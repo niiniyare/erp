@@ -1,9 +1,4 @@
---
--- PostgreSQL database dump
---
 
--- Dumped from database version 17.0
--- Dumped by pg_dump version 17.0
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -17,16 +12,10 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- Name: fuzzystrmatch; Type: EXTENSION; Schema: -; Owner: -
---
 
 CREATE EXTENSION IF NOT EXISTS fuzzystrmatch WITH SCHEMA public;
 
 
---
--- Name: entity_type; Type: TYPE; Schema: public; Owner: -
---
 
 CREATE TYPE public.entity_type AS ENUM (
     'COMPANY',
@@ -36,9 +25,6 @@ CREATE TYPE public.entity_type AS ENUM (
 );
 
 
---
--- Name: financial_year_status_enum; Type: TYPE; Schema: public; Owner: -
---
 
 CREATE TYPE public.financial_year_status_enum AS ENUM (
     'OPEN',
@@ -47,9 +33,6 @@ CREATE TYPE public.financial_year_status_enum AS ENUM (
 );
 
 
---
--- Name: avgcost(integer); Type: FUNCTION; Schema: public; Owner: -
---
 
 CREATE FUNCTION public.avgcost(integer) RETURNS double precision
     LANGUAGE plpgsql
@@ -85,9 +68,6 @@ END;
 $_$;
 
 
---
--- Name: check_department(); Type: FUNCTION; Schema: public; Owner: -
---
 
 CREATE FUNCTION public.check_department() RETURNS trigger
     LANGUAGE plpgsql
@@ -116,9 +96,6 @@ end;
 $$;
 
 
---
--- Name: del_customer(); Type: FUNCTION; Schema: public; Owner: -
---
 
 CREATE FUNCTION public.del_customer() RETURNS trigger
     LANGUAGE plpgsql
@@ -133,9 +110,6 @@ end;
 $$;
 
 
---
--- Name: del_recurring(); Type: FUNCTION; Schema: public; Owner: -
---
 
 CREATE FUNCTION public.del_recurring() RETURNS trigger
     LANGUAGE plpgsql
@@ -149,9 +123,6 @@ end;
 $$;
 
 
---
--- Name: del_vendor(); Type: FUNCTION; Schema: public; Owner: -
---
 
 CREATE FUNCTION public.del_vendor() RETURNS trigger
     LANGUAGE plpgsql
@@ -166,9 +137,6 @@ end;
 $$;
 
 
---
--- Name: del_yearend(); Type: FUNCTION; Schema: public; Owner: -
---
 
 CREATE FUNCTION public.del_yearend() RETURNS trigger
     LANGUAGE plpgsql
@@ -180,9 +148,6 @@ end;
 $$;
 
 
---
--- Name: lastcost(integer); Type: FUNCTION; Schema: public; Owner: -
---
 
 CREATE FUNCTION public.lastcost(integer) RETURNS double precision
     LANGUAGE plpgsql
@@ -210,18 +175,12 @@ END;
 $_$;
 
 
---
--- Name: to_filtered_tsvector(text, text, regconfig); Type: FUNCTION; Schema: public; Owner: -
---
 
 CREATE FUNCTION public.to_filtered_tsvector(input text, filter_type text DEFAULT 'COMMON'::text, ts_config regconfig DEFAULT 'simple'::regconfig) RETURNS tsvector
     LANGUAGE plpgsql
     AS $$ DECLARE filtered_input TEXT; BEGIN SELECT string_agg(input_word, ' ') INTO filtered_input FROM unnest(string_to_array(input, ' ')) AS input_word WHERE lower(input_word) NOT IN (SELECT lower(word) FROM search_irrelevant_words WHERE search_target = 'COMMON' OR search_target = filter_type); RETURN to_tsvector(ts_config, filtered_input); END; $$;
 
 
---
--- Name: update_entity_paths(); Type: FUNCTION; Schema: public; Owner: -
---
 
 CREATE FUNCTION public.update_entity_paths() RETURNS trigger
     LANGUAGE plpgsql
@@ -244,9 +203,6 @@ END;
 $$;
 
 
---
--- Name: update_timestamps(); Type: FUNCTION; Schema: public; Owner: -
---
 
 CREATE FUNCTION public.update_timestamps() RETURNS trigger
     LANGUAGE plpgsql
@@ -258,9 +214,6 @@ END;
 $$;
 
 
---
--- Name: entry_id; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.entry_id
     START WITH 1
@@ -274,9 +227,6 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
---
--- Name: acc_trans; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.acc_trans (
     trans_id integer,
@@ -300,9 +250,6 @@ CREATE TABLE public.acc_trans (
 );
 
 
---
--- Name: acc_trans_log; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.acc_trans_log (
     trans_id integer,
@@ -327,9 +274,6 @@ CREATE TABLE public.acc_trans_log (
 );
 
 
---
--- Name: acc_trans_log_deleted; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.acc_trans_log_deleted (
     trans_id integer,
@@ -354,9 +298,6 @@ CREATE TABLE public.acc_trans_log_deleted (
 );
 
 
---
--- Name: addressid; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.addressid
     START WITH 1
@@ -366,9 +307,6 @@ CREATE SEQUENCE public.addressid
     CACHE 1;
 
 
---
--- Name: address; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.address (
     id integer DEFAULT nextval('public.addressid'::regclass) NOT NULL,
@@ -384,9 +322,6 @@ CREATE TABLE public.address (
 );
 
 
---
--- Name: id; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.id
     START WITH 10000
@@ -396,9 +331,6 @@ CREATE SEQUENCE public.id
     CACHE 1;
 
 
---
--- Name: ap; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.ap (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -436,9 +368,6 @@ CREATE TABLE public.ap (
 );
 
 
---
--- Name: ap_log; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.ap_log (
     id integer,
@@ -474,9 +403,6 @@ CREATE TABLE public.ap_log (
 );
 
 
---
--- Name: ap_log_deleted; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.ap_log_deleted (
     id integer,
@@ -512,9 +438,6 @@ CREATE TABLE public.ap_log_deleted (
 );
 
 
---
--- Name: ar; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.ar (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -552,9 +475,6 @@ CREATE TABLE public.ar (
 );
 
 
---
--- Name: ar_log; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.ar_log (
     id integer,
@@ -590,9 +510,6 @@ CREATE TABLE public.ar_log (
 );
 
 
---
--- Name: ar_log_deleted; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.ar_log_deleted (
     id integer,
@@ -628,9 +545,6 @@ CREATE TABLE public.ar_log_deleted (
 );
 
 
---
--- Name: assemblyid; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.assemblyid
     START WITH 1
@@ -640,9 +554,6 @@ CREATE SEQUENCE public.assemblyid
     CACHE 1;
 
 
---
--- Name: assembly; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.assembly (
     id integer DEFAULT nextval('public.assemblyid'::regclass),
@@ -654,9 +565,6 @@ CREATE TABLE public.assembly (
 );
 
 
---
--- Name: audittrail; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.audittrail (
     trans_id integer,
@@ -669,9 +577,6 @@ CREATE TABLE public.audittrail (
 );
 
 
---
--- Name: bank; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.bank (
     id integer,
@@ -688,9 +593,6 @@ CREATE TABLE public.bank (
 );
 
 
---
--- Name: bank_account; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.bank_account (
     id integer NOT NULL,
@@ -713,9 +615,6 @@ CREATE TABLE public.bank_account (
 );
 
 
---
--- Name: bank_account_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 ALTER TABLE public.bank_account ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public.bank_account_id_seq
@@ -727,9 +626,6 @@ ALTER TABLE public.bank_account ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDEN
 );
 
 
---
--- Name: banking_import_event; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.banking_import_event (
     id bigint NOT NULL,
@@ -737,9 +633,6 @@ CREATE TABLE public.banking_import_event (
 );
 
 
---
--- Name: banking_import_event_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 ALTER TABLE public.banking_import_event ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public.banking_import_event_id_seq
@@ -751,9 +644,6 @@ ALTER TABLE public.banking_import_event ALTER COLUMN id ADD GENERATED BY DEFAULT
 );
 
 
---
--- Name: blink_import_process; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.blink_import_process (
     id bigint NOT NULL,
@@ -765,9 +655,6 @@ CREATE TABLE public.blink_import_process (
 );
 
 
---
--- Name: blink_import_process_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 ALTER TABLE public.blink_import_process ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public.blink_import_process_id_seq
@@ -779,9 +666,6 @@ ALTER TABLE public.blink_import_process ALTER COLUMN id ADD GENERATED BY DEFAULT
 );
 
 
---
--- Name: blink_import_process_log; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.blink_import_process_log (
     id bigint NOT NULL,
@@ -793,9 +677,6 @@ CREATE TABLE public.blink_import_process_log (
 );
 
 
---
--- Name: blink_import_process_log_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 ALTER TABLE public.blink_import_process_log ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
     SEQUENCE NAME public.blink_import_process_log_id_seq
@@ -807,9 +688,6 @@ ALTER TABLE public.blink_import_process_log ALTER COLUMN id ADD GENERATED BY DEF
 );
 
 
---
--- Name: booking_to_settlement; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.booking_to_settlement (
     id integer NOT NULL,
@@ -818,9 +696,6 @@ CREATE TABLE public.booking_to_settlement (
 );
 
 
---
--- Name: booking_to_settlement_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.booking_to_settlement_id_seq
     AS integer
@@ -831,16 +706,10 @@ CREATE SEQUENCE public.booking_to_settlement_id_seq
     CACHE 1;
 
 
---
--- Name: booking_to_settlement_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.booking_to_settlement_id_seq OWNED BY public.booking_to_settlement.id;
 
 
---
--- Name: br; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.br (
     id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
@@ -855,9 +724,6 @@ CREATE TABLE public.br (
 );
 
 
---
--- Name: build; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.build (
     id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
@@ -869,9 +735,6 @@ CREATE TABLE public.build (
 );
 
 
---
--- Name: business; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.business (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -880,9 +743,6 @@ CREATE TABLE public.business (
 );
 
 
---
--- Name: cargo; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.cargo (
     id integer NOT NULL,
@@ -894,9 +754,6 @@ CREATE TABLE public.cargo (
 );
 
 
---
--- Name: chart; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.chart (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -914,9 +771,6 @@ CREATE TABLE public.chart (
 );
 
 
---
--- Name: chat; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.chat (
     id integer NOT NULL,
@@ -927,9 +781,6 @@ CREATE TABLE public.chat (
 );
 
 
---
--- Name: chat_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.chat_id_seq
     AS integer
@@ -940,16 +791,10 @@ CREATE SEQUENCE public.chat_id_seq
     CACHE 1;
 
 
---
--- Name: chat_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.chat_id_seq OWNED BY public.chat.id;
 
 
---
--- Name: contactid; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.contactid
     START WITH 1
@@ -959,9 +804,6 @@ CREATE SEQUENCE public.contactid
     CACHE 1;
 
 
---
--- Name: contact; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.contact (
     id integer DEFAULT nextval('public.contactid'::regclass) NOT NULL,
@@ -981,9 +823,6 @@ CREATE TABLE public.contact (
 );
 
 
---
--- Name: credits; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.credits (
     id integer NOT NULL,
@@ -995,9 +834,6 @@ CREATE TABLE public.credits (
 );
 
 
---
--- Name: credits_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.credits_id_seq
     AS integer
@@ -1008,16 +844,10 @@ CREATE SEQUENCE public.credits_id_seq
     CACHE 1;
 
 
---
--- Name: credits_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.credits_id_seq OWNED BY public.credits.id;
 
 
---
--- Name: curr; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.curr (
     rn integer,
@@ -1026,9 +856,6 @@ CREATE TABLE public.curr (
 );
 
 
---
--- Name: customer; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.customer (
     id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
@@ -1066,9 +893,6 @@ CREATE TABLE public.customer (
 );
 
 
---
--- Name: customercart; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.customercart (
     cart_id character varying(32),
@@ -1080,9 +904,6 @@ CREATE TABLE public.customercart (
 );
 
 
---
--- Name: customerloginid; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.customerloginid
     START WITH 1
@@ -1092,9 +913,6 @@ CREATE SEQUENCE public.customerloginid
     CACHE 1;
 
 
---
--- Name: customerlogin; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.customerlogin (
     id integer DEFAULT nextval('public.customerloginid'::regclass) NOT NULL,
@@ -1106,9 +924,6 @@ CREATE TABLE public.customerlogin (
 );
 
 
---
--- Name: customertax; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.customertax (
     customer_id integer,
@@ -1116,9 +931,6 @@ CREATE TABLE public.customertax (
 );
 
 
---
--- Name: debits; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.debits (
     id integer NOT NULL,
@@ -1130,9 +942,6 @@ CREATE TABLE public.debits (
 );
 
 
---
--- Name: debits_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.debits_id_seq
     AS integer
@@ -1143,16 +952,10 @@ CREATE SEQUENCE public.debits_id_seq
     CACHE 1;
 
 
---
--- Name: debits_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.debits_id_seq OWNED BY public.debits.id;
 
 
---
--- Name: debitscredits; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.debitscredits (
     id integer NOT NULL,
@@ -1165,9 +968,6 @@ CREATE TABLE public.debitscredits (
 );
 
 
---
--- Name: debitscredits_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.debitscredits_id_seq
     AS integer
@@ -1178,16 +978,10 @@ CREATE SEQUENCE public.debitscredits_id_seq
     CACHE 1;
 
 
---
--- Name: debitscredits_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.debitscredits_id_seq OWNED BY public.debitscredits.id;
 
 
---
--- Name: defaults; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.defaults (
     fldname text,
@@ -1195,9 +989,6 @@ CREATE TABLE public.defaults (
 );
 
 
---
--- Name: department; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.department (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -1206,9 +997,6 @@ CREATE TABLE public.department (
 );
 
 
---
--- Name: dispatch; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.dispatch (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -1216,9 +1004,6 @@ CREATE TABLE public.dispatch (
 );
 
 
---
--- Name: dpt_trans; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.dpt_trans (
     trans_id integer,
@@ -1226,9 +1011,6 @@ CREATE TABLE public.dpt_trans (
 );
 
 
---
--- Name: employee; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.employee (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -1257,9 +1039,6 @@ CREATE TABLE public.employee (
 );
 
 
---
--- Name: entities; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.entities (
     id integer NOT NULL,
@@ -1273,9 +1052,6 @@ CREATE TABLE public.entities (
 );
 
 
---
--- Name: entities_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.entities_id_seq
     AS integer
@@ -1286,16 +1062,10 @@ CREATE SEQUENCE public.entities_id_seq
     CACHE 1;
 
 
---
--- Name: entities_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.entities_id_seq OWNED BY public.entities.id;
 
 
---
--- Name: exchangerate; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.exchangerate (
     curr character(3),
@@ -1305,9 +1075,6 @@ CREATE TABLE public.exchangerate (
 );
 
 
---
--- Name: fifo; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.fifo (
     trans_id integer,
@@ -1321,9 +1088,6 @@ CREATE TABLE public.fifo (
 );
 
 
---
--- Name: filtered; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.filtered (
     trans_id integer,
@@ -1334,9 +1098,6 @@ CREATE TABLE public.filtered (
 );
 
 
---
--- Name: financial_year; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.financial_year (
     id integer NOT NULL,
@@ -1347,9 +1108,6 @@ CREATE TABLE public.financial_year (
 );
 
 
---
--- Name: financial_year_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.financial_year_id_seq
     AS integer
@@ -1360,16 +1118,10 @@ CREATE SEQUENCE public.financial_year_id_seq
     CACHE 1;
 
 
---
--- Name: financial_year_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.financial_year_id_seq OWNED BY public.financial_year.id;
 
 
---
--- Name: gifi; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.gifi (
     accno text,
@@ -1377,9 +1129,6 @@ CREATE TABLE public.gifi (
 );
 
 
---
--- Name: gl; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.gl (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -1397,9 +1146,6 @@ CREATE TABLE public.gl (
 );
 
 
---
--- Name: gl_log; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.gl_log (
     id integer,
@@ -1417,9 +1163,6 @@ CREATE TABLE public.gl_log (
 );
 
 
---
--- Name: gl_log_deleted; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.gl_log_deleted (
     id integer,
@@ -1437,9 +1180,6 @@ CREATE TABLE public.gl_log_deleted (
 );
 
 
---
--- Name: hierarchy_paths; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.hierarchy_paths (
     ancestor_id integer NOT NULL,
@@ -1448,9 +1188,6 @@ CREATE TABLE public.hierarchy_paths (
 );
 
 
---
--- Name: inventoryid; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.inventoryid
     START WITH 1
@@ -1460,9 +1197,6 @@ CREATE SEQUENCE public.inventoryid
     CACHE 1;
 
 
---
--- Name: inventory; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.inventory (
     id integer DEFAULT nextval('public.inventoryid'::regclass),
@@ -1485,9 +1219,6 @@ CREATE TABLE public.inventory (
 );
 
 
---
--- Name: invoiceid; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.invoiceid
     START WITH 1
@@ -1497,9 +1228,6 @@ CREATE SEQUENCE public.invoiceid
     CACHE 1;
 
 
---
--- Name: invoice; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.invoice (
     id integer DEFAULT nextval('public.invoiceid'::regclass),
@@ -1519,9 +1247,6 @@ CREATE TABLE public.invoice (
 );
 
 
---
--- Name: invoice_log; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.invoice_log (
     id integer,
@@ -1542,9 +1267,6 @@ CREATE TABLE public.invoice_log (
 );
 
 
---
--- Name: invoice_log_deleted; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.invoice_log_deleted (
     trans_id integer,
@@ -1569,9 +1291,6 @@ CREATE TABLE public.invoice_log_deleted (
 );
 
 
---
--- Name: invoicetax; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.invoicetax (
     trans_id integer,
@@ -1582,9 +1301,6 @@ CREATE TABLE public.invoicetax (
 );
 
 
---
--- Name: jcitemsid; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.jcitemsid
     START WITH 1
@@ -1594,9 +1310,6 @@ CREATE SEQUENCE public.jcitemsid
     CACHE 1;
 
 
---
--- Name: jcitems; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.jcitems (
     id integer DEFAULT nextval('public.jcitemsid'::regclass),
@@ -1615,9 +1328,6 @@ CREATE TABLE public.jcitems (
 );
 
 
---
--- Name: language; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.language (
     code character varying(6),
@@ -1625,9 +1335,6 @@ CREATE TABLE public.language (
 );
 
 
---
--- Name: lastused; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.lastused (
     id integer NOT NULL,
@@ -1637,9 +1344,6 @@ CREATE TABLE public.lastused (
 );
 
 
---
--- Name: lastused_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.lastused_id_seq
     AS integer
@@ -1650,16 +1354,10 @@ CREATE SEQUENCE public.lastused_id_seq
     CACHE 1;
 
 
---
--- Name: lastused_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.lastused_id_seq OWNED BY public.lastused.id;
 
 
---
--- Name: makemodel; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.makemodel (
     parts_id integer,
@@ -1668,9 +1366,6 @@ CREATE TABLE public.makemodel (
 );
 
 
---
--- Name: oe; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.oe (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -1703,9 +1398,6 @@ CREATE TABLE public.oe (
 );
 
 
---
--- Name: oldchart; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.oldchart (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -1722,9 +1414,6 @@ CREATE TABLE public.oldchart (
 );
 
 
---
--- Name: orderitemsid; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.orderitemsid
     START WITH 1
@@ -1734,9 +1423,6 @@ CREATE SEQUENCE public.orderitemsid
     CACHE 1;
 
 
---
--- Name: orderitems; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.orderitems (
     id integer DEFAULT nextval('public.orderitemsid'::regclass),
@@ -1759,9 +1445,6 @@ CREATE TABLE public.orderitems (
 );
 
 
---
--- Name: org; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.org (
     id integer NOT NULL,
@@ -1773,9 +1456,6 @@ CREATE TABLE public.org (
 );
 
 
---
--- Name: org_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.org_id_seq
     AS integer
@@ -1786,16 +1466,10 @@ CREATE SEQUENCE public.org_id_seq
     CACHE 1;
 
 
---
--- Name: org_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.org_id_seq OWNED BY public.org.id;
 
 
---
--- Name: parts; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.parts (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -1832,9 +1506,6 @@ CREATE TABLE public.parts (
 );
 
 
---
--- Name: partsattr; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.partsattr (
     parts_id integer,
@@ -1842,9 +1513,6 @@ CREATE TABLE public.partsattr (
 );
 
 
---
--- Name: partscustomer; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.partscustomer (
     parts_id integer,
@@ -1858,9 +1526,6 @@ CREATE TABLE public.partscustomer (
 );
 
 
---
--- Name: partsgroup; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.partsgroup (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -1869,9 +1534,6 @@ CREATE TABLE public.partsgroup (
 );
 
 
---
--- Name: partstax; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.partstax (
     parts_id integer,
@@ -1879,9 +1541,6 @@ CREATE TABLE public.partstax (
 );
 
 
---
--- Name: partsvendor; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.partsvendor (
     vendor_id integer,
@@ -1893,9 +1552,6 @@ CREATE TABLE public.partsvendor (
 );
 
 
---
--- Name: payment; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.payment (
     id integer NOT NULL,
@@ -1905,9 +1561,6 @@ CREATE TABLE public.payment (
 );
 
 
---
--- Name: paymentmethod; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.paymentmethod (
     id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
@@ -1917,9 +1570,6 @@ CREATE TABLE public.paymentmethod (
 );
 
 
---
--- Name: pricegroup; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.pricegroup (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -1927,9 +1577,6 @@ CREATE TABLE public.pricegroup (
 );
 
 
---
--- Name: project; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.project (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -1944,9 +1591,6 @@ CREATE TABLE public.project (
 );
 
 
---
--- Name: recurring; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.recurring (
     id integer,
@@ -1962,9 +1606,6 @@ CREATE TABLE public.recurring (
 );
 
 
---
--- Name: recurringemail; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.recurringemail (
     id integer,
@@ -1974,9 +1615,6 @@ CREATE TABLE public.recurringemail (
 );
 
 
---
--- Name: recurringprint; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.recurringprint (
     id integer,
@@ -1986,9 +1624,6 @@ CREATE TABLE public.recurringprint (
 );
 
 
---
--- Name: report; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.report (
     reportid integer DEFAULT nextval('public.id'::regclass) NOT NULL,
@@ -1998,9 +1633,6 @@ CREATE TABLE public.report (
 );
 
 
---
--- Name: reportvars; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.reportvars (
     reportid integer NOT NULL,
@@ -2009,9 +1641,6 @@ CREATE TABLE public.reportvars (
 );
 
 
---
--- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.schema_migrations (
     version bigint NOT NULL,
@@ -2019,9 +1648,6 @@ CREATE TABLE public.schema_migrations (
 );
 
 
---
--- Name: search_irrelevant_words; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.search_irrelevant_words (
     id integer NOT NULL,
@@ -2030,9 +1656,6 @@ CREATE TABLE public.search_irrelevant_words (
 );
 
 
---
--- Name: search_irrelevant_words_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.search_irrelevant_words_id_seq
     AS integer
@@ -2043,16 +1666,10 @@ CREATE SEQUENCE public.search_irrelevant_words_id_seq
     CACHE 1;
 
 
---
--- Name: search_irrelevant_words_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.search_irrelevant_words_id_seq OWNED BY public.search_irrelevant_words.id;
 
 
---
--- Name: semaphore; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.semaphore (
     id integer,
@@ -2062,9 +1679,6 @@ CREATE TABLE public.semaphore (
 );
 
 
---
--- Name: shipto; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.shipto (
     trans_id integer,
@@ -2082,9 +1696,6 @@ CREATE TABLE public.shipto (
 );
 
 
---
--- Name: sic; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.sic (
     code character varying(6),
@@ -2093,9 +1704,6 @@ CREATE TABLE public.sic (
 );
 
 
---
--- Name: status; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.status (
     trans_id integer,
@@ -2106,9 +1714,6 @@ CREATE TABLE public.status (
 );
 
 
---
--- Name: tax; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.tax (
     chart_id integer,
@@ -2123,9 +1728,6 @@ CREATE TABLE public.tax (
 );
 
 
---
--- Name: tax_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.tax_id_seq
     AS integer
@@ -2136,16 +1738,10 @@ CREATE SEQUENCE public.tax_id_seq
     CACHE 1;
 
 
---
--- Name: tax_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.tax_id_seq OWNED BY public.tax.id;
 
 
---
--- Name: translation; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.translation (
     trans_id integer,
@@ -2154,9 +1750,6 @@ CREATE TABLE public.translation (
 );
 
 
---
--- Name: trf; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.trf (
     id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
@@ -2172,9 +1765,6 @@ CREATE TABLE public.trf (
 );
 
 
---
--- Name: users; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.users (
     id integer NOT NULL,
@@ -2188,9 +1778,6 @@ CREATE TABLE public.users (
 );
 
 
---
--- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.users_id_seq
     AS integer
@@ -2201,16 +1788,10 @@ CREATE SEQUENCE public.users_id_seq
     CACHE 1;
 
 
---
--- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
---
--- Name: v_active_users; Type: VIEW; Schema: public; Owner: -
---
 
 CREATE VIEW public.v_active_users AS
  SELECT u.id AS user_id,
@@ -2231,9 +1812,6 @@ CREATE VIEW public.v_active_users AS
   WHERE ((u.deleted_at IS NULL) AND (u.last_login_at > (CURRENT_DATE - '90 days'::interval)) AND (cc.deleted_at IS NULL) AND (d.deleted_at IS NULL) AND (r.deleted_at IS NULL) AND (c.deleted_at IS NULL) AND (o.deleted_at IS NULL));
 
 
---
--- Name: v_company_subtree; Type: VIEW; Schema: public; Owner: -
---
 
 CREATE VIEW public.v_company_subtree AS
  SELECT c.id AS company_id,
@@ -2248,9 +1826,6 @@ CREATE VIEW public.v_company_subtree AS
   WHERE ((c.type = 'COMPANY'::public.entity_type) AND (c.deleted_at IS NULL) AND (e.deleted_at IS NULL));
 
 
---
--- Name: v_cost_center_management; Type: VIEW; Schema: public; Owner: -
---
 
 CREATE VIEW public.v_cost_center_management AS
  SELECT cc.id AS cost_center_id,
@@ -2275,9 +1850,6 @@ CREATE VIEW public.v_cost_center_management AS
   GROUP BY cc.id, cc.name, d.id, d.name, r.id, r.name, c.id, c.name, o.id, o.name;
 
 
---
--- Name: v_department_summary; Type: VIEW; Schema: public; Owner: -
---
 
 CREATE VIEW public.v_department_summary AS
  SELECT d.id AS department_id,
@@ -2300,9 +1872,6 @@ CREATE VIEW public.v_department_summary AS
   GROUP BY d.id, d.name, r.id, r.name, c.id, c.name, o.id, o.name;
 
 
---
--- Name: v_organization_hierarchy; Type: VIEW; Schema: public; Owner: -
---
 
 CREATE VIEW public.v_organization_hierarchy AS
  WITH RECURSIVE org_chart AS (
@@ -2339,9 +1908,6 @@ CREATE VIEW public.v_organization_hierarchy AS
   WHERE (oc.deleted_at IS NULL);
 
 
---
--- Name: v_organization_size_report; Type: VIEW; Schema: public; Owner: -
---
 
 CREATE VIEW public.v_organization_size_report AS
  SELECT o.id AS organization_id,
@@ -2361,9 +1927,6 @@ CREATE VIEW public.v_organization_size_report AS
   GROUP BY o.id, o.name;
 
 
---
--- Name: v_user_directory; Type: VIEW; Schema: public; Owner: -
---
 
 CREATE VIEW public.v_user_directory AS
  SELECT u.id AS user_id,
@@ -2389,9 +1952,6 @@ CREATE VIEW public.v_user_directory AS
   WHERE (u.deleted_at IS NULL);
 
 
---
--- Name: vat_settlement; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.vat_settlement (
     id integer NOT NULL,
@@ -2404,9 +1964,6 @@ CREATE TABLE public.vat_settlement (
 );
 
 
---
--- Name: vat_settlement_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.vat_settlement_id_seq
     AS integer
@@ -2417,16 +1974,10 @@ CREATE SEQUENCE public.vat_settlement_id_seq
     CACHE 1;
 
 
---
--- Name: vat_settlement_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.vat_settlement_id_seq OWNED BY public.vat_settlement.id;
 
 
---
--- Name: vendor; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.vendor (
     id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
@@ -2465,9 +2016,6 @@ CREATE TABLE public.vendor (
 );
 
 
---
--- Name: vendortax; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.vendortax (
     vendor_id integer,
@@ -2475,9 +2023,6 @@ CREATE TABLE public.vendortax (
 );
 
 
---
--- Name: vr; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.vr (
     br_id integer,
@@ -2487,9 +2032,6 @@ CREATE TABLE public.vr (
 );
 
 
---
--- Name: warehouse; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.warehouse (
     id integer DEFAULT nextval('public.id'::regclass),
@@ -2497,9 +2039,6 @@ CREATE TABLE public.warehouse (
 );
 
 
---
--- Name: yearend; Type: TABLE; Schema: public; Owner: -
---
 
 CREATE TABLE public.yearend (
     trans_id integer,
@@ -2508,9 +2047,6 @@ CREATE TABLE public.yearend (
 );
 
 
---
--- Name: yearend_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
 
 CREATE SEQUENCE public.yearend_id_seq
     AS integer
@@ -2521,1100 +2057,647 @@ CREATE SEQUENCE public.yearend_id_seq
     CACHE 1;
 
 
---
--- Name: yearend_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 
 ALTER SEQUENCE public.yearend_id_seq OWNED BY public.yearend.id;
 
 
---
--- Name: booking_to_settlement id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.booking_to_settlement ALTER COLUMN id SET DEFAULT nextval('public.booking_to_settlement_id_seq'::regclass);
 
 
---
--- Name: chat id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.chat ALTER COLUMN id SET DEFAULT nextval('public.chat_id_seq'::regclass);
 
 
---
--- Name: credits id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.credits ALTER COLUMN id SET DEFAULT nextval('public.credits_id_seq'::regclass);
 
 
---
--- Name: debits id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.debits ALTER COLUMN id SET DEFAULT nextval('public.debits_id_seq'::regclass);
 
 
---
--- Name: debitscredits id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.debitscredits ALTER COLUMN id SET DEFAULT nextval('public.debitscredits_id_seq'::regclass);
 
 
---
--- Name: entities id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.entities ALTER COLUMN id SET DEFAULT nextval('public.entities_id_seq'::regclass);
 
 
---
--- Name: financial_year id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.financial_year ALTER COLUMN id SET DEFAULT nextval('public.financial_year_id_seq'::regclass);
 
 
---
--- Name: lastused id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.lastused ALTER COLUMN id SET DEFAULT nextval('public.lastused_id_seq'::regclass);
 
 
---
--- Name: org id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.org ALTER COLUMN id SET DEFAULT nextval('public.org_id_seq'::regclass);
 
 
---
--- Name: search_irrelevant_words id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.search_irrelevant_words ALTER COLUMN id SET DEFAULT nextval('public.search_irrelevant_words_id_seq'::regclass);
 
 
---
--- Name: tax id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.tax ALTER COLUMN id SET DEFAULT nextval('public.tax_id_seq'::regclass);
 
 
---
--- Name: users id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
---
--- Name: vat_settlement id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.vat_settlement ALTER COLUMN id SET DEFAULT nextval('public.vat_settlement_id_seq'::regclass);
 
 
---
--- Name: yearend id; Type: DEFAULT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.yearend ALTER COLUMN id SET DEFAULT nextval('public.yearend_id_seq'::regclass);
 
 
---
--- Name: address address_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.address
     ADD CONSTRAINT address_pkey PRIMARY KEY (id);
 
 
---
--- Name: bank_account bank_account_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.bank_account
     ADD CONSTRAINT bank_account_pkey PRIMARY KEY (id);
 
 
---
--- Name: banking_import_event banking_import_event_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.banking_import_event
     ADD CONSTRAINT banking_import_event_pkey PRIMARY KEY (id);
 
 
---
--- Name: blink_import_process_log blink_import_process_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.blink_import_process_log
     ADD CONSTRAINT blink_import_process_log_pkey PRIMARY KEY (id);
 
 
---
--- Name: blink_import_process blink_import_process_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.blink_import_process
     ADD CONSTRAINT blink_import_process_pkey PRIMARY KEY (id);
 
 
---
--- Name: booking_to_settlement booking_to_settlement_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.booking_to_settlement
     ADD CONSTRAINT booking_to_settlement_pkey PRIMARY KEY (id);
 
 
---
--- Name: br br_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.br
     ADD CONSTRAINT br_pkey PRIMARY KEY (id);
 
 
---
--- Name: build build_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.build
     ADD CONSTRAINT build_pkey PRIMARY KEY (id);
 
 
---
--- Name: chart chart_accno_key1; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.chart
     ADD CONSTRAINT chart_accno_key1 UNIQUE (accno);
 
 
---
--- Name: chat chat_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.chat
     ADD CONSTRAINT chat_pkey PRIMARY KEY (id);
 
 
---
--- Name: contact contact_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.contact
     ADD CONSTRAINT contact_pkey PRIMARY KEY (id);
 
 
---
--- Name: curr curr_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.curr
     ADD CONSTRAINT curr_pkey PRIMARY KEY (curr);
 
 
---
--- Name: customer customer_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.customer
     ADD CONSTRAINT customer_pkey PRIMARY KEY (id);
 
 
---
--- Name: customerlogin customerlogin_login_key; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.customerlogin
     ADD CONSTRAINT customerlogin_login_key UNIQUE (login);
 
 
---
--- Name: customerlogin customerlogin_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.customerlogin
     ADD CONSTRAINT customerlogin_pkey PRIMARY KEY (id);
 
 
---
--- Name: customerlogin customerlogin_session_key; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.customerlogin
     ADD CONSTRAINT customerlogin_session_key UNIQUE (session);
 
 
---
--- Name: entities entities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.entities
     ADD CONSTRAINT entities_pkey PRIMARY KEY (id);
 
 
---
--- Name: financial_year financial_year_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.financial_year
     ADD CONSTRAINT financial_year_pkey PRIMARY KEY (id);
 
 
---
--- Name: hierarchy_paths hierarchy_paths_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.hierarchy_paths
     ADD CONSTRAINT hierarchy_paths_pkey PRIMARY KEY (ancestor_id, descendant_id);
 
 
---
--- Name: lastused lastused_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.lastused
     ADD CONSTRAINT lastused_pkey PRIMARY KEY (id);
 
 
---
--- Name: org org_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.org
     ADD CONSTRAINT org_pkey PRIMARY KEY (id);
 
 
---
--- Name: paymentmethod paymentmethod_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.paymentmethod
     ADD CONSTRAINT paymentmethod_pkey PRIMARY KEY (id);
 
 
---
--- Name: report report_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.report
     ADD CONSTRAINT report_pkey PRIMARY KEY (reportid);
 
 
---
--- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
 
 
---
--- Name: search_irrelevant_words search_irrelevant_words_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.search_irrelevant_words
     ADD CONSTRAINT search_irrelevant_words_pkey PRIMARY KEY (id);
 
 
---
--- Name: tax tax_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.tax
     ADD CONSTRAINT tax_pkey PRIMARY KEY (id);
 
 
---
--- Name: trf trf_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.trf
     ADD CONSTRAINT trf_pkey PRIMARY KEY (id);
 
 
---
--- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_email_key UNIQUE (email);
 
 
---
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 
---
--- Name: vat_settlement vat_settlement_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.vat_settlement
     ADD CONSTRAINT vat_settlement_pkey PRIMARY KEY (id);
 
 
---
--- Name: vendor vendor_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.vendor
     ADD CONSTRAINT vendor_pkey PRIMARY KEY (id);
 
 
---
--- Name: yearend yearend_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.yearend
     ADD CONSTRAINT yearend_pkey PRIMARY KEY (id);
 
 
---
--- Name: acc_trans_chart_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX acc_trans_chart_id_key ON public.acc_trans USING btree (chart_id);
 
 
---
--- Name: acc_trans_chart_id_transdate_approved_trans_id; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX acc_trans_chart_id_transdate_approved_trans_id ON public.acc_trans USING btree (chart_id, transdate, approved, trans_id, amount);
 
 
---
--- Name: acc_trans_source_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX acc_trans_source_key ON public.acc_trans USING btree (lower(source));
 
 
---
--- Name: acc_trans_trans_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX acc_trans_trans_id_key ON public.acc_trans USING btree (trans_id);
 
 
---
--- Name: acc_trans_transdate_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX acc_trans_transdate_key ON public.acc_trans USING btree (transdate);
 
 
---
--- Name: ap_quonumber_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX ap_quonumber_key ON public.ap USING btree (lower(quonumber));
 
 
---
--- Name: ar_quonumber_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX ar_quonumber_key ON public.ar USING btree (lower(quonumber));
 
 
---
--- Name: assembly_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX assembly_id_key ON public.assembly USING btree (id);
 
 
---
--- Name: audittrail_trans_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX audittrail_trans_id_key ON public.audittrail USING btree (trans_id);
 
 
---
--- Name: cargo_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX cargo_id_key ON public.cargo USING btree (id, trans_id);
 
 
---
--- Name: chart_accno_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE UNIQUE INDEX chart_accno_key ON public.oldchart USING btree (accno);
 
 
---
--- Name: chart_category_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX chart_category_key ON public.oldchart USING btree (category);
 
 
---
--- Name: chart_gifi_accno_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX chart_gifi_accno_key ON public.oldchart USING btree (gifi_accno);
 
 
---
--- Name: chart_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX chart_id_key ON public.oldchart USING btree (id);
 
 
---
--- Name: chart_link_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX chart_link_key ON public.oldchart USING btree (link);
 
 
---
--- Name: customer_contact_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX customer_contact_key ON public.customer USING btree (lower((contact)::text));
 
 
---
--- Name: customer_customer_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX customer_customer_id_key ON public.customertax USING btree (customer_id);
 
 
---
--- Name: customer_customernumber_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX customer_customernumber_key ON public.customer USING btree (customernumber);
 
 
---
--- Name: customer_name_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX customer_name_key ON public.customer USING btree (lower((name)::text));
 
 
---
--- Name: department_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX department_id_key ON public.department USING btree (id);
 
 
---
--- Name: employee_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX employee_id_key ON public.employee USING btree (id);
 
 
---
--- Name: employee_login_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE UNIQUE INDEX employee_login_key ON public.employee USING btree (login);
 
 
---
--- Name: employee_name_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX employee_name_key ON public.employee USING btree (name);
 
 
---
--- Name: exchangerate_ct_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX exchangerate_ct_key ON public.exchangerate USING btree (curr, transdate);
 
 
---
--- Name: fifo_parts_id; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX fifo_parts_id ON public.fifo USING btree (parts_id);
 
 
---
--- Name: fifo_trans_id; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX fifo_trans_id ON public.fifo USING btree (trans_id);
 
 
---
--- Name: gifi_accno_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE UNIQUE INDEX gifi_accno_key ON public.gifi USING btree (accno);
 
 
---
--- Name: gl_description_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX gl_description_key ON public.gl USING btree (lower(description));
 
 
---
--- Name: gl_employee_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX gl_employee_id_key ON public.gl USING btree (employee_id);
 
 
---
--- Name: gl_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX gl_id_key ON public.gl USING btree (id);
 
 
---
--- Name: gl_reference_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX gl_reference_key ON public.gl USING btree (reference);
 
 
---
--- Name: gl_transdate_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX gl_transdate_key ON public.gl USING btree (transdate);
 
 
---
--- Name: idx_entities_deleted; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX idx_entities_deleted ON public.entities USING btree (deleted_at);
 
 
---
--- Name: idx_entities_org; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX idx_entities_org ON public.entities USING btree (organization_id);
 
 
---
--- Name: idx_entities_org_parent; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX idx_entities_org_parent ON public.entities USING btree (organization_id, parent_id);
 
 
---
--- Name: idx_entities_parent; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX idx_entities_parent ON public.entities USING btree (parent_id);
 
 
---
--- Name: idx_entities_type; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX idx_entities_type ON public.entities USING btree (type);
 
 
---
--- Name: idx_hierarchy_ancestor; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX idx_hierarchy_ancestor ON public.hierarchy_paths USING btree (ancestor_id);
 
 
---
--- Name: idx_hierarchy_descendant; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX idx_hierarchy_descendant ON public.hierarchy_paths USING btree (descendant_id);
 
 
---
--- Name: idx_hierarchy_paths_depth; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX idx_hierarchy_paths_depth ON public.hierarchy_paths USING btree (depth);
 
 
---
--- Name: idx_users_deleted; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX idx_users_deleted ON public.users USING btree (deleted_at);
 
 
---
--- Name: idx_users_entity; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX idx_users_entity ON public.users USING btree (entity_id);
 
 
---
--- Name: idx_users_last_login; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX idx_users_last_login ON public.users USING btree (last_login_at);
 
 
---
--- Name: inventory_invoice_id; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX inventory_invoice_id ON public.inventory USING btree (invoice_id);
 
 
---
--- Name: inventory_parts_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX inventory_parts_id_key ON public.inventory USING btree (parts_id);
 
 
---
--- Name: jcitems_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX jcitems_id_key ON public.jcitems USING btree (id);
 
 
---
--- Name: language_code_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE UNIQUE INDEX language_code_key ON public.language USING btree (code);
 
 
---
--- Name: makemodel_make_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX makemodel_make_key ON public.makemodel USING btree (lower(make));
 
 
---
--- Name: makemodel_model_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX makemodel_model_key ON public.makemodel USING btree (lower(model));
 
 
---
--- Name: makemodel_parts_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX makemodel_parts_id_key ON public.makemodel USING btree (parts_id);
 
 
---
--- Name: oe_employee_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX oe_employee_id_key ON public.oe USING btree (employee_id);
 
 
---
--- Name: oe_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX oe_id_key ON public.oe USING btree (id);
 
 
---
--- Name: oe_ordnumber_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX oe_ordnumber_key ON public.oe USING btree (ordnumber);
 
 
---
--- Name: oe_transdate_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX oe_transdate_key ON public.oe USING btree (transdate);
 
 
---
--- Name: orderitems_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX orderitems_id_key ON public.orderitems USING btree (id);
 
 
---
--- Name: orderitems_trans_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX orderitems_trans_id_key ON public.orderitems USING btree (trans_id);
 
 
---
--- Name: parts_description_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX parts_description_key ON public.parts USING btree (lower(description));
 
 
---
--- Name: parts_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX parts_id_key ON public.parts USING btree (id);
 
 
---
--- Name: parts_partnumber_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX parts_partnumber_key ON public.parts USING btree (lower(partnumber));
 
 
---
--- Name: partscustomer_customer_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX partscustomer_customer_id_key ON public.partscustomer USING btree (customer_id);
 
 
---
--- Name: partscustomer_parts_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX partscustomer_parts_id_key ON public.partscustomer USING btree (parts_id);
 
 
---
--- Name: partsgroup_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX partsgroup_id_key ON public.partsgroup USING btree (id);
 
 
---
--- Name: partsgroup_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE UNIQUE INDEX partsgroup_key ON public.partsgroup USING btree (partsgroup);
 
 
---
--- Name: partstax_parts_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX partstax_parts_id_key ON public.partstax USING btree (parts_id);
 
 
---
--- Name: partsvendor_parts_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX partsvendor_parts_id_key ON public.partsvendor USING btree (parts_id);
 
 
---
--- Name: partsvendor_vendor_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX partsvendor_vendor_id_key ON public.partsvendor USING btree (vendor_id);
 
 
---
--- Name: pricegroup_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX pricegroup_id_key ON public.pricegroup USING btree (id);
 
 
---
--- Name: pricegroup_pricegroup_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX pricegroup_pricegroup_key ON public.pricegroup USING btree (pricegroup);
 
 
---
--- Name: project_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX project_id_key ON public.project USING btree (id);
 
 
---
--- Name: projectnumber_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE UNIQUE INDEX projectnumber_key ON public.project USING btree (projectnumber);
 
 
---
--- Name: shipto_trans_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX shipto_trans_id_key ON public.shipto USING btree (trans_id);
 
 
---
--- Name: status_trans_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX status_trans_id_key ON public.status USING btree (trans_id);
 
 
---
--- Name: translation_trans_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX translation_trans_id_key ON public.translation USING btree (trans_id);
 
 
---
--- Name: vendor_contact_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX vendor_contact_key ON public.vendor USING btree (lower((contact)::text));
 
 
---
--- Name: vendor_name_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX vendor_name_key ON public.vendor USING btree (lower((name)::text));
 
 
---
--- Name: vendor_vendornumber_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX vendor_vendornumber_key ON public.vendor USING btree (vendornumber);
 
 
---
--- Name: vendortax_vendor_id_key; Type: INDEX; Schema: public; Owner: -
---
 
 CREATE INDEX vendortax_vendor_id_key ON public.vendortax USING btree (vendor_id);
 
 
---
--- Name: ap check_department; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON public.ap FOR EACH ROW EXECUTE FUNCTION public.check_department();
 
 
---
--- Name: ar check_department; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON public.ar FOR EACH ROW EXECUTE FUNCTION public.check_department();
 
 
---
--- Name: gl check_department; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON public.gl FOR EACH ROW EXECUTE FUNCTION public.check_department();
 
 
---
--- Name: oe check_department; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON public.oe FOR EACH ROW EXECUTE FUNCTION public.check_department();
 
 
---
--- Name: customer del_customer; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER del_customer AFTER DELETE ON public.customer FOR EACH ROW EXECUTE FUNCTION public.del_customer();
 
 
---
--- Name: ap del_recurring; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER del_recurring AFTER DELETE ON public.ap FOR EACH ROW EXECUTE FUNCTION public.del_recurring();
 
 
---
--- Name: ar del_recurring; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER del_recurring AFTER DELETE ON public.ar FOR EACH ROW EXECUTE FUNCTION public.del_recurring();
 
 
---
--- Name: gl del_recurring; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER del_recurring AFTER DELETE ON public.gl FOR EACH ROW EXECUTE FUNCTION public.del_recurring();
 
 
---
--- Name: oe del_recurring; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER del_recurring AFTER DELETE ON public.oe FOR EACH ROW EXECUTE FUNCTION public.del_recurring();
 
 
---
--- Name: vendor del_vendor; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER del_vendor AFTER DELETE ON public.vendor FOR EACH ROW EXECUTE FUNCTION public.del_vendor();
 
 
---
--- Name: gl del_yearend; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER del_yearend AFTER DELETE ON public.gl FOR EACH ROW EXECUTE FUNCTION public.del_yearend();
 
 
---
--- Name: entities trg_entity_paths; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER trg_entity_paths AFTER INSERT ON public.entities FOR EACH ROW EXECUTE FUNCTION public.update_entity_paths();
 
 
---
--- Name: entities trg_update_entity_timestamp; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER trg_update_entity_timestamp BEFORE UPDATE ON public.entities FOR EACH ROW EXECUTE FUNCTION public.update_timestamps();
 
 
---
--- Name: org trg_update_org_timestamp; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER trg_update_org_timestamp BEFORE UPDATE ON public.org FOR EACH ROW EXECUTE FUNCTION public.update_timestamps();
 
 
---
--- Name: users trg_update_user_timestamp; Type: TRIGGER; Schema: public; Owner: -
---
 
 CREATE TRIGGER trg_update_user_timestamp BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.update_timestamps();
 
 
---
--- Name: blink_import_process blink_import_process_bank_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.blink_import_process
     ADD CONSTRAINT blink_import_process_bank_account_id_fkey FOREIGN KEY (bank_account_id) REFERENCES public.bank_account(id);
 
 
---
--- Name: blink_import_process_log blink_import_process_log_banking_import_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.blink_import_process_log
     ADD CONSTRAINT blink_import_process_log_banking_import_event_id_fkey FOREIGN KEY (banking_import_event_id) REFERENCES public.banking_import_event(id);
 
 
---
--- Name: blink_import_process_log blink_import_process_log_blink_import_process_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.blink_import_process_log
     ADD CONSTRAINT blink_import_process_log_blink_import_process_id_fkey FOREIGN KEY (blink_import_process_id) REFERENCES public.blink_import_process(id);
 
 
---
--- Name: booking_to_settlement booking_to_settlement_settlement_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.booking_to_settlement
     ADD CONSTRAINT booking_to_settlement_settlement_id_fkey FOREIGN KEY (settlement_id) REFERENCES public.vat_settlement(id);
 
 
---
--- Name: entities entities_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.entities
     ADD CONSTRAINT entities_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.org(id) ON DELETE CASCADE;
 
 
---
--- Name: entities entities_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.entities
     ADD CONSTRAINT entities_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.entities(id) ON DELETE CASCADE;
 
 
---
--- Name: financial_year fk_yearend; Type: FK CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.financial_year
     ADD CONSTRAINT fk_yearend FOREIGN KEY (yearend_id) REFERENCES public.yearend(id) ON DELETE SET NULL;
 
 
---
--- Name: hierarchy_paths hierarchy_paths_ancestor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.hierarchy_paths
     ADD CONSTRAINT hierarchy_paths_ancestor_id_fkey FOREIGN KEY (ancestor_id) REFERENCES public.entities(id) ON DELETE CASCADE;
 
 
---
--- Name: hierarchy_paths hierarchy_paths_descendant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.hierarchy_paths
     ADD CONSTRAINT hierarchy_paths_descendant_id_fkey FOREIGN KEY (descendant_id) REFERENCES public.entities(id) ON DELETE CASCADE;
 
 
---
--- Name: users users_entity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_entity_id_fkey FOREIGN KEY (entity_id) REFERENCES public.entities(id) ON DELETE RESTRICT;
 
 
---
--- Name: vr vr_br_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
 
 ALTER TABLE ONLY public.vr
     ADD CONSTRAINT vr_br_id_fkey FOREIGN KEY (br_id) REFERENCES public.br(id) ON DELETE CASCADE;
 
 
---
--- PostgreSQL database dump complete
---
 
