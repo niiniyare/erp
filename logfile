@@ -1,0 +1,2251 @@
+2025-06-09 10:21:47.359 EAT [8263] LOG:  starting PostgreSQL 17.0 on aarch64-unknown-linux-android, compiled by Android (12470979, +pgo, +bolt, +lto, +mlgo, based on r522817c) clang version 18.0.3 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262), 64-bit
+2025-06-09 10:21:47.361 EAT [8263] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-06-09 10:21:47.362 EAT [8263] LOG:  listening on Unix socket "/data/data/com.termux/files/usr/tmp/.s.PGSQL.5432"
+2025-06-09 10:21:47.455 EAT [8269] LOG:  database system was interrupted; last known up at 2025-06-09 02:26:24 EAT
+2025-06-09 10:21:47.631 EAT [8269] LOG:  database system was not properly shut down; automatic recovery in progress
+2025-06-09 10:21:47.637 EAT [8269] LOG:  redo starts at 0/6379FA90
+2025-06-09 10:21:47.639 EAT [8269] WARNING:  could not open directory "base/296542": No such file or directory
+2025-06-09 10:21:47.639 EAT [8269] CONTEXT:  WAL redo at 0/6379FB98 for Database/DROP: dir 1663/296542
+2025-06-09 10:21:47.639 EAT [8269] WARNING:  some useless files may be left behind in old database directory "base/296542"
+2025-06-09 10:21:47.639 EAT [8269] CONTEXT:  WAL redo at 0/6379FB98 for Database/DROP: dir 1663/296542
+2025-06-09 10:21:47.683 EAT [8269] LOG:  invalid record length at 0/63C39EE0: expected at least 24, got 0
+2025-06-09 10:21:47.683 EAT [8269] LOG:  redo done at 0/63C39EA8 system usage: CPU: user: 0.00 s, system: 0.02 s, elapsed: 0.04 s
+2025-06-09 10:21:47.694 EAT [8267] LOG:  checkpoint starting: end-of-recovery immediate wait
+2025-06-09 10:21:47.823 EAT [8267] LOG:  checkpoint complete: wrote 1013 buffers (6.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.036 s, sync=0.084 s, total=0.131 s; sync files=393, longest=0.004 s, average=0.001 s; distance=4713 kB, estimate=4713 kB; lsn=0/63C39EE0, redo lsn=0/63C39EE0
+2025-06-09 10:21:47.833 EAT [8263] LOG:  database system is ready to accept connections
+2025-06-09 10:21:50.018 EAT [8267] LOG:  checkpoint starting: immediate force wait
+2025-06-09 10:21:50.089 EAT [8267] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.001 s, total=0.072 s; sync files=2, longest=0.001 s, average=0.001 s; distance=2 kB, estimate=4242 kB; lsn=0/63C3AA58, redo lsn=0/63C3AA00
+2025-06-09 10:21:50.482 EAT [8359] FATAL:  database "u0_a337" does not exist
+2025-06-09 10:22:23.823 EAT [8263] LOG:  received fast shutdown request
+2025-06-09 10:22:23.826 EAT [8263] LOG:  aborting any active transactions
+2025-06-09 10:22:23.834 EAT [8263] LOG:  background worker "logical replication launcher" (PID 8273) exited with exit code 1
+2025-06-09 10:22:23.836 EAT [8267] LOG:  shutting down
+2025-06-09 10:22:23.839 EAT [8267] LOG:  checkpoint starting: shutdown immediate
+2025-06-09 10:22:24.223 EAT [8267] LOG:  checkpoint complete: wrote 935 buffers (5.7%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.028 s, sync=0.193 s, total=0.387 s; sync files=303, longest=0.020 s, average=0.001 s; distance=4275 kB, estimate=4275 kB; lsn=0/64067920, redo lsn=0/64067920
+2025-06-09 10:22:24.253 EAT [8263] LOG:  database system is shut down
+2025-06-09 10:22:27.091 EAT [8916] LOG:  starting PostgreSQL 17.0 on aarch64-unknown-linux-android, compiled by Android (12470979, +pgo, +bolt, +lto, +mlgo, based on r522817c) clang version 18.0.3 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262), 64-bit
+2025-06-09 10:22:27.092 EAT [8916] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-06-09 10:22:27.094 EAT [8916] LOG:  listening on Unix socket "/data/data/com.termux/files/usr/tmp/.s.PGSQL.5432"
+2025-06-09 10:22:27.102 EAT [8924] LOG:  database system was shut down at 2025-06-09 10:22:24 EAT
+2025-06-09 10:22:27.114 EAT [8916] LOG:  database system is ready to accept connections
+2025-06-09 10:22:29.567 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 10:22:29.587 EAT [8922] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.002 s, total=0.021 s; sync files=4, longest=0.001 s, average=0.001 s; distance=2 kB, estimate=2 kB; lsn=0/64068560, redo lsn=0/64068508
+2025-06-09 10:22:29.772 EAT [9006] FATAL:  database "u0_a337" does not exist
+2025-06-09 10:22:39.399 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 10:22:39.431 EAT [8922] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.004 s, total=0.033 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4276 kB, estimate=4276 kB; lsn=0/64495678, redo lsn=0/64495620
+2025-06-09 10:27:39.531 EAT [8922] LOG:  checkpoint starting: time
+2025-06-09 10:28:38.157 EAT [13455] ERROR:  extension "ltree" is not available
+2025-06-09 10:28:38.157 EAT [13455] DETAIL:  Could not open extension control file "/data/data/com.termux/files/usr/share/postgresql/extension/ltree.control": No such file or directory.
+2025-06-09 10:28:38.157 EAT [13455] HINT:  The extension must first be installed on the system where PostgreSQL is running.
+2025-06-09 10:28:38.157 EAT [13455] STATEMENT:  -- Enable necessary extensions
+	CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+	CREATE EXTENSION IF NOT EXISTS "ltree";
+	
+	-- Tenant management (your existing structure is good)
+	CREATE TABLE tenants (
+	    id SERIAL PRIMARY KEY,
+	    uuid UUID NOT NULL DEFAULT uuid_generate_v4(),
+	    name VARCHAR(255) NOT NULL UNIQUE,
+	    subdomain VARCHAR(63) UNIQUE,
+	    status VARCHAR(20) NOT NULL DEFAULT 'active' 
+	        CHECK (status IN ('active', 'suspended', 'pending')),
+	    industry VARCHAR(50), -- For future industry-specific modules
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ
+	);
+	
+	-- Tenant configurations
+	CREATE TABLE tenant_configurations (
+	    tenant_id INT PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
+	    max_users INT NOT NULL DEFAULT 100,
+	    storage_quota BIGINT NOT NULL DEFAULT 1073741824, -- 1GB
+	    features JSONB NOT NULL DEFAULT '{}'::jsonb,
+	    modules_enabled JSONB NOT NULL DEFAULT '["accounting", "inventory"]'::jsonb
+	);
+	
+	
+2025-06-09 10:29:13.966 EAT [8922] LOG:  checkpoint complete: wrote 935 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=94.364 s, sync=0.028 s, total=94.436 s; sync files=307, longest=0.003 s, average=0.001 s; distance=4276 kB, estimate=4276 kB; lsn=0/648F21F0, redo lsn=0/648C2770
+2025-06-09 10:55:38.231 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 10:55:38.263 EAT [8922] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.008 s, sync=0.003 s, total=0.032 s; sync files=5, longest=0.001 s, average=0.001 s; distance=193 kB, estimate=3868 kB; lsn=0/648F2C08, redo lsn=0/648F2BB0
+2025-06-09 10:55:43.728 EAT [26110] ERROR:  extension "ltree" is not available
+2025-06-09 10:55:43.728 EAT [26110] DETAIL:  Could not open extension control file "/data/data/com.termux/files/usr/share/postgresql/extension/ltree.control": No such file or directory.
+2025-06-09 10:55:43.728 EAT [26110] HINT:  The extension must first be installed on the system where PostgreSQL is running.
+2025-06-09 10:55:43.728 EAT [26110] STATEMENT:  -- Enable necessary extensions
+	CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+	CREATE EXTENSION IF NOT EXISTS "ltree";
+	
+	-- Tenant management (your existing structure is good)
+	CREATE TABLE tenants (
+	    id SERIAL PRIMARY KEY,
+	    uuid UUID NOT NULL DEFAULT uuid_generate_v4(),
+	    name VARCHAR(255) NOT NULL UNIQUE,
+	    subdomain VARCHAR(63) UNIQUE,
+	    status VARCHAR(20) NOT NULL DEFAULT 'active' 
+	        CHECK (status IN ('active', 'suspended', 'pending')),
+	    industry VARCHAR(50), -- For future industry-specific modules
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ
+	);
+	
+	-- Tenant configurations
+	CREATE TABLE tenant_configurations (
+	    tenant_id INT PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
+	    max_users INT NOT NULL DEFAULT 100,
+	    storage_quota BIGINT NOT NULL DEFAULT 1073741824, -- 1GB
+	    features JSONB NOT NULL DEFAULT '{}'::jsonb,
+	    modules_enabled JSONB NOT NULL DEFAULT '["accounting", "inventory"]'::jsonb
+	);
+	
+	
+2025-06-09 10:59:08.444 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 10:59:08.465 EAT [8922] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.007 s, sync=0.003 s, total=0.021 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4299 kB, estimate=4299 kB; lsn=0/64D25810, redo lsn=0/64D257B8
+2025-06-09 10:59:11.205 EAT [28717] ERROR:  syntax error at or near "WHERE" at character 954
+2025-06-09 10:59:11.205 EAT [28717] STATEMENT:  -- Enhanced entity table for flexible hierarchy
+	CREATE TABLE entities (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    parent_id INT REFERENCES entities(id) ON DELETE CASCADE,
+	    name VARCHAR(255) NOT NULL,
+	    code VARCHAR(50), -- For internal reference codes
+	    type VARCHAR(20) NOT NULL 
+	        CHECK (type IN ('COMPANY', 'SUBSIDIARY', 'REGION', 'BRANCH', 'LOCATION', 
+	                       'DEPARTMENT', 'DIVISION', 'COST_CENTER', 'PROJECT', 'BUDGET_UNIT')),
+	                  -- TODO ltree is not working for termuxfix later
+	--    path LTREE, -- For efficient hierarchy queries
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    settings JSONB DEFAULT '{}'::jsonb, -- Entity-specific settings
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ,
+	    UNIQUE (tenant_id, parent_id, name),
+	    UNIQUE (tenant_id, code) WHERE code IS NOT NULL
+	);
+	
+	-- Enhanced closure table (keep your existing structure)
+	CREATE TABLE hierarchy_paths (
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    ancestor_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    descendant_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    depth INT NOT NULL,
+	    PRIMARY KEY (tenant_id, ancestor_id, descendant_id)
+	);
+	
+	
+2025-06-09 11:04:08.568 EAT [8922] LOG:  checkpoint starting: time
+2025-06-09 11:04:14.149 EAT [8922] LOG:  checkpoint complete: wrote 64 buffers (0.4%); 0 WAL file(s) added, 0 removed, 1 recycled; write=5.546 s, sync=0.004 s, total=5.581 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4352 kB, estimate=4352 kB; lsn=0/651676A8, redo lsn=0/65165B40
+2025-06-09 11:04:14.149 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:04:14.161 EAT [8922] LOG:  checkpoint complete: wrote 1 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.001 s, total=0.012 s; sync files=1, longest=0.001 s, average=0.001 s; distance=6 kB, estimate=3918 kB; lsn=0/65167778, redo lsn=0/65167720
+2025-06-09 11:04:18.043 EAT [29988] ERROR:  syntax error at or near "WHERE" at character 988
+2025-06-09 11:04:18.043 EAT [29988] STATEMENT:  -- Person table (generic person entity)
+	CREATE TABLE persons (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_type VARCHAR(20) NOT NULL 
+	        CHECK (person_type IN ('INDIVIDUAL', 'EMPLOYEE', 'CONTACT', 'CUSTOMER', 'VENDOR')),
+	    first_name VARCHAR(100) NOT NULL,
+	    last_name VARCHAR(100) NOT NULL,
+	    middle_name VARCHAR(100),
+	    full_name VARCHAR(255) GENERATED ALWAYS AS (
+	        TRIM(CONCAT(first_name, ' ', COALESCE(middle_name || ' ', ''), last_name))
+	    ) STORED,
+	    email VARCHAR(255),
+	    phone VARCHAR(20),
+	    birth_date DATE,
+	    national_id VARCHAR(50),
+	    tax_id VARCHAR(50),
+	    address JSONB, -- Flexible address structure
+	    metadata JSONB DEFAULT '{}'::jsonb, -- For industry-specific fields
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ,
+	    UNIQUE (tenant_id, email) WHERE email IS NOT NULL,
+	    UNIQUE (tenant_id, national_id) WHERE national_id IS NOT NULL
+	);
+	
+	-- Employee table (extends person)
+	CREATE TABLE employees (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_id INT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+	    employee_number VARCHAR(50) NOT NULL,
+	    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE RESTRICT,
+	    position_title VARCHAR(100),
+	    department_id INT REFERENCES entities(id), -- Direct department reference
+	    manager_id INT REFERENCES employees(id),
+	    hire_date DATE NOT NULL,
+	    termination_date DATE,
+	    salary_info JSONB, -- Encrypted/sensitive salary data
+	    employment_status VARCHAR(20) DEFAULT 'ACTIVE'
+	        CHECK (employment_status IN ('ACTIVE', 'INACTIVE', 'TERMINATED', 'ON_LEAVE')),
+	    work_schedule JSONB, -- Work hours, days, etc.
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, employee_number),
+	    UNIQUE (tenant_id, person_id)
+	);
+	
+	-- Users table (system access)
+	CREATE TABLE users (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_id INT REFERENCES persons(id) ON DELETE SET NULL, -- May not always be linked to person
+	    employee_id INT REFERENCES employees(id) ON DELETE SET NULL, -- Employee users
+	    username VARCHAR(100),
+	    email VARCHAR(255) NOT NULL,
+	    password_hash VARCHAR(255),
+	    user_type VARCHAR(20) NOT NULL DEFAULT 'INTERNAL'
+	        CHECK (user_type IN ('INTERNAL', 'CUSTOMER', 'VENDOR', 'PARTNER', 'API')),
+	    entity_id INT REFERENCES entities(id) ON DELETE RESTRICT, -- User's primary entity
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    last_login_at TIMESTAMPTZ,
+	    password_changed_at TIMESTAMPTZ,
+	    settings JSONB DEFAULT '{}'::jsonb,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ,
+	    UNIQUE (tenant_id, email),
+	    UNIQUE (tenant_id, username) WHERE username IS NOT NULL
+	);
+	
+	-- Enhanced roles and permissions
+	CREATE TABLE roles (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    name VARCHAR(50) NOT NULL,
+	    description TEXT,
+	    module VARCHAR(50), -- Which module this role belongs to
+	    permissions JSONB NOT NULL DEFAULT '{}'::jsonb,
+	    entity_scope JSONB, -- Which entity levels this role can access
+	    is_system_role BOOLEAN DEFAULT false, -- System vs custom roles
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, name)
+	);
+	
+	CREATE TABLE user_roles (
+	    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	    role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+	    entity_id INT REFERENCES entities(id) ON DELETE CASCADE, -- Role scope
+	    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    assigned_by INT REFERENCES users(id),
+	    expires_at TIMESTAMPTZ,
+	    PRIMARY KEY (user_id, role_id, entity_id)
+	);
+	
+	
+	
+2025-06-09 11:08:22.807 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:08:22.833 EAT [8922] LOG:  checkpoint complete: wrote 17 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.006 s, total=0.027 s; sync files=12, longest=0.001 s, average=0.001 s; distance=4462 kB, estimate=4462 kB; lsn=0/655C31A0, redo lsn=0/655C3148
+2025-06-09 11:08:26.737 EAT [30752] ERROR:  syntax error at or near "WHERE" at character 988
+2025-06-09 11:08:26.737 EAT [30752] STATEMENT:  -- Person table (generic person entity)
+	CREATE TABLE persons (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_type VARCHAR(20) NOT NULL 
+	        CHECK (person_type IN ('INDIVIDUAL', 'EMPLOYEE', 'CONTACT', 'CUSTOMER', 'VENDOR')),
+	    first_name VARCHAR(100) NOT NULL,
+	    last_name VARCHAR(100) NOT NULL,
+	    middle_name VARCHAR(100),
+	    full_name VARCHAR(255) GENERATED ALWAYS AS (
+	        TRIM(CONCAT(first_name, ' ', COALESCE(middle_name || ' ', ''), last_name))
+	    ) STORED,
+	    email VARCHAR(255),
+	    phone VARCHAR(20),
+	    birth_date DATE,
+	    national_id VARCHAR(50),
+	    tax_id VARCHAR(50),
+	    address JSONB, -- Flexible address structure
+	    metadata JSONB DEFAULT '{}'::jsonb, -- For industry-specific fields
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ,
+	    UNIQUE (tenant_id, email) WHERE email IS NOT NULL,
+	);
+	CREATE UNIQUE INDEX person_email_unique_idx
+	ON persons (tenant_id, email)
+	WHERE email IS NOT NULL;
+	
+	CREATE UNIQUE INDEX person_national_id_unique_idx
+	ON persons (tenant_id, national_id)
+	WHERE national_id IS NOT NULL;
+	
+	-- Employee table (extends person)
+	CREATE TABLE employees (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_id INT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+	    employee_number VARCHAR(50) NOT NULL,
+	    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE RESTRICT,
+	    position_title VARCHAR(100),
+	    department_id INT REFERENCES entities(id), -- Direct department reference
+	    manager_id INT REFERENCES employees(id),
+	    hire_date DATE NOT NULL,
+	    termination_date DATE,
+	    salary_info JSONB, -- Encrypted/sensitive salary data
+	    employment_status VARCHAR(20) DEFAULT 'ACTIVE'
+	        CHECK (employment_status IN ('ACTIVE', 'INACTIVE', 'TERMINATED', 'ON_LEAVE')),
+	    work_schedule JSONB, -- Work hours, days, etc.
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, employee_number),
+	    UNIQUE (tenant_id, person_id)
+	);
+	
+	-- Users table (system access)
+	CREATE TABLE users (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_id INT REFERENCES persons(id) ON DELETE SET NULL, -- May not always be linked to person
+	    employee_id INT REFERENCES employees(id) ON DELETE SET NULL, -- Employee users
+	    username VARCHAR(100),
+	    email VARCHAR(255) NOT NULL,
+	    password_hash VARCHAR(255),
+	    user_type VARCHAR(20) NOT NULL DEFAULT 'INTERNAL'
+	        CHECK (user_type IN ('INTERNAL', 'CUSTOMER', 'VENDOR', 'PARTNER', 'API')),
+	    entity_id INT REFERENCES entities(id) ON DELETE RESTRICT, -- User's primary entity
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    last_login_at TIMESTAMPTZ,
+	    password_changed_at TIMESTAMPTZ,
+	    settings JSONB DEFAULT '{}'::jsonb,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ,
+	    UNIQUE (tenant_id, email),
+	    UNIQUE (tenant_id, username) WHERE username IS NOT NULL
+	);
+	
+	-- Enhanced roles and permissions
+	CREATE TABLE roles (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    name VARCHAR(50) NOT NULL,
+	    description TEXT,
+	    module VARCHAR(50), -- Which module this role belongs to
+	    permissions JSONB NOT NULL DEFAULT '{}'::jsonb,
+	    entity_scope JSONB, -- Which entity levels this role can access
+	    is_system_role BOOLEAN DEFAULT false, -- System vs custom roles
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, name)
+	);
+	
+	CREATE TABLE user_roles (
+	    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	    role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+	    entity_id INT REFERENCES entities(id) ON DELETE CASCADE, -- Role scope
+	    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    assigned_by INT REFERENCES users(id),
+	    expires_at TIMESTAMPTZ,
+	    PRIMARY KEY (user_id, role_id, entity_id)
+	);
+	
+	
+	
+2025-06-09 11:09:08.201 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:09:08.235 EAT [8922] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.004 s, total=0.034 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4425 kB, estimate=4458 kB; lsn=0/65A156F0, redo lsn=0/65A15698
+2025-06-09 11:09:10.680 EAT [31313] ERROR:  syntax error at or near "WHERE" at character 3149
+2025-06-09 11:09:10.680 EAT [31313] STATEMENT:  -- Person table (generic person entity)
+	CREATE TABLE persons (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_type VARCHAR(20) NOT NULL 
+	        CHECK (person_type IN ('INDIVIDUAL', 'EMPLOYEE', 'CONTACT', 'CUSTOMER', 'VENDOR')),
+	    first_name VARCHAR(100) NOT NULL,
+	    last_name VARCHAR(100) NOT NULL,
+	    middle_name VARCHAR(100),
+	    full_name VARCHAR(255) GENERATED ALWAYS AS (
+	        TRIM(CONCAT(first_name, ' ', COALESCE(middle_name || ' ', ''), last_name))
+	    ) STORED,
+	    email VARCHAR(255),
+	    phone VARCHAR(20),
+	    birth_date DATE,
+	    national_id VARCHAR(50),
+	    tax_id VARCHAR(50),
+	    address JSONB, -- Flexible address structure
+	    metadata JSONB DEFAULT '{}'::jsonb, -- For industry-specific fields
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ
+	);
+	CREATE UNIQUE INDEX person_email_unique_idx
+	ON persons (tenant_id, email)
+	WHERE email IS NOT NULL;
+	
+	CREATE UNIQUE INDEX person_national_id_unique_idx
+	ON persons (tenant_id, national_id)
+	WHERE national_id IS NOT NULL;
+	
+	-- Employee table (extends person)
+	CREATE TABLE employees (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_id INT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+	    employee_number VARCHAR(50) NOT NULL,
+	    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE RESTRICT,
+	    position_title VARCHAR(100),
+	    department_id INT REFERENCES entities(id), -- Direct department reference
+	    manager_id INT REFERENCES employees(id),
+	    hire_date DATE NOT NULL,
+	    termination_date DATE,
+	    salary_info JSONB, -- Encrypted/sensitive salary data
+	    employment_status VARCHAR(20) DEFAULT 'ACTIVE'
+	        CHECK (employment_status IN ('ACTIVE', 'INACTIVE', 'TERMINATED', 'ON_LEAVE')),
+	    work_schedule JSONB, -- Work hours, days, etc.
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, employee_number),
+	    UNIQUE (tenant_id, person_id)
+	);
+	
+	-- Users table (system access)
+	CREATE TABLE users (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_id INT REFERENCES persons(id) ON DELETE SET NULL, -- May not always be linked to person
+	    employee_id INT REFERENCES employees(id) ON DELETE SET NULL, -- Employee users
+	    username VARCHAR(100),
+	    email VARCHAR(255) NOT NULL,
+	    password_hash VARCHAR(255),
+	    user_type VARCHAR(20) NOT NULL DEFAULT 'INTERNAL'
+	        CHECK (user_type IN ('INTERNAL', 'CUSTOMER', 'VENDOR', 'PARTNER', 'API')),
+	    entity_id INT REFERENCES entities(id) ON DELETE RESTRICT, -- User's primary entity
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    last_login_at TIMESTAMPTZ,
+	    password_changed_at TIMESTAMPTZ,
+	    settings JSONB DEFAULT '{}'::jsonb,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ,
+	    UNIQUE (tenant_id, email),
+	    UNIQUE (tenant_id, username) WHERE username IS NOT NULL
+	);
+	
+	-- Enhanced roles and permissions
+	CREATE TABLE roles (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    name VARCHAR(50) NOT NULL,
+	    description TEXT,
+	    module VARCHAR(50), -- Which module this role belongs to
+	    permissions JSONB NOT NULL DEFAULT '{}'::jsonb,
+	    entity_scope JSONB, -- Which entity levels this role can access
+	    is_system_role BOOLEAN DEFAULT false, -- System vs custom roles
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, name)
+	);
+	
+	CREATE TABLE user_roles (
+	    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	    role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+	    entity_id INT REFERENCES entities(id) ON DELETE CASCADE, -- Role scope
+	    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    assigned_by INT REFERENCES users(id),
+	    expires_at TIMESTAMPTZ,
+	    PRIMARY KEY (user_id, role_id, entity_id)
+	);
+	
+	
+	
+2025-06-09 11:09:24.378 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:09:24.412 EAT [8922] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.005 s, total=0.035 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4427 kB, estimate=4455 kB; lsn=0/65E684A8, redo lsn=0/65E68450
+2025-06-09 11:11:08.845 EAT [31875] ERROR:  generation expression is not immutable
+2025-06-09 11:11:08.845 EAT [31875] STATEMENT:  -- Person table (generic person entity)
+	CREATE TABLE persons (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_type VARCHAR(20) NOT NULL 
+	        CHECK (person_type IN ('INDIVIDUAL', 'EMPLOYEE', 'CONTACT', 'CUSTOMER', 'VENDOR')),
+	    first_name VARCHAR(100) NOT NULL,
+	    last_name VARCHAR(100) NOT NULL,
+	    middle_name VARCHAR(100),
+	    full_name VARCHAR(255) GENERATED ALWAYS AS (
+	        TRIM(CONCAT(first_name, ' ', COALESCE(middle_name || ' ', ''), last_name))
+	    ) STORED,
+	    email VARCHAR(255),
+	    phone VARCHAR(20),
+	    birth_date DATE,
+	    national_id VARCHAR(50),
+	    tax_id VARCHAR(50),
+	    address JSONB, -- Flexible address structure
+	    metadata JSONB DEFAULT '{}'::jsonb, -- For industry-specific fields
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ
+	);
+	CREATE UNIQUE INDEX person_email_unique_idx
+	ON persons (tenant_id, email)
+	WHERE email IS NOT NULL;
+	
+	CREATE UNIQUE INDEX person_national_id_unique_idx
+	ON persons (tenant_id, national_id)
+	WHERE national_id IS NOT NULL;
+	
+	-- Employee table (extends person)
+	CREATE TABLE employees (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_id INT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+	    employee_number VARCHAR(50) NOT NULL,
+	    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE RESTRICT,
+	    position_title VARCHAR(100),
+	    department_id INT REFERENCES entities(id), -- Direct department reference
+	    manager_id INT REFERENCES employees(id),
+	    hire_date DATE NOT NULL,
+	    termination_date DATE,
+	    salary_info JSONB, -- Encrypted/sensitive salary data
+	    employment_status VARCHAR(20) DEFAULT 'ACTIVE'
+	        CHECK (employment_status IN ('ACTIVE', 'INACTIVE', 'TERMINATED', 'ON_LEAVE')),
+	    work_schedule JSONB, -- Work hours, days, etc.
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, employee_number),
+	    UNIQUE (tenant_id, person_id)
+	);
+	
+	-- Users table (system access)
+	CREATE TABLE users (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_id INT REFERENCES persons(id) ON DELETE SET NULL, -- May not always be linked to person
+	    employee_id INT REFERENCES employees(id) ON DELETE SET NULL, -- Employee users
+	    username VARCHAR(100),
+	    email VARCHAR(255) NOT NULL,
+	    password_hash VARCHAR(255),
+	    user_type VARCHAR(20) NOT NULL DEFAULT 'INTERNAL'
+	        CHECK (user_type IN ('INTERNAL', 'CUSTOMER', 'VENDOR', 'PARTNER', 'API')),
+	    entity_id INT REFERENCES entities(id) ON DELETE RESTRICT, -- User's primary entity
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    last_login_at TIMESTAMPTZ,
+	    password_changed_at TIMESTAMPTZ,
+	    settings JSONB DEFAULT '{}'::jsonb,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ,
+	    UNIQUE (tenant_id, email)
+	);
+	CREATE UNIQUE INDEX user_username_unique_idx
+	ON users (tenant_id, username)
+	WHERE code IS NOT NULL;
+	
+	-- Enhanced roles and permissions
+	CREATE TABLE roles (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    name VARCHAR(50) NOT NULL,
+	    description TEXT,
+	    module VARCHAR(50), -- Which module this role belongs to
+	    permissions JSONB NOT NULL DEFAULT '{}'::jsonb,
+	    entity_scope JSONB, -- Which entity levels this role can access
+	    is_system_role BOOLEAN DEFAULT false, -- System vs custom roles
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, name)
+	);
+	
+	CREATE TABLE user_roles (
+	    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	    role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+	    entity_id INT REFERENCES entities(id) ON DELETE CASCADE, -- Role scope
+	    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    assigned_by INT REFERENCES users(id),
+	    expires_at TIMESTAMPTZ,
+	    PRIMARY KEY (user_id, role_id, entity_id)
+	);
+	
+	
+	
+2025-06-09 11:14:10.288 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:14:10.316 EAT [8922] LOG:  checkpoint complete: wrote 15 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.004 s, sync=0.005 s, total=0.028 s; sync files=11, longest=0.001 s, average=0.001 s; distance=4474 kB, estimate=4474 kB; lsn=0/662C6EA8, redo lsn=0/662C6E50
+2025-06-09 11:14:14.297 EAT [1296] ERROR:  column "code" does not exist at character 3206
+2025-06-09 11:14:14.297 EAT [1296] STATEMENT:  -- Person table (generic person entity)
+	CREATE TABLE persons (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_type VARCHAR(20) NOT NULL 
+	        CHECK (person_type IN ('INDIVIDUAL', 'EMPLOYEE', 'CONTACT', 'CUSTOMER', 'VENDOR')),
+	    first_name VARCHAR(100) NOT NULL,
+	    last_name VARCHAR(100) NOT NULL,
+	    middle_name VARCHAR(100),
+	--    full_name VARCHAR(255) GENERATED ALWAYS AS (
+	  --      TRIM(CONCAT(first_name, ' ', COALESCE(middle_name || ' ', ''), last_name))
+	   -- ) STORED,
+	    email VARCHAR(255),
+	    phone VARCHAR(20),
+	    birth_date DATE,
+	    national_id VARCHAR(50),
+	    tax_id VARCHAR(50),
+	    address JSONB, -- Flexible address structure
+	    metadata JSONB DEFAULT '{}'::jsonb, -- For industry-specific fields
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ
+	);
+	CREATE UNIQUE INDEX person_email_unique_idx
+	ON persons (tenant_id, email)
+	WHERE email IS NOT NULL;
+	
+	CREATE UNIQUE INDEX person_national_id_unique_idx
+	ON persons (tenant_id, national_id)
+	WHERE national_id IS NOT NULL;
+	
+	-- Employee table (extends person)
+	CREATE TABLE employees (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_id INT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+	    employee_number VARCHAR(50) NOT NULL,
+	    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE RESTRICT,
+	    position_title VARCHAR(100),
+	    department_id INT REFERENCES entities(id), -- Direct department reference
+	    manager_id INT REFERENCES employees(id),
+	    hire_date DATE NOT NULL,
+	    termination_date DATE,
+	    salary_info JSONB, -- Encrypted/sensitive salary data
+	    employment_status VARCHAR(20) DEFAULT 'ACTIVE'
+	        CHECK (employment_status IN ('ACTIVE', 'INACTIVE', 'TERMINATED', 'ON_LEAVE')),
+	    work_schedule JSONB, -- Work hours, days, etc.
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, employee_number),
+	    UNIQUE (tenant_id, person_id)
+	);
+	
+	-- Users table (system access)
+	CREATE TABLE users (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    person_id INT REFERENCES persons(id) ON DELETE SET NULL, -- May not always be linked to person
+	    employee_id INT REFERENCES employees(id) ON DELETE SET NULL, -- Employee users
+	    username VARCHAR(100),
+	    email VARCHAR(255) NOT NULL,
+	    password_hash VARCHAR(255),
+	    user_type VARCHAR(20) NOT NULL DEFAULT 'INTERNAL'
+	        CHECK (user_type IN ('INTERNAL', 'CUSTOMER', 'VENDOR', 'PARTNER', 'API')),
+	    entity_id INT REFERENCES entities(id) ON DELETE RESTRICT, -- User's primary entity
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    last_login_at TIMESTAMPTZ,
+	    password_changed_at TIMESTAMPTZ,
+	    settings JSONB DEFAULT '{}'::jsonb,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ,
+	    UNIQUE (tenant_id, email)
+	);
+	CREATE UNIQUE INDEX user_username_unique_idx
+	ON users (tenant_id, username)
+	WHERE code IS NOT NULL;
+	
+	-- Enhanced roles and permissions
+	CREATE TABLE roles (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    name VARCHAR(50) NOT NULL,
+	    description TEXT,
+	    module VARCHAR(50), -- Which module this role belongs to
+	    permissions JSONB NOT NULL DEFAULT '{}'::jsonb,
+	    entity_scope JSONB, -- Which entity levels this role can access
+	    is_system_role BOOLEAN DEFAULT false, -- System vs custom roles
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, name)
+	);
+	
+	CREATE TABLE user_roles (
+	    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	    role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+	    entity_id INT REFERENCES entities(id) ON DELETE CASCADE, -- Role scope
+	    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    assigned_by INT REFERENCES users(id),
+	    expires_at TIMESTAMPTZ,
+	    PRIMARY KEY (user_id, role_id, entity_id)
+	);
+	
+	
+	
+2025-06-09 11:16:22.993 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:16:23.010 EAT [8922] LOG:  checkpoint complete: wrote 11 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.006 s, total=0.017 s; sync files=9, longest=0.002 s, average=0.001 s; distance=4588 kB, estimate=4588 kB; lsn=0/66741FE8, redo lsn=0/66741F90
+2025-06-09 11:16:23.327 EAT [3345] ERROR:  syntax error at or near "WHERE" at character 856
+2025-06-09 11:16:23.327 EAT [3345] STATEMENT:  -- Projects table (can be under any entity)
+	CREATE TABLE projects (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    parent_project_id INT REFERENCES projects(id), -- Sub-projects
+	    name VARCHAR(255) NOT NULL,
+	    code VARCHAR(50),
+	    description TEXT,
+	    project_manager_id INT REFERENCES employees(id),
+	    start_date DATE,
+	    end_date DATE,
+	    budget_amount DECIMAL(15,2),
+	    actual_cost DECIMAL(15,2) DEFAULT 0,
+	    status VARCHAR(20) DEFAULT 'PLANNING'
+	        CHECK (status IN ('PLANNING', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED')),
+	    metadata JSONB DEFAULT '{}'::jsonb,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, entity_id, code) WHERE code IS NOT NULL
+	);
+	
+	-- Budget management
+	CREATE TABLE budgets (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    project_id INT REFERENCES projects(id), -- Optional project budget
+	    name VARCHAR(255) NOT NULL,
+	    budget_type VARCHAR(20) NOT NULL
+	        CHECK (budget_type IN ('OPERATIONAL', 'CAPITAL', 'PROJECT', 'DEPARTMENT')),
+	    fiscal_year INT NOT NULL,
+	    period_start DATE NOT NULL,
+	    period_end DATE NOT NULL,
+	    total_amount DECIMAL(15,2) NOT NULL,
+	    allocated_amount DECIMAL(15,2) DEFAULT 0,
+	    spent_amount DECIMAL(15,2) DEFAULT 0,
+	    status VARCHAR(20) DEFAULT 'DRAFT'
+	        CHECK (status IN ('DRAFT', 'APPROVED', 'ACTIVE', 'CLOSED')),
+	    approved_by INT REFERENCES users(id),
+	    approved_at TIMESTAMPTZ,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	);
+	
+	
+2025-06-09 11:18:38.980 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:18:38.998 EAT [8922] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.003 s, total=0.018 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4653 kB, estimate=4653 kB; lsn=0/66BCD7E0, redo lsn=0/66BCD788
+2025-06-09 11:20:23.278 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:20:23.318 EAT [8922] LOG:  checkpoint complete: wrote 12 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.012 s, sync=0.004 s, total=0.040 s; sync files=9, longest=0.001 s, average=0.001 s; distance=4796 kB, estimate=4796 kB; lsn=0/6707C840, redo lsn=0/6707C7E8
+2025-06-09 11:23:03.783 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:23:03.803 EAT [8922] LOG:  checkpoint complete: wrote 12 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.005 s, total=0.020 s; sync files=9, longest=0.001 s, average=0.001 s; distance=4926 kB, estimate=4926 kB; lsn=0/6754C0D0, redo lsn=0/6754C078
+2025-06-09 11:23:04.207 EAT [8995] ERROR:  column "path" does not exist
+2025-06-09 11:23:04.207 EAT [8995] STATEMENT:  
+	-- Audit logging (enhanced)
+	CREATE TABLE audit_logs (
+	    id BIGSERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+	    entity_id INT REFERENCES entities(id), -- Context entity
+	    action VARCHAR(50) NOT NULL,
+	    resource_type VARCHAR(50), -- What was changed
+	    resource_id BIGINT, -- ID of the changed resource
+	    old_values JSONB,
+	    new_values JSONB,
+	    ip_address INET,
+	    user_agent TEXT,
+	    session_id VARCHAR(255),
+	    module VARCHAR(50), -- Which module generated the log
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	);
+	
+	-- Module-specific tables can be added here
+	-- For example, for accounting module:
+	CREATE TABLE chart_of_accounts (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    account_code VARCHAR(20) NOT NULL,
+	    account_name VARCHAR(255) NOT NULL,
+	    account_type VARCHAR(20) NOT NULL
+	        CHECK (account_type IN ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE')),
+	    parent_account_id INT REFERENCES chart_of_accounts(id),
+	    is_active BOOLEAN DEFAULT true,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, entity_id, account_code)
+	);
+	
+	-- Indexes for performance
+	CREATE INDEX idx_entities_tenant ON entities(tenant_id);
+	CREATE INDEX idx_entities_parent ON entities(parent_id);
+	CREATE INDEX idx_entities_type ON entities(type);
+	CREATE INDEX idx_entities_path ON entities USING GIST(path);
+	CREATE INDEX idx_hierarchy_paths_tenant ON hierarchy_paths(tenant_id);
+	CREATE INDEX idx_hierarchy_paths_ancestor ON hierarchy_paths(ancestor_id);
+	CREATE INDEX idx_hierarchy_paths_descendant ON hierarchy_paths(descendant_id);
+	
+	CREATE INDEX idx_persons_tenant ON persons(tenant_id);
+	CREATE INDEX idx_persons_type ON persons(person_type);
+	CREATE INDEX idx_persons_email ON persons(email);
+	CREATE INDEX idx_persons_name ON persons(first_name, last_name);
+	
+	CREATE INDEX idx_employees_tenant ON employees(tenant_id);
+	CREATE INDEX idx_employees_entity ON employees(entity_id);
+	CREATE INDEX idx_employees_number ON employees(employee_number);
+	CREATE INDEX idx_employees_status ON employees(employment_status);
+	
+	CREATE INDEX idx_users_tenant ON users(tenant_id);
+	CREATE INDEX idx_users_entity ON users(entity_id);
+	CREATE INDEX idx_users_email ON users(email);
+	CREATE INDEX idx_users_type ON users(user_type);
+	
+	CREATE INDEX idx_projects_tenant ON projects(tenant_id);
+	CREATE INDEX idx_projects_entity ON projects(entity_id);
+	CREATE INDEX idx_projects_status ON projects(status);
+	
+	CREATE INDEX idx_budgets_tenant ON budgets(tenant_id);
+	CREATE INDEX idx_budgets_entity ON budgets(entity_id);
+	CREATE INDEX idx_budgets_year ON budgets(fiscal_year);
+	
+	CREATE INDEX idx_audit_logs_tenant ON audit_logs(tenant_id);
+	CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
+	CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
+	CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
+	
+	-- Row Level Security (apply to all tables)
+	ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE entities ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE hierarchy_paths ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE persons ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE chart_of_accounts ENABLE ROW LEVEL SECURITY;
+	
+	-- Tenant context function (your existing function is good)
+	CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS INT AS $$
+	BEGIN
+	    RETURN current_setting('app.current_tenant_id')::INT;
+	EXCEPTION WHEN OTHERS THEN
+	    RAISE EXCEPTION 'Tenant context not set';
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- RLS Policies (apply tenant isolation to all tables)
+	CREATE POLICY tenant_isolation_policy ON tenants USING (id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON entities USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON hierarchy_paths USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON persons USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON employees USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON users USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON roles USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON projects USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON budgets USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON audit_logs USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON chart_of_accounts USING (tenant_id = current_tenant_id());
+	
+	-- User roles policy (users can only see their own roles)
+	CREATE POLICY user_roles_policy ON user_roles 
+	    USING (user_id IN (SELECT id FROM users WHERE tenant_id = current_tenant_id()));
+	
+	-- Triggers for maintaining hierarchy paths and timestamps
+	CREATE OR REPLACE FUNCTION update_timestamps() RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.updated_at = NOW();
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	-- Apply timestamp triggers to all relevant tables
+	CREATE TRIGGER update_tenant_timestamps BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_entity_timestamps BEFORE UPDATE ON entities FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_person_timestamps BEFORE UPDATE ON persons FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_employee_timestamps BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_user_timestamps BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_project_timestamps BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_budget_timestamps BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	
+	-- Enhanced hierarchy path maintenance
+	CREATE OR REPLACE FUNCTION maintain_hierarchy_paths() RETURNS TRIGGER AS $$
+	BEGIN
+	    IF TG_OP = 'DELETE' THEN
+	        -- Remove all paths involving this entity
+	        DELETE FROM hierarchy_paths 
+	        WHERE tenant_id = OLD.tenant_id 
+	        AND (ancestor_id = OLD.id OR descendant_id = OLD.id);
+	        RETURN OLD;
+	    END IF;
+	    
+	    -- Clear old paths for this descendant
+	    DELETE FROM hierarchy_paths 
+	    WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    
+	    -- Self-reference (depth 0)
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    VALUES (NEW.tenant_id, NEW.id, NEW.id, 0);
+	    
+	    -- Update ltree path
+	    IF NEW.parent_id IS NULL THEN
+	        NEW.path = NEW.id::TEXT::LTREE;
+	    ELSE
+	        SELECT path || NEW.id::TEXT INTO NEW.path
+	        FROM entities 
+	        WHERE tenant_id = NEW.tenant_id AND id = NEW.parent_id;
+	    END IF;
+	    
+	    -- Parent paths (all ancestors)
+	    IF NEW.parent_id IS NOT NULL THEN
+	        INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	        SELECT NEW.tenant_id, p.ancestor_id, NEW.id, p.depth + 1
+	        FROM hierarchy_paths p
+	        WHERE p.tenant_id = NEW.tenant_id AND p.descendant_id = NEW.parent_id;
+	    END IF;
+	    
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	CREATE TRIGGER trg_maintain_hierarchy_paths
+	    BEFORE INSERT OR UPDATE OR DELETE ON entities
+	    FOR EACH ROW EXECUTE FUNCTION maintain_hierarchy_paths();
+	
+	-- Function to get entity hierarchy (for easy querying)
+	CREATE OR REPLACE FUNCTION get_entity_descendants(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.descendant_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.ancestor_id = entity_id
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+2025-06-09 11:28:03.819 EAT [8922] LOG:  checkpoint starting: time
+2025-06-09 11:28:16.019 EAT [8922] LOG:  checkpoint complete: wrote 132 buffers (0.8%); 0 WAL file(s) added, 0 removed, 0 recycled; write=12.181 s, sync=0.004 s, total=12.201 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4851 kB, estimate=4918 kB; lsn=0/67A0AFB0, redo lsn=0/67A08F60
+2025-06-09 11:28:16.019 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:28:16.036 EAT [8922] LOG:  checkpoint complete: wrote 1 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.001 s, total=0.018 s; sync files=1, longest=0.001 s, average=0.001 s; distance=8 kB, estimate=4427 kB; lsn=0/67A0B080, redo lsn=0/67A0B028
+2025-06-09 11:28:16.447 EAT [10231] ERROR:  column "path" does not exist
+2025-06-09 11:28:16.447 EAT [10231] STATEMENT:  -- Fixed migration script
+	-- Note: You'll need to add the entities table definition with the path column
+	
+	-- Add this to your entities table definition (before the existing CREATE TABLE entities):
+	-- ALTER TABLE entities ADD COLUMN path LTREE;
+	
+	-- Or if creating the entities table from scratch, include:
+	-- Audit logging (enhanced)
+	CREATE TABLE audit_logs (
+	    id BIGSERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+	    entity_id INT REFERENCES entities(id), -- Context entity
+	    action VARCHAR(50) NOT NULL,
+	    resource_type VARCHAR(50), -- What was changed
+	    resource_id BIGINT, -- ID of the changed resource
+	    old_values JSONB,
+	    new_values JSONB,
+	    ip_address INET,
+	    user_agent TEXT,
+	    session_id VARCHAR(255),
+	    module VARCHAR(50), -- Which module generated the log
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	);
+	
+	-- Module-specific tables can be added here
+	-- For example, for accounting module:
+	CREATE TABLE chart_of_accounts (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    account_code VARCHAR(20) NOT NULL,
+	    account_name VARCHAR(255) NOT NULL,
+	    account_type VARCHAR(20) NOT NULL
+	        CHECK (account_type IN ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE')),
+	    parent_account_id INT REFERENCES chart_of_accounts(id),
+	    is_active BOOLEAN DEFAULT true,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, entity_id, account_code)
+	);
+	
+	-- Indexes for performance
+	CREATE INDEX idx_entities_tenant ON entities(tenant_id);
+	CREATE INDEX idx_entities_parent ON entities(parent_id);
+	CREATE INDEX idx_entities_type ON entities(type);
+	-- Fixed: Only create this index if the path column exists
+	CREATE INDEX idx_entities_path ON entities USING GIST(path);
+	CREATE INDEX idx_hierarchy_paths_tenant ON hierarchy_paths(tenant_id);
+	CREATE INDEX idx_hierarchy_paths_ancestor ON hierarchy_paths(ancestor_id);
+	CREATE INDEX idx_hierarchy_paths_descendant ON hierarchy_paths(descendant_id);
+	
+	CREATE INDEX idx_persons_tenant ON persons(tenant_id);
+	CREATE INDEX idx_persons_type ON persons(person_type);
+	CREATE INDEX idx_persons_email ON persons(email);
+	CREATE INDEX idx_persons_name ON persons(first_name, last_name);
+	
+	CREATE INDEX idx_employees_tenant ON employees(tenant_id);
+	CREATE INDEX idx_employees_entity ON employees(entity_id);
+	CREATE INDEX idx_employees_number ON employees(employee_number);
+	CREATE INDEX idx_employees_status ON employees(employment_status);
+	
+	CREATE INDEX idx_users_tenant ON users(tenant_id);
+	CREATE INDEX idx_users_entity ON users(entity_id);
+	CREATE INDEX idx_users_email ON users(email);
+	CREATE INDEX idx_users_type ON users(user_type);
+	
+	CREATE INDEX idx_projects_tenant ON projects(tenant_id);
+	CREATE INDEX idx_projects_entity ON projects(entity_id);
+	CREATE INDEX idx_projects_status ON projects(status);
+	
+	CREATE INDEX idx_budgets_tenant ON budgets(tenant_id);
+	CREATE INDEX idx_budgets_entity ON budgets(entity_id);
+	CREATE INDEX idx_budgets_year ON budgets(fiscal_year);
+	
+	CREATE INDEX idx_audit_logs_tenant ON audit_logs(tenant_id);
+	CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
+	CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
+	CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
+	
+	-- Row Level Security (apply to all tables)
+	ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE entities ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE hierarchy_paths ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE persons ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE chart_of_accounts ENABLE ROW LEVEL SECURITY;
+	
+	-- Tenant context function (your existing function is good)
+	CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS INT AS $$
+	BEGIN
+	    RETURN current_setting('app.current_tenant_id')::INT;
+	EXCEPTION WHEN OTHERS THEN
+	    RAISE EXCEPTION 'Tenant context not set';
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- RLS Policies (apply tenant isolation to all tables)
+	CREATE POLICY tenant_isolation_policy ON tenants USING (id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON entities USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON hierarchy_paths USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON persons USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON employees USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON users USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON roles USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON projects USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON budgets USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON audit_logs USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON chart_of_accounts USING (tenant_id = current_tenant_id());
+	
+	-- User roles policy (users can only see their own roles)
+	CREATE POLICY user_roles_policy ON user_roles
+	    USING (user_id IN (SELECT id FROM users WHERE tenant_id = current_tenant_id()));
+	
+	-- Triggers for maintaining hierarchy paths and timestamps
+	CREATE OR REPLACE FUNCTION update_timestamps() RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.updated_at = NOW();
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	-- Apply timestamp triggers to all relevant tables
+	CREATE TRIGGER update_tenant_timestamps BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_entity_timestamps BEFORE UPDATE ON entities FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_person_timestamps BEFORE UPDATE ON persons FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_employee_timestamps BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_user_timestamps BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_project_timestamps BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_budget_timestamps BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	
+	-- Enhanced hierarchy path maintenance
+	CREATE OR REPLACE FUNCTION maintain_hierarchy_paths() RETURNS TRIGGER AS $$
+	BEGIN
+	    IF TG_OP = 'DELETE' THEN
+	        -- Remove all paths involving this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = OLD.tenant_id
+	        AND (ancestor_id = OLD.id OR descendant_id = OLD.id);
+	        RETURN OLD;
+	    END IF;
+	
+	    -- Clear old paths for this descendant
+	    DELETE FROM hierarchy_paths
+	    WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	
+	    -- Self-reference (depth 0)
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    VALUES (NEW.tenant_id, NEW.id, NEW.id, 0);
+	
+	    -- Update ltree path (only if path column exists)
+	    IF NEW.parent_id IS NULL THEN
+	        NEW.path = NEW.id::TEXT::LTREE;
+	    ELSE
+	        SELECT path || NEW.id::TEXT INTO NEW.path
+	        FROM entities
+	        WHERE tenant_id = NEW.tenant_id AND id = NEW.parent_id;
+	    END IF;
+	
+	    -- Parent paths (all ancestors)
+	    IF NEW.parent_id IS NOT NULL THEN
+	        INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	        SELECT NEW.tenant_id, p.ancestor_id, NEW.id, p.depth + 1
+	        FROM hierarchy_paths p
+	        WHERE p.tenant_id = NEW.tenant_id AND p.descendant_id = NEW.parent_id;
+	    END IF;
+	
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	CREATE TRIGGER trg_maintain_hierarchy_paths
+	    BEFORE INSERT OR UPDATE OR DELETE ON entities
+	    FOR EACH ROW EXECUTE FUNCTION maintain_hierarchy_paths();
+	
+	-- Function to get entity hierarchy (for easy querying)
+	CREATE OR REPLACE FUNCTION get_entity_descendants(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.descendant_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.ancestor_id = entity_id
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+2025-06-09 11:33:16.042 EAT [8922] LOG:  checkpoint starting: time
+2025-06-09 11:34:55.584 EAT [8922] LOG:  checkpoint complete: wrote 990 buffers (6.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=99.450 s, sync=0.068 s, total=99.542 s; sync files=393, longest=0.004 s, average=0.001 s; distance=4858 kB, estimate=4858 kB; lsn=0/67EC9C38, redo lsn=0/67EC9BA8
+2025-06-09 11:36:19.895 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:36:19.912 EAT [8922] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.002 s, total=0.018 s; sync files=3, longest=0.001 s, average=0.001 s; distance=10 kB, estimate=4374 kB; lsn=0/67ECC618, redo lsn=0/67ECC5C0
+2025-06-09 11:36:20.305 EAT [12295] ERROR:  data type integer has no default operator class for access method "gist"
+2025-06-09 11:36:20.305 EAT [12295] HINT:  You must specify an operator class for the index or define a default operator class for the data type.
+2025-06-09 11:36:20.305 EAT [12295] STATEMENT:  -- Fixed migration script
+	-- Note: You'll need to add the entities table definition with the path column
+	
+	-- Add this to your entities table definition (before the existing CREATE TABLE entities):
+	-- ALTER TABLE entities ADD COLUMN path LTREE;
+	
+	-- Or if creating the entities table from scratch, include:
+	-- Audit logging (enhanced)
+	CREATE TABLE audit_logs (
+	    id BIGSERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+	    entity_id INT REFERENCES entities(id), -- Context entity
+	    action VARCHAR(50) NOT NULL,
+	    resource_type VARCHAR(50), -- What was changed
+	    resource_id BIGINT, -- ID of the changed resource
+	    old_values JSONB,
+	    new_values JSONB,
+	    ip_address INET,
+	    user_agent TEXT,
+	    session_id VARCHAR(255),
+	    module VARCHAR(50), -- Which module generated the log
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	);
+	
+	-- Module-specific tables can be added here
+	-- For example, for accounting module:
+	CREATE TABLE chart_of_accounts (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    account_code VARCHAR(20) NOT NULL,
+	    account_name VARCHAR(255) NOT NULL,
+	    account_type VARCHAR(20) NOT NULL
+	        CHECK (account_type IN ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE')),
+	    parent_account_id INT REFERENCES chart_of_accounts(id),
+	    is_active BOOLEAN DEFAULT true,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, entity_id, account_code)
+	);
+	
+	-- Indexes for performance
+	CREATE INDEX idx_entities_tenant ON entities(tenant_id);
+	CREATE INDEX idx_entities_parent ON entities(parent_id);
+	CREATE INDEX idx_entities_type ON entities(type);
+	-- Fixed: Only create this index if the path column exists
+	CREATE INDEX idx_entities_path ON entities USING GIST(path);
+	CREATE INDEX idx_hierarchy_paths_tenant ON hierarchy_paths(tenant_id);
+	CREATE INDEX idx_hierarchy_paths_ancestor ON hierarchy_paths(ancestor_id);
+	CREATE INDEX idx_hierarchy_paths_descendant ON hierarchy_paths(descendant_id);
+	
+	CREATE INDEX idx_persons_tenant ON persons(tenant_id);
+	CREATE INDEX idx_persons_type ON persons(person_type);
+	CREATE INDEX idx_persons_email ON persons(email);
+	CREATE INDEX idx_persons_name ON persons(first_name, last_name);
+	
+	CREATE INDEX idx_employees_tenant ON employees(tenant_id);
+	CREATE INDEX idx_employees_entity ON employees(entity_id);
+	CREATE INDEX idx_employees_number ON employees(employee_number);
+	CREATE INDEX idx_employees_status ON employees(employment_status);
+	
+	CREATE INDEX idx_users_tenant ON users(tenant_id);
+	CREATE INDEX idx_users_entity ON users(entity_id);
+	CREATE INDEX idx_users_email ON users(email);
+	CREATE INDEX idx_users_type ON users(user_type);
+	
+	CREATE INDEX idx_projects_tenant ON projects(tenant_id);
+	CREATE INDEX idx_projects_entity ON projects(entity_id);
+	CREATE INDEX idx_projects_status ON projects(status);
+	
+	CREATE INDEX idx_budgets_tenant ON budgets(tenant_id);
+	CREATE INDEX idx_budgets_entity ON budgets(entity_id);
+	CREATE INDEX idx_budgets_year ON budgets(fiscal_year);
+	
+	CREATE INDEX idx_audit_logs_tenant ON audit_logs(tenant_id);
+	CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
+	CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
+	CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
+	
+	-- Row Level Security (apply to all tables)
+	ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE entities ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE hierarchy_paths ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE persons ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE chart_of_accounts ENABLE ROW LEVEL SECURITY;
+	
+	-- Tenant context function (your existing function is good)
+	CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS INT AS $$
+	BEGIN
+	    RETURN current_setting('app.current_tenant_id')::INT;
+	EXCEPTION WHEN OTHERS THEN
+	    RAISE EXCEPTION 'Tenant context not set';
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- RLS Policies (apply tenant isolation to all tables)
+	CREATE POLICY tenant_isolation_policy ON tenants USING (id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON entities USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON hierarchy_paths USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON persons USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON employees USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON users USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON roles USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON projects USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON budgets USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON audit_logs USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON chart_of_accounts USING (tenant_id = current_tenant_id());
+	
+	-- User roles policy (users can only see their own roles)
+	CREATE POLICY user_roles_policy ON user_roles
+	    USING (user_id IN (SELECT id FROM users WHERE tenant_id = current_tenant_id()));
+	
+	-- Triggers for maintaining hierarchy paths and timestamps
+	CREATE OR REPLACE FUNCTION update_timestamps() RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.updated_at = NOW();
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	-- Apply timestamp triggers to all relevant tables
+	CREATE TRIGGER update_tenant_timestamps BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_entity_timestamps BEFORE UPDATE ON entities FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_person_timestamps BEFORE UPDATE ON persons FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_employee_timestamps BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_user_timestamps BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_project_timestamps BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_budget_timestamps BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	
+	-- Enhanced hierarchy path maintenance
+	CREATE OR REPLACE FUNCTION maintain_hierarchy_paths() RETURNS TRIGGER AS $$
+	BEGIN
+	    IF TG_OP = 'DELETE' THEN
+	        -- Remove all paths involving this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = OLD.tenant_id
+	        AND (ancestor_id = OLD.id OR descendant_id = OLD.id);
+	        RETURN OLD;
+	    END IF;
+	
+	    -- Clear old paths for this descendant
+	    DELETE FROM hierarchy_paths
+	    WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	
+	    -- Self-reference (depth 0)
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    VALUES (NEW.tenant_id, NEW.id, NEW.id, 0);
+	
+	    -- Update ltree path (only if path column exists)
+	    IF NEW.parent_id IS NULL THEN
+	        NEW.path = NEW.id::TEXT::LTREE;
+	    ELSE
+	        SELECT path || NEW.id::TEXT INTO NEW.path
+	        FROM entities
+	        WHERE tenant_id = NEW.tenant_id AND id = NEW.parent_id;
+	    END IF;
+	
+	    -- Parent paths (all ancestors)
+	    IF NEW.parent_id IS NOT NULL THEN
+	        INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	        SELECT NEW.tenant_id, p.ancestor_id, NEW.id, p.depth + 1
+	        FROM hierarchy_paths p
+	        WHERE p.tenant_id = NEW.tenant_id AND p.descendant_id = NEW.parent_id;
+	    END IF;
+	
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	CREATE TRIGGER trg_maintain_hierarchy_paths
+	    BEFORE INSERT OR UPDATE OR DELETE ON entities
+	    FOR EACH ROW EXECUTE FUNCTION maintain_hierarchy_paths();
+	
+	-- Function to get entity hierarchy (for easy querying)
+	CREATE OR REPLACE FUNCTION get_entity_descendants(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.descendant_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.ancestor_id = entity_id
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+2025-06-09 11:41:20.013 EAT [8922] LOG:  checkpoint starting: time
+2025-06-09 11:43:00.339 EAT [8922] LOG:  checkpoint complete: wrote 997 buffers (6.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=100.226 s, sync=0.072 s, total=100.327 s; sync files=397, longest=0.003 s, average=0.001 s; distance=4897 kB, estimate=4897 kB; lsn=0/68394C88, redo lsn=0/68394BF8
+2025-06-09 11:43:18.648 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:43:18.663 EAT [8922] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.002 s, total=0.016 s; sync files=3, longest=0.001 s, average=0.001 s; distance=8 kB, estimate=4408 kB; lsn=0/68396E38, redo lsn=0/68396DE0
+2025-06-09 11:43:18.927 EAT [13517] ERROR:  column "parent_id" specified more than once
+2025-06-09 11:43:18.927 EAT [13517] STATEMENT:  -- Enhanced entity table for flexible hierarchy
+	CREATE TABLE entities (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    parent_id INT REFERENCES entities(id) ON DELETE CASCADE,
+	    name VARCHAR(255) NOT NULL,
+	    code VARCHAR(50), -- For internal reference codes
+	    type VARCHAR(20) NOT NULL 
+	        CHECK (type IN ('COMPANY', 'SUBSIDIARY', 'REGION', 'BRANCH', 'LOCATION', 
+	                       'DEPARTMENT', 'DIVISION', 'COST_CENTER', 'PROJECT', 'BUDGET_UNIT')),
+	                  -- TODO ltree is not working for termuxfix later
+	    parent_id INT REFERENCES entities(id), -- For efficient hierarchy queries
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    settings JSONB DEFAULT '{}'::jsonb, -- Entity-specific settings
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ,
+	    UNIQUE (tenant_id, parent_id, name)
+	);
+	
+	CREATE UNIQUE INDEX tenant_code_unique_idx
+	ON entities (tenant_id, code)
+	WHERE code IS NOT NULL;
+	
+	-- Enhanced closure table (keep your existing structure)
+	CREATE TABLE hierarchy_paths (
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    ancestor_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    descendant_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    depth INT NOT NULL,
+	    PRIMARY KEY (tenant_id, ancestor_id, descendant_id)
+	);
+	
+	
+2025-06-09 11:44:10.792 EAT [8922] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:44:10.809 EAT [8922] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.003 s, total=0.017 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4359 kB, estimate=4403 kB; lsn=0/687D8B70, redo lsn=0/687D8B18
+2025-06-09 11:49:10.866 EAT [8922] LOG:  checkpoint starting: time
+2025-06-09 11:50:51.355 EAT [8922] LOG:  checkpoint complete: wrote 1002 buffers (6.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=100.420 s, sync=0.050 s, total=100.490 s; sync files=426, longest=0.005 s, average=0.001 s; distance=5014 kB, estimate=5014 kB; lsn=0/68CBE5C0, redo lsn=0/68CBE530
+2025-06-09 11:52:37.087 EAT [19933] FATAL:  lock file "postmaster.pid" already exists
+2025-06-09 11:52:37.087 EAT [19933] HINT:  Is another postmaster (PID 8916) running in data directory "/data/data/com.termux/files/home/pg"?
+2025-06-09 11:53:19.721 EAT [8916] LOG:  received fast shutdown request
+2025-06-09 11:53:19.724 EAT [8916] LOG:  aborting any active transactions
+2025-06-09 11:53:19.733 EAT [8916] LOG:  background worker "logical replication launcher" (PID 8929) exited with exit code 1
+2025-06-09 11:53:19.734 EAT [8922] LOG:  shutting down
+2025-06-09 11:53:19.736 EAT [8922] LOG:  checkpoint starting: shutdown immediate
+2025-06-09 11:53:19.747 EAT [8922] LOG:  checkpoint complete: wrote 0 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.002 s, sync=0.001 s, total=0.014 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=4513 kB; lsn=0/68CBE670, redo lsn=0/68CBE670
+2025-06-09 11:53:19.781 EAT [8916] LOG:  database system is shut down
+2025-06-09 11:53:22.800 EAT [20797] LOG:  starting PostgreSQL 17.0 on aarch64-unknown-linux-android, compiled by Android (12470979, +pgo, +bolt, +lto, +mlgo, based on r522817c) clang version 18.0.3 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262), 64-bit
+2025-06-09 11:53:22.802 EAT [20797] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-06-09 11:53:22.803 EAT [20797] LOG:  listening on Unix socket "/data/data/com.termux/files/usr/tmp/.s.PGSQL.5432"
+2025-06-09 11:53:22.877 EAT [20804] LOG:  database system was shut down at 2025-06-09 11:53:19 EAT
+2025-06-09 11:53:22.892 EAT [20797] LOG:  database system is ready to accept connections
+2025-06-09 11:53:25.601 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:53:25.622 EAT [20801] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.002 s, total=0.022 s; sync files=4, longest=0.001 s, average=0.001 s; distance=12 kB, estimate=12 kB; lsn=0/68CC1978, redo lsn=0/68CC1920
+2025-06-09 11:53:26.298 EAT [20968] ERROR:  relation "chart_of_accounts" already exists
+2025-06-09 11:53:26.298 EAT [20968] STATEMENT:  -- Module-specific tables can be added here
+	-- For example, for accounting module:
+	CREATE TABLE chart_of_accounts (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    account_code VARCHAR(20) NOT NULL,
+	    account_name VARCHAR(255) NOT NULL,
+	    account_type VARCHAR(20) NOT NULL
+	        CHECK (account_type IN ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE')),
+	    parent_account_id INT REFERENCES chart_of_accounts(id),
+	    is_active BOOLEAN DEFAULT true,
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    UNIQUE (tenant_id, entity_id, account_code)
+	);
+	
+	-- Indexes for performance
+	CREATE INDEX idx_entities_tenant ON entities(tenant_id);
+	CREATE INDEX idx_entities_parent ON entities(parent_id);
+	CREATE INDEX idx_entities_type ON entities(type);
+	CREATE INDEX idx_hierarchy_paths_tenant ON hierarchy_paths(tenant_id);
+	CREATE INDEX idx_hierarchy_paths_ancestor ON hierarchy_paths(ancestor_id);
+	CREATE INDEX idx_hierarchy_paths_descendant ON hierarchy_paths(descendant_id);
+	CREATE INDEX idx_hierarchy_paths_depth ON hierarchy_paths(depth);
+	
+	CREATE INDEX idx_persons_tenant ON persons(tenant_id);
+	CREATE INDEX idx_persons_type ON persons(person_type);
+	CREATE INDEX idx_persons_email ON persons(email);
+	CREATE INDEX idx_persons_name ON persons(first_name, last_name);
+	
+	CREATE INDEX idx_employees_tenant ON employees(tenant_id);
+	CREATE INDEX idx_employees_entity ON employees(entity_id);
+	CREATE INDEX idx_employees_number ON employees(employee_number);
+	CREATE INDEX idx_employees_status ON employees(employment_status);
+	
+	CREATE INDEX idx_users_tenant ON users(tenant_id);
+	CREATE INDEX idx_users_entity ON users(entity_id);
+	CREATE INDEX idx_users_email ON users(email);
+	CREATE INDEX idx_users_type ON users(user_type);
+	
+	CREATE INDEX idx_projects_tenant ON projects(tenant_id);
+	CREATE INDEX idx_projects_entity ON projects(entity_id);
+	CREATE INDEX idx_projects_status ON projects(status);
+	
+	CREATE INDEX idx_budgets_tenant ON budgets(tenant_id);
+	CREATE INDEX idx_budgets_entity ON budgets(entity_id);
+	CREATE INDEX idx_budgets_year ON budgets(fiscal_year);
+	
+	CREATE INDEX idx_audit_logs_tenant ON audit_logs(tenant_id);
+	CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
+	CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
+	CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
+	
+	CREATE INDEX idx_chart_of_accounts_tenant ON chart_of_accounts(tenant_id);
+	CREATE INDEX idx_chart_of_accounts_entity ON chart_of_accounts(entity_id);
+	CREATE INDEX idx_chart_of_accounts_code ON chart_of_accounts(account_code);
+	CREATE INDEX idx_chart_of_accounts_type ON chart_of_accounts(account_type);
+	CREATE INDEX idx_chart_of_accounts_parent ON chart_of_accounts(parent_account_id);
+	
+	-- Row Level Security (apply to all tables)
+	ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE entities ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE hierarchy_paths ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE persons ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+	ALTER TABLE chart_of_accounts ENABLE ROW LEVEL SECURITY;
+	
+	-- Tenant context function
+	CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS INT AS $$
+	BEGIN
+	    RETURN current_setting('app.current_tenant_id')::INT;
+	EXCEPTION WHEN OTHERS THEN
+	    RAISE EXCEPTION 'Tenant context not set';
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- RLS Policies (apply tenant isolation to all tables)
+	CREATE POLICY tenant_isolation_policy ON tenants USING (id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON entities USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON hierarchy_paths USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON persons USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON employees USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON users USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON roles USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON projects USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON budgets USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON audit_logs USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON chart_of_accounts USING (tenant_id = current_tenant_id());
+	
+	-- User roles policy (users can only see their own roles)
+	CREATE POLICY user_roles_policy ON user_roles
+	    USING (user_id IN (SELECT id FROM users WHERE tenant_id = current_tenant_id()));
+	
+	-- Triggers for maintaining hierarchy paths and timestamps
+	CREATE OR REPLACE FUNCTION update_timestamps() RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.updated_at = NOW();
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	-- Apply timestamp triggers to all relevant tables
+	CREATE TRIGGER update_tenant_timestamps BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_entity_timestamps BEFORE UPDATE ON entities FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_person_timestamps BEFORE UPDATE ON persons FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_employee_timestamps BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_user_timestamps BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_project_timestamps BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_budget_timestamps BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	
+	-- Enhanced hierarchy path maintenance (without ltree)
+	CREATE OR REPLACE FUNCTION maintain_hierarchy_paths() RETURNS TRIGGER AS $$
+	BEGIN
+	    IF TG_OP = 'DELETE' THEN
+	        -- Remove all paths involving this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = OLD.tenant_id
+	        AND (ancestor_id = OLD.id OR descendant_id = OLD.id);
+	        RETURN OLD;
+	    END IF;
+	
+	    -- Handle UPDATE of parent_id
+	    IF TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id THEN
+	        -- Remove old hierarchy paths for this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Clear old paths for this descendant (for INSERT or parent change)
+	    IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id) THEN
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Self-reference (depth 0)
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    VALUES (NEW.tenant_id, NEW.id, NEW.id, 0)
+	    ON CONFLICT DO NOTHING;
+	
+	    -- Add parent paths (all ancestors)
+	    IF NEW.parent_id IS NOT NULL THEN
+	        INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	        SELECT NEW.tenant_id, p.ancestor_id, NEW.id, p.depth + 1
+	        FROM hierarchy_paths p
+	        WHERE p.tenant_id = NEW.tenant_id 
+	        AND p.descendant_id = NEW.parent_id
+	        ON CONFLICT DO NOTHING;
+	    END IF;
+	
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	CREATE TRIGGER trg_maintain_hierarchy_paths
+	    BEFORE INSERT OR UPDATE OR DELETE ON entities
+	    FOR EACH ROW EXECUTE FUNCTION maintain_hierarchy_paths();
+	
+	-- Function to get entity descendants
+	CREATE OR REPLACE FUNCTION get_entity_descendants(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.descendant_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.ancestor_id = entity_id
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity ancestors
+	CREATE OR REPLACE FUNCTION get_entity_ancestors(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id
+	    AND hp.depth > 0  -- Exclude self-reference
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth DESC, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to check if entity is descendant of another
+	CREATE OR REPLACE FUNCTION is_entity_descendant(descendant_id INT, ancestor_id INT)
+	RETURNS BOOLEAN AS $$
+	BEGIN
+	    RETURN EXISTS(
+	        SELECT 1 FROM hierarchy_paths
+	        WHERE tenant_id = current_tenant_id()
+	        AND ancestor_id = is_entity_descendant.ancestor_id
+	        AND descendant_id = is_entity_descendant.descendant_id
+	        AND depth > 0
+	    );
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity path as text
+	CREATE OR REPLACE FUNCTION get_entity_path(entity_id INT, separator VARCHAR DEFAULT ' > ')
+	RETURNS TEXT AS $$
+	DECLARE
+	    result TEXT;
+	BEGIN
+	    SELECT string_agg(e.name, separator ORDER BY hp.depth DESC)
+	    INTO result
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id;
+	    
+	    RETURN COALESCE(result, '');
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get immediate children
+	CREATE OR REPLACE FUNCTION get_entity_children(entity_id INT)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type
+	    FROM entities e
+	    WHERE e.tenant_id = current_tenant_id()
+	    AND e.parent_id = entity_id
+	    ORDER BY e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to rebuild hierarchy paths (useful for data repair)
+	CREATE OR REPLACE FUNCTION rebuild_hierarchy_paths(tenant_id_param INT DEFAULT NULL)
+	RETURNS VOID AS $$
+	DECLARE
+	    target_tenant_id INT;
+	BEGIN
+	    target_tenant_id := COALESCE(tenant_id_param, current_tenant_id());
+	    
+	    -- Clear existing paths for the tenant
+	    DELETE FROM hierarchy_paths WHERE tenant_id = target_tenant_id;
+	    
+	    -- Rebuild paths using recursive CTE
+	    WITH RECURSIVE entity_paths AS (
+	        -- Root entities (self-references)
+	        SELECT id, id as ancestor_id, 0 as depth, tenant_id
+	        FROM entities
+	        WHERE tenant_id = target_tenant_id
+	        
+	        UNION ALL
+	        
+	        -- Parent-child relationships
+	        SELECT e.id, ep.ancestor_id, ep.depth + 1, e.tenant_id
+	        FROM entities e
+	        JOIN entity_paths ep ON e.parent_id = ep.id
+	    )
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    SELECT tenant_id, ancestor_id, id, depth
+	    FROM entity_paths;
+	END;
+	$$ LANGUAGE plpgsql SECURITY DEFINER;
+	
+2025-06-09 11:56:56.528 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 11:56:56.556 EAT [20801] LOG:  checkpoint complete: wrote 13 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.004 s, sync=0.005 s, total=0.029 s; sync files=9, longest=0.001 s, average=0.001 s; distance=5037 kB, estimate=5037 kB; lsn=0/691AD0A8, redo lsn=0/691AD050
+2025-06-09 12:01:56.656 EAT [20801] LOG:  checkpoint starting: time
+2025-06-09 12:03:37.607 EAT [20801] LOG:  checkpoint complete: wrote 1005 buffers (6.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=100.855 s, sync=0.075 s, total=100.951 s; sync files=438, longest=0.007 s, average=0.001 s; distance=5026 kB, estimate=5036 kB; lsn=0/69695998, redo lsn=0/69695908
+2025-06-09 12:19:52.821 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 12:19:52.838 EAT [20801] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.001 s, total=0.017 s; sync files=2, longest=0.001 s, average=0.001 s; distance=13 kB, estimate=4534 kB; lsn=0/69698E90, redo lsn=0/69698E38
+2025-06-09 12:19:53.356 EAT [28011] ERROR:  syntax error at or near "posted_by" at character 338
+2025-06-09 12:19:53.356 EAT [28011] STATEMENT:  -- Ledgers - collections of journal entries for organizational purposes
+	CREATE TABLE IF NOT EXISTS ledger (
+	  created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	  updated TIMESTAMP WITHOUT TIME ZONE NULL,
+	  tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	  entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE 
+	  posted_by INT REFERENCES users(id),   
+	  created_by INT REFERENCES users(id),
+	  id SERIAL PRIMARY KEY,
+	  name VARCHAR(150) NULL,                              -- Ledger name/description
+	  posted BOOLEAN NOT NULL,                             -- Whether ledger is posted
+	  locked BOOLEAN NOT NULL,                             -- Whether ledger is locked
+	  hidden BOOLEAN NOT NULL,                             -- Whether ledger is hidden from UI
+	  entity_id INT NOT NULL REFERENCES entities(id) DEFERRABLE INITIALLY DEFERRED,
+	  additional_info TEXT NULL CHECK (
+	    (additional_info IS NULL OR additional_info::TEXT ~ '^[\s]*(\{.*\}|null)[\s]*$')
+	  ),
+	  ledger_xid VARCHAR(150) NULL                         -- External ledger identifier
+	);
+	COMMENT ON TABLE ledger IS 'Ledgers group related journal entries (e.g., monthly ledgers, project ledgers)';
+	
+	
+2025-06-09 12:22:15.087 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 12:22:15.109 EAT [20801] LOG:  checkpoint complete: wrote 13 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.006 s, total=0.022 s; sync files=9, longest=0.002 s, average=0.001 s; distance=5045 kB, estimate=5045 kB; lsn=0/69B863F0, redo lsn=0/69B86398
+2025-06-09 12:22:15.636 EAT [29068] ERROR:  column "entity_id" specified more than once
+2025-06-09 12:22:15.636 EAT [29068] STATEMENT:  -- Ledgers - collections of journal entries for organizational purposes
+	CREATE TABLE IF NOT EXISTS ledger (
+	  created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	  updated TIMESTAMP WITHOUT TIME ZONE NULL,
+	  tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	  entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE, 
+	  posted_by INT REFERENCES users(id),   
+	  created_by INT REFERENCES users(id),
+	  id SERIAL PRIMARY KEY,
+	  name VARCHAR(150) NULL,                              -- Ledger name/description
+	  posted BOOLEAN NOT NULL,                             -- Whether ledger is posted
+	  locked BOOLEAN NOT NULL,                             -- Whether ledger is locked
+	  hidden BOOLEAN NOT NULL,                             -- Whether ledger is hidden from UI
+	  entity_id INT NOT NULL REFERENCES entities(id) DEFERRABLE INITIALLY DEFERRED,
+	  additional_info TEXT NULL CHECK (
+	    (additional_info IS NULL OR additional_info::TEXT ~ '^[\s]*(\{.*\}|null)[\s]*$')
+	  ),
+	  ledger_xid VARCHAR(150) NULL                         -- External ledger identifier
+	);
+	COMMENT ON TABLE ledger IS 'Ledgers group related journal entries (e.g., monthly ledgers, project ledgers)';
+	
+	
+2025-06-09 12:23:05.395 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 12:23:05.418 EAT [20801] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.004 s, sync=0.004 s, total=0.024 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5035 kB, estimate=5044 kB; lsn=0/6A071298, redo lsn=0/6A071240
+2025-06-09 12:27:04.967 EAT [31323] ERROR:  cannot drop table users because other objects depend on it
+2025-06-09 12:27:04.967 EAT [31323] DETAIL:  constraint audit_logs_user_id_fkey on table audit_logs depends on table users
+	constraint ledger_posted_by_fkey on table ledger depends on table users
+	constraint ledger_created_by_fkey on table ledger depends on table users
+2025-06-09 12:27:04.967 EAT [31323] HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+2025-06-09 12:27:04.967 EAT [31323] STATEMENT:  
+	-- Drop user_roles table first due to foreign key dependencies on users and roles
+	DROP TABLE IF EXISTS user_roles;
+	
+	-- Drop users table
+	DROP TABLE IF EXISTS users;
+	
+	-- Drop employees table
+	DROP TABLE IF EXISTS employees;
+	
+	-- Drop roles table
+	DROP TABLE IF EXISTS roles;
+	
+	DROP TABLE IF EXISTS persons;
+	
+2025-06-09 12:28:05.519 EAT [20801] LOG:  checkpoint starting: time
+2025-06-09 12:29:47.124 EAT [20801] LOG:  checkpoint complete: wrote 1011 buffers (6.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=101.518 s, sync=0.051 s, total=101.605 s; sync files=475, longest=0.014 s, average=0.001 s; distance=5161 kB, estimate=5161 kB; lsn=0/6A57B8E0, redo lsn=0/6A57B850
+2025-06-09 12:30:27.485 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 12:30:27.500 EAT [20801] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.002 s, total=0.016 s; sync files=4, longest=0.001 s, average=0.001 s; distance=10 kB, estimate=4646 kB; lsn=0/6A57E490, redo lsn=0/6A57E438
+2025-06-09 12:30:33.303 EAT [1466] ERROR:  cannot drop table users because other objects depend on it
+2025-06-09 12:30:33.303 EAT [1466] DETAIL:  constraint ledger_posted_by_fkey on table ledger depends on table users
+	constraint ledger_created_by_fkey on table ledger depends on table users
+2025-06-09 12:30:33.303 EAT [1466] HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+2025-06-09 12:30:33.303 EAT [1466] STATEMENT:  
+	-- Drop user_roles table first due to foreign key dependencies on users and roles
+	DROP TABLE IF EXISTS user_roles;
+	
+	-- Drop users table
+	DROP TABLE IF EXISTS users;
+	
+	-- Drop employees table
+	DROP TABLE IF EXISTS employees;
+	
+	-- Drop roles table
+	DROP TABLE IF EXISTS roles;
+	
+	DROP TABLE IF EXISTS persons;
+	
+2025-06-09 12:31:25.593 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 12:31:25.612 EAT [20801] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.004 s, total=0.019 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5166 kB, estimate=5166 kB; lsn=0/6AA89EC8, redo lsn=0/6AA89E70
+2025-06-09 12:36:25.709 EAT [20801] LOG:  checkpoint starting: time
+2025-06-09 12:36:44.334 EAT [6129] ERROR:  syntax error at or near "(" at character 1096
+2025-06-09 12:36:44.334 EAT [6129] STATEMENT:  -- Journal entries - the foundation of double-entry bookkeeping
+	CREATE TABLE IF NOT EXISTS journalentry (
+	  created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	  updated TIMESTAMP WITHOUT TIME ZONE NULL,
+	  tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	  -- entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE 
+	  posted_by INT REFERENCES users(id),   
+	  created_by INT REFERENCES users(id),
+	  uuid CHAR(32) NOT NULL PRIMARY KEY,
+	  je_number VARCHAR(25) NOT NULL,                      -- Journal entry number
+	  timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,     -- Transaction timestamp
+	  description VARCHAR(70) NULL,                        -- JE description
+	  activity VARCHAR(20) NULL,                           -- Business activity category
+	  origin VARCHAR(30) NULL,                             -- Source of the journal entry
+	  posted BOOLEAN NOT NULL,                             -- Whether JE is posted to the books
+	  locked BOOLEAN NOT NULL,                             -- Whether JE is locked from changes
+	  entity_unit_id CHAR(32) NULL REFERENCES entities(id) (uuid) DEFERRABLE INITIALLY DEFERRED,
+	  ledger_id CHAR(32) NOT NULL REFERENCES ledger (uuid) DEFERRABLE INITIALLY DEFERRED,
+	  is_closing_entry BOOLEAN NOT NULL                    -- Whether this is a period-end closing entry
+	);
+	COMMENT ON TABLE journalentry IS 'Journal entries for double-entry bookkeeping with audit trail';
+	COMMENT ON COLUMN journalentry.posted IS 'Whether the journal entry affects account balances';
+	COMMENT ON COLUMN journalentry.origin IS 'Source system: invoice, bill, manual, etc.';
+	
+	
+	
+2025-06-09 12:37:45.527 EAT [20801] LOG:  checkpoint complete: wrote 798 buffers (4.9%); 0 WAL file(s) added, 0 removed, 0 recycled; write=79.803 s, sync=0.004 s, total=79.819 s; sync files=9, longest=0.001 s, average=0.001 s; distance=5277 kB, estimate=5277 kB; lsn=0/6B0DC1A0, redo lsn=0/6AFB1658
+2025-06-09 12:37:45.528 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 12:37:45.552 EAT [20801] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.003 s, sync=0.003 s, total=0.024 s; sync files=4, longest=0.002 s, average=0.001 s; distance=1194 kB, estimate=4869 kB; lsn=0/6B0DC270, redo lsn=0/6B0DC218
+2025-06-09 12:37:46.159 EAT [7281] ERROR:  foreign key constraint "journalentry_entity_unit_id_fkey" cannot be implemented
+2025-06-09 12:37:46.159 EAT [7281] DETAIL:  Key columns "entity_unit_id" and "id" are of incompatible types: character and integer.
+2025-06-09 12:37:46.159 EAT [7281] STATEMENT:  -- Journal entries - the foundation of double-entry bookkeeping
+	CREATE TABLE IF NOT EXISTS journalentry (
+	  created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	  updated TIMESTAMP WITHOUT TIME ZONE NULL,
+	  tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	  -- entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE 
+	  posted_by INT REFERENCES users(id),   
+	  created_by INT REFERENCES users(id),
+	  uuid CHAR(32) NOT NULL PRIMARY KEY,
+	  je_number VARCHAR(25) NOT NULL,                      -- Journal entry number
+	  timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,     -- Transaction timestamp
+	  description VARCHAR(70) NULL,                        -- JE description
+	  activity VARCHAR(20) NULL,                           -- Business activity category
+	  origin VARCHAR(30) NULL,                             -- Source of the journal entry
+	  posted BOOLEAN NOT NULL,                             -- Whether JE is posted to the books
+	  locked BOOLEAN NOT NULL,                             -- Whether JE is locked from changes
+	  entity_unit_id CHAR(32) NULL REFERENCES entities(id) DEFERRABLE INITIALLY DEFERRED,
+	  ledger_id CHAR(32) NOT NULL REFERENCES ledger (uuid) DEFERRABLE INITIALLY DEFERRED,
+	  is_closing_entry BOOLEAN NOT NULL                    -- Whether this is a period-end closing entry
+	);
+	COMMENT ON TABLE journalentry IS 'Journal entries for double-entry bookkeeping with audit trail';
+	COMMENT ON COLUMN journalentry.posted IS 'Whether the journal entry affects account balances';
+	COMMENT ON COLUMN journalentry.origin IS 'Source system: invoice, bill, manual, etc.';
+	
+	
+	
+2025-06-09 12:38:26.171 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 12:38:26.199 EAT [20801] LOG:  checkpoint complete: wrote 13 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.005 s, total=0.028 s; sync files=9, longest=0.001 s, average=0.001 s; distance=5124 kB, estimate=5124 kB; lsn=0/6B5DD5D0, redo lsn=0/6B5DD578
+2025-06-09 12:38:26.742 EAT [7899] ERROR:  column "uuid" referenced in foreign key constraint does not exist
+2025-06-09 12:38:26.742 EAT [7899] STATEMENT:  -- Journal entries - the foundation of double-entry bookkeeping
+	CREATE TABLE IF NOT EXISTS journalentry (
+	  created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	  updated TIMESTAMP WITHOUT TIME ZONE NULL,
+	  tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	  -- entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE 
+	  posted_by INT REFERENCES users(id),   
+	  created_by INT REFERENCES users(id),
+	  uuid CHAR(32) NOT NULL PRIMARY KEY,
+	  je_number VARCHAR(25) NOT NULL,                      -- Journal entry number
+	  timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,     -- Transaction timestamp
+	  description VARCHAR(70) NULL,                        -- JE description
+	  activity VARCHAR(20) NULL,                           -- Business activity category
+	  origin VARCHAR(30) NULL,                             -- Source of the journal entry
+	  posted BOOLEAN NOT NULL,                             -- Whether JE is posted to the books
+	  locked BOOLEAN NOT NULL,                             -- Whether JE is locked from changes
+	  entity_unit_id INT NULL REFERENCES entities(id) DEFERRABLE INITIALLY DEFERRED,
+	  ledger_id CHAR(32) NOT NULL REFERENCES ledger (uuid) DEFERRABLE INITIALLY DEFERRED,
+	  is_closing_entry BOOLEAN NOT NULL                    -- Whether this is a period-end closing entry
+	);
+	COMMENT ON TABLE journalentry IS 'Journal entries for double-entry bookkeeping with audit trail';
+	COMMENT ON COLUMN journalentry.posted IS 'Whether the journal entry affects account balances';
+	COMMENT ON COLUMN journalentry.origin IS 'Source system: invoice, bill, manual, etc.';
+	
+	
+	
+2025-06-09 12:39:02.027 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 12:39:02.048 EAT [20801] LOG:  checkpoint complete: wrote 13 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.005 s, total=0.022 s; sync files=9, longest=0.001 s, average=0.001 s; distance=5116 kB, estimate=5124 kB; lsn=0/6BADC828, redo lsn=0/6BADC7D0
+2025-06-09 12:39:02.601 EAT [8173] ERROR:  foreign key constraint "journalentry_ledger_id_fkey" cannot be implemented
+2025-06-09 12:39:02.601 EAT [8173] DETAIL:  Key columns "ledger_id" and "id" are of incompatible types: character and integer.
+2025-06-09 12:39:02.601 EAT [8173] STATEMENT:  -- Journal entries - the foundation of double-entry bookkeeping
+	CREATE TABLE IF NOT EXISTS journalentry (
+	  created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	  updated TIMESTAMP WITHOUT TIME ZONE NULL,
+	  tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	  -- entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE 
+	  posted_by INT REFERENCES users(id),   
+	  created_by INT REFERENCES users(id),
+	  uuid CHAR(32) NOT NULL PRIMARY KEY,
+	  je_number VARCHAR(25) NOT NULL,                      -- Journal entry number
+	  timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,     -- Transaction timestamp
+	  description VARCHAR(70) NULL,                        -- JE description
+	  activity VARCHAR(20) NULL,                           -- Business activity category
+	  origin VARCHAR(30) NULL,                             -- Source of the journal entry
+	  posted BOOLEAN NOT NULL,                             -- Whether JE is posted to the books
+	  locked BOOLEAN NOT NULL,                             -- Whether JE is locked from changes
+	  entity_unit_id INT NULL REFERENCES entities(id) DEFERRABLE INITIALLY DEFERRED,
+	  ledger_id CHAR(32) NOT NULL REFERENCES ledger (id) DEFERRABLE INITIALLY DEFERRED,
+	  is_closing_entry BOOLEAN NOT NULL                    -- Whether this is a period-end closing entry
+	);
+	COMMENT ON TABLE journalentry IS 'Journal entries for double-entry bookkeeping with audit trail';
+	COMMENT ON COLUMN journalentry.posted IS 'Whether the journal entry affects account balances';
+	COMMENT ON COLUMN journalentry.origin IS 'Source system: invoice, bill, manual, etc.';
+	
+	
+	
+2025-06-09 12:40:00.583 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 12:40:00.606 EAT [20801] LOG:  checkpoint complete: wrote 10 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.005 s, total=0.023 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5101 kB, estimate=5121 kB; lsn=0/6BFD7FA8, redo lsn=0/6BFD7F50
+2025-06-09 12:45:00.706 EAT [20801] LOG:  checkpoint starting: time
+2025-06-09 12:45:01.135 EAT [10979] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 12:45:01.135 EAT [10979] STATEMENT:  ALTER TABLE itemtransactionmodel ADD CONSTRAINT itemtransactionmodel_entity_unit_id_fkey 
+	    FOREIGN KEY (entity_unit_id) REFERENCES entityunitmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 12:45:01.165 EAT [10979] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 12:45:01.165 EAT [10979] STATEMENT:  ALTER TABLE entitystatemodel ADD CONSTRAINT entitystatemodel_entity_unit_id_fkey 
+	    FOREIGN KEY (entity_unit_id) REFERENCES entityunitmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 12:45:01.168 EAT [10979] ERROR:  relation "auth_user" does not exist
+2025-06-09 12:45:01.168 EAT [10979] STATEMENT:  ALTER TABLE entitymanagementmodel ADD CONSTRAINT entitymanagementmodel_user_id_fkey 
+	    FOREIGN KEY (user_id) REFERENCES auth_user (id) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 12:45:01.197 EAT [10979] ERROR:  relation "auth_user" does not exist
+2025-06-09 12:45:01.197 EAT [10979] STATEMENT:  ALTER TABLE entitymodel ADD CONSTRAINT entitymodel_admin_id_fkey 
+	    FOREIGN KEY (admin_id) REFERENCES auth_user (id) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 12:45:01.200 EAT [10979] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 12:45:01.200 EAT [10979] STATEMENT:  ALTER TABLE journalentrymodel ADD CONSTRAINT journalentrymodel_entity_unit_id_fkey 
+	    FOREIGN KEY (entity_unit_id) REFERENCES entityunitmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 12:45:01.209 EAT [10979] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 12:45:01.209 EAT [10979] STATEMENT:  ALTER TABLE closingentrytransactionmodel ADD CONSTRAINT closingentrytransactionmodel_unit_model_id_fkey 
+	    FOREIGN KEY (unit_model_id) REFERENCES entityunitmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 12:45:01.225 EAT [10979] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 12:45:01.225 EAT [10979] STATEMENT:  ALTER TABLE stagedtransactionmodel ADD CONSTRAINT stagedtransactionmodel_unit_model_id_fkey 
+	    FOREIGN KEY (unit_model_id) REFERENCES entityunitmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 12:46:41.083 EAT [20801] LOG:  checkpoint complete: wrote 998 buffers (6.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=100.186 s, sync=0.142 s, total=100.378 s; sync files=584, longest=0.004 s, average=0.001 s; distance=5388 kB, estimate=5388 kB; lsn=0/6C60F938, redo lsn=0/6C51B0B0
+2025-06-09 14:48:42.500 EAT [10979] ERROR:  constraint "estimatemodel_customer_id_fkey" for relation "estimatemodel" already exists
+2025-06-09 14:48:42.500 EAT [10979] STATEMENT:  ALTER TABLE estimatemodel ADD CONSTRAINT estimatemodel_customer_id_fkey 
+	    FOREIGN KEY (customer_id) REFERENCES customermodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.503 EAT [10979] ERROR:  constraint "estimatemodel_entity_id_fkey" for relation "estimatemodel" already exists
+2025-06-09 14:48:42.503 EAT [10979] STATEMENT:  ALTER TABLE estimatemodel ADD CONSTRAINT estimatemodel_entity_id_fkey 
+	    FOREIGN KEY (entity_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.504 EAT [10979] ERROR:  constraint "itemtransactionmodel_bill_model_id_fkey" for relation "itemtransactionmodel" already exists
+2025-06-09 14:48:42.504 EAT [10979] STATEMENT:  ALTER TABLE itemtransactionmodel ADD CONSTRAINT itemtransactionmodel_bill_model_id_fkey 
+	    FOREIGN KEY (bill_model_id) REFERENCES billmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.505 EAT [10979] ERROR:  constraint "itemtransactionmodel_ce_model_id_fkey" for relation "itemtransactionmodel" already exists
+2025-06-09 14:48:42.505 EAT [10979] STATEMENT:  ALTER TABLE itemtransactionmodel ADD CONSTRAINT itemtransactionmodel_ce_model_id_fkey 
+	    FOREIGN KEY (ce_model_id) REFERENCES estimatemodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.506 EAT [10979] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:48:42.506 EAT [10979] STATEMENT:  ALTER TABLE itemtransactionmodel ADD CONSTRAINT itemtransactionmodel_entity_unit_id_fkey 
+	    FOREIGN KEY (entity_unit_id) REFERENCES entityunitmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.506 EAT [10979] ERROR:  constraint "itemtransactionmodel_invoice_model_id_fkey" for relation "itemtransactionmodel" already exists
+2025-06-09 14:48:42.506 EAT [10979] STATEMENT:  ALTER TABLE itemtransactionmodel ADD CONSTRAINT itemtransactionmodel_invoice_model_id_fkey 
+	    FOREIGN KEY (invoice_model_id) REFERENCES invoicemodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.507 EAT [10979] ERROR:  constraint "itemtransactionmodel_item_model_id_fkey" for relation "itemtransactionmodel" already exists
+2025-06-09 14:48:42.507 EAT [10979] STATEMENT:  ALTER TABLE itemtransactionmodel ADD CONSTRAINT itemtransactionmodel_item_model_id_fkey 
+	    FOREIGN KEY (item_model_id) REFERENCES itemmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.507 EAT [10979] ERROR:  constraint "itemtransactionmodel_po_model_id_fkey" for relation "itemtransactionmodel" already exists
+2025-06-09 14:48:42.507 EAT [10979] STATEMENT:  ALTER TABLE itemtransactionmodel ADD CONSTRAINT itemtransactionmodel_po_model_id_fkey 
+	    FOREIGN KEY (po_model_id) REFERENCES purchaseordermodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.508 EAT [10979] ERROR:  constraint "unitofmeasuremodel_entity_id_fkey" for relation "unitofmeasuremodel" already exists
+2025-06-09 14:48:42.508 EAT [10979] STATEMENT:  ALTER TABLE unitofmeasuremodel ADD CONSTRAINT unitofmeasuremodel_entity_id_fkey 
+	    FOREIGN KEY (entity_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.509 EAT [10979] ERROR:  constraint "purchaseordermodel_ce_model_id_fkey" for relation "purchaseordermodel" already exists
+2025-06-09 14:48:42.509 EAT [10979] STATEMENT:  ALTER TABLE purchaseordermodel ADD CONSTRAINT purchaseordermodel_ce_model_id_fkey 
+	    FOREIGN KEY (ce_model_id) REFERENCES estimatemodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.509 EAT [10979] ERROR:  constraint "purchaseordermodel_entity_id_fkey" for relation "purchaseordermodel" already exists
+2025-06-09 14:48:42.509 EAT [10979] STATEMENT:  ALTER TABLE purchaseordermodel ADD CONSTRAINT purchaseordermodel_entity_id_fkey 
+	    FOREIGN KEY (entity_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.510 EAT [10979] ERROR:  constraint "invoicemodel_cash_account_id_fkey" for relation "invoicemodel" already exists
+2025-06-09 14:48:42.510 EAT [10979] STATEMENT:  ALTER TABLE invoicemodel ADD CONSTRAINT invoicemodel_cash_account_id_fkey 
+	    FOREIGN KEY (cash_account_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.510 EAT [10979] ERROR:  constraint "invoicemodel_ce_model_id_fkey" for relation "invoicemodel" already exists
+2025-06-09 14:48:42.510 EAT [10979] STATEMENT:  ALTER TABLE invoicemodel ADD CONSTRAINT invoicemodel_ce_model_id_fkey 
+	    FOREIGN KEY (ce_model_id) REFERENCES estimatemodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.511 EAT [10979] ERROR:  constraint "invoicemodel_customer_id_fkey" for relation "invoicemodel" already exists
+2025-06-09 14:48:42.511 EAT [10979] STATEMENT:  ALTER TABLE invoicemodel ADD CONSTRAINT invoicemodel_customer_id_fkey 
+	    FOREIGN KEY (customer_id) REFERENCES customermodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.511 EAT [10979] ERROR:  constraint "invoicemodel_ledger_id_fkey" for relation "invoicemodel" already exists
+2025-06-09 14:48:42.511 EAT [10979] STATEMENT:  ALTER TABLE invoicemodel ADD CONSTRAINT invoicemodel_ledger_id_fkey 
+	    FOREIGN KEY (ledger_id) REFERENCES ledgermodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.511 EAT [10979] ERROR:  constraint "invoicemodel_prepaid_account_id_fkey" for relation "invoicemodel" already exists
+2025-06-09 14:48:42.511 EAT [10979] STATEMENT:  ALTER TABLE invoicemodel ADD CONSTRAINT invoicemodel_prepaid_account_id_fkey 
+	    FOREIGN KEY (prepaid_account_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.512 EAT [10979] ERROR:  constraint "invoicemodel_unearned_account_id_fkey" for relation "invoicemodel" already exists
+2025-06-09 14:48:42.512 EAT [10979] STATEMENT:  ALTER TABLE invoicemodel ADD CONSTRAINT invoicemodel_unearned_account_id_fkey 
+	    FOREIGN KEY (unearned_account_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.512 EAT [10979] ERROR:  constraint "entitystatemodel_entity_model_id_fkey" for relation "entitystatemodel" already exists
+2025-06-09 14:48:42.512 EAT [10979] STATEMENT:  ALTER TABLE entitystatemodel ADD CONSTRAINT entitystatemodel_entity_model_id_fkey 
+	    FOREIGN KEY (entity_model_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.513 EAT [10979] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:48:42.513 EAT [10979] STATEMENT:  ALTER TABLE entitystatemodel ADD CONSTRAINT entitystatemodel_entity_unit_id_fkey 
+	    FOREIGN KEY (entity_unit_id) REFERENCES entityunitmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.513 EAT [10979] ERROR:  constraint "entitymanagementmodel_entity_id_fkey" for relation "entitymanagementmodel" already exists
+2025-06-09 14:48:42.513 EAT [10979] STATEMENT:  ALTER TABLE entitymanagementmodel ADD CONSTRAINT entitymanagementmodel_entity_id_fkey 
+	    FOREIGN KEY (entity_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.513 EAT [10979] ERROR:  relation "auth_user" does not exist
+2025-06-09 14:48:42.513 EAT [10979] STATEMENT:  ALTER TABLE entitymanagementmodel ADD CONSTRAINT entitymanagementmodel_user_id_fkey 
+	    FOREIGN KEY (user_id) REFERENCES auth_user (id) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.514 EAT [10979] ERROR:  constraint "customermodel_entity_model_id_fkey" for relation "customermodel" already exists
+2025-06-09 14:48:42.514 EAT [10979] STATEMENT:  ALTER TABLE customermodel ADD CONSTRAINT customermodel_entity_model_id_fkey 
+	    FOREIGN KEY (entity_model_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.514 EAT [10979] ERROR:  constraint "billmodel_cash_account_id_fkey" for relation "billmodel" already exists
+2025-06-09 14:48:42.514 EAT [10979] STATEMENT:  ALTER TABLE billmodel ADD CONSTRAINT billmodel_cash_account_id_fkey 
+	    FOREIGN KEY (cash_account_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.515 EAT [10979] ERROR:  constraint "billmodel_ce_model_id_fkey" for relation "billmodel" already exists
+2025-06-09 14:48:42.515 EAT [10979] STATEMENT:  ALTER TABLE billmodel ADD CONSTRAINT billmodel_ce_model_id_fkey 
+	    FOREIGN KEY (ce_model_id) REFERENCES estimatemodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.515 EAT [10979] ERROR:  constraint "billmodel_ledger_id_fkey" for relation "billmodel" already exists
+2025-06-09 14:48:42.515 EAT [10979] STATEMENT:  ALTER TABLE billmodel ADD CONSTRAINT billmodel_ledger_id_fkey 
+	    FOREIGN KEY (ledger_id) REFERENCES ledgermodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.515 EAT [10979] ERROR:  constraint "billmodel_prepaid_account_id_fkey" for relation "billmodel" already exists
+2025-06-09 14:48:42.515 EAT [10979] STATEMENT:  ALTER TABLE billmodel ADD CONSTRAINT billmodel_prepaid_account_id_fkey 
+	    FOREIGN KEY (prepaid_account_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.516 EAT [10979] ERROR:  constraint "billmodel_unearned_account_id_fkey" for relation "billmodel" already exists
+2025-06-09 14:48:42.516 EAT [10979] STATEMENT:  ALTER TABLE billmodel ADD CONSTRAINT billmodel_unearned_account_id_fkey 
+	    FOREIGN KEY (unearned_account_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.516 EAT [10979] ERROR:  constraint "billmodel_vendor_id_fkey" for relation "billmodel" already exists
+2025-06-09 14:48:42.516 EAT [10979] STATEMENT:  ALTER TABLE billmodel ADD CONSTRAINT billmodel_vendor_id_fkey 
+	    FOREIGN KEY (vendor_id) REFERENCES vendormodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.517 EAT [10979] ERROR:  constraint "itemmodel_cogs_account_id_fkey" for relation "itemmodel" already exists
+2025-06-09 14:48:42.517 EAT [10979] STATEMENT:  ALTER TABLE itemmodel ADD CONSTRAINT itemmodel_cogs_account_id_fkey 
+	    FOREIGN KEY (cogs_account_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.517 EAT [10979] ERROR:  constraint "itemmodel_earnings_account_id_fkey" for relation "itemmodel" already exists
+2025-06-09 14:48:42.517 EAT [10979] STATEMENT:  ALTER TABLE itemmodel ADD CONSTRAINT itemmodel_earnings_account_id_fkey 
+	    FOREIGN KEY (earnings_account_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.517 EAT [10979] ERROR:  constraint "itemmodel_entity_id_fkey" for relation "itemmodel" already exists
+2025-06-09 14:48:42.517 EAT [10979] STATEMENT:  ALTER TABLE itemmodel ADD CONSTRAINT itemmodel_entity_id_fkey 
+	    FOREIGN KEY (entity_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.518 EAT [10979] ERROR:  constraint "itemmodel_expense_account_id_fkey" for relation "itemmodel" already exists
+2025-06-09 14:48:42.518 EAT [10979] STATEMENT:  ALTER TABLE itemmodel ADD CONSTRAINT itemmodel_expense_account_id_fkey 
+	    FOREIGN KEY (expense_account_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.518 EAT [10979] ERROR:  constraint "itemmodel_inventory_account_id_fkey" for relation "itemmodel" already exists
+2025-06-09 14:48:42.518 EAT [10979] STATEMENT:  ALTER TABLE itemmodel ADD CONSTRAINT itemmodel_inventory_account_id_fkey 
+	    FOREIGN KEY (inventory_account_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.518 EAT [10979] ERROR:  constraint "itemmodel_uom_id_fkey" for relation "itemmodel" already exists
+2025-06-09 14:48:42.518 EAT [10979] STATEMENT:  ALTER TABLE itemmodel ADD CONSTRAINT itemmodel_uom_id_fkey 
+	    FOREIGN KEY (uom_id) REFERENCES unitofmeasuremodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.519 EAT [10979] ERROR:  relation "auth_user" does not exist
+2025-06-09 14:48:42.519 EAT [10979] STATEMENT:  ALTER TABLE entitymodel ADD CONSTRAINT entitymodel_admin_id_fkey 
+	    FOREIGN KEY (admin_id) REFERENCES auth_user (id) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.519 EAT [10979] ERROR:  constraint "entitymodel_default_coa_id_fkey" for relation "entitymodel" already exists
+2025-06-09 14:48:42.519 EAT [10979] STATEMENT:  ALTER TABLE entitymodel ADD CONSTRAINT entitymodel_default_coa_id_fkey 
+	    FOREIGN KEY (default_coa_id) REFERENCES chartofaccountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.520 EAT [10979] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:48:42.520 EAT [10979] STATEMENT:  ALTER TABLE journalentrymodel ADD CONSTRAINT journalentrymodel_entity_unit_id_fkey 
+	    FOREIGN KEY (entity_unit_id) REFERENCES entityunitmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.520 EAT [10979] ERROR:  constraint "journalentrymodel_ledger_id_fkey" for relation "journalentrymodel" already exists
+2025-06-09 14:48:42.520 EAT [10979] STATEMENT:  ALTER TABLE journalentrymodel ADD CONSTRAINT journalentrymodel_ledger_id_fkey 
+	    FOREIGN KEY (ledger_id) REFERENCES ledgermodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.520 EAT [10979] ERROR:  constraint "ledgermodel_entity_id_fkey" for relation "ledgermodel" already exists
+2025-06-09 14:48:42.520 EAT [10979] STATEMENT:  ALTER TABLE ledgermodel ADD CONSTRAINT ledgermodel_entity_id_fkey 
+	    FOREIGN KEY (entity_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.521 EAT [10979] ERROR:  constraint "closingentrytransactionmodel_account_model_id_fkey" for relation "closingentrytransactionmodel" already exists
+2025-06-09 14:48:42.521 EAT [10979] STATEMENT:  ALTER TABLE closingentrytransactionmodel ADD CONSTRAINT closingentrytransactionmodel_account_model_id_fkey 
+	    FOREIGN KEY (account_model_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.521 EAT [10979] ERROR:  constraint "closingentrytransactionmodel_closing_entry_model_id_fkey" for relation "closingentrytransactionmodel" already exists
+2025-06-09 14:48:42.521 EAT [10979] STATEMENT:  ALTER TABLE closingentrytransactionmodel ADD CONSTRAINT closingentrytransactionmodel_closing_entry_model_id_fkey 
+	    FOREIGN KEY (closing_entry_model_id) REFERENCES closingentrymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.521 EAT [10979] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:48:42.521 EAT [10979] STATEMENT:  ALTER TABLE closingentrytransactionmodel ADD CONSTRAINT closingentrytransactionmodel_unit_model_id_fkey 
+	    FOREIGN KEY (unit_model_id) REFERENCES entityunitmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.522 EAT [10979] ERROR:  constraint "closingentrymodel_entity_model_id_fkey" for relation "closingentrymodel" already exists
+2025-06-09 14:48:42.522 EAT [10979] STATEMENT:  ALTER TABLE closingentrymodel ADD CONSTRAINT closingentrymodel_entity_model_id_fkey 
+	    FOREIGN KEY (entity_model_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.522 EAT [10979] ERROR:  constraint "closingentrymodel_ledger_model_id_fkey" for relation "closingentrymodel" already exists
+2025-06-09 14:48:42.522 EAT [10979] STATEMENT:  ALTER TABLE closingentrymodel ADD CONSTRAINT closingentrymodel_ledger_model_id_fkey 
+	    FOREIGN KEY (ledger_model_id) REFERENCES ledgermodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.522 EAT [10979] ERROR:  constraint "importjobmodel_bank_account_model_id_fkey" for relation "importjobmodel" already exists
+2025-06-09 14:48:42.522 EAT [10979] STATEMENT:  ALTER TABLE importjobmodel ADD CONSTRAINT importjobmodel_bank_account_model_id_fkey 
+	    FOREIGN KEY (bank_account_model_id) REFERENCES bankaccountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.522 EAT [10979] ERROR:  constraint "importjobmodel_ledger_model_id_fkey" for relation "importjobmodel" already exists
+2025-06-09 14:48:42.522 EAT [10979] STATEMENT:  ALTER TABLE importjobmodel ADD CONSTRAINT importjobmodel_ledger_model_id_fkey 
+	    FOREIGN KEY (ledger_model_id) REFERENCES ledgermodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.523 EAT [10979] ERROR:  constraint "stagedtransactionmodel_account_model_id_fkey" for relation "stagedtransactionmodel" already exists
+2025-06-09 14:48:42.523 EAT [10979] STATEMENT:  ALTER TABLE stagedtransactionmodel ADD CONSTRAINT stagedtransactionmodel_account_model_id_fkey 
+	    FOREIGN KEY (account_model_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.523 EAT [10979] ERROR:  constraint "stagedtransactionmodel_import_job_id_fkey" for relation "stagedtransactionmodel" already exists
+2025-06-09 14:48:42.523 EAT [10979] STATEMENT:  ALTER TABLE stagedtransactionmodel ADD CONSTRAINT stagedtransactionmodel_import_job_id_fkey 
+	    FOREIGN KEY (import_job_id) REFERENCES importjobmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.523 EAT [10979] ERROR:  constraint "stagedtransactionmodel_transaction_model_id_fkey" for relation "stagedtransactionmodel" already exists
+2025-06-09 14:48:42.523 EAT [10979] STATEMENT:  ALTER TABLE stagedtransactionmodel ADD CONSTRAINT stagedtransactionmodel_transaction_model_id_fkey 
+	    FOREIGN KEY (transaction_model_id) REFERENCES transactionmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.523 EAT [10979] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:48:42.523 EAT [10979] STATEMENT:  ALTER TABLE stagedtransactionmodel ADD CONSTRAINT stagedtransactionmodel_unit_model_id_fkey 
+	    FOREIGN KEY (unit_model_id) REFERENCES entityunitmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.524 EAT [10979] ERROR:  constraint "stagedtransactionmodel_parent_id_fkey" for relation "stagedtransactionmodel" already exists
+2025-06-09 14:48:42.524 EAT [10979] STATEMENT:  ALTER TABLE stagedtransactionmodel ADD CONSTRAINT stagedtransactionmodel_parent_id_fkey 
+	    FOREIGN KEY (parent_id) REFERENCES stagedtransactionmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.524 EAT [10979] ERROR:  constraint "chartofaccountmodel_entity_id_fkey" for relation "chartofaccountmodel" already exists
+2025-06-09 14:48:42.524 EAT [10979] STATEMENT:  ALTER TABLE chartofaccountmodel ADD CONSTRAINT chartofaccountmodel_entity_id_fkey 
+	    FOREIGN KEY (entity_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.525 EAT [10979] ERROR:  constraint "accountmodel_coa_model_id_fkey" for relation "accountmodel" already exists
+2025-06-09 14:48:42.525 EAT [10979] STATEMENT:  ALTER TABLE accountmodel ADD CONSTRAINT accountmodel_coa_model_id_fkey 
+	    FOREIGN KEY (coa_model_id) REFERENCES chartofaccountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.525 EAT [10979] ERROR:  constraint "transactionmodel_account_id_fkey" for relation "transactionmodel" already exists
+2025-06-09 14:48:42.525 EAT [10979] STATEMENT:  ALTER TABLE transactionmodel ADD CONSTRAINT transactionmodel_account_id_fkey 
+	    FOREIGN KEY (account_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.525 EAT [10979] ERROR:  constraint "transactionmodel_journal_entry_id_fkey" for relation "transactionmodel" already exists
+2025-06-09 14:48:42.525 EAT [10979] STATEMENT:  ALTER TABLE transactionmodel ADD CONSTRAINT transactionmodel_journal_entry_id_fkey 
+	    FOREIGN KEY (journal_entry_id) REFERENCES journalentrymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.526 EAT [10979] ERROR:  constraint "bankaccountmodel_entity_model_id_fkey" for relation "bankaccountmodel" already exists
+2025-06-09 14:48:42.526 EAT [10979] STATEMENT:  ALTER TABLE bankaccountmodel ADD CONSTRAINT bankaccountmodel_entity_model_id_fkey 
+	    FOREIGN KEY (entity_model_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.526 EAT [10979] ERROR:  constraint "bankaccountmodel_account_model_id_fkey" for relation "bankaccountmodel" already exists
+2025-06-09 14:48:42.526 EAT [10979] STATEMENT:  ALTER TABLE bankaccountmodel ADD CONSTRAINT bankaccountmodel_account_model_id_fkey 
+	    FOREIGN KEY (account_model_id) REFERENCES accountmodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:48:42.526 EAT [10979] ERROR:  constraint "vendormodel_entity_model_id_fkey" for relation "vendormodel" already exists
+2025-06-09 14:48:42.526 EAT [10979] STATEMENT:  ALTER TABLE vendormodel ADD CONSTRAINT vendormodel_entity_model_id_fkey 
+	    FOREIGN KEY (entity_model_id) REFERENCES entitymodel (uuid) DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:49:02.755 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 14:49:02.801 EAT [20801] LOG:  checkpoint complete: wrote 47 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.019 s, sync=0.009 s, total=0.047 s; sync files=19, longest=0.001 s, average=0.001 s; distance=980 kB, estimate=4947 kB; lsn=0/6C610498, redo lsn=0/6C610440
+2025-06-09 14:51:25.949 EAT [9998] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:51:25.949 EAT [9998] STATEMENT:  ALTER TABLE stagedtransactionmodel
+	ADD CONSTRAINT stagedtransactionmodel_unit_model_id_fkey
+	FOREIGN KEY (unit_model_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:51:25.976 EAT [9998] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:51:25.976 EAT [9998] STATEMENT:  ALTER TABLE itemtransactionmodel
+	ADD CONSTRAINT itemtransactionmodel_entity_unit_id_fkey
+	FOREIGN KEY (entity_unit_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:51:26.008 EAT [9998] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:51:26.008 EAT [9998] STATEMENT:  ALTER TABLE entitystatemodel
+	ADD CONSTRAINT entitystatemodel_entity_unit_id_fkey
+	FOREIGN KEY (entity_unit_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:51:26.010 EAT [9998] ERROR:  relation "auth_user" does not exist
+2025-06-09 14:51:26.010 EAT [9998] STATEMENT:  ALTER TABLE entitymanagementmodel
+	ADD CONSTRAINT entitymanagementmodel_user_id_fkey
+	FOREIGN KEY (user_id)
+	REFERENCES auth_user (id)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:51:26.042 EAT [9998] ERROR:  relation "auth_user" does not exist
+2025-06-09 14:51:26.042 EAT [9998] STATEMENT:  ALTER TABLE entitymodel
+	ADD CONSTRAINT entitymodel_admin_id_fkey
+	FOREIGN KEY (admin_id)
+	REFERENCES auth_user (id)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:51:26.044 EAT [9998] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:51:26.044 EAT [9998] STATEMENT:  ALTER TABLE journalentrymodel
+	ADD CONSTRAINT journalentrymodel_entity_unit_id_fkey
+	FOREIGN KEY (entity_unit_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:51:26.054 EAT [9998] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:51:26.054 EAT [9998] STATEMENT:  ALTER TABLE closingentrytransactionmodel
+	ADD CONSTRAINT closingentrytransactionmodel_unit_model_id_fkey
+	FOREIGN KEY (unit_model_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:54:02.900 EAT [20801] LOG:  checkpoint starting: time
+2025-06-09 14:55:41.461 EAT [20801] LOG:  checkpoint complete: wrote 983 buffers (6.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=98.487 s, sync=0.050 s, total=98.562 s; sync files=392, longest=0.003 s, average=0.001 s; distance=4972 kB, estimate=4972 kB; lsn=0/6CAEB7C0, redo lsn=0/6CAEB730
+2025-06-09 14:58:20.061 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 14:58:20.080 EAT [20801] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.001 s, total=0.020 s; sync files=2, longest=0.001 s, average=0.001 s; distance=3 kB, estimate=4475 kB; lsn=0/6CAEC3E8, redo lsn=0/6CAEC390
+2025-06-09 14:58:22.833 EAT [12374] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:58:22.833 EAT [12374] STATEMENT:  ALTER TABLE stagedtransactionmodel
+	ADD CONSTRAINT stagedtransactionmodel_unit_model_id_fkey
+	FOREIGN KEY (unit_model_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:58:22.860 EAT [12374] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:58:22.860 EAT [12374] STATEMENT:  ALTER TABLE itemtransactionmodel
+	ADD CONSTRAINT itemtransactionmodel_entity_unit_id_fkey
+	FOREIGN KEY (entity_unit_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:58:22.889 EAT [12374] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:58:22.889 EAT [12374] STATEMENT:  ALTER TABLE entitystatemodel
+	ADD CONSTRAINT entitystatemodel_entity_unit_id_fkey
+	FOREIGN KEY (entity_unit_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:58:22.892 EAT [12374] ERROR:  relation "auth_user" does not exist
+2025-06-09 14:58:22.892 EAT [12374] STATEMENT:  ALTER TABLE entitymanagementmodel
+	ADD CONSTRAINT entitymanagementmodel_user_id_fkey
+	FOREIGN KEY (user_id)
+	REFERENCES auth_user (id)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:58:22.923 EAT [12374] ERROR:  relation "auth_user" does not exist
+2025-06-09 14:58:22.923 EAT [12374] STATEMENT:  ALTER TABLE entitymodel
+	ADD CONSTRAINT entitymodel_admin_id_fkey
+	FOREIGN KEY (admin_id)
+	REFERENCES auth_user (id)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:58:22.926 EAT [12374] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:58:22.926 EAT [12374] STATEMENT:  ALTER TABLE journalentrymodel
+	ADD CONSTRAINT journalentrymodel_entity_unit_id_fkey
+	FOREIGN KEY (entity_unit_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 14:58:22.937 EAT [12374] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 14:58:22.937 EAT [12374] STATEMENT:  ALTER TABLE closingentrytransactionmodel
+	ADD CONSTRAINT closingentrytransactionmodel_unit_model_id_fkey
+	FOREIGN KEY (unit_model_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:03:20.126 EAT [20801] LOG:  checkpoint starting: time
+2025-06-09 15:04:10.048 EAT [20801] LOG:  checkpoint complete: wrote 500 buffers (3.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=49.905 s, sync=0.002 s, total=49.922 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4975 kB, estimate=4975 kB; lsn=0/6CFC9888, redo lsn=0/6CFC8198
+2025-06-09 15:04:10.049 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 15:04:10.064 EAT [20801] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.002 s, total=0.015 s; sync files=2, longest=0.001 s, average=0.001 s; distance=5 kB, estimate=4478 kB; lsn=0/6CFC9958, redo lsn=0/6CFC9900
+2025-06-09 15:04:11.557 EAT [13545] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 15:04:11.557 EAT [13545] STATEMENT:  ALTER TABLE stagedtransactionmodel
+	ADD CONSTRAINT stagedtransactionmodel_unit_model_id_fkey
+	FOREIGN KEY (unit_model_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:04:11.615 EAT [13545] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 15:04:11.615 EAT [13545] STATEMENT:  ALTER TABLE entitystatemodel
+	ADD CONSTRAINT entitystatemodel_entity_unit_id_fkey
+	FOREIGN KEY (entity_unit_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:04:11.617 EAT [13545] ERROR:  relation "auth_user" does not exist
+2025-06-09 15:04:11.617 EAT [13545] STATEMENT:  ALTER TABLE entitymanagementmodel
+	ADD CONSTRAINT entitymanagementmodel_user_id_fkey
+	FOREIGN KEY (user_id)
+	REFERENCES auth_user (id)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:04:11.649 EAT [13545] ERROR:  relation "auth_user" does not exist
+2025-06-09 15:04:11.649 EAT [13545] STATEMENT:  ALTER TABLE entitymodel
+	ADD CONSTRAINT entitymodel_admin_id_fkey
+	FOREIGN KEY (admin_id)
+	REFERENCES auth_user (id)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:04:11.652 EAT [13545] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 15:04:11.652 EAT [13545] STATEMENT:  ALTER TABLE journalentrymodel
+	ADD CONSTRAINT journalentrymodel_entity_unit_id_fkey
+	FOREIGN KEY (entity_unit_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:04:11.661 EAT [13545] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 15:04:11.661 EAT [13545] STATEMENT:  ALTER TABLE closingentrytransactionmodel
+	ADD CONSTRAINT closingentrytransactionmodel_unit_model_id_fkey
+	FOREIGN KEY (unit_model_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:04:54.038 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 15:04:54.066 EAT [20801] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.004 s, sync=0.004 s, total=0.028 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4973 kB, estimate=4973 kB; lsn=0/6D4A4F28, redo lsn=0/6D4A4ED0
+2025-06-09 15:04:55.292 EAT [13727] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 15:04:55.292 EAT [13727] STATEMENT:  ALTER TABLE entitystatemodel
+	ADD CONSTRAINT entitystatemodel_entity_unit_id_fkey
+	FOREIGN KEY (entity_unit_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:04:55.294 EAT [13727] ERROR:  relation "auth_user" does not exist
+2025-06-09 15:04:55.294 EAT [13727] STATEMENT:  ALTER TABLE entitymanagementmodel
+	ADD CONSTRAINT entitymanagementmodel_user_id_fkey
+	FOREIGN KEY (user_id)
+	REFERENCES auth_user (id)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:04:55.323 EAT [13727] ERROR:  relation "auth_user" does not exist
+2025-06-09 15:04:55.323 EAT [13727] STATEMENT:  ALTER TABLE entitymodel
+	ADD CONSTRAINT entitymodel_admin_id_fkey
+	FOREIGN KEY (admin_id)
+	REFERENCES auth_user (id)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:04:55.326 EAT [13727] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 15:04:55.326 EAT [13727] STATEMENT:  ALTER TABLE journalentrymodel
+	ADD CONSTRAINT journalentrymodel_entity_unit_id_fkey
+	FOREIGN KEY (entity_unit_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:04:55.335 EAT [13727] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 15:04:55.335 EAT [13727] STATEMENT:  ALTER TABLE closingentrytransactionmodel
+	ADD CONSTRAINT closingentrytransactionmodel_unit_model_id_fkey
+	FOREIGN KEY (unit_model_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:05:24.641 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 15:05:24.660 EAT [20801] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.004 s, total=0.020 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4976 kB, estimate=4976 kB; lsn=0/6D981018, redo lsn=0/6D980FC0
+2025-06-09 15:05:26.674 EAT [13951] ERROR:  relation "auth_user" does not exist
+2025-06-09 15:05:26.674 EAT [13951] STATEMENT:  ALTER TABLE entitymanagementmodel
+	ADD CONSTRAINT entitymanagementmodel_user_id_fkey
+	FOREIGN KEY (user_id)
+	REFERENCES auth_user (id)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:05:26.705 EAT [13951] ERROR:  relation "auth_user" does not exist
+2025-06-09 15:05:26.705 EAT [13951] STATEMENT:  ALTER TABLE entitymodel
+	ADD CONSTRAINT entitymodel_admin_id_fkey
+	FOREIGN KEY (admin_id)
+	REFERENCES auth_user (id)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:05:26.707 EAT [13951] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 15:05:26.707 EAT [13951] STATEMENT:  ALTER TABLE journalentrymodel
+	ADD CONSTRAINT journalentrymodel_entity_unit_id_fkey
+	FOREIGN KEY (entity_unit_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:05:26.717 EAT [13951] ERROR:  relation "entityunitmodel" does not exist
+2025-06-09 15:05:26.717 EAT [13951] STATEMENT:  ALTER TABLE closingentrytransactionmodel
+	ADD CONSTRAINT closingentrytransactionmodel_unit_model_id_fkey
+	FOREIGN KEY (unit_model_id)
+	REFERENCES entityunitmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-09 15:09:02.134 EAT [20801] LOG:  checkpoint starting: immediate force wait
+2025-06-09 15:09:02.154 EAT [20801] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.004 s, total=0.020 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4973 kB, estimate=4976 kB; lsn=0/6DE5C7D0, redo lsn=0/6DE5C778
+2025-06-09 15:14:02.193 EAT [20801] LOG:  checkpoint starting: time
+2025-06-09 15:15:41.900 EAT [20801] LOG:  checkpoint complete: wrote 983 buffers (6.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=99.482 s, sync=0.174 s, total=99.707 s; sync files=392, longest=0.005 s, average=0.001 s; distance=4976 kB, estimate=4976 kB; lsn=0/6E338A30, redo lsn=0/6E3389A0

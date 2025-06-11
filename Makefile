@@ -11,7 +11,8 @@ BIN=$(abspath ~/go/bin)
 # Set to use a different compiler. For example, `GO=go1.18rc1 make test`.
 GO ?= go
 .DEFAULT_GOAL := help
-DB_URL=postgresql://admin:admin@localhost:5432/flight?sslmode=disable
+MIGRATION_PATH="db/django/migration"
+DB_URL=postgresql://admin:admin@localhost:5432/ledger?sslmode=disable
 # DB_URL=postgres://wegmjdaf:khexFaRIW0eslZ6GPRY5VFyCM7w_vMVc@tyke.db.elephantsql.com/wegmjdaf?sslmode=disable
 API_VERSION := v1
 PROTO := pkg/api/$(API_VERSION)/proto
@@ -50,15 +51,15 @@ createdb: ## create postgres database
 dropdb:  ## drop postgres database
 	@dropdb flight
 migrateup:  ## migrates up   last one version of thev database schema 	
-	@migrate -path db/migration -database "$(DB_URL)" -verbose up
+	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose up
 migratedown:  ## brings down  last one version of thev database schema 
-	@migrate -path db/migration -database "$(DB_URL)" -verbose down 
+	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose down 
 
 migratedrop: ##  drops database schema
-	@migrate -path db/migration -database "$(DB_URL)" -verbose drop
+	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose drop
 
 migrateCreate: ## create new migration file
-	migrate create -ext sql -dir db/migration/ -digits 2 -seq $(name) -verbose
+	migrate create -ext sql -dir "$(MIGRATION_PATH)" -digits 2 -seq $(name) -verbose
 
 
 sqlc: ## generates go files from sql Query files using config files  in ./sqlc.yaml

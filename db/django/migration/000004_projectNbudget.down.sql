@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS Budgets;
+DROP TABLE IF EXISTS projects;
+
