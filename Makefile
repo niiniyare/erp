@@ -9,10 +9,11 @@ MAKEFLAGS += --no-print-directory
 BIN=$(abspath ~/go/bin)
 
 # Set to use a different compiler. For example, `GO=go1.18rc1 make test`.
+DB_NAME="ledger"
 GO ?= go
 .DEFAULT_GOAL := help
 MIGRATION_PATH="db/django/migration"
-DB_URL=postgresql://admin:admin@localhost:5432/ledger?sslmode=disable
+DB_URL=postgresql://admin:admin@localhost:5432/$(DB_NAME)?sslmode=disable
 # DB_URL=postgres://wegmjdaf:khexFaRIW0eslZ6GPRY5VFyCM7w_vMVc@tyke.db.elephantsql.com/wegmjdaf?sslmode=disable
 API_VERSION := v1
 PROTO := pkg/api/$(API_VERSION)/proto
@@ -47,9 +48,9 @@ server:
 	
 
 createdb: ## create postgres database
-	@createdb --username="$(DB_USER)" --owner="$(DB_PSSWD)" flight
+	@createdb --username="$(DB_USER)" --owner="$(DB_PSSWD)" $(DB_NAME)
 dropdb:  ## drop postgres database
-	@dropdb flight
+	@dropdb $(DB_NAME)
 migrateup:  ## migrates up   last one version of thev database schema 	
 	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose up
 migratedown:  ## brings down  last one version of thev database schema 

@@ -17,7 +17,7 @@ CREATE EXTENSION IF NOT EXISTS fuzzystrmatch WITH SCHEMA public;
 
 
 
-CREATE TYPE public.entity_type AS ENUM (
+CREATE TYPE entity_type AS ENUM (
     'COMPANY',
     'REGIONAL',
     'DEPARTMENT',
@@ -26,7 +26,7 @@ CREATE TYPE public.entity_type AS ENUM (
 
 
 
-CREATE TYPE public.financial_year_status_enum AS ENUM (
+CREATE TYPE financial_year_status_enum AS ENUM (
     'OPEN',
     'CURRENT_FINANCIAL_YEAR',
     'CLOSED'
@@ -34,7 +34,7 @@ CREATE TYPE public.financial_year_status_enum AS ENUM (
 
 
 
-CREATE FUNCTION public.avgcost(integer) RETURNS double precision
+CREATE FUNCTION avgcost(integer) RETURNS double precision
     LANGUAGE plpgsql
     AS $_$
 
@@ -69,7 +69,7 @@ $_$;
 
 
 
-CREATE FUNCTION public.check_department() RETURNS trigger
+CREATE FUNCTION check_department() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 
@@ -97,7 +97,7 @@ $$;
 
 
 
-CREATE FUNCTION public.del_customer() RETURNS trigger
+CREATE FUNCTION del_customer() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 begin
@@ -111,7 +111,7 @@ $$;
 
 
 
-CREATE FUNCTION public.del_recurring() RETURNS trigger
+CREATE FUNCTION del_recurring() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 begin
@@ -124,7 +124,7 @@ $$;
 
 
 
-CREATE FUNCTION public.del_vendor() RETURNS trigger
+CREATE FUNCTION del_vendor() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 begin
@@ -138,7 +138,7 @@ $$;
 
 
 
-CREATE FUNCTION public.del_yearend() RETURNS trigger
+CREATE FUNCTION del_yearend() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 begin
@@ -149,7 +149,7 @@ $$;
 
 
 
-CREATE FUNCTION public.lastcost(integer) RETURNS double precision
+CREATE FUNCTION lastcost(integer) RETURNS double precision
     LANGUAGE plpgsql
     AS $_$
  
@@ -176,13 +176,13 @@ $_$;
 
 
 
-CREATE FUNCTION public.to_filtered_tsvector(input text, filter_type text DEFAULT 'COMMON'::text, ts_config regconfig DEFAULT 'simple'::regconfig) RETURNS tsvector
+CREATE FUNCTION to_filtered_tsvector(input text, filter_type text DEFAULT 'COMMON'::text, ts_config regconfig DEFAULT 'simple'::regconfig) RETURNS tsvector
     LANGUAGE plpgsql
     AS $$ DECLARE filtered_input TEXT; BEGIN SELECT string_agg(input_word, ' ') INTO filtered_input FROM unnest(string_to_array(input, ' ')) AS input_word WHERE lower(input_word) NOT IN (SELECT lower(word) FROM search_irrelevant_words WHERE search_target = 'COMMON' OR search_target = filter_type); RETURN to_tsvector(ts_config, filtered_input); END; $$;
 
 
 
-CREATE FUNCTION public.update_entity_paths() RETURNS trigger
+CREATE FUNCTION update_entity_paths() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -204,7 +204,7 @@ $$;
 
 
 
-CREATE FUNCTION public.update_timestamps() RETURNS trigger
+CREATE FUNCTION update_timestamps() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -215,7 +215,7 @@ $$;
 
 
 
-CREATE SEQUENCE public.entry_id
+CREATE SEQUENCE entry_id
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -228,7 +228,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 
-CREATE TABLE public.acc_trans (
+CREATE TABLE acc_trans (
     trans_id integer,
     chart_id integer NOT NULL,
     amount double precision,
@@ -241,7 +241,7 @@ CREATE TABLE public.acc_trans (
     id integer,
     cleared boolean DEFAULT false,
     vr_id integer,
-    entry_id integer DEFAULT nextval('public.entry_id'::regclass),
+    entry_id integer DEFAULT nextval('entry_id'::regclass),
     tax text,
     taxamount double precision,
     tax_chart_id integer,
@@ -251,7 +251,7 @@ CREATE TABLE public.acc_trans (
 
 
 
-CREATE TABLE public.acc_trans_log (
+CREATE TABLE acc_trans_log (
     trans_id integer,
     chart_id integer,
     amount double precision,
@@ -275,7 +275,7 @@ CREATE TABLE public.acc_trans_log (
 
 
 
-CREATE TABLE public.acc_trans_log_deleted (
+CREATE TABLE acc_trans_log_deleted (
     trans_id integer,
     chart_id integer,
     amount double precision,
@@ -299,7 +299,7 @@ CREATE TABLE public.acc_trans_log_deleted (
 
 
 
-CREATE SEQUENCE public.addressid
+CREATE SEQUENCE addressid
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -308,8 +308,8 @@ CREATE SEQUENCE public.addressid
 
 
 
-CREATE TABLE public.address (
-    id integer DEFAULT nextval('public.addressid'::regclass) NOT NULL,
+CREATE TABLE address (
+    id integer DEFAULT nextval('addressid'::regclass) NOT NULL,
     trans_id integer,
     address1 character varying(64),
     address2 character varying(64),
@@ -323,7 +323,7 @@ CREATE TABLE public.address (
 
 
 
-CREATE SEQUENCE public.id
+CREATE SEQUENCE id
     START WITH 10000
     INCREMENT BY 1
     NO MINVALUE
@@ -332,8 +332,8 @@ CREATE SEQUENCE public.id
 
 
 
-CREATE TABLE public.ap (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE ap (
+    id integer DEFAULT nextval('id'::regclass),
     invnumber text,
     transdate date DEFAULT CURRENT_DATE,
     vendor_id integer,
@@ -369,7 +369,7 @@ CREATE TABLE public.ap (
 
 
 
-CREATE TABLE public.ap_log (
+CREATE TABLE ap_log (
     id integer,
     invnumber text,
     transdate date,
@@ -404,7 +404,7 @@ CREATE TABLE public.ap_log (
 
 
 
-CREATE TABLE public.ap_log_deleted (
+CREATE TABLE ap_log_deleted (
     id integer,
     invnumber text,
     transdate date,
@@ -439,8 +439,8 @@ CREATE TABLE public.ap_log_deleted (
 
 
 
-CREATE TABLE public.ar (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE ar (
+    id integer DEFAULT nextval('id'::regclass),
     invnumber text,
     transdate date DEFAULT CURRENT_DATE,
     customer_id integer,
@@ -476,7 +476,7 @@ CREATE TABLE public.ar (
 
 
 
-CREATE TABLE public.ar_log (
+CREATE TABLE ar_log (
     id integer,
     invnumber text,
     transdate date,
@@ -511,7 +511,7 @@ CREATE TABLE public.ar_log (
 
 
 
-CREATE TABLE public.ar_log_deleted (
+CREATE TABLE ar_log_deleted (
     id integer,
     invnumber text,
     transdate date,
@@ -546,7 +546,7 @@ CREATE TABLE public.ar_log_deleted (
 
 
 
-CREATE SEQUENCE public.assemblyid
+CREATE SEQUENCE assemblyid
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -555,8 +555,8 @@ CREATE SEQUENCE public.assemblyid
 
 
 
-CREATE TABLE public.assembly (
-    id integer DEFAULT nextval('public.assemblyid'::regclass),
+CREATE TABLE assembly (
+    id integer DEFAULT nextval('assemblyid'::regclass),
     parts_id integer,
     qty double precision,
     bom boolean,
@@ -566,7 +566,7 @@ CREATE TABLE public.assembly (
 
 
 
-CREATE TABLE public.audittrail (
+CREATE TABLE audittrail (
     trans_id integer,
     tablename text,
     reference text,
@@ -578,12 +578,12 @@ CREATE TABLE public.audittrail (
 
 
 
-CREATE TABLE public.bank (
+CREATE TABLE bank (
     id integer,
     name character varying(64),
     iban character varying(34),
     bic character varying(11),
-    address_id integer DEFAULT nextval('public.addressid'::regclass),
+    address_id integer DEFAULT nextval('addressid'::regclass),
     dcn text,
     rvc text,
     strdbkginf text,
@@ -594,7 +594,7 @@ CREATE TABLE public.bank (
 
 
 
-CREATE TABLE public.bank_account (
+CREATE TABLE bank_account (
     id integer NOT NULL,
     bic text,
     iban text,
@@ -616,8 +616,8 @@ CREATE TABLE public.bank_account (
 
 
 
-ALTER TABLE public.bank_account ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
-    SEQUENCE NAME public.bank_account_id_seq
+ALTER TABLE bank_account ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME bank_account_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -627,15 +627,15 @@ ALTER TABLE public.bank_account ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDEN
 
 
 
-CREATE TABLE public.banking_import_event (
+CREATE TABLE banking_import_event (
     id bigint NOT NULL,
     delegated_to text
 );
 
 
 
-ALTER TABLE public.banking_import_event ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
-    SEQUENCE NAME public.banking_import_event_id_seq
+ALTER TABLE banking_import_event ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME banking_import_event_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -645,7 +645,7 @@ ALTER TABLE public.banking_import_event ALTER COLUMN id ADD GENERATED BY DEFAULT
 
 
 
-CREATE TABLE public.blink_import_process (
+CREATE TABLE blink_import_process (
     id bigint NOT NULL,
     bank_account_id bigint NOT NULL,
     status text NOT NULL,
@@ -656,8 +656,8 @@ CREATE TABLE public.blink_import_process (
 
 
 
-ALTER TABLE public.blink_import_process ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
-    SEQUENCE NAME public.blink_import_process_id_seq
+ALTER TABLE blink_import_process ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME blink_import_process_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -667,7 +667,7 @@ ALTER TABLE public.blink_import_process ALTER COLUMN id ADD GENERATED BY DEFAULT
 
 
 
-CREATE TABLE public.blink_import_process_log (
+CREATE TABLE blink_import_process_log (
     id bigint NOT NULL,
     blink_import_process_id bigint NOT NULL,
     processed_target_id text NOT NULL,
@@ -678,8 +678,8 @@ CREATE TABLE public.blink_import_process_log (
 
 
 
-ALTER TABLE public.blink_import_process_log ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
-    SEQUENCE NAME public.blink_import_process_log_id_seq
+ALTER TABLE blink_import_process_log ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME blink_import_process_log_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -689,7 +689,7 @@ ALTER TABLE public.blink_import_process_log ALTER COLUMN id ADD GENERATED BY DEF
 
 
 
-CREATE TABLE public.booking_to_settlement (
+CREATE TABLE booking_to_settlement (
     id integer NOT NULL,
     booking_id integer NOT NULL,
     settlement_id integer NOT NULL
@@ -697,7 +697,7 @@ CREATE TABLE public.booking_to_settlement (
 
 
 
-CREATE SEQUENCE public.booking_to_settlement_id_seq
+CREATE SEQUENCE booking_to_settlement_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -707,12 +707,12 @@ CREATE SEQUENCE public.booking_to_settlement_id_seq
 
 
 
-ALTER SEQUENCE public.booking_to_settlement_id_seq OWNED BY public.booking_to_settlement.id;
+ALTER SEQUENCE booking_to_settlement_id_seq OWNED BY booking_to_settlement.id;
 
 
 
-CREATE TABLE public.br (
-    id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
+CREATE TABLE br (
+    id integer DEFAULT nextval('id'::regclass) NOT NULL,
     batchnumber text,
     description text,
     batch text,
@@ -725,8 +725,8 @@ CREATE TABLE public.br (
 
 
 
-CREATE TABLE public.build (
-    id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
+CREATE TABLE build (
+    id integer DEFAULT nextval('id'::regclass) NOT NULL,
     reference text,
     transdate date,
     department_id integer,
@@ -736,15 +736,15 @@ CREATE TABLE public.build (
 
 
 
-CREATE TABLE public.business (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE business (
+    id integer DEFAULT nextval('id'::regclass),
     description text,
     discount real
 );
 
 
 
-CREATE TABLE public.cargo (
+CREATE TABLE cargo (
     id integer NOT NULL,
     trans_id integer NOT NULL,
     package text,
@@ -755,8 +755,8 @@ CREATE TABLE public.cargo (
 
 
 
-CREATE TABLE public.chart (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE chart (
+    id integer DEFAULT nextval('id'::regclass),
     accno integer,
     description text,
     balance double precision,
@@ -772,7 +772,7 @@ CREATE TABLE public.chart (
 
 
 
-CREATE TABLE public.chat (
+CREATE TABLE chat (
     id integer NOT NULL,
     trans_id integer NOT NULL,
     message character varying(255) NOT NULL,
@@ -782,7 +782,7 @@ CREATE TABLE public.chat (
 
 
 
-CREATE SEQUENCE public.chat_id_seq
+CREATE SEQUENCE chat_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -792,11 +792,11 @@ CREATE SEQUENCE public.chat_id_seq
 
 
 
-ALTER SEQUENCE public.chat_id_seq OWNED BY public.chat.id;
+ALTER SEQUENCE chat_id_seq OWNED BY chat.id;
 
 
 
-CREATE SEQUENCE public.contactid
+CREATE SEQUENCE contactid
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -805,8 +805,8 @@ CREATE SEQUENCE public.contactid
 
 
 
-CREATE TABLE public.contact (
-    id integer DEFAULT nextval('public.contactid'::regclass) NOT NULL,
+CREATE TABLE contact (
+    id integer DEFAULT nextval('contactid'::regclass) NOT NULL,
     trans_id integer NOT NULL,
     salutation character varying(32),
     firstname character varying(32),
@@ -824,7 +824,7 @@ CREATE TABLE public.contact (
 
 
 
-CREATE TABLE public.credits (
+CREATE TABLE credits (
     id integer NOT NULL,
     reference text,
     description text,
@@ -835,7 +835,7 @@ CREATE TABLE public.credits (
 
 
 
-CREATE SEQUENCE public.credits_id_seq
+CREATE SEQUENCE credits_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -845,11 +845,11 @@ CREATE SEQUENCE public.credits_id_seq
 
 
 
-ALTER SEQUENCE public.credits_id_seq OWNED BY public.credits.id;
+ALTER SEQUENCE credits_id_seq OWNED BY credits.id;
 
 
 
-CREATE TABLE public.curr (
+CREATE TABLE curr (
     rn integer,
     curr character(3) NOT NULL,
     "precision" smallint
@@ -857,8 +857,8 @@ CREATE TABLE public.curr (
 
 
 
-CREATE TABLE public.customer (
-    id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
+CREATE TABLE customer (
+    id integer DEFAULT nextval('id'::regclass) NOT NULL,
     name character varying(64),
     contact character varying(64),
     phone character varying(20),
@@ -894,7 +894,7 @@ CREATE TABLE public.customer (
 
 
 
-CREATE TABLE public.customercart (
+CREATE TABLE customercart (
     cart_id character varying(32),
     customer_id integer,
     parts_id integer,
@@ -905,7 +905,7 @@ CREATE TABLE public.customercart (
 
 
 
-CREATE SEQUENCE public.customerloginid
+CREATE SEQUENCE customerloginid
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -914,8 +914,8 @@ CREATE SEQUENCE public.customerloginid
 
 
 
-CREATE TABLE public.customerlogin (
-    id integer DEFAULT nextval('public.customerloginid'::regclass) NOT NULL,
+CREATE TABLE customerlogin (
+    id integer DEFAULT nextval('customerloginid'::regclass) NOT NULL,
     login character varying(100),
     passwd character(32),
     session character(32),
@@ -925,14 +925,14 @@ CREATE TABLE public.customerlogin (
 
 
 
-CREATE TABLE public.customertax (
+CREATE TABLE customertax (
     customer_id integer,
     chart_id integer
 );
 
 
 
-CREATE TABLE public.debits (
+CREATE TABLE debits (
     id integer NOT NULL,
     reference text,
     description text,
@@ -943,7 +943,7 @@ CREATE TABLE public.debits (
 
 
 
-CREATE SEQUENCE public.debits_id_seq
+CREATE SEQUENCE debits_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -953,11 +953,11 @@ CREATE SEQUENCE public.debits_id_seq
 
 
 
-ALTER SEQUENCE public.debits_id_seq OWNED BY public.debits.id;
+ALTER SEQUENCE debits_id_seq OWNED BY debits.id;
 
 
 
-CREATE TABLE public.debitscredits (
+CREATE TABLE debitscredits (
     id integer NOT NULL,
     reference text,
     description text,
@@ -969,7 +969,7 @@ CREATE TABLE public.debitscredits (
 
 
 
-CREATE SEQUENCE public.debitscredits_id_seq
+CREATE SEQUENCE debitscredits_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -979,41 +979,41 @@ CREATE SEQUENCE public.debitscredits_id_seq
 
 
 
-ALTER SEQUENCE public.debitscredits_id_seq OWNED BY public.debitscredits.id;
+ALTER SEQUENCE debitscredits_id_seq OWNED BY debitscredits.id;
 
 
 
-CREATE TABLE public.defaults (
+CREATE TABLE defaults (
     fldname text,
     fldvalue text
 );
 
 
 
-CREATE TABLE public.department (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE department (
+    id integer DEFAULT nextval('id'::regclass),
     description text,
     role character(1) DEFAULT 'P'::bpchar
 );
 
 
 
-CREATE TABLE public.dispatch (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE dispatch (
+    id integer DEFAULT nextval('id'::regclass),
     description text
 );
 
 
 
-CREATE TABLE public.dpt_trans (
+CREATE TABLE dpt_trans (
     trans_id integer,
     department_id integer
 );
 
 
 
-CREATE TABLE public.employee (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE employee (
+    id integer DEFAULT nextval('id'::regclass),
     login text,
     name character varying(64),
     address1 character varying(32),
@@ -1040,10 +1040,10 @@ CREATE TABLE public.employee (
 
 
 
-CREATE TABLE public.entities (
+CREATE TABLE entities (
     id integer NOT NULL,
     name character varying(255) NOT NULL,
-    type public.entity_type NOT NULL,
+    type entity_type NOT NULL,
     parent_id integer,
     organization_id integer NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -1053,7 +1053,7 @@ CREATE TABLE public.entities (
 
 
 
-CREATE SEQUENCE public.entities_id_seq
+CREATE SEQUENCE entities_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -1063,11 +1063,11 @@ CREATE SEQUENCE public.entities_id_seq
 
 
 
-ALTER SEQUENCE public.entities_id_seq OWNED BY public.entities.id;
+ALTER SEQUENCE entities_id_seq OWNED BY entities.id;
 
 
 
-CREATE TABLE public.exchangerate (
+CREATE TABLE exchangerate (
     curr character(3),
     transdate date,
     buy double precision,
@@ -1076,7 +1076,7 @@ CREATE TABLE public.exchangerate (
 
 
 
-CREATE TABLE public.fifo (
+CREATE TABLE fifo (
     trans_id integer,
     transdate date,
     parts_id integer,
@@ -1089,7 +1089,7 @@ CREATE TABLE public.fifo (
 
 
 
-CREATE TABLE public.filtered (
+CREATE TABLE filtered (
     trans_id integer,
     entry_id integer DEFAULT 0,
     entry_id2 integer DEFAULT 0,
@@ -1099,17 +1099,17 @@ CREATE TABLE public.filtered (
 
 
 
-CREATE TABLE public.financial_year (
+CREATE TABLE financial_year (
     id integer NOT NULL,
     start_date date,
     end_date date,
-    status public.financial_year_status_enum,
+    status financial_year_status_enum,
     yearend_id integer
 );
 
 
 
-CREATE SEQUENCE public.financial_year_id_seq
+CREATE SEQUENCE financial_year_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -1119,19 +1119,19 @@ CREATE SEQUENCE public.financial_year_id_seq
 
 
 
-ALTER SEQUENCE public.financial_year_id_seq OWNED BY public.financial_year.id;
+ALTER SEQUENCE financial_year_id_seq OWNED BY financial_year.id;
 
 
 
-CREATE TABLE public.gifi (
+CREATE TABLE gifi (
     accno text,
     description text
 );
 
 
 
-CREATE TABLE public.gl (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE gl (
+    id integer DEFAULT nextval('id'::regclass),
     reference text,
     description text,
     transdate date DEFAULT CURRENT_DATE,
@@ -1147,7 +1147,7 @@ CREATE TABLE public.gl (
 
 
 
-CREATE TABLE public.gl_log (
+CREATE TABLE gl_log (
     id integer,
     reference text,
     description text,
@@ -1164,7 +1164,7 @@ CREATE TABLE public.gl_log (
 
 
 
-CREATE TABLE public.gl_log_deleted (
+CREATE TABLE gl_log_deleted (
     id integer,
     reference text,
     description text,
@@ -1181,7 +1181,7 @@ CREATE TABLE public.gl_log_deleted (
 
 
 
-CREATE TABLE public.hierarchy_paths (
+CREATE TABLE hierarchy_paths (
     ancestor_id integer NOT NULL,
     descendant_id integer NOT NULL,
     depth integer NOT NULL
@@ -1189,7 +1189,7 @@ CREATE TABLE public.hierarchy_paths (
 
 
 
-CREATE SEQUENCE public.inventoryid
+CREATE SEQUENCE inventoryid
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1198,8 +1198,8 @@ CREATE SEQUENCE public.inventoryid
 
 
 
-CREATE TABLE public.inventory (
-    id integer DEFAULT nextval('public.inventoryid'::regclass),
+CREATE TABLE inventory (
+    id integer DEFAULT nextval('inventoryid'::regclass),
     warehouse_id integer,
     parts_id integer,
     trans_id integer,
@@ -1220,7 +1220,7 @@ CREATE TABLE public.inventory (
 
 
 
-CREATE SEQUENCE public.invoiceid
+CREATE SEQUENCE invoiceid
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1229,8 +1229,8 @@ CREATE SEQUENCE public.invoiceid
 
 
 
-CREATE TABLE public.invoice (
-    id integer DEFAULT nextval('public.invoiceid'::regclass),
+CREATE TABLE invoice (
+    id integer DEFAULT nextval('invoiceid'::regclass),
     trans_id integer,
     parts_id integer,
     description text,
@@ -1248,7 +1248,7 @@ CREATE TABLE public.invoice (
 
 
 
-CREATE TABLE public.invoice_log (
+CREATE TABLE invoice_log (
     id integer,
     trans_id integer,
     parts_id integer,
@@ -1268,7 +1268,7 @@ CREATE TABLE public.invoice_log (
 
 
 
-CREATE TABLE public.invoice_log_deleted (
+CREATE TABLE invoice_log_deleted (
     trans_id integer,
     chart_id integer,
     amount double precision,
@@ -1292,7 +1292,7 @@ CREATE TABLE public.invoice_log_deleted (
 
 
 
-CREATE TABLE public.invoicetax (
+CREATE TABLE invoicetax (
     trans_id integer,
     invoice_id integer,
     chart_id integer,
@@ -1302,7 +1302,7 @@ CREATE TABLE public.invoicetax (
 
 
 
-CREATE SEQUENCE public.jcitemsid
+CREATE SEQUENCE jcitemsid
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1311,8 +1311,8 @@ CREATE SEQUENCE public.jcitemsid
 
 
 
-CREATE TABLE public.jcitems (
-    id integer DEFAULT nextval('public.jcitemsid'::regclass),
+CREATE TABLE jcitems (
+    id integer DEFAULT nextval('jcitemsid'::regclass),
     project_id integer,
     parts_id integer,
     description text,
@@ -1329,14 +1329,14 @@ CREATE TABLE public.jcitems (
 
 
 
-CREATE TABLE public.language (
+CREATE TABLE language (
     code character varying(6),
     description text
 );
 
 
 
-CREATE TABLE public.lastused (
+CREATE TABLE lastused (
     id integer NOT NULL,
     report character varying(40),
     cols text,
@@ -1345,7 +1345,7 @@ CREATE TABLE public.lastused (
 
 
 
-CREATE SEQUENCE public.lastused_id_seq
+CREATE SEQUENCE lastused_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -1355,11 +1355,11 @@ CREATE SEQUENCE public.lastused_id_seq
 
 
 
-ALTER SEQUENCE public.lastused_id_seq OWNED BY public.lastused.id;
+ALTER SEQUENCE lastused_id_seq OWNED BY lastused.id;
 
 
 
-CREATE TABLE public.makemodel (
+CREATE TABLE makemodel (
     parts_id integer,
     make text,
     model text
@@ -1367,8 +1367,8 @@ CREATE TABLE public.makemodel (
 
 
 
-CREATE TABLE public.oe (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE oe (
+    id integer DEFAULT nextval('id'::regclass),
     ordnumber text,
     transdate date DEFAULT CURRENT_DATE,
     vendor_id integer,
@@ -1399,8 +1399,8 @@ CREATE TABLE public.oe (
 
 
 
-CREATE TABLE public.oldchart (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE oldchart (
+    id integer DEFAULT nextval('id'::regclass),
     accno text NOT NULL,
     description text,
     parent_id integer,
@@ -1415,7 +1415,7 @@ CREATE TABLE public.oldchart (
 
 
 
-CREATE SEQUENCE public.orderitemsid
+CREATE SEQUENCE orderitemsid
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1424,8 +1424,8 @@ CREATE SEQUENCE public.orderitemsid
 
 
 
-CREATE TABLE public.orderitems (
-    id integer DEFAULT nextval('public.orderitemsid'::regclass),
+CREATE TABLE orderitems (
+    id integer DEFAULT nextval('orderitemsid'::regclass),
     trans_id integer,
     parts_id integer,
     description text,
@@ -1446,7 +1446,7 @@ CREATE TABLE public.orderitems (
 
 
 
-CREATE TABLE public.org (
+CREATE TABLE org (
     id integer NOT NULL,
     name character varying(255) NOT NULL,
     hierarchy_level integer DEFAULT 1 NOT NULL,
@@ -1457,7 +1457,7 @@ CREATE TABLE public.org (
 
 
 
-CREATE SEQUENCE public.org_id_seq
+CREATE SEQUENCE org_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -1467,12 +1467,12 @@ CREATE SEQUENCE public.org_id_seq
 
 
 
-ALTER SEQUENCE public.org_id_seq OWNED BY public.org.id;
+ALTER SEQUENCE org_id_seq OWNED BY org.id;
 
 
 
-CREATE TABLE public.parts (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE parts (
+    id integer DEFAULT nextval('id'::regclass),
     partnumber text,
     description text,
     unit character varying(5),
@@ -1507,14 +1507,14 @@ CREATE TABLE public.parts (
 
 
 
-CREATE TABLE public.partsattr (
+CREATE TABLE partsattr (
     parts_id integer,
     hotnew character varying(3)
 );
 
 
 
-CREATE TABLE public.partscustomer (
+CREATE TABLE partscustomer (
     parts_id integer,
     customer_id integer,
     pricegroup_id integer,
@@ -1527,22 +1527,22 @@ CREATE TABLE public.partscustomer (
 
 
 
-CREATE TABLE public.partsgroup (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE partsgroup (
+    id integer DEFAULT nextval('id'::regclass),
     partsgroup text,
     pos boolean DEFAULT true
 );
 
 
 
-CREATE TABLE public.partstax (
+CREATE TABLE partstax (
     parts_id integer,
     chart_id integer
 );
 
 
 
-CREATE TABLE public.partsvendor (
+CREATE TABLE partsvendor (
     vendor_id integer,
     parts_id integer,
     partnumber text,
@@ -1553,7 +1553,7 @@ CREATE TABLE public.partsvendor (
 
 
 
-CREATE TABLE public.payment (
+CREATE TABLE payment (
     id integer NOT NULL,
     trans_id integer NOT NULL,
     exchangerate double precision DEFAULT 1,
@@ -1562,8 +1562,8 @@ CREATE TABLE public.payment (
 
 
 
-CREATE TABLE public.paymentmethod (
-    id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
+CREATE TABLE paymentmethod (
+    id integer DEFAULT nextval('id'::regclass) NOT NULL,
     description text,
     fee double precision,
     rn integer
@@ -1571,15 +1571,15 @@ CREATE TABLE public.paymentmethod (
 
 
 
-CREATE TABLE public.pricegroup (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE pricegroup (
+    id integer DEFAULT nextval('id'::regclass),
     pricegroup text
 );
 
 
 
-CREATE TABLE public.project (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE project (
+    id integer DEFAULT nextval('id'::regclass),
     projectnumber text,
     description text,
     startdate date,
@@ -1592,7 +1592,7 @@ CREATE TABLE public.project (
 
 
 
-CREATE TABLE public.recurring (
+CREATE TABLE recurring (
     id integer,
     reference text,
     startdate date,
@@ -1607,7 +1607,7 @@ CREATE TABLE public.recurring (
 
 
 
-CREATE TABLE public.recurringemail (
+CREATE TABLE recurringemail (
     id integer,
     formname text,
     format text,
@@ -1616,7 +1616,7 @@ CREATE TABLE public.recurringemail (
 
 
 
-CREATE TABLE public.recurringprint (
+CREATE TABLE recurringprint (
     id integer,
     formname text,
     format text,
@@ -1625,8 +1625,8 @@ CREATE TABLE public.recurringprint (
 
 
 
-CREATE TABLE public.report (
-    reportid integer DEFAULT nextval('public.id'::regclass) NOT NULL,
+CREATE TABLE report (
+    reportid integer DEFAULT nextval('id'::regclass) NOT NULL,
     reportcode text,
     reportdescription text,
     login text
@@ -1634,7 +1634,7 @@ CREATE TABLE public.report (
 
 
 
-CREATE TABLE public.reportvars (
+CREATE TABLE reportvars (
     reportid integer NOT NULL,
     reportvariable text,
     reportvalue text
@@ -1642,14 +1642,14 @@ CREATE TABLE public.reportvars (
 
 
 
-CREATE TABLE public.schema_migrations (
+CREATE TABLE schema_migrations (
     version bigint NOT NULL,
     dirty boolean NOT NULL
 );
 
 
 
-CREATE TABLE public.search_irrelevant_words (
+CREATE TABLE search_irrelevant_words (
     id integer NOT NULL,
     search_target text NOT NULL,
     word text NOT NULL
@@ -1657,7 +1657,7 @@ CREATE TABLE public.search_irrelevant_words (
 
 
 
-CREATE SEQUENCE public.search_irrelevant_words_id_seq
+CREATE SEQUENCE search_irrelevant_words_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -1667,11 +1667,11 @@ CREATE SEQUENCE public.search_irrelevant_words_id_seq
 
 
 
-ALTER SEQUENCE public.search_irrelevant_words_id_seq OWNED BY public.search_irrelevant_words.id;
+ALTER SEQUENCE search_irrelevant_words_id_seq OWNED BY search_irrelevant_words.id;
 
 
 
-CREATE TABLE public.semaphore (
+CREATE TABLE semaphore (
     id integer,
     login text,
     module text,
@@ -1680,7 +1680,7 @@ CREATE TABLE public.semaphore (
 
 
 
-CREATE TABLE public.shipto (
+CREATE TABLE shipto (
     trans_id integer,
     shiptoname character varying(64),
     shiptoaddress1 character varying(32),
@@ -1697,7 +1697,7 @@ CREATE TABLE public.shipto (
 
 
 
-CREATE TABLE public.sic (
+CREATE TABLE sic (
     code character varying(6),
     sictype character(1),
     description text
@@ -1705,7 +1705,7 @@ CREATE TABLE public.sic (
 
 
 
-CREATE TABLE public.status (
+CREATE TABLE status (
     trans_id integer,
     formname text,
     printed boolean DEFAULT false,
@@ -1715,7 +1715,7 @@ CREATE TABLE public.status (
 
 
 
-CREATE TABLE public.tax (
+CREATE TABLE tax (
     chart_id integer,
     rate double precision,
     taxnumber text,
@@ -1729,7 +1729,7 @@ CREATE TABLE public.tax (
 
 
 
-CREATE SEQUENCE public.tax_id_seq
+CREATE SEQUENCE tax_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -1739,11 +1739,11 @@ CREATE SEQUENCE public.tax_id_seq
 
 
 
-ALTER SEQUENCE public.tax_id_seq OWNED BY public.tax.id;
+ALTER SEQUENCE tax_id_seq OWNED BY tax.id;
 
 
 
-CREATE TABLE public.translation (
+CREATE TABLE translation (
     trans_id integer,
     language_code character varying(6),
     description text
@@ -1751,8 +1751,8 @@ CREATE TABLE public.translation (
 
 
 
-CREATE TABLE public.trf (
-    id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
+CREATE TABLE trf (
+    id integer DEFAULT nextval('id'::regclass) NOT NULL,
     transdate date,
     trfnumber text,
     description text,
@@ -1766,7 +1766,7 @@ CREATE TABLE public.trf (
 
 
 
-CREATE TABLE public.users (
+CREATE TABLE users (
     id integer NOT NULL,
     email character varying(255) NOT NULL,
     full_name character varying(255) NOT NULL,
@@ -1779,7 +1779,7 @@ CREATE TABLE public.users (
 
 
 
-CREATE SEQUENCE public.users_id_seq
+CREATE SEQUENCE users_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -1789,11 +1789,11 @@ CREATE SEQUENCE public.users_id_seq
 
 
 
-ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+ALTER SEQUENCE users_id_seq OWNED BY users.id;
 
 
 
-CREATE VIEW public.v_active_users AS
+CREATE VIEW v_active_users AS
  SELECT u.id AS user_id,
     u.email,
     u.full_name,
@@ -1803,31 +1803,31 @@ CREATE VIEW public.v_active_users AS
     d.name AS department,
     cc.name AS cost_center,
     u.last_login_at
-   FROM (((((public.users u
-     JOIN public.entities cc ON ((u.entity_id = cc.id)))
-     JOIN public.entities d ON ((cc.parent_id = d.id)))
-     JOIN public.entities r ON ((d.parent_id = r.id)))
-     JOIN public.entities c ON ((r.parent_id = c.id)))
-     JOIN public.org o ON ((c.organization_id = o.id)))
+   FROM (((((users u
+     JOIN entities cc ON ((u.entity_id = cc.id)))
+     JOIN entities d ON ((cc.parent_id = d.id)))
+     JOIN entities r ON ((d.parent_id = r.id)))
+     JOIN entities c ON ((r.parent_id = c.id)))
+     JOIN org o ON ((c.organization_id = o.id)))
   WHERE ((u.deleted_at IS NULL) AND (u.last_login_at > (CURRENT_DATE - '90 days'::interval)) AND (cc.deleted_at IS NULL) AND (d.deleted_at IS NULL) AND (r.deleted_at IS NULL) AND (c.deleted_at IS NULL) AND (o.deleted_at IS NULL));
 
 
 
-CREATE VIEW public.v_company_subtree AS
+CREATE VIEW v_company_subtree AS
  SELECT c.id AS company_id,
     c.name AS company,
     e.id AS entity_id,
     e.name AS entity_name,
     e.type AS entity_type,
     hp.depth AS levels_from_company
-   FROM ((public.entities c
-     JOIN public.hierarchy_paths hp ON ((c.id = hp.ancestor_id)))
-     JOIN public.entities e ON ((hp.descendant_id = e.id)))
-  WHERE ((c.type = 'COMPANY'::public.entity_type) AND (c.deleted_at IS NULL) AND (e.deleted_at IS NULL));
+   FROM ((entities c
+     JOIN hierarchy_paths hp ON ((c.id = hp.ancestor_id)))
+     JOIN entities e ON ((hp.descendant_id = e.id)))
+  WHERE ((c.type = 'COMPANY'::entity_type) AND (c.deleted_at IS NULL) AND (e.deleted_at IS NULL));
 
 
 
-CREATE VIEW public.v_cost_center_management AS
+CREATE VIEW v_cost_center_management AS
  SELECT cc.id AS cost_center_id,
     cc.name AS cost_center,
     d.id AS department_id,
@@ -1840,18 +1840,18 @@ CREATE VIEW public.v_cost_center_management AS
     o.name AS organization,
     count(u.id) AS user_count,
     string_agg((u.full_name)::text, ', '::text) AS users
-   FROM (((((public.entities cc
-     JOIN public.entities d ON ((cc.parent_id = d.id)))
-     JOIN public.entities r ON ((d.parent_id = r.id)))
-     JOIN public.entities c ON ((r.parent_id = c.id)))
-     JOIN public.org o ON ((c.organization_id = o.id)))
-     LEFT JOIN public.users u ON ((u.entity_id = cc.id)))
-  WHERE ((cc.type = 'COST_CENTER'::public.entity_type) AND (cc.deleted_at IS NULL))
+   FROM (((((entities cc
+     JOIN entities d ON ((cc.parent_id = d.id)))
+     JOIN entities r ON ((d.parent_id = r.id)))
+     JOIN entities c ON ((r.parent_id = c.id)))
+     JOIN org o ON ((c.organization_id = o.id)))
+     LEFT JOIN users u ON ((u.entity_id = cc.id)))
+  WHERE ((cc.type = 'COST_CENTER'::entity_type) AND (cc.deleted_at IS NULL))
   GROUP BY cc.id, cc.name, d.id, d.name, r.id, r.name, c.id, c.name, o.id, o.name;
 
 
 
-CREATE VIEW public.v_department_summary AS
+CREATE VIEW v_department_summary AS
  SELECT d.id AS department_id,
     d.name AS department,
     r.id AS regional_id,
@@ -1862,18 +1862,18 @@ CREATE VIEW public.v_department_summary AS
     o.name AS organization,
     count(DISTINCT cc.id) AS cost_center_count,
     count(DISTINCT u.id) AS user_count
-   FROM (((((public.entities d
-     JOIN public.entities r ON ((d.parent_id = r.id)))
-     JOIN public.entities c ON ((r.parent_id = c.id)))
-     JOIN public.org o ON ((c.organization_id = o.id)))
-     LEFT JOIN public.entities cc ON (((cc.parent_id = d.id) AND (cc.type = 'COST_CENTER'::public.entity_type) AND (cc.deleted_at IS NULL))))
-     LEFT JOIN public.users u ON (((u.entity_id = cc.id) AND (u.deleted_at IS NULL))))
-  WHERE ((d.type = 'DEPARTMENT'::public.entity_type) AND (d.deleted_at IS NULL))
+   FROM (((((entities d
+     JOIN entities r ON ((d.parent_id = r.id)))
+     JOIN entities c ON ((r.parent_id = c.id)))
+     JOIN org o ON ((c.organization_id = o.id)))
+     LEFT JOIN entities cc ON (((cc.parent_id = d.id) AND (cc.type = 'COST_CENTER'::entity_type) AND (cc.deleted_at IS NULL))))
+     LEFT JOIN users u ON (((u.entity_id = cc.id) AND (u.deleted_at IS NULL))))
+  WHERE ((d.type = 'DEPARTMENT'::entity_type) AND (d.deleted_at IS NULL))
   GROUP BY d.id, d.name, r.id, r.name, c.id, c.name, o.id, o.name;
 
 
 
-CREATE VIEW public.v_organization_hierarchy AS
+CREATE VIEW v_organization_hierarchy AS
  WITH RECURSIVE org_chart AS (
          SELECT entities.id,
             entities.name,
@@ -1883,7 +1883,7 @@ CREATE VIEW public.v_organization_hierarchy AS
             entities.deleted_at,
             (entities.name)::text AS path,
             0 AS depth
-           FROM public.entities
+           FROM entities
           WHERE (entities.parent_id IS NULL)
         UNION ALL
          SELECT e.id,
@@ -1894,7 +1894,7 @@ CREATE VIEW public.v_organization_hierarchy AS
             e.deleted_at,
             ((oc_1.path || ' > '::text) || (e.name)::text) AS text,
             (oc_1.depth + 1)
-           FROM (public.entities e
+           FROM (entities e
              JOIN org_chart oc_1 ON ((e.parent_id = oc_1.id)))
         )
  SELECT o.name AS organization,
@@ -1904,31 +1904,31 @@ CREATE VIEW public.v_organization_hierarchy AS
     oc.path AS full_path,
     oc.depth
    FROM (org_chart oc
-     JOIN public.org o ON ((oc.organization_id = o.id)))
+     JOIN org o ON ((oc.organization_id = o.id)))
   WHERE (oc.deleted_at IS NULL);
 
 
 
-CREATE VIEW public.v_organization_size_report AS
+CREATE VIEW v_organization_size_report AS
  SELECT o.id AS organization_id,
     o.name AS organization,
-    count(DISTINCT c.id) FILTER (WHERE ((c.type = 'COMPANY'::public.entity_type) AND (c.deleted_at IS NULL))) AS company_count,
-    count(DISTINCT r.id) FILTER (WHERE ((r.type = 'REGIONAL'::public.entity_type) AND (r.deleted_at IS NULL))) AS regional_count,
-    count(DISTINCT d.id) FILTER (WHERE ((d.type = 'DEPARTMENT'::public.entity_type) AND (d.deleted_at IS NULL))) AS department_count,
-    count(DISTINCT cc.id) FILTER (WHERE ((cc.type = 'COST_CENTER'::public.entity_type) AND (cc.deleted_at IS NULL))) AS cost_center_count,
+    count(DISTINCT c.id) FILTER (WHERE ((c.type = 'COMPANY'::entity_type) AND (c.deleted_at IS NULL))) AS company_count,
+    count(DISTINCT r.id) FILTER (WHERE ((r.type = 'REGIONAL'::entity_type) AND (r.deleted_at IS NULL))) AS regional_count,
+    count(DISTINCT d.id) FILTER (WHERE ((d.type = 'DEPARTMENT'::entity_type) AND (d.deleted_at IS NULL))) AS department_count,
+    count(DISTINCT cc.id) FILTER (WHERE ((cc.type = 'COST_CENTER'::entity_type) AND (cc.deleted_at IS NULL))) AS cost_center_count,
     count(DISTINCT u.id) FILTER (WHERE (u.deleted_at IS NULL)) AS user_count
-   FROM (((((public.org o
-     LEFT JOIN public.entities c ON ((c.organization_id = o.id)))
-     LEFT JOIN public.entities r ON ((r.organization_id = o.id)))
-     LEFT JOIN public.entities d ON ((d.organization_id = o.id)))
-     LEFT JOIN public.entities cc ON ((cc.organization_id = o.id)))
-     LEFT JOIN public.users u ON ((u.entity_id = cc.id)))
+   FROM (((((org o
+     LEFT JOIN entities c ON ((c.organization_id = o.id)))
+     LEFT JOIN entities r ON ((r.organization_id = o.id)))
+     LEFT JOIN entities d ON ((d.organization_id = o.id)))
+     LEFT JOIN entities cc ON ((cc.organization_id = o.id)))
+     LEFT JOIN users u ON ((u.entity_id = cc.id)))
   WHERE (o.deleted_at IS NULL)
   GROUP BY o.id, o.name;
 
 
 
-CREATE VIEW public.v_user_directory AS
+CREATE VIEW v_user_directory AS
  SELECT u.id AS user_id,
     u.email,
     u.full_name,
@@ -1943,17 +1943,17 @@ CREATE VIEW public.v_user_directory AS
     c.name AS company,
     o.id AS organization_id,
     o.name AS organization
-   FROM (((((public.users u
-     JOIN public.entities cc ON ((u.entity_id = cc.id)))
-     JOIN public.entities d ON ((cc.parent_id = d.id)))
-     JOIN public.entities r ON ((d.parent_id = r.id)))
-     JOIN public.entities c ON ((r.parent_id = c.id)))
-     JOIN public.org o ON ((c.organization_id = o.id)))
+   FROM (((((users u
+     JOIN entities cc ON ((u.entity_id = cc.id)))
+     JOIN entities d ON ((cc.parent_id = d.id)))
+     JOIN entities r ON ((d.parent_id = r.id)))
+     JOIN entities c ON ((r.parent_id = c.id)))
+     JOIN org o ON ((c.organization_id = o.id)))
   WHERE (u.deleted_at IS NULL);
 
 
 
-CREATE TABLE public.vat_settlement (
+CREATE TABLE vat_settlement (
     id integer NOT NULL,
     vat_form_id integer,
     period_from date,
@@ -1965,7 +1965,7 @@ CREATE TABLE public.vat_settlement (
 
 
 
-CREATE SEQUENCE public.vat_settlement_id_seq
+CREATE SEQUENCE vat_settlement_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -1975,12 +1975,12 @@ CREATE SEQUENCE public.vat_settlement_id_seq
 
 
 
-ALTER SEQUENCE public.vat_settlement_id_seq OWNED BY public.vat_settlement.id;
+ALTER SEQUENCE vat_settlement_id_seq OWNED BY vat_settlement.id;
 
 
 
-CREATE TABLE public.vendor (
-    id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
+CREATE TABLE vendor (
+    id integer DEFAULT nextval('id'::regclass) NOT NULL,
     name character varying(64),
     contact character varying(64),
     phone character varying(20),
@@ -2017,30 +2017,30 @@ CREATE TABLE public.vendor (
 
 
 
-CREATE TABLE public.vendortax (
+CREATE TABLE vendortax (
     vendor_id integer,
     chart_id integer
 );
 
 
 
-CREATE TABLE public.vr (
+CREATE TABLE vr (
     br_id integer,
     trans_id integer NOT NULL,
-    id integer DEFAULT nextval('public.id'::regclass) NOT NULL,
+    id integer DEFAULT nextval('id'::regclass) NOT NULL,
     vouchernumber text
 );
 
 
 
-CREATE TABLE public.warehouse (
-    id integer DEFAULT nextval('public.id'::regclass),
+CREATE TABLE warehouse (
+    id integer DEFAULT nextval('id'::regclass),
     description text
 );
 
 
 
-CREATE TABLE public.yearend (
+CREATE TABLE yearend (
     trans_id integer,
     transdate date,
     id integer NOT NULL
@@ -2048,7 +2048,7 @@ CREATE TABLE public.yearend (
 
 
 
-CREATE SEQUENCE public.yearend_id_seq
+CREATE SEQUENCE yearend_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -2058,646 +2058,646 @@ CREATE SEQUENCE public.yearend_id_seq
 
 
 
-ALTER SEQUENCE public.yearend_id_seq OWNED BY public.yearend.id;
+ALTER SEQUENCE yearend_id_seq OWNED BY yearend.id;
 
 
 
-ALTER TABLE ONLY public.booking_to_settlement ALTER COLUMN id SET DEFAULT nextval('public.booking_to_settlement_id_seq'::regclass);
+ALTER TABLE ONLY booking_to_settlement ALTER COLUMN id SET DEFAULT nextval('booking_to_settlement_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.chat ALTER COLUMN id SET DEFAULT nextval('public.chat_id_seq'::regclass);
+ALTER TABLE ONLY chat ALTER COLUMN id SET DEFAULT nextval('chat_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.credits ALTER COLUMN id SET DEFAULT nextval('public.credits_id_seq'::regclass);
+ALTER TABLE ONLY credits ALTER COLUMN id SET DEFAULT nextval('credits_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.debits ALTER COLUMN id SET DEFAULT nextval('public.debits_id_seq'::regclass);
+ALTER TABLE ONLY debits ALTER COLUMN id SET DEFAULT nextval('debits_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.debitscredits ALTER COLUMN id SET DEFAULT nextval('public.debitscredits_id_seq'::regclass);
+ALTER TABLE ONLY debitscredits ALTER COLUMN id SET DEFAULT nextval('debitscredits_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.entities ALTER COLUMN id SET DEFAULT nextval('public.entities_id_seq'::regclass);
+ALTER TABLE ONLY entities ALTER COLUMN id SET DEFAULT nextval('entities_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.financial_year ALTER COLUMN id SET DEFAULT nextval('public.financial_year_id_seq'::regclass);
+ALTER TABLE ONLY financial_year ALTER COLUMN id SET DEFAULT nextval('financial_year_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.lastused ALTER COLUMN id SET DEFAULT nextval('public.lastused_id_seq'::regclass);
+ALTER TABLE ONLY lastused ALTER COLUMN id SET DEFAULT nextval('lastused_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.org ALTER COLUMN id SET DEFAULT nextval('public.org_id_seq'::regclass);
+ALTER TABLE ONLY org ALTER COLUMN id SET DEFAULT nextval('org_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.search_irrelevant_words ALTER COLUMN id SET DEFAULT nextval('public.search_irrelevant_words_id_seq'::regclass);
+ALTER TABLE ONLY search_irrelevant_words ALTER COLUMN id SET DEFAULT nextval('search_irrelevant_words_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.tax ALTER COLUMN id SET DEFAULT nextval('public.tax_id_seq'::regclass);
+ALTER TABLE ONLY tax ALTER COLUMN id SET DEFAULT nextval('tax_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.vat_settlement ALTER COLUMN id SET DEFAULT nextval('public.vat_settlement_id_seq'::regclass);
+ALTER TABLE ONLY vat_settlement ALTER COLUMN id SET DEFAULT nextval('vat_settlement_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.yearend ALTER COLUMN id SET DEFAULT nextval('public.yearend_id_seq'::regclass);
+ALTER TABLE ONLY yearend ALTER COLUMN id SET DEFAULT nextval('yearend_id_seq'::regclass);
 
 
 
-ALTER TABLE ONLY public.address
+ALTER TABLE ONLY address
     ADD CONSTRAINT address_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.bank_account
+ALTER TABLE ONLY bank_account
     ADD CONSTRAINT bank_account_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.banking_import_event
+ALTER TABLE ONLY banking_import_event
     ADD CONSTRAINT banking_import_event_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.blink_import_process_log
+ALTER TABLE ONLY blink_import_process_log
     ADD CONSTRAINT blink_import_process_log_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.blink_import_process
+ALTER TABLE ONLY blink_import_process
     ADD CONSTRAINT blink_import_process_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.booking_to_settlement
+ALTER TABLE ONLY booking_to_settlement
     ADD CONSTRAINT booking_to_settlement_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.br
+ALTER TABLE ONLY br
     ADD CONSTRAINT br_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.build
+ALTER TABLE ONLY build
     ADD CONSTRAINT build_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.chart
+ALTER TABLE ONLY chart
     ADD CONSTRAINT chart_accno_key1 UNIQUE (accno);
 
 
 
-ALTER TABLE ONLY public.chat
+ALTER TABLE ONLY chat
     ADD CONSTRAINT chat_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.contact
+ALTER TABLE ONLY contact
     ADD CONSTRAINT contact_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.curr
+ALTER TABLE ONLY curr
     ADD CONSTRAINT curr_pkey PRIMARY KEY (curr);
 
 
 
-ALTER TABLE ONLY public.customer
+ALTER TABLE ONLY customer
     ADD CONSTRAINT customer_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.customerlogin
+ALTER TABLE ONLY customerlogin
     ADD CONSTRAINT customerlogin_login_key UNIQUE (login);
 
 
 
-ALTER TABLE ONLY public.customerlogin
+ALTER TABLE ONLY customerlogin
     ADD CONSTRAINT customerlogin_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.customerlogin
+ALTER TABLE ONLY customerlogin
     ADD CONSTRAINT customerlogin_session_key UNIQUE (session);
 
 
 
-ALTER TABLE ONLY public.entities
+ALTER TABLE ONLY entities
     ADD CONSTRAINT entities_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.financial_year
+ALTER TABLE ONLY financial_year
     ADD CONSTRAINT financial_year_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.hierarchy_paths
+ALTER TABLE ONLY hierarchy_paths
     ADD CONSTRAINT hierarchy_paths_pkey PRIMARY KEY (ancestor_id, descendant_id);
 
 
 
-ALTER TABLE ONLY public.lastused
+ALTER TABLE ONLY lastused
     ADD CONSTRAINT lastused_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.org
+ALTER TABLE ONLY org
     ADD CONSTRAINT org_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.paymentmethod
+ALTER TABLE ONLY paymentmethod
     ADD CONSTRAINT paymentmethod_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.report
+ALTER TABLE ONLY report
     ADD CONSTRAINT report_pkey PRIMARY KEY (reportid);
 
 
 
-ALTER TABLE ONLY public.schema_migrations
+ALTER TABLE ONLY schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
 
 
 
-ALTER TABLE ONLY public.search_irrelevant_words
+ALTER TABLE ONLY search_irrelevant_words
     ADD CONSTRAINT search_irrelevant_words_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.tax
+ALTER TABLE ONLY tax
     ADD CONSTRAINT tax_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.trf
+ALTER TABLE ONLY trf
     ADD CONSTRAINT trf_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.users
+ALTER TABLE ONLY users
     ADD CONSTRAINT users_email_key UNIQUE (email);
 
 
 
-ALTER TABLE ONLY public.users
+ALTER TABLE ONLY users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.vat_settlement
+ALTER TABLE ONLY vat_settlement
     ADD CONSTRAINT vat_settlement_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.vendor
+ALTER TABLE ONLY vendor
     ADD CONSTRAINT vendor_pkey PRIMARY KEY (id);
 
 
 
-ALTER TABLE ONLY public.yearend
+ALTER TABLE ONLY yearend
     ADD CONSTRAINT yearend_pkey PRIMARY KEY (id);
 
 
 
-CREATE INDEX acc_trans_chart_id_key ON public.acc_trans USING btree (chart_id);
+CREATE INDEX acc_trans_chart_id_key ON acc_trans USING btree (chart_id);
 
 
 
-CREATE INDEX acc_trans_chart_id_transdate_approved_trans_id ON public.acc_trans USING btree (chart_id, transdate, approved, trans_id, amount);
+CREATE INDEX acc_trans_chart_id_transdate_approved_trans_id ON acc_trans USING btree (chart_id, transdate, approved, trans_id, amount);
 
 
 
-CREATE INDEX acc_trans_source_key ON public.acc_trans USING btree (lower(source));
+CREATE INDEX acc_trans_source_key ON acc_trans USING btree (lower(source));
 
 
 
-CREATE INDEX acc_trans_trans_id_key ON public.acc_trans USING btree (trans_id);
+CREATE INDEX acc_trans_trans_id_key ON acc_trans USING btree (trans_id);
 
 
 
-CREATE INDEX acc_trans_transdate_key ON public.acc_trans USING btree (transdate);
+CREATE INDEX acc_trans_transdate_key ON acc_trans USING btree (transdate);
 
 
 
-CREATE INDEX ap_quonumber_key ON public.ap USING btree (lower(quonumber));
+CREATE INDEX ap_quonumber_key ON ap USING btree (lower(quonumber));
 
 
 
-CREATE INDEX ar_quonumber_key ON public.ar USING btree (lower(quonumber));
+CREATE INDEX ar_quonumber_key ON ar USING btree (lower(quonumber));
 
 
 
-CREATE INDEX assembly_id_key ON public.assembly USING btree (id);
+CREATE INDEX assembly_id_key ON assembly USING btree (id);
 
 
 
-CREATE INDEX audittrail_trans_id_key ON public.audittrail USING btree (trans_id);
+CREATE INDEX audittrail_trans_id_key ON audittrail USING btree (trans_id);
 
 
 
-CREATE INDEX cargo_id_key ON public.cargo USING btree (id, trans_id);
+CREATE INDEX cargo_id_key ON cargo USING btree (id, trans_id);
 
 
 
-CREATE UNIQUE INDEX chart_accno_key ON public.oldchart USING btree (accno);
+CREATE UNIQUE INDEX chart_accno_key ON oldchart USING btree (accno);
 
 
 
-CREATE INDEX chart_category_key ON public.oldchart USING btree (category);
+CREATE INDEX chart_category_key ON oldchart USING btree (category);
 
 
 
-CREATE INDEX chart_gifi_accno_key ON public.oldchart USING btree (gifi_accno);
+CREATE INDEX chart_gifi_accno_key ON oldchart USING btree (gifi_accno);
 
 
 
-CREATE INDEX chart_id_key ON public.oldchart USING btree (id);
+CREATE INDEX chart_id_key ON oldchart USING btree (id);
 
 
 
-CREATE INDEX chart_link_key ON public.oldchart USING btree (link);
+CREATE INDEX chart_link_key ON oldchart USING btree (link);
 
 
 
-CREATE INDEX customer_contact_key ON public.customer USING btree (lower((contact)::text));
+CREATE INDEX customer_contact_key ON customer USING btree (lower((contact)::text));
 
 
 
-CREATE INDEX customer_customer_id_key ON public.customertax USING btree (customer_id);
+CREATE INDEX customer_customer_id_key ON customertax USING btree (customer_id);
 
 
 
-CREATE INDEX customer_customernumber_key ON public.customer USING btree (customernumber);
+CREATE INDEX customer_customernumber_key ON customer USING btree (customernumber);
 
 
 
-CREATE INDEX customer_name_key ON public.customer USING btree (lower((name)::text));
+CREATE INDEX customer_name_key ON customer USING btree (lower((name)::text));
 
 
 
-CREATE INDEX department_id_key ON public.department USING btree (id);
+CREATE INDEX department_id_key ON department USING btree (id);
 
 
 
-CREATE INDEX employee_id_key ON public.employee USING btree (id);
+CREATE INDEX employee_id_key ON employee USING btree (id);
 
 
 
-CREATE UNIQUE INDEX employee_login_key ON public.employee USING btree (login);
+CREATE UNIQUE INDEX employee_login_key ON employee USING btree (login);
 
 
 
-CREATE INDEX employee_name_key ON public.employee USING btree (name);
+CREATE INDEX employee_name_key ON employee USING btree (name);
 
 
 
-CREATE INDEX exchangerate_ct_key ON public.exchangerate USING btree (curr, transdate);
+CREATE INDEX exchangerate_ct_key ON exchangerate USING btree (curr, transdate);
 
 
 
-CREATE INDEX fifo_parts_id ON public.fifo USING btree (parts_id);
+CREATE INDEX fifo_parts_id ON fifo USING btree (parts_id);
 
 
 
-CREATE INDEX fifo_trans_id ON public.fifo USING btree (trans_id);
+CREATE INDEX fifo_trans_id ON fifo USING btree (trans_id);
 
 
 
-CREATE UNIQUE INDEX gifi_accno_key ON public.gifi USING btree (accno);
+CREATE UNIQUE INDEX gifi_accno_key ON gifi USING btree (accno);
 
 
 
-CREATE INDEX gl_description_key ON public.gl USING btree (lower(description));
+CREATE INDEX gl_description_key ON gl USING btree (lower(description));
 
 
 
-CREATE INDEX gl_employee_id_key ON public.gl USING btree (employee_id);
+CREATE INDEX gl_employee_id_key ON gl USING btree (employee_id);
 
 
 
-CREATE INDEX gl_id_key ON public.gl USING btree (id);
+CREATE INDEX gl_id_key ON gl USING btree (id);
 
 
 
-CREATE INDEX gl_reference_key ON public.gl USING btree (reference);
+CREATE INDEX gl_reference_key ON gl USING btree (reference);
 
 
 
-CREATE INDEX gl_transdate_key ON public.gl USING btree (transdate);
+CREATE INDEX gl_transdate_key ON gl USING btree (transdate);
 
 
 
-CREATE INDEX idx_entities_deleted ON public.entities USING btree (deleted_at);
+CREATE INDEX idx_entities_deleted ON entities USING btree (deleted_at);
 
 
 
-CREATE INDEX idx_entities_org ON public.entities USING btree (organization_id);
+CREATE INDEX idx_entities_org ON entities USING btree (organization_id);
 
 
 
-CREATE INDEX idx_entities_org_parent ON public.entities USING btree (organization_id, parent_id);
+CREATE INDEX idx_entities_org_parent ON entities USING btree (organization_id, parent_id);
 
 
 
-CREATE INDEX idx_entities_parent ON public.entities USING btree (parent_id);
+CREATE INDEX idx_entities_parent ON entities USING btree (parent_id);
 
 
 
-CREATE INDEX idx_entities_type ON public.entities USING btree (type);
+CREATE INDEX idx_entities_type ON entities USING btree (type);
 
 
 
-CREATE INDEX idx_hierarchy_ancestor ON public.hierarchy_paths USING btree (ancestor_id);
+CREATE INDEX idx_hierarchy_ancestor ON hierarchy_paths USING btree (ancestor_id);
 
 
 
-CREATE INDEX idx_hierarchy_descendant ON public.hierarchy_paths USING btree (descendant_id);
+CREATE INDEX idx_hierarchy_descendant ON hierarchy_paths USING btree (descendant_id);
 
 
 
-CREATE INDEX idx_hierarchy_paths_depth ON public.hierarchy_paths USING btree (depth);
+CREATE INDEX idx_hierarchy_paths_depth ON hierarchy_paths USING btree (depth);
 
 
 
-CREATE INDEX idx_users_deleted ON public.users USING btree (deleted_at);
+CREATE INDEX idx_users_deleted ON users USING btree (deleted_at);
 
 
 
-CREATE INDEX idx_users_entity ON public.users USING btree (entity_id);
+CREATE INDEX idx_users_entity ON users USING btree (entity_id);
 
 
 
-CREATE INDEX idx_users_last_login ON public.users USING btree (last_login_at);
+CREATE INDEX idx_users_last_login ON users USING btree (last_login_at);
 
 
 
-CREATE INDEX inventory_invoice_id ON public.inventory USING btree (invoice_id);
+CREATE INDEX inventory_invoice_id ON inventory USING btree (invoice_id);
 
 
 
-CREATE INDEX inventory_parts_id_key ON public.inventory USING btree (parts_id);
+CREATE INDEX inventory_parts_id_key ON inventory USING btree (parts_id);
 
 
 
-CREATE INDEX jcitems_id_key ON public.jcitems USING btree (id);
+CREATE INDEX jcitems_id_key ON jcitems USING btree (id);
 
 
 
-CREATE UNIQUE INDEX language_code_key ON public.language USING btree (code);
+CREATE UNIQUE INDEX language_code_key ON language USING btree (code);
 
 
 
-CREATE INDEX makemodel_make_key ON public.makemodel USING btree (lower(make));
+CREATE INDEX makemodel_make_key ON makemodel USING btree (lower(make));
 
 
 
-CREATE INDEX makemodel_model_key ON public.makemodel USING btree (lower(model));
+CREATE INDEX makemodel_model_key ON makemodel USING btree (lower(model));
 
 
 
-CREATE INDEX makemodel_parts_id_key ON public.makemodel USING btree (parts_id);
+CREATE INDEX makemodel_parts_id_key ON makemodel USING btree (parts_id);
 
 
 
-CREATE INDEX oe_employee_id_key ON public.oe USING btree (employee_id);
+CREATE INDEX oe_employee_id_key ON oe USING btree (employee_id);
 
 
 
-CREATE INDEX oe_id_key ON public.oe USING btree (id);
+CREATE INDEX oe_id_key ON oe USING btree (id);
 
 
 
-CREATE INDEX oe_ordnumber_key ON public.oe USING btree (ordnumber);
+CREATE INDEX oe_ordnumber_key ON oe USING btree (ordnumber);
 
 
 
-CREATE INDEX oe_transdate_key ON public.oe USING btree (transdate);
+CREATE INDEX oe_transdate_key ON oe USING btree (transdate);
 
 
 
-CREATE INDEX orderitems_id_key ON public.orderitems USING btree (id);
+CREATE INDEX orderitems_id_key ON orderitems USING btree (id);
 
 
 
-CREATE INDEX orderitems_trans_id_key ON public.orderitems USING btree (trans_id);
+CREATE INDEX orderitems_trans_id_key ON orderitems USING btree (trans_id);
 
 
 
-CREATE INDEX parts_description_key ON public.parts USING btree (lower(description));
+CREATE INDEX parts_description_key ON parts USING btree (lower(description));
 
 
 
-CREATE INDEX parts_id_key ON public.parts USING btree (id);
+CREATE INDEX parts_id_key ON parts USING btree (id);
 
 
 
-CREATE INDEX parts_partnumber_key ON public.parts USING btree (lower(partnumber));
+CREATE INDEX parts_partnumber_key ON parts USING btree (lower(partnumber));
 
 
 
-CREATE INDEX partscustomer_customer_id_key ON public.partscustomer USING btree (customer_id);
+CREATE INDEX partscustomer_customer_id_key ON partscustomer USING btree (customer_id);
 
 
 
-CREATE INDEX partscustomer_parts_id_key ON public.partscustomer USING btree (parts_id);
+CREATE INDEX partscustomer_parts_id_key ON partscustomer USING btree (parts_id);
 
 
 
-CREATE INDEX partsgroup_id_key ON public.partsgroup USING btree (id);
+CREATE INDEX partsgroup_id_key ON partsgroup USING btree (id);
 
 
 
-CREATE UNIQUE INDEX partsgroup_key ON public.partsgroup USING btree (partsgroup);
+CREATE UNIQUE INDEX partsgroup_key ON partsgroup USING btree (partsgroup);
 
 
 
-CREATE INDEX partstax_parts_id_key ON public.partstax USING btree (parts_id);
+CREATE INDEX partstax_parts_id_key ON partstax USING btree (parts_id);
 
 
 
-CREATE INDEX partsvendor_parts_id_key ON public.partsvendor USING btree (parts_id);
+CREATE INDEX partsvendor_parts_id_key ON partsvendor USING btree (parts_id);
 
 
 
-CREATE INDEX partsvendor_vendor_id_key ON public.partsvendor USING btree (vendor_id);
+CREATE INDEX partsvendor_vendor_id_key ON partsvendor USING btree (vendor_id);
 
 
 
-CREATE INDEX pricegroup_id_key ON public.pricegroup USING btree (id);
+CREATE INDEX pricegroup_id_key ON pricegroup USING btree (id);
 
 
 
-CREATE INDEX pricegroup_pricegroup_key ON public.pricegroup USING btree (pricegroup);
+CREATE INDEX pricegroup_pricegroup_key ON pricegroup USING btree (pricegroup);
 
 
 
-CREATE INDEX project_id_key ON public.project USING btree (id);
+CREATE INDEX project_id_key ON project USING btree (id);
 
 
 
-CREATE UNIQUE INDEX projectnumber_key ON public.project USING btree (projectnumber);
+CREATE UNIQUE INDEX projectnumber_key ON project USING btree (projectnumber);
 
 
 
-CREATE INDEX shipto_trans_id_key ON public.shipto USING btree (trans_id);
+CREATE INDEX shipto_trans_id_key ON shipto USING btree (trans_id);
 
 
 
-CREATE INDEX status_trans_id_key ON public.status USING btree (trans_id);
+CREATE INDEX status_trans_id_key ON status USING btree (trans_id);
 
 
 
-CREATE INDEX translation_trans_id_key ON public.translation USING btree (trans_id);
+CREATE INDEX translation_trans_id_key ON translation USING btree (trans_id);
 
 
 
-CREATE INDEX vendor_contact_key ON public.vendor USING btree (lower((contact)::text));
+CREATE INDEX vendor_contact_key ON vendor USING btree (lower((contact)::text));
 
 
 
-CREATE INDEX vendor_name_key ON public.vendor USING btree (lower((name)::text));
+CREATE INDEX vendor_name_key ON vendor USING btree (lower((name)::text));
 
 
 
-CREATE INDEX vendor_vendornumber_key ON public.vendor USING btree (vendornumber);
+CREATE INDEX vendor_vendornumber_key ON vendor USING btree (vendornumber);
 
 
 
-CREATE INDEX vendortax_vendor_id_key ON public.vendortax USING btree (vendor_id);
+CREATE INDEX vendortax_vendor_id_key ON vendortax USING btree (vendor_id);
 
 
 
-CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON public.ap FOR EACH ROW EXECUTE FUNCTION public.check_department();
+CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON ap FOR EACH ROW EXECUTE FUNCTION check_department();
 
 
 
-CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON public.ar FOR EACH ROW EXECUTE FUNCTION public.check_department();
+CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON ar FOR EACH ROW EXECUTE FUNCTION check_department();
 
 
 
-CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON public.gl FOR EACH ROW EXECUTE FUNCTION public.check_department();
+CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON gl FOR EACH ROW EXECUTE FUNCTION check_department();
 
 
 
-CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON public.oe FOR EACH ROW EXECUTE FUNCTION public.check_department();
+CREATE TRIGGER check_department AFTER INSERT OR UPDATE ON oe FOR EACH ROW EXECUTE FUNCTION check_department();
 
 
 
-CREATE TRIGGER del_customer AFTER DELETE ON public.customer FOR EACH ROW EXECUTE FUNCTION public.del_customer();
+CREATE TRIGGER del_customer AFTER DELETE ON customer FOR EACH ROW EXECUTE FUNCTION del_customer();
 
 
 
-CREATE TRIGGER del_recurring AFTER DELETE ON public.ap FOR EACH ROW EXECUTE FUNCTION public.del_recurring();
+CREATE TRIGGER del_recurring AFTER DELETE ON ap FOR EACH ROW EXECUTE FUNCTION del_recurring();
 
 
 
-CREATE TRIGGER del_recurring AFTER DELETE ON public.ar FOR EACH ROW EXECUTE FUNCTION public.del_recurring();
+CREATE TRIGGER del_recurring AFTER DELETE ON ar FOR EACH ROW EXECUTE FUNCTION del_recurring();
 
 
 
-CREATE TRIGGER del_recurring AFTER DELETE ON public.gl FOR EACH ROW EXECUTE FUNCTION public.del_recurring();
+CREATE TRIGGER del_recurring AFTER DELETE ON gl FOR EACH ROW EXECUTE FUNCTION del_recurring();
 
 
 
-CREATE TRIGGER del_recurring AFTER DELETE ON public.oe FOR EACH ROW EXECUTE FUNCTION public.del_recurring();
+CREATE TRIGGER del_recurring AFTER DELETE ON oe FOR EACH ROW EXECUTE FUNCTION del_recurring();
 
 
 
-CREATE TRIGGER del_vendor AFTER DELETE ON public.vendor FOR EACH ROW EXECUTE FUNCTION public.del_vendor();
+CREATE TRIGGER del_vendor AFTER DELETE ON vendor FOR EACH ROW EXECUTE FUNCTION del_vendor();
 
 
 
-CREATE TRIGGER del_yearend AFTER DELETE ON public.gl FOR EACH ROW EXECUTE FUNCTION public.del_yearend();
+CREATE TRIGGER del_yearend AFTER DELETE ON gl FOR EACH ROW EXECUTE FUNCTION del_yearend();
 
 
 
-CREATE TRIGGER trg_entity_paths AFTER INSERT ON public.entities FOR EACH ROW EXECUTE FUNCTION public.update_entity_paths();
+CREATE TRIGGER trg_entity_paths AFTER INSERT ON entities FOR EACH ROW EXECUTE FUNCTION update_entity_paths();
 
 
 
-CREATE TRIGGER trg_update_entity_timestamp BEFORE UPDATE ON public.entities FOR EACH ROW EXECUTE FUNCTION public.update_timestamps();
+CREATE TRIGGER trg_update_entity_timestamp BEFORE UPDATE ON entities FOR EACH ROW EXECUTE FUNCTION update_timestamps();
 
 
 
-CREATE TRIGGER trg_update_org_timestamp BEFORE UPDATE ON public.org FOR EACH ROW EXECUTE FUNCTION public.update_timestamps();
+CREATE TRIGGER trg_update_org_timestamp BEFORE UPDATE ON org FOR EACH ROW EXECUTE FUNCTION update_timestamps();
 
 
 
-CREATE TRIGGER trg_update_user_timestamp BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.update_timestamps();
+CREATE TRIGGER trg_update_user_timestamp BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_timestamps();
 
 
 
-ALTER TABLE ONLY public.blink_import_process
-    ADD CONSTRAINT blink_import_process_bank_account_id_fkey FOREIGN KEY (bank_account_id) REFERENCES public.bank_account(id);
+ALTER TABLE ONLY blink_import_process
+    ADD CONSTRAINT blink_import_process_bank_account_id_fkey FOREIGN KEY (bank_account_id) REFERENCES bank_account(id);
 
 
 
-ALTER TABLE ONLY public.blink_import_process_log
-    ADD CONSTRAINT blink_import_process_log_banking_import_event_id_fkey FOREIGN KEY (banking_import_event_id) REFERENCES public.banking_import_event(id);
+ALTER TABLE ONLY blink_import_process_log
+    ADD CONSTRAINT blink_import_process_log_banking_import_event_id_fkey FOREIGN KEY (banking_import_event_id) REFERENCES banking_import_event(id);
 
 
 
-ALTER TABLE ONLY public.blink_import_process_log
-    ADD CONSTRAINT blink_import_process_log_blink_import_process_id_fkey FOREIGN KEY (blink_import_process_id) REFERENCES public.blink_import_process(id);
+ALTER TABLE ONLY blink_import_process_log
+    ADD CONSTRAINT blink_import_process_log_blink_import_process_id_fkey FOREIGN KEY (blink_import_process_id) REFERENCES blink_import_process(id);
 
 
 
-ALTER TABLE ONLY public.booking_to_settlement
-    ADD CONSTRAINT booking_to_settlement_settlement_id_fkey FOREIGN KEY (settlement_id) REFERENCES public.vat_settlement(id);
+ALTER TABLE ONLY booking_to_settlement
+    ADD CONSTRAINT booking_to_settlement_settlement_id_fkey FOREIGN KEY (settlement_id) REFERENCES vat_settlement(id);
 
 
 
-ALTER TABLE ONLY public.entities
-    ADD CONSTRAINT entities_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.org(id) ON DELETE CASCADE;
+ALTER TABLE ONLY entities
+    ADD CONSTRAINT entities_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES org(id) ON DELETE CASCADE;
 
 
 
-ALTER TABLE ONLY public.entities
-    ADD CONSTRAINT entities_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.entities(id) ON DELETE CASCADE;
+ALTER TABLE ONLY entities
+    ADD CONSTRAINT entities_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES entities(id) ON DELETE CASCADE;
 
 
 
-ALTER TABLE ONLY public.financial_year
-    ADD CONSTRAINT fk_yearend FOREIGN KEY (yearend_id) REFERENCES public.yearend(id) ON DELETE SET NULL;
+ALTER TABLE ONLY financial_year
+    ADD CONSTRAINT fk_yearend FOREIGN KEY (yearend_id) REFERENCES yearend(id) ON DELETE SET NULL;
 
 
 
-ALTER TABLE ONLY public.hierarchy_paths
-    ADD CONSTRAINT hierarchy_paths_ancestor_id_fkey FOREIGN KEY (ancestor_id) REFERENCES public.entities(id) ON DELETE CASCADE;
+ALTER TABLE ONLY hierarchy_paths
+    ADD CONSTRAINT hierarchy_paths_ancestor_id_fkey FOREIGN KEY (ancestor_id) REFERENCES entities(id) ON DELETE CASCADE;
 
 
 
-ALTER TABLE ONLY public.hierarchy_paths
-    ADD CONSTRAINT hierarchy_paths_descendant_id_fkey FOREIGN KEY (descendant_id) REFERENCES public.entities(id) ON DELETE CASCADE;
+ALTER TABLE ONLY hierarchy_paths
+    ADD CONSTRAINT hierarchy_paths_descendant_id_fkey FOREIGN KEY (descendant_id) REFERENCES entities(id) ON DELETE CASCADE;
 
 
 
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_entity_id_fkey FOREIGN KEY (entity_id) REFERENCES public.entities(id) ON DELETE RESTRICT;
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_entity_id_fkey FOREIGN KEY (entity_id) REFERENCES entities(id) ON DELETE RESTRICT;
 
 
 
-ALTER TABLE ONLY public.vr
-    ADD CONSTRAINT vr_br_id_fkey FOREIGN KEY (br_id) REFERENCES public.br(id) ON DELETE CASCADE;
+ALTER TABLE ONLY vr
+    ADD CONSTRAINT vr_br_id_fkey FOREIGN KEY (br_id) REFERENCES br(id) ON DELETE CASCADE;
 
 
 

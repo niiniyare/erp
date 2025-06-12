@@ -2249,3 +2249,924 @@
 2025-06-09 15:09:02.154 EAT [20801] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.004 s, total=0.020 s; sync files=7, longest=0.001 s, average=0.001 s; distance=4973 kB, estimate=4976 kB; lsn=0/6DE5C7D0, redo lsn=0/6DE5C778
 2025-06-09 15:14:02.193 EAT [20801] LOG:  checkpoint starting: time
 2025-06-09 15:15:41.900 EAT [20801] LOG:  checkpoint complete: wrote 983 buffers (6.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=99.482 s, sync=0.174 s, total=99.707 s; sync files=392, longest=0.005 s, average=0.001 s; distance=4976 kB, estimate=4976 kB; lsn=0/6E338A30, redo lsn=0/6E3389A0
+2025-06-12 17:55:25.900 EAT [4255] LOG:  starting PostgreSQL 17.0 on aarch64-unknown-linux-android, compiled by Android (12470979, +pgo, +bolt, +lto, +mlgo, based on r522817c) clang version 18.0.3 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262), 64-bit
+2025-06-12 17:55:25.902 EAT [4255] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-06-12 17:55:25.903 EAT [4255] LOG:  listening on Unix socket "/data/data/com.termux/files/usr/tmp/.s.PGSQL.5432"
+2025-06-12 17:55:25.978 EAT [4263] LOG:  database system was interrupted; last known up at 2025-06-09 15:15:41 EAT
+2025-06-12 17:55:26.142 EAT [4263] LOG:  database system was not properly shut down; automatic recovery in progress
+2025-06-12 17:55:26.147 EAT [4263] LOG:  redo starts at 0/6E3389A0
+2025-06-12 17:55:26.147 EAT [4263] LOG:  invalid record length at 0/6E338AE0: expected at least 24, got 0
+2025-06-12 17:55:26.147 EAT [4263] LOG:  redo done at 0/6E338AA8 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2025-06-12 17:55:26.165 EAT [4259] LOG:  checkpoint starting: end-of-recovery immediate wait
+2025-06-12 17:55:26.180 EAT [4259] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.002 s, total=0.016 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/6E338AE0, redo lsn=0/6E338AE0
+2025-06-12 17:55:26.187 EAT [4255] LOG:  database system is ready to accept connections
+2025-06-12 17:55:36.849 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 17:55:36.869 EAT [4259] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.002 s, total=0.021 s; sync files=3, longest=0.001 s, average=0.001 s; distance=7 kB, estimate=7 kB; lsn=0/6E33A8C8, redo lsn=0/6E33A870
+2025-06-12 17:55:51.466 EAT [5073] ERROR:  column "id" referenced in foreign key constraint does not exist
+2025-06-12 17:55:51.466 EAT [5073] STATEMENT:  CREATE TABLE users (
+	    id integer NOT NULL,
+	    email character varying(255) NOT NULL,
+	    full_name character varying(255) NOT NULL,
+	    entity_id integer NOT NULL References entitymodel (id),
+	    created_at timestamp with time zone DEFAULT now() NOT NULL,
+	    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+	    last_login_at timestamp with time zone,
+	    deleted_at timestamp with time zone
+	);
+2025-06-12 17:55:51.739 EAT [5073] ERROR:  syntax error at or near ")" at character 1
+2025-06-12 17:55:51.739 EAT [5073] STATEMENT:  )
+	)
+	-- =============================================================================
+	--  Document Attachments
+	-- =============================================================================
+	CREATE TABLE IF NOT EXISTS attachmentmodel (
+	  uuid CHAR(32) NOT NULL PRIMARY KEY,
+	    created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	    filename VARCHAR(255) NOT NULL,
+	    file_path VARCHAR(500) NOT NULL,
+	    file_size BIGINT,
+	    mime_type VARCHAR(100),
+	    document_type VARCHAR(20) NOT NULL,
+	    document_id CHAR(32) NOT NULL,
+	    description TEXT,
+	    entity_id CHAR(32) NOT NULL REFERENCES entitymodel (uuid)
+	  );
+2025-06-12 17:55:51.746 EAT [5073] ERROR:  relation "entityunitmodel" does not exist
+2025-06-12 17:55:51.746 EAT [5073] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid CHAR(32) NOT NULL PRIMARY KEY,
+	  account_id CHAR(32) NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id CHAR(32) NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL, -- 1-12 for months
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id CHAR(32) REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:00:36.969 EAT [4259] LOG:  checkpoint starting: time
+2025-06-12 18:02:18.457 EAT [4259] LOG:  checkpoint complete: wrote 1006 buffers (6.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=101.372 s, sync=0.101 s, total=101.488 s; sync files=436, longest=0.003 s, average=0.001 s; distance=5292 kB, estimate=5292 kB; lsn=0/6E865C98, redo lsn=0/6E865C08
+2025-06-12 18:07:39.893 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:07:39.911 EAT [4259] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.001 s, total=0.018 s; sync files=2, longest=0.001 s, average=0.001 s; distance=4 kB, estimate=4764 kB; lsn=0/6E866CD0, redo lsn=0/6E866C78
+2025-06-12 18:07:41.324 EAT [12955] ERROR:  column "id" referenced in foreign key constraint does not exist
+2025-06-12 18:07:41.324 EAT [12955] STATEMENT:  CREATE TABLE users (
+	    id integer NOT NULL,
+	    email character varying(255) NOT NULL,
+	    full_name character varying(255) NOT NULL,
+	    entity_id integer NOT NULL References entitymodel (id),
+	    created_at timestamp with time zone DEFAULT now() NOT NULL,
+	    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+	    last_login_at timestamp with time zone,
+	    deleted_at timestamp with time zone
+	);
+2025-06-12 18:07:41.521 EAT [12955] ERROR:  foreign key constraint "entitymodel_default_coa_id_fkey" cannot be implemented
+2025-06-12 18:07:41.521 EAT [12955] DETAIL:  Key columns "default_coa_id" and "uuid" are of incompatible types: character and uuid.
+2025-06-12 18:07:41.521 EAT [12955] STATEMENT:  ALTER TABLE entitymodel
+	ADD CONSTRAINT entitymodel_default_coa_id_fkey
+	FOREIGN KEY (default_coa_id)
+	REFERENCES chartofaccountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:07:41.603 EAT [12955] ERROR:  syntax error at or near ")" at character 1
+2025-06-12 18:07:41.603 EAT [12955] STATEMENT:  )
+	)
+	-- =============================================================================
+	--  Document Attachments
+	-- =============================================================================
+	CREATE TABLE IF NOT EXISTS attachmentmodel (
+	  uuid uuid NOT NULL PRIMARY KEY,
+	    created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	    filename VARCHAR(255) NOT NULL,
+	    file_path VARCHAR(500) NOT NULL,
+	    file_size BIGINT,
+	    mime_type VARCHAR(100),
+	    document_type VARCHAR(20) NOT NULL,
+	    document_id uuid NOT NULL,
+	    description TEXT,
+	    entity_id uuid NOT NULL REFERENCES entitymodel (uuid)
+	  );
+2025-06-12 18:07:41.614 EAT [12955] ERROR:  relation "entityunitmodel" does not exist
+2025-06-12 18:07:41.614 EAT [12955] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid uuid NOT NULL PRIMARY KEY,
+	  account_id uuid NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id uuid NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL, -- 1-12 for months
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id uuid REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:08:43.611 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:08:43.636 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.003 s, total=0.025 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5291 kB, estimate=5291 kB; lsn=0/6ED91AF0, redo lsn=0/6ED91A98
+2025-06-12 18:08:44.791 EAT [13182] ERROR:  foreign key constraint "entitymodel_default_coa_id_fkey" cannot be implemented
+2025-06-12 18:08:44.791 EAT [13182] DETAIL:  Key columns "default_coa_id" and "uuid" are of incompatible types: character and uuid.
+2025-06-12 18:08:44.791 EAT [13182] STATEMENT:  ALTER TABLE entitymodel
+	ADD CONSTRAINT entitymodel_default_coa_id_fkey
+	FOREIGN KEY (default_coa_id)
+	REFERENCES chartofaccountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:08:44.874 EAT [13182] ERROR:  syntax error at or near ")" at character 1
+2025-06-12 18:08:44.874 EAT [13182] STATEMENT:  )
+	)
+	-- =============================================================================
+	--  Document Attachments
+	-- =============================================================================
+	CREATE TABLE IF NOT EXISTS attachmentmodel (
+	  uuid uuid NOT NULL PRIMARY KEY,
+	    created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	    filename VARCHAR(255) NOT NULL,
+	    file_path VARCHAR(500) NOT NULL,
+	    file_size BIGINT,
+	    mime_type VARCHAR(100),
+	    document_type VARCHAR(20) NOT NULL,
+	    document_id uuid NOT NULL,
+	    description TEXT,
+	    entity_id uuid NOT NULL REFERENCES entitymodel (uuid)
+	  );
+2025-06-12 18:08:44.882 EAT [13182] ERROR:  relation "entityunitmodel" does not exist
+2025-06-12 18:08:44.882 EAT [13182] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid uuid NOT NULL PRIMARY KEY,
+	  account_id uuid NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id uuid NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL, -- 1-12 for months
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id uuid REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:10:34.405 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:10:34.435 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.004 s, sync=0.005 s, total=0.030 s; sync files=7, longest=0.002 s, average=0.001 s; distance=5294 kB, estimate=5294 kB; lsn=0/6F2BD4A8, redo lsn=0/6F2BD450
+2025-06-12 18:10:35.665 EAT [13990] ERROR:  syntax error at or near ")" at character 1
+2025-06-12 18:10:35.665 EAT [13990] STATEMENT:  )
+	)
+	-- =============================================================================
+	--  Document Attachments
+	-- =============================================================================
+	CREATE TABLE IF NOT EXISTS attachmentmodel (
+	  uuid uuid NOT NULL PRIMARY KEY,
+	    created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	    filename VARCHAR(255) NOT NULL,
+	    file_path VARCHAR(500) NOT NULL,
+	    file_size BIGINT,
+	    mime_type VARCHAR(100),
+	    document_type VARCHAR(20) NOT NULL,
+	    document_id uuid NOT NULL,
+	    description TEXT,
+	    entity_id uuid NOT NULL REFERENCES entitymodel (uuid)
+	  );
+2025-06-12 18:10:35.675 EAT [13990] ERROR:  relation "entityunitmodel" does not exist
+2025-06-12 18:10:35.675 EAT [13990] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid uuid NOT NULL PRIMARY KEY,
+	  account_id uuid NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id uuid NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL, -- 1-12 for months
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id uuid REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:13:35.344 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:13:35.366 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.003 s, total=0.023 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5301 kB, estimate=5301 kB; lsn=0/6F7EAAF8, redo lsn=0/6F7EAAA0
+2025-06-12 18:13:37.361 EAT [14577] ERROR:  foreign key constraint "entitymodel_default_coa_id_fkey" cannot be implemented
+2025-06-12 18:13:37.361 EAT [14577] DETAIL:  Key columns "default_coa_id" and "uuid" are of incompatible types: character and uuid.
+2025-06-12 18:13:37.361 EAT [14577] STATEMENT:  ALTER TABLE entitymodel
+	ADD CONSTRAINT entitymodel_default_coa_id_fkey
+	FOREIGN KEY (default_coa_id)
+	REFERENCES chartofaccountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:13:37.447 EAT [14577] ERROR:  syntax error at or near ")" at character 1
+2025-06-12 18:13:37.447 EAT [14577] STATEMENT:  )
+	)
+	-- =============================================================================
+	--  Document Attachments
+	-- =============================================================================
+	CREATE TABLE IF NOT EXISTS attachmentmodel (
+	  uuid UUID NOT NULL PRIMARY KEY,
+	    created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	    filename VARCHAR(255) NOT NULL,
+	    file_path VARCHAR(500) NOT NULL,
+	    file_size BIGINT,
+	    mime_type VARCHAR(100),
+	    document_type VARCHAR(20) NOT NULL,
+	    document_id uuid NOT NULL,
+	    description TEXT,
+	    entity_id uuid NOT NULL REFERENCES entitymodel (uuid)
+	  );
+2025-06-12 18:13:37.455 EAT [14577] ERROR:  relation "entityunitmodel" does not exist
+2025-06-12 18:13:37.455 EAT [14577] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid UUID NOT NULL PRIMARY KEY,
+	  account_id uuid NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id uuid NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL, -- 1-12 for months
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id uuid REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:14:41.317 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:14:41.330 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.002 s, total=0.013 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5294 kB, estimate=5300 kB; lsn=0/6FD166A8, redo lsn=0/6FD16650
+2025-06-12 18:14:42.513 EAT [14859] ERROR:  foreign key constraint "entitymodel_default_coa_id_fkey" cannot be implemented
+2025-06-12 18:14:42.513 EAT [14859] DETAIL:  Key columns "default_coa_id" and "uuid" are of incompatible types: character and uuid.
+2025-06-12 18:14:42.513 EAT [14859] STATEMENT:  ALTER TABLE entitymodel
+	ADD CONSTRAINT entitymodel_default_coa_id_fkey
+	FOREIGN KEY (default_coa_id)
+	REFERENCES chartofaccountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:14:42.599 EAT [14859] ERROR:  syntax error at or near ")" at character 1
+2025-06-12 18:14:42.599 EAT [14859] STATEMENT:  )
+	)
+	-- =============================================================================
+	--  Document Attachments
+	-- =============================================================================
+	CREATE TABLE IF NOT EXISTS attachmentmodel (
+	  uuid UUID NOT NULL PRIMARY KEY,
+	    created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	    filename VARCHAR(255) NOT NULL,
+	    file_path VARCHAR(500) NOT NULL,
+	    file_size BIGINT,
+	    mime_type VARCHAR(100),
+	    document_type VARCHAR(20) NOT NULL,
+	    document_id uuid NOT NULL,
+	    description TEXT,
+	    entity_id uuid NOT NULL REFERENCES entitymodel (uuid)
+	  );
+2025-06-12 18:14:42.606 EAT [14859] ERROR:  relation "entityunitmodel" does not exist
+2025-06-12 18:14:42.606 EAT [14859] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid UUID NOT NULL PRIMARY KEY,
+	  account_id uuid NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id uuid NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL, -- 1-12 for months
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id uuid REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:15:57.663 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:15:57.689 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.004 s, sync=0.005 s, total=0.027 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5297 kB, estimate=5300 kB; lsn=0/70242E10, redo lsn=0/70242DB8
+2025-06-12 18:15:59.188 EAT [15045] ERROR:  syntax error at or near ")" at character 1
+2025-06-12 18:15:59.188 EAT [15045] STATEMENT:  )
+	)
+	-- =============================================================================
+	--  Document Attachments
+	-- =============================================================================
+	CREATE TABLE IF NOT EXISTS attachmentmodel (
+	  uuid UUID NOT NULL PRIMARY KEY,
+	    created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	    filename VARCHAR(255) NOT NULL,
+	    file_path VARCHAR(500) NOT NULL,
+	    file_size BIGINT,
+	    mime_type VARCHAR(100),
+	    document_type VARCHAR(20) NOT NULL,
+	    document_id uuid NOT NULL,
+	    description TEXT,
+	    entity_id uuid NOT NULL REFERENCES entitymodel (uuid)
+	  );
+2025-06-12 18:15:59.195 EAT [15045] ERROR:  relation "entityunitmodel" does not exist
+2025-06-12 18:15:59.195 EAT [15045] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid UUID NOT NULL PRIMARY KEY,
+	  account_id uuid NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id uuid NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL, -- 1-12 for months
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id uuid REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:18:21.500 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:18:21.516 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.003 s, total=0.017 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5299 kB, estimate=5300 kB; lsn=0/7076FCE8, redo lsn=0/7076FC90
+2025-06-12 18:18:23.400 EAT [15668] ERROR:  syntax error at or near ")" at character 1
+2025-06-12 18:18:23.400 EAT [15668] STATEMENT:  )
+	)
+	-- =============================================================================
+	--  Document Attachments
+	-- =============================================================================
+	CREATE TABLE IF NOT EXISTS attachmentmodel (
+	  uuid UUID NOT NULL PRIMARY KEY,
+	    created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	    filename VARCHAR(255) NOT NULL,
+	    file_path VARCHAR(500) NOT NULL,
+	    file_size BIGINT,
+	    mime_type VARCHAR(100),
+	    document_type VARCHAR(20) NOT NULL,
+	    document_id UUID NOT NULL,
+	    description TEXT,
+	    entity_id UUID NOT NULL REFERENCES entitymodel (uuid)
+	  );
+2025-06-12 18:18:23.407 EAT [15668] ERROR:  relation "entityunitmodel" does not exist
+2025-06-12 18:18:23.407 EAT [15668] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid UUID NOT NULL PRIMARY KEY,
+	  account_id UUID NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id UUID NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL, -- 1-12 for months
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id uuid REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:20:05.495 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:20:05.515 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.004 s, total=0.020 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5302 kB, estimate=5302 kB; lsn=0/70C9D720, redo lsn=0/70C9D6C8
+2025-06-12 18:20:06.872 EAT [16195] ERROR:  relation "entityunitmodel" does not exist
+2025-06-12 18:20:06.872 EAT [16195] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid UUID NOT NULL PRIMARY KEY,
+	  account_id UUID NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id UUID NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL, -- 1-12 for months
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id uuid REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:26:26.300 EAT [4259] LOG:  checkpoint starting: time
+2025-06-12 18:28:08.525 EAT [4259] LOG:  checkpoint complete: wrote 1010 buffers (6.2%); 0 WAL file(s) added, 0 removed, 1 recycled; write=102.010 s, sync=0.153 s, total=102.225 s; sync files=440, longest=0.003 s, average=0.001 s; distance=5328 kB, estimate=5328 kB; lsn=0/711D1770, redo lsn=0/711D16E0
+2025-06-12 18:29:22.342 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:29:22.359 EAT [4259] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.001 s, total=0.017 s; sync files=2, longest=0.001 s, average=0.001 s; distance=5 kB, estimate=4795 kB; lsn=0/711D2D18, redo lsn=0/711D2CC0
+2025-06-12 18:29:23.930 EAT [21366] ERROR:  function uuid_generate_v4() does not exist at character 83
+2025-06-12 18:29:23.930 EAT [21366] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2025-06-12 18:29:23.930 EAT [21366] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetmodel (
+	  uuid UUID NOT NULL PRIMARY KEY DEFAULT uuid_generate_v4(), -- Automatically generate UUIDs
+	  created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Store with time zone and default to creation time
+	  name VARCHAR(150) NOT NULL,
+	  fiscal_year INTEGER NOT NULL,
+	  version INTEGER NOT NULL DEFAULT 1,
+	  status budget_status NOT NULL DEFAULT 'draft', -- Using the ENUM type
+	  entity_id UUID NOT NULL REFERENCES entitymodel (uuid)
+	);
+2025-06-12 18:29:23.932 EAT [21366] ERROR:  function uuid_generate_v4() does not exist at character 87
+2025-06-12 18:29:23.932 EAT [21366] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2025-06-12 18:29:23.932 EAT [21366] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid UUID NOT NULL PRIMARY KEY DEFAULT uuid_generate_v4(), -- Automatically generate UUIDs
+	  account_id UUID NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id UUID NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL CHECK (period >= 1 AND period <= 12), -- Enforce month period (1-12)
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id UUID REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:30:24.261 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:30:24.282 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.003 s, total=0.022 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5311 kB, estimate=5311 kB; lsn=0/71702B20, redo lsn=0/71702AC8
+2025-06-12 18:30:25.763 EAT [21684] ERROR:  syntax error at or near "," at character 83
+2025-06-12 18:30:25.763 EAT [21684] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetmodel (
+	  uuid UUID NOT NULL PRIMARY KEY DEFAULT , -- Automatically generate UUIDs
+	  created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Store with time zone and default to creation time
+	  name VARCHAR(150) NOT NULL,
+	  fiscal_year INTEGER NOT NULL,
+	  version INTEGER NOT NULL DEFAULT 1,
+	  status budget_status NOT NULL DEFAULT 'draft', -- Using the ENUM type
+	  entity_id UUID NOT NULL REFERENCES entitymodel (uuid)
+	);
+2025-06-12 18:30:25.764 EAT [21684] ERROR:  syntax error at or near "," at character 87
+2025-06-12 18:30:25.764 EAT [21684] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid UUID NOT NULL PRIMARY KEY DEFAULT , -- Automatically generate UUIDs
+	  account_id UUID NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id UUID NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL CHECK (period >= 1 AND period <= 12), -- Enforce month period (1-12)
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id UUID REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:31:56.574 EAT [21684] ERROR:  relation "users" already exists
+2025-06-12 18:31:56.574 EAT [21684] STATEMENT:  CREATE TABLE users (
+	    id integer NOT NULL,
+	    email character varying(255) NOT NULL,
+	    full_name character varying(255) NOT NULL,
+	    entity_id UUID NOT NULL References entitymodel (uuid),
+	    created_at timestamp with time zone DEFAULT now() NOT NULL,
+	    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+	    last_login_at timestamp with time zone,
+	    deleted_at timestamp with time zone
+	);
+2025-06-12 18:31:56.589 EAT [21684] ERROR:  constraint "importjobmodel_bank_account_model_id_fkey" for relation "importjobmodel" already exists
+2025-06-12 18:31:56.589 EAT [21684] STATEMENT:  ALTER TABLE importjobmodel
+	ADD CONSTRAINT importjobmodel_bank_account_model_id_fkey
+	FOREIGN KEY (bank_account_model_id)
+	REFERENCES bankaccountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.591 EAT [21684] ERROR:  constraint "importjobmodel_ledger_model_id_fkey" for relation "importjobmodel" already exists
+2025-06-12 18:31:56.591 EAT [21684] STATEMENT:  ALTER TABLE importjobmodel
+	ADD CONSTRAINT importjobmodel_ledger_model_id_fkey
+	FOREIGN KEY (ledger_model_id)
+	REFERENCES ledgermodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.592 EAT [21684] ERROR:  constraint "stagedtransactionmodel_account_model_id_fkey" for relation "stagedtransactionmodel" already exists
+2025-06-12 18:31:56.592 EAT [21684] STATEMENT:  ALTER TABLE stagedtransactionmodel
+	ADD CONSTRAINT stagedtransactionmodel_account_model_id_fkey
+	FOREIGN KEY (account_model_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.593 EAT [21684] ERROR:  constraint "stagedtransactionmodel_import_job_id_fkey" for relation "stagedtransactionmodel" already exists
+2025-06-12 18:31:56.593 EAT [21684] STATEMENT:  ALTER TABLE stagedtransactionmodel
+	ADD CONSTRAINT stagedtransactionmodel_import_job_id_fkey
+	FOREIGN KEY (import_job_id)
+	REFERENCES importjobmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.594 EAT [21684] ERROR:  constraint "stagedtransactionmodel_transaction_model_id_fkey" for relation "stagedtransactionmodel" already exists
+2025-06-12 18:31:56.594 EAT [21684] STATEMENT:  ALTER TABLE stagedtransactionmodel
+	ADD CONSTRAINT stagedtransactionmodel_transaction_model_id_fkey
+	FOREIGN KEY (transaction_model_id)
+	REFERENCES transactionmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.595 EAT [21684] ERROR:  constraint "stagedtransactionmodel_parent_id_fkey" for relation "stagedtransactionmodel" already exists
+2025-06-12 18:31:56.595 EAT [21684] STATEMENT:  ALTER TABLE stagedtransactionmodel
+	ADD CONSTRAINT stagedtransactionmodel_parent_id_fkey
+	FOREIGN KEY (parent_id)
+	REFERENCES stagedtransactionmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.596 EAT [21684] ERROR:  constraint "chartofaccountmodel_entity_id_fkey" for relation "chartofaccountmodel" already exists
+2025-06-12 18:31:56.596 EAT [21684] STATEMENT:  ALTER TABLE chartofaccountmodel
+	ADD CONSTRAINT chartofaccountmodel_entity_id_fkey
+	FOREIGN KEY (entity_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.596 EAT [21684] ERROR:  constraint "accountmodel_coa_model_id_fkey" for relation "accountmodel" already exists
+2025-06-12 18:31:56.596 EAT [21684] STATEMENT:  ALTER TABLE accountmodel
+	ADD CONSTRAINT accountmodel_coa_model_id_fkey
+	FOREIGN KEY (coa_model_id)
+	REFERENCES chartofaccountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.597 EAT [21684] ERROR:  constraint "transactionmodel_account_id_fkey" for relation "transactionmodel" already exists
+2025-06-12 18:31:56.597 EAT [21684] STATEMENT:  ALTER TABLE transactionmodel
+	ADD CONSTRAINT transactionmodel_account_id_fkey
+	FOREIGN KEY (account_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.598 EAT [21684] ERROR:  constraint "transactionmodel_journal_entry_id_fkey" for relation "transactionmodel" already exists
+2025-06-12 18:31:56.598 EAT [21684] STATEMENT:  ALTER TABLE transactionmodel
+	ADD CONSTRAINT transactionmodel_journal_entry_id_fkey
+	FOREIGN KEY (journal_entry_id)
+	REFERENCES journalentrymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.599 EAT [21684] ERROR:  constraint "bankaccountmodel_entity_model_id_fkey" for relation "bankaccountmodel" already exists
+2025-06-12 18:31:56.599 EAT [21684] STATEMENT:  ALTER TABLE bankaccountmodel
+	ADD CONSTRAINT bankaccountmodel_entity_model_id_fkey
+	FOREIGN KEY (entity_model_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.600 EAT [21684] ERROR:  constraint "bankaccountmodel_account_model_id_fkey" for relation "bankaccountmodel" already exists
+2025-06-12 18:31:56.600 EAT [21684] STATEMENT:  ALTER TABLE bankaccountmodel
+	ADD CONSTRAINT bankaccountmodel_account_model_id_fkey
+	FOREIGN KEY (account_model_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.601 EAT [21684] ERROR:  constraint "vendormodel_entity_model_id_fkey" for relation "vendormodel" already exists
+2025-06-12 18:31:56.601 EAT [21684] STATEMENT:  ALTER TABLE vendormodel
+	ADD CONSTRAINT vendormodel_entity_model_id_fkey
+	FOREIGN KEY (entity_model_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.602 EAT [21684] ERROR:  constraint "estimatemodel_customer_id_fkey" for relation "estimatemodel" already exists
+2025-06-12 18:31:56.602 EAT [21684] STATEMENT:  ALTER TABLE estimatemodel
+	ADD CONSTRAINT estimatemodel_customer_id_fkey
+	FOREIGN KEY (customer_id)
+	REFERENCES customermodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.603 EAT [21684] ERROR:  constraint "estimatemodel_entity_id_fkey" for relation "estimatemodel" already exists
+2025-06-12 18:31:56.603 EAT [21684] STATEMENT:  ALTER TABLE estimatemodel
+	ADD CONSTRAINT estimatemodel_entity_id_fkey
+	FOREIGN KEY (entity_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.604 EAT [21684] ERROR:  constraint "itemtransactionmodel_bill_model_id_fkey" for relation "itemtransactionmodel" already exists
+2025-06-12 18:31:56.604 EAT [21684] STATEMENT:  ALTER TABLE itemtransactionmodel
+	ADD CONSTRAINT itemtransactionmodel_bill_model_id_fkey
+	FOREIGN KEY (bill_model_id)
+	REFERENCES billmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.604 EAT [21684] ERROR:  constraint "itemtransactionmodel_ce_model_id_fkey" for relation "itemtransactionmodel" already exists
+2025-06-12 18:31:56.604 EAT [21684] STATEMENT:  ALTER TABLE itemtransactionmodel
+	ADD CONSTRAINT itemtransactionmodel_ce_model_id_fkey
+	FOREIGN KEY (ce_model_id)
+	REFERENCES estimatemodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.605 EAT [21684] ERROR:  constraint "itemtransactionmodel_invoice_model_id_fkey" for relation "itemtransactionmodel" already exists
+2025-06-12 18:31:56.605 EAT [21684] STATEMENT:  ALTER TABLE itemtransactionmodel
+	ADD CONSTRAINT itemtransactionmodel_invoice_model_id_fkey
+	FOREIGN KEY (invoice_model_id)
+	REFERENCES invoicemodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.606 EAT [21684] ERROR:  constraint "itemtransactionmodel_item_model_id_fkey" for relation "itemtransactionmodel" already exists
+2025-06-12 18:31:56.606 EAT [21684] STATEMENT:  ALTER TABLE itemtransactionmodel
+	ADD CONSTRAINT itemtransactionmodel_item_model_id_fkey
+	FOREIGN KEY (item_model_id)
+	REFERENCES itemmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.607 EAT [21684] ERROR:  constraint "itemtransactionmodel_po_model_id_fkey" for relation "itemtransactionmodel" already exists
+2025-06-12 18:31:56.607 EAT [21684] STATEMENT:  ALTER TABLE itemtransactionmodel
+	ADD CONSTRAINT itemtransactionmodel_po_model_id_fkey
+	FOREIGN KEY (po_model_id)
+	REFERENCES purchaseordermodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.607 EAT [21684] ERROR:  constraint "unitofmeasuremodel_entity_id_fkey" for relation "unitofmeasuremodel" already exists
+2025-06-12 18:31:56.607 EAT [21684] STATEMENT:  ALTER TABLE unitofmeasuremodel
+	ADD CONSTRAINT unitofmeasuremodel_entity_id_fkey
+	FOREIGN KEY (entity_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.608 EAT [21684] ERROR:  constraint "purchaseordermodel_ce_model_id_fkey" for relation "purchaseordermodel" already exists
+2025-06-12 18:31:56.608 EAT [21684] STATEMENT:  ALTER TABLE purchaseordermodel
+	ADD CONSTRAINT purchaseordermodel_ce_model_id_fkey
+	FOREIGN KEY (ce_model_id)
+	REFERENCES estimatemodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.608 EAT [21684] ERROR:  constraint "purchaseordermodel_entity_id_fkey" for relation "purchaseordermodel" already exists
+2025-06-12 18:31:56.608 EAT [21684] STATEMENT:  ALTER TABLE purchaseordermodel
+	ADD CONSTRAINT purchaseordermodel_entity_id_fkey
+	FOREIGN KEY (entity_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.609 EAT [21684] ERROR:  constraint "invoicemodel_cash_account_id_fkey" for relation "invoicemodel" already exists
+2025-06-12 18:31:56.609 EAT [21684] STATEMENT:  ALTER TABLE invoicemodel
+	ADD CONSTRAINT invoicemodel_cash_account_id_fkey
+	FOREIGN KEY (cash_account_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.609 EAT [21684] ERROR:  constraint "invoicemodel_ce_model_id_fkey" for relation "invoicemodel" already exists
+2025-06-12 18:31:56.609 EAT [21684] STATEMENT:  ALTER TABLE invoicemodel
+	ADD CONSTRAINT invoicemodel_ce_model_id_fkey
+	FOREIGN KEY (ce_model_id)
+	REFERENCES estimatemodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.610 EAT [21684] ERROR:  constraint "invoicemodel_customer_id_fkey" for relation "invoicemodel" already exists
+2025-06-12 18:31:56.610 EAT [21684] STATEMENT:  ALTER TABLE invoicemodel
+	ADD CONSTRAINT invoicemodel_customer_id_fkey
+	FOREIGN KEY (customer_id)
+	REFERENCES customermodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.610 EAT [21684] ERROR:  constraint "invoicemodel_ledger_id_fkey" for relation "invoicemodel" already exists
+2025-06-12 18:31:56.610 EAT [21684] STATEMENT:  ALTER TABLE invoicemodel
+	ADD CONSTRAINT invoicemodel_ledger_id_fkey
+	FOREIGN KEY (ledger_id)
+	REFERENCES ledgermodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.611 EAT [21684] ERROR:  constraint "invoicemodel_prepaid_account_id_fkey" for relation "invoicemodel" already exists
+2025-06-12 18:31:56.611 EAT [21684] STATEMENT:  ALTER TABLE invoicemodel
+	ADD CONSTRAINT invoicemodel_prepaid_account_id_fkey
+	FOREIGN KEY (prepaid_account_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.611 EAT [21684] ERROR:  constraint "invoicemodel_unearned_account_id_fkey" for relation "invoicemodel" already exists
+2025-06-12 18:31:56.611 EAT [21684] STATEMENT:  ALTER TABLE invoicemodel
+	ADD CONSTRAINT invoicemodel_unearned_account_id_fkey
+	FOREIGN KEY (unearned_account_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.612 EAT [21684] ERROR:  constraint "entitystatemodel_entity_model_id_fkey" for relation "entitystatemodel" already exists
+2025-06-12 18:31:56.612 EAT [21684] STATEMENT:  ALTER TABLE entitystatemodel
+	ADD CONSTRAINT entitystatemodel_entity_model_id_fkey
+	FOREIGN KEY (entity_model_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.612 EAT [21684] ERROR:  constraint "entitymanagementmodel_entity_id_fkey" for relation "entitymanagementmodel" already exists
+2025-06-12 18:31:56.612 EAT [21684] STATEMENT:  ALTER TABLE entitymanagementmodel
+	ADD CONSTRAINT entitymanagementmodel_entity_id_fkey
+	FOREIGN KEY (entity_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.613 EAT [21684] ERROR:  constraint "customermodel_entity_model_id_fkey" for relation "customermodel" already exists
+2025-06-12 18:31:56.613 EAT [21684] STATEMENT:  ALTER TABLE customermodel
+	ADD CONSTRAINT customermodel_entity_model_id_fkey
+	FOREIGN KEY (entity_model_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.613 EAT [21684] ERROR:  constraint "billmodel_cash_account_id_fkey" for relation "billmodel" already exists
+2025-06-12 18:31:56.613 EAT [21684] STATEMENT:  ALTER TABLE billmodel
+	ADD CONSTRAINT billmodel_cash_account_id_fkey
+	FOREIGN KEY (cash_account_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.614 EAT [21684] ERROR:  constraint "billmodel_ce_model_id_fkey" for relation "billmodel" already exists
+2025-06-12 18:31:56.614 EAT [21684] STATEMENT:  ALTER TABLE billmodel
+	ADD CONSTRAINT billmodel_ce_model_id_fkey
+	FOREIGN KEY (ce_model_id)
+	REFERENCES estimatemodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.615 EAT [21684] ERROR:  constraint "billmodel_ledger_id_fkey" for relation "billmodel" already exists
+2025-06-12 18:31:56.615 EAT [21684] STATEMENT:  ALTER TABLE billmodel
+	ADD CONSTRAINT billmodel_ledger_id_fkey
+	FOREIGN KEY (ledger_id)
+	REFERENCES ledgermodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.616 EAT [21684] ERROR:  constraint "billmodel_prepaid_account_id_fkey" for relation "billmodel" already exists
+2025-06-12 18:31:56.616 EAT [21684] STATEMENT:  ALTER TABLE billmodel
+	ADD CONSTRAINT billmodel_prepaid_account_id_fkey
+	FOREIGN KEY (prepaid_account_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.616 EAT [21684] ERROR:  constraint "billmodel_unearned_account_id_fkey" for relation "billmodel" already exists
+2025-06-12 18:31:56.616 EAT [21684] STATEMENT:  ALTER TABLE billmodel
+	ADD CONSTRAINT billmodel_unearned_account_id_fkey
+	FOREIGN KEY (unearned_account_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.617 EAT [21684] ERROR:  constraint "billmodel_vendor_id_fkey" for relation "billmodel" already exists
+2025-06-12 18:31:56.617 EAT [21684] STATEMENT:  ALTER TABLE billmodel
+	ADD CONSTRAINT billmodel_vendor_id_fkey
+	FOREIGN KEY (vendor_id)
+	REFERENCES vendormodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.617 EAT [21684] ERROR:  constraint "itemmodel_cogs_account_id_fkey" for relation "itemmodel" already exists
+2025-06-12 18:31:56.617 EAT [21684] STATEMENT:  ALTER TABLE itemmodel
+	ADD CONSTRAINT itemmodel_cogs_account_id_fkey
+	FOREIGN KEY (cogs_account_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.617 EAT [21684] ERROR:  constraint "itemmodel_earnings_account_id_fkey" for relation "itemmodel" already exists
+2025-06-12 18:31:56.617 EAT [21684] STATEMENT:  ALTER TABLE itemmodel
+	ADD CONSTRAINT itemmodel_earnings_account_id_fkey
+	FOREIGN KEY (earnings_account_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.618 EAT [21684] ERROR:  constraint "itemmodel_entity_id_fkey" for relation "itemmodel" already exists
+2025-06-12 18:31:56.618 EAT [21684] STATEMENT:  ALTER TABLE itemmodel
+	ADD CONSTRAINT itemmodel_entity_id_fkey
+	FOREIGN KEY (entity_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.618 EAT [21684] ERROR:  constraint "itemmodel_expense_account_id_fkey" for relation "itemmodel" already exists
+2025-06-12 18:31:56.618 EAT [21684] STATEMENT:  ALTER TABLE itemmodel
+	ADD CONSTRAINT itemmodel_expense_account_id_fkey
+	FOREIGN KEY (expense_account_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.618 EAT [21684] ERROR:  constraint "itemmodel_inventory_account_id_fkey" for relation "itemmodel" already exists
+2025-06-12 18:31:56.618 EAT [21684] STATEMENT:  ALTER TABLE itemmodel
+	ADD CONSTRAINT itemmodel_inventory_account_id_fkey
+	FOREIGN KEY (inventory_account_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.619 EAT [21684] ERROR:  constraint "itemmodel_uom_id_fkey" for relation "itemmodel" already exists
+2025-06-12 18:31:56.619 EAT [21684] STATEMENT:  ALTER TABLE itemmodel
+	ADD CONSTRAINT itemmodel_uom_id_fkey
+	FOREIGN KEY (uom_id)
+	REFERENCES unitofmeasuremodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.619 EAT [21684] ERROR:  constraint "entitymodel_default_coa_id_fkey" for relation "entitymodel" already exists
+2025-06-12 18:31:56.619 EAT [21684] STATEMENT:  ALTER TABLE entitymodel
+	ADD CONSTRAINT entitymodel_default_coa_id_fkey
+	FOREIGN KEY (default_coa_id)
+	REFERENCES chartofaccountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.620 EAT [21684] ERROR:  constraint "journalentrymodel_ledger_id_fkey" for relation "journalentrymodel" already exists
+2025-06-12 18:31:56.620 EAT [21684] STATEMENT:  ALTER TABLE journalentrymodel
+	ADD CONSTRAINT journalentrymodel_ledger_id_fkey
+	FOREIGN KEY (ledger_id)
+	REFERENCES ledgermodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.620 EAT [21684] ERROR:  constraint "ledgermodel_entity_id_fkey" for relation "ledgermodel" already exists
+2025-06-12 18:31:56.620 EAT [21684] STATEMENT:  ALTER TABLE ledgermodel
+	ADD CONSTRAINT ledgermodel_entity_id_fkey
+	FOREIGN KEY (entity_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.620 EAT [21684] ERROR:  constraint "closingentrytransactionmodel_account_model_id_fkey" for relation "closingentrytransactionmodel" already exists
+2025-06-12 18:31:56.620 EAT [21684] STATEMENT:  ALTER TABLE closingentrytransactionmodel
+	ADD CONSTRAINT closingentrytransactionmodel_account_model_id_fkey
+	FOREIGN KEY (account_model_id)
+	REFERENCES accountmodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.620 EAT [21684] ERROR:  constraint "closingentrytransactionmodel_closing_entry_model_id_fkey" for relation "closingentrytransactionmodel" already exists
+2025-06-12 18:31:56.620 EAT [21684] STATEMENT:  ALTER TABLE closingentrytransactionmodel
+	ADD CONSTRAINT closingentrytransactionmodel_closing_entry_model_id_fkey
+	FOREIGN KEY (closing_entry_model_id)
+	REFERENCES closingentrymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.621 EAT [21684] ERROR:  constraint "closingentrymodel_entity_model_id_fkey" for relation "closingentrymodel" already exists
+2025-06-12 18:31:56.621 EAT [21684] STATEMENT:  ALTER TABLE closingentrymodel
+	ADD CONSTRAINT closingentrymodel_entity_model_id_fkey
+	FOREIGN KEY (entity_model_id)
+	REFERENCES entitymodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.621 EAT [21684] ERROR:  constraint "closingentrymodel_ledger_model_id_fkey" for relation "closingentrymodel" already exists
+2025-06-12 18:31:56.621 EAT [21684] STATEMENT:  ALTER TABLE closingentrymodel
+	ADD CONSTRAINT closingentrymodel_ledger_model_id_fkey
+	FOREIGN KEY (ledger_model_id)
+	REFERENCES ledgermodel (uuid)
+	DEFERRABLE INITIALLY DEFERRED;
+2025-06-12 18:31:56.623 EAT [21684] ERROR:  relation "account_balances" already exists
+2025-06-12 18:31:56.623 EAT [21684] STATEMENT:  CREATE MATERIALIZED VIEW account_balances AS
+	SELECT 
+	    a.uuid as account_id,
+	    a.code,
+	    a.name,
+	    a.balance_type,
+	    a.coa_model_id,
+	    COALESCE(SUM(CASE WHEN t.tx_type = 'DEBIT' THEN t.amount ELSE -t.amount END), 0) as balance,
+	    MAX(je.timestamp) as last_transaction_date
+	FROM accountmodel a
+	LEFT JOIN transactionmodel t ON a.uuid = t.account_id
+	LEFT JOIN journalentrymodel je ON t.journal_entry_id = je.uuid AND je.posted = TRUE
+	GROUP BY a.uuid, a.code, a.name, a.balance_type, a.coa_model_id;
+2025-06-12 18:31:56.624 EAT [21684] ERROR:  relation "ar_aging" already exists
+2025-06-12 18:31:56.624 EAT [21684] STATEMENT:  CREATE MATERIALIZED VIEW ar_aging AS
+	SELECT 
+	    i.customer_id,
+	    c.customer_name,
+	    SUM(CASE WHEN CURRENT_DATE - i.date_due <= 30 THEN i.amount_receivable ELSE 0 END) as current_amount,
+	    SUM(CASE WHEN CURRENT_DATE - i.date_due BETWEEN 31 AND 60 THEN i.amount_receivable ELSE 0 END) as days_31_60,
+	    SUM(CASE WHEN CURRENT_DATE - i.date_due BETWEEN 61 AND 90 THEN i.amount_receivable ELSE 0 END) as days_61_90,
+	    SUM(CASE WHEN CURRENT_DATE - i.date_due > 90 THEN i.amount_receivable ELSE 0 END) as over_90_days
+	FROM invoicemodel i
+	JOIN customermodel c ON i.customer_id = c.uuid
+	WHERE i.invoice_status NOT IN ('paid', 'void', 'canceled') AND i.amount_receivable > 0
+	GROUP BY i.customer_id, c.customer_name;
+2025-06-12 18:31:56.628 EAT [21684] ERROR:  constraint "chk_balanced_je" for relation "journalentrymodel" already exists
+2025-06-12 18:31:56.628 EAT [21684] STATEMENT:  ALTER TABLE journalentrymodel 
+	  ADD CONSTRAINT chk_balanced_je 
+	  CHECK (NOT posted OR validate_journal_entry_balance(uuid));
+2025-06-12 18:31:56.629 EAT [21684] ERROR:  column "currency_id" of relation "invoicemodel" already exists
+2025-06-12 18:31:56.629 EAT [21684] STATEMENT:  ALTER TABLE invoicemodel ADD COLUMN currency_id uuid REFERENCES currencymodel (uuid);
+2025-06-12 18:31:56.630 EAT [21684] ERROR:  column "currency_id" of relation "billmodel" already exists
+2025-06-12 18:31:56.630 EAT [21684] STATEMENT:  ALTER TABLE billmodel ADD COLUMN currency_id uuid REFERENCES currencymodel (uuid);
+2025-06-12 18:31:56.631 EAT [21684] ERROR:  type "budget_status" already exists
+2025-06-12 18:31:56.631 EAT [21684] STATEMENT:  CREATE TYPE budget_status AS ENUM ('draft', 'pending', 'approved', 'rejected', 'final');
+2025-06-12 18:31:56.632 EAT [21684] ERROR:  syntax error at or near "," at character 83
+2025-06-12 18:31:56.632 EAT [21684] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetmodel (
+	  uuid UUID NOT NULL PRIMARY KEY DEFAULT ,
+	  created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Store with time zone and default to creation time
+	  name VARCHAR(150) NOT NULL,
+	  fiscal_year INTEGER NOT NULL,
+	  version INTEGER NOT NULL DEFAULT 1,
+	  status budget_status NOT NULL DEFAULT 'draft',   entity_id UUID NOT NULL REFERENCES entitymodel (uuid)
+	);
+2025-06-12 18:31:56.632 EAT [21684] ERROR:  syntax error at or near "," at character 87
+2025-06-12 18:31:56.632 EAT [21684] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid UUID NOT NULL PRIMARY KEY DEFAULT ,
+	  account_id UUID NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id UUID NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL CHECK (period >= 1 AND period <= 12), 
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id UUID REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:32:04.548 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:32:04.566 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.004 s, total=0.019 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5295 kB, estimate=5309 kB; lsn=0/71C2EA30, redo lsn=0/71C2E9D8
+2025-06-12 18:32:05.740 EAT [21977] ERROR:  syntax error at or near "," at character 83
+2025-06-12 18:32:05.740 EAT [21977] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetmodel (
+	  uuid UUID NOT NULL PRIMARY KEY DEFAULT ,
+	  created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Store with time zone and default to creation time
+	  name VARCHAR(150) NOT NULL,
+	  fiscal_year INTEGER NOT NULL,
+	  version INTEGER NOT NULL DEFAULT 1,
+	  status budget_status NOT NULL DEFAULT 'draft',   entity_id UUID NOT NULL REFERENCES entitymodel (uuid)
+	);
+2025-06-12 18:32:05.740 EAT [21977] ERROR:  syntax error at or near "," at character 87
+2025-06-12 18:32:05.740 EAT [21977] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid UUID NOT NULL PRIMARY KEY DEFAULT ,
+	  account_id UUID NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id UUID NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL CHECK (period >= 1 AND period <= 12), 
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id UUID REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:33:01.059 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:33:01.085 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.004 s, sync=0.004 s, total=0.027 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5296 kB, estimate=5308 kB; lsn=0/7215AD58, redo lsn=0/7215AD00
+2025-06-12 18:33:02.584 EAT [22118] ERROR:  syntax error at or near "," at character 83
+2025-06-12 18:33:02.584 EAT [22118] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetmodel (
+	  uuid UUID NOT NULL PRIMARY KEY DEFAULT ,
+	  created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,   name VARCHAR(150) NOT NULL,
+	  -- Store with time zone and default to creation time
+	  fiscal_year INTEGER NOT NULL,
+	  version INTEGER NOT NULL DEFAULT 1,
+	  status budget_status NOT NULL DEFAULT 'draft',   entity_id UUID NOT NULL REFERENCES entitymodel (uuid)
+	);
+2025-06-12 18:33:02.585 EAT [22118] ERROR:  syntax error at or near "," at character 87
+2025-06-12 18:33:02.585 EAT [22118] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid UUID NOT NULL PRIMARY KEY DEFAULT ,
+	  account_id UUID NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id UUID NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL CHECK (period >= 1 AND period <= 12), 
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id UUID REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:33:44.637 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:33:44.661 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.004 s, total=0.025 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5294 kB, estimate=5307 kB; lsn=0/72686708, redo lsn=0/726866B0
+2025-06-12 18:33:45.967 EAT [22345] ERROR:  relation "entityunitmodel" does not exist
+2025-06-12 18:33:45.967 EAT [22345] STATEMENT:  CREATE TABLE IF NOT EXISTS budgetlinemodel (
+	  uuid UUID NOT NULL PRIMARY KEY ,
+	  account_id UUID NOT NULL REFERENCES accountmodel (uuid),
+	  budget_id UUID NOT NULL REFERENCES budgetmodel (uuid),
+	  period INTEGER NOT NULL CHECK (period >= 1 AND period <= 12), 
+	  budgeted_amount DECIMAL(15,2) NOT NULL,
+	  unit_id UUID REFERENCES entityunitmodel (uuid)
+	);
+2025-06-12 18:35:42.271 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:35:42.290 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.004 s, total=0.020 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5335 kB, estimate=5335 kB; lsn=0/72BBC340, redo lsn=0/72BBC2E8
+2025-06-12 18:40:42.323 EAT [4259] LOG:  checkpoint starting: time
+2025-06-12 18:40:55.376 EAT [4259] LOG:  checkpoint complete: wrote 138 buffers (0.8%); 0 WAL file(s) added, 0 removed, 1 recycled; write=13.025 s, sync=0.004 s, total=13.054 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5338 kB, estimate=5338 kB; lsn=0/730F4620, redo lsn=0/730F2CE0
+2025-06-12 18:40:55.376 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:40:55.388 EAT [4259] LOG:  checkpoint complete: wrote 1 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.001 s, total=0.012 s; sync files=1, longest=0.001 s, average=0.001 s; distance=6 kB, estimate=4805 kB; lsn=0/730F46F0, redo lsn=0/730F4698
+2025-06-12 18:41:10.905 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 18:41:10.923 EAT [4259] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.003 s, total=0.018 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5329 kB, estimate=5329 kB; lsn=0/73628DF0, redo lsn=0/73628D98
+2025-06-12 18:46:11.025 EAT [4259] LOG:  checkpoint starting: time
+2025-06-12 18:47:53.118 EAT [4259] LOG:  checkpoint complete: wrote 1013 buffers (6.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=101.909 s, sync=0.167 s, total=102.093 s; sync files=440, longest=0.005 s, average=0.001 s; distance=5329 kB, estimate=5329 kB; lsn=0/73B5D310, redo lsn=0/73B5D280
+2025-06-12 19:46:54.149 EAT [18256] ERROR:  relation "entities" already exists
+2025-06-12 19:46:54.149 EAT [18256] STATEMENT:  -- Root entity/company table with hierarchical structure and accounting preferences
+	CREATE TABLE entities (
+	    id SERIAL PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    parent_id INT REFERENCES entities(id) ON DELETE CASCADE,
+	    name VARCHAR(255) NOT NULL,
+	    code VARCHAR(50), -- For internal reference codes
+	    type VARCHAR(20) NOT NULL 
+	        CHECK (type IN ('COMPANY', 'SUBSIDIARY', 'REGION', 'BRANCH', 'LOCATION', 
+	                       'DEPARTMENT', 'DIVISION', 'COST_CENTER', 'PROJECT', 'BUDGET_UNIT')),
+	    is_active BOOLEAN NOT NULL DEFAULT true,
+	    hidden BOOLEAN NOT NULL,                             -- Whether entity is hidden
+	    accrual_method BOOLEAN NOT NULL,                     -- True=Accrual, False=Cash accounting
+	    fy_start_month INTEGER NOT NULL,                     -- Fiscal year start month (1-12)
+	  
+	    address JSONB DEFAULT '{}'::jsonb, -- Entity-specific address
+	    picture VARCHAR(100) NULL,                           -- Logo/picture file path
+	    settings JSONB DEFAULT '{}'::jsonb, -- Entity-specific settings
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	    deleted_at TIMESTAMPTZ,
+	    UNIQUE (tenant_id, parent_id, name)
+	);
+	
+	COMMENT ON TABLE entities IS ' * Purpose: Stores business entities/organizations/companies
+	 * Description: Core table representing different business entities that can
+	 *              have their own accounting books, customers, vendors, etc.
+	 *              Uses tree structure for hierarchical organization relationships.
+	';
+	
+	CREATE UNIQUE INDEX tenant_code_unique_idx
+	ON entities (tenant_id, code)
+	WHERE code IS NOT NULL;
+	
+	-- Enhanced closure table (keep your existing structure)
+	CREATE TABLE hierarchy_paths (
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    ancestor_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    descendant_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	    depth INT NOT NULL,
+	    PRIMARY KEY (tenant_id, ancestor_id, descendant_id)
+	);
+	
+	
+2025-06-12 19:49:03.866 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 19:49:03.917 EAT [4259] LOG:  checkpoint complete: wrote 14 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.016 s, sync=0.006 s, total=0.053 s; sync files=9, longest=0.002 s, average=0.001 s; distance=313 kB, estimate=4828 kB; lsn=0/73BAB798, redo lsn=0/73BAB740
+2025-06-12 19:54:04.019 EAT [4259] LOG:  checkpoint starting: time
+2025-06-12 19:55:46.524 EAT [4259] LOG:  checkpoint complete: wrote 1016 buffers (6.2%); 0 WAL file(s) added, 0 removed, 1 recycled; write=102.246 s, sync=0.142 s, total=102.506 s; sync files=462, longest=0.005 s, average=0.001 s; distance=5155 kB, estimate=5155 kB; lsn=0/740B44B0, redo lsn=0/740B4420
+2025-06-12 19:57:45.047 EAT [24663] ERROR:  cannot drop table entities because other objects depend on it
+2025-06-12 19:57:45.047 EAT [24663] DETAIL:  constraint customer_entity_id_fkey on table customer depends on table entities
+2025-06-12 19:57:45.047 EAT [24663] HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+2025-06-12 19:57:45.047 EAT [24663] STATEMENT:  DROP TABLE IF EXISTS hierarchy_paths;
+	DROP TABLE IF EXISTS entities;
+	
+	
+2025-06-12 19:59:04.625 EAT [4259] LOG:  checkpoint starting: time
+2025-06-12 19:59:16.156 EAT [4259] LOG:  checkpoint complete: wrote 115 buffers (0.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=11.480 s, sync=0.026 s, total=11.531 s; sync files=73, longest=0.004 s, average=0.001 s; distance=746 kB, estimate=4714 kB; lsn=0/7416EF70, redo lsn=0/7416EF18
+2025-06-12 20:01:24.668 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 20:01:24.693 EAT [4259] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.003 s, total=0.026 s; sync files=3, longest=0.002 s, average=0.001 s; distance=11 kB, estimate=4244 kB; lsn=0/74171B80, redo lsn=0/74171B28
+2025-06-12 20:01:49.237 EAT [26876] ERROR:  cannot drop table entities because other objects depend on it
+2025-06-12 20:01:49.237 EAT [26876] DETAIL:  constraint customer_entity_id_fkey on table customer depends on table entities
+2025-06-12 20:01:49.237 EAT [26876] HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+2025-06-12 20:01:49.237 EAT [26876] STATEMENT:  DROP TABLE IF EXISTS hierarchy_paths;
+	COMMENT ON TABLE entities IS NULL;
+	DROP TABLE IF EXISTS entities;
+	
+	
+2025-06-12 20:06:24.790 EAT [4259] LOG:  checkpoint starting: time
+2025-06-12 20:07:18.167 EAT [4259] LOG:  checkpoint complete: wrote 537 buffers (3.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=53.336 s, sync=0.004 s, total=53.378 s; sync files=10, longest=0.001 s, average=0.001 s; distance=5385 kB, estimate=5385 kB; lsn=0/746B69B8, redo lsn=0/746B41A0
+2025-06-12 20:07:18.168 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 20:07:18.200 EAT [4259] LOG:  checkpoint complete: wrote 1 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.009 s, sync=0.004 s, total=0.032 s; sync files=1, longest=0.004 s, average=0.004 s; distance=10 kB, estimate=4848 kB; lsn=0/746B6A88, redo lsn=0/746B6A30
+2025-06-12 20:07:34.144 EAT [32666] ERROR:  cannot drop table entities because other objects depend on it
+2025-06-12 20:07:34.144 EAT [32666] DETAIL:  constraint customer_entity_id_fkey on table customer depends on table entities
+2025-06-12 20:07:34.144 EAT [32666] HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+2025-06-12 20:07:34.144 EAT [32666] STATEMENT:  DROP TABLE IF EXISTS hierarchy_paths;
+	COMMENT ON TABLE entities IS NULL;
+	DROP TABLE IF EXISTS entities;
+	
+	
+2025-06-12 20:12:18.302 EAT [4259] LOG:  checkpoint starting: time
+2025-06-12 20:12:42.295 EAT [4259] LOG:  checkpoint complete: wrote 249 buffers (1.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=23.964 s, sync=0.009 s, total=23.993 s; sync files=10, longest=0.002 s, average=0.001 s; distance=5441 kB, estimate=5441 kB; lsn=0/74C093D0, redo lsn=0/74C07060
+2025-06-12 20:12:42.295 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 20:12:42.327 EAT [4259] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.003 s, total=0.032 s; sync files=1, longest=0.003 s, average=0.003 s; distance=8 kB, estimate=4898 kB; lsn=0/74C094A0, redo lsn=0/74C09448
+2025-06-12 20:12:45.532 EAT [7143] ERROR:  cannot drop table entities because other objects depend on it
+2025-06-12 20:12:45.532 EAT [7143] DETAIL:  constraint customer_entity_id_fkey on table customer depends on table entities
+2025-06-12 20:12:45.532 EAT [7143] HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+2025-06-12 20:12:45.532 EAT [7143] STATEMENT:  -- Down script for entities and hierarchy_paths tables
+	
+	DROP TABLE IF EXISTS hierarchy_paths;
+	
+	DROP INDEX IF EXISTS tenant_code_unique_idx; -- Explicitly drop the index
+	
+	DROP TABLE IF EXISTS entities;
+	
+2025-06-12 20:14:31.925 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 20:14:31.947 EAT [4259] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.004 s, sync=0.003 s, total=0.023 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5362 kB, estimate=5362 kB; lsn=0/75145F10, redo lsn=0/75145EB8
+2025-06-12 20:14:34.353 EAT [7930] ERROR:  cannot drop table tenants because other objects depend on it
+2025-06-12 20:14:34.353 EAT [7930] DETAIL:  constraint customer_tenant_id_fkey on table customer depends on table tenants
+2025-06-12 20:14:34.353 EAT [7930] HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+2025-06-12 20:14:34.353 EAT [7930] STATEMENT:  -- Down migration to revert the changes
+	
+	-- Drop the tenant_configurations table
+	DROP TABLE IF EXISTS tenant_configurations;
+	
+	-- Drop the tenants table
+	DROP TABLE IF EXISTS tenants;
+	
+	-- Drop extensions (if they were created solely for this schema and are no longer needed)
+	-- Be cautious when dropping extensions, as they might be used by other parts of your database.
+	-- Only drop them if you are certain they are not used elsewhere.
+	DROP EXTENSION IF EXISTS "ltree";
+	DROP EXTENSION IF EXISTS "uuid-ossp";
+	
+	
+	
+2025-06-12 20:16:30.008 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 20:16:30.021 EAT [4259] LOG:  checkpoint complete: wrote 13 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.003 s, total=0.014 s; sync files=9, longest=0.001 s, average=0.001 s; distance=5399 kB, estimate=5399 kB; lsn=0/7568BDF0, redo lsn=0/7568BD98
+2025-06-12 20:16:32.208 EAT [9632] ERROR:  cannot drop table entities because other objects depend on it
+2025-06-12 20:16:32.208 EAT [9632] DETAIL:  constraint customer_entity_id_fkey on table customer depends on table entities
+2025-06-12 20:16:32.208 EAT [9632] HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+2025-06-12 20:16:32.208 EAT [9632] STATEMENT:  -- Down script for entities and hierarchy_paths tables
+	
+	-- First, drop the foreign key constraint that depends on the 'entities' table
+	-- ALTER TABLE customer DROP CONSTRAINT IF EXISTS customer_entity_id_fkey; -- Assuming 'customer' is the table and 'customer_entity_id_fkey' is the constraint name
+	
+	DROP TABLE IF EXISTS hierarchy_paths;
+	
+	-- DROP INDEX IF EXISTS tenant_code_unique_idx; -- Explicitly drop the index
+	
+	DROP TABLE IF EXISTS entities;
+	
+2025-06-12 20:17:48.111 EAT [4259] LOG:  checkpoint starting: immediate force wait
+2025-06-12 20:17:48.147 EAT [4259] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.009 s, sync=0.007 s, total=0.036 s; sync files=7, longest=0.002 s, average=0.001 s; distance=5408 kB, estimate=5408 kB; lsn=0/75BD40F0, redo lsn=0/75BD4098
+2025-06-12 20:22:48.248 EAT [4259] LOG:  checkpoint starting: time
+2025-06-12 20:24:28.442 EAT [4259] LOG:  checkpoint complete: wrote 990 buffers (6.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=100.032 s, sync=0.115 s, total=100.194 s; sync files=520, longest=0.003 s, average=0.001 s; distance=5413 kB, estimate=5413 kB; lsn=0/7611D7F8, redo lsn=0/7611D768

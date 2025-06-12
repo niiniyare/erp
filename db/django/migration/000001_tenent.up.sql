@@ -6,9 +6,8 @@
 
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
--- CREATE EXTENSION IF NOT EXISTS "ltree";
 
--- Tenant management (your existing structure is good)
+-- Tenant management
 CREATE TABLE tenants (
     id SERIAL PRIMARY KEY,
     uuid UUID NOT NULL DEFAULT uuid_generate_v4(),

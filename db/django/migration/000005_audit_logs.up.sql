@@ -1,8 +1,7 @@
--- Fixed migration script without ltree dependency
 
 -- Audit logging (enhanced)
 CREATE TABLE audit_logs (
-    id BIGSERIAL PRIMARY KEY,
+    uuid UUID PRIMARY KEY,
     tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id INT REFERENCES users(id) ON DELETE SET NULL,
     entity_id INT REFERENCES entities(id), -- Context entity
