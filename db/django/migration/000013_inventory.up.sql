@@ -6,7 +6,7 @@
 CREATE TABLE warehouses (
     id SERIAL PRIMARY KEY,
     tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     code VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     address JSONB,
@@ -24,7 +24,7 @@ CREATE TABLE warehouses (
 CREATE TABLE item_categories (
     id SERIAL PRIMARY KEY,
     tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+  entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     parent_id INT REFERENCES item_categories(id),
     name VARCHAR(100) NOT NULL,
     code VARCHAR(20),
@@ -38,7 +38,7 @@ CREATE TABLE item_categories (
 CREATE TABLE items (
     id SERIAL PRIMARY KEY,
     tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     item_code VARCHAR(50) NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -71,6 +71,8 @@ CREATE TABLE inventory_balances (
     id SERIAL PRIMARY KEY,
     tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     item_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
+
     warehouse_id INT NOT NULL REFERENCES warehouses(id) ON DELETE CASCADE,
     quantity_on_hand DECIMAL(10,2) DEFAULT 0,
     quantity_available DECIMAL(10,2) DEFAULT 0, -- On hand - reserved
@@ -87,7 +89,7 @@ CREATE TABLE inventory_balances (
 CREATE TABLE inventory_movements (
     id BIGSERIAL PRIMARY KEY,
     tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     item_id INT NOT NULL REFERENCES items(id),
     warehouse_id INT NOT NULL REFERENCES warehouses(id),
     movement_type VARCHAR(20) NOT NULL

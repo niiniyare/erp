@@ -1,3 +1,4 @@
+
 -- Tenant context function
 CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS INT AS $$
 BEGIN
@@ -18,7 +19,8 @@ CREATE POLICY tenant_isolation_policy ON roles USING (tenant_id = current_tenant
 CREATE POLICY tenant_isolation_policy ON projects USING (tenant_id = current_tenant_id());
 CREATE POLICY tenant_isolation_policy ON budgets USING (tenant_id = current_tenant_id());
 CREATE POLICY tenant_isolation_policy ON audit_logs USING (tenant_id = current_tenant_id());
-CREATE POLICY tenant_isolation_policy ON chart_of_accounts USING (tenant_id = current_tenant_id());
+CREATE POLICY tenant_isolation_policy ON account USING (tenant_id = current_tenant_id());
+CREATE POLICY tenant_isolation_policy ON chartofaccount USING (tenant_id = current_tenant_id());
 
 -- User roles policy (users can only see their own roles)
 CREATE POLICY user_roles_policy ON user_roles

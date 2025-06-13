@@ -35,11 +35,11 @@ CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
 CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
 CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
 
-CREATE INDEX idx_chart_of_accounts_tenant ON chart_of_accounts(tenant_id);
-CREATE INDEX idx_chart_of_accounts_entity ON chart_of_accounts(entity_id);
-CREATE INDEX idx_chart_of_accounts_code ON chart_of_accounts(account_code);
-CREATE INDEX idx_chart_of_accounts_type ON chart_of_accounts(account_type);
-CREATE INDEX idx_chart_of_accounts_parent ON chart_of_accounts(parent_account_id);
+CREATE INDEX idx_account_tenant ON account(tenant_id);
+CREATE INDEX idx_account_entity ON account(entity_id);
+CREATE INDEX idx_account_code ON account(account_code);
+CREATE INDEX idx_account_type ON account(account_type);
+-- CREATE INDEX idx_account_parent ON account(parent_account_id);
 
 -- Row Level Security (apply to all tables)
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
@@ -53,5 +53,7 @@ ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE chart_of_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chartofaccount ENABLE ROW LEVEL SECURITY;
+ALTER TABLE account ENABLE ROW LEVEL SECURITY;
+
 

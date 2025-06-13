@@ -1,692 +1,692 @@
-Enum budget_status {
-  draft
-  pending
-  approved
-  rejected
-  final
+Enum "budget_status" {
+  "draft"
+  "pending"
+  "approved"
+  "rejected"
+  "final"
 }
 
-Table entities {
-  path VARCHAR(255) [unique, not null]
-  depth INTEGER [not null]
-  numchild INTEGER [not null]
-  slug VARCHAR(50) [unique, not null]
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  name VARCHAR(150) [not null]
-  hidden BOOLEAN [not null]
-  accrual_method BOOLEAN [not null]
-  fy_start_month INTEGER [not null]
-  picture VARCHAR(100)
-  admin_id INTEGER [not null]
-  default_coa_id UUID [unique]
-  last_closing_date DATE
-  meta TEXT
-  address_1 VARCHAR(70) [not null]
-  address_2 VARCHAR(70)
-  city VARCHAR(70)
-  state VARCHAR(70)
-  zip_code VARCHAR(20)
-  country VARCHAR(70)
-  email VARCHAR(254)
-  website VARCHAR(200)
-  phone VARCHAR(30)
+Table "entities" {
+  "path" VARCHAR(255) [unique, not null]
+  "depth" INTEGER [not null]
+  "numchild" INTEGER [not null]
+  "slug" VARCHAR(50) [unique, not null]
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "name" VARCHAR(150) [not null]
+  "hidden" BOOLEAN [not null]
+  "accrual_method" BOOLEAN [not null]
+  "fy_start_month" INTEGER [not null]
+  "picture" VARCHAR(100)
+  "admin_id" INTEGER [not null]
+  "default_coa_id" UUID [unique]
+  "last_closing_date" DATE
+  "meta" TEXT
+  "address_1" VARCHAR(70) [not null]
+  "address_2" VARCHAR(70)
+  "city" VARCHAR(70)
+  "state" VARCHAR(70)
+  "zip_code" VARCHAR(20)
+  "country" VARCHAR(70)
+  "email" VARCHAR(254)
+  "website" VARCHAR(200)
+  "phone" VARCHAR(30)
 }
 
-Table users {
-  id integer [not null]
-  email character varying(255) [not null]
-  full_name character varying(255) [not null]
-  entity_id UUID [not null]
-  created_at timestamp [not null, default: `now()`]
-  updated_at timestamp [not null, default: `now()`]
-  last_login_at timestamp
-  deleted_at timestamp
+Table "users" {
+  "id" integer [not null]
+  "email" "character varying(255)" [not null]
+  "full_name" "character varying(255)" [not null]
+  "entity_id" UUID [not null]
+  "created_at" timestamp [not null, default: `now()`]
+  "updated_at" timestamp [not null, default: `now()`]
+  "last_login_at" timestamp
+  "deleted_at" timestamp
 }
 
-Table entitystate {
-  uuid UUID [pk, not null]
-  fiscal_year SMALLINT
-  key VARCHAR(10) [not null]
-  sequence BIGINT [not null]
-  entity__id UUID [not null]
-  entity_unit_id uuid
+Table "entitystate" {
+  "uuid" UUID [pk, not null]
+  "fiscal_year" SMALLINT
+  "key" VARCHAR(10) [not null]
+  "sequence" BIGINT [not null]
+  "entity__id" UUID [not null]
+  "entity_unit_id" uuid
 }
 
-Table entitymanagement {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  permission_level VARCHAR(10) [not null]
-  entity_id UUID [not null]
-  user_id INTEGER [not null]
+Table "entitymanagement" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "permission_level" VARCHAR(10) [not null]
+  "entity_id" UUID [not null]
+  "user_id" INTEGER [not null]
 }
 
-Table customer {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  customer_name VARCHAR(100) [not null]
-  customer_number VARCHAR(30) [not null]
-  description TEXT [not null]
-  active BOOLEAN [not null]
-  hidden BOOLEAN [not null]
-  entity__id UUID [not null]
-  address_1 VARCHAR(70) [not null]
-  address_2 VARCHAR(70)
-  city VARCHAR(70)
-  state VARCHAR(70)
-  zip_code VARCHAR(20)
-  country VARCHAR(70)
-  email VARCHAR(254)
-  website VARCHAR(200)
-  phone VARCHAR(30)
-  sales_tax_rate REAL
-  additional_info JSONB
+Table "customer" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "customer_name" VARCHAR(100) [not null]
+  "customer_number" VARCHAR(30) [not null]
+  "description" TEXT [not null]
+  "active" BOOLEAN [not null]
+  "hidden" BOOLEAN [not null]
+  "entity__id" UUID [not null]
+  "address_1" VARCHAR(70) [not null]
+  "address_2" VARCHAR(70)
+  "city" VARCHAR(70)
+  "state" VARCHAR(70)
+  "zip_code" VARCHAR(20)
+  "country" VARCHAR(70)
+  "email" VARCHAR(254)
+  "website" VARCHAR(200)
+  "phone" VARCHAR(30)
+  "sales_tax_rate" REAL
+  "additional_info" JSONB
 }
 
-Table vendor {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  vendor_name VARCHAR(100) [not null]
-  vendor_number VARCHAR(30)
-  description TEXT [not null]
-  active BOOLEAN [not null]
-  hidden BOOLEAN [not null]
-  entity__id UUID [not null]
-  address_1 VARCHAR(70) [not null]
-  address_2 VARCHAR(70)
-  city VARCHAR(70)
-  state VARCHAR(70)
-  zip_code VARCHAR(20)
-  country VARCHAR(70)
-  email VARCHAR(254)
-  website VARCHAR(200)
-  phone VARCHAR(30)
-  account_number VARCHAR(30)
-  routing_number VARCHAR(30)
-  aba_number VARCHAR(30)
-  swift_number VARCHAR(30)
-  tax_id_number VARCHAR(30)
-  account_type VARCHAR(20) [not null]
-  additional_info JSONB
+Table "vendor" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "vendor_name" VARCHAR(100) [not null]
+  "vendor_number" VARCHAR(30)
+  "description" TEXT [not null]
+  "active" BOOLEAN [not null]
+  "hidden" BOOLEAN [not null]
+  "entity__id" UUID [not null]
+  "address_1" VARCHAR(70) [not null]
+  "address_2" VARCHAR(70)
+  "city" VARCHAR(70)
+  "state" VARCHAR(70)
+  "zip_code" VARCHAR(20)
+  "country" VARCHAR(70)
+  "email" VARCHAR(254)
+  "website" VARCHAR(200)
+  "phone" VARCHAR(30)
+  "account_number" VARCHAR(30)
+  "routing_number" VARCHAR(30)
+  "aba_number" VARCHAR(30)
+  "swift_number" VARCHAR(30)
+  "tax_id_number" VARCHAR(30)
+  "account_type" VARCHAR(20) [not null]
+  "additional_info" JSONB
 }
 
-Table unitofmeasure {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  name VARCHAR(50) [not null]
-  unit_abbr VARCHAR(10) [not null]
-  is_active BOOLEAN [not null]
-  entity_id UUID [not null]
+Table "unitofmeasure" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "name" VARCHAR(50) [not null]
+  "unit_abbr" VARCHAR(10) [not null]
+  "is_active" BOOLEAN [not null]
+  "entity_id" UUID [not null]
 }
 
-Table item {
-  uuid UUID [pk, not null]
-  name VARCHAR(100) [not null]
-  item_number VARCHAR(30) [not null]
-  item_type VARCHAR(1)
-  sku VARCHAR(50)
-  upc VARCHAR(50)
-  item_id VARCHAR(50)
-  item_role VARCHAR(10)
-  is_active BOOLEAN [not null]
-  default_amount DECIMAL [not null]
-  for_inventory BOOLEAN [not null]
-  is_product_or_service BOOLEAN [not null]
-  sold_as_unit BOOLEAN [not null]
-  inventory_received DECIMAL
-  inventory_received_value DECIMAL
-  cogs_account_id uuid
-  earnings_account_id uuid
-  expense_account_id uuid
-  inventory_account_id uuid
-  entity_id UUID [not null]
-  uom_id UUID [not null]
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  additional_info JSONB
+Table "item" {
+  "uuid" UUID [pk, not null]
+  "name" VARCHAR(100) [not null]
+  "item_number" VARCHAR(30) [not null]
+  "item_type" VARCHAR(1)
+  "sku" VARCHAR(50)
+  "upc" VARCHAR(50)
+  "item_id" VARCHAR(50)
+  "item_role" VARCHAR(10)
+  "is_active" BOOLEAN [not null]
+  "default_amount" DECIMAL [not null]
+  "for_inventory" BOOLEAN [not null]
+  "is_product_or_service" BOOLEAN [not null]
+  "sold_as_unit" BOOLEAN [not null]
+  "inventory_received" DECIMAL
+  "inventory_received_value" DECIMAL
+  "cogs_account_id" uuid
+  "earnings_account_id" uuid
+  "expense_account_id" uuid
+  "inventory_account_id" uuid
+  "entity_id" UUID [not null]
+  "uom_id" UUID [not null]
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "additional_info" JSONB
 }
 
-Table itemtransaction {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  quantity REAL
-  unit_cost REAL
-  total_amount DECIMAL
-  item_notes VARCHAR(400)
-  po_quantity REAL
-  po_unit_cost REAL
-  po_total_amount DECIMAL
-  po_item_status VARCHAR(15)
-  ce_quantity REAL
-  ce_unit_cost_estimate REAL
-  ce_cost_estimate DECIMAL
-  ce_unit_revenue_estimate REAL
-  ce_revenue_estimate DECIMAL
-  bill__id uuid
-  ce__id uuid
-  invoice__id uuid
-  po__id uuid
-  item__id UUID [not null]
-  entity_unit_id uuid
+Table "itemtransaction" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "quantity" REAL
+  "unit_cost" REAL
+  "total_amount" DECIMAL
+  "item_notes" VARCHAR(400)
+  "po_quantity" REAL
+  "po_unit_cost" REAL
+  "po_total_amount" DECIMAL
+  "po_item_status" VARCHAR(15)
+  "ce_quantity" REAL
+  "ce_unit_cost_estimate" REAL
+  "ce_cost_estimate" DECIMAL
+  "ce_unit_revenue_estimate" REAL
+  "ce_revenue_estimate" DECIMAL
+  "bill__id" uuid
+  "ce__id" uuid
+  "invoice__id" uuid
+  "po__id" uuid
+  "item__id" UUID [not null]
+  "entity_unit_id" uuid
 }
 
-Table estimate {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  estimate_number VARCHAR(20) [not null]
-  title VARCHAR(250) [not null]
-  terms VARCHAR(10) [not null]
-  markdown_notes TEXT
-  status VARCHAR(10) [not null]
-  date_draft DATE
-  date_in_review DATE
-  date_approved DATE
-  date_completed DATE
-  date_canceled DATE
-  date_void DATE
-  revenue_estimate DECIMAL [not null]
-  labor_estimate DECIMAL [not null]
-  material_estimate DECIMAL [not null]
-  equipment_estimate DECIMAL [not null]
-  other_estimate DECIMAL [not null]
-  customer_id UUID [not null]
-  entity_id UUID [not null]
+Table "estimate" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "estimate_number" VARCHAR(20) [not null]
+  "title" VARCHAR(250) [not null]
+  "terms" VARCHAR(10) [not null]
+  "markdown_notes" TEXT
+  "status" VARCHAR(10) [not null]
+  "date_draft" DATE
+  "date_in_review" DATE
+  "date_approved" DATE
+  "date_completed" DATE
+  "date_canceled" DATE
+  "date_void" DATE
+  "revenue_estimate" DECIMAL [not null]
+  "labor_estimate" DECIMAL [not null]
+  "material_estimate" DECIMAL [not null]
+  "equipment_estimate" DECIMAL [not null]
+  "other_estimate" DECIMAL [not null]
+  "customer_id" UUID [not null]
+  "entity_id" UUID [not null]
 }
 
-Table invoice {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  invoice_number VARCHAR(20) [not null]
-  terms VARCHAR(10) [not null]
-  date_due DATE
-  markdown_notes TEXT
-  amount_due DECIMAL [not null]
-  amount_paid DECIMAL [not null]
-  amount_receivable DECIMAL [not null]
-  amount_unearned DECIMAL [not null]
-  amount_earned DECIMAL [not null]
-  accrue BOOLEAN [not null]
-  progress DECIMAL [not null]
-  invoice_status VARCHAR(10) [not null]
-  date_draft DATE
-  date_in_review DATE
-  date_approved DATE
-  date_paid DATE
-  date_void DATE
-  date_canceled DATE
-  cash_account_id UUID [not null]
-  prepaid_account_id UUID [not null]
-  unearned_account_id UUID [not null]
-  customer_id UUID [not null]
-  ce__id uuid
-  ledger_id UUID [unique, not null]
-  additional_info JSONB
+Table "invoice" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "invoice_number" VARCHAR(20) [not null]
+  "terms" VARCHAR(10) [not null]
+  "date_due" DATE
+  "markdown_notes" TEXT
+  "amount_due" DECIMAL [not null]
+  "amount_paid" DECIMAL [not null]
+  "amount_receivable" DECIMAL [not null]
+  "amount_unearned" DECIMAL [not null]
+  "amount_earned" DECIMAL [not null]
+  "accrue" BOOLEAN [not null]
+  "progress" DECIMAL [not null]
+  "invoice_status" VARCHAR(10) [not null]
+  "date_draft" DATE
+  "date_in_review" DATE
+  "date_approved" DATE
+  "date_paid" DATE
+  "date_void" DATE
+  "date_canceled" DATE
+  "cash_account_id" UUID [not null]
+  "prepaid_account_id" UUID [not null]
+  "unearned_account_id" UUID [not null]
+  "customer_id" UUID [not null]
+  "ce__id" uuid
+  "ledger_id" UUID [unique, not null]
+  "additional_info" JSONB
 }
 
-Table purchaseorder {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  po_number VARCHAR(20) [not null]
-  po_title VARCHAR(250) [not null]
-  markdown_notes TEXT
-  po_amount DECIMAL [not null]
-  po_amount_received DECIMAL [not null]
-  po_status VARCHAR(10) [not null]
-  date_draft DATE
-  date_in_review DATE
-  date_approved DATE
-  date_fulfilled DATE
-  date_canceled DATE
-  date_void DATE
-  ce__id uuid
-  entity_id UUID [not null]
+Table "purchaseorder" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "po_number" VARCHAR(20) [not null]
+  "po_title" VARCHAR(250) [not null]
+  "markdown_notes" TEXT
+  "po_amount" DECIMAL [not null]
+  "po_amount_received" DECIMAL [not null]
+  "po_status" VARCHAR(10) [not null]
+  "date_draft" DATE
+  "date_in_review" DATE
+  "date_approved" DATE
+  "date_fulfilled" DATE
+  "date_canceled" DATE
+  "date_void" DATE
+  "ce__id" uuid
+  "entity_id" UUID [not null]
 }
 
-Table bill {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  bill_number VARCHAR(20) [not null]
-  xref VARCHAR(50)
-  terms VARCHAR(10) [not null]
-  date_due DATE
-  markdown_notes TEXT
-  amount_due DECIMAL [not null]
-  amount_paid DECIMAL [not null]
-  amount_receivable DECIMAL [not null]
-  amount_unearned DECIMAL [not null]
-  amount_earned DECIMAL [not null]
-  accrue BOOLEAN [not null]
-  progress DECIMAL [not null]
-  bill_status VARCHAR(10) [not null]
-  date_draft DATE
-  date_in_review DATE
-  date_approved DATE
-  date_paid DATE
-  date_void DATE
-  date_canceled DATE
-  cash_account_id uuid
-  prepaid_account_id uuid
-  unearned_account_id uuid
-  vendor_id UUID [not null]
-  ce__id uuid
-  ledger_id UUID [unique, not null]
-  additional_info JSONB
+Table "bill" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "bill_number" VARCHAR(20) [not null]
+  "xref" VARCHAR(50)
+  "terms" VARCHAR(10) [not null]
+  "date_due" DATE
+  "markdown_notes" TEXT
+  "amount_due" DECIMAL [not null]
+  "amount_paid" DECIMAL [not null]
+  "amount_receivable" DECIMAL [not null]
+  "amount_unearned" DECIMAL [not null]
+  "amount_earned" DECIMAL [not null]
+  "accrue" BOOLEAN [not null]
+  "progress" DECIMAL [not null]
+  "bill_status" VARCHAR(10) [not null]
+  "date_draft" DATE
+  "date_in_review" DATE
+  "date_approved" DATE
+  "date_paid" DATE
+  "date_void" DATE
+  "date_canceled" DATE
+  "cash_account_id" uuid
+  "prepaid_account_id" uuid
+  "unearned_account_id" uuid
+  "vendor_id" UUID [not null]
+  "ce__id" uuid
+  "ledger_id" UUID [unique, not null]
+  "additional_info" JSONB
 }
 
-Table chartofaccount {
-  slug VARCHAR(50) [unique, not null]
-  name VARCHAR(150)
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  description TEXT
-  entity_id UUID [not null]
-  active BOOLEAN [not null]
+Table "chartofaccount" {
+  "slug" VARCHAR(50) [unique, not null]
+  "name" VARCHAR(150)
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "description" TEXT
+  "entity_id" UUID [not null]
+  "active" BOOLEAN [not null]
 }
 
-Table account {
-  path VARCHAR(255) [unique, not null]
-  depth INTEGER [not null]
-  numchild INTEGER [not null]
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  code VARCHAR(10) [not null]
-  name VARCHAR(100) [not null]
-  role VARCHAR(30) [not null]
-  balance_type VARCHAR(6) [not null]
-  locked BOOLEAN [not null]
-  active BOOLEAN [not null]
-  role_default BOOLEAN
-  coa__id UUID [not null]
+Table "account" {
+  "path" VARCHAR(255) [unique, not null]
+  "depth" INTEGER [not null]
+  "numchild" INTEGER [not null]
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "code" VARCHAR(10) [not null]
+  "name" VARCHAR(100) [not null]
+  "role" VARCHAR(30) [not null]
+  "balance_type" VARCHAR(6) [not null]
+  "locked" BOOLEAN [not null]
+  "active" BOOLEAN [not null]
+  "role_default" BOOLEAN
+  "coa__id" UUID [not null]
 
   Indexes {
-    (coa__id, code) [unique, name: unique_code_for_coa_]
-    (coa__id, role, role_default) [unique, name: only_one_account_assigned_as_default_for_role]
+    (coa__id, code) [unique, name: "unique_code_for_coa_"]
+    (coa__id, role, role_default) [unique, name: "only_one_account_assigned_as_default_for_role"]
   }
 }
 
-Table ledger {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  name VARCHAR(150)
-  posted BOOLEAN [not null]
-  locked BOOLEAN [not null]
-  hidden BOOLEAN [not null]
-  entity_id UUID [not null]
-  ledger_xid VARCHAR(150)
-  additional_info JSONB
+Table "ledger" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "name" VARCHAR(150)
+  "posted" BOOLEAN [not null]
+  "locked" BOOLEAN [not null]
+  "hidden" BOOLEAN [not null]
+  "entity_id" UUID [not null]
+  "ledger_xid" VARCHAR(150)
+  "additional_info" JSONB
 }
 
-Table journalentry {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  je_number VARCHAR(25) [not null]
-  timestamp TIMESTAMP [not null]
-  description VARCHAR(70)
-  activity VARCHAR(20)
-  origin VARCHAR(30)
-  posted BOOLEAN [not null]
-  locked BOOLEAN [not null]
-  is_closing_entry BOOLEAN [not null]
-  entity_unit_id uuid
-  ledger_id UUID [not null]
+Table "journalentry" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "je_number" VARCHAR(25) [not null]
+  "timestamp" TIMESTAMP [not null]
+  "description" VARCHAR(70)
+  "activity" VARCHAR(20)
+  "origin" VARCHAR(30)
+  "posted" BOOLEAN [not null]
+  "locked" BOOLEAN [not null]
+  "is_closing_entry" BOOLEAN [not null]
+  "entity_unit_id" uuid
+  "ledger_id" UUID [not null]
 }
 
-Table transaction {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  tx_type VARCHAR(10) [not null]
-  amount DECIMAL [not null]
-  description VARCHAR(100)
-  cleared BOOLEAN [not null]
-  reconciled BOOLEAN [not null]
-  account_id UUID [not null]
-  journal_entry_id UUID [not null]
+Table "transaction" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "tx_type" VARCHAR(10) [not null]
+  "amount" DECIMAL [not null]
+  "description" VARCHAR(100)
+  "cleared" BOOLEAN [not null]
+  "reconciled" BOOLEAN [not null]
+  "account_id" UUID [not null]
+  "journal_entry_id" UUID [not null]
 }
 
-Table closingentry {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  closing_date DATE [not null]
-  posted BOOLEAN [not null]
-  markdown_notes TEXT
-  entity__id UUID [not null]
-  ledger__id UUID [unique, not null]
+Table "closingentry" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "closing_date" DATE [not null]
+  "posted" BOOLEAN [not null]
+  "markdown_notes" TEXT
+  "entity__id" UUID [not null]
+  "ledger__id" UUID [unique, not null]
 
   Indexes {
-    (entity__id, closing_date) [unique, name: unique_entity_closing_date]
+    (entity__id, closing_date) [unique, name: "unique_entity_closing_date"]
   }
 }
 
-Table closingentrytransaction {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  activity VARCHAR(20)
-  tx_type VARCHAR(10) [not null]
-  balance DECIMAL [not null]
-  account__id UUID [not null]
-  closing_entry__id UUID [not null]
-  unit__id uuid
+Table "closingentrytransaction" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "activity" VARCHAR(20)
+  "tx_type" VARCHAR(10) [not null]
+  "balance" DECIMAL [not null]
+  "account__id" UUID [not null]
+  "closing_entry__id" UUID [not null]
+  "unit__id" uuid
 
   Indexes {
-    (closing_entry__id, account__id, unit__id, activity) [unique, name: unique_closing_entry]
+    (closing_entry__id, account__id, unit__id, activity) [unique, name: "unique_closing_entry"]
   }
 }
 
-Table bankaccount {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  name VARCHAR(150)
-  active BOOLEAN [not null]
-  hidden BOOLEAN [not null]
-  account_number VARCHAR(30)
-  routing_number VARCHAR(30)
-  aba_number VARCHAR(30)
-  swift_number VARCHAR(30)
-  account_type VARCHAR(20) [not null]
-  entity__id UUID [not null]
-  account__id UUID [not null]
+Table "bankaccount" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "name" VARCHAR(150)
+  "active" BOOLEAN [not null]
+  "hidden" BOOLEAN [not null]
+  "account_number" VARCHAR(30)
+  "routing_number" VARCHAR(30)
+  "aba_number" VARCHAR(30)
+  "swift_number" VARCHAR(30)
+  "account_type" VARCHAR(20) [not null]
+  "entity__id" UUID [not null]
+  "account__id" UUID [not null]
 }
 
-Table importjob {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  description VARCHAR(200) [not null]
-  completed BOOLEAN [not null]
-  bank_account__id UUID [not null]
-  ledger__id uuid [unique]
+Table "importjob" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "description" VARCHAR(200) [not null]
+  "completed" BOOLEAN [not null]
+  "bank_account__id" UUID [not null]
+  "ledger__id" uuid [unique]
 }
 
-Table stagedtransaction {
-  created TIMESTAMP [not null]
-  updated TIMESTAMP
-  uuid UUID [pk, not null]
-  fit_id VARCHAR(100) [not null]
-  date_posted DATE [not null]
-  amount DECIMAL
-  amount_split DECIMAL
-  name VARCHAR(200)
-  memo VARCHAR(200)
-  account__id uuid
-  activity VARCHAR(20)
-  bundle_split BOOLEAN [not null]
-  parent_id uuid
-  import_job_id UUID [not null]
-  transaction__id uuid [unique]
-  unit__id uuid
+Table "stagedtransaction" {
+  "created" TIMESTAMP [not null]
+  "updated" TIMESTAMP
+  "uuid" UUID [pk, not null]
+  "fit_id" VARCHAR(100) [not null]
+  "date_posted" DATE [not null]
+  "amount" DECIMAL
+  "amount_split" DECIMAL
+  "name" VARCHAR(200)
+  "memo" VARCHAR(200)
+  "account__id" uuid
+  "activity" VARCHAR(20)
+  "bundle_split" BOOLEAN [not null]
+  "parent_id" uuid
+  "import_job_id" UUID [not null]
+  "transaction__id" uuid [unique]
+  "unit__id" uuid
 }
 
-Table taxrate {
-  uuid UUID [pk, not null]
-  created TIMESTAMP [not null]
-  name VARCHAR(100) [not null]
-  rate DECIMAL(5,4) [not null]
-  tax_type VARCHAR(20) [not null]
-  jurisdiction VARCHAR(100)
-  effective_date DATE [not null]
-  expiry_date DATE
-  active BOOLEAN [not null, default: TRUE]
-  entity_id UUID [not null]
+Table "taxrate" {
+  "uuid" UUID [pk, not null]
+  "created" TIMESTAMP [not null]
+  "name" VARCHAR(100) [not null]
+  "rate" DECIMAL(5,4) [not null]
+  "tax_type" VARCHAR(20) [not null]
+  "jurisdiction" VARCHAR(100)
+  "effective_date" DATE [not null]
+  "expiry_date" DATE
+  "active" BOOLEAN [not null, default: TRUE]
+  "entity_id" UUID [not null]
 }
 
-Table taxline {
-  uuid UUID [pk, not null]
-  taxable_amount DECIMAL [not null]
-  tax_amount DECIMAL [not null]
-  tax_rate_id UUID [not null]
-  invoice_id uuid
-  bill_id uuid
+Table "taxline" {
+  "uuid" UUID [pk, not null]
+  "taxable_amount" DECIMAL [not null]
+  "tax_amount" DECIMAL [not null]
+  "tax_rate_id" UUID [not null]
+  "invoice_id" uuid
+  "bill_id" uuid
 }
 
-Table payment {
-  uuid UUID [pk, not null]
-  created TIMESTAMP [not null]
-  payment_number VARCHAR(20) [not null]
-  payment_date DATE [not null]
-  amount DECIMAL [not null]
-  payment_method VARCHAR(20) [not null]
-  reference_number VARCHAR(50)
-  notes TEXT
-  bank_account_id uuid
-  ledger_id UUID [not null]
-  entity_id UUID [not null]
+Table "payment" {
+  "uuid" UUID [pk, not null]
+  "created" TIMESTAMP [not null]
+  "payment_number" VARCHAR(20) [not null]
+  "payment_date" DATE [not null]
+  "amount" DECIMAL [not null]
+  "payment_method" VARCHAR(20) [not null]
+  "reference_number" VARCHAR(50)
+  "notes" TEXT
+  "bank_account_id" uuid
+  "ledger_id" UUID [not null]
+  "entity_id" UUID [not null]
 }
 
-Table paymentallocation {
-  uuid UUID [pk, not null]
-  amount_allocated DECIMAL [not null]
-  payment_id UUID [not null]
-  invoice_id uuid
-  bill_id uuid
+Table "paymentallocation" {
+  "uuid" UUID [pk, not null]
+  "amount_allocated" DECIMAL [not null]
+  "payment_id" UUID [not null]
+  "invoice_id" uuid
+  "bill_id" uuid
 }
 
-Table workflowstate {
-  uuid UUID [pk, not null]
-  document_type VARCHAR(20) [not null]
-  from_status VARCHAR(20) [not null]
-  to_status VARCHAR(20) [not null]
-  required_permission VARCHAR(20)
-  auto_transition BOOLEAN [default: FALSE]
-  entity_id UUID [not null]
+Table "workflowstate" {
+  "uuid" UUID [pk, not null]
+  "document_type" VARCHAR(20) [not null]
+  "from_status" VARCHAR(20) [not null]
+  "to_status" VARCHAR(20) [not null]
+  "required_permission" VARCHAR(20)
+  "auto_transition" BOOLEAN [default: FALSE]
+  "entity_id" UUID [not null]
 }
 
-Table documenthistory {
-  uuid UUID [pk, not null]
-  timestamp TIMESTAMP [not null, default: `NOW()`]
-  document_type VARCHAR(20) [not null]
-  document_id UUID [not null]
-  from_status VARCHAR(20)
-  to_status VARCHAR(20) [not null]
-  user_id INTEGER
-  notes TEXT
-  entity_id UUID [not null]
+Table "documenthistory" {
+  "uuid" UUID [pk, not null]
+  "timestamp" TIMESTAMP [not null, default: `NOW()`]
+  "document_type" VARCHAR(20) [not null]
+  "document_id" UUID [not null]
+  "from_status" VARCHAR(20)
+  "to_status" VARCHAR(20) [not null]
+  "user_id" INTEGER
+  "notes" TEXT
+  "entity_id" UUID [not null]
 }
 
-Table currency {
-  uuid UUID [pk, not null]
-  code CHAR (3) [unique, not null]
-  name VARCHAR(100) [not null]
-  symbol VARCHAR(10)
-  active BOOLEAN [not null, default: TRUE]
+Table "currency" {
+  "uuid" UUID [pk, not null]
+  "code" "CHAR (3)" [unique, not null]
+  "name" VARCHAR(100) [not null]
+  "symbol" VARCHAR(10)
+  "active" BOOLEAN [not null, default: TRUE]
 }
 
-Table exchangerate {
-  uuid UUID [pk, not null]
-  from_currency_id UUID [not null]
-  to_currency_id UUID [not null]
-  rate DECIMAL(12,6) [not null]
-  effective_date DATE [not null]
-  source VARCHAR(50)
+Table "exchangerate" {
+  "uuid" UUID [pk, not null]
+  "from_currency_id" UUID [not null]
+  "to_currency_id" UUID [not null]
+  "rate" DECIMAL(12,6) [not null]
+  "effective_date" DATE [not null]
+  "source" VARCHAR(50)
 }
 
-Table attachment {
-  uuid UUID [pk, not null]
-  created TIMESTAMP [not null]
-  filename VARCHAR(255) [not null]
-  file_path VARCHAR(500) [not null]
-  file_size BIGINT
-  mime_type VARCHAR(100)
-  document_type VARCHAR(20) [not null]
-  document_id UUID [not null]
-  description TEXT
-  entity_id UUID [not null]
+Table "attachment" {
+  "uuid" UUID [pk, not null]
+  "created" TIMESTAMP [not null]
+  "filename" VARCHAR(255) [not null]
+  "file_path" VARCHAR(500) [not null]
+  "file_size" BIGINT
+  "mime_type" VARCHAR(100)
+  "document_type" VARCHAR(20) [not null]
+  "document_id" UUID [not null]
+  "description" TEXT
+  "entity_id" UUID [not null]
 }
 
-Table budget {
-  uuid UUID [pk, not null]
-  created TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`]
-  name VARCHAR(150) [not null]
-  fiscal_year INTEGER [not null]
-  version INTEGER [not null, default: 1]
-  status budget_status [not null, default: 'draft']
-  entity_id UUID [not null]
+Table "budget" {
+  "uuid" UUID [pk, not null]
+  "created" TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`]
+  "name" VARCHAR(150) [not null]
+  "fiscal_year" INTEGER [not null]
+  "version" INTEGER [not null, default: 1]
+  "status" budget_status [not null, default: 'draft']
+  "entity_id" UUID [not null]
 }
 
-Table budgetline {
-  uuid UUID [pk, not null]
-  account_id UUID [not null]
-  budget_id UUID [not null]
-  period INTEGER [not null]
-  budgeted_amount DECIMAL(15,2) [not null]
-  unit_id UUID
+Table "budgetline" {
+  "uuid" UUID [pk, not null]
+  "account_id" UUID [not null]
+  "budget_id" UUID [not null]
+  "period" INTEGER [not null]
+  "budgeted_amount" DECIMAL(15,2) [not null]
+  "unit_id" UUID
 }
 
-Ref:entities.uuid < users.entity_id
+Ref:"entities"."uuid" < "users"."entity_id"
 
-Ref importjob_bank_account__id_fkey:bankaccount.uuid < importjob.bank_account__id
+Ref "importjob_bank_account__id_fkey":"bankaccount"."uuid" < "importjob"."bank_account__id"
 
-Ref importjob_ledger__id_fkey:ledger.uuid < importjob.ledger__id
+Ref "importjob_ledger__id_fkey":"ledger"."uuid" < "importjob"."ledger__id"
 
-Ref stagedtransaction_account__id_fkey:account.uuid < stagedtransaction.account__id
+Ref "stagedtransaction_account__id_fkey":"account"."uuid" < "stagedtransaction"."account__id"
 
-Ref stagedtransaction_import_job_id_fkey:importjob.uuid < stagedtransaction.import_job_id
+Ref "stagedtransaction_import_job_id_fkey":"importjob"."uuid" < "stagedtransaction"."import_job_id"
 
-Ref stagedtransaction_transaction__id_fkey:transaction.uuid < stagedtransaction.transaction__id
+Ref "stagedtransaction_transaction__id_fkey":"transaction"."uuid" < "stagedtransaction"."transaction__id"
 
-Ref stagedtransaction_parent_id_fkey:stagedtransaction.uuid < stagedtransaction.parent_id
+Ref "stagedtransaction_parent_id_fkey":"stagedtransaction"."uuid" < "stagedtransaction"."parent_id"
 
-Ref chartofaccount_entity_id_fkey:entities.uuid < chartofaccount.entity_id
+Ref "chartofaccount_entity_id_fkey":"entities"."uuid" < "chartofaccount"."entity_id"
 
-Ref account_coa__id_fkey:chartofaccount.uuid < account.coa__id
+Ref "account_coa__id_fkey":"chartofaccount"."uuid" < "account"."coa__id"
 
-Ref transaction_account_id_fkey:account.uuid < transaction.account_id
+Ref "transaction_account_id_fkey":"account"."uuid" < "transaction"."account_id"
 
-Ref transaction_journal_entry_id_fkey:journalentry.uuid < transaction.journal_entry_id
+Ref "transaction_journal_entry_id_fkey":"journalentry"."uuid" < "transaction"."journal_entry_id"
 
-Ref bankaccount_entity__id_fkey:entities.uuid < bankaccount.entity__id
+Ref "bankaccount_entity__id_fkey":"entities"."uuid" < "bankaccount"."entity__id"
 
-Ref bankaccount_account__id_fkey:account.uuid < bankaccount.account__id
+Ref "bankaccount_account__id_fkey":"account"."uuid" < "bankaccount"."account__id"
 
-Ref vendor_entity__id_fkey:entities.uuid < vendor.entity__id
+Ref "vendor_entity__id_fkey":"entities"."uuid" < "vendor"."entity__id"
 
-Ref estimate_customer_id_fkey:customer.uuid < estimate.customer_id
+Ref "estimate_customer_id_fkey":"customer"."uuid" < "estimate"."customer_id"
 
-Ref estimate_entity_id_fkey:entities.uuid < estimate.entity_id
+Ref "estimate_entity_id_fkey":"entities"."uuid" < "estimate"."entity_id"
 
-Ref itemtransaction_bill__id_fkey:bill.uuid < itemtransaction.bill__id
+Ref "itemtransaction_bill__id_fkey":"bill"."uuid" < "itemtransaction"."bill__id"
 
-Ref itemtransaction_ce__id_fkey:estimate.uuid < itemtransaction.ce__id
+Ref "itemtransaction_ce__id_fkey":"estimate"."uuid" < "itemtransaction"."ce__id"
 
-Ref itemtransaction_invoice__id_fkey:invoice.uuid < itemtransaction.invoice__id
+Ref "itemtransaction_invoice__id_fkey":"invoice"."uuid" < "itemtransaction"."invoice__id"
 
-Ref itemtransaction_item__id_fkey:item.uuid < itemtransaction.item__id
+Ref "itemtransaction_item__id_fkey":"item"."uuid" < "itemtransaction"."item__id"
 
-Ref itemtransaction_po__id_fkey:purchaseorder.uuid < itemtransaction.po__id
+Ref "itemtransaction_po__id_fkey":"purchaseorder"."uuid" < "itemtransaction"."po__id"
 
-Ref unitofmeasure_entity_id_fkey:entities.uuid < unitofmeasure.entity_id
+Ref "unitofmeasure_entity_id_fkey":"entities"."uuid" < "unitofmeasure"."entity_id"
 
-Ref purchaseorder_ce__id_fkey:estimate.uuid < purchaseorder.ce__id
+Ref "purchaseorder_ce__id_fkey":"estimate"."uuid" < "purchaseorder"."ce__id"
 
-Ref purchaseorder_entity_id_fkey:entities.uuid < purchaseorder.entity_id
+Ref "purchaseorder_entity_id_fkey":"entities"."uuid" < "purchaseorder"."entity_id"
 
-Ref invoice_cash_account_id_fkey:account.uuid < invoice.cash_account_id
+Ref "invoice_cash_account_id_fkey":"account"."uuid" < "invoice"."cash_account_id"
 
-Ref invoice_ce__id_fkey:estimate.uuid < invoice.ce__id
+Ref "invoice_ce__id_fkey":"estimate"."uuid" < "invoice"."ce__id"
 
-Ref invoice_customer_id_fkey:customer.uuid < invoice.customer_id
+Ref "invoice_customer_id_fkey":"customer"."uuid" < "invoice"."customer_id"
 
-Ref invoice_ledger_id_fkey:ledger.uuid < invoice.ledger_id
+Ref "invoice_ledger_id_fkey":"ledger"."uuid" < "invoice"."ledger_id"
 
-Ref invoice_prepaid_account_id_fkey:account.uuid < invoice.prepaid_account_id
+Ref "invoice_prepaid_account_id_fkey":"account"."uuid" < "invoice"."prepaid_account_id"
 
-Ref invoice_unearned_account_id_fkey:account.uuid < invoice.unearned_account_id
+Ref "invoice_unearned_account_id_fkey":"account"."uuid" < "invoice"."unearned_account_id"
 
-Ref entitystate_entity__id_fkey:entities.uuid < entitystate.entity__id
+Ref "entitystate_entity__id_fkey":"entities"."uuid" < "entitystate"."entity__id"
 
-Ref entitymanagement_entity_id_fkey:entities.uuid < entitymanagement.entity_id
+Ref "entitymanagement_entity_id_fkey":"entities"."uuid" < "entitymanagement"."entity_id"
 
-Ref customer_entity__id_fkey:entities.uuid < customer.entity__id
+Ref "customer_entity__id_fkey":"entities"."uuid" < "customer"."entity__id"
 
-Ref bill_cash_account_id_fkey:account.uuid < bill.cash_account_id
+Ref "bill_cash_account_id_fkey":"account"."uuid" < "bill"."cash_account_id"
 
-Ref bill_ce__id_fkey:estimate.uuid < bill.ce__id
+Ref "bill_ce__id_fkey":"estimate"."uuid" < "bill"."ce__id"
 
-Ref bill_ledger_id_fkey:ledger.uuid < bill.ledger_id
+Ref "bill_ledger_id_fkey":"ledger"."uuid" < "bill"."ledger_id"
 
-Ref bill_prepaid_account_id_fkey:account.uuid < bill.prepaid_account_id
+Ref "bill_prepaid_account_id_fkey":"account"."uuid" < "bill"."prepaid_account_id"
 
-Ref bill_unearned_account_id_fkey:account.uuid < bill.unearned_account_id
+Ref "bill_unearned_account_id_fkey":"account"."uuid" < "bill"."unearned_account_id"
 
-Ref bill_vendor_id_fkey:vendor.uuid < bill.vendor_id
+Ref "bill_vendor_id_fkey":"vendor"."uuid" < "bill"."vendor_id"
 
-Ref item_cogs_account_id_fkey:account.uuid < item.cogs_account_id
+Ref "item_cogs_account_id_fkey":"account"."uuid" < "item"."cogs_account_id"
 
-Ref item_earnings_account_id_fkey:account.uuid < item.earnings_account_id
+Ref "item_earnings_account_id_fkey":"account"."uuid" < "item"."earnings_account_id"
 
-Ref item_entity_id_fkey:entities.uuid < item.entity_id
+Ref "item_entity_id_fkey":"entities"."uuid" < "item"."entity_id"
 
-Ref item_expense_account_id_fkey:account.uuid < item.expense_account_id
+Ref "item_expense_account_id_fkey":"account"."uuid" < "item"."expense_account_id"
 
-Ref item_inventory_account_id_fkey:account.uuid < item.inventory_account_id
+Ref "item_inventory_account_id_fkey":"account"."uuid" < "item"."inventory_account_id"
 
-Ref item_uom_id_fkey:unitofmeasure.uuid < item.uom_id
+Ref "item_uom_id_fkey":"unitofmeasure"."uuid" < "item"."uom_id"
 
-Ref entities_default_coa_id_fkey:chartofaccount.uuid < entities.default_coa_id
+Ref "entities_default_coa_id_fkey":"chartofaccount"."uuid" < "entities"."default_coa_id"
 
-Ref journalentry_ledger_id_fkey:ledger.uuid < journalentry.ledger_id
+Ref "journalentry_ledger_id_fkey":"ledger"."uuid" < "journalentry"."ledger_id"
 
-Ref ledger_entity_id_fkey:entities.uuid < ledger.entity_id
+Ref "ledger_entity_id_fkey":"entities"."uuid" < "ledger"."entity_id"
 
-Ref closingentrytransaction_account__id_fkey:account.uuid < closingentrytransaction.account__id
+Ref "closingentrytransaction_account__id_fkey":"account"."uuid" < "closingentrytransaction"."account__id"
 
-Ref closingentrytransaction_closing_entry__id_fkey:closingentry.uuid < closingentrytransaction.closing_entry__id
+Ref "closingentrytransaction_closing_entry__id_fkey":"closingentry"."uuid" < "closingentrytransaction"."closing_entry__id"
 
-Ref closingentry_entity__id_fkey:entities.uuid < closingentry.entity__id
+Ref "closingentry_entity__id_fkey":"entities"."uuid" < "closingentry"."entity__id"
 
-Ref closingentry_ledger__id_fkey:ledger.uuid < closingentry.ledger__id
+Ref "closingentry_ledger__id_fkey":"ledger"."uuid" < "closingentry"."ledger__id"
 
-Ref:entities.uuid < taxrate.entity_id
+Ref:"entities"."uuid" < "taxrate"."entity_id"
 
-Ref:taxrate.uuid < taxline.tax_rate_id
+Ref:"taxrate"."uuid" < "taxline"."tax_rate_id"
 
-Ref:invoice.uuid < taxline.invoice_id
+Ref:"invoice"."uuid" < "taxline"."invoice_id"
 
-Ref:bill.uuid < taxline.bill_id
+Ref:"bill"."uuid" < "taxline"."bill_id"
 
-Ref:bankaccount.uuid < payment.bank_account_id
+Ref:"bankaccount"."uuid" < "payment"."bank_account_id"
 
-Ref:ledger.uuid < payment.ledger_id
+Ref:"ledger"."uuid" < "payment"."ledger_id"
 
-Ref:entities.uuid < payment.entity_id
+Ref:"entities"."uuid" < "payment"."entity_id"
 
-Ref:payment.uuid < paymentallocation.payment_id
+Ref:"payment"."uuid" < "paymentallocation"."payment_id"
 
-Ref:invoice.uuid < paymentallocation.invoice_id
+Ref:"invoice"."uuid" < "paymentallocation"."invoice_id"
 
-Ref:bill.uuid < paymentallocation.bill_id
+Ref:"bill"."uuid" < "paymentallocation"."bill_id"
 
-Ref:entities.uuid < workflowstate.entity_id
+Ref:"entities"."uuid" < "workflowstate"."entity_id"
 
-Ref:entities.uuid < documenthistory.entity_id
+Ref:"entities"."uuid" < "documenthistory"."entity_id"
 
-Ref:currency.uuid < exchangerate.from_currency_id
+Ref:"currency"."uuid" < "exchangerate"."from_currency_id"
 
-Ref:currency.uuid < exchangerate.to_currency_id
+Ref:"currency"."uuid" < "exchangerate"."to_currency_id"
 
-Ref:entities.uuid < attachment.entity_id
+Ref:"entities"."uuid" < "attachment"."entity_id"
 
-Ref:entities.uuid < budget.entity_id
+Ref:"entities"."uuid" < "budget"."entity_id"
 
-Ref:account.uuid < budgetline.account_id
+Ref:"account"."uuid" < "budgetline"."account_id"
 
-Ref:budget.uuid < budgetline.budget_id
+Ref:"budget"."uuid" < "budgetline"."budget_id"
 
-Ref:entities.uuid < budgetline.unit_id
+Ref:"entities"."uuid" < "budgetline"."unit_id"

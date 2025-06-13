@@ -4,7 +4,7 @@ CREATE TABLE audit_logs (
     uuid UUID PRIMARY KEY,
     tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id INT REFERENCES users(id) ON DELETE SET NULL,
-    entity_id INT REFERENCES entities(id), -- Context entity
+    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
     action VARCHAR(50) NOT NULL,
     resource_type VARCHAR(50), -- What was changed
     resource_id BIGINT, -- ID of the changed resource

@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS customer (
   updated TIMESTAMP NULL, -- Last modification timestamp
   uuid UUID NOT NULL PRIMARY KEY, -- Unique identifier
   tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE, 
+  entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
 
 -- Core customer information
   customer_name VARCHAR(100) NOT NULL, -- Customer business/personal name
@@ -43,4 +43,5 @@ COMMENT ON TABLE customer IS ' * Purpose: Stores customer information and contac
  * Description: Maintains customer database with contact information, billing
  *              details, and sales tax rates for invoicing purposes';
 
-
+-- ALTER TABLE customer
+   -- ADD CONIS /;

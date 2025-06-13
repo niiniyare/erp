@@ -1,0 +1,256 @@
+{
+  "fieldname": "cust_master_name",
+  "fieldtype": "Select",
+  "description": null,
+  "label": "Customer Naming By",
+  "default": "Customer Name",
+  "options": "Customer Name\nNaming Series\nAuto Name"
+}
+{
+  "fieldname": "customer_group",
+  "fieldtype": "Link",
+  "description": null,
+  "label": "Default Customer Group",
+  "default": null,
+  "options": "Customer Group"
+}
+{
+  "fieldname": "territory",
+  "fieldtype": "Link",
+  "description": null,
+  "label": "Default Territory",
+  "default": null,
+  "options": "Territory"
+}
+{
+  "fieldname": "selling_price_list",
+  "fieldtype": "Link",
+  "description": null,
+  "label": "Default Price List",
+  "default": null,
+  "options": "Price List"
+}
+{
+  "fieldname": "column_break_5",
+  "fieldtype": "Column Break",
+  "description": null,
+  "label": null,
+  "default": null,
+  "options": null
+}
+{
+  "fieldname": "so_required",
+  "fieldtype": "Select",
+  "description": null,
+  "label": "Is Sales Order Required for Sales Invoice & Delivery Note Creation?",
+  "default": null,
+  "options": "No\nYes"
+}
+{
+  "fieldname": "dn_required",
+  "fieldtype": "Select",
+  "description": null,
+  "label": "Is Delivery Note Required for Sales Invoice Creation?",
+  "default": null,
+  "options": "No\nYes"
+}
+{
+  "fieldname": "sales_update_frequency",
+  "fieldtype": "Select",
+  "description": "How often should Project and Company be updated based on Sales Transactions?",
+  "label": "Sales Update Frequency in Company and Project",
+  "default": "Each Transaction",
+  "options": "Monthly\nEach Transaction\nDaily"
+}
+{
+  "fieldname": "maintain_same_sales_rate",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Maintain Same Rate Throughout Sales Cycle",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "editable_price_list_rate",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Allow User to Edit Price List Rate in Transactions",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "allow_multiple_items",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Allow Item to be Added Multiple Times in a Transaction",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "allow_against_multiple_purchase_orders",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Allow Multiple Sales Orders Against a Customer's Purchase Order",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "validate_selling_price",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Validate Selling Price for Item Against Purchase Rate or Valuation Rate",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "hide_tax_id",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Hide Customer's Tax ID from Sales Transactions",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "maintain_same_rate_action",
+  "fieldtype": "Select",
+  "description": null,
+  "label": "Action if Same Rate is Not Maintained Throughout Sales Cycle",
+  "default": "Stop",
+  "options": "Stop\nWarn"
+}
+{
+  "fieldname": "role_to_override_stop_action",
+  "fieldtype": "Link",
+  "description": null,
+  "label": "Role Allowed to Override Stop Action",
+  "default": null,
+  "options": "Role"
+}
+{
+  "fieldname": "customer_defaults_section",
+  "fieldtype": "Section Break",
+  "description": null,
+  "label": "Customer Defaults",
+  "default": null,
+  "options": null
+}
+{
+  "fieldname": "column_break_4",
+  "fieldtype": "Column Break",
+  "description": null,
+  "label": null,
+  "default": null,
+  "options": null
+}
+{
+  "fieldname": "item_price_settings_section",
+  "fieldtype": "Section Break",
+  "description": null,
+  "label": "Item Price Settings",
+  "default": null,
+  "options": null
+}
+{
+  "fieldname": "column_break_15",
+  "fieldtype": "Column Break",
+  "description": null,
+  "label": null,
+  "default": null,
+  "options": null
+}
+{
+  "fieldname": "sales_transactions_settings_section",
+  "fieldtype": "Section Break",
+  "description": null,
+  "label": "Transaction Settings",
+  "default": null,
+  "options": null
+}
+{
+  "fieldname": "editable_bundle_item_rates",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Calculate Product Bundle Price based on Child Items' Rates",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "enable_discount_accounting",
+  "fieldtype": "Check",
+  "description": "If enabled, additional ledger entries will be made for discounts in a separate Discount Account",
+  "label": "Enable Discount Accounting for Selling",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "allow_sales_order_creation_for_expired_quotation",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Allow Sales Order Creation For Expired Quotation",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "dont_reserve_sales_order_qty_on_sales_return",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Don't Reserve Sales Order Qty on Sales Return",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "allow_negative_rates_for_items",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Allow Negative rates for Items",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "blanket_order_allowance",
+  "fieldtype": "Float",
+  "description": "Percentage you are allowed to sell beyond the Blanket Order quantity.",
+  "label": "Blanket Order Allowance (%)",
+  "default": null,
+  "options": null
+}
+{
+  "fieldname": "enable_cutoff_date_on_bulk_delivery_note_creation",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Enable Cut-Off Date on Bulk Delivery Note Creation",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "experimental_section",
+  "fieldtype": "Section Break",
+  "description": null,
+  "label": "Experimental",
+  "default": null,
+  "options": null
+}
+{
+  "fieldname": "use_server_side_reactivity",
+  "fieldtype": "Check",
+  "description": null,
+  "label": "Use Server Side Reactivity",
+  "default": "1",
+  "options": null
+}
+{
+  "fieldname": "allow_zero_qty_in_sales_order",
+  "fieldtype": "Check",
+  "description": "Allows users to submit Sales Orders with zero quantity. Useful when rates are fixed but the quantities are not. Eg. Rate Contracts.",
+  "label": "Allow Sales Order with Zero Quantity",
+  "default": "0",
+  "options": null
+}
+{
+  "fieldname": "allow_zero_qty_in_quotation",
+  "fieldtype": "Check",
+  "description": "Allows users to submit Quotations with zero quantity. Useful when rates are fixed but the quantities are not. Eg. Rate Contracts.",
+  "label": "Allow Quotation with Zero Quantity",
+  "default": "0",
+  "options": null
+}

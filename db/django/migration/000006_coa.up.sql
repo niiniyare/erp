@@ -2,7 +2,7 @@
 -- For example, for accounting module:
 CREATE TABLE IF NOT EXISTS chartofaccount (
   tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+  entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
   module TEXT,
   slug VARCHAR(50) NOT NULL UNIQUE,
   name VARCHAR(150) NULL,
@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS chartofaccount (
   uuid CHAR(32) NOT NULL PRIMARY KEY,
   is_active BOOLEAN DEFAULT true, 
   description TEXT NULL,
-  entity_id CHAR(32) NOT NULL REFERENCES entity (uuid) DEFERRABLE INITIALLY DEFERRED,
   active BOOLEAN NOT NULL
 );
 COMMENT ON TABLE chartofaccount IS 'Chart of accounts templates (e.g., Standard, Manufacturing, Retail)';
@@ -25,7 +24,7 @@ CREATE TABLE IF NOT EXISTS account (
   updated TIMESTAMP WITHOUT TIME ZONE NULL,
   tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
 
-    entity_id INT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
   -- Tree structure for account hierarchy
   path VARCHAR(255) NOT NULL UNIQUE,
   depth INTEGER NOT NULL CHECK (depth >= 0),
@@ -43,11 +42,11 @@ CREATE TABLE IF NOT EXISTS account (
   active BOOLEAN NOT NULL,                             -- Whether account is active
   coa__id CHAR(32) NOT NULL REFERENCES chartofaccount (uuid) DEFERRABLE INITIALLY DEFERRED,
   role_default BOOLEAN NULL,                          -- Whether this is the default account for this role
-  CONSTRAINT unique_code_for_coa_ UNIQUE (coa__id, code),
+  CONSTRAINT unique_code_for_coa_ UNIQUE (coa__id, account_code),
   CONSTRAINT only_one_account_assigned_as_default_for_role UNIQUE (
-    coa__id, role, role_default
+    coa__id, account_role, role_default
   )
 );
 COMMENT ON TABLE account IS 'Individual accounts within chart of accounts with hierarchical structure';
-COMMENT ON COLUMN account.role IS 'Account role: cash, ar, ap, inventory, revenue, expense, equity, etc.';
+COMMENT ON COLUMN account.account_role IS 'Account role: cash, ar, ap, inventory, revenue, expense, equity, etc.';
 COMMENT ON COLUMN account.balance_type IS 'Normal balance type: DEBIT (assets, expenses) or CREDIT (liabilities, equity, revenue)';
