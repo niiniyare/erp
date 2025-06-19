@@ -24,8 +24,6 @@ type Querier interface {
 	// =====================================================
 	// BULK OPERATIONS
 	// =====================================================
-	// WHERE id = ANY($1::int[]) AND deleted_at IS NULL;
-	// (sqlc.slice("ages"))
 	BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error
 	CheckCurrentTenantExists(ctx context.Context) (bool, error)
 	CheckCurrentTenantHasFeature(ctx context.Context, features json.RawMessage) (bool, error)

@@ -276,14 +276,6 @@ SELECT EXISTS(
 -- =====================================================
 -- BULK OPERATIONS
 -- =====================================================
-/*
--- name: BulkUpdateTenantStatus :exec
-UPDATE tenants
-SET status = @status, updated_at = NOW()
--- WHERE id = ANY($1::int[]) AND deleted_at IS NULL;
-WHERE id = (sqlc.slice("id")::ini[]) AND deleted_at IS NULL;
--- (sqlc.slice("ages"))
-*/
 -- name: BulkUpdateTenantStatus :exec
 UPDATE tenants
 SET status = @status, updated_at = NOW()

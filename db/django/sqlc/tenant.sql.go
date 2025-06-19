@@ -28,11 +28,6 @@ func (q *Queries) BulkSoftDeleteTenants(ctx context.Context, tenantIds []int32) 
 }
 
 const bulkUpdateTenantStatus = `-- name: BulkUpdateTenantStatus :exec
-/*
-UPDATE tenants
-SET status = @status, updated_at = NOW()
-WHERE id = (sqlc.slice("id")::ini[]) AND deleted_at IS NULL;
-*/
 UPDATE tenants
 SET status = $1, updated_at = NOW()
 WHERE id = ANY($2::int[]) AND deleted_at IS NULL
@@ -46,8 +41,6 @@ type BulkUpdateTenantStatusParams struct {
 // =====================================================
 // BULK OPERATIONS
 // =====================================================
-// WHERE id = ANY($1::int[]) AND deleted_at IS NULL;
-// (sqlc.slice("ages"))
 func (q *Queries) BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error {
 	_, err := q.db.ExecContext(ctx, bulkUpdateTenantStatus, arg.Status, pq.Array(arg.ID))
 	return err
