@@ -6,10 +6,9 @@ package db
 
 import (
 	"context"
-	"database/sql"
-	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -26,9 +25,9 @@ type Querier interface {
 	// =====================================================
 	BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error
 	CheckCurrentTenantExists(ctx context.Context) (bool, error)
-	CheckCurrentTenantHasFeature(ctx context.Context, features json.RawMessage) (bool, error)
-	CheckCurrentTenantHasModule(ctx context.Context, modulesEnabled json.RawMessage) (bool, error)
-	CheckSubdomainExists(ctx context.Context, subdomain sql.NullString) (bool, error)
+	CheckCurrentTenantHasFeature(ctx context.Context, features []byte) (bool, error)
+	CheckCurrentTenantHasModule(ctx context.Context, modulesEnabled []byte) (bool, error)
+	CheckSubdomainExists(ctx context.Context, subdomain pgtype.Text) (bool, error)
 	CheckTenantExists(ctx context.Context, id int32) (bool, error)
 	CheckTenantNameExists(ctx context.Context, name string) (bool, error)
 	CheckUserPermission(ctx context.Context, arg CheckUserPermissionParams) (bool, error)
@@ -76,6 +75,7 @@ type Querier interface {
 	DeleteEntityState(ctx context.Context, arg DeleteEntityStateParams) error
 	DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID) error
 	DeleteRole(ctx context.Context, id int32) error
+	DeleteTenant(ctx context.Context) error
 	// =====================================================
 	// ADVANCED QUERIES WITH FILTERS
 	// =====================================================
@@ -105,7 +105,7 @@ type Querier interface {
 	GetEntitiesByUUIDs(ctx context.Context, arg GetEntitiesByUUIDsParams) ([]Entity, error)
 	GetEntity(ctx context.Context, argUuid uuid.UUID) (Entity, error)
 	GetEntityAncestors(ctx context.Context, descendantID uuid.UUID) ([]GetEntityAncestorsRow, error)
-	GetEntityByCode(ctx context.Context, code sql.NullString) (Entity, error)
+	GetEntityByCode(ctx context.Context, code pgtype.Text) (Entity, error)
 	GetEntityByName(ctx context.Context, name string) (Entity, error)
 	GetEntityChildren(ctx context.Context, ancestorID uuid.UUID) ([]Entity, error)
 	GetEntityDescendants(ctx context.Context, ancestorID uuid.UUID) ([]GetEntityDescendantsRow, error)
@@ -121,8 +121,8 @@ type Querier interface {
 	GetEntityWithHierarchyInfo(ctx context.Context, arg GetEntityWithHierarchyInfoParams) (GetEntityWithHierarchyInfoRow, error)
 	GetNextSequenceNumber(ctx context.Context, arg GetNextSequenceNumberParams) (int64, error)
 	GetPerson(ctx context.Context, id int32) (Person, error)
-	GetPersonByEmail(ctx context.Context, email sql.NullString) (Person, error)
-	GetPersonByNationalId(ctx context.Context, nationalID sql.NullString) (Person, error)
+	GetPersonByEmail(ctx context.Context, email pgtype.Text) (Person, error)
+	GetPersonByNationalId(ctx context.Context, nationalID pgtype.Text) (Person, error)
 	// ==============================================
 	// COMPLEX QUERIES AND REPORTS
 	// ==============================================
@@ -131,8 +131,10 @@ type Querier interface {
 	GetRole(ctx context.Context, id int32) (Role, error)
 	GetRoleByName(ctx context.Context, name string) (Role, error)
 	GetRoleUsers(ctx context.Context, roleID int32) ([]GetRoleUsersRow, error)
+	// Example session variable
+	//
 	GetTenantByID(ctx context.Context, id int32) (Tenant, error)
-	GetTenantBySubdomain(ctx context.Context, subdomain sql.NullString) (Tenant, error)
+	GetTenantBySubdomain(ctx context.Context, subdomain pgtype.Text) (Tenant, error)
 	GetTenantByUUID(ctx context.Context, argUuid uuid.UUID) (Tenant, error)
 	GetTenantConfiguration(ctx context.Context, tenantID int32) (TenantConfiguration, error)
 	// Admin utilities (system-wide)
@@ -141,11 +143,11 @@ type Querier interface {
 	GetTenantWithConfiguration(ctx context.Context, id int32) (GetTenantWithConfigurationRow, error)
 	GetTenantsByIndustry(ctx context.Context) ([]GetTenantsByIndustryRow, error)
 	GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]Tenant, error)
-	GetTenantsWithFeature(ctx context.Context, features json.RawMessage) ([]GetTenantsWithFeatureRow, error)
-	GetTenantsWithModule(ctx context.Context, modulesEnabled json.RawMessage) ([]GetTenantsWithModuleRow, error)
+	GetTenantsWithFeature(ctx context.Context, features []byte) ([]GetTenantsWithFeatureRow, error)
+	GetTenantsWithModule(ctx context.Context, modulesEnabled []byte) ([]GetTenantsWithModuleRow, error)
 	GetUser(ctx context.Context, id int32) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
-	GetUserByUsername(ctx context.Context, username sql.NullString) (User, error)
+	GetUserByUsername(ctx context.Context, username pgtype.Text) (User, error)
 	GetUserPermissions(ctx context.Context, userID int32) ([]GetUserPermissionsRow, error)
 	GetUserRoles(ctx context.Context, userID int32) ([]GetUserRolesRow, error)
 	GetUserStats(ctx context.Context) (GetUserStatsRow, error)
@@ -158,8 +160,8 @@ type Querier interface {
 	ListActiveUsers(ctx context.Context) ([]ListActiveUsersRow, error)
 	ListCustomRoles(ctx context.Context) ([]Role, error)
 	ListEmployees(ctx context.Context) ([]ListEmployeesRow, error)
-	ListEmployeesByDepartment(ctx context.Context, departmentID uuid.NullUUID) ([]ListEmployeesByDepartmentRow, error)
-	ListEmployeesByManager(ctx context.Context, managerID sql.NullInt32) ([]ListEmployeesByManagerRow, error)
+	ListEmployeesByDepartment(ctx context.Context, departmentID pgtype.UUID) ([]ListEmployeesByDepartmentRow, error)
+	ListEmployeesByManager(ctx context.Context, managerID pgtype.Int4) ([]ListEmployeesByManagerRow, error)
 	// Entity Listing and Filtering
 	ListEntities(ctx context.Context) ([]Entity, error)
 	ListEntitiesByType(ctx context.Context, type_ string) ([]Entity, error)
@@ -171,7 +173,7 @@ type Querier interface {
 	ListPersonsByEntity(ctx context.Context, entityID uuid.UUID) ([]Person, error)
 	ListPersonsByType(ctx context.Context, personType string) ([]Person, error)
 	ListRoles(ctx context.Context) ([]Role, error)
-	ListRolesByModule(ctx context.Context, module sql.NullString) ([]Role, error)
+	ListRolesByModule(ctx context.Context, module pgtype.Text) ([]Role, error)
 	ListSystemRoles(ctx context.Context) ([]Role, error)
 	ListTenants(ctx context.Context, arg ListTenantsParams) ([]Tenant, error)
 	ListTenantsWithConfigurations(ctx context.Context, arg ListTenantsWithConfigurationsParams) ([]ListTenantsWithConfigurationsRow, error)
@@ -186,14 +188,15 @@ type Querier interface {
 	SearchPersonsByName(ctx context.Context, arg SearchPersonsByNameParams) ([]Person, error)
 	SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]Tenant, error)
 	SearchUsersWithRoles(ctx context.Context, arg SearchUsersWithRolesParams) ([]SearchUsersWithRolesRow, error)
+	SetCurrentTenant(ctx context.Context, dollar_1 interface{}) error
 	SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	SoftDeletePerson(ctx context.Context, id int32) error
 	SoftDeleteTenant(ctx context.Context, id int32) error
 	SoftDeleteUser(ctx context.Context, id int32) error
 	UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (Tenant, error)
-	UpdateCurrentTenantFeatures(ctx context.Context, features json.RawMessage) (TenantConfiguration, error)
+	UpdateCurrentTenantFeatures(ctx context.Context, features []byte) (TenantConfiguration, error)
 	UpdateCurrentTenantMaxUsers(ctx context.Context, maxUsers int32) (TenantConfiguration, error)
-	UpdateCurrentTenantModules(ctx context.Context, modulesEnabled json.RawMessage) (TenantConfiguration, error)
+	UpdateCurrentTenantModules(ctx context.Context, modulesEnabled []byte) (TenantConfiguration, error)
 	UpdateCurrentTenantStorageQuota(ctx context.Context, storageQuota int64) (TenantConfiguration, error)
 	UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error)
 	UpdateEntity(ctx context.Context, arg UpdateEntityParams) (Entity, error)
@@ -203,6 +206,11 @@ type Querier interface {
 	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)
 	UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Tenant, error)
 	UpdateTenantConfiguration(ctx context.Context, arg UpdateTenantConfigurationParams) (TenantConfiguration, error)
+	UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (Tenant, error)
+	UpdateTenantName(ctx context.Context, arg UpdateTenantNameParams) (Tenant, error)
+	//
+	UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (Tenant, error)
+	UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (Tenant, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 	UpdateUserLogin(ctx context.Context, id int32) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error

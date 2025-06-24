@@ -325,7 +325,6 @@ WHERE tenant_id = $1 AND uuid = ANY($2::UUID[]);
 SELECT * FROM entities 
 WHERE tenant_id = $1 AND uuid = ANY($2::UUID[]) AND deleted_at IS NULL
 ORDER BY name;
-
 /*
 I'll create comprehensive sqlc functions for your entity management schema. This will include CRUD operations, hierarchy management, and state tracking.I've created a comprehensive set of sqlc functions for your entity management schema. Here's what's included:
 

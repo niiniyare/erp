@@ -7,11 +7,9 @@ package db
 
 import (
 	"context"
-	"database/sql"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createPerson = `-- name: CreatePerson :one
@@ -25,26 +23,26 @@ INSERT INTO persons (
 `
 
 type CreatePersonParams struct {
-	EntityID   uuid.UUID             `json:"entity_id"`
-	PersonType string                `json:"person_type"`
-	FirstName  string                `json:"first_name"`
-	LastName   string                `json:"last_name"`
-	MiddleName sql.NullString        `json:"middle_name"`
-	Email      sql.NullString        `json:"email"`
-	Phone      sql.NullString        `json:"phone"`
-	BirthDate  sql.NullTime          `json:"birth_date"`
-	NationalID sql.NullString        `json:"national_id"`
-	TaxID      sql.NullString        `json:"tax_id"`
-	Address    pqtype.NullRawMessage `json:"address"`
-	Metadata   pqtype.NullRawMessage `json:"metadata"`
-	IsActive   bool                  `json:"is_active"`
+	EntityID   uuid.UUID   `json:"entity_id"`
+	PersonType string      `json:"person_type"`
+	FirstName  string      `json:"first_name"`
+	LastName   string      `json:"last_name"`
+	MiddleName pgtype.Text `json:"middle_name"`
+	Email      pgtype.Text `json:"email"`
+	Phone      pgtype.Text `json:"phone"`
+	BirthDate  pgtype.Date `json:"birth_date"`
+	NationalID pgtype.Text `json:"national_id"`
+	TaxID      pgtype.Text `json:"tax_id"`
+	Address    []byte      `json:"address"`
+	Metadata   []byte      `json:"metadata"`
+	IsActive   bool        `json:"is_active"`
 }
 
 // ==============================================
 // PERSONS TABLE OPERATIONS
 // ==============================================
 func (q *Queries) CreatePerson(ctx context.Context, arg CreatePersonParams) (Person, error) {
-	row := q.db.QueryRowContext(ctx, createPerson,
+	row := q.db.QueryRow(ctx, createPerson,
 		arg.EntityID,
 		arg.PersonType,
 		arg.FirstName,
@@ -89,7 +87,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
 func (q *Queries) GetPerson(ctx context.Context, id int32) (Person, error) {
-	row := q.db.QueryRowContext(ctx, getPerson, id)
+	row := q.db.QueryRow(ctx, getPerson, id)
 	var i Person
 	err := row.Scan(
 		&i.ID,
@@ -119,8 +117,8 @@ SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name
 WHERE email = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
-func (q *Queries) GetPersonByEmail(ctx context.Context, email sql.NullString) (Person, error) {
-	row := q.db.QueryRowContext(ctx, getPersonByEmail, email)
+func (q *Queries) GetPersonByEmail(ctx context.Context, email pgtype.Text) (Person, error) {
+	row := q.db.QueryRow(ctx, getPersonByEmail, email)
 	var i Person
 	err := row.Scan(
 		&i.ID,
@@ -150,8 +148,8 @@ SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name
 WHERE national_id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
-func (q *Queries) GetPersonByNationalId(ctx context.Context, nationalID sql.NullString) (Person, error) {
-	row := q.db.QueryRowContext(ctx, getPersonByNationalId, nationalID)
+func (q *Queries) GetPersonByNationalId(ctx context.Context, nationalID pgtype.Text) (Person, error) {
+	row := q.db.QueryRow(ctx, getPersonByNationalId, nationalID)
 	var i Person
 	err := row.Scan(
 		&i.ID,
@@ -194,41 +192,41 @@ WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
 `
 
 type GetPersonEmployeeUserInfoRow struct {
-	ID               int32                 `json:"id"`
-	TenantID         int32                 `json:"tenant_id"`
-	EntityID         uuid.UUID             `json:"entity_id"`
-	PersonType       string                `json:"person_type"`
-	FirstName        string                `json:"first_name"`
-	LastName         string                `json:"last_name"`
-	MiddleName       sql.NullString        `json:"middle_name"`
-	Email            sql.NullString        `json:"email"`
-	Phone            sql.NullString        `json:"phone"`
-	BirthDate        sql.NullTime          `json:"birth_date"`
-	NationalID       sql.NullString        `json:"national_id"`
-	TaxID            sql.NullString        `json:"tax_id"`
-	Address          pqtype.NullRawMessage `json:"address"`
-	Metadata         pqtype.NullRawMessage `json:"metadata"`
-	IsActive         bool                  `json:"is_active"`
-	CreatedAt        time.Time             `json:"created_at"`
-	UpdatedAt        time.Time             `json:"updated_at"`
-	DeletedAt        sql.NullTime          `json:"deleted_at"`
-	EmployeeID       sql.NullInt32         `json:"employee_id"`
-	EmployeeNumber   sql.NullString        `json:"employee_number"`
-	PositionTitle    sql.NullString        `json:"position_title"`
-	EmploymentStatus sql.NullString        `json:"employment_status"`
-	UserID           sql.NullInt32         `json:"user_id"`
-	Username         sql.NullString        `json:"username"`
-	UserEmail        sql.NullString        `json:"user_email"`
-	UserType         sql.NullString        `json:"user_type"`
-	UserActive       sql.NullBool          `json:"user_active"`
-	FullName         string                `json:"full_name"`
+	ID               int32              `json:"id"`
+	TenantID         int32              `json:"tenant_id"`
+	EntityID         uuid.UUID          `json:"entity_id"`
+	PersonType       string             `json:"person_type"`
+	FirstName        string             `json:"first_name"`
+	LastName         string             `json:"last_name"`
+	MiddleName       pgtype.Text        `json:"middle_name"`
+	Email            pgtype.Text        `json:"email"`
+	Phone            pgtype.Text        `json:"phone"`
+	BirthDate        pgtype.Date        `json:"birth_date"`
+	NationalID       pgtype.Text        `json:"national_id"`
+	TaxID            pgtype.Text        `json:"tax_id"`
+	Address          []byte             `json:"address"`
+	Metadata         []byte             `json:"metadata"`
+	IsActive         bool               `json:"is_active"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+	EmployeeID       pgtype.Int4        `json:"employee_id"`
+	EmployeeNumber   pgtype.Text        `json:"employee_number"`
+	PositionTitle    pgtype.Text        `json:"position_title"`
+	EmploymentStatus pgtype.Text        `json:"employment_status"`
+	UserID           pgtype.Int4        `json:"user_id"`
+	Username         pgtype.Text        `json:"username"`
+	UserEmail        pgtype.Text        `json:"user_email"`
+	UserType         pgtype.Text        `json:"user_type"`
+	UserActive       pgtype.Bool        `json:"user_active"`
+	FullName         string             `json:"full_name"`
 }
 
 // ==============================================
 // COMPLEX QUERIES AND REPORTS
 // ==============================================
 func (q *Queries) GetPersonEmployeeUserInfo(ctx context.Context, personID int32) (GetPersonEmployeeUserInfoRow, error) {
-	row := q.db.QueryRowContext(ctx, getPersonEmployeeUserInfo, personID)
+	row := q.db.QueryRow(ctx, getPersonEmployeeUserInfo, personID)
 	var i GetPersonEmployeeUserInfoRow
 	err := row.Scan(
 		&i.ID,
@@ -275,7 +273,7 @@ WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
 `
 
 func (q *Queries) GetPersonFullName(ctx context.Context, personID int32) (interface{}, error) {
-	row := q.db.QueryRowContext(ctx, getPersonFullName, personID)
+	row := q.db.QueryRow(ctx, getPersonFullName, personID)
 	var full_name interface{}
 	err := row.Scan(&full_name)
 	return full_name, err
@@ -288,7 +286,7 @@ ORDER BY last_name, first_name
 `
 
 func (q *Queries) ListPersons(ctx context.Context) ([]Person, error) {
-	rows, err := q.db.QueryContext(ctx, listPersons)
+	rows, err := q.db.Query(ctx, listPersons)
 	if err != nil {
 		return nil, err
 	}
@@ -319,9 +317,6 @@ func (q *Queries) ListPersons(ctx context.Context) ([]Person, error) {
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -336,7 +331,7 @@ ORDER BY last_name, first_name
 `
 
 func (q *Queries) ListPersonsByEntity(ctx context.Context, entityID uuid.UUID) ([]Person, error) {
-	rows, err := q.db.QueryContext(ctx, listPersonsByEntity, entityID)
+	rows, err := q.db.Query(ctx, listPersonsByEntity, entityID)
 	if err != nil {
 		return nil, err
 	}
@@ -367,9 +362,6 @@ func (q *Queries) ListPersonsByEntity(ctx context.Context, entityID uuid.UUID) (
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -384,7 +376,7 @@ ORDER BY last_name, first_name
 `
 
 func (q *Queries) ListPersonsByType(ctx context.Context, personType string) ([]Person, error) {
-	rows, err := q.db.QueryContext(ctx, listPersonsByType, personType)
+	rows, err := q.db.Query(ctx, listPersonsByType, personType)
 	if err != nil {
 		return nil, err
 	}
@@ -416,9 +408,6 @@ func (q *Queries) ListPersonsByType(ctx context.Context, personType string) ([]P
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -432,7 +421,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 `
 
 func (q *Queries) RestorePerson(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, restorePerson, id)
+	_, err := q.db.Exec(ctx, restorePerson, id)
 	return err
 }
 
@@ -450,12 +439,12 @@ LIMIT $2
 `
 
 type SearchPersonsByNameParams struct {
-	Column1 sql.NullString `json:"column_1"`
-	Limit   int32          `json:"limit"`
+	Column1 pgtype.Text `json:"column_1"`
+	Limit   int32       `json:"limit"`
 }
 
 func (q *Queries) SearchPersonsByName(ctx context.Context, arg SearchPersonsByNameParams) ([]Person, error) {
-	rows, err := q.db.QueryContext(ctx, searchPersonsByName, arg.Column1, arg.Limit)
+	rows, err := q.db.Query(ctx, searchPersonsByName, arg.Column1, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -487,9 +476,6 @@ func (q *Queries) SearchPersonsByName(ctx context.Context, arg SearchPersonsByNa
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -503,7 +489,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 `
 
 func (q *Queries) SoftDeletePerson(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, softDeletePerson, id)
+	_, err := q.db.Exec(ctx, softDeletePerson, id)
 	return err
 }
 
@@ -529,24 +515,24 @@ RETURNING id, tenant_id, entity_id, person_type, first_name, last_name, middle_n
 `
 
 type UpdatePersonParams struct {
-	ID         int32                 `json:"id"`
-	EntityID   uuid.UUID             `json:"entity_id"`
-	PersonType string                `json:"person_type"`
-	FirstName  string                `json:"first_name"`
-	LastName   string                `json:"last_name"`
-	MiddleName sql.NullString        `json:"middle_name"`
-	Email      sql.NullString        `json:"email"`
-	Phone      sql.NullString        `json:"phone"`
-	BirthDate  sql.NullTime          `json:"birth_date"`
-	NationalID sql.NullString        `json:"national_id"`
-	TaxID      sql.NullString        `json:"tax_id"`
-	Address    pqtype.NullRawMessage `json:"address"`
-	Metadata   pqtype.NullRawMessage `json:"metadata"`
-	IsActive   bool                  `json:"is_active"`
+	ID         int32       `json:"id"`
+	EntityID   uuid.UUID   `json:"entity_id"`
+	PersonType string      `json:"person_type"`
+	FirstName  string      `json:"first_name"`
+	LastName   string      `json:"last_name"`
+	MiddleName pgtype.Text `json:"middle_name"`
+	Email      pgtype.Text `json:"email"`
+	Phone      pgtype.Text `json:"phone"`
+	BirthDate  pgtype.Date `json:"birth_date"`
+	NationalID pgtype.Text `json:"national_id"`
+	TaxID      pgtype.Text `json:"tax_id"`
+	Address    []byte      `json:"address"`
+	Metadata   []byte      `json:"metadata"`
+	IsActive   bool        `json:"is_active"`
 }
 
 func (q *Queries) UpdatePerson(ctx context.Context, arg UpdatePersonParams) (Person, error) {
-	row := q.db.QueryRowContext(ctx, updatePerson,
+	row := q.db.QueryRow(ctx, updatePerson,
 		arg.ID,
 		arg.EntityID,
 		arg.PersonType,

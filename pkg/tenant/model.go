@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 )
 
 // =====================================================
@@ -24,15 +23,15 @@ const (
 )
 
 type Tenant struct {
-	ID         int32     `json:"id"`
-	UUID       uuid.UUID `json:"uuid"`
-	Name       string    `json:"name"`
-	Subdomain  *string   `json:"subdomain,omitempty"`
-	Status     string    `json:"status"`
-	Industry   *string   `json:"industry,omitempty"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	DeletedAt  *time.Time `json:"deleted_at,omitempty"`
+	ID        int32      `json:"id"`
+	UUID      uuid.UUID  `json:"uuid"`
+	Name      string     `json:"name"`
+	Subdomain *string    `json:"subdomain,omitempty"`
+	Status    string     `json:"status"`
+	Industry  *string    `json:"industry,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 }
 
 type TenantConfiguration struct {
@@ -67,19 +66,18 @@ func (e DomainError) Error() string {
 }
 
 var (
-	ErrTenantNotFound           = DomainError{Code: "TENANT_NOT_FOUND", Message: "tenant not found"}
-	ErrTenantAlreadyExists      = DomainError{Code: "TENANT_ALREADY_EXISTS", Message: "tenant already exists"}
-	ErrSubdomainAlreadyExists   = DomainError{Code: "SUBDOMAIN_ALREADY_EXISTS", Message: "subdomain already exists"}
-	ErrConfigurationNotFound    = DomainError{Code: "CONFIGURATION_NOT_FOUND", Message: "tenant configuration not found"}
-	ErrInvalidTenantStatus      = DomainError{Code: "INVALID_TENANT_STATUS", Message: "invalid tenant status"}
-	ErrUnauthorized            = DomainError{Code: "UNAUTHORIZED", Message: "unauthorized access"}
-	ErrValidationFailed        = DomainError{Code: "VALIDATION_FAILED", Message: "validation failed"}
+	ErrTenantNotFound         = DomainError{Code: "TENANT_NOT_FOUND", Message: "tenant not found"}
+	ErrTenantAlreadyExists    = DomainError{Code: "TENANT_ALREADY_EXISTS", Message: "tenant already exists"}
+	ErrSubdomainAlreadyExists = DomainError{Code: "SUBDOMAIN_ALREADY_EXISTS", Message: "subdomain already exists"}
+	ErrConfigurationNotFound  = DomainError{Code: "CONFIGURATION_NOT_FOUND", Message: "tenant configuration not found"}
+	ErrInvalidTenantStatus    = DomainError{Code: "INVALID_TENANT_STATUS", Message: "invalid tenant status"}
+	ErrUnauthorized           = DomainError{Code: "UNAUTHORIZED", Message: "unauthorized access"}
+	ErrValidationFailed       = DomainError{Code: "VALIDATION_FAILED", Message: "validation failed"}
 )
 
 // =====================================================
 // PORT INTERFACES (Application Layer)
 // =====================================================
-
 
 // =====================================================
 // APPLICATION SERVICE IMPLEMENTATION

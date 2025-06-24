@@ -1,7 +1,11 @@
 package repositories
 
 import (
-	"encoding/`json"
+	"context"
+	"encoding/json"
+
+	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/domain/tenant"
 )
 
 type CreateTenantRequest struct {
@@ -48,25 +52,23 @@ type TenantStats struct {
 	PendingTenants   int64 `json:"pending_tenants"`
 }
 
-
-
 // Secondary Ports (Driven - Outbound)
 type TenantRepository interface {
 	// Admin operations
-	CreateTenant(ctx context.Context, arg CreateTenantParams) (*Tenant, error)
-	GetTenantByID(ctx context.Context, id int32) (*Tenant, error)
-	GetTenantByUUID(ctx context.Context, uuid uuid.UUID) (*Tenant, error)
-	GetTenantBySubdomain(ctx context.Context, subdomain string) (*Tenant, error)
-	ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Tenant, error)
-	UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Tenant, error)
+	CreateTenant(ctx context.Context, arg CreateTenantParams) (*tenant.Tenant, error)
+	GetTenantByID(ctx context.Context, id int32) (*tenant.Tenant, error)
+	GetTenantByUUID(ctx context.Context, uuid uuid.UUID) (*tenant.Tenant, error)
+	GetTenantBySubdomain(ctx context.Context, subdomain string) (*tenant.Tenant, error)
+	ListTenants(ctx context.Context, arg ListTenantsParams) (*tenant.Tenant, error)
+	UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*tenant.Tenant, error)
 	SoftDeleteTenant(ctx context.Context, id int32) error
 	GetTenantStats(ctx context.Context) (*TenantStats, error)
 	CheckTenantExists(ctx context.Context, id int32) (bool, error)
 	CheckSubdomainExists(ctx context.Context, subdomain string) (bool, error)
 	CheckTenantNameExists(ctx context.Context, name string) (bool, error)
-	
+
 	// Current tenant operations
-	GetCurrentTenant(ctx context.Context) (*Tenant, error)
+	GetCurrentTenant(ctx context.Context) (*tenant.Tenant, error)
 	UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error)
 }
 
@@ -76,7 +78,7 @@ type TenantConfigRepository interface {
 	GetTenantConfiguration(ctx context.Context, tenantID int32) (*TenantConfiguration, error)
 	UpdateTenantConfiguration(ctx context.Context, arg UpdateTenantConfigurationParams) (*TenantConfiguration, error)
 	DeleteTenantConfiguration(ctx context.Context, tenantID int32) error
-	
+
 	// Current tenant operations
 	GetCurrentTenantConfiguration(ctx context.Context) (*TenantConfiguration, error)
 	UpdateCurrentTenantMaxUsers(ctx context.Context, maxUsers int32) (*TenantConfiguration, error)
@@ -141,4 +143,3 @@ type CreateCurrentTenantConfigurationParams struct {
 	Features       json.RawMessage
 	ModulesEnabled json.RawMessage
 }
-

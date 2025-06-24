@@ -13,6 +13,9 @@ INSERT INTO tenants (name, subdomain, status, industry)
 VALUES ($1, $2, $3, $4)
 RETURNING *;
 
+-- name: SetCurrentTenant :exec
+SET app.current_tenant = $1 ; -- Example session variable
+--
 -- name: GetTenantByID :one
 SELECT * FROM tenants
 WHERE id = $1 AND deleted_at IS NULL;
@@ -37,6 +40,30 @@ SET name = $2, subdomain = $3, status = $4, industry = $5, updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL
 RETURNING *;
 
+-- name: UpdateTenantIndustry :one
+UPDATE tenants
+SET industry = $2, updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING *;
+
+
+-- name: UpdateTenantName :one 
+UPDATE tenants
+SET name = $2, updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING *;
+-- name: UpdateTenantSubdomain :one 
+UPDATE tenants
+SET subdomain = $2, updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING *;
+--
+-- name: UpdateTenantStatus :one
+UPDATE tenants
+SET status = $2, updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+RETURNING *;
+
 -- name: SoftDeleteTenant :exec
 UPDATE tenants
 SET deleted_at = NOW(), updated_at = NOW()
@@ -50,6 +77,10 @@ ORDER BY name;
 -- name: CountTenants :one
 SELECT COUNT(*) FROM tenants
 WHERE deleted_at IS NULL;
+
+-- name: DeleteTenant :exec
+DELETE FROM tenants;
+
 
 -- name: SearchTenantsByName :many
 SELECT * FROM tenants

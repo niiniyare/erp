@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS customer (
   description TEXT NOT NULL, -- Customer notes/description
   active BOOLEAN NOT NULL, -- Whether customer is currently active
   hidden BOOLEAN NOT NULL, -- Whether to hide from customer lists
-  entity__id UUID NOT NULL, -- Reference to owning entity
+  -- entity__id UUID NOT NULL, -- Reference to owning entity
 
 -- Contact information
   address JSONB DEFAULT '{}'::jsonb, -- Entity-specific address

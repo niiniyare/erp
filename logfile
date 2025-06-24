@@ -1,0 +1,2193 @@
+2025-06-24 16:33:04.284 EAT [31117] LOG:  starting PostgreSQL 17.0 on aarch64-unknown-linux-android, compiled by Android (12470979, +pgo, +bolt, +lto, +mlgo, based on r522817c) clang version 18.0.3 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262), 64-bit
+2025-06-24 16:33:04.285 EAT [31117] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-06-24 16:33:04.287 EAT [31117] LOG:  listening on Unix socket "/data/data/com.termux/files/usr/tmp/.s.PGSQL.5432"
+2025-06-24 16:33:04.368 EAT [31123] LOG:  database system was interrupted; last known up at 2025-06-20 06:42:44 EAT
+2025-06-24 16:33:04.553 EAT [31123] LOG:  database system was not properly shut down; automatic recovery in progress
+2025-06-24 16:33:04.560 EAT [31123] LOG:  redo starts at 0/86231790
+2025-06-24 16:33:04.560 EAT [31123] LOG:  invalid record length at 0/862318D0: expected at least 24, got 0
+2025-06-24 16:33:04.560 EAT [31123] LOG:  redo done at 0/86231898 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2025-06-24 16:33:04.574 EAT [31121] LOG:  checkpoint starting: end-of-recovery immediate wait
+2025-06-24 16:33:04.587 EAT [31121] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.002 s, total=0.013 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/862318D0, redo lsn=0/862318D0
+2025-06-24 16:33:04.594 EAT [31117] LOG:  database system is ready to accept connections
+2025-06-24 16:34:01.571 EAT [4807] ERROR:  duplicate key value violates unique constraint "tenants_subdomain_key"
+2025-06-24 16:34:01.571 EAT [4807] DETAIL:  Key (subdomain)=(duplicate-test-subdomain) already exists.
+2025-06-24 16:34:01.571 EAT [4807] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:34:01.575 EAT [4807] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 16:34:01.575 EAT [4807] DETAIL:  Failing row contains (649, 152a8ce1-f72f-4e57-b3b9-aa46198722f8, Invalid Status Corp_1750772041572622118_5277, invalid-status-1750772041572638118-7905, invalid_status, testing, 2025-06-24 16:34:01.574597+03, 2025-06-24 16:34:01.574597+03, null).
+2025-06-24 16:34:01.575 EAT [4807] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:34:01.579 EAT [4807] ERROR:  value too long for type character varying(63)
+2025-06-24 16:34:01.579 EAT [4807] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:34:01.637 EAT [4811] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 16:34:01.637 EAT [4811] DETAIL:  Failing row contains (655, dc0a9e41-a430-4cad-8916-4183d3baabb8, Test inactive Corp_1750772041636598502_4422, inactive-1750772041636613272-3739, inactive, testing, 2025-06-24 16:34:01.637207+03, 2025-06-24 16:34:01.637207+03, null).
+2025-06-24 16:34:01.637 EAT [4811] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:34:01.644 EAT [4811] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 16:34:01.644 EAT [4811] DETAIL:  Failing row contains (656, aab9780f-3e39-452f-8117-23fa5ffc9948, Test disabled Corp_1750772041639334502_5382, disabled-1750772041639347964-3582, disabled, testing, 2025-06-24 16:34:01.643622+03, 2025-06-24 16:34:01.643622+03, null).
+2025-06-24 16:34:01.644 EAT [4811] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:34:01.818 EAT [4817] ERROR:  duplicate key value violates unique constraint "tenants_name_key"
+2025-06-24 16:34:01.818 EAT [4817] DETAIL:  Key (name)=(Unique Test_1750772041801458733_5320) already exists.
+2025-06-24 16:34:01.818 EAT [4817] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:34:01.870 EAT [4820] ERROR:  Tenant context not set
+2025-06-24 16:34:01.870 EAT [4820] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 16:34:01.870 EAT [4820] STATEMENT:  -- name: UpdateCurrentTenant :one
+	UPDATE tenants
+	SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
+	WHERE id = current_tenant_id() AND deleted_at IS NULL
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:34:01.968 EAT [4824] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 16:34:01.968 EAT [4824] DETAIL:  Failing row contains (663, 616c2b02-ba63-43ef-9e08-446746e6ee3e, Test Corporation_1750772041924122118_899, updated-1750772041953625502-832, invalid_status, null, 2025-06-24 16:34:01.927941+03, 2025-06-24 16:34:01.967355+03, null).
+2025-06-24 16:34:01.968 EAT [4824] STATEMENT:  -- name: UpdateTenantStatus :one
+	UPDATE tenants
+	SET status = $2, updated_at = NOW()
+	WHERE id = $1 AND deleted_at IS NULL
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:38:04.626 EAT [31121] LOG:  checkpoint starting: time
+2025-06-24 16:38:07.165 EAT [31121] LOG:  checkpoint complete: wrote 25 buffers (0.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=2.468 s, sync=0.009 s, total=2.543 s; sync files=14, longest=0.004 s, average=0.001 s; distance=116 kB, estimate=116 kB; lsn=0/8624ECD0, redo lsn=0/8624EC78
+2025-06-24 16:44:22.680 EAT [14686] ERROR:  duplicate key value violates unique constraint "tenants_subdomain_key"
+2025-06-24 16:44:22.680 EAT [14686] DETAIL:  Key (subdomain)=(duplicate-test-subdomain) already exists.
+2025-06-24 16:44:22.680 EAT [14686] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:44:22.684 EAT [14686] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 16:44:22.684 EAT [14686] DETAIL:  Failing row contains (724, 9e8c3dda-e762-48be-a8dc-15aa02894f12, Invalid Status Corp_1750772662682043155_1025, invalid-status-1750772662682057924-1490, invalid_status, testing, 2025-06-24 16:44:22.683668+03, 2025-06-24 16:44:22.683668+03, null).
+2025-06-24 16:44:22.684 EAT [14686] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:44:22.687 EAT [14686] ERROR:  value too long for type character varying(63)
+2025-06-24 16:44:22.687 EAT [14686] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:44:22.739 EAT [14689] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 16:44:22.739 EAT [14689] DETAIL:  Failing row contains (730, 178e2f3e-1629-4b1a-ba06-f08dc81cd2ad, Test inactive Corp_1750772662738161232_7471, inactive-1750772662738177309-6476, inactive, testing, 2025-06-24 16:44:22.738692+03, 2025-06-24 16:44:22.738692+03, null).
+2025-06-24 16:44:22.739 EAT [14689] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:44:22.744 EAT [14689] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 16:44:22.744 EAT [14689] DETAIL:  Failing row contains (731, 355b90af-f659-4c88-b839-0956e30e9244, Test disabled Corp_1750772662740858462_2065, disabled-1750772662740871693-5259, disabled, testing, 2025-06-24 16:44:22.743593+03, 2025-06-24 16:44:22.743593+03, null).
+2025-06-24 16:44:22.744 EAT [14689] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:44:22.914 EAT [14695] ERROR:  duplicate key value violates unique constraint "tenants_name_key"
+2025-06-24 16:44:22.914 EAT [14695] DETAIL:  Key (name)=(Unique Test_1750772662902579078_7187) already exists.
+2025-06-24 16:44:22.914 EAT [14695] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:44:22.972 EAT [14698] ERROR:  Tenant context not set
+2025-06-24 16:44:22.972 EAT [14698] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 16:44:22.972 EAT [14698] STATEMENT:  -- name: UpdateCurrentTenant :one
+	UPDATE tenants
+	SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
+	WHERE id = current_tenant_id() AND deleted_at IS NULL
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:44:23.058 EAT [14701] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 16:44:23.058 EAT [14701] DETAIL:  Failing row contains (738, d389dae8-f5b0-49cd-9bd5-aa9a560ee6aa, Test Corporation_1750772663021913924_1621, updated-1750772663047455155-7209, invalid_status, null, 2025-06-24 16:44:23.024517+03, 2025-06-24 16:44:23.057784+03, null).
+2025-06-24 16:44:23.058 EAT [14701] STATEMENT:  -- name: UpdateTenantStatus :one
+	UPDATE tenants
+	SET status = $2, updated_at = NOW()
+	WHERE id = $1 AND deleted_at IS NULL
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 16:44:35.226 EAT [31121] LOG:  checkpoint starting: immediate force wait
+2025-06-24 16:44:35.285 EAT [31121] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.016 s, sync=0.005 s, total=0.060 s; sync files=4, longest=0.002 s, average=0.002 s; distance=81 kB, estimate=113 kB; lsn=0/86263260, redo lsn=0/86263208
+2025-06-24 16:44:36.146 EAT [14959] ERROR:  syntax error at or near "FUNCTIONapply_rls_to_tenant_tables" at character 4225
+2025-06-24 16:44:36.146 EAT [14959] STATEMENT:  
+	
+	-- Audit logging (enhanced)
+	CREATE TABLE audit_logs (
+	    uuid UUID PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+	    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
+	    action VARCHAR(50) NOT NULL,
+	    resource_type VARCHAR(50), -- What was changed
+	    resource_id BIGINT, -- ID of the changed resource
+	    old_values JSONB,
+	    new_values JSONB,
+	    ip_address INET,
+	    user_agent TEXT,
+	    session_id VARCHAR(255),
+	    module VARCHAR(50), -- Which module generated the log
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	);
+	
+	CREATE TABLE IF NOT EXISTS rls_change_log (
+	    id SERIAL PRIMARY KEY,
+	    schema_name TEXT NOT NULL,
+	    table_name TEXT NOT NULL,
+	    action TEXT NOT NULL,           -- 'apply' or 'remove'
+	    policy_name TEXT,
+	    policy_type TEXT,
+	    command TEXT,
+	    dry_run BOOLEAN DEFAULT false,
+	    changed_at TIMESTAMPTZ DEFAULT now()
+	);
+	
+	
+	
+	CREATE OR REPLACE FUNCTION apply_rls_to_tenant_tables(
+	    schema_name TEXT,
+	    policy_name TEXT DEFAULT 'tenant_isolation_policy',
+	    policy_type TEXT DEFAULT 'all',
+	    force_rls BOOLEAN DEFAULT true
+	)
+	RETURNS void
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+	    tbl TEXT;
+	    current_tenant TEXT;
+	    rls_clause TEXT := 'USING (tenant_id = current_setting(''app.current_tenant'')::INT)';
+	    commands TEXT[];
+	BEGIN
+	    BEGIN
+	        current_tenant := current_setting('app.current_tenant', true);
+	        IF current_tenant IS NULL THEN
+	            RAISE EXCEPTION 'app.current_tenant is not set for this session';
+	        END IF;
+	    EXCEPTION WHEN OTHERS THEN
+	        RAISE EXCEPTION 'app.current_tenant setting is missing or inaccessible';
+	    END;
+	
+	    FOR tbl IN
+	        SELECT table_name
+	        FROM information_schema.columns
+	        WHERE column_name = 'tenant_id'
+	          AND table_schema = schema_name
+	    LOOP
+	        EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', schema_name, tbl);
+	        EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', policy_name, schema_name, tbl);
+	
+	        IF policy_type = 'read' THEN
+	            commands := ARRAY['SELECT'];
+	            EXECUTE format('CREATE POLICY %I ON %I.%I FOR SELECT %s',
+	                policy_name, schema_name, tbl, rls_clause);
+	        ELSIF policy_type = 'write' THEN
+	            commands := ARRAY['INSERT', 'UPDATE', 'DELETE'];
+	            EXECUTE format('CREATE POLICY %I ON %I.%I FOR INSERT, UPDATE, DELETE %s',
+	                policy_name, schema_name, tbl, rls_clause);
+	        ELSIF policy_type = 'all' THEN
+	            commands := ARRAY['SELECT', 'INSERT', 'UPDATE', 'DELETE'];
+	            EXECUTE format('CREATE POLICY %I ON %I.%I FOR ALL %s',
+	                policy_name, schema_name, tbl, rls_clause);
+	        ELSE
+	            RAISE EXCEPTION 'Invalid policy_type: %, expected read/write/all', policy_type;
+	        END IF;
+	
+	        IF force_rls THEN
+	            EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', schema_name, tbl);
+	        END IF;
+	
+	        -- Log each command individually
+	        FOREACH rls_cmd IN ARRAY commands LOOP
+	            INSERT INTO rls_change_log(schema_name, table_name, action, policy_name, policy_type, command, dry_run)
+	            VALUES (schema_name, tbl, 'apply', policy_name, policy_type, rls_cmd, false);
+	        END LOOP;
+	    END LOOP;
+	END;
+	$$;
+	
+	
+	CREATE OR REPLACE FUNCTION apply_rls_to_tenant_tables()
+	RETURNS void
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+	    tbl TEXT;
+	    rls_policy_name TEXT := 'tenant_isolation_policy';
+	BEGIN
+	    FOR tbl IN
+	        SELECT table_name
+	        FROM information_schema.columns
+	        WHERE column_name = 'tenant_id'
+	          AND table_schema = 'public'
+	    LOOP
+	        -- Enable RLS on the table
+	        EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', tbl);
+	
+	        -- Drop policy if it already exists
+	        EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', rls_policy_name, tbl);
+	
+	        -- Create RLS policy for tenant isolation
+	        EXECUTE format($sql$
+	            CREATE POLICY %I ON public.%I
+	            USING (tenant_id = current_setting('app.current_tenant')::INT)
+	        $sql$, rls_policy_name, tbl);
+	    END LOOP;
+	END;
+	$$;
+	COMMENT ON FUNCTIONapply_rls_to_tenant_tables IS '
+	apply_rls_to_tenant_tables(). This function will apply Row-Level Security (RLS) to all public schema tables that have a tenant_id column, dropping any existing policy named tenant_isolation_policy and recreating it.'
+	
+2025-06-24 16:46:44.577 EAT [31121] LOG:  checkpoint starting: immediate force wait
+2025-06-24 16:46:44.597 EAT [31121] LOG:  checkpoint complete: wrote 14 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.005 s, total=0.020 s; sync files=11, longest=0.001 s, average=0.001 s; distance=4973 kB, estimate=4973 kB; lsn=0/8673E6B0, redo lsn=0/8673E658
+2025-06-24 16:46:45.164 EAT [16949] ERROR:  loop variable of FOREACH must be a known variable or list of variables at character 3086
+2025-06-24 16:46:45.164 EAT [16949] STATEMENT:  
+	
+	-- Audit logging (enhanced)
+	CREATE TABLE audit_logs (
+	    uuid UUID PRIMARY KEY,
+	    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+	    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+	    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
+	    action VARCHAR(50) NOT NULL,
+	    resource_type VARCHAR(50), -- What was changed
+	    resource_id BIGINT, -- ID of the changed resource
+	    old_values JSONB,
+	    new_values JSONB,
+	    ip_address INET,
+	    user_agent TEXT,
+	    session_id VARCHAR(255),
+	    module VARCHAR(50), -- Which module generated the log
+	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	);
+	
+	CREATE TABLE IF NOT EXISTS rls_change_log (
+	    id SERIAL PRIMARY KEY,
+	    schema_name TEXT NOT NULL,
+	    table_name TEXT NOT NULL,
+	    action TEXT NOT NULL,           -- 'apply' or 'remove'
+	    policy_name TEXT,
+	    policy_type TEXT,
+	    command TEXT,
+	    dry_run BOOLEAN DEFAULT false,
+	    changed_at TIMESTAMPTZ DEFAULT now()
+	);
+	
+	
+	
+	CREATE OR REPLACE FUNCTION apply_rls_to_tenant_tables(
+	    schema_name TEXT,
+	    policy_name TEXT DEFAULT 'tenant_isolation_policy',
+	    policy_type TEXT DEFAULT 'all',
+	    force_rls BOOLEAN DEFAULT true
+	)
+	RETURNS void
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+	    tbl TEXT;
+	    current_tenant TEXT;
+	    rls_clause TEXT := 'USING (tenant_id = current_setting(''app.current_tenant'')::INT)';
+	    commands TEXT[];
+	BEGIN
+	    BEGIN
+	        current_tenant := current_setting('app.current_tenant', true);
+	        IF current_tenant IS NULL THEN
+	            RAISE EXCEPTION 'app.current_tenant is not set for this session';
+	        END IF;
+	    EXCEPTION WHEN OTHERS THEN
+	        RAISE EXCEPTION 'app.current_tenant setting is missing or inaccessible';
+	    END;
+	
+	    FOR tbl IN
+	        SELECT table_name
+	        FROM information_schema.columns
+	        WHERE column_name = 'tenant_id'
+	          AND table_schema = schema_name
+	    LOOP
+	        EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', schema_name, tbl);
+	        EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', policy_name, schema_name, tbl);
+	
+	        IF policy_type = 'read' THEN
+	            commands := ARRAY['SELECT'];
+	            EXECUTE format('CREATE POLICY %I ON %I.%I FOR SELECT %s',
+	                policy_name, schema_name, tbl, rls_clause);
+	        ELSIF policy_type = 'write' THEN
+	            commands := ARRAY['INSERT', 'UPDATE', 'DELETE'];
+	            EXECUTE format('CREATE POLICY %I ON %I.%I FOR INSERT, UPDATE, DELETE %s',
+	                policy_name, schema_name, tbl, rls_clause);
+	        ELSIF policy_type = 'all' THEN
+	            commands := ARRAY['SELECT', 'INSERT', 'UPDATE', 'DELETE'];
+	            EXECUTE format('CREATE POLICY %I ON %I.%I FOR ALL %s',
+	                policy_name, schema_name, tbl, rls_clause);
+	        ELSE
+	            RAISE EXCEPTION 'Invalid policy_type: %, expected read/write/all', policy_type;
+	        END IF;
+	
+	        IF force_rls THEN
+	            EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', schema_name, tbl);
+	        END IF;
+	
+	        -- Log each command individually
+	        FOREACH rls_cmd IN ARRAY commands LOOP
+	            INSERT INTO rls_change_log(schema_name, table_name, action, policy_name, policy_type, command, dry_run)
+	            VALUES (schema_name, tbl, 'apply', policy_name, policy_type, rls_cmd, false);
+	        END LOOP;
+	    END LOOP;
+	END;
+	$$;
+	
+	
+	CREATE OR REPLACE FUNCTION apply_rls_to_tenant_tables()
+	RETURNS void
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+	    tbl TEXT;
+	    rls_policy_name TEXT := 'tenant_isolation_policy';
+	BEGIN
+	    FOR tbl IN
+	        SELECT table_name
+	        FROM information_schema.columns
+	        WHERE column_name = 'tenant_id'
+	          AND table_schema = 'public'
+	    LOOP
+	        -- Enable RLS on the table
+	        EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', tbl);
+	
+	        -- Drop policy if it already exists
+	        EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', rls_policy_name, tbl);
+	
+	        -- Create RLS policy for tenant isolation
+	        EXECUTE format($sql$
+	            CREATE POLICY %I ON public.%I
+	            USING (tenant_id = current_setting('app.current_tenant')::INT)
+	        $sql$, rls_policy_name, tbl);
+	    END LOOP;
+	END;
+	$$;
+	COMMENT ON FUNCTION apply_rls_to_tenant_tables IS '
+	apply_rls_to_tenant_tables(). This function will apply Row-Level Security (RLS) to all public schema tables that have a tenant_id column, dropping any existing policy named tenant_isolation_policy and recreating it.'
+	
+2025-06-24 16:48:42.618 EAT [31121] LOG:  checkpoint starting: immediate force wait
+2025-06-24 16:48:42.644 EAT [31121] LOG:  checkpoint complete: wrote 11 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.004 s, total=0.026 s; sync files=9, longest=0.001 s, average=0.001 s; distance=5012 kB, estimate=5012 kB; lsn=0/86C23998, redo lsn=0/86C23940
+2025-06-24 16:48:43.281 EAT [20316] ERROR:  syntax error at or near "DECLARE" at character 8315
+2025-06-24 16:48:43.281 EAT [20316] STATEMENT:  
+	-- Tenant context function
+	CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS INT AS $$
+	BEGIN
+	    RETURN current_setting('app.current_tenant_id')::INT;
+	EXCEPTION WHEN OTHERS THEN
+	    RAISE EXCEPTION 'Tenant context not set';
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- RLS Policies (apply tenant isolation to all tables)
+	CREATE POLICY tenant_isolation_policy ON tenants USING (id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON entities USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON hierarchy_paths USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON persons USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON employees USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON users USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON roles USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON projects USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON budgets USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON audit_logs USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON account USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON chartofaccount USING (tenant_id = current_tenant_id());
+	
+	-- User roles policy (users can only see their own roles)
+	CREATE POLICY user_roles_policy ON user_roles
+	    USING (user_id IN (SELECT id FROM users WHERE tenant_id = current_tenant_id()));
+	
+	-- Triggers for maintaining hierarchy paths and timestamps
+	CREATE OR REPLACE FUNCTION update_timestamps() RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.updated_at = NOW();
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	-- Apply timestamp triggers to all relevant tables
+	CREATE TRIGGER update_tenant_timestamps BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_entity_timestamps BEFORE UPDATE ON entities FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_person_timestamps BEFORE UPDATE ON persons FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_employee_timestamps BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_user_timestamps BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_project_timestamps BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_budget_timestamps BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	
+	-- Enhanced hierarchy path maintenance (without ltree)
+	CREATE OR REPLACE FUNCTION maintain_hierarchy_paths() RETURNS TRIGGER AS $$
+	BEGIN
+	    IF TG_OP = 'DELETE' THEN
+	        -- Remove all paths involving this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = OLD.tenant_id
+	        AND (ancestor_id = OLD.id OR descendant_id = OLD.id);
+	        RETURN OLD;
+	    END IF;
+	
+	    -- Handle UPDATE of parent_id
+	    IF TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id THEN
+	        -- Remove old hierarchy paths for this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Clear old paths for this descendant (for INSERT or parent change)
+	    IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id) THEN
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Self-reference (depth 0)
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    VALUES (NEW.tenant_id, NEW.id, NEW.id, 0)
+	    ON CONFLICT DO NOTHING;
+	
+	    -- Add parent paths (all ancestors)
+	    IF NEW.parent_id IS NOT NULL THEN
+	        INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	        SELECT NEW.tenant_id, p.ancestor_id, NEW.id, p.depth + 1
+	        FROM hierarchy_paths p
+	        WHERE p.tenant_id = NEW.tenant_id 
+	        AND p.descendant_id = NEW.parent_id
+	        ON CONFLICT DO NOTHING;
+	    END IF;
+	
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	CREATE TRIGGER trg_maintain_hierarchy_paths
+	    BEFORE INSERT OR UPDATE OR DELETE ON entities
+	    FOR EACH ROW EXECUTE FUNCTION maintain_hierarchy_paths();
+	
+	-- Function to get entity descendants
+	CREATE OR REPLACE FUNCTION get_entity_descendants(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.descendant_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.ancestor_id = entity_id
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity ancestors
+	CREATE OR REPLACE FUNCTION get_entity_ancestors(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id
+	    AND hp.depth > 0  -- Exclude self-reference
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth DESC, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to check if entity is descendant of another
+	CREATE OR REPLACE FUNCTION is_entity_descendant(descendant_id INT, ancestor_id INT)
+	RETURNS BOOLEAN AS $$
+	BEGIN
+	    RETURN EXISTS(
+	        SELECT 1 FROM hierarchy_paths
+	        WHERE tenant_id = current_tenant_id()
+	        AND ancestor_id = is_entity_descendant.ancestor_id
+	        AND descendant_id = is_entity_descendant.descendant_id
+	        AND depth > 0
+	    );
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity path as text
+	CREATE OR REPLACE FUNCTION get_entity_path(entity_id INT, separator VARCHAR DEFAULT ' > ')
+	RETURNS TEXT AS $$
+	DECLARE
+	    result TEXT;
+	BEGIN
+	    SELECT string_agg(e.name, separator ORDER BY hp.depth DESC)
+	    INTO result
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id;
+	    
+	    RETURN COALESCE(result, '');
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get immediate children
+	CREATE OR REPLACE FUNCTION get_entity_children(entity_id INT)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type
+	    FROM entities e
+	    WHERE e.tenant_id = current_tenant_id()
+	    AND e.parent_id = entity_id
+	    ORDER BY e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to rebuild hierarchy paths (useful for data repair)
+	CREATE OR REPLACE FUNCTION rebuild_hierarchy_paths(tenant_id_param INT DEFAULT NULL)
+	RETURNS VOID AS $$
+	DECLARE
+	    target_tenant_id INT;
+	BEGIN
+	    target_tenant_id := COALESCE(tenant_id_param, current_tenant_id());
+	    
+	    -- Clear existing paths for the tenant
+	    DELETE FROM hierarchy_paths WHERE tenant_id = target_tenant_id;
+	    
+	    -- Rebuild paths using recursive CTE
+	    WITH RECURSIVE entity_paths AS (
+	        -- Root entities (self-references)
+	        SELECT id, id as ancestor_id, 0 as depth, tenant_id
+	        FROM entities
+	        WHERE tenant_id = target_tenant_id
+	        
+	        UNION ALL
+	        
+	        -- Parent-child relationships
+	        SELECT e.id, ep.ancestor_id, ep.depth + 1, e.tenant_id
+	        FROM entities e
+	        JOIN entity_paths ep ON e.parent_id = ep.id
+	    )
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    SELECT tenant_id, ancestor_id, id, depth
+	    FROM entity_paths;
+	END;
+	
+	
+	
+	-- Already calls apply/remove which now do logging
+	CREATE OR REPLACE FUNCTION manage_rls_across_schemas(
+	    schemas TEXT[],
+	    mode TEXT DEFAULT 'apply',
+	    policy_name TEXT DEFAULT 'tenant_isolation_policy',
+	    policy_type TEXT DEFAULT 'all',
+	    force_rls BOOLEAN DEFAULT true,
+	    dry_run BOOLEAN DEFAULT false
+	)
+	RETURNS void
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+	    schema_name TEXT;
+	BEGIN
+	    FOREACH schema_name IN ARRAY schemas LOOP
+	        IF mode = 'apply' THEN
+	            IF NOT dry_run THEN
+	                PERFORM apply_rls_to_tenant_tables(schema_name, policy_name, policy_type, force_rls);
+	            END IF;
+	        ELSIF mode = 'remove' THEN
+	            PERFORM remove_rls_from_tenant_tables_by_type(schema_name, policy_type, dry_run);
+	        ELSE
+	            RAISE EXCEPTION 'Invalid mode: %, expected ''apply'' or ''remove''', mode;
+	        END IF;
+	    END LOOP;
+	END;
+	$$;
+	$$ LANGUAGE plpgsql SECURITY DEFINER;
+	
+2025-06-24 16:51:36.217 EAT [31121] LOG:  checkpoint starting: immediate force wait
+2025-06-24 16:51:36.246 EAT [31121] LOG:  checkpoint complete: wrote 14 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.005 s, sync=0.006 s, total=0.030 s; sync files=11, longest=0.001 s, average=0.001 s; distance=5195 kB, estimate=5195 kB; lsn=0/87136648, redo lsn=0/871365F0
+2025-06-24 16:51:36.948 EAT [22434] ERROR:  no language specified
+2025-06-24 16:51:36.948 EAT [22434] STATEMENT:  
+	-- Tenant context function
+	CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS INT AS $$
+	BEGIN
+	    RETURN current_setting('app.current_tenant_id')::INT;
+	EXCEPTION WHEN OTHERS THEN
+	    RAISE EXCEPTION 'Tenant context not set';
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- RLS Policies (apply tenant isolation to all tables)
+	CREATE POLICY tenant_isolation_policy ON tenants USING (id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON entities USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON hierarchy_paths USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON persons USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON employees USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON users USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON roles USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON projects USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON budgets USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON audit_logs USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON account USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON chartofaccount USING (tenant_id = current_tenant_id());
+	
+	-- User roles policy (users can only see their own roles)
+	CREATE POLICY user_roles_policy ON user_roles
+	    USING (user_id IN (SELECT id FROM users WHERE tenant_id = current_tenant_id()));
+	
+	-- Triggers for maintaining hierarchy paths and timestamps
+	CREATE OR REPLACE FUNCTION update_timestamps() RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.updated_at = NOW();
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	-- Apply timestamp triggers to all relevant tables
+	CREATE TRIGGER update_tenant_timestamps BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_entity_timestamps BEFORE UPDATE ON entities FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_person_timestamps BEFORE UPDATE ON persons FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_employee_timestamps BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_user_timestamps BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_project_timestamps BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_budget_timestamps BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	
+	-- Enhanced hierarchy path maintenance (without ltree)
+	CREATE OR REPLACE FUNCTION maintain_hierarchy_paths() RETURNS TRIGGER AS $$
+	BEGIN
+	    IF TG_OP = 'DELETE' THEN
+	        -- Remove all paths involving this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = OLD.tenant_id
+	        AND (ancestor_id = OLD.id OR descendant_id = OLD.id);
+	        RETURN OLD;
+	    END IF;
+	
+	    -- Handle UPDATE of parent_id
+	    IF TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id THEN
+	        -- Remove old hierarchy paths for this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Clear old paths for this descendant (for INSERT or parent change)
+	    IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id) THEN
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Self-reference (depth 0)
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    VALUES (NEW.tenant_id, NEW.id, NEW.id, 0)
+	    ON CONFLICT DO NOTHING;
+	
+	    -- Add parent paths (all ancestors)
+	    IF NEW.parent_id IS NOT NULL THEN
+	        INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	        SELECT NEW.tenant_id, p.ancestor_id, NEW.id, p.depth + 1
+	        FROM hierarchy_paths p
+	        WHERE p.tenant_id = NEW.tenant_id 
+	        AND p.descendant_id = NEW.parent_id
+	        ON CONFLICT DO NOTHING;
+	    END IF;
+	
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	CREATE TRIGGER trg_maintain_hierarchy_paths
+	    BEFORE INSERT OR UPDATE OR DELETE ON entities
+	    FOR EACH ROW EXECUTE FUNCTION maintain_hierarchy_paths();
+	
+	-- Function to get entity descendants
+	CREATE OR REPLACE FUNCTION get_entity_descendants(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.descendant_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.ancestor_id = entity_id
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity ancestors
+	CREATE OR REPLACE FUNCTION get_entity_ancestors(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id
+	    AND hp.depth > 0  -- Exclude self-reference
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth DESC, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to check if entity is descendant of another
+	CREATE OR REPLACE FUNCTION is_entity_descendant(descendant_id INT, ancestor_id INT)
+	RETURNS BOOLEAN AS $$
+	BEGIN
+	    RETURN EXISTS(
+	        SELECT 1 FROM hierarchy_paths
+	        WHERE tenant_id = current_tenant_id()
+	        AND ancestor_id = is_entity_descendant.ancestor_id
+	        AND descendant_id = is_entity_descendant.descendant_id
+	        AND depth > 0
+	    );
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity path as text
+	CREATE OR REPLACE FUNCTION get_entity_path(entity_id INT, separator VARCHAR DEFAULT ' > ')
+	RETURNS TEXT AS $$
+	DECLARE
+	    result TEXT;
+	BEGIN
+	    SELECT string_agg(e.name, separator ORDER BY hp.depth DESC)
+	    INTO result
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id;
+	    
+	    RETURN COALESCE(result, '');
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get immediate children
+	CREATE OR REPLACE FUNCTION get_entity_children(entity_id INT)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type
+	    FROM entities e
+	    WHERE e.tenant_id = current_tenant_id()
+	    AND e.parent_id = entity_id
+	    ORDER BY e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to rebuild hierarchy paths (useful for data repair)
+	CREATE OR REPLACE FUNCTION rebuild_hierarchy_paths(tenant_id_param INT DEFAULT NULL)
+	RETURNS VOID AS $$
+	DECLARE
+	    target_tenant_id INT;
+	BEGIN
+	    target_tenant_id := COALESCE(tenant_id_param, current_tenant_id());
+	    
+	    -- Clear existing paths for the tenant
+	    DELETE FROM hierarchy_paths WHERE tenant_id = target_tenant_id;
+	    
+	    -- Rebuild paths using recursive CTE
+	    WITH RECURSIVE entity_paths AS (
+	        -- Root entities (self-references)
+	        SELECT id, id as ancestor_id, 0 as depth, tenant_id
+	        FROM entities
+	        WHERE tenant_id = target_tenant_id
+	        
+	        UNION ALL
+	        
+	        -- Parent-child relationships
+	        SELECT e.id, ep.ancestor_id, ep.depth + 1, e.tenant_id
+	        FROM entities e
+	        JOIN entity_paths ep ON e.parent_id = ep.id
+	    )
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    SELECT tenant_id, ancestor_id, id, depth
+	    FROM entity_paths;
+	END;
+	
+	
+	--
+	-- -- Already calls apply/remove which now do logging
+	-- CREATE OR REPLACE FUNCTION manage_rls_across_schemas(
+	--     schemas TEXT[],
+	--     mode TEXT DEFAULT 'apply',
+	--     policy_name TEXT DEFAULT 'tenant_isolation_policy',
+	--     policy_type TEXT DEFAULT 'all',
+	--     force_rls BOOLEAN DEFAULT true,
+	--     dry_run BOOLEAN DEFAULT false
+	-- )
+	-- RETURNS void
+	-- LANGUAGE plpgsql
+	-- AS $$
+	-- DECLARE
+	--     schema_name TEXT;
+	-- BEGIN
+	--     FOREACH schema_name IN ARRAY schemas LOOP
+	--         IF mode = 'apply' THEN
+	--             IF NOT dry_run THEN
+	--                 PERFORM apply_rls_to_tenant_tables(schema_name, policy_name, policy_type, force_rls);
+	--             END IF;
+	--         ELSIF mode = 'remove' THEN
+	--             PERFORM remove_rls_from_tenant_tables_by_type(schema_name, policy_type, dry_run);
+	--         ELSE
+	--             RAISE EXCEPTION 'Invalid mode: %, expected ''apply'' or ''remove''', mode;
+	--         END IF;
+	--     END LOOP;
+	-- END;
+	-- $$;
+	-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+	
+2025-06-24 16:55:57.466 EAT [31121] LOG:  checkpoint starting: immediate force wait
+2025-06-24 16:55:57.490 EAT [31121] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.007 s, sync=0.004 s, total=0.024 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5205 kB, estimate=5205 kB; lsn=0/8764BAC0, redo lsn=0/8764BA68
+2025-06-24 16:55:58.254 EAT [24858] ERROR:  no language specified
+2025-06-24 16:55:58.254 EAT [24858] STATEMENT:  
+	-- Tenant context function
+	CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS INT AS $$
+	BEGIN
+	    RETURN current_setting('app.current_tenant_id')::INT;
+	EXCEPTION WHEN OTHERS THEN
+	    RAISE EXCEPTION 'Tenant context not set';
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- RLS Policies (apply tenant isolation to all tables)
+	CREATE POLICY tenant_isolation_policy ON tenants USING (id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON entities USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON hierarchy_paths USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON persons USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON employees USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON users USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON roles USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON projects USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON budgets USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON audit_logs USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON account USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON chartofaccount USING (tenant_id = current_tenant_id());
+	
+	-- User roles policy (users can only see their own roles)
+	CREATE POLICY user_roles_policy ON user_roles
+	    USING (user_id IN (SELECT id FROM users WHERE tenant_id = current_tenant_id()));
+	
+	-- Triggers for maintaining hierarchy paths and timestamps
+	CREATE OR REPLACE FUNCTION update_timestamps() RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.updated_at = NOW();
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	-- Apply timestamp triggers to all relevant tables
+	CREATE TRIGGER update_tenant_timestamps BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_entity_timestamps BEFORE UPDATE ON entities FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_person_timestamps BEFORE UPDATE ON persons FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_employee_timestamps BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_user_timestamps BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_project_timestamps BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_budget_timestamps BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	
+	-- Enhanced hierarchy path maintenance (without ltree)
+	CREATE OR REPLACE FUNCTION maintain_hierarchy_paths() RETURNS TRIGGER AS $$
+	BEGIN
+	    IF TG_OP = 'DELETE' THEN
+	        -- Remove all paths involving this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = OLD.tenant_id
+	        AND (ancestor_id = OLD.id OR descendant_id = OLD.id);
+	        RETURN OLD;
+	    END IF;
+	
+	    -- Handle UPDATE of parent_id
+	    IF TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id THEN
+	        -- Remove old hierarchy paths for this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Clear old paths for this descendant (for INSERT or parent change)
+	    IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id) THEN
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Self-reference (depth 0)
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    VALUES (NEW.tenant_id, NEW.id, NEW.id, 0)
+	    ON CONFLICT DO NOTHING;
+	
+	    -- Add parent paths (all ancestors)
+	    IF NEW.parent_id IS NOT NULL THEN
+	        INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	        SELECT NEW.tenant_id, p.ancestor_id, NEW.id, p.depth + 1
+	        FROM hierarchy_paths p
+	        WHERE p.tenant_id = NEW.tenant_id 
+	        AND p.descendant_id = NEW.parent_id
+	        ON CONFLICT DO NOTHING;
+	    END IF;
+	
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	CREATE TRIGGER trg_maintain_hierarchy_paths
+	    BEFORE INSERT OR UPDATE OR DELETE ON entities
+	    FOR EACH ROW EXECUTE FUNCTION maintain_hierarchy_paths();
+	
+	-- Function to get entity descendants
+	CREATE OR REPLACE FUNCTION get_entity_descendants(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.descendant_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.ancestor_id = entity_id
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity ancestors
+	CREATE OR REPLACE FUNCTION get_entity_ancestors(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id
+	    AND hp.depth > 0  -- Exclude self-reference
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth DESC, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to check if entity is descendant of another
+	CREATE OR REPLACE FUNCTION is_entity_descendant(descendant_id INT, ancestor_id INT)
+	RETURNS BOOLEAN AS $$
+	BEGIN
+	    RETURN EXISTS(
+	        SELECT 1 FROM hierarchy_paths
+	        WHERE tenant_id = current_tenant_id()
+	        AND ancestor_id = is_entity_descendant.ancestor_id
+	        AND descendant_id = is_entity_descendant.descendant_id
+	        AND depth > 0
+	    );
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity path as text
+	CREATE OR REPLACE FUNCTION get_entity_path(entity_id INT, separator VARCHAR DEFAULT ' > ')
+	RETURNS TEXT AS $$
+	DECLARE
+	    result TEXT;
+	BEGIN
+	    SELECT string_agg(e.name, separator ORDER BY hp.depth DESC)
+	    INTO result
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id;
+	    
+	    RETURN COALESCE(result, '');
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get immediate children
+	CREATE OR REPLACE FUNCTION get_entity_children(entity_id INT)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type
+	    FROM entities e
+	    WHERE e.tenant_id = current_tenant_id()
+	    AND e.parent_id = entity_id
+	    ORDER BY e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to rebuild hierarchy paths (useful for data repair)
+	CREATE OR REPLACE FUNCTION rebuild_hierarchy_paths(tenant_id_param INT DEFAULT NULL)
+	RETURNS VOID AS $$
+	DECLARE
+	    target_tenant_id INT;
+	BEGIN
+	    target_tenant_id := COALESCE(tenant_id_param, current_tenant_id());
+	    
+	    -- Clear existing paths for the tenant
+	    DELETE FROM hierarchy_paths WHERE tenant_id = target_tenant_id;
+	    
+	    -- Rebuild paths using recursive CTE
+	    WITH RECURSIVE entity_paths AS (
+	        -- Root entities (self-references)
+	        SELECT id, id as ancestor_id, 0 as depth, tenant_id
+	        FROM entities
+	        WHERE tenant_id = target_tenant_id
+	        
+	        UNION ALL
+	        
+	        -- Parent-child relationships
+	        SELECT e.id, ep.ancestor_id, ep.depth + 1, e.tenant_id
+	        FROM entities e
+	        JOIN entity_paths ep ON e.parent_id = ep.id
+	    )
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    SELECT tenant_id, ancestor_id, id, depth
+	    FROM entity_paths;
+	END;
+	
+	
+	--
+	-- -- Already calls apply/remove which now do logging
+	-- CREATE OR REPLACE FUNCTION manage_rls_across_schemas(
+	--     schemas TEXT[],
+	--     mode TEXT DEFAULT 'apply',
+	--     policy_name TEXT DEFAULT 'tenant_isolation_policy',
+	--     policy_type TEXT DEFAULT 'all',
+	--     force_rls BOOLEAN DEFAULT true,
+	--     dry_run BOOLEAN DEFAULT false
+	-- )
+	-- RETURNS void
+	-- LANGUAGE plpgsql
+	-- AS $$
+	-- DECLARE
+	--     schema_name TEXT;
+	-- BEGIN
+	--     FOREACH schema_name IN ARRAY schemas LOOP
+	--         IF mode = 'apply' THEN
+	--             IF NOT dry_run THEN
+	--                 PERFORM apply_rls_to_tenant_tables(schema_name, policy_name, policy_type, force_rls);
+	--             END IF;
+	--         ELSIF mode = 'remove' THEN
+	--             PERFORM remove_rls_from_tenant_tables_by_type(schema_name, policy_type, dry_run);
+	--         ELSE
+	--             RAISE EXCEPTION 'Invalid mode: %, expected ''apply'' or ''remove''', mode;
+	--         END IF;
+	--     END LOOP;
+	-- END;
+	-- $$;
+	-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+	
+2025-06-24 16:59:44.125 EAT [31121] LOG:  checkpoint starting: immediate force wait
+2025-06-24 16:59:44.149 EAT [31121] LOG:  checkpoint complete: wrote 11 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.007 s, sync=0.004 s, total=0.025 s; sync files=9, longest=0.001 s, average=0.001 s; distance=5214 kB, estimate=5214 kB; lsn=0/87B63370, redo lsn=0/87B63318
+2025-06-24 17:00:38.272 EAT [31121] LOG:  checkpoint starting: immediate force wait
+2025-06-24 17:00:38.302 EAT [31121] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.008 s, sync=0.006 s, total=0.030 s; sync files=7, longest=0.001 s, average=0.001 s; distance=5597 kB, estimate=5597 kB; lsn=0/880DA818, redo lsn=0/880DA7C0
+2025-06-24 17:00:38.922 EAT [27440] ERROR:  syntax error at or near "$$ LANGUAGE plpgsql SECURITY DEFINER;
+	
+	/*
+	-- Tenant context function
+	CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS INT AS $$" at character 8857
+2025-06-24 17:00:38.922 EAT [27440] STATEMENT:  -- Tenant context function
+	CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS INT AS $$
+	BEGIN
+	    RETURN current_setting('app.current_tenant_id')::INT;
+	EXCEPTION WHEN OTHERS THEN
+	    RAISE EXCEPTION 'Tenant context not set';
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- RLS Policies (apply tenant isolation to all tables)
+	CREATE POLICY tenant_isolation_policy ON tenants USING (id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON entities USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON hierarchy_paths USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON persons USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON employees USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON users USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON roles USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON projects USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON budgets USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON audit_logs USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON account USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON chartofaccount USING (tenant_id = current_tenant_id());
+	
+	-- User roles policy (users can only see their own roles)
+	CREATE POLICY user_roles_policy ON user_roles
+	    USING (user_id IN (SELECT id FROM users WHERE tenant_id = current_tenant_id()));
+	
+	-- Triggers for maintaining hierarchy paths and timestamps
+	CREATE OR REPLACE FUNCTION update_timestamps() RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.updated_at = NOW();
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	-- Apply timestamp triggers to all relevant tables
+	CREATE TRIGGER update_tenant_timestamps BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_entity_timestamps BEFORE UPDATE ON entities FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_person_timestamps BEFORE UPDATE ON persons FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_employee_timestamps BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_user_timestamps BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_project_timestamps BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_budget_timestamps BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	
+	-- Enhanced hierarchy path maintenance (without ltree)
+	CREATE OR REPLACE FUNCTION maintain_hierarchy_paths() RETURNS TRIGGER AS $$
+	BEGIN
+	    IF TG_OP = 'DELETE' THEN
+	        -- Remove all paths involving this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = OLD.tenant_id
+	        AND (ancestor_id = OLD.id OR descendant_id = OLD.id);
+	        RETURN OLD;
+	    END IF;
+	
+	    -- Handle UPDATE of parent_id
+	    IF TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id THEN
+	        -- Remove old hierarchy paths for this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Clear old paths for this descendant (for INSERT or parent change)
+	    IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id) THEN
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Self-reference (depth 0)
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    VALUES (NEW.tenant_id, NEW.id, NEW.id, 0)
+	    ON CONFLICT DO NOTHING;
+	
+	    -- Add parent paths (all ancestors)
+	    IF NEW.parent_id IS NOT NULL THEN
+	        INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	        SELECT NEW.tenant_id, p.ancestor_id, NEW.id, p.depth + 1
+	        FROM hierarchy_paths p
+	        WHERE p.tenant_id = NEW.tenant_id
+	        AND p.descendant_id = NEW.parent_id
+	        ON CONFLICT DO NOTHING;
+	    END IF;
+	
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	CREATE TRIGGER trg_maintain_hierarchy_paths
+	    BEFORE INSERT OR UPDATE OR DELETE ON entities
+	    FOR EACH ROW EXECUTE FUNCTION maintain_hierarchy_paths();
+	
+	-- Function to get entity descendants
+	CREATE OR REPLACE FUNCTION get_entity_descendants(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.descendant_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.ancestor_id = entity_id
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity ancestors
+	CREATE OR REPLACE FUNCTION get_entity_ancestors(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id
+	    AND hp.depth > 0  -- Exclude self-reference
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth DESC, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to check if entity is descendant of another
+	CREATE OR REPLACE FUNCTION is_entity_descendant(descendant_id INT, ancestor_id INT)
+	RETURNS BOOLEAN AS $$
+	BEGIN
+	    RETURN EXISTS(
+	        SELECT 1 FROM hierarchy_paths
+	        WHERE tenant_id = current_tenant_id()
+	        AND ancestor_id = is_entity_descendant.ancestor_id
+	        AND descendant_id = is_entity_descendant.descendant_id
+	        AND depth > 0
+	    );
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity path as text
+	CREATE OR REPLACE FUNCTION get_entity_path(entity_id INT, separator VARCHAR DEFAULT ' > ')
+	RETURNS TEXT AS $$
+	DECLARE
+	    result TEXT;
+	BEGIN
+	    SELECT string_agg(e.name, separator ORDER BY hp.depth DESC)
+	    INTO result
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id;
+	
+	    RETURN COALESCE(result, '');
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get immediate children
+	CREATE OR REPLACE FUNCTION get_entity_children(entity_id INT)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type
+	    FROM entities e
+	    WHERE e.tenant_id = current_tenant_id()
+	    AND e.parent_id = entity_id
+	    ORDER BY e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to rebuild hierarchy paths (useful for data repair)
+	CREATE OR REPLACE FUNCTION rebuild_hierarchy_paths(tenant_id_param INT DEFAULT NULL)
+	RETURNS VOID AS $$
+	DECLARE
+	    target_tenant_id INT;
+	BEGIN
+	    target_tenant_id := COALESCE(tenant_id_param, current_tenant_id());
+	
+	    -- Clear existing paths for the tenant
+	    DELETE FROM hierarchy_paths WHERE tenant_id = target_tenant_id;
+	
+	    -- Rebuild paths using recursive CTE
+	    WITH RECURSIVE entity_paths AS (
+	        -- Root entities (self-references)
+	        SELECT id, id as ancestor_id, 0 as depth, tenant_id
+	        FROM entities
+	        WHERE tenant_id = target_tenant_id
+	
+	        UNION ALL
+	
+	        -- Parent-child relationships
+	        SELECT e.id, ep.ancestor_id, ep.depth + 1, e.tenant_id
+	        FROM entities e
+	        JOIN entity_paths ep ON e.parent_id = ep.id
+	    )
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    SELECT tenant_id, ancestor_id, id, depth
+	    FROM entity_paths;
+	END;
+	$$ LANGUAGE plpgsql SECURITY DEFINER;
+	
+	
+	-- Already calls apply/remove which now do logging
+	CREATE OR REPLACE FUNCTION manage_rls_across_schemas(
+	    schemas TEXT[],
+	    mode TEXT DEFAULT 'apply',
+	    policy_name TEXT DEFAULT 'tenant_isolation_policy',
+	    policy_type TEXT DEFAULT 'all',
+	    force_rls BOOLEAN DEFAULT true,
+	    dry_run BOOLEAN DEFAULT false
+	)
+	RETURNS void
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+	    schema_name TEXT;
+	BEGIN
+	    FOREACH schema_name IN ARRAY schemas LOOP
+	        IF mode = 'apply' THEN
+	            IF NOT dry_run THEN
+	                PERFORM apply_rls_to_tenant_tables(schema_name, policy_name, policy_type, force_rls);
+	            END IF;
+	        ELSIF mode = 'remove' THEN
+	            PERFORM remove_rls_from_tenant_tables_by_type(schema_name, policy_type, dry_run);
+	        ELSE
+	            RAISE EXCEPTION 'Invalid mode: %, expected ''apply'' or ''remove''', mode;
+	        END IF;
+	    END LOOP;
+	END;
+	$$;
+	$$ LANGUAGE plpgsql SECURITY DEFINER;
+	
+	/*
+	-- Tenant context function
+	CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS INT AS $$
+	BEGIN
+	    RETURN current_setting('app.current_tenant_id')::INT;
+	EXCEPTION WHEN OTHERS THEN
+	    RAISE EXCEPTION 'Tenant context not set';
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- RLS Policies (apply tenant isolation to all tables)
+	CREATE POLICY tenant_isolation_policy ON tenants USING (id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON entities USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON hierarchy_paths USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON persons USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON employees USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON users USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON roles USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON projects USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON budgets USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON audit_logs USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON account USING (tenant_id = current_tenant_id());
+	CREATE POLICY tenant_isolation_policy ON chartofaccount USING (tenant_id = current_tenant_id());
+	
+	-- User roles policy (users can only see their own roles)
+	CREATE POLICY user_roles_policy ON user_roles
+	    USING (user_id IN (SELECT id FROM users WHERE tenant_id = current_tenant_id()));
+	
+	-- Triggers for maintaining hierarchy paths and timestamps
+	CREATE OR REPLACE FUNCTION update_timestamps() RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.updated_at = NOW();
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	-- Apply timestamp triggers to all relevant tables
+	CREATE TRIGGER update_tenant_timestamps BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_entity_timestamps BEFORE UPDATE ON entities FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_person_timestamps BEFORE UPDATE ON persons FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_employee_timestamps BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_user_timestamps BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_project_timestamps BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	CREATE TRIGGER update_budget_timestamps BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+	
+	-- Enhanced hierarchy path maintenance (without ltree)
+	CREATE OR REPLACE FUNCTION maintain_hierarchy_paths() RETURNS TRIGGER AS $$
+	BEGIN
+	    IF TG_OP = 'DELETE' THEN
+	        -- Remove all paths involving this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = OLD.tenant_id
+	        AND (ancestor_id = OLD.id OR descendant_id = OLD.id);
+	        RETURN OLD;
+	    END IF;
+	
+	    -- Handle UPDATE of parent_id
+	    IF TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id THEN
+	        -- Remove old hierarchy paths for this entity
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Clear old paths for this descendant (for INSERT or parent change)
+	    IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.parent_id IS DISTINCT FROM NEW.parent_id) THEN
+	        DELETE FROM hierarchy_paths
+	        WHERE tenant_id = NEW.tenant_id AND descendant_id = NEW.id;
+	    END IF;
+	
+	    -- Self-reference (depth 0)
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    VALUES (NEW.tenant_id, NEW.id, NEW.id, 0)
+	    ON CONFLICT DO NOTHING;
+	
+	    -- Add parent paths (all ancestors)
+	    IF NEW.parent_id IS NOT NULL THEN
+	        INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	        SELECT NEW.tenant_id, p.ancestor_id, NEW.id, p.depth + 1
+	        FROM hierarchy_paths p
+	        WHERE p.tenant_id = NEW.tenant_id 
+	        AND p.descendant_id = NEW.parent_id
+	        ON CONFLICT DO NOTHING;
+	    END IF;
+	
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	CREATE TRIGGER trg_maintain_hierarchy_paths
+	    BEFORE INSERT OR UPDATE OR DELETE ON entities
+	    FOR EACH ROW EXECUTE FUNCTION maintain_hierarchy_paths();
+	
+	-- Function to get entity descendants
+	CREATE OR REPLACE FUNCTION get_entity_descendants(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.descendant_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.ancestor_id = entity_id
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity ancestors
+	CREATE OR REPLACE FUNCTION get_entity_ancestors(entity_id INT, max_depth INT DEFAULT NULL)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR, depth INT) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type, hp.depth
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id
+	    AND hp.depth > 0  -- Exclude self-reference
+	    AND (max_depth IS NULL OR hp.depth <= max_depth)
+	    ORDER BY hp.depth DESC, e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to check if entity is descendant of another
+	CREATE OR REPLACE FUNCTION is_entity_descendant(descendant_id INT, ancestor_id INT)
+	RETURNS BOOLEAN AS $$
+	BEGIN
+	    RETURN EXISTS(
+	        SELECT 1 FROM hierarchy_paths
+	        WHERE tenant_id = current_tenant_id()
+	        AND ancestor_id = is_entity_descendant.ancestor_id
+	        AND descendant_id = is_entity_descendant.descendant_id
+	        AND depth > 0
+	    );
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get entity path as text
+	CREATE OR REPLACE FUNCTION get_entity_path(entity_id INT, separator VARCHAR DEFAULT ' > ')
+	RETURNS TEXT AS $$
+	DECLARE
+	    result TEXT;
+	BEGIN
+	    SELECT string_agg(e.name, separator ORDER BY hp.depth DESC)
+	    INTO result
+	    FROM entities e
+	    JOIN hierarchy_paths hp ON e.id = hp.ancestor_id
+	    WHERE hp.tenant_id = current_tenant_id()
+	    AND hp.descendant_id = entity_id;
+	    
+	    RETURN COALESCE(result, '');
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to get immediate children
+	CREATE OR REPLACE FUNCTION get_entity_children(entity_id INT)
+	RETURNS TABLE(id INT, name VARCHAR, type VARCHAR) AS $$
+	BEGIN
+	    RETURN QUERY
+	    SELECT e.id, e.name, e.type
+	    FROM entities e
+	    WHERE e.tenant_id = current_tenant_id()
+	    AND e.parent_id = entity_id
+	    ORDER BY e.name;
+	END;
+	$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+	
+	-- Function to rebuild hierarchy paths (useful for data repair)
+	CREATE OR REPLACE FUNCTION rebuild_hierarchy_paths(tenant_id_param INT DEFAULT NULL)
+	RETURNS VOID AS $$
+	DECLARE
+	    target_tenant_id INT;
+	BEGIN
+	    target_tenant_id := COALESCE(tenant_id_param, current_tenant_id());
+	    
+	    -- Clear existing paths for the tenant
+	    DELETE FROM hierarchy_paths WHERE tenant_id = target_tenant_id;
+	    
+	    -- Rebuild paths using recursive CTE
+	    WITH RECURSIVE entity_paths AS (
+	        -- Root entities (self-references)
+	        SELECT id, id as ancestor_id, 0 as depth, tenant_id
+	        FROM entities
+	        WHERE tenant_id = target_tenant_id
+	        
+	        UNION ALL
+	        
+	        -- Parent-child relationships
+	        SELECT e.id, ep.ancestor_id, ep.depth + 1, e.tenant_id
+	        FROM entities e
+	        JOIN entity_paths ep ON e.parent_id = ep.id
+	    )
+	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	    SELECT tenant_id, ancestor_id, id, depth
+	    FROM entity_paths;
+	END;
+	
+	
+	--
+	-- Already calls apply/remove which now do logging
+	CREATE OR REPLACE FUNCTION manage_rls_across_schemas(
+	    schemas TEXT[],
+	    mode TEXT DEFAULT 'apply',
+	    policy_name TEXT DEFAULT 'tenant_isolation_policy',
+	    policy_type TEXT DEFAULT 'all',
+	    force_rls BOOLEAN DEFAULT true,
+	    dry_run BOOLEAN DEFAULT false
+	)
+	RETURNS void
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+	    schema_name TEXT;
+	BEGIN
+	    FOREACH schema_name IN ARRAY schemas LOOP
+	        IF mode = 'apply' THEN
+	            IF NOT dry_run THEN
+	                PERFORM apply_rls_to_tenant_tables(schema_name, policy_name, policy_type, force_rls);
+	            END IF;
+	        ELSIF mode = 'remove' THEN
+	            PERFORM remove_rls_from_tenant_tables_by_type(schema_name, policy_type, dry_run);
+	        ELSE
+	            RAISE EXCEPTION 'Invalid mode: %, expected ''apply'' or ''remove''', mode;
+	        END IF;
+	    END LOOP;
+	END;
+	$$;
+	$$ LANGUAGE plpgsql SECURITY DEFINER;
+	*/
+	
+2025-06-24 17:01:54.260 EAT [31121] LOG:  checkpoint starting: immediate force wait
+2025-06-24 17:01:54.279 EAT [31121] LOG:  checkpoint complete: wrote 13 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.005 s, total=0.020 s; sync files=9, longest=0.001 s, average=0.001 s; distance=5174 kB, estimate=5554 kB; lsn=0/885E8050, redo lsn=0/885E7FE0
+2025-06-24 17:02:04.843 EAT [28700] ERROR:  duplicate key value violates unique constraint "tenants_subdomain_key"
+2025-06-24 17:02:04.843 EAT [28700] DETAIL:  Key (subdomain)=(duplicate-test-subdomain) already exists.
+2025-06-24 17:02:04.843 EAT [28700] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:02:04.846 EAT [28700] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:02:04.846 EAT [28700] DETAIL:  Failing row contains (10, 0acb9a7f-3ebb-44ee-a1f2-94c8aa4f6c48, Invalid Status Corp_1750773724844625910_5851, invalid-status-1750773724844639449-9941, invalid_status, testing, 2025-06-24 17:02:04.846359+03, 2025-06-24 17:02:04.846359+03, null).
+2025-06-24 17:02:04.846 EAT [28700] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:02:04.848 EAT [28700] ERROR:  value too long for type character varying(63)
+2025-06-24 17:02:04.848 EAT [28700] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:02:04.901 EAT [28703] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:02:04.901 EAT [28703] DETAIL:  Failing row contains (16, edb8121f-24d4-4db0-90f2-bb22be105103, Test inactive Corp_1750773724900172064_155, inactive-1750773724900185064-385, inactive, testing, 2025-06-24 17:02:04.90068+03, 2025-06-24 17:02:04.90068+03, null).
+2025-06-24 17:02:04.901 EAT [28703] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:02:04.905 EAT [28703] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:02:04.905 EAT [28703] DETAIL:  Failing row contains (17, 25084768-741e-4a52-983b-ec3d26e869db, Test disabled Corp_1750773724902739757_4620, disabled-1750773724902753064-9933, disabled, testing, 2025-06-24 17:02:04.904819+03, 2025-06-24 17:02:04.904819+03, null).
+2025-06-24 17:02:04.905 EAT [28703] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:02:05.016 EAT [28709] ERROR:  duplicate key value violates unique constraint "tenants_name_key"
+2025-06-24 17:02:05.016 EAT [28709] DETAIL:  Key (name)=(Unique Test_1750773725001887218_6073) already exists.
+2025-06-24 17:02:05.016 EAT [28709] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:02:05.066 EAT [28712] ERROR:  Tenant context not set
+2025-06-24 17:02:05.066 EAT [28712] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 17:02:05.066 EAT [28712] STATEMENT:  -- name: UpdateCurrentTenant :one
+	UPDATE tenants
+	SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
+	WHERE id = current_tenant_id() AND deleted_at IS NULL
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:02:05.139 EAT [28715] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:02:05.139 EAT [28715] DETAIL:  Failing row contains (24, 400c1a8b-4255-42ae-8a95-b43f8456f5b5, Test Corporation_1750773725113709910_5696, updated-1750773725131863757-1163, invalid_status, null, 2025-06-24 17:02:05.116419+03, 2025-06-24 17:02:05.138671+03, null).
+2025-06-24 17:02:05.139 EAT [28715] STATEMENT:  -- name: UpdateTenantStatus :one
+	UPDATE tenants
+	SET status = $2, updated_at = NOW()
+	WHERE id = $1 AND deleted_at IS NULL
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:06:54.386 EAT [31121] LOG:  checkpoint starting: time
+2025-06-24 17:08:41.908 EAT [31121] LOG:  checkpoint complete: wrote 1058 buffers (6.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=107.389 s, sync=0.090 s, total=107.528 s; sync files=528, longest=0.020 s, average=0.001 s; distance=5643 kB, estimate=5643 kB; lsn=0/88B6AC88, redo lsn=0/88B6ABF8
+2025-06-24 17:15:01.359 EAT [8480] ERROR:  duplicate key value violates unique constraint "tenants_subdomain_key"
+2025-06-24 17:15:01.359 EAT [8480] DETAIL:  Key (subdomain)=(duplicate-test-subdomain) already exists.
+2025-06-24 17:15:01.359 EAT [8480] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:01.365 EAT [8480] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:15:01.365 EAT [8480] DETAIL:  Failing row contains (85, e21fa432-6f34-4f06-9929-80320ec3642e, Invalid Status Corp_1750774501360974649_7102, invalid-status-1750774501360986649-9606, invalid_status, testing, 2025-06-24 17:15:01.363564+03, 2025-06-24 17:15:01.363564+03, null).
+2025-06-24 17:15:01.365 EAT [8480] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:01.368 EAT [8480] ERROR:  value too long for type character varying(63)
+2025-06-24 17:15:01.368 EAT [8480] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:01.415 EAT [8483] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:15:01.415 EAT [8483] DETAIL:  Failing row contains (91, c473013f-3681-40eb-9382-c90b974afc9f, Test inactive Corp_1750774501414086572_7656, inactive-1750774501414103187-9600, inactive, testing, 2025-06-24 17:15:01.414571+03, 2025-06-24 17:15:01.414571+03, null).
+2025-06-24 17:15:01.415 EAT [8483] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:01.418 EAT [8483] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:15:01.418 EAT [8483] DETAIL:  Failing row contains (92, f5507b9a-e566-441e-aae2-e8a71f3bcd55, Test disabled Corp_1750774501416395803_8939, disabled-1750774501416405649-4225, disabled, testing, 2025-06-24 17:15:01.418+03, 2025-06-24 17:15:01.418+03, null).
+2025-06-24 17:15:01.418 EAT [8483] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:01.576 EAT [8489] ERROR:  duplicate key value violates unique constraint "tenants_name_key"
+2025-06-24 17:15:01.576 EAT [8489] DETAIL:  Key (name)=(Unique Test_1750774501562090264_3159) already exists.
+2025-06-24 17:15:01.576 EAT [8489] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:01.618 EAT [8492] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 17:15:01.618 EAT [8492] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 17:15:01.631 EAT [8492] ERROR:  Tenant context not set
+2025-06-24 17:15:01.631 EAT [8492] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 17:15:01.631 EAT [8492] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 17:15:01.719 EAT [8495] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:15:01.719 EAT [8495] DETAIL:  Failing row contains (99, aa0b7d22-d9ce-4580-b0a4-89541c5b9c56, Test Corporation_1750774501677135264_2164, updated-1750774501706153418-8192, invalid_status, null, 2025-06-24 17:15:01.68187+03, 2025-06-24 17:15:01.718756+03, null).
+2025-06-24 17:15:01.719 EAT [8495] STATEMENT:  -- name: UpdateTenantStatus :one
+	UPDATE tenants
+	SET status = $2, updated_at = NOW()
+	WHERE id = $1 AND deleted_at IS NULL
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:06.243 EAT [31121] LOG:  checkpoint starting: immediate force wait
+2025-06-24 17:15:06.262 EAT [31121] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.002 s, total=0.020 s; sync files=3, longest=0.001 s, average=0.001 s; distance=80 kB, estimate=5086 kB; lsn=0/88B7EFC0, redo lsn=0/88B7EF68
+2025-06-24 17:15:11.406 EAT [9011] ERROR:  duplicate key value violates unique constraint "tenants_subdomain_key"
+2025-06-24 17:15:11.406 EAT [9011] DETAIL:  Key (subdomain)=(duplicate-test-subdomain) already exists.
+2025-06-24 17:15:11.406 EAT [9011] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:11.409 EAT [9011] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:15:11.409 EAT [9011] DETAIL:  Failing row contains (10, f337ab8f-6f6a-4ec8-9291-46b2c7cb1467, Invalid Status Corp_1750774511407414573_6836, invalid-status-1750774511407425111-6406, invalid_status, testing, 2025-06-24 17:15:11.408714+03, 2025-06-24 17:15:11.408714+03, null).
+2025-06-24 17:15:11.409 EAT [9011] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:11.411 EAT [9011] ERROR:  value too long for type character varying(63)
+2025-06-24 17:15:11.411 EAT [9011] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:11.453 EAT [9014] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:15:11.453 EAT [9014] DETAIL:  Failing row contains (16, 9281c187-654d-4e5b-825a-3e44db82baf3, Test inactive Corp_1750774511452362957_69, inactive-1750774511452374650-4668, inactive, testing, 2025-06-24 17:15:11.452883+03, 2025-06-24 17:15:11.452883+03, null).
+2025-06-24 17:15:11.453 EAT [9014] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:11.457 EAT [9014] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:15:11.457 EAT [9014] DETAIL:  Failing row contains (17, fdf5b498-503c-4679-8ea3-c912fab4b4ff, Test disabled Corp_1750774511454794573_1515, disabled-1750774511454809342-4906, disabled, testing, 2025-06-24 17:15:11.456795+03, 2025-06-24 17:15:11.456795+03, null).
+2025-06-24 17:15:11.457 EAT [9014] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:11.566 EAT [9020] ERROR:  duplicate key value violates unique constraint "tenants_name_key"
+2025-06-24 17:15:11.566 EAT [9020] DETAIL:  Key (name)=(Unique Test_1750774511549321419_1369) already exists.
+2025-06-24 17:15:11.566 EAT [9020] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:15:11.610 EAT [9023] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 17:15:11.610 EAT [9023] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 17:15:11.619 EAT [9023] ERROR:  Tenant context not set
+2025-06-24 17:15:11.619 EAT [9023] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 17:15:11.619 EAT [9023] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 17:15:11.713 EAT [9027] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:15:11.713 EAT [9027] DETAIL:  Failing row contains (24, d98bb2a8-cebe-40e4-a80e-37f661fad353, Test Corporation_1750774511664103573_7725, updated-1750774511699598265-7791, invalid_status, null, 2025-06-24 17:15:11.66838+03, 2025-06-24 17:15:11.712832+03, null).
+2025-06-24 17:15:11.713 EAT [9027] STATEMENT:  -- name: UpdateTenantStatus :one
+	UPDATE tenants
+	SET status = $2, updated_at = NOW()
+	WHERE id = $1 AND deleted_at IS NULL
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:29.622 EAT [9844] ERROR:  duplicate key value violates unique constraint "tenants_subdomain_key"
+2025-06-24 17:16:29.622 EAT [9844] DETAIL:  Key (subdomain)=(duplicate-test-subdomain) already exists.
+2025-06-24 17:16:29.622 EAT [9844] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:29.626 EAT [9844] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:16:29.626 EAT [9844] DETAIL:  Failing row contains (85, 61320e00-f143-47f0-859b-0877023cf56c, Invalid Status Corp_1750774589623988808_6563, invalid-status-1750774589624008193-2661, invalid_status, testing, 2025-06-24 17:16:29.625915+03, 2025-06-24 17:16:29.625915+03, null).
+2025-06-24 17:16:29.626 EAT [9844] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:29.629 EAT [9844] ERROR:  value too long for type character varying(63)
+2025-06-24 17:16:29.629 EAT [9844] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:29.683 EAT [9847] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:16:29.683 EAT [9847] DETAIL:  Failing row contains (91, 5cd1eede-664c-4388-a850-64458a2b8945, Test inactive Corp_1750774589682453116_1606, inactive-1750774589682465347-2090, inactive, testing, 2025-06-24 17:16:29.682958+03, 2025-06-24 17:16:29.682958+03, null).
+2025-06-24 17:16:29.683 EAT [9847] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:29.686 EAT [9847] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:16:29.686 EAT [9847] DETAIL:  Failing row contains (92, 43cb0775-9bc0-4a7b-b361-cd31b7472fb8, Test disabled Corp_1750774589684590962_1226, disabled-1750774589684601039-312, disabled, testing, 2025-06-24 17:16:29.686444+03, 2025-06-24 17:16:29.686444+03, null).
+2025-06-24 17:16:29.686 EAT [9847] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:29.803 EAT [9853] ERROR:  duplicate key value violates unique constraint "tenants_name_key"
+2025-06-24 17:16:29.803 EAT [9853] DETAIL:  Key (name)=(Unique Test_1750774589787636193_4687) already exists.
+2025-06-24 17:16:29.803 EAT [9853] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:47.975 EAT [10578] ERROR:  duplicate key value violates unique constraint "tenants_subdomain_key"
+2025-06-24 17:16:47.975 EAT [10578] DETAIL:  Key (subdomain)=(duplicate-test-subdomain) already exists.
+2025-06-24 17:16:47.975 EAT [10578] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:47.979 EAT [10578] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:16:47.979 EAT [10578] DETAIL:  Failing row contains (104, 88687d73-2d84-4680-a2ce-967c645cb4e2, Invalid Status Corp_1750774607976902963_7240, invalid-status-1750774607976916117-4047, invalid_status, testing, 2025-06-24 17:16:47.97871+03, 2025-06-24 17:16:47.97871+03, null).
+2025-06-24 17:16:47.979 EAT [10578] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:47.985 EAT [10578] ERROR:  value too long for type character varying(63)
+2025-06-24 17:16:47.985 EAT [10578] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:48.029 EAT [10581] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:16:48.029 EAT [10581] DETAIL:  Failing row contains (110, f9d9dbea-4dd1-4a93-8b49-7c1fb3c03d04, Test inactive Corp_1750774608028624501_1631, inactive-1750774608028635194-7744, inactive, testing, 2025-06-24 17:16:48.029089+03, 2025-06-24 17:16:48.029089+03, null).
+2025-06-24 17:16:48.029 EAT [10581] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:48.031 EAT [10581] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 17:16:48.031 EAT [10581] DETAIL:  Failing row contains (111, 60737f86-247e-4952-9805-c5335463b465, Test disabled Corp_1750774608030488194_5694, disabled-1750774608030498040-1747, disabled, testing, 2025-06-24 17:16:48.031613+03, 2025-06-24 17:16:48.031613+03, null).
+2025-06-24 17:16:48.031 EAT [10581] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:16:48.129 EAT [10588] ERROR:  duplicate key value violates unique constraint "tenants_name_key"
+2025-06-24 17:16:48.129 EAT [10588] DETAIL:  Key (name)=(Unique Test_1750774608111141117_4244) already exists.
+2025-06-24 17:16:48.129 EAT [10588] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 17:20:06.364 EAT [31121] LOG:  checkpoint starting: time
+2025-06-24 17:21:53.825 EAT [31121] LOG:  checkpoint complete: wrote 1065 buffers (6.5%); 0 WAL file(s) added, 0 removed, 1 recycled; write=107.091 s, sync=0.331 s, total=107.462 s; sync files=531, longest=0.030 s, average=0.001 s; distance=5691 kB, estimate=5691 kB; lsn=0/8910DC30, redo lsn=0/8910DBA0
+2025-06-24 18:09:03.979 EAT [10941] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:09:03.979 EAT [10941] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:09:04.018 EAT [10941] ERROR:  Tenant context not set
+2025-06-24 18:09:04.018 EAT [10941] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:09:04.018 EAT [10941] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:09:04.022 EAT [10941] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:09:04.022 EAT [10941] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:09:04.025 EAT [10941] ERROR:  Tenant context not set
+2025-06-24 18:09:04.025 EAT [10941] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:09:04.025 EAT [10941] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:09:04.028 EAT [10941] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:09:04.028 EAT [10941] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:09:04.031 EAT [10941] ERROR:  Tenant context not set
+2025-06-24 18:09:04.031 EAT [10941] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:09:04.031 EAT [10941] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:09:04.034 EAT [10941] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:09:04.034 EAT [10941] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:09:04.038 EAT [10941] ERROR:  Tenant context not set
+2025-06-24 18:09:04.038 EAT [10941] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:09:04.038 EAT [10941] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:09:04.093 EAT [10941] ERROR:  duplicate key value violates unique constraint "tenants_subdomain_key"
+2025-06-24 18:09:04.093 EAT [10941] DETAIL:  Key (subdomain)=(duplicate-test-subdomain) already exists.
+2025-06-24 18:09:04.093 EAT [10941] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:09:04.097 EAT [10941] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:09:04.097 EAT [10941] DETAIL:  Failing row contains (123, 999dd7d6-9a17-4818-a513-7b6ece758b7d, Invalid Status Corp_1750777744094934829_9382, invalid-status-1750777744094951059-1700, invalid_status, testing, 2025-06-24 18:09:04.096842+03, 2025-06-24 18:09:04.096842+03, null).
+2025-06-24 18:09:04.097 EAT [10941] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:09:04.101 EAT [10941] ERROR:  value too long for type character varying(63)
+2025-06-24 18:09:04.101 EAT [10941] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:09:04.154 EAT [10944] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:09:04.154 EAT [10944] DETAIL:  Failing row contains (129, 29673299-5c25-4ac0-a3e5-9e4a57fdc695, Test inactive Corp_1750777744153188983_4482, inactive-1750777744153200290-1318, inactive, testing, 2025-06-24 18:09:04.153746+03, 2025-06-24 18:09:04.153746+03, null).
+2025-06-24 18:09:04.154 EAT [10944] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:09:04.159 EAT [10944] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:09:04.159 EAT [10944] DETAIL:  Failing row contains (130, 92a4b0d2-8f64-4e57-a94a-28932e85e766, Test disabled Corp_1750777744156395983_757, disabled-1750777744156407059-4319, disabled, testing, 2025-06-24 18:09:04.158689+03, 2025-06-24 18:09:04.158689+03, null).
+2025-06-24 18:09:04.159 EAT [10944] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:09:04.313 EAT [10950] ERROR:  duplicate key value violates unique constraint "tenants_name_key"
+2025-06-24 18:09:04.313 EAT [10950] DETAIL:  Key (name)=(Unique Test_1750777744296630752_6196) already exists.
+2025-06-24 18:09:04.313 EAT [10950] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:09:22.142 EAT [12455] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:09:22.142 EAT [12455] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:09:22.150 EAT [12455] ERROR:  Tenant context not set
+2025-06-24 18:09:22.150 EAT [12455] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:09:22.150 EAT [12455] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:09:22.152 EAT [12455] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:09:22.152 EAT [12455] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:09:22.156 EAT [12455] ERROR:  Tenant context not set
+2025-06-24 18:09:22.156 EAT [12455] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:09:22.156 EAT [12455] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:09:22.159 EAT [12455] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:09:22.159 EAT [12455] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:09:22.163 EAT [12455] ERROR:  Tenant context not set
+2025-06-24 18:09:22.163 EAT [12455] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:09:22.163 EAT [12455] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:09:22.166 EAT [12455] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:09:22.166 EAT [12455] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:09:22.169 EAT [12455] ERROR:  Tenant context not set
+2025-06-24 18:09:22.169 EAT [12455] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:09:22.169 EAT [12455] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:09:22.209 EAT [12455] ERROR:  duplicate key value violates unique constraint "tenants_subdomain_key"
+2025-06-24 18:09:22.209 EAT [12455] DETAIL:  Key (subdomain)=(duplicate-test-subdomain) already exists.
+2025-06-24 18:09:22.209 EAT [12455] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:09:22.213 EAT [12455] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:09:22.213 EAT [12455] DETAIL:  Failing row contains (142, af28ad0c-c772-4679-9c1f-b6f0fc311454, Invalid Status Corp_1750777762210917830_7015, invalid-status-1750777762210933214-8681, invalid_status, testing, 2025-06-24 18:09:22.212677+03, 2025-06-24 18:09:22.212677+03, null).
+2025-06-24 18:09:22.213 EAT [12455] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:09:22.216 EAT [12455] ERROR:  value too long for type character varying(63)
+2025-06-24 18:09:22.216 EAT [12455] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:09:22.271 EAT [12458] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:09:22.271 EAT [12458] DETAIL:  Failing row contains (148, 50da722c-61f6-4916-b19d-9b32c6906497, Test inactive Corp_1750777762269913522_4617, inactive-1750777762269927368-8993, inactive, testing, 2025-06-24 18:09:22.270432+03, 2025-06-24 18:09:22.270432+03, null).
+2025-06-24 18:09:22.271 EAT [12458] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:09:22.275 EAT [12458] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:09:22.275 EAT [12458] DETAIL:  Failing row contains (149, 0da094b9-1cc7-44d2-bba1-3c46c38ce5e5, Test disabled Corp_1750777762272644676_4170, disabled-1750777762272658522-4296, disabled, testing, 2025-06-24 18:09:22.274759+03, 2025-06-24 18:09:22.274759+03, null).
+2025-06-24 18:09:22.275 EAT [12458] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:09:22.373 EAT [12465] ERROR:  duplicate key value violates unique constraint "tenants_name_key"
+2025-06-24 18:09:22.373 EAT [12465] DETAIL:  Key (name)=(Unique Test_1750777762357409599_2972) already exists.
+2025-06-24 18:09:22.373 EAT [12465] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:10:43.401 EAT [31121] LOG:  checkpoint starting: time
+2025-06-24 18:10:44.368 EAT [31121] LOG:  checkpoint complete: wrote 10 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.938 s, sync=0.012 s, total=0.967 s; sync files=9, longest=0.005 s, average=0.002 s; distance=27 kB, estimate=5124 kB; lsn=0/89114BA0, redo lsn=0/89114B48
+2025-06-24 18:11:31.857 EAT [16819] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:11:31.857 EAT [16819] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:11:31.870 EAT [16819] ERROR:  Tenant context not set
+2025-06-24 18:11:31.870 EAT [16819] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:11:31.870 EAT [16819] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:11:31.876 EAT [16819] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:11:31.876 EAT [16819] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:11:31.880 EAT [16819] ERROR:  Tenant context not set
+2025-06-24 18:11:31.880 EAT [16819] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:11:31.880 EAT [16819] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:11:31.884 EAT [16819] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:11:31.884 EAT [16819] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:11:31.887 EAT [16819] ERROR:  Tenant context not set
+2025-06-24 18:11:31.887 EAT [16819] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:11:31.887 EAT [16819] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:11:31.891 EAT [16819] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:11:31.891 EAT [16819] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:11:31.893 EAT [16819] ERROR:  Tenant context not set
+2025-06-24 18:11:31.893 EAT [16819] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:11:31.893 EAT [16819] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:11:31.963 EAT [16819] ERROR:  duplicate key value violates unique constraint "tenants_subdomain_key"
+2025-06-24 18:11:31.963 EAT [16819] DETAIL:  Key (subdomain)=(duplicate-test-subdomain) already exists.
+2025-06-24 18:11:31.963 EAT [16819] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:11:31.969 EAT [16819] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:11:31.969 EAT [16819] DETAIL:  Failing row contains (161, 470a6db3-ca8a-4291-97fa-ea054a39e8ff, Invalid Status Corp_1750777891965152607_1589, invalid-status-1750777891965176914-9332, invalid_status, testing, 2025-06-24 18:11:31.96818+03, 2025-06-24 18:11:31.96818+03, null).
+2025-06-24 18:11:31.969 EAT [16819] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:11:31.973 EAT [16819] ERROR:  value too long for type character varying(63)
+2025-06-24 18:11:31.973 EAT [16819] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:11:32.031 EAT [16822] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:11:32.031 EAT [16822] DETAIL:  Failing row contains (167, 88a287ac-ba9b-4ec0-99a0-b7a9da9f0c82, Test inactive Corp_1750777892029925914_434, inactive-1750777892029940376-8709, inactive, testing, 2025-06-24 18:11:32.030448+03, 2025-06-24 18:11:32.030448+03, null).
+2025-06-24 18:11:32.031 EAT [16822] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:11:32.036 EAT [16822] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:11:32.036 EAT [16822] DETAIL:  Failing row contains (168, dd55313b-54ee-409c-b281-c1cb969927fd, Test disabled Corp_1750777892032472607_5120, disabled-1750777892032485914-3145, disabled, testing, 2025-06-24 18:11:32.035525+03, 2025-06-24 18:11:32.035525+03, null).
+2025-06-24 18:11:32.036 EAT [16822] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:11:32.128 EAT [16828] ERROR:  duplicate key value violates unique constraint "tenants_name_key"
+2025-06-24 18:11:32.128 EAT [16828] DETAIL:  Key (name)=(Unique Test_1750777892112908299_1286) already exists.
+2025-06-24 18:11:32.128 EAT [16828] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:15:43.469 EAT [31121] LOG:  checkpoint starting: time
+2025-06-24 18:15:44.150 EAT [31121] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.633 s, sync=0.011 s, total=0.681 s; sync files=6, longest=0.004 s, average=0.002 s; distance=18 kB, estimate=4614 kB; lsn=0/89119408, redo lsn=0/891193B0
+2025-06-24 18:18:47.077 EAT [21795] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:18:47.077 EAT [21795] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:18:47.096 EAT [21795] ERROR:  Tenant context not set
+2025-06-24 18:18:47.096 EAT [21795] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:18:47.096 EAT [21795] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:18:47.099 EAT [21795] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:18:47.099 EAT [21795] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:18:47.102 EAT [21795] ERROR:  Tenant context not set
+2025-06-24 18:18:47.102 EAT [21795] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:18:47.102 EAT [21795] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:18:47.104 EAT [21795] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:18:47.104 EAT [21795] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:18:47.108 EAT [21795] ERROR:  Tenant context not set
+2025-06-24 18:18:47.108 EAT [21795] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:18:47.108 EAT [21795] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:18:47.110 EAT [21795] ERROR:  syntax error at or near "$1" at character 29
+2025-06-24 18:18:47.110 EAT [21795] STATEMENT:  SET app.current_tenant_id = $1
+2025-06-24 18:18:47.113 EAT [21795] ERROR:  Tenant context not set
+2025-06-24 18:18:47.113 EAT [21795] CONTEXT:  PL/pgSQL function current_tenant_id() line 5 at RAISE
+2025-06-24 18:18:47.113 EAT [21795] STATEMENT:  SELECT current_tenant_id()
+2025-06-24 18:18:47.150 EAT [21795] ERROR:  duplicate key value violates unique constraint "tenants_subdomain_key"
+2025-06-24 18:18:47.150 EAT [21795] DETAIL:  Key (subdomain)=(duplicate-test-subdomain) already exists.
+2025-06-24 18:18:47.150 EAT [21795] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:18:47.154 EAT [21795] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:18:47.154 EAT [21795] DETAIL:  Failing row contains (180, fe40b8c6-567a-466d-9c9f-4c68d55ab420, Invalid Status Corp_1750778327151667402_7257, invalid-status-1750778327151688017-2910, invalid_status, testing, 2025-06-24 18:18:47.153711+03, 2025-06-24 18:18:47.153711+03, null).
+2025-06-24 18:18:47.154 EAT [21795] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:18:47.156 EAT [21795] ERROR:  value too long for type character varying(63)
+2025-06-24 18:18:47.156 EAT [21795] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:18:47.211 EAT [21798] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:18:47.211 EAT [21798] DETAIL:  Failing row contains (186, ca52e2c8-ffba-447f-8a03-562a49b78723, Test inactive Corp_1750778327209831094_3541, inactive-1750778327209847094-6203, inactive, testing, 2025-06-24 18:18:47.210418+03, 2025-06-24 18:18:47.210418+03, null).
+2025-06-24 18:18:47.211 EAT [21798] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:18:47.215 EAT [21798] ERROR:  new row for relation "tenants" violates check constraint "tenants_status_check"
+2025-06-24 18:18:47.215 EAT [21798] DETAIL:  Failing row contains (187, 65bf7263-ae51-4226-a636-e5109a02b45d, Test disabled Corp_1750778327212391402_1721, disabled-1750778327212404940-9019, disabled, testing, 2025-06-24 18:18:47.214485+03, 2025-06-24 18:18:47.214485+03, null).
+2025-06-24 18:18:47.215 EAT [21798] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:18:47.359 EAT [21805] ERROR:  duplicate key value violates unique constraint "tenants_name_key"
+2025-06-24 18:18:47.359 EAT [21805] DETAIL:  Key (name)=(Unique Test_1750778327344627787_5826) already exists.
+2025-06-24 18:18:47.359 EAT [21805] STATEMENT:  -- name: CreateTenant :one
+	
+	
+	INSERT INTO tenants (name, subdomain, status, industry)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+	
+2025-06-24 18:20:43.164 EAT [31121] LOG:  checkpoint starting: time
+2025-06-24 18:20:46.929 EAT [31121] LOG:  checkpoint complete: wrote 38 buffers (0.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=3.727 s, sync=0.014 s, total=3.766 s; sync files=13, longest=0.009 s, average=0.002 s; distance=120 kB, estimate=4164 kB; lsn=0/89137590, redo lsn=0/89137538
+2025-06-24 18:23:37.016 EAT [31121] LOG:  checkpoint starting: immediate force wait
+2025-06-24 18:23:37.051 EAT [31121] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.012 s, sync=0.003 s, total=0.035 s; sync files=3, longest=0.001 s, average=0.001 s; distance=10 kB, estimate=3749 kB; lsn=0/8913A100, redo lsn=0/8913A0A8
+2025-06-24 18:28:37.119 EAT [31121] LOG:  checkpoint starting: time
+2025-06-24 18:30:23.562 EAT [31121] LOG:  checkpoint complete: wrote 1053 buffers (6.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=106.255 s, sync=0.164 s, total=106.444 s; sync files=529, longest=0.004 s, average=0.001 s; distance=5609 kB, estimate=5609 kB; lsn=0/896B45B0, redo lsn=0/896B4520
