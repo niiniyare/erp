@@ -23,15 +23,15 @@ INSERT INTO users (
 `
 
 type CreateUserParams struct {
-	EntityID     uuid.UUID   `json:"entity_id"`
-	PersonID     pgtype.Int4 `json:"person_id"`
-	EmployeeID   pgtype.Int4 `json:"employee_id"`
-	Username     pgtype.Text `json:"username"`
-	Email        string      `json:"email"`
-	PasswordHash pgtype.Text `json:"password_hash"`
-	UserType     string      `json:"user_type"`
-	IsActive     bool        `json:"is_active"`
-	Settings     []byte      `json:"settings"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	PersonID     *int32    `json:"person_id"`
+	EmployeeID   *int32    `json:"employee_id"`
+	Username     *string   `json:"username"`
+	Email        string    `json:"email"`
+	PasswordHash *string   `json:"password_hash"`
+	UserType     string    `json:"user_type"`
+	IsActive     bool      `json:"is_active"`
+	Settings     []byte    `json:"settings"`
 }
 
 // ==============================================
@@ -134,7 +134,7 @@ SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, passwo
 WHERE username = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
-func (q *Queries) GetUserByUsername(ctx context.Context, username pgtype.Text) (User, error) {
+func (q *Queries) GetUserByUsername(ctx context.Context, username *string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(
@@ -208,11 +208,11 @@ type GetUserWithPersonDetailsRow struct {
 	ID                int32              `json:"id"`
 	TenantID          int32              `json:"tenant_id"`
 	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          pgtype.Int4        `json:"person_id"`
-	EmployeeID        pgtype.Int4        `json:"employee_id"`
-	Username          pgtype.Text        `json:"username"`
+	PersonID          *int32             `json:"person_id"`
+	EmployeeID        *int32             `json:"employee_id"`
+	Username          *string            `json:"username"`
 	Email             string             `json:"email"`
-	PasswordHash      pgtype.Text        `json:"password_hash"`
+	PasswordHash      *string            `json:"password_hash"`
 	UserType          string             `json:"user_type"`
 	IsActive          bool               `json:"is_active"`
 	LastLoginAt       pgtype.Timestamptz `json:"last_login_at"`
@@ -221,13 +221,13 @@ type GetUserWithPersonDetailsRow struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
-	FirstName         pgtype.Text        `json:"first_name"`
-	LastName          pgtype.Text        `json:"last_name"`
-	MiddleName        pgtype.Text        `json:"middle_name"`
-	Phone             pgtype.Text        `json:"phone"`
+	FirstName         *string            `json:"first_name"`
+	LastName          *string            `json:"last_name"`
+	MiddleName        *string            `json:"middle_name"`
+	Phone             *string            `json:"phone"`
 	BirthDate         pgtype.Date        `json:"birth_date"`
-	EmployeeNumber    pgtype.Text        `json:"employee_number"`
-	PositionTitle     pgtype.Text        `json:"position_title"`
+	EmployeeNumber    *string            `json:"employee_number"`
+	PositionTitle     *string            `json:"position_title"`
 	DepartmentID      pgtype.UUID        `json:"department_id"`
 }
 
@@ -276,11 +276,11 @@ type ListActiveUsersRow struct {
 	ID                int32              `json:"id"`
 	TenantID          int32              `json:"tenant_id"`
 	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          pgtype.Int4        `json:"person_id"`
-	EmployeeID        pgtype.Int4        `json:"employee_id"`
-	Username          pgtype.Text        `json:"username"`
+	PersonID          *int32             `json:"person_id"`
+	EmployeeID        *int32             `json:"employee_id"`
+	Username          *string            `json:"username"`
 	Email             string             `json:"email"`
-	PasswordHash      pgtype.Text        `json:"password_hash"`
+	PasswordHash      *string            `json:"password_hash"`
 	UserType          string             `json:"user_type"`
 	IsActive          bool               `json:"is_active"`
 	LastLoginAt       pgtype.Timestamptz `json:"last_login_at"`
@@ -289,9 +289,9 @@ type ListActiveUsersRow struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
-	FirstName         pgtype.Text        `json:"first_name"`
-	LastName          pgtype.Text        `json:"last_name"`
-	EmployeeNumber    pgtype.Text        `json:"employee_number"`
+	FirstName         *string            `json:"first_name"`
+	LastName          *string            `json:"last_name"`
+	EmployeeNumber    *string            `json:"employee_number"`
 }
 
 func (q *Queries) ListActiveUsers(ctx context.Context) ([]ListActiveUsersRow, error) {
@@ -347,11 +347,11 @@ type ListUsersRow struct {
 	ID                int32              `json:"id"`
 	TenantID          int32              `json:"tenant_id"`
 	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          pgtype.Int4        `json:"person_id"`
-	EmployeeID        pgtype.Int4        `json:"employee_id"`
-	Username          pgtype.Text        `json:"username"`
+	PersonID          *int32             `json:"person_id"`
+	EmployeeID        *int32             `json:"employee_id"`
+	Username          *string            `json:"username"`
 	Email             string             `json:"email"`
-	PasswordHash      pgtype.Text        `json:"password_hash"`
+	PasswordHash      *string            `json:"password_hash"`
 	UserType          string             `json:"user_type"`
 	IsActive          bool               `json:"is_active"`
 	LastLoginAt       pgtype.Timestamptz `json:"last_login_at"`
@@ -360,9 +360,9 @@ type ListUsersRow struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
-	FirstName         pgtype.Text        `json:"first_name"`
-	LastName          pgtype.Text        `json:"last_name"`
-	EmployeeNumber    pgtype.Text        `json:"employee_number"`
+	FirstName         *string            `json:"first_name"`
+	LastName          *string            `json:"last_name"`
+	EmployeeNumber    *string            `json:"employee_number"`
 }
 
 func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
@@ -418,11 +418,11 @@ type ListUsersByTypeRow struct {
 	ID                int32              `json:"id"`
 	TenantID          int32              `json:"tenant_id"`
 	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          pgtype.Int4        `json:"person_id"`
-	EmployeeID        pgtype.Int4        `json:"employee_id"`
-	Username          pgtype.Text        `json:"username"`
+	PersonID          *int32             `json:"person_id"`
+	EmployeeID        *int32             `json:"employee_id"`
+	Username          *string            `json:"username"`
 	Email             string             `json:"email"`
-	PasswordHash      pgtype.Text        `json:"password_hash"`
+	PasswordHash      *string            `json:"password_hash"`
 	UserType          string             `json:"user_type"`
 	IsActive          bool               `json:"is_active"`
 	LastLoginAt       pgtype.Timestamptz `json:"last_login_at"`
@@ -431,9 +431,9 @@ type ListUsersByTypeRow struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
-	FirstName         pgtype.Text        `json:"first_name"`
-	LastName          pgtype.Text        `json:"last_name"`
-	EmployeeNumber    pgtype.Text        `json:"employee_number"`
+	FirstName         *string            `json:"first_name"`
+	LastName          *string            `json:"last_name"`
+	EmployeeNumber    *string            `json:"employee_number"`
 }
 
 func (q *Queries) ListUsersByType(ctx context.Context, userType string) ([]ListUsersByTypeRow, error) {
@@ -505,16 +505,16 @@ RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, pas
 `
 
 type UpdateUserParams struct {
-	ID           int32       `json:"id"`
-	EntityID     uuid.UUID   `json:"entity_id"`
-	PersonID     pgtype.Int4 `json:"person_id"`
-	EmployeeID   pgtype.Int4 `json:"employee_id"`
-	Username     pgtype.Text `json:"username"`
-	Email        string      `json:"email"`
-	PasswordHash pgtype.Text `json:"password_hash"`
-	UserType     string      `json:"user_type"`
-	IsActive     bool        `json:"is_active"`
-	Settings     []byte      `json:"settings"`
+	ID           int32     `json:"id"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	PersonID     *int32    `json:"person_id"`
+	EmployeeID   *int32    `json:"employee_id"`
+	Username     *string   `json:"username"`
+	Email        string    `json:"email"`
+	PasswordHash *string   `json:"password_hash"`
+	UserType     string    `json:"user_type"`
+	IsActive     bool      `json:"is_active"`
+	Settings     []byte    `json:"settings"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
@@ -570,8 +570,8 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 `
 
 type UpdateUserPasswordParams struct {
-	ID           int32       `json:"id"`
-	PasswordHash pgtype.Text `json:"password_hash"`
+	ID           int32   `json:"id"`
+	PasswordHash *string `json:"password_hash"`
 }
 
 func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {

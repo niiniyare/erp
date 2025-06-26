@@ -25,29 +25,29 @@ type Account struct {
 	AccountName string           `json:"account_name"`
 	AccountType string           `json:"account_type"`
 	// Account role: cash, ar, ap, inventory, revenue, expense, equity, etc.
-	AccountRole pgtype.Text `json:"account_role"`
+	AccountRole *string `json:"account_role"`
 	// Normal balance type: DEBIT (assets, expenses) or CREDIT (liabilities, equity, revenue)
-	BalanceType string      `json:"balance_type"`
-	Locked      bool        `json:"locked"`
-	Active      bool        `json:"active"`
-	CoaID       string      `json:"coa__id"`
-	RoleDefault pgtype.Bool `json:"role_default"`
+	BalanceType string `json:"balance_type"`
+	Locked      bool   `json:"locked"`
+	Active      bool   `json:"active"`
+	CoaID       string `json:"coa__id"`
+	RoleDefault *bool  `json:"role_default"`
 }
 
 type AuditLog struct {
 	Uuid         uuid.UUID          `json:"uuid"`
 	TenantID     int32              `json:"tenant_id"`
-	UserID       pgtype.Int4        `json:"user_id"`
+	UserID       *int32             `json:"user_id"`
 	EntityID     uuid.UUID          `json:"entity_id"`
 	Action       string             `json:"action"`
-	ResourceType pgtype.Text        `json:"resource_type"`
-	ResourceID   pgtype.Int8        `json:"resource_id"`
+	ResourceType *string            `json:"resource_type"`
+	ResourceID   *int64             `json:"resource_id"`
 	OldValues    []byte             `json:"old_values"`
 	NewValues    []byte             `json:"new_values"`
 	IpAddress    *netip.Addr        `json:"ip_address"`
-	UserAgent    pgtype.Text        `json:"user_agent"`
-	SessionID    pgtype.Text        `json:"session_id"`
-	Module       pgtype.Text        `json:"module"`
+	UserAgent    *string            `json:"user_agent"`
+	SessionID    *string            `json:"session_id"`
+	Module       *string            `json:"module"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
@@ -55,7 +55,7 @@ type Budget struct {
 	ID              int32              `json:"id"`
 	TenantID        int32              `json:"tenant_id"`
 	EntityID        uuid.UUID          `json:"entity_id"`
-	ProjectID       pgtype.Int4        `json:"project_id"`
+	ProjectID       *int32             `json:"project_id"`
 	Name            string             `json:"name"`
 	BudgetType      string             `json:"budget_type"`
 	FiscalYear      int32              `json:"fiscal_year"`
@@ -64,8 +64,8 @@ type Budget struct {
 	TotalAmount     pgtype.Numeric     `json:"total_amount"`
 	AllocatedAmount pgtype.Numeric     `json:"allocated_amount"`
 	SpentAmount     pgtype.Numeric     `json:"spent_amount"`
-	Status          pgtype.Text        `json:"status"`
-	ApprovedBy      pgtype.Int4        `json:"approved_by"`
+	Status          *string            `json:"status"`
+	ApprovedBy      *int32             `json:"approved_by"`
 	ApprovedAt      pgtype.Timestamptz `json:"approved_at"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
@@ -75,14 +75,14 @@ type Budget struct {
 type Chartofaccount struct {
 	TenantID    int32            `json:"tenant_id"`
 	EntityID    uuid.UUID        `json:"entity_id"`
-	Module      pgtype.Text      `json:"module"`
+	Module      *string          `json:"module"`
 	Slug        string           `json:"slug"`
-	Name        pgtype.Text      `json:"name"`
+	Name        *string          `json:"name"`
 	Created     pgtype.Timestamp `json:"created"`
 	Updated     pgtype.Timestamp `json:"updated"`
 	Uuid        string           `json:"uuid"`
-	IsActive    pgtype.Bool      `json:"is_active"`
-	Description pgtype.Text      `json:"description"`
+	IsActive    *bool            `json:"is_active"`
+	Description *string          `json:"description"`
 	Active      bool             `json:"active"`
 }
 
@@ -101,10 +101,10 @@ type Customer struct {
 	Active         bool             `json:"active"`
 	Hidden         bool             `json:"hidden"`
 	Address        []byte           `json:"address"`
-	Email          pgtype.Text      `json:"email"`
-	Website        pgtype.Text      `json:"website"`
-	Phone          pgtype.Text      `json:"phone"`
-	SalesTaxRate   pgtype.Float4    `json:"sales_tax_rate"`
+	Email          *string          `json:"email"`
+	Website        *string          `json:"website"`
+	Phone          *string          `json:"phone"`
+	SalesTaxRate   *float32         `json:"sales_tax_rate"`
 	AdditionalInfo []byte           `json:"additional_info"`
 }
 
@@ -114,13 +114,13 @@ type Employee struct {
 	PersonID         int32              `json:"person_id"`
 	EmployeeNumber   string             `json:"employee_number"`
 	EntityID         uuid.UUID          `json:"entity_id"`
-	PositionTitle    pgtype.Text        `json:"position_title"`
+	PositionTitle    *string            `json:"position_title"`
 	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        pgtype.Int4        `json:"manager_id"`
+	ManagerID        *int32             `json:"manager_id"`
 	HireDate         pgtype.Date        `json:"hire_date"`
 	TerminationDate  pgtype.Date        `json:"termination_date"`
 	SalaryInfo       []byte             `json:"salary_info"`
-	EmploymentStatus pgtype.Text        `json:"employment_status"`
+	EmploymentStatus *string            `json:"employment_status"`
 	WorkSchedule     []byte             `json:"work_schedule"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
@@ -136,14 +136,14 @@ type Entity struct {
 	TenantID      int32              `json:"tenant_id"`
 	ParentID      pgtype.UUID        `json:"parent_id"`
 	Name          string             `json:"name"`
-	Code          pgtype.Text        `json:"code"`
+	Code          *string            `json:"code"`
 	Type          string             `json:"type"`
 	IsActive      bool               `json:"is_active"`
 	Hidden        bool               `json:"hidden"`
 	AccrualMethod bool               `json:"accrual_method"`
 	FyStartMonth  int32              `json:"fy_start_month"`
 	Address       []byte             `json:"address"`
-	Picture       pgtype.Text        `json:"picture"`
+	Picture       *string            `json:"picture"`
 	Settings      []byte             `json:"settings"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
@@ -152,8 +152,8 @@ type Entity struct {
 
 // Manages sequence numbers for document numbering (invoices, POs, etc.)
 type Entitystate struct {
-	Uuid       uuid.UUID   `json:"uuid"`
-	FiscalYear pgtype.Int2 `json:"fiscal_year"`
+	Uuid       uuid.UUID `json:"uuid"`
+	FiscalYear *int16    `json:"fiscal_year"`
 	// Document type: invoice, po, estimate, bill, etc.
 	Key          string      `json:"key"`
 	Sequence     int64       `json:"sequence"`
@@ -191,18 +191,18 @@ type InventoryMovement struct {
 	ItemID          int32              `json:"item_id"`
 	WarehouseID     int32              `json:"warehouse_id"`
 	MovementType    string             `json:"movement_type"`
-	ReferenceType   pgtype.Text        `json:"reference_type"`
-	ReferenceID     pgtype.Int8        `json:"reference_id"`
-	ReferenceNumber pgtype.Text        `json:"reference_number"`
+	ReferenceType   *string            `json:"reference_type"`
+	ReferenceID     *int64             `json:"reference_id"`
+	ReferenceNumber *string            `json:"reference_number"`
 	TransactionDate pgtype.Date        `json:"transaction_date"`
 	Quantity        pgtype.Numeric     `json:"quantity"`
 	UnitCost        pgtype.Numeric     `json:"unit_cost"`
 	TotalCost       pgtype.Numeric     `json:"total_cost"`
-	Reason          pgtype.Text        `json:"reason"`
-	BatchNumber     pgtype.Text        `json:"batch_number"`
+	Reason          *string            `json:"reason"`
+	BatchNumber     *string            `json:"batch_number"`
 	SerialNumbers   []string           `json:"serial_numbers"`
 	ExpiryDate      pgtype.Date        `json:"expiry_date"`
-	CreatedBy       pgtype.Int4        `json:"created_by"`
+	CreatedBy       *int32             `json:"created_by"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 }
 
@@ -212,22 +212,22 @@ type Item struct {
 	EntityID          uuid.UUID          `json:"entity_id"`
 	ItemCode          string             `json:"item_code"`
 	Name              string             `json:"name"`
-	Description       pgtype.Text        `json:"description"`
-	CategoryID        pgtype.Int4        `json:"category_id"`
-	ItemType          pgtype.Text        `json:"item_type"`
+	Description       *string            `json:"description"`
+	CategoryID        *int32             `json:"category_id"`
+	ItemType          *string            `json:"item_type"`
 	UnitOfMeasure     string             `json:"unit_of_measure"`
-	CostMethod        pgtype.Text        `json:"cost_method"`
+	CostMethod        *string            `json:"cost_method"`
 	StandardCost      pgtype.Numeric     `json:"standard_cost"`
 	SellingPrice      pgtype.Numeric     `json:"selling_price"`
 	MinimumStockLevel pgtype.Numeric     `json:"minimum_stock_level"`
 	MaximumStockLevel pgtype.Numeric     `json:"maximum_stock_level"`
 	ReorderPoint      pgtype.Numeric     `json:"reorder_point"`
 	ReorderQuantity   pgtype.Numeric     `json:"reorder_quantity"`
-	IsActive          pgtype.Bool        `json:"is_active"`
-	IsSerialized      pgtype.Bool        `json:"is_serialized"`
-	IsBatchTracked    pgtype.Bool        `json:"is_batch_tracked"`
-	TaxCategory       pgtype.Text        `json:"tax_category"`
-	SupplierID        pgtype.Int4        `json:"supplier_id"`
+	IsActive          *bool              `json:"is_active"`
+	IsSerialized      *bool              `json:"is_serialized"`
+	IsBatchTracked    *bool              `json:"is_batch_tracked"`
+	TaxCategory       *string            `json:"tax_category"`
+	SupplierID        *int32             `json:"supplier_id"`
 	Specifications    []byte             `json:"specifications"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
@@ -237,11 +237,11 @@ type ItemCategory struct {
 	ID          int32              `json:"id"`
 	TenantID    int32              `json:"tenant_id"`
 	EntityID    uuid.UUID          `json:"entity_id"`
-	ParentID    pgtype.Int4        `json:"parent_id"`
+	ParentID    *int32             `json:"parent_id"`
 	Name        string             `json:"name"`
-	Code        pgtype.Text        `json:"code"`
-	Description pgtype.Text        `json:"description"`
-	IsActive    pgtype.Bool        `json:"is_active"`
+	Code        *string            `json:"code"`
+	Description *string            `json:"description"`
+	IsActive    *bool              `json:"is_active"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
@@ -251,14 +251,14 @@ type Journalentry struct {
 	Created     pgtype.Timestamp `json:"created"`
 	Updated     pgtype.Timestamp `json:"updated"`
 	TenantID    int32            `json:"tenant_id"`
-	PostedBy    pgtype.Int4      `json:"posted_by"`
-	CreatedBy   pgtype.Int4      `json:"created_by"`
+	PostedBy    *int32           `json:"posted_by"`
+	CreatedBy   *int32           `json:"created_by"`
 	JeNumber    string           `json:"je_number"`
 	Timestamp   pgtype.Timestamp `json:"timestamp"`
-	Description pgtype.Text      `json:"description"`
-	Activity    pgtype.Text      `json:"activity"`
+	Description *string          `json:"description"`
+	Activity    *string          `json:"activity"`
 	// Source system: invoice, bill, manual, etc.
-	Origin pgtype.Text `json:"origin"`
+	Origin *string `json:"origin"`
 	// Whether the journal entry affects account balances
 	Posted         bool      `json:"posted"`
 	Locked         bool      `json:"locked"`
@@ -274,14 +274,14 @@ type Ledger struct {
 	Updated        pgtype.Timestamp `json:"updated"`
 	TenantID       int32            `json:"tenant_id"`
 	EntityID       uuid.UUID        `json:"entity_id"`
-	PostedBy       pgtype.Int4      `json:"posted_by"`
-	CreatedBy      pgtype.Int4      `json:"created_by"`
-	Name           pgtype.Text      `json:"name"`
+	PostedBy       *int32           `json:"posted_by"`
+	CreatedBy      *int32           `json:"created_by"`
+	Name           *string          `json:"name"`
 	Posted         bool             `json:"posted"`
 	Locked         bool             `json:"locked"`
 	Hidden         bool             `json:"hidden"`
-	AdditionalInfo pgtype.Text      `json:"additional_info"`
-	LedgerXid      pgtype.Text      `json:"ledger_xid"`
+	AdditionalInfo *string          `json:"additional_info"`
+	LedgerXid      *string          `json:"ledger_xid"`
 }
 
 type Person struct {
@@ -291,12 +291,12 @@ type Person struct {
 	PersonType string             `json:"person_type"`
 	FirstName  string             `json:"first_name"`
 	LastName   string             `json:"last_name"`
-	MiddleName pgtype.Text        `json:"middle_name"`
-	Email      pgtype.Text        `json:"email"`
-	Phone      pgtype.Text        `json:"phone"`
+	MiddleName *string            `json:"middle_name"`
+	Email      *string            `json:"email"`
+	Phone      *string            `json:"phone"`
 	BirthDate  pgtype.Date        `json:"birth_date"`
-	NationalID pgtype.Text        `json:"national_id"`
-	TaxID      pgtype.Text        `json:"tax_id"`
+	NationalID *string            `json:"national_id"`
+	TaxID      *string            `json:"tax_id"`
 	Address    []byte             `json:"address"`
 	Metadata   []byte             `json:"metadata"`
 	IsActive   bool               `json:"is_active"`
@@ -310,14 +310,14 @@ type Project struct {
 	TenantID         int32              `json:"tenant_id"`
 	EntityID         uuid.UUID          `json:"entity_id"`
 	Name             string             `json:"name"`
-	Code             pgtype.Text        `json:"code"`
-	Description      pgtype.Text        `json:"description"`
-	ProjectManagerID pgtype.Int4        `json:"project_manager_id"`
+	Code             *string            `json:"code"`
+	Description      *string            `json:"description"`
+	ProjectManagerID *int32             `json:"project_manager_id"`
 	StartDate        pgtype.Date        `json:"start_date"`
 	EndDate          pgtype.Date        `json:"end_date"`
 	BudgetAmount     pgtype.Numeric     `json:"budget_amount"`
 	ActualCost       pgtype.Numeric     `json:"actual_cost"`
-	Status           pgtype.Text        `json:"status"`
+	Status           *string            `json:"status"`
 	Metadata         []byte             `json:"metadata"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
@@ -328,10 +328,10 @@ type RlsChangeLog struct {
 	SchemaName string             `json:"schema_name"`
 	TableName  string             `json:"table_name"`
 	Action     string             `json:"action"`
-	PolicyName pgtype.Text        `json:"policy_name"`
-	PolicyType pgtype.Text        `json:"policy_type"`
-	Command    pgtype.Text        `json:"command"`
-	DryRun     pgtype.Bool        `json:"dry_run"`
+	PolicyName *string            `json:"policy_name"`
+	PolicyType *string            `json:"policy_type"`
+	Command    *string            `json:"command"`
+	DryRun     *bool              `json:"dry_run"`
 	ChangedAt  pgtype.Timestamptz `json:"changed_at"`
 }
 
@@ -340,11 +340,11 @@ type Role struct {
 	TenantID     int32              `json:"tenant_id"`
 	EntityID     pgtype.UUID        `json:"entity_id"`
 	Name         string             `json:"name"`
-	Description  pgtype.Text        `json:"description"`
-	Module       pgtype.Text        `json:"module"`
+	Description  *string            `json:"description"`
+	Module       *string            `json:"module"`
 	Permissions  []byte             `json:"permissions"`
 	EntityScope  []byte             `json:"entity_scope"`
-	IsSystemRole pgtype.Bool        `json:"is_system_role"`
+	IsSystemRole *bool              `json:"is_system_role"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
@@ -352,9 +352,9 @@ type Tenant struct {
 	ID        int32              `json:"id"`
 	Uuid      uuid.UUID          `json:"uuid"`
 	Name      string             `json:"name"`
-	Subdomain pgtype.Text        `json:"subdomain"`
+	Subdomain *string            `json:"subdomain"`
 	Status    string             `json:"status"`
-	Industry  pgtype.Text        `json:"industry"`
+	Industry  *string            `json:"industry"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
@@ -379,21 +379,21 @@ type Uom struct {
 	// Name of the unit of measure (unique per tenant/entity)
 	UomName string `json:"uom_name"`
 	// Check this to disallow fractions (for Nos)
-	MustBeWholeNumber pgtype.Bool `json:"must_be_whole_number"`
+	MustBeWholeNumber *bool `json:"must_be_whole_number"`
 	// Whether this UOM is active and can be used
-	Enabled pgtype.Bool `json:"enabled"`
+	Enabled *bool `json:"enabled"`
 	// Short symbol representation of the UOM (e.g., kg, m, pcs)
-	Symbol pgtype.Text `json:"symbol"`
+	Symbol *string `json:"symbol"`
 	// Standard code according to CEFACT/ICG/2010/IC013 or CEFACT/ICG/2010/IC010
-	CommonCode pgtype.Text `json:"common_code"`
+	CommonCode *string `json:"common_code"`
 	// Additional description or notes about the UOM
-	Description pgtype.Text `json:"description"`
+	Description *string `json:"description"`
 	// Reference to the base unit for this UOM group (NULL for base units)
-	BaseUomID pgtype.Int4 `json:"base_uom_id"`
+	BaseUomID *int32 `json:"base_uom_id"`
 	// Factor to convert from this UOM to base UOM (1.0 for base units)
 	ConversionFactor pgtype.Numeric `json:"conversion_factor"`
 	// Category of measurement (Weight, Length, Volume, etc.)
-	UomType   pgtype.Text      `json:"uom_type"`
+	UomType   *string          `json:"uom_type"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
@@ -418,11 +418,11 @@ type User struct {
 	ID                int32              `json:"id"`
 	TenantID          int32              `json:"tenant_id"`
 	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          pgtype.Int4        `json:"person_id"`
-	EmployeeID        pgtype.Int4        `json:"employee_id"`
-	Username          pgtype.Text        `json:"username"`
+	PersonID          *int32             `json:"person_id"`
+	EmployeeID        *int32             `json:"employee_id"`
+	Username          *string            `json:"username"`
 	Email             string             `json:"email"`
-	PasswordHash      pgtype.Text        `json:"password_hash"`
+	PasswordHash      *string            `json:"password_hash"`
 	UserType          string             `json:"user_type"`
 	IsActive          bool               `json:"is_active"`
 	LastLoginAt       pgtype.Timestamptz `json:"last_login_at"`
@@ -438,7 +438,7 @@ type UserRole struct {
 	RoleID     int32              `json:"role_id"`
 	EntityID   uuid.UUID          `json:"entity_id"`
 	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy pgtype.Int4        `json:"assigned_by"`
+	AssignedBy *int32             `json:"assigned_by"`
 	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
 }
 
@@ -451,7 +451,7 @@ type Vendor struct {
 	Updated        pgtype.Timestamp `json:"updated"`
 	Uuid           uuid.UUID        `json:"uuid"`
 	VendorName     string           `json:"vendor_name"`
-	VendorNumber   pgtype.Text      `json:"vendor_number"`
+	VendorNumber   *string          `json:"vendor_number"`
 	Description    string           `json:"description"`
 	Active         bool             `json:"active"`
 	Hidden         bool             `json:"hidden"`
@@ -459,11 +459,11 @@ type Vendor struct {
 	EntityID       uuid.UUID        `json:"entity_id"`
 	Address        []byte           `json:"address"`
 	Contact        []byte           `json:"contact"`
-	AccountNumber  pgtype.Text      `json:"account_number"`
-	RoutingNumber  pgtype.Text      `json:"routing_number"`
-	AbaNumber      pgtype.Text      `json:"aba_number"`
-	SwiftNumber    pgtype.Text      `json:"swift_number"`
-	TaxIDNumber    pgtype.Text      `json:"tax_id_number"`
+	AccountNumber  *string          `json:"account_number"`
+	RoutingNumber  *string          `json:"routing_number"`
+	AbaNumber      *string          `json:"aba_number"`
+	SwiftNumber    *string          `json:"swift_number"`
+	TaxIDNumber    *string          `json:"tax_id_number"`
 	AccountType    string           `json:"account_type"`
 	AdditionalInfo []byte           `json:"additional_info"`
 }
@@ -475,8 +475,8 @@ type Warehouse struct {
 	Code          string             `json:"code"`
 	Name          string             `json:"name"`
 	Address       []byte             `json:"address"`
-	WarehouseType pgtype.Text        `json:"warehouse_type"`
-	ManagerID     pgtype.Int4        `json:"manager_id"`
-	IsActive      pgtype.Bool        `json:"is_active"`
+	WarehouseType *string            `json:"warehouse_type"`
+	ManagerID     *int32             `json:"manager_id"`
+	IsActive      *bool              `json:"is_active"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 }

@@ -56,36 +56,6 @@ func (q *Queries) CheckCurrentTenantExists(ctx context.Context) (bool, error) {
 	return exists, err
 }
 
-const checkCurrentTenantHasFeature = `-- name: CheckCurrentTenantHasFeature :one
-SELECT EXISTS(
-    SELECT 1 FROM tenant_configurations 
-    WHERE tenant_id = current_tenant_id() 
-    AND features ? $1
-)
-`
-
-func (q *Queries) CheckCurrentTenantHasFeature(ctx context.Context, features []byte) (bool, error) {
-	row := q.db.QueryRow(ctx, checkCurrentTenantHasFeature, features)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
-const checkCurrentTenantHasModule = `-- name: CheckCurrentTenantHasModule :one
-SELECT EXISTS(
-    SELECT 1 FROM tenant_configurations 
-    WHERE tenant_id = current_tenant_id() 
-    AND modules_enabled ? $1
-)
-`
-
-func (q *Queries) CheckCurrentTenantHasModule(ctx context.Context, modulesEnabled []byte) (bool, error) {
-	row := q.db.QueryRow(ctx, checkCurrentTenantHasModule, modulesEnabled)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
 const checkSubdomainExists = `-- name: CheckSubdomainExists :one
 SELECT EXISTS(
     SELECT 1 FROM tenants 
@@ -93,7 +63,7 @@ SELECT EXISTS(
 )
 `
 
-func (q *Queries) CheckSubdomainExists(ctx context.Context, subdomain pgtype.Text) (bool, error) {
+func (q *Queries) CheckSubdomainExists(ctx context.Context, subdomain *string) (bool, error) {
 	row := q.db.QueryRow(ctx, checkSubdomainExists, subdomain)
 	var exists bool
 	err := row.Scan(&exists)
@@ -137,9 +107,9 @@ WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
 `
 
 type CountFilteredTenantsParams struct {
-	NameFilter     pgtype.Text `json:"name_filter"`
-	StatusFilter   pgtype.Text `json:"status_filter"`
-	IndustryFilter pgtype.Text `json:"industry_filter"`
+	NameFilter     *string `json:"name_filter"`
+	StatusFilter   *string `json:"status_filter"`
+	IndustryFilter *string `json:"industry_filter"`
 }
 
 func (q *Queries) CountFilteredTenants(ctx context.Context, arg CountFilteredTenantsParams) (int64, error) {
@@ -161,37 +131,6 @@ func (q *Queries) CountTenants(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-const createCurrentTenantConfiguration = `-- name: CreateCurrentTenantConfiguration :one
-INSERT INTO tenant_configurations (tenant_id, max_users, storage_quota, features, modules_enabled)
-VALUES (current_tenant_id(), $1, $2, $3, $4)
-RETURNING tenant_id, max_users, storage_quota, features, modules_enabled
-`
-
-type CreateCurrentTenantConfigurationParams struct {
-	MaxUsers       int32  `json:"max_users"`
-	StorageQuota   int64  `json:"storage_quota"`
-	Features       []byte `json:"features"`
-	ModulesEnabled []byte `json:"modules_enabled"`
-}
-
-func (q *Queries) CreateCurrentTenantConfiguration(ctx context.Context, arg CreateCurrentTenantConfigurationParams) (TenantConfiguration, error) {
-	row := q.db.QueryRow(ctx, createCurrentTenantConfiguration,
-		arg.MaxUsers,
-		arg.StorageQuota,
-		arg.Features,
-		arg.ModulesEnabled,
-	)
-	var i TenantConfiguration
-	err := row.Scan(
-		&i.TenantID,
-		&i.MaxUsers,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-	)
-	return i, err
-}
-
 const createTenant = `-- name: CreateTenant :one
 
 
@@ -201,10 +140,10 @@ RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, d
 `
 
 type CreateTenantParams struct {
-	Name      string      `json:"name"`
-	Subdomain pgtype.Text `json:"subdomain"`
-	Status    string      `json:"status"`
-	Industry  pgtype.Text `json:"industry"`
+	Name      string  `json:"name"`
+	Subdomain *string `json:"subdomain"`
+	Status    string  `json:"status"`
+	Industry  *string `json:"industry"`
 }
 
 // =====================================================
@@ -237,54 +176,6 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 	return i, err
 }
 
-const createTenantConfiguration = `-- name: CreateTenantConfiguration :one
-
-INSERT INTO tenant_configurations (tenant_id, max_users, storage_quota, features, modules_enabled)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING tenant_id, max_users, storage_quota, features, modules_enabled
-`
-
-type CreateTenantConfigurationParams struct {
-	TenantID       int32  `json:"tenant_id"`
-	MaxUsers       int32  `json:"max_users"`
-	StorageQuota   int64  `json:"storage_quota"`
-	Features       []byte `json:"features"`
-	ModulesEnabled []byte `json:"modules_enabled"`
-}
-
-// =====================================================
-// TENANT CONFIGURATION QUERIES
-// =====================================================
-// Admin-level configuration management
-func (q *Queries) CreateTenantConfiguration(ctx context.Context, arg CreateTenantConfigurationParams) (TenantConfiguration, error) {
-	row := q.db.QueryRow(ctx, createTenantConfiguration,
-		arg.TenantID,
-		arg.MaxUsers,
-		arg.StorageQuota,
-		arg.Features,
-		arg.ModulesEnabled,
-	)
-	var i TenantConfiguration
-	err := row.Scan(
-		&i.TenantID,
-		&i.MaxUsers,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-	)
-	return i, err
-}
-
-const deleteCurrentTenantConfiguration = `-- name: DeleteCurrentTenantConfiguration :exec
-DELETE FROM tenant_configurations
-WHERE tenant_id = current_tenant_id()
-`
-
-func (q *Queries) DeleteCurrentTenantConfiguration(ctx context.Context) error {
-	_, err := q.db.Exec(ctx, deleteCurrentTenantConfiguration)
-	return err
-}
-
 const deleteTenant = `-- name: DeleteTenant :exec
 DELETE FROM tenants
 `
@@ -302,20 +193,20 @@ WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
   AND ($3::varchar IS NULL OR industry = $3)
   AND deleted_at IS NULL
 ORDER BY 
-  CASE WHEN $4 = 'name' THEN name END ASC,
-  CASE WHEN $4 = 'created_at' THEN created_at END DESC,
-  CASE WHEN $4 = 'updated_at' THEN updated_at END DESC,
+  CASE WHEN $4::varchar = 'name' THEN name END ASC,
+  CASE WHEN $4::varchar = 'created_at' THEN created_at END DESC,
+  CASE WHEN $4::varchar = 'updated_at' THEN updated_at END DESC,
   id DESC
 LIMIT $6 OFFSET $5
 `
 
 type FilterTenantsParams struct {
-	NameFilter     pgtype.Text `json:"name_filter"`
-	StatusFilter   pgtype.Text `json:"status_filter"`
-	IndustryFilter pgtype.Text `json:"industry_filter"`
-	SortBy         interface{} `json:"sort_by"`
-	OffsetCount    int32       `json:"offset_count"`
-	LimitCount     int32       `json:"limit_count"`
+	NameFilter     *string `json:"name_filter"`
+	StatusFilter   *string `json:"status_filter"`
+	IndustryFilter *string `json:"industry_filter"`
+	SortBy         string  `json:"sort_by"`
+	OffsetCount    int32   `json:"offset_count"`
+	LimitCount     int32   `json:"limit_count"`
 }
 
 // =====================================================
@@ -421,25 +312,6 @@ func (q *Queries) GetCurrentTenant(ctx context.Context) (Tenant, error) {
 	return i, err
 }
 
-const getCurrentTenantConfiguration = `-- name: GetCurrentTenantConfiguration :one
-SELECT tenant_id, max_users, storage_quota, features, modules_enabled FROM tenant_configurations
-WHERE tenant_id = current_tenant_id()
-`
-
-// Current tenant configuration queries (RLS-aware)
-func (q *Queries) GetCurrentTenantConfiguration(ctx context.Context) (TenantConfiguration, error) {
-	row := q.db.QueryRow(ctx, getCurrentTenantConfiguration)
-	var i TenantConfiguration
-	err := row.Scan(
-		&i.TenantID,
-		&i.MaxUsers,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-	)
-	return i, err
-}
-
 const getCurrentTenantID = `-- name: GetCurrentTenantID :one
 
 SELECT current_tenant_id()
@@ -468,10 +340,10 @@ WHERE t.id = current_tenant_id() AND t.deleted_at IS NULL
 `
 
 type GetCurrentTenantStorageUsageRow struct {
-	ID           int32       `json:"id"`
-	Name         string      `json:"name"`
-	StorageQuota pgtype.Int8 `json:"storage_quota"`
-	QuotaBytes   int64       `json:"quota_bytes"`
+	ID           int32  `json:"id"`
+	Name         string `json:"name"`
+	StorageQuota *int64 `json:"storage_quota"`
+	QuotaBytes   int64  `json:"quota_bytes"`
 }
 
 func (q *Queries) GetCurrentTenantStorageUsage(ctx context.Context) (GetCurrentTenantStorageUsageRow, error) {
@@ -482,56 +354,6 @@ func (q *Queries) GetCurrentTenantStorageUsage(ctx context.Context) (GetCurrentT
 		&i.Name,
 		&i.StorageQuota,
 		&i.QuotaBytes,
-	)
-	return i, err
-}
-
-const getCurrentTenantWithConfiguration = `-- name: GetCurrentTenantWithConfiguration :one
-SELECT 
-    t.id, t.uuid, t.name, t.subdomain, t.status, t.industry, t.created_at, t.updated_at, t.deleted_at,
-    tc.max_users,
-    tc.storage_quota,
-    tc.features,
-    tc.modules_enabled
-FROM tenants t
-LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE t.id = current_tenant_id() AND t.deleted_at IS NULL
-`
-
-type GetCurrentTenantWithConfigurationRow struct {
-	ID             int32              `json:"id"`
-	Uuid           uuid.UUID          `json:"uuid"`
-	Name           string             `json:"name"`
-	Subdomain      pgtype.Text        `json:"subdomain"`
-	Status         string             `json:"status"`
-	Industry       pgtype.Text        `json:"industry"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
-	MaxUsers       pgtype.Int4        `json:"max_users"`
-	StorageQuota   pgtype.Int8        `json:"storage_quota"`
-	Features       []byte             `json:"features"`
-	ModulesEnabled []byte             `json:"modules_enabled"`
-}
-
-// Combined queries with current tenant context
-func (q *Queries) GetCurrentTenantWithConfiguration(ctx context.Context) (GetCurrentTenantWithConfigurationRow, error) {
-	row := q.db.QueryRow(ctx, getCurrentTenantWithConfiguration)
-	var i GetCurrentTenantWithConfigurationRow
-	err := row.Scan(
-		&i.ID,
-		&i.Uuid,
-		&i.Name,
-		&i.Subdomain,
-		&i.Status,
-		&i.Industry,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-		&i.MaxUsers,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
 	)
 	return i, err
 }
@@ -564,7 +386,7 @@ SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, dele
 WHERE subdomain = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) GetTenantBySubdomain(ctx context.Context, subdomain pgtype.Text) (Tenant, error) {
+func (q *Queries) GetTenantBySubdomain(ctx context.Context, subdomain *string) (Tenant, error) {
 	row := q.db.QueryRow(ctx, getTenantBySubdomain, subdomain)
 	var i Tenant
 	err := row.Scan(
@@ -603,24 +425,6 @@ func (q *Queries) GetTenantByUUID(ctx context.Context, argUuid uuid.UUID) (Tenan
 	return i, err
 }
 
-const getTenantConfiguration = `-- name: GetTenantConfiguration :one
-SELECT tenant_id, max_users, storage_quota, features, modules_enabled FROM tenant_configurations
-WHERE tenant_id = $1
-`
-
-func (q *Queries) GetTenantConfiguration(ctx context.Context, tenantID int32) (TenantConfiguration, error) {
-	row := q.db.QueryRow(ctx, getTenantConfiguration, tenantID)
-	var i TenantConfiguration
-	err := row.Scan(
-		&i.TenantID,
-		&i.MaxUsers,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-	)
-	return i, err
-}
-
 const getTenantStats = `-- name: GetTenantStats :one
 SELECT 
     COUNT(*) as total_tenants,
@@ -651,56 +455,6 @@ func (q *Queries) GetTenantStats(ctx context.Context) (GetTenantStatsRow, error)
 	return i, err
 }
 
-const getTenantWithConfiguration = `-- name: GetTenantWithConfiguration :one
-SELECT 
-    t.id, t.uuid, t.name, t.subdomain, t.status, t.industry, t.created_at, t.updated_at, t.deleted_at,
-    tc.max_users,
-    tc.storage_quota,
-    tc.features,
-    tc.modules_enabled
-FROM tenants t
-LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE t.id = $1 AND t.deleted_at IS NULL
-`
-
-type GetTenantWithConfigurationRow struct {
-	ID             int32              `json:"id"`
-	Uuid           uuid.UUID          `json:"uuid"`
-	Name           string             `json:"name"`
-	Subdomain      pgtype.Text        `json:"subdomain"`
-	Status         string             `json:"status"`
-	Industry       pgtype.Text        `json:"industry"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
-	MaxUsers       pgtype.Int4        `json:"max_users"`
-	StorageQuota   pgtype.Int8        `json:"storage_quota"`
-	Features       []byte             `json:"features"`
-	ModulesEnabled []byte             `json:"modules_enabled"`
-}
-
-// Admin queries (for system administration)
-func (q *Queries) GetTenantWithConfiguration(ctx context.Context, id int32) (GetTenantWithConfigurationRow, error) {
-	row := q.db.QueryRow(ctx, getTenantWithConfiguration, id)
-	var i GetTenantWithConfigurationRow
-	err := row.Scan(
-		&i.ID,
-		&i.Uuid,
-		&i.Name,
-		&i.Subdomain,
-		&i.Status,
-		&i.Industry,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-		&i.MaxUsers,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-	)
-	return i, err
-}
-
 const getTenantsByIndustry = `-- name: GetTenantsByIndustry :many
 SELECT industry, COUNT(*) as tenant_count
 FROM tenants
@@ -710,8 +464,8 @@ ORDER BY tenant_count DESC
 `
 
 type GetTenantsByIndustryRow struct {
-	Industry    pgtype.Text `json:"industry"`
-	TenantCount int64       `json:"tenant_count"`
+	Industry    *string `json:"industry"`
+	TenantCount int64   `json:"tenant_count"`
 }
 
 func (q *Queries) GetTenantsByIndustry(ctx context.Context) ([]GetTenantsByIndustryRow, error) {
@@ -777,134 +531,6 @@ func (q *Queries) GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenan
 	return items, nil
 }
 
-const getTenantsWithFeature = `-- name: GetTenantsWithFeature :many
-SELECT 
-    t.id, t.uuid, t.name, t.subdomain, t.status, t.industry, t.created_at, t.updated_at, t.deleted_at,
-    tc.max_users,
-    tc.storage_quota,
-    tc.features,
-    tc.modules_enabled
-FROM tenants t
-JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE tc.features ? $1 
-  AND t.deleted_at IS NULL
-ORDER BY t.name
-`
-
-type GetTenantsWithFeatureRow struct {
-	ID             int32              `json:"id"`
-	Uuid           uuid.UUID          `json:"uuid"`
-	Name           string             `json:"name"`
-	Subdomain      pgtype.Text        `json:"subdomain"`
-	Status         string             `json:"status"`
-	Industry       pgtype.Text        `json:"industry"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
-	MaxUsers       int32              `json:"max_users"`
-	StorageQuota   int64              `json:"storage_quota"`
-	Features       []byte             `json:"features"`
-	ModulesEnabled []byte             `json:"modules_enabled"`
-}
-
-func (q *Queries) GetTenantsWithFeature(ctx context.Context, features []byte) ([]GetTenantsWithFeatureRow, error) {
-	rows, err := q.db.Query(ctx, getTenantsWithFeature, features)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetTenantsWithFeatureRow{}
-	for rows.Next() {
-		var i GetTenantsWithFeatureRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Uuid,
-			&i.Name,
-			&i.Subdomain,
-			&i.Status,
-			&i.Industry,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-			&i.MaxUsers,
-			&i.StorageQuota,
-			&i.Features,
-			&i.ModulesEnabled,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getTenantsWithModule = `-- name: GetTenantsWithModule :many
-SELECT 
-    t.id, t.uuid, t.name, t.subdomain, t.status, t.industry, t.created_at, t.updated_at, t.deleted_at,
-    tc.max_users,
-    tc.storage_quota,
-    tc.features,
-    tc.modules_enabled
-FROM tenants t
-JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE tc.modules_enabled ? $1 
-  AND t.deleted_at IS NULL
-ORDER BY t.name
-`
-
-type GetTenantsWithModuleRow struct {
-	ID             int32              `json:"id"`
-	Uuid           uuid.UUID          `json:"uuid"`
-	Name           string             `json:"name"`
-	Subdomain      pgtype.Text        `json:"subdomain"`
-	Status         string             `json:"status"`
-	Industry       pgtype.Text        `json:"industry"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
-	MaxUsers       int32              `json:"max_users"`
-	StorageQuota   int64              `json:"storage_quota"`
-	Features       []byte             `json:"features"`
-	ModulesEnabled []byte             `json:"modules_enabled"`
-}
-
-func (q *Queries) GetTenantsWithModule(ctx context.Context, modulesEnabled []byte) ([]GetTenantsWithModuleRow, error) {
-	rows, err := q.db.Query(ctx, getTenantsWithModule, modulesEnabled)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetTenantsWithModuleRow{}
-	for rows.Next() {
-		var i GetTenantsWithModuleRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Uuid,
-			&i.Name,
-			&i.Subdomain,
-			&i.Status,
-			&i.Industry,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-			&i.MaxUsers,
-			&i.StorageQuota,
-			&i.Features,
-			&i.ModulesEnabled,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listTenants = `-- name: ListTenants :many
 SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
 WHERE deleted_at IS NULL
@@ -947,91 +573,22 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]Ten
 	return items, nil
 }
 
-const listTenantsWithConfigurations = `-- name: ListTenantsWithConfigurations :many
-SELECT 
-    t.id, t.uuid, t.name, t.subdomain, t.status, t.industry, t.created_at, t.updated_at, t.deleted_at,
-    tc.max_users,
-    tc.storage_quota,
-    tc.features,
-    tc.modules_enabled
-FROM tenants t
-LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE t.deleted_at IS NULL
-ORDER BY t.created_at DESC
-LIMIT $1 OFFSET $2
-`
-
-type ListTenantsWithConfigurationsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
-}
-
-type ListTenantsWithConfigurationsRow struct {
-	ID             int32              `json:"id"`
-	Uuid           uuid.UUID          `json:"uuid"`
-	Name           string             `json:"name"`
-	Subdomain      pgtype.Text        `json:"subdomain"`
-	Status         string             `json:"status"`
-	Industry       pgtype.Text        `json:"industry"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
-	MaxUsers       pgtype.Int4        `json:"max_users"`
-	StorageQuota   pgtype.Int8        `json:"storage_quota"`
-	Features       []byte             `json:"features"`
-	ModulesEnabled []byte             `json:"modules_enabled"`
-}
-
-func (q *Queries) ListTenantsWithConfigurations(ctx context.Context, arg ListTenantsWithConfigurationsParams) ([]ListTenantsWithConfigurationsRow, error) {
-	rows, err := q.db.Query(ctx, listTenantsWithConfigurations, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListTenantsWithConfigurationsRow{}
-	for rows.Next() {
-		var i ListTenantsWithConfigurationsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Uuid,
-			&i.Name,
-			&i.Subdomain,
-			&i.Status,
-			&i.Industry,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-			&i.MaxUsers,
-			&i.StorageQuota,
-			&i.Features,
-			&i.ModulesEnabled,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const searchTenantsByName = `-- name: SearchTenantsByName :many
 SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
 WHERE name ILIKE '%' || $1 || '%' 
   AND deleted_at IS NULL
 ORDER BY name
-LIMIT $2 OFFSET $3
+LIMIT $3 OFFSET $2
 `
 
 type SearchTenantsByNameParams struct {
-	Column1 pgtype.Text `json:"column_1"`
-	Limit   int32       `json:"limit"`
-	Offset  int32       `json:"offset"`
+	Name   *string `json:"name"`
+	Offset int32   `json:"offset"`
+	Limit  int32   `json:"limit"`
 }
 
 func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]Tenant, error) {
-	rows, err := q.db.Query(ctx, searchTenantsByName, arg.Column1, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, searchTenantsByName, arg.Name, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -1088,10 +645,10 @@ RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, d
 `
 
 type UpdateCurrentTenantParams struct {
-	Name      string      `json:"name"`
-	Subdomain pgtype.Text `json:"subdomain"`
-	Status    string      `json:"status"`
-	Industry  pgtype.Text `json:"industry"`
+	Name      string  `json:"name"`
+	Subdomain *string `json:"subdomain"`
+	Status    string  `json:"status"`
+	Industry  *string `json:"industry"`
 }
 
 func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (Tenant, error) {
@@ -1116,108 +673,33 @@ func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTena
 	return i, err
 }
 
-const updateCurrentTenantFeatures = `-- name: UpdateCurrentTenantFeatures :one
-UPDATE tenant_configurations
-SET features = $1
-WHERE tenant_id = current_tenant_id()
-RETURNING tenant_id, max_users, storage_quota, features, modules_enabled
-`
-
-func (q *Queries) UpdateCurrentTenantFeatures(ctx context.Context, features []byte) (TenantConfiguration, error) {
-	row := q.db.QueryRow(ctx, updateCurrentTenantFeatures, features)
-	var i TenantConfiguration
-	err := row.Scan(
-		&i.TenantID,
-		&i.MaxUsers,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-	)
-	return i, err
-}
-
-const updateCurrentTenantMaxUsers = `-- name: UpdateCurrentTenantMaxUsers :one
-UPDATE tenant_configurations
-SET max_users = $1
-WHERE tenant_id = current_tenant_id()
-RETURNING tenant_id, max_users, storage_quota, features, modules_enabled
-`
-
-func (q *Queries) UpdateCurrentTenantMaxUsers(ctx context.Context, maxUsers int32) (TenantConfiguration, error) {
-	row := q.db.QueryRow(ctx, updateCurrentTenantMaxUsers, maxUsers)
-	var i TenantConfiguration
-	err := row.Scan(
-		&i.TenantID,
-		&i.MaxUsers,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-	)
-	return i, err
-}
-
-const updateCurrentTenantModules = `-- name: UpdateCurrentTenantModules :one
-UPDATE tenant_configurations
-SET modules_enabled = $1
-WHERE tenant_id = current_tenant_id()
-RETURNING tenant_id, max_users, storage_quota, features, modules_enabled
-`
-
-func (q *Queries) UpdateCurrentTenantModules(ctx context.Context, modulesEnabled []byte) (TenantConfiguration, error) {
-	row := q.db.QueryRow(ctx, updateCurrentTenantModules, modulesEnabled)
-	var i TenantConfiguration
-	err := row.Scan(
-		&i.TenantID,
-		&i.MaxUsers,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-	)
-	return i, err
-}
-
-const updateCurrentTenantStorageQuota = `-- name: UpdateCurrentTenantStorageQuota :one
-UPDATE tenant_configurations
-SET storage_quota = $1
-WHERE tenant_id = current_tenant_id()
-RETURNING tenant_id, max_users, storage_quota, features, modules_enabled
-`
-
-func (q *Queries) UpdateCurrentTenantStorageQuota(ctx context.Context, storageQuota int64) (TenantConfiguration, error) {
-	row := q.db.QueryRow(ctx, updateCurrentTenantStorageQuota, storageQuota)
-	var i TenantConfiguration
-	err := row.Scan(
-		&i.TenantID,
-		&i.MaxUsers,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-	)
-	return i, err
-}
-
 const updateTenant = `-- name: UpdateTenant :one
 UPDATE tenants
-SET name = $2, subdomain = $3, status = $4, industry = $5, updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+SET 
+    name = COALESCE($1, name), 
+subdomain = COALESCE($2, subdomain),
+status = COALESCE($3, status),
+industry = COALESCE($4, industry) ,
+updated_at = NOW()
+WHERE id = $5 AND deleted_at IS NULL
+  RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantParams struct {
-	ID        int32       `json:"id"`
-	Name      string      `json:"name"`
-	Subdomain pgtype.Text `json:"subdomain"`
-	Status    string      `json:"status"`
-	Industry  pgtype.Text `json:"industry"`
+	Name      *string `json:"name"`
+	Subdomain *string `json:"subdomain"`
+	Status    *string `json:"status"`
+	Industry  *string `json:"industry"`
+	ID        int32   `json:"id"`
 }
 
 func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenant,
-		arg.ID,
 		arg.Name,
 		arg.Subdomain,
 		arg.Status,
 		arg.Industry,
+		arg.ID,
 	)
 	var i Tenant
 	err := row.Scan(
@@ -1234,40 +716,6 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Ten
 	return i, err
 }
 
-const updateTenantConfiguration = `-- name: UpdateTenantConfiguration :one
-UPDATE tenant_configurations
-SET max_users = $2, storage_quota = $3, features = $4, modules_enabled = $5
-WHERE tenant_id = $1
-RETURNING tenant_id, max_users, storage_quota, features, modules_enabled
-`
-
-type UpdateTenantConfigurationParams struct {
-	TenantID       int32  `json:"tenant_id"`
-	MaxUsers       int32  `json:"max_users"`
-	StorageQuota   int64  `json:"storage_quota"`
-	Features       []byte `json:"features"`
-	ModulesEnabled []byte `json:"modules_enabled"`
-}
-
-func (q *Queries) UpdateTenantConfiguration(ctx context.Context, arg UpdateTenantConfigurationParams) (TenantConfiguration, error) {
-	row := q.db.QueryRow(ctx, updateTenantConfiguration,
-		arg.TenantID,
-		arg.MaxUsers,
-		arg.StorageQuota,
-		arg.Features,
-		arg.ModulesEnabled,
-	)
-	var i TenantConfiguration
-	err := row.Scan(
-		&i.TenantID,
-		&i.MaxUsers,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-	)
-	return i, err
-}
-
 const updateTenantIndustry = `-- name: UpdateTenantIndustry :one
 UPDATE tenants
 SET industry = $2, updated_at = NOW()
@@ -1276,8 +724,8 @@ RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, d
 `
 
 type UpdateTenantIndustryParams struct {
-	ID       int32       `json:"id"`
-	Industry pgtype.Text `json:"industry"`
+	ID       int32   `json:"id"`
+	Industry *string `json:"industry"`
 }
 
 func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (Tenant, error) {
@@ -1363,8 +811,8 @@ RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, d
 `
 
 type UpdateTenantSubdomainParams struct {
-	ID        int32       `json:"id"`
-	Subdomain pgtype.Text `json:"subdomain"`
+	ID        int32   `json:"id"`
+	Subdomain *string `json:"subdomain"`
 }
 
 func (q *Queries) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (Tenant, error) {

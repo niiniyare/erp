@@ -1,54 +1,36 @@
 package tenant
 
 import (
-	"context"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/repo/tenant"
+)
+
+type TenantStatus string
+
+const (
+	TenantStatusActive    TenantStatus = "active"
+	TenantStatusSuspended TenantStatus = "suspended"
+	TenantStatusInactive  TenantStatus = "inactive"
 )
 
 type Tenant struct {
-	ID        int32
-	Uuid      string
-	Name      string
-	Subdomain string
-	Status    string
-	Industry  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt time.Time
+	ID        int32        `json:"id"`
+	Uuid      uuid.UUID    `json:"uuid"`
+	Name      string       `json:"name"`
+	Subdomain string       `json:"subdomain"`
+	Status    TenantStatus `json:"status"`
+	Industry  string       `json:"industry"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+	DeletedAt time.Time    `json:"deleted_at"`
 }
 
-// Primary Ports (Driving - Inbound)
-type TenantService interface {
-	// Admin operations (system-wide)
-	CreateTenant(ctx context.Context, req CreateTenantRequest) (*Tenant, error)
-	GetTenantByID(ctx context.Context, id int32) (*Tenant, error)
-	GetTenantByUUID(ctx context.Context, uuid uuid.UUID) (*Tenant, error)
-	GetTenantBySubdomain(ctx context.Context, subdomain string) (*Tenant, error)
-	ListTenants(ctx context.Context, filter TenantFilter) ([]*Tenant, error)
-	UpdateTenant(ctx context.Context, id int32, req UpdateTenantRequest) (*Tenant, error)
-	DeleteTenant(ctx context.Context, id int32) error
-	GetTenantStats(ctx context.Context) (*TenantStats, error)
-
-	// Current tenant operations (RLS-aware)
-	GetCurrentTenant(ctx context.Context) (*Tenant, error)
-	UpdateCurrentTenant(ctx context.Context, req UpdateTenantRequest) (*Tenant, error)
-}
-
-type TenantConfigService interface {
-	// Admin operations
-	CreateTenantConfiguration(ctx context.Context, tenantID int32, req CreateTenantConfigRequest) (*TenantConfiguration, error)
-	GetTenantConfiguration(ctx context.Context, tenantID int32) (*TenantConfiguration, error)
-	UpdateTenantConfiguration(ctx context.Context, tenantID int32, req UpdateTenantConfigRequest) (*TenantConfiguration, error)
-	DeleteTenantConfiguration(ctx context.Context, tenantID int32) error
-
-	// Current tenant operations (RLS-aware)
-	GetCurrentTenantConfiguration(ctx context.Context) (*TenantConfiguration, error)
-	UpdateCurrentTenantConfiguration(ctx context.Context, req UpdateTenantConfigRequest) (*TenantConfiguration, error)
-	CreateCurrentTenantConfiguration(ctx context.Context, req CreateTenantConfigRequest) (*TenantConfiguration, error)
-
-	// Feature and module checks
-	CheckCurrentTenantHasFeature(ctx context.Context, feature string) (bool, error)
-	CheckCurrentTenantHasModule(ctx context.Context, module string) (bool, error)
+type TenantConfiguration struct {
+	TenantID       int32  `json:"tenant_id"`
+	MaxUsers       int32  `json:"max_users"`
+	StorageQuota   int64  `json:"storage_quota"`
+	Features       []byte `json:"features"`
+	ModulesEnabled []byte `json:"modules_enabled"`
 }

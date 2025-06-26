@@ -27,12 +27,12 @@ type CreatePersonParams struct {
 	PersonType string      `json:"person_type"`
 	FirstName  string      `json:"first_name"`
 	LastName   string      `json:"last_name"`
-	MiddleName pgtype.Text `json:"middle_name"`
-	Email      pgtype.Text `json:"email"`
-	Phone      pgtype.Text `json:"phone"`
+	MiddleName *string     `json:"middle_name"`
+	Email      *string     `json:"email"`
+	Phone      *string     `json:"phone"`
 	BirthDate  pgtype.Date `json:"birth_date"`
-	NationalID pgtype.Text `json:"national_id"`
-	TaxID      pgtype.Text `json:"tax_id"`
+	NationalID *string     `json:"national_id"`
+	TaxID      *string     `json:"tax_id"`
 	Address    []byte      `json:"address"`
 	Metadata   []byte      `json:"metadata"`
 	IsActive   bool        `json:"is_active"`
@@ -117,7 +117,7 @@ SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name
 WHERE email = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
-func (q *Queries) GetPersonByEmail(ctx context.Context, email pgtype.Text) (Person, error) {
+func (q *Queries) GetPersonByEmail(ctx context.Context, email *string) (Person, error) {
 	row := q.db.QueryRow(ctx, getPersonByEmail, email)
 	var i Person
 	err := row.Scan(
@@ -148,7 +148,7 @@ SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name
 WHERE national_id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
-func (q *Queries) GetPersonByNationalId(ctx context.Context, nationalID pgtype.Text) (Person, error) {
+func (q *Queries) GetPersonByNationalId(ctx context.Context, nationalID *string) (Person, error) {
 	row := q.db.QueryRow(ctx, getPersonByNationalId, nationalID)
 	var i Person
 	err := row.Scan(
@@ -198,27 +198,27 @@ type GetPersonEmployeeUserInfoRow struct {
 	PersonType       string             `json:"person_type"`
 	FirstName        string             `json:"first_name"`
 	LastName         string             `json:"last_name"`
-	MiddleName       pgtype.Text        `json:"middle_name"`
-	Email            pgtype.Text        `json:"email"`
-	Phone            pgtype.Text        `json:"phone"`
+	MiddleName       *string            `json:"middle_name"`
+	Email            *string            `json:"email"`
+	Phone            *string            `json:"phone"`
 	BirthDate        pgtype.Date        `json:"birth_date"`
-	NationalID       pgtype.Text        `json:"national_id"`
-	TaxID            pgtype.Text        `json:"tax_id"`
+	NationalID       *string            `json:"national_id"`
+	TaxID            *string            `json:"tax_id"`
 	Address          []byte             `json:"address"`
 	Metadata         []byte             `json:"metadata"`
 	IsActive         bool               `json:"is_active"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
-	EmployeeID       pgtype.Int4        `json:"employee_id"`
-	EmployeeNumber   pgtype.Text        `json:"employee_number"`
-	PositionTitle    pgtype.Text        `json:"position_title"`
-	EmploymentStatus pgtype.Text        `json:"employment_status"`
-	UserID           pgtype.Int4        `json:"user_id"`
-	Username         pgtype.Text        `json:"username"`
-	UserEmail        pgtype.Text        `json:"user_email"`
-	UserType         pgtype.Text        `json:"user_type"`
-	UserActive       pgtype.Bool        `json:"user_active"`
+	EmployeeID       *int32             `json:"employee_id"`
+	EmployeeNumber   *string            `json:"employee_number"`
+	PositionTitle    *string            `json:"position_title"`
+	EmploymentStatus *string            `json:"employment_status"`
+	UserID           *int32             `json:"user_id"`
+	Username         *string            `json:"username"`
+	UserEmail        *string            `json:"user_email"`
+	UserType         *string            `json:"user_type"`
+	UserActive       *bool              `json:"user_active"`
 	FullName         string             `json:"full_name"`
 }
 
@@ -439,8 +439,8 @@ LIMIT $2
 `
 
 type SearchPersonsByNameParams struct {
-	Column1 pgtype.Text `json:"column_1"`
-	Limit   int32       `json:"limit"`
+	Column1 *string `json:"column_1"`
+	Limit   int32   `json:"limit"`
 }
 
 func (q *Queries) SearchPersonsByName(ctx context.Context, arg SearchPersonsByNameParams) ([]Person, error) {
@@ -520,12 +520,12 @@ type UpdatePersonParams struct {
 	PersonType string      `json:"person_type"`
 	FirstName  string      `json:"first_name"`
 	LastName   string      `json:"last_name"`
-	MiddleName pgtype.Text `json:"middle_name"`
-	Email      pgtype.Text `json:"email"`
-	Phone      pgtype.Text `json:"phone"`
+	MiddleName *string     `json:"middle_name"`
+	Email      *string     `json:"email"`
+	Phone      *string     `json:"phone"`
 	BirthDate  pgtype.Date `json:"birth_date"`
-	NationalID pgtype.Text `json:"national_id"`
-	TaxID      pgtype.Text `json:"tax_id"`
+	NationalID *string     `json:"national_id"`
+	TaxID      *string     `json:"tax_id"`
 	Address    []byte      `json:"address"`
 	Metadata   []byte      `json:"metadata"`
 	IsActive   bool        `json:"is_active"`

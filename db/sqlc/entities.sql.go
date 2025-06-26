@@ -59,14 +59,14 @@ type CreateEntityParams struct {
 	Uuid          uuid.UUID   `json:"uuid"`
 	ParentID      pgtype.UUID `json:"parent_id"`
 	Name          string      `json:"name"`
-	Code          pgtype.Text `json:"code"`
+	Code          *string     `json:"code"`
 	Type          string      `json:"type"`
 	IsActive      bool        `json:"is_active"`
 	Hidden        bool        `json:"hidden"`
 	AccrualMethod bool        `json:"accrual_method"`
 	FyStartMonth  int32       `json:"fy_start_month"`
 	Address       []byte      `json:"address"`
-	Picture       pgtype.Text `json:"picture"`
+	Picture       *string     `json:"picture"`
 	Settings      []byte      `json:"settings"`
 }
 
@@ -116,7 +116,7 @@ RETURNING uuid, fiscal_year, key, sequence, entity_id, entity_unit_id
 
 type CreateEntityStateParams struct {
 	Uuid         uuid.UUID   `json:"uuid"`
-	FiscalYear   pgtype.Int2 `json:"fiscal_year"`
+	FiscalYear   *int16      `json:"fiscal_year"`
 	Key          string      `json:"key"`
 	Sequence     int64       `json:"sequence"`
 	EntityID     uuid.UUID   `json:"entity_id"`
@@ -168,9 +168,9 @@ WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
 `
 
 type DeleteEntityStateParams struct {
-	EntityID   uuid.UUID   `json:"entity_id"`
-	Key        string      `json:"key"`
-	FiscalYear pgtype.Int2 `json:"fiscal_year"`
+	EntityID   uuid.UUID `json:"entity_id"`
+	Key        string    `json:"key"`
+	FiscalYear *int16    `json:"fiscal_year"`
 }
 
 func (q *Queries) DeleteEntityState(ctx context.Context, arg DeleteEntityStateParams) error {
@@ -200,8 +200,8 @@ ORDER BY e.name
 `
 
 type GetEntitiesByFiscalYearParams struct {
-	TenantID   int32       `json:"tenant_id"`
-	FiscalYear pgtype.Int2 `json:"fiscal_year"`
+	TenantID   int32  `json:"tenant_id"`
+	FiscalYear *int16 `json:"fiscal_year"`
 }
 
 func (q *Queries) GetEntitiesByFiscalYear(ctx context.Context, arg GetEntitiesByFiscalYearParams) ([]Entity, error) {
@@ -335,14 +335,14 @@ type GetEntityAncestorsRow struct {
 	TenantID      int32              `json:"tenant_id"`
 	ParentID      pgtype.UUID        `json:"parent_id"`
 	Name          string             `json:"name"`
-	Code          pgtype.Text        `json:"code"`
+	Code          *string            `json:"code"`
 	Type          string             `json:"type"`
 	IsActive      bool               `json:"is_active"`
 	Hidden        bool               `json:"hidden"`
 	AccrualMethod bool               `json:"accrual_method"`
 	FyStartMonth  int32              `json:"fy_start_month"`
 	Address       []byte             `json:"address"`
-	Picture       pgtype.Text        `json:"picture"`
+	Picture       *string            `json:"picture"`
 	Settings      []byte             `json:"settings"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
@@ -393,7 +393,7 @@ SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_
 WHERE code = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
-func (q *Queries) GetEntityByCode(ctx context.Context, code pgtype.Text) (Entity, error) {
+func (q *Queries) GetEntityByCode(ctx context.Context, code *string) (Entity, error) {
 	row := q.db.QueryRow(ctx, getEntityByCode, code)
 	var i Entity
 	err := row.Scan(
@@ -508,14 +508,14 @@ type GetEntityDescendantsRow struct {
 	TenantID      int32              `json:"tenant_id"`
 	ParentID      pgtype.UUID        `json:"parent_id"`
 	Name          string             `json:"name"`
-	Code          pgtype.Text        `json:"code"`
+	Code          *string            `json:"code"`
 	Type          string             `json:"type"`
 	IsActive      bool               `json:"is_active"`
 	Hidden        bool               `json:"hidden"`
 	AccrualMethod bool               `json:"accrual_method"`
 	FyStartMonth  int32              `json:"fy_start_month"`
 	Address       []byte             `json:"address"`
-	Picture       pgtype.Text        `json:"picture"`
+	Picture       *string            `json:"picture"`
 	Settings      []byte             `json:"settings"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
@@ -708,9 +708,9 @@ WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
 `
 
 type GetEntityStateParams struct {
-	EntityID   uuid.UUID   `json:"entity_id"`
-	Key        string      `json:"key"`
-	FiscalYear pgtype.Int2 `json:"fiscal_year"`
+	EntityID   uuid.UUID `json:"entity_id"`
+	Key        string    `json:"key"`
+	FiscalYear *int16    `json:"fiscal_year"`
 }
 
 func (q *Queries) GetEntityState(ctx context.Context, arg GetEntityStateParams) (Entitystate, error) {
@@ -823,14 +823,14 @@ type GetEntityTreeStructureRow struct {
 	TenantID      int32              `json:"tenant_id"`
 	ParentID      pgtype.UUID        `json:"parent_id"`
 	Name          string             `json:"name"`
-	Code          pgtype.Text        `json:"code"`
+	Code          *string            `json:"code"`
 	Type          string             `json:"type"`
 	IsActive      bool               `json:"is_active"`
 	Hidden        bool               `json:"hidden"`
 	AccrualMethod bool               `json:"accrual_method"`
 	FyStartMonth  int32              `json:"fy_start_month"`
 	Address       []byte             `json:"address"`
-	Picture       pgtype.Text        `json:"picture"`
+	Picture       *string            `json:"picture"`
 	Settings      []byte             `json:"settings"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
@@ -904,21 +904,21 @@ type GetEntityWithHierarchyInfoRow struct {
 	TenantID      int32              `json:"tenant_id"`
 	ParentID      pgtype.UUID        `json:"parent_id"`
 	Name          string             `json:"name"`
-	Code          pgtype.Text        `json:"code"`
+	Code          *string            `json:"code"`
 	Type          string             `json:"type"`
 	IsActive      bool               `json:"is_active"`
 	Hidden        bool               `json:"hidden"`
 	AccrualMethod bool               `json:"accrual_method"`
 	FyStartMonth  int32              `json:"fy_start_month"`
 	Address       []byte             `json:"address"`
-	Picture       pgtype.Text        `json:"picture"`
+	Picture       *string            `json:"picture"`
 	Settings      []byte             `json:"settings"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
 	Level         interface{}        `json:"level"`
 	ChildCount    int64              `json:"child_count"`
-	ParentName    pgtype.Text        `json:"parent_name"`
+	ParentName    *string            `json:"parent_name"`
 }
 
 // Advanced Entity Queries
@@ -960,7 +960,7 @@ RETURNING sequence
 type GetNextSequenceNumberParams struct {
 	EntityID     uuid.UUID   `json:"entity_id"`
 	Key          string      `json:"key"`
-	FiscalYear   pgtype.Int2 `json:"fiscal_year"`
+	FiscalYear   *int16      `json:"fiscal_year"`
 	EntityUnitID pgtype.UUID `json:"entity_unit_id"`
 }
 
@@ -994,9 +994,9 @@ RETURNING sequence
 `
 
 type IncrementEntityStateSequenceParams struct {
-	EntityID   uuid.UUID   `json:"entity_id"`
-	Key        string      `json:"key"`
-	FiscalYear pgtype.Int2 `json:"fiscal_year"`
+	EntityID   uuid.UUID `json:"entity_id"`
+	Key        string    `json:"key"`
+	FiscalYear *int16    `json:"fiscal_year"`
 }
 
 func (q *Queries) IncrementEntityStateSequence(ctx context.Context, arg IncrementEntityStateSequenceParams) (int64, error) {
@@ -1289,10 +1289,10 @@ WHERE entity_id = $1 AND key = $2 AND fiscal_year = $4
 `
 
 type ResetEntityStateSequenceParams struct {
-	EntityID   uuid.UUID   `json:"entity_id"`
-	Key        string      `json:"key"`
-	Sequence   int64       `json:"sequence"`
-	FiscalYear pgtype.Int2 `json:"fiscal_year"`
+	EntityID   uuid.UUID `json:"entity_id"`
+	Key        string    `json:"key"`
+	Sequence   int64     `json:"sequence"`
+	FiscalYear *int16    `json:"fiscal_year"`
 }
 
 func (q *Queries) ResetEntityStateSequence(ctx context.Context, arg ResetEntityStateSequenceParams) error {
@@ -1326,8 +1326,8 @@ LIMIT $2
 `
 
 type SearchEntitiesByNameParams struct {
-	Column1 pgtype.Text `json:"column_1"`
-	Limit   int32       `json:"limit"`
+	Column1 *string `json:"column_1"`
+	Limit   int32   `json:"limit"`
 }
 
 func (q *Queries) SearchEntitiesByName(ctx context.Context, arg SearchEntitiesByNameParams) ([]Entity, error) {
@@ -1397,17 +1397,17 @@ RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accru
 `
 
 type UpdateEntityParams struct {
-	Uuid          uuid.UUID   `json:"uuid"`
-	Name          string      `json:"name"`
-	Code          pgtype.Text `json:"code"`
-	Type          string      `json:"type"`
-	IsActive      bool        `json:"is_active"`
-	Hidden        bool        `json:"hidden"`
-	AccrualMethod bool        `json:"accrual_method"`
-	FyStartMonth  int32       `json:"fy_start_month"`
-	Address       []byte      `json:"address"`
-	Picture       pgtype.Text `json:"picture"`
-	Settings      []byte      `json:"settings"`
+	Uuid          uuid.UUID `json:"uuid"`
+	Name          string    `json:"name"`
+	Code          *string   `json:"code"`
+	Type          string    `json:"type"`
+	IsActive      bool      `json:"is_active"`
+	Hidden        bool      `json:"hidden"`
+	AccrualMethod bool      `json:"accrual_method"`
+	FyStartMonth  int32     `json:"fy_start_month"`
+	Address       []byte    `json:"address"`
+	Picture       *string   `json:"picture"`
+	Settings      []byte    `json:"settings"`
 }
 
 func (q *Queries) UpdateEntity(ctx context.Context, arg UpdateEntityParams) (Entity, error) {

@@ -27,13 +27,13 @@ type CreateEmployeeParams struct {
 	PersonID         int32       `json:"person_id"`
 	EmployeeNumber   string      `json:"employee_number"`
 	EntityID         uuid.UUID   `json:"entity_id"`
-	PositionTitle    pgtype.Text `json:"position_title"`
+	PositionTitle    *string     `json:"position_title"`
 	DepartmentID     pgtype.UUID `json:"department_id"`
-	ManagerID        pgtype.Int4 `json:"manager_id"`
+	ManagerID        *int32      `json:"manager_id"`
 	HireDate         pgtype.Date `json:"hire_date"`
 	TerminationDate  pgtype.Date `json:"termination_date"`
 	SalaryInfo       []byte      `json:"salary_info"`
-	EmploymentStatus pgtype.Text `json:"employment_status"`
+	EmploymentStatus *string     `json:"employment_status"`
 	WorkSchedule     []byte      `json:"work_schedule"`
 }
 
@@ -183,14 +183,14 @@ ORDER BY level, last_name, first_name
 `
 
 type GetEmployeeHierarchyRow struct {
-	ID             int32       `json:"id"`
-	PersonID       int32       `json:"person_id"`
-	EmployeeNumber string      `json:"employee_number"`
-	PositionTitle  pgtype.Text `json:"position_title"`
-	ManagerID      pgtype.Int4 `json:"manager_id"`
-	FirstName      string      `json:"first_name"`
-	LastName       string      `json:"last_name"`
-	Level          int32       `json:"level"`
+	ID             int32   `json:"id"`
+	PersonID       int32   `json:"person_id"`
+	EmployeeNumber string  `json:"employee_number"`
+	PositionTitle  *string `json:"position_title"`
+	ManagerID      *int32  `json:"manager_id"`
+	FirstName      string  `json:"first_name"`
+	LastName       string  `json:"last_name"`
+	Level          int32   `json:"level"`
 }
 
 func (q *Queries) GetEmployeeHierarchy(ctx context.Context, id int32) ([]GetEmployeeHierarchyRow, error) {
@@ -271,20 +271,20 @@ type ListActiveEmployeesRow struct {
 	PersonID         int32              `json:"person_id"`
 	EmployeeNumber   string             `json:"employee_number"`
 	EntityID         uuid.UUID          `json:"entity_id"`
-	PositionTitle    pgtype.Text        `json:"position_title"`
+	PositionTitle    *string            `json:"position_title"`
 	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        pgtype.Int4        `json:"manager_id"`
+	ManagerID        *int32             `json:"manager_id"`
 	HireDate         pgtype.Date        `json:"hire_date"`
 	TerminationDate  pgtype.Date        `json:"termination_date"`
 	SalaryInfo       []byte             `json:"salary_info"`
-	EmploymentStatus pgtype.Text        `json:"employment_status"`
+	EmploymentStatus *string            `json:"employment_status"`
 	WorkSchedule     []byte             `json:"work_schedule"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 	FirstName        string             `json:"first_name"`
 	LastName         string             `json:"last_name"`
-	Email            pgtype.Text        `json:"email"`
-	Phone            pgtype.Text        `json:"phone"`
+	Email            *string            `json:"email"`
+	Phone            *string            `json:"phone"`
 }
 
 func (q *Queries) ListActiveEmployees(ctx context.Context) ([]ListActiveEmployeesRow, error) {
@@ -341,20 +341,20 @@ type ListEmployeesRow struct {
 	PersonID         int32              `json:"person_id"`
 	EmployeeNumber   string             `json:"employee_number"`
 	EntityID         uuid.UUID          `json:"entity_id"`
-	PositionTitle    pgtype.Text        `json:"position_title"`
+	PositionTitle    *string            `json:"position_title"`
 	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        pgtype.Int4        `json:"manager_id"`
+	ManagerID        *int32             `json:"manager_id"`
 	HireDate         pgtype.Date        `json:"hire_date"`
 	TerminationDate  pgtype.Date        `json:"termination_date"`
 	SalaryInfo       []byte             `json:"salary_info"`
-	EmploymentStatus pgtype.Text        `json:"employment_status"`
+	EmploymentStatus *string            `json:"employment_status"`
 	WorkSchedule     []byte             `json:"work_schedule"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 	FirstName        string             `json:"first_name"`
 	LastName         string             `json:"last_name"`
-	Email            pgtype.Text        `json:"email"`
-	Phone            pgtype.Text        `json:"phone"`
+	Email            *string            `json:"email"`
+	Phone            *string            `json:"phone"`
 }
 
 func (q *Queries) ListEmployees(ctx context.Context) ([]ListEmployeesRow, error) {
@@ -411,20 +411,20 @@ type ListEmployeesByDepartmentRow struct {
 	PersonID         int32              `json:"person_id"`
 	EmployeeNumber   string             `json:"employee_number"`
 	EntityID         uuid.UUID          `json:"entity_id"`
-	PositionTitle    pgtype.Text        `json:"position_title"`
+	PositionTitle    *string            `json:"position_title"`
 	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        pgtype.Int4        `json:"manager_id"`
+	ManagerID        *int32             `json:"manager_id"`
 	HireDate         pgtype.Date        `json:"hire_date"`
 	TerminationDate  pgtype.Date        `json:"termination_date"`
 	SalaryInfo       []byte             `json:"salary_info"`
-	EmploymentStatus pgtype.Text        `json:"employment_status"`
+	EmploymentStatus *string            `json:"employment_status"`
 	WorkSchedule     []byte             `json:"work_schedule"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 	FirstName        string             `json:"first_name"`
 	LastName         string             `json:"last_name"`
-	Email            pgtype.Text        `json:"email"`
-	Phone            pgtype.Text        `json:"phone"`
+	Email            *string            `json:"email"`
+	Phone            *string            `json:"phone"`
 }
 
 func (q *Queries) ListEmployeesByDepartment(ctx context.Context, departmentID pgtype.UUID) ([]ListEmployeesByDepartmentRow, error) {
@@ -481,23 +481,23 @@ type ListEmployeesByManagerRow struct {
 	PersonID         int32              `json:"person_id"`
 	EmployeeNumber   string             `json:"employee_number"`
 	EntityID         uuid.UUID          `json:"entity_id"`
-	PositionTitle    pgtype.Text        `json:"position_title"`
+	PositionTitle    *string            `json:"position_title"`
 	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        pgtype.Int4        `json:"manager_id"`
+	ManagerID        *int32             `json:"manager_id"`
 	HireDate         pgtype.Date        `json:"hire_date"`
 	TerminationDate  pgtype.Date        `json:"termination_date"`
 	SalaryInfo       []byte             `json:"salary_info"`
-	EmploymentStatus pgtype.Text        `json:"employment_status"`
+	EmploymentStatus *string            `json:"employment_status"`
 	WorkSchedule     []byte             `json:"work_schedule"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 	FirstName        string             `json:"first_name"`
 	LastName         string             `json:"last_name"`
-	Email            pgtype.Text        `json:"email"`
-	Phone            pgtype.Text        `json:"phone"`
+	Email            *string            `json:"email"`
+	Phone            *string            `json:"phone"`
 }
 
-func (q *Queries) ListEmployeesByManager(ctx context.Context, managerID pgtype.Int4) ([]ListEmployeesByManagerRow, error) {
+func (q *Queries) ListEmployeesByManager(ctx context.Context, managerID *int32) ([]ListEmployeesByManagerRow, error) {
 	rows, err := q.db.Query(ctx, listEmployeesByManager, managerID)
 	if err != nil {
 		return nil, err
@@ -559,13 +559,13 @@ type UpdateEmployeeParams struct {
 	ID               int32       `json:"id"`
 	EmployeeNumber   string      `json:"employee_number"`
 	EntityID         uuid.UUID   `json:"entity_id"`
-	PositionTitle    pgtype.Text `json:"position_title"`
+	PositionTitle    *string     `json:"position_title"`
 	DepartmentID     pgtype.UUID `json:"department_id"`
-	ManagerID        pgtype.Int4 `json:"manager_id"`
+	ManagerID        *int32      `json:"manager_id"`
 	HireDate         pgtype.Date `json:"hire_date"`
 	TerminationDate  pgtype.Date `json:"termination_date"`
 	SalaryInfo       []byte      `json:"salary_info"`
-	EmploymentStatus pgtype.Text `json:"employment_status"`
+	EmploymentStatus *string     `json:"employment_status"`
 	WorkSchedule     []byte      `json:"work_schedule"`
 }
 

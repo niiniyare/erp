@@ -27,7 +27,7 @@ type AssignUserRoleParams struct {
 	UserID     int32              `json:"user_id"`
 	RoleID     int32              `json:"role_id"`
 	EntityID   uuid.UUID          `json:"entity_id"`
-	AssignedBy pgtype.Int4        `json:"assigned_by"`
+	AssignedBy *int32             `json:"assigned_by"`
 	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
 }
 
@@ -100,11 +100,11 @@ INSERT INTO roles (
 type CreateRoleParams struct {
 	EntityID     pgtype.UUID `json:"entity_id"`
 	Name         string      `json:"name"`
-	Description  pgtype.Text `json:"description"`
-	Module       pgtype.Text `json:"module"`
+	Description  *string     `json:"description"`
+	Module       *string     `json:"module"`
 	Permissions  []byte      `json:"permissions"`
 	EntityScope  []byte      `json:"entity_scope"`
-	IsSystemRole pgtype.Bool `json:"is_system_role"`
+	IsSystemRole *bool       `json:"is_system_role"`
 }
 
 // ==============================================
@@ -208,12 +208,12 @@ type GetRoleUsersRow struct {
 	RoleID     int32              `json:"role_id"`
 	EntityID   uuid.UUID          `json:"entity_id"`
 	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy pgtype.Int4        `json:"assigned_by"`
+	AssignedBy *int32             `json:"assigned_by"`
 	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
 	Email      string             `json:"email"`
-	Username   pgtype.Text        `json:"username"`
-	FirstName  pgtype.Text        `json:"first_name"`
-	LastName   pgtype.Text        `json:"last_name"`
+	Username   *string            `json:"username"`
+	FirstName  *string            `json:"first_name"`
+	LastName   *string            `json:"last_name"`
 }
 
 func (q *Queries) GetRoleUsers(ctx context.Context, roleID int32) ([]GetRoleUsersRow, error) {
@@ -256,8 +256,8 @@ WHERE ur.user_id = $1
 `
 
 type GetUserPermissionsRow struct {
-	Module      pgtype.Text `json:"module"`
-	Permissions []byte      `json:"permissions"`
+	Module      *string `json:"module"`
+	Permissions []byte  `json:"permissions"`
 }
 
 func (q *Queries) GetUserPermissions(ctx context.Context, userID int32) ([]GetUserPermissionsRow, error) {
@@ -294,10 +294,10 @@ type GetUserRolesRow struct {
 	RoleID          int32              `json:"role_id"`
 	EntityID        uuid.UUID          `json:"entity_id"`
 	AssignedAt      pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy      pgtype.Int4        `json:"assigned_by"`
+	AssignedBy      *int32             `json:"assigned_by"`
 	ExpiresAt       pgtype.Timestamptz `json:"expires_at"`
 	RoleName        string             `json:"role_name"`
-	RoleDescription pgtype.Text        `json:"role_description"`
+	RoleDescription *string            `json:"role_description"`
 	Permissions     []byte             `json:"permissions"`
 }
 
@@ -384,7 +384,7 @@ type ListExpiredUserRolesRow struct {
 	RoleID     int32              `json:"role_id"`
 	EntityID   uuid.UUID          `json:"entity_id"`
 	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy pgtype.Int4        `json:"assigned_by"`
+	AssignedBy *int32             `json:"assigned_by"`
 	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
 	Email      string             `json:"email"`
 	RoleName   string             `json:"role_name"`
@@ -462,7 +462,7 @@ WHERE tenant_id = current_tenant_id() AND module = $1
 ORDER BY name
 `
 
-func (q *Queries) ListRolesByModule(ctx context.Context, module pgtype.Text) ([]Role, error) {
+func (q *Queries) ListRolesByModule(ctx context.Context, module *string) ([]Role, error) {
 	rows, err := q.db.Query(ctx, listRolesByModule, module)
 	if err != nil {
 		return nil, err
@@ -569,19 +569,19 @@ LIMIT $2
 `
 
 type SearchUsersWithRolesParams struct {
-	Column1 pgtype.Text `json:"column_1"`
-	Limit   int32       `json:"limit"`
+	Column1 *string `json:"column_1"`
+	Limit   int32   `json:"limit"`
 }
 
 type SearchUsersWithRolesRow struct {
-	ID        int32       `json:"id"`
-	Username  pgtype.Text `json:"username"`
-	Email     string      `json:"email"`
-	UserType  string      `json:"user_type"`
-	IsActive  bool        `json:"is_active"`
-	FirstName pgtype.Text `json:"first_name"`
-	LastName  pgtype.Text `json:"last_name"`
-	Roles     []byte      `json:"roles"`
+	ID        int32   `json:"id"`
+	Username  *string `json:"username"`
+	Email     string  `json:"email"`
+	UserType  string  `json:"user_type"`
+	IsActive  bool    `json:"is_active"`
+	FirstName *string `json:"first_name"`
+	LastName  *string `json:"last_name"`
+	Roles     []byte  `json:"roles"`
 }
 
 func (q *Queries) SearchUsersWithRoles(ctx context.Context, arg SearchUsersWithRolesParams) ([]SearchUsersWithRolesRow, error) {
@@ -630,8 +630,8 @@ type UpdateRoleParams struct {
 	ID          int32       `json:"id"`
 	EntityID    pgtype.UUID `json:"entity_id"`
 	Name        string      `json:"name"`
-	Description pgtype.Text `json:"description"`
-	Module      pgtype.Text `json:"module"`
+	Description *string     `json:"description"`
+	Module      *string     `json:"module"`
 	Permissions []byte      `json:"permissions"`
 	EntityScope []byte      `json:"entity_scope"`
 }
