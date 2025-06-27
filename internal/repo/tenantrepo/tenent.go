@@ -1,4 +1,4 @@
-package tenant
+package tenantrepo
 
 import (
 	"context"
@@ -44,7 +44,6 @@ type TenantRepo interface {
 	// UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatus) (Tenant, error)
 	// UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomain) (Tenant, error)
 }
-
 type UpdateCurrentTenant struct {
 	Name      string  `json:"name"`
 	Subdomain *string `json:"subdomain"`

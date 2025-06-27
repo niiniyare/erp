@@ -27,10 +27,7 @@ func createRandomEntity(ctx context.Context, t *testing.T, q *Queries, parentID 
 			Valid: parentID != nil,
 		},
 		Name: "Test Entity",
-		Code: pgtype.Text{
-			String: "TEST_" + uid.String()[:8],
-			Valid:  true,
-		},
+		// Code: "TEST_" + uid.String()[:8],
 		Type:          "department",
 		IsActive:      true,
 		Hidden:        false,

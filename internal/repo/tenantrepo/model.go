@@ -1,4 +1,4 @@
-package tenant
+package tenantrepo
 
 import (
 	"time"

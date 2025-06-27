@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	tenantrepo "github.com/niiniyare/erp/internal/repo/tenant_repo"
+	tenantrepo "github.com/niiniyare/erp/internal/repo/tenantrepo"
 
 	// Import the tenant package from its location
 	"github.com/niiniyare/erp/internal/storage/cache"
@@ -631,13 +631,13 @@ func (s *TenantService) convertToDomainTenant(repoTenant tenantrepo.Tenant) Tena
 	}
 
 	// Handle subdomain (convert from pointer to string)
-	if repoTenant.Subdomain != nil {
-		domainTenant.Subdomain = *repoTenant.Subdomain
+	if repoTenant.Subdomain != "" {
+		domainTenant.Subdomain = repoTenant.Subdomain
 	}
 
 	// Handle industry (convert from pointer to string)
-	if repoTenant.Industry != nil {
-		domainTenant.Industry = *repoTenant.Industry
+	if repoTenant.Industry != "" {
+		domainTenant.Industry = repoTenant.Industry
 	}
 
 	return domainTenant

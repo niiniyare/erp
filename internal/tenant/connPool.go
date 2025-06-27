@@ -6,8 +6,10 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -121,18 +123,18 @@ func (tap *TenantAwarePool) createPool(tenantID int) (*pgxpool.Pool, error) {
 func (tap *TenantAwarePool) Exec(ctx context.Context, sql string, args ...interface{}) (pgconn.CommandTag, error) {
 	tenantID, ok := FromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("tenant context missing")
+		return pgconn.CommandTag{}, fmt.Errorf("tenant context missing")
 	}
 
 	pool, err := tap.GetPool(ctx, tenantID)
 	if err != nil {
-		return nil, err
+		return pgconn.CommandTag{}, err
 	}
 
 	// Set tenant context for this operation
 	_, err = pool.Exec(ctx, "SET app.current_tenant_id = $1", tenantID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to set tenant context: %w", err)
+		return pgconn.CommandTag{}, fmt.Errorf("failed to set tenant context: %w", err)
 	}
 
 	return pool.Exec(ctx, sql, args...)

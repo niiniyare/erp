@@ -7,6 +7,11 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+type CacheStore interface {
+	Set(key, value string, ttl time.Duration) error
+	Get(key string) (string, error)
+	Delete(key string) error
+}
 type redisStore struct {
 	client *redis.Client
 	ctx    context.Context

@@ -1,6 +1,5 @@
 package comman
 
-
 import (
 	"database/sql"
 	"fmt"
@@ -413,7 +412,6 @@ func main() {
 	fmt.Println("Account saved successfully")
 }
 
-
 // Assume Form struct encapsulates form data and database connection methods
 type Form struct {
 	ID int64
@@ -593,4 +591,3 @@ func main() {
 		log.Printf("Account deleted successfully")
 	}
 }
-

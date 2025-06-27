@@ -10,12 +10,12 @@ import (
 
 // DocType represents a document type configuration
 type DocType struct {
-	Name        string `json:"name"`
-	IsSingle    bool   `json:"issingle"`
-	Fields      []Field `json:"fields"`
+	Name        string       `json:"name"`
+	IsSingle    bool         `json:"issingle"`
+	Fields      []Field      `json:"fields"`
 	Permissions []Permission `json:"permissions"`
-	Engine      string `json:"engine"`
-	RowFormat   string `json:"row_format"`
+	Engine      string       `json:"engine"`
+	RowFormat   string       `json:"row_format"`
 }
 
 // Field represents a field in a document type
@@ -42,11 +42,11 @@ func (d *DocType) UnmarshalJSON(data []byte) error {
 	}{
 		Alias: (*Alias)(d),
 	}
-	
+
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	
+
 	d.IsSingle = aux.IsSingle == 1
 	return nil
 }
@@ -60,11 +60,11 @@ func (f *Field) UnmarshalJSON(data []byte) error {
 	}{
 		Alias: (*Alias)(f),
 	}
-	
+
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	
+
 	f.Required = aux.Required == 1
 	return nil
 }
@@ -78,11 +78,11 @@ func (p *Permission) UnmarshalJSON(data []byte) error {
 	}{
 		Alias: (*Alias)(p),
 	}
-	
+
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	
+
 	p.Read = aux.Read == 1
 	return nil
 }
@@ -101,7 +101,7 @@ func main() {
 	}
 
 	generator := NewPostgresSchemaGenerator()
-	
+
 	for _, filePath := range os.Args[1:] {
 		if err := processFile(filePath, generator); err != nil {
 			log.Printf("Error processing file %s: %v", filePath, err)
@@ -125,12 +125,12 @@ func parseDocType(path string) (*DocType, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
-	
+
 	var doc DocType
 	if err := json.Unmarshal(data, &doc); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
-	
+
 	return &doc, nil
 }
 
@@ -156,17 +156,17 @@ func (g *PostgresSchemaGenerator) writeHeader(b *strings.Builder, tableName stri
 
 func (g *PostgresSchemaGenerator) writeTableDefinition(b *strings.Builder, tableName string, doc *DocType) {
 	fmt.Fprintf(b, "CREATE TABLE %s (\n", quoteIdentifier(tableName))
-	
+
 	// Write standard fields
 	g.writeStandardFields(b)
-	
+
 	// Write custom fields
 	g.writeCustomFields(b, doc.Fields)
-	
+
 	// Remove trailing comma and close table definition
 	schema := b.String()
 	schema = strings.TrimSuffix(schema, ",\n") + "\n);\n\n"
-	
+
 	// Reset builder and write the corrected schema
 	b.Reset()
 	b.WriteString(schema)
@@ -196,27 +196,27 @@ func (g *PostgresSchemaGenerator) writeCustomFields(b *strings.Builder, fields [
 		if shouldSkipField(field.Fieldtype) {
 			continue
 		}
-		
+
 		pgType := mapToPostgresType(field)
 		defaultClause := getDefaultValue(field, pgType)
-		
+
 		var requiredClause string
 		if field.Required {
 			requiredClause = " NOT NULL"
 		}
-		
-		column := fmt.Sprintf("%s %s%s%s", 
-			quoteIdentifier(field.Fieldname), 
-			pgType, 
-			defaultClause, 
+
+		column := fmt.Sprintf("%s %s%s%s",
+			quoteIdentifier(field.Fieldname),
+			pgType,
+			defaultClause,
 			requiredClause)
-		
+
 		fmt.Fprintf(b, "    %s,\n", column)
 	}
 }
 
 func (g *PostgresSchemaGenerator) writeTableComment(b *strings.Builder, tableName string, doc *DocType) {
-	fmt.Fprintf(b, "COMMENT ON TABLE %s IS 'doctype: %s';\n\n", 
+	fmt.Fprintf(b, "COMMENT ON TABLE %s IS 'doctype: %s';\n\n",
 		quoteIdentifier(tableName), doc.Name)
 }
 
@@ -293,9 +293,9 @@ func getDefaultValue(field Field, pgType string) string {
 	if field.Default == nil || *field.Default == "null" {
 		return ""
 	}
-	
+
 	val := *field.Default
-	
+
 	switch {
 	case strings.HasPrefix(pgType, "VARCHAR"), pgType == "TEXT":
 		return fmt.Sprintf(" DEFAULT '%s'", escapeString(val))
