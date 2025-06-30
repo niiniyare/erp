@@ -40,6 +40,14 @@ type CreateEmployeeParams struct {
 // ==============================================
 // EMPLOYEES TABLE OPERATIONS
 // ==============================================
+//
+//	INSERT INTO employees (
+//	    tenant_id, person_id, employee_number, entity_id, position_title,
+//	    department_id, manager_id, hire_date, termination_date, salary_info,
+//	    employment_status, work_schedule
+//	) VALUES (
+//	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+//	) RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at
 func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (Employee, error) {
 	row := q.db.QueryRow(ctx, createEmployee,
 		arg.PersonID,
@@ -80,6 +88,10 @@ SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, dep
 WHERE id = $1 AND tenant_id = current_tenant_id()
 `
 
+// GetEmployee
+//
+//	SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
+//	WHERE id = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) GetEmployee(ctx context.Context, id int32) (Employee, error) {
 	row := q.db.QueryRow(ctx, getEmployee, id)
 	var i Employee
@@ -108,6 +120,10 @@ SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, dep
 WHERE employee_number = $1 AND tenant_id = current_tenant_id()
 `
 
+// GetEmployeeByNumber
+//
+//	SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
+//	WHERE employee_number = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) GetEmployeeByNumber(ctx context.Context, employeeNumber string) (Employee, error) {
 	row := q.db.QueryRow(ctx, getEmployeeByNumber, employeeNumber)
 	var i Employee
@@ -136,6 +152,10 @@ SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, dep
 WHERE person_id = $1 AND tenant_id = current_tenant_id()
 `
 
+// GetEmployeeByPersonId
+//
+//	SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
+//	WHERE person_id = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) GetEmployeeByPersonId(ctx context.Context, personID int32) (Employee, error) {
 	row := q.db.QueryRow(ctx, getEmployeeByPersonId, personID)
 	var i Employee
@@ -193,6 +213,28 @@ type GetEmployeeHierarchyRow struct {
 	Level          int32   `json:"level"`
 }
 
+// GetEmployeeHierarchy
+//
+//	WITH RECURSIVE employee_hierarchy AS (
+//	    SELECT
+//	        e.id, e.person_id, e.employee_number, e.position_title, e.manager_id,
+//	        p.first_name, p.last_name, 0 as level
+//	    FROM employees e
+//	    JOIN persons p ON e.person_id = p.id
+//	    WHERE e.id = $1 AND e.tenant_id = current_tenant_id()
+//
+//	    UNION ALL
+//
+//	    SELECT
+//	        e.id, e.person_id, e.employee_number, e.position_title, e.manager_id,
+//	        p.first_name, p.last_name, eh.level + 1
+//	    FROM employees e
+//	    JOIN persons p ON e.person_id = p.id
+//	    JOIN employee_hierarchy eh ON e.manager_id = eh.id
+//	    WHERE e.tenant_id = current_tenant_id() AND eh.level < 10
+//	)
+//	SELECT id, person_id, employee_number, position_title, manager_id, first_name, last_name, level FROM employee_hierarchy
+//	ORDER BY level, last_name, first_name
 func (q *Queries) GetEmployeeHierarchy(ctx context.Context, id int32) ([]GetEmployeeHierarchyRow, error) {
 	rows, err := q.db.Query(ctx, getEmployeeHierarchy, id)
 	if err != nil {
@@ -243,6 +285,17 @@ type GetEmployeeStatsRow struct {
 	ManagersCount       int64 `json:"managers_count"`
 }
 
+// GetEmployeeStats
+//
+//	SELECT
+//	    COUNT(*) as total_employees,
+//	    COUNT(*) FILTER (WHERE employment_status = 'ACTIVE') as active_employees,
+//	    COUNT(*) FILTER (WHERE employment_status = 'TERMINATED') as terminated_employees,
+//	    COUNT(*) FILTER (WHERE employment_status = 'ON_LEAVE') as on_leave_employees,
+//	    COUNT(DISTINCT department_id) as departments_count,
+//	    COUNT(*) FILTER (WHERE manager_id IS NULL) as managers_count
+//	FROM employees
+//	WHERE tenant_id = current_tenant_id()
 func (q *Queries) GetEmployeeStats(ctx context.Context) (GetEmployeeStatsRow, error) {
 	row := q.db.QueryRow(ctx, getEmployeeStats)
 	var i GetEmployeeStatsRow
@@ -287,6 +340,13 @@ type ListActiveEmployeesRow struct {
 	Phone            *string            `json:"phone"`
 }
 
+// ListActiveEmployees
+//
+//	SELECT e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.created_at, e.updated_at, p.first_name, p.last_name, p.email, p.phone
+//	FROM employees e
+//	JOIN persons p ON e.person_id = p.id
+//	WHERE e.tenant_id = current_tenant_id() AND e.employment_status = 'ACTIVE'
+//	ORDER BY p.last_name, p.first_name
 func (q *Queries) ListActiveEmployees(ctx context.Context) ([]ListActiveEmployeesRow, error) {
 	rows, err := q.db.Query(ctx, listActiveEmployees)
 	if err != nil {
@@ -357,6 +417,13 @@ type ListEmployeesRow struct {
 	Phone            *string            `json:"phone"`
 }
 
+// ListEmployees
+//
+//	SELECT e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.created_at, e.updated_at, p.first_name, p.last_name, p.email, p.phone
+//	FROM employees e
+//	JOIN persons p ON e.person_id = p.id
+//	WHERE e.tenant_id = current_tenant_id()
+//	ORDER BY p.last_name, p.first_name
 func (q *Queries) ListEmployees(ctx context.Context) ([]ListEmployeesRow, error) {
 	rows, err := q.db.Query(ctx, listEmployees)
 	if err != nil {
@@ -427,6 +494,13 @@ type ListEmployeesByDepartmentRow struct {
 	Phone            *string            `json:"phone"`
 }
 
+// ListEmployeesByDepartment
+//
+//	SELECT e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.created_at, e.updated_at, p.first_name, p.last_name, p.email, p.phone
+//	FROM employees e
+//	JOIN persons p ON e.person_id = p.id
+//	WHERE e.tenant_id = current_tenant_id() AND e.department_id = $1
+//	ORDER BY p.last_name, p.first_name
 func (q *Queries) ListEmployeesByDepartment(ctx context.Context, departmentID pgtype.UUID) ([]ListEmployeesByDepartmentRow, error) {
 	rows, err := q.db.Query(ctx, listEmployeesByDepartment, departmentID)
 	if err != nil {
@@ -497,6 +571,13 @@ type ListEmployeesByManagerRow struct {
 	Phone            *string            `json:"phone"`
 }
 
+// ListEmployeesByManager
+//
+//	SELECT e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.created_at, e.updated_at, p.first_name, p.last_name, p.email, p.phone
+//	FROM employees e
+//	JOIN persons p ON e.person_id = p.id
+//	WHERE e.tenant_id = current_tenant_id() AND e.manager_id = $1
+//	ORDER BY p.last_name, p.first_name
 func (q *Queries) ListEmployeesByManager(ctx context.Context, managerID *int32) ([]ListEmployeesByManagerRow, error) {
 	rows, err := q.db.Query(ctx, listEmployeesByManager, managerID)
 	if err != nil {
@@ -569,6 +650,23 @@ type UpdateEmployeeParams struct {
 	WorkSchedule     []byte      `json:"work_schedule"`
 }
 
+// UpdateEmployee
+//
+//	UPDATE employees
+//	SET
+//	    employee_number = COALESCE($2, employee_number),
+//	    entity_id = COALESCE($3, entity_id),
+//	    position_title = COALESCE($4, position_title),
+//	    department_id = COALESCE($5, department_id),
+//	    manager_id = COALESCE($6, manager_id),
+//	    hire_date = COALESCE($7, hire_date),
+//	    termination_date = COALESCE($8, termination_date),
+//	    salary_info = COALESCE($9, salary_info),
+//	    employment_status = COALESCE($10, employment_status),
+//	    work_schedule = COALESCE($11, work_schedule),
+//	    updated_at = NOW()
+//	WHERE id = $1 AND tenant_id = current_tenant_id()
+//	RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at
 func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error) {
 	row := q.db.QueryRow(ctx, updateEmployee,
 		arg.ID,

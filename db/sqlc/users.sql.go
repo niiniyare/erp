@@ -37,6 +37,13 @@ type CreateUserParams struct {
 // ==============================================
 // USERS TABLE OPERATIONS
 // ==============================================
+//
+//	INSERT INTO users (
+//	    tenant_id, entity_id, person_id, employee_id, username, email,
+//	    password_hash, user_type, is_active, settings
+//	) VALUES (
+//	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9
+//	) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.EntityID,
@@ -76,6 +83,10 @@ SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, passwo
 WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
+// GetUser
+//
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
+//	WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 	row := q.db.QueryRow(ctx, getUser, id)
 	var i User
@@ -105,6 +116,10 @@ SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, passwo
 WHERE email = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
+// GetUserByEmail
+//
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
+//	WHERE email = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
@@ -134,6 +149,10 @@ SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, passwo
 WHERE username = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
+// GetUserByUsername
+//
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
+//	WHERE username = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetUserByUsername(ctx context.Context, username *string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
@@ -179,6 +198,17 @@ type GetUserStatsRow struct {
 	RecentLogins  int64 `json:"recent_logins"`
 }
 
+// GetUserStats
+//
+//	SELECT
+//	    COUNT(*) as total_users,
+//	    COUNT(*) FILTER (WHERE is_active = true) as active_users,
+//	    COUNT(*) FILTER (WHERE user_type = 'INTERNAL') as internal_users,
+//	    COUNT(*) FILTER (WHERE user_type = 'CUSTOMER') as customer_users,
+//	    COUNT(*) FILTER (WHERE user_type = 'VENDOR') as vendor_users,
+//	    COUNT(*) FILTER (WHERE last_login_at >= NOW() - INTERVAL '30 days') as recent_logins
+//	FROM users
+//	WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetUserStats(ctx context.Context) (GetUserStatsRow, error) {
 	row := q.db.QueryRow(ctx, getUserStats)
 	var i GetUserStatsRow
@@ -231,6 +261,16 @@ type GetUserWithPersonDetailsRow struct {
 	DepartmentID      pgtype.UUID        `json:"department_id"`
 }
 
+// GetUserWithPersonDetails
+//
+//	SELECT
+//	    u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.is_active, u.last_login_at, u.password_changed_at, u.settings, u.created_at, u.updated_at, u.deleted_at,
+//	    p.first_name, p.last_name, p.middle_name, p.phone, p.birth_date,
+//	    e.employee_number, e.position_title, e.department_id
+//	FROM users u
+//	LEFT JOIN persons p ON u.person_id = p.id
+//	LEFT JOIN employees e ON u.employee_id = e.id
+//	WHERE u.id = $1 AND u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
 func (q *Queries) GetUserWithPersonDetails(ctx context.Context, id int32) (GetUserWithPersonDetailsRow, error) {
 	row := q.db.QueryRow(ctx, getUserWithPersonDetails, id)
 	var i GetUserWithPersonDetailsRow
@@ -294,6 +334,14 @@ type ListActiveUsersRow struct {
 	EmployeeNumber    *string            `json:"employee_number"`
 }
 
+// ListActiveUsers
+//
+//	SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.is_active, u.last_login_at, u.password_changed_at, u.settings, u.created_at, u.updated_at, u.deleted_at, p.first_name, p.last_name, e.employee_number
+//	FROM users u
+//	LEFT JOIN persons p ON u.person_id = p.id
+//	LEFT JOIN employees e ON u.employee_id = e.id
+//	WHERE u.tenant_id = current_tenant_id() AND u.is_active = true AND u.deleted_at IS NULL
+//	ORDER BY u.email
 func (q *Queries) ListActiveUsers(ctx context.Context) ([]ListActiveUsersRow, error) {
 	rows, err := q.db.Query(ctx, listActiveUsers)
 	if err != nil {
@@ -365,6 +413,14 @@ type ListUsersRow struct {
 	EmployeeNumber    *string            `json:"employee_number"`
 }
 
+// ListUsers
+//
+//	SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.is_active, u.last_login_at, u.password_changed_at, u.settings, u.created_at, u.updated_at, u.deleted_at, p.first_name, p.last_name, e.employee_number
+//	FROM users u
+//	LEFT JOIN persons p ON u.person_id = p.id
+//	LEFT JOIN employees e ON u.employee_id = e.id
+//	WHERE u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
+//	ORDER BY u.email
 func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 	rows, err := q.db.Query(ctx, listUsers)
 	if err != nil {
@@ -436,6 +492,14 @@ type ListUsersByTypeRow struct {
 	EmployeeNumber    *string            `json:"employee_number"`
 }
 
+// ListUsersByType
+//
+//	SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.is_active, u.last_login_at, u.password_changed_at, u.settings, u.created_at, u.updated_at, u.deleted_at, p.first_name, p.last_name, e.employee_number
+//	FROM users u
+//	LEFT JOIN persons p ON u.person_id = p.id
+//	LEFT JOIN employees e ON u.employee_id = e.id
+//	WHERE u.tenant_id = current_tenant_id() AND u.user_type = $1 AND u.deleted_at IS NULL
+//	ORDER BY u.email
 func (q *Queries) ListUsersByType(ctx context.Context, userType string) ([]ListUsersByTypeRow, error) {
 	rows, err := q.db.Query(ctx, listUsersByType, userType)
 	if err != nil {
@@ -482,6 +546,11 @@ SET deleted_at = NOW(), updated_at = NOW()
 WHERE id = $1 AND tenant_id = current_tenant_id()
 `
 
+// SoftDeleteUser
+//
+//	UPDATE users
+//	SET deleted_at = NOW(), updated_at = NOW()
+//	WHERE id = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) SoftDeleteUser(ctx context.Context, id int32) error {
 	_, err := q.db.Exec(ctx, softDeleteUser, id)
 	return err
@@ -517,6 +586,22 @@ type UpdateUserParams struct {
 	Settings     []byte    `json:"settings"`
 }
 
+// UpdateUser
+//
+//	UPDATE users
+//	SET
+//	    entity_id = COALESCE($2, entity_id),
+//	    person_id = COALESCE($3, person_id),
+//	    employee_id = COALESCE($4, employee_id),
+//	    username = COALESCE($5, username),
+//	    email = COALESCE($6, email),
+//	    password_hash = COALESCE($7, password_hash),
+//	    user_type = COALESCE($8, user_type),
+//	    is_active = COALESCE($9, is_active),
+//	    settings = COALESCE($10, settings),
+//	    updated_at = NOW()
+//	WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+//	RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.ID,
@@ -558,6 +643,11 @@ SET last_login_at = NOW()
 WHERE id = $1 AND tenant_id = current_tenant_id()
 `
 
+// UpdateUserLogin
+//
+//	UPDATE users
+//	SET last_login_at = NOW()
+//	WHERE id = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) UpdateUserLogin(ctx context.Context, id int32) error {
 	_, err := q.db.Exec(ctx, updateUserLogin, id)
 	return err
@@ -574,6 +664,11 @@ type UpdateUserPasswordParams struct {
 	PasswordHash *string `json:"password_hash"`
 }
 
+// UpdateUserPassword
+//
+//	UPDATE users
+//	SET password_hash = $2, password_changed_at = NOW(), updated_at = NOW()
+//	WHERE id = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
 	_, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.PasswordHash)
 	return err

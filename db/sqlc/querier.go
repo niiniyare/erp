@@ -8,20 +8,163 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
+	// ==============================================
+	// USER ROLES TABLE OPERATIONS
+	// ==============================================
+	//
+	//
+	//  INSERT INTO user_roles (user_id, role_id, entity_id, assigned_by, expires_at)
+	//  VALUES ($1, $2, $3, $4, $5)
+	//  ON CONFLICT (user_id, role_id, entity_id) DO UPDATE SET
+	//      assigned_at = NOW(),
+	//      assigned_by = EXCLUDED.assigned_by,
+	//      expires_at = EXCLUDED.expires_at
+	//  RETURNING user_id, role_id, entity_id, assigned_at, assigned_by, expires_at
+	AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (UserRole, error)
+	//BatchSoftDeleteEntities
+	//
+	//  UPDATE entities
+	//  SET deleted_at = NOW(), updated_at = NOW()
+	//  WHERE tenant_id = $1 AND uuid = ANY($2::UUID[])
+	BatchSoftDeleteEntities(ctx context.Context, arg BatchSoftDeleteEntitiesParams) error
+	// Batch Operations
+	//
+	//  UPDATE entities
+	//  SET is_active = $3, updated_at = NOW()
+	//  WHERE tenant_id = $1 AND uuid = ANY($2::UUID[]) AND deleted_at IS NULL
+	BatchUpdateEntityStatus(ctx context.Context, arg BatchUpdateEntityStatusParams) error
+	//BulkSoftDeleteTenants
+	//
+	//  UPDATE tenants
+	//  SET deleted_at = NOW(), updated_at = NOW()
+	//  WHERE id = ANY($1::int[])
 	BulkSoftDeleteTenants(ctx context.Context, tenantIds []int32) error
 	// =====================================================
 	// BULK OPERATIONS
 	// =====================================================
+	//
+	//  UPDATE tenants
+	//  SET status = $1, updated_at = NOW()
+	//  WHERE id = ANY($2::int[]) AND deleted_at IS NULL
 	BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error
+	//CheckCurrentTenantExists
+	//
+	//  SELECT EXISTS(
+	//      SELECT 1 FROM tenants
+	//      WHERE id = current_tenant_id() AND deleted_at IS NULL
+	//  )
 	CheckCurrentTenantExists(ctx context.Context) (bool, error)
+	//CheckSubdomainExists
+	//
+	//  SELECT EXISTS(
+	//      SELECT 1 FROM tenants
+	//      WHERE subdomain = $1 AND deleted_at IS NULL
+	//  )
 	CheckSubdomainExists(ctx context.Context, subdomain *string) (bool, error)
+	//CheckTenantExists
+	//
+	//  SELECT EXISTS(
+	//      SELECT 1 FROM tenants
+	//      WHERE id = $1 AND deleted_at IS NULL
+	//  )
 	CheckTenantExists(ctx context.Context, id int32) (bool, error)
+	//CheckTenantNameExists
+	//
+	//  SELECT EXISTS(
+	//      SELECT 1 FROM tenants
+	//      WHERE name = $1 AND deleted_at IS NULL
+	//  )
 	CheckTenantNameExists(ctx context.Context, name string) (bool, error)
+	//CheckUserPermission
+	//
+	//  SELECT EXISTS(
+	//      SELECT 1
+	//      FROM user_roles ur
+	//      JOIN roles r ON ur.role_id = r.id
+	//      WHERE ur.user_id = $1
+	//          AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+	//          AND r.permissions ? $2
+	//  ) as has_permission
+	CheckUserPermission(ctx context.Context, arg CheckUserPermissionParams) (bool, error)
+	//CleanupExpiredUserRoles
+	//
+	//  DELETE FROM user_roles
+	//  WHERE expires_at IS NOT NULL AND expires_at <= NOW() - INTERVAL '30 days'
+	CleanupExpiredUserRoles(ctx context.Context) error
+	//CountFilteredTenants
+	//
+	//  SELECT COUNT(*) FROM tenants
+	//  WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
+	//    AND ($2::varchar IS NULL OR status = $2)
+	//    AND ($3::varchar IS NULL OR industry = $3)
+	//    AND deleted_at IS NULL
 	CountFilteredTenants(ctx context.Context, arg CountFilteredTenantsParams) (int64, error)
+	//CountTenants
+	//
+	//  SELECT COUNT(*) FROM tenants
+	//  WHERE deleted_at IS NULL
 	CountTenants(ctx context.Context) (int64, error)
+	// ==============================================
+	// EMPLOYEES TABLE OPERATIONS
+	// ==============================================
+	//
+	//
+	//  INSERT INTO employees (
+	//      tenant_id, person_id, employee_number, entity_id, position_title,
+	//      department_id, manager_id, hire_date, termination_date, salary_info,
+	//      employment_status, work_schedule
+	//  ) VALUES (
+	//      current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+	//  ) RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at
+	CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (Employee, error)
+	// Entity CRUD Operations
+	//
+	//  INSERT INTO entities (
+	//      uuid, tenant_id, parent_id, name, code, type, is_active,
+	//      hidden, accrual_method, fy_start_month, address, picture, settings
+	//  ) VALUES (
+	//      $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+	//  ) RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at
+	CreateEntity(ctx context.Context, arg CreateEntityParams) (Entity, error)
+	// Entity State Management
+	//
+	//  INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
+	//  VALUES ($1, $2, $3, $4, $5, $6)
+	//  RETURNING uuid, fiscal_year, key, sequence, entity_id, entity_unit_id
+	CreateEntityState(ctx context.Context, arg CreateEntityStateParams) (Entitystate, error)
+	// Entity Hierarchy Operations
+	//
+	//  INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	//  VALUES (current_tenant_id(), $1, $2, $3)
+	CreateHierarchyPath(ctx context.Context, arg CreateHierarchyPathParams) error
+	// ==============================================
+	// PERSONS TABLE OPERATIONS
+	// ==============================================
+	//
+	//
+	//  INSERT INTO persons (
+	//      tenant_id, entity_id, person_type, first_name, last_name, middle_name,
+	//      email, phone, birth_date, national_id, tax_id, address, metadata, is_active
+	//  ) VALUES (
+	//      current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+	//  ) RETURNING id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at
+	CreatePerson(ctx context.Context, arg CreatePersonParams) (Person, error)
+	// ==============================================
+	// ROLES TABLE OPERATIONS
+	// ==============================================
+	//
+	//
+	//  INSERT INTO roles (
+	//      tenant_id, entity_id, name, description, module, permissions,
+	//      entity_scope, is_system_role
+	//  ) VALUES (
+	//      current_tenant_id(), $1, $2, $3, $4, $5, $6, $7
+	//  ) RETURNING id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at
+	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	// =====================================================
 	// SQLC QUERIES FOR ERP/ACCOUNTING SYSTEM
 	// Multi-tenant with Row Level Security (RLS)
@@ -30,44 +173,952 @@ type Querier interface {
 	// TENANT MANAGEMENT QUERIES (Admin/System Level)
 	// Note: These queries are for system administrators managing tenants
 	// =====================================================
+	//
+	//
+	//
+	//  INSERT INTO tenants (name, subdomain, status, industry)
+	//  VALUES ($1, $2, $3, $4)
+	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 	CreateTenant(ctx context.Context, arg CreateTenantParams) (Tenant, error)
+	// ==============================================
+	// USERS TABLE OPERATIONS
+	// ==============================================
+	//
+	//
+	//  INSERT INTO users (
+	//      tenant_id, entity_id, person_id, employee_id, username, email,
+	//      password_hash, user_type, is_active, settings
+	//  ) VALUES (
+	//      current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9
+	//  ) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	//DeleteEntityState
+	//
+	//  DELETE FROM entitystate
+	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
+	DeleteEntityState(ctx context.Context, arg DeleteEntityStateParams) error
+	//DeleteHierarchyPaths
+	//
+	//  DELETE FROM hierarchy_paths
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND (ancestor_id = $1 OR descendant_id = $1)
+	DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID) error
+	//DeleteRole
+	//
+	//  DELETE FROM roles
+	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND is_system_role = false
+	DeleteRole(ctx context.Context, id int32) error
+	//DeleteTenant
+	//
+	//  DELETE FROM tenants
 	DeleteTenant(ctx context.Context) error
 	// =====================================================
 	// ADVANCED QUERIES WITH FILTERS
 	// =====================================================
-	FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]Tenant, error)
+	//
+	//
+	//  SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+	//  WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
+	//    AND ($2::varchar IS NULL OR status = $2)
+	//    AND ($3::varchar IS NULL OR industry = $3)
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    CASE WHEN $4::varchar = 'name' THEN name END ASC,
+	//    CASE WHEN $4::varchar = 'created_at' THEN created_at END DESC,
+	//    CASE WHEN $4::varchar = 'updated_at' THEN updated_at END DESC,
+	//    id DESC
+	//  LIMIT $6 OFFSET $5
+	FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]FilterTenantsRow, error)
+	//GetActiveTenants
+	//
+	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  WHERE status = 'active' AND deleted_at IS NULL
+	//  ORDER BY name
 	GetActiveTenants(ctx context.Context) ([]Tenant, error)
 	//=====================================================
 	// CURRENT TENANT QUERIES (RLS-Aware)
 	// These queries work within the current tenant context
 	// =====================================================
+	//
+	//
+	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  WHERE id = current_tenant_id() AND deleted_at IS NULL
 	GetCurrentTenant(ctx context.Context) (Tenant, error)
 	// =====================================================
 	// UTILITY QUERIES
 	// =====================================================
 	// Current tenant utilities
+	//
+	//
+	//  SELECT current_tenant_id()
 	GetCurrentTenantID(ctx context.Context) (int32, error)
+	// SELECT
+	//     t.id,
+	//     t.name,
+	//     tc.storage_quota,
+	//     COALESCE(tc.storage_quota, 1073741824) as quota_bytes
+	// FROM tenants t
+	// LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
+	// WHERE t.id = current_tenant_id() AND t.deleted_at IS NULL;
+	//
+	//
+	//
+	//
+	// Admin utilities (system-wide)
+	//
+	//  SELECT
+	//      COUNT(*) as total_tenants,
+	//      COUNT(*) FILTER (WHERE status = 'active') as active_tenants,
+	//      COUNT(*) FILTER (WHERE status = 'suspended') as suspended_tenants,
+	//      COUNT(*) FILTER (WHERE status = 'pending') as pending_tenants
+	//  FROM tenants
+	//  WHERE deleted_at IS NULL
 	GetCurrentTenantStorageUsage(ctx context.Context) (GetCurrentTenantStorageUsageRow, error)
+	//GetEmployee
+	//
+	//  SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	GetEmployee(ctx context.Context, id int32) (Employee, error)
+	//GetEmployeeByNumber
+	//
+	//  SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
+	//  WHERE employee_number = $1 AND tenant_id = current_tenant_id()
+	GetEmployeeByNumber(ctx context.Context, employeeNumber string) (Employee, error)
+	//GetEmployeeByPersonId
+	//
+	//  SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
+	//  WHERE person_id = $1 AND tenant_id = current_tenant_id()
+	GetEmployeeByPersonId(ctx context.Context, personID int32) (Employee, error)
+	//GetEmployeeHierarchy
+	//
+	//  WITH RECURSIVE employee_hierarchy AS (
+	//      SELECT
+	//          e.id, e.person_id, e.employee_number, e.position_title, e.manager_id,
+	//          p.first_name, p.last_name, 0 as level
+	//      FROM employees e
+	//      JOIN persons p ON e.person_id = p.id
+	//      WHERE e.id = $1 AND e.tenant_id = current_tenant_id()
+	//
+	//      UNION ALL
+	//
+	//      SELECT
+	//          e.id, e.person_id, e.employee_number, e.position_title, e.manager_id,
+	//          p.first_name, p.last_name, eh.level + 1
+	//      FROM employees e
+	//      JOIN persons p ON e.person_id = p.id
+	//      JOIN employee_hierarchy eh ON e.manager_id = eh.id
+	//      WHERE e.tenant_id = current_tenant_id() AND eh.level < 10
+	//  )
+	//  SELECT id, person_id, employee_number, position_title, manager_id, first_name, last_name, level FROM employee_hierarchy
+	//  ORDER BY level, last_name, first_name
+	GetEmployeeHierarchy(ctx context.Context, id int32) ([]GetEmployeeHierarchyRow, error)
+	//GetEmployeeStats
+	//
+	//  SELECT
+	//      COUNT(*) as total_employees,
+	//      COUNT(*) FILTER (WHERE employment_status = 'ACTIVE') as active_employees,
+	//      COUNT(*) FILTER (WHERE employment_status = 'TERMINATED') as terminated_employees,
+	//      COUNT(*) FILTER (WHERE employment_status = 'ON_LEAVE') as on_leave_employees,
+	//      COUNT(DISTINCT department_id) as departments_count,
+	//      COUNT(*) FILTER (WHERE manager_id IS NULL) as managers_count
+	//  FROM employees
+	//  WHERE tenant_id = current_tenant_id()
+	GetEmployeeStats(ctx context.Context) (GetEmployeeStatsRow, error)
+	//GetEntitiesByFiscalYear
+	//
+	//  SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at
+	//  FROM entities e
+	//  JOIN entitystate es ON e.uuid = es.entity_id
+	//  WHERE e.tenant_id = $1
+	//      AND es.fiscal_year = $2
+	//      AND e.deleted_at IS NULL
+	//  ORDER BY e.name
+	GetEntitiesByFiscalYear(ctx context.Context, arg GetEntitiesByFiscalYearParams) ([]Entity, error)
+	//GetEntitiesByUUIDs
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = $1 AND uuid = ANY($2::UUID[]) AND deleted_at IS NULL
+	//  ORDER BY name
+	GetEntitiesByUUIDs(ctx context.Context, arg GetEntitiesByUUIDsParams) ([]Entity, error)
+	//GetEntity
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//    WHERE uuid = $1
+	//    AND tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	GetEntity(ctx context.Context, argUuid uuid.UUID) (Entity, error)
+	//GetEntityAncestors
+	//
+	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
+	//  JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
+	//  WHERE hp.tenant_id = current_tenant_id()
+	//      AND hp.descendant_id = $1
+	//      AND hp.depth > 0
+	//      AND e.deleted_at IS NULL
+	//  ORDER BY hp.depth DESC
+	GetEntityAncestors(ctx context.Context, descendantID uuid.UUID) ([]GetEntityAncestorsRow, error)
+	//GetEntityByCode
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE code = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	GetEntityByCode(ctx context.Context, code *string) (Entity, error)
+	//GetEntityByName
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	GetEntityByName(ctx context.Context, name string) (Entity, error)
+	//GetEntityChildren
+	//
+	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+	//  JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
+	//  WHERE hp.tenant_id = current_tenant_id()
+	//      AND hp.ancestor_id = $1
+	//      AND hp.depth = 1
+	//      AND e.deleted_at IS NULL
+	//  ORDER BY e.name
+	GetEntityChildren(ctx context.Context, ancestorID uuid.UUID) ([]Entity, error)
+	//GetEntityDescendants
+	//
+	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
+	//  JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
+	//  WHERE hp.tenant_id = current_tenant_id()
+	//      AND hp.ancestor_id = $1
+	//      AND hp.depth > 0
+	//      AND e.deleted_at IS NULL
+	//  ORDER BY hp.depth, e.name
+	GetEntityDescendants(ctx context.Context, ancestorID uuid.UUID) ([]GetEntityDescendantsRow, error)
+	//GetEntityLevel
+	//
+	//  SELECT COALESCE(MIN(hp.depth), 0) as level
+	//  FROM hierarchy_paths hp
+	//  WHERE hp.tenant_id = current_tenant_id() AND hp.descendant_id = $1
+	GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (interface{}, error)
+	//GetEntityParent
+	//
+	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+	//  JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
+	//  WHERE hp.tenant_id = current_tenant_id()
+	//      AND hp.descendant_id = $1
+	//      AND hp.depth = 1
+	//      AND e.deleted_at IS NULL
+	GetEntityParent(ctx context.Context, descendantID uuid.UUID) (Entity, error)
+	//GetEntityRoots
+	//
+	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+	//  WHERE e.tenant_id = current_tenant_id()
+	//      AND e.parent_id IS NULL
+	//      AND e.deleted_at IS NULL
+	//  ORDER BY e.name
+	GetEntityRoots(ctx context.Context) ([]Entity, error)
+	//GetEntitySiblings
+	//
+	//  SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+	//  JOIN hierarchy_paths hp1 ON e.uuid = hp1.descendant_id
+	//  JOIN hierarchy_paths hp2 ON hp1.ancestor_id = hp2.ancestor_id
+	//  WHERE hp2.tenant_id = current_tenant_id()
+	//      AND hp2.descendant_id = $1
+	//      AND hp1.depth = 1
+	//      AND hp2.depth = 1
+	//      AND e.uuid != $1
+	//      AND e.deleted_at IS NULL
+	//  ORDER BY e.name
+	GetEntitySiblings(ctx context.Context, descendantID uuid.UUID) ([]Entity, error)
+	//GetEntityState
+	//
+	//  SELECT uuid, fiscal_year, key, sequence, entity_id, entity_unit_id FROM entitystate
+	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
+	GetEntityState(ctx context.Context, arg GetEntityStateParams) (Entitystate, error)
+	//GetEntityStateByKey
+	//
+	//  SELECT uuid, fiscal_year, key, sequence, entity_id, entity_unit_id FROM entitystate
+	//  WHERE entity_id = $1 AND key = $2
+	GetEntityStateByKey(ctx context.Context, arg GetEntityStateByKeyParams) (Entitystate, error)
+	//GetEntityStats
+	//
+	//  SELECT
+	//      COUNT(*) as total_entities,
+	//      COUNT(*) FILTER (WHERE is_active = true) as active_entities,
+	//      COUNT(*) FILTER (WHERE hidden = false) as visible_entities,
+	//      COUNT(DISTINCT type) as entity_types,
+	//      COUNT(*) FILTER (WHERE parent_id IS NULL) as root_entities,
+	//      COUNT(*) FILTER (WHERE accrual_method = true) as accrual_entities,
+	//      COUNT(*) FILTER (WHERE accrual_method = false) as cash_entities
+	//  FROM entities
+	//  WHERE tenant_id = $1 AND deleted_at IS NULL
+	GetEntityStats(ctx context.Context, tenantID int32) (GetEntityStatsRow, error)
+	//GetEntityTreeStructure
+	//
+	//  WITH RECURSIVE entity_tree AS (
+	//      SELECT
+	//          e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+	//          0 as level,
+	//          ARRAY[e.name] as path,
+	//          e.name as sort_path
+	//      FROM entities e
+	//      WHERE e.tenant_id = $1
+	//          AND e.parent_id IS NULL
+	//          AND e.deleted_at IS NULL
+	//
+	//      UNION ALL
+	//
+	//      SELECT
+	//          e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+	//          et.level + 1,
+	//          et.path || e.name,
+	//          et.sort_path || '/' || e.name
+	//      FROM entities e
+	//      JOIN entity_tree et ON e.parent_id = et.uuid
+	//      WHERE e.tenant_id = $1
+	//          AND e.deleted_at IS NULL
+	//          AND et.level < 10
+	//  )
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
+	//  ORDER BY sort_path
+	GetEntityTreeStructure(ctx context.Context, tenantID int32) ([]GetEntityTreeStructureRow, error)
+	// Advanced Entity Queries
+	//
+	//  SELECT
+	//      e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+	//      COALESCE(MIN(hp.depth), 0) as level,
+	//      COUNT(children.uuid) as child_count,
+	//      parent_e.name as parent_name
+	//  FROM entities e
+	//  LEFT JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id AND hp.tenant_id = e.tenant_id
+	//  LEFT JOIN entities children ON children.parent_id = e.uuid AND children.tenant_id = e.tenant_id AND children.deleted_at IS NULL
+	//  LEFT JOIN entities parent_e ON parent_e.uuid = e.parent_id AND parent_e.tenant_id = e.tenant_id
+	//  WHERE e.uuid = $1 AND e.tenant_id = $2 AND e.deleted_at IS NULL
+	//  GROUP BY e.uuid, parent_e.name
+	GetEntityWithHierarchyInfo(ctx context.Context, arg GetEntityWithHierarchyInfoParams) (GetEntityWithHierarchyInfoRow, error)
+	//GetNextSequenceNumber
+	//
+	//  INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
+	//  VALUES (gen_random_uuid(), $3, $2, 1, $1, $4)
+	//  ON CONFLICT (entity_id, key, fiscal_year) DO UPDATE
+	//  SET sequence = entitystate.sequence + 1
+	//  RETURNING sequence
+	GetNextSequenceNumber(ctx context.Context, arg GetNextSequenceNumberParams) (int64, error)
+	//GetPerson
+	//
+	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at FROM persons
+	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	GetPerson(ctx context.Context, id int32) (Person, error)
+	//GetPersonByEmail
+	//
+	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at FROM persons
+	//  WHERE email = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	GetPersonByEmail(ctx context.Context, email *string) (Person, error)
+	//GetPersonByNationalId
+	//
+	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at FROM persons
+	//  WHERE national_id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	GetPersonByNationalId(ctx context.Context, nationalID *string) (Person, error)
+	// ==============================================
+	// COMPLEX QUERIES AND REPORTS
+	// ==============================================
+	//
+	//
+	//  SELECT
+	//      p.id, p.tenant_id, p.entity_id, p.person_type, p.first_name, p.last_name, p.middle_name, p.email, p.phone, p.birth_date, p.national_id, p.tax_id, p.address, p.metadata, p.is_active, p.created_at, p.updated_at, p.deleted_at,
+	//      e.id as employee_id, e.employee_number, e.position_title, e.employment_status,
+	//      u.id as user_id, u.username, u.email as user_email, u.user_type, u.is_active as user_active,
+	//      (CASE
+	//          WHEN p.middle_name IS NOT NULL AND p.middle_name != ''
+	//          THEN p.first_name || ' ' || p.middle_name || ' ' || p.last_name
+	//          ELSE p.first_name || ' ' || p.last_name
+	//      END)::text as full_name
+	//  FROM persons p
+	//  LEFT JOIN employees e ON p.id = e.person_id AND e.tenant_id = current_tenant_id() AND e.deleted_at IS NULL
+	//  LEFT JOIN users u ON p.id = u.person_id AND u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
+	//  WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
+	GetPersonEmployeeUserInfo(ctx context.Context, personID int32) (GetPersonEmployeeUserInfoRow, error)
+	//GetPersonFullName
+	//
+	//  SELECT
+	//      CASE
+	//          WHEN middle_name IS NOT NULL AND middle_name != ''
+	//          THEN first_name || ' ' || middle_name || ' ' || last_name
+	//          ELSE first_name || ' ' || last_name
+	//      END as full_name
+	//  FROM persons p
+	//  WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
+	GetPersonFullName(ctx context.Context, personID int32) (interface{}, error)
+	//GetRole
+	//
+	//  SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	GetRole(ctx context.Context, id int32) (Role, error)
+	//GetRoleByName
+	//
+	//  SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+	//  WHERE name = $1 AND tenant_id = current_tenant_id()
+	GetRoleByName(ctx context.Context, name string) (Role, error)
+	//GetRoleUsers
+	//
+	//  SELECT ur.user_id, ur.role_id, ur.entity_id, ur.assigned_at, ur.assigned_by, ur.expires_at, u.email, u.username, p.first_name, p.last_name
+	//  FROM user_roles ur
+	//  JOIN users u ON ur.user_id = u.id
+	//  LEFT JOIN persons p ON u.person_id = p.id
+	//  WHERE ur.role_id = $1
+	//      AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+	//      AND u.deleted_at IS NULL
+	//  ORDER BY p.last_name, p.first_name, u.email
+	GetRoleUsers(ctx context.Context, roleID int32) ([]GetRoleUsersRow, error)
 	// Example session variable
 	//
+	//
+	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  WHERE id = $1 AND deleted_at IS NULL
 	GetTenantByID(ctx context.Context, id int32) (Tenant, error)
+	//GetTenantBySubdomain
+	//
+	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  WHERE subdomain = $1 AND deleted_at IS NULL
 	GetTenantBySubdomain(ctx context.Context, subdomain *string) (Tenant, error)
+	//GetTenantByUUID
+	//
+	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  WHERE uuid = $1 AND deleted_at IS NULL
 	GetTenantByUUID(ctx context.Context, argUuid uuid.UUID) (Tenant, error)
-	// Admin utilities (system-wide)
-	GetTenantStats(ctx context.Context) (GetTenantStatsRow, error)
+	//GetTenantsByIndustry
+	//
+	//  SELECT industry, COUNT(*) as tenant_count
+	//  FROM tenants
+	//  WHERE deleted_at IS NULL AND industry IS NOT NULL
+	//  GROUP BY industry
+	//  ORDER BY tenant_count DESC
 	GetTenantsByIndustry(ctx context.Context) ([]GetTenantsByIndustryRow, error)
+	//GetTenantsCreatedInDateRange
+	//
+	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  WHERE created_at >= $1
+	//    AND created_at <= $2
+	//    AND deleted_at IS NULL
+	//  ORDER BY created_at DESC
 	GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]Tenant, error)
+	//GetUser
+	//
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
+	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	GetUser(ctx context.Context, id int32) (User, error)
+	//GetUserByEmail
+	//
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
+	//  WHERE email = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	GetUserByEmail(ctx context.Context, email string) (User, error)
+	//GetUserByUsername
+	//
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
+	//  WHERE username = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	GetUserByUsername(ctx context.Context, username *string) (User, error)
+	//GetUserPermissions
+	//
+	//  SELECT DISTINCT r.module, r.permissions
+	//  FROM user_roles ur
+	//  JOIN roles r ON ur.role_id = r.id
+	//  WHERE ur.user_id = $1
+	//      AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+	GetUserPermissions(ctx context.Context, userID int32) ([]GetUserPermissionsRow, error)
+	//GetUserRoles
+	//
+	//  SELECT ur.user_id, ur.role_id, ur.entity_id, ur.assigned_at, ur.assigned_by, ur.expires_at, r.name as role_name, r.description as role_description, r.permissions
+	//  FROM user_roles ur
+	//  JOIN roles r ON ur.role_id = r.id
+	//  WHERE ur.user_id = $1
+	//      AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+	//  ORDER BY r.name
+	GetUserRoles(ctx context.Context, userID int32) ([]GetUserRolesRow, error)
+	//GetUserStats
+	//
+	//  SELECT
+	//      COUNT(*) as total_users,
+	//      COUNT(*) FILTER (WHERE is_active = true) as active_users,
+	//      COUNT(*) FILTER (WHERE user_type = 'INTERNAL') as internal_users,
+	//      COUNT(*) FILTER (WHERE user_type = 'CUSTOMER') as customer_users,
+	//      COUNT(*) FILTER (WHERE user_type = 'VENDOR') as vendor_users,
+	//      COUNT(*) FILTER (WHERE last_login_at >= NOW() - INTERVAL '30 days') as recent_logins
+	//  FROM users
+	//  WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
+	GetUserStats(ctx context.Context) (GetUserStatsRow, error)
+	//GetUserWithPersonDetails
+	//
+	//  SELECT
+	//      u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.is_active, u.last_login_at, u.password_changed_at, u.settings, u.created_at, u.updated_at, u.deleted_at,
+	//      p.first_name, p.last_name, p.middle_name, p.phone, p.birth_date,
+	//      e.employee_number, e.position_title, e.department_id
+	//  FROM users u
+	//  LEFT JOIN persons p ON u.person_id = p.id
+	//  LEFT JOIN employees e ON u.employee_id = e.id
+	//  WHERE u.id = $1 AND u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
+	GetUserWithPersonDetails(ctx context.Context, id int32) (GetUserWithPersonDetailsRow, error)
+	//HardDeleteEntity
+	//
+	//  DELETE FROM entities
+	//  WHERE uuid = $1 AND tenant_id = current_tenant_id()
+	HardDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
+	//IncrementEntityStateSequence
+	//
+	//  UPDATE entitystate
+	//  SET sequence = sequence + 1
+	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
+	//  RETURNING sequence
+	IncrementEntityStateSequence(ctx context.Context, arg IncrementEntityStateSequenceParams) (int64, error)
+	//IsEntityAncestor
+	//
+	//  SELECT EXISTS(
+	//      SELECT 1 FROM hierarchy_paths
+	//      WHERE tenant_id = current_tenant_id()
+	//          AND ancestor_id = $1
+	//          AND descendant_id = $2
+	//          AND depth > 0
+	//  ) as is_ancestor
+	IsEntityAncestor(ctx context.Context, arg IsEntityAncestorParams) (bool, error)
+	//ListActiveEmployees
+	//
+	//  SELECT e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.created_at, e.updated_at, p.first_name, p.last_name, p.email, p.phone
+	//  FROM employees e
+	//  JOIN persons p ON e.person_id = p.id
+	//  WHERE e.tenant_id = current_tenant_id() AND e.employment_status = 'ACTIVE'
+	//  ORDER BY p.last_name, p.first_name
+	ListActiveEmployees(ctx context.Context) ([]ListActiveEmployeesRow, error)
+	//ListActiveEntities
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = current_tenant_id() AND is_active = true AND deleted_at IS NULL
+	//  ORDER BY name
+	ListActiveEntities(ctx context.Context) ([]Entity, error)
+	//ListActiveUsers
+	//
+	//  SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.is_active, u.last_login_at, u.password_changed_at, u.settings, u.created_at, u.updated_at, u.deleted_at, p.first_name, p.last_name, e.employee_number
+	//  FROM users u
+	//  LEFT JOIN persons p ON u.person_id = p.id
+	//  LEFT JOIN employees e ON u.employee_id = e.id
+	//  WHERE u.tenant_id = current_tenant_id() AND u.is_active = true AND u.deleted_at IS NULL
+	//  ORDER BY u.email
+	ListActiveUsers(ctx context.Context) ([]ListActiveUsersRow, error)
+	//ListCustomRoles
+	//
+	//  SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+	//  WHERE tenant_id = current_tenant_id() AND is_system_role = false
+	//  ORDER BY name
+	ListCustomRoles(ctx context.Context) ([]Role, error)
+	//ListEmployees
+	//
+	//  SELECT e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.created_at, e.updated_at, p.first_name, p.last_name, p.email, p.phone
+	//  FROM employees e
+	//  JOIN persons p ON e.person_id = p.id
+	//  WHERE e.tenant_id = current_tenant_id()
+	//  ORDER BY p.last_name, p.first_name
+	ListEmployees(ctx context.Context) ([]ListEmployeesRow, error)
+	//ListEmployeesByDepartment
+	//
+	//  SELECT e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.created_at, e.updated_at, p.first_name, p.last_name, p.email, p.phone
+	//  FROM employees e
+	//  JOIN persons p ON e.person_id = p.id
+	//  WHERE e.tenant_id = current_tenant_id() AND e.department_id = $1
+	//  ORDER BY p.last_name, p.first_name
+	ListEmployeesByDepartment(ctx context.Context, departmentID pgtype.UUID) ([]ListEmployeesByDepartmentRow, error)
+	//ListEmployeesByManager
+	//
+	//  SELECT e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.created_at, e.updated_at, p.first_name, p.last_name, p.email, p.phone
+	//  FROM employees e
+	//  JOIN persons p ON e.person_id = p.id
+	//  WHERE e.tenant_id = current_tenant_id() AND e.manager_id = $1
+	//  ORDER BY p.last_name, p.first_name
+	ListEmployeesByManager(ctx context.Context, managerID *int32) ([]ListEmployeesByManagerRow, error)
+	// Entity Listing and Filtering
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  ORDER BY name
+	ListEntities(ctx context.Context) ([]Entity, error)
+	//ListEntitiesByType
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = current_tenant_id() AND type = $1 AND deleted_at IS NULL
+	//  ORDER BY name
+	ListEntitiesByType(ctx context.Context, type_ string) ([]Entity, error)
+	// Find all leaf nodes (entities with no children)
+	//
+	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at
+	//  FROM entities e
+	//  LEFT JOIN entities children ON children.parent_id = e.uuid
+	//      AND children.tenant_id = e.tenant_id
+	//  WHERE children.uuid IS NULL
+	//    AND e.tenant_id = current_tenant_id()
+	//    AND e.is_active = true
+	ListEntitiesWithNochildren(ctx context.Context) ([]Entity, error)
+	//ListEntityStates
+	//
+	//  SELECT uuid, fiscal_year, key, sequence, entity_id, entity_unit_id FROM entitystate
+	//  WHERE entity_id = $1
+	//  ORDER BY key, fiscal_year
+	ListEntityStates(ctx context.Context, entityID uuid.UUID) ([]Entitystate, error)
+	//ListExpiredUserRoles
+	//
+	//  SELECT ur.user_id, ur.role_id, ur.entity_id, ur.assigned_at, ur.assigned_by, ur.expires_at, u.email, r.name as role_name
+	//  FROM user_roles ur
+	//  JOIN users u ON ur.user_id = u.id
+	//  JOIN roles r ON ur.role_id = r.id
+	//  WHERE ur.expires_at IS NOT NULL
+	//      AND ur.expires_at <= NOW()
+	//      AND u.tenant_id = current_tenant_id()
+	//  ORDER BY ur.expires_at DESC
+	ListExpiredUserRoles(ctx context.Context) ([]ListExpiredUserRolesRow, error)
+	//ListPersons
+	//
+	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at FROM persons
+	//  WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  ORDER BY last_name, first_name
+	ListPersons(ctx context.Context) ([]Person, error)
+	//ListPersonsByEntity
+	//
+	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at FROM persons
+	//  WHERE tenant_id = current_tenant_id() AND entity_id = $1 AND deleted_at IS NULL
+	//  ORDER BY last_name, first_name
+	ListPersonsByEntity(ctx context.Context, entityID uuid.UUID) ([]Person, error)
+	//ListPersonsByType
+	//
+	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at FROM persons
+	//  WHERE tenant_id = current_tenant_id() AND person_type = $1 AND deleted_at IS NULL
+	//  ORDER BY last_name, first_name
+	ListPersonsByType(ctx context.Context, personType string) ([]Person, error)
+	//ListRoles
+	//
+	//  SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+	//  WHERE tenant_id = current_tenant_id()
+	//  ORDER BY name
+	ListRoles(ctx context.Context) ([]Role, error)
+	//ListRolesByModule
+	//
+	//  SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+	//  WHERE tenant_id = current_tenant_id() AND module = $1
+	//  ORDER BY name
+	ListRolesByModule(ctx context.Context, module *string) ([]Role, error)
+	//ListSystemRoles
+	//
+	//  SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+	//  WHERE tenant_id = current_tenant_id() AND is_system_role = true
+	//  ORDER BY name
+	ListSystemRoles(ctx context.Context) ([]Role, error)
+	//ListTenants
+	//
+	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  WHERE deleted_at IS NULL
+	//  ORDER BY created_at DESC
+	//  LIMIT $1 OFFSET $2
 	ListTenants(ctx context.Context, arg ListTenantsParams) ([]Tenant, error)
+	//ListUsers
+	//
+	//  SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.is_active, u.last_login_at, u.password_changed_at, u.settings, u.created_at, u.updated_at, u.deleted_at, p.first_name, p.last_name, e.employee_number
+	//  FROM users u
+	//  LEFT JOIN persons p ON u.person_id = p.id
+	//  LEFT JOIN employees e ON u.employee_id = e.id
+	//  WHERE u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
+	//  ORDER BY u.email
+	ListUsers(ctx context.Context) ([]ListUsersRow, error)
+	//ListUsersByType
+	//
+	//  SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.is_active, u.last_login_at, u.password_changed_at, u.settings, u.created_at, u.updated_at, u.deleted_at, p.first_name, p.last_name, e.employee_number
+	//  FROM users u
+	//  LEFT JOIN persons p ON u.person_id = p.id
+	//  LEFT JOIN employees e ON u.employee_id = e.id
+	//  WHERE u.tenant_id = current_tenant_id() AND u.user_type = $1 AND u.deleted_at IS NULL
+	//  ORDER BY u.email
+	ListUsersByType(ctx context.Context, userType string) ([]ListUsersByTypeRow, error)
+	//ListVisibleEntities
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = current_tenant_id() AND hidden = false AND deleted_at IS NULL
+	//  ORDER BY name
+	ListVisibleEntities(ctx context.Context) ([]Entity, error)
+	//ResetEntityStateSequence
+	//
+	//  UPDATE entitystate
+	//  SET sequence = $3
+	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $4
+	ResetEntityStateSequence(ctx context.Context, arg ResetEntityStateSequenceParams) error
+	//RestoreEntity
+	//
+	//  UPDATE entities
+	//  SET deleted_at = NULL, updated_at = NOW()
+	//  WHERE uuid = $1 AND tenant_id = current_tenant_id()
+	RestoreEntity(ctx context.Context, argUuid uuid.UUID) error
+	//RestorePerson
+	//
+	//  UPDATE persons
+	//  SET deleted_at = NULL, updated_at = NOW()
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	RestorePerson(ctx context.Context, id int32) error
+	//RevokeUserRole
+	//
+	//  DELETE FROM user_roles
+	//  WHERE user_id = $1 AND role_id = $2 AND entity_id = $3
+	RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) error
+	//SearchEntitiesByName
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND name ILIKE '%' || $1 || '%'
+	//      AND deleted_at IS NULL
+	//  ORDER BY name
+	//  LIMIT $2
+	SearchEntitiesByName(ctx context.Context, arg SearchEntitiesByNameParams) ([]Entity, error)
+	//SearchPersonsByName
+	//
+	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at FROM persons
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND (
+	//          first_name ILIKE '%' || $1 || '%' OR
+	//          last_name ILIKE '%' || $1 || '%' OR
+	//          (first_name || ' ' || last_name) ILIKE '%' || $1 || '%'
+	//      )
+	//      AND deleted_at IS NULL
+	//  ORDER BY last_name, first_name
+	//  LIMIT $2
+	SearchPersonsByName(ctx context.Context, arg SearchPersonsByNameParams) ([]Person, error)
+	//SearchTenantsByName
+	//
+	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  WHERE name ILIKE '%' || $1 || '%'
+	//    AND deleted_at IS NULL
+	//  ORDER BY name
+	//  LIMIT $3 OFFSET $2
 	SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]Tenant, error)
+	//SearchUsersWithRoles
+	//
+	//  SELECT DISTINCT
+	//      u.id, u.username, u.email, u.user_type, u.is_active,
+	//      p.first_name, p.last_name,
+	//      string_agg(r.name, ', ') as roles
+	//  FROM users u
+	//  LEFT JOIN persons p ON u.person_id = p.id
+	//  LEFT JOIN user_roles ur ON u.id = ur.user_id AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+	//  LEFT JOIN roles r ON ur.role_id = r.id
+	//  WHERE u.tenant_id = current_tenant_id()
+	//      AND u.deleted_at IS NULL
+	//      AND (
+	//          u.email ILIKE '%' || $1 || '%' OR
+	//          u.username ILIKE '%' || $1 || '%' OR
+	//          p.first_name ILIKE '%' || $1 || '%' OR
+	//          p.last_name ILIKE '%' || $1 || '%'
+	//      )
+	//  GROUP BY u.id, u.username, u.email, u.user_type, u.is_active, p.first_name, p.last_name
+	//  ORDER BY p.last_name, p.first_name, u.email
+	//  LIMIT $2
+	SearchUsersWithRoles(ctx context.Context, arg SearchUsersWithRolesParams) ([]SearchUsersWithRolesRow, error)
+	//SetCurrentTenant
+	//
+	//  SET app.current_tenant = $1
 	SetCurrentTenant(ctx context.Context, dollar_1 interface{}) error
+	//SoftDeleteEntity
+	//
+	//  UPDATE entities
+	//  SET deleted_at = NOW(), updated_at = NOW()
+	//  WHERE uuid = $1 AND tenant_id = current_tenant_id()
+	SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
+	//SoftDeletePerson
+	//
+	//  UPDATE persons
+	//  SET deleted_at = NOW(), updated_at = NOW()
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	SoftDeletePerson(ctx context.Context, id int32) error
+	//SoftDeleteTenant
+	//
+	//  UPDATE tenants
+	//  SET deleted_at = NOW(), updated_at = NOW()
+	//  WHERE id = $1
 	SoftDeleteTenant(ctx context.Context, id int32) error
+	//SoftDeleteUser
+	//
+	//  UPDATE users
+	//  SET deleted_at = NOW(), updated_at = NOW()
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	SoftDeleteUser(ctx context.Context, id int32) error
+	//UpdateCurrentTenant
+	//
+	//  UPDATE tenants
+	//  SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
+	//  WHERE id = current_tenant_id() AND deleted_at IS NULL
+	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 	UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (Tenant, error)
+	//UpdateEmployee
+	//
+	//  UPDATE employees
+	//  SET
+	//      employee_number = COALESCE($2, employee_number),
+	//      entity_id = COALESCE($3, entity_id),
+	//      position_title = COALESCE($4, position_title),
+	//      department_id = COALESCE($5, department_id),
+	//      manager_id = COALESCE($6, manager_id),
+	//      hire_date = COALESCE($7, hire_date),
+	//      termination_date = COALESCE($8, termination_date),
+	//      salary_info = COALESCE($9, salary_info),
+	//      employment_status = COALESCE($10, employment_status),
+	//      work_schedule = COALESCE($11, work_schedule),
+	//      updated_at = NOW()
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at
+	UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error)
+	//UpdateEntity
+	//
+	//  UPDATE entities
+	//  SET
+	//      name = COALESCE($2, name),
+	//      code = COALESCE($3, code),
+	//      type = COALESCE($4, type),
+	//      is_active = COALESCE($5, is_active),
+	//      hidden = COALESCE($6, hidden),
+	//      accrual_method = COALESCE($7, accrual_method),
+	//      fy_start_month = COALESCE($8, fy_start_month),
+	//      address = COALESCE($9, address),
+	//      picture = COALESCE($10, picture),
+	//      settings = COALESCE($11, settings),
+	//      updated_at = NOW()
+	//  WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at
+	UpdateEntity(ctx context.Context, arg UpdateEntityParams) (Entity, error)
+	//UpdateEntityStateSequence
+	//
+	//  UPDATE entitystate
+	//  SET sequence = $3, updated_at = NOW()
+	//  WHERE entity_id = $1 AND key = $2
+	//  RETURNING uuid, fiscal_year, key, sequence, entity_id, entity_unit_id
+	UpdateEntityStateSequence(ctx context.Context, arg UpdateEntityStateSequenceParams) (Entitystate, error)
+	//UpdateHierarchyPaths
+	//
+	//  WITH RECURSIVE hierarchy_cte AS (
+	//      -- Base case: self-reference
+	//      SELECT current_tenant_id() as tenant_id, $1::UUID as ancestor_id, $1::UUID as descendant_id, 0 as depth
+	//      UNION ALL
+	//      -- Recursive case: add ancestors
+	//      SELECT h.tenant_id, hp.ancestor_id, h.descendant_id, h.depth + 1
+	//      FROM hierarchy_cte h
+	//      JOIN hierarchy_paths hp ON hp.descendant_id = h.ancestor_id AND hp.tenant_id = h.tenant_id
+	//      WHERE h.depth < 10 -- Prevent infinite recursion
+	//  )
+	//  INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	//  SELECT DISTINCT tenant_id, ancestor_id, descendant_id, depth
+	//  FROM hierarchy_cte
+	//  ON CONFLICT (tenant_id, ancestor_id, descendant_id) DO NOTHING
+	UpdateHierarchyPaths(ctx context.Context, dollar_1 uuid.UUID) error
+	//UpdatePerson
+	//
+	//  UPDATE persons
+	//  SET
+	//      entity_id = COALESCE($2, entity_id),
+	//      person_type = COALESCE($3, person_type),
+	//      first_name = COALESCE($4, first_name),
+	//      last_name = COALESCE($5, last_name),
+	//      middle_name = COALESCE($6, middle_name),
+	//      email = COALESCE($7, email),
+	//      phone = COALESCE($8, phone),
+	//      birth_date = COALESCE($9, birth_date),
+	//      national_id = COALESCE($10, national_id),
+	//      tax_id = COALESCE($11, tax_id),
+	//      address = COALESCE($12, address),
+	//      metadata = COALESCE($13, metadata),
+	//      is_active = COALESCE($14, is_active),
+	//      updated_at = NOW()
+	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  RETURNING id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at
+	UpdatePerson(ctx context.Context, arg UpdatePersonParams) (Person, error)
+	//UpdateRole
+	//
+	//  UPDATE roles
+	//  SET
+	//      entity_id = COALESCE($2, entity_id),
+	//      name = COALESCE($3, name),
+	//      description = COALESCE($4, description),
+	//      module = COALESCE($5, module),
+	//      permissions = COALESCE($6, permissions),
+	//      entity_scope = COALESCE($7, entity_scope)
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  RETURNING id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at
+	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)
+	//UpdateTenant
+	//
+	//  UPDATE tenants
+	//  SET
+	//      name = COALESCE($1, name),
+	//  subdomain = COALESCE($2, subdomain),
+	//  status = COALESCE($3, status),
+	//  industry = COALESCE($4, industry) ,
+	//  updated_at = NOW()
+	//  WHERE id = $5 AND deleted_at IS NULL
+	//    RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 	UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Tenant, error)
+	//UpdateTenantIndustry
+	//
+	//  UPDATE tenants
+	//  SET industry = $2, updated_at = NOW()
+	//  WHERE id = $1 AND deleted_at IS NULL
+	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 	UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (Tenant, error)
+	//UpdateTenantName
+	//
+	//  UPDATE tenants
+	//  SET name = $2, updated_at = NOW()
+	//  WHERE id = $1 AND deleted_at IS NULL
+	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 	UpdateTenantName(ctx context.Context, arg UpdateTenantNameParams) (Tenant, error)
 	//
+	//
+	//  UPDATE tenants
+	//  SET status = $2, updated_at = NOW()
+	//  WHERE id = $1 AND deleted_at IS NULL
+	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 	UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (Tenant, error)
+	//UpdateTenantSubdomain
+	//
+	//  UPDATE tenants
+	//  SET subdomain = $2, updated_at = NOW()
+	//  WHERE id = $1 AND deleted_at IS NULL
+	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 	UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (Tenant, error)
+	//UpdateUser
+	//
+	//  UPDATE users
+	//  SET
+	//      entity_id = COALESCE($2, entity_id),
+	//      person_id = COALESCE($3, person_id),
+	//      employee_id = COALESCE($4, employee_id),
+	//      username = COALESCE($5, username),
+	//      email = COALESCE($6, email),
+	//      password_hash = COALESCE($7, password_hash),
+	//      user_type = COALESCE($8, user_type),
+	//      is_active = COALESCE($9, is_active),
+	//      settings = COALESCE($10, settings),
+	//      updated_at = NOW()
+	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	//UpdateUserLogin
+	//
+	//  UPDATE users
+	//  SET last_login_at = NOW()
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	UpdateUserLogin(ctx context.Context, id int32) error
+	//UpdateUserPassword
+	//
+	//  UPDATE users
+	//  SET password_hash = $2, password_changed_at = NOW(), updated_at = NOW()
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	//ValidateEntityHierarchy
+	//
+	//  SELECT
+	//      CASE
+	//          WHEN COUNT(*) = 0 THEN true
+	//          ELSE false
+	//      END as is_valid
+	//  FROM hierarchy_paths hp1
+	//  JOIN hierarchy_paths hp2 ON hp1.descendant_id = hp2.ancestor_id
+	//  WHERE hp1.tenant_id = $1
+	//      AND hp2.tenant_id = $1
+	//      AND hp1.ancestor_id = hp2.descendant_id
+	//      AND hp1.depth > 0
+	//      AND hp2.depth > 0
+	ValidateEntityHierarchy(ctx context.Context, tenantID int32) (bool, error)
 }
 
 var _ Querier = (*Queries)(nil)

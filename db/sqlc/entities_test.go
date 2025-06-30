@@ -26,25 +26,22 @@ func createRandomEntity(ctx context.Context, t *testing.T, q *Queries, parentID 
 			Bytes: parentIDOrNil(parentID),
 			Valid: parentID != nil,
 		},
-		Name: "Test Entity",
-		// Code: "TEST_" + uid.String()[:8],
+		Name:          "Test Entity",
+		Code:          nil,
 		Type:          "department",
 		IsActive:      true,
 		Hidden:        false,
 		AccrualMethod: true,
 		FyStartMonth:  1,
 		Address:       []byte(`{"city": "Nairobi"}`),
-		Picture: pgtype.Text{
-			String: "picture.png",
-			Valid:  true,
-		},
-		Settings: []byte(`{"currency": "KES"}`),
+		Picture:       nil,
+		Settings:      []byte(`{"currency": "KES"}`),
 	}
 
 	entity, err := q.CreateEntity(ctx, arg)
 	require.NoError(t, err)
 	require.Equal(t, arg.Name, entity.Name)
-	require.Equal(t, arg.Code.String, entity.Code.String)
+	require.Equal(t, arg.Code, entity.Code)
 
 	return entity
 }

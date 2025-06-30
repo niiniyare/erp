@@ -18,6 +18,11 @@ SET deleted_at = NOW(), updated_at = NOW()
 WHERE id = ANY($1::int[])
 `
 
+// BulkSoftDeleteTenants
+//
+//	UPDATE tenants
+//	SET deleted_at = NOW(), updated_at = NOW()
+//	WHERE id = ANY($1::int[])
 func (q *Queries) BulkSoftDeleteTenants(ctx context.Context, tenantIds []int32) error {
 	_, err := q.db.Exec(ctx, bulkSoftDeleteTenants, tenantIds)
 	return err
@@ -37,6 +42,10 @@ type BulkUpdateTenantStatusParams struct {
 // =====================================================
 // BULK OPERATIONS
 // =====================================================
+//
+//	UPDATE tenants
+//	SET status = $1, updated_at = NOW()
+//	WHERE id = ANY($2::int[]) AND deleted_at IS NULL
 func (q *Queries) BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error {
 	_, err := q.db.Exec(ctx, bulkUpdateTenantStatus, arg.Status, arg.ID)
 	return err
@@ -49,6 +58,12 @@ SELECT EXISTS(
 )
 `
 
+// CheckCurrentTenantExists
+//
+//	SELECT EXISTS(
+//	    SELECT 1 FROM tenants
+//	    WHERE id = current_tenant_id() AND deleted_at IS NULL
+//	)
 func (q *Queries) CheckCurrentTenantExists(ctx context.Context) (bool, error) {
 	row := q.db.QueryRow(ctx, checkCurrentTenantExists)
 	var exists bool
@@ -63,6 +78,12 @@ SELECT EXISTS(
 )
 `
 
+// CheckSubdomainExists
+//
+//	SELECT EXISTS(
+//	    SELECT 1 FROM tenants
+//	    WHERE subdomain = $1 AND deleted_at IS NULL
+//	)
 func (q *Queries) CheckSubdomainExists(ctx context.Context, subdomain *string) (bool, error) {
 	row := q.db.QueryRow(ctx, checkSubdomainExists, subdomain)
 	var exists bool
@@ -77,6 +98,12 @@ SELECT EXISTS(
 )
 `
 
+// CheckTenantExists
+//
+//	SELECT EXISTS(
+//	    SELECT 1 FROM tenants
+//	    WHERE id = $1 AND deleted_at IS NULL
+//	)
 func (q *Queries) CheckTenantExists(ctx context.Context, id int32) (bool, error) {
 	row := q.db.QueryRow(ctx, checkTenantExists, id)
 	var exists bool
@@ -91,6 +118,12 @@ SELECT EXISTS(
 )
 `
 
+// CheckTenantNameExists
+//
+//	SELECT EXISTS(
+//	    SELECT 1 FROM tenants
+//	    WHERE name = $1 AND deleted_at IS NULL
+//	)
 func (q *Queries) CheckTenantNameExists(ctx context.Context, name string) (bool, error) {
 	row := q.db.QueryRow(ctx, checkTenantNameExists, name)
 	var exists bool
@@ -112,6 +145,13 @@ type CountFilteredTenantsParams struct {
 	IndustryFilter *string `json:"industry_filter"`
 }
 
+// CountFilteredTenants
+//
+//	SELECT COUNT(*) FROM tenants
+//	WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
+//	  AND ($2::varchar IS NULL OR status = $2)
+//	  AND ($3::varchar IS NULL OR industry = $3)
+//	  AND deleted_at IS NULL
 func (q *Queries) CountFilteredTenants(ctx context.Context, arg CountFilteredTenantsParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countFilteredTenants, arg.NameFilter, arg.StatusFilter, arg.IndustryFilter)
 	var count int64
@@ -124,6 +164,10 @@ SELECT COUNT(*) FROM tenants
 WHERE deleted_at IS NULL
 `
 
+// CountTenants
+//
+//	SELECT COUNT(*) FROM tenants
+//	WHERE deleted_at IS NULL
 func (q *Queries) CountTenants(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, countTenants)
 	var count int64
@@ -136,7 +180,7 @@ const createTenant = `-- name: CreateTenant :one
 
 INSERT INTO tenants (name, subdomain, status, industry)
 VALUES ($1, $2, $3, $4)
-RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 `
 
 type CreateTenantParams struct {
@@ -154,6 +198,10 @@ type CreateTenantParams struct {
 // TENANT MANAGEMENT QUERIES (Admin/System Level)
 // Note: These queries are for system administrators managing tenants
 // =====================================================
+//
+//	INSERT INTO tenants (name, subdomain, status, industry)
+//	VALUES ($1, $2, $3, $4)
+//	RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Tenant, error) {
 	row := q.db.QueryRow(ctx, createTenant,
 		arg.Name,
@@ -169,6 +217,7 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 		&i.Subdomain,
 		&i.Status,
 		&i.Industry,
+		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -180,6 +229,9 @@ const deleteTenant = `-- name: DeleteTenant :exec
 DELETE FROM tenants
 `
 
+// DeleteTenant
+//
+//	DELETE FROM tenants
 func (q *Queries) DeleteTenant(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, deleteTenant)
 	return err
@@ -209,10 +261,34 @@ type FilterTenantsParams struct {
 	LimitCount     int32   `json:"limit_count"`
 }
 
+type FilterTenantsRow struct {
+	ID        int32              `json:"id"`
+	Uuid      uuid.UUID          `json:"uuid"`
+	Name      string             `json:"name"`
+	Subdomain *string            `json:"subdomain"`
+	Status    string             `json:"status"`
+	Industry  *string            `json:"industry"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
 // =====================================================
 // ADVANCED QUERIES WITH FILTERS
 // =====================================================
-func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]Tenant, error) {
+//
+//	SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+//	WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
+//	  AND ($2::varchar IS NULL OR status = $2)
+//	  AND ($3::varchar IS NULL OR industry = $3)
+//	  AND deleted_at IS NULL
+//	ORDER BY
+//	  CASE WHEN $4::varchar = 'name' THEN name END ASC,
+//	  CASE WHEN $4::varchar = 'created_at' THEN created_at END DESC,
+//	  CASE WHEN $4::varchar = 'updated_at' THEN updated_at END DESC,
+//	  id DESC
+//	LIMIT $6 OFFSET $5
+func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]FilterTenantsRow, error) {
 	rows, err := q.db.Query(ctx, filterTenants,
 		arg.NameFilter,
 		arg.StatusFilter,
@@ -225,9 +301,9 @@ func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Tenant{}
+	items := []FilterTenantsRow{}
 	for rows.Next() {
-		var i Tenant
+		var i FilterTenantsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Uuid,
@@ -250,11 +326,16 @@ func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([
 }
 
 const getActiveTenants = `-- name: GetActiveTenants :many
-SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
 WHERE status = 'active' AND deleted_at IS NULL
 ORDER BY name
 `
 
+// GetActiveTenants
+//
+//	SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+//	WHERE status = 'active' AND deleted_at IS NULL
+//	ORDER BY name
 func (q *Queries) GetActiveTenants(ctx context.Context) ([]Tenant, error) {
 	rows, err := q.db.Query(ctx, getActiveTenants)
 	if err != nil {
@@ -271,6 +352,7 @@ func (q *Queries) GetActiveTenants(ctx context.Context) ([]Tenant, error) {
 			&i.Subdomain,
 			&i.Status,
 			&i.Industry,
+			&i.Settings,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -287,7 +369,7 @@ func (q *Queries) GetActiveTenants(ctx context.Context) ([]Tenant, error) {
 
 const getCurrentTenant = `-- name: GetCurrentTenant :one
 
-SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
 WHERE id = current_tenant_id() AND deleted_at IS NULL
 `
 
@@ -295,6 +377,9 @@ WHERE id = current_tenant_id() AND deleted_at IS NULL
 // CURRENT TENANT QUERIES (RLS-Aware)
 // These queries work within the current tenant context
 // =====================================================
+//
+//	SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+//	WHERE id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetCurrentTenant(ctx context.Context) (Tenant, error) {
 	row := q.db.QueryRow(ctx, getCurrentTenant)
 	var i Tenant
@@ -305,6 +390,7 @@ func (q *Queries) GetCurrentTenant(ctx context.Context) (Tenant, error) {
 		&i.Subdomain,
 		&i.Status,
 		&i.Industry,
+		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -321,6 +407,8 @@ SELECT current_tenant_id()
 // UTILITY QUERIES
 // =====================================================
 // Current tenant utilities
+//
+//	SELECT current_tenant_id()
 func (q *Queries) GetCurrentTenantID(ctx context.Context) (int32, error) {
 	row := q.db.QueryRow(ctx, getCurrentTenantID)
 	var current_tenant_id int32
@@ -330,40 +418,62 @@ func (q *Queries) GetCurrentTenantID(ctx context.Context) (int32, error) {
 
 const getCurrentTenantStorageUsage = `-- name: GetCurrentTenantStorageUsage :one
 SELECT 
-    t.id,
-    t.name,
-    tc.storage_quota,
-    COALESCE(tc.storage_quota, 1073741824) as quota_bytes
-FROM tenants t
-LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE t.id = current_tenant_id() AND t.deleted_at IS NULL
+    COUNT(*) as total_tenants,
+    COUNT(*) FILTER (WHERE status = 'active') as active_tenants,
+    COUNT(*) FILTER (WHERE status = 'suspended') as suspended_tenants,
+    COUNT(*) FILTER (WHERE status = 'pending') as pending_tenants
+FROM tenants
+WHERE deleted_at IS NULL
 `
 
 type GetCurrentTenantStorageUsageRow struct {
-	ID           int32  `json:"id"`
-	Name         string `json:"name"`
-	StorageQuota *int64 `json:"storage_quota"`
-	QuotaBytes   int64  `json:"quota_bytes"`
+	TotalTenants     int64 `json:"total_tenants"`
+	ActiveTenants    int64 `json:"active_tenants"`
+	SuspendedTenants int64 `json:"suspended_tenants"`
+	PendingTenants   int64 `json:"pending_tenants"`
 }
 
+// SELECT
+//
+//	t.id,
+//	t.name,
+//	tc.storage_quota,
+//	COALESCE(tc.storage_quota, 1073741824) as quota_bytes
+//
+// FROM tenants t
+// LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
+// WHERE t.id = current_tenant_id() AND t.deleted_at IS NULL;
+//
+// Admin utilities (system-wide)
+//
+//	SELECT
+//	    COUNT(*) as total_tenants,
+//	    COUNT(*) FILTER (WHERE status = 'active') as active_tenants,
+//	    COUNT(*) FILTER (WHERE status = 'suspended') as suspended_tenants,
+//	    COUNT(*) FILTER (WHERE status = 'pending') as pending_tenants
+//	FROM tenants
+//	WHERE deleted_at IS NULL
 func (q *Queries) GetCurrentTenantStorageUsage(ctx context.Context) (GetCurrentTenantStorageUsageRow, error) {
 	row := q.db.QueryRow(ctx, getCurrentTenantStorageUsage)
 	var i GetCurrentTenantStorageUsageRow
 	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.StorageQuota,
-		&i.QuotaBytes,
+		&i.TotalTenants,
+		&i.ActiveTenants,
+		&i.SuspendedTenants,
+		&i.PendingTenants,
 	)
 	return i, err
 }
 
 const getTenantByID = `-- name: GetTenantByID :one
-SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
 WHERE id = $1 AND deleted_at IS NULL
 `
 
 // Example session variable
+//
+//	SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+//	WHERE id = $1 AND deleted_at IS NULL
 func (q *Queries) GetTenantByID(ctx context.Context, id int32) (Tenant, error) {
 	row := q.db.QueryRow(ctx, getTenantByID, id)
 	var i Tenant
@@ -374,6 +484,7 @@ func (q *Queries) GetTenantByID(ctx context.Context, id int32) (Tenant, error) {
 		&i.Subdomain,
 		&i.Status,
 		&i.Industry,
+		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -382,10 +493,14 @@ func (q *Queries) GetTenantByID(ctx context.Context, id int32) (Tenant, error) {
 }
 
 const getTenantBySubdomain = `-- name: GetTenantBySubdomain :one
-SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
 WHERE subdomain = $1 AND deleted_at IS NULL
 `
 
+// GetTenantBySubdomain
+//
+//	SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+//	WHERE subdomain = $1 AND deleted_at IS NULL
 func (q *Queries) GetTenantBySubdomain(ctx context.Context, subdomain *string) (Tenant, error) {
 	row := q.db.QueryRow(ctx, getTenantBySubdomain, subdomain)
 	var i Tenant
@@ -396,6 +511,7 @@ func (q *Queries) GetTenantBySubdomain(ctx context.Context, subdomain *string) (
 		&i.Subdomain,
 		&i.Status,
 		&i.Industry,
+		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -404,10 +520,14 @@ func (q *Queries) GetTenantBySubdomain(ctx context.Context, subdomain *string) (
 }
 
 const getTenantByUUID = `-- name: GetTenantByUUID :one
-SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
 WHERE uuid = $1 AND deleted_at IS NULL
 `
 
+// GetTenantByUUID
+//
+//	SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+//	WHERE uuid = $1 AND deleted_at IS NULL
 func (q *Queries) GetTenantByUUID(ctx context.Context, argUuid uuid.UUID) (Tenant, error) {
 	row := q.db.QueryRow(ctx, getTenantByUUID, argUuid)
 	var i Tenant
@@ -418,39 +538,10 @@ func (q *Queries) GetTenantByUUID(ctx context.Context, argUuid uuid.UUID) (Tenan
 		&i.Subdomain,
 		&i.Status,
 		&i.Industry,
+		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-	)
-	return i, err
-}
-
-const getTenantStats = `-- name: GetTenantStats :one
-SELECT 
-    COUNT(*) as total_tenants,
-    COUNT(*) FILTER (WHERE status = 'active') as active_tenants,
-    COUNT(*) FILTER (WHERE status = 'suspended') as suspended_tenants,
-    COUNT(*) FILTER (WHERE status = 'pending') as pending_tenants
-FROM tenants
-WHERE deleted_at IS NULL
-`
-
-type GetTenantStatsRow struct {
-	TotalTenants     int64 `json:"total_tenants"`
-	ActiveTenants    int64 `json:"active_tenants"`
-	SuspendedTenants int64 `json:"suspended_tenants"`
-	PendingTenants   int64 `json:"pending_tenants"`
-}
-
-// Admin utilities (system-wide)
-func (q *Queries) GetTenantStats(ctx context.Context) (GetTenantStatsRow, error) {
-	row := q.db.QueryRow(ctx, getTenantStats)
-	var i GetTenantStatsRow
-	err := row.Scan(
-		&i.TotalTenants,
-		&i.ActiveTenants,
-		&i.SuspendedTenants,
-		&i.PendingTenants,
 	)
 	return i, err
 }
@@ -468,6 +559,13 @@ type GetTenantsByIndustryRow struct {
 	TenantCount int64   `json:"tenant_count"`
 }
 
+// GetTenantsByIndustry
+//
+//	SELECT industry, COUNT(*) as tenant_count
+//	FROM tenants
+//	WHERE deleted_at IS NULL AND industry IS NOT NULL
+//	GROUP BY industry
+//	ORDER BY tenant_count DESC
 func (q *Queries) GetTenantsByIndustry(ctx context.Context) ([]GetTenantsByIndustryRow, error) {
 	rows, err := q.db.Query(ctx, getTenantsByIndustry)
 	if err != nil {
@@ -489,7 +587,7 @@ func (q *Queries) GetTenantsByIndustry(ctx context.Context) ([]GetTenantsByIndus
 }
 
 const getTenantsCreatedInDateRange = `-- name: GetTenantsCreatedInDateRange :many
-SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
 WHERE created_at >= $1 
   AND created_at <= $2
   AND deleted_at IS NULL
@@ -501,6 +599,13 @@ type GetTenantsCreatedInDateRangeParams struct {
 	CreatedAt_2 pgtype.Timestamptz `json:"created_at_2"`
 }
 
+// GetTenantsCreatedInDateRange
+//
+//	SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+//	WHERE created_at >= $1
+//	  AND created_at <= $2
+//	  AND deleted_at IS NULL
+//	ORDER BY created_at DESC
 func (q *Queries) GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]Tenant, error) {
 	rows, err := q.db.Query(ctx, getTenantsCreatedInDateRange, arg.CreatedAt, arg.CreatedAt_2)
 	if err != nil {
@@ -517,6 +622,7 @@ func (q *Queries) GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenan
 			&i.Subdomain,
 			&i.Status,
 			&i.Industry,
+			&i.Settings,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -532,7 +638,7 @@ func (q *Queries) GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenan
 }
 
 const listTenants = `-- name: ListTenants :many
-SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
@@ -543,6 +649,12 @@ type ListTenantsParams struct {
 	Offset int32 `json:"offset"`
 }
 
+// ListTenants
+//
+//	SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+//	WHERE deleted_at IS NULL
+//	ORDER BY created_at DESC
+//	LIMIT $1 OFFSET $2
 func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]Tenant, error) {
 	rows, err := q.db.Query(ctx, listTenants, arg.Limit, arg.Offset)
 	if err != nil {
@@ -559,6 +671,7 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]Ten
 			&i.Subdomain,
 			&i.Status,
 			&i.Industry,
+			&i.Settings,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -574,7 +687,7 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]Ten
 }
 
 const searchTenantsByName = `-- name: SearchTenantsByName :many
-SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
 WHERE name ILIKE '%' || $1 || '%' 
   AND deleted_at IS NULL
 ORDER BY name
@@ -587,6 +700,13 @@ type SearchTenantsByNameParams struct {
 	Limit  int32   `json:"limit"`
 }
 
+// SearchTenantsByName
+//
+//	SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+//	WHERE name ILIKE '%' || $1 || '%'
+//	  AND deleted_at IS NULL
+//	ORDER BY name
+//	LIMIT $3 OFFSET $2
 func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]Tenant, error) {
 	rows, err := q.db.Query(ctx, searchTenantsByName, arg.Name, arg.Offset, arg.Limit)
 	if err != nil {
@@ -603,6 +723,7 @@ func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNa
 			&i.Subdomain,
 			&i.Status,
 			&i.Industry,
+			&i.Settings,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -621,6 +742,9 @@ const setCurrentTenant = `-- name: SetCurrentTenant :exec
 SET app.current_tenant = $1
 `
 
+// SetCurrentTenant
+//
+//	SET app.current_tenant = $1
 func (q *Queries) SetCurrentTenant(ctx context.Context, dollar_1 interface{}) error {
 	_, err := q.db.Exec(ctx, setCurrentTenant, dollar_1)
 	return err
@@ -632,6 +756,11 @@ SET deleted_at = NOW(), updated_at = NOW()
 WHERE id = $1
 `
 
+// SoftDeleteTenant
+//
+//	UPDATE tenants
+//	SET deleted_at = NOW(), updated_at = NOW()
+//	WHERE id = $1
 func (q *Queries) SoftDeleteTenant(ctx context.Context, id int32) error {
 	_, err := q.db.Exec(ctx, softDeleteTenant, id)
 	return err
@@ -641,7 +770,7 @@ const updateCurrentTenant = `-- name: UpdateCurrentTenant :one
 UPDATE tenants
 SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
 WHERE id = current_tenant_id() AND deleted_at IS NULL
-RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateCurrentTenantParams struct {
@@ -651,6 +780,12 @@ type UpdateCurrentTenantParams struct {
 	Industry  *string `json:"industry"`
 }
 
+// UpdateCurrentTenant
+//
+//	UPDATE tenants
+//	SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
+//	WHERE id = current_tenant_id() AND deleted_at IS NULL
+//	RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (Tenant, error) {
 	row := q.db.QueryRow(ctx, updateCurrentTenant,
 		arg.Name,
@@ -666,6 +801,7 @@ func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTena
 		&i.Subdomain,
 		&i.Status,
 		&i.Industry,
+		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -682,7 +818,7 @@ status = COALESCE($3, status),
 industry = COALESCE($4, industry) ,
 updated_at = NOW()
 WHERE id = $5 AND deleted_at IS NULL
-  RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantParams struct {
@@ -693,6 +829,17 @@ type UpdateTenantParams struct {
 	ID        int32   `json:"id"`
 }
 
+// UpdateTenant
+//
+//	UPDATE tenants
+//	SET
+//	    name = COALESCE($1, name),
+//	subdomain = COALESCE($2, subdomain),
+//	status = COALESCE($3, status),
+//	industry = COALESCE($4, industry) ,
+//	updated_at = NOW()
+//	WHERE id = $5 AND deleted_at IS NULL
+//	  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenant,
 		arg.Name,
@@ -709,6 +856,7 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Ten
 		&i.Subdomain,
 		&i.Status,
 		&i.Industry,
+		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -720,7 +868,7 @@ const updateTenantIndustry = `-- name: UpdateTenantIndustry :one
 UPDATE tenants
 SET industry = $2, updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantIndustryParams struct {
@@ -728,6 +876,12 @@ type UpdateTenantIndustryParams struct {
 	Industry *string `json:"industry"`
 }
 
+// UpdateTenantIndustry
+//
+//	UPDATE tenants
+//	SET industry = $2, updated_at = NOW()
+//	WHERE id = $1 AND deleted_at IS NULL
+//	RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantIndustry, arg.ID, arg.Industry)
 	var i Tenant
@@ -738,6 +892,7 @@ func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndu
 		&i.Subdomain,
 		&i.Status,
 		&i.Industry,
+		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -749,7 +904,7 @@ const updateTenantName = `-- name: UpdateTenantName :one
 UPDATE tenants
 SET name = $2, updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantNameParams struct {
@@ -757,6 +912,12 @@ type UpdateTenantNameParams struct {
 	Name string `json:"name"`
 }
 
+// UpdateTenantName
+//
+//	UPDATE tenants
+//	SET name = $2, updated_at = NOW()
+//	WHERE id = $1 AND deleted_at IS NULL
+//	RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenantName(ctx context.Context, arg UpdateTenantNameParams) (Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantName, arg.ID, arg.Name)
 	var i Tenant
@@ -767,6 +928,7 @@ func (q *Queries) UpdateTenantName(ctx context.Context, arg UpdateTenantNamePara
 		&i.Subdomain,
 		&i.Status,
 		&i.Industry,
+		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -778,7 +940,7 @@ const updateTenantStatus = `-- name: UpdateTenantStatus :one
 UPDATE tenants
 SET status = $2, updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantStatusParams struct {
@@ -786,6 +948,10 @@ type UpdateTenantStatusParams struct {
 	Status string `json:"status"`
 }
 
+// UPDATE tenants
+// SET status = $2, updated_at = NOW()
+// WHERE id = $1 AND deleted_at IS NULL
+// RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantStatus, arg.ID, arg.Status)
 	var i Tenant
@@ -796,6 +962,7 @@ func (q *Queries) UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatus
 		&i.Subdomain,
 		&i.Status,
 		&i.Industry,
+		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -807,7 +974,7 @@ const updateTenantSubdomain = `-- name: UpdateTenantSubdomain :one
 UPDATE tenants
 SET subdomain = $2, updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at
+RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantSubdomainParams struct {
@@ -815,6 +982,12 @@ type UpdateTenantSubdomainParams struct {
 	Subdomain *string `json:"subdomain"`
 }
 
+// UpdateTenantSubdomain
+//
+//	UPDATE tenants
+//	SET subdomain = $2, updated_at = NOW()
+//	WHERE id = $1 AND deleted_at IS NULL
+//	RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantSubdomain, arg.ID, arg.Subdomain)
 	var i Tenant
@@ -825,6 +998,7 @@ func (q *Queries) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSub
 		&i.Subdomain,
 		&i.Status,
 		&i.Industry,
+		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

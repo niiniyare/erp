@@ -34,6 +34,14 @@ type AssignUserRoleParams struct {
 // ==============================================
 // USER ROLES TABLE OPERATIONS
 // ==============================================
+//
+//	INSERT INTO user_roles (user_id, role_id, entity_id, assigned_by, expires_at)
+//	VALUES ($1, $2, $3, $4, $5)
+//	ON CONFLICT (user_id, role_id, entity_id) DO UPDATE SET
+//	    assigned_at = NOW(),
+//	    assigned_by = EXCLUDED.assigned_by,
+//	    expires_at = EXCLUDED.expires_at
+//	RETURNING user_id, role_id, entity_id, assigned_at, assigned_by, expires_at
 func (q *Queries) AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (UserRole, error) {
 	row := q.db.QueryRow(ctx, assignUserRole,
 		arg.UserID,
@@ -70,6 +78,16 @@ type CheckUserPermissionParams struct {
 	Permissions []byte `json:"permissions"`
 }
 
+// CheckUserPermission
+//
+//	SELECT EXISTS(
+//	    SELECT 1
+//	    FROM user_roles ur
+//	    JOIN roles r ON ur.role_id = r.id
+//	    WHERE ur.user_id = $1
+//	        AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+//	        AND r.permissions ? $2
+//	) as has_permission
 func (q *Queries) CheckUserPermission(ctx context.Context, arg CheckUserPermissionParams) (bool, error) {
 	row := q.db.QueryRow(ctx, checkUserPermission, arg.UserID, arg.Permissions)
 	var has_permission bool
@@ -82,6 +100,10 @@ DELETE FROM user_roles
 WHERE expires_at IS NOT NULL AND expires_at <= NOW() - INTERVAL '30 days'
 `
 
+// CleanupExpiredUserRoles
+//
+//	DELETE FROM user_roles
+//	WHERE expires_at IS NOT NULL AND expires_at <= NOW() - INTERVAL '30 days'
 func (q *Queries) CleanupExpiredUserRoles(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, cleanupExpiredUserRoles)
 	return err
@@ -110,6 +132,13 @@ type CreateRoleParams struct {
 // ==============================================
 // ROLES TABLE OPERATIONS
 // ==============================================
+//
+//	INSERT INTO roles (
+//	    tenant_id, entity_id, name, description, module, permissions,
+//	    entity_scope, is_system_role
+//	) VALUES (
+//	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7
+//	) RETURNING id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at
 func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error) {
 	row := q.db.QueryRow(ctx, createRole,
 		arg.EntityID,
@@ -141,6 +170,10 @@ DELETE FROM roles
 WHERE id = $1 AND tenant_id = current_tenant_id() AND is_system_role = false
 `
 
+// DeleteRole
+//
+//	DELETE FROM roles
+//	WHERE id = $1 AND tenant_id = current_tenant_id() AND is_system_role = false
 func (q *Queries) DeleteRole(ctx context.Context, id int32) error {
 	_, err := q.db.Exec(ctx, deleteRole, id)
 	return err
@@ -151,6 +184,10 @@ SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_
 WHERE id = $1 AND tenant_id = current_tenant_id()
 `
 
+// GetRole
+//
+//	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+//	WHERE id = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) GetRole(ctx context.Context, id int32) (Role, error) {
 	row := q.db.QueryRow(ctx, getRole, id)
 	var i Role
@@ -174,6 +211,10 @@ SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_
 WHERE name = $1 AND tenant_id = current_tenant_id()
 `
 
+// GetRoleByName
+//
+//	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+//	WHERE name = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) GetRoleByName(ctx context.Context, name string) (Role, error) {
 	row := q.db.QueryRow(ctx, getRoleByName, name)
 	var i Role
@@ -216,6 +257,16 @@ type GetRoleUsersRow struct {
 	LastName   *string            `json:"last_name"`
 }
 
+// GetRoleUsers
+//
+//	SELECT ur.user_id, ur.role_id, ur.entity_id, ur.assigned_at, ur.assigned_by, ur.expires_at, u.email, u.username, p.first_name, p.last_name
+//	FROM user_roles ur
+//	JOIN users u ON ur.user_id = u.id
+//	LEFT JOIN persons p ON u.person_id = p.id
+//	WHERE ur.role_id = $1
+//	    AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+//	    AND u.deleted_at IS NULL
+//	ORDER BY p.last_name, p.first_name, u.email
 func (q *Queries) GetRoleUsers(ctx context.Context, roleID int32) ([]GetRoleUsersRow, error) {
 	rows, err := q.db.Query(ctx, getRoleUsers, roleID)
 	if err != nil {
@@ -260,6 +311,13 @@ type GetUserPermissionsRow struct {
 	Permissions []byte  `json:"permissions"`
 }
 
+// GetUserPermissions
+//
+//	SELECT DISTINCT r.module, r.permissions
+//	FROM user_roles ur
+//	JOIN roles r ON ur.role_id = r.id
+//	WHERE ur.user_id = $1
+//	    AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
 func (q *Queries) GetUserPermissions(ctx context.Context, userID int32) ([]GetUserPermissionsRow, error) {
 	rows, err := q.db.Query(ctx, getUserPermissions, userID)
 	if err != nil {
@@ -301,6 +359,14 @@ type GetUserRolesRow struct {
 	Permissions     []byte             `json:"permissions"`
 }
 
+// GetUserRoles
+//
+//	SELECT ur.user_id, ur.role_id, ur.entity_id, ur.assigned_at, ur.assigned_by, ur.expires_at, r.name as role_name, r.description as role_description, r.permissions
+//	FROM user_roles ur
+//	JOIN roles r ON ur.role_id = r.id
+//	WHERE ur.user_id = $1
+//	    AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+//	ORDER BY r.name
 func (q *Queries) GetUserRoles(ctx context.Context, userID int32) ([]GetUserRolesRow, error) {
 	rows, err := q.db.Query(ctx, getUserRoles, userID)
 	if err != nil {
@@ -337,6 +403,11 @@ WHERE tenant_id = current_tenant_id() AND is_system_role = false
 ORDER BY name
 `
 
+// ListCustomRoles
+//
+//	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+//	WHERE tenant_id = current_tenant_id() AND is_system_role = false
+//	ORDER BY name
 func (q *Queries) ListCustomRoles(ctx context.Context) ([]Role, error) {
 	rows, err := q.db.Query(ctx, listCustomRoles)
 	if err != nil {
@@ -390,6 +461,16 @@ type ListExpiredUserRolesRow struct {
 	RoleName   string             `json:"role_name"`
 }
 
+// ListExpiredUserRoles
+//
+//	SELECT ur.user_id, ur.role_id, ur.entity_id, ur.assigned_at, ur.assigned_by, ur.expires_at, u.email, r.name as role_name
+//	FROM user_roles ur
+//	JOIN users u ON ur.user_id = u.id
+//	JOIN roles r ON ur.role_id = r.id
+//	WHERE ur.expires_at IS NOT NULL
+//	    AND ur.expires_at <= NOW()
+//	    AND u.tenant_id = current_tenant_id()
+//	ORDER BY ur.expires_at DESC
 func (q *Queries) ListExpiredUserRoles(ctx context.Context) ([]ListExpiredUserRolesRow, error) {
 	rows, err := q.db.Query(ctx, listExpiredUserRoles)
 	if err != nil {
@@ -425,6 +506,11 @@ WHERE tenant_id = current_tenant_id()
 ORDER BY name
 `
 
+// ListRoles
+//
+//	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+//	WHERE tenant_id = current_tenant_id()
+//	ORDER BY name
 func (q *Queries) ListRoles(ctx context.Context) ([]Role, error) {
 	rows, err := q.db.Query(ctx, listRoles)
 	if err != nil {
@@ -462,6 +548,11 @@ WHERE tenant_id = current_tenant_id() AND module = $1
 ORDER BY name
 `
 
+// ListRolesByModule
+//
+//	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+//	WHERE tenant_id = current_tenant_id() AND module = $1
+//	ORDER BY name
 func (q *Queries) ListRolesByModule(ctx context.Context, module *string) ([]Role, error) {
 	rows, err := q.db.Query(ctx, listRolesByModule, module)
 	if err != nil {
@@ -499,6 +590,11 @@ WHERE tenant_id = current_tenant_id() AND is_system_role = true
 ORDER BY name
 `
 
+// ListSystemRoles
+//
+//	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
+//	WHERE tenant_id = current_tenant_id() AND is_system_role = true
+//	ORDER BY name
 func (q *Queries) ListSystemRoles(ctx context.Context) ([]Role, error) {
 	rows, err := q.db.Query(ctx, listSystemRoles)
 	if err != nil {
@@ -541,6 +637,10 @@ type RevokeUserRoleParams struct {
 	EntityID uuid.UUID `json:"entity_id"`
 }
 
+// RevokeUserRole
+//
+//	DELETE FROM user_roles
+//	WHERE user_id = $1 AND role_id = $2 AND entity_id = $3
 func (q *Queries) RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) error {
 	_, err := q.db.Exec(ctx, revokeUserRole, arg.UserID, arg.RoleID, arg.EntityID)
 	return err
@@ -584,6 +684,27 @@ type SearchUsersWithRolesRow struct {
 	Roles     []byte  `json:"roles"`
 }
 
+// SearchUsersWithRoles
+//
+//	SELECT DISTINCT
+//	    u.id, u.username, u.email, u.user_type, u.is_active,
+//	    p.first_name, p.last_name,
+//	    string_agg(r.name, ', ') as roles
+//	FROM users u
+//	LEFT JOIN persons p ON u.person_id = p.id
+//	LEFT JOIN user_roles ur ON u.id = ur.user_id AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+//	LEFT JOIN roles r ON ur.role_id = r.id
+//	WHERE u.tenant_id = current_tenant_id()
+//	    AND u.deleted_at IS NULL
+//	    AND (
+//	        u.email ILIKE '%' || $1 || '%' OR
+//	        u.username ILIKE '%' || $1 || '%' OR
+//	        p.first_name ILIKE '%' || $1 || '%' OR
+//	        p.last_name ILIKE '%' || $1 || '%'
+//	    )
+//	GROUP BY u.id, u.username, u.email, u.user_type, u.is_active, p.first_name, p.last_name
+//	ORDER BY p.last_name, p.first_name, u.email
+//	LIMIT $2
 func (q *Queries) SearchUsersWithRoles(ctx context.Context, arg SearchUsersWithRolesParams) ([]SearchUsersWithRolesRow, error) {
 	rows, err := q.db.Query(ctx, searchUsersWithRoles, arg.Column1, arg.Limit)
 	if err != nil {
@@ -636,6 +757,18 @@ type UpdateRoleParams struct {
 	EntityScope []byte      `json:"entity_scope"`
 }
 
+// UpdateRole
+//
+//	UPDATE roles
+//	SET
+//	    entity_id = COALESCE($2, entity_id),
+//	    name = COALESCE($3, name),
+//	    description = COALESCE($4, description),
+//	    module = COALESCE($5, module),
+//	    permissions = COALESCE($6, permissions),
+//	    entity_scope = COALESCE($7, entity_scope)
+//	WHERE id = $1 AND tenant_id = current_tenant_id()
+//	RETURNING id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at
 func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error) {
 	row := q.db.QueryRow(ctx, updateRole,
 		arg.ID,

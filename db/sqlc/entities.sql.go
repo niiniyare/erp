@@ -23,6 +23,11 @@ type BatchSoftDeleteEntitiesParams struct {
 	Column2  []uuid.UUID `json:"column_2"`
 }
 
+// BatchSoftDeleteEntities
+//
+//	UPDATE entities
+//	SET deleted_at = NOW(), updated_at = NOW()
+//	WHERE tenant_id = $1 AND uuid = ANY($2::UUID[])
 func (q *Queries) BatchSoftDeleteEntities(ctx context.Context, arg BatchSoftDeleteEntitiesParams) error {
 	_, err := q.db.Exec(ctx, batchSoftDeleteEntities, arg.TenantID, arg.Column2)
 	return err
@@ -41,6 +46,10 @@ type BatchUpdateEntityStatusParams struct {
 }
 
 // Batch Operations
+//
+//	UPDATE entities
+//	SET is_active = $3, updated_at = NOW()
+//	WHERE tenant_id = $1 AND uuid = ANY($2::UUID[]) AND deleted_at IS NULL
 func (q *Queries) BatchUpdateEntityStatus(ctx context.Context, arg BatchUpdateEntityStatusParams) error {
 	_, err := q.db.Exec(ctx, batchUpdateEntityStatus, arg.TenantID, arg.Column2, arg.IsActive)
 	return err
@@ -71,6 +80,13 @@ type CreateEntityParams struct {
 }
 
 // Entity CRUD Operations
+//
+//	INSERT INTO entities (
+//	    uuid, tenant_id, parent_id, name, code, type, is_active,
+//	    hidden, accrual_method, fy_start_month, address, picture, settings
+//	) VALUES (
+//	    $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+//	) RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at
 func (q *Queries) CreateEntity(ctx context.Context, arg CreateEntityParams) (Entity, error) {
 	row := q.db.QueryRow(ctx, createEntity,
 		arg.Uuid,
@@ -124,6 +140,10 @@ type CreateEntityStateParams struct {
 }
 
 // Entity State Management
+//
+//	INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
+//	VALUES ($1, $2, $3, $4, $5, $6)
+//	RETURNING uuid, fiscal_year, key, sequence, entity_id, entity_unit_id
 func (q *Queries) CreateEntityState(ctx context.Context, arg CreateEntityStateParams) (Entitystate, error) {
 	row := q.db.QueryRow(ctx, createEntityState,
 		arg.Uuid,
@@ -157,6 +177,9 @@ type CreateHierarchyPathParams struct {
 }
 
 // Entity Hierarchy Operations
+//
+//	INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+//	VALUES (current_tenant_id(), $1, $2, $3)
 func (q *Queries) CreateHierarchyPath(ctx context.Context, arg CreateHierarchyPathParams) error {
 	_, err := q.db.Exec(ctx, createHierarchyPath, arg.AncestorID, arg.DescendantID, arg.Depth)
 	return err
@@ -173,6 +196,10 @@ type DeleteEntityStateParams struct {
 	FiscalYear *int16    `json:"fiscal_year"`
 }
 
+// DeleteEntityState
+//
+//	DELETE FROM entitystate
+//	WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
 func (q *Queries) DeleteEntityState(ctx context.Context, arg DeleteEntityStateParams) error {
 	_, err := q.db.Exec(ctx, deleteEntityState, arg.EntityID, arg.Key, arg.FiscalYear)
 	return err
@@ -184,6 +211,11 @@ WHERE tenant_id = current_tenant_id()
     AND (ancestor_id = $1 OR descendant_id = $1)
 `
 
+// DeleteHierarchyPaths
+//
+//	DELETE FROM hierarchy_paths
+//	WHERE tenant_id = current_tenant_id()
+//	    AND (ancestor_id = $1 OR descendant_id = $1)
 func (q *Queries) DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteHierarchyPaths, ancestorID)
 	return err
@@ -204,6 +236,15 @@ type GetEntitiesByFiscalYearParams struct {
 	FiscalYear *int16 `json:"fiscal_year"`
 }
 
+// GetEntitiesByFiscalYear
+//
+//	SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at
+//	FROM entities e
+//	JOIN entitystate es ON e.uuid = es.entity_id
+//	WHERE e.tenant_id = $1
+//	    AND es.fiscal_year = $2
+//	    AND e.deleted_at IS NULL
+//	ORDER BY e.name
 func (q *Queries) GetEntitiesByFiscalYear(ctx context.Context, arg GetEntitiesByFiscalYearParams) ([]Entity, error) {
 	rows, err := q.db.Query(ctx, getEntitiesByFiscalYear, arg.TenantID, arg.FiscalYear)
 	if err != nil {
@@ -252,6 +293,11 @@ type GetEntitiesByUUIDsParams struct {
 	Column2  []uuid.UUID `json:"column_2"`
 }
 
+// GetEntitiesByUUIDs
+//
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	WHERE tenant_id = $1 AND uuid = ANY($2::UUID[]) AND deleted_at IS NULL
+//	ORDER BY name
 func (q *Queries) GetEntitiesByUUIDs(ctx context.Context, arg GetEntitiesByUUIDsParams) ([]Entity, error) {
 	rows, err := q.db.Query(ctx, getEntitiesByUUIDs, arg.TenantID, arg.Column2)
 	if err != nil {
@@ -296,6 +342,12 @@ SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_
   AND deleted_at IS NULL
 `
 
+// GetEntity
+//
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	  WHERE uuid = $1
+//	  AND tenant_id = current_tenant_id()
+//	  AND deleted_at IS NULL
 func (q *Queries) GetEntity(ctx context.Context, argUuid uuid.UUID) (Entity, error) {
 	row := q.db.QueryRow(ctx, getEntity, argUuid)
 	var i Entity
@@ -350,6 +402,15 @@ type GetEntityAncestorsRow struct {
 	Depth         int32              `json:"depth"`
 }
 
+// GetEntityAncestors
+//
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
+//	JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
+//	WHERE hp.tenant_id = current_tenant_id()
+//	    AND hp.descendant_id = $1
+//	    AND hp.depth > 0
+//	    AND e.deleted_at IS NULL
+//	ORDER BY hp.depth DESC
 func (q *Queries) GetEntityAncestors(ctx context.Context, descendantID uuid.UUID) ([]GetEntityAncestorsRow, error) {
 	rows, err := q.db.Query(ctx, getEntityAncestors, descendantID)
 	if err != nil {
@@ -393,6 +454,10 @@ SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_
 WHERE code = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
+// GetEntityByCode
+//
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	WHERE code = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetEntityByCode(ctx context.Context, code *string) (Entity, error) {
 	row := q.db.QueryRow(ctx, getEntityByCode, code)
 	var i Entity
@@ -422,6 +487,10 @@ SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_
 WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
+// GetEntityByName
+//
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetEntityByName(ctx context.Context, name string) (Entity, error) {
 	row := q.db.QueryRow(ctx, getEntityByName, name)
 	var i Entity
@@ -456,6 +525,15 @@ WHERE hp.tenant_id = current_tenant_id()
 ORDER BY e.name
 `
 
+// GetEntityChildren
+//
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+//	JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
+//	WHERE hp.tenant_id = current_tenant_id()
+//	    AND hp.ancestor_id = $1
+//	    AND hp.depth = 1
+//	    AND e.deleted_at IS NULL
+//	ORDER BY e.name
 func (q *Queries) GetEntityChildren(ctx context.Context, ancestorID uuid.UUID) ([]Entity, error) {
 	rows, err := q.db.Query(ctx, getEntityChildren, ancestorID)
 	if err != nil {
@@ -523,6 +601,15 @@ type GetEntityDescendantsRow struct {
 	Depth         int32              `json:"depth"`
 }
 
+// GetEntityDescendants
+//
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
+//	JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
+//	WHERE hp.tenant_id = current_tenant_id()
+//	    AND hp.ancestor_id = $1
+//	    AND hp.depth > 0
+//	    AND e.deleted_at IS NULL
+//	ORDER BY hp.depth, e.name
 func (q *Queries) GetEntityDescendants(ctx context.Context, ancestorID uuid.UUID) ([]GetEntityDescendantsRow, error) {
 	rows, err := q.db.Query(ctx, getEntityDescendants, ancestorID)
 	if err != nil {
@@ -567,6 +654,11 @@ FROM hierarchy_paths hp
 WHERE hp.tenant_id = current_tenant_id() AND hp.descendant_id = $1
 `
 
+// GetEntityLevel
+//
+//	SELECT COALESCE(MIN(hp.depth), 0) as level
+//	FROM hierarchy_paths hp
+//	WHERE hp.tenant_id = current_tenant_id() AND hp.descendant_id = $1
 func (q *Queries) GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (interface{}, error) {
 	row := q.db.QueryRow(ctx, getEntityLevel, descendantID)
 	var level interface{}
@@ -583,6 +675,14 @@ WHERE hp.tenant_id = current_tenant_id()
     AND e.deleted_at IS NULL
 `
 
+// GetEntityParent
+//
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+//	JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
+//	WHERE hp.tenant_id = current_tenant_id()
+//	    AND hp.descendant_id = $1
+//	    AND hp.depth = 1
+//	    AND e.deleted_at IS NULL
 func (q *Queries) GetEntityParent(ctx context.Context, descendantID uuid.UUID) (Entity, error) {
 	row := q.db.QueryRow(ctx, getEntityParent, descendantID)
 	var i Entity
@@ -615,6 +715,13 @@ WHERE e.tenant_id = current_tenant_id()
 ORDER BY e.name
 `
 
+// GetEntityRoots
+//
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+//	WHERE e.tenant_id = current_tenant_id()
+//	    AND e.parent_id IS NULL
+//	    AND e.deleted_at IS NULL
+//	ORDER BY e.name
 func (q *Queries) GetEntityRoots(ctx context.Context) ([]Entity, error) {
 	rows, err := q.db.Query(ctx, getEntityRoots)
 	if err != nil {
@@ -665,6 +772,18 @@ WHERE hp2.tenant_id = current_tenant_id()
 ORDER BY e.name
 `
 
+// GetEntitySiblings
+//
+//	SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+//	JOIN hierarchy_paths hp1 ON e.uuid = hp1.descendant_id
+//	JOIN hierarchy_paths hp2 ON hp1.ancestor_id = hp2.ancestor_id
+//	WHERE hp2.tenant_id = current_tenant_id()
+//	    AND hp2.descendant_id = $1
+//	    AND hp1.depth = 1
+//	    AND hp2.depth = 1
+//	    AND e.uuid != $1
+//	    AND e.deleted_at IS NULL
+//	ORDER BY e.name
 func (q *Queries) GetEntitySiblings(ctx context.Context, descendantID uuid.UUID) ([]Entity, error) {
 	rows, err := q.db.Query(ctx, getEntitySiblings, descendantID)
 	if err != nil {
@@ -713,6 +832,10 @@ type GetEntityStateParams struct {
 	FiscalYear *int16    `json:"fiscal_year"`
 }
 
+// GetEntityState
+//
+//	SELECT uuid, fiscal_year, key, sequence, entity_id, entity_unit_id FROM entitystate
+//	WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
 func (q *Queries) GetEntityState(ctx context.Context, arg GetEntityStateParams) (Entitystate, error) {
 	row := q.db.QueryRow(ctx, getEntityState, arg.EntityID, arg.Key, arg.FiscalYear)
 	var i Entitystate
@@ -737,6 +860,10 @@ type GetEntityStateByKeyParams struct {
 	Key      string    `json:"key"`
 }
 
+// GetEntityStateByKey
+//
+//	SELECT uuid, fiscal_year, key, sequence, entity_id, entity_unit_id FROM entitystate
+//	WHERE entity_id = $1 AND key = $2
 func (q *Queries) GetEntityStateByKey(ctx context.Context, arg GetEntityStateByKeyParams) (Entitystate, error) {
 	row := q.db.QueryRow(ctx, getEntityStateByKey, arg.EntityID, arg.Key)
 	var i Entitystate
@@ -774,6 +901,18 @@ type GetEntityStatsRow struct {
 	CashEntities    int64 `json:"cash_entities"`
 }
 
+// GetEntityStats
+//
+//	SELECT
+//	    COUNT(*) as total_entities,
+//	    COUNT(*) FILTER (WHERE is_active = true) as active_entities,
+//	    COUNT(*) FILTER (WHERE hidden = false) as visible_entities,
+//	    COUNT(DISTINCT type) as entity_types,
+//	    COUNT(*) FILTER (WHERE parent_id IS NULL) as root_entities,
+//	    COUNT(*) FILTER (WHERE accrual_method = true) as accrual_entities,
+//	    COUNT(*) FILTER (WHERE accrual_method = false) as cash_entities
+//	FROM entities
+//	WHERE tenant_id = $1 AND deleted_at IS NULL
 func (q *Queries) GetEntityStats(ctx context.Context, tenantID int32) (GetEntityStatsRow, error) {
 	row := q.db.QueryRow(ctx, getEntityStats, tenantID)
 	var i GetEntityStatsRow
@@ -840,6 +979,34 @@ type GetEntityTreeStructureRow struct {
 	SortPath      string             `json:"sort_path"`
 }
 
+// GetEntityTreeStructure
+//
+//	WITH RECURSIVE entity_tree AS (
+//	    SELECT
+//	        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+//	        0 as level,
+//	        ARRAY[e.name] as path,
+//	        e.name as sort_path
+//	    FROM entities e
+//	    WHERE e.tenant_id = $1
+//	        AND e.parent_id IS NULL
+//	        AND e.deleted_at IS NULL
+//
+//	    UNION ALL
+//
+//	    SELECT
+//	        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+//	        et.level + 1,
+//	        et.path || e.name,
+//	        et.sort_path || '/' || e.name
+//	    FROM entities e
+//	    JOIN entity_tree et ON e.parent_id = et.uuid
+//	    WHERE e.tenant_id = $1
+//	        AND e.deleted_at IS NULL
+//	        AND et.level < 10
+//	)
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
+//	ORDER BY sort_path
 func (q *Queries) GetEntityTreeStructure(ctx context.Context, tenantID int32) ([]GetEntityTreeStructureRow, error) {
 	rows, err := q.db.Query(ctx, getEntityTreeStructure, tenantID)
 	if err != nil {
@@ -922,6 +1089,18 @@ type GetEntityWithHierarchyInfoRow struct {
 }
 
 // Advanced Entity Queries
+//
+//	SELECT
+//	    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+//	    COALESCE(MIN(hp.depth), 0) as level,
+//	    COUNT(children.uuid) as child_count,
+//	    parent_e.name as parent_name
+//	FROM entities e
+//	LEFT JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id AND hp.tenant_id = e.tenant_id
+//	LEFT JOIN entities children ON children.parent_id = e.uuid AND children.tenant_id = e.tenant_id AND children.deleted_at IS NULL
+//	LEFT JOIN entities parent_e ON parent_e.uuid = e.parent_id AND parent_e.tenant_id = e.tenant_id
+//	WHERE e.uuid = $1 AND e.tenant_id = $2 AND e.deleted_at IS NULL
+//	GROUP BY e.uuid, parent_e.name
 func (q *Queries) GetEntityWithHierarchyInfo(ctx context.Context, arg GetEntityWithHierarchyInfoParams) (GetEntityWithHierarchyInfoRow, error) {
 	row := q.db.QueryRow(ctx, getEntityWithHierarchyInfo, arg.Uuid, arg.TenantID)
 	var i GetEntityWithHierarchyInfoRow
@@ -964,6 +1143,13 @@ type GetNextSequenceNumberParams struct {
 	EntityUnitID pgtype.UUID `json:"entity_unit_id"`
 }
 
+// GetNextSequenceNumber
+//
+//	INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
+//	VALUES (gen_random_uuid(), $3, $2, 1, $1, $4)
+//	ON CONFLICT (entity_id, key, fiscal_year) DO UPDATE
+//	SET sequence = entitystate.sequence + 1
+//	RETURNING sequence
 func (q *Queries) GetNextSequenceNumber(ctx context.Context, arg GetNextSequenceNumberParams) (int64, error) {
 	row := q.db.QueryRow(ctx, getNextSequenceNumber,
 		arg.EntityID,
@@ -981,6 +1167,10 @@ DELETE FROM entities
 WHERE uuid = $1 AND tenant_id = current_tenant_id()
 `
 
+// HardDeleteEntity
+//
+//	DELETE FROM entities
+//	WHERE uuid = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) HardDeleteEntity(ctx context.Context, argUuid uuid.UUID) error {
 	_, err := q.db.Exec(ctx, hardDeleteEntity, argUuid)
 	return err
@@ -999,6 +1189,12 @@ type IncrementEntityStateSequenceParams struct {
 	FiscalYear *int16    `json:"fiscal_year"`
 }
 
+// IncrementEntityStateSequence
+//
+//	UPDATE entitystate
+//	SET sequence = sequence + 1
+//	WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
+//	RETURNING sequence
 func (q *Queries) IncrementEntityStateSequence(ctx context.Context, arg IncrementEntityStateSequenceParams) (int64, error) {
 	row := q.db.QueryRow(ctx, incrementEntityStateSequence, arg.EntityID, arg.Key, arg.FiscalYear)
 	var sequence int64
@@ -1021,6 +1217,15 @@ type IsEntityAncestorParams struct {
 	DescendantID uuid.UUID `json:"descendant_id"`
 }
 
+// IsEntityAncestor
+//
+//	SELECT EXISTS(
+//	    SELECT 1 FROM hierarchy_paths
+//	    WHERE tenant_id = current_tenant_id()
+//	        AND ancestor_id = $1
+//	        AND descendant_id = $2
+//	        AND depth > 0
+//	) as is_ancestor
 func (q *Queries) IsEntityAncestor(ctx context.Context, arg IsEntityAncestorParams) (bool, error) {
 	row := q.db.QueryRow(ctx, isEntityAncestor, arg.AncestorID, arg.DescendantID)
 	var is_ancestor bool
@@ -1034,6 +1239,11 @@ WHERE tenant_id = current_tenant_id() AND is_active = true AND deleted_at IS NUL
 ORDER BY name
 `
 
+// ListActiveEntities
+//
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	WHERE tenant_id = current_tenant_id() AND is_active = true AND deleted_at IS NULL
+//	ORDER BY name
 func (q *Queries) ListActiveEntities(ctx context.Context) ([]Entity, error) {
 	rows, err := q.db.Query(ctx, listActiveEntities)
 	if err != nil {
@@ -1078,6 +1288,10 @@ ORDER BY name
 `
 
 // Entity Listing and Filtering
+//
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
+//	ORDER BY name
 func (q *Queries) ListEntities(ctx context.Context) ([]Entity, error) {
 	rows, err := q.db.Query(ctx, listEntities)
 	if err != nil {
@@ -1121,6 +1335,11 @@ WHERE tenant_id = current_tenant_id() AND type = $1 AND deleted_at IS NULL
 ORDER BY name
 `
 
+// ListEntitiesByType
+//
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	WHERE tenant_id = current_tenant_id() AND type = $1 AND deleted_at IS NULL
+//	ORDER BY name
 func (q *Queries) ListEntitiesByType(ctx context.Context, type_ string) ([]Entity, error) {
 	rows, err := q.db.Query(ctx, listEntitiesByType, type_)
 	if err != nil {
@@ -1169,6 +1388,14 @@ WHERE children.uuid IS NULL
 `
 
 // Find all leaf nodes (entities with no children)
+//
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at
+//	FROM entities e
+//	LEFT JOIN entities children ON children.parent_id = e.uuid
+//	    AND children.tenant_id = e.tenant_id
+//	WHERE children.uuid IS NULL
+//	  AND e.tenant_id = current_tenant_id()
+//	  AND e.is_active = true
 func (q *Queries) ListEntitiesWithNochildren(ctx context.Context) ([]Entity, error) {
 	rows, err := q.db.Query(ctx, listEntitiesWithNochildren)
 	if err != nil {
@@ -1212,6 +1439,11 @@ WHERE entity_id = $1
 ORDER BY key, fiscal_year
 `
 
+// ListEntityStates
+//
+//	SELECT uuid, fiscal_year, key, sequence, entity_id, entity_unit_id FROM entitystate
+//	WHERE entity_id = $1
+//	ORDER BY key, fiscal_year
 func (q *Queries) ListEntityStates(ctx context.Context, entityID uuid.UUID) ([]Entitystate, error) {
 	rows, err := q.db.Query(ctx, listEntityStates, entityID)
 	if err != nil {
@@ -1245,6 +1477,11 @@ WHERE tenant_id = current_tenant_id() AND hidden = false AND deleted_at IS NULL
 ORDER BY name
 `
 
+// ListVisibleEntities
+//
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	WHERE tenant_id = current_tenant_id() AND hidden = false AND deleted_at IS NULL
+//	ORDER BY name
 func (q *Queries) ListVisibleEntities(ctx context.Context) ([]Entity, error) {
 	rows, err := q.db.Query(ctx, listVisibleEntities)
 	if err != nil {
@@ -1295,6 +1532,11 @@ type ResetEntityStateSequenceParams struct {
 	FiscalYear *int16    `json:"fiscal_year"`
 }
 
+// ResetEntityStateSequence
+//
+//	UPDATE entitystate
+//	SET sequence = $3
+//	WHERE entity_id = $1 AND key = $2 AND fiscal_year = $4
 func (q *Queries) ResetEntityStateSequence(ctx context.Context, arg ResetEntityStateSequenceParams) error {
 	_, err := q.db.Exec(ctx, resetEntityStateSequence,
 		arg.EntityID,
@@ -1311,6 +1553,11 @@ SET deleted_at = NULL, updated_at = NOW()
 WHERE uuid = $1 AND tenant_id = current_tenant_id()
 `
 
+// RestoreEntity
+//
+//	UPDATE entities
+//	SET deleted_at = NULL, updated_at = NOW()
+//	WHERE uuid = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) RestoreEntity(ctx context.Context, argUuid uuid.UUID) error {
 	_, err := q.db.Exec(ctx, restoreEntity, argUuid)
 	return err
@@ -1330,6 +1577,14 @@ type SearchEntitiesByNameParams struct {
 	Limit   int32   `json:"limit"`
 }
 
+// SearchEntitiesByName
+//
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	WHERE tenant_id = current_tenant_id()
+//	    AND name ILIKE '%' || $1 || '%'
+//	    AND deleted_at IS NULL
+//	ORDER BY name
+//	LIMIT $2
 func (q *Queries) SearchEntitiesByName(ctx context.Context, arg SearchEntitiesByNameParams) ([]Entity, error) {
 	rows, err := q.db.Query(ctx, searchEntitiesByName, arg.Column1, arg.Limit)
 	if err != nil {
@@ -1373,6 +1628,11 @@ SET deleted_at = NOW(), updated_at = NOW()
 WHERE uuid = $1 AND tenant_id = current_tenant_id()
 `
 
+// SoftDeleteEntity
+//
+//	UPDATE entities
+//	SET deleted_at = NOW(), updated_at = NOW()
+//	WHERE uuid = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error {
 	_, err := q.db.Exec(ctx, softDeleteEntity, argUuid)
 	return err
@@ -1410,6 +1670,23 @@ type UpdateEntityParams struct {
 	Settings      []byte    `json:"settings"`
 }
 
+// UpdateEntity
+//
+//	UPDATE entities
+//	SET
+//	    name = COALESCE($2, name),
+//	    code = COALESCE($3, code),
+//	    type = COALESCE($4, type),
+//	    is_active = COALESCE($5, is_active),
+//	    hidden = COALESCE($6, hidden),
+//	    accrual_method = COALESCE($7, accrual_method),
+//	    fy_start_month = COALESCE($8, fy_start_month),
+//	    address = COALESCE($9, address),
+//	    picture = COALESCE($10, picture),
+//	    settings = COALESCE($11, settings),
+//	    updated_at = NOW()
+//	WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+//	RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateEntity(ctx context.Context, arg UpdateEntityParams) (Entity, error) {
 	row := q.db.QueryRow(ctx, updateEntity,
 		arg.Uuid,
@@ -1459,6 +1736,12 @@ type UpdateEntityStateSequenceParams struct {
 	Sequence int64     `json:"sequence"`
 }
 
+// UpdateEntityStateSequence
+//
+//	UPDATE entitystate
+//	SET sequence = $3, updated_at = NOW()
+//	WHERE entity_id = $1 AND key = $2
+//	RETURNING uuid, fiscal_year, key, sequence, entity_id, entity_unit_id
 func (q *Queries) UpdateEntityStateSequence(ctx context.Context, arg UpdateEntityStateSequenceParams) (Entitystate, error) {
 	row := q.db.QueryRow(ctx, updateEntityStateSequence, arg.EntityID, arg.Key, arg.Sequence)
 	var i Entitystate
@@ -1490,6 +1773,22 @@ FROM hierarchy_cte
 ON CONFLICT (tenant_id, ancestor_id, descendant_id) DO NOTHING
 `
 
+// UpdateHierarchyPaths
+//
+//	WITH RECURSIVE hierarchy_cte AS (
+//	    -- Base case: self-reference
+//	    SELECT current_tenant_id() as tenant_id, $1::UUID as ancestor_id, $1::UUID as descendant_id, 0 as depth
+//	    UNION ALL
+//	    -- Recursive case: add ancestors
+//	    SELECT h.tenant_id, hp.ancestor_id, h.descendant_id, h.depth + 1
+//	    FROM hierarchy_cte h
+//	    JOIN hierarchy_paths hp ON hp.descendant_id = h.ancestor_id AND hp.tenant_id = h.tenant_id
+//	    WHERE h.depth < 10 -- Prevent infinite recursion
+//	)
+//	INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+//	SELECT DISTINCT tenant_id, ancestor_id, descendant_id, depth
+//	FROM hierarchy_cte
+//	ON CONFLICT (tenant_id, ancestor_id, descendant_id) DO NOTHING
 func (q *Queries) UpdateHierarchyPaths(ctx context.Context, dollar_1 uuid.UUID) error {
 	_, err := q.db.Exec(ctx, updateHierarchyPaths, dollar_1)
 	return err
@@ -1510,6 +1809,20 @@ WHERE hp1.tenant_id = $1
     AND hp2.depth > 0
 `
 
+// ValidateEntityHierarchy
+//
+//	SELECT
+//	    CASE
+//	        WHEN COUNT(*) = 0 THEN true
+//	        ELSE false
+//	    END as is_valid
+//	FROM hierarchy_paths hp1
+//	JOIN hierarchy_paths hp2 ON hp1.descendant_id = hp2.ancestor_id
+//	WHERE hp1.tenant_id = $1
+//	    AND hp2.tenant_id = $1
+//	    AND hp1.ancestor_id = hp2.descendant_id
+//	    AND hp1.depth > 0
+//	    AND hp2.depth > 0
 func (q *Queries) ValidateEntityHierarchy(ctx context.Context, tenantID int32) (bool, error) {
 	row := q.db.QueryRow(ctx, validateEntityHierarchy, tenantID)
 	var is_valid bool
