@@ -16,16 +16,17 @@ CREATE TABLE tenants (
   status VARCHAR(20) NOT NULL DEFAULT 'active'
   CHECK (status IN ('active', 'suspended', 'pending')),
   industry VARCHAR(50), -- For future industry-specific modules
+  settings JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
 );
 
--- Tenant configurations
-CREATE TABLE tenant_configurations (
-  tenant_id INT PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
-  max_users INT NOT NULL DEFAULT 100,
-  storage_quota BIGINT NOT NULL DEFAULT 1073741824, -- 1GB
-  features JSONB NOT NULL DEFAULT '{}'::jsonb,
-  modules_enabled JSONB NOT NULL DEFAULT '["accounting", "inventory"]'::jsonb
-);
+-- -- Tenant configurations
+-- CREATE TABLE tenant_configurations (
+--   tenant_id INT PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
+--   max_users INT NOT NULL DEFAULT 100,
+--   storage_quota BIGINT NOT NULL DEFAULT 1073741824, -- 1GB
+--   features JSONB NOT NULL DEFAULT '{}'::jsonb,
+--   modules_enabled JSONB NOT NULL DEFAULT '["accounting", "inventory"]'::jsonb
+-- );
