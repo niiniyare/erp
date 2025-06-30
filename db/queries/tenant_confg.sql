@@ -1,136 +1,136 @@
--- =====================================================
--- TENANT CONFIGURATION QUERIES
--- =====================================================
-
--- Admin-level configuration management
--- name: CreateTenantConfiguration :one
-INSERT INTO tenant_configurations (tenant_id, max_users, storage_quota, features, modules_enabled)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING *;
-
--- name: GetTenantConfiguration :one
-SELECT * FROM tenant_configurations
-WHERE tenant_id = $1;
-
--- name: UpdateTenantConfiguration :one
-UPDATE tenant_configurations
-SET max_users = $2, storage_quota = $3, features = $4, modules_enabled = $5
-WHERE tenant_id = $1
-RETURNING *;
-
--- Current tenant configuration queries (RLS-aware)
--- name: GetCurrentTenantConfiguration :one
-SELECT * FROM tenant_configurations
-WHERE tenant_id = current_tenant_id();
-
--- name: UpdateCurrentTenantMaxUsers :one
-UPDATE tenant_configurations
-SET max_users = $1
-WHERE tenant_id = current_tenant_id()
-RETURNING *;
-
--- name: UpdateCurrentTenantStorageQuota :one
-UPDATE tenant_configurations
-SET storage_quota = $1
-WHERE tenant_id = current_tenant_id()
-RETURNING *;
-
--- name: UpdateCurrentTenantFeatures :one
-UPDATE tenant_configurations
-SET features = $1
-WHERE tenant_id = current_tenant_id()
-RETURNING *;
-
--- name: UpdateCurrentTenantModules :one
-UPDATE tenant_configurations
-SET modules_enabled = $1
-WHERE tenant_id = current_tenant_id()
-RETURNING *;
-
--- name: CreateCurrentTenantConfiguration :one
-INSERT INTO tenant_configurations (tenant_id, max_users, storage_quota, features, modules_enabled)
-VALUES (current_tenant_id(), $1, $2, $3, $4)
-RETURNING *;
-
--- Combined queries with current tenant context
--- name: GetCurrentTenantWithConfiguration :one
-SELECT 
-    t.*,
-    tc.max_users,
-    tc.storage_quota,
-    tc.features,
-    tc.modules_enabled
-FROM tenants t
-LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE t.id = current_tenant_id() AND t.deleted_at IS NULL;
-
--- name: CheckCurrentTenantHasFeature :one
-SELECT EXISTS(
-    SELECT 1 FROM tenant_configurations 
-    WHERE tenant_id = current_tenant_id() 
-    AND features ? $1
-);
-
--- name: CheckCurrentTenantHasModule :one
-SELECT EXISTS(
-    SELECT 1 FROM tenant_configurations 
-    WHERE tenant_id = current_tenant_id() 
-    AND modules_enabled ? $1
-);
-
--- Admin queries (for system administration)
--- name: GetTenantWithConfiguration :one
-SELECT 
-    t.*,
-    tc.max_users,
-    tc.storage_quota,
-    tc.features,
-    tc.modules_enabled
-FROM tenants t
-LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE t.id = $1 AND t.deleted_at IS NULL;
-
--- name: ListTenantsWithConfigurations :many
-SELECT 
-    t.*,
-    tc.max_users,
-    tc.storage_quota,
-    tc.features,
-    tc.modules_enabled
-FROM tenants t
-LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE t.deleted_at IS NULL
-ORDER BY t.created_at DESC
-LIMIT $1 OFFSET $2;
-
--- name: GetTenantsWithFeature :many
-SELECT 
-    t.*,
-    tc.max_users,
-    tc.storage_quota,
-    tc.features,
-    tc.modules_enabled
-FROM tenants t
-JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE tc.features ? $1 
-  AND t.deleted_at IS NULL
-ORDER BY t.name;
-
--- name: GetTenantsWithModule :many
-SELECT 
-    t.*,
-    tc.max_users,
-    tc.storage_quota,
-    tc.features,
-    tc.modules_enabled
-FROM tenants t
-JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE tc.modules_enabled ? $1 
-  AND t.deleted_at IS NULL
-ORDER BY t.name;
-
--- name: DeleteCurrentTenantConfiguration :exec
-DELETE FROM tenant_configurations
-WHERE tenant_id = current_tenant_id();
-
-
+-- -- =====================================================
+-- -- TENANT CONFIGURATION QUERIES
+-- -- =====================================================
+--
+-- -- Admin-level configuration management
+-- -- name: CreateTenantConfiguration :one
+-- INSERT INTO tenant_configurations (tenant_id, max_users, storage_quota, features, modules_enabled)
+-- VALUES ($1, $2, $3, $4, $5)
+-- RETURNING *;
+--
+-- -- name: GetTenantConfiguration :one
+-- SELECT * FROM tenant_configurations
+-- WHERE tenant_id = $1;
+--
+-- -- name: UpdateTenantConfiguration :one
+-- UPDATE tenant_configurations
+-- SET max_users = $2, storage_quota = $3, features = $4, modules_enabled = $5
+-- WHERE tenant_id = $1
+-- RETURNING *;
+--
+-- -- Current tenant configuration queries (RLS-aware)
+-- -- name: GetCurrentTenantConfiguration :one
+-- SELECT * FROM tenant_configurations
+-- WHERE tenant_id = current_tenant_id();
+--
+-- -- name: UpdateCurrentTenantMaxUsers :one
+-- UPDATE tenant_configurations
+-- SET max_users = $1
+-- WHERE tenant_id = current_tenant_id()
+-- RETURNING *;
+--
+-- -- name: UpdateCurrentTenantStorageQuota :one
+-- UPDATE tenant_configurations
+-- SET storage_quota = $1
+-- WHERE tenant_id = current_tenant_id()
+-- RETURNING *;
+--
+-- -- name: UpdateCurrentTenantFeatures :one
+-- UPDATE tenant_configurations
+-- SET features = $1
+-- WHERE tenant_id = current_tenant_id()
+-- RETURNING *;
+--
+-- -- name: UpdateCurrentTenantModules :one
+-- UPDATE tenant_configurations
+-- SET modules_enabled = $1
+-- WHERE tenant_id = current_tenant_id()
+-- RETURNING *;
+--
+-- -- name: CreateCurrentTenantConfiguration :one
+-- INSERT INTO tenant_configurations (tenant_id, max_users, storage_quota, features, modules_enabled)
+-- VALUES (current_tenant_id(), $1, $2, $3, $4)
+-- RETURNING *;
+--
+-- -- Combined queries with current tenant context
+-- -- name: GetCurrentTenantWithConfiguration :one
+-- SELECT 
+--     t.*,
+--     tc.max_users,
+--     tc.storage_quota,
+--     tc.features,
+--     tc.modules_enabled
+-- FROM tenants t
+-- LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
+-- WHERE t.id = current_tenant_id() AND t.deleted_at IS NULL;
+--
+-- -- name: CheckCurrentTenantHasFeature :one
+-- SELECT EXISTS(
+--     SELECT 1 FROM tenant_configurations 
+--     WHERE tenant_id = current_tenant_id() 
+--     AND features ? $1
+-- );
+--
+-- -- name: CheckCurrentTenantHasModule :one
+-- SELECT EXISTS(
+--     SELECT 1 FROM tenant_configurations 
+--     WHERE tenant_id = current_tenant_id() 
+--     AND modules_enabled ? $1
+-- );
+--
+-- -- Admin queries (for system administration)
+-- -- name: GetTenantWithConfiguration :one
+-- SELECT 
+--     t.*,
+--     tc.max_users,
+--     tc.storage_quota,
+--     tc.features,
+--     tc.modules_enabled
+-- FROM tenants t
+-- LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
+-- WHERE t.id = $1 AND t.deleted_at IS NULL;
+--
+-- -- name: ListTenantsWithConfigurations :many
+-- SELECT 
+--     t.*,
+--     tc.max_users,
+--     tc.storage_quota,
+--     tc.features,
+--     tc.modules_enabled
+-- FROM tenants t
+-- LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
+-- WHERE t.deleted_at IS NULL
+-- ORDER BY t.created_at DESC
+-- LIMIT $1 OFFSET $2;
+--
+-- -- name: GetTenantsWithFeature :many
+-- SELECT 
+--     t.*,
+--     tc.max_users,
+--     tc.storage_quota,
+--     tc.features,
+--     tc.modules_enabled
+-- FROM tenants t
+-- JOIN tenant_configurations tc ON t.id = tc.tenant_id
+-- WHERE tc.features ? $1 
+--   AND t.deleted_at IS NULL
+-- ORDER BY t.name;
+--
+-- -- name: GetTenantsWithModule :many
+-- SELECT 
+--     t.*,
+--     tc.max_users,
+--     tc.storage_quota,
+--     tc.features,
+--     tc.modules_enabled
+-- FROM tenants t
+-- JOIN tenant_configurations tc ON t.id = tc.tenant_id
+-- WHERE tc.modules_enabled ? $1 
+--   AND t.deleted_at IS NULL
+-- ORDER BY t.name;
+--
+-- -- name: DeleteCurrentTenantConfiguration :exec
+-- DELETE FROM tenant_configurations
+-- WHERE tenant_id = current_tenant_id();
+--
+--

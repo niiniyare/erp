@@ -124,15 +124,18 @@ SELECT EXISTS(
 );
 
 -- name: GetCurrentTenantStorageUsage :one
-SELECT 
-    t.id,
-    t.name,
-    tc.storage_quota,
-    COALESCE(tc.storage_quota, 1073741824) as quota_bytes
-FROM tenants t
-LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
-WHERE t.id = current_tenant_id() AND t.deleted_at IS NULL;
-
+-- SELECT 
+--     t.id,
+--     t.name,
+--     tc.storage_quota,
+--     COALESCE(tc.storage_quota, 1073741824) as quota_bytes
+-- FROM tenants t
+-- LEFT JOIN tenant_configurations tc ON t.id = tc.tenant_id
+-- WHERE t.id = current_tenant_id() AND t.deleted_at IS NULL;
+--
+--
+--
+--
 -- Admin utilities (system-wide)
 -- name: GetTenantStats :one
 SELECT 
