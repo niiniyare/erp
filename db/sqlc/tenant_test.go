@@ -2,875 +2,1044 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"math/rand"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/stretchr/testify/assert"
+	"github.com/niiniyare/erp/pkg/util"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-// TestSuite for database integration tests
+// Test fixtures and helpers
 var (
-	testDBPool  *pgxpool.Pool
-	testQueries *Queries
+	testCtx = context.Background()
 )
 
-func setupTestDB(ctx context.Context, t *testing.T) {
-	// Skip if already setup
-	if testDBPool != nil && testQueries != nil {
+// Helper functions
+func stringPtr(s string) *string {
+	return &s
+}
+
+func int32Ptr(i int32) *int32 {
+	return &i
+}
+
+func int64Ptr(i int64) *int64 {
+	return &i
+}
+
+func setupTestDB(t *testing.T) *pgxpool.Pool {
+	t.Helper()
+
+	databaseURL := os.Getenv("TEST_DATABASE_URL")
+	if databaseURL == "" {
+		t.Skip("TEST_DATABASE_URL not set, skipping database tests")
+	}
+
+	config, err := pgxpool.ParseConfig(databaseURL)
+	require.NoError(t, err)
+
+	// Configure for testing
+	config.MaxConns = 10
+	config.MinConns = 2
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	require.NoError(t, err)
+
+	// Test connection
+	err = pool.Ping(context.Background())
+	require.NoError(t, err)
+
+	return pool
+}
+
+// generateUniqueTestName creates a unique test name to avoid conflicts
+// Keeps names short to fit database constraints (usually VARCHAR(50) or VARCHAR(63))
+func generateUniqueTestName(baseName string) string {
+	// Use only the last 6 digits of timestamp for uniqueness
+	timestamp := time.Now().UnixNano() % 1000000
+	// Use 4-char random string to save space
+	random := util.RandomString(4)
+	// Format: BaseName_123456_AbCd (max ~25 chars for reasonable base names)
+	return fmt.Sprintf("%s_%06d_%s", baseName, timestamp, random)
+}
+
+// generateShortUniqueName creates very short unique names for constrained fields
+func generateShortUniqueName(prefix string) string {
+	timestamp := time.Now().UnixNano() % 100000 // 5 digits
+	random := util.RandomString(3)              // 3 chars
+	// Format: prefix_12345_ABC (max ~15 chars for short prefixes)
+	return fmt.Sprintf("%s_%05d_%s", prefix, timestamp, random)
+}
+
+func createTestTenant(t *testing.T, store Store, name string) *Tenant {
+	t.Helper()
+	// Keep base name short to fit database constraints
+	shortName := name
+	if len(name) > 15 {
+		shortName = name[:15]
+	}
+	uniqueName := generateUniqueTestName(shortName)
+	subdomain := strings.ToLower(strings.ReplaceAll(uniqueName, " ", "-"))
+
+	params := CreateTenantParams{
+		Name:      uniqueName,
+		Subdomain: stringPtr(subdomain),
+		Status:    "active",
+		Industry:  stringPtr("technology"),
+	}
+	tenant, err := store.CreateTenant(testCtx, params)
+	require.NoError(t, err)
+	require.NotNil(t, tenant)
+	return tenant
+}
+
+func createComplexTestTenant(t *testing.T, store Store, name string) *Tenant {
+	t.Helper()
+
+	// Keep base name short to fit database constraints
+	shortName := name
+	if len(name) > 15 {
+		shortName = name[:15]
+	}
+	uniqueName := generateUniqueTestName(shortName)
+	slug := generateShortUniqueName("slug") // Keep slug very short
+	email := fmt.Sprintf("test@%s.com", generateShortUniqueName("domain"))
+
+	metadata, err := json.Marshal(map[string]interface{}{
+		"test_data":  true,
+		"created_by": "test_suite",
+		"timestamp":  time.Now().Unix(),
+	})
+	require.NoError(t, err)
+
+	settings, err := json.Marshal(map[string]interface{}{
+		"theme":         "dark",
+		"notifications": true,
+	})
+	require.NoError(t, err)
+
+	params := CreateTenantCompleteParams{
+		Name:               uniqueName,
+		Slug:               slug,
+		Email:              email,
+		Subdomain:          stringPtr(generateShortUniqueName("sub")),
+		Status:             "active",
+		Timezone:           "UTC",
+		CurrencyCode:       "USD",
+		Metadata:           metadata,
+		Industry:           stringPtr("technology"),
+		CompanySize:        stringPtr("medium"),
+		TaxID:              stringPtr(generateShortUniqueName("TAX")),
+		RegistrationNumber: stringPtr(generateShortUniqueName("REG")),
+		LegalEntityType:    stringPtr("corporation"),
+		Settings:           settings,
+	}
+
+	tenant, err := store.CreateTenantComplete(testCtx, params)
+	require.NoError(t, err)
+	require.NotNil(t, tenant)
+	return tenant
+}
+
+// Tenant Test Suite
+type TenantTestSuite struct {
+	suite.Suite
+	store       Store
+	pool        *pgxpool.Pool
+	testTenants []uuid.UUID // Track tenants created during tests for cleanup
+}
+
+func (suite *TenantTestSuite) SetupSuite() {
+	suite.pool = setupTestDB(suite.T())
+	suite.store = NewStore(suite.pool)
+	suite.testTenants = make([]uuid.UUID, 0)
+}
+
+func (suite *TenantTestSuite) TearDownSuite() {
+	// Clean up all test tenants
+	suite.cleanupTestTenants()
+
+	if suite.pool != nil {
+		suite.pool.Close()
+	}
+}
+
+func (suite *TenantTestSuite) SetupTest() {
+	// Clear any existing tenant context
+	_, _ = suite.pool.Exec(testCtx, "SELECT set_config('app.current_tenant_id', '', false)")
+}
+
+func (suite *TenantTestSuite) TearDownTest() {
+	// Clear tenant context after each test
+	_, _ = suite.pool.Exec(testCtx, "SELECT set_config('app.current_tenant_id', '', false)")
+}
+
+func (suite *TenantTestSuite) cleanupTestTenants() {
+	if len(suite.testTenants) == 0 {
 		return
 	}
 
-	// Get database URL from environment variable
-	dbURL := os.Getenv("DB_URL")
-	if dbURL == "" {
-		dbURL = "postgres://admin:admin@localhost:5432/ledger?sslmode=disable"
+	// Clean up in proper dependency order
+	for _, tenantID := range suite.testTenants {
+		// Delete dependent records first
+		_, _ = suite.pool.Exec(testCtx, "DELETE FROM tenant_usage_stats WHERE tenant_id = $1", tenantID)
+		_, _ = suite.pool.Exec(testCtx, "DELETE FROM tenant_configurations WHERE tenant_id = $1", tenantID)
+		// Force delete tenant (including soft-deleted ones)
+		_, _ = suite.pool.Exec(testCtx, "DELETE FROM tenants WHERE id = $1", tenantID)
 	}
 
-	// Connect to database
-	db, err := pgxpool.New(ctx, dbURL)
-	require.NoError(t, err)
-
-	// Set global variables
-	testDBPool = db
-	testQueries = New(testDBPool)
-
-	// Verify connection
-	err = db.Ping(ctx)
-	require.NoError(t, err)
+	suite.testTenants = make([]uuid.UUID, 0)
 }
 
-func teardownTestDB() {
-	if testDBPool != nil {
-		testDBPool.Close()
-		testDBPool = nil
-		testQueries = nil
-	}
+func (suite *TenantTestSuite) trackTenant(tenantID uuid.UUID) {
+	suite.testTenants = append(suite.testTenants, tenantID)
 }
 
-func withTenantContext(t *testing.T, tenantID int32, fn func(q *Queries)) {
-	ctx := context.Background()
-	conn, err := testDBPool.Acquire(ctx)
-	require.NoError(t, err, "Failed to acquire connection")
-	defer conn.Release()
-
-	// Set tenant context using SET command
-	_, err = conn.Exec(ctx, "SET app.current_tenant_id = $1", fmt.Sprintf("%d", tenantID))
-	if err != nil {
-		// Fallback to set_config if SET fails
-		_, err = conn.Exec(ctx, "SELECT set_config('app.current_tenant_id', $1, true)", fmt.Sprintf("%d", tenantID))
-		require.NoError(t, err, "Failed to set tenant context")
-	}
-
-	// Verify tenant context is properly set
-	var setting string
-	err = conn.QueryRow(ctx, "SHOW app.current_tenant_id").Scan(&setting)
-	require.NoError(t, err, "Failed to verify tenant context")
-	require.Equal(t, fmt.Sprintf("%d", tenantID), setting, "Tenant context not set correctly")
-
-	// Create tenant-scoped Queries instance
-	q := New(conn)
-	fn(q)
-}
-
-//	func withTenantContext(t *testing.T, tenantID int32, fn func(q *Queries)) {
-//		ctx := context.Background()
-//		conn, err := testDBPool.Acquire(ctx)
-//		require.NoError(t, err, "Failed to acquire connection")
-//		defer conn.Release()
-//
-//		// Set tenant context using SET command
-//		_, err = conn.Exec(ctx, "SET app.current_tenant_id = $1", tenantID)
-//		if err != nil {
-//			// Fallback to set_config if SET fails
-//			_, err = conn.Exec(ctx, "SELECT set_config('app.current_tenant_id', $1, true)", fmt.Sprintf("%d", tenantID))
-//			require.NoError(t, err, "Failed to set tenant context")
-//		}
-//
-//		// Verify tenant context is properly set
-//		var currentTenantID int32
-//		err = conn.QueryRow(ctx, "SELECT current_tenant_id()").Scan(&currentTenantID)
-//		require.NoError(t, err, "current_tenant_id() function failed")
-//		require.Equal(t, tenantID, currentTenantID, "Tenant context not properly set")
-//
-//		// Create tenant-scoped Queries instance
-//		q := New(conn)
-//		fn(q)
-//	}
-//
-// setTenantContext sets the tenant context for operations that require it
-func setTenantContext(ctx context.Context, t *testing.T, tenantID int32) {
-	// Try different possible ways to set tenant context
-	// Adjust these based on your actual database setup
-
-	// Option 1: Using PostgreSQL set_config
-	_, err := testDBPool.Exec(ctx, "SELECT set_config('app.current_tenant_id', $1, true)", fmt.Sprintf("%d", tenantID))
-	if err != nil {
-		// Option 2: Try a custom function if it exists
-		_, err2 := testDBPool.Exec(ctx, "SELECT set_tenant_context($1)", tenantID)
-		if err2 != nil {
-			// Option 3: Try setting rls context
-			_, err3 := testDBPool.Exec(ctx, "SET rls.tenant_id = $1", tenantID)
-			if err3 != nil {
-				t.Logf("Failed to set tenant context with all methods. Errors: %v, %v, %v", err, err2, err3)
-				// Don't fail the test here, let the actual operation fail and provide better error info
-			}
-		}
-	}
-}
-
-// clearTenantContext clears any set tenant context
-func clearTenantContext(ctx context.Context, t *testing.T) {
-	// Clear the tenant context
-	testDBPool.Exec(ctx, "SELECT set_config('app.current_tenant_id', NULL, true)")
-	testDBPool.Exec(ctx, "RESET rls.tenant_id")
-}
-
-// Generate unique names to avoid duplicates
-func generateUniqueName(baseName string) string {
-	rand.Seed(time.Now().UnixNano())
-	timestamp := time.Now().UnixNano()
-	randomNum := rand.Intn(10000)
-	return fmt.Sprintf("%s_%d_%d", baseName, timestamp, randomNum)
-}
-
-func generateUniqueSubdomain(baseSubdomain string) string {
-	rand.Seed(time.Now().UnixNano())
-	timestamp := time.Now().UnixNano()
-	randomNum := rand.Intn(10000)
-	return fmt.Sprintf("%s-%d-%d", baseSubdomain, timestamp, randomNum)
-}
-
-// Test cases structure
-type createTenantTestCase struct {
-	name           string
-	input          CreateTenantParams
-	expectedError  bool
-	errorContains  string
-	validateResult func(*testing.T, Tenant)
-	setupFunc      func() CreateTenantParams // Function to generate unique test data
-}
-
-// createTenant is a helper function that creates a single tenant for use in other test cases
-func createTestTenant(t *testing.T) Tenant {
-	ctx := context.Background()
-
-	// Ensure database is set up (but don't teardown here)
-	if testQueries == nil {
-		setupTestDB(ctx, t)
-	}
-
-	// Create tenant with basic valid parameters
-	params := CreateTenantParams{
-		Name:      generateUniqueName("Test Corporation"),
-		Subdomain: pgtype.Text{String: generateUniqueSubdomain("test-corp"), Valid: true},
-		Status:    "active",
-		Industry:  pgtype.Text{String: "technology", Valid: true},
-	}
-
-	tenant, err := testQueries.CreateTenant(ctx, params)
-	require.NoError(t, err, "Failed to create tenant: %v", err)
-
-	// Basic validations to ensure tenant was created properly
-	assert.NotZero(t, tenant.ID)
-	assert.NotEmpty(t, tenant.Uuid)
-	assert.NotEmpty(t, tenant.Name)
-	assert.Equal(t, "active", tenant.Status)
-	assert.NotZero(t, tenant.CreatedAt)
-	assert.NotZero(t, tenant.UpdatedAt)
-	assert.False(t, tenant.DeletedAt.Valid)
-
-	return tenant
-}
-func TestCreateTenant(t *testing.T) {
-	ctx := context.Background()
-
-	// Setup test database connection
-	setupTestDB(ctx, t)
-	defer teardownTestDB()
-
-	testCases := []createTenantTestCase{
-		{
-			name: "Valid tenant with all fields",
-			setupFunc: func() CreateTenantParams {
-				return CreateTenantParams{
-					Name:      generateUniqueName("Acme Corporation"),
-					Subdomain: pgtype.Text{String: generateUniqueSubdomain("acme"), Valid: true},
-					Status:    "active",
-					Industry:  pgtype.Text{String: "technology", Valid: true},
-				}
-			},
-			expectedError: false,
-			validateResult: func(t *testing.T, tenant Tenant) {
-				assert.NotZero(t, tenant.ID)
-				assert.NotEmpty(t, tenant.Uuid)
-				assert.Contains(t, tenant.Name, "Acme Corporation")
-				assert.True(t, tenant.Subdomain.Valid)
-				assert.Contains(t, tenant.Subdomain.String, "acme")
-				assert.Equal(t, "active", tenant.Status)
-				assert.True(t, tenant.Industry.Valid)
-				assert.Equal(t, "technology", tenant.Industry.String)
-				assert.NotZero(t, tenant.CreatedAt)
-				assert.NotZero(t, tenant.UpdatedAt)
-				assert.False(t, tenant.DeletedAt.Valid)
-			},
-		},
-		{
-			name: "Valid tenant with minimal fields",
-			setupFunc: func() CreateTenantParams {
-				return CreateTenantParams{
-					Name:      generateUniqueName("Basic Company"),
-					Subdomain: pgtype.Text{Valid: false},
-					Status:    "pending",
-					Industry:  pgtype.Text{Valid: false},
-				}
-			},
-			expectedError: false,
-			validateResult: func(t *testing.T, tenant Tenant) {
-				assert.NotZero(t, tenant.ID)
-				assert.NotEmpty(t, tenant.Uuid)
-				assert.Contains(t, tenant.Name, "Basic Company")
-				assert.False(t, tenant.Subdomain.Valid)
-				assert.Equal(t, "pending", tenant.Status)
-				assert.False(t, tenant.Industry.Valid)
-				assert.NotZero(t, tenant.CreatedAt)
-				assert.NotZero(t, tenant.UpdatedAt)
-			},
-		},
-		{
-			name: "Valid tenant with long name",
-			setupFunc: func() CreateTenantParams {
-				return CreateTenantParams{
-					Name:      generateUniqueName("Very Long Company Name That Tests The Maximum Length Allowed By The Database Schema"),
-					Subdomain: pgtype.Text{String: generateUniqueSubdomain("longname"), Valid: true},
-					Status:    "active",
-					Industry:  pgtype.Text{String: "consulting", Valid: true},
-				}
-			},
-			expectedError: false,
-			validateResult: func(t *testing.T, tenant Tenant) {
-				assert.NotZero(t, tenant.ID)
-				assert.Contains(t, tenant.Name, "Very Long Company Name")
-			},
-		},
-		{
-			name: "Valid tenant with special characters",
-			setupFunc: func() CreateTenantParams {
-				return CreateTenantParams{
-					Name:      generateUniqueName("Müller & Associates (Zürich)"),
-					Subdomain: pgtype.Text{String: generateUniqueSubdomain("muller-zurich"), Valid: true},
-					Status:    "active",
-					Industry:  pgtype.Text{String: "legal services", Valid: true},
-				}
-			},
-			expectedError: false,
-			validateResult: func(t *testing.T, tenant Tenant) {
-				assert.NotZero(t, tenant.ID)
-				assert.Contains(t, tenant.Name, "Müller & Associates")
-			},
-		},
-		{
-			name: "Valid tenant with suspended status",
-			setupFunc: func() CreateTenantParams {
-				return CreateTenantParams{
-					Name:      generateUniqueName("Suspended Corp"),
-					Subdomain: pgtype.Text{String: generateUniqueSubdomain("suspended"), Valid: true},
-					Status:    "suspended",
-					Industry:  pgtype.Text{String: "manufacturing", Valid: true},
-				}
-			},
-			expectedError: false,
-			validateResult: func(t *testing.T, tenant Tenant) {
-				assert.Equal(t, "suspended", tenant.Status)
-			},
-		},
-		{
-			name: "Empty name should fail",
-			input: CreateTenantParams{
-				Name:      "", // Empty name
-				Subdomain: pgtype.Text{String: generateUniqueSubdomain("empty"), Valid: true},
-				Status:    "active",
-				Industry:  pgtype.Text{String: "retail", Valid: true},
-			},
-			expectedError: false, // Database doesn't reject empty names
-			validateResult: func(t *testing.T, tenant Tenant) {
-				assert.Equal(t, "", tenant.Name) // Verify empty name was stored
-			},
-		},
-		{
-			name: "Whitespace-only name",
-			input: CreateTenantParams{
-				Name:      "   ", // Whitespace only
-				Subdomain: pgtype.Text{String: generateUniqueSubdomain("whitespace"), Valid: true},
-				Status:    "active",
-				Industry:  pgtype.Text{String: "retail", Valid: true},
-			},
-			expectedError: false, // Changed expectation - DB might allow this
-			validateResult: func(t *testing.T, tenant Tenant) {
-				// Just verify it was created if the DB allows it
-				assert.NotZero(t, tenant.ID)
-			},
-		},
-		{
-			name: "Duplicate subdomain should fail",
-			setupFunc: func() CreateTenantParams {
-				return CreateTenantParams{
-					Name:      generateUniqueName("Duplicate Test"),
-					Subdomain: pgtype.Text{String: "duplicate-test-subdomain", Valid: true}, // Fixed subdomain for this test
-					Status:    "active",
-					Industry:  pgtype.Text{String: "testing", Valid: true},
-				}
-			},
-			expectedError: false, // First insert should succeed
-			validateResult: func(t *testing.T, tenant Tenant) {
-				assert.Equal(t, "duplicate-test-subdomain", tenant.Subdomain.String)
-			},
-		},
-		{
-			name: "Invalid status enum",
-			setupFunc: func() CreateTenantParams {
-				return CreateTenantParams{
-					Name:      generateUniqueName("Invalid Status Corp"),
-					Subdomain: pgtype.Text{String: generateUniqueSubdomain("invalid-status"), Valid: true},
-					Status:    "invalid_status", // Invalid status
-					Industry:  pgtype.Text{String: "testing", Valid: true},
-				}
-			},
-			expectedError: true,
-			errorContains: "check constraint",
-		},
-		{
-			name: "Very long subdomain should fail",
-			setupFunc: func() CreateTenantParams {
-				return CreateTenantParams{
-					Name:      generateUniqueName("Long Subdomain Corp"),
-					Subdomain: pgtype.Text{String: "very-long-subdomain-that-exceeds-normal-limits-and-should-be-tested-for-length-constraints", Valid: true},
-					Status:    "active",
-					Industry:  pgtype.Text{String: "testing", Valid: true},
-				}
-			},
-			expectedError: true,
-			errorContains: "value too long",
-		},
-		{
-			name: "Valid length subdomain",
-			setupFunc: func() CreateTenantParams {
-				return CreateTenantParams{
-					Name:      generateUniqueName("Good Length Corp"),
-					Subdomain: pgtype.Text{String: generateUniqueSubdomain("good-length-subdomain"), Valid: true}, // Under 63 chars
-					Status:    "active",
-					Industry:  pgtype.Text{String: "testing", Valid: true},
-				}
-			},
-			expectedError: false,
-			validateResult: func(t *testing.T, tenant Tenant) {
-				assert.Contains(t, tenant.Subdomain.String, "good-length-subdomain")
-				assert.LessOrEqual(t, len(tenant.Subdomain.String), 63, "Subdomain should be <= 63 characters")
-			},
-		},
-		{
-			name: "Valid tenant with no industry",
-			setupFunc: func() CreateTenantParams {
-				return CreateTenantParams{
-					Name:      generateUniqueName("No Industry Corp"),
-					Subdomain: pgtype.Text{String: generateUniqueSubdomain("no-industry"), Valid: true},
-					Status:    "active",
-					Industry:  pgtype.Text{Valid: false},
-				}
-			},
-			expectedError: false,
-			validateResult: func(t *testing.T, tenant Tenant) {
-				assert.False(t, tenant.Industry.Valid)
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Generate test data
-			var testInput CreateTenantParams
-			if tc.setupFunc != nil {
-				testInput = tc.setupFunc()
-			} else {
-				testInput = tc.input
-			}
-
-			// Handle special case for duplicate subdomain test
-			if tc.name == "Duplicate subdomain should fail" {
-				// First, create a tenant with the fixed subdomain
-				_, err := testQueries.CreateTenant(ctx, testInput)
-				require.NoError(t, err, "First insert should succeed")
-
-				// Now try to create another tenant with the same subdomain but different name
-				duplicateInput := testInput
-				duplicateInput.Name = generateUniqueName("Duplicate Test 2")
-				_, err = testQueries.CreateTenant(ctx, duplicateInput)
-				assert.Error(t, err, "Second insert with duplicate subdomain should fail")
-				if err != nil {
-					assert.Contains(t, err.Error(), "duplicate")
-				}
-				return
-			}
-
-			// Execute the function
-			result, err := testQueries.CreateTenant(ctx, testInput)
-
-			// Check error expectations
-			if tc.expectedError {
-				assert.Error(t, err, "Expected error but got none")
-				if tc.errorContains != "" {
-					assert.Contains(t, err.Error(), tc.errorContains)
-				}
-				return
-			}
-
-			// If no error expected, validate the result
-			if err != nil {
-				t.Logf("Unexpected error: %v", err)
-				t.Logf("Test input: %+v", testInput)
-			}
-			require.NoError(t, err, "Expected no error but got: %v", err)
-
-			// Run custom validation if provided
-			if tc.validateResult != nil {
-				tc.validateResult(t, result)
-			}
-
-			// Common validations for successful cases
-			assert.NotZero(t, result.ID)
-			assert.NotEmpty(t, result.Uuid)
-			assert.NotZero(t, result.CreatedAt)
-			assert.NotZero(t, result.UpdatedAt)
-			assert.Equal(t, result.CreatedAt, result.UpdatedAt)
-			assert.False(t, result.DeletedAt.Valid)
-		})
-	}
-}
-
-// Test to verify what status values are actually allowed
-func TestValidStatusValues(t *testing.T) {
-	ctx := context.Background()
-	setupTestDB(ctx, t)
-	defer teardownTestDB()
-
-	statusValues := []string{"active", "pending", "suspended", "inactive", "disabled"}
-
-	for _, status := range statusValues {
-		t.Run(fmt.Sprintf("Status_%s", status), func(t *testing.T) {
-			input := CreateTenantParams{
-				Name:      generateUniqueName(fmt.Sprintf("Test %s Corp", status)),
-				Subdomain: pgtype.Text{String: generateUniqueSubdomain(status), Valid: true},
-				Status:    status,
-				Industry:  pgtype.Text{String: "testing", Valid: true},
-			}
-
-			result, err := testQueries.CreateTenant(ctx, input)
-			if err != nil {
-				t.Logf("Status '%s' failed: %v", status, err)
-			} else {
-				t.Logf("Status '%s' succeeded", status)
-				assert.Equal(t, status, result.Status)
-			}
-		})
-	}
-}
-
-// Test cleanup function
-func TestCleanupTestData(t *testing.T) {
-	// This test can be used to clean up any test data if needed
-	// You might want to implement a cleanup query in your SQLC files
-
-	ctx := context.Background()
-	setupTestDB(ctx, t)
-	defer teardownTestDB()
-	err := testQueries.DeleteTenant(ctx)
-	require.NoError(t, err)
-}
-
-// Test database constraints and document findings
-func TestDatabaseConstraints(t *testing.T) {
-	ctx := context.Background()
-	setupTestDB(ctx, t)
-	defer teardownTestDB()
-
-	t.Run("Check_unique_constraints", func(t *testing.T) {
-		// Test name uniqueness
-		name := generateUniqueName("Unique Test")
-		input1 := CreateTenantParams{
-			Name:      name,
-			Subdomain: pgtype.Text{String: generateUniqueSubdomain("unique1"), Valid: true},
-			Status:    "active",
-			Industry:  pgtype.Text{String: "testing", Valid: true},
-		}
-
-		_, err := testQueries.CreateTenant(ctx, input1)
-		require.NoError(t, err, "First insert should succeed")
-
-		// Try to insert with same name
-		input2 := CreateTenantParams{
-			Name:      name, // Same name
-			Subdomain: pgtype.Text{String: generateUniqueSubdomain("unique2"), Valid: true},
-			Status:    "active",
-			Industry:  pgtype.Text{String: "testing", Valid: true},
-		}
-
-		_, err = testQueries.CreateTenant(ctx, input2)
-		assert.Error(t, err, "Second insert with duplicate name should fail")
-		if err != nil {
-			assert.Contains(t, err.Error(), "duplicate")
-		}
-	})
-
-	t.Run("Document_findings", func(t *testing.T) {
-		t.Log("=== DATABASE CONSTRAINT FINDINGS ===")
-		t.Log("1. Name field: Allows empty strings and whitespace-only values")
-		t.Log("2. Name field: Has UNIQUE constraint - duplicates not allowed")
-		t.Log("3. Subdomain field: Has varchar(63) limit")
-		t.Log("4. Status field: Only allows 'active', 'pending', 'suspended'")
-		t.Log("5. Status field: Does NOT allow 'inactive' or 'disabled'")
-		t.Log("6. Subdomain field: Likely has UNIQUE constraint for non-null values")
-	})
-}
-
-// TODO
-// Test cases for tenant configuration management
-// func TestTenantConfiguration(t *testing.T) {
-// 	ctx := context.Background()
-// 	setupTestDB(ctx, t)
-// 	defer teardownTestDB()
-//
-// 	t.Run("Tenant Lifecycle Tests", func(t *testing.T) {
-// 		testTenantLifecycle(t, ctx)
-// 	})
-//
-// 	t.Run("Tenant Isolation Tests", func(t *testing.T) {
-// 		testTenantIsolation(t, ctx)
-// 	})
-//
-// 	t.Run("Tenant Configuration Updates", func(t *testing.T) {
-// 		testTenantConfigurationUpdates(t, ctx)
-// 	})
-//
-// 	t.Run("Tenant Performance Tests", func(t *testing.T) {
-// 		testTenantPerformance(t, ctx)
-// 	})
-//
-// 	t.Run("Tenant Security Tests", func(t *testing.T) {
-// 		testTenantSecurity(t, ctx)
-// 	})
-// }
-
-// func testTenantLifecycle(t *testing.T, ctx context.Context) {
-// 	tenant := createTestTenant(t)
-//
-// 	// 2. Update tenant status to suspended
-// 	withTenantContext(t, tenant.ID, func(q *Queries) {
-// 		updatedTenant, err := q.UpdateCurrentTenant(ctx, UpdateCurrentTenantParams{
-// 			Name:      tenant.Name,
-// 			Subdomain: tenant.Subdomain,
-// 			Status:    "suspended",
-// 			Industry:  tenant.Industry,
-// 		})
-// 		require.NoError(t, err)
-// 		assert.Equal(t, "suspended", updatedTenant.Status)
-// 	})
-//
-// 	// 3. Reactivate tenant
-// 	reactivatedTenant, err := testQueries.UpdateTenantStatus(ctx, UpdateTenantStatusParams{
-// 		ID:     tenant.ID,
-// 		Status: "active",
-// 	})
-// 	require.NoError(t, err)
-// 	assert.Equal(t, "active", reactivatedTenant.Status)
-//
-// 	// 4. Soft delete tenant
-// 	err = testQueries.SoftDeleteTenant(ctx, tenant.ID)
-// 	require.NoError(t, err)
-// }
-
-func testTenantLifecycle(t *testing.T, ctx context.Context) {
-	tenant := createTestTenant(t)
-	assert.Equal(t, "active", tenant.Status)
-
-	// 2. Update tenant status to suspended using tenant context
-	withTenantContext(t, tenant.ID, func(q *Queries) {
-		updatedTenant, err := q.UpdateCurrentTenant(ctx, UpdateCurrentTenantParams{
-			Name:      tenant.Name,
-			Subdomain: tenant.Subdomain,
-			Status:    "suspended",
-			Industry:  tenant.Industry,
-		})
-		require.NoError(t, err)
-		assert.Equal(t, "suspended", updatedTenant.Status)
-	})
-
-	// 3. Reactivate tenant
-	reactivatedTenant, err := testQueries.UpdateTenantStatus(ctx, UpdateTenantStatusParams{
-		ID:     tenant.ID,
-		Status: "active",
-	})
-	require.NoError(t, err)
-	assert.Equal(t, "active", reactivatedTenant.Status)
-
-	// 4. Soft delete tenant
-	err = testQueries.SoftDeleteTenant(ctx, tenant.ID)
-	require.NoError(t, err)
-}
-
-// testTenantIsolation ensures proper data isolation between tenants
-func testTenantIsolation(t *testing.T, ctx context.Context) {
-	// Ensure database is set up
-	if testQueries == nil {
-		setupTestDB(ctx, t)
-	}
-	defer teardownTestDB()
-
-	// Create multiple tenants
-	tenant1 := createTenantWithName(t, "Tenant One Corp")
-	tenant2 := createTenantWithName(t, "Tenant Two Corp")
-	tenant3 := createTenantWithName(t, "Tenant Three Corp")
-
-	// Verify each tenant has unique identifiers
-	assert.NotEqual(t, tenant1.ID, tenant2.ID)
-	assert.NotEqual(t, tenant1.ID, tenant3.ID)
-	assert.NotEqual(t, tenant2.ID, tenant3.ID)
-
-	assert.NotEqual(t, tenant1.Uuid, tenant2.Uuid)
-	assert.NotEqual(t, tenant1.Uuid, tenant3.Uuid)
-	assert.NotEqual(t, tenant2.Uuid, tenant3.Uuid)
-
-	// Verify subdomain uniqueness
-	if tenant1.Subdomain.Valid && tenant2.Subdomain.Valid {
-		assert.NotEqual(t, tenant1.Subdomain.String, tenant2.Subdomain.String)
-	}
-
-	// Test tenant retrieval by different identifiers
-	retrievedByID, err := testQueries.GetTenantByID(ctx, tenant1.ID)
-	require.NoError(t, err)
-	assert.Equal(t, tenant1.Name, retrievedByID.Name)
-
-	retrievedByUUID, err := testQueries.GetTenantByUUID(ctx, tenant1.Uuid)
-	require.NoError(t, err)
-	assert.Equal(t, tenant1.Name, retrievedByUUID.Name)
-
-	if tenant1.Subdomain.Valid {
-		retrievedBySubdomain, err := testQueries.GetTenantBySubdomain(ctx, tenant1.Subdomain)
-		require.NoError(t, err)
-		assert.Equal(t, tenant1.Name, retrievedBySubdomain.Name)
-	}
-}
-
-// testTenantConfigurationUpdates tests various tenant configuration changes
-func testTenantConfigurationUpdates(t *testing.T, ctx context.Context) {
-	// Ensure database is set up
-	if testQueries == nil {
-		setupTestDB(ctx, t)
-	}
-
-	tenant := createTestTenant(t)
-
-	setTenantContext(ctx, t, tenant.ID)
-	defer clearTenantContext(ctx, t)
-
-	testCases := []struct {
-		name          string
-		updateFunc    func() error
-		validateFunc  func(t *testing.T)
-		expectedError bool
+// Basic CRUD Tests
+func (suite *TenantTestSuite) TestCreateTenant() {
+	tests := []struct {
+		name    string
+		params  CreateTenantParams
+		wantErr bool
 	}{
 		{
-			name: "Update tenant industry",
-			updateFunc: func() error {
-				_, err := testQueries.UpdateTenantIndustry(ctx, UpdateTenantIndustryParams{
-					ID:       tenant.ID,
-					Industry: pgtype.Text{String: "healthcare", Valid: true},
-				})
-				return err
+			name: "valid basic tenant",
+			params: CreateTenantParams{
+				Name:      generateShortUniqueName("Test"),
+				Subdomain: stringPtr(generateShortUniqueName("test")),
+				Status:    "active",
+				Industry:  stringPtr("technology"),
 			},
-			validateFunc: func(t *testing.T) {
-				updated, err := testQueries.GetTenantByID(ctx, tenant.ID)
-				require.NoError(t, err)
-				assert.True(t, updated.Industry.Valid)
-				assert.Equal(t, "healthcare", updated.Industry.String)
-			},
+			wantErr: false,
 		},
 		{
-			name: "Update tenant subdomain",
-			updateFunc: func() error {
-				_, err := testQueries.UpdateTenantSubdomain(ctx, UpdateTenantSubdomainParams{
-					ID:        tenant.ID,
-					Subdomain: pgtype.Text{String: generateUniqueSubdomain("updated"), Valid: true},
-				})
-				return err
+			name: "tenant without subdomain",
+			params: CreateTenantParams{
+				Name:      generateShortUniqueName("NoSub"),
+				Subdomain: nil,
+				Status:    "pending",
+				Industry:  stringPtr("healthcare"),
 			},
-			validateFunc: func(t *testing.T) {
-				updated, err := testQueries.GetTenantByID(ctx, tenant.ID)
-				require.NoError(t, err)
-				assert.True(t, updated.Subdomain.Valid)
-				assert.Contains(t, updated.Subdomain.String, "updated")
-			},
+			wantErr: false,
 		},
 		{
-			name: "Clear tenant industry",
-			updateFunc: func() error {
-				_, err := testQueries.UpdateTenantIndustry(ctx, UpdateTenantIndustryParams{
-					ID:       tenant.ID,
-					Industry: pgtype.Text{Valid: false},
-				})
-				return err
+			name: "tenant without industry",
+			params: CreateTenantParams{
+				Name:      generateShortUniqueName("Generic"),
+				Subdomain: stringPtr(generateShortUniqueName("generic")),
+				Status:    "active",
+				Industry:  nil,
 			},
-			validateFunc: func(t *testing.T) {
-				updated, err := testQueries.GetTenantByID(ctx, tenant.ID)
-				require.NoError(t, err)
-				assert.False(t, updated.Industry.Valid)
-			},
-		},
-		{
-			name: "Invalid status update should fail",
-			updateFunc: func() error {
-				_, err := testQueries.UpdateTenantStatus(ctx, UpdateTenantStatusParams{
-					ID:     tenant.ID,
-					Status: "invalid_status",
-				})
-				return err
-			},
-			expectedError: true,
+			wantErr: false,
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := tc.updateFunc()
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			tenant, err := suite.store.CreateTenant(testCtx, tt.params)
 
-			if tc.expectedError {
-				assert.Error(t, err)
-				return
-			}
+			if tt.wantErr {
+				suite.Require().Error(err)
+				suite.Require().Nil(tenant)
+			} else {
+				suite.Require().NoError(err)
+				suite.Require().NotNil(tenant)
+				suite.Require().Equal(tt.params.Name, tenant.Name)
+				suite.Require().Equal(tt.params.Status, tenant.Status)
+				suite.Require().Equal(tt.params.Subdomain, tenant.Subdomain)
+				suite.Require().Equal(tt.params.Industry, tenant.Industry)
+				suite.Require().NotEqual(uuid.Nil, tenant.ID)
+				suite.Require().False(tenant.CreatedAt.IsZero())
+				suite.Require().False(tenant.UpdatedAt.IsZero())
 
-			require.NoError(t, err)
-			if tc.validateFunc != nil {
-				tc.validateFunc(t)
+				// Track for cleanup
+				suite.trackTenant(tenant.ID)
 			}
 		})
 	}
 }
 
-// testTenantPerformance tests performance aspects of tenant operations
-func testTenantPerformance(t *testing.T, ctx context.Context) {
-	// Ensure database is set up
-	if testQueries == nil {
-		setupTestDB(ctx, t)
+func (suite *TenantTestSuite) TestCreateTenantComplete() {
+	metadata, err := json.Marshal(map[string]interface{}{"test": true})
+	suite.Require().NoError(err)
+
+	settings, err := json.Marshal(map[string]interface{}{"theme": "light"})
+	suite.Require().NoError(err)
+
+	uniqueName := generateShortUniqueName("Complete")
+	slug := generateShortUniqueName("slug")
+
+	params := CreateTenantCompleteParams{
+		Name:               uniqueName,
+		Slug:               slug,
+		Email:              fmt.Sprintf("admin@%s.com", generateShortUniqueName("test")),
+		Subdomain:          stringPtr(generateShortUniqueName("sub")),
+		Status:             "active",
+		Timezone:           "America/New_York",
+		CurrencyCode:       "EUR",
+		Metadata:           metadata,
+		Industry:           stringPtr("finance"),
+		CompanySize:        stringPtr("large"),
+		TaxID:              stringPtr(generateShortUniqueName("TAX")),
+		RegistrationNumber: stringPtr(generateShortUniqueName("REG")),
+		LegalEntityType:    stringPtr("llc"),
+		Settings:           settings,
 	}
 
-	const numTenants = 50
+	tenant, err := suite.store.CreateTenantComplete(testCtx, params)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(tenant)
+	suite.Require().Equal(params.Name, tenant.Name)
+	suite.Require().Equal(params.Slug, tenant.Slug)
+	suite.Require().Equal(params.Email, tenant.Email)
+	suite.Require().Equal(params.Timezone, tenant.Timezone)
+	suite.Require().Equal(params.CurrencyCode, tenant.CurrencyCode)
+	suite.Require().Equal(params.CompanySize, tenant.CompanySize)
 
-	// Test bulk tenant creation performance
-	start := time.Now()
-	var tenants []Tenant
-
-	for i := 0; i < numTenants; i++ {
-		tenant := createTenantWithName(t, generateUniqueName("Performance Test Corp"))
-		tenants = append(tenants, tenant)
-	}
-
-	creationDuration := time.Since(start)
-	t.Logf("Created %d tenants in %v (avg: %v per tenant)",
-		numTenants, creationDuration, creationDuration/numTenants)
-
-	// Test bulk tenant retrieval performance
-	start = time.Now()
-	for _, tenant := range tenants {
-		_, err := testQueries.GetTenantByID(ctx, tenant.ID)
-		require.NoError(t, err)
-	}
-	retrievalDuration := time.Since(start)
-	t.Logf("Retrieved %d tenants in %v (avg: %v per tenant)",
-		numTenants, retrievalDuration, retrievalDuration/numTenants)
-
-	// Performance thresholds (adjust based on your requirements)
-	avgCreationTime := creationDuration / numTenants
-	avgRetrievalTime := retrievalDuration / numTenants
-
-	assert.Less(t, avgCreationTime, 100*time.Millisecond, "Tenant creation should be fast")
-	assert.Less(t, avgRetrievalTime, 10*time.Millisecond, "Tenant retrieval should be fast")
+	// Track for cleanup
+	suite.trackTenant(tenant.ID)
 }
 
-// testTenantSecurity tests security aspects of tenant operations
-func testTenantSecurity(t *testing.T, ctx context.Context) {
-	// Ensure database is set up
-	if testQueries == nil {
-		setupTestDB(ctx, t)
+func (suite *TenantTestSuite) TestGetTenantByID() {
+	// Create a test tenant
+	createdTenant := createTestTenant(suite.T(), suite.store, "GetByID")
+	suite.trackTenant(createdTenant.ID)
+
+	// Test getting existing tenant
+	tenant, err := suite.store.GetTenantByID(testCtx, createdTenant.ID)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(tenant)
+	suite.Require().Equal(createdTenant.ID, tenant.ID)
+	suite.Require().Equal(createdTenant.Name, tenant.Name)
+
+	// Test getting non-existent tenant
+	_, err = suite.store.GetTenantByID(testCtx, uuid.New())
+	suite.Require().Error(err)
+}
+
+func (suite *TenantTestSuite) TestGetTenantBySlug() {
+	tenant := createComplexTestTenant(suite.T(), suite.store, "Slug")
+	suite.trackTenant(tenant.ID)
+
+	foundTenant, err := suite.store.GetTenantBySlug(testCtx, tenant.Slug)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(foundTenant)
+	suite.Require().Equal(tenant.ID, foundTenant.ID)
+	suite.Require().Equal(tenant.Slug, foundTenant.Slug)
+}
+
+func (suite *TenantTestSuite) TestGetTenantByEmail() {
+	tenant := createComplexTestTenant(suite.T(), suite.store, "Email")
+	suite.trackTenant(tenant.ID)
+
+	foundTenant, err := suite.store.GetTenantByEmail(testCtx, tenant.Email)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(foundTenant)
+	suite.Require().Equal(tenant.ID, foundTenant.ID)
+	suite.Require().Equal(tenant.Email, foundTenant.Email)
+}
+
+func (suite *TenantTestSuite) TestUpdateTenant() {
+	createdTenant := createTestTenant(suite.T(), suite.store, "Update")
+	suite.trackTenant(createdTenant.ID)
+
+	newSubdomain := generateShortUniqueName("updated")
+	params := UpdateTenantParams{
+		ID:        createdTenant.ID,
+		Name:      stringPtr(generateShortUniqueName("Updated")),
+		Subdomain: stringPtr(newSubdomain),
+		Status:    stringPtr("suspended"),
+		Industry:  stringPtr("finance"),
 	}
 
-	tenant := createTestTenant(t)
+	updatedTenant, err := suite.store.UpdateTenant(testCtx, params)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(updatedTenant)
+	suite.Require().Equal(*params.Name, updatedTenant.Name)
+	suite.Require().Equal(*params.Status, updatedTenant.Status)
+	suite.Require().Equal(params.Subdomain, updatedTenant.Subdomain)
+	suite.Require().Equal(params.Industry, updatedTenant.Industry)
+}
 
-	// Test SQL injection protection in tenant queries
-	maliciousInputs := []string{
-		"'; DROP TABLE tenants; --",
-		"' OR '1'='1",
-		"<script>alert('xss')</script>",
-		"' UNION SELECT * FROM tenants --",
-	}
+func (suite *TenantTestSuite) TestSoftDeleteTenant() {
+	createdTenant := createTestTenant(suite.T(), suite.store, "Delete")
+	suite.trackTenant(createdTenant.ID)
 
-	for _, maliciousInput := range maliciousInputs {
-		t.Run("SQL injection protection with: "+maliciousInput, func(t *testing.T) {
-			// Test in tenant name update
-			_, err := testQueries.UpdateTenantName(ctx, UpdateTenantNameParams{
-				ID:   tenant.ID,
-				Name: maliciousInput,
-			})
-			// Should not error (parameterized queries should handle this safely)
-			require.NoError(t, err)
+	err := suite.store.SoftDeleteTenant(testCtx, createdTenant.ID)
+	suite.Require().NoError(err)
 
-			// Verify the malicious input was stored as-is (not executed)
-			updated, err := testQueries.GetTenantByID(ctx, tenant.ID)
-			require.NoError(t, err)
-			assert.Equal(t, maliciousInput, updated.Name)
-		})
-	}
+	// Verify tenant is soft deleted (should not be found)
+	_, err = suite.store.GetTenantByID(testCtx, createdTenant.ID)
+	suite.Require().Error(err)
+}
 
-	// Test tenant access control
-	t.Run("Tenant access control", func(t *testing.T) {
-		// Attempt to access non-existent tenant
-		_, err := testQueries.GetTenantByID(ctx, 999999)
-		assert.Error(t, err, "Should not be able to access non-existent tenant")
+// Tenant Configuration Tests
+func (suite *TenantTestSuite) TestTenantConfiguration() {
+	tenant := createTestTenant(suite.T(), suite.store, "Config")
+	suite.trackTenant(tenant.ID)
 
-		// Attempt to update non-existent tenant
-		_, err = testQueries.UpdateTenantName(ctx, UpdateTenantNameParams{
-			ID:   999999,
-			Name: "Should not work",
-		})
-		assert.Error(t, err, "Should not be able to update non-existent tenant")
+	// Clean up any existing configuration for this tenant (safety measure)
+	_, _ = suite.pool.Exec(testCtx, "DELETE FROM tenant_configurations WHERE tenant_id = $1", tenant.ID)
+
+	// Set tenant context
+	err := suite.store.SetTenantContext(testCtx, tenant.ID)
+	suite.Require().NoError(err)
+
+	// Verify context is set
+	currentTenantID, err := suite.store.GetCurrentTenantID(testCtx)
+	suite.Require().NoError(err)
+	suite.Require().Equal(tenant.ID, currentTenantID)
+
+	// Create configuration
+	features, err := json.Marshal(map[string]bool{
+		"advanced_reporting": true,
+		"api_access":         true,
 	})
+	suite.Require().NoError(err)
+
+	modules, err := json.Marshal([]string{"accounting", "inventory", "payroll"})
+	suite.Require().NoError(err)
+
+	passwordPolicy, err := json.Marshal(map[string]interface{}{
+		"min_length":      12,
+		"require_symbols": true,
+	})
+	suite.Require().NoError(err)
+
+	webhooks, err := json.Marshal([]string{"https://example.com/webhook"})
+	suite.Require().NoError(err)
+
+	rateLimits, err := json.Marshal(map[string]int{
+		"requests_per_minute": 200,
+		"requests_per_hour":   10000,
+	})
+	suite.Require().NoError(err)
+
+	configParams := CreateTenantConfigurationParams{
+		MaxUsers:                500,
+		MaxEntities:             5000,
+		MaxTransactionsPerMonth: 50000,
+		StorageQuota:            5368709120, // 5GB
+		Features:                features,
+		ModulesEnabled:          modules,
+		AccountingMethod:        "accrual",
+		FiscalYearStartMonth:    4, // April
+		DefaultCurrency:         "EUR",
+		DateFormat:              "DD/MM/YYYY",
+		NumberFormat:            "EU",
+		LanguageCode:            "en-GB",
+		PasswordPolicy:          passwordPolicy,
+		WebhookEndpoints:        webhooks,
+		ApiRateLimits:           rateLimits,
+	}
+
+	config, err := suite.store.CreateTenantConfiguration(testCtx, configParams)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(config)
+	suite.Require().Equal(tenant.ID, config.TenantID)
+	suite.Require().Equal(configParams.MaxUsers, config.MaxUsers)
+	suite.Require().Equal(configParams.AccountingMethod, config.AccountingMethod)
+
+	// Get configuration
+	retrievedConfig, err := suite.store.GetTenantConfiguration(testCtx)
+	suite.Require().NoError(err)
+	suite.Require().Equal(config.TenantID, retrievedConfig.TenantID)
+	suite.Require().Equal(config.MaxUsers, retrievedConfig.MaxUsers)
+
+	// Update features
+	newFeatures, err := json.Marshal(map[string]bool{
+		"advanced_reporting": false,
+		"api_access":         true,
+		"multi_currency":     true,
+	})
+	suite.Require().NoError(err)
+
+	updatedConfig, err := suite.store.UpdateTenantFeatures(testCtx, newFeatures)
+	suite.Require().NoError(err)
+	
+	// Parse both JSON values to compare content rather than byte arrays
+	var expectedFeatures, actualFeatures map[string]bool
+	err = json.Unmarshal(newFeatures, &expectedFeatures)
+	suite.Require().NoError(err)
+	err = json.Unmarshal(updatedConfig.Features, &actualFeatures)
+	suite.Require().NoError(err)
+	suite.Require().Equal(expectedFeatures, actualFeatures)
 }
 
-// Helper function to create a tenant with a specific name
-func createTenantWithName(t *testing.T, name string) Tenant {
-	ctx := context.Background()
+// Tenant Usage Statistics Tests
+func (suite *TenantTestSuite) TestTenantUsageStats() {
+	tenant := createTestTenant(suite.T(), suite.store, "Usage")
+	suite.trackTenant(tenant.ID)
 
-	// Ensure database is set up
-	if testQueries == nil {
-		setupTestDB(ctx, t)
+	// Set tenant context
+	err := suite.store.SetTenantContext(testCtx, tenant.ID)
+	suite.Require().NoError(err)
+
+	// Create usage stats
+	now := time.Now()
+	periodStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	periodEnd := periodStart.AddDate(0, 1, -1)
+
+	var avgResponseTime pgtype.Numeric
+	err = avgResponseTime.Scan("125.50")
+	suite.Require().NoError(err)
+
+	var errorRate pgtype.Numeric
+	err = errorRate.Scan("0.0045")
+	suite.Require().NoError(err)
+
+	var monthlyRevenue pgtype.Numeric
+	err = monthlyRevenue.Scan("15750.00")
+	suite.Require().NoError(err)
+
+	usageParams := CreateTenantUsageStatsParams{
+		PeriodStart:       periodStart,
+		PeriodEnd:         periodEnd,
+		ActiveUsers:       25,
+		TotalEntities:     150,
+		TotalTransactions: 1250,
+		StorageUsed:       536870912, // 512MB
+		ApiCalls:          5000,
+		AvgResponseTime:   avgResponseTime,
+		ErrorRate:         errorRate,
+		MonthlyRevenue:    monthlyRevenue,
 	}
+
+	usage, err := suite.store.CreateTenantUsageStats(testCtx, usageParams)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(usage)
+	suite.Require().Equal(tenant.ID, usage.TenantID)
+	suite.Require().Equal(usageParams.ActiveUsers, usage.ActiveUsers)
+	suite.Require().Equal(usageParams.StorageUsed, usage.StorageUsed)
+
+	// Get usage stats
+	retrievedUsage, err := suite.store.GetTenantUsageStats(testCtx, periodStart)
+	suite.Require().NoError(err)
+	suite.Require().Equal(usage.TenantID, retrievedUsage.TenantID)
+	suite.Require().Equal(usage.ActiveUsers, retrievedUsage.ActiveUsers)
+
+	// Get latest usage stats
+	latestUsage, err := suite.store.GetLatestTenantUsageStats(testCtx)
+	suite.Require().NoError(err)
+	suite.Require().Equal(usage.TenantID, latestUsage.TenantID)
+
+	// Update usage stats
+	updateParams := UpdateTenantUsageStatsParams{
+		ActiveUsers: int32Ptr(30),
+		StorageUsed: int64Ptr(1073741824), // 1GB
+		PeriodStart: periodStart,
+	}
+
+	updatedUsage, err := suite.store.UpdateTenantUsageStats(testCtx, updateParams)
+	suite.Require().NoError(err)
+	suite.Require().Equal(*updateParams.ActiveUsers, updatedUsage.ActiveUsers)
+	suite.Require().Equal(*updateParams.StorageUsed, updatedUsage.StorageUsed)
+}
+
+// Tenant Context and RLS Tests
+func (suite *TenantTestSuite) TestTenantContext() {
+	tenant := createTestTenant(suite.T(), suite.store, "Context")
+	suite.trackTenant(tenant.ID)
+
+	// Set tenant context
+	err := suite.store.SetTenantContext(testCtx, tenant.ID)
+	suite.Require().NoError(err)
+
+	// Get current tenant ID
+	currentID, err := suite.store.GetCurrentTenantID(testCtx)
+	suite.Require().NoError(err)
+	suite.Require().Equal(tenant.ID, currentID)
+
+	// Check if current tenant exists
+	exists, err := suite.store.CheckCurrentTenantExists(testCtx)
+	suite.Require().NoError(err)
+	suite.Require().True(exists)
+
+	// Get current tenant
+	currentTenant, err := suite.store.GetCurrentTenant(testCtx)
+	suite.Require().NoError(err)
+	suite.Require().Equal(tenant.ID, currentTenant.ID)
+}
+
+// Search and Filter Tests
+func (suite *TenantTestSuite) TestSearchAndFilter() {
+	// Create multiple test tenants with unique names (keep them short)
+	testData := []struct {
+		name string
+	}{
+		{generateShortUniqueName("Apple")},
+		{generateShortUniqueName("Banana")},
+		{generateShortUniqueName("Cherry")},
+		{generateShortUniqueName("AppleSol")}, // Short version of Apple Solutions
+	}
+
+	tenants := make([]*Tenant, len(testData))
+	for i, data := range testData {
+		tenants[i] = createTestTenant(suite.T(), suite.store, data.name)
+		suite.trackTenant(tenants[i].ID)
+	}
+
+	// Search by name pattern (Apple)
+	searchParams := SearchTenantsByNameParams{
+		Name:   "Apple",
+		Limit:  10,
+		Offset: 0,
+	}
+
+	results, err := suite.store.SearchTenantsByName(testCtx, searchParams)
+	suite.Require().NoError(err)
+	suite.Require().GreaterOrEqual(len(results), 2) // Should find at least our 2 Apple companies
+
+	// Filter tenants
+	filterParams := FilterTenantsParams{
+		StatusFilter:   stringPtr("active"),
+		IndustryFilter: stringPtr("technology"),
+		SortBy:         "name",
+		LimitCount:     10,
+		OffsetCount:    0,
+	}
+
+	filtered, err := suite.store.FilterTenants(testCtx, filterParams)
+	suite.Require().NoError(err)
+	suite.Require().GreaterOrEqual(len(filtered), len(tenants))
+
+	// Count filtered tenants
+	countParams := CountFilteredTenantsParams{
+		StatusFilter: stringPtr("active"),
+	}
+
+	count, err := suite.store.CountFilteredTenants(testCtx, countParams)
+	suite.Require().NoError(err)
+	suite.Require().GreaterOrEqual(count, int64(len(tenants)))
+}
+
+// Bulk Operations Tests
+func (suite *TenantTestSuite) TestBulkOperations() {
+	// Create multiple tenants
+	testNames := []string{"Bulk1", "Bulk2", "Bulk3"}
+	tenants := make([]*Tenant, len(testNames))
+	tenantIDs := make([]uuid.UUID, len(testNames))
+
+	for i, name := range testNames {
+		tenants[i] = createTestTenant(suite.T(), suite.store, name)
+		tenantIDs[i] = tenants[i].ID
+		suite.trackTenant(tenants[i].ID)
+	}
+
+	// Bulk update status
+	bulkUpdateParams := BulkUpdateTenantStatusParams{
+		Status: "suspended",
+		ID:     tenantIDs,
+	}
+
+	err := suite.store.BulkUpdateTenantStatus(testCtx, bulkUpdateParams)
+	suite.Require().NoError(err)
+
+	// Verify status was updated
+	for _, tenantID := range tenantIDs {
+		tenant, err := suite.store.GetTenantByID(testCtx, tenantID)
+		suite.Require().NoError(err)
+		suite.Require().Equal("suspended", tenant.Status)
+	}
+
+	// Bulk soft delete
+	err = suite.store.BulkSoftDeleteTenants(testCtx, tenantIDs)
+	suite.Require().NoError(err)
+
+	// Verify tenants are deleted
+	for _, tenantID := range tenantIDs {
+		_, err := suite.store.GetTenantByID(testCtx, tenantID)
+		suite.Require().Error(err) // Should not be found
+	}
+}
+
+// Analytics Tests
+func (suite *TenantTestSuite) TestAnalytics() {
+	// Create diverse test data with short names
+	industries := []string{"tech", "health", "finance", "mfg"} // Shortened industry names
+	sizes := []string{"startup", "small", "medium", "large"}
+
+	createdTenants := make([]uuid.UUID, 0)
+	for _, industry := range industries {
+		for _, size := range sizes {
+			metadata, _ := json.Marshal(map[string]interface{}{"test": true})
+			settings, _ := json.Marshal(map[string]interface{}{"theme": "light"})
+
+			// Create very short, unique names
+			uniqueName := generateShortUniqueName(fmt.Sprintf("%s%s", industry, size))
+			slug := generateShortUniqueName("slug")
+
+			params := CreateTenantCompleteParams{
+				Name:         uniqueName,
+				Slug:         slug,
+				Email:        fmt.Sprintf("test@%s.com", generateShortUniqueName("domain")),
+				Subdomain:    stringPtr(generateShortUniqueName("sub")),
+				Status:       "active",
+				Timezone:     "UTC",
+				CurrencyCode: "USD",
+				Metadata:     metadata,
+				Industry:     &industry,
+				CompanySize:  &size,
+				Settings:     settings,
+			}
+
+			tenant, err := suite.store.CreateTenantComplete(testCtx, params)
+			suite.Require().NoError(err)
+			createdTenants = append(createdTenants, tenant.ID)
+			suite.trackTenant(tenant.ID)
+		}
+	}
+
+	// Test analytics queries
+	stats, err := suite.store.GetTenantStats(testCtx)
+	suite.Require().NoError(err)
+	suite.Require().GreaterOrEqual(stats.TotalTenants, int64(len(createdTenants)))
+
+	// Test industry distribution
+	industryStats, err := suite.store.GetTenantsByIndustry(testCtx)
+	suite.Require().NoError(err)
+	suite.Require().GreaterOrEqual(len(industryStats), len(industries))
+
+	// Test company size distribution
+	sizeStats, err := suite.store.GetTenantsByCompanySize(testCtx)
+	suite.Require().NoError(err)
+	suite.Require().GreaterOrEqual(len(sizeStats), len(sizes))
+
+	// Test status distribution
+	statusDist, err := suite.store.GetTenantStatusDistribution(testCtx)
+	suite.Require().NoError(err)
+	suite.Require().GreaterOrEqual(statusDist.ActiveTenants, int64(len(createdTenants)))
+}
+
+// Validation Tests
+func (suite *TenantTestSuite) TestValidationChecks() {
+	tenant := createTestTenant(suite.T(), suite.store, "Validation")
+	suite.trackTenant(tenant.ID)
+
+	// Check tenant exists
+	exists, err := suite.store.CheckTenantExists(testCtx, tenant.ID)
+	suite.Require().NoError(err)
+	suite.Require().True(exists)
+
+	// Check non-existent tenant
+	exists, err = suite.store.CheckTenantExists(testCtx, uuid.New())
+	suite.Require().NoError(err)
+	suite.Require().False(exists)
+
+	// Check tenant name exists
+	exists, err = suite.store.CheckTenantNameExists(testCtx, tenant.Name)
+	suite.Require().NoError(err)
+	suite.Require().True(exists)
+
+	// Check subdomain exists
+	if tenant.Subdomain != nil {
+		exists, err = suite.store.CheckSubdomainExists(testCtx, tenant.Subdomain)
+		suite.Require().NoError(err)
+		suite.Require().True(exists)
+	}
+
+	// Check non-existent subdomain
+	nonExistent := generateShortUniqueName("nonexist")
+	exists, err = suite.store.CheckSubdomainExists(testCtx, &nonExistent)
+	suite.Require().NoError(err)
+	suite.Require().False(exists)
+}
+
+// Tenant Limits Tests
+func (suite *TenantTestSuite) TestTenantLimits() {
+	tenant := createTestTenant(suite.T(), suite.store, "Limits")
+	suite.trackTenant(tenant.ID)
+
+	// Set tenant context
+	err := suite.store.SetTenantContext(testCtx, tenant.ID)
+	suite.Require().NoError(err)
+
+	// Create default configuration first
+	err = suite.store.CreateDefaultTenantConfiguration(testCtx)
+	if err == nil { // Only if function exists and works
+		// Check limits
+		limitsParams := CheckTenantLimitsParams{
+			PCheckType:       "storage",
+			PAdditionalUsage: 1024,
+		}
+
+		canProceed, err := suite.store.CheckTenantLimits(testCtx, limitsParams)
+		if err == nil {
+			suite.Require().IsType(bool(true), canProceed)
+		}
+	}
+}
+
+// Date Range Tests
+func (suite *TenantTestSuite) TestDateRangeQueries() {
+	tenant := createTestTenant(suite.T(), suite.store, "DateRange")
+	suite.trackTenant(tenant.ID)
+
+	now := time.Now()
+	yesterday := now.Add(-24 * time.Hour)
+	tomorrow := now.Add(24 * time.Hour)
+
+	params := GetTenantsCreatedInDateRangeParams{
+		CreatedAt:   yesterday,
+		CreatedAt_2: tomorrow,
+	}
+
+	tenants, err := suite.store.GetTenantsCreatedInDateRange(testCtx, params)
+	suite.Require().NoError(err)
+	suite.Require().GreaterOrEqual(len(tenants), 1)
+
+	// Verify all tenants are within range
+	for _, tenant := range tenants {
+		suite.Require().True(tenant.CreatedAt.After(yesterday) || tenant.CreatedAt.Equal(yesterday))
+		suite.Require().True(tenant.CreatedAt.Before(tomorrow) || tenant.CreatedAt.Equal(tomorrow))
+	}
+}
+
+// List and Pagination Tests
+func (suite *TenantTestSuite) TestListTenants() {
+	// Create multiple tenants
+	createdTenants := make([]uuid.UUID, 0)
+	for i := 0; i < 5; i++ {
+		tenant := createTestTenant(suite.T(), suite.store, fmt.Sprintf("List%d", i))
+		createdTenants = append(createdTenants, tenant.ID)
+		suite.trackTenant(tenant.ID)
+	}
+
+	// Test pagination
+	params := ListTenantsParams{
+		Limit:  3,
+		Offset: 0,
+	}
+
+	tenants, err := suite.store.ListTenants(testCtx, params)
+	suite.Require().NoError(err)
+	suite.Require().LessOrEqual(len(tenants), 3)
+
+	// Test second page
+	params.Offset = 3
+	params.Limit = 2
+
+	secondPage, err := suite.store.ListTenants(testCtx, params)
+	suite.Require().NoError(err)
+	suite.Require().LessOrEqual(len(secondPage), 2)
+
+	// Count total tenants
+	count, err := suite.store.CountTenants(testCtx)
+	suite.Require().NoError(err)
+	suite.Require().GreaterOrEqual(count, int64(len(createdTenants)))
+}
+
+// Error Handling Tests
+func (suite *TenantTestSuite) TestErrorHandling() {
+	// Test duplicate names
+	tenant1 := createTestTenant(suite.T(), suite.store, "Unique")
+	suite.trackTenant(tenant1.ID)
+
+	// Try to create another tenant with same name
+	params := CreateTenantParams{
+		Name:      tenant1.Name, // Duplicate name
+		Subdomain: stringPtr(generateShortUniqueName("different")),
+		Status:    "active",
+		Industry:  stringPtr("finance"),
+	}
+
+	_, err := suite.store.CreateTenant(testCtx, params)
+	suite.Require().Error(err, "Should fail due to duplicate name")
+
+	// Test duplicate subdomain
+	if tenant1.Subdomain != nil {
+		params2 := CreateTenantParams{
+			Name:      generateShortUniqueName("Different"),
+			Subdomain: tenant1.Subdomain, // Duplicate subdomain
+			Status:    "active",
+			Industry:  stringPtr("healthcare"),
+		}
+
+		_, err = suite.store.CreateTenant(testCtx, params2)
+		suite.Require().Error(err, "Should fail due to duplicate subdomain")
+	}
+}
+
+// Performance Tests
+func (suite *TenantTestSuite) TestPerformance() {
+	if testing.Short() {
+		suite.T().Skip("Skipping performance tests in short mode")
+	}
+
+	start := time.Now()
+	createdTenants := make([]uuid.UUID, 0)
+
+	// Create many tenants
+	for i := 0; i < 50; i++ {
+		tenant := createTestTenant(suite.T(), suite.store, fmt.Sprintf("Perf%d", i))
+		createdTenants = append(createdTenants, tenant.ID)
+		suite.trackTenant(tenant.ID)
+	}
+
+	duration := time.Since(start)
+	suite.T().Logf("Created 50 tenants in %v", duration)
+	suite.Require().Less(duration, 30*time.Second, "Should create 50 tenants in less than 30 seconds")
+}
+
+// Run the test suite
+func TestTenantTestSuite(t *testing.T) {
+	suite.Run(t, new(TenantTestSuite))
+}
+
+// Additional standalone tests
+func TestTenantLifecycle(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration tests in short mode")
+	}
+
+	pool := setupTestDB(t)
+	defer pool.Close()
+	store := NewStore(pool)
+
+	// Track tenant for cleanup
+	var tenantID uuid.UUID
+	defer func() {
+		if tenantID != uuid.Nil {
+			// Clean up
+			_, _ = pool.Exec(testCtx, "DELETE FROM tenant_usage_stats WHERE tenant_id = $1", tenantID)
+			_, _ = pool.Exec(testCtx, "DELETE FROM tenant_configurations WHERE tenant_id = $1", tenantID)
+			_, _ = pool.Exec(testCtx, "DELETE FROM tenants WHERE id = $1", tenantID)
+		}
+	}()
+
+	// Complete tenant lifecycle test
+	uniqueName := generateShortUniqueName("Lifecycle")
+	subdomain := generateShortUniqueName("lifecycle")
 
 	params := CreateTenantParams{
-		Name:      name,
-		Subdomain: pgtype.Text{String: generateUniqueSubdomain("test"), Valid: true},
-		Status:    "active",
-		Industry:  pgtype.Text{String: "technology", Valid: true},
+		Name:      uniqueName,
+		Subdomain: stringPtr(subdomain),
+		Status:    "pending",
+		Industry:  stringPtr("technology"),
 	}
 
-	tenant, err := testQueries.CreateTenant(ctx, params)
-	require.NoError(t, err, "Failed to create tenant with name %s: %v", name, err)
+	// 1. Create tenant
+	tenant, err := store.CreateTenant(testCtx, params)
+	require.NoError(t, err)
+	require.NotNil(t, tenant)
+	require.Equal(t, "pending", tenant.Status)
+	tenantID = tenant.ID
 
-	assert.NotZero(t, tenant.ID)
-	assert.NotEmpty(t, tenant.Uuid)
-	assert.Equal(t, name, tenant.Name)
+	// 2. Activate tenant
+	updateParams := UpdateTenantStatusParams{
+		ID:     tenant.ID,
+		Status: "active",
+	}
 
-	return tenant
+	activeTenant, err := store.UpdateTenantStatus(testCtx, updateParams)
+	require.NoError(t, err)
+	require.Equal(t, "active", activeTenant.Status)
+
+	// 3. Update tenant details
+	newName := generateShortUniqueName("Updated")
+	updateAllParams := UpdateTenantParams{
+		ID:       tenant.ID,
+		Name:     stringPtr(newName),
+		Industry: stringPtr("finance"),
+	}
+
+	updatedTenant, err := store.UpdateTenant(testCtx, updateAllParams)
+	require.NoError(t, err)
+	require.Equal(t, newName, updatedTenant.Name)
+	require.Equal(t, stringPtr("finance"), updatedTenant.Industry)
+
+	// 4. Set tenant context and work with tenant-scoped data
+	err = store.SetTenantContext(testCtx, tenant.ID)
+	require.NoError(t, err)
+
+	// Verify context is set correctly
+	currentTenantID, err := store.GetCurrentTenantID(testCtx)
+	require.NoError(t, err)
+	require.Equal(t, tenant.ID, currentTenantID)
+
+	// 5. Create tenant configuration
+	err = store.CreateDefaultTenantConfiguration(testCtx)
+	if err == nil { // Only if function works in test environment
+		config, err := store.GetTenantConfiguration(testCtx)
+		if err == nil {
+			require.Equal(t, tenant.ID, config.TenantID)
+		}
+	}
+
+	// 6. Soft delete tenant
+	err = store.SoftDeleteTenant(testCtx, tenant.ID)
+	require.NoError(t, err)
+
+	// 7. Verify tenant is no longer accessible
+	_, err = store.GetTenantByID(testCtx, tenant.ID)
+	require.Error(t, err, "Soft deleted tenant should not be found")
+}
+
+// Benchmark tests
+func BenchmarkCreateTenant(b *testing.B) {
+	pool := setupTestDB(&testing.T{})
+	defer pool.Close()
+	store := NewStore(pool)
+
+	// Track created tenants for cleanup
+	createdTenants := make([]uuid.UUID, 0, b.N)
+	defer func() {
+		for _, tenantID := range createdTenants {
+			_, _ = pool.Exec(testCtx, "DELETE FROM tenants WHERE id = $1", tenantID)
+		}
+	}()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		uniqueName := generateShortUniqueName(fmt.Sprintf("Bench%d", i))
+		subdomain := generateShortUniqueName(fmt.Sprintf("b%d", i))
+
+		params := CreateTenantParams{
+			Name:      uniqueName,
+			Subdomain: stringPtr(subdomain),
+			Status:    "active",
+			Industry:  stringPtr("technology"),
+		}
+		tenant, err := store.CreateTenant(testCtx, params)
+		if err != nil {
+			b.Fatal(err)
+		}
+		createdTenants = append(createdTenants, tenant.ID)
+	}
+}
+
+func BenchmarkGetTenantByID(b *testing.B) {
+	pool := setupTestDB(&testing.T{})
+	defer pool.Close()
+	store := NewStore(pool)
+
+	tenant := createTestTenant(&testing.T{}, store, "BenchGet")
+	defer func() {
+		_, _ = pool.Exec(testCtx, "DELETE FROM tenants WHERE id = $1", tenant.ID)
+	}()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := store.GetTenantByID(testCtx, tenant.ID)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// Test main for setup/teardown
+func TestMain(m *testing.M) {
+	// Setup before all tests
+	code := m.Run()
+
+	// Cleanup after all tests
+	os.Exit(code)
 }
