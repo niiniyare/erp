@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS vendor (
   description TEXT NOT NULL, -- Vendor notes/description
   active BOOLEAN NOT NULL, -- Whether vendor is currently active
   hidden BOOLEAN NOT NULL, -- Whether to hide from vendor lists
-  tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
 
 -- Contact information

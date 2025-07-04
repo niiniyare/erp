@@ -1,10 +1,20 @@
--- Down script for entities and hierarchy_paths tables
+-- Down migration for Entities Module
 
--- First, drop the foreign key constraint that depends on the 'entities' table
--- ALTER TABLE customer DROP CONSTRAINT IF EXISTS customer_entity_id_fkey; -- Assuming 'customer' is the table and 'customer_entity_id_fkey' is the constraint name
+-- Drop foreign key constraints from dependent tables first
+ALTER TABLE uom DROP CONSTRAINT IF EXISTS uom_entity_id_fkey;
+ALTER TABLE uom_conversion DROP CONSTRAINT IF EXISTS uom_conversion_entity_id_fkey;
+ALTER TABLE chartofaccount DROP CONSTRAINT IF EXISTS chartofaccount_entity_id_fkey;
+ALTER TABLE account DROP CONSTRAINT IF EXISTS account_entity_id_fkey;
 
+-- Now, drop tables that depend on 'entities' if they are also being managed in this migration
+-- (If these tables are managed in other migration files, you might only need to drop the FK constraints)
+
+-- Drop entitystate table
+DROP TABLE IF EXISTS entitystate;
+
+-- Drop hierarchy_paths table
 DROP TABLE IF EXISTS hierarchy_paths;
 
--- DROP INDEX IF EXISTS tenant_code_unique_idx; -- Explicitly drop the index
-
+-- Finally, drop entities table and its associated index
+DROP INDEX IF EXISTS tenant_code_unique_idx;
 DROP TABLE IF EXISTS entities;

@@ -1,7 +1,7 @@
 -- Person table (generic person entity)
 CREATE TABLE persons (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
     person_type VARCHAR(20) NOT NULL CHECK (
         person_type IN ('INDIVIDUAL', 'EMPLOYEE', 'CONTACT', 'CUSTOMER', 'VENDOR')
@@ -33,14 +33,14 @@ WHERE national_id IS NOT NULL;
 
 
 CREATE TABLE employees (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    person_id INT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    person_id UUID NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
     employee_number VARCHAR(50) NOT NULL,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
     position_title VARCHAR(100),
     department_id UUID REFERENCES entities(uuid),
-    manager_id INT REFERENCES employees(id),
+    manager_id UUID REFERENCES employees(id),
     hire_date DATE NOT NULL,
     termination_date DATE,
     salary_info JSONB,
@@ -55,11 +55,11 @@ CREATE TABLE employees (
 );
 -- Users table (system access)
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
-    person_id INT REFERENCES persons(id) ON DELETE SET NULL,
-    employee_id INT REFERENCES employees(id) ON DELETE SET NULL,
+    person_id UUID REFERENCES persons(id) ON DELETE SET NULL,
+    employee_id UUID REFERENCES employees(id) ON DELETE SET NULL,
     username VARCHAR(100),
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255),
@@ -82,8 +82,8 @@ WHERE username IS NOT NULL;
 
 -- Roles table (enhanced role/permission system)
 CREATE TABLE roles (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID REFERENCES entities(uuid) ON DELETE RESTRICT,
     name VARCHAR(50) NOT NULL,
     description TEXT,
@@ -97,11 +97,11 @@ CREATE TABLE roles (
 
 -- Role assignments to users
 CREATE TABLE user_roles (
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     entity_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    assigned_by INT REFERENCES users(id),
+    assigned_by UUID REFERENCES users(id),
     expires_at TIMESTAMPTZ,
     PRIMARY KEY (user_id, role_id, entity_id)
 );

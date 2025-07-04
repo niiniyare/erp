@@ -1,7 +1,7 @@
 -- Root entity/company table with hierarchical structure and accounting preferences
 CREATE TABLE entities (
     uuid UUID PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     parent_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,
     
     name VARCHAR(255) NOT NULL,
@@ -42,7 +42,7 @@ CREATE UNIQUE INDEX tenant_code_unique_idx
 
 -- Enhanced closure table for entity hierarchy
 CREATE TABLE hierarchy_paths (
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     ancestor_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
     descendant_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
     depth INT NOT NULL CHECK (depth >= 0),

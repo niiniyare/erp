@@ -4,15 +4,14 @@
 
 -- Ledgers - collections of journal entries for organizational purposes
 CREATE TABLE IF NOT EXISTS ledger (
-  id SERIAL PRIMARY KEY,
+  id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
   created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
   updated TIMESTAMP WITHOUT TIME ZONE NULL,
-  tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL REFERENCES entities(uuid) DEFERRABLE INITIALLY DEFERRED,
 
-  posted_by INT REFERENCES users(id),
-  created_by INT REFERENCES users(id),
+  posted_by UUID REFERENCES users(id),
+  created_by UUID REFERENCES users(id),
 
   name VARCHAR(150) NULL,
   posted BOOLEAN NOT NULL,

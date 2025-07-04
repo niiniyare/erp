@@ -2,9 +2,9 @@
 
 -- Audit logging (enhanced)
 CREATE TABLE audit_logs (
-    uuid UUID PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
     action VARCHAR(50) NOT NULL,
     resource_type VARCHAR(50), -- What was changed
@@ -19,7 +19,7 @@ CREATE TABLE audit_logs (
 );
 
 CREATE TABLE IF NOT EXISTS rls_change_log (
-    id SERIAL PRIMARY KEY,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
     schema_name TEXT NOT NULL,
     table_name TEXT NOT NULL,
     action TEXT NOT NULL,           -- 'apply' or 'remove'

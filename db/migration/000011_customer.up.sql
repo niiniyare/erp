@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS customer (
 -- Audit fields
   created TIMESTAMP NOT NULL, -- Record creation timestamp
   updated TIMESTAMP NULL, -- Last modification timestamp
-  uuid UUID NOT NULL PRIMARY KEY, -- Unique identifier
-  tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  id UUID NOT NULL PRIMARY KEY, -- Unique identifier
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
 
 -- Core customer information
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS customer (
 
 -- Contact information
   address JSONB DEFAULT '{}'::jsonb, -- Entity-specific address
-  -- address_1 VARCHAR(70) NOT NULL, -- Primary billing address
+   -- address_1 VARCHAR(70) NOT NULL, -- Primary billing address
   -- address_2 VARCHAR(70) NULL, -- Secondary address line
   -- city VARCHAR(70) NULL, -- City name
   -- state VARCHAR(70) NULL, -- State/province

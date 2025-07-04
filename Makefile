@@ -12,7 +12,7 @@ BIN=$(abspath ~/go/bin)
 DB_NAME="ledger"
 GO ?= go
 .DEFAULT_GOAL := help
-MIGRATION_PATH="db/django/migration"
+MIGRATION_PATH="db/migration"
 DB_URL=postgresql://admin:admin@localhost:5432/$(DB_NAME)?sslmode=disable
 # DB_URL=postgres://wegmjdaf:khexFaRIW0eslZ6GPRY5VFyCM7w_vMVc@tyke.db.elephantsql.com/wegmjdaf?sslmode=disable
 API_VERSION := v1

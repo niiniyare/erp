@@ -4,15 +4,15 @@
 
 -- Warehouses/Locations
 CREATE TABLE warehouses (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     code VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     address JSONB,
     warehouse_type VARCHAR(20) DEFAULT 'GENERAL'
         CHECK (warehouse_type IN ('GENERAL', 'RETAIL', 'TRANSIT', 'QUARANTINE')),
-    manager_id INT REFERENCES employees(id),
+    manager_id UUID REFERENCES employees(id),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (tenant_id, code)
@@ -22,10 +22,10 @@ CREATE TABLE warehouses (
 
 -- Item Categories
 CREATE TABLE item_categories (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
-    parent_id INT REFERENCES item_categories(id),
+    parent_id UUID REFERENCES item_categories(id),
     name VARCHAR(100) NOT NULL,
     code VARCHAR(20),
     description TEXT,
@@ -36,13 +36,13 @@ CREATE TABLE item_categories (
 
 -- Items/Products
 CREATE TABLE items (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     item_code VARCHAR(50) NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    category_id INT REFERENCES item_categories(id),
+    category_id UUID REFERENCES item_categories(id),
     item_type VARCHAR(20) DEFAULT 'INVENTORY'
         CHECK (item_type IN ('INVENTORY', 'SERVICE', 'NON_INVENTORY', 'ASSEMBLY')),
     unit_of_measure VARCHAR(20) NOT NULL DEFAULT 'EACH',
@@ -68,12 +68,12 @@ CREATE TABLE items (
 
 -- Inventory Balances
 CREATE TABLE inventory_balances (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    item_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
 
-    warehouse_id INT NOT NULL REFERENCES warehouses(id) ON DELETE CASCADE,
+    warehouse_id UUID NOT NULL REFERENCES warehouses(id) ON DELETE CASCADE,
     quantity_on_hand DECIMAL(10,2) DEFAULT 0,
     quantity_available DECIMAL(10,2) DEFAULT 0, -- On hand - reserved
     quantity_reserved DECIMAL(10,2) DEFAULT 0,
@@ -87,11 +87,11 @@ CREATE TABLE inventory_balances (
 
 -- Inventory Movements/Transactions
 CREATE TABLE inventory_movements (
-    id BIGSERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
-    item_id INT NOT NULL REFERENCES items(id),
-    warehouse_id INT NOT NULL REFERENCES warehouses(id),
+    item_id UUID NOT NULL REFERENCES items(id),
+    warehouse_id UUID NOT NULL REFERENCES warehouses(id),
     movement_type VARCHAR(20) NOT NULL
         CHECK (movement_type IN ('RECEIPT', 'ISSUE', 'TRANSFER', 'ADJUSTMENT', 'SALE', 'RETURN')),
     reference_type VARCHAR(20), -- PURCHASE_ORDER, SALES_ORDER, etc.
@@ -105,7 +105,7 @@ CREATE TABLE inventory_movements (
     batch_number VARCHAR(50),
     serial_numbers TEXT[], -- For serialized items
     expiry_date DATE,
-    created_by INT REFERENCES users(id),
+    created_by UUID REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

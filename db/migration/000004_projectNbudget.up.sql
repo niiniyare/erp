@@ -1,13 +1,13 @@
 -- Projects table (can be under any entity)
 CREATE TABLE projects (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
     -- parent_project_id INT REFERENCES projects(id), -- Sub-projects
     name VARCHAR(255) NOT NULL,
     code VARCHAR(50),
     description TEXT,
-    project_manager_id INT REFERENCES employees(id),
+    project_manager_id  UUID REFERENCES employees(id),
     start_date DATE,
     end_date DATE,
     budget_amount DECIMAL(15,2),
@@ -24,10 +24,10 @@ WHERE code IS NOT NULL;
 
 -- Budget management
 CREATE TABLE budgets (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
-    project_id INT REFERENCES projects(id), -- Optional project budget
+    project_id UUID REFERENCES projects(id), -- Optional project budget
     name VARCHAR(255) NOT NULL,
     budget_type VARCHAR(20) NOT NULL
         CHECK (budget_type IN ('OPERATIONAL', 'CAPITAL', 'PROJECT', 'DEPARTMENT')),
@@ -39,7 +39,7 @@ CREATE TABLE budgets (
     spent_amount DECIMAL(15,2) DEFAULT 0,
     status VARCHAR(20) DEFAULT 'DRAFT'
         CHECK (status IN ('DRAFT', 'APPROVED', 'ACTIVE', 'CLOSED')),
-    approved_by INT REFERENCES users(id),
+    approved_by UUID REFERENCES users(id),
     approved_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -47,8 +47,8 @@ CREATE TABLE budgets (
 
 -- Multi-tenant Unit of Measure (UOM) table with conversion system
 CREATE TABLE uom (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
     uom_name VARCHAR(255) NOT NULL,
     must_be_whole_number BOOLEAN DEFAULT FALSE,
@@ -56,8 +56,8 @@ CREATE TABLE uom (
     symbol VARCHAR(50),
     common_code VARCHAR(3),
     description TEXT,
-    -- Conversion fields
-    base_uom_id INTEGER REFERENCES uom(id),
+    -- Conversion f qqields
+    base_uom_id UUID REFERENCES uom(id),
     conversion_factor DECIMAL(15,6) DEFAULT 1.0,
     uom_type VARCHAR(50), -- 'Weight', 'Length', 'Volume', 'Area', 'Time', 'Count'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -68,11 +68,11 @@ CREATE TABLE uom (
 
 -- Multi-tenant UOM Conversion table for complex conversions
 CREATE TABLE uom_conversion (
-    id SERIAL PRIMARY KEY,
-    tenant_id INT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
-    from_uom_id INTEGER NOT NULL REFERENCES uom(id),
-    to_uom_id INTEGER NOT NULL REFERENCES uom(id),
+    from_uom_id UUID NOT NULL REFERENCES uom(id),
+    to_uom_id UUID NOT NULL REFERENCES uom(id),
     conversion_factor DECIMAL(15,6) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(tenant_id, entity_id, from_uom_id, to_uom_id)
