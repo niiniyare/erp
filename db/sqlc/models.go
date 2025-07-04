@@ -5,26 +5,27 @@
 package db
 
 import (
+	"time"
+
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Employee struct {
-	ID               uuid.UUID          `json:"id"`
-	TenantID         uuid.UUID          `json:"tenant_id"`
-	PersonID         uuid.UUID          `json:"person_id"`
-	EmployeeNumber   string             `json:"employee_number"`
-	EntityID         uuid.UUID          `json:"entity_id"`
-	PositionTitle    *string            `json:"position_title"`
-	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        pgtype.UUID        `json:"manager_id"`
-	HireDate         pgtype.Date        `json:"hire_date"`
-	TerminationDate  pgtype.Date        `json:"termination_date"`
-	SalaryInfo       []byte             `json:"salary_info"`
-	EmploymentStatus *string            `json:"employment_status"`
-	WorkSchedule     []byte             `json:"work_schedule"`
-	CreatedAt        pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	ID               uuid.UUID  `json:"id"`
+	TenantID         uuid.UUID  `json:"tenant_id"`
+	PersonID         uuid.UUID  `json:"person_id"`
+	EmployeeNumber   string     `json:"employee_number"`
+	EntityID         uuid.UUID  `json:"entity_id"`
+	PositionTitle    *string    `json:"position_title"`
+	DepartmentID     *uuid.UUID `json:"department_id"`
+	ManagerID        *uuid.UUID `json:"manager_id"`
+	HireDate         time.Time  `json:"hire_date"`
+	TerminationDate  time.Time  `json:"termination_date"`
+	SalaryInfo       []byte     `json:"salary_info"`
+	EmploymentStatus *string    `json:"employment_status"`
+	WorkSchedule     []byte     `json:"work_schedule"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
 }
 
 // Purpose: Stores business entities/organizations/companies.
@@ -33,22 +34,22 @@ type Employee struct {
 //	             have their own accounting books, customers, vendors, etc.
 //	             Uses tree structure for hierarchical organization relationships.
 type Entity struct {
-	Uuid          uuid.UUID          `json:"uuid"`
-	TenantID      uuid.UUID          `json:"tenant_id"`
-	ParentID      pgtype.UUID        `json:"parent_id"`
-	Name          string             `json:"name"`
-	Code          *string            `json:"code"`
-	Type          string             `json:"type"`
-	IsActive      bool               `json:"is_active"`
-	Hidden        bool               `json:"hidden"`
-	AccrualMethod bool               `json:"accrual_method"`
-	FyStartMonth  int32              `json:"fy_start_month"`
-	Address       []byte             `json:"address"`
-	Picture       *string            `json:"picture"`
-	Settings      []byte             `json:"settings"`
-	CreatedAt     pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
+	Uuid          uuid.UUID  `json:"uuid"`
+	TenantID      uuid.UUID  `json:"tenant_id"`
+	ParentID      *uuid.UUID `json:"parent_id"`
+	Name          string     `json:"name"`
+	Code          *string    `json:"code"`
+	Type          string     `json:"type"`
+	IsActive      bool       `json:"is_active"`
+	Hidden        bool       `json:"hidden"`
+	AccrualMethod bool       `json:"accrual_method"`
+	FyStartMonth  int32      `json:"fy_start_month"`
+	Address       []byte     `json:"address"`
+	Picture       *string    `json:"picture"`
+	Settings      []byte     `json:"settings"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+	DeletedAt     time.Time  `json:"deleted_at"`
 }
 
 // Manages sequence numbers for document numbering (invoices, POs, etc.)
@@ -56,44 +57,44 @@ type Entitystate struct {
 	Uuid       uuid.UUID `json:"uuid"`
 	FiscalYear *int16    `json:"fiscal_year"`
 	// Document type: invoice, po, estimate, bill, etc.
-	Key          string      `json:"key"`
-	Sequence     int64       `json:"sequence"`
-	EntityID     uuid.UUID   `json:"entity_id"`
-	EntityUnitID pgtype.UUID `json:"entity_unit_id"`
+	Key          string     `json:"key"`
+	Sequence     int64      `json:"sequence"`
+	EntityID     uuid.UUID  `json:"entity_id"`
+	EntityUnitID *uuid.UUID `json:"entity_unit_id"`
 }
 
 type Person struct {
-	ID         uuid.UUID          `json:"id"`
-	TenantID   uuid.UUID          `json:"tenant_id"`
-	EntityID   uuid.UUID          `json:"entity_id"`
-	PersonType string             `json:"person_type"`
-	FirstName  string             `json:"first_name"`
-	LastName   string             `json:"last_name"`
-	MiddleName *string            `json:"middle_name"`
-	Email      *string            `json:"email"`
-	Phone      *string            `json:"phone"`
-	BirthDate  pgtype.Date        `json:"birth_date"`
-	NationalID *string            `json:"national_id"`
-	TaxID      *string            `json:"tax_id"`
-	Address    []byte             `json:"address"`
-	Metadata   []byte             `json:"metadata"`
-	IsActive   bool               `json:"is_active"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt  pgtype.Timestamptz `json:"deleted_at"`
+	ID         uuid.UUID `json:"id"`
+	TenantID   uuid.UUID `json:"tenant_id"`
+	EntityID   uuid.UUID `json:"entity_id"`
+	PersonType string    `json:"person_type"`
+	FirstName  string    `json:"first_name"`
+	LastName   string    `json:"last_name"`
+	MiddleName *string   `json:"middle_name"`
+	Email      *string   `json:"email"`
+	Phone      *string   `json:"phone"`
+	BirthDate  time.Time `json:"birth_date"`
+	NationalID *string   `json:"national_id"`
+	TaxID      *string   `json:"tax_id"`
+	Address    []byte    `json:"address"`
+	Metadata   []byte    `json:"metadata"`
+	IsActive   bool      `json:"is_active"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	DeletedAt  time.Time `json:"deleted_at"`
 }
 
 type Role struct {
-	ID           uuid.UUID          `json:"id"`
-	TenantID     uuid.UUID          `json:"tenant_id"`
-	EntityID     pgtype.UUID        `json:"entity_id"`
-	Name         string             `json:"name"`
-	Description  *string            `json:"description"`
-	Module       *string            `json:"module"`
-	Permissions  []byte             `json:"permissions"`
-	EntityScope  []byte             `json:"entity_scope"`
-	IsSystemRole *bool              `json:"is_system_role"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	ID           uuid.UUID  `json:"id"`
+	TenantID     uuid.UUID  `json:"tenant_id"`
+	EntityID     *uuid.UUID `json:"entity_id"`
+	Name         string     `json:"name"`
+	Description  string     `json:"description"`
+	Module       *string    `json:"module"`
+	Permissions  []byte     `json:"permissions"`
+	EntityScope  []byte     `json:"entity_scope"`
+	IsSystemRole *bool      `json:"is_system_role"`
+	CreatedAt    time.Time  `json:"created_at"`
 }
 
 // Core tenant management table for multi-tenant SaaS architecture
@@ -116,37 +117,37 @@ type Tenant struct {
 	RegistrationNumber *string `json:"registration_number"`
 	LegalEntityType    *string `json:"legal_entity_type"`
 	// Tenant-specific configuration settings
-	Settings  []byte             `json:"settings"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Settings  []byte    `json:"settings"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// Soft delete timestamp - NULL means active
-	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+	DeletedAt time.Time `json:"deleted_at"`
 }
 
 type User struct {
-	ID                uuid.UUID          `json:"id"`
-	TenantID          uuid.UUID          `json:"tenant_id"`
-	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          pgtype.UUID        `json:"person_id"`
-	EmployeeID        pgtype.UUID        `json:"employee_id"`
-	Username          *string            `json:"username"`
-	Email             string             `json:"email"`
-	PasswordHash      *string            `json:"password_hash"`
-	UserType          string             `json:"user_type"`
-	IsActive          bool               `json:"is_active"`
-	LastLoginAt       pgtype.Timestamptz `json:"last_login_at"`
-	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
-	Settings          []byte             `json:"settings"`
-	CreatedAt         pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
+	ID                uuid.UUID  `json:"id"`
+	TenantID          uuid.UUID  `json:"tenant_id"`
+	EntityID          uuid.UUID  `json:"entity_id"`
+	PersonID          *uuid.UUID `json:"person_id"`
+	EmployeeID        *uuid.UUID `json:"employee_id"`
+	Username          *string    `json:"username"`
+	Email             string     `json:"email"`
+	PasswordHash      *string    `json:"password_hash"`
+	UserType          string     `json:"user_type"`
+	IsActive          bool       `json:"is_active"`
+	LastLoginAt       time.Time  `json:"last_login_at"`
+	PasswordChangedAt time.Time  `json:"password_changed_at"`
+	Settings          []byte     `json:"settings"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+	DeletedAt         time.Time  `json:"deleted_at"`
 }
 
 type UserRole struct {
-	UserID     uuid.UUID          `json:"user_id"`
-	RoleID     uuid.UUID          `json:"role_id"`
-	EntityID   uuid.UUID          `json:"entity_id"`
-	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy pgtype.UUID        `json:"assigned_by"`
-	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	UserID     uuid.UUID  `json:"user_id"`
+	RoleID     uuid.UUID  `json:"role_id"`
+	EntityID   uuid.UUID  `json:"entity_id"`
+	AssignedAt time.Time  `json:"assigned_at"`
+	AssignedBy *uuid.UUID `json:"assigned_by"`
+	ExpiresAt  time.Time  `json:"expires_at"`
 }

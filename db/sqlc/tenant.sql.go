@@ -7,9 +7,9 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const bulkSoftDeleteTenants = `-- name: BulkSoftDeleteTenants :exec
@@ -202,7 +202,7 @@ type CreateTenantParams struct {
 //	INSERT INTO tenants (name, subdomain, status, industry)
 //	VALUES ($1, $2, $3, $4)
 //	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
-func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Tenant, error) {
+func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, createTenant,
 		arg.Name,
 		arg.Subdomain,
@@ -230,7 +230,7 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const deleteTenant = `-- name: DeleteTenant :exec
@@ -270,14 +270,14 @@ type FilterTenantsParams struct {
 }
 
 type FilterTenantsRow struct {
-	ID        uuid.UUID          `json:"id"`
-	Name      string             `json:"name"`
-	Subdomain *string            `json:"subdomain"`
-	Status    string             `json:"status"`
-	Industry  *string            `json:"industry"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Subdomain *string   `json:"subdomain"`
+	Status    string    `json:"status"`
+	Industry  *string   `json:"industry"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	DeletedAt time.Time `json:"deleted_at"`
 }
 
 // =====================================================
@@ -295,7 +295,7 @@ type FilterTenantsRow struct {
 //	  CASE WHEN $4::varchar = 'updated_at' THEN updated_at END DESC,
 //	  id DESC
 //	LIMIT $6 OFFSET $5
-func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]FilterTenantsRow, error) {
+func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]*FilterTenantsRow, error) {
 	rows, err := q.db.Query(ctx, filterTenants,
 		arg.NameFilter,
 		arg.StatusFilter,
@@ -308,7 +308,7 @@ func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([
 		return nil, err
 	}
 	defer rows.Close()
-	items := []FilterTenantsRow{}
+	items := []*FilterTenantsRow{}
 	for rows.Next() {
 		var i FilterTenantsRow
 		if err := rows.Scan(
@@ -323,7 +323,7 @@ func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -342,13 +342,13 @@ ORDER BY name
 //	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 //	WHERE status = 'active' AND deleted_at IS NULL
 //	ORDER BY name
-func (q *Queries) GetActiveTenants(ctx context.Context) ([]Tenant, error) {
+func (q *Queries) GetActiveTenants(ctx context.Context) ([]*Tenant, error) {
 	rows, err := q.db.Query(ctx, getActiveTenants)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Tenant{}
+	items := []*Tenant{}
 	for rows.Next() {
 		var i Tenant
 		if err := rows.Scan(
@@ -373,7 +373,7 @@ func (q *Queries) GetActiveTenants(ctx context.Context) ([]Tenant, error) {
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -394,7 +394,7 @@ WHERE id = current_tenant_id() AND deleted_at IS NULL
 //
 //	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 //	WHERE id = current_tenant_id() AND deleted_at IS NULL
-func (q *Queries) GetCurrentTenant(ctx context.Context) (Tenant, error) {
+func (q *Queries) GetCurrentTenant(ctx context.Context) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, getCurrentTenant)
 	var i Tenant
 	err := row.Scan(
@@ -417,7 +417,7 @@ func (q *Queries) GetCurrentTenant(ctx context.Context) (Tenant, error) {
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getCurrentTenantID = `-- name: GetCurrentTenantID :one
@@ -475,7 +475,7 @@ type GetCurrentTenantStorageUsageRow struct {
 //	    COUNT(*) FILTER (WHERE status = 'pending') as pending_tenants
 //	FROM tenants
 //	WHERE deleted_at IS NULL
-func (q *Queries) GetCurrentTenantStorageUsage(ctx context.Context) (GetCurrentTenantStorageUsageRow, error) {
+func (q *Queries) GetCurrentTenantStorageUsage(ctx context.Context) (*GetCurrentTenantStorageUsageRow, error) {
 	row := q.db.QueryRow(ctx, getCurrentTenantStorageUsage)
 	var i GetCurrentTenantStorageUsageRow
 	err := row.Scan(
@@ -484,7 +484,7 @@ func (q *Queries) GetCurrentTenantStorageUsage(ctx context.Context) (GetCurrentT
 		&i.SuspendedTenants,
 		&i.PendingTenants,
 	)
-	return i, err
+	return &i, err
 }
 
 const getTenantByID = `-- name: GetTenantByID :one
@@ -496,7 +496,7 @@ WHERE id = $1 AND deleted_at IS NULL
 //
 //	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 //	WHERE id = $1 AND deleted_at IS NULL
-func (q *Queries) GetTenantByID(ctx context.Context, id uuid.UUID) (Tenant, error) {
+func (q *Queries) GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, getTenantByID, id)
 	var i Tenant
 	err := row.Scan(
@@ -519,7 +519,7 @@ func (q *Queries) GetTenantByID(ctx context.Context, id uuid.UUID) (Tenant, erro
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getTenantByUUID = `-- name: GetTenantByUUID :one
@@ -533,7 +533,7 @@ WHERE subdomain = $1 AND deleted_at IS NULL
 //
 //	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 //	WHERE subdomain = $1 AND deleted_at IS NULL
-func (q *Queries) GetTenantByUUID(ctx context.Context, subdomain *string) (Tenant, error) {
+func (q *Queries) GetTenantByUUID(ctx context.Context, subdomain *string) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, getTenantByUUID, subdomain)
 	var i Tenant
 	err := row.Scan(
@@ -556,7 +556,7 @@ func (q *Queries) GetTenantByUUID(ctx context.Context, subdomain *string) (Tenan
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getTenantsByIndustry = `-- name: GetTenantsByIndustry :many
@@ -579,19 +579,19 @@ type GetTenantsByIndustryRow struct {
 //	WHERE deleted_at IS NULL AND industry IS NOT NULL
 //	GROUP BY industry
 //	ORDER BY tenant_count DESC
-func (q *Queries) GetTenantsByIndustry(ctx context.Context) ([]GetTenantsByIndustryRow, error) {
+func (q *Queries) GetTenantsByIndustry(ctx context.Context) ([]*GetTenantsByIndustryRow, error) {
 	rows, err := q.db.Query(ctx, getTenantsByIndustry)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetTenantsByIndustryRow{}
+	items := []*GetTenantsByIndustryRow{}
 	for rows.Next() {
 		var i GetTenantsByIndustryRow
 		if err := rows.Scan(&i.Industry, &i.TenantCount); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -608,8 +608,8 @@ ORDER BY created_at DESC
 `
 
 type GetTenantsCreatedInDateRangeParams struct {
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	CreatedAt_2 pgtype.Timestamptz `json:"created_at_2"`
+	CreatedAt   time.Time `json:"created_at"`
+	CreatedAt_2 time.Time `json:"created_at_2"`
 }
 
 // GetTenantsCreatedInDateRange
@@ -619,13 +619,13 @@ type GetTenantsCreatedInDateRangeParams struct {
 //	  AND created_at <= $2
 //	  AND deleted_at IS NULL
 //	ORDER BY created_at DESC
-func (q *Queries) GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]Tenant, error) {
+func (q *Queries) GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]*Tenant, error) {
 	rows, err := q.db.Query(ctx, getTenantsCreatedInDateRange, arg.CreatedAt, arg.CreatedAt_2)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Tenant{}
+	items := []*Tenant{}
 	for rows.Next() {
 		var i Tenant
 		if err := rows.Scan(
@@ -650,7 +650,7 @@ func (q *Queries) GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenan
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -676,13 +676,13 @@ type ListTenantsParams struct {
 //	WHERE deleted_at IS NULL
 //	ORDER BY created_at DESC
 //	LIMIT $1 OFFSET $2
-func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]Tenant, error) {
+func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Tenant, error) {
 	rows, err := q.db.Query(ctx, listTenants, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Tenant{}
+	items := []*Tenant{}
 	for rows.Next() {
 		var i Tenant
 		if err := rows.Scan(
@@ -707,7 +707,7 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]Ten
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -724,9 +724,9 @@ LIMIT $3 OFFSET $2
 `
 
 type SearchTenantsByNameParams struct {
-	Name   *string `json:"name"`
-	Offset int32   `json:"offset"`
-	Limit  int32   `json:"limit"`
+	Name   string `json:"name"`
+	Offset int32  `json:"offset"`
+	Limit  int32  `json:"limit"`
 }
 
 // SearchTenantsByName
@@ -736,13 +736,13 @@ type SearchTenantsByNameParams struct {
 //	  AND deleted_at IS NULL
 //	ORDER BY name
 //	LIMIT $3 OFFSET $2
-func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]Tenant, error) {
+func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]*Tenant, error) {
 	rows, err := q.db.Query(ctx, searchTenantsByName, arg.Name, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Tenant{}
+	items := []*Tenant{}
 	for rows.Next() {
 		var i Tenant
 		if err := rows.Scan(
@@ -767,7 +767,7 @@ func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNa
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -823,7 +823,7 @@ type UpdateCurrentTenantParams struct {
 //	SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
 //	WHERE id = current_tenant_id() AND deleted_at IS NULL
 //	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
-func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (Tenant, error) {
+func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateCurrentTenant,
 		arg.Name,
 		arg.Subdomain,
@@ -851,7 +851,7 @@ func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTena
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const updateTenant = `-- name: UpdateTenant :one
@@ -885,7 +885,7 @@ type UpdateTenantParams struct {
 //	updated_at = NOW()
 //	WHERE id = $5 AND deleted_at IS NULL
 //	  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
-func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Tenant, error) {
+func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenant,
 		arg.Name,
 		arg.Subdomain,
@@ -914,7 +914,7 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Ten
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const updateTenantIndustry = `-- name: UpdateTenantIndustry :one
@@ -935,7 +935,7 @@ type UpdateTenantIndustryParams struct {
 //	SET industry = $2, updated_at = NOW()
 //	WHERE id = $1 AND deleted_at IS NULL
 //	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
-func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (Tenant, error) {
+func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantIndustry, arg.ID, arg.Industry)
 	var i Tenant
 	err := row.Scan(
@@ -958,7 +958,7 @@ func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndu
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const updateTenantName = `-- name: UpdateTenantName :one
@@ -979,7 +979,7 @@ type UpdateTenantNameParams struct {
 //	SET name = $2, updated_at = NOW()
 //	WHERE id = $1 AND deleted_at IS NULL
 //	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
-func (q *Queries) UpdateTenantName(ctx context.Context, arg UpdateTenantNameParams) (Tenant, error) {
+func (q *Queries) UpdateTenantName(ctx context.Context, arg UpdateTenantNameParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantName, arg.ID, arg.Name)
 	var i Tenant
 	err := row.Scan(
@@ -1002,7 +1002,7 @@ func (q *Queries) UpdateTenantName(ctx context.Context, arg UpdateTenantNamePara
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const updateTenantStatus = `-- name: UpdateTenantStatus :one
@@ -1021,7 +1021,7 @@ type UpdateTenantStatusParams struct {
 // SET status = $2, updated_at = NOW()
 // WHERE id = $1 AND deleted_at IS NULL
 // RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
-func (q *Queries) UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (Tenant, error) {
+func (q *Queries) UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantStatus, arg.ID, arg.Status)
 	var i Tenant
 	err := row.Scan(
@@ -1044,7 +1044,7 @@ func (q *Queries) UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatus
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const updateTenantSubdomain = `-- name: UpdateTenantSubdomain :one
@@ -1065,7 +1065,7 @@ type UpdateTenantSubdomainParams struct {
 //	SET subdomain = $2, updated_at = NOW()
 //	WHERE id = $1 AND deleted_at IS NULL
 //	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
-func (q *Queries) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (Tenant, error) {
+func (q *Queries) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantSubdomain, arg.ID, arg.Subdomain)
 	var i Tenant
 	err := row.Scan(
@@ -1088,5 +1088,5 @@ func (q *Queries) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSub
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }

@@ -7,9 +7,9 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -23,15 +23,15 @@ INSERT INTO users (
 `
 
 type CreateUserParams struct {
-	EntityID     uuid.UUID   `json:"entity_id"`
-	PersonID     pgtype.UUID `json:"person_id"`
-	EmployeeID   pgtype.UUID `json:"employee_id"`
-	Username     *string     `json:"username"`
-	Email        string      `json:"email"`
-	PasswordHash *string     `json:"password_hash"`
-	UserType     string      `json:"user_type"`
-	IsActive     bool        `json:"is_active"`
-	Settings     []byte      `json:"settings"`
+	EntityID     uuid.UUID  `json:"entity_id"`
+	PersonID     *uuid.UUID `json:"person_id"`
+	EmployeeID   *uuid.UUID `json:"employee_id"`
+	Username     *string    `json:"username"`
+	Email        string     `json:"email"`
+	PasswordHash *string    `json:"password_hash"`
+	UserType     string     `json:"user_type"`
+	IsActive     bool       `json:"is_active"`
+	Settings     []byte     `json:"settings"`
 }
 
 // ==============================================
@@ -44,7 +44,7 @@ type CreateUserParams struct {
 //	) VALUES (
 //	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9
 //	) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.EntityID,
 		arg.PersonID,
@@ -75,7 +75,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getUser = `-- name: GetUser :one
@@ -87,7 +87,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 //
 //	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
 //	WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
+func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (*User, error) {
 	row := q.db.QueryRow(ctx, getUser, id)
 	var i User
 	err := row.Scan(
@@ -108,7 +108,7 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -120,7 +120,7 @@ WHERE email = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 //
 //	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
 //	WHERE email = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
@@ -141,7 +141,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
@@ -153,7 +153,7 @@ WHERE username = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 //
 //	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
 //	WHERE username = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-func (q *Queries) GetUserByUsername(ctx context.Context, username *string) (User, error) {
+func (q *Queries) GetUserByUsername(ctx context.Context, username *string) (*User, error) {
 	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(
@@ -174,7 +174,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username *string) (User
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getUserStats = `-- name: GetUserStats :one
@@ -209,7 +209,7 @@ type GetUserStatsRow struct {
 //	    COUNT(*) FILTER (WHERE last_login_at >= NOW() - INTERVAL '30 days') as recent_logins
 //	FROM users
 //	WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
-func (q *Queries) GetUserStats(ctx context.Context) (GetUserStatsRow, error) {
+func (q *Queries) GetUserStats(ctx context.Context) (*GetUserStatsRow, error) {
 	row := q.db.QueryRow(ctx, getUserStats)
 	var i GetUserStatsRow
 	err := row.Scan(
@@ -220,7 +220,7 @@ func (q *Queries) GetUserStats(ctx context.Context) (GetUserStatsRow, error) {
 		&i.VendorUsers,
 		&i.RecentLogins,
 	)
-	return i, err
+	return &i, err
 }
 
 const getUserWithPersonDetails = `-- name: GetUserWithPersonDetails :one
@@ -235,30 +235,30 @@ WHERE u.id = $1 AND u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
 `
 
 type GetUserWithPersonDetailsRow struct {
-	ID                uuid.UUID          `json:"id"`
-	TenantID          uuid.UUID          `json:"tenant_id"`
-	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          pgtype.UUID        `json:"person_id"`
-	EmployeeID        pgtype.UUID        `json:"employee_id"`
-	Username          *string            `json:"username"`
-	Email             string             `json:"email"`
-	PasswordHash      *string            `json:"password_hash"`
-	UserType          string             `json:"user_type"`
-	IsActive          bool               `json:"is_active"`
-	LastLoginAt       pgtype.Timestamptz `json:"last_login_at"`
-	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
-	Settings          []byte             `json:"settings"`
-	CreatedAt         pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
-	FirstName         *string            `json:"first_name"`
-	LastName          *string            `json:"last_name"`
-	MiddleName        *string            `json:"middle_name"`
-	Phone             *string            `json:"phone"`
-	BirthDate         pgtype.Date        `json:"birth_date"`
-	EmployeeNumber    *string            `json:"employee_number"`
-	PositionTitle     *string            `json:"position_title"`
-	DepartmentID      pgtype.UUID        `json:"department_id"`
+	ID                uuid.UUID  `json:"id"`
+	TenantID          uuid.UUID  `json:"tenant_id"`
+	EntityID          uuid.UUID  `json:"entity_id"`
+	PersonID          *uuid.UUID `json:"person_id"`
+	EmployeeID        *uuid.UUID `json:"employee_id"`
+	Username          *string    `json:"username"`
+	Email             string     `json:"email"`
+	PasswordHash      *string    `json:"password_hash"`
+	UserType          string     `json:"user_type"`
+	IsActive          bool       `json:"is_active"`
+	LastLoginAt       time.Time  `json:"last_login_at"`
+	PasswordChangedAt time.Time  `json:"password_changed_at"`
+	Settings          []byte     `json:"settings"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+	DeletedAt         time.Time  `json:"deleted_at"`
+	FirstName         *string    `json:"first_name"`
+	LastName          *string    `json:"last_name"`
+	MiddleName        *string    `json:"middle_name"`
+	Phone             *string    `json:"phone"`
+	BirthDate         time.Time  `json:"birth_date"`
+	EmployeeNumber    *string    `json:"employee_number"`
+	PositionTitle     *string    `json:"position_title"`
+	DepartmentID      *uuid.UUID `json:"department_id"`
 }
 
 // GetUserWithPersonDetails
@@ -271,7 +271,7 @@ type GetUserWithPersonDetailsRow struct {
 //	LEFT JOIN persons p ON u.person_id = p.id
 //	LEFT JOIN employees e ON u.employee_id = e.id
 //	WHERE u.id = $1 AND u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
-func (q *Queries) GetUserWithPersonDetails(ctx context.Context, id uuid.UUID) (GetUserWithPersonDetailsRow, error) {
+func (q *Queries) GetUserWithPersonDetails(ctx context.Context, id uuid.UUID) (*GetUserWithPersonDetailsRow, error) {
 	row := q.db.QueryRow(ctx, getUserWithPersonDetails, id)
 	var i GetUserWithPersonDetailsRow
 	err := row.Scan(
@@ -300,7 +300,7 @@ func (q *Queries) GetUserWithPersonDetails(ctx context.Context, id uuid.UUID) (G
 		&i.PositionTitle,
 		&i.DepartmentID,
 	)
-	return i, err
+	return &i, err
 }
 
 const listActiveUsers = `-- name: ListActiveUsers :many
@@ -313,25 +313,25 @@ ORDER BY u.email
 `
 
 type ListActiveUsersRow struct {
-	ID                uuid.UUID          `json:"id"`
-	TenantID          uuid.UUID          `json:"tenant_id"`
-	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          pgtype.UUID        `json:"person_id"`
-	EmployeeID        pgtype.UUID        `json:"employee_id"`
-	Username          *string            `json:"username"`
-	Email             string             `json:"email"`
-	PasswordHash      *string            `json:"password_hash"`
-	UserType          string             `json:"user_type"`
-	IsActive          bool               `json:"is_active"`
-	LastLoginAt       pgtype.Timestamptz `json:"last_login_at"`
-	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
-	Settings          []byte             `json:"settings"`
-	CreatedAt         pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
-	FirstName         *string            `json:"first_name"`
-	LastName          *string            `json:"last_name"`
-	EmployeeNumber    *string            `json:"employee_number"`
+	ID                uuid.UUID  `json:"id"`
+	TenantID          uuid.UUID  `json:"tenant_id"`
+	EntityID          uuid.UUID  `json:"entity_id"`
+	PersonID          *uuid.UUID `json:"person_id"`
+	EmployeeID        *uuid.UUID `json:"employee_id"`
+	Username          *string    `json:"username"`
+	Email             string     `json:"email"`
+	PasswordHash      *string    `json:"password_hash"`
+	UserType          string     `json:"user_type"`
+	IsActive          bool       `json:"is_active"`
+	LastLoginAt       time.Time  `json:"last_login_at"`
+	PasswordChangedAt time.Time  `json:"password_changed_at"`
+	Settings          []byte     `json:"settings"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+	DeletedAt         time.Time  `json:"deleted_at"`
+	FirstName         *string    `json:"first_name"`
+	LastName          *string    `json:"last_name"`
+	EmployeeNumber    *string    `json:"employee_number"`
 }
 
 // ListActiveUsers
@@ -342,13 +342,13 @@ type ListActiveUsersRow struct {
 //	LEFT JOIN employees e ON u.employee_id = e.id
 //	WHERE u.tenant_id = current_tenant_id() AND u.is_active = true AND u.deleted_at IS NULL
 //	ORDER BY u.email
-func (q *Queries) ListActiveUsers(ctx context.Context) ([]ListActiveUsersRow, error) {
+func (q *Queries) ListActiveUsers(ctx context.Context) ([]*ListActiveUsersRow, error) {
 	rows, err := q.db.Query(ctx, listActiveUsers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListActiveUsersRow{}
+	items := []*ListActiveUsersRow{}
 	for rows.Next() {
 		var i ListActiveUsersRow
 		if err := rows.Scan(
@@ -374,7 +374,7 @@ func (q *Queries) ListActiveUsers(ctx context.Context) ([]ListActiveUsersRow, er
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -392,25 +392,25 @@ ORDER BY u.email
 `
 
 type ListUsersRow struct {
-	ID                uuid.UUID          `json:"id"`
-	TenantID          uuid.UUID          `json:"tenant_id"`
-	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          pgtype.UUID        `json:"person_id"`
-	EmployeeID        pgtype.UUID        `json:"employee_id"`
-	Username          *string            `json:"username"`
-	Email             string             `json:"email"`
-	PasswordHash      *string            `json:"password_hash"`
-	UserType          string             `json:"user_type"`
-	IsActive          bool               `json:"is_active"`
-	LastLoginAt       pgtype.Timestamptz `json:"last_login_at"`
-	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
-	Settings          []byte             `json:"settings"`
-	CreatedAt         pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
-	FirstName         *string            `json:"first_name"`
-	LastName          *string            `json:"last_name"`
-	EmployeeNumber    *string            `json:"employee_number"`
+	ID                uuid.UUID  `json:"id"`
+	TenantID          uuid.UUID  `json:"tenant_id"`
+	EntityID          uuid.UUID  `json:"entity_id"`
+	PersonID          *uuid.UUID `json:"person_id"`
+	EmployeeID        *uuid.UUID `json:"employee_id"`
+	Username          *string    `json:"username"`
+	Email             string     `json:"email"`
+	PasswordHash      *string    `json:"password_hash"`
+	UserType          string     `json:"user_type"`
+	IsActive          bool       `json:"is_active"`
+	LastLoginAt       time.Time  `json:"last_login_at"`
+	PasswordChangedAt time.Time  `json:"password_changed_at"`
+	Settings          []byte     `json:"settings"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+	DeletedAt         time.Time  `json:"deleted_at"`
+	FirstName         *string    `json:"first_name"`
+	LastName          *string    `json:"last_name"`
+	EmployeeNumber    *string    `json:"employee_number"`
 }
 
 // ListUsers
@@ -421,13 +421,13 @@ type ListUsersRow struct {
 //	LEFT JOIN employees e ON u.employee_id = e.id
 //	WHERE u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
 //	ORDER BY u.email
-func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
+func (q *Queries) ListUsers(ctx context.Context) ([]*ListUsersRow, error) {
 	rows, err := q.db.Query(ctx, listUsers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListUsersRow{}
+	items := []*ListUsersRow{}
 	for rows.Next() {
 		var i ListUsersRow
 		if err := rows.Scan(
@@ -453,7 +453,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -471,25 +471,25 @@ ORDER BY u.email
 `
 
 type ListUsersByTypeRow struct {
-	ID                uuid.UUID          `json:"id"`
-	TenantID          uuid.UUID          `json:"tenant_id"`
-	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          pgtype.UUID        `json:"person_id"`
-	EmployeeID        pgtype.UUID        `json:"employee_id"`
-	Username          *string            `json:"username"`
-	Email             string             `json:"email"`
-	PasswordHash      *string            `json:"password_hash"`
-	UserType          string             `json:"user_type"`
-	IsActive          bool               `json:"is_active"`
-	LastLoginAt       pgtype.Timestamptz `json:"last_login_at"`
-	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
-	Settings          []byte             `json:"settings"`
-	CreatedAt         pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
-	FirstName         *string            `json:"first_name"`
-	LastName          *string            `json:"last_name"`
-	EmployeeNumber    *string            `json:"employee_number"`
+	ID                uuid.UUID  `json:"id"`
+	TenantID          uuid.UUID  `json:"tenant_id"`
+	EntityID          uuid.UUID  `json:"entity_id"`
+	PersonID          *uuid.UUID `json:"person_id"`
+	EmployeeID        *uuid.UUID `json:"employee_id"`
+	Username          *string    `json:"username"`
+	Email             string     `json:"email"`
+	PasswordHash      *string    `json:"password_hash"`
+	UserType          string     `json:"user_type"`
+	IsActive          bool       `json:"is_active"`
+	LastLoginAt       time.Time  `json:"last_login_at"`
+	PasswordChangedAt time.Time  `json:"password_changed_at"`
+	Settings          []byte     `json:"settings"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+	DeletedAt         time.Time  `json:"deleted_at"`
+	FirstName         *string    `json:"first_name"`
+	LastName          *string    `json:"last_name"`
+	EmployeeNumber    *string    `json:"employee_number"`
 }
 
 // ListUsersByType
@@ -500,13 +500,13 @@ type ListUsersByTypeRow struct {
 //	LEFT JOIN employees e ON u.employee_id = e.id
 //	WHERE u.tenant_id = current_tenant_id() AND u.user_type = $1 AND u.deleted_at IS NULL
 //	ORDER BY u.email
-func (q *Queries) ListUsersByType(ctx context.Context, userType string) ([]ListUsersByTypeRow, error) {
+func (q *Queries) ListUsersByType(ctx context.Context, userType string) ([]*ListUsersByTypeRow, error) {
 	rows, err := q.db.Query(ctx, listUsersByType, userType)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListUsersByTypeRow{}
+	items := []*ListUsersByTypeRow{}
 	for rows.Next() {
 		var i ListUsersByTypeRow
 		if err := rows.Scan(
@@ -532,7 +532,7 @@ func (q *Queries) ListUsersByType(ctx context.Context, userType string) ([]ListU
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -574,16 +574,16 @@ RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, pas
 `
 
 type UpdateUserParams struct {
-	ID           uuid.UUID   `json:"id"`
-	EntityID     uuid.UUID   `json:"entity_id"`
-	PersonID     pgtype.UUID `json:"person_id"`
-	EmployeeID   pgtype.UUID `json:"employee_id"`
-	Username     *string     `json:"username"`
-	Email        string      `json:"email"`
-	PasswordHash *string     `json:"password_hash"`
-	UserType     string      `json:"user_type"`
-	IsActive     bool        `json:"is_active"`
-	Settings     []byte      `json:"settings"`
+	ID           uuid.UUID  `json:"id"`
+	EntityID     uuid.UUID  `json:"entity_id"`
+	PersonID     *uuid.UUID `json:"person_id"`
+	EmployeeID   *uuid.UUID `json:"employee_id"`
+	Username     *string    `json:"username"`
+	Email        string     `json:"email"`
+	PasswordHash *string    `json:"password_hash"`
+	UserType     string     `json:"user_type"`
+	IsActive     bool       `json:"is_active"`
+	Settings     []byte     `json:"settings"`
 }
 
 // UpdateUser
@@ -602,7 +602,7 @@ type UpdateUserParams struct {
 //	    updated_at = NOW()
 //	WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 //	RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.ID,
 		arg.EntityID,
@@ -634,7 +634,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const updateUserLogin = `-- name: UpdateUserLogin :exec

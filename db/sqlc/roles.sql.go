@@ -7,9 +7,9 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const assignUserRole = `-- name: AssignUserRole :one
@@ -24,11 +24,11 @@ RETURNING user_id, role_id, entity_id, assigned_at, assigned_by, expires_at
 `
 
 type AssignUserRoleParams struct {
-	UserID     uuid.UUID          `json:"user_id"`
-	RoleID     uuid.UUID          `json:"role_id"`
-	EntityID   uuid.UUID          `json:"entity_id"`
-	AssignedBy pgtype.UUID        `json:"assigned_by"`
-	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	UserID     uuid.UUID  `json:"user_id"`
+	RoleID     uuid.UUID  `json:"role_id"`
+	EntityID   uuid.UUID  `json:"entity_id"`
+	AssignedBy *uuid.UUID `json:"assigned_by"`
+	ExpiresAt  time.Time  `json:"expires_at"`
 }
 
 // ==============================================
@@ -42,7 +42,7 @@ type AssignUserRoleParams struct {
 //	    assigned_by = EXCLUDED.assigned_by,
 //	    expires_at = EXCLUDED.expires_at
 //	RETURNING user_id, role_id, entity_id, assigned_at, assigned_by, expires_at
-func (q *Queries) AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (UserRole, error) {
+func (q *Queries) AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (*UserRole, error) {
 	row := q.db.QueryRow(ctx, assignUserRole,
 		arg.UserID,
 		arg.RoleID,
@@ -59,7 +59,7 @@ func (q *Queries) AssignUserRole(ctx context.Context, arg AssignUserRoleParams) 
 		&i.AssignedBy,
 		&i.ExpiresAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const checkUserPermission = `-- name: CheckUserPermission :one
@@ -120,13 +120,13 @@ INSERT INTO roles (
 `
 
 type CreateRoleParams struct {
-	EntityID     pgtype.UUID `json:"entity_id"`
-	Name         string      `json:"name"`
-	Description  *string     `json:"description"`
-	Module       *string     `json:"module"`
-	Permissions  []byte      `json:"permissions"`
-	EntityScope  []byte      `json:"entity_scope"`
-	IsSystemRole *bool       `json:"is_system_role"`
+	EntityID     *uuid.UUID `json:"entity_id"`
+	Name         string     `json:"name"`
+	Description  string     `json:"description"`
+	Module       *string    `json:"module"`
+	Permissions  []byte     `json:"permissions"`
+	EntityScope  []byte     `json:"entity_scope"`
+	IsSystemRole *bool      `json:"is_system_role"`
 }
 
 // ==============================================
@@ -139,7 +139,7 @@ type CreateRoleParams struct {
 //	) VALUES (
 //	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7
 //	) RETURNING id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at
-func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error) {
+func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (*Role, error) {
 	row := q.db.QueryRow(ctx, createRole,
 		arg.EntityID,
 		arg.Name,
@@ -162,7 +162,7 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, e
 		&i.IsSystemRole,
 		&i.CreatedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const deleteRole = `-- name: DeleteRole :exec
@@ -188,7 +188,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 //
 //	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
 //	WHERE id = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) GetRole(ctx context.Context, id uuid.UUID) (Role, error) {
+func (q *Queries) GetRole(ctx context.Context, id uuid.UUID) (*Role, error) {
 	row := q.db.QueryRow(ctx, getRole, id)
 	var i Role
 	err := row.Scan(
@@ -203,7 +203,7 @@ func (q *Queries) GetRole(ctx context.Context, id uuid.UUID) (Role, error) {
 		&i.IsSystemRole,
 		&i.CreatedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getRoleByName = `-- name: GetRoleByName :one
@@ -215,7 +215,7 @@ WHERE name = $1 AND tenant_id = current_tenant_id()
 //
 //	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
 //	WHERE name = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) GetRoleByName(ctx context.Context, name string) (Role, error) {
+func (q *Queries) GetRoleByName(ctx context.Context, name string) (*Role, error) {
 	row := q.db.QueryRow(ctx, getRoleByName, name)
 	var i Role
 	err := row.Scan(
@@ -230,7 +230,7 @@ func (q *Queries) GetRoleByName(ctx context.Context, name string) (Role, error) 
 		&i.IsSystemRole,
 		&i.CreatedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getRoleUsers = `-- name: GetRoleUsers :many
@@ -245,16 +245,16 @@ ORDER BY p.last_name, p.first_name, u.email
 `
 
 type GetRoleUsersRow struct {
-	UserID     uuid.UUID          `json:"user_id"`
-	RoleID     uuid.UUID          `json:"role_id"`
-	EntityID   uuid.UUID          `json:"entity_id"`
-	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy pgtype.UUID        `json:"assigned_by"`
-	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
-	Email      string             `json:"email"`
-	Username   *string            `json:"username"`
-	FirstName  *string            `json:"first_name"`
-	LastName   *string            `json:"last_name"`
+	UserID     uuid.UUID  `json:"user_id"`
+	RoleID     uuid.UUID  `json:"role_id"`
+	EntityID   uuid.UUID  `json:"entity_id"`
+	AssignedAt time.Time  `json:"assigned_at"`
+	AssignedBy *uuid.UUID `json:"assigned_by"`
+	ExpiresAt  time.Time  `json:"expires_at"`
+	Email      string     `json:"email"`
+	Username   *string    `json:"username"`
+	FirstName  *string    `json:"first_name"`
+	LastName   *string    `json:"last_name"`
 }
 
 // GetRoleUsers
@@ -267,13 +267,13 @@ type GetRoleUsersRow struct {
 //	    AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
 //	    AND u.deleted_at IS NULL
 //	ORDER BY p.last_name, p.first_name, u.email
-func (q *Queries) GetRoleUsers(ctx context.Context, roleID uuid.UUID) ([]GetRoleUsersRow, error) {
+func (q *Queries) GetRoleUsers(ctx context.Context, roleID uuid.UUID) ([]*GetRoleUsersRow, error) {
 	rows, err := q.db.Query(ctx, getRoleUsers, roleID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetRoleUsersRow{}
+	items := []*GetRoleUsersRow{}
 	for rows.Next() {
 		var i GetRoleUsersRow
 		if err := rows.Scan(
@@ -290,7 +290,7 @@ func (q *Queries) GetRoleUsers(ctx context.Context, roleID uuid.UUID) ([]GetRole
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -318,19 +318,19 @@ type GetUserPermissionsRow struct {
 //	JOIN roles r ON ur.role_id = r.id
 //	WHERE ur.user_id = $1
 //	    AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
-func (q *Queries) GetUserPermissions(ctx context.Context, userID uuid.UUID) ([]GetUserPermissionsRow, error) {
+func (q *Queries) GetUserPermissions(ctx context.Context, userID uuid.UUID) ([]*GetUserPermissionsRow, error) {
 	rows, err := q.db.Query(ctx, getUserPermissions, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetUserPermissionsRow{}
+	items := []*GetUserPermissionsRow{}
 	for rows.Next() {
 		var i GetUserPermissionsRow
 		if err := rows.Scan(&i.Module, &i.Permissions); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -348,15 +348,15 @@ ORDER BY r.name
 `
 
 type GetUserRolesRow struct {
-	UserID          uuid.UUID          `json:"user_id"`
-	RoleID          uuid.UUID          `json:"role_id"`
-	EntityID        uuid.UUID          `json:"entity_id"`
-	AssignedAt      pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy      pgtype.UUID        `json:"assigned_by"`
-	ExpiresAt       pgtype.Timestamptz `json:"expires_at"`
-	RoleName        string             `json:"role_name"`
-	RoleDescription *string            `json:"role_description"`
-	Permissions     []byte             `json:"permissions"`
+	UserID          uuid.UUID  `json:"user_id"`
+	RoleID          uuid.UUID  `json:"role_id"`
+	EntityID        uuid.UUID  `json:"entity_id"`
+	AssignedAt      time.Time  `json:"assigned_at"`
+	AssignedBy      *uuid.UUID `json:"assigned_by"`
+	ExpiresAt       time.Time  `json:"expires_at"`
+	RoleName        string     `json:"role_name"`
+	RoleDescription string     `json:"role_description"`
+	Permissions     []byte     `json:"permissions"`
 }
 
 // GetUserRoles
@@ -367,13 +367,13 @@ type GetUserRolesRow struct {
 //	WHERE ur.user_id = $1
 //	    AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
 //	ORDER BY r.name
-func (q *Queries) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]GetUserRolesRow, error) {
+func (q *Queries) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*GetUserRolesRow, error) {
 	rows, err := q.db.Query(ctx, getUserRoles, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetUserRolesRow{}
+	items := []*GetUserRolesRow{}
 	for rows.Next() {
 		var i GetUserRolesRow
 		if err := rows.Scan(
@@ -389,7 +389,7 @@ func (q *Queries) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]GetUser
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -408,13 +408,13 @@ ORDER BY name
 //	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
 //	WHERE tenant_id = current_tenant_id() AND is_system_role = false
 //	ORDER BY name
-func (q *Queries) ListCustomRoles(ctx context.Context) ([]Role, error) {
+func (q *Queries) ListCustomRoles(ctx context.Context) ([]*Role, error) {
 	rows, err := q.db.Query(ctx, listCustomRoles)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Role{}
+	items := []*Role{}
 	for rows.Next() {
 		var i Role
 		if err := rows.Scan(
@@ -431,7 +431,7 @@ func (q *Queries) ListCustomRoles(ctx context.Context) ([]Role, error) {
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -451,14 +451,14 @@ ORDER BY ur.expires_at DESC
 `
 
 type ListExpiredUserRolesRow struct {
-	UserID     uuid.UUID          `json:"user_id"`
-	RoleID     uuid.UUID          `json:"role_id"`
-	EntityID   uuid.UUID          `json:"entity_id"`
-	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy pgtype.UUID        `json:"assigned_by"`
-	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
-	Email      string             `json:"email"`
-	RoleName   string             `json:"role_name"`
+	UserID     uuid.UUID  `json:"user_id"`
+	RoleID     uuid.UUID  `json:"role_id"`
+	EntityID   uuid.UUID  `json:"entity_id"`
+	AssignedAt time.Time  `json:"assigned_at"`
+	AssignedBy *uuid.UUID `json:"assigned_by"`
+	ExpiresAt  time.Time  `json:"expires_at"`
+	Email      string     `json:"email"`
+	RoleName   string     `json:"role_name"`
 }
 
 // ListExpiredUserRoles
@@ -471,13 +471,13 @@ type ListExpiredUserRolesRow struct {
 //	    AND ur.expires_at <= NOW()
 //	    AND u.tenant_id = current_tenant_id()
 //	ORDER BY ur.expires_at DESC
-func (q *Queries) ListExpiredUserRoles(ctx context.Context) ([]ListExpiredUserRolesRow, error) {
+func (q *Queries) ListExpiredUserRoles(ctx context.Context) ([]*ListExpiredUserRolesRow, error) {
 	rows, err := q.db.Query(ctx, listExpiredUserRoles)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListExpiredUserRolesRow{}
+	items := []*ListExpiredUserRolesRow{}
 	for rows.Next() {
 		var i ListExpiredUserRolesRow
 		if err := rows.Scan(
@@ -492,7 +492,7 @@ func (q *Queries) ListExpiredUserRoles(ctx context.Context) ([]ListExpiredUserRo
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -511,13 +511,13 @@ ORDER BY name
 //	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
 //	WHERE tenant_id = current_tenant_id()
 //	ORDER BY name
-func (q *Queries) ListRoles(ctx context.Context) ([]Role, error) {
+func (q *Queries) ListRoles(ctx context.Context) ([]*Role, error) {
 	rows, err := q.db.Query(ctx, listRoles)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Role{}
+	items := []*Role{}
 	for rows.Next() {
 		var i Role
 		if err := rows.Scan(
@@ -534,7 +534,7 @@ func (q *Queries) ListRoles(ctx context.Context) ([]Role, error) {
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -553,13 +553,13 @@ ORDER BY name
 //	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
 //	WHERE tenant_id = current_tenant_id() AND module = $1
 //	ORDER BY name
-func (q *Queries) ListRolesByModule(ctx context.Context, module *string) ([]Role, error) {
+func (q *Queries) ListRolesByModule(ctx context.Context, module *string) ([]*Role, error) {
 	rows, err := q.db.Query(ctx, listRolesByModule, module)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Role{}
+	items := []*Role{}
 	for rows.Next() {
 		var i Role
 		if err := rows.Scan(
@@ -576,7 +576,7 @@ func (q *Queries) ListRolesByModule(ctx context.Context, module *string) ([]Role
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -595,13 +595,13 @@ ORDER BY name
 //	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
 //	WHERE tenant_id = current_tenant_id() AND is_system_role = true
 //	ORDER BY name
-func (q *Queries) ListSystemRoles(ctx context.Context) ([]Role, error) {
+func (q *Queries) ListSystemRoles(ctx context.Context) ([]*Role, error) {
 	rows, err := q.db.Query(ctx, listSystemRoles)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Role{}
+	items := []*Role{}
 	for rows.Next() {
 		var i Role
 		if err := rows.Scan(
@@ -618,7 +618,7 @@ func (q *Queries) ListSystemRoles(ctx context.Context) ([]Role, error) {
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -669,8 +669,8 @@ LIMIT $2
 `
 
 type SearchUsersWithRolesParams struct {
-	Column1 *string `json:"column_1"`
-	Limit   int32   `json:"limit"`
+	Column1 string `json:"column_1"`
+	Limit   int32  `json:"limit"`
 }
 
 type SearchUsersWithRolesRow struct {
@@ -705,13 +705,13 @@ type SearchUsersWithRolesRow struct {
 //	GROUP BY u.id, u.username, u.email, u.user_type, u.is_active, p.first_name, p.last_name
 //	ORDER BY p.last_name, p.first_name, u.email
 //	LIMIT $2
-func (q *Queries) SearchUsersWithRoles(ctx context.Context, arg SearchUsersWithRolesParams) ([]SearchUsersWithRolesRow, error) {
+func (q *Queries) SearchUsersWithRoles(ctx context.Context, arg SearchUsersWithRolesParams) ([]*SearchUsersWithRolesRow, error) {
 	rows, err := q.db.Query(ctx, searchUsersWithRoles, arg.Column1, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []SearchUsersWithRolesRow{}
+	items := []*SearchUsersWithRolesRow{}
 	for rows.Next() {
 		var i SearchUsersWithRolesRow
 		if err := rows.Scan(
@@ -726,7 +726,7 @@ func (q *Queries) SearchUsersWithRoles(ctx context.Context, arg SearchUsersWithR
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -748,13 +748,13 @@ RETURNING id, tenant_id, entity_id, name, description, module, permissions, enti
 `
 
 type UpdateRoleParams struct {
-	ID          uuid.UUID   `json:"id"`
-	EntityID    pgtype.UUID `json:"entity_id"`
-	Name        string      `json:"name"`
-	Description *string     `json:"description"`
-	Module      *string     `json:"module"`
-	Permissions []byte      `json:"permissions"`
-	EntityScope []byte      `json:"entity_scope"`
+	ID          uuid.UUID  `json:"id"`
+	EntityID    *uuid.UUID `json:"entity_id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Module      *string    `json:"module"`
+	Permissions []byte     `json:"permissions"`
+	EntityScope []byte     `json:"entity_scope"`
 }
 
 // UpdateRole
@@ -769,7 +769,7 @@ type UpdateRoleParams struct {
 //	    entity_scope = COALESCE($7, entity_scope)
 //	WHERE id = $1 AND tenant_id = current_tenant_id()
 //	RETURNING id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at
-func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error) {
+func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (*Role, error) {
 	row := q.db.QueryRow(ctx, updateRole,
 		arg.ID,
 		arg.EntityID,
@@ -792,5 +792,5 @@ func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, e
 		&i.IsSystemRole,
 		&i.CreatedAt,
 	)
-	return i, err
+	return &i, err
 }

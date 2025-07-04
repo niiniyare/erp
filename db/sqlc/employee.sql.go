@@ -7,9 +7,9 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createEmployee = `-- name: CreateEmployee :one
@@ -24,17 +24,17 @@ INSERT INTO employees (
 `
 
 type CreateEmployeeParams struct {
-	PersonID         uuid.UUID   `json:"person_id"`
-	EmployeeNumber   string      `json:"employee_number"`
-	EntityID         uuid.UUID   `json:"entity_id"`
-	PositionTitle    *string     `json:"position_title"`
-	DepartmentID     pgtype.UUID `json:"department_id"`
-	ManagerID        pgtype.UUID `json:"manager_id"`
-	HireDate         pgtype.Date `json:"hire_date"`
-	TerminationDate  pgtype.Date `json:"termination_date"`
-	SalaryInfo       []byte      `json:"salary_info"`
-	EmploymentStatus *string     `json:"employment_status"`
-	WorkSchedule     []byte      `json:"work_schedule"`
+	PersonID         uuid.UUID  `json:"person_id"`
+	EmployeeNumber   string     `json:"employee_number"`
+	EntityID         uuid.UUID  `json:"entity_id"`
+	PositionTitle    *string    `json:"position_title"`
+	DepartmentID     *uuid.UUID `json:"department_id"`
+	ManagerID        *uuid.UUID `json:"manager_id"`
+	HireDate         time.Time  `json:"hire_date"`
+	TerminationDate  time.Time  `json:"termination_date"`
+	SalaryInfo       []byte     `json:"salary_info"`
+	EmploymentStatus *string    `json:"employment_status"`
+	WorkSchedule     []byte     `json:"work_schedule"`
 }
 
 // ==============================================
@@ -48,7 +48,7 @@ type CreateEmployeeParams struct {
 //	) VALUES (
 //	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
 //	) RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at
-func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (Employee, error) {
+func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (*Employee, error) {
 	row := q.db.QueryRow(ctx, createEmployee,
 		arg.PersonID,
 		arg.EmployeeNumber,
@@ -80,7 +80,7 @@ func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getEmployee = `-- name: GetEmployee :one
@@ -92,7 +92,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 //
 //	SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
 //	WHERE id = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) GetEmployee(ctx context.Context, id uuid.UUID) (Employee, error) {
+func (q *Queries) GetEmployee(ctx context.Context, id uuid.UUID) (*Employee, error) {
 	row := q.db.QueryRow(ctx, getEmployee, id)
 	var i Employee
 	err := row.Scan(
@@ -112,7 +112,7 @@ func (q *Queries) GetEmployee(ctx context.Context, id uuid.UUID) (Employee, erro
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getEmployeeByNumber = `-- name: GetEmployeeByNumber :one
@@ -124,7 +124,7 @@ WHERE employee_number = $1 AND tenant_id = current_tenant_id()
 //
 //	SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
 //	WHERE employee_number = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) GetEmployeeByNumber(ctx context.Context, employeeNumber string) (Employee, error) {
+func (q *Queries) GetEmployeeByNumber(ctx context.Context, employeeNumber string) (*Employee, error) {
 	row := q.db.QueryRow(ctx, getEmployeeByNumber, employeeNumber)
 	var i Employee
 	err := row.Scan(
@@ -144,7 +144,7 @@ func (q *Queries) GetEmployeeByNumber(ctx context.Context, employeeNumber string
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getEmployeeByPersonId = `-- name: GetEmployeeByPersonId :one
@@ -156,7 +156,7 @@ WHERE person_id = $1 AND tenant_id = current_tenant_id()
 //
 //	SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
 //	WHERE person_id = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) GetEmployeeByPersonId(ctx context.Context, personID uuid.UUID) (Employee, error) {
+func (q *Queries) GetEmployeeByPersonId(ctx context.Context, personID uuid.UUID) (*Employee, error) {
 	row := q.db.QueryRow(ctx, getEmployeeByPersonId, personID)
 	var i Employee
 	err := row.Scan(
@@ -176,7 +176,7 @@ func (q *Queries) GetEmployeeByPersonId(ctx context.Context, personID uuid.UUID)
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const getEmployeeHierarchy = `-- name: GetEmployeeHierarchy :many
@@ -203,14 +203,14 @@ ORDER BY level, last_name, first_name
 `
 
 type GetEmployeeHierarchyRow struct {
-	ID             uuid.UUID   `json:"id"`
-	PersonID       uuid.UUID   `json:"person_id"`
-	EmployeeNumber string      `json:"employee_number"`
-	PositionTitle  *string     `json:"position_title"`
-	ManagerID      pgtype.UUID `json:"manager_id"`
-	FirstName      string      `json:"first_name"`
-	LastName       string      `json:"last_name"`
-	Level          int32       `json:"level"`
+	ID             uuid.UUID  `json:"id"`
+	PersonID       uuid.UUID  `json:"person_id"`
+	EmployeeNumber string     `json:"employee_number"`
+	PositionTitle  *string    `json:"position_title"`
+	ManagerID      *uuid.UUID `json:"manager_id"`
+	FirstName      string     `json:"first_name"`
+	LastName       string     `json:"last_name"`
+	Level          int32      `json:"level"`
 }
 
 // GetEmployeeHierarchy
@@ -235,13 +235,13 @@ type GetEmployeeHierarchyRow struct {
 //	)
 //	SELECT id, person_id, employee_number, position_title, manager_id, first_name, last_name, level FROM employee_hierarchy
 //	ORDER BY level, last_name, first_name
-func (q *Queries) GetEmployeeHierarchy(ctx context.Context, id uuid.UUID) ([]GetEmployeeHierarchyRow, error) {
+func (q *Queries) GetEmployeeHierarchy(ctx context.Context, id uuid.UUID) ([]*GetEmployeeHierarchyRow, error) {
 	rows, err := q.db.Query(ctx, getEmployeeHierarchy, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetEmployeeHierarchyRow{}
+	items := []*GetEmployeeHierarchyRow{}
 	for rows.Next() {
 		var i GetEmployeeHierarchyRow
 		if err := rows.Scan(
@@ -256,7 +256,7 @@ func (q *Queries) GetEmployeeHierarchy(ctx context.Context, id uuid.UUID) ([]Get
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -296,7 +296,7 @@ type GetEmployeeStatsRow struct {
 //	    COUNT(*) FILTER (WHERE manager_id IS NULL) as managers_count
 //	FROM employees
 //	WHERE tenant_id = current_tenant_id()
-func (q *Queries) GetEmployeeStats(ctx context.Context) (GetEmployeeStatsRow, error) {
+func (q *Queries) GetEmployeeStats(ctx context.Context) (*GetEmployeeStatsRow, error) {
 	row := q.db.QueryRow(ctx, getEmployeeStats)
 	var i GetEmployeeStatsRow
 	err := row.Scan(
@@ -307,7 +307,7 @@ func (q *Queries) GetEmployeeStats(ctx context.Context) (GetEmployeeStatsRow, er
 		&i.DepartmentsCount,
 		&i.ManagersCount,
 	)
-	return i, err
+	return &i, err
 }
 
 const listActiveEmployees = `-- name: ListActiveEmployees :many
@@ -319,25 +319,25 @@ ORDER BY p.last_name, p.first_name
 `
 
 type ListActiveEmployeesRow struct {
-	ID               uuid.UUID          `json:"id"`
-	TenantID         uuid.UUID          `json:"tenant_id"`
-	PersonID         uuid.UUID          `json:"person_id"`
-	EmployeeNumber   string             `json:"employee_number"`
-	EntityID         uuid.UUID          `json:"entity_id"`
-	PositionTitle    *string            `json:"position_title"`
-	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        pgtype.UUID        `json:"manager_id"`
-	HireDate         pgtype.Date        `json:"hire_date"`
-	TerminationDate  pgtype.Date        `json:"termination_date"`
-	SalaryInfo       []byte             `json:"salary_info"`
-	EmploymentStatus *string            `json:"employment_status"`
-	WorkSchedule     []byte             `json:"work_schedule"`
-	CreatedAt        pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
-	FirstName        string             `json:"first_name"`
-	LastName         string             `json:"last_name"`
-	Email            *string            `json:"email"`
-	Phone            *string            `json:"phone"`
+	ID               uuid.UUID  `json:"id"`
+	TenantID         uuid.UUID  `json:"tenant_id"`
+	PersonID         uuid.UUID  `json:"person_id"`
+	EmployeeNumber   string     `json:"employee_number"`
+	EntityID         uuid.UUID  `json:"entity_id"`
+	PositionTitle    *string    `json:"position_title"`
+	DepartmentID     *uuid.UUID `json:"department_id"`
+	ManagerID        *uuid.UUID `json:"manager_id"`
+	HireDate         time.Time  `json:"hire_date"`
+	TerminationDate  time.Time  `json:"termination_date"`
+	SalaryInfo       []byte     `json:"salary_info"`
+	EmploymentStatus *string    `json:"employment_status"`
+	WorkSchedule     []byte     `json:"work_schedule"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+	FirstName        string     `json:"first_name"`
+	LastName         string     `json:"last_name"`
+	Email            *string    `json:"email"`
+	Phone            *string    `json:"phone"`
 }
 
 // ListActiveEmployees
@@ -347,13 +347,13 @@ type ListActiveEmployeesRow struct {
 //	JOIN persons p ON e.person_id = p.id
 //	WHERE e.tenant_id = current_tenant_id() AND e.employment_status = 'ACTIVE'
 //	ORDER BY p.last_name, p.first_name
-func (q *Queries) ListActiveEmployees(ctx context.Context) ([]ListActiveEmployeesRow, error) {
+func (q *Queries) ListActiveEmployees(ctx context.Context) ([]*ListActiveEmployeesRow, error) {
 	rows, err := q.db.Query(ctx, listActiveEmployees)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListActiveEmployeesRow{}
+	items := []*ListActiveEmployeesRow{}
 	for rows.Next() {
 		var i ListActiveEmployeesRow
 		if err := rows.Scan(
@@ -379,7 +379,7 @@ func (q *Queries) ListActiveEmployees(ctx context.Context) ([]ListActiveEmployee
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -396,25 +396,25 @@ ORDER BY p.last_name, p.first_name
 `
 
 type ListEmployeesRow struct {
-	ID               uuid.UUID          `json:"id"`
-	TenantID         uuid.UUID          `json:"tenant_id"`
-	PersonID         uuid.UUID          `json:"person_id"`
-	EmployeeNumber   string             `json:"employee_number"`
-	EntityID         uuid.UUID          `json:"entity_id"`
-	PositionTitle    *string            `json:"position_title"`
-	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        pgtype.UUID        `json:"manager_id"`
-	HireDate         pgtype.Date        `json:"hire_date"`
-	TerminationDate  pgtype.Date        `json:"termination_date"`
-	SalaryInfo       []byte             `json:"salary_info"`
-	EmploymentStatus *string            `json:"employment_status"`
-	WorkSchedule     []byte             `json:"work_schedule"`
-	CreatedAt        pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
-	FirstName        string             `json:"first_name"`
-	LastName         string             `json:"last_name"`
-	Email            *string            `json:"email"`
-	Phone            *string            `json:"phone"`
+	ID               uuid.UUID  `json:"id"`
+	TenantID         uuid.UUID  `json:"tenant_id"`
+	PersonID         uuid.UUID  `json:"person_id"`
+	EmployeeNumber   string     `json:"employee_number"`
+	EntityID         uuid.UUID  `json:"entity_id"`
+	PositionTitle    *string    `json:"position_title"`
+	DepartmentID     *uuid.UUID `json:"department_id"`
+	ManagerID        *uuid.UUID `json:"manager_id"`
+	HireDate         time.Time  `json:"hire_date"`
+	TerminationDate  time.Time  `json:"termination_date"`
+	SalaryInfo       []byte     `json:"salary_info"`
+	EmploymentStatus *string    `json:"employment_status"`
+	WorkSchedule     []byte     `json:"work_schedule"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+	FirstName        string     `json:"first_name"`
+	LastName         string     `json:"last_name"`
+	Email            *string    `json:"email"`
+	Phone            *string    `json:"phone"`
 }
 
 // ListEmployees
@@ -424,13 +424,13 @@ type ListEmployeesRow struct {
 //	JOIN persons p ON e.person_id = p.id
 //	WHERE e.tenant_id = current_tenant_id()
 //	ORDER BY p.last_name, p.first_name
-func (q *Queries) ListEmployees(ctx context.Context) ([]ListEmployeesRow, error) {
+func (q *Queries) ListEmployees(ctx context.Context) ([]*ListEmployeesRow, error) {
 	rows, err := q.db.Query(ctx, listEmployees)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListEmployeesRow{}
+	items := []*ListEmployeesRow{}
 	for rows.Next() {
 		var i ListEmployeesRow
 		if err := rows.Scan(
@@ -456,7 +456,7 @@ func (q *Queries) ListEmployees(ctx context.Context) ([]ListEmployeesRow, error)
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -473,25 +473,25 @@ ORDER BY p.last_name, p.first_name
 `
 
 type ListEmployeesByDepartmentRow struct {
-	ID               uuid.UUID          `json:"id"`
-	TenantID         uuid.UUID          `json:"tenant_id"`
-	PersonID         uuid.UUID          `json:"person_id"`
-	EmployeeNumber   string             `json:"employee_number"`
-	EntityID         uuid.UUID          `json:"entity_id"`
-	PositionTitle    *string            `json:"position_title"`
-	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        pgtype.UUID        `json:"manager_id"`
-	HireDate         pgtype.Date        `json:"hire_date"`
-	TerminationDate  pgtype.Date        `json:"termination_date"`
-	SalaryInfo       []byte             `json:"salary_info"`
-	EmploymentStatus *string            `json:"employment_status"`
-	WorkSchedule     []byte             `json:"work_schedule"`
-	CreatedAt        pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
-	FirstName        string             `json:"first_name"`
-	LastName         string             `json:"last_name"`
-	Email            *string            `json:"email"`
-	Phone            *string            `json:"phone"`
+	ID               uuid.UUID  `json:"id"`
+	TenantID         uuid.UUID  `json:"tenant_id"`
+	PersonID         uuid.UUID  `json:"person_id"`
+	EmployeeNumber   string     `json:"employee_number"`
+	EntityID         uuid.UUID  `json:"entity_id"`
+	PositionTitle    *string    `json:"position_title"`
+	DepartmentID     *uuid.UUID `json:"department_id"`
+	ManagerID        *uuid.UUID `json:"manager_id"`
+	HireDate         time.Time  `json:"hire_date"`
+	TerminationDate  time.Time  `json:"termination_date"`
+	SalaryInfo       []byte     `json:"salary_info"`
+	EmploymentStatus *string    `json:"employment_status"`
+	WorkSchedule     []byte     `json:"work_schedule"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+	FirstName        string     `json:"first_name"`
+	LastName         string     `json:"last_name"`
+	Email            *string    `json:"email"`
+	Phone            *string    `json:"phone"`
 }
 
 // ListEmployeesByDepartment
@@ -501,13 +501,13 @@ type ListEmployeesByDepartmentRow struct {
 //	JOIN persons p ON e.person_id = p.id
 //	WHERE e.tenant_id = current_tenant_id() AND e.department_id = $1
 //	ORDER BY p.last_name, p.first_name
-func (q *Queries) ListEmployeesByDepartment(ctx context.Context, departmentID pgtype.UUID) ([]ListEmployeesByDepartmentRow, error) {
+func (q *Queries) ListEmployeesByDepartment(ctx context.Context, departmentID *uuid.UUID) ([]*ListEmployeesByDepartmentRow, error) {
 	rows, err := q.db.Query(ctx, listEmployeesByDepartment, departmentID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListEmployeesByDepartmentRow{}
+	items := []*ListEmployeesByDepartmentRow{}
 	for rows.Next() {
 		var i ListEmployeesByDepartmentRow
 		if err := rows.Scan(
@@ -533,7 +533,7 @@ func (q *Queries) ListEmployeesByDepartment(ctx context.Context, departmentID pg
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -550,25 +550,25 @@ ORDER BY p.last_name, p.first_name
 `
 
 type ListEmployeesByManagerRow struct {
-	ID               uuid.UUID          `json:"id"`
-	TenantID         uuid.UUID          `json:"tenant_id"`
-	PersonID         uuid.UUID          `json:"person_id"`
-	EmployeeNumber   string             `json:"employee_number"`
-	EntityID         uuid.UUID          `json:"entity_id"`
-	PositionTitle    *string            `json:"position_title"`
-	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        pgtype.UUID        `json:"manager_id"`
-	HireDate         pgtype.Date        `json:"hire_date"`
-	TerminationDate  pgtype.Date        `json:"termination_date"`
-	SalaryInfo       []byte             `json:"salary_info"`
-	EmploymentStatus *string            `json:"employment_status"`
-	WorkSchedule     []byte             `json:"work_schedule"`
-	CreatedAt        pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
-	FirstName        string             `json:"first_name"`
-	LastName         string             `json:"last_name"`
-	Email            *string            `json:"email"`
-	Phone            *string            `json:"phone"`
+	ID               uuid.UUID  `json:"id"`
+	TenantID         uuid.UUID  `json:"tenant_id"`
+	PersonID         uuid.UUID  `json:"person_id"`
+	EmployeeNumber   string     `json:"employee_number"`
+	EntityID         uuid.UUID  `json:"entity_id"`
+	PositionTitle    *string    `json:"position_title"`
+	DepartmentID     *uuid.UUID `json:"department_id"`
+	ManagerID        *uuid.UUID `json:"manager_id"`
+	HireDate         time.Time  `json:"hire_date"`
+	TerminationDate  time.Time  `json:"termination_date"`
+	SalaryInfo       []byte     `json:"salary_info"`
+	EmploymentStatus *string    `json:"employment_status"`
+	WorkSchedule     []byte     `json:"work_schedule"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+	FirstName        string     `json:"first_name"`
+	LastName         string     `json:"last_name"`
+	Email            *string    `json:"email"`
+	Phone            *string    `json:"phone"`
 }
 
 // ListEmployeesByManager
@@ -578,13 +578,13 @@ type ListEmployeesByManagerRow struct {
 //	JOIN persons p ON e.person_id = p.id
 //	WHERE e.tenant_id = current_tenant_id() AND e.manager_id = $1
 //	ORDER BY p.last_name, p.first_name
-func (q *Queries) ListEmployeesByManager(ctx context.Context, managerID pgtype.UUID) ([]ListEmployeesByManagerRow, error) {
+func (q *Queries) ListEmployeesByManager(ctx context.Context, managerID *uuid.UUID) ([]*ListEmployeesByManagerRow, error) {
 	rows, err := q.db.Query(ctx, listEmployeesByManager, managerID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListEmployeesByManagerRow{}
+	items := []*ListEmployeesByManagerRow{}
 	for rows.Next() {
 		var i ListEmployeesByManagerRow
 		if err := rows.Scan(
@@ -610,7 +610,7 @@ func (q *Queries) ListEmployeesByManager(ctx context.Context, managerID pgtype.U
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -637,17 +637,17 @@ RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, 
 `
 
 type UpdateEmployeeParams struct {
-	ID               uuid.UUID   `json:"id"`
-	EmployeeNumber   string      `json:"employee_number"`
-	EntityID         uuid.UUID   `json:"entity_id"`
-	PositionTitle    *string     `json:"position_title"`
-	DepartmentID     pgtype.UUID `json:"department_id"`
-	ManagerID        pgtype.UUID `json:"manager_id"`
-	HireDate         pgtype.Date `json:"hire_date"`
-	TerminationDate  pgtype.Date `json:"termination_date"`
-	SalaryInfo       []byte      `json:"salary_info"`
-	EmploymentStatus *string     `json:"employment_status"`
-	WorkSchedule     []byte      `json:"work_schedule"`
+	ID               uuid.UUID  `json:"id"`
+	EmployeeNumber   string     `json:"employee_number"`
+	EntityID         uuid.UUID  `json:"entity_id"`
+	PositionTitle    *string    `json:"position_title"`
+	DepartmentID     *uuid.UUID `json:"department_id"`
+	ManagerID        *uuid.UUID `json:"manager_id"`
+	HireDate         time.Time  `json:"hire_date"`
+	TerminationDate  time.Time  `json:"termination_date"`
+	SalaryInfo       []byte     `json:"salary_info"`
+	EmploymentStatus *string    `json:"employment_status"`
+	WorkSchedule     []byte     `json:"work_schedule"`
 }
 
 // UpdateEmployee
@@ -667,7 +667,7 @@ type UpdateEmployeeParams struct {
 //	    updated_at = NOW()
 //	WHERE id = $1 AND tenant_id = current_tenant_id()
 //	RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at
-func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error) {
+func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (*Employee, error) {
 	row := q.db.QueryRow(ctx, updateEmployee,
 		arg.ID,
 		arg.EmployeeNumber,
@@ -699,5 +699,5 @@ func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
-	return i, err
+	return &i, err
 }
