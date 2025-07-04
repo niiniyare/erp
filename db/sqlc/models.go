@@ -10,14 +10,14 @@ import (
 )
 
 type Employee struct {
-	ID               int32              `json:"id"`
-	TenantID         int32              `json:"tenant_id"`
-	PersonID         int32              `json:"person_id"`
+	ID               uuid.UUID          `json:"id"`
+	TenantID         uuid.UUID          `json:"tenant_id"`
+	PersonID         uuid.UUID          `json:"person_id"`
 	EmployeeNumber   string             `json:"employee_number"`
 	EntityID         uuid.UUID          `json:"entity_id"`
 	PositionTitle    *string            `json:"position_title"`
 	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        *int32             `json:"manager_id"`
+	ManagerID        pgtype.UUID        `json:"manager_id"`
 	HireDate         pgtype.Date        `json:"hire_date"`
 	TerminationDate  pgtype.Date        `json:"termination_date"`
 	SalaryInfo       []byte             `json:"salary_info"`
@@ -34,7 +34,7 @@ type Employee struct {
 //	             Uses tree structure for hierarchical organization relationships.
 type Entity struct {
 	Uuid          uuid.UUID          `json:"uuid"`
-	TenantID      int32              `json:"tenant_id"`
+	TenantID      uuid.UUID          `json:"tenant_id"`
 	ParentID      pgtype.UUID        `json:"parent_id"`
 	Name          string             `json:"name"`
 	Code          *string            `json:"code"`
@@ -63,8 +63,8 @@ type Entitystate struct {
 }
 
 type Person struct {
-	ID         int32              `json:"id"`
-	TenantID   int32              `json:"tenant_id"`
+	ID         uuid.UUID          `json:"id"`
+	TenantID   uuid.UUID          `json:"tenant_id"`
 	EntityID   uuid.UUID          `json:"entity_id"`
 	PersonType string             `json:"person_type"`
 	FirstName  string             `json:"first_name"`
@@ -84,8 +84,8 @@ type Person struct {
 }
 
 type Role struct {
-	ID           int32              `json:"id"`
-	TenantID     int32              `json:"tenant_id"`
+	ID           uuid.UUID          `json:"id"`
+	TenantID     uuid.UUID          `json:"tenant_id"`
 	EntityID     pgtype.UUID        `json:"entity_id"`
 	Name         string             `json:"name"`
 	Description  *string            `json:"description"`
@@ -96,25 +96,39 @@ type Role struct {
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
+// Core tenant management table for multi-tenant SaaS architecture
 type Tenant struct {
-	ID        int32              `json:"id"`
-	Uuid      uuid.UUID          `json:"uuid"`
-	Name      string             `json:"name"`
-	Subdomain *string            `json:"subdomain"`
-	Status    string             `json:"status"`
-	Industry  *string            `json:"industry"`
+	// Universal unique identifier for external API references
+	ID uuid.UUID `json:"id"`
+	// URL-friendly tenant identifier
+	Slug         string  `json:"slug"`
+	Name         string  `json:"name"`
+	Email        string  `json:"email"`
+	Subdomain    *string `json:"subdomain"`
+	Status       string  `json:"status"`
+	Timezone     string  `json:"timezone"`
+	CurrencyCode string  `json:"currency_code"`
+	// Flexible JSONB storage for additional tenant metadata
+	Metadata           []byte  `json:"metadata"`
+	Industry           *string `json:"industry"`
+	CompanySize        *string `json:"company_size"`
+	TaxID              *string `json:"tax_id"`
+	RegistrationNumber *string `json:"registration_number"`
+	LegalEntityType    *string `json:"legal_entity_type"`
+	// Tenant-specific configuration settings
 	Settings  []byte             `json:"settings"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	// Soft delete timestamp - NULL means active
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type User struct {
-	ID                int32              `json:"id"`
-	TenantID          int32              `json:"tenant_id"`
+	ID                uuid.UUID          `json:"id"`
+	TenantID          uuid.UUID          `json:"tenant_id"`
 	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          *int32             `json:"person_id"`
-	EmployeeID        *int32             `json:"employee_id"`
+	PersonID          pgtype.UUID        `json:"person_id"`
+	EmployeeID        pgtype.UUID        `json:"employee_id"`
 	Username          *string            `json:"username"`
 	Email             string             `json:"email"`
 	PasswordHash      *string            `json:"password_hash"`
@@ -129,10 +143,10 @@ type User struct {
 }
 
 type UserRole struct {
-	UserID     int32              `json:"user_id"`
-	RoleID     int32              `json:"role_id"`
+	UserID     uuid.UUID          `json:"user_id"`
+	RoleID     uuid.UUID          `json:"role_id"`
 	EntityID   uuid.UUID          `json:"entity_id"`
 	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy *int32             `json:"assigned_by"`
+	AssignedBy pgtype.UUID        `json:"assigned_by"`
 	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
 }

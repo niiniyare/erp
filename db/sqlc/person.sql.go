@@ -97,7 +97,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 //
 //	SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at FROM persons
 //	WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-func (q *Queries) GetPerson(ctx context.Context, id int32) (Person, error) {
+func (q *Queries) GetPerson(ctx context.Context, id uuid.UUID) (Person, error) {
 	row := q.db.QueryRow(ctx, getPerson, id)
 	var i Person
 	err := row.Scan(
@@ -211,8 +211,8 @@ WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
 `
 
 type GetPersonEmployeeUserInfoRow struct {
-	ID               int32              `json:"id"`
-	TenantID         int32              `json:"tenant_id"`
+	ID               uuid.UUID          `json:"id"`
+	TenantID         uuid.UUID          `json:"tenant_id"`
 	EntityID         uuid.UUID          `json:"entity_id"`
 	PersonType       string             `json:"person_type"`
 	FirstName        string             `json:"first_name"`
@@ -229,11 +229,11 @@ type GetPersonEmployeeUserInfoRow struct {
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
-	EmployeeID       *int32             `json:"employee_id"`
+	EmployeeID       pgtype.UUID        `json:"employee_id"`
 	EmployeeNumber   *string            `json:"employee_number"`
 	PositionTitle    *string            `json:"position_title"`
 	EmploymentStatus *string            `json:"employment_status"`
-	UserID           *int32             `json:"user_id"`
+	UserID           pgtype.UUID        `json:"user_id"`
 	Username         *string            `json:"username"`
 	UserEmail        *string            `json:"user_email"`
 	UserType         *string            `json:"user_type"`
@@ -258,7 +258,7 @@ type GetPersonEmployeeUserInfoRow struct {
 //	LEFT JOIN employees e ON p.id = e.person_id AND e.tenant_id = current_tenant_id() AND e.deleted_at IS NULL
 //	LEFT JOIN users u ON p.id = u.person_id AND u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
 //	WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
-func (q *Queries) GetPersonEmployeeUserInfo(ctx context.Context, personID int32) (GetPersonEmployeeUserInfoRow, error) {
+func (q *Queries) GetPersonEmployeeUserInfo(ctx context.Context, personID uuid.UUID) (GetPersonEmployeeUserInfoRow, error) {
 	row := q.db.QueryRow(ctx, getPersonEmployeeUserInfo, personID)
 	var i GetPersonEmployeeUserInfoRow
 	err := row.Scan(
@@ -315,7 +315,7 @@ WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
 //	    END as full_name
 //	FROM persons p
 //	WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
-func (q *Queries) GetPersonFullName(ctx context.Context, personID int32) (interface{}, error) {
+func (q *Queries) GetPersonFullName(ctx context.Context, personID uuid.UUID) (interface{}, error) {
 	row := q.db.QueryRow(ctx, getPersonFullName, personID)
 	var full_name interface{}
 	err := row.Scan(&full_name)
@@ -483,7 +483,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 //	UPDATE persons
 //	SET deleted_at = NULL, updated_at = NOW()
 //	WHERE id = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) RestorePerson(ctx context.Context, id int32) error {
+func (q *Queries) RestorePerson(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, restorePerson, id)
 	return err
 }
@@ -568,7 +568,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 //	UPDATE persons
 //	SET deleted_at = NOW(), updated_at = NOW()
 //	WHERE id = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) SoftDeletePerson(ctx context.Context, id int32) error {
+func (q *Queries) SoftDeletePerson(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, softDeletePerson, id)
 	return err
 }
@@ -595,7 +595,7 @@ RETURNING id, tenant_id, entity_id, person_type, first_name, last_name, middle_n
 `
 
 type UpdatePersonParams struct {
-	ID         int32       `json:"id"`
+	ID         uuid.UUID   `json:"id"`
 	EntityID   uuid.UUID   `json:"entity_id"`
 	PersonType string      `json:"person_type"`
 	FirstName  string      `json:"first_name"`

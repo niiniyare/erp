@@ -23,15 +23,15 @@ INSERT INTO users (
 `
 
 type CreateUserParams struct {
-	EntityID     uuid.UUID `json:"entity_id"`
-	PersonID     *int32    `json:"person_id"`
-	EmployeeID   *int32    `json:"employee_id"`
-	Username     *string   `json:"username"`
-	Email        string    `json:"email"`
-	PasswordHash *string   `json:"password_hash"`
-	UserType     string    `json:"user_type"`
-	IsActive     bool      `json:"is_active"`
-	Settings     []byte    `json:"settings"`
+	EntityID     uuid.UUID   `json:"entity_id"`
+	PersonID     pgtype.UUID `json:"person_id"`
+	EmployeeID   pgtype.UUID `json:"employee_id"`
+	Username     *string     `json:"username"`
+	Email        string      `json:"email"`
+	PasswordHash *string     `json:"password_hash"`
+	UserType     string      `json:"user_type"`
+	IsActive     bool        `json:"is_active"`
+	Settings     []byte      `json:"settings"`
 }
 
 // ==============================================
@@ -87,7 +87,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 //
 //	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
 //	WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
+func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 	row := q.db.QueryRow(ctx, getUser, id)
 	var i User
 	err := row.Scan(
@@ -235,11 +235,11 @@ WHERE u.id = $1 AND u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
 `
 
 type GetUserWithPersonDetailsRow struct {
-	ID                int32              `json:"id"`
-	TenantID          int32              `json:"tenant_id"`
+	ID                uuid.UUID          `json:"id"`
+	TenantID          uuid.UUID          `json:"tenant_id"`
 	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          *int32             `json:"person_id"`
-	EmployeeID        *int32             `json:"employee_id"`
+	PersonID          pgtype.UUID        `json:"person_id"`
+	EmployeeID        pgtype.UUID        `json:"employee_id"`
 	Username          *string            `json:"username"`
 	Email             string             `json:"email"`
 	PasswordHash      *string            `json:"password_hash"`
@@ -271,7 +271,7 @@ type GetUserWithPersonDetailsRow struct {
 //	LEFT JOIN persons p ON u.person_id = p.id
 //	LEFT JOIN employees e ON u.employee_id = e.id
 //	WHERE u.id = $1 AND u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
-func (q *Queries) GetUserWithPersonDetails(ctx context.Context, id int32) (GetUserWithPersonDetailsRow, error) {
+func (q *Queries) GetUserWithPersonDetails(ctx context.Context, id uuid.UUID) (GetUserWithPersonDetailsRow, error) {
 	row := q.db.QueryRow(ctx, getUserWithPersonDetails, id)
 	var i GetUserWithPersonDetailsRow
 	err := row.Scan(
@@ -313,11 +313,11 @@ ORDER BY u.email
 `
 
 type ListActiveUsersRow struct {
-	ID                int32              `json:"id"`
-	TenantID          int32              `json:"tenant_id"`
+	ID                uuid.UUID          `json:"id"`
+	TenantID          uuid.UUID          `json:"tenant_id"`
 	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          *int32             `json:"person_id"`
-	EmployeeID        *int32             `json:"employee_id"`
+	PersonID          pgtype.UUID        `json:"person_id"`
+	EmployeeID        pgtype.UUID        `json:"employee_id"`
 	Username          *string            `json:"username"`
 	Email             string             `json:"email"`
 	PasswordHash      *string            `json:"password_hash"`
@@ -392,11 +392,11 @@ ORDER BY u.email
 `
 
 type ListUsersRow struct {
-	ID                int32              `json:"id"`
-	TenantID          int32              `json:"tenant_id"`
+	ID                uuid.UUID          `json:"id"`
+	TenantID          uuid.UUID          `json:"tenant_id"`
 	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          *int32             `json:"person_id"`
-	EmployeeID        *int32             `json:"employee_id"`
+	PersonID          pgtype.UUID        `json:"person_id"`
+	EmployeeID        pgtype.UUID        `json:"employee_id"`
 	Username          *string            `json:"username"`
 	Email             string             `json:"email"`
 	PasswordHash      *string            `json:"password_hash"`
@@ -471,11 +471,11 @@ ORDER BY u.email
 `
 
 type ListUsersByTypeRow struct {
-	ID                int32              `json:"id"`
-	TenantID          int32              `json:"tenant_id"`
+	ID                uuid.UUID          `json:"id"`
+	TenantID          uuid.UUID          `json:"tenant_id"`
 	EntityID          uuid.UUID          `json:"entity_id"`
-	PersonID          *int32             `json:"person_id"`
-	EmployeeID        *int32             `json:"employee_id"`
+	PersonID          pgtype.UUID        `json:"person_id"`
+	EmployeeID        pgtype.UUID        `json:"employee_id"`
 	Username          *string            `json:"username"`
 	Email             string             `json:"email"`
 	PasswordHash      *string            `json:"password_hash"`
@@ -551,7 +551,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 //	UPDATE users
 //	SET deleted_at = NOW(), updated_at = NOW()
 //	WHERE id = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) SoftDeleteUser(ctx context.Context, id int32) error {
+func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, softDeleteUser, id)
 	return err
 }
@@ -574,16 +574,16 @@ RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, pas
 `
 
 type UpdateUserParams struct {
-	ID           int32     `json:"id"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	PersonID     *int32    `json:"person_id"`
-	EmployeeID   *int32    `json:"employee_id"`
-	Username     *string   `json:"username"`
-	Email        string    `json:"email"`
-	PasswordHash *string   `json:"password_hash"`
-	UserType     string    `json:"user_type"`
-	IsActive     bool      `json:"is_active"`
-	Settings     []byte    `json:"settings"`
+	ID           uuid.UUID   `json:"id"`
+	EntityID     uuid.UUID   `json:"entity_id"`
+	PersonID     pgtype.UUID `json:"person_id"`
+	EmployeeID   pgtype.UUID `json:"employee_id"`
+	Username     *string     `json:"username"`
+	Email        string      `json:"email"`
+	PasswordHash *string     `json:"password_hash"`
+	UserType     string      `json:"user_type"`
+	IsActive     bool        `json:"is_active"`
+	Settings     []byte      `json:"settings"`
 }
 
 // UpdateUser
@@ -648,7 +648,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 //	UPDATE users
 //	SET last_login_at = NOW()
 //	WHERE id = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) UpdateUserLogin(ctx context.Context, id int32) error {
+func (q *Queries) UpdateUserLogin(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, updateUserLogin, id)
 	return err
 }
@@ -660,8 +660,8 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 `
 
 type UpdateUserPasswordParams struct {
-	ID           int32   `json:"id"`
-	PasswordHash *string `json:"password_hash"`
+	ID           uuid.UUID `json:"id"`
+	PasswordHash *string   `json:"password_hash"`
 }
 
 // UpdateUserPassword

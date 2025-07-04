@@ -21,8 +21,8 @@ SELECT * FROM tenants
 WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: GetTenantByUUID :one
-SELECT * FROM tenants
-WHERE uuid = $1 AND deleted_at IS NULL;
+-- SELECT * FROM tenants
+-- WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: GetTenantBySubdomain :one
 SELECT * FROM tenants
@@ -196,7 +196,7 @@ WHERE id = ANY(sqlc.slice('tenant_ids')::int[]);
 -- =====================================================
 
 -- name: FilterTenants :many
-SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+SELECT id, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
 WHERE (sqlc.narg('name_filter')::varchar IS NULL OR name ILIKE '%' || sqlc.narg('name_filter') || '%')
   AND (sqlc.narg('status_filter')::varchar IS NULL OR status = sqlc.narg('status_filter'))
   AND (sqlc.narg('industry_filter')::varchar IS NULL OR industry = sqlc.narg('industry_filter'))

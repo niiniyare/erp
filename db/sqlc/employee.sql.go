@@ -24,12 +24,12 @@ INSERT INTO employees (
 `
 
 type CreateEmployeeParams struct {
-	PersonID         int32       `json:"person_id"`
+	PersonID         uuid.UUID   `json:"person_id"`
 	EmployeeNumber   string      `json:"employee_number"`
 	EntityID         uuid.UUID   `json:"entity_id"`
 	PositionTitle    *string     `json:"position_title"`
 	DepartmentID     pgtype.UUID `json:"department_id"`
-	ManagerID        *int32      `json:"manager_id"`
+	ManagerID        pgtype.UUID `json:"manager_id"`
 	HireDate         pgtype.Date `json:"hire_date"`
 	TerminationDate  pgtype.Date `json:"termination_date"`
 	SalaryInfo       []byte      `json:"salary_info"`
@@ -92,7 +92,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 //
 //	SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
 //	WHERE id = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) GetEmployee(ctx context.Context, id int32) (Employee, error) {
+func (q *Queries) GetEmployee(ctx context.Context, id uuid.UUID) (Employee, error) {
 	row := q.db.QueryRow(ctx, getEmployee, id)
 	var i Employee
 	err := row.Scan(
@@ -156,7 +156,7 @@ WHERE person_id = $1 AND tenant_id = current_tenant_id()
 //
 //	SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
 //	WHERE person_id = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) GetEmployeeByPersonId(ctx context.Context, personID int32) (Employee, error) {
+func (q *Queries) GetEmployeeByPersonId(ctx context.Context, personID uuid.UUID) (Employee, error) {
 	row := q.db.QueryRow(ctx, getEmployeeByPersonId, personID)
 	var i Employee
 	err := row.Scan(
@@ -203,14 +203,14 @@ ORDER BY level, last_name, first_name
 `
 
 type GetEmployeeHierarchyRow struct {
-	ID             int32   `json:"id"`
-	PersonID       int32   `json:"person_id"`
-	EmployeeNumber string  `json:"employee_number"`
-	PositionTitle  *string `json:"position_title"`
-	ManagerID      *int32  `json:"manager_id"`
-	FirstName      string  `json:"first_name"`
-	LastName       string  `json:"last_name"`
-	Level          int32   `json:"level"`
+	ID             uuid.UUID   `json:"id"`
+	PersonID       uuid.UUID   `json:"person_id"`
+	EmployeeNumber string      `json:"employee_number"`
+	PositionTitle  *string     `json:"position_title"`
+	ManagerID      pgtype.UUID `json:"manager_id"`
+	FirstName      string      `json:"first_name"`
+	LastName       string      `json:"last_name"`
+	Level          int32       `json:"level"`
 }
 
 // GetEmployeeHierarchy
@@ -235,7 +235,7 @@ type GetEmployeeHierarchyRow struct {
 //	)
 //	SELECT id, person_id, employee_number, position_title, manager_id, first_name, last_name, level FROM employee_hierarchy
 //	ORDER BY level, last_name, first_name
-func (q *Queries) GetEmployeeHierarchy(ctx context.Context, id int32) ([]GetEmployeeHierarchyRow, error) {
+func (q *Queries) GetEmployeeHierarchy(ctx context.Context, id uuid.UUID) ([]GetEmployeeHierarchyRow, error) {
 	rows, err := q.db.Query(ctx, getEmployeeHierarchy, id)
 	if err != nil {
 		return nil, err
@@ -319,14 +319,14 @@ ORDER BY p.last_name, p.first_name
 `
 
 type ListActiveEmployeesRow struct {
-	ID               int32              `json:"id"`
-	TenantID         int32              `json:"tenant_id"`
-	PersonID         int32              `json:"person_id"`
+	ID               uuid.UUID          `json:"id"`
+	TenantID         uuid.UUID          `json:"tenant_id"`
+	PersonID         uuid.UUID          `json:"person_id"`
 	EmployeeNumber   string             `json:"employee_number"`
 	EntityID         uuid.UUID          `json:"entity_id"`
 	PositionTitle    *string            `json:"position_title"`
 	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        *int32             `json:"manager_id"`
+	ManagerID        pgtype.UUID        `json:"manager_id"`
 	HireDate         pgtype.Date        `json:"hire_date"`
 	TerminationDate  pgtype.Date        `json:"termination_date"`
 	SalaryInfo       []byte             `json:"salary_info"`
@@ -396,14 +396,14 @@ ORDER BY p.last_name, p.first_name
 `
 
 type ListEmployeesRow struct {
-	ID               int32              `json:"id"`
-	TenantID         int32              `json:"tenant_id"`
-	PersonID         int32              `json:"person_id"`
+	ID               uuid.UUID          `json:"id"`
+	TenantID         uuid.UUID          `json:"tenant_id"`
+	PersonID         uuid.UUID          `json:"person_id"`
 	EmployeeNumber   string             `json:"employee_number"`
 	EntityID         uuid.UUID          `json:"entity_id"`
 	PositionTitle    *string            `json:"position_title"`
 	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        *int32             `json:"manager_id"`
+	ManagerID        pgtype.UUID        `json:"manager_id"`
 	HireDate         pgtype.Date        `json:"hire_date"`
 	TerminationDate  pgtype.Date        `json:"termination_date"`
 	SalaryInfo       []byte             `json:"salary_info"`
@@ -473,14 +473,14 @@ ORDER BY p.last_name, p.first_name
 `
 
 type ListEmployeesByDepartmentRow struct {
-	ID               int32              `json:"id"`
-	TenantID         int32              `json:"tenant_id"`
-	PersonID         int32              `json:"person_id"`
+	ID               uuid.UUID          `json:"id"`
+	TenantID         uuid.UUID          `json:"tenant_id"`
+	PersonID         uuid.UUID          `json:"person_id"`
 	EmployeeNumber   string             `json:"employee_number"`
 	EntityID         uuid.UUID          `json:"entity_id"`
 	PositionTitle    *string            `json:"position_title"`
 	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        *int32             `json:"manager_id"`
+	ManagerID        pgtype.UUID        `json:"manager_id"`
 	HireDate         pgtype.Date        `json:"hire_date"`
 	TerminationDate  pgtype.Date        `json:"termination_date"`
 	SalaryInfo       []byte             `json:"salary_info"`
@@ -550,14 +550,14 @@ ORDER BY p.last_name, p.first_name
 `
 
 type ListEmployeesByManagerRow struct {
-	ID               int32              `json:"id"`
-	TenantID         int32              `json:"tenant_id"`
-	PersonID         int32              `json:"person_id"`
+	ID               uuid.UUID          `json:"id"`
+	TenantID         uuid.UUID          `json:"tenant_id"`
+	PersonID         uuid.UUID          `json:"person_id"`
 	EmployeeNumber   string             `json:"employee_number"`
 	EntityID         uuid.UUID          `json:"entity_id"`
 	PositionTitle    *string            `json:"position_title"`
 	DepartmentID     pgtype.UUID        `json:"department_id"`
-	ManagerID        *int32             `json:"manager_id"`
+	ManagerID        pgtype.UUID        `json:"manager_id"`
 	HireDate         pgtype.Date        `json:"hire_date"`
 	TerminationDate  pgtype.Date        `json:"termination_date"`
 	SalaryInfo       []byte             `json:"salary_info"`
@@ -578,7 +578,7 @@ type ListEmployeesByManagerRow struct {
 //	JOIN persons p ON e.person_id = p.id
 //	WHERE e.tenant_id = current_tenant_id() AND e.manager_id = $1
 //	ORDER BY p.last_name, p.first_name
-func (q *Queries) ListEmployeesByManager(ctx context.Context, managerID *int32) ([]ListEmployeesByManagerRow, error) {
+func (q *Queries) ListEmployeesByManager(ctx context.Context, managerID pgtype.UUID) ([]ListEmployeesByManagerRow, error) {
 	rows, err := q.db.Query(ctx, listEmployeesByManager, managerID)
 	if err != nil {
 		return nil, err
@@ -637,12 +637,12 @@ RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, 
 `
 
 type UpdateEmployeeParams struct {
-	ID               int32       `json:"id"`
+	ID               uuid.UUID   `json:"id"`
 	EmployeeNumber   string      `json:"employee_number"`
 	EntityID         uuid.UUID   `json:"entity_id"`
 	PositionTitle    *string     `json:"position_title"`
 	DepartmentID     pgtype.UUID `json:"department_id"`
-	ManagerID        *int32      `json:"manager_id"`
+	ManagerID        pgtype.UUID `json:"manager_id"`
 	HireDate         pgtype.Date `json:"hire_date"`
 	TerminationDate  pgtype.Date `json:"termination_date"`
 	SalaryInfo       []byte      `json:"salary_info"`

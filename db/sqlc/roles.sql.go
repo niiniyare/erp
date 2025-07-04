@@ -24,10 +24,10 @@ RETURNING user_id, role_id, entity_id, assigned_at, assigned_by, expires_at
 `
 
 type AssignUserRoleParams struct {
-	UserID     int32              `json:"user_id"`
-	RoleID     int32              `json:"role_id"`
+	UserID     uuid.UUID          `json:"user_id"`
+	RoleID     uuid.UUID          `json:"role_id"`
 	EntityID   uuid.UUID          `json:"entity_id"`
-	AssignedBy *int32             `json:"assigned_by"`
+	AssignedBy pgtype.UUID        `json:"assigned_by"`
 	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
 }
 
@@ -74,8 +74,8 @@ SELECT EXISTS(
 `
 
 type CheckUserPermissionParams struct {
-	UserID      int32  `json:"user_id"`
-	Permissions []byte `json:"permissions"`
+	UserID      uuid.UUID `json:"user_id"`
+	Permissions []byte    `json:"permissions"`
 }
 
 // CheckUserPermission
@@ -174,7 +174,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id() AND is_system_role = false
 //
 //	DELETE FROM roles
 //	WHERE id = $1 AND tenant_id = current_tenant_id() AND is_system_role = false
-func (q *Queries) DeleteRole(ctx context.Context, id int32) error {
+func (q *Queries) DeleteRole(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteRole, id)
 	return err
 }
@@ -188,7 +188,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 //
 //	SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
 //	WHERE id = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) GetRole(ctx context.Context, id int32) (Role, error) {
+func (q *Queries) GetRole(ctx context.Context, id uuid.UUID) (Role, error) {
 	row := q.db.QueryRow(ctx, getRole, id)
 	var i Role
 	err := row.Scan(
@@ -245,11 +245,11 @@ ORDER BY p.last_name, p.first_name, u.email
 `
 
 type GetRoleUsersRow struct {
-	UserID     int32              `json:"user_id"`
-	RoleID     int32              `json:"role_id"`
+	UserID     uuid.UUID          `json:"user_id"`
+	RoleID     uuid.UUID          `json:"role_id"`
 	EntityID   uuid.UUID          `json:"entity_id"`
 	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy *int32             `json:"assigned_by"`
+	AssignedBy pgtype.UUID        `json:"assigned_by"`
 	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
 	Email      string             `json:"email"`
 	Username   *string            `json:"username"`
@@ -267,7 +267,7 @@ type GetRoleUsersRow struct {
 //	    AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
 //	    AND u.deleted_at IS NULL
 //	ORDER BY p.last_name, p.first_name, u.email
-func (q *Queries) GetRoleUsers(ctx context.Context, roleID int32) ([]GetRoleUsersRow, error) {
+func (q *Queries) GetRoleUsers(ctx context.Context, roleID uuid.UUID) ([]GetRoleUsersRow, error) {
 	rows, err := q.db.Query(ctx, getRoleUsers, roleID)
 	if err != nil {
 		return nil, err
@@ -318,7 +318,7 @@ type GetUserPermissionsRow struct {
 //	JOIN roles r ON ur.role_id = r.id
 //	WHERE ur.user_id = $1
 //	    AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
-func (q *Queries) GetUserPermissions(ctx context.Context, userID int32) ([]GetUserPermissionsRow, error) {
+func (q *Queries) GetUserPermissions(ctx context.Context, userID uuid.UUID) ([]GetUserPermissionsRow, error) {
 	rows, err := q.db.Query(ctx, getUserPermissions, userID)
 	if err != nil {
 		return nil, err
@@ -348,11 +348,11 @@ ORDER BY r.name
 `
 
 type GetUserRolesRow struct {
-	UserID          int32              `json:"user_id"`
-	RoleID          int32              `json:"role_id"`
+	UserID          uuid.UUID          `json:"user_id"`
+	RoleID          uuid.UUID          `json:"role_id"`
 	EntityID        uuid.UUID          `json:"entity_id"`
 	AssignedAt      pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy      *int32             `json:"assigned_by"`
+	AssignedBy      pgtype.UUID        `json:"assigned_by"`
 	ExpiresAt       pgtype.Timestamptz `json:"expires_at"`
 	RoleName        string             `json:"role_name"`
 	RoleDescription *string            `json:"role_description"`
@@ -367,7 +367,7 @@ type GetUserRolesRow struct {
 //	WHERE ur.user_id = $1
 //	    AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
 //	ORDER BY r.name
-func (q *Queries) GetUserRoles(ctx context.Context, userID int32) ([]GetUserRolesRow, error) {
+func (q *Queries) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]GetUserRolesRow, error) {
 	rows, err := q.db.Query(ctx, getUserRoles, userID)
 	if err != nil {
 		return nil, err
@@ -451,11 +451,11 @@ ORDER BY ur.expires_at DESC
 `
 
 type ListExpiredUserRolesRow struct {
-	UserID     int32              `json:"user_id"`
-	RoleID     int32              `json:"role_id"`
+	UserID     uuid.UUID          `json:"user_id"`
+	RoleID     uuid.UUID          `json:"role_id"`
 	EntityID   uuid.UUID          `json:"entity_id"`
 	AssignedAt pgtype.Timestamptz `json:"assigned_at"`
-	AssignedBy *int32             `json:"assigned_by"`
+	AssignedBy pgtype.UUID        `json:"assigned_by"`
 	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
 	Email      string             `json:"email"`
 	RoleName   string             `json:"role_name"`
@@ -632,8 +632,8 @@ WHERE user_id = $1 AND role_id = $2 AND entity_id = $3
 `
 
 type RevokeUserRoleParams struct {
-	UserID   int32     `json:"user_id"`
-	RoleID   int32     `json:"role_id"`
+	UserID   uuid.UUID `json:"user_id"`
+	RoleID   uuid.UUID `json:"role_id"`
 	EntityID uuid.UUID `json:"entity_id"`
 }
 
@@ -674,14 +674,14 @@ type SearchUsersWithRolesParams struct {
 }
 
 type SearchUsersWithRolesRow struct {
-	ID        int32   `json:"id"`
-	Username  *string `json:"username"`
-	Email     string  `json:"email"`
-	UserType  string  `json:"user_type"`
-	IsActive  bool    `json:"is_active"`
-	FirstName *string `json:"first_name"`
-	LastName  *string `json:"last_name"`
-	Roles     []byte  `json:"roles"`
+	ID        uuid.UUID `json:"id"`
+	Username  *string   `json:"username"`
+	Email     string    `json:"email"`
+	UserType  string    `json:"user_type"`
+	IsActive  bool      `json:"is_active"`
+	FirstName *string   `json:"first_name"`
+	LastName  *string   `json:"last_name"`
+	Roles     []byte    `json:"roles"`
 }
 
 // SearchUsersWithRoles
@@ -748,7 +748,7 @@ RETURNING id, tenant_id, entity_id, name, description, module, permissions, enti
 `
 
 type UpdateRoleParams struct {
-	ID          int32       `json:"id"`
+	ID          uuid.UUID   `json:"id"`
 	EntityID    pgtype.UUID `json:"entity_id"`
 	Name        string      `json:"name"`
 	Description *string     `json:"description"`

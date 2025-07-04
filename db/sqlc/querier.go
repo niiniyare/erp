@@ -71,7 +71,7 @@ type Querier interface {
 	//      SELECT 1 FROM tenants
 	//      WHERE id = $1 AND deleted_at IS NULL
 	//  )
-	CheckTenantExists(ctx context.Context, id int32) (bool, error)
+	CheckTenantExists(ctx context.Context, id uuid.UUID) (bool, error)
 	//CheckTenantNameExists
 	//
 	//  SELECT EXISTS(
@@ -178,7 +178,7 @@ type Querier interface {
 	//
 	//  INSERT INTO tenants (name, subdomain, status, industry)
 	//  VALUES ($1, $2, $3, $4)
-	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
+	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	CreateTenant(ctx context.Context, arg CreateTenantParams) (Tenant, error)
 	// ==============================================
 	// USERS TABLE OPERATIONS
@@ -207,7 +207,7 @@ type Querier interface {
 	//
 	//  DELETE FROM roles
 	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND is_system_role = false
-	DeleteRole(ctx context.Context, id int32) error
+	DeleteRole(ctx context.Context, id uuid.UUID) error
 	//DeleteTenant
 	//
 	//  DELETE FROM tenants
@@ -217,7 +217,7 @@ type Querier interface {
 	// =====================================================
 	//
 	//
-	//  SELECT id, uuid, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
+	//  SELECT id, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
 	//  WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
 	//    AND ($2::varchar IS NULL OR status = $2)
 	//    AND ($3::varchar IS NULL OR industry = $3)
@@ -231,7 +231,7 @@ type Querier interface {
 	FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]FilterTenantsRow, error)
 	//GetActiveTenants
 	//
-	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 	//  WHERE status = 'active' AND deleted_at IS NULL
 	//  ORDER BY name
 	GetActiveTenants(ctx context.Context) ([]Tenant, error)
@@ -241,7 +241,7 @@ type Querier interface {
 	// =====================================================
 	//
 	//
-	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 	//  WHERE id = current_tenant_id() AND deleted_at IS NULL
 	GetCurrentTenant(ctx context.Context) (Tenant, error)
 	// =====================================================
@@ -251,7 +251,7 @@ type Querier interface {
 	//
 	//
 	//  SELECT current_tenant_id()
-	GetCurrentTenantID(ctx context.Context) (int32, error)
+	GetCurrentTenantID(ctx context.Context) (uuid.UUID, error)
 	// SELECT
 	//     t.id,
 	//     t.name,
@@ -278,7 +278,7 @@ type Querier interface {
 	//
 	//  SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
 	//  WHERE id = $1 AND tenant_id = current_tenant_id()
-	GetEmployee(ctx context.Context, id int32) (Employee, error)
+	GetEmployee(ctx context.Context, id uuid.UUID) (Employee, error)
 	//GetEmployeeByNumber
 	//
 	//  SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
@@ -288,7 +288,7 @@ type Querier interface {
 	//
 	//  SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, created_at, updated_at FROM employees
 	//  WHERE person_id = $1 AND tenant_id = current_tenant_id()
-	GetEmployeeByPersonId(ctx context.Context, personID int32) (Employee, error)
+	GetEmployeeByPersonId(ctx context.Context, personID uuid.UUID) (Employee, error)
 	//GetEmployeeHierarchy
 	//
 	//  WITH RECURSIVE employee_hierarchy AS (
@@ -311,7 +311,7 @@ type Querier interface {
 	//  )
 	//  SELECT id, person_id, employee_number, position_title, manager_id, first_name, last_name, level FROM employee_hierarchy
 	//  ORDER BY level, last_name, first_name
-	GetEmployeeHierarchy(ctx context.Context, id int32) ([]GetEmployeeHierarchyRow, error)
+	GetEmployeeHierarchy(ctx context.Context, id uuid.UUID) ([]GetEmployeeHierarchyRow, error)
 	//GetEmployeeStats
 	//
 	//  SELECT
@@ -445,7 +445,7 @@ type Querier interface {
 	//      COUNT(*) FILTER (WHERE accrual_method = false) as cash_entities
 	//  FROM entities
 	//  WHERE tenant_id = $1 AND deleted_at IS NULL
-	GetEntityStats(ctx context.Context, tenantID int32) (GetEntityStatsRow, error)
+	GetEntityStats(ctx context.Context, tenantID uuid.UUID) (GetEntityStatsRow, error)
 	//GetEntityTreeStructure
 	//
 	//  WITH RECURSIVE entity_tree AS (
@@ -474,7 +474,7 @@ type Querier interface {
 	//  )
 	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
 	//  ORDER BY sort_path
-	GetEntityTreeStructure(ctx context.Context, tenantID int32) ([]GetEntityTreeStructureRow, error)
+	GetEntityTreeStructure(ctx context.Context, tenantID uuid.UUID) ([]GetEntityTreeStructureRow, error)
 	// Advanced Entity Queries
 	//
 	//  SELECT
@@ -501,7 +501,7 @@ type Querier interface {
 	//
 	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at FROM persons
 	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-	GetPerson(ctx context.Context, id int32) (Person, error)
+	GetPerson(ctx context.Context, id uuid.UUID) (Person, error)
 	//GetPersonByEmail
 	//
 	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at FROM persons
@@ -530,7 +530,7 @@ type Querier interface {
 	//  LEFT JOIN employees e ON p.id = e.person_id AND e.tenant_id = current_tenant_id() AND e.deleted_at IS NULL
 	//  LEFT JOIN users u ON p.id = u.person_id AND u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
 	//  WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
-	GetPersonEmployeeUserInfo(ctx context.Context, personID int32) (GetPersonEmployeeUserInfoRow, error)
+	GetPersonEmployeeUserInfo(ctx context.Context, personID uuid.UUID) (GetPersonEmployeeUserInfoRow, error)
 	//GetPersonFullName
 	//
 	//  SELECT
@@ -541,12 +541,12 @@ type Querier interface {
 	//      END as full_name
 	//  FROM persons p
 	//  WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
-	GetPersonFullName(ctx context.Context, personID int32) (interface{}, error)
+	GetPersonFullName(ctx context.Context, personID uuid.UUID) (interface{}, error)
 	//GetRole
 	//
 	//  SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
 	//  WHERE id = $1 AND tenant_id = current_tenant_id()
-	GetRole(ctx context.Context, id int32) (Role, error)
+	GetRole(ctx context.Context, id uuid.UUID) (Role, error)
 	//GetRoleByName
 	//
 	//  SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
@@ -562,23 +562,20 @@ type Querier interface {
 	//      AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
 	//      AND u.deleted_at IS NULL
 	//  ORDER BY p.last_name, p.first_name, u.email
-	GetRoleUsers(ctx context.Context, roleID int32) ([]GetRoleUsersRow, error)
+	GetRoleUsers(ctx context.Context, roleID uuid.UUID) ([]GetRoleUsersRow, error)
 	// Example session variable
 	//
 	//
-	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 	//  WHERE id = $1 AND deleted_at IS NULL
-	GetTenantByID(ctx context.Context, id int32) (Tenant, error)
-	//GetTenantBySubdomain
+	GetTenantByID(ctx context.Context, id uuid.UUID) (Tenant, error)
+	// SELECT * FROM tenants
+	// WHERE id = $1 AND deleted_at IS NULL;
 	//
-	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//
+	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 	//  WHERE subdomain = $1 AND deleted_at IS NULL
-	GetTenantBySubdomain(ctx context.Context, subdomain *string) (Tenant, error)
-	//GetTenantByUUID
-	//
-	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
-	//  WHERE uuid = $1 AND deleted_at IS NULL
-	GetTenantByUUID(ctx context.Context, argUuid uuid.UUID) (Tenant, error)
+	GetTenantByUUID(ctx context.Context, subdomain *string) (Tenant, error)
 	//GetTenantsByIndustry
 	//
 	//  SELECT industry, COUNT(*) as tenant_count
@@ -589,7 +586,7 @@ type Querier interface {
 	GetTenantsByIndustry(ctx context.Context) ([]GetTenantsByIndustryRow, error)
 	//GetTenantsCreatedInDateRange
 	//
-	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 	//  WHERE created_at >= $1
 	//    AND created_at <= $2
 	//    AND deleted_at IS NULL
@@ -599,7 +596,7 @@ type Querier interface {
 	//
 	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
 	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-	GetUser(ctx context.Context, id int32) (User, error)
+	GetUser(ctx context.Context, id uuid.UUID) (User, error)
 	//GetUserByEmail
 	//
 	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
@@ -617,7 +614,7 @@ type Querier interface {
 	//  JOIN roles r ON ur.role_id = r.id
 	//  WHERE ur.user_id = $1
 	//      AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
-	GetUserPermissions(ctx context.Context, userID int32) ([]GetUserPermissionsRow, error)
+	GetUserPermissions(ctx context.Context, userID uuid.UUID) ([]GetUserPermissionsRow, error)
 	//GetUserRoles
 	//
 	//  SELECT ur.user_id, ur.role_id, ur.entity_id, ur.assigned_at, ur.assigned_by, ur.expires_at, r.name as role_name, r.description as role_description, r.permissions
@@ -626,7 +623,7 @@ type Querier interface {
 	//  WHERE ur.user_id = $1
 	//      AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
 	//  ORDER BY r.name
-	GetUserRoles(ctx context.Context, userID int32) ([]GetUserRolesRow, error)
+	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]GetUserRolesRow, error)
 	//GetUserStats
 	//
 	//  SELECT
@@ -649,7 +646,7 @@ type Querier interface {
 	//  LEFT JOIN persons p ON u.person_id = p.id
 	//  LEFT JOIN employees e ON u.employee_id = e.id
 	//  WHERE u.id = $1 AND u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
-	GetUserWithPersonDetails(ctx context.Context, id int32) (GetUserWithPersonDetailsRow, error)
+	GetUserWithPersonDetails(ctx context.Context, id uuid.UUID) (GetUserWithPersonDetailsRow, error)
 	//HardDeleteEntity
 	//
 	//  DELETE FROM entities
@@ -724,7 +721,7 @@ type Querier interface {
 	//  JOIN persons p ON e.person_id = p.id
 	//  WHERE e.tenant_id = current_tenant_id() AND e.manager_id = $1
 	//  ORDER BY p.last_name, p.first_name
-	ListEmployeesByManager(ctx context.Context, managerID *int32) ([]ListEmployeesByManagerRow, error)
+	ListEmployeesByManager(ctx context.Context, managerID pgtype.UUID) ([]ListEmployeesByManagerRow, error)
 	// Entity Listing and Filtering
 	//
 	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
@@ -802,7 +799,7 @@ type Querier interface {
 	ListSystemRoles(ctx context.Context) ([]Role, error)
 	//ListTenants
 	//
-	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 	//  WHERE deleted_at IS NULL
 	//  ORDER BY created_at DESC
 	//  LIMIT $1 OFFSET $2
@@ -848,7 +845,7 @@ type Querier interface {
 	//  UPDATE persons
 	//  SET deleted_at = NULL, updated_at = NOW()
 	//  WHERE id = $1 AND tenant_id = current_tenant_id()
-	RestorePerson(ctx context.Context, id int32) error
+	RestorePerson(ctx context.Context, id uuid.UUID) error
 	//RevokeUserRole
 	//
 	//  DELETE FROM user_roles
@@ -878,7 +875,7 @@ type Querier interface {
 	SearchPersonsByName(ctx context.Context, arg SearchPersonsByNameParams) ([]Person, error)
 	//SearchTenantsByName
 	//
-	//  SELECT id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at FROM tenants
+	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 	//  WHERE name ILIKE '%' || $1 || '%'
 	//    AND deleted_at IS NULL
 	//  ORDER BY name
@@ -921,25 +918,25 @@ type Querier interface {
 	//  UPDATE persons
 	//  SET deleted_at = NOW(), updated_at = NOW()
 	//  WHERE id = $1 AND tenant_id = current_tenant_id()
-	SoftDeletePerson(ctx context.Context, id int32) error
+	SoftDeletePerson(ctx context.Context, id uuid.UUID) error
 	//SoftDeleteTenant
 	//
 	//  UPDATE tenants
 	//  SET deleted_at = NOW(), updated_at = NOW()
 	//  WHERE id = $1
-	SoftDeleteTenant(ctx context.Context, id int32) error
+	SoftDeleteTenant(ctx context.Context, id uuid.UUID) error
 	//SoftDeleteUser
 	//
 	//  UPDATE users
 	//  SET deleted_at = NOW(), updated_at = NOW()
 	//  WHERE id = $1 AND tenant_id = current_tenant_id()
-	SoftDeleteUser(ctx context.Context, id int32) error
+	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	//UpdateCurrentTenant
 	//
 	//  UPDATE tenants
 	//  SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
 	//  WHERE id = current_tenant_id() AND deleted_at IS NULL
-	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
+	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (Tenant, error)
 	//UpdateEmployee
 	//
@@ -1045,35 +1042,35 @@ type Querier interface {
 	//  industry = COALESCE($4, industry) ,
 	//  updated_at = NOW()
 	//  WHERE id = $5 AND deleted_at IS NULL
-	//    RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
+	//    RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Tenant, error)
 	//UpdateTenantIndustry
 	//
 	//  UPDATE tenants
 	//  SET industry = $2, updated_at = NOW()
 	//  WHERE id = $1 AND deleted_at IS NULL
-	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
+	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (Tenant, error)
 	//UpdateTenantName
 	//
 	//  UPDATE tenants
 	//  SET name = $2, updated_at = NOW()
 	//  WHERE id = $1 AND deleted_at IS NULL
-	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
+	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenantName(ctx context.Context, arg UpdateTenantNameParams) (Tenant, error)
 	//
 	//
 	//  UPDATE tenants
 	//  SET status = $2, updated_at = NOW()
 	//  WHERE id = $1 AND deleted_at IS NULL
-	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
+	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (Tenant, error)
 	//UpdateTenantSubdomain
 	//
 	//  UPDATE tenants
 	//  SET subdomain = $2, updated_at = NOW()
 	//  WHERE id = $1 AND deleted_at IS NULL
-	//  RETURNING id, uuid, name, subdomain, status, industry, settings, created_at, updated_at, deleted_at
+	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (Tenant, error)
 	//UpdateUser
 	//
@@ -1097,7 +1094,7 @@ type Querier interface {
 	//  UPDATE users
 	//  SET last_login_at = NOW()
 	//  WHERE id = $1 AND tenant_id = current_tenant_id()
-	UpdateUserLogin(ctx context.Context, id int32) error
+	UpdateUserLogin(ctx context.Context, id uuid.UUID) error
 	//UpdateUserPassword
 	//
 	//  UPDATE users
@@ -1118,7 +1115,7 @@ type Querier interface {
 	//      AND hp1.ancestor_id = hp2.descendant_id
 	//      AND hp1.depth > 0
 	//      AND hp2.depth > 0
-	ValidateEntityHierarchy(ctx context.Context, tenantID int32) (bool, error)
+	ValidateEntityHierarchy(ctx context.Context, tenantID uuid.UUID) (bool, error)
 }
 
 var _ Querier = (*Queries)(nil)

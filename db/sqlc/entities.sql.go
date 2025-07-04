@@ -19,7 +19,7 @@ WHERE tenant_id = $1 AND uuid = ANY($2::UUID[])
 `
 
 type BatchSoftDeleteEntitiesParams struct {
-	TenantID int32       `json:"tenant_id"`
+	TenantID uuid.UUID   `json:"tenant_id"`
 	Column2  []uuid.UUID `json:"column_2"`
 }
 
@@ -40,7 +40,7 @@ WHERE tenant_id = $1 AND uuid = ANY($2::UUID[]) AND deleted_at IS NULL
 `
 
 type BatchUpdateEntityStatusParams struct {
-	TenantID int32       `json:"tenant_id"`
+	TenantID uuid.UUID   `json:"tenant_id"`
 	Column2  []uuid.UUID `json:"column_2"`
 	IsActive bool        `json:"is_active"`
 }
@@ -232,8 +232,8 @@ ORDER BY e.name
 `
 
 type GetEntitiesByFiscalYearParams struct {
-	TenantID   int32  `json:"tenant_id"`
-	FiscalYear *int16 `json:"fiscal_year"`
+	TenantID   uuid.UUID `json:"tenant_id"`
+	FiscalYear *int16    `json:"fiscal_year"`
 }
 
 // GetEntitiesByFiscalYear
@@ -289,7 +289,7 @@ ORDER BY name
 `
 
 type GetEntitiesByUUIDsParams struct {
-	TenantID int32       `json:"tenant_id"`
+	TenantID uuid.UUID   `json:"tenant_id"`
 	Column2  []uuid.UUID `json:"column_2"`
 }
 
@@ -384,7 +384,7 @@ ORDER BY hp.depth DESC
 
 type GetEntityAncestorsRow struct {
 	Uuid          uuid.UUID          `json:"uuid"`
-	TenantID      int32              `json:"tenant_id"`
+	TenantID      uuid.UUID          `json:"tenant_id"`
 	ParentID      pgtype.UUID        `json:"parent_id"`
 	Name          string             `json:"name"`
 	Code          *string            `json:"code"`
@@ -583,7 +583,7 @@ ORDER BY hp.depth, e.name
 
 type GetEntityDescendantsRow struct {
 	Uuid          uuid.UUID          `json:"uuid"`
-	TenantID      int32              `json:"tenant_id"`
+	TenantID      uuid.UUID          `json:"tenant_id"`
 	ParentID      pgtype.UUID        `json:"parent_id"`
 	Name          string             `json:"name"`
 	Code          *string            `json:"code"`
@@ -913,7 +913,7 @@ type GetEntityStatsRow struct {
 //	    COUNT(*) FILTER (WHERE accrual_method = false) as cash_entities
 //	FROM entities
 //	WHERE tenant_id = $1 AND deleted_at IS NULL
-func (q *Queries) GetEntityStats(ctx context.Context, tenantID int32) (GetEntityStatsRow, error) {
+func (q *Queries) GetEntityStats(ctx context.Context, tenantID uuid.UUID) (GetEntityStatsRow, error) {
 	row := q.db.QueryRow(ctx, getEntityStats, tenantID)
 	var i GetEntityStatsRow
 	err := row.Scan(
@@ -959,7 +959,7 @@ ORDER BY sort_path
 
 type GetEntityTreeStructureRow struct {
 	Uuid          uuid.UUID          `json:"uuid"`
-	TenantID      int32              `json:"tenant_id"`
+	TenantID      uuid.UUID          `json:"tenant_id"`
 	ParentID      pgtype.UUID        `json:"parent_id"`
 	Name          string             `json:"name"`
 	Code          *string            `json:"code"`
@@ -1007,7 +1007,7 @@ type GetEntityTreeStructureRow struct {
 //	)
 //	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
 //	ORDER BY sort_path
-func (q *Queries) GetEntityTreeStructure(ctx context.Context, tenantID int32) ([]GetEntityTreeStructureRow, error) {
+func (q *Queries) GetEntityTreeStructure(ctx context.Context, tenantID uuid.UUID) ([]GetEntityTreeStructureRow, error) {
 	rows, err := q.db.Query(ctx, getEntityTreeStructure, tenantID)
 	if err != nil {
 		return nil, err
@@ -1063,12 +1063,12 @@ GROUP BY e.uuid, parent_e.name
 
 type GetEntityWithHierarchyInfoParams struct {
 	Uuid     uuid.UUID `json:"uuid"`
-	TenantID int32     `json:"tenant_id"`
+	TenantID uuid.UUID `json:"tenant_id"`
 }
 
 type GetEntityWithHierarchyInfoRow struct {
 	Uuid          uuid.UUID          `json:"uuid"`
-	TenantID      int32              `json:"tenant_id"`
+	TenantID      uuid.UUID          `json:"tenant_id"`
 	ParentID      pgtype.UUID        `json:"parent_id"`
 	Name          string             `json:"name"`
 	Code          *string            `json:"code"`
@@ -1823,7 +1823,7 @@ WHERE hp1.tenant_id = $1
 //	    AND hp1.ancestor_id = hp2.descendant_id
 //	    AND hp1.depth > 0
 //	    AND hp2.depth > 0
-func (q *Queries) ValidateEntityHierarchy(ctx context.Context, tenantID int32) (bool, error) {
+func (q *Queries) ValidateEntityHierarchy(ctx context.Context, tenantID uuid.UUID) (bool, error) {
 	row := q.db.QueryRow(ctx, validateEntityHierarchy, tenantID)
 	var is_valid bool
 	err := row.Scan(&is_valid)
