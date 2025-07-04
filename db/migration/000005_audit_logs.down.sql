@@ -1,0 +1,21 @@
+DROP FUNCTION IF EXISTS apply_rls_to_tenant_tables();
+-- Drop the apply_rls_to_tenant_tables function.
+-- This will remove the function that was created in the up migration.
+DROP FUNCTION IF EXISTS apply_rls_to_tenant_tables(TEXT, TEXT, TEXT, BOOLEAN);
+
+-- Drop the rls_change_log table.
+-- This will remove the table used for logging RLS policy changes.
+DROP TABLE IF EXISTS rls_change_log;
+
+-- Optional: If you want to remove RLS from tables that were affected by the up migration,
+-- you would need to write specific ALTER TABLE statements here.
+-- However, typically a down migration only reverses the direct changes made by the up migration
+-- (i.e., dropping functions and tables created), not side effects like policies applied by a function.
+-- If you need to remove RLS from specific tables, you would do something like:
+-- ALTER TABLE your_schema.your_table DISABLE ROW LEVEL SECURITY;
+-- DROP POLICY IF EXISTS tenant_isolation_policy ON your_schema.your_table;
+-- But this would require knowing which tables were affected, which is outside the scope
+-- of a generic down migration for the function itself.
+
+
+DROP TABLE IF EXISTS audit_logs;
