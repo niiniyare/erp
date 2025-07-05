@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -211,34 +212,34 @@ WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
 `
 
 type GetPersonEmployeeUserInfoRow struct {
-	ID               uuid.UUID  `json:"id"`
-	TenantID         uuid.UUID  `json:"tenant_id"`
-	EntityID         uuid.UUID  `json:"entity_id"`
-	PersonType       string     `json:"person_type"`
-	FirstName        string     `json:"first_name"`
-	LastName         string     `json:"last_name"`
-	MiddleName       *string    `json:"middle_name"`
-	Email            *string    `json:"email"`
-	Phone            *string    `json:"phone"`
-	BirthDate        time.Time  `json:"birth_date"`
-	NationalID       *string    `json:"national_id"`
-	TaxID            *string    `json:"tax_id"`
-	Address          []byte     `json:"address"`
-	Metadata         []byte     `json:"metadata"`
-	IsActive         bool       `json:"is_active"`
-	CreatedAt        time.Time  `json:"created_at"`
-	UpdatedAt        time.Time  `json:"updated_at"`
-	DeletedAt        time.Time  `json:"deleted_at"`
-	EmployeeID       *uuid.UUID `json:"employee_id"`
-	EmployeeNumber   *string    `json:"employee_number"`
-	PositionTitle    *string    `json:"position_title"`
-	EmploymentStatus *string    `json:"employment_status"`
-	UserID           *uuid.UUID `json:"user_id"`
-	Username         *string    `json:"username"`
-	UserEmail        *string    `json:"user_email"`
-	UserType         *string    `json:"user_type"`
-	UserActive       *bool      `json:"user_active"`
-	FullName         string     `json:"full_name"`
+	ID               uuid.UUID    `json:"id"`
+	TenantID         uuid.UUID    `json:"tenant_id"`
+	EntityID         uuid.UUID    `json:"entity_id"`
+	PersonType       string       `json:"person_type"`
+	FirstName        string       `json:"first_name"`
+	LastName         string       `json:"last_name"`
+	MiddleName       *string      `json:"middle_name"`
+	Email            *string      `json:"email"`
+	Phone            *string      `json:"phone"`
+	BirthDate        time.Time    `json:"birth_date"`
+	NationalID       *string      `json:"national_id"`
+	TaxID            *string      `json:"tax_id"`
+	Address          []byte       `json:"address"`
+	Metadata         []byte       `json:"metadata"`
+	IsActive         bool         `json:"is_active"`
+	CreatedAt        time.Time    `json:"created_at"`
+	UpdatedAt        time.Time    `json:"updated_at"`
+	DeletedAt        sql.NullTime `json:"deleted_at"`
+	EmployeeID       *uuid.UUID   `json:"employee_id"`
+	EmployeeNumber   *string      `json:"employee_number"`
+	PositionTitle    *string      `json:"position_title"`
+	EmploymentStatus *string      `json:"employment_status"`
+	UserID           *uuid.UUID   `json:"user_id"`
+	Username         *string      `json:"username"`
+	UserEmail        *string      `json:"user_email"`
+	UserType         *string      `json:"user_type"`
+	UserActive       *bool        `json:"user_active"`
+	FullName         string       `json:"full_name"`
 }
 
 // ==============================================

@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -235,30 +236,30 @@ WHERE u.id = $1 AND u.tenant_id = current_tenant_id() AND u.deleted_at IS NULL
 `
 
 type GetUserWithPersonDetailsRow struct {
-	ID                uuid.UUID  `json:"id"`
-	TenantID          uuid.UUID  `json:"tenant_id"`
-	EntityID          uuid.UUID  `json:"entity_id"`
-	PersonID          *uuid.UUID `json:"person_id"`
-	EmployeeID        *uuid.UUID `json:"employee_id"`
-	Username          *string    `json:"username"`
-	Email             string     `json:"email"`
-	PasswordHash      *string    `json:"password_hash"`
-	UserType          string     `json:"user_type"`
-	IsActive          bool       `json:"is_active"`
-	LastLoginAt       time.Time  `json:"last_login_at"`
-	PasswordChangedAt time.Time  `json:"password_changed_at"`
-	Settings          []byte     `json:"settings"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
-	DeletedAt         time.Time  `json:"deleted_at"`
-	FirstName         *string    `json:"first_name"`
-	LastName          *string    `json:"last_name"`
-	MiddleName        *string    `json:"middle_name"`
-	Phone             *string    `json:"phone"`
-	BirthDate         time.Time  `json:"birth_date"`
-	EmployeeNumber    *string    `json:"employee_number"`
-	PositionTitle     *string    `json:"position_title"`
-	DepartmentID      *uuid.UUID `json:"department_id"`
+	ID                uuid.UUID    `json:"id"`
+	TenantID          uuid.UUID    `json:"tenant_id"`
+	EntityID          uuid.UUID    `json:"entity_id"`
+	PersonID          *uuid.UUID   `json:"person_id"`
+	EmployeeID        *uuid.UUID   `json:"employee_id"`
+	Username          *string      `json:"username"`
+	Email             string       `json:"email"`
+	PasswordHash      *string      `json:"password_hash"`
+	UserType          string       `json:"user_type"`
+	IsActive          bool         `json:"is_active"`
+	LastLoginAt       sql.NullTime `json:"last_login_at"`
+	PasswordChangedAt sql.NullTime `json:"password_changed_at"`
+	Settings          []byte       `json:"settings"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
+	DeletedAt         sql.NullTime `json:"deleted_at"`
+	FirstName         *string      `json:"first_name"`
+	LastName          *string      `json:"last_name"`
+	MiddleName        *string      `json:"middle_name"`
+	Phone             *string      `json:"phone"`
+	BirthDate         time.Time    `json:"birth_date"`
+	EmployeeNumber    *string      `json:"employee_number"`
+	PositionTitle     *string      `json:"position_title"`
+	DepartmentID      *uuid.UUID   `json:"department_id"`
 }
 
 // GetUserWithPersonDetails
@@ -313,25 +314,25 @@ ORDER BY u.email
 `
 
 type ListActiveUsersRow struct {
-	ID                uuid.UUID  `json:"id"`
-	TenantID          uuid.UUID  `json:"tenant_id"`
-	EntityID          uuid.UUID  `json:"entity_id"`
-	PersonID          *uuid.UUID `json:"person_id"`
-	EmployeeID        *uuid.UUID `json:"employee_id"`
-	Username          *string    `json:"username"`
-	Email             string     `json:"email"`
-	PasswordHash      *string    `json:"password_hash"`
-	UserType          string     `json:"user_type"`
-	IsActive          bool       `json:"is_active"`
-	LastLoginAt       time.Time  `json:"last_login_at"`
-	PasswordChangedAt time.Time  `json:"password_changed_at"`
-	Settings          []byte     `json:"settings"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
-	DeletedAt         time.Time  `json:"deleted_at"`
-	FirstName         *string    `json:"first_name"`
-	LastName          *string    `json:"last_name"`
-	EmployeeNumber    *string    `json:"employee_number"`
+	ID                uuid.UUID    `json:"id"`
+	TenantID          uuid.UUID    `json:"tenant_id"`
+	EntityID          uuid.UUID    `json:"entity_id"`
+	PersonID          *uuid.UUID   `json:"person_id"`
+	EmployeeID        *uuid.UUID   `json:"employee_id"`
+	Username          *string      `json:"username"`
+	Email             string       `json:"email"`
+	PasswordHash      *string      `json:"password_hash"`
+	UserType          string       `json:"user_type"`
+	IsActive          bool         `json:"is_active"`
+	LastLoginAt       sql.NullTime `json:"last_login_at"`
+	PasswordChangedAt sql.NullTime `json:"password_changed_at"`
+	Settings          []byte       `json:"settings"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
+	DeletedAt         sql.NullTime `json:"deleted_at"`
+	FirstName         *string      `json:"first_name"`
+	LastName          *string      `json:"last_name"`
+	EmployeeNumber    *string      `json:"employee_number"`
 }
 
 // ListActiveUsers
@@ -392,25 +393,25 @@ ORDER BY u.email
 `
 
 type ListUsersRow struct {
-	ID                uuid.UUID  `json:"id"`
-	TenantID          uuid.UUID  `json:"tenant_id"`
-	EntityID          uuid.UUID  `json:"entity_id"`
-	PersonID          *uuid.UUID `json:"person_id"`
-	EmployeeID        *uuid.UUID `json:"employee_id"`
-	Username          *string    `json:"username"`
-	Email             string     `json:"email"`
-	PasswordHash      *string    `json:"password_hash"`
-	UserType          string     `json:"user_type"`
-	IsActive          bool       `json:"is_active"`
-	LastLoginAt       time.Time  `json:"last_login_at"`
-	PasswordChangedAt time.Time  `json:"password_changed_at"`
-	Settings          []byte     `json:"settings"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
-	DeletedAt         time.Time  `json:"deleted_at"`
-	FirstName         *string    `json:"first_name"`
-	LastName          *string    `json:"last_name"`
-	EmployeeNumber    *string    `json:"employee_number"`
+	ID                uuid.UUID    `json:"id"`
+	TenantID          uuid.UUID    `json:"tenant_id"`
+	EntityID          uuid.UUID    `json:"entity_id"`
+	PersonID          *uuid.UUID   `json:"person_id"`
+	EmployeeID        *uuid.UUID   `json:"employee_id"`
+	Username          *string      `json:"username"`
+	Email             string       `json:"email"`
+	PasswordHash      *string      `json:"password_hash"`
+	UserType          string       `json:"user_type"`
+	IsActive          bool         `json:"is_active"`
+	LastLoginAt       sql.NullTime `json:"last_login_at"`
+	PasswordChangedAt sql.NullTime `json:"password_changed_at"`
+	Settings          []byte       `json:"settings"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
+	DeletedAt         sql.NullTime `json:"deleted_at"`
+	FirstName         *string      `json:"first_name"`
+	LastName          *string      `json:"last_name"`
+	EmployeeNumber    *string      `json:"employee_number"`
 }
 
 // ListUsers
@@ -471,25 +472,25 @@ ORDER BY u.email
 `
 
 type ListUsersByTypeRow struct {
-	ID                uuid.UUID  `json:"id"`
-	TenantID          uuid.UUID  `json:"tenant_id"`
-	EntityID          uuid.UUID  `json:"entity_id"`
-	PersonID          *uuid.UUID `json:"person_id"`
-	EmployeeID        *uuid.UUID `json:"employee_id"`
-	Username          *string    `json:"username"`
-	Email             string     `json:"email"`
-	PasswordHash      *string    `json:"password_hash"`
-	UserType          string     `json:"user_type"`
-	IsActive          bool       `json:"is_active"`
-	LastLoginAt       time.Time  `json:"last_login_at"`
-	PasswordChangedAt time.Time  `json:"password_changed_at"`
-	Settings          []byte     `json:"settings"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
-	DeletedAt         time.Time  `json:"deleted_at"`
-	FirstName         *string    `json:"first_name"`
-	LastName          *string    `json:"last_name"`
-	EmployeeNumber    *string    `json:"employee_number"`
+	ID                uuid.UUID    `json:"id"`
+	TenantID          uuid.UUID    `json:"tenant_id"`
+	EntityID          uuid.UUID    `json:"entity_id"`
+	PersonID          *uuid.UUID   `json:"person_id"`
+	EmployeeID        *uuid.UUID   `json:"employee_id"`
+	Username          *string      `json:"username"`
+	Email             string       `json:"email"`
+	PasswordHash      *string      `json:"password_hash"`
+	UserType          string       `json:"user_type"`
+	IsActive          bool         `json:"is_active"`
+	LastLoginAt       sql.NullTime `json:"last_login_at"`
+	PasswordChangedAt sql.NullTime `json:"password_changed_at"`
+	Settings          []byte       `json:"settings"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
+	DeletedAt         sql.NullTime `json:"deleted_at"`
+	FirstName         *string      `json:"first_name"`
+	LastName          *string      `json:"last_name"`
+	EmployeeNumber    *string      `json:"employee_number"`
 }
 
 // ListUsersByType

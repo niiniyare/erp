@@ -7,7 +7,7 @@ import (
 )
 
 type TenantRepo interface {
-	CreateTenant(ctx context.Context, arg CreateTenant) (Tenant, error)
+	CreateTenant(ctx context.Context, req Tenant) (Tenant, error)
 	BulkSoftDeleteTenants(ctx context.Context, tenantIds []int32) error
 	// =====================================================
 	// BULK OPERATIONS

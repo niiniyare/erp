@@ -9,7 +9,7 @@
 -- =====================================================
 
 -- Start transaction to ensure atomic migration
-BEGIN;
+-- BEGIN;
 
 -- =====================================================
 -- EXTENSIONS
@@ -41,7 +41,8 @@ $$;
 CREATE TABLE tenants (
     -- Primary identifiers
     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    slug VARCHAR(50) UNIQUE NOT NULL,
+    slug VARCHAR(50)  NOT NULL,
+    -- slug VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(255) UNIQUE NOT NULL,
 
     -- Contact and access information
@@ -443,6 +444,23 @@ CREATE TRIGGER create_tenant_configuration_trigger
 -- Add trigger comment
 COMMENT ON TRIGGER create_tenant_configuration_trigger ON tenants IS 'Automatically creates default configuration for new tenants';
 
+
+
+CREATE OR REPLACE FUNCTION generate_slug_from_name()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.slug IS NULL THEN
+        NEW.slug := lower(regexp_replace(NEW.name, '[^a-zA-Z0-9]+', '-', 'g'));
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tenant_slug_trigger
+    BEFORE INSERT ON tenants FOR EACH ROW
+    EXECUTE FUNCTION generate_slug_from_name();
+
+
 -- =====================================================
 -- SAMPLE DATA (OPTIONAL)
 -- =====================================================
@@ -466,9 +484,12 @@ INSERT INTO tenants (
 -- =====================================================
 -- MIGRATION COMPLETION
 -- =====================================================
-
 -- Commit the transaction
-COMMIT;
+-- COMMIT;
+
+-- In your database setup/migration
+-- ALTER SYSTEM SET app.current_tenant_id = '';
+-- SELECT pg_reload_conf();
 
 -- Log completion
 DO $$

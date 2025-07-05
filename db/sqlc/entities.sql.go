@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -383,23 +384,23 @@ ORDER BY hp.depth DESC
 `
 
 type GetEntityAncestorsRow struct {
-	Uuid          uuid.UUID  `json:"uuid"`
-	TenantID      uuid.UUID  `json:"tenant_id"`
-	ParentID      *uuid.UUID `json:"parent_id"`
-	Name          string     `json:"name"`
-	Code          *string    `json:"code"`
-	Type          string     `json:"type"`
-	IsActive      bool       `json:"is_active"`
-	Hidden        bool       `json:"hidden"`
-	AccrualMethod bool       `json:"accrual_method"`
-	FyStartMonth  int32      `json:"fy_start_month"`
-	Address       []byte     `json:"address"`
-	Picture       *string    `json:"picture"`
-	Settings      []byte     `json:"settings"`
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
-	DeletedAt     time.Time  `json:"deleted_at"`
-	Depth         int32      `json:"depth"`
+	Uuid          uuid.UUID    `json:"uuid"`
+	TenantID      uuid.UUID    `json:"tenant_id"`
+	ParentID      *uuid.UUID   `json:"parent_id"`
+	Name          string       `json:"name"`
+	Code          *string      `json:"code"`
+	Type          string       `json:"type"`
+	IsActive      bool         `json:"is_active"`
+	Hidden        bool         `json:"hidden"`
+	AccrualMethod bool         `json:"accrual_method"`
+	FyStartMonth  int32        `json:"fy_start_month"`
+	Address       []byte       `json:"address"`
+	Picture       *string      `json:"picture"`
+	Settings      []byte       `json:"settings"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
+	DeletedAt     sql.NullTime `json:"deleted_at"`
+	Depth         int32        `json:"depth"`
 }
 
 // GetEntityAncestors
@@ -582,23 +583,23 @@ ORDER BY hp.depth, e.name
 `
 
 type GetEntityDescendantsRow struct {
-	Uuid          uuid.UUID  `json:"uuid"`
-	TenantID      uuid.UUID  `json:"tenant_id"`
-	ParentID      *uuid.UUID `json:"parent_id"`
-	Name          string     `json:"name"`
-	Code          *string    `json:"code"`
-	Type          string     `json:"type"`
-	IsActive      bool       `json:"is_active"`
-	Hidden        bool       `json:"hidden"`
-	AccrualMethod bool       `json:"accrual_method"`
-	FyStartMonth  int32      `json:"fy_start_month"`
-	Address       []byte     `json:"address"`
-	Picture       *string    `json:"picture"`
-	Settings      []byte     `json:"settings"`
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
-	DeletedAt     time.Time  `json:"deleted_at"`
-	Depth         int32      `json:"depth"`
+	Uuid          uuid.UUID    `json:"uuid"`
+	TenantID      uuid.UUID    `json:"tenant_id"`
+	ParentID      *uuid.UUID   `json:"parent_id"`
+	Name          string       `json:"name"`
+	Code          *string      `json:"code"`
+	Type          string       `json:"type"`
+	IsActive      bool         `json:"is_active"`
+	Hidden        bool         `json:"hidden"`
+	AccrualMethod bool         `json:"accrual_method"`
+	FyStartMonth  int32        `json:"fy_start_month"`
+	Address       []byte       `json:"address"`
+	Picture       *string      `json:"picture"`
+	Settings      []byte       `json:"settings"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
+	DeletedAt     sql.NullTime `json:"deleted_at"`
+	Depth         int32        `json:"depth"`
 }
 
 // GetEntityDescendants
@@ -958,25 +959,25 @@ ORDER BY sort_path
 `
 
 type GetEntityTreeStructureRow struct {
-	Uuid          uuid.UUID   `json:"uuid"`
-	TenantID      uuid.UUID   `json:"tenant_id"`
-	ParentID      *uuid.UUID  `json:"parent_id"`
-	Name          string      `json:"name"`
-	Code          *string     `json:"code"`
-	Type          string      `json:"type"`
-	IsActive      bool        `json:"is_active"`
-	Hidden        bool        `json:"hidden"`
-	AccrualMethod bool        `json:"accrual_method"`
-	FyStartMonth  int32       `json:"fy_start_month"`
-	Address       []byte      `json:"address"`
-	Picture       *string     `json:"picture"`
-	Settings      []byte      `json:"settings"`
-	CreatedAt     time.Time   `json:"created_at"`
-	UpdatedAt     time.Time   `json:"updated_at"`
-	DeletedAt     time.Time   `json:"deleted_at"`
-	Level         int32       `json:"level"`
-	Path          interface{} `json:"path"`
-	SortPath      string      `json:"sort_path"`
+	Uuid          uuid.UUID    `json:"uuid"`
+	TenantID      uuid.UUID    `json:"tenant_id"`
+	ParentID      *uuid.UUID   `json:"parent_id"`
+	Name          string       `json:"name"`
+	Code          *string      `json:"code"`
+	Type          string       `json:"type"`
+	IsActive      bool         `json:"is_active"`
+	Hidden        bool         `json:"hidden"`
+	AccrualMethod bool         `json:"accrual_method"`
+	FyStartMonth  int32        `json:"fy_start_month"`
+	Address       []byte       `json:"address"`
+	Picture       *string      `json:"picture"`
+	Settings      []byte       `json:"settings"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
+	DeletedAt     sql.NullTime `json:"deleted_at"`
+	Level         int32        `json:"level"`
+	Path          interface{}  `json:"path"`
+	SortPath      string       `json:"sort_path"`
 }
 
 // GetEntityTreeStructure
@@ -1067,25 +1068,25 @@ type GetEntityWithHierarchyInfoParams struct {
 }
 
 type GetEntityWithHierarchyInfoRow struct {
-	Uuid          uuid.UUID   `json:"uuid"`
-	TenantID      uuid.UUID   `json:"tenant_id"`
-	ParentID      *uuid.UUID  `json:"parent_id"`
-	Name          string      `json:"name"`
-	Code          *string     `json:"code"`
-	Type          string      `json:"type"`
-	IsActive      bool        `json:"is_active"`
-	Hidden        bool        `json:"hidden"`
-	AccrualMethod bool        `json:"accrual_method"`
-	FyStartMonth  int32       `json:"fy_start_month"`
-	Address       []byte      `json:"address"`
-	Picture       *string     `json:"picture"`
-	Settings      []byte      `json:"settings"`
-	CreatedAt     time.Time   `json:"created_at"`
-	UpdatedAt     time.Time   `json:"updated_at"`
-	DeletedAt     time.Time   `json:"deleted_at"`
-	Level         interface{} `json:"level"`
-	ChildCount    int64       `json:"child_count"`
-	ParentName    *string     `json:"parent_name"`
+	Uuid          uuid.UUID    `json:"uuid"`
+	TenantID      uuid.UUID    `json:"tenant_id"`
+	ParentID      *uuid.UUID   `json:"parent_id"`
+	Name          string       `json:"name"`
+	Code          *string      `json:"code"`
+	Type          string       `json:"type"`
+	IsActive      bool         `json:"is_active"`
+	Hidden        bool         `json:"hidden"`
+	AccrualMethod bool         `json:"accrual_method"`
+	FyStartMonth  int32        `json:"fy_start_month"`
+	Address       []byte       `json:"address"`
+	Picture       *string      `json:"picture"`
+	Settings      []byte       `json:"settings"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
+	DeletedAt     sql.NullTime `json:"deleted_at"`
+	Level         interface{}  `json:"level"`
+	ChildCount    int64        `json:"child_count"`
+	ParentName    *string      `json:"parent_name"`
 }
 
 // Advanced Entity Queries

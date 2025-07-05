@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,11 +25,11 @@ RETURNING user_id, role_id, entity_id, assigned_at, assigned_by, expires_at
 `
 
 type AssignUserRoleParams struct {
-	UserID     uuid.UUID  `json:"user_id"`
-	RoleID     uuid.UUID  `json:"role_id"`
-	EntityID   uuid.UUID  `json:"entity_id"`
-	AssignedBy *uuid.UUID `json:"assigned_by"`
-	ExpiresAt  time.Time  `json:"expires_at"`
+	UserID     uuid.UUID    `json:"user_id"`
+	RoleID     uuid.UUID    `json:"role_id"`
+	EntityID   uuid.UUID    `json:"entity_id"`
+	AssignedBy *uuid.UUID   `json:"assigned_by"`
+	ExpiresAt  sql.NullTime `json:"expires_at"`
 }
 
 // ==============================================
@@ -245,16 +246,16 @@ ORDER BY p.last_name, p.first_name, u.email
 `
 
 type GetRoleUsersRow struct {
-	UserID     uuid.UUID  `json:"user_id"`
-	RoleID     uuid.UUID  `json:"role_id"`
-	EntityID   uuid.UUID  `json:"entity_id"`
-	AssignedAt time.Time  `json:"assigned_at"`
-	AssignedBy *uuid.UUID `json:"assigned_by"`
-	ExpiresAt  time.Time  `json:"expires_at"`
-	Email      string     `json:"email"`
-	Username   *string    `json:"username"`
-	FirstName  *string    `json:"first_name"`
-	LastName   *string    `json:"last_name"`
+	UserID     uuid.UUID    `json:"user_id"`
+	RoleID     uuid.UUID    `json:"role_id"`
+	EntityID   uuid.UUID    `json:"entity_id"`
+	AssignedAt time.Time    `json:"assigned_at"`
+	AssignedBy *uuid.UUID   `json:"assigned_by"`
+	ExpiresAt  sql.NullTime `json:"expires_at"`
+	Email      string       `json:"email"`
+	Username   *string      `json:"username"`
+	FirstName  *string      `json:"first_name"`
+	LastName   *string      `json:"last_name"`
 }
 
 // GetRoleUsers
@@ -348,15 +349,15 @@ ORDER BY r.name
 `
 
 type GetUserRolesRow struct {
-	UserID          uuid.UUID  `json:"user_id"`
-	RoleID          uuid.UUID  `json:"role_id"`
-	EntityID        uuid.UUID  `json:"entity_id"`
-	AssignedAt      time.Time  `json:"assigned_at"`
-	AssignedBy      *uuid.UUID `json:"assigned_by"`
-	ExpiresAt       time.Time  `json:"expires_at"`
-	RoleName        string     `json:"role_name"`
-	RoleDescription string     `json:"role_description"`
-	Permissions     []byte     `json:"permissions"`
+	UserID          uuid.UUID    `json:"user_id"`
+	RoleID          uuid.UUID    `json:"role_id"`
+	EntityID        uuid.UUID    `json:"entity_id"`
+	AssignedAt      time.Time    `json:"assigned_at"`
+	AssignedBy      *uuid.UUID   `json:"assigned_by"`
+	ExpiresAt       sql.NullTime `json:"expires_at"`
+	RoleName        string       `json:"role_name"`
+	RoleDescription string       `json:"role_description"`
+	Permissions     []byte       `json:"permissions"`
 }
 
 // GetUserRoles
@@ -451,14 +452,14 @@ ORDER BY ur.expires_at DESC
 `
 
 type ListExpiredUserRolesRow struct {
-	UserID     uuid.UUID  `json:"user_id"`
-	RoleID     uuid.UUID  `json:"role_id"`
-	EntityID   uuid.UUID  `json:"entity_id"`
-	AssignedAt time.Time  `json:"assigned_at"`
-	AssignedBy *uuid.UUID `json:"assigned_by"`
-	ExpiresAt  time.Time  `json:"expires_at"`
-	Email      string     `json:"email"`
-	RoleName   string     `json:"role_name"`
+	UserID     uuid.UUID    `json:"user_id"`
+	RoleID     uuid.UUID    `json:"role_id"`
+	EntityID   uuid.UUID    `json:"entity_id"`
+	AssignedAt time.Time    `json:"assigned_at"`
+	AssignedBy *uuid.UUID   `json:"assigned_by"`
+	ExpiresAt  sql.NullTime `json:"expires_at"`
+	Email      string       `json:"email"`
+	RoleName   string       `json:"role_name"`
 }
 
 // ListExpiredUserRoles

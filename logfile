@@ -2193,3 +2193,7 @@
 2025-06-24 18:30:23.562 EAT [31121] LOG:  checkpoint complete: wrote 1053 buffers (6.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=106.255 s, sync=0.164 s, total=106.444 s; sync files=529, longest=0.004 s, average=0.001 s; distance=5609 kB, estimate=5609 kB; lsn=0/896B45B0, redo lsn=0/896B4520
 2025-07-04 04:29:51.859 EAT [31049] FATAL:  lock file "postmaster.pid" already exists
 2025-07-04 04:29:51.859 EAT [31049] HINT:  Is another postmaster (PID 21344) running in data directory "/data/data/com.termux/files/home/pg"?
+2025-07-04 10:27:00.839 EAT [21163] FATAL:  lock file "postmaster.pid" already exists
+2025-07-04 10:27:00.839 EAT [21163] HINT:  Is another postmaster (PID 21344) running in data directory "/data/data/com.termux/files/home/pg"?
+2025-07-05 20:38:57.382 EAT [17498] FATAL:  lock file "postmaster.pid" already exists
+2025-07-05 20:38:57.382 EAT [17498] HINT:  Is another postmaster (PID 21344) running in data directory "/data/data/com.termux/files/home/pg"?
