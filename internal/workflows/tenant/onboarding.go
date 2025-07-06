@@ -1,12 +1,13 @@
 package tenant
 
 import (
+    "context"
     "time"
     
     "go.temporal.io/sdk/workflow"
     "go.temporal.io/sdk/activity"
 
-    "github.com/niiniyare/erp/internal/domain/tenant"
+    "github.com/niiniyare/erp/internal/core/tenant"
 )
 
 // TenantOnboardingWorkflow handles tenant setup process

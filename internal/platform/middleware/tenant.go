@@ -6,7 +6,7 @@ import (
     "strings"
     
     "github.com/gin-gonic/gin"
-    "github.com/niiniyare/erp/internal/domain/tenant"
+    "github.com/niiniyare/erp/internal/core/tenant"
     "github.com/niiniyare/erp/internal/shared/errors"
 )
 

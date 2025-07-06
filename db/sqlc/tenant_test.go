@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/niiniyare/erp/pkg/util"
+	"github.com/niiniyare/erp/internal/shared/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -66,7 +66,7 @@ func generateUniqueTestName(baseName string) string {
 	// Use only the last 6 digits of timestamp for uniqueness
 	timestamp := time.Now().UnixNano() % 1000000
 	// Use 4-char random string to save space
-	random := util.RandomString(4)
+	random := utils.RandomString(4)
 	// Format: BaseName_123456_AbCd (max ~25 chars for reasonable base names)
 	return fmt.Sprintf("%s_%06d_%s", baseName, timestamp, random)
 }
@@ -74,7 +74,7 @@ func generateUniqueTestName(baseName string) string {
 // generateShortUniqueName creates very short unique names for constrained fields
 func generateShortUniqueName(prefix string) string {
 	timestamp := time.Now().UnixNano() % 100000 // 5 digits
-	random := util.RandomString(3)              // 3 chars
+	random := utils.RandomString(3)              // 3 chars
 	// Format: prefix_12345_ABC (max ~15 chars for short prefixes)
 	return fmt.Sprintf("%s_%05d_%s", prefix, timestamp, random)
 }
