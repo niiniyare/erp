@@ -36,25 +36,41 @@ func NewService(repo Repository, cache cache.Service) Service {
 
 // CreateTenant implements Service.CreateTenant
 func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*Tenant, error) {
-    // Validate subdomain uniqueness
-    exists, err := s.repo.Exists(ctx, req.Subdomain)
-    if err != nil {
-        return nil, fmt.Errorf("failed to check subdomain existence: %w", err)
+    // Validate subdomain uniqueness if provided
+    if req.Subdomain != nil && *req.Subdomain != "" {
+        exists, err := s.repo.Exists(ctx, *req.Subdomain)
+        if err != nil {
+            return nil, fmt.Errorf("failed to check subdomain existence: %w", err)
+        }
+        if exists {
+            return nil, errors.ErrSubdomainAlreadyExists
+        }
     }
-    if exists {
-        return nil, errors.ErrSubdomainAlreadyExists
+    
+    // Set default status if not provided
+    status := req.Status
+    if status == "" {
+        status = StatusActive
     }
     
     // Create tenant entity
     tenant := &Tenant{
-        ID:        uuid.New(),
-        Name:      req.Name,
-        Subdomain: req.Subdomain,
-        PlanType:  req.PlanType,
-        Status:    StatusActive,
-        Settings:  req.Settings,
-        CreatedAt: time.Now(),
-        UpdatedAt: time.Now(),
+        ID:                 uuid.New(),
+        Slug:               req.Slug,
+        Name:               req.Name,
+        Email:              req.Email,
+        Subdomain:          req.Subdomain,
+        Status:             status,
+        Timezone:           "UTC", // Default timezone
+        CurrencyCode:       "USD", // Default currency
+        Industry:           req.Industry,
+        CompanySize:        req.CompanySize,
+        TaxID:              req.TaxID,
+        RegistrationNumber: req.RegistrationNumber,
+        LegalEntityType:    req.LegalEntityType,
+        Settings:           req.Settings,
+        CreatedAt:          time.Now(),
+        UpdatedAt:          time.Now(),
     }
     
     // Save to database
@@ -62,9 +78,11 @@ func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*T
         return nil, fmt.Errorf("failed to create tenant: %w", err)
     }
     
-    // Cache the tenant
-    cacheKey := fmt.Sprintf("tenant:subdomain:%s", tenant.Subdomain)
-    s.cache.Set(ctx, cacheKey, tenant, 30*time.Minute)
+    // Cache the tenant if subdomain is provided
+    if tenant.Subdomain != nil {
+        cacheKey := fmt.Sprintf("tenant:subdomain:%s", *tenant.Subdomain)
+        s.cache.Set(ctx, cacheKey, tenant, 30*time.Minute)
+    }
     
     return tenant, nil
 }

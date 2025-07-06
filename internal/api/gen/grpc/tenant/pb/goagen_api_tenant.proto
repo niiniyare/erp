@@ -1,0 +1,90 @@
+// Code generated with goa v3.21.1, DO NOT EDIT.
+//
+// tenant protocol buffer definition
+//
+// Command:
+// $ goa gen github.com/niiniyare/erp/internal/api/design -o internal/api
+
+syntax = "proto3";
+
+package tenant;
+
+option go_package = "/tenantpb";
+
+// Tenant management service
+service Tenant {
+	// Create a new tenant
+	rpc Create (CreateRequest) returns (CreateResponse);
+	// Get tenant by ID
+	rpc Get (GetRequest) returns (GetResponse);
+	// List tenants with pagination
+	rpc List (ListRequest) returns (TenantMinimalCollection);
+}
+
+message CreateRequest {
+	// Tenant name
+	string name = 1;
+	// Unique subdomain
+	string subdomain = 2;
+	// Subscription plan
+	optional string plan_type = 3;
+}
+
+message CreateResponse {
+	// Tenant unique identifier
+	string id = 1;
+	// Tenant name
+	string name = 2;
+	// Tenant subdomain
+	string subdomain = 3;
+	// Subscription plan type
+	string plan_type = 4;
+	// Tenant status
+	string status = 5;
+	// Creation timestamp
+	optional string created_at = 6;
+	// Update timestamp
+	optional string updated_at = 7;
+}
+
+message GetRequest {
+	// Tenant ID
+	string id = 1;
+}
+
+message GetResponse {
+	// Tenant unique identifier
+	string id = 1;
+	// Tenant name
+	string name = 2;
+	// Tenant subdomain
+	string subdomain = 3;
+	// Subscription plan type
+	string plan_type = 4;
+	// Tenant status
+	string status = 5;
+	// Creation timestamp
+	optional string created_at = 6;
+	// Update timestamp
+	optional string updated_at = 7;
+}
+
+message ListRequest {
+	// Pagination offset
+	optional sint32 offset = 1;
+	// Pagination limit
+	optional sint32 limit = 2;
+}
+
+message TenantMinimalCollection {
+	repeated TenantMinimal field = 1;
+}
+// Tenant result type (minimal view)
+message TenantMinimal {
+	// Tenant unique identifier
+	string id = 1;
+	// Tenant name
+	string name = 2;
+	// Tenant subdomain
+	string subdomain = 3;
+}
