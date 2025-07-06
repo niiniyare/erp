@@ -3,11 +3,16 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/niiniyare/erp/internal/core/tenant"
+	"github.com/niiniyare/erp/internal/platform/middleware"
 )
 
 // NewRouter creates a new router with all handlers
 func NewRouter(tenantService tenant.Service) *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
+
+	// Add middleware
+	r.Use(gin.Recovery())
+	r.Use(middleware.RequestLogger())
 
 	// Initialize handlers
 	tenantHandler := NewTenantHandler(tenantService)

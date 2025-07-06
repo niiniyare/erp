@@ -2,12 +2,14 @@ package tenant
 
 import (
     "context"
+    "errors"
     "fmt"
     "time"
     
     "github.com/google/uuid"
     "github.com/niiniyare/erp/internal/platform/cache"
-    "github.com/niiniyare/erp/internal/shared/errors"
+    sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
+    "github.com/niiniyare/erp/internal/shared/logger"
 )
 
 // Service defines tenant business logic interface
@@ -36,14 +38,27 @@ func NewService(repo Repository, cache cache.Service) Service {
 
 // CreateTenant implements Service.CreateTenant
 func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*Tenant, error) {
+    logger.InfoContext(ctx, "Creating new tenant", logger.Fields{
+        "tenant_name": req.Name,
+        "subdomain": req.Subdomain,
+        "industry": req.Industry,
+    })
+    
     // Validate subdomain uniqueness if provided
     if req.Subdomain != nil && *req.Subdomain != "" {
         exists, err := s.repo.Exists(ctx, *req.Subdomain)
         if err != nil {
+            logger.ErrorContext(ctx, "Failed to check subdomain existence", logger.Fields{
+                "subdomain": *req.Subdomain,
+                "error": err.Error(),
+            })
             return nil, fmt.Errorf("failed to check subdomain existence: %w", err)
         }
         if exists {
-            return nil, errors.ErrSubdomainAlreadyExists
+            logger.WarnContext(ctx, "Subdomain already exists", logger.Fields{
+                "subdomain": *req.Subdomain,
+            })
+            return nil, sharedErrors.ErrSubdomainAlreadyExists
         }
     }
     
@@ -75,13 +90,31 @@ func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*T
     
     // Save to database
     if err := s.repo.Create(ctx, tenant); err != nil {
+        logger.ErrorContext(ctx, "Failed to create tenant in database", logger.Fields{
+            "tenant_id": tenant.ID.String(),
+            "tenant_name": tenant.Name,
+            "error": err.Error(),
+        })
         return nil, fmt.Errorf("failed to create tenant: %w", err)
     }
+    
+    logger.InfoContext(ctx, "Tenant created successfully", logger.Fields{
+        "tenant_id": tenant.ID.String(),
+        "tenant_name": tenant.Name,
+        "subdomain": tenant.Subdomain,
+        "status": string(tenant.Status),
+    })
     
     // Cache the tenant if subdomain is provided
     if tenant.Subdomain != nil {
         cacheKey := fmt.Sprintf("tenant:subdomain:%s", *tenant.Subdomain)
-        s.cache.Set(ctx, cacheKey, tenant, 30*time.Minute)
+        if err := s.cache.Set(ctx, cacheKey, tenant, 30*time.Minute); err != nil {
+            logger.WarnContext(ctx, "Failed to cache tenant", logger.Fields{
+                "tenant_id": tenant.ID.String(),
+                "cache_key": cacheKey,
+                "error": err.Error(),
+            })
+        }
     }
     
     return tenant, nil
@@ -89,21 +122,51 @@ func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*T
 
 // GetTenantBySubdomain implements Service.GetTenantBySubdomain with caching
 func (s *service) GetTenantBySubdomain(ctx context.Context, subdomain string) (*Tenant, error) {
+    logger.DebugContext(ctx, "Getting tenant by subdomain", logger.Fields{
+        "subdomain": subdomain,
+    })
+    
     // Check cache first
     cacheKey := fmt.Sprintf("tenant:subdomain:%s", subdomain)
     var tenant Tenant
     if err := s.cache.Get(ctx, cacheKey, &tenant); err == nil {
+        logger.DebugContext(ctx, "Tenant found in cache", logger.Fields{
+            "subdomain": subdomain,
+            "tenant_id": tenant.ID.String(),
+        })
         return &tenant, nil
     }
     
     // Get from database
     dbTenant, err := s.repo.GetBySubdomain(ctx, subdomain)
     if err != nil {
+        if errors.Is(err, sharedErrors.ErrTenantNotFound) {
+            logger.WarnContext(ctx, "Tenant not found by subdomain", logger.Fields{
+                "subdomain": subdomain,
+            })
+        } else {
+            logger.ErrorContext(ctx, "Failed to get tenant by subdomain", logger.Fields{
+                "subdomain": subdomain,
+                "error": err.Error(),
+            })
+        }
         return nil, err
     }
     
+    logger.InfoContext(ctx, "Tenant found in database", logger.Fields{
+        "subdomain": subdomain,
+        "tenant_id": dbTenant.ID.String(),
+        "tenant_name": dbTenant.Name,
+    })
+    
     // Cache result
-    s.cache.Set(ctx, cacheKey, dbTenant, 30*time.Minute)
+    if err := s.cache.Set(ctx, cacheKey, dbTenant, 30*time.Minute); err != nil {
+        logger.WarnContext(ctx, "Failed to cache tenant", logger.Fields{
+            "subdomain": subdomain,
+            "tenant_id": dbTenant.ID.String(),
+            "error": err.Error(),
+        })
+    }
     
     return dbTenant, nil
 }

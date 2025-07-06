@@ -10,6 +10,7 @@ import (
     
     "github.com/niiniyare/erp/internal/core/tenant"
     sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
+    "github.com/niiniyare/erp/internal/shared/logger"
 )
 
 // TenantHandler handles tenant-related HTTP requests
@@ -26,7 +27,17 @@ func NewTenantHandler(service tenant.Service) *TenantHandler {
 func (h *TenantHandler) CreateTenant(c *gin.Context) {
     var req tenant.CreateTenantRequest
     
+    logger.InfoContext(c.Request.Context(), "Received tenant creation request", logger.Fields{
+        "method": c.Request.Method,
+        "path": c.Request.URL.Path,
+        "client_ip": c.ClientIP(),
+    })
+    
     if err := c.ShouldBindJSON(&req); err != nil {
+        logger.WarnContext(c.Request.Context(), "Invalid request payload", logger.Fields{
+            "error": err.Error(),
+            "content_type": c.GetHeader("Content-Type"),
+        })
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
@@ -36,12 +47,28 @@ func (h *TenantHandler) CreateTenant(c *gin.Context) {
     if err != nil {
         switch {
         case errors.Is(err, sharedErrors.ErrSubdomainAlreadyExists):
+            logger.WarnContext(c.Request.Context(), "Tenant creation failed - subdomain exists", logger.Fields{
+                "subdomain": req.Subdomain,
+                "tenant_name": req.Name,
+            })
             c.JSON(http.StatusConflict, gin.H{"error": "Subdomain already exists"})
         default:
+            logger.ErrorContext(c.Request.Context(), "Tenant creation failed", logger.Fields{
+                "error": err.Error(),
+                "tenant_name": req.Name,
+                "subdomain": req.Subdomain,
+            })
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
         }
         return
     }
+    
+    logger.InfoContext(c.Request.Context(), "Tenant created successfully", logger.Fields{
+        "tenant_id": newTenant.ID.String(),
+        "tenant_name": newTenant.Name,
+        "subdomain": newTenant.Subdomain,
+        "status_code": http.StatusCreated,
+    })
     
     c.JSON(http.StatusCreated, newTenant)
 }

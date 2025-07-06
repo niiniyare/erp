@@ -2,12 +2,13 @@ package middleware
 
 import (
     "context"
+    "errors"
     "net/http"
     "strings"
     
     "github.com/gin-gonic/gin"
     "github.com/niiniyare/erp/internal/core/tenant"
-    "github.com/niiniyare/erp/internal/shared/errors"
+    sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 )
 
 // TenantContextKey is the key for tenant context
@@ -32,7 +33,7 @@ func TenantMiddleware(tenantService tenant.Service) gin.HandlerFunc {
         // Get tenant by subdomain
         tenant, err := tenantService.GetTenantBySubdomain(c.Request.Context(), subdomain)
         if err != nil {
-            if errors.Is(err, errors.ErrTenantNotFound) {
+            if errors.Is(err, sharedErrors.ErrTenantNotFound) {
                 c.JSON(http.StatusNotFound, gin.H{"error": "Tenant not found"})
             } else {
                 c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})

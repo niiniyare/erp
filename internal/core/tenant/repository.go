@@ -7,6 +7,7 @@ import (
     "github.com/google/uuid"
     db "github.com/niiniyare/erp/db/sqlc"
     "github.com/niiniyare/erp/internal/shared/errors"
+    "github.com/niiniyare/erp/internal/shared/logger"
 )
 
 // Repository defines the interface for tenant data access
@@ -32,6 +33,12 @@ func NewRepository(store db.Store) Repository {
 
 // Create implements Repository.Create
 func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
+    logger.DebugContext(ctx, "Creating tenant in database", logger.Fields{
+        "tenant_id": tenant.ID.String(),
+        "tenant_name": tenant.Name,
+        "subdomain": tenant.Subdomain,
+    })
+    
     params := db.CreateTenantParams{
         Name:      tenant.Name,
         Slug:      tenant.Slug,
@@ -42,6 +49,12 @@ func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
     }
     
     _, err := r.store.CreateTenant(ctx, params)
+    if err != nil {
+        logger.ErrorContext(ctx, "Failed to create tenant in database", logger.Fields{
+            "tenant_id": tenant.ID.String(),
+            "error": err.Error(),
+        })
+    }
     return err
 }
 
