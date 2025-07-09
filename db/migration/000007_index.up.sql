@@ -4,24 +4,24 @@ CREATE INDEX idx_entities_parent ON entities(parent_id);
 CREATE INDEX idx_entities_type ON entities(type);
 CREATE INDEX idx_hierarchy_paths_tenant ON hierarchy_paths(tenant_id);
 CREATE INDEX idx_hierarchy_paths_ancestor ON hierarchy_paths(ancestor_id);
-CREATE INDEX idx_hierarchy_paths_descendant ON hierarchy_paths(descendant_id);
-CREATE INDEX idx_hierarchy_paths_depth ON hierarchy_paths(depth);
-
-CREATE INDEX idx_persons_tenant ON persons(tenant_id);
-CREATE INDEX idx_persons_type ON persons(person_type);
-CREATE INDEX idx_persons_email ON persons(email);
-CREATE INDEX idx_persons_name ON persons(first_name, last_name);
-
-CREATE INDEX idx_employees_tenant ON employees(tenant_id);
-CREATE INDEX idx_employees_entity ON employees(entity_id);
-CREATE INDEX idx_employees_number ON employees(employee_number);
-CREATE INDEX idx_employees_status ON employees(employment_status);
-
-CREATE INDEX idx_users_tenant ON users(tenant_id);
-CREATE INDEX idx_users_entity ON users(entity_id);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_type ON users(user_type);
-
+-- CREATE INDEX idx_hierarchy_paths_descendant ON hierarchy_paths(descendant_id);
+-- -- CREATE INDEX idx_hierarchy_paths_depth ON hierarchy_paths(depth);
+--
+-- CREATE INDEX idx_persons_tenant ON persons(tenant_id);
+-- CREATE INDEX idx_persons_type ON persons(person_type);
+-- CREATE INDEX idx_persons_email ON persons(email);
+-- CREATE INDEX idx_persons_name ON persons(first_name, last_name);
+--
+-- CREATE INDEX idx_employees_tenant ON employees(tenant_id);
+-- CREATE INDEX idx_employees_entity ON employees(entity_id);
+-- CREATE INDEX idx_employees_number ON employees(employee_number);
+-- CREATE INDEX idx_employees_status ON employees(employment_status);
+--
+-- CREATE INDEX idx_users_tenant ON users(tenant_id);
+-- CREATE INDEX idx_users_entity ON users(entity_id);
+-- CREATE INDEX idx_users_email ON users(email);
+-- CREATE INDEX idx_users_type ON users(user_type);
+--
 CREATE INDEX idx_projects_tenant ON projects(tenant_id);
 CREATE INDEX idx_projects_entity ON projects(entity_id);
 CREATE INDEX idx_projects_status ON projects(status);

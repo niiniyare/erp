@@ -1,21 +1,14 @@
 -- =====================================================
--- ERP/ACCOUNTING SYSTEM DATABASE MIGRATION
--- =====================================================
--- File: 001_create_erp_accounting_system.sql
--- Description: Complete database schema for multi-tenant ERP/Accounting system
--- Author: Generated Migration
--- Date: 2025-07-04
--- Version: 1.0.0
--- =====================================================
-
--- Start transaction to ensure atomic migration
--- BEGIN;
-
--- =====================================================
 -- EXTENSIONS
 -- =====================================================
 -- Enable UUID generation for unique identifiers
+-- Enable required extensions
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Enable Row Level Security globally
+SET row_security = on;
+
 
 -- =====================================================
 -- ROLES AND PERMISSIONS
