@@ -30,38 +30,55 @@ type Employee struct {
 	UpdatedAt        time.Time  `json:"updated_at"`
 }
 
-// Purpose: Stores business entities/organizations/companies.
-//
-//	Description: Core table representing different business entities that can
-//	             have their own accounting books, customers, vendors, etc.
-//	             Uses tree structure for hierarchical organization relationships.
+// Master table for business entities and organizational units. Supports hierarchical structures for companies, subsidiaries, departments, and other organizational divisions. Each entity can maintain its own accounting books, customers, vendors, and fiscal year settings.
 type Entity struct {
-	Uuid          uuid.UUID    `json:"uuid"`
-	TenantID      uuid.UUID    `json:"tenant_id"`
-	ParentID      *uuid.UUID   `json:"parent_id"`
-	Name          string       `json:"name"`
-	Code          *string      `json:"code"`
-	Type          string       `json:"type"`
-	IsActive      bool         `json:"is_active"`
-	Hidden        bool         `json:"hidden"`
-	AccrualMethod bool         `json:"accrual_method"`
-	FyStartMonth  int32        `json:"fy_start_month"`
-	Address       []byte       `json:"address"`
-	Picture       *string      `json:"picture"`
-	Settings      []byte       `json:"settings"`
-	CreatedAt     time.Time    `json:"created_at"`
-	UpdatedAt     time.Time    `json:"updated_at"`
-	DeletedAt     sql.NullTime `json:"deleted_at"`
+	// Primary key - Unique identifier for the entity
+	Uuid uuid.UUID `json:"uuid"`
+	// Foreign key to tenants table - Associates entity with a specific tenant for multi-tenancy support
+	TenantID uuid.UUID `json:"tenant_id"`
+	// Self-referencing foreign key - Creates hierarchical relationship between entities (e.g., subsidiary under parent company)
+	ParentID *uuid.UUID `json:"parent_id"`
+	// Business name or title of the entity - Must be unique within tenant
+	Name string `json:"name"`
+	// Optional internal reference code - Used for abbreviated identification and reporting
+	Code *string `json:"code"`
+	// Classification of entity type - Defines the organizational level and purpose (company, department, project, etc.)
+	Type string `json:"type"`
+	// Active status flag - Indicates whether the entity is currently operational
+	IsActive bool `json:"is_active"`
+	// Visibility flag - Controls whether entity appears in user interfaces and reports
+	Hidden bool `json:"hidden"`
+	// Accounting method indicator - TRUE for accrual accounting, FALSE for cash accounting
+	AccrualMethod bool `json:"accrual_method"`
+	// Fiscal year start month - Numeric month (1-12) when fiscal year begins for this entity
+	FyStartMonth int32 `json:"fy_start_month"`
+	// Physical address information - Stored as JSON object with flexible address components
+	Address []byte `json:"address"`
+	// Entity logo or image reference - File path or URL to associated image
+	Picture *string `json:"picture"`
+	// Entity-specific configuration - JSON object storing customizable settings and preferences
+	Settings []byte `json:"settings"`
+	// Record creation timestamp - Automatically set when entity is first created
+	CreatedAt time.Time `json:"created_at"`
+	// Last modification timestamp - Automatically updated when entity record is modified
+	UpdatedAt time.Time `json:"updated_at"`
+	// Soft deletion timestamp - NULL for active records, timestamp when logically deleted
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
-// Manages sequence numbers for document numbering (invoices, POs, etc.)
+// Manages sequential numbering for business documents within entities. Tracks next available sequence numbers for different document types (invoices, purchase orders, estimates, etc.) by fiscal year and entity.
 type Entitystate struct {
-	Uuid       uuid.UUID `json:"uuid"`
-	FiscalYear *int16    `json:"fiscal_year"`
-	// Document type: invoice, po, estimate, bill, etc.
-	Key          string     `json:"key"`
-	Sequence     int64      `json:"sequence"`
-	EntityID     uuid.UUID  `json:"entity_id"`
+	// Primary key - Unique identifier for the entity state record
+	Uuid uuid.UUID `json:"uuid"`
+	// Fiscal year for sequence tracking - Allows separate numbering sequences per year
+	FiscalYear *int16 `json:"fiscal_year"`
+	// Document type identifier - Specifies the type of document being numbered (invoice, po, estimate, bill, receipt, etc.)
+	Key string `json:"key"`
+	// Next sequence number - The next available sequential number for this document type
+	Sequence int64 `json:"sequence"`
+	// Primary entity reference - The main entity that owns this sequence numbering
+	EntityID uuid.UUID `json:"entity_id"`
+	// Sub-entity reference - Optional reference to a subsidiary or department within the main entity for more granular numbering
 	EntityUnitID *uuid.UUID `json:"entity_unit_id"`
 }
 

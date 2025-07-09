@@ -6,12 +6,20 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Querier interface {
+	//ArchiveOldDeletedEntities
+	//
+	//  DELETE FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND deleted_at < $1
+	//      AND deleted_at IS NOT NULL
+	ArchiveOldDeletedEntities(ctx context.Context, deletedAt sql.NullTime) error
 	// ==============================================
 	// USER ROLES TABLE OPERATIONS
 	// ==============================================
@@ -31,12 +39,29 @@ type Querier interface {
 	//  SET deleted_at = NOW(), updated_at = NOW()
 	//  WHERE tenant_id = $1 AND uuid = ANY($2::UUID[])
 	BatchSoftDeleteEntities(ctx context.Context, arg BatchSoftDeleteEntitiesParams) error
+	// ===============================================
 	// Batch Operations
+	// -- ===============================================
+	//
 	//
 	//  UPDATE entities
 	//  SET is_active = $3, updated_at = NOW()
 	//  WHERE tenant_id = $1 AND uuid = ANY($2::UUID[]) AND deleted_at IS NULL
 	BatchUpdateEntityStatus(ctx context.Context, arg BatchUpdateEntityStatusParams) error
+	//BulkCreateEntityStates
+	//
+	//  INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
+	//  SELECT gen_random_uuid(), $2, unnest($3::VARCHAR[]), 1, $1, $4
+	//  ON CONFLICT (entity_id, key, fiscal_year) DO NOTHING
+	BulkCreateEntityStates(ctx context.Context, arg BulkCreateEntityStatesParams) error
+	//BulkMoveEntities
+	//
+	//  UPDATE entities
+	//  SET parent_id = $2, updated_at = NOW()
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND uuid = ANY($1::UUID[])
+	//      AND deleted_at IS NULL
+	BulkMoveEntities(ctx context.Context, arg BulkMoveEntitiesParams) error
 	//BulkSoftDeleteTenants
 	//
 	//  UPDATE tenants
@@ -51,6 +76,15 @@ type Querier interface {
 	//  SET status = $1, updated_at = NOW()
 	//  WHERE id = ANY($2::UUID[]) AND deleted_at IS NULL
 	BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error
+	//CheckCircularReference
+	//
+	//  SELECT EXISTS(
+	//      SELECT 1 FROM hierarchy_paths
+	//      WHERE tenant_id = current_tenant_id()
+	//          AND ancestor_id = $2
+	//          AND descendant_id = $1
+	//  )::BOOLEAN AS exists
+	CheckCircularReference(ctx context.Context, arg CheckCircularReferenceParams) (bool, error)
 	//CheckCurrentTenantExists
 	//
 	//  SELECT EXISTS(
@@ -99,6 +133,28 @@ type Querier interface {
 	//  DELETE FROM user_roles
 	//  WHERE expires_at IS NOT NULL AND expires_at <= NOW() - INTERVAL '30 days'
 	CleanupExpiredUserRoles(ctx context.Context) error
+	// =====================================================================
+	// 7. MAINTENANCE AND CLEANUP QUERIES
+	// =====================================================================
+	//
+	//
+	//  DELETE FROM hierarchy_paths
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND (
+	//          NOT EXISTS(SELECT 1 FROM entities WHERE uuid = ancestor_id AND tenant_id = current_tenant_id())
+	//          OR NOT EXISTS(SELECT 1 FROM entities WHERE uuid = descendant_id AND tenant_id = current_tenant_id())
+	//      )
+	CleanupOrphanedHierarchyPaths(ctx context.Context) error
+	//CountEntitiesWithFilters
+	//
+	//  SELECT COUNT(*) AS count
+	//  FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND deleted_at IS NULL
+	//      AND ($1::VARCHAR IS NULL OR type = $1)
+	//      AND ($2::BOOLEAN IS NULL OR is_active = $2)
+	//      AND ($3::BOOLEAN IS NULL OR hidden = $3)
+	CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error)
 	//CountFilteredTenants
 	//
 	//  SELECT COUNT(*) FROM tenants
@@ -138,7 +194,12 @@ type Querier interface {
 	//      $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 	//  ) RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (*Entity, error)
+	// ===============================================
 	// Entity State Management
+	// ===============================================
+	//
+	//
+	//
 	//
 	//  INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
 	//  VALUES ($1, $2, $3, $4, $5, $6)
@@ -677,6 +738,14 @@ type Querier interface {
 	//      AND e.deleted_at IS NULL
 	//  ORDER BY e.name
 	GetEntitiesByFiscalYear(ctx context.Context, arg GetEntitiesByFiscalYearParams) ([]*Entity, error)
+	//GetEntitiesByFiscalYearStart
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND fy_start_month = $1
+	//      AND deleted_at IS NULL
+	//  ORDER BY name
+	GetEntitiesByFiscalYearStart(ctx context.Context, fyStartMonth int32) ([]*Entity, error)
 	//GetEntitiesByUUIDs
 	//
 	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
@@ -700,6 +769,27 @@ type Querier interface {
 	//      AND e.deleted_at IS NULL
 	//  ORDER BY hp.depth DESC
 	GetEntityAncestors(ctx context.Context, descendantID uuid.UUID) ([]*GetEntityAncestorsRow, error)
+	//GetEntityAuditLog
+	//
+	//  SELECT
+	//      uuid,
+	//      name,
+	//      type,
+	//      is_active,
+	//      hidden,
+	//      created_at,
+	//      updated_at,
+	//      deleted_at,
+	//      CASE
+	//          WHEN deleted_at IS NOT NULL THEN 'DELETED'
+	//          WHEN updated_at > created_at THEN 'UPDATED'
+	//          ELSE 'CREATED'
+	//      END as action
+	//  FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND (created_at >= $1 OR updated_at >= $1 OR deleted_at >= $1)
+	//  ORDER BY GREATEST(created_at, updated_at, COALESCE(deleted_at, created_at)) DESC
+	GetEntityAuditLog(ctx context.Context, createdAt time.Time) ([]*GetEntityAuditLogRow, error)
 	//GetEntityByCode
 	//
 	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
@@ -720,6 +810,24 @@ type Querier interface {
 	//      AND e.deleted_at IS NULL
 	//  ORDER BY e.name
 	GetEntityChildren(ctx context.Context, ancestorID uuid.UUID) ([]*Entity, error)
+	// =====================================================================
+	// 6. PERFORMANCE AND ANALYTICS QUERIES
+	// =====================================================================
+	//
+	//
+	//  SELECT type, COUNT(*) as count
+	//  FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND deleted_at IS NULL
+	//  GROUP BY type
+	//  ORDER BY count DESC
+	GetEntityCountByType(ctx context.Context) ([]*GetEntityCountByTypeRow, error)
+	//GetEntityDepth
+	//
+	//  SELECT COALESCE(MAX(depth), 0) AS depth
+	//  FROM hierarchy_paths
+	//  WHERE tenant_id = current_tenant_id() AND ancestor_id = $1
+	GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (interface{}, error)
 	//GetEntityDescendants
 	//
 	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
@@ -730,6 +838,27 @@ type Querier interface {
 	//      AND e.deleted_at IS NULL
 	//  ORDER BY hp.depth, e.name
 	GetEntityDescendants(ctx context.Context, ancestorID uuid.UUID) ([]*GetEntityDescendantsRow, error)
+	//GetEntityHealthCheck
+	//
+	//  SELECT
+	//      (SELECT COUNT(*) FROM entities WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL) as active_entities,
+	//      (SELECT COUNT(*) FROM hierarchy_paths WHERE tenant_id = current_tenant_id()) as hierarchy_paths,
+	//      (SELECT COUNT(*) FROM entitystate es JOIN entities e ON es.entity_id = e.uuid WHERE e.tenant_id = current_tenant_id()) as entity_states,
+	//      (SELECT COUNT(*) FROM entities e LEFT JOIN entities p ON e.parent_id = p.uuid WHERE e.tenant_id = current_tenant_id() AND e.parent_id IS NOT NULL AND p.uuid IS NULL) as orphaned_entities,
+	//      (SELECT COUNT(*) FROM hierarchy_paths hp LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid WHERE hp.tenant_id = current_tenant_id() AND (e1.uuid IS NULL OR e2.uuid IS NULL)) as orphaned_paths
+	GetEntityHealthCheck(ctx context.Context) (*GetEntityHealthCheckRow, error)
+	//GetEntityHierarchyStats
+	//
+	//  SELECT
+	//      COUNT(*) as total_entities,
+	//      COUNT(*) FILTER (WHERE parent_id IS NULL) as root_entities,
+	//      MAX(depth) as max_depth,
+	//      AVG(depth) as avg_depth,
+	//      COUNT(DISTINCT ancestor_id) as entities_with_children
+	//  FROM entities e
+	//  LEFT JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id AND hp.tenant_id = e.tenant_id
+	//  WHERE e.tenant_id = current_tenant_id() AND e.deleted_at IS NULL
+	GetEntityHierarchyStats(ctx context.Context) (*GetEntityHierarchyStatsRow, error)
 	//GetEntityLevel
 	//
 	//  SELECT COALESCE(MIN(hp.depth), 0) as level
@@ -745,6 +874,16 @@ type Querier interface {
 	//      AND hp.depth = 1
 	//      AND e.deleted_at IS NULL
 	GetEntityParent(ctx context.Context, descendantID uuid.UUID) (*Entity, error)
+	//GetEntityPath
+	//
+	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth
+	//  FROM entities e
+	//  JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
+	//  WHERE hp.tenant_id = current_tenant_id()
+	//      AND hp.descendant_id = $1
+	//      AND e.deleted_at IS NULL
+	//  ORDER BY hp.depth DESC
+	GetEntityPath(ctx context.Context, descendantID uuid.UUID) ([]*GetEntityPathRow, error)
 	//GetEntityRoots
 	//
 	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
@@ -753,6 +892,20 @@ type Querier interface {
 	//      AND e.deleted_at IS NULL
 	//  ORDER BY e.name
 	GetEntityRoots(ctx context.Context) ([]*Entity, error)
+	//GetEntitySequenceStats
+	//
+	//  SELECT
+	//      e.name as entity_name,
+	//      es.key,
+	//      es.fiscal_year,
+	//      es.sequence,
+	//      es.sequence - 1 as documents_created
+	//  FROM entitystate es
+	//  JOIN entities e ON es.entity_id = e.uuid
+	//  WHERE e.tenant_id = current_tenant_id()
+	//      AND ($1::UUID IS NULL OR es.entity_id = $1)
+	//  ORDER BY e.name, es.key, es.fiscal_year
+	GetEntitySequenceStats(ctx context.Context, dollar_1 uuid.UUID) ([]*GetEntitySequenceStatsRow, error)
 	//GetEntitySiblings
 	//
 	//  SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
@@ -776,6 +929,34 @@ type Querier interface {
 	//  SELECT uuid, fiscal_year, key, sequence, entity_id, entity_unit_id FROM entitystate
 	//  WHERE entity_id = $1 AND key = $2
 	GetEntityStateByKey(ctx context.Context, arg GetEntityStateByKeyParams) (*Entitystate, error)
+	//GetEntityStateHistory
+	//
+	//  SELECT es.uuid, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, e.name as entity_name
+	//  FROM entitystate es
+	//  JOIN entities e ON es.entity_id = e.uuid
+	//  WHERE es.entity_id = $1
+	//      AND ($2::VARCHAR IS NULL OR es.key = $2)
+	//      AND ($3::SMALLINT IS NULL OR es.fiscal_year = $3)
+	//  ORDER BY es.fiscal_year DESC, es.key
+	GetEntityStateHistory(ctx context.Context, arg GetEntityStateHistoryParams) ([]*GetEntityStateHistoryRow, error)
+	// =====================================================================
+	// 4. ENTITY STATE
+	// =====================================================================
+	//
+	//
+	//  SELECT uuid, fiscal_year, key, sequence, entity_id, entity_unit_id FROM entitystate
+	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
+	//  FOR UPDATE
+	GetEntityStateWithLocking(ctx context.Context, arg GetEntityStateWithLockingParams) (*Entitystate, error)
+	//GetEntityStatesByFiscalYear
+	//
+	//  SELECT es.uuid, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, e.name as entity_name
+	//  FROM entitystate es
+	//  JOIN entities e ON es.entity_id = e.uuid
+	//  WHERE es.fiscal_year = $1
+	//      AND e.tenant_id = current_tenant_id()
+	//  ORDER BY e.name, es.key
+	GetEntityStatesByFiscalYear(ctx context.Context, fiscalYear *int16) ([]*GetEntityStatesByFiscalYearRow, error)
 	//GetEntityStats
 	//
 	//  SELECT
@@ -789,6 +970,17 @@ type Querier interface {
 	//  FROM entities
 	//  WHERE tenant_id = $1 AND deleted_at IS NULL
 	GetEntityStats(ctx context.Context, tenantID uuid.UUID) (*GetEntityStatsRow, error)
+	//GetEntitySubtree
+	//
+	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth
+	//  FROM entities e
+	//  JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
+	//  WHERE hp.tenant_id = current_tenant_id()
+	//      AND hp.ancestor_id = $1
+	//      AND e.deleted_at IS NULL
+	//      AND ($2::INTEGER IS NULL OR hp.depth <= $2)
+	//  ORDER BY hp.depth, e.name
+	GetEntitySubtree(ctx context.Context, arg GetEntitySubtreeParams) ([]*GetEntitySubtreeRow, error)
 	//GetEntityTreeStructure
 	//
 	//  WITH RECURSIVE entity_tree AS (
@@ -818,7 +1010,11 @@ type Querier interface {
 	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
 	//  ORDER BY sort_path
 	GetEntityTreeStructure(ctx context.Context, tenantID uuid.UUID) ([]*GetEntityTreeStructureRow, error)
+	// ===============================================
 	// Advanced Entity Queries
+	// ===============================================
+	//
+	//
 	//
 	//  SELECT
 	//      e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
@@ -832,6 +1028,21 @@ type Querier interface {
 	//  WHERE e.uuid = $1 AND e.tenant_id = $2 AND e.deleted_at IS NULL
 	//  GROUP BY e.uuid, parent_e.name
 	GetEntityWithHierarchyInfo(ctx context.Context, arg GetEntityWithHierarchyInfoParams) (*GetEntityWithHierarchyInfoRow, error)
+	//GetHighestSequenceNumber
+	//
+	//  SELECT COALESCE(MAX(sequence), 0) AS sequence
+	//  FROM entitystate
+	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
+	GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (interface{}, error)
+	//GetInconsistentHierarchyPaths
+	//
+	//  SELECT DISTINCT hp.ancestor_id, hp.descendant_id, hp.depth
+	//  FROM hierarchy_paths hp
+	//  LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid AND e1.tenant_id = hp.tenant_id
+	//  LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid AND e2.tenant_id = hp.tenant_id
+	//  WHERE hp.tenant_id = current_tenant_id()
+	//      AND (e1.uuid IS NULL OR e2.uuid IS NULL OR e1.deleted_at IS NOT NULL OR e2.deleted_at IS NOT NULL)
+	GetInconsistentHierarchyPaths(ctx context.Context) ([]*GetInconsistentHierarchyPathsRow, error)
 	//GetLatestTenantUsageStats
 	//
 	//  SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
@@ -846,6 +1057,15 @@ type Querier interface {
 	//  SET sequence = entitystate.sequence + 1
 	//  RETURNING sequence
 	GetNextSequenceNumber(ctx context.Context, arg GetNextSequenceNumberParams) (int64, error)
+	//GetOrphanedEntities
+	//
+	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+	//  LEFT JOIN entities parent ON parent.uuid = e.parent_id AND parent.tenant_id = e.tenant_id
+	//  WHERE e.tenant_id = current_tenant_id()
+	//      AND e.parent_id IS NOT NULL
+	//      AND parent.uuid IS NULL
+	//      AND e.deleted_at IS NULL
+	GetOrphanedEntities(ctx context.Context) ([]*Entity, error)
 	//GetPerson
 	//
 	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, metadata, is_active, created_at, updated_at, deleted_at FROM persons
@@ -891,6 +1111,27 @@ type Querier interface {
 	//  FROM persons p
 	//  WHERE p.id = $1 AND p.tenant_id = current_tenant_id() AND p.deleted_at IS NULL
 	GetPersonFullName(ctx context.Context, personID uuid.UUID) (interface{}, error)
+	//GetRecentlyDeletedEntities
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND deleted_at >= $1
+	//      AND deleted_at IS NOT NULL
+	//  ORDER BY deleted_at DESC
+	//  LIMIT $2
+	GetRecentlyDeletedEntities(ctx context.Context, arg GetRecentlyDeletedEntitiesParams) ([]*Entity, error)
+	// =====================================================================
+	// 5. AUDIT AND MONITORING QUERIES
+	// =====================================================================
+	//
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND updated_at >= $1
+	//      AND deleted_at IS NULL
+	//  ORDER BY updated_at DESC
+	//  LIMIT $2
+	GetRecentlyModifiedEntities(ctx context.Context, arg GetRecentlyModifiedEntitiesParams) ([]*Entity, error)
 	//GetRole
 	//
 	//  SELECT id, tenant_id, entity_id, name, description, module, permissions, entity_scope, is_system_role, created_at FROM roles
@@ -1031,6 +1272,15 @@ type Querier interface {
 	//    AND deleted_at IS NULL
 	//  ORDER BY created_at DESC
 	GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]*Tenant, error)
+	//GetUnusedEntityCodes
+	//
+	//  SELECT DISTINCT code
+	//  FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND code IS NOT NULL
+	//      AND deleted_at IS NOT NULL
+	//  ORDER BY code
+	GetUnusedEntityCodes(ctx context.Context) ([]*string, error)
 	//GetUser
 	//
 	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, is_active, last_login_at, password_changed_at, settings, created_at, updated_at, deleted_at FROM users
@@ -1173,6 +1423,14 @@ type Querier interface {
 	//  WHERE tenant_id = current_tenant_id() AND type = $1 AND deleted_at IS NULL
 	//  ORDER BY name
 	ListEntitiesByType(ctx context.Context, type_ string) ([]*Entity, error)
+	//ListEntitiesByTypes
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND type = ANY($1::VARCHAR[])
+	//      AND deleted_at IS NULL
+	//  ORDER BY type, name
+	ListEntitiesByTypes(ctx context.Context, dollar_1 []string) ([]*Entity, error)
 	// Find all leaf nodes (entities with no children)
 	//
 	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at
@@ -1183,6 +1441,17 @@ type Querier interface {
 	//    AND e.tenant_id = current_tenant_id()
 	//    AND e.is_active = true
 	ListEntitiesWithNochildren(ctx context.Context) ([]*Entity, error)
+	//ListEntitiesWithPagination
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND deleted_at IS NULL
+	//      AND ($1::VARCHAR IS NULL OR type = $1)
+	//      AND ($2::BOOLEAN IS NULL OR is_active = $2)
+	//      AND ($3::BOOLEAN IS NULL OR hidden = $3)
+	//  ORDER BY name
+	//  LIMIT $4 OFFSET $5
+	ListEntitiesWithPagination(ctx context.Context, arg ListEntitiesWithPaginationParams) ([]*Entity, error)
 	//ListEntityStates
 	//
 	//  SELECT uuid, fiscal_year, key, sequence, entity_id, entity_unit_id FROM entitystate
@@ -1267,6 +1536,85 @@ type Querier interface {
 	//  WHERE tenant_id = current_tenant_id() AND hidden = false AND deleted_at IS NULL
 	//  ORDER BY name
 	ListVisibleEntities(ctx context.Context) ([]*Entity, error)
+	// =====================================================================
+	// 3. HIERARCHY BULK OPERATIONS
+	// =====================================================================
+	//
+	//
+	//  WITH RECURSIVE affected_entities AS (
+	//      SELECT $1::UUID as entity_id, 0 as depth
+	//      UNION ALL
+	//      SELECT hp.descendant_id, ae.depth + 1
+	//      FROM affected_entities ae
+	//      JOIN hierarchy_paths hp ON hp.ancestor_id = ae.entity_id
+	//      WHERE hp.tenant_id = current_tenant_id() AND ae.depth < 10
+	//  ),
+	//  delete_paths AS (
+	//      DELETE FROM hierarchy_paths
+	//      WHERE tenant_id = current_tenant_id()
+	//          AND descendant_id IN (SELECT entity_id FROM affected_entities)
+	//  ),
+	//  insert_new_paths AS (
+	//      INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	//      SELECT
+	//          current_tenant_id(),
+	//          ancestor_paths.ancestor_id,
+	//          ae.entity_id,
+	//          ancestor_paths.depth + descendant_paths.depth + 1
+	//      FROM affected_entities ae
+	//      CROSS JOIN (
+	//          SELECT ancestor_id, depth FROM hierarchy_paths
+	//          WHERE tenant_id = current_tenant_id() AND descendant_id = $2
+	//          UNION ALL
+	//          SELECT $2::UUID, 0
+	//      ) ancestor_paths
+	//      CROSS JOIN (
+	//          SELECT descendant_id, depth FROM hierarchy_paths
+	//          WHERE tenant_id = current_tenant_id() AND ancestor_id = $1
+	//          UNION ALL
+	//          SELECT $1::UUID, 0
+	//      ) descendant_paths
+	//      WHERE ae.entity_id = descendant_paths.descendant_id
+	//  )
+	//  UPDATE entities SET parent_id = $2, updated_at = NOW() WHERE uuid = $1
+	MoveEntityToNewParent(ctx context.Context, arg MoveEntityToNewParentParams) error
+	//RebuildHierarchyPaths
+	//
+	//  WITH RECURSIVE entity_hierarchy AS (
+	//      SELECT
+	//          uuid as ancestor_id,
+	//          uuid as descendant_id,
+	//          0 as depth,
+	//          tenant_id
+	//      FROM entities
+	//      WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//
+	//      UNION ALL
+	//
+	//      SELECT
+	//          eh.ancestor_id,
+	//          e.uuid,
+	//          eh.depth + 1,
+	//          e.tenant_id
+	//      FROM entity_hierarchy eh
+	//      JOIN entities e ON e.parent_id = eh.descendant_id
+	//      WHERE e.tenant_id = current_tenant_id()
+	//          AND e.deleted_at IS NULL
+	//          AND eh.depth < 10
+	//  ),
+	//  cleanup AS (
+	//      DELETE FROM hierarchy_paths WHERE tenant_id = current_tenant_id()
+	//  )
+	//  INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	//  SELECT tenant_id, ancestor_id, descendant_id, depth
+	//  FROM entity_hierarchy
+	RebuildHierarchyPaths(ctx context.Context) error
+	//ResetAllEntitySequences
+	//
+	//  UPDATE entitystate
+	//  SET sequence = 1
+	//  WHERE entity_id = $1 AND fiscal_year = $2
+	ResetAllEntitySequences(ctx context.Context, arg ResetAllEntitySequencesParams) error
 	//ResetEntityStateSequence
 	//
 	//  UPDATE entitystate
@@ -1290,6 +1638,22 @@ type Querier interface {
 	//  DELETE FROM user_roles
 	//  WHERE user_id = $1 AND role_id = $2 AND entity_id = $3
 	RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) error
+	// =====================================================================
+	// 2. ENTITY SEARCH AND FILTERING ENHANCEMENTS
+	// =====================================================================
+	//
+	//
+	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+	//  WHERE tenant_id = current_tenant_id()
+	//      AND (code ILIKE '%' || $1 || '%' OR name ILIKE '%' || $1 || '%')
+	//      AND deleted_at IS NULL
+	//  ORDER BY
+	//      CASE WHEN code ILIKE $1 || '%' THEN 1
+	//           WHEN name ILIKE $1 || '%' THEN 2
+	//           ELSE 3 END,
+	//      name
+	//  LIMIT $2
+	SearchEntitiesByCodeAndName(ctx context.Context, arg SearchEntitiesByCodeAndNameParams) ([]*Entity, error)
 	//SearchEntitiesByName
 	//
 	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
@@ -1437,7 +1801,8 @@ type Querier interface {
 	//      SELECT h.tenant_id, hp.ancestor_id, h.descendant_id, h.depth + 1
 	//      FROM hierarchy_cte h
 	//      JOIN hierarchy_paths hp ON hp.descendant_id = h.ancestor_id AND hp.tenant_id = h.tenant_id
-	//      WHERE h.depth < 10 -- Prevent infinite recursion
+	//      --TODO  decide how much depth can entit have
+	//      WHERE h.depth < 5 -- Prevent infinite recursion
 	//  )
 	//  INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
 	//  SELECT DISTINCT tenant_id, ancestor_id, descendant_id, depth
@@ -1643,6 +2008,16 @@ type Querier interface {
 	//  SET password_hash = $2, password_changed_at = NOW(), updated_at = NOW()
 	//  WHERE id = $1 AND tenant_id = current_tenant_id()
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	// =====================================================================
+	// 1. ENTITY VALIDATION AND INTEGRITY CHECKS
+	// =====================================================================
+	//
+	//
+	//  SELECT EXISTS(
+	//      SELECT 1 FROM entities
+	//      WHERE code = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
+	//  )::BOOLEAN AS exists
+	ValidateEntityCode(ctx context.Context, arg ValidateEntityCodeParams) (bool, error)
 	//ValidateEntityHierarchy
 	//
 	//  SELECT
@@ -1658,6 +2033,25 @@ type Querier interface {
 	//      AND hp1.depth > 0
 	//      AND hp2.depth > 0
 	ValidateEntityHierarchy(ctx context.Context, tenantID uuid.UUID) (bool, error)
+	//ValidateEntityName
+	//
+	//  SELECT EXISTS(
+	//      SELECT 1 FROM entities
+	//      WHERE name = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
+	//  ) AS exists
+	ValidateEntityName(ctx context.Context, arg ValidateEntityNameParams) (bool, error)
+	//ValidateEntityParent
+	//
+	//  SELECT
+	//      (
+	//          CASE
+	//              WHEN $1 IS NULL THEN true
+	//              WHEN NOT EXISTS(SELECT 1 FROM entities WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL) THEN false
+	//              WHEN EXISTS(SELECT 1 FROM hierarchy_paths WHERE tenant_id = current_tenant_id() AND ancestor_id = $2 AND descendant_id = $1) THEN false
+	//              ELSE true
+	//          END
+	//      )::BOOLEAN AS valid
+	ValidateEntityParent(ctx context.Context, arg ValidateEntityParentParams) (bool, error)
 }
 
 var _ Querier = (*Queries)(nil)

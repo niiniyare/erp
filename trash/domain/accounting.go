@@ -2,6 +2,7 @@ package comman
 
 //
 //
+//
 // import (
 // 	"database/sql"
 // 	"fmt"
@@ -12,7 +13,7 @@ package comman
 // 	_ "github.com/lib/pq" // Assuming PostgreSQL; adjust import as needed
 // )
 //
-// type Form struct {
+// type AccForm struct {
 // 	ID                         int
 // 	Accno                      string
 // 	Description                string
@@ -54,7 +55,7 @@ package comman
 // 	DSN string
 // }
 //
-// func (f *Form) dbconnect(myconfig *MyConfig) (*sql.DB, error) {
+// func (f *AccForm) dbconnect(myconfig *MyConfig) (*sql.DB, error) {
 // 	// Connect to DB with AutoCommit on (default)
 // 	db, err := sql.Open("postgres", myconfig.DSN)
 // 	if err != nil {
@@ -63,7 +64,7 @@ package comman
 // 	return db, nil
 // }
 //
-// func (f *Form) dbconnectNoAuto(myconfig *MyConfig) (*sql.DB, error) {
+// func (f *AccForm) dbconnectNoAuto(myconfig *MyConfig) (*sql.DB, error) {
 // 	// Connect to DB with AutoCommit off (transaction)
 // 	db, err := sql.Open("postgres", myconfig.DSN)
 // 	if err != nil {
@@ -73,11 +74,11 @@ package comman
 // 	return db, nil
 // }
 //
-// func (f *Form) dberror(query string, err error) {
+// func (f *AccForm) dberror(query string, err error) {
 // 	log.Fatalf("Database error on query [%s]: %v", query, err)
 // }
 //
-// func (f *Form) get_defaults(db *sql.DB, keys []string) (map[string]string, error) {
+// func (f *AccForm) get_defaults(db *sql.DB, keys []string) (map[string]string, error) {
 // 	// This function is assumed to fetch default values for keys like '%accno_id'
 // 	// Since original code calls: $form->get_defaults($dbh, \@{['%accno_id']});
 // 	// We'll simulate fetching defaults from some defaults table or config
@@ -87,7 +88,7 @@ package comman
 // 	return map[string]string{}, nil
 // }
 //
-// func (f *Form) GetAccount(myconfig *MyConfig) error {
+// func (f *AccForm) GetAccount(myconfig *MyConfig) error {
 // 	db, err := f.dbconnect(myconfig)
 // 	if err != nil {
 // 		return err
@@ -186,7 +187,7 @@ package comman
 // 	return nil
 // }
 //
-// func (f *Form) SaveAccount(myconfig *MyConfig) error {
+// func (f *AccForm) SaveAccount(myconfig *MyConfig) error {
 // 	db, err := f.dbconnectNoAuto(myconfig)
 // 	if err != nil {
 // 		return err
@@ -388,14 +389,14 @@ package comman
 // 	return nil
 // }
 //
-// func main() {
+// func Main() {
 // 	// Example usage:
 //
 // 	myconfig := &MyConfig{
 // 		DSN: "user=youruser dbname=yourdb sslmode=disable", // Adjust DSN accordingly
 // 	}
 //
-// 	form := &Form{
+// 	form := &AccForm{
 // 		ID: 1, // Example ID
 // 	}
 //
@@ -415,7 +416,7 @@ package comman
 // }
 //
 //
-// // Assume Form struct encapsulates form data and database connection methods
+// // Assume AccForm struct encapsulates form data and database connection methods
 // type Form struct {
 // 	ID int64
 // 	DB *sql.DB
@@ -571,7 +572,7 @@ package comman
 // 	return nil
 // }
 //
-// func main() {
+// func Main2() {
 // 	// Example usage:
 // 	// Open DB connection, initialize Form struct, call deleteAccount
 //
