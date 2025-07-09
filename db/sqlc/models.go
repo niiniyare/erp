@@ -6,11 +6,109 @@ package db
 
 import (
 	"database/sql"
+	"net/netip"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+// Individual accounts within chart of accounts with hierarchical structure
+type Account struct {
+	ID          uuid.UUID        `json:"id"`
+	Created     pgtype.Timestamp `json:"created"`
+	Updated     pgtype.Timestamp `json:"updated"`
+	TenantID    uuid.UUID        `json:"tenant_id"`
+	EntityID    uuid.UUID        `json:"entity_id"`
+	Path        string           `json:"path"`
+	Depth       int32            `json:"depth"`
+	Numchild    int32            `json:"numchild"`
+	AccountCode string           `json:"account_code"`
+	AccountName string           `json:"account_name"`
+	AccountType string           `json:"account_type"`
+	// Account role: cash, ar, ap, inventory, revenue, expense, equity, etc.
+	AccountRole *string `json:"account_role"`
+	// Normal balance type: DEBIT (assets, expenses) or CREDIT (liabilities, equity, revenue)
+	BalanceType string    `json:"balance_type"`
+	Locked      bool      `json:"locked"`
+	Active      bool      `json:"active"`
+	CoaID       uuid.UUID `json:"coa__id"`
+	RoleDefault *bool     `json:"role_default"`
+}
+
+type AuditLog struct {
+	ID           uuid.UUID   `json:"id"`
+	TenantID     uuid.UUID   `json:"tenant_id"`
+	UserID       *uuid.UUID  `json:"user_id"`
+	EntityID     uuid.UUID   `json:"entity_id"`
+	Action       string      `json:"action"`
+	ResourceType *string     `json:"resource_type"`
+	ResourceID   *int64      `json:"resource_id"`
+	OldValues    []byte      `json:"old_values"`
+	NewValues    []byte      `json:"new_values"`
+	IpAddress    *netip.Addr `json:"ip_address"`
+	UserAgent    string      `json:"user_agent"`
+	SessionID    *string     `json:"session_id"`
+	Module       *string     `json:"module"`
+	CreatedAt    time.Time   `json:"created_at"`
+}
+
+type Budget struct {
+	ID              uuid.UUID      `json:"id"`
+	TenantID        uuid.UUID      `json:"tenant_id"`
+	EntityID        uuid.UUID      `json:"entity_id"`
+	ProjectID       *uuid.UUID     `json:"project_id"`
+	Name            string         `json:"name"`
+	BudgetType      string         `json:"budget_type"`
+	FiscalYear      int32          `json:"fiscal_year"`
+	PeriodStart     time.Time      `json:"period_start"`
+	PeriodEnd       time.Time      `json:"period_end"`
+	TotalAmount     pgtype.Numeric `json:"total_amount"`
+	AllocatedAmount pgtype.Numeric `json:"allocated_amount"`
+	SpentAmount     pgtype.Numeric `json:"spent_amount"`
+	Status          *string        `json:"status"`
+	ApprovedBy      *uuid.UUID     `json:"approved_by"`
+	ApprovedAt      sql.NullTime   `json:"approved_at"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+}
+
+// Chart of accounts templates (e.g., Standard, Manufacturing, Retail)
+type Chartofaccount struct {
+	ID          uuid.UUID        `json:"id"`
+	TenantID    uuid.UUID        `json:"tenant_id"`
+	EntityID    uuid.UUID        `json:"entity_id"`
+	Module      string           `json:"module"`
+	Slug        string           `json:"slug"`
+	Name        *string          `json:"name"`
+	Created     pgtype.Timestamp `json:"created"`
+	Updated     pgtype.Timestamp `json:"updated"`
+	IsActive    *bool            `json:"is_active"`
+	Description string           `json:"description"`
+	Active      bool             `json:"active"`
+}
+
+// * Purpose: Stores customer information and contact details
+// * Description: Maintains customer database with contact information, billing
+// *              details, and sales tax rates for invoicing purposes
+type Customer struct {
+	Created        pgtype.Timestamp `json:"created"`
+	Updated        pgtype.Timestamp `json:"updated"`
+	ID             uuid.UUID        `json:"id"`
+	TenantID       uuid.UUID        `json:"tenant_id"`
+	EntityID       uuid.UUID        `json:"entity_id"`
+	CustomerName   string           `json:"customer_name"`
+	CustomerNumber string           `json:"customer_number"`
+	Description    string           `json:"description"`
+	Active         bool             `json:"active"`
+	Hidden         bool             `json:"hidden"`
+	Address        []byte           `json:"address"`
+	Email          *string          `json:"email"`
+	Website        *string          `json:"website"`
+	Phone          *string          `json:"phone"`
+	SalesTaxRate   *float32         `json:"sales_tax_rate"`
+	AdditionalInfo []byte           `json:"additional_info"`
+}
 
 type Employee struct {
 	ID               uuid.UUID  `json:"id"`
@@ -58,6 +156,7 @@ type Entity struct {
 	Picture *string `json:"picture"`
 	// Entity-specific configuration - JSON object storing customizable settings and preferences
 	Settings []byte `json:"settings"`
+	Metadata []byte `json:"metadata"`
 	// Record creation timestamp - Automatically set when entity is first created
 	CreatedAt time.Time `json:"created_at"`
 	// Last modification timestamp - Automatically updated when entity record is modified
@@ -82,6 +181,155 @@ type Entitystate struct {
 	EntityUnitID *uuid.UUID `json:"entity_unit_id"`
 }
 
+// Closure table for efficient entity hierarchy queries. Stores all ancestor-descendant relationships with depth information. Enables fast retrieval of entity trees, subtrees, and hierarchy levels without recursive queries.
+type HierarchyPath struct {
+	// Tenant identifier - Partitions hierarchy data by tenant for multi-tenancy
+	TenantID uuid.UUID `json:"tenant_id"`
+	// Parent entity in the relationship - References entities.uuid
+	AncestorID uuid.UUID `json:"ancestor_id"`
+	// Child entity in the relationship - References entities.uuid
+	DescendantID uuid.UUID `json:"descendant_id"`
+	// Hierarchical distance - 0 for self-reference, 1 for direct parent-child, 2+ for deeper relationships
+	Depth int32 `json:"depth"`
+}
+
+// Example queries demonstrating UUID-based hierarchy operations
+type HierarchyUuidExample struct {
+	Description string `json:"description"`
+	Example1    string `json:"example_1"`
+	Query1      string `json:"query_1"`
+	Example2    string `json:"example_2"`
+	Query2      string `json:"query_2"`
+	Example3    string `json:"example_3"`
+	Query3      string `json:"query_3"`
+	Example4    string `json:"example_4"`
+	Query4      string `json:"query_4"`
+	Example5    string `json:"example_5"`
+	Query5      string `json:"query_5"`
+	Example6    string `json:"example_6"`
+	Query6      string `json:"query_6"`
+	Example7    string `json:"example_7"`
+	Query7      string `json:"query_7"`
+	Example8    string `json:"example_8"`
+	Query8      string `json:"query_8"`
+}
+
+type InventoryBalance struct {
+	ID                uuid.UUID      `json:"id"`
+	TenantID          uuid.UUID      `json:"tenant_id"`
+	ItemID            uuid.UUID      `json:"item_id"`
+	EntityID          uuid.UUID      `json:"entity_id"`
+	WarehouseID       uuid.UUID      `json:"warehouse_id"`
+	QuantityOnHand    pgtype.Numeric `json:"quantity_on_hand"`
+	QuantityAvailable pgtype.Numeric `json:"quantity_available"`
+	QuantityReserved  pgtype.Numeric `json:"quantity_reserved"`
+	QuantityOnOrder   pgtype.Numeric `json:"quantity_on_order"`
+	AverageCost       pgtype.Numeric `json:"average_cost"`
+	TotalValue        pgtype.Numeric `json:"total_value"`
+	LastMovementDate  time.Time      `json:"last_movement_date"`
+	UpdatedAt         time.Time      `json:"updated_at"`
+}
+
+type InventoryMovement struct {
+	ID              uuid.UUID      `json:"id"`
+	TenantID        uuid.UUID      `json:"tenant_id"`
+	EntityID        uuid.UUID      `json:"entity_id"`
+	ItemID          uuid.UUID      `json:"item_id"`
+	WarehouseID     uuid.UUID      `json:"warehouse_id"`
+	MovementType    string         `json:"movement_type"`
+	ReferenceType   *string        `json:"reference_type"`
+	ReferenceID     *int64         `json:"reference_id"`
+	ReferenceNumber *string        `json:"reference_number"`
+	TransactionDate time.Time      `json:"transaction_date"`
+	Quantity        pgtype.Numeric `json:"quantity"`
+	UnitCost        pgtype.Numeric `json:"unit_cost"`
+	TotalCost       pgtype.Numeric `json:"total_cost"`
+	Reason          string         `json:"reason"`
+	BatchNumber     *string        `json:"batch_number"`
+	SerialNumbers   []string       `json:"serial_numbers"`
+	ExpiryDate      time.Time      `json:"expiry_date"`
+	CreatedBy       *uuid.UUID     `json:"created_by"`
+	CreatedAt       time.Time      `json:"created_at"`
+}
+
+type Item struct {
+	ID                uuid.UUID      `json:"id"`
+	TenantID          uuid.UUID      `json:"tenant_id"`
+	EntityID          uuid.UUID      `json:"entity_id"`
+	ItemCode          string         `json:"item_code"`
+	Name              string         `json:"name"`
+	Description       string         `json:"description"`
+	CategoryID        *uuid.UUID     `json:"category_id"`
+	ItemType          *string        `json:"item_type"`
+	UnitOfMeasure     string         `json:"unit_of_measure"`
+	CostMethod        *string        `json:"cost_method"`
+	StandardCost      pgtype.Numeric `json:"standard_cost"`
+	SellingPrice      pgtype.Numeric `json:"selling_price"`
+	MinimumStockLevel pgtype.Numeric `json:"minimum_stock_level"`
+	MaximumStockLevel pgtype.Numeric `json:"maximum_stock_level"`
+	ReorderPoint      pgtype.Numeric `json:"reorder_point"`
+	ReorderQuantity   pgtype.Numeric `json:"reorder_quantity"`
+	IsActive          *bool          `json:"is_active"`
+	IsSerialized      *bool          `json:"is_serialized"`
+	IsBatchTracked    *bool          `json:"is_batch_tracked"`
+	TaxCategory       *string        `json:"tax_category"`
+	SupplierID        *int32         `json:"supplier_id"`
+	Specifications    []byte         `json:"specifications"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
+}
+
+type ItemCategory struct {
+	ID          uuid.UUID  `json:"id"`
+	TenantID    uuid.UUID  `json:"tenant_id"`
+	EntityID    uuid.UUID  `json:"entity_id"`
+	ParentID    *uuid.UUID `json:"parent_id"`
+	Name        string     `json:"name"`
+	Code        *string    `json:"code"`
+	Description string     `json:"description"`
+	IsActive    *bool      `json:"is_active"`
+	CreatedAt   time.Time  `json:"created_at"`
+}
+
+// Journal entries for double-entry bookkeeping with audit trail
+type Journalentry struct {
+	ID          uuid.UUID        `json:"id"`
+	Created     pgtype.Timestamp `json:"created"`
+	Updated     pgtype.Timestamp `json:"updated"`
+	TenantID    uuid.UUID        `json:"tenant_id"`
+	EntityID    uuid.UUID        `json:"entity_id"`
+	PostedBy    *uuid.UUID       `json:"posted_by"`
+	CreatedBy   *uuid.UUID       `json:"created_by"`
+	JeNumber    string           `json:"je_number"`
+	Timestamp   pgtype.Timestamp `json:"timestamp"`
+	Description *string          `json:"description"`
+	Activity    *string          `json:"activity"`
+	// Source system: invoice, bill, manual, etc.
+	Origin *string `json:"origin"`
+	// Whether the journal entry affects account balances
+	Posted         bool      `json:"posted"`
+	Locked         bool      `json:"locked"`
+	LedgerID       uuid.UUID `json:"ledger_id"`
+	IsClosingEntry bool      `json:"is_closing_entry"`
+}
+
+// Ledgers group related journal entries (e.g., monthly ledgers, project ledgers)
+type Ledger struct {
+	ID             uuid.UUID        `json:"id"`
+	Created        pgtype.Timestamp `json:"created"`
+	Updated        pgtype.Timestamp `json:"updated"`
+	TenantID       uuid.UUID        `json:"tenant_id"`
+	EntityID       uuid.UUID        `json:"entity_id"`
+	PostedBy       *uuid.UUID       `json:"posted_by"`
+	CreatedBy      *uuid.UUID       `json:"created_by"`
+	Name           *string          `json:"name"`
+	Posted         bool             `json:"posted"`
+	Locked         bool             `json:"locked"`
+	Hidden         bool             `json:"hidden"`
+	AdditionalInfo string           `json:"additional_info"`
+	LedgerXid      *string          `json:"ledger_xid"`
+}
+
 type Person struct {
 	ID         uuid.UUID    `json:"id"`
 	TenantID   uuid.UUID    `json:"tenant_id"`
@@ -101,6 +349,36 @@ type Person struct {
 	CreatedAt  time.Time    `json:"created_at"`
 	UpdatedAt  time.Time    `json:"updated_at"`
 	DeletedAt  sql.NullTime `json:"deleted_at"`
+}
+
+type Project struct {
+	ID               uuid.UUID      `json:"id"`
+	TenantID         uuid.UUID      `json:"tenant_id"`
+	EntityID         uuid.UUID      `json:"entity_id"`
+	Name             string         `json:"name"`
+	Code             *string        `json:"code"`
+	Description      string         `json:"description"`
+	ProjectManagerID *uuid.UUID     `json:"project_manager_id"`
+	StartDate        time.Time      `json:"start_date"`
+	EndDate          time.Time      `json:"end_date"`
+	BudgetAmount     pgtype.Numeric `json:"budget_amount"`
+	ActualCost       pgtype.Numeric `json:"actual_cost"`
+	Status           *string        `json:"status"`
+	Metadata         []byte         `json:"metadata"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+}
+
+type RlsChangeLog struct {
+	ID         uuid.UUID    `json:"id"`
+	SchemaName string       `json:"schema_name"`
+	TableName  string       `json:"table_name"`
+	Action     string       `json:"action"`
+	PolicyName string       `json:"policy_name"`
+	PolicyType string       `json:"policy_type"`
+	Command    string       `json:"command"`
+	DryRun     *bool        `json:"dry_run"`
+	ChangedAt  sql.NullTime `json:"changed_at"`
 }
 
 type Role struct {
@@ -188,6 +466,52 @@ type TenantUsageStat struct {
 	CreatedAt      time.Time      `json:"created_at"`
 }
 
+// Multi-tenant Unit of Measure definitions with conversion capabilities
+type Uom struct {
+	// Primary key auto-increment identifier
+	ID uuid.UUID `json:"id"`
+	// Tenant identifier for multi-tenancy
+	TenantID uuid.UUID `json:"tenant_id"`
+	// Entity identifier within tenant
+	EntityID uuid.UUID `json:"entity_id"`
+	// Name of the unit of measure (unique per tenant/entity)
+	UomName string `json:"uom_name"`
+	// Check this to disallow fractions (for Nos)
+	MustBeWholeNumber *bool `json:"must_be_whole_number"`
+	// Whether this UOM is active and can be used
+	Enabled *bool `json:"enabled"`
+	// Short symbol representation of the UOM (e.g., kg, m, pcs)
+	Symbol *string `json:"symbol"`
+	// Standard code according to CEFACT/ICG/2010/IC013 or CEFACT/ICG/2010/IC010
+	CommonCode *string `json:"common_code"`
+	// Additional description or notes about the UOM
+	Description string `json:"description"`
+	// Reference to the base unit for this UOM group (NULL for base units)
+	BaseUomID *uuid.UUID `json:"base_uom_id"`
+	// Factor to convert from this UOM to base UOM (1.0 for base units)
+	ConversionFactor pgtype.Numeric `json:"conversion_factor"`
+	// Category of measurement (Weight, Length, Volume, etc.)
+	UomType   *string          `json:"uom_type"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+}
+
+// Multi-tenant UOM conversion factors between different units
+type UomConversion struct {
+	ID uuid.UUID `json:"id"`
+	// Tenant identifier for multi-tenancy
+	TenantID uuid.UUID `json:"tenant_id"`
+	// Entity identifier within tenant
+	EntityID uuid.UUID `json:"entity_id"`
+	// Source UOM for conversion
+	FromUomID uuid.UUID `json:"from_uom_id"`
+	// Target UOM for conversion
+	ToUomID uuid.UUID `json:"to_uom_id"`
+	// Factor to multiply from_uom to get to_uom
+	ConversionFactor pgtype.Numeric   `json:"conversion_factor"`
+	CreatedAt        pgtype.Timestamp `json:"created_at"`
+}
+
 type User struct {
 	ID                uuid.UUID    `json:"id"`
 	TenantID          uuid.UUID    `json:"tenant_id"`
@@ -214,4 +538,43 @@ type UserRole struct {
 	AssignedAt time.Time    `json:"assigned_at"`
 	AssignedBy *uuid.UUID   `json:"assigned_by"`
 	ExpiresAt  sql.NullTime `json:"expires_at"`
+}
+
+//	Purpose: Stores vendor/supplier information and payment details
+//	* Description:
+//
+// Maintains vendor database with contact information and banking details for bill payments and purchase orders
+type Vendor struct {
+	Created        pgtype.Timestamp `json:"created"`
+	Updated        pgtype.Timestamp `json:"updated"`
+	Uuid           uuid.UUID        `json:"uuid"`
+	VendorName     string           `json:"vendor_name"`
+	VendorNumber   *string          `json:"vendor_number"`
+	Description    string           `json:"description"`
+	Active         bool             `json:"active"`
+	Hidden         bool             `json:"hidden"`
+	TenantID       uuid.UUID        `json:"tenant_id"`
+	EntityID       uuid.UUID        `json:"entity_id"`
+	Address        []byte           `json:"address"`
+	Contact        []byte           `json:"contact"`
+	AccountNumber  *string          `json:"account_number"`
+	RoutingNumber  *string          `json:"routing_number"`
+	AbaNumber      *string          `json:"aba_number"`
+	SwiftNumber    *string          `json:"swift_number"`
+	TaxIDNumber    *string          `json:"tax_id_number"`
+	AccountType    string           `json:"account_type"`
+	AdditionalInfo []byte           `json:"additional_info"`
+}
+
+type Warehouse struct {
+	ID            uuid.UUID  `json:"id"`
+	TenantID      uuid.UUID  `json:"tenant_id"`
+	EntityID      uuid.UUID  `json:"entity_id"`
+	Code          string     `json:"code"`
+	Name          string     `json:"name"`
+	Address       []byte     `json:"address"`
+	WarehouseType *string    `json:"warehouse_type"`
+	ManagerID     *uuid.UUID `json:"manager_id"`
+	IsActive      *bool      `json:"is_active"`
+	CreatedAt     time.Time  `json:"created_at"`
 }

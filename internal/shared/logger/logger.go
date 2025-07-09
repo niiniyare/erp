@@ -37,7 +37,7 @@ func (l LogLevel) String() string {
 }
 
 // Fields represents structured logging fields
-type Fields map[string]interface{}
+type Fields map[string]any
 
 // Logger defines the interface for all logger implementations
 type Logger interface {

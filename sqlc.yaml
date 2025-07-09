@@ -14,7 +14,7 @@ sql:
       emit_empty_slices: true
       initialisms: ["id"]
       emit_sql_as_comment: true
-      omit_unused_structs: true
+      # omit_unused_structs: true
       emit_prepared_queries: true
       emit_enum_valid_method: true
       emit_result_struct_pointers: true

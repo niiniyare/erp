@@ -24,6 +24,7 @@ CREATE TABLE entities (
     address JSONB DEFAULT '{}'::jsonb,
     picture VARCHAR(100),
     settings JSONB DEFAULT '{}'::jsonb,
+    metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,

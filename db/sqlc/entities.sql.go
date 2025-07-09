@@ -219,10 +219,10 @@ func (q *Queries) CountEntitiesWithFilters(ctx context.Context, arg CountEntitie
 const createEntity = `-- name: CreateEntity :one
 INSERT INTO entities (
     uuid, tenant_id, parent_id, name, code, type, is_active, 
-    hidden, accrual_method, fy_start_month, address, picture, settings
+    hidden, accrual_method, fy_start_month, address, picture, metadata, settings
 ) VALUES (
-    $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-) RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at
+    $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13
+) RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at
 `
 
 type CreateEntityParams struct {
@@ -237,6 +237,7 @@ type CreateEntityParams struct {
 	FyStartMonth  int32      `json:"fy_start_month"`
 	Address       []byte     `json:"address"`
 	Picture       *string    `json:"picture"`
+	Metadata      []byte     `json:"metadata"`
 	Settings      []byte     `json:"settings"`
 }
 
@@ -244,10 +245,10 @@ type CreateEntityParams struct {
 //
 //	INSERT INTO entities (
 //	    uuid, tenant_id, parent_id, name, code, type, is_active,
-//	    hidden, accrual_method, fy_start_month, address, picture, settings
+//	    hidden, accrual_method, fy_start_month, address, picture, metadata, settings
 //	) VALUES (
-//	    $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-//	) RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at
+//	    $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13
+//	) RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at
 func (q *Queries) CreateEntity(ctx context.Context, arg CreateEntityParams) (*Entity, error) {
 	row := q.db.QueryRow(ctx, createEntity,
 		arg.Uuid,
@@ -261,6 +262,7 @@ func (q *Queries) CreateEntity(ctx context.Context, arg CreateEntityParams) (*En
 		arg.FyStartMonth,
 		arg.Address,
 		arg.Picture,
+		arg.Metadata,
 		arg.Settings,
 	)
 	var i Entity
@@ -278,6 +280,7 @@ func (q *Queries) CreateEntity(ctx context.Context, arg CreateEntityParams) (*En
 		&i.Address,
 		&i.Picture,
 		&i.Settings,
+		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -388,7 +391,7 @@ func (q *Queries) DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID
 }
 
 const getEntitiesByFiscalYear = `-- name: GetEntitiesByFiscalYear :many
-SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at
+SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at
 FROM entities e
 JOIN entitystate es ON e.uuid = es.entity_id
 WHERE e.tenant_id = $1 
@@ -404,7 +407,7 @@ type GetEntitiesByFiscalYearParams struct {
 
 // GetEntitiesByFiscalYear
 //
-//	SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at
+//	SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at
 //	FROM entities e
 //	JOIN entitystate es ON e.uuid = es.entity_id
 //	WHERE e.tenant_id = $1
@@ -434,6 +437,7 @@ func (q *Queries) GetEntitiesByFiscalYear(ctx context.Context, arg GetEntitiesBy
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -449,7 +453,7 @@ func (q *Queries) GetEntitiesByFiscalYear(ctx context.Context, arg GetEntitiesBy
 }
 
 const getEntitiesByFiscalYearStart = `-- name: GetEntitiesByFiscalYearStart :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = current_tenant_id() 
     AND fy_start_month = $1
     AND deleted_at IS NULL
@@ -458,7 +462,7 @@ ORDER BY name
 
 // GetEntitiesByFiscalYearStart
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
 //	    AND fy_start_month = $1
 //	    AND deleted_at IS NULL
@@ -486,6 +490,7 @@ func (q *Queries) GetEntitiesByFiscalYearStart(ctx context.Context, fyStartMonth
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -501,7 +506,7 @@ func (q *Queries) GetEntitiesByFiscalYearStart(ctx context.Context, fyStartMonth
 }
 
 const getEntitiesByUUIDs = `-- name: GetEntitiesByUUIDs :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = $1 AND uuid = ANY($2::UUID[]) AND deleted_at IS NULL
 ORDER BY name
 `
@@ -513,7 +518,7 @@ type GetEntitiesByUUIDsParams struct {
 
 // GetEntitiesByUUIDs
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = $1 AND uuid = ANY($2::UUID[]) AND deleted_at IS NULL
 //	ORDER BY name
 func (q *Queries) GetEntitiesByUUIDs(ctx context.Context, arg GetEntitiesByUUIDsParams) ([]*Entity, error) {
@@ -539,6 +544,7 @@ func (q *Queries) GetEntitiesByUUIDs(ctx context.Context, arg GetEntitiesByUUIDs
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -554,7 +560,7 @@ func (q *Queries) GetEntitiesByUUIDs(ctx context.Context, arg GetEntitiesByUUIDs
 }
 
 const getEntity = `-- name: GetEntity :one
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
   WHERE uuid = $1 
   AND tenant_id = current_tenant_id() 
   AND deleted_at IS NULL
@@ -562,7 +568,7 @@ SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_
 
 // GetEntity
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	  WHERE uuid = $1
 //	  AND tenant_id = current_tenant_id()
 //	  AND deleted_at IS NULL
@@ -583,6 +589,7 @@ func (q *Queries) GetEntity(ctx context.Context, argUuid uuid.UUID) (*Entity, er
 		&i.Address,
 		&i.Picture,
 		&i.Settings,
+		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -591,7 +598,7 @@ func (q *Queries) GetEntity(ctx context.Context, argUuid uuid.UUID) (*Entity, er
 }
 
 const getEntityAncestors = `-- name: GetEntityAncestors :many
-SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
+SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
 WHERE hp.tenant_id = current_tenant_id() 
     AND hp.descendant_id = $1 
@@ -614,6 +621,7 @@ type GetEntityAncestorsRow struct {
 	Address       []byte       `json:"address"`
 	Picture       *string      `json:"picture"`
 	Settings      []byte       `json:"settings"`
+	Metadata      []byte       `json:"metadata"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
 	DeletedAt     sql.NullTime `json:"deleted_at"`
@@ -622,7 +630,7 @@ type GetEntityAncestorsRow struct {
 
 // GetEntityAncestors
 //
-//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
 //	WHERE hp.tenant_id = current_tenant_id()
 //	    AND hp.descendant_id = $1
@@ -652,6 +660,7 @@ func (q *Queries) GetEntityAncestors(ctx context.Context, descendantID uuid.UUID
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -751,13 +760,13 @@ func (q *Queries) GetEntityAuditLog(ctx context.Context, createdAt time.Time) ([
 }
 
 const getEntityByCode = `-- name: GetEntityByCode :one
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE code = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
 // GetEntityByCode
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE code = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetEntityByCode(ctx context.Context, code *string) (*Entity, error) {
 	row := q.db.QueryRow(ctx, getEntityByCode, code)
@@ -776,6 +785,7 @@ func (q *Queries) GetEntityByCode(ctx context.Context, code *string) (*Entity, e
 		&i.Address,
 		&i.Picture,
 		&i.Settings,
+		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -784,13 +794,13 @@ func (q *Queries) GetEntityByCode(ctx context.Context, code *string) (*Entity, e
 }
 
 const getEntityByName = `-- name: GetEntityByName :one
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
 // GetEntityByName
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetEntityByName(ctx context.Context, name string) (*Entity, error) {
 	row := q.db.QueryRow(ctx, getEntityByName, name)
@@ -809,6 +819,7 @@ func (q *Queries) GetEntityByName(ctx context.Context, name string) (*Entity, er
 		&i.Address,
 		&i.Picture,
 		&i.Settings,
+		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -817,7 +828,7 @@ func (q *Queries) GetEntityByName(ctx context.Context, name string) (*Entity, er
 }
 
 const getEntityChildren = `-- name: GetEntityChildren :many
-SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
 WHERE hp.tenant_id = current_tenant_id() 
     AND hp.ancestor_id = $1 
@@ -828,7 +839,7 @@ ORDER BY e.name
 
 // GetEntityChildren
 //
-//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
 //	WHERE hp.tenant_id = current_tenant_id()
 //	    AND hp.ancestor_id = $1
@@ -858,6 +869,7 @@ func (q *Queries) GetEntityChildren(ctx context.Context, ancestorID uuid.UUID) (
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -936,7 +948,7 @@ func (q *Queries) GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (int
 }
 
 const getEntityDescendants = `-- name: GetEntityDescendants :many
-SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
+SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
 WHERE hp.tenant_id = current_tenant_id() 
     AND hp.ancestor_id = $1 
@@ -959,6 +971,7 @@ type GetEntityDescendantsRow struct {
 	Address       []byte       `json:"address"`
 	Picture       *string      `json:"picture"`
 	Settings      []byte       `json:"settings"`
+	Metadata      []byte       `json:"metadata"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
 	DeletedAt     sql.NullTime `json:"deleted_at"`
@@ -967,7 +980,7 @@ type GetEntityDescendantsRow struct {
 
 // GetEntityDescendants
 //
-//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
 //	WHERE hp.tenant_id = current_tenant_id()
 //	    AND hp.ancestor_id = $1
@@ -997,6 +1010,7 @@ func (q *Queries) GetEntityDescendants(ctx context.Context, ancestorID uuid.UUID
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -1113,7 +1127,7 @@ func (q *Queries) GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (i
 }
 
 const getEntityParent = `-- name: GetEntityParent :one
-SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
 WHERE hp.tenant_id = current_tenant_id() 
     AND hp.descendant_id = $1 
@@ -1123,7 +1137,7 @@ WHERE hp.tenant_id = current_tenant_id()
 
 // GetEntityParent
 //
-//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
 //	WHERE hp.tenant_id = current_tenant_id()
 //	    AND hp.descendant_id = $1
@@ -1146,6 +1160,7 @@ func (q *Queries) GetEntityParent(ctx context.Context, descendantID uuid.UUID) (
 		&i.Address,
 		&i.Picture,
 		&i.Settings,
+		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -1154,7 +1169,7 @@ func (q *Queries) GetEntityParent(ctx context.Context, descendantID uuid.UUID) (
 }
 
 const getEntityPath = `-- name: GetEntityPath :many
-SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth
+SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at, hp.depth
 FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
 WHERE hp.tenant_id = current_tenant_id() 
@@ -1177,6 +1192,7 @@ type GetEntityPathRow struct {
 	Address       []byte       `json:"address"`
 	Picture       *string      `json:"picture"`
 	Settings      []byte       `json:"settings"`
+	Metadata      []byte       `json:"metadata"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
 	DeletedAt     sql.NullTime `json:"deleted_at"`
@@ -1185,7 +1201,7 @@ type GetEntityPathRow struct {
 
 // GetEntityPath
 //
-//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at, hp.depth
 //	FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
 //	WHERE hp.tenant_id = current_tenant_id()
@@ -1215,6 +1231,7 @@ func (q *Queries) GetEntityPath(ctx context.Context, descendantID uuid.UUID) ([]
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -1231,7 +1248,7 @@ func (q *Queries) GetEntityPath(ctx context.Context, descendantID uuid.UUID) ([]
 }
 
 const getEntityRoots = `-- name: GetEntityRoots :many
-SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at FROM entities e
 WHERE e.tenant_id = current_tenant_id() 
     AND e.parent_id IS NULL
     AND e.deleted_at IS NULL
@@ -1240,7 +1257,7 @@ ORDER BY e.name
 
 // GetEntityRoots
 //
-//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at FROM entities e
 //	WHERE e.tenant_id = current_tenant_id()
 //	    AND e.parent_id IS NULL
 //	    AND e.deleted_at IS NULL
@@ -1268,6 +1285,7 @@ func (q *Queries) GetEntityRoots(ctx context.Context) ([]*Entity, error) {
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -1344,7 +1362,7 @@ func (q *Queries) GetEntitySequenceStats(ctx context.Context, dollar_1 uuid.UUID
 }
 
 const getEntitySiblings = `-- name: GetEntitySiblings :many
-SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at FROM entities e
 JOIN hierarchy_paths hp1 ON e.uuid = hp1.descendant_id
 JOIN hierarchy_paths hp2 ON hp1.ancestor_id = hp2.ancestor_id
 WHERE hp2.tenant_id = current_tenant_id() 
@@ -1358,7 +1376,7 @@ ORDER BY e.name
 
 // GetEntitySiblings
 //
-//	SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+//	SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at FROM entities e
 //	JOIN hierarchy_paths hp1 ON e.uuid = hp1.descendant_id
 //	JOIN hierarchy_paths hp2 ON hp1.ancestor_id = hp2.ancestor_id
 //	WHERE hp2.tenant_id = current_tenant_id()
@@ -1391,6 +1409,7 @@ func (q *Queries) GetEntitySiblings(ctx context.Context, descendantID uuid.UUID)
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -1665,7 +1684,7 @@ func (q *Queries) GetEntityStats(ctx context.Context, tenantID uuid.UUID) (*GetE
 }
 
 const getEntitySubtree = `-- name: GetEntitySubtree :many
-SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth
+SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at, hp.depth
 FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
 WHERE hp.tenant_id = current_tenant_id() 
@@ -1694,6 +1713,7 @@ type GetEntitySubtreeRow struct {
 	Address       []byte       `json:"address"`
 	Picture       *string      `json:"picture"`
 	Settings      []byte       `json:"settings"`
+	Metadata      []byte       `json:"metadata"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
 	DeletedAt     sql.NullTime `json:"deleted_at"`
@@ -1702,7 +1722,7 @@ type GetEntitySubtreeRow struct {
 
 // GetEntitySubtree
 //
-//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at, hp.depth
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at, hp.depth
 //	FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
 //	WHERE hp.tenant_id = current_tenant_id()
@@ -1733,6 +1753,7 @@ func (q *Queries) GetEntitySubtree(ctx context.Context, arg GetEntitySubtreePara
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -1751,7 +1772,7 @@ func (q *Queries) GetEntitySubtree(ctx context.Context, arg GetEntitySubtreePara
 const getEntityTreeStructure = `-- name: GetEntityTreeStructure :many
 WITH RECURSIVE entity_tree AS (
     SELECT 
-        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at,
         0 as level,
         ARRAY[e.name] as path,
         e.name as sort_path
@@ -1763,7 +1784,7 @@ WITH RECURSIVE entity_tree AS (
     UNION ALL
     
     SELECT 
-        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at,
         et.level + 1,
         et.path || e.name,
         et.sort_path || '/' || e.name
@@ -1773,7 +1794,7 @@ WITH RECURSIVE entity_tree AS (
         AND e.deleted_at IS NULL
         AND et.level < 10
 )
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
 ORDER BY sort_path
 `
 
@@ -1791,6 +1812,7 @@ type GetEntityTreeStructureRow struct {
 	Address       []byte       `json:"address"`
 	Picture       *string      `json:"picture"`
 	Settings      []byte       `json:"settings"`
+	Metadata      []byte       `json:"metadata"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
 	DeletedAt     sql.NullTime `json:"deleted_at"`
@@ -1803,7 +1825,7 @@ type GetEntityTreeStructureRow struct {
 //
 //	WITH RECURSIVE entity_tree AS (
 //	    SELECT
-//	        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+//	        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at,
 //	        0 as level,
 //	        ARRAY[e.name] as path,
 //	        e.name as sort_path
@@ -1815,7 +1837,7 @@ type GetEntityTreeStructureRow struct {
 //	    UNION ALL
 //
 //	    SELECT
-//	        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+//	        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at,
 //	        et.level + 1,
 //	        et.path || e.name,
 //	        et.sort_path || '/' || e.name
@@ -1825,7 +1847,7 @@ type GetEntityTreeStructureRow struct {
 //	        AND e.deleted_at IS NULL
 //	        AND et.level < 10
 //	)
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
 //	ORDER BY sort_path
 func (q *Queries) GetEntityTreeStructure(ctx context.Context, tenantID uuid.UUID) ([]*GetEntityTreeStructureRow, error) {
 	rows, err := q.db.Query(ctx, getEntityTreeStructure, tenantID)
@@ -1850,6 +1872,7 @@ func (q *Queries) GetEntityTreeStructure(ctx context.Context, tenantID uuid.UUID
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -1871,7 +1894,7 @@ const getEntityWithHierarchyInfo = `-- name: GetEntityWithHierarchyInfo :one
 
 
 SELECT 
-    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at,
     COALESCE(MIN(hp.depth), 0) as level,
     COUNT(children.uuid) as child_count,
     parent_e.name as parent_name
@@ -1902,6 +1925,7 @@ type GetEntityWithHierarchyInfoRow struct {
 	Address       []byte       `json:"address"`
 	Picture       *string      `json:"picture"`
 	Settings      []byte       `json:"settings"`
+	Metadata      []byte       `json:"metadata"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
 	DeletedAt     sql.NullTime `json:"deleted_at"`
@@ -1915,7 +1939,7 @@ type GetEntityWithHierarchyInfoRow struct {
 // ===============================================
 //
 //	SELECT
-//	    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at,
+//	    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at,
 //	    COALESCE(MIN(hp.depth), 0) as level,
 //	    COUNT(children.uuid) as child_count,
 //	    parent_e.name as parent_name
@@ -1942,6 +1966,7 @@ func (q *Queries) GetEntityWithHierarchyInfo(ctx context.Context, arg GetEntityW
 		&i.Address,
 		&i.Picture,
 		&i.Settings,
+		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -2054,7 +2079,7 @@ func (q *Queries) GetNextSequenceNumber(ctx context.Context, arg GetNextSequence
 }
 
 const getOrphanedEntities = `-- name: GetOrphanedEntities :many
-SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at FROM entities e
 LEFT JOIN entities parent ON parent.uuid = e.parent_id AND parent.tenant_id = e.tenant_id
 WHERE e.tenant_id = current_tenant_id()
     AND e.parent_id IS NOT NULL
@@ -2064,7 +2089,7 @@ WHERE e.tenant_id = current_tenant_id()
 
 // GetOrphanedEntities
 //
-//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at FROM entities e
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at FROM entities e
 //	LEFT JOIN entities parent ON parent.uuid = e.parent_id AND parent.tenant_id = e.tenant_id
 //	WHERE e.tenant_id = current_tenant_id()
 //	    AND e.parent_id IS NOT NULL
@@ -2093,6 +2118,7 @@ func (q *Queries) GetOrphanedEntities(ctx context.Context) ([]*Entity, error) {
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -2108,7 +2134,7 @@ func (q *Queries) GetOrphanedEntities(ctx context.Context) ([]*Entity, error) {
 }
 
 const getRecentlyDeletedEntities = `-- name: GetRecentlyDeletedEntities :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = current_tenant_id() 
     AND deleted_at >= $1
     AND deleted_at IS NOT NULL
@@ -2123,7 +2149,7 @@ type GetRecentlyDeletedEntitiesParams struct {
 
 // GetRecentlyDeletedEntities
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
 //	    AND deleted_at >= $1
 //	    AND deleted_at IS NOT NULL
@@ -2152,6 +2178,7 @@ func (q *Queries) GetRecentlyDeletedEntities(ctx context.Context, arg GetRecentl
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -2168,7 +2195,7 @@ func (q *Queries) GetRecentlyDeletedEntities(ctx context.Context, arg GetRecentl
 
 const getRecentlyModifiedEntities = `-- name: GetRecentlyModifiedEntities :many
 
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = current_tenant_id() 
     AND updated_at >= $1
     AND deleted_at IS NULL
@@ -2185,7 +2212,7 @@ type GetRecentlyModifiedEntitiesParams struct {
 // 5. AUDIT AND MONITORING QUERIES
 // =====================================================================
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
 //	    AND updated_at >= $1
 //	    AND deleted_at IS NULL
@@ -2214,6 +2241,7 @@ func (q *Queries) GetRecentlyModifiedEntities(ctx context.Context, arg GetRecent
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -2337,14 +2365,14 @@ func (q *Queries) IsEntityAncestor(ctx context.Context, arg IsEntityAncestorPara
 }
 
 const listActiveEntities = `-- name: ListActiveEntities :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = current_tenant_id() AND is_active = true AND deleted_at IS NULL
 ORDER BY name
 `
 
 // ListActiveEntities
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id() AND is_active = true AND deleted_at IS NULL
 //	ORDER BY name
 func (q *Queries) ListActiveEntities(ctx context.Context) ([]*Entity, error) {
@@ -2370,6 +2398,7 @@ func (q *Queries) ListActiveEntities(ctx context.Context) ([]*Entity, error) {
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -2385,14 +2414,14 @@ func (q *Queries) ListActiveEntities(ctx context.Context) ([]*Entity, error) {
 }
 
 const listEntities = `-- name: ListEntities :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
 ORDER BY name
 `
 
 // Entity Listing and Filtering
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
 //	ORDER BY name
 func (q *Queries) ListEntities(ctx context.Context) ([]*Entity, error) {
@@ -2418,6 +2447,7 @@ func (q *Queries) ListEntities(ctx context.Context) ([]*Entity, error) {
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -2433,14 +2463,14 @@ func (q *Queries) ListEntities(ctx context.Context) ([]*Entity, error) {
 }
 
 const listEntitiesByType = `-- name: ListEntitiesByType :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = current_tenant_id() AND type = $1 AND deleted_at IS NULL
 ORDER BY name
 `
 
 // ListEntitiesByType
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id() AND type = $1 AND deleted_at IS NULL
 //	ORDER BY name
 func (q *Queries) ListEntitiesByType(ctx context.Context, type_ string) ([]*Entity, error) {
@@ -2466,6 +2496,7 @@ func (q *Queries) ListEntitiesByType(ctx context.Context, type_ string) ([]*Enti
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -2481,7 +2512,7 @@ func (q *Queries) ListEntitiesByType(ctx context.Context, type_ string) ([]*Enti
 }
 
 const listEntitiesByTypes = `-- name: ListEntitiesByTypes :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = current_tenant_id() 
     AND type = ANY($1::VARCHAR[])
     AND deleted_at IS NULL
@@ -2490,7 +2521,7 @@ ORDER BY type, name
 
 // ListEntitiesByTypes
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
 //	    AND type = ANY($1::VARCHAR[])
 //	    AND deleted_at IS NULL
@@ -2518,6 +2549,7 @@ func (q *Queries) ListEntitiesByTypes(ctx context.Context, dollar_1 []string) ([
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -2533,7 +2565,7 @@ func (q *Queries) ListEntitiesByTypes(ctx context.Context, dollar_1 []string) ([
 }
 
 const listEntitiesWithNochildren = `-- name: ListEntitiesWithNochildren :many
-SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at
+SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at
 FROM entities e
 LEFT JOIN entities children ON children.parent_id = e.uuid 
     AND children.tenant_id = e.tenant_id
@@ -2544,7 +2576,7 @@ WHERE children.uuid IS NULL
 
 // Find all leaf nodes (entities with no children)
 //
-//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.created_at, e.updated_at, e.deleted_at
+//	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.created_at, e.updated_at, e.deleted_at
 //	FROM entities e
 //	LEFT JOIN entities children ON children.parent_id = e.uuid
 //	    AND children.tenant_id = e.tenant_id
@@ -2574,6 +2606,7 @@ func (q *Queries) ListEntitiesWithNochildren(ctx context.Context) ([]*Entity, er
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -2589,7 +2622,7 @@ func (q *Queries) ListEntitiesWithNochildren(ctx context.Context) ([]*Entity, er
 }
 
 const listEntitiesWithPagination = `-- name: ListEntitiesWithPagination :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = current_tenant_id() 
     AND deleted_at IS NULL
     AND ($1::VARCHAR IS NULL OR type = $1)
@@ -2609,7 +2642,7 @@ type ListEntitiesWithPaginationParams struct {
 
 // ListEntitiesWithPagination
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
 //	    AND deleted_at IS NULL
 //	    AND ($1::VARCHAR IS NULL OR type = $1)
@@ -2646,6 +2679,7 @@ func (q *Queries) ListEntitiesWithPagination(ctx context.Context, arg ListEntiti
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -2699,14 +2733,14 @@ func (q *Queries) ListEntityStates(ctx context.Context, entityID uuid.UUID) ([]*
 }
 
 const listVisibleEntities = `-- name: ListVisibleEntities :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = current_tenant_id() AND hidden = false AND deleted_at IS NULL
 ORDER BY name
 `
 
 // ListVisibleEntities
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id() AND hidden = false AND deleted_at IS NULL
 //	ORDER BY name
 func (q *Queries) ListVisibleEntities(ctx context.Context) ([]*Entity, error) {
@@ -2732,6 +2766,7 @@ func (q *Queries) ListVisibleEntities(ctx context.Context) ([]*Entity, error) {
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -2969,7 +3004,7 @@ func (q *Queries) RestoreEntity(ctx context.Context, argUuid uuid.UUID) error {
 
 const searchEntitiesByCodeAndName = `-- name: SearchEntitiesByCodeAndName :many
 
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = current_tenant_id() 
     AND (code ILIKE '%' || $1 || '%' OR name ILIKE '%' || $1 || '%')
     AND deleted_at IS NULL
@@ -2990,7 +3025,7 @@ type SearchEntitiesByCodeAndNameParams struct {
 // 2. ENTITY SEARCH AND FILTERING ENHANCEMENTS
 // =====================================================================
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
 //	    AND (code ILIKE '%' || $1 || '%' OR name ILIKE '%' || $1 || '%')
 //	    AND deleted_at IS NULL
@@ -3023,6 +3058,7 @@ func (q *Queries) SearchEntitiesByCodeAndName(ctx context.Context, arg SearchEnt
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -3038,7 +3074,7 @@ func (q *Queries) SearchEntitiesByCodeAndName(ctx context.Context, arg SearchEnt
 }
 
 const searchEntitiesByName = `-- name: SearchEntitiesByName :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities 
 WHERE tenant_id = current_tenant_id() 
     AND name ILIKE '%' || $1 || '%' 
     AND deleted_at IS NULL
@@ -3053,7 +3089,7 @@ type SearchEntitiesByNameParams struct {
 
 // SearchEntitiesByName
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
 //	    AND name ILIKE '%' || $1 || '%'
 //	    AND deleted_at IS NULL
@@ -3082,6 +3118,7 @@ func (q *Queries) SearchEntitiesByName(ctx context.Context, arg SearchEntitiesBy
 			&i.Address,
 			&i.Picture,
 			&i.Settings,
+			&i.Metadata,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -3127,7 +3164,7 @@ SET
     settings = COALESCE($11, settings),
     updated_at = NOW()
 WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at
+RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at
 `
 
 type UpdateEntityParams struct {
@@ -3160,7 +3197,7 @@ type UpdateEntityParams struct {
 //	    settings = COALESCE($11, settings),
 //	    updated_at = NOW()
 //	WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-//	RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, created_at, updated_at, deleted_at
+//	RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, created_at, updated_at, deleted_at
 func (q *Queries) UpdateEntity(ctx context.Context, arg UpdateEntityParams) (*Entity, error) {
 	row := q.db.QueryRow(ctx, updateEntity,
 		arg.Uuid,
@@ -3190,6 +3227,7 @@ func (q *Queries) UpdateEntity(ctx context.Context, arg UpdateEntityParams) (*En
 		&i.Address,
 		&i.Picture,
 		&i.Settings,
+		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

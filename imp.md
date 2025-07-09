@@ -1,6 +1,4 @@
 
-please impiliment this feature repo methods following [dataflow pattern](docs/data-flow-pattern.md) 
-
 // ==============================================
 // CREATE ENTITY
 // ==============================================

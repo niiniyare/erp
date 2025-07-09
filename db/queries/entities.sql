@@ -2,9 +2,9 @@
 -- name: CreateEntity :one
 INSERT INTO entities (
     uuid, tenant_id, parent_id, name, code, type, is_active, 
-    hidden, accrual_method, fy_start_month, address, picture, settings
+    hidden, accrual_method, fy_start_month, address, picture, metadata, settings
 ) VALUES (
-    $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+    $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13
 ) RETURNING *;
 
 -- name: GetEntity :one
