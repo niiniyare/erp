@@ -13,6 +13,34 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+// Access request approval workflow with business justification, lifecycle management, and automatic revocation for governance and compliance.
+type AccessRequest struct {
+	ID          uuid.UUID `json:"id"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	RequesterID uuid.UUID `json:"requester_id"`
+	// User receiving the access (if different from requester)
+	TargetUserID *uuid.UUID `json:"target_user_id"`
+	EntityID     uuid.UUID  `json:"entity_id"`
+	// Type of access request: ROLE_ASSIGNMENT, PERMISSION_GRANT, RESOURCE_ACCESS, ELEVATION
+	RequestType    string     `json:"request_type"`
+	RoleID         *uuid.UUID `json:"role_id"`
+	PermissionID   *uuid.UUID `json:"permission_id"`
+	ResourceID     *uuid.UUID `json:"resource_id"`
+	Justification  string     `json:"justification"`
+	BusinessReason *string    `json:"business_reason"`
+	// Requested access duration in hours for temporary access
+	DurationHours    *int32       `json:"duration_hours"`
+	ApprovalStatus   *string      `json:"approval_status"`
+	ApprovedBy       *uuid.UUID   `json:"approved_by"`
+	ApprovedAt       sql.NullTime `json:"approved_at"`
+	ApprovalComments string       `json:"approval_comments"`
+	ExpiresAt        sql.NullTime `json:"expires_at"`
+	// Whether to automatically revoke access when it expires
+	AutoRevoke *bool        `json:"auto_revoke"`
+	CreatedAt  sql.NullTime `json:"created_at"`
+	UpdatedAt  sql.NullTime `json:"updated_at"`
+}
+
 // Individual accounts within chart of accounts with hierarchical structure
 type Account struct {
 	ID          uuid.UUID        `json:"id"`
@@ -36,6 +64,80 @@ type Account struct {
 	RoleDefault *bool     `json:"role_default"`
 }
 
+// Defines actions that can be performed on resources with risk assessment and approval workflow requirements.
+type Action struct {
+	ID          uuid.UUID `json:"id"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	Name        string    `json:"name"`
+	DisplayName *string   `json:"display_name"`
+	Description string    `json:"description"`
+	// Standard action type: CREATE, READ, UPDATE, DELETE, EXECUTE, APPROVE, REJECT, EXPORT, IMPORT
+	ActionType string `json:"action_type"`
+	// Action category for risk assessment: STANDARD, ADMINISTRATIVE, SENSITIVE, BULK, SYSTEM
+	ActionCategory *string `json:"action_category"`
+	// Risk level for audit and approval workflows: LOW, MEDIUM, HIGH, CRITICAL
+	RiskLevel *string `json:"risk_level"`
+	// Whether this action requires explicit approval before execution
+	RequiresApproval *bool        `json:"requires_approval"`
+	IsActive         *bool        `json:"is_active"`
+	CreatedAt        sql.NullTime `json:"created_at"`
+}
+
+// Defines attributes used in ABAC policies with data types, validation rules, and security controls for consistent attribute management.
+type AttributeDefinition struct {
+	ID          uuid.UUID `json:"id"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	Name        string    `json:"name"`
+	DisplayName *string   `json:"display_name"`
+	Description string    `json:"description"`
+	// Attribute data type: STRING, NUMBER, BOOLEAN, DATE, TIME, JSON, ARRAY, ENUM
+	DataType string `json:"data_type"`
+	// Attribute category: USER (user attributes), RESOURCE (resource attributes), ENVIRONMENT (context), ACTION (action attributes), ENTITY (entity attributes), SESSION (session context)
+	Category   string `json:"category"`
+	IsRequired *bool  `json:"is_required"`
+	// Whether attribute contains PII or sensitive data requiring special handling
+	IsSensitive  *bool  `json:"is_sensitive"`
+	DefaultValue string `json:"default_value"`
+	// JSONB array of allowed values for ENUM data type
+	AllowedValues []byte `json:"allowed_values"`
+	// JSONB containing custom validation rules (regex, ranges, etc.)
+	ValidationRules []byte `json:"validation_rules"`
+	// Whether attribute values must be encrypted at rest
+	EncryptionRequired *bool        `json:"encryption_required"`
+	IsActive           *bool        `json:"is_active"`
+	CreatedAt          sql.NullTime `json:"created_at"`
+}
+
+// Comprehensive audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.
+type AuditLog struct {
+	ID        uuid.UUID `json:"id"`
+	TenantID  uuid.UUID `json:"tenant_id"`
+	EventType string    `json:"event_type"`
+	// Event category: ACCESS (authorization), ADMIN (administrative), DATA (data access), AUTH (authentication), SYSTEM (system events), COMPLIANCE (regulatory)
+	EventCategory *string `json:"event_category"`
+	// Event severity level: LOW, INFO, WARN, HIGH, CRITICAL
+	Severity *string    `json:"severity"`
+	UserID   *uuid.UUID `json:"user_id"`
+	// Target user for administrative actions (e.g., admin modifying another user)
+	TargetUserID *uuid.UUID `json:"target_user_id"`
+	EntityID     *uuid.UUID `json:"entity_id"`
+	ResourceID   *uuid.UUID `json:"resource_id"`
+	ActionID     *uuid.UUID `json:"action_id"`
+	RoleID       *uuid.UUID `json:"role_id"`
+	PermissionID *uuid.UUID `json:"permission_id"`
+	Decision     *string    `json:"decision"`
+	Reason       string     `json:"reason"`
+	// Calculated risk score from 0-100 based on action, context, and user behavior
+	RiskScore *int32      `json:"risk_score"`
+	Context   []byte      `json:"context"`
+	IpAddress *netip.Addr `json:"ip_address"`
+	UserAgent string      `json:"user_agent"`
+	SessionID *uuid.UUID  `json:"session_id"`
+	// JSONB containing compliance-related flags (GDPR, SOX, HIPAA, PCI, etc.)
+	ComplianceFlags []byte       `json:"compliance_flags"`
+	CreatedAt       sql.NullTime `json:"created_at"`
+}
+
 type AuditLog struct {
 	ID           uuid.UUID   `json:"id"`
 	TenantID     uuid.UUID   `json:"tenant_id"`
@@ -51,6 +153,20 @@ type AuditLog struct {
 	SessionID    *string     `json:"session_id"`
 	Module       *string     `json:"module"`
 	CreatedAt    time.Time   `json:"created_at"`
+}
+
+// Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.
+type AuditSummaryView struct {
+	TenantID        uuid.UUID       `json:"tenant_id"`
+	EventCategory   *string         `json:"event_category"`
+	Severity        *string         `json:"severity"`
+	HourBucket      pgtype.Interval `json:"hour_bucket"`
+	EventCount      int64           `json:"event_count"`
+	UniqueUsers     int64           `json:"unique_users"`
+	AvgRiskScore    float64         `json:"avg_risk_score"`
+	MaxRiskScore    interface{}     `json:"max_risk_score"`
+	DeniedAttempts  int64           `json:"denied_attempts"`
+	AllowedAttempts int64           `json:"allowed_attempts"`
 }
 
 type Budget struct {
@@ -110,22 +226,32 @@ type Customer struct {
 	AdditionalInfo []byte           `json:"additional_info"`
 }
 
+// Employee records extending persons with employment-specific data, organizational hierarchy, and security levels for access control.
 type Employee struct {
-	ID               uuid.UUID  `json:"id"`
-	TenantID         uuid.UUID  `json:"tenant_id"`
-	PersonID         uuid.UUID  `json:"person_id"`
-	EmployeeNumber   string     `json:"employee_number"`
-	EntityID         uuid.UUID  `json:"entity_id"`
-	PositionTitle    *string    `json:"position_title"`
-	DepartmentID     *uuid.UUID `json:"department_id"`
-	ManagerID        *uuid.UUID `json:"manager_id"`
-	HireDate         time.Time  `json:"hire_date"`
-	TerminationDate  time.Time  `json:"termination_date"`
-	SalaryInfo       []byte     `json:"salary_info"`
-	EmploymentStatus *string    `json:"employment_status"`
-	WorkSchedule     []byte     `json:"work_schedule"`
-	CreatedAt        time.Time  `json:"created_at"`
-	UpdatedAt        time.Time  `json:"updated_at"`
+	ID       uuid.UUID `json:"id"`
+	TenantID uuid.UUID `json:"tenant_id"`
+	PersonID uuid.UUID `json:"person_id"`
+	// Unique employee identifier within tenant
+	EmployeeNumber string    `json:"employee_number"`
+	EntityID       uuid.UUID `json:"entity_id"`
+	PositionTitle  *string   `json:"position_title"`
+	// Foreign key to entities table representing department
+	DepartmentID *uuid.UUID `json:"department_id"`
+	// Self-referential foreign key for organizational hierarchy
+	ManagerID       *uuid.UUID `json:"manager_id"`
+	HireDate        time.Time  `json:"hire_date"`
+	TerminationDate time.Time  `json:"termination_date"`
+	// JSONB containing encrypted/sensitive salary and compensation data
+	SalaryInfo       []byte  `json:"salary_info"`
+	EmploymentStatus *string `json:"employment_status"`
+	WorkSchedule     []byte  `json:"work_schedule"`
+	// Numeric security clearance level (0=lowest, higher numbers = higher clearance)
+	SecurityLevel *int32 `json:"security_level"`
+	// JSONB containing employment-specific ABAC attributes for access control
+	AccessAttributes []byte       `json:"access_attributes"`
+	CreatedAt        time.Time    `json:"created_at"`
+	UpdatedAt        time.Time    `json:"updated_at"`
+	DeletedAt        sql.NullTime `json:"deleted_at"`
 }
 
 // Master table for business entities and organizational units. Supports hierarchical structures for companies, subsidiaries, departments, and other organizational divisions. Each entity can maintain its own accounting books, customers, vendors, and fiscal year settings.
@@ -330,25 +456,118 @@ type Ledger struct {
 	LedgerXid      *string          `json:"ledger_xid"`
 }
 
+// System modules for organizing permissions and features into logical groups. Enables modular permission management and feature toggles.
+type Module struct {
+	ID          uuid.UUID `json:"id"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	Name        string    `json:"name"`
+	DisplayName *string   `json:"display_name"`
+	Description string    `json:"description"`
+	// Module category for grouping: CORE, HR, FINANCE, SALES, INVENTORY, etc.
+	Category *string `json:"category"`
+	// Module version for tracking feature updates and compatibility
+	Version   *string      `json:"version"`
+	IsActive  *bool        `json:"is_active"`
+	CreatedAt sql.NullTime `json:"created_at"`
+}
+
+// Granular permissions combining resources and actions with ABAC conditions, data filters, and field restrictions for fine-grained access control.
+type Permission struct {
+	ID          uuid.UUID `json:"id"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	ResourceID  uuid.UUID `json:"resource_id"`
+	ActionID    uuid.UUID `json:"action_id"`
+	Name        string    `json:"name"`
+	DisplayName *string   `json:"display_name"`
+	Description string    `json:"description"`
+	// Permission effect: ALLOW (grant access) or DENY (explicitly deny access)
+	Effect *string `json:"effect"`
+	// JSONB containing ABAC evaluation conditions (time, location, attributes, etc.)
+	Conditions []byte `json:"conditions"`
+	// JSONB containing row-level security filters to limit data access
+	DataFilters []byte `json:"data_filters"`
+	// JSONB containing column-level restrictions to limit field access
+	FieldRestrictions []byte       `json:"field_restrictions"`
+	IsActive          *bool        `json:"is_active"`
+	CreatedAt         sql.NullTime `json:"created_at"`
+}
+
+// Stores person entities with ABAC security attributes. Supports multiple person types including employees, customers, vendors, and contractors. Implements soft delete and tenant isolation.
 type Person struct {
-	ID         uuid.UUID    `json:"id"`
-	TenantID   uuid.UUID    `json:"tenant_id"`
-	EntityID   uuid.UUID    `json:"entity_id"`
-	PersonType string       `json:"person_type"`
-	FirstName  string       `json:"first_name"`
-	LastName   string       `json:"last_name"`
-	MiddleName *string      `json:"middle_name"`
-	Email      *string      `json:"email"`
-	Phone      *string      `json:"phone"`
-	BirthDate  time.Time    `json:"birth_date"`
-	NationalID *string      `json:"national_id"`
-	TaxID      *string      `json:"tax_id"`
-	Address    []byte       `json:"address"`
-	Metadata   []byte       `json:"metadata"`
-	IsActive   bool         `json:"is_active"`
-	CreatedAt  time.Time    `json:"created_at"`
-	UpdatedAt  time.Time    `json:"updated_at"`
-	DeletedAt  sql.NullTime `json:"deleted_at"`
+	// UUID primary key for the person record
+	ID uuid.UUID `json:"id"`
+	// Foreign key to tenants table for multi-tenant isolation
+	TenantID uuid.UUID `json:"tenant_id"`
+	// Foreign key to entities table for hierarchical organization
+	EntityID uuid.UUID `json:"entity_id"`
+	// Classification of person: INDIVIDUAL, EMPLOYEE, CONTACT, CUSTOMER, VENDOR, CONTRACTOR
+	PersonType string    `json:"person_type"`
+	FirstName  string    `json:"first_name"`
+	LastName   string    `json:"last_name"`
+	MiddleName *string   `json:"middle_name"`
+	Email      *string   `json:"email"`
+	Phone      *string   `json:"phone"`
+	BirthDate  time.Time `json:"birth_date"`
+	NationalID *string   `json:"national_id"`
+	TaxID      *string   `json:"tax_id"`
+	Address    []byte    `json:"address"`
+	// JSONB containing ABAC attributes like clearance level, department, location for access control
+	SecurityAttributes []byte `json:"security_attributes"`
+	// Flexible JSONB storage for additional person-related data
+	Metadata  []byte    `json:"metadata"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	// Soft delete timestamp - NULL means record is active
+	DeletedAt sql.NullTime `json:"deleted_at"`
+}
+
+// ABAC policies with advanced rule engine supporting multiple policy types, priorities, obligations, and compliance tracking.
+type Policy struct {
+	ID          uuid.UUID  `json:"id"`
+	TenantID    uuid.UUID  `json:"tenant_id"`
+	EntityID    *uuid.UUID `json:"entity_id"`
+	Name        string     `json:"name"`
+	DisplayName *string    `json:"display_name"`
+	Description string     `json:"description"`
+	// Policy type: ABAC (attribute-based), RBAC (role-based), HYBRID (combined), TIME_BASED (temporal), LOCATION_BASED (geographic)
+	PolicyType *string `json:"policy_type"`
+	Effect     *string `json:"effect"`
+	// Policy priority for conflict resolution (higher numbers processed first)
+	Priority *int32 `json:"priority"`
+	// Policy category: ACCESS (authorization), DATA_FILTER (row-level), FIELD_MASK (column-level), AUDIT (logging), COMPLIANCE (regulatory)
+	Category *string `json:"category"`
+	// JSONB defining when policy applies (subjects, resources, actions, conditions)
+	Target []byte `json:"target"`
+	// JSONB containing policy evaluation logic and conditions
+	Rule []byte `json:"rule"`
+	// JSONB defining required actions when policy fires (logging, notifications, etc.)
+	Obligations []byte `json:"obligations"`
+	// JSONB defining optional actions and recommendations
+	Advice    []byte       `json:"advice"`
+	IsActive  *bool        `json:"is_active"`
+	CreatedAt sql.NullTime `json:"created_at"`
+	UpdatedAt sql.NullTime `json:"updated_at"`
+	CreatedBy *uuid.UUID   `json:"created_by"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
+}
+
+// Caches ABAC policy evaluation results for performance optimization with configurable TTL and context tracking.
+type PolicyEvaluation struct {
+	ID         uuid.UUID `json:"id"`
+	TenantID   uuid.UUID `json:"tenant_id"`
+	UserID     uuid.UUID `json:"user_id"`
+	ResourceID uuid.UUID `json:"resource_id"`
+	ActionID   uuid.UUID `json:"action_id"`
+	// SHA-256 hash of evaluation context for cache key uniqueness
+	ContextHash string `json:"context_hash"`
+	Decision    string `json:"decision"`
+	// Array of policy UUIDs that were evaluated and fired
+	ApplicablePolicies []uuid.UUID `json:"applicable_policies"`
+	// Policy evaluation time in milliseconds for performance monitoring
+	EvaluationTimeMs *int32       `json:"evaluation_time_ms"`
+	EvaluatedAt      sql.NullTime `json:"evaluated_at"`
+	ExpiresAt        sql.NullTime `json:"expires_at"`
 }
 
 type Project struct {
@@ -369,6 +588,28 @@ type Project struct {
 	UpdatedAt        time.Time      `json:"updated_at"`
 }
 
+// System resources that can be protected by permissions including APIs, UI components, data objects, files, reports, and workflows.
+type Resource struct {
+	ID          uuid.UUID  `json:"id"`
+	TenantID    uuid.UUID  `json:"tenant_id"`
+	ModuleID    uuid.UUID  `json:"module_id"`
+	EntityID    *uuid.UUID `json:"entity_id"`
+	Name        string     `json:"name"`
+	DisplayName *string    `json:"display_name"`
+	Description string     `json:"description"`
+	// Type of resource: API, UI, DATA, FILE, REPORT, WORKFLOW, FUNCTION
+	ResourceType string `json:"resource_type"`
+	// Self-referential for resource hierarchy (e.g., API endpoints under API group)
+	ParentResourceID *uuid.UUID `json:"parent_resource_id"`
+	// Resource path: URL, API endpoint, file path, database object, etc.
+	Path *string `json:"path"`
+	// JSONB containing ABAC attributes like classification level, sensitivity, department ownership
+	ResourceAttributes []byte       `json:"resource_attributes"`
+	IsActive           *bool        `json:"is_active"`
+	CreatedAt          sql.NullTime `json:"created_at"`
+	DeletedAt          sql.NullTime `json:"deleted_at"`
+}
+
 type RlsChangeLog struct {
 	ID         uuid.UUID    `json:"id"`
 	SchemaName string       `json:"schema_name"`
@@ -381,17 +622,64 @@ type RlsChangeLog struct {
 	ChangedAt  sql.NullTime `json:"changed_at"`
 }
 
+// Roles with module association, entity scoping, and hierarchical structure. Supports both RBAC and ABAC with conditional access rules.
 type Role struct {
-	ID           uuid.UUID  `json:"id"`
-	TenantID     uuid.UUID  `json:"tenant_id"`
-	EntityID     *uuid.UUID `json:"entity_id"`
-	Name         string     `json:"name"`
-	Description  string     `json:"description"`
-	Module       *string    `json:"module"`
-	Permissions  []byte     `json:"permissions"`
-	EntityScope  []byte     `json:"entity_scope"`
-	IsSystemRole *bool      `json:"is_system_role"`
-	CreatedAt    time.Time  `json:"created_at"`
+	ID          uuid.UUID  `json:"id"`
+	TenantID    uuid.UUID  `json:"tenant_id"`
+	EntityID    uuid.UUID  `json:"entity_id"`
+	Name        string     `json:"name"`
+	DisplayName *string    `json:"display_name"`
+	Description string     `json:"description"`
+	ModuleID    *uuid.UUID `json:"module_id"`
+	// Role classification: SYSTEM (built-in), TENANT (tenant-wide), ENTITY (entity-scoped), CUSTOM (user-defined), FUNCTIONAL (job-based)
+	RoleType *string `json:"role_type"`
+	// Parent role for inheritance hierarchy
+	ParentRoleID *uuid.UUID `json:"parent_role_id"`
+	// Calculated hierarchy level (0=root, higher=deeper)
+	Level *int32 `json:"level"`
+	// Cached permissions JSONB for performance optimization
+	Permissions []byte `json:"permissions"`
+	// JSONB defining which entities this role can access
+	EntityScope []byte `json:"entity_scope"`
+	// JSONB containing time, location, device, and other conditional access rules
+	Conditions   []byte       `json:"conditions"`
+	IsSystemRole *bool        `json:"is_system_role"`
+	IsActive     *bool        `json:"is_active"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	DeletedAt    sql.NullTime `json:"deleted_at"`
+}
+
+// Maps permissions to roles with optional entity-specific scoping and additional conditions for flexible authorization.
+type RolePermission struct {
+	ID           uuid.UUID `json:"id"`
+	TenantID     uuid.UUID `json:"tenant_id"`
+	RoleID       uuid.UUID `json:"role_id"`
+	PermissionID uuid.UUID `json:"permission_id"`
+	// Optional entity restriction - if specified, permission only applies within this entity
+	EntityScope *uuid.UUID `json:"entity_scope"`
+	// User who granted this permission assignment
+	GrantedBy *uuid.UUID   `json:"granted_by"`
+	GrantedAt sql.NullTime `json:"granted_at"`
+	// Additional JSONB conditions beyond those in the permission itself
+	Conditions []byte `json:"conditions"`
+	IsActive   *bool  `json:"is_active"`
+}
+
+// Summary view of roles with their permissions, resources, actions, and user assignment counts for role management and analysis.
+type RolePermissionsSummary struct {
+	TenantID          uuid.UUID   `json:"tenant_id"`
+	RoleID            uuid.UUID   `json:"role_id"`
+	RoleName          string      `json:"role_name"`
+	RoleDisplayName   *string     `json:"role_display_name"`
+	RoleType          *string     `json:"role_type"`
+	HierarchyLevel    *int32      `json:"hierarchy_level"`
+	ModuleID          *uuid.UUID  `json:"module_id"`
+	ModuleName        *string     `json:"module_name"`
+	ResourceNames     interface{} `json:"resource_names"`
+	ActionNames       interface{} `json:"action_names"`
+	PermissionCount   int64       `json:"permission_count"`
+	AssignedUserCount int64       `json:"assigned_user_count"`
 }
 
 // Core tenant management table for multi-tenant SaaS architecture
@@ -512,32 +800,123 @@ type UomConversion struct {
 	CreatedAt        pgtype.Timestamp `json:"created_at"`
 }
 
+// System user accounts with authentication, authorization, and session management. Can be linked to persons/employees or exist independently for service accounts.
 type User struct {
-	ID                uuid.UUID    `json:"id"`
-	TenantID          uuid.UUID    `json:"tenant_id"`
-	EntityID          uuid.UUID    `json:"entity_id"`
-	PersonID          *uuid.UUID   `json:"person_id"`
-	EmployeeID        *uuid.UUID   `json:"employee_id"`
-	Username          *string      `json:"username"`
-	Email             string       `json:"email"`
-	PasswordHash      *string      `json:"password_hash"`
-	UserType          string       `json:"user_type"`
+	ID           uuid.UUID  `json:"id"`
+	TenantID     uuid.UUID  `json:"tenant_id"`
+	EntityID     uuid.UUID  `json:"entity_id"`
+	PersonID     *uuid.UUID `json:"person_id"`
+	EmployeeID   *uuid.UUID `json:"employee_id"`
+	Username     *string    `json:"username"`
+	Email        string     `json:"email"`
+	PasswordHash *string    `json:"password_hash"`
+	// Classification of user account: INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, ADMIN
+	UserType string `json:"user_type"`
+	// Current account status affecting login ability
+	AccountStatus     *string      `json:"account_status"`
 	IsActive          bool         `json:"is_active"`
 	LastLoginAt       sql.NullTime `json:"last_login_at"`
 	PasswordChangedAt sql.NullTime `json:"password_changed_at"`
-	Settings          []byte       `json:"settings"`
-	CreatedAt         time.Time    `json:"created_at"`
-	UpdatedAt         time.Time    `json:"updated_at"`
-	DeletedAt         sql.NullTime `json:"deleted_at"`
+	// Counter for failed login attempts for security monitoring
+	FailedLoginAttempts *int32       `json:"failed_login_attempts"`
+	LockoutUntil        sql.NullTime `json:"lockout_until"`
+	// Session timeout in minutes (default 480 = 8 hours)
+	SessionTimeoutMinutes *int32  `json:"session_timeout_minutes"`
+	MfaEnabled            *bool   `json:"mfa_enabled"`
+	MfaSecret             *string `json:"mfa_secret"`
+	// JSONB containing ABAC attributes for fine-grained access control
+	UserAttributes []byte `json:"user_attributes"`
+	// JSONB containing user preferences and application settings
+	Settings  []byte       `json:"settings"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
-type UserRole struct {
-	UserID     uuid.UUID    `json:"user_id"`
-	RoleID     uuid.UUID    `json:"role_id"`
-	EntityID   uuid.UUID    `json:"entity_id"`
-	AssignedAt time.Time    `json:"assigned_at"`
-	AssignedBy *uuid.UUID   `json:"assigned_by"`
+// Comprehensive view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.
+type UserCompleteView struct {
+	UserID             uuid.UUID    `json:"user_id"`
+	TenantID           uuid.UUID    `json:"tenant_id"`
+	EntityID           uuid.UUID    `json:"entity_id"`
+	Username           *string      `json:"username"`
+	Email              string       `json:"email"`
+	UserType           string       `json:"user_type"`
+	AccountStatus      *string      `json:"account_status"`
+	UserActive         bool         `json:"user_active"`
+	LastLoginAt        sql.NullTime `json:"last_login_at"`
+	MfaEnabled         *bool        `json:"mfa_enabled"`
+	PersonID           *uuid.UUID   `json:"person_id"`
+	FirstName          *string      `json:"first_name"`
+	LastName           *string      `json:"last_name"`
+	MiddleName         *string      `json:"middle_name"`
+	PersonType         *string      `json:"person_type"`
+	EmployeeID         *uuid.UUID   `json:"employee_id"`
+	EmployeeNumber     *string      `json:"employee_number"`
+	PositionTitle      *string      `json:"position_title"`
+	DepartmentID       *uuid.UUID   `json:"department_id"`
+	EmploymentStatus   *string      `json:"employment_status"`
+	SecurityLevel      *int32       `json:"security_level"`
+	CombinedAttributes interface{}  `json:"combined_attributes"`
+	RoleNames          interface{}  `json:"role_names"`
+	RoleIds            interface{}  `json:"role_ids"`
+	ActiveRoleCount    int64        `json:"active_role_count"`
+}
+
+// Direct permission grants to users bypassing roles. Used for exceptional access, denials, and temporary permissions.
+type UserPermission struct {
+	ID           uuid.UUID  `json:"id"`
+	TenantID     uuid.UUID  `json:"tenant_id"`
+	UserID       uuid.UUID  `json:"user_id"`
+	PermissionID uuid.UUID  `json:"permission_id"`
+	EntityID     *uuid.UUID `json:"entity_id"`
+	// Permission effect: ALLOW (grant access) or DENY (explicitly deny - overrides role permissions)
+	Effect *string `json:"effect"`
+	// Business justification for this direct permission assignment
+	Reason string `json:"reason"`
+	// User who granted this direct permission
+	GrantedBy  *uuid.UUID   `json:"granted_by"`
+	GrantedAt  sql.NullTime `json:"granted_at"`
 	ExpiresAt  sql.NullTime `json:"expires_at"`
+	Conditions []byte       `json:"conditions"`
+	IsActive   *bool        `json:"is_active"`
+}
+
+// Assigns roles to users with entity context, delegation support, and temporal controls for dynamic authorization.
+type UserRole struct {
+	ID       uuid.UUID `json:"id"`
+	UserID   uuid.UUID `json:"user_id"`
+	RoleID   uuid.UUID `json:"role_id"`
+	EntityID uuid.UUID `json:"entity_id"`
+	// Type of assignment: DIRECT (explicitly assigned), INHERITED (from hierarchy), DELEGATED (from another user), TEMPORARY (time-limited)
+	AssignmentType *string `json:"assignment_type"`
+	// User who delegated this role assignment (for DELEGATED type)
+	DelegatedBy *uuid.UUID `json:"delegated_by"`
+	AssignedAt  time.Time  `json:"assigned_at"`
+	AssignedBy  *uuid.UUID `json:"assigned_by"`
+	// Expiration timestamp for temporary role assignments
+	ExpiresAt sql.NullTime `json:"expires_at"`
+	// JSONB containing conditional access rules (time, location, device, etc.)
+	Conditions []byte `json:"conditions"`
+	IsActive   *bool  `json:"is_active"`
+}
+
+// Active user sessions with security context including device, location, and access patterns for ABAC evaluation and security monitoring.
+type UserSession struct {
+	ID           uuid.UUID   `json:"id"`
+	TenantID     uuid.UUID   `json:"tenant_id"`
+	UserID       uuid.UUID   `json:"user_id"`
+	SessionToken string      `json:"session_token"`
+	RefreshToken *string     `json:"refresh_token"`
+	IpAddress    *netip.Addr `json:"ip_address"`
+	UserAgent    string      `json:"user_agent"`
+	// JSONB containing device fingerprinting data for security analysis
+	DeviceInfo []byte `json:"device_info"`
+	// JSONB containing geographic and network location data for location-based access control
+	LocationInfo   []byte       `json:"location_info"`
+	ExpiresAt      time.Time    `json:"expires_at"`
+	CreatedAt      sql.NullTime `json:"created_at"`
+	LastAccessedAt sql.NullTime `json:"last_accessed_at"`
+	IsActive       *bool        `json:"is_active"`
 }
 
 //	Purpose: Stores vendor/supplier information and payment details

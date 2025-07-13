@@ -1,192 +1,148 @@
+// ========================================================================
+// PRACTICAL RBAC/ABAC IMPLEMENTATION PSEUDO-CODE
+// Prerequisites: Tenant and Entity already created
+// ========================================================================
 
-// ==============================================
-// CREATE ENTITY
-// ==============================================
-function createEntity(tenantId, entityData) {
-    // Validate unique name and code
-    if validateEntityName(entityData.name) exists 
-        throw "Entity name already exists"
-    if validateEntityCode(entityData.code) exists 
-        throw "Entity code already exists"
+FUNCTION MainImplementation(ctx, dbPool, tenantID, rootEntityID):
+    PRINT "Starting RBAC/ABAC System Implementation"
     
-    // Validate parent if provided
-    if entityData.parentId {
-        if !validateEntityParent(entityData.parentId) 
-            throw "Invalid parent entity"
-        if checkCircularReference(entityData.parentId, newUuid)
-            throw "Circular reference detected"
-    }
+    // Step 1: Initialize System
+    CALL Step1_InitializeSystem(ctx, tenantID)
     
-    // Generate UUID and create entity
-    newUuid = generateUUID()
-    entity = execute CreateEntity(
-        uuid: newUuid,
-        parent_id: entityData.parentId,
-        name: entityData.name,
-        code: entityData.code,
-        type: entityData.type,
-        is_active: true,
-        ...otherFields
-    )
+    // Step 2: Create Application Modules
+    modules = Step2_CreateModules(ctx)
     
-    // Build hierarchy paths
-    if entityData.parentId {
-        execute CreateHierarchyPath(
-            ancestor_id: entityData.parentId,
-            descendant_id: newUuid,
-            depth: 1
-        )
-        execute UpdateHierarchyPaths(descendant_id: newUuid)
-    }
+    // Step 3: Create Resources
+    resources = Step3_CreateResources(ctx, modules, rootEntityID)
     
-    return entity
-}
-
-// ==============================================
-// READ ENTITY
-// ==============================================
-function getEntity(tenantId, identifier) {
-    if isUUID(identifier) {
-        return execute GetEntity(uuid: identifier)
-    } 
-    else if isCode(identifier) {
-        return execute GetEntityByCode(code: identifier)
-    }
-    else {
-        return execute GetEntityByName(name: identifier)
-    }
-}
-
-// Get entity with hierarchy info
-function getEntityWithHierarchy(tenantId, uuid) {
-    return execute GetEntityWithHierarchyInfo(
-        entityId: uuid, 
-        tenantId: tenantId
-    )
-}
-
-// List entities with filtering
-function listEntities(tenantId, filters) {
-    return execute ListEntitiesWithPagination(
-        type: filters.type,
-        is_active: filters.active,
-        hidden: filters.hidden,
-        limit: filters.limit,
-        offset: filters.offset
-    )
-}
-
-// ==============================================
-// UPDATE ENTITY
-// ==============================================
-function updateEntity(tenantId, uuid, updateData) {
-    // Validate unique constraints
-    if updateData.name && validateEntityName(updateData.name, uuid) 
-        throw "New entity name already exists"
-    if updateData.code && validateEntityCode(updateData.code, uuid)
-        throw "New entity code already exists"
+    // Step 4: Setup Actions
+    actions = Step4_SetupActions(ctx)
     
-    // Handle parent changes
-    if updateData.parentId {
-        oldParent = execute GetEntityParent(uuid)
-        if oldParent.uuid !== updateData.parentId {
-            if !validateEntityParent(updateData.parentId)
-                throw "Invalid parent entity"
-            if checkCircularReference(updateData.parentId, uuid)
-                throw "Circular reference detected"
-            
-            execute MoveEntityToNewParent(
-                entity_id: uuid,
-                new_parent_id: updateData.parentId
-            )
-        }
-    }
+    // Step 5: Create Permissions
+    permissions = Step5_CreatePermissions(ctx, resources, actions)
     
-    // Perform update
-    return execute UpdateEntity(
-        uuid: uuid,
-        name: updateData.name,
-        code: updateData.code,
-        ...otherFields
-    )
-}
+    // Step 6: Create Roles
+    roles = Step6_CreateRoles(ctx, permissions, modules, rootEntityID)
+    
+    // Step 7: Create ABAC Attributes
+    CALL Step7_CreateAttributeDefinitions(ctx)
+    
+    // Step 8: Create Users
+    users = Step8_CreateUsers(ctx, roles, rootEntityID)
+    
+    // Step 9: Test Permissions
+    CALL Step9_TestPermissions(ctx, users, rootEntityID)
+    
+    // Step 10: Create ABAC Policies
+    CALL Step10_CreateABACPolicies(ctx, users, rootEntityID)
+    
+    // Step 11: Setup Sessions
+    CALL Step11_SetupSessionManagement(ctx, users)
+    
+    // Step 12: Setup Auditing
+    CALL Step12_SetupAuditLogging(ctx, users, rootEntityID)
+    
+    // Step 13: Setup Access Requests
+    CALL Step13_SetupAccessRequests(ctx, users, roles, rootEntityID)
+    
+    // Step 14: Maintenance
+    CALL Step14_SetupMaintenance(ctx, users)
+    
+    PRINT "Implementation Complete"
 
-// ==============================================
-// DELETE ENTITY
-// ==============================================
-function deleteEntity(tenantId, uuid, permanent = false) {
-    if permanent {
-        // Hard delete
-        execute DeleteHierarchyPaths(uuid)
-        execute DeleteEntityStatesForEntity(uuid)
-        execute HardDeleteEntity(uuid)
-    } else {
-        // Soft delete
-        execute SoftDeleteEntity(uuid)
-        // Optional: Cleanup orphaned hierarchy paths
-        execute CleanupOrphanedHierarchyPaths()
-    }
-}
+// ========================================================================
+// STEP FUNCTIONS
+// ========================================================================
 
-// Restore soft-deleted entity
-function restoreEntity(tenantId, uuid) {
-    execute RestoreEntity(uuid)
-    execute RebuildHierarchyPaths(tenantId)
-}
+FUNCTION Step1_InitializeSystem(ctx, tenantID):
+    SET tenant context
+    CREATE default system data (modules, actions, attributes)
 
-// ==============================================
-// ENTITY STATE MANAGEMENT
-// ==============================================
-function getNextSequence(tenantId, entityId, key, fiscalYear) {
-    return execute GetNextSequenceNumber(
-        entity_id: entityId,
-        key: key,
-        fiscal_year: fiscalYear
-    )
-}
+FUNCTION Step2_CreateModules(ctx) RETURNS map:
+    FOR EACH module_config IN [HR, FINANCE, SALES, INVENTORY]:
+        CREATE module
+    RETURN module_name -> ID mapping
 
-function resetEntitySequence(entityId, key, fiscalYear) {
-    execute ResetEntityStateSequence(
-        entity_id: entityId,
-        key: key,
-        sequence: 1,
-        fiscal_year: fiscalYear
-    )
-}
+FUNCTION Step3_CreateResources(ctx, modules, rootEntityID) RETURNS map:
+    GET USER_MANAGEMENT module
+    FOR EACH resource_config IN [users, roles, employees,...]:
+        CREATE resource with attributes
+    RETURN resource_name -> ID mapping
 
-// ==============================================
-// HIERARCHY OPERATIONS
-// ==============================================
-function getEntityChildren(tenantId, uuid) {
-    return execute GetEntityChildren(ancestor_id: uuid)
-}
+FUNCTION Step4_SetupActions(ctx) RETURNS map:
+    GET default actions (CREATE, READ, UPDATE, DELETE)
+    CREATE custom actions (VIEW_REPORT, EXPORT, IMPORT)
+    RETURN action_name -> ID mapping
 
-function getEntityAncestors(tenantId, uuid) {
-    return execute GetEntityAncestors(descendant_id: uuid)
-}
+FUNCTION Step5_CreatePermissions(ctx, resources, actions) RETURNS map:
+    FOR EACH permission_config IN [users.create, users.read, ...]:
+        CREATE permission with optional:
+            - Conditions
+            - Data filters
+            - Field restrictions
+    RETURN permission_name -> ID mapping
 
-function getEntityTree(tenantId) {
-    return execute GetEntityTreeStructure(tenant_id: tenantId)
-}
+FUNCTION Step6_CreateRoles(ctx, permissions, modules, rootEntityID) RETURNS map:
+    FOR EACH role_config IN [system_admin, hr_manager, ...]:
+        CREATE role
+        FOR EACH permission IN role_config.permissions:
+            GRANT permission to role
+    RETURN role_name -> ID mapping
 
-// ==============================================
-// VALIDATION FUNCTIONS
-// ==============================================
-function validateEntityName(name, excludeUuid = null) {
-    return execute ValidateEntityName(name, excludeUuid)
-}
+FUNCTION Step7_CreateAttributeDefinitions(ctx):
+    FOR EACH attr_config IN [security_level, department, ...]:
+        CREATE attribute definition with:
+            - Data type
+            - Validation rules
+            - Default values
 
-function validateEntityCode(code, excludeUuid = null) {
-    return execute ValidateEntityCode(code, excludeUuid)
-}
+FUNCTION Step8_CreateUsers(ctx, roles, rootEntityID) RETURNS map:
+    FOR EACH user_config IN [admin, hr_manager, ...]:
+        CREATE person
+        CREATE employee
+        CREATE user account with hashed password
+        ASSIGN role to user
+    RETURN username -> ID mapping
 
-function validateEntityParent(parentId, childId) {
-    return execute ValidateEntityParent(parentId, childId)
-}
+FUNCTION Step9_TestPermissions(ctx, users, rootEntityID):
+    FOR EACH test_case IN permission_tests:
+        CHECK if user has permission on resource
+        VERIFY expected vs actual result
 
-function checkCircularReference(parentId, childId) {
-    return execute IsEntityAncestor(
-        ancestor_id: childId,
-        descendant_id: parentId
-    )
-}
+FUNCTION Step10_CreateABACPolicies(ctx, users, rootEntityID):
+    FOR EACH policy_config IN [business_hours_only, ...]:
+        CREATE ABAC policy with:
+            - Target resources/users
+            - Rules
+            - Obligations
+
+FUNCTION Step11_SetupSessionManagement(ctx, users):
+    CREATE session for admin user
+    VALIDATE session
+
+FUNCTION Step12_SetupAuditLogging(ctx, users, rootEntityID):
+    FOR EACH audit_event IN [USER_LOGIN, PERMISSION_CHECK, ...]:
+        LOG audit event with context
+
+FUNCTION Step13_SetupAccessRequests(ctx, users, roles, rootEntityID):
+    CREATE access request for role assignment
+    APPROVE request
+    ASSIGN temporary role
+
+FUNCTION Step14_SetupMaintenance(ctx, users):
+    RUN data cleanup
+    GET security summary
+    CHECK high-risk events
+    GENERATE tenant statistics
+    VALIDATE data integrity
+    CHECK role hierarchy
+
+// ========================================================================
+// UTILITY FUNCTIONS
+// ========================================================================
+
+FUNCTION generateSecureToken() RETURNS string:
+    GENERATE cryptographically secure random token
+
+FUNCTION getJSONBStatus(data) RETURNS pgtype.Status:
+    RETURN Present if data exists, else Null
