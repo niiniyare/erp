@@ -23,6 +23,7 @@ require (
 	go.temporal.io/sdk v1.34.0
 	go.uber.org/zap v1.18.1
 	goa.design/goa/v3 v3.21.1
+	golang.org/x/crypto v0.39.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 )
@@ -82,7 +83,6 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect

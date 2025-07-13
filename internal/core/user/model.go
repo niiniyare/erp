@@ -8,6 +8,40 @@ import (
 	db "github.com/niiniyare/erp/db/sqlc"
 )
 
+type AccountStatus string
+
+const (
+	AccountStatusActive    AccountStatus = "ACTIVE"
+	AccountStatusInactive  AccountStatus = "INACTIVE"
+	AccountStatusLocked    AccountStatus = "LOCKED"
+	AccountStatusSuspended AccountStatus = "SUSPENDED"
+)
+
+var validAccountStatuses = map[AccountStatus]struct{}{
+	AccountStatusActive:    {},
+	AccountStatusInactive:  {},
+	AccountStatusLocked:    {},
+	AccountStatusSuspended: {},
+}
+
+func (a AccountStatus) IsValid() bool {
+	_, ok := validAccountStatuses[a]
+	return ok
+}
+
+func (a AccountStatus) String() string {
+	return string(a)
+}
+
+func AllAccountStatuses() []AccountStatus {
+	return []AccountStatus{
+		AccountStatusActive,
+		AccountStatusInactive,
+		AccountStatusLocked,
+		AccountStatusSuspended,
+	}
+}
+
 // User represents a user in the system (domain model)
 type User struct {
 	ID                    uuid.UUID              `json:"id"`
@@ -18,7 +52,7 @@ type User struct {
 	Username              string                 `json:"username"`
 	Email                 string                 `json:"email"`
 	UserType              string                 `json:"user_type"`
-	AccountStatus         string                 `json:"account_status"`
+	AccountStatus         AccountStatus          `json:"account_status"`
 	IsActive              bool                   `json:"is_active"`
 	LastLoginAt           *time.Time             `json:"last_login_at,omitempty"`
 	PasswordChangedAt     *time.Time             `json:"password_changed_at,omitempty"`
@@ -42,12 +76,12 @@ type Person struct {
 	FirstName          string                 `json:"first_name"`
 	LastName           string                 `json:"last_name"`
 	MiddleName         *string                `json:"middle_name,omitempty"`
-	Email              string                 `json:"email"`
+	Email              string                 `json:"email,omitempty"`
 	Phone              *string                `json:"phone,omitempty"`
 	BirthDate          *time.Time             `json:"birth_date,omitempty"`
 	NationalID         *string                `json:"national_id,omitempty"`
 	TaxID              *string                `json:"tax_id,omitempty"`
-	Address            *string                `json:"address,omitempty"`
+	Address            []byte                 `json:"address,omitempty"`
 	SecurityAttributes map[string]interface{} `json:"security_attributes,omitempty"`
 	Metadata           map[string]interface{} `json:"metadata,omitempty"`
 	IsActive           bool                   `json:"is_active"`
@@ -56,20 +90,59 @@ type Person struct {
 	DeletedAt          *time.Time             `json:"deleted_at,omitempty"`
 }
 
+type EmploymentStatus string
+
+const (
+	EmploymentStatusActive     EmploymentStatus = "ACTIVE"
+	EmploymentStatusInactive   EmploymentStatus = "INACTIVE"
+	EmploymentStatusTerminated EmploymentStatus = "TERMINATED"
+	EmploymentStatusOnLeave    EmploymentStatus = "ON_LEAVE"
+	EmploymentStatusSuspended  EmploymentStatus = "SUSPENDED"
+)
+
+var validEmploymentStatuses = map[EmploymentStatus]struct{}{
+	EmploymentStatusActive:     {},
+	EmploymentStatusInactive:   {},
+	EmploymentStatusTerminated: {},
+	EmploymentStatusOnLeave:    {},
+	EmploymentStatusSuspended:  {},
+}
+
+// AllEmploymentStatuses returns all valid enum values.
+func AllEmploymentStatuses() []EmploymentStatus {
+	return []EmploymentStatus{
+		EmploymentStatusActive,
+		EmploymentStatusInactive,
+		EmploymentStatusTerminated,
+		EmploymentStatusOnLeave,
+		EmploymentStatusSuspended,
+	}
+}
+
+// IsValid checks if the value is a valid enum.
+func (e EmploymentStatus) IsValid() bool {
+	_, ok := validEmploymentStatuses[e]
+	return ok
+}
+
+func (e EmploymentStatus) String() string {
+	return string(e)
+}
+
 // Employee represents an employee in the system (domain model)
 type Employee struct {
 	ID               uuid.UUID              `json:"id"`
-	TenantID         int32                  `json:"tenant_id"`
+	TenantID         uuid.UUID              `json:"tenant_id"`
 	PersonID         uuid.UUID              `json:"person_id"`
 	EmployeeNumber   string                 `json:"employee_number"`
 	EntityID         uuid.UUID              `json:"entity_id"`
-	PositionTitle    *string                `json:"position_title,omitempty"`
+	PositionTitle    *string                `json:"position_title,omite/mpty"`
 	DepartmentID     *uuid.UUID             `json:"department_id,omitempty"`
 	ManagerID        *uuid.UUID             `json:"manager_id,omitempty"`
 	HireDate         time.Time              `json:"hire_date"`
 	TerminationDate  *time.Time             `json:"termination_date,omitempty"`
 	SalaryInfo       map[string]interface{} `json:"salary_info,omitempty"`
-	EmploymentStatus string                 `json:"employment_status"`
+	Status           EmploymentStatus       `json:"employment_status"`
 	WorkSchedule     map[string]interface{} `json:"work_schedule,omitempty"`
 	SecurityLevel    int32                  `json:"security_level"`
 	AccessAttributes map[string]interface{} `json:"access_attributes,omitempty"`
@@ -140,12 +213,12 @@ type CreatePersonRequest struct {
 	FirstName          string                 `json:"first_name" validate:"required,min=2,max=100"`
 	LastName           string                 `json:"last_name" validate:"required,min=2,max=100"`
 	MiddleName         *string                `json:"middle_name,omitempty"`
-	Email              string                 `json:"email" validate:"required,email"`
+	Email              *string                `json:"email" validate:"required,email"`
 	Phone              *string                `json:"phone,omitempty"`
 	BirthDate          *time.Time             `json:"birth_date,omitempty"`
 	NationalID         *string                `json:"national_id,omitempty"`
 	TaxID              *string                `json:"tax_id,omitempty"`
-	Address            *string                `json:"address,omitempty"`
+	Address            []byte                 `json:"address,omitempty"`
 	SecurityAttributes map[string]interface{} `json:"security_attributes,omitempty"`
 	Metadata           map[string]interface{} `json:"metadata,omitempty"`
 }
@@ -160,7 +233,7 @@ type CreateEmployeeRequest struct {
 	ManagerID        *uuid.UUID             `json:"manager_id,omitempty"`
 	HireDate         time.Time              `json:"hire_date"`
 	SalaryInfo       map[string]interface{} `json:"salary_info,omitempty"`
-	EmploymentStatus string                 `json:"employment_status"`
+	Status           EmploymentStatus       `json:"employment_status"`
 	WorkSchedule     map[string]interface{} `json:"work_schedule,omitempty"`
 	SecurityLevel    int32                  `json:"security_level"`
 	AccessAttributes map[string]interface{} `json:"access_attributes,omitempty"`
@@ -226,22 +299,22 @@ func FromSQLCUser(sqlcUser *db.User) (*User, error) {
 	}
 
 	var deletedAt *time.Time
-	if sqlcUser.DeletedAt != nil && sqlcUser.DeletedAt.Valid {
+	if sqlcUser.DeletedAt.Valid {
 		deletedAt = &sqlcUser.DeletedAt.Time
 	}
 
 	var lastLoginAt *time.Time
-	if sqlcUser.LastLoginAt != nil && sqlcUser.LastLoginAt.Valid {
+	if sqlcUser.LastLoginAt.Valid {
 		lastLoginAt = &sqlcUser.LastLoginAt.Time
 	}
 
 	var passwordChangedAt *time.Time
-	if sqlcUser.PasswordChangedAt != nil && sqlcUser.PasswordChangedAt.Valid {
+	if sqlcUser.PasswordChangedAt.Valid {
 		passwordChangedAt = &sqlcUser.PasswordChangedAt.Time
 	}
 
 	var lockoutUntil *time.Time
-	if sqlcUser.LockoutUntil != nil && sqlcUser.LockoutUntil.Valid {
+	if sqlcUser.LockoutUntil.Valid {
 		lockoutUntil = &sqlcUser.LockoutUntil.Time
 	}
 
@@ -308,7 +381,7 @@ func FromSQLCPerson(sqlcPerson *db.Person) (*Person, error) {
 		BirthDate:          birthDate,
 		NationalID:         sqlcPerson.NationalID,
 		TaxID:              sqlcPerson.TaxID,
-		Address:            *string(&sqlcPerson.Address),
+		Address:            sqlcPerson.Address,
 		SecurityAttributes: securityAttributes,
 		Metadata:           metadata,
 		IsActive:           sqlcPerson.IsActive,
@@ -342,13 +415,13 @@ func FromSQLCEmployee(sqlcEmployee *db.Employee) (*Employee, error) {
 	}
 
 	var deletedAt *time.Time
-	if sqlcEmployee.DeletedAt != nil && sqlcEmployee.DeletedAt.Valid {
+	if sqlcEmployee.DeletedAt.Valid {
 		deletedAt = &sqlcEmployee.DeletedAt.Time
 	}
 
 	var terminationDate *time.Time
-	if sqlcEmployee.TerminationDate != nil && sqlcEmployee.TerminationDate.Valid {
-		terminationDate = &sqlcEmployee.TerminationDate.Time
+	if !sqlcEmployee.TerminationDate.IsZero() {
+		terminationDate = &sqlcEmployee.TerminationDate
 	}
 
 	return &Employee{
@@ -360,10 +433,10 @@ func FromSQLCEmployee(sqlcEmployee *db.Employee) (*Employee, error) {
 		PositionTitle:    sqlcEmployee.PositionTitle,
 		DepartmentID:     sqlcEmployee.DepartmentID,
 		ManagerID:        sqlcEmployee.ManagerID,
-		HireDate:         sqlcEmployee.HireDate.Time,
+		HireDate:         sqlcEmployee.HireDate,
 		TerminationDate:  terminationDate,
 		SalaryInfo:       salaryInfo,
-		EmploymentStatus: sqlcEmployee.EmploymentStatus,
+		Status:           &sqlcEmployee.EmploymentStatus,
 		WorkSchedule:     workSchedule,
 		SecurityLevel:    sqlcEmployee.SecurityLevel,
 		AccessAttributes: accessAttributes,
@@ -478,17 +551,17 @@ func (req *CreateEmployeeRequest) ToSQLCCreateEmployeeParams() (db.CreateEmploye
 	}
 
 	params := db.CreateEmployeeParams{
-		PersonID:         req.PersonID,
-		EmployeeNumber:   req.EmployeeNumber,
-		EntityID:         req.EntityID,
-		PositionTitle:    req.PositionTitle,
-		DepartmentID:     req.DepartmentID,
-		ManagerID:        req.ManagerID,
-		HireDate:         db.Date{Time: req.HireDate, Valid: true},
-		SalaryInfo:       salaryInfo,
-		EmploymentStatus: req.EmploymentStatus,
+		PersonID:       req.PersonID,
+		EmployeeNumber: req.EmployeeNumber,
+		EntityID:       req.EntityID,
+		PositionTitle:  req.PositionTitle,
+		DepartmentID:   req.DepartmentID,
+		ManagerID:      req.ManagerID,
+		HireDate:       req.HireDate,
+		SalaryInfo:     salaryInfo,
+		// Status:           req.EmploymentStatusActive,
 		WorkSchedule:     workSchedule,
-		SecurityLevel:    req.SecurityLevel,
+		SecurityLevel:    &req.SecurityLevel,
 		AccessAttributes: accessAttributes,
 	}
 

@@ -774,7 +774,7 @@ func (r *repository) GetUserWithDetails(ctx context.Context, id uuid.UUID) (*Use
 			logger.WarnContext(ctx, "Failed to get employee details for user",
 				logger.Fields{"error": err.Error(), "employee_id": user.EmployeeID.String()})
 		}
-	}"}
+	}
 
 	// Success metrics
 	r.metrics.IncrementCounter("database_operations_total", metrics.Fields{

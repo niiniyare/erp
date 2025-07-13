@@ -7,6 +7,7 @@ import (
 	"github.com/niiniyare/erp/internal/api/handlers"
 	"github.com/niiniyare/erp/internal/core/entity"
 	"github.com/niiniyare/erp/internal/core/tenant"
+	"github.com/niiniyare/erp/internal/core/user"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -89,13 +90,15 @@ func main() {
 	// Initialize repositories
 	tenantRepo := tenant.NewRepository(store)
 	entityRepo := entity.NewRepository(store, tracingService, metricsService)
+	userRepo := user.NewRepository(store, tracingService, metricsService)
 
 	// Initialize services
 	tenantService := tenant.NewService(tenantRepo, redisClient)
 	entityService := entity.NewService(entityRepo, tracingService, metricsService)
+	userService := user.NewService(userRepo, redisClient, tracingService, metricsService)
 
 	// Initialize API handlers
-	router := handlers.NewRouter(tenantService, entityService, tracingService, metricsService)
+	router := handlers.NewRouter(tenantService, entityService, userService, tracingService, metricsService)
 
 	// Start server
 	logger.Info("Server starting", logger.Fields{

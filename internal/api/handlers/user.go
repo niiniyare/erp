@@ -3,200 +3,447 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/yourproject/erp/internal/api/gen/user"
-	"github.com/yourproject/erp/internal/core/user"
-	"github.com/yourproject/erp/internal/shared/logger"
-	"github.com/yourproject/erp/internal/shared/utils"
-	"github.com/yourproject/erp/db/sqlc"
+	coreUser "github.com/niiniyare/erp/internal/core/user"
+	"github.com/niiniyare/erp/internal/shared/errors"
+	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
-// UserHandler handles user-related HTTP requests
+// UserHandler handles user-related HTTP requests following the data flow pattern
 type UserHandler struct {
-	userService *user.UserService
-	logger      logger.Logger
+	service coreUser.Service
+	tracing *tracing.TracingService
+	metrics *metrics.MetricsService
 }
 
 // NewUserHandler creates a new user handler
-func NewUserHandler(userService *user.UserService, logger logger.Logger) *UserHandler {
+func NewUserHandler(service coreUser.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) *UserHandler {
 	return &UserHandler{
-		userService: userService,
-		logger:      logger,
+		service: service,
+		tracing: tracing,
+		metrics: metrics,
 	}
 }
 
-// CreateUser handles user creation
-func (h *UserHandler) CreateUser(ctx context.Context, p *user.CreateUserPayload) (*user.CreateUserResult, error) {
-	h.logger.Info("Creating user", "username", p.Username, "email", p.Email)
-
-	// Parse entity ID
-	entityID, err := uuid.Parse(p.EntityID)
+// CreateUser handles user creation following the data flow pattern
+func (h *UserHandler) CreateUser(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.create_user",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users",
+	})
+	defer timer.Stop()
+	
+	// Log request
+	logger.InfoContext(ctx, "Processing create user request",
+		logger.Fields{
+			"method":     c.Request.Method,
+			"path":       c.Request.URL.Path,
+			"user_agent": c.Request.UserAgent(),
+		})
+	
+	// Parse and validate request
+	var req CreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users",
+			"error_type": "validation_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Invalid request payload",
+			logger.Fields{"error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+	
+	// Convert to service request
+	serviceReq := &coreUser.CreateUserRequest{
+		EntityID:               req.EntityID,
+		Username:               &req.Username,
+		Email:                  req.Email,
+		Password:               req.Password,
+		UserType:               req.UserType,
+		AccountStatus:          req.AccountStatus,
+		SessionTimeoutMinutes:  req.SessionTimeoutMinutes,
+		MfaEnabled:             req.MfaEnabled,
+		PasswordExpirationDays: req.PasswordExpirationDays,
+		MaxFailedLogins:        req.MaxFailedLogins,
+		PersonID:               req.PersonID,
+		EmployeeID:             req.EmployeeID,
+		CreatedBy:              req.CreatedBy,
+	}
+	
+	// Call service layer
+	user, err := h.service.CreateUser(ctx, serviceReq)
 	if err != nil {
-		return nil, user.MakeBadRequest(fmt.Errorf("invalid entity_id: %w", err))
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to create user",
+			logger.Fields{"error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, errors.ErrEmailAlreadyExists):
+			c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
+		case errors.Is(err, errors.ErrUsernameAlreadyExists):
+			c.JSON(http.StatusConflict, gin.H{"error": "Username already exists"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
 	}
-
-	// Convert payload to user config
-	config := user.UserConfig{
-		EntityID:      entityID,
-		FirstName:     p.FirstName,
-		LastName:      p.LastName,
-		Email:         p.Email,
-		Username:      p.Username,
-		Password:      p.Password,
-		UserType:      p.UserType,
-		SecurityLevel: p.SecurityLevel,
-		IsActive:      p.IsActive != nil && *p.IsActive,
-	}
-
-	// Set optional fields
-	if p.MiddleName != nil {
-		config.MiddleName = p.MiddleName
-	}
-	if p.Phone != nil {
-		config.Phone = p.Phone
-	}
-	if p.Department != nil {
-		config.Department = p.Department
-	}
-	if p.Position != nil {
-		config.Position = p.Position
-	}
-	if p.RoleNames != nil {
-		config.RoleNames = p.RoleNames
-	}
-
-	// TODO: Get roles by name (this would typically come from a role service)
-	rolesByName := make(map[string]uuid.UUID)
-	for _, roleName := range config.RoleNames {
-		// This is a placeholder - you would query the role service
-		rolesByName[roleName] = uuid.New()
-	}
-
-	// Create the user
-	result, err := h.userService.Step8_CreateUsers(ctx, rolesByName, entityID)
-	if err != nil {
-		h.logger.Error("Failed to create user", "error", err)
-		return nil, user.MakeInternalError(err)
-	}
-
-	// For now, return the first user created (in a real implementation, this would be different)
-	var userID uuid.UUID
-	for _, id := range result {
-		userID = id
-		break
-	}
-
-	// Get the created user details
-	createdUser, err := h.userService.GetUserByID(ctx, userID)
-	if err != nil {
-		h.logger.Error("Failed to retrieve created user", "error", err)
-		return nil, user.MakeInternalError(err)
-	}
-
-	return &user.CreateUserResult{
-		UserID:    createdUser.ID.String(),
-		PersonID:  createdUser.PersonID.String(),
-		Username:  createdUser.Username,
-		Email:     createdUser.Email,
-		CreatedAt: createdUser.CreatedAt.Format(time.RFC3339),
-	}, nil
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusCreated, h.convertUserToResponse(user))
 }
 
 // GetUser handles user retrieval by ID
-func (h *UserHandler) GetUser(ctx context.Context, p *user.GetUserPayload) (*user.GetUserResult, error) {
-	h.logger.Info("Getting user", "user_id", p.UserID)
-
-	userID, err := uuid.Parse(p.UserID)
+func (h *UserHandler) GetUser(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.get_user",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}",
+	})
+	defer timer.Stop()
+	
+	// Get user ID from path
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return nil, user.MakeBadRequest(fmt.Errorf("invalid user_id: %w", err))
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid user ID",
+			logger.Fields{"user_id": userIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
 	}
-
-	u, err := h.userService.GetUserByID(ctx, userID)
+	
+	// Add user ID to span
+	span.SetAttributes(attribute.String("user.id", userID.String()))
+	
+	// Call service layer
+	user, err := h.service.GetUserByID(ctx, userID)
 	if err != nil {
-		h.logger.Error("Failed to get user", "user_id", p.UserID, "error", err)
-		return nil, user.MakeNotFound(err)
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to get user",
+			logger.Fields{"user_id": userID.String(), "error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, errors.ErrUserNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
 	}
-
-	return h.convertUserToResult(u), nil
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, h.convertUserToResponse(user))
 }
 
 // ListUsers handles user listing with pagination
-func (h *UserHandler) ListUsers(ctx context.Context, p *user.ListUsersPayload) (*user.ListUsersResult, error) {
-	h.logger.Info("Listing users", "limit", p.Limit, "offset", p.Offset)
-
-	limit := int32(20)
-	offset := int32(0)
-
-	if p.Limit != nil {
-		limit = *p.Limit
+func (h *UserHandler) ListUsers(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.list_users",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users",
+	})
+	defer timer.Stop()
+	
+	// Parse query parameters
+	limit := 20
+	offset := 0
+	
+	if l := c.Query("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 100 {
+			limit = parsed
+		}
 	}
-	if p.Offset != nil {
-		offset = *p.Offset
+	
+	if o := c.Query("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			offset = parsed
+		}
 	}
-
-	users, err := h.userService.ListUsers(ctx, p.UserType, p.AccountStatus, limit, offset)
-	if err != nil {
-		h.logger.Error("Failed to list users", "error", err)
-		return nil, user.MakeInternalError(err)
-	}
-
-	userResults := make([]*user.UserResult, len(users))
-	for i, u := range users {
-		userResults[i] = h.convertUserToUserResult(u)
-	}
-
-	return &user.ListUsersResult{
-		Users:  userResults,
-		Total:  int32(len(users)), // In a real implementation, get actual count
+	
+	userType := c.Query("user_type")
+	accountStatus := c.Query("account_status")
+	
+	// Add query parameters to span
+	span.SetAttributes(
+		attribute.Int("query.limit", limit),
+		attribute.Int("query.offset", offset),
+		attribute.String("query.user_type", userType),
+		attribute.String("query.account_status", accountStatus),
+	)
+	
+	// Build service request
+	req := &coreUser.ListUsersRequest{
 		Limit:  limit,
 		Offset: offset,
-	}, nil
+	}
+	
+	if userType != "" {
+		req.UserType = &userType
+	}
+	if accountStatus != "" {
+		req.AccountStatus = &accountStatus
+	}
+	
+	// Call service layer
+	users, err := h.service.ListUsers(ctx, req)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to list users",
+			logger.Fields{"error": err.Error()})
+		
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+	
+	// Convert to response format
+	userResponses := make([]UserResponse, len(users))
+	for i, user := range users {
+		userResponses[i] = h.convertUserToResponse(user)
+	}
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, ListUsersResponse{
+		Users:  userResponses,
+		Total:  len(users),
+		Limit:  limit,
+		Offset: offset,
+	})
 }
 
 // UpdateUser handles user updates
-func (h *UserHandler) UpdateUser(ctx context.Context, p *user.UpdateUserPayload) (*user.UserResult, error) {
-	h.logger.Info("Updating user", "user_id", p.UserID)
-
-	userID, err := uuid.Parse(p.UserID)
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.update_user",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}",
+	})
+	defer timer.Stop()
+	
+	// Get user ID from path
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return nil, user.MakeBadRequest(fmt.Errorf("invalid user_id: %w", err))
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid user ID",
+			logger.Fields{"user_id": userIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
 	}
-
-	// Build update parameters
-	params := sqlc.UpdateUserParams{
-		ID: userID,
+	
+	// Parse and validate request
+	var req UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}",
+			"error_type": "validation_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Invalid request payload",
+			logger.Fields{"error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
 	}
-
-	if p.Username != nil {
-		params.Username = p.Username
+	
+	// Convert to service request
+	serviceReq := &coreUser.UpdateUserRequest{
+		Username:               req.Username,
+		Email:                  req.Email,
+		UserType:               req.UserType,
+		AccountStatus:          req.AccountStatus,
+		SessionTimeoutMinutes:  req.SessionTimeoutMinutes,
+		MfaEnabled:             req.MfaEnabled,
+		PasswordExpirationDays: req.PasswordExpirationDays,
+		MaxFailedLogins:        req.MaxFailedLogins,
 	}
-	if p.Email != nil {
-		params.Email = *p.Email
-	}
-	if p.UserType != nil {
-		params.UserType = *p.UserType
-	}
-	if p.AccountStatus != nil {
-		params.AccountStatus = p.AccountStatus
-	}
-	if p.MfaEnabled != nil {
-		params.MfaEnabled = p.MfaEnabled
-	}
-	if p.SessionTimeoutMinutes != nil {
-		params.SessionTimeoutMinutes = p.SessionTimeoutMinutes
-	}
-
-	updatedUser, err := h.userService.UpdateUser(ctx, userID, params)
+	
+	// Call service layer
+	user, err := h.service.UpdateUser(ctx, userID, serviceReq)
 	if err != nil {
-		h.logger.Error("Failed to update user", "user_id", p.UserID, "error", err)
-		return nil, user.MakeInternalError(err)
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to update user",
+			logger.Fields{"user_id": userID.String(), "error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, errors.ErrUserNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		case errors.Is(err, errors.ErrEmailAlreadyExists):
+			c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
+		case errors.Is(err, errors.ErrUsernameAlreadyExists):
+			c.JSON(http.StatusConflict, gin.H{"error": "Username already exists"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
 	}
-
-	return h.convertUserToUserResult(updatedUser), nil
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, h.convertUserToResponse(user))
 }
 
 // UpdateUserPassword handles password updates
@@ -233,68 +480,257 @@ func (h *UserHandler) UpdateUserPassword(ctx context.Context, p *user.UpdateUser
 }
 
 // DeleteUser handles user soft deletion
-func (h *UserHandler) DeleteUser(ctx context.Context, p *user.DeleteUserPayload) (*user.DeleteUserResult, error) {
-	h.logger.Info("Deleting user", "user_id", p.UserID)
-
-	userID, err := uuid.Parse(p.UserID)
+func (h *UserHandler) DeleteUser(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.delete_user",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}",
+	})
+	defer timer.Stop()
+	
+	// Get user ID from path
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return nil, user.MakeBadRequest(fmt.Errorf("invalid user_id: %w", err))
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid user ID",
+			logger.Fields{"user_id": userIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
 	}
-
-	err = h.userService.SoftDeleteUser(ctx, userID)
+	
+	// Add user ID to span
+	span.SetAttributes(attribute.String("user.id", userID.String()))
+	
+	// Call service layer (soft delete)
+	err = h.service.DeleteUser(ctx, userID, false)
 	if err != nil {
-		h.logger.Error("Failed to delete user", "user_id", p.UserID, "error", err)
-		return nil, user.MakeInternalError(err)
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to delete user",
+			logger.Fields{"user_id": userID.String(), "error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, errors.ErrUserNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
 	}
-
-	return &user.DeleteUserResult{
-		Success: true,
-		Message: "User deleted successfully",
-	}, nil
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
 // AuthenticateUser handles user authentication
-func (h *UserHandler) AuthenticateUser(ctx context.Context, p *user.AuthenticateUserPayload) (*user.AuthenticateUserResult, error) {
-	h.logger.Info("Authenticating user", "identifier", p.Identifier)
-
-	authenticatedUser, err := h.userService.AuthenticateUser(ctx, p.Identifier, p.Password)
-	if err != nil {
-		h.logger.Error("Authentication failed", "identifier", p.Identifier, "error", err)
-		if strings.Contains(err.Error(), "locked") {
-			return nil, user.MakeAccountLocked(err)
-		}
-		return nil, user.MakeUnauthorized(err)
+func (h *UserHandler) AuthenticateUser(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.authenticate_user",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/auth",
+	})
+	defer timer.Stop()
+	
+	// Parse and validate request
+	var req AuthenticateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/auth",
+			"error_type": "validation_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Invalid request payload",
+			logger.Fields{"error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
 	}
-
+	
+	// Add identifier to span (but not password for security)
+	span.SetAttributes(attribute.String("auth.identifier", req.Identifier))
+	
+	// Call service layer
+	user, err := h.service.AuthenticateUser(ctx, req.Identifier, req.Password)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/auth",
+			"error_type": "authentication_error",
+		})
+		
+		// Log error (without password)
+		logger.ErrorContext(ctx, "Authentication failed",
+			logger.Fields{"identifier": req.Identifier, "error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, errors.ErrUserNotFound):
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		case strings.Contains(err.Error(), "locked"):
+			c.JSON(http.StatusLocked, gin.H{"error": "Account is locked"})
+		default:
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		}
+		return
+	}
+	
 	// TODO: Generate JWT token (this would be handled by an auth service)
 	token := "jwt-token-placeholder"
 	expiresAt := time.Now().Add(8 * time.Hour)
-
-	return &user.AuthenticateUserResult{
-		User:      h.convertUserToUserResult(authenticatedUser),
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/auth",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, AuthenticateUserResponse{
+		User:      h.convertUserToResponse(user),
 		Token:     token,
 		ExpiresAt: expiresAt.Format(time.RFC3339),
-	}, nil
+	})
 }
 
 // GetUserRoles handles retrieving user roles
-func (h *UserHandler) GetUserRoles(ctx context.Context, p *user.GetUserRolesPayload) (*user.GetUserRolesResult, error) {
-	h.logger.Info("Getting user roles", "user_id", p.UserID)
-
-	userID, err := uuid.Parse(p.UserID)
+func (h *UserHandler) GetUserRoles(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.get_user_roles",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}/roles",
+	})
+	defer timer.Stop()
+	
+	// Get user ID from path
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return nil, user.MakeBadRequest(fmt.Errorf("invalid user_id: %w", err))
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}/roles",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid user ID",
+			logger.Fields{"user_id": userIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
 	}
-
-	roles, err := h.userService.GetUserRoles(ctx, userID)
+	
+	// Add user ID to span
+	span.SetAttributes(attribute.String("user.id", userID.String()))
+	
+	// Call service layer
+	roles, err := h.service.GetUserRoles(ctx, userID)
 	if err != nil {
-		h.logger.Error("Failed to get user roles", "user_id", p.UserID, "error", err)
-		return nil, user.MakeInternalError(err)
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}/roles",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to get user roles",
+			logger.Fields{"user_id": userID.String(), "error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, errors.ErrUserNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
 	}
-
-	roleResults := make([]*user.UserRoleResult, len(roles))
+	
+	// Convert to response format
+	roleResponses := make([]UserRoleResponse, len(roles))
 	for i, role := range roles {
-		roleResults[i] = &user.UserRoleResult{
+		roleResponses[i] = UserRoleResponse{
 			ID:          role.ID.String(),
 			Name:        role.Name,
 			DisplayName: role.DisplayName,
@@ -304,139 +740,356 @@ func (h *UserHandler) GetUserRoles(ctx context.Context, p *user.GetUserRolesPayl
 		}
 		
 		if role.ExpiresAt != nil {
-			roleResults[i].ExpiresAt = role.ExpiresAt.Format(time.RFC3339)
+			roleResponses[i].ExpiresAt = role.ExpiresAt.Format(time.RFC3339)
 		}
 	}
-
-	return &user.GetUserRolesResult{
-		Roles: roleResults,
-	}, nil
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}/roles",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, GetUserRolesResponse{
+		Roles: roleResponses,
+	})
 }
 
-// GetUserPermissions handles retrieving user permissions
-func (h *UserHandler) GetUserPermissions(ctx context.Context, p *user.GetUserPermissionsPayload) (*user.GetUserPermissionsResult, error) {
-	h.logger.Info("Getting user permissions", "user_id", p.UserID)
-
-	userID, err := uuid.Parse(p.UserID)
+// UpdateUserPassword handles password updates
+func (h *UserHandler) UpdateUserPassword(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.update_user_password",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}/password",
+	})
+	defer timer.Stop()
+	
+	// Get user ID from path
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return nil, user.MakeBadRequest(fmt.Errorf("invalid user_id: %w", err))
-	}
-
-	permissions, err := h.userService.GetUserEffectivePermissions(ctx, userID)
-	if err != nil {
-		h.logger.Error("Failed to get user permissions", "user_id", p.UserID, "error", err)
-		return nil, user.MakeInternalError(err)
-	}
-
-	permissionResults := make([]*user.UserPermissionResult, len(permissions))
-	for i, perm := range permissions {
-		permissionResults[i] = &user.UserPermissionResult{
-			ID:               perm.ID.String(),
-			Name:             perm.Name,
-			DisplayName:      perm.DisplayName,
-			ResourceName:     perm.ResourceName,
-			ActionName:       perm.ActionName,
-			PermissionSource: perm.PermissionSource,
-		}
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
 		
-		if perm.SourceRole != nil {
-			permissionResults[i].SourceRole = *perm.SourceRole
-		}
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}/password",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid user ID",
+			logger.Fields{"user_id": userIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
 	}
-
-	return &user.GetUserPermissionsResult{
-		Permissions: permissionResults,
-	}, nil
+	
+	// Parse and validate request
+	var req UpdatePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}/password",
+			"error_type": "validation_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Invalid request payload",
+			logger.Fields{"error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+	
+	// Add user ID to span
+	span.SetAttributes(attribute.String("user.id", userID.String()))
+	
+	// Call service layer
+	err = h.service.UpdatePassword(ctx, userID, req.NewPassword)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}/password",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to update user password",
+			logger.Fields{"user_id": userID.String(), "error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, errors.ErrUserNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
+	}
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}/password",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
 }
 
 // SearchUsers handles user search
-func (h *UserHandler) SearchUsers(ctx context.Context, p *user.SearchUsersPayload) (*user.SearchUsersResult, error) {
-	h.logger.Info("Searching users", "query", p.Query)
-
-	limit := int32(20)
-	offset := int32(0)
-
-	if p.Limit != nil {
-		limit = *p.Limit
+func (h *UserHandler) SearchUsers(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.search_users",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/search",
+	})
+	defer timer.Stop()
+	
+	// Parse query parameters
+	query := c.Query("q")
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Query parameter 'q' is required"})
+		return
 	}
-	if p.Offset != nil {
-		offset = *p.Offset
+	
+	limit := 20
+	offset := 0
+	
+	if l := c.Query("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 100 {
+			limit = parsed
+		}
 	}
-
-	// TODO: Implement proper search in the service
-	// For now, this is a placeholder
-	users := []*user.UserSearchResult{}
-
-	return &user.SearchUsersResult{
-		Users:  users,
-		Total:  int32(len(users)),
+	
+	if o := c.Query("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+	
+	// Add query parameters to span
+	span.SetAttributes(
+		attribute.String("search.query", query),
+		attribute.Int("search.limit", limit),
+		attribute.Int("search.offset", offset),
+	)
+	
+	// Call service layer
+	users, err := h.service.SearchUsers(ctx, query, limit, offset)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/search",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to search users",
+			logger.Fields{"query": query, "error": err.Error()})
+		
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+	
+	// Convert to response format
+	userResponses := make([]UserResponse, len(users))
+	for i, user := range users {
+		userResponses[i] = h.convertUserToResponse(user)
+	}
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/search",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, SearchUsersResponse{
+		Users:  userResponses,
+		Total:  len(users),
 		Limit:  limit,
 		Offset: offset,
-	}, nil
+		Query:  query,
+	})
+}
+
+// Request and Response Types
+
+// CreateUserRequest represents the request to create a user
+type CreateUserRequest struct {
+	EntityID               uuid.UUID `json:"entity_id" binding:"required"`
+	Username               string    `json:"username" binding:"required"`
+	Email                  string    `json:"email" binding:"required,email"`
+	Password               string    `json:"password" binding:"required,min=8"`
+	UserType               string    `json:"user_type" binding:"required"`
+	AccountStatus          *string   `json:"account_status,omitempty"`
+	SessionTimeoutMinutes  *int32    `json:"session_timeout_minutes,omitempty"`
+	MfaEnabled             *bool     `json:"mfa_enabled,omitempty"`
+	PasswordExpirationDays *int32    `json:"password_expiration_days,omitempty"`
+	MaxFailedLogins        *int32    `json:"max_failed_logins,omitempty"`
+	PersonID               *uuid.UUID `json:"person_id,omitempty"`
+	EmployeeID             *uuid.UUID `json:"employee_id,omitempty"`
+	CreatedBy              *uuid.UUID `json:"created_by,omitempty"`
+}
+
+// UpdateUserRequest represents the request to update a user
+type UpdateUserRequest struct {
+	Username               *string `json:"username,omitempty"`
+	Email                  *string `json:"email,omitempty"`
+	UserType               *string `json:"user_type,omitempty"`
+	AccountStatus          *string `json:"account_status,omitempty"`
+	SessionTimeoutMinutes  *int32  `json:"session_timeout_minutes,omitempty"`
+	MfaEnabled             *bool   `json:"mfa_enabled,omitempty"`
+	PasswordExpirationDays *int32  `json:"password_expiration_days,omitempty"`
+	MaxFailedLogins        *int32  `json:"max_failed_logins,omitempty"`
+}
+
+// AuthenticateUserRequest represents the request to authenticate a user
+type AuthenticateUserRequest struct {
+	Identifier string `json:"identifier" binding:"required"`
+	Password   string `json:"password" binding:"required"`
+}
+
+// UpdatePasswordRequest represents the request to update a user's password
+type UpdatePasswordRequest struct {
+	CurrentPassword string `json:"current_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required,min=8"`
+}
+
+// UserResponse represents a user in API responses
+type UserResponse struct {
+	ID            string    `json:"id"`
+	EntityID      string    `json:"entity_id"`
+	PersonID      *string   `json:"person_id,omitempty"`
+	EmployeeID    *string   `json:"employee_id,omitempty"`
+	Username      *string   `json:"username,omitempty"`
+	Email         string    `json:"email"`
+	UserType      string    `json:"user_type"`
+	AccountStatus *string   `json:"account_status,omitempty"`
+	IsActive      bool      `json:"is_active"`
+	LastLoginAt   *string   `json:"last_login_at,omitempty"`
+	MfaEnabled    *bool     `json:"mfa_enabled,omitempty"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+// UserRoleResponse represents a user role in API responses
+type UserRoleResponse struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	DisplayName string  `json:"display_name"`
+	Description string  `json:"description"`
+	RoleType    string  `json:"role_type"`
+	AssignedAt  string  `json:"assigned_at"`
+	ExpiresAt   string  `json:"expires_at,omitempty"`
+}
+
+// ListUsersResponse represents the response for listing users
+type ListUsersResponse struct {
+	Users  []UserResponse `json:"users"`
+	Total  int           `json:"total"`
+	Limit  int           `json:"limit"`
+	Offset int           `json:"offset"`
+}
+
+// SearchUsersResponse represents the response for searching users
+type SearchUsersResponse struct {
+	Users  []UserResponse `json:"users"`
+	Total  int           `json:"total"`
+	Limit  int           `json:"limit"`
+	Offset int           `json:"offset"`
+	Query  string        `json:"query"`
+}
+
+// AuthenticateUserResponse represents the response for user authentication
+type AuthenticateUserResponse struct {
+	User      UserResponse `json:"user"`
+	Token     string       `json:"token"`
+	ExpiresAt string       `json:"expires_at"`
+}
+
+// GetUserRolesResponse represents the response for getting user roles
+type GetUserRolesResponse struct {
+	Roles []UserRoleResponse `json:"roles"`
 }
 
 // Helper functions
 
-// convertUserToResult converts a sqlc.User to user.GetUserResult
-func (h *UserHandler) convertUserToResult(u *sqlc.User) *user.GetUserResult {
-	result := &user.GetUserResult{
-		ID:        u.ID.String(),
-		EntityID:  u.EntityID.String(),
-		Username:  u.Username,
-		Email:     u.Email,
-		UserType:  u.UserType,
-		IsActive:  u.IsActive,
-		CreatedAt: u.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: u.UpdatedAt.Format(time.RFC3339),
+// convertUserToResponse converts a domain User to UserResponse
+func (h *UserHandler) convertUserToResponse(u *coreUser.User) UserResponse {
+	response := UserResponse{
+		ID:            u.ID.String(),
+		EntityID:      u.EntityID.String(),
+		Email:         u.Email,
+		UserType:      u.UserType,
+		IsActive:      u.IsActive,
+		CreatedAt:     u.CreatedAt,
+		UpdatedAt:     u.UpdatedAt,
 	}
 
 	if u.PersonID != nil {
-		result.PersonID = u.PersonID.String()
+		personID := u.PersonID.String()
+		response.PersonID = &personID
 	}
 	if u.EmployeeID != nil {
-		result.EmployeeID = u.EmployeeID.String()
+		employeeID := u.EmployeeID.String()
+		response.EmployeeID = &employeeID
+	}
+	if u.Username != nil {
+		response.Username = u.Username
 	}
 	if u.AccountStatus != nil {
-		result.AccountStatus = *u.AccountStatus
+		response.AccountStatus = u.AccountStatus
 	}
 	if u.LastLoginAt != nil {
-		result.LastLoginAt = u.LastLoginAt.Format(time.RFC3339)
+		lastLogin := u.LastLoginAt.Format(time.RFC3339)
+		response.LastLoginAt = &lastLogin
 	}
 	if u.MfaEnabled != nil {
-		result.MfaEnabled = *u.MfaEnabled
+		response.MfaEnabled = u.MfaEnabled
 	}
 
-	return result
-}
-
-// convertUserToUserResult converts a sqlc.User to user.UserResult
-func (h *UserHandler) convertUserToUserResult(u *sqlc.User) *user.UserResult {
-	result := &user.UserResult{
-		ID:        u.ID.String(),
-		EntityID:  u.EntityID.String(),
-		Username:  u.Username,
-		Email:     u.Email,
-		UserType:  u.UserType,
-		IsActive:  u.IsActive,
-		CreatedAt: u.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: u.UpdatedAt.Format(time.RFC3339),
-	}
-
-	if u.PersonID != nil {
-		result.PersonID = u.PersonID.String()
-	}
-	if u.EmployeeID != nil {
-		result.EmployeeID = u.EmployeeID.String()
-	}
-	if u.AccountStatus != nil {
-		result.AccountStatus = *u.AccountStatus
-	}
-	if u.LastLoginAt != nil {
-		result.LastLoginAt = u.LastLoginAt.Format(time.RFC3339)
-	}
-	if u.MfaEnabled != nil {
-		result.MfaEnabled = *u.MfaEnabled
-	}
-
-	return result
+	return response
 }

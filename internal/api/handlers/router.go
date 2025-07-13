@@ -4,22 +4,26 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/niiniyare/erp/internal/core/entity"
 	"github.com/niiniyare/erp/internal/core/tenant"
+	"github.com/niiniyare/erp/internal/core/user"
 	"github.com/niiniyare/erp/internal/platform/middleware"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
 // NewRouter creates a new router with all handlers
-func NewRouter(tenantService tenant.Service, entityService entity.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) *gin.Engine {
+func NewRouter(tenantService tenant.Service, entityService entity.Service, userService user.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) *gin.Engine {
 	r := gin.New()
 
 	// Add middleware
 	r.Use(gin.Recovery())
 	r.Use(middleware.RequestLogger())
+	r.Use(middleware.TracingMiddleware(tracing))
+	r.Use(middleware.MetricsMiddleware(metrics))
 
 	// Initialize handlers
 	tenantHandler := NewTenantHandler(tenantService)
 	entityHandler := NewEntityHandler(entityService, tracing, metrics)
+	userHandler := NewUserHandler(userService, tracing, metrics)
 	healthHandler := NewHealthHandler()
 
 	// Health check routes
@@ -55,6 +59,27 @@ func NewRouter(tenantService tenant.Service, entityService entity.Service, traci
 			entities.GET("/:id/children", entityHandler.GetEntityChildren)
 			entities.GET("/:id/ancestors", entityHandler.GetEntityAncestors)
 			entities.GET("/:id/hierarchy", entityHandler.GetEntityWithHierarchy)
+		}
+
+		// User routes
+		users := v1.Group("/users")
+		{
+			// Authentication routes
+			users.POST("/auth", userHandler.AuthenticateUser)
+			
+			// User CRUD operations
+			users.POST("/", userHandler.CreateUser)
+			users.GET("/", userHandler.ListUsers)
+			users.GET("/search", userHandler.SearchUsers)
+			users.GET("/:id", userHandler.GetUser)
+			users.PUT("/:id", userHandler.UpdateUser)
+			users.DELETE("/:id", userHandler.DeleteUser)
+			
+			// User password operations
+			users.PUT("/:id/password", userHandler.UpdateUserPassword)
+			
+			// User role operations
+			users.GET("/:id/roles", userHandler.GetUserRoles)
 		}
 	}
 

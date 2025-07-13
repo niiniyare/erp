@@ -1,20 +1,20 @@
-# {SERVICE_NAME} Service Implementation Request
+# UsersPermision Service Implementation Request
 
 ## 📋 Overview
-Implement the **{SERVICE_NAME}** feature following our Clean Architecture patterns. Review existing SQLC queries and database schema to understand the service requirements.
+Implement the **UsersPermision** feature following our Clean Architecture patterns. Review existing SQLC queries and database schema to understand the service requirements.
 
 > **📚 Reference Documentation**: Before starting, review our [Developer Guide](./dev/README.md) for architecture patterns and implementation examples.
 
 ## 🎯 Implementation Checklist
 
 ### 1. **API Contract Design**
-- [ ] Define Goa DSL design in `design/{service_name}.go`
+- [ ] Define Goa DSL design in `design/{user}.go`
 - [ ] Include required endpoints: `{list_main_endpoints}`
 - [ ] Follow our [API Layer patterns](./dev/architecture.md#api-layer-responsibilities)
 - [ ] Generate interfaces: `goa gen ./design`
 
 ### 2. **Service Layer Implementation**
-- [ ] Create service in `internal/core/{service_name}/`
+- [ ] Create service in `internal/core/{user}/`
 - [ ] Implement business logic following [Service Layer patterns](./dev/best-practices.md#service-layer-responsibilities)
 - [ ] Add authorization checks using tenant/entity context
 - [ ] Include feature flag gates where applicable
@@ -32,7 +32,7 @@ Implement the **{SERVICE_NAME}** feature following our Clean Architecture patter
 - [ ] Include metrics collection using [Metrics patterns](./dev/observability.md#metrics-collection)
 
 ### 5. **UI Layer Configuration**
-- [ ] Create AMIS JSON configuration in `web-ui/{service_name}/`
+- [ ] Create AMIS JSON configuration in `web-ui/{user}/`
 - [ ] Include context-sensitive elements for multi-tenant support
 - [ ] Add client-side validation rules
 - [ ] Follow UI/UX patterns established in existing modules
@@ -109,6 +109,7 @@ Implement the **{SERVICE_NAME}** feature following our Clean Architecture patter
 
 ## 📖 Key Reference Links
 
+- **[Service Documentation](./module/user-permissions.md)** - read user-permissions Documentation
 - **[Main Developer Guide](./data-flow-pattern.md)** - Start here for quick navigation
 - **[Architecture Overview](./dev/architecture.md)** - Understanding Clean Architecture layers
 - **[Complete Code Examples](./dev/code-examples.md)** - Full implementation examples

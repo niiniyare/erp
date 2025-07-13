@@ -138,22 +138,6 @@ type AuditLog struct {
 	CreatedAt       sql.NullTime `json:"created_at"`
 }
 
-type AuditLog struct {
-	ID           uuid.UUID   `json:"id"`
-	TenantID     uuid.UUID   `json:"tenant_id"`
-	UserID       *uuid.UUID  `json:"user_id"`
-	EntityID     uuid.UUID   `json:"entity_id"`
-	Action       string      `json:"action"`
-	ResourceType *string     `json:"resource_type"`
-	ResourceID   *int64      `json:"resource_id"`
-	OldValues    []byte      `json:"old_values"`
-	NewValues    []byte      `json:"new_values"`
-	IpAddress    *netip.Addr `json:"ip_address"`
-	UserAgent    string      `json:"user_agent"`
-	SessionID    *string     `json:"session_id"`
-	Module       *string     `json:"module"`
-	CreatedAt    time.Time   `json:"created_at"`
-}
 
 // Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.
 type AuditSummaryView struct {
