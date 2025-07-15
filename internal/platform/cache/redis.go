@@ -26,6 +26,9 @@ func NewRedisClient(cfg *config.RedisConfig) Service {
 func (r *redisClient) Get(ctx context.Context, key string, dest interface{}) error {
 	val, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {
+		if err == redis.Nil {
+			return ErrCacheMiss
+		}
 		return err
 	}
 	return json.Unmarshal(val, dest)

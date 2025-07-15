@@ -2,7 +2,13 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"time"
+)
+
+// Cache errors
+var (
+	ErrCacheMiss = errors.New("cache miss")
 )
 
 // Service defines the interface for a cache service

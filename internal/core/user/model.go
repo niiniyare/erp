@@ -318,23 +318,49 @@ func FromSQLCUser(sqlcUser *db.User) (*User, error) {
 		lockoutUntil = &sqlcUser.LockoutUntil.Time
 	}
 
+	// Handle optional pointers from SQLC
+	username := ""
+	if sqlcUser.Username != nil {
+		username = *sqlcUser.Username
+	}
+
+	accountStatus := AccountStatusActive
+	if sqlcUser.AccountStatus != nil {
+		accountStatus = AccountStatus(*sqlcUser.AccountStatus)
+	}
+
+	failedLoginAttempts := int32(0)
+	if sqlcUser.FailedLoginAttempts != nil {
+		failedLoginAttempts = *sqlcUser.FailedLoginAttempts
+	}
+
+	sessionTimeoutMinutes := int32(480) // default 8 hours
+	if sqlcUser.SessionTimeoutMinutes != nil {
+		sessionTimeoutMinutes = *sqlcUser.SessionTimeoutMinutes
+	}
+
+	mfaEnabled := false
+	if sqlcUser.MfaEnabled != nil {
+		mfaEnabled = *sqlcUser.MfaEnabled
+	}
+
 	return &User{
 		ID:                    sqlcUser.ID,
 		TenantID:              sqlcUser.TenantID,
 		EntityID:              sqlcUser.EntityID,
 		PersonID:              sqlcUser.PersonID,
 		EmployeeID:            sqlcUser.EmployeeID,
-		Username:              *sqlcUser.Username,
+		Username:              username,
 		Email:                 sqlcUser.Email,
 		UserType:              sqlcUser.UserType,
-		AccountStatus:         *sqlcUser.AccountStatus,
+		AccountStatus:         accountStatus,
 		IsActive:              sqlcUser.IsActive,
 		LastLoginAt:           lastLoginAt,
 		PasswordChangedAt:     passwordChangedAt,
-		FailedLoginAttempts:   *sqlcUser.FailedLoginAttempts,
+		FailedLoginAttempts:   failedLoginAttempts,
 		LockoutUntil:          lockoutUntil,
-		SessionTimeoutMinutes: *sqlcUser.SessionTimeoutMinutes,
-		MfaEnabled:            *sqlcUser.MfaEnabled,
+		SessionTimeoutMinutes: sessionTimeoutMinutes,
+		MfaEnabled:            mfaEnabled,
 		UserAttributes:        userAttributes,
 		Settings:              settings,
 		CreatedAt:             sqlcUser.CreatedAt,
@@ -368,6 +394,12 @@ func FromSQLCPerson(sqlcPerson *db.Person) (*Person, error) {
 		birthDate = &sqlcPerson.BirthDate
 	}
 
+	// Handle optional email pointer from SQLC
+	email := ""
+	if sqlcPerson.Email != nil {
+		email = *sqlcPerson.Email
+	}
+
 	return &Person{
 		ID:                 sqlcPerson.ID,
 		TenantID:           sqlcPerson.TenantID,
@@ -376,7 +408,7 @@ func FromSQLCPerson(sqlcPerson *db.Person) (*Person, error) {
 		FirstName:          sqlcPerson.FirstName,
 		LastName:           sqlcPerson.LastName,
 		MiddleName:         sqlcPerson.MiddleName,
-		Email:              *sqlcPerson.Email,
+		Email:              email,
 		Phone:              sqlcPerson.Phone,
 		BirthDate:          birthDate,
 		NationalID:         sqlcPerson.NationalID,
@@ -424,6 +456,17 @@ func FromSQLCEmployee(sqlcEmployee *db.Employee) (*Employee, error) {
 		terminationDate = &sqlcEmployee.TerminationDate
 	}
 
+	// Handle optional pointers from SQLC
+	status := EmploymentStatusActive
+	if sqlcEmployee.EmploymentStatus != nil {
+		status = EmploymentStatus(*sqlcEmployee.EmploymentStatus)
+	}
+
+	securityLevel := int32(0)
+	if sqlcEmployee.SecurityLevel != nil {
+		securityLevel = *sqlcEmployee.SecurityLevel
+	}
+
 	return &Employee{
 		ID:               sqlcEmployee.ID,
 		TenantID:         sqlcEmployee.TenantID,
@@ -436,9 +479,9 @@ func FromSQLCEmployee(sqlcEmployee *db.Employee) (*Employee, error) {
 		HireDate:         sqlcEmployee.HireDate,
 		TerminationDate:  terminationDate,
 		SalaryInfo:       salaryInfo,
-		Status:           &sqlcEmployee.EmploymentStatus,
+		Status:           status,
 		WorkSchedule:     workSchedule,
-		SecurityLevel:    sqlcEmployee.SecurityLevel,
+		SecurityLevel:    securityLevel,
 		AccessAttributes: accessAttributes,
 		CreatedAt:        sqlcEmployee.CreatedAt,
 		UpdatedAt:        sqlcEmployee.UpdatedAt,
@@ -607,4 +650,379 @@ func IsValidEmploymentStatus(status string) bool {
 		}
 	}
 	return false
+}
+
+// ===== PERMISSION EVALUATION MODELS =====
+
+// Role represents a role in the system
+type Role struct {
+	ID           uuid.UUID              `json:"id"`
+	TenantID     uuid.UUID              `json:"tenant_id"`
+	EntityID     uuid.UUID              `json:"entity_id"`
+	Name         string                 `json:"name"`
+	DisplayName  *string                `json:"display_name,omitempty"`
+	Description  *string                `json:"description,omitempty"`
+	RoleType     string                 `json:"role_type"`
+	ParentRoleID *uuid.UUID             `json:"parent_role_id,omitempty"`
+	Level        int32                  `json:"level"`
+	Permissions  map[string]interface{} `json:"permissions"`
+	EntityScope  map[string]interface{} `json:"entity_scope"`
+	Conditions   map[string]interface{} `json:"conditions"`
+	IsActive     bool                   `json:"is_active"`
+	CreatedAt    time.Time              `json:"created_at"`
+	UpdatedAt    time.Time              `json:"updated_at"`
+}
+
+// Permission represents a permission in the system
+type Permission struct {
+	ID                uuid.UUID              `json:"id"`
+	TenantID          uuid.UUID              `json:"tenant_id"`
+	ResourceID        uuid.UUID              `json:"resource_id"`
+	ActionID          uuid.UUID              `json:"action_id"`
+	Name              string                 `json:"name"`
+	DisplayName       *string                `json:"display_name,omitempty"`
+	Description       *string                `json:"description,omitempty"`
+	Effect            string                 `json:"effect"` // ALLOW or DENY
+	Conditions        map[string]interface{} `json:"conditions"`
+	DataFilters       map[string]interface{} `json:"data_filters"`
+	FieldRestrictions map[string]interface{} `json:"field_restrictions"`
+	IsActive          bool                   `json:"is_active"`
+	CreatedAt         time.Time              `json:"created_at"`
+}
+
+// Policy represents an ABAC policy
+type Policy struct {
+	ID          uuid.UUID              `json:"id"`
+	TenantID    uuid.UUID              `json:"tenant_id"`
+	EntityID    *uuid.UUID             `json:"entity_id,omitempty"`
+	Name        string                 `json:"name"`
+	DisplayName *string                `json:"display_name,omitempty"`
+	Description *string                `json:"description,omitempty"`
+	PolicyType  string                 `json:"policy_type"`
+	Effect      string                 `json:"effect"` // ALLOW or DENY
+	Priority    int32                  `json:"priority"`
+	Category    string                 `json:"category"`
+	Target      map[string]interface{} `json:"target"`
+	Rule        map[string]interface{} `json:"rule"`
+	Obligations map[string]interface{} `json:"obligations"`
+	Advice      map[string]interface{} `json:"advice"`
+	IsActive    bool                   `json:"is_active"`
+	CreatedAt   time.Time              `json:"created_at"`
+	UpdatedAt   time.Time              `json:"updated_at"`
+}
+
+// EffectivePermission represents a permission granted to a user through roles
+type EffectivePermission struct {
+	Permission     *Permission `json:"permission"`
+	GrantedByRole  *Role       `json:"granted_by_role"`
+	EntityID       uuid.UUID   `json:"entity_id"`
+	AssignmentType string      `json:"assignment_type"`
+	ExpiresAt      *time.Time  `json:"expires_at,omitempty"`
+}
+
+// PermissionEvaluationRequest represents a permission evaluation request
+type PermissionEvaluationRequest struct {
+	UserID       uuid.UUID              `json:"user_id" validate:"required"`
+	ResourceName string                 `json:"resource_name" validate:"required"`
+	ActionName   string                 `json:"action_name" validate:"required"`
+	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
+	Context      map[string]interface{} `json:"context,omitempty"`
+}
+
+// PermissionEvaluationResult represents the result of permission evaluation
+type PermissionEvaluationResult struct {
+	Allowed           bool                  `json:"allowed"`
+	PolicyDecisions   []string              `json:"policy_decisions"`
+	EffectiveRoles    []string              `json:"effective_roles"`
+	EvaluationTimeMS  int                   `json:"evaluation_time_ms"`
+	CacheHit          bool                  `json:"cache_hit"`
+	RBACResult        *RBACEvaluationResult `json:"rbac_result,omitempty"`
+	ABACResult        *ABACEvaluationResult `json:"abac_result,omitempty"`
+}
+
+// RBACEvaluationResult represents RBAC evaluation result
+type RBACEvaluationResult struct {
+	Allowed         bool     `json:"allowed"`
+	PolicyDecisions []string `json:"policy_decisions"`
+}
+
+// ABACEvaluationRequest represents ABAC evaluation request
+type ABACEvaluationRequest struct {
+	UserID       uuid.UUID              `json:"user_id" validate:"required"`
+	ResourceName string                 `json:"resource_name" validate:"required"`
+	ActionName   string                 `json:"action_name" validate:"required"`
+	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
+	Context      map[string]interface{} `json:"context,omitempty"`
+}
+
+// ABACEvaluationResult represents ABAC evaluation result
+type ABACEvaluationResult struct {
+	Allowed            bool                   `json:"allowed"`
+	PolicyDecisions    []string               `json:"policy_decisions"`
+	ApplicablePolicies []string               `json:"applicable_policies"`
+	EvaluationDetails  map[string]interface{} `json:"evaluation_details,omitempty"`
+}
+
+// BulkPermissionEvaluationRequest represents multiple permission evaluations
+type BulkPermissionEvaluationRequest struct {
+	Requests []*PermissionEvaluationRequest `json:"requests" validate:"required,min=1"`
+}
+
+// PolicyTestRequest represents a policy test request
+type PolicyTestRequest struct {
+	UserID       uuid.UUID              `json:"user_id" validate:"required"`
+	ResourceName string                 `json:"resource_name" validate:"required"`
+	ActionName   string                 `json:"action_name" validate:"required"`
+	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
+	Context      map[string]interface{} `json:"context,omitempty"`
+}
+
+// PolicyTestResult represents the result of policy testing
+type PolicyTestResult struct {
+	PolicyID      uuid.UUID              `json:"policy_id"`
+	PolicyName    string                 `json:"policy_name"`
+	TargetMatches bool                   `json:"target_matches"`
+	RuleResult    bool                   `json:"rule_result"`
+	Effect        string                 `json:"effect"`
+	Details       map[string]interface{} `json:"details"`
+}
+
+// ===== CONVERSION FUNCTIONS FOR PERMISSION MODELS =====
+
+// FromSQLCRole converts SQLC Role to domain Role
+func FromSQLCRole(sqlcRole *db.Role) (*Role, error) {
+	var permissions map[string]interface{}
+	if len(sqlcRole.Permissions) > 0 {
+		if err := json.Unmarshal(sqlcRole.Permissions, &permissions); err != nil {
+			return nil, err
+		}
+	}
+
+	var entityScope map[string]interface{}
+	if len(sqlcRole.EntityScope) > 0 {
+		if err := json.Unmarshal(sqlcRole.EntityScope, &entityScope); err != nil {
+			return nil, err
+		}
+	}
+
+	var conditions map[string]interface{}
+	if len(sqlcRole.Conditions) > 0 {
+		if err := json.Unmarshal(sqlcRole.Conditions, &conditions); err != nil {
+			return nil, err
+		}
+	}
+
+	// Handle optional pointers from SQLC
+	description := &sqlcRole.Description
+
+	roleType := ""
+	if sqlcRole.RoleType != nil {
+		roleType = *sqlcRole.RoleType
+	}
+
+	level := int32(0)
+	if sqlcRole.Level != nil {
+		level = *sqlcRole.Level
+	}
+
+	isActive := false
+	if sqlcRole.IsActive != nil {
+		isActive = *sqlcRole.IsActive
+	}
+
+	return &Role{
+		ID:           sqlcRole.ID,
+		TenantID:     sqlcRole.TenantID,
+		EntityID:     sqlcRole.EntityID,
+		Name:         sqlcRole.Name,
+		DisplayName:  sqlcRole.DisplayName,
+		Description:  description,
+		RoleType:     roleType,
+		ParentRoleID: sqlcRole.ParentRoleID,
+		Level:        level,
+		Permissions:  permissions,
+		EntityScope:  entityScope,
+		Conditions:   conditions,
+		IsActive:     isActive,
+		CreatedAt:    sqlcRole.CreatedAt,
+		UpdatedAt:    sqlcRole.UpdatedAt,
+	}, nil
+}
+
+// FromSQLCPermission converts SQLC Permission to domain Permission
+func FromSQLCPermission(sqlcPermission *db.Permission) (*Permission, error) {
+	var conditions map[string]interface{}
+	if len(sqlcPermission.Conditions) > 0 {
+		if err := json.Unmarshal(sqlcPermission.Conditions, &conditions); err != nil {
+			return nil, err
+		}
+	}
+
+	var dataFilters map[string]interface{}
+	if len(sqlcPermission.DataFilters) > 0 {
+		if err := json.Unmarshal(sqlcPermission.DataFilters, &dataFilters); err != nil {
+			return nil, err
+		}
+	}
+
+	var fieldRestrictions map[string]interface{}
+	if len(sqlcPermission.FieldRestrictions) > 0 {
+		if err := json.Unmarshal(sqlcPermission.FieldRestrictions, &fieldRestrictions); err != nil {
+			return nil, err
+		}
+	}
+
+	// Handle optional pointers from SQLC
+	description := &sqlcPermission.Description
+
+	effect := ""
+	if sqlcPermission.Effect != nil {
+		effect = *sqlcPermission.Effect
+	}
+
+	isActive := false
+	if sqlcPermission.IsActive != nil {
+		isActive = *sqlcPermission.IsActive
+	}
+
+	createdAt := time.Time{}
+	if sqlcPermission.CreatedAt.Valid {
+		createdAt = sqlcPermission.CreatedAt.Time
+	}
+
+	return &Permission{
+		ID:                sqlcPermission.ID,
+		TenantID:          sqlcPermission.TenantID,
+		ResourceID:        sqlcPermission.ResourceID,
+		ActionID:          sqlcPermission.ActionID,
+		Name:              sqlcPermission.Name,
+		DisplayName:       sqlcPermission.DisplayName,
+		Description:       description,
+		Effect:            effect,
+		Conditions:        conditions,
+		DataFilters:       dataFilters,
+		FieldRestrictions: fieldRestrictions,
+		IsActive:          isActive,
+		CreatedAt:         createdAt,
+	}, nil
+}
+
+// FromSQLCPolicy converts SQLC Policy to domain Policy
+func FromSQLCPolicy(sqlcPolicy *db.Policy) (*Policy, error) {
+	var target map[string]interface{}
+	if len(sqlcPolicy.Target) > 0 {
+		if err := json.Unmarshal(sqlcPolicy.Target, &target); err != nil {
+			return nil, err
+		}
+	}
+
+	var rule map[string]interface{}
+	if len(sqlcPolicy.Rule) > 0 {
+		if err := json.Unmarshal(sqlcPolicy.Rule, &rule); err != nil {
+			return nil, err
+		}
+	}
+
+	var obligations map[string]interface{}
+	if len(sqlcPolicy.Obligations) > 0 {
+		if err := json.Unmarshal(sqlcPolicy.Obligations, &obligations); err != nil {
+			return nil, err
+		}
+	}
+
+	var advice map[string]interface{}
+	if len(sqlcPolicy.Advice) > 0 {
+		if err := json.Unmarshal(sqlcPolicy.Advice, &advice); err != nil {
+			return nil, err
+		}
+	}
+
+	// Handle optional pointers from SQLC
+	description := &sqlcPolicy.Description
+
+	policyType := ""
+	if sqlcPolicy.PolicyType != nil {
+		policyType = *sqlcPolicy.PolicyType
+	}
+
+	effect := ""
+	if sqlcPolicy.Effect != nil {
+		effect = *sqlcPolicy.Effect
+	}
+
+	priority := int32(0)
+	if sqlcPolicy.Priority != nil {
+		priority = *sqlcPolicy.Priority
+	}
+
+	category := ""
+	if sqlcPolicy.Category != nil {
+		category = *sqlcPolicy.Category
+	}
+
+	isActive := false
+	if sqlcPolicy.IsActive != nil {
+		isActive = *sqlcPolicy.IsActive
+	}
+
+	createdAt := time.Time{}
+	if sqlcPolicy.CreatedAt.Valid {
+		createdAt = sqlcPolicy.CreatedAt.Time
+	}
+
+	updatedAt := time.Time{}
+	if sqlcPolicy.UpdatedAt.Valid {
+		updatedAt = sqlcPolicy.UpdatedAt.Time
+	}
+
+	return &Policy{
+		ID:          sqlcPolicy.ID,
+		TenantID:    sqlcPolicy.TenantID,
+		EntityID:    sqlcPolicy.EntityID,
+		Name:        sqlcPolicy.Name,
+		DisplayName: sqlcPolicy.DisplayName,
+		Description: description,
+		PolicyType:  policyType,
+		Effect:      effect,
+		Priority:    priority,
+		Category:    category,
+		Target:      target,
+		Rule:        rule,
+		Obligations: obligations,
+		Advice:      advice,
+		IsActive:    isActive,
+		CreatedAt:   createdAt,
+		UpdatedAt:   updatedAt,
+	}, nil
+}
+
+// FromSQLCUserRole converts SQLC UserRole to domain UserRole
+func FromSQLCUserRole(sqlcUserRole *db.UserRole) (*UserRole, error) {
+	var expiresAt *time.Time
+	if sqlcUserRole.ExpiresAt.Valid {
+		expiresAt = &sqlcUserRole.ExpiresAt.Time
+	}
+
+	// Handle optional pointers from SQLC
+	assignmentType := ""
+	if sqlcUserRole.AssignmentType != nil {
+		assignmentType = *sqlcUserRole.AssignmentType
+	}
+
+	isActive := false
+	if sqlcUserRole.IsActive != nil {
+		isActive = *sqlcUserRole.IsActive
+	}
+
+	return &UserRole{
+		ID:             sqlcUserRole.ID,
+		UserID:         sqlcUserRole.UserID,
+		RoleID:         sqlcUserRole.RoleID,
+		EntityID:       sqlcUserRole.EntityID,
+		AssignmentType: assignmentType,
+		AssignedAt:     sqlcUserRole.AssignedAt,
+		AssignedBy:     sqlcUserRole.AssignedBy,
+		ExpiresAt:      expiresAt,
+		IsActive:       isActive,
+	}, nil
 }

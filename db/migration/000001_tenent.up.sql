@@ -485,12 +485,12 @@ INSERT INTO tenants (
 -- SELECT pg_reload_conf();
 
 -- Log completion
-DO $$
-BEGIN
-    RAISE NOTICE 'ERP/Accounting System Database Migration Completed Successfully!';
-    RAISE NOTICE 'Created tables: tenants, tenant_configurations, tenant_usage_stats';
-    RAISE NOTICE 'Created functions: set_tenant_context, get_current_tenant_id, check_tenant_limits';
-    RAISE NOTICE 'Enabled Row Level Security with tenant isolation policies';
-    RAISE NOTICE 'Next steps: Create entities, accounts, users, and journal_entries tables';
-END;
-$$;
+-- DO $$
+-- BEGIN
+--     RAISE NOTICE 'ERP/Accounting System Database Migration Completed Successfully!';
+--     RAISE NOTICE 'Created tables: tenants, tenant_configurations, tenant_usage_stats';
+--     RAISE NOTICE 'Created functions: set_tenant_context, get_current_tenant_id, check_tenant_limits';
+--     RAISE NOTICE 'Enabled Row Level Security with tenant isolation policies';
+--     RAISE NOTICE 'Next steps: Create entities, accounts, users, and journal_entries tables';
+-- END;
+-- $$;

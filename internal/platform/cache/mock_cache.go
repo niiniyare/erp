@@ -21,7 +21,7 @@ func NewMockCache() *MockCache {
 func (c *MockCache) Get(ctx context.Context, key string, dest interface{}) error {
 	_, ok := c.store[key]
 	if !ok {
-		return nil
+		return ErrCacheMiss
 	}
 	return nil
 }

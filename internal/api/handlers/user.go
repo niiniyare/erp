@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"context"
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,12 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	coreUser "github.com/niiniyare/erp/internal/core/user"
-	"github.com/niiniyare/erp/internal/shared/errors"
+	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 )
 
 // UserHandler handles user-related HTTP requests following the data flow pattern
@@ -85,21 +83,34 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 	
-	// Convert to service request
+	// Convert to service request with proper type handling
 	serviceReq := &coreUser.CreateUserRequest{
-		EntityID:               req.EntityID,
-		Username:               &req.Username,
-		Email:                  req.Email,
-		Password:               req.Password,
-		UserType:               req.UserType,
-		AccountStatus:          req.AccountStatus,
-		SessionTimeoutMinutes:  req.SessionTimeoutMinutes,
-		MfaEnabled:             req.MfaEnabled,
-		PasswordExpirationDays: req.PasswordExpirationDays,
-		MaxFailedLogins:        req.MaxFailedLogins,
-		PersonID:               req.PersonID,
-		EmployeeID:             req.EmployeeID,
-		CreatedBy:              req.CreatedBy,
+		EntityID:              req.EntityID,
+		Username:              req.Username,
+		Email:                 req.Email,
+		Password:              req.Password,
+		UserType:              req.UserType,
+		PersonID:              req.PersonID,
+		EmployeeID:            req.EmployeeID,
+	}
+	
+	// Handle optional pointer fields with defaults
+	if req.AccountStatus != nil {
+		serviceReq.AccountStatus = *req.AccountStatus
+	} else {
+		serviceReq.AccountStatus = "ACTIVE"
+	}
+	
+	if req.SessionTimeoutMinutes != nil {
+		serviceReq.SessionTimeoutMinutes = *req.SessionTimeoutMinutes
+	} else {
+		serviceReq.SessionTimeoutMinutes = 30
+	}
+	
+	if req.MfaEnabled != nil {
+		serviceReq.MfaEnabled = *req.MfaEnabled
+	} else {
+		serviceReq.MfaEnabled = false
 	}
 	
 	// Call service layer
@@ -121,9 +132,9 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		
 		// Handle specific errors
 		switch {
-		case errors.Is(err, errors.ErrEmailAlreadyExists):
+		case errors.Is(err, sharedErrors.ErrEmailAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
-		case errors.Is(err, errors.ErrUsernameAlreadyExists):
+		case errors.Is(err, sharedErrors.ErrUsernameAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{"error": "Username already exists"})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
@@ -206,7 +217,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		
 		// Handle specific errors
 		switch {
-		case errors.Is(err, errors.ErrUserNotFound):
+		case errors.Is(err, sharedErrors.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
@@ -394,14 +405,12 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	
 	// Convert to service request
 	serviceReq := &coreUser.UpdateUserRequest{
-		Username:               req.Username,
-		Email:                  req.Email,
-		UserType:               req.UserType,
-		AccountStatus:          req.AccountStatus,
-		SessionTimeoutMinutes:  req.SessionTimeoutMinutes,
-		MfaEnabled:             req.MfaEnabled,
-		PasswordExpirationDays: req.PasswordExpirationDays,
-		MaxFailedLogins:        req.MaxFailedLogins,
+		Username:              req.Username,
+		Email:                 req.Email,
+		UserType:              req.UserType,
+		AccountStatus:         req.AccountStatus,
+		SessionTimeoutMinutes: req.SessionTimeoutMinutes,
+		MfaEnabled:            req.MfaEnabled,
 	}
 	
 	// Call service layer
@@ -423,11 +432,11 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		
 		// Handle specific errors
 		switch {
-		case errors.Is(err, errors.ErrUserNotFound):
+		case errors.Is(err, sharedErrors.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		case errors.Is(err, errors.ErrEmailAlreadyExists):
+		case errors.Is(err, sharedErrors.ErrEmailAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
-		case errors.Is(err, errors.ErrUsernameAlreadyExists):
+		case errors.Is(err, sharedErrors.ErrUsernameAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{"error": "Username already exists"})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
@@ -446,38 +455,6 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, h.convertUserToResponse(user))
 }
 
-// UpdateUserPassword handles password updates
-func (h *UserHandler) UpdateUserPassword(ctx context.Context, p *user.UpdateUserPasswordPayload) (*user.UpdateUserPasswordResult, error) {
-	h.logger.Info("Updating user password", "user_id", p.UserID)
-
-	userID, err := uuid.Parse(p.UserID)
-	if err != nil {
-		return nil, user.MakeBadRequest(fmt.Errorf("invalid user_id: %w", err))
-	}
-
-	// Get current user to verify current password
-	currentUser, err := h.userService.GetUserByID(ctx, userID)
-	if err != nil {
-		return nil, user.MakeNotFound(err)
-	}
-
-	// Verify current password
-	if currentUser.PasswordHash == nil || !h.userService.VerifyPassword(*currentUser.PasswordHash, p.CurrentPassword) {
-		return nil, user.MakeUnauthorized(fmt.Errorf("current password is incorrect"))
-	}
-
-	// Update password
-	err = h.userService.UpdateUserPassword(ctx, userID, p.NewPassword)
-	if err != nil {
-		h.logger.Error("Failed to update user password", "user_id", p.UserID, "error", err)
-		return nil, user.MakeInternalError(err)
-	}
-
-	return &user.UpdateUserPasswordResult{
-		Success: true,
-		Message: "Password updated successfully",
-	}, nil
-}
 
 // DeleteUser handles user soft deletion
 func (h *UserHandler) DeleteUser(c *gin.Context) {
@@ -543,7 +520,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		
 		// Handle specific errors
 		switch {
-		case errors.Is(err, errors.ErrUserNotFound):
+		case errors.Is(err, sharedErrors.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
@@ -626,7 +603,7 @@ func (h *UserHandler) AuthenticateUser(c *gin.Context) {
 		
 		// Handle specific errors
 		switch {
-		case errors.Is(err, errors.ErrUserNotFound):
+		case errors.Is(err, sharedErrors.ErrUserNotFound):
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		case strings.Contains(err.Error(), "locked"):
 			c.JSON(http.StatusLocked, gin.H{"error": "Account is locked"})
@@ -719,7 +696,7 @@ func (h *UserHandler) GetUserRoles(c *gin.Context) {
 		
 		// Handle specific errors
 		switch {
-		case errors.Is(err, errors.ErrUserNotFound):
+		case errors.Is(err, sharedErrors.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
@@ -731,16 +708,18 @@ func (h *UserHandler) GetUserRoles(c *gin.Context) {
 	roleResponses := make([]UserRoleResponse, len(roles))
 	for i, role := range roles {
 		roleResponses[i] = UserRoleResponse{
-			ID:          role.ID.String(),
-			Name:        role.Name,
-			DisplayName: role.DisplayName,
-			Description: role.Description,
-			RoleType:    role.RoleType,
-			AssignedAt:  role.AssignedAt.Format(time.RFC3339),
+			ID:             role.ID.String(),
+			UserID:         role.UserID.String(),
+			RoleID:         role.RoleID.String(),
+			EntityID:       role.EntityID.String(),
+			AssignmentType: role.AssignmentType,
+			AssignedAt:     role.AssignedAt.Format(time.RFC3339),
+			IsActive:       role.IsActive,
 		}
 		
 		if role.ExpiresAt != nil {
-			roleResponses[i].ExpiresAt = role.ExpiresAt.Format(time.RFC3339)
+			expiry := role.ExpiresAt.Format(time.RFC3339)
+			roleResponses[i].ExpiresAt = &expiry
 		}
 	}
 	
@@ -842,7 +821,7 @@ func (h *UserHandler) UpdateUserPassword(c *gin.Context) {
 		
 		// Handle specific errors
 		switch {
-		case errors.Is(err, errors.ErrUserNotFound):
+		case errors.Is(err, sharedErrors.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
@@ -1017,13 +996,14 @@ type UserResponse struct {
 
 // UserRoleResponse represents a user role in API responses
 type UserRoleResponse struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	DisplayName string  `json:"display_name"`
-	Description string  `json:"description"`
-	RoleType    string  `json:"role_type"`
-	AssignedAt  string  `json:"assigned_at"`
-	ExpiresAt   string  `json:"expires_at,omitempty"`
+	ID             string  `json:"id"`
+	UserID         string  `json:"user_id"`
+	RoleID         string  `json:"role_id"`
+	EntityID       string  `json:"entity_id"`
+	AssignmentType string  `json:"assignment_type"`
+	AssignedAt     string  `json:"assigned_at"`
+	ExpiresAt      *string `json:"expires_at,omitempty"`
+	IsActive       bool    `json:"is_active"`
 }
 
 // ListUsersResponse represents the response for listing users
@@ -1077,19 +1057,886 @@ func (h *UserHandler) convertUserToResponse(u *coreUser.User) UserResponse {
 		employeeID := u.EmployeeID.String()
 		response.EmployeeID = &employeeID
 	}
-	if u.Username != nil {
-		response.Username = u.Username
+	if u.Username != "" {
+		response.Username = &u.Username
 	}
-	if u.AccountStatus != nil {
-		response.AccountStatus = u.AccountStatus
-	}
+	status := string(u.AccountStatus)
+	response.AccountStatus = &status
 	if u.LastLoginAt != nil {
 		lastLogin := u.LastLoginAt.Format(time.RFC3339)
 		response.LastLoginAt = &lastLogin
 	}
-	if u.MfaEnabled != nil {
-		response.MfaEnabled = u.MfaEnabled
-	}
+	response.MfaEnabled = &u.MfaEnabled
 
 	return response
+}
+
+// ===== PERMISSION EVALUATION HANDLERS =====
+
+// EvaluatePermission handles single permission evaluation
+func (h *UserHandler) EvaluatePermission(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.evaluate_permission",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/permissions/evaluate",
+	})
+	defer timer.Stop()
+	
+	// Parse and validate request
+	var req EvaluatePermissionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/permissions/evaluate",
+			"error_type": "validation_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Invalid request payload",
+			logger.Fields{"error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+	
+	// Convert to service request
+	serviceReq := &coreUser.PermissionEvaluationRequest{
+		UserID:       req.UserID,
+		ResourceName: req.ResourceName,
+		ActionName:   req.ActionName,
+		EntityID:     req.EntityID,
+		Context:      req.Context,
+	}
+	
+	// Call service layer
+	result, err := h.service.EvaluatePermission(ctx, serviceReq)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/permissions/evaluate",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to evaluate permission",
+			logger.Fields{"error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, sharedErrors.ErrUserNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
+	}
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/permissions/evaluate",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, PermissionEvaluationResponse{
+		Allowed:           result.Allowed,
+		PolicyDecisions:   result.PolicyDecisions,
+		EffectiveRoles:    result.EffectiveRoles,
+		EvaluationTimeMS:  int32(result.EvaluationTimeMS),
+		CacheHit:          result.CacheHit,
+	})
+}
+
+// BulkEvaluatePermissions handles bulk permission evaluation
+func (h *UserHandler) BulkEvaluatePermissions(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.bulk_evaluate_permissions",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/permissions/bulk-evaluate",
+	})
+	defer timer.Stop()
+	
+	// Parse and validate request
+	var req BulkEvaluatePermissionsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/permissions/bulk-evaluate",
+			"error_type": "validation_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Invalid request payload",
+			logger.Fields{"error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+	
+	// Convert to service requests
+	serviceRequests := make([]*coreUser.PermissionEvaluationRequest, len(req.Requests))
+	for i, r := range req.Requests {
+		serviceRequests[i] = &coreUser.PermissionEvaluationRequest{
+			UserID:       r.UserID,
+			ResourceName: r.ResourceName,
+			ActionName:   r.ActionName,
+			EntityID:     r.EntityID,
+			Context:      r.Context,
+		}
+	}
+	
+	// Build bulk request
+	bulkReq := &coreUser.BulkPermissionEvaluationRequest{
+		Requests: serviceRequests,
+	}
+	
+	// Call service layer
+	results, err := h.service.BulkEvaluatePermissions(ctx, bulkReq)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/permissions/bulk-evaluate",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to bulk evaluate permissions",
+			logger.Fields{"error": err.Error()})
+		
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+	
+	// Convert results to response format
+	responseResults := make([]PermissionEvaluationResponse, len(results))
+	totalEvaluationTime := int32(0)
+	for i, result := range results {
+		responseResults[i] = PermissionEvaluationResponse{
+			Allowed:           result.Allowed,
+			PolicyDecisions:   result.PolicyDecisions,
+			EffectiveRoles:    result.EffectiveRoles,
+			EvaluationTimeMS:  int32(result.EvaluationTimeMS),
+			CacheHit:          result.CacheHit,
+		}
+		totalEvaluationTime += int32(result.EvaluationTimeMS)
+	}
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/permissions/bulk-evaluate",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, BulkEvaluatePermissionsResponse{
+		Results:                responseResults,
+		TotalEvaluationTimeMS: totalEvaluationTime,
+	})
+}
+
+// GetUserEffectivePermissions handles getting user effective permissions
+func (h *UserHandler) GetUserEffectivePermissions(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.get_user_effective_permissions",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}/effective-permissions",
+	})
+	defer timer.Stop()
+	
+	// Get user ID from path
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}/effective-permissions",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid user ID",
+			logger.Fields{"user_id": userIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+	
+	// Get optional entity filter
+	var entityID *uuid.UUID
+	if entityIDStr := c.Query("entity_id"); entityIDStr != "" {
+		if parsed, err := uuid.Parse(entityIDStr); err == nil {
+			entityID = &parsed
+		}
+	}
+	
+	// Add user ID to span
+	span.SetAttributes(attribute.String("user.id", userID.String()))
+	
+	// Call service layer
+	permissions, err := h.service.GetUserEffectivePermissions(ctx, userID, entityID)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}/effective-permissions",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to get user effective permissions",
+			logger.Fields{"user_id": userID.String(), "error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, sharedErrors.ErrUserNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
+	}
+	
+	// Convert to response format
+	permissionResponses := make([]EffectivePermissionResponse, len(permissions))
+	for i, perm := range permissions {
+		permissionResponses[i] = EffectivePermissionResponse{
+			PermissionID:   perm.Permission.ID.String(),
+			PermissionName: perm.Permission.Name,
+			ResourceName:   perm.Permission.ResourceID.String(),
+			ActionName:     perm.Permission.ActionID.String(),
+			Effect:         perm.Permission.Effect,
+			GrantedByRole:  perm.GrantedByRole.Name,
+			AssignmentType: perm.AssignmentType,
+			EntityID:       perm.EntityID.String(),
+		}
+	}
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}/effective-permissions",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, GetUserEffectivePermissionsResponse{
+		Permissions: permissionResponses,
+		TotalCount:  len(permissions),
+	})
+}
+
+// ===== ROLE MANAGEMENT HANDLERS =====
+
+// AssignUserRole handles role assignment to users
+func (h *UserHandler) AssignUserRole(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.assign_user_role",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}/roles",
+	})
+	defer timer.Stop()
+	
+	// Get user ID from path
+	userIDStr := c.Param("id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}/roles",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid user ID",
+			logger.Fields{"user_id": userIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+	
+	// Parse and validate request
+	var req AssignUserRoleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}/roles",
+			"error_type": "validation_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Invalid request payload",
+			logger.Fields{"error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+	
+	// Call service layer
+	err = h.service.AssignUserRole(ctx, userID, req.RoleID, req.EntityID)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{id}/roles",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to assign user role",
+			logger.Fields{"user_id": userID.String(), "role_id": req.RoleID.String(), "error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, sharedErrors.ErrUserNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		case errors.Is(err, sharedErrors.ErrRoleNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
+		case strings.Contains(err.Error(), "already assigned"):
+			c.JSON(http.StatusConflict, gin.H{"error": "Role already assigned"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
+	}
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{id}/roles",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusCreated, AssignUserRoleResponse{
+		Success:      true,
+		AssignmentID: uuid.New().String(), // TODO: Get actual assignment ID from service
+		Message:      "Role assigned successfully",
+	})
+}
+
+// RevokeUserRole handles role revocation from users
+func (h *UserHandler) RevokeUserRole(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.revoke_user_role",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{user_id}/roles/{role_id}",
+	})
+	defer timer.Stop()
+	
+	// Get user ID from path
+	userIDStr := c.Param("user_id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{user_id}/roles/{role_id}",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid user ID",
+			logger.Fields{"user_id": userIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+	
+	// Get role ID from path
+	roleIDStr := c.Param("role_id")
+	roleID, err := uuid.Parse(roleIDStr)
+	if err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{user_id}/roles/{role_id}",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid role ID",
+			logger.Fields{"role_id": roleIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		return
+	}
+	
+	// Get entity ID from query parameter
+	entityIDStr := c.Query("entity_id")
+	if entityIDStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "entity_id query parameter is required"})
+		return
+	}
+	
+	entityID, err := uuid.Parse(entityIDStr)
+	if err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{user_id}/roles/{role_id}",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid entity ID",
+			logger.Fields{"entity_id": entityIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid entity ID"})
+		return
+	}
+	
+	// Call service layer
+	err = h.service.RevokeUserRole(ctx, userID, roleID, entityID)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/{user_id}/roles/{role_id}",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to revoke user role",
+			logger.Fields{"user_id": userID.String(), "role_id": roleID.String(), "error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, sharedErrors.ErrUserNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		case errors.Is(err, sharedErrors.ErrRoleNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
+		case strings.Contains(err.Error(), "assignment not found"):
+			c.JSON(http.StatusNotFound, gin.H{"error": "Role assignment not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
+	}
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/{user_id}/roles/{role_id}",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, RevokeUserRoleResponse{
+		Success: true,
+		Message: "Role revoked successfully",
+	})
+}
+
+// GetRoleHierarchy handles getting role hierarchy
+func (h *UserHandler) GetRoleHierarchy(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.get_role_hierarchy",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/roles/{role_id}/hierarchy",
+	})
+	defer timer.Stop()
+	
+	// Get role ID from path
+	roleIDStr := c.Param("role_id")
+	roleID, err := uuid.Parse(roleIDStr)
+	if err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/roles/{role_id}/hierarchy",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid role ID",
+			logger.Fields{"role_id": roleIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		return
+	}
+	
+	// Call service layer
+	hierarchy, err := h.service.CalculateRoleHierarchy(ctx, roleID)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/roles/{role_id}/hierarchy",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to get role hierarchy",
+			logger.Fields{"role_id": roleID.String(), "error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, sharedErrors.ErrRoleNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
+	}
+	
+	// Convert to response format
+	hroleResponses := make([]RoleHierarchyResponse, len(hierarchy))
+	maxDepth := int32(0)
+	for i, role := range hierarchy {
+		level := int32(i) // Simple level calculation based on order
+		if level > maxDepth {
+			maxDepth = level
+		}
+		
+		hroleResponses[i] = RoleHierarchyResponse{
+			ID:          role.ID.String(),
+			Name:        role.Name,
+			DisplayName: func() string {
+				if role.DisplayName != nil {
+					return *role.DisplayName
+				}
+				return ""
+			}(),
+			Level:       level,
+			ParentRoleID: func() *string {
+				if role.ParentRoleID != nil {
+					parentID := role.ParentRoleID.String()
+					return &parentID
+				}
+				return nil
+			}(),
+			ChildrenCount:    0, // TODO: Calculate children count
+			PermissionsCount: 0, // TODO: Calculate permissions count
+		}
+	}
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/roles/{role_id}/hierarchy",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, GetRoleHierarchyResponse{
+		Roles:      hroleResponses,
+		TotalDepth: maxDepth,
+	})
+}
+
+// TestPolicy handles ABAC policy testing
+func (h *UserHandler) TestPolicy(c *gin.Context) {
+	// Extract tracing context
+	ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
+	
+	// Start HTTP span
+	ctx, span := h.tracing.StartSpan(ctx, "http.test_policy",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("http.method", c.Request.Method),
+			attribute.String("http.url", c.Request.URL.String()),
+		))
+	defer span.End()
+	
+	// Start metrics timer
+	timer := h.metrics.Timer("http_request_duration", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/policies/{policy_id}/test",
+	})
+	defer timer.Stop()
+	
+	// Get policy ID from path
+	policyIDStr := c.Param("policy_id")
+	policyID, err := uuid.Parse(policyIDStr)
+	if err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/policies/{policy_id}/test",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid policy ID",
+			logger.Fields{"policy_id": policyIDStr, "error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid policy ID"})
+		return
+	}
+	
+	// Parse and validate request
+	var req TestPolicyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/policies/{policy_id}/test",
+			"error_type": "validation_error",
+		})
+		
+		logger.ErrorContext(ctx, "Invalid request payload",
+			logger.Fields{"error": err.Error()})
+		
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+	
+	// Convert to service request
+	serviceReq := &coreUser.PolicyTestRequest{
+		UserID:       req.UserID,
+		ResourceName: req.ResourceName,
+		ActionName:   req.ActionName,
+		EntityID:     req.EntityID,
+		Context:      req.Context,
+	}
+	
+	// Call service layer
+	result, err := h.service.TestPolicy(ctx, policyID, serviceReq)
+	if err != nil {
+		// Record error in span
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		
+		// Increment error counter
+		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+			"method":     c.Request.Method,
+			"endpoint":   "/api/v1/users/policies/{policy_id}/test",
+			"error_type": "business_error",
+		})
+		
+		// Log error
+		logger.ErrorContext(ctx, "Failed to test policy",
+			logger.Fields{"policy_id": policyID.String(), "error": err.Error()})
+		
+		// Handle specific errors
+		switch {
+		case errors.Is(err, sharedErrors.ErrUserNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		case errors.Is(err, sharedErrors.ErrNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "Policy not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+		return
+	}
+	
+	// Success metrics
+	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+		"method":   c.Request.Method,
+		"endpoint": "/api/v1/users/policies/{policy_id}/test",
+		"status":   "success",
+	})
+	
+	// Success response
+	c.JSON(http.StatusOK, TestPolicyResponse{
+		PolicyID:      result.PolicyID.String(),
+		PolicyName:    result.PolicyName,
+		Effect:        result.Effect,
+		TargetMatches: result.TargetMatches,
+		RuleResult:    result.RuleResult,
+		Details:       result.Details,
+	})
+}
+
+// ===== ADDITIONAL REQUEST/RESPONSE TYPES =====
+
+// Permission Evaluation Types
+type EvaluatePermissionRequest struct {
+	UserID       uuid.UUID              `json:"user_id" binding:"required"`
+	ResourceName string                 `json:"resource_name" binding:"required"`
+	ActionName   string                 `json:"action_name" binding:"required"`
+	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
+	Context      map[string]interface{} `json:"context,omitempty"`
+}
+
+type PermissionEvaluationResponse struct {
+	Allowed           bool     `json:"allowed"`
+	PolicyDecisions   []string `json:"policy_decisions"`
+	EffectiveRoles    []string `json:"effective_roles"`
+	EvaluationTimeMS  int32    `json:"evaluation_time_ms"`
+	CacheHit          bool     `json:"cache_hit"`
+}
+
+type BulkEvaluatePermissionsRequest struct {
+	Requests []EvaluatePermissionRequest `json:"requests" binding:"required"`
+}
+
+type BulkEvaluatePermissionsResponse struct {
+	Results               []PermissionEvaluationResponse `json:"results"`
+	TotalEvaluationTimeMS int32                          `json:"total_evaluation_time_ms"`
+}
+
+type EffectivePermissionResponse struct {
+	PermissionID   string `json:"permission_id"`
+	PermissionName string `json:"permission_name"`
+	ResourceName   string `json:"resource_name"`
+	ActionName     string `json:"action_name"`
+	Effect         string `json:"effect"`
+	GrantedByRole  string `json:"granted_by_role"`
+	AssignmentType string `json:"assignment_type"`
+	EntityID       string `json:"entity_id"`
+}
+
+type GetUserEffectivePermissionsResponse struct {
+	Permissions []EffectivePermissionResponse `json:"permissions"`
+	TotalCount  int                           `json:"total_count"`
+}
+
+// Role Management Types
+type AssignUserRoleRequest struct {
+	RoleID         uuid.UUID  `json:"role_id" binding:"required"`
+	EntityID       uuid.UUID  `json:"entity_id" binding:"required"`
+	AssignmentType string     `json:"assignment_type" binding:"required"`
+	ExpiresAt      *time.Time `json:"expires_at,omitempty"`
+	Justification  string     `json:"justification,omitempty"`
+}
+
+type AssignUserRoleResponse struct {
+	Success      bool   `json:"success"`
+	AssignmentID string `json:"assignment_id"`
+	Message      string `json:"message"`
+}
+
+type RevokeUserRoleResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
+type RoleHierarchyResponse struct {
+	ID               string  `json:"id"`
+	Name             string  `json:"name"`
+	DisplayName      string  `json:"display_name"`
+	Level            int32   `json:"level"`
+	ParentRoleID     *string `json:"parent_role_id,omitempty"`
+	ChildrenCount    int32   `json:"children_count"`
+	PermissionsCount int32   `json:"permissions_count"`
+}
+
+type GetRoleHierarchyResponse struct {
+	Roles      []RoleHierarchyResponse `json:"roles"`
+	TotalDepth int32                   `json:"total_depth"`
+}
+
+// Policy Testing Types
+type TestPolicyRequest struct {
+	UserID       uuid.UUID              `json:"user_id" binding:"required"`
+	ResourceName string                 `json:"resource_name" binding:"required"`
+	ActionName   string                 `json:"action_name" binding:"required"`
+	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
+	Context      map[string]interface{} `json:"context,omitempty"`
+}
+
+type TestPolicyResponse struct {
+	PolicyID      string                 `json:"policy_id"`
+	PolicyName    string                 `json:"policy_name"`
+	Effect        string                 `json:"effect"`
+	TargetMatches bool                   `json:"target_matches"`
+	RuleResult    bool                   `json:"rule_result"`
+	Details       map[string]interface{} `json:"details"`
 }

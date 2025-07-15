@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -53,23 +52,39 @@ type Service interface {
 	
 	// Search operations
 	SearchUsers(ctx context.Context, query string, limit, offset int) ([]*User, error)
+	
+	// Permission evaluation operations
+	EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResult, error)
+	GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) ([]*EffectivePermission, error)
+	BulkEvaluatePermissions(ctx context.Context, req *BulkPermissionEvaluationRequest) ([]*PermissionEvaluationResult, error)
+	
+	// Role hierarchy operations
+	CalculateRoleHierarchy(ctx context.Context, roleID uuid.UUID) ([]*Role, error)
+	GetInheritedPermissions(ctx context.Context, roleID uuid.UUID) ([]*Permission, error)
+	
+	// ABAC policy operations
+	EvaluateABACPolicies(ctx context.Context, req *ABACEvaluationRequest) (*ABACEvaluationResult, error)
+	TestPolicy(ctx context.Context, policyID uuid.UUID, req *PolicyTestRequest) (*PolicyTestResult, error)
 }
 
 // service implements the Service interface
 type service struct {
-	repo    Repository
-	cache   cache.Service
-	tracing *tracing.TracingService
-	metrics *metrics.MetricsService
+	repo           Repository
+	cache          cache.Service
+	permissionCache *PermissionCacheService
+	tracing        *tracing.TracingService
+	metrics        *metrics.MetricsService
 }
 
 // NewService creates a new user service
 func NewService(repo Repository, cache cache.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) Service {
+	permissionCache := NewPermissionCacheService(cache, metrics, tracing)
 	return &service{
-		repo:    repo,
-		cache:   cache,
-		tracing: tracing,
-		metrics: metrics,
+		repo:           repo,
+		cache:          cache,
+		permissionCache: permissionCache,
+		tracing:        tracing,
+		metrics:        metrics,
 	}
 }
 
@@ -542,7 +557,10 @@ func (s *service) CreatePerson(ctx context.Context, req *CreatePersonRequest) (*
 	ctx, span := s.tracing.StartSpan(ctx, "service.create_person",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
-			attribute.String("person.email", req.Email),
+			attribute.String("person.email", func() string {
+				if req.Email != nil { return *req.Email }
+				return ""
+			}()),
 			attribute.String("person.first_name", req.FirstName),
 			attribute.String("person.last_name", req.LastName),
 		))
@@ -640,7 +658,10 @@ func (s *service) CreateEmployee(ctx context.Context, req *CreateEmployeeRequest
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
 			attribute.String("employee.number", req.EmployeeNumber),
-			attribute.String("employee.position", req.PositionTitle),
+			attribute.String("employee.position", func() string {
+				if req.PositionTitle != nil { return *req.PositionTitle }
+				return ""
+			}()),
 		))
 	defer span.End()
 
@@ -812,7 +833,14 @@ func (s *service) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*UserRo
 	logger.DebugContext(ctx, "Getting user roles",
 		logger.Fields{"user_id": userID.String()})
 
-	// Repository operation
+	// Check cache first using the permission cache service
+	if cachedRoles, found, err := s.permissionCache.GetUserRoles(ctx, userID); err == nil && found {
+		logger.DebugContext(ctx, "User roles retrieved from cache",
+			logger.Fields{"user_id": userID.String(), "roles_count": len(cachedRoles)})
+		return cachedRoles, nil
+	}
+
+	// Cache miss - get from repository
 	roles, err := s.repo.GetUserRoles(ctx, userID)
 	if err != nil {
 		span.RecordError(err)
@@ -820,6 +848,12 @@ func (s *service) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*UserRo
 		logger.ErrorContext(ctx, "Failed to get user roles",
 			logger.Fields{"error": err.Error(), "user_id": userID.String()})
 		return nil, fmt.Errorf("failed to get user roles: %w", err)
+	}
+
+	// Cache the result using the permission cache service
+	if err := s.permissionCache.SetUserRoles(ctx, userID, roles); err != nil {
+		logger.WarnContext(ctx, "Failed to cache user roles",
+			logger.Fields{"error": err.Error(), "user_id": userID.String()})
 	}
 
 	logger.DebugContext(ctx, "User roles retrieved successfully",
@@ -854,6 +888,9 @@ func (s *service) AssignUserRole(ctx context.Context, userID, roleID, entityID u
 			logger.Fields{"error": err.Error()})
 		return fmt.Errorf("failed to assign user role: %w", err)
 	}
+
+	// Invalidate user permissions and role cache after role assignment
+	s.invalidateUserAndRoleCache(ctx, userID, roleID)
 
 	logger.InfoContext(ctx, "Role assigned to user successfully",
 		logger.Fields{
@@ -891,6 +928,9 @@ func (s *service) RevokeUserRole(ctx context.Context, userID, roleID, entityID u
 			logger.Fields{"error": err.Error()})
 		return fmt.Errorf("failed to revoke user role: %w", err)
 	}
+
+	// Invalidate user permissions and role cache after role revocation
+	s.invalidateUserAndRoleCache(ctx, userID, roleID)
 
 	logger.InfoContext(ctx, "Role revoked from user successfully",
 		logger.Fields{
@@ -958,6 +998,90 @@ func (s *service) SearchUsers(ctx context.Context, query string, limit, offset i
 
 // Helper functions for caching and validation
 
+/*
+CACHE INVALIDATION GUIDE FOR ROLE/PERMISSION OPERATIONS:
+
+When implementing new methods that modify roles or permissions, use these guidelines:
+
+1. USER ROLE ASSIGNMENT/REVOCATION:
+   - Call invalidateUserAndRoleCache(ctx, userID, roleID)
+   - This invalidates both user permission cache and role cache
+
+2. ROLE HIERARCHY MODIFICATIONS (CreateRole, UpdateRole, DeleteRole):
+   - Call invalidateRoleHierarchyCache(ctx, roleID)
+   - Also call invalidateUserPermissionsForRole(ctx, roleID) if the role has users
+
+3. PERMISSION MODIFICATIONS (CreatePermission, UpdatePermission, DeletePermission):
+   - Call invalidatePermissionCache(ctx, permissionID)
+   - This flushes all permission caches as permissions affect multiple users/roles
+
+4. ROLE PERMISSION ASSIGNMENTS:
+   - Call invalidateRoleHierarchyCache(ctx, roleID)
+   - Call invalidateUserPermissionsForRole(ctx, roleID)
+
+5. POLICY MODIFICATIONS:
+   - Call permissionCache.FlushPermissionCache(ctx) as policies affect evaluation
+
+Examples of methods that would need cache invalidation:
+- CreateRole() -> invalidateRoleHierarchyCache + invalidateUserPermissionsForRole
+- UpdateRole() -> invalidateRoleHierarchyCache + invalidateUserPermissionsForRole
+- DeleteRole() -> invalidateRoleHierarchyCache + invalidateUserPermissionsForRole
+- CreatePermission() -> invalidatePermissionCache
+- UpdatePermission() -> invalidatePermissionCache
+- DeletePermission() -> invalidatePermissionCache
+- AssignRolePermission() -> invalidateRoleHierarchyCache + invalidateUserPermissionsForRole
+- RevokeRolePermission() -> invalidateRoleHierarchyCache + invalidateUserPermissionsForRole
+*/
+
+// invalidateUserAndRoleCache invalidates both user permissions and role cache
+func (s *service) invalidateUserAndRoleCache(ctx context.Context, userID, roleID uuid.UUID) {
+	// Invalidate user permissions cache
+	if err := s.permissionCache.InvalidateUserPermissions(ctx, userID); err != nil {
+		logger.WarnContext(ctx, "Failed to invalidate user permissions cache",
+			logger.Fields{"error": err.Error(), "user_id": userID.String()})
+	}
+
+	// Invalidate role cache
+	if err := s.permissionCache.InvalidateRoleCache(ctx, roleID); err != nil {
+		logger.WarnContext(ctx, "Failed to invalidate role cache",
+			logger.Fields{"error": err.Error(), "role_id": roleID.String()})
+	}
+}
+
+// invalidateRoleHierarchyCache invalidates role hierarchy cache for a role and its related roles
+func (s *service) invalidateRoleHierarchyCache(ctx context.Context, roleID uuid.UUID) {
+	// Invalidate the role's cache
+	if err := s.permissionCache.InvalidateRoleCache(ctx, roleID); err != nil {
+		logger.WarnContext(ctx, "Failed to invalidate role cache",
+			logger.Fields{"error": err.Error(), "role_id": roleID.String()})
+	}
+
+	// TODO: When implementing role hierarchy modifications, also invalidate parent/child role caches
+	// This would require getting the role hierarchy and invalidating related roles
+}
+
+// invalidatePermissionCache invalidates permission-related caches
+func (s *service) invalidatePermissionCache(ctx context.Context, permissionID uuid.UUID) {
+	// TODO: When implementing permission modification methods, add specific permission cache invalidation
+	// For now, we flush all permission caches as a fallback
+	if err := s.permissionCache.FlushPermissionCache(ctx); err != nil {
+		logger.WarnContext(ctx, "Failed to flush permission cache",
+			logger.Fields{"error": err.Error(), "permission_id": permissionID.String()})
+	}
+}
+
+// invalidateUserPermissionsForRole invalidates user permissions for all users with a specific role
+func (s *service) invalidateUserPermissionsForRole(ctx context.Context, roleID uuid.UUID) {
+	// TODO: When implementing role modification methods, this should:
+	// 1. Get all users with the role
+	// 2. Invalidate their permission caches
+	// For now, we'll flush all user permission caches
+	if err := s.permissionCache.FlushPermissionCache(ctx); err != nil {
+		logger.WarnContext(ctx, "Failed to flush permission cache after role modification",
+			logger.Fields{"error": err.Error(), "role_id": roleID.String()})
+	}
+}
+
 // cacheUser caches a user with multiple cache keys
 func (s *service) cacheUser(ctx context.Context, user *User) error {
 	cacheTTL := 30 * time.Minute
@@ -975,8 +1099,8 @@ func (s *service) cacheUser(ctx context.Context, user *User) error {
 	}
 
 	// Cache by username if available
-	if user.Username != nil && *user.Username != "" {
-		usernameKey := fmt.Sprintf("user:username:%s", *user.Username)
+	if user.Username != "" {
+		usernameKey := fmt.Sprintf("user:username:%s", user.Username)
 		if err := s.cache.Set(ctx, usernameKey, user, cacheTTL); err != nil {
 			return fmt.Errorf("failed to cache user by username: %w", err)
 		}
@@ -1002,12 +1126,18 @@ func (s *service) invalidateUserCache(ctx context.Context, user *User) error {
 	}
 
 	// Delete cache by username if available
-	if user.Username != nil && *user.Username != "" {
-		usernameKey := fmt.Sprintf("user:username:%s", *user.Username)
+	if user.Username != "" {
+		usernameKey := fmt.Sprintf("user:username:%s", user.Username)
 		if err := s.cache.Delete(ctx, usernameKey); err != nil {
 			logger.WarnContext(ctx, "Failed to delete user cache by username",
 				logger.Fields{"error": err.Error(), "key": usernameKey})
 		}
+	}
+
+	// Invalidate permission-related cache using the specialized permission cache service
+	if err := s.permissionCache.InvalidateUserPermissions(ctx, user.ID); err != nil {
+		logger.WarnContext(ctx, "Failed to invalidate user permissions cache",
+			logger.Fields{"error": err.Error(), "user_id": user.ID.String()})
 	}
 
 	return nil
@@ -1028,16 +1158,16 @@ func (s *service) generateListCacheKey(req *ListUsersRequest) string {
 // validateCreateUserRequest validates a create user request
 func (s *service) validateCreateUserRequest(ctx context.Context, req *CreateUserRequest) error {
 	if req.Email == "" {
-		return errors.ErrInvalidInput.WithMessage("email is required")
+		return fmt.Errorf("email is required")
 	}
 	if req.UserType == "" {
-		return errors.ErrInvalidInput.WithMessage("user type is required")
+		return fmt.Errorf("user type is required")
 	}
 	if req.Password == "" {
-		return errors.ErrInvalidInput.WithMessage("password is required")
+		return fmt.Errorf("password is required")
 	}
 	if len(req.Password) < 8 {
-		return errors.ErrInvalidInput.WithMessage("password must be at least 8 characters")
+		return fmt.Errorf("password must be at least 8 characters")
 	}
 	return nil
 }
@@ -1045,10 +1175,10 @@ func (s *service) validateCreateUserRequest(ctx context.Context, req *CreateUser
 // validateUpdateUserRequest validates an update user request
 func (s *service) validateUpdateUserRequest(ctx context.Context, req *UpdateUserRequest) error {
 	if req.Email != nil && *req.Email == "" {
-		return errors.ErrInvalidInput.WithMessage("email cannot be empty")
+		return fmt.Errorf("email cannot be empty")
 	}
 	if req.UserType != nil && *req.UserType == "" {
-		return errors.ErrInvalidInput.WithMessage("user type cannot be empty")
+		return fmt.Errorf("user type cannot be empty")
 	}
 	return nil
 }
@@ -1056,13 +1186,13 @@ func (s *service) validateUpdateUserRequest(ctx context.Context, req *UpdateUser
 // validateCreatePersonRequest validates a create person request
 func (s *service) validateCreatePersonRequest(ctx context.Context, req *CreatePersonRequest) error {
 	if req.FirstName == "" {
-		return errors.ErrInvalidInput.WithMessage("first name is required")
+		return fmt.Errorf("first name is required")
 	}
 	if req.LastName == "" {
-		return errors.ErrInvalidInput.WithMessage("last name is required")
+		return fmt.Errorf("last name is required")
 	}
-	if req.Email == "" {
-		return errors.ErrInvalidInput.WithMessage("email is required")
+	if req.Email == nil || *req.Email == "" {
+		return fmt.Errorf("email is required")
 	}
 	return nil
 }
@@ -1070,10 +1200,620 @@ func (s *service) validateCreatePersonRequest(ctx context.Context, req *CreatePe
 // validateCreateEmployeeRequest validates a create employee request
 func (s *service) validateCreateEmployeeRequest(ctx context.Context, req *CreateEmployeeRequest) error {
 	if req.EmployeeNumber == "" {
-		return errors.ErrInvalidInput.WithMessage("employee number is required")
+		return fmt.Errorf("employee number is required")
 	}
 	if req.PersonID == uuid.Nil {
-		return errors.ErrInvalidInput.WithMessage("person ID is required")
+		return fmt.Errorf("person ID is required")
 	}
 	return nil
+}
+
+// ===== PERMISSION EVALUATION METHODS =====
+
+// EvaluatePermission evaluates a permission request using RBAC and ABAC
+func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResult, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "service.evaluate_permission",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("user.id", req.UserID.String()),
+			attribute.String("resource.name", req.ResourceName),
+			attribute.String("action.name", req.ActionName),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Evaluating permission",
+		logger.Fields{
+			"user_id":       req.UserID.String(),
+			"resource_name": req.ResourceName,
+			"action_name":   req.ActionName,
+		})
+
+	startTime := time.Now()
+
+	// Check cache first using the specialized permission cache service
+	if cachedResult, found, err := s.permissionCache.GetPermissionEvaluationResult(ctx, req); err == nil && found {
+		// Cache hit - return cached result
+		cachedResult.EvaluationTimeMS = int(time.Since(startTime).Milliseconds())
+		return cachedResult, nil
+	}
+
+	// Cache miss - evaluate permission
+
+	// Step 1: Get user's roles and permissions
+	userRoles, err := s.repo.GetUserRoles(ctx, req.UserID)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("failed to get user roles: %w", err)
+	}
+
+	// Step 2: Calculate role hierarchy and inherited permissions
+	allRoles := make([]*Role, 0)
+	allPermissions := make([]*Permission, 0)
+	
+	for _, userRole := range userRoles {
+		// Get role hierarchy
+		roleHierarchy, err := s.CalculateRoleHierarchy(ctx, userRole.RoleID)
+		if err != nil {
+			logger.WarnContext(ctx, "Failed to calculate role hierarchy",
+				logger.Fields{"role_id": userRole.RoleID.String(), "error": err.Error()})
+			continue
+		}
+		allRoles = append(allRoles, roleHierarchy...)
+
+		// Get inherited permissions for each role
+		for _, role := range roleHierarchy {
+			permissions, err := s.GetInheritedPermissions(ctx, role.ID)
+			if err != nil {
+				logger.WarnContext(ctx, "Failed to get inherited permissions",
+					logger.Fields{"role_id": role.ID.String(), "error": err.Error()})
+				continue
+			}
+			allPermissions = append(allPermissions, permissions...)
+		}
+	}
+
+	// Step 3: Check RBAC permissions
+	rbacResult := s.evaluateRBACPermissions(ctx, req, allPermissions)
+
+	// Step 4: Evaluate ABAC policies if needed
+	abacResult := &ABACEvaluationResult{Allowed: true} // Default allow if no policies
+	if rbacResult.Allowed || s.shouldEvaluateABACForDeny(req) {
+		abacReq := &ABACEvaluationRequest{
+			UserID:       req.UserID,
+			ResourceName: req.ResourceName,
+			ActionName:   req.ActionName,
+			EntityID:     req.EntityID,
+			Context:      req.Context,
+		}
+		abacResult, err = s.EvaluateABACPolicies(ctx, abacReq)
+		if err != nil {
+			logger.WarnContext(ctx, "ABAC evaluation failed, falling back to RBAC",
+				logger.Fields{"error": err.Error()})
+			abacResult = &ABACEvaluationResult{Allowed: rbacResult.Allowed}
+		}
+	}
+
+	// Step 5: Combine RBAC and ABAC results
+	finalDecision := rbacResult.Allowed && abacResult.Allowed
+	
+	// Build result
+	result := PermissionEvaluationResult{
+		Allowed:           finalDecision,
+		PolicyDecisions:   append(rbacResult.PolicyDecisions, abacResult.PolicyDecisions...),
+		EffectiveRoles:    s.extractRoleNames(allRoles),
+		EvaluationTimeMS:  int(time.Since(startTime).Milliseconds()),
+		CacheHit:          false,
+		RBACResult:        rbacResult,
+		ABACResult:        abacResult,
+	}
+
+	// Cache the result using the specialized permission cache service
+	if err := s.permissionCache.SetPermissionEvaluationResult(ctx, req, &result); err != nil {
+		logger.WarnContext(ctx, "Failed to cache permission evaluation",
+			logger.Fields{"error": err.Error()})
+	}
+
+	// Metrics
+	s.metrics.IncrementCounter("permission_evaluations_total", metrics.Fields{
+		"decision": fmt.Sprintf("%t", finalDecision),
+	})
+	s.metrics.ObserveHistogram("permission_evaluation_duration",
+		float64(result.EvaluationTimeMS)/1000, metrics.Fields{})
+
+	logger.DebugContext(ctx, "Permission evaluation completed",
+		logger.Fields{
+			"user_id":        req.UserID.String(),
+			"resource_name":  req.ResourceName,
+			"action_name":    req.ActionName,
+			"allowed":        finalDecision,
+			"duration_ms":    result.EvaluationTimeMS,
+		})
+
+	return &result, nil
+}
+
+// GetUserEffectivePermissions retrieves all effective permissions for a user
+func (s *service) GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) ([]*EffectivePermission, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "service.get_user_effective_permissions",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("user.id", userID.String()),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting user effective permissions",
+		logger.Fields{"user_id": userID.String()})
+
+	// Check cache first using the specialized permission cache service
+	if cachedPermissions, found, err := s.permissionCache.GetUserPermissions(ctx, userID, entityID); err == nil && found {
+		return cachedPermissions, nil
+	}
+
+	// Get all user roles
+	userRoles, err := s.repo.GetUserRoles(ctx, userID)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("failed to get user roles: %w", err)
+	}
+
+	effectivePermissions := make([]*EffectivePermission, 0)
+	processedPermissions := make(map[string]bool) // Deduplication
+
+	for _, userRole := range userRoles {
+		// Skip if entity filtering is requested and doesn't match
+		if entityID != nil && userRole.EntityID != *entityID {
+			continue
+		}
+
+		// Get role hierarchy
+		roleHierarchy, err := s.CalculateRoleHierarchy(ctx, userRole.RoleID)
+		if err != nil {
+			logger.WarnContext(ctx, "Failed to calculate role hierarchy",
+				logger.Fields{"role_id": userRole.RoleID.String(), "error": err.Error()})
+			continue
+		}
+
+		// Process each role in hierarchy
+		for _, role := range roleHierarchy {
+			permissions, err := s.GetInheritedPermissions(ctx, role.ID)
+			if err != nil {
+				logger.WarnContext(ctx, "Failed to get role permissions",
+					logger.Fields{"role_id": role.ID.String(), "error": err.Error()})
+				continue
+			}
+
+			for _, permission := range permissions {
+				// Create unique key for deduplication
+				key := fmt.Sprintf("%s:%s:%s", permission.ResourceID, permission.ActionID, userRole.EntityID)
+				if processedPermissions[key] {
+					continue
+				}
+				processedPermissions[key] = true
+
+				effectivePermission := &EffectivePermission{
+					Permission:     permission,
+					GrantedByRole:  role,
+					EntityID:       userRole.EntityID,
+					AssignmentType: userRole.AssignmentType,
+					ExpiresAt:      userRole.ExpiresAt,
+				}
+				effectivePermissions = append(effectivePermissions, effectivePermission)
+			}
+		}
+	}
+
+	// Cache the result using the specialized permission cache service
+	if err := s.permissionCache.SetUserPermissions(ctx, userID, entityID, effectivePermissions); err != nil {
+		logger.WarnContext(ctx, "Failed to cache user permissions",
+			logger.Fields{"error": err.Error()})
+	}
+
+	logger.DebugContext(ctx, "User effective permissions retrieved",
+		logger.Fields{
+			"user_id":           userID.String(),
+			"permissions_count": len(effectivePermissions),
+		})
+
+	return effectivePermissions, nil
+}
+
+// BulkEvaluatePermissions evaluates multiple permissions efficiently
+func (s *service) BulkEvaluatePermissions(ctx context.Context, req *BulkPermissionEvaluationRequest) ([]*PermissionEvaluationResult, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "service.bulk_evaluate_permissions",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.Int("requests.count", len(req.Requests)),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Bulk evaluating permissions",
+		logger.Fields{"requests_count": len(req.Requests)})
+
+	results := make([]*PermissionEvaluationResult, len(req.Requests))
+	
+	// Process in parallel for better performance
+	type evalResult struct {
+		index  int
+		result *PermissionEvaluationResult
+		err    error
+	}
+	
+	resultChan := make(chan evalResult, len(req.Requests))
+	
+	// Launch goroutines for parallel evaluation
+	for i, permReq := range req.Requests {
+		go func(idx int, request *PermissionEvaluationRequest) {
+			result, err := s.EvaluatePermission(ctx, request)
+			resultChan <- evalResult{index: idx, result: result, err: err}
+		}(i, permReq)
+	}
+	
+	// Collect results
+	for i := 0; i < len(req.Requests); i++ {
+		evalRes := <-resultChan
+		if evalRes.err != nil {
+			logger.WarnContext(ctx, "Permission evaluation failed in bulk operation",
+				logger.Fields{"index": evalRes.index, "error": evalRes.err.Error()})
+			// Create a denied result for failed evaluations
+			results[evalRes.index] = &PermissionEvaluationResult{
+				Allowed:           false,
+				PolicyDecisions:   []string{"evaluation_failed"},
+				EffectiveRoles:    []string{},
+				EvaluationTimeMS:  0,
+				CacheHit:          false,
+			}
+		} else {
+			results[evalRes.index] = evalRes.result
+		}
+	}
+
+	logger.DebugContext(ctx, "Bulk permission evaluation completed",
+		logger.Fields{"requests_count": len(req.Requests)})
+
+	return results, nil
+}
+
+// CalculateRoleHierarchy calculates the complete role hierarchy for a role
+func (s *service) CalculateRoleHierarchy(ctx context.Context, roleID uuid.UUID) ([]*Role, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "service.calculate_role_hierarchy",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("role.id", roleID.String()),
+		))
+	defer span.End()
+
+	// Check cache first using the specialized permission cache service
+	if cachedRoles, found, err := s.permissionCache.GetRoleHierarchy(ctx, roleID); err == nil && found {
+		return cachedRoles, nil
+	}
+
+	// Cache miss - calculate hierarchy
+
+	roles, err := s.repo.GetRoleHierarchy(ctx, roleID)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("failed to get role hierarchy: %w", err)
+	}
+
+	// Cache the result using the specialized permission cache service
+	if err := s.permissionCache.SetRoleHierarchy(ctx, roleID, roles); err != nil {
+		logger.WarnContext(ctx, "Failed to cache role hierarchy",
+			logger.Fields{"error": err.Error()})
+	}
+
+	return roles, nil
+}
+
+// GetInheritedPermissions gets all permissions for a role including inherited ones
+func (s *service) GetInheritedPermissions(ctx context.Context, roleID uuid.UUID) ([]*Permission, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "service.get_inherited_permissions",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("role.id", roleID.String()),
+		))
+	defer span.End()
+
+	// Check cache first
+	cacheKey := fmt.Sprintf("role:permissions:%s", roleID.String())
+	var permissions []*Permission
+	
+	if err := s.cache.Get(ctx, cacheKey, &permissions); err == nil {
+		s.metrics.IncrementCounter("role_permissions_cache_hits_total", metrics.Fields{})
+		return permissions, nil
+	}
+
+	// Cache miss - get permissions
+	s.metrics.IncrementCounter("role_permissions_cache_misses_total", metrics.Fields{})
+
+	permissions, err := s.repo.GetRolePermissions(ctx, roleID)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("failed to get role permissions: %w", err)
+	}
+
+	// Cache the result
+	if err := s.cache.Set(ctx, cacheKey, permissions, 15*time.Minute); err != nil {
+		logger.WarnContext(ctx, "Failed to cache role permissions",
+			logger.Fields{"error": err.Error()})
+	}
+
+	return permissions, nil
+}
+
+// EvaluateABACPolicies evaluates ABAC policies for a request
+func (s *service) EvaluateABACPolicies(ctx context.Context, req *ABACEvaluationRequest) (*ABACEvaluationResult, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "service.evaluate_abac_policies",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("user.id", req.UserID.String()),
+			attribute.String("resource.name", req.ResourceName),
+			attribute.String("action.name", req.ActionName),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Evaluating ABAC policies",
+		logger.Fields{
+			"user_id":       req.UserID.String(),
+			"resource_name": req.ResourceName,
+			"action_name":   req.ActionName,
+		})
+
+	// Get applicable policies
+	policies, err := s.repo.GetApplicablePolicies(ctx, req.ResourceName, req.ActionName)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("failed to get applicable policies: %w", err)
+	}
+
+	// If no policies, default to allow
+	if len(policies) == 0 {
+		return &ABACEvaluationResult{
+			Allowed:           true,
+			PolicyDecisions:   []string{"no_policies_applicable"},
+			ApplicablePolicies: []string{},
+		}, nil
+	}
+
+	// Get user context for evaluation
+	userContext, err := s.buildUserContext(ctx, req.UserID, req.EntityID)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("failed to build user context: %w", err)
+	}
+
+	// Evaluate each policy
+	policyDecisions := make([]string, 0)
+	applicablePolicies := make([]string, 0)
+	allowCount := 0
+	denyCount := 0
+
+	for _, policy := range policies {
+		// Check if policy target matches
+		if !s.policyTargetMatches(policy, req, userContext) {
+			continue
+		}
+		
+		applicablePolicies = append(applicablePolicies, policy.Name)
+		
+		// Evaluate policy rule
+		allowed, err := s.evaluatePolicyRule(ctx, policy, req, userContext)
+		if err != nil {
+			logger.WarnContext(ctx, "Policy evaluation failed",
+				logger.Fields{"policy_id": policy.ID.String(), "error": err.Error()})
+			continue
+		}
+
+		decision := fmt.Sprintf("policy_%s_%s", policy.Name, policy.Effect)
+		if allowed {
+			if policy.Effect == "ALLOW" {
+				allowCount++
+				decision += "_granted"
+			} else if policy.Effect == "DENY" {
+				denyCount++
+				decision += "_denied"
+			}
+		} else {
+			decision += "_not_applicable"
+		}
+		
+		policyDecisions = append(policyDecisions, decision)
+	}
+
+	// Determine final decision (DENY takes precedence)
+	finalDecision := allowCount > 0 && denyCount == 0
+
+	result := &ABACEvaluationResult{
+		Allowed:            finalDecision,
+		PolicyDecisions:    policyDecisions,
+		ApplicablePolicies: applicablePolicies,
+		EvaluationDetails: map[string]interface{}{
+			"allow_count": allowCount,
+			"deny_count":  denyCount,
+			"total_policies": len(policies),
+		},
+	}
+
+	logger.DebugContext(ctx, "ABAC policy evaluation completed",
+		logger.Fields{
+			"user_id":        req.UserID.String(),
+			"resource_name":  req.ResourceName,
+			"action_name":    req.ActionName,
+			"allowed":        finalDecision,
+			"policies_count": len(applicablePolicies),
+		})
+
+	return result, nil
+}
+
+// TestPolicy tests a specific policy against a request
+func (s *service) TestPolicy(ctx context.Context, policyID uuid.UUID, req *PolicyTestRequest) (*PolicyTestResult, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "service.test_policy",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("policy.id", policyID.String()),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Testing policy",
+		logger.Fields{"policy_id": policyID.String()})
+
+	// Get the policy
+	policy, err := s.repo.GetPolicyByID(ctx, policyID)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("failed to get policy: %w", err)
+	}
+
+	// Build evaluation request
+	evalReq := &ABACEvaluationRequest{
+		UserID:       req.UserID,
+		ResourceName: req.ResourceName,
+		ActionName:   req.ActionName,
+		EntityID:     req.EntityID,
+		Context:      req.Context,
+	}
+
+	// Get user context
+	userContext, err := s.buildUserContext(ctx, req.UserID, req.EntityID)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("failed to build user context: %w", err)
+	}
+
+	// Test target matching
+	targetMatches := s.policyTargetMatches(policy, evalReq, userContext)
+	
+	var ruleResult bool
+	var ruleError error
+	
+	if targetMatches {
+		// Test rule evaluation
+		ruleResult, ruleError = s.evaluatePolicyRule(ctx, policy, evalReq, userContext)
+	}
+
+	result := &PolicyTestResult{
+		PolicyID:      policyID,
+		PolicyName:    policy.Name,
+		TargetMatches: targetMatches,
+		RuleResult:    ruleResult && targetMatches,
+		Effect:        policy.Effect,
+		Details: map[string]interface{}{
+			"target_matches": targetMatches,
+			"rule_result":    ruleResult,
+			"rule_error":     ruleError,
+		},
+	}
+
+	logger.DebugContext(ctx, "Policy test completed",
+		logger.Fields{
+			"policy_id":      policyID.String(),
+			"target_matches": targetMatches,
+			"rule_result":    ruleResult,
+		})
+
+	return result, nil
+}
+
+// Helper methods for permission evaluation
+
+// generatePermissionCacheKey is now deprecated - use PermissionCacheService.GeneratePermissionEvaluationKey instead
+// This method is kept for backwards compatibility but will be removed in a future version
+
+func (s *service) evaluateRBACPermissions(ctx context.Context, req *PermissionEvaluationRequest, permissions []*Permission) *RBACEvaluationResult {
+	decisions := make([]string, 0)
+	allowed := false
+
+	// Find matching permissions
+	for _, permission := range permissions {
+		// This would need to check resource and action matching
+		// For now, simplified check based on names
+		if s.permissionMatches(permission, req.ResourceName, req.ActionName) {
+			if permission.Effect == "ALLOW" {
+				allowed = true
+				decisions = append(decisions, fmt.Sprintf("rbac_allow_%s", permission.Name))
+			} else if permission.Effect == "DENY" {
+				allowed = false
+				decisions = append(decisions, fmt.Sprintf("rbac_deny_%s", permission.Name))
+				break // DENY takes precedence
+			}
+		}
+	}
+
+	if len(decisions) == 0 {
+		decisions = append(decisions, "rbac_no_matching_permissions")
+	}
+
+	return &RBACEvaluationResult{
+		Allowed:         allowed,
+		PolicyDecisions: decisions,
+	}
+}
+
+func (s *service) shouldEvaluateABACForDeny(req *PermissionEvaluationRequest) bool {
+	// Always evaluate ABAC for comprehensive security
+	return true
+}
+
+func (s *service) extractRoleNames(roles []*Role) []string {
+	names := make([]string, len(roles))
+	for i, role := range roles {
+		names[i] = role.Name
+	}
+	return names
+}
+
+func (s *service) buildUserContext(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) (map[string]interface{}, error) {
+	// Get user details with person and employee info
+	userDetails, err := s.repo.GetUserWithDetails(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	context := map[string]interface{}{
+		"user_id":    userID.String(),
+		"user_type":  userDetails.User.UserType,
+		"email":      userDetails.User.Email,
+		"attributes": userDetails.User.UserAttributes,
+	}
+
+	if userDetails.Person != nil {
+		context["person_type"] = userDetails.Person.PersonType
+		context["person_attributes"] = userDetails.Person.SecurityAttributes
+	}
+
+	if userDetails.Employee != nil {
+		context["security_level"] = userDetails.Employee.SecurityLevel
+		context["department_id"] = userDetails.Employee.DepartmentID
+		context["manager_id"] = userDetails.Employee.ManagerID
+		context["access_attributes"] = userDetails.Employee.AccessAttributes
+	}
+
+	if entityID != nil {
+		context["entity_id"] = entityID.String()
+	}
+
+	// Add current time for time-based policies
+	context["current_time"] = time.Now()
+	context["current_hour"] = time.Now().Hour()
+	context["current_day"] = int(time.Now().Weekday())
+
+	return context, nil
+}
+
+func (s *service) permissionMatches(permission *Permission, resourceName, actionName string) bool {
+	// This is a simplified check - in production you'd want more sophisticated matching
+	// that considers the actual resource and action IDs from the database
+	return true // Placeholder - implement proper matching logic
+}
+
+func (s *service) policyTargetMatches(policy *Policy, req *ABACEvaluationRequest, userContext map[string]interface{}) bool {
+	// Simplified target matching - implement full JSON target evaluation
+	// This would parse the policy.Target JSON and match against user context
+	return true // Placeholder - implement proper target matching
+}
+
+func (s *service) evaluatePolicyRule(ctx context.Context, policy *Policy, req *ABACEvaluationRequest, userContext map[string]interface{}) (bool, error) {
+	// Simplified rule evaluation - implement full JSON rule evaluation engine
+	// This would parse the policy.Rule JSON and evaluate against user context
+	return true, nil // Placeholder - implement proper rule evaluation
 }

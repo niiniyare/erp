@@ -24,8 +24,8 @@ func main() {
 		panic("Failed to initialize logger: " + err.Error())
 	}
 
-	logger.Info("Starting ERP server", logger.Fields{
-		"service": "erp-server",
+	logger.Info("Starting Awo ERP server", logger.Fields{
+		"service": "awo-server",
 		"version": "1.0.0",
 	})
 
@@ -40,7 +40,7 @@ func main() {
 
 	// Initialize tracing
 	tracingService, err := tracing.NewTracingService(tracing.TracingConfig{
-		ServiceName:    "erp-server",
+		ServiceName:    "awo-server",
 		ServiceVersion: "1.0.0",
 		Environment:    "development",
 		ExporterType:   tracing.StdoutExporter,

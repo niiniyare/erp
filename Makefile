@@ -1,19 +1,23 @@
 # See https://tech.davis-hansson.com/p/make/
+include .env
+export
+
 SHELL := bash
 .DELETE_ON_ERROR:
 .SHELLFLAGS := -eu -o pipefail -c
-.DEFAULT_GOAL := all
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-print-directory
 BIN=$(abspath ~/go/bin)
 
 # Set to use a different compiler. For example, `GO=go1.18rc1 make test`.
-DB_NAME="ledger"
 GO ?= go
 .DEFAULT_GOAL := help
 MIGRATION_PATH="db/migration"
-DB_URL=postgresql://admin:admin@localhost:5432/$(DB_NAME)?sslmode=disable
+DB_NAME ?= ledger
+DB_USER ?= admin
+DB_PSSWD ?= admin
+DB_URL ?= postgresql://$(DB_USER):$(DB_PSSWD)@localhost:5432/$(DB_NAME)?sslmode=disable
 # DB_URL=postgres://wegmjdaf:khexFaRIW0eslZ6GPRY5VFyCM7w_vMVc@tyke.db.elephantsql.com/wegmjdaf?sslmode=disable
 API_VERSION := v1
 PROTO := pkg/api/$(API_VERSION)/proto
@@ -23,6 +27,7 @@ BUF_VERSION:=0.55.0 88ii8i8i8
 # Only list test and build dependencies
 # Standard dependencies are installed via go get
 DEPEND=\
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.2.2 \
 	google.golang.org/protobuf/cmd/protoc-gen-go@latest \
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest \
 	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
@@ -31,18 +36,12 @@ DEPEND=\
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
 
-DB_USER=admin
-DB_PSSWD=admin
 
 clean: ## clean command 
 	@rm -f $(PB)/*.pb.go
-	# @rm -f doc/swagger/*.swagger.json
-# gen: ## generates grpc and grpc gatewayes 
-# 	@protoc --proto_path=$(PROTO)  $(PROTO)/*.proto --proto_path=third_party  --go_out=:pkg/api/v1 --go-grpc_out=:# pkg/api/v1 --grpc-gateway_out=$(PROTO) --openapiv2_out=swagger
-#
 
 server:
-	@go run cmd/server/main.go -port 8080
+	@go run cmd/server
 
 
 	
@@ -51,7 +50,9 @@ createdb: ## create postgres database
 	@createdb --username="$(DB_USER)" --owner="$(DB_PSSWD)" $(DB_NAME)
 dropdb:  ## drop postgres database
 	@dropdb $(DB_NAME)
-migrateup:  ## migrates up   last one version of thev database schema 	
+
+migrateup: ## Create DB and apply migrations
+	@psql -lqt | cut -d \| -f 1 | grep -qw $(DB_NAME) || createdb -U $(DB_USER) $(DB_NAME)
 	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose up
 migratedown:  ## brings down  last one version of thev database schema 
 	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose down 
@@ -76,7 +77,7 @@ dbdocs:
 	@dbdocs build docs/schema.dbml
 
 sql2dbml:
-	@sql2dbml docs/schema.up.sql  --postgres -o docs/schema.dbml
+	@sql2dbml db/migration/*.up.sql  --postgres -o db/migration/*schema.dbml
 
 
 help: ## show help message
@@ -118,4 +119,10 @@ buf: ## removes files generated before re-generates grpc, grpc gatewayes and swa
 	
 buf-lint: ## lint protobuf files using buf tool
 	@buf lint --error-format=json --exclude-path=pkg/api/v1/proto/google,pkg/api/v1/proto/protoc-gen-openapiv2 | jq
+
+lint: ## Lint code
+	@golangci-lint run ./...
+
+fmt: ## Format Go code
+	@go fmt ./...
 .PHONY: clean gen server client test testdb install  createdb  migrateup migratedown migratedrop dropdb sqlc test mock dbdocs sql2dbml migrateup-doc migratedown-doc help seed-airport seed-aircraft test/html redis-graph proto evans buf migrateCreate

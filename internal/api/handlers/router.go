@@ -24,6 +24,7 @@ func NewRouter(tenantService tenant.Service, entityService entity.Service, userS
 	tenantHandler := NewTenantHandler(tenantService)
 	entityHandler := NewEntityHandler(entityService, tracing, metrics)
 	userHandler := NewUserHandler(userService, tracing, metrics)
+	// userManagementHandler := NewUserManagementHandler(userService, tracing, metrics)
 	healthHandler := NewHealthHandler()
 
 	// Health check routes
@@ -61,27 +62,56 @@ func NewRouter(tenantService tenant.Service, entityService entity.Service, userS
 			entities.GET("/:id/hierarchy", entityHandler.GetEntityWithHierarchy)
 		}
 
-		// User routes
+		// Person Management routes (temporarily disabled - implementation pending)
+		// persons := v1.Group("/persons")
+		// {
+		// 	persons.GET("/", userManagementHandler.ListPersons)
+		// 	persons.POST("/", userManagementHandler.CreatePerson)
+		// 	persons.GET("/:person_id", userManagementHandler.GetPerson)
+		// }
+
+		// Employee Management routes (temporarily disabled - implementation pending)
+		// employees := v1.Group("/employees")
+		// {
+		// 	employees.GET("/", userManagementHandler.ListEmployees)
+		// 	employees.POST("/", userManagementHandler.CreateEmployee)
+		// 	employees.GET("/:employee_id", userManagementHandler.GetEmployee)
+		// }
+
+		// User Management routes
 		users := v1.Group("/users")
 		{
-			// Authentication routes
-			users.POST("/auth", userHandler.AuthenticateUser)
-			
-			// User CRUD operations
+			// Basic user management (working)
 			users.POST("/", userHandler.CreateUser)
-			users.GET("/", userHandler.ListUsers)
-			users.GET("/search", userHandler.SearchUsers)
 			users.GET("/:id", userHandler.GetUser)
 			users.PUT("/:id", userHandler.UpdateUser)
 			users.DELETE("/:id", userHandler.DeleteUser)
-			
-			// User password operations
+			users.POST("/auth", userHandler.AuthenticateUser)
+			users.GET("/search", userHandler.SearchUsers)
 			users.PUT("/:id/password", userHandler.UpdateUserPassword)
-			
-			// User role operations
 			users.GET("/:id/roles", userHandler.GetUserRoles)
 		}
+
+		// Permission Evaluation routes (temporarily disabled - implementation pending)
+		// permissions := v1.Group("/permissions")
+		// {
+		// 	permissions.POST("/evaluate", userManagementHandler.EvaluatePermission)
+		// }
 	}
+
+	// Add CORS middleware for API testing
+	r.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Tenant-ID, X-Entity-ID, X-User-ID")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	})
 
 	return r
 }
