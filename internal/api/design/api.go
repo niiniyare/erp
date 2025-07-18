@@ -5,7 +5,7 @@ import (
 )
 
 var _ = API("awo", func() {
-    Title("Multi-Tenant ERP System API")
+    Title("Multi-Tenant AWO ERP System API")
     Description("A scalable multi-tenant ERP system with REST and gRPC interfaces")
     Version("1.0")
     

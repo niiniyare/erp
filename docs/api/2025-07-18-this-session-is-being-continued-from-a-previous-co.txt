@@ -240,8 +240,8 @@
 
 ● Write(README.md)
   ⎿  Wrote 357 lines to README.md                                                                    
-     # ERP System API Documentation
-     Welcome to the ERP System API documentation. This directory contains comprehensive testing
+     # AWO ERP System API Documentation
+     Welcome to the AWO ERP System API documentation. This directory contains comprehensive testing
      resources, documentation, and utilities for all API endpoints.
      ## 📁 Directory Structure
      ```
@@ -380,7 +380,7 @@
 ● Write(QUICK_START.md)
   ⎿  Wrote 216 lines to QUICK_START.md                              
      # Quick Start Guide
-     Get up and running with the ERP System APIs in under 5 minutes.
+     Get up and running with the AWO ERP System APIs in under 5 minutes.
      ## 🚀 1. Start the Server
      ```bash
      # Set environment variables

@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-    title: Multi-Tenant ERP System API
+    title: Multi-Tenant AWO ERP System API
     description: A scalable multi-tenant ERP system with REST and gRPC interfaces
     version: "1.0"
 servers:

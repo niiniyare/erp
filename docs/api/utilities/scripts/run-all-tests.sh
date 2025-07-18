@@ -293,7 +293,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Start testing
-log_header "ERP System API Test Suite"
+log_header "AWO ERP System API Test Suite"
 echo "Starting comprehensive API testing..."
 echo "Base URL: $BASE_URL"
 echo "Verbose: $VERBOSE"

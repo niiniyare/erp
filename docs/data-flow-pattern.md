@@ -1,4 +1,4 @@
-# ERP System Developer Guide
+# AWO ERP System Developer Guide
 
 Welcome to the ERP system development guide. This documentation helps new developers understand our architecture, patterns, and best practices.
 

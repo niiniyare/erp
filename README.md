@@ -1,4 +1,4 @@
-# 🌀 Awo ERP System
+# 🌀 Awo AWO ERP System
 
 **Awo** is a modern, modular, and scalable ERP system built to support multi-organization environments with clean architecture and a forward-thinking foundation. Designed to start simple and grow effortlessly, Awo adapts to the evolving needs of businesses — from early-stage teams to enterprise-scale operations.
 

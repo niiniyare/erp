@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get up and running with the ERP System APIs in under 5 minutes.
+Get up and running with the AWO ERP System APIs in under 5 minutes.
 
 ## 🚀 1. Start the Server
 

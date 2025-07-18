@@ -6,7 +6,7 @@ import (
 
 // API describes the global properties of the API server.
 var _ = API("awo", func() {
-	Title("Enterprise ERP System API")
+	Title("Enterprise AWO ERP System API")
 	Description("Comprehensive multi-tenant ERP system with RBAC and ABAC capabilities")
 	Version("1.0.0")
 	

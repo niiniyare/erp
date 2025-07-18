@@ -1,6 +1,6 @@
-# ERP System API Documentation
+# AWO ERP System API Documentation
 
-Welcome to the ERP System API documentation. This directory contains comprehensive testing resources, documentation, and utilities for all API endpoints.
+Welcome to the AWO ERP System API documentation. This directory contains comprehensive testing resources, documentation, and utilities for all API endpoints.
 
 ## 📁 Directory Structure
 
@@ -352,6 +352,6 @@ POST   /api/v1/analytics/users/{id}/detect-anomalies # Anomaly detection
 
 **Last Updated**: 2024-07-18
 **Version**: 1.0.0
-**Maintained by**: ERP System Team
+**Maintained by**: AWO ERP System Team
 
 For questions or issues, please refer to the troubleshooting guide or contact the development team.
