@@ -1,0 +1,33 @@
+repos:
+  # 🔒 Gitleaks for secret detection
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.27.2
+    hooks:
+      - id: gitleaks
+
+  # ✅ Format & vet via local commands
+  - repo: local
+    hooks:
+      - id: go-fmt
+        name: go fmt
+        entry: gofmt -s -w .
+        language: system
+        types: [go]
+
+      - id: go-vet
+        name: go vet
+        entry: go vet ./...
+        language: system
+        types: [go]
+
+      - id: staticcheck
+        name: staticcheck
+        entry: staticcheck ./...
+        language: system
+        types: [go]
+
+  # 📄 YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.1
+    hooks:
+      - id: yamllint

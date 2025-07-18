@@ -10,18 +10,18 @@ import (
 
 // Organization represents an organizational unit
 type Organization struct {
-	ID          uuid.UUID              `json:"id"`
-	TenantID    uuid.UUID              `json:"tenant_id"`
-	ParentID    *uuid.UUID             `json:"parent_id,omitempty"`
-	Name        string                 `json:"name"`
-	Code        string                 `json:"code,omitempty"`
-	Type        OrganizationType       `json:"type"`
-	Description string                 `json:"description,omitempty"`
-	ManagerID   *uuid.UUID             `json:"manager_id,omitempty"`
-	IsActive    bool                   `json:"is_active"`
-	Metadata    map[string]any `json:"metadata,omitempty"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
+	ID          uuid.UUID        `json:"id"`
+	TenantID    uuid.UUID        `json:"tenant_id"`
+	ParentID    *uuid.UUID       `json:"parent_id,omitempty"`
+	Name        string           `json:"name"`
+	Code        string           `json:"code,omitempty"`
+	Type        OrganizationType `json:"type"`
+	Description string           `json:"description,omitempty"`
+	ManagerID   *uuid.UUID       `json:"manager_id,omitempty"`
+	IsActive    bool             `json:"is_active"`
+	Metadata    map[string]any   `json:"metadata,omitempty"`
+	CreatedAt   time.Time        `json:"created_at"`
+	UpdatedAt   time.Time        `json:"updated_at"`
 
 	// Relations (loaded separately)
 	Parent   *Organization   `json:"parent,omitempty"`

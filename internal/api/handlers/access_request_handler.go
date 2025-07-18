@@ -17,11 +17,11 @@ import (
 
 // AccessRequestHandler handles access request workflow endpoints
 type AccessRequestHandler struct {
-	accessRequestService    user.AccessRequestService
+	accessRequestService     user.AccessRequestService
 	conditionalAccessService user.ConditionalAccessService
-	analyticsService        user.UserAnalyticsService
-	tracing                 *tracing.TracingService
-	metrics                 *metrics.MetricsService
+	analyticsService         user.UserAnalyticsService
+	tracing                  *tracing.TracingService
+	metrics                  *metrics.MetricsService
 }
 
 // NewAccessRequestHandler creates a new access request handler
@@ -33,11 +33,11 @@ func NewAccessRequestHandler(
 	metrics *metrics.MetricsService,
 ) *AccessRequestHandler {
 	return &AccessRequestHandler{
-		accessRequestService:      accessRequestService,
-		conditionalAccessService:  conditionalAccessService,
-		analyticsService:          analyticsService,
-		tracing:                   tracing,
-		metrics:                   metrics,
+		accessRequestService:     accessRequestService,
+		conditionalAccessService: conditionalAccessService,
+		analyticsService:         analyticsService,
+		tracing:                  tracing,
+		metrics:                  metrics,
 	}
 }
 

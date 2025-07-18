@@ -22,67 +22,67 @@ const (
 	ConditionalAccessLocationRestriction ConditionalAccessType = "LOCATION_RESTRICTION"
 	ConditionalAccessDeviceRestriction   ConditionalAccessType = "DEVICE_RESTRICTION"
 	ConditionalAccessNetworkRestriction  ConditionalAccessType = "NETWORK_RESTRICTION"
-	ConditionalAccessRiskBased          ConditionalAccessType = "RISK_BASED"
-	ConditionalAccessCombined           ConditionalAccessType = "COMBINED"
+	ConditionalAccessRiskBased           ConditionalAccessType = "RISK_BASED"
+	ConditionalAccessCombined            ConditionalAccessType = "COMBINED"
 )
 
 // ConditionalAccessRule represents a conditional access rule
 type ConditionalAccessRule struct {
-	ID                uuid.UUID                    `json:"id"`
-	TenantID          uuid.UUID                    `json:"tenant_id"`
-	EntityID          uuid.UUID                    `json:"entity_id"`
-	Name              string                       `json:"name"`
-	Description       string                       `json:"description"`
-	RuleType          ConditionalAccessType        `json:"rule_type"`
-	Priority          int                          `json:"priority"`
-	IsActive          bool                         `json:"is_active"`
-	
+	ID          uuid.UUID             `json:"id"`
+	TenantID    uuid.UUID             `json:"tenant_id"`
+	EntityID    uuid.UUID             `json:"entity_id"`
+	Name        string                `json:"name"`
+	Description string                `json:"description"`
+	RuleType    ConditionalAccessType `json:"rule_type"`
+	Priority    int                   `json:"priority"`
+	IsActive    bool                  `json:"is_active"`
+
 	// Target conditions
-	TargetUsers       []uuid.UUID                  `json:"target_users,omitempty"`
-	TargetRoles       []uuid.UUID                  `json:"target_roles,omitempty"`
-	TargetResources   []uuid.UUID                  `json:"target_resources,omitempty"`
-	TargetActions     []string                     `json:"target_actions,omitempty"`
-	
+	TargetUsers     []uuid.UUID `json:"target_users,omitempty"`
+	TargetRoles     []uuid.UUID `json:"target_roles,omitempty"`
+	TargetResources []uuid.UUID `json:"target_resources,omitempty"`
+	TargetActions   []string    `json:"target_actions,omitempty"`
+
 	// Access conditions
-	TimeRestrictions  *TimeRestrictions            `json:"time_restrictions,omitempty"`
-	LocationRules     *LocationRestrictions        `json:"location_rules,omitempty"`
-	DeviceRules       *DeviceRestrictions          `json:"device_rules,omitempty"`
-	NetworkRules      *NetworkRestrictions         `json:"network_rules,omitempty"`
-	RiskRules         *RiskRestrictions            `json:"risk_rules,omitempty"`
-	
+	TimeRestrictions *TimeRestrictions     `json:"time_restrictions,omitempty"`
+	LocationRules    *LocationRestrictions `json:"location_rules,omitempty"`
+	DeviceRules      *DeviceRestrictions   `json:"device_rules,omitempty"`
+	NetworkRules     *NetworkRestrictions  `json:"network_rules,omitempty"`
+	RiskRules        *RiskRestrictions     `json:"risk_rules,omitempty"`
+
 	// Actions to take
-	Effect            ConditionalAccessEffect      `json:"effect"`
-	Actions           []ConditionalAccessAction    `json:"actions"`
-	
-	CreatedAt         time.Time                    `json:"created_at"`
-	UpdatedAt         time.Time                    `json:"updated_at"`
-	CreatedBy         uuid.UUID                    `json:"created_by"`
+	Effect  ConditionalAccessEffect   `json:"effect"`
+	Actions []ConditionalAccessAction `json:"actions"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	CreatedBy uuid.UUID `json:"created_by"`
 }
 
 // ConditionalAccessEffect represents the effect of the rule
 type ConditionalAccessEffect string
 
 const (
-	EffectAllow        ConditionalAccessEffect = "ALLOW"
-	EffectDeny         ConditionalAccessEffect = "DENY"
-	EffectChallenge    ConditionalAccessEffect = "CHALLENGE"
-	EffectAuditOnly    ConditionalAccessEffect = "AUDIT_ONLY"
+	EffectAllow     ConditionalAccessEffect = "ALLOW"
+	EffectDeny      ConditionalAccessEffect = "DENY"
+	EffectChallenge ConditionalAccessEffect = "CHALLENGE"
+	EffectAuditOnly ConditionalAccessEffect = "AUDIT_ONLY"
 )
 
 // ConditionalAccessAction represents actions to take when rule triggers
 type ConditionalAccessAction struct {
-	Type       string                 `json:"type"`        // REQUIRE_MFA, BLOCK_ACCESS, AUDIT_LOG, NOTIFY, STEP_UP_AUTH
+	Type       string         `json:"type"` // REQUIRE_MFA, BLOCK_ACCESS, AUDIT_LOG, NOTIFY, STEP_UP_AUTH
 	Parameters map[string]any `json:"parameters"`
 }
 
 // TimeRestrictions represents time-based access restrictions
 type TimeRestrictions struct {
-	AllowedDays       []time.Weekday             `json:"allowed_days"`          // Monday=1, Sunday=0
-	AllowedTimeRanges []TimeRange                `json:"allowed_time_ranges"`
-	BlockedDays       []time.Weekday             `json:"blocked_days,omitempty"`
-	BlockedTimeRanges []TimeRange                `json:"blocked_time_ranges,omitempty"`
-	Timezone          string                     `json:"timezone"`              // IANA timezone
-	MaxSessionDuration time.Duration             `json:"max_session_duration,omitempty"`
+	AllowedDays        []time.Weekday `json:"allowed_days"` // Monday=1, Sunday=0
+	AllowedTimeRanges  []TimeRange    `json:"allowed_time_ranges"`
+	BlockedDays        []time.Weekday `json:"blocked_days,omitempty"`
+	BlockedTimeRanges  []TimeRange    `json:"blocked_time_ranges,omitempty"`
+	Timezone           string         `json:"timezone"` // IANA timezone
+	MaxSessionDuration time.Duration  `json:"max_session_duration,omitempty"`
 }
 
 // TimeRange represents a time range within a day
@@ -93,17 +93,17 @@ type TimeRange struct {
 
 // LocationRestrictions represents location-based access restrictions
 type LocationRestrictions struct {
-	AllowedCountries  []string                   `json:"allowed_countries,omitempty"`  // ISO 3166-1 alpha-2 codes
-	BlockedCountries  []string                   `json:"blocked_countries,omitempty"`
-	AllowedRegions    []string                   `json:"allowed_regions,omitempty"`    // State/province codes
-	BlockedRegions    []string                   `json:"blocked_regions,omitempty"`
-	AllowedCities     []string                   `json:"allowed_cities,omitempty"`
-	BlockedCities     []string                   `json:"blocked_cities,omitempty"`
-	AllowedIPRanges   []string                   `json:"allowed_ip_ranges,omitempty"`  // CIDR notation
-	BlockedIPRanges   []string                   `json:"blocked_ip_ranges,omitempty"`
-	TrustedLocations  []TrustedLocation          `json:"trusted_locations,omitempty"`
-	MaxDistanceFromTrusted *float64               `json:"max_distance_from_trusted,omitempty"` // kilometers
-	RequireKnownLocation   bool                   `json:"require_known_location"`
+	AllowedCountries       []string          `json:"allowed_countries,omitempty"` // ISO 3166-1 alpha-2 codes
+	BlockedCountries       []string          `json:"blocked_countries,omitempty"`
+	AllowedRegions         []string          `json:"allowed_regions,omitempty"` // State/province codes
+	BlockedRegions         []string          `json:"blocked_regions,omitempty"`
+	AllowedCities          []string          `json:"allowed_cities,omitempty"`
+	BlockedCities          []string          `json:"blocked_cities,omitempty"`
+	AllowedIPRanges        []string          `json:"allowed_ip_ranges,omitempty"` // CIDR notation
+	BlockedIPRanges        []string          `json:"blocked_ip_ranges,omitempty"`
+	TrustedLocations       []TrustedLocation `json:"trusted_locations,omitempty"`
+	MaxDistanceFromTrusted *float64          `json:"max_distance_from_trusted,omitempty"` // kilometers
+	RequireKnownLocation   bool              `json:"require_known_location"`
 }
 
 // TrustedLocation represents a trusted physical location
@@ -119,18 +119,18 @@ type TrustedLocation struct {
 
 // DeviceRestrictions represents device-based access restrictions
 type DeviceRestrictions struct {
-	AllowedDeviceTypes    []string               `json:"allowed_device_types,omitempty"`    // mobile, desktop, tablet
-	BlockedDeviceTypes    []string               `json:"blocked_device_types,omitempty"`
-	AllowedOperatingSystems []string             `json:"allowed_operating_systems,omitempty"` // windows, macos, linux, ios, android
-	BlockedOperatingSystems []string             `json:"blocked_operating_systems,omitempty"`
-	AllowedBrowsers       []string               `json:"allowed_browsers,omitempty"`        // chrome, firefox, safari, edge
-	BlockedBrowsers       []string               `json:"blocked_browsers,omitempty"`
-	RequireCompliantDevice bool                  `json:"require_compliant_device"`
-	RequireManagedDevice   bool                  `json:"require_managed_device"`
-	RequireEncryption     bool                   `json:"require_encryption"`
-	MinOSVersion          map[string]string      `json:"min_os_version,omitempty"`          // os -> version
-	TrustedDevices        []uuid.UUID            `json:"trusted_devices,omitempty"`
-	DeviceFingerprinting  *DeviceFingerprinting  `json:"device_fingerprinting,omitempty"`
+	AllowedDeviceTypes      []string              `json:"allowed_device_types,omitempty"` // mobile, desktop, tablet
+	BlockedDeviceTypes      []string              `json:"blocked_device_types,omitempty"`
+	AllowedOperatingSystems []string              `json:"allowed_operating_systems,omitempty"` // windows, macos, linux, ios, android
+	BlockedOperatingSystems []string              `json:"blocked_operating_systems,omitempty"`
+	AllowedBrowsers         []string              `json:"allowed_browsers,omitempty"` // chrome, firefox, safari, edge
+	BlockedBrowsers         []string              `json:"blocked_browsers,omitempty"`
+	RequireCompliantDevice  bool                  `json:"require_compliant_device"`
+	RequireManagedDevice    bool                  `json:"require_managed_device"`
+	RequireEncryption       bool                  `json:"require_encryption"`
+	MinOSVersion            map[string]string     `json:"min_os_version,omitempty"` // os -> version
+	TrustedDevices          []uuid.UUID           `json:"trusted_devices,omitempty"`
+	DeviceFingerprinting    *DeviceFingerprinting `json:"device_fingerprinting,omitempty"`
 }
 
 // DeviceFingerprinting represents device fingerprinting configuration
@@ -144,19 +144,19 @@ type DeviceFingerprinting struct {
 
 // NetworkRestrictions represents network-based access restrictions
 type NetworkRestrictions struct {
-	AllowedNetworks       []string `json:"allowed_networks,omitempty"`      // CIDR ranges
-	BlockedNetworks       []string `json:"blocked_networks,omitempty"`
-	RequireVPN            bool     `json:"require_vpn"`
-	RequireCorporateNetwork bool   `json:"require_corporate_network"`
-	AllowedVPNProviders   []string `json:"allowed_vpn_providers,omitempty"`
-	BlockedVPNProviders   []string `json:"blocked_vpn_providers,omitempty"`
-	RequireSecureConnection bool   `json:"require_secure_connection"`      // HTTPS/TLS
+	AllowedNetworks         []string `json:"allowed_networks,omitempty"` // CIDR ranges
+	BlockedNetworks         []string `json:"blocked_networks,omitempty"`
+	RequireVPN              bool     `json:"require_vpn"`
+	RequireCorporateNetwork bool     `json:"require_corporate_network"`
+	AllowedVPNProviders     []string `json:"allowed_vpn_providers,omitempty"`
+	BlockedVPNProviders     []string `json:"blocked_vpn_providers,omitempty"`
+	RequireSecureConnection bool     `json:"require_secure_connection"` // HTTPS/TLS
 }
 
 // RiskRestrictions represents risk-based access restrictions
 type RiskRestrictions struct {
-	MaxRiskScore         int      `json:"max_risk_score"`                // 0-100
-	RiskFactors          []string `json:"risk_factors"`                  // unusual_location, new_device, etc.
+	MaxRiskScore         int      `json:"max_risk_score"` // 0-100
+	RiskFactors          []string `json:"risk_factors"`   // unusual_location, new_device, etc.
 	RequireStepUpAuth    bool     `json:"require_step_up_auth"`
 	BlockHighRisk        bool     `json:"block_high_risk"`
 	AuditMediumRisk      bool     `json:"audit_medium_risk"`
@@ -165,78 +165,78 @@ type RiskRestrictions struct {
 
 // AccessContext represents the context for conditional access evaluation
 type AccessContext struct {
-	UserID        uuid.UUID              `json:"user_id"`
-	SessionID     uuid.UUID              `json:"session_id"`
-	IPAddress     string                 `json:"ip_address"`
-	UserAgent     string                 `json:"user_agent"`
-	DeviceInfo    *DeviceInfo            `json:"device_info,omitempty"`
-	LocationInfo  *LocationInfo          `json:"location_info,omitempty"`
-	NetworkInfo   *NetworkInfo           `json:"network_info,omitempty"`
-	TimeContext   *TimeContext           `json:"time_context,omitempty"`
-	RiskContext   *RiskContext           `json:"risk_context,omitempty"`
-	RequestedResource string             `json:"requested_resource"`
-	RequestedAction   string             `json:"requested_action"`
-	Metadata      map[string]any `json:"metadata,omitempty"`
+	UserID            uuid.UUID      `json:"user_id"`
+	SessionID         uuid.UUID      `json:"session_id"`
+	IPAddress         string         `json:"ip_address"`
+	UserAgent         string         `json:"user_agent"`
+	DeviceInfo        *DeviceInfo    `json:"device_info,omitempty"`
+	LocationInfo      *LocationInfo  `json:"location_info,omitempty"`
+	NetworkInfo       *NetworkInfo   `json:"network_info,omitempty"`
+	TimeContext       *TimeContext   `json:"time_context,omitempty"`
+	RiskContext       *RiskContext   `json:"risk_context,omitempty"`
+	RequestedResource string         `json:"requested_resource"`
+	RequestedAction   string         `json:"requested_action"`
+	Metadata          map[string]any `json:"metadata,omitempty"`
 }
 
 // DeviceInfo represents device information
 type DeviceInfo struct {
-	DeviceID         string            `json:"device_id"`
-	DeviceType       string            `json:"device_type"`       // mobile, desktop, tablet
-	OperatingSystem  string            `json:"operating_system"`  // windows, macos, linux, ios, android
-	OSVersion        string            `json:"os_version"`
-	Browser          string            `json:"browser"`
-	BrowserVersion   string            `json:"browser_version"`
-	IsManaged        bool              `json:"is_managed"`
-	IsCompliant      bool              `json:"is_compliant"`
-	IsEncrypted      bool              `json:"is_encrypted"`
-	IsTrusted        bool              `json:"is_trusted"`
-	Fingerprint      string            `json:"fingerprint"`
-	LastSeen         time.Time         `json:"last_seen"`
-	Attributes       map[string]string `json:"attributes,omitempty"`
+	DeviceID        string            `json:"device_id"`
+	DeviceType      string            `json:"device_type"`      // mobile, desktop, tablet
+	OperatingSystem string            `json:"operating_system"` // windows, macos, linux, ios, android
+	OSVersion       string            `json:"os_version"`
+	Browser         string            `json:"browser"`
+	BrowserVersion  string            `json:"browser_version"`
+	IsManaged       bool              `json:"is_managed"`
+	IsCompliant     bool              `json:"is_compliant"`
+	IsEncrypted     bool              `json:"is_encrypted"`
+	IsTrusted       bool              `json:"is_trusted"`
+	Fingerprint     string            `json:"fingerprint"`
+	LastSeen        time.Time         `json:"last_seen"`
+	Attributes      map[string]string `json:"attributes,omitempty"`
 }
 
 // LocationInfo represents location information
 type LocationInfo struct {
-	Country       string    `json:"country"`        // ISO 3166-1 alpha-2
-	Region        string    `json:"region"`         // State/province
-	City          string    `json:"city"`
-	Latitude      *float64  `json:"latitude,omitempty"`
-	Longitude     *float64  `json:"longitude,omitempty"`
-	Accuracy      *float64  `json:"accuracy,omitempty"` // meters
-	IPLocation    bool      `json:"ip_location"`        // true if derived from IP
-	IsTrusted     bool      `json:"is_trusted"`
-	LastKnown     time.Time `json:"last_known"`
+	Country    string    `json:"country"` // ISO 3166-1 alpha-2
+	Region     string    `json:"region"`  // State/province
+	City       string    `json:"city"`
+	Latitude   *float64  `json:"latitude,omitempty"`
+	Longitude  *float64  `json:"longitude,omitempty"`
+	Accuracy   *float64  `json:"accuracy,omitempty"` // meters
+	IPLocation bool      `json:"ip_location"`        // true if derived from IP
+	IsTrusted  bool      `json:"is_trusted"`
+	LastKnown  time.Time `json:"last_known"`
 }
 
 // NetworkInfo represents network information
 type NetworkInfo struct {
-	Network          string `json:"network"`           // CIDR
-	ISP              string `json:"isp"`
-	Organization     string `json:"organization"`
-	IsVPN            bool   `json:"is_vpn"`
-	VPNProvider      string `json:"vpn_provider,omitempty"`
-	IsCorporate      bool   `json:"is_corporate"`
-	IsSecure         bool   `json:"is_secure"`         // HTTPS/TLS
-	ConnectionType   string `json:"connection_type"`   // wifi, cellular, ethernet
+	Network        string `json:"network"` // CIDR
+	ISP            string `json:"isp"`
+	Organization   string `json:"organization"`
+	IsVPN          bool   `json:"is_vpn"`
+	VPNProvider    string `json:"vpn_provider,omitempty"`
+	IsCorporate    bool   `json:"is_corporate"`
+	IsSecure       bool   `json:"is_secure"`       // HTTPS/TLS
+	ConnectionType string `json:"connection_type"` // wifi, cellular, ethernet
 }
 
 // TimeContext represents time context information
 type TimeContext struct {
-	AccessTime    time.Time `json:"access_time"`
-	Timezone      string    `json:"timezone"`
-	IsWorkingHours bool     `json:"is_working_hours"`
-	IsWeekend     bool      `json:"is_weekend"`
-	IsHoliday     bool      `json:"is_holiday"`
+	AccessTime     time.Time `json:"access_time"`
+	Timezone       string    `json:"timezone"`
+	IsWorkingHours bool      `json:"is_working_hours"`
+	IsWeekend      bool      `json:"is_weekend"`
+	IsHoliday      bool      `json:"is_holiday"`
 }
 
 // RiskContext represents risk assessment context
 type RiskContext struct {
-	RiskScore     int      `json:"risk_score"`      // 0-100
-	RiskLevel     string   `json:"risk_level"`      // LOW, MEDIUM, HIGH, CRITICAL
-	RiskFactors   []string `json:"risk_factors"`
-	IsAnomaly     bool     `json:"is_anomaly"`
-	ThreatLevel   string   `json:"threat_level"`
+	RiskScore   int      `json:"risk_score"` // 0-100
+	RiskLevel   string   `json:"risk_level"` // LOW, MEDIUM, HIGH, CRITICAL
+	RiskFactors []string `json:"risk_factors"`
+	IsAnomaly   bool     `json:"is_anomaly"`
+	ThreatLevel string   `json:"threat_level"`
 }
 
 // ConditionalAccessEvaluationResult represents the result of conditional access evaluation
@@ -246,7 +246,7 @@ type ConditionalAccessEvaluationResult struct {
 	RequiredActions   []ConditionalAccessAction `json:"required_actions"`
 	Reason            string                    `json:"reason"`
 	RiskScore         int                       `json:"risk_score"`
-	AdditionalContext map[string]any    `json:"additional_context,omitempty"`
+	AdditionalContext map[string]any            `json:"additional_context,omitempty"`
 	EvaluatedAt       time.Time                 `json:"evaluated_at"`
 	ExpiresAt         *time.Time                `json:"expires_at,omitempty"`
 }
@@ -259,22 +259,22 @@ type ConditionalAccessService interface {
 	DeleteRule(ctx context.Context, ruleID uuid.UUID) error
 	GetRule(ctx context.Context, ruleID uuid.UUID) (*ConditionalAccessRule, error)
 	ListRules(ctx context.Context, entityID uuid.UUID) ([]*ConditionalAccessRule, error)
-	
+
 	// Access evaluation
 	EvaluateAccess(ctx context.Context, accessContext *AccessContext) (*ConditionalAccessEvaluationResult, error)
 	EvaluateAccessRequest(ctx context.Context, request *AccessRequest, accessContext *AccessContext) (*ConditionalAccessEvaluationResult, error)
-	
+
 	// Context enrichment
 	EnrichAccessContext(ctx context.Context, baseContext *AccessContext) (*AccessContext, error)
 	GetDeviceInfo(ctx context.Context, userAgent, ipAddress string) (*DeviceInfo, error)
 	GetLocationInfo(ctx context.Context, ipAddress string) (*LocationInfo, error)
 	GetRiskContext(ctx context.Context, userID uuid.UUID, accessContext *AccessContext) (*RiskContext, error)
-	
+
 	// Trusted location management
 	CreateTrustedLocation(ctx context.Context, location *TrustedLocation) error
 	UpdateTrustedLocation(ctx context.Context, locationID uuid.UUID, location *TrustedLocation) error
 	GetTrustedLocations(ctx context.Context, entityID uuid.UUID) ([]*TrustedLocation, error)
-	
+
 	// Device management
 	RegisterTrustedDevice(ctx context.Context, userID uuid.UUID, deviceInfo *DeviceInfo) error
 	RevokeTrustedDevice(ctx context.Context, userID, deviceID uuid.UUID) error
@@ -283,9 +283,9 @@ type ConditionalAccessService interface {
 
 // conditionalAccessService implements ConditionalAccessService
 type conditionalAccessService struct {
-	tracing         *tracing.TracingService
-	metrics         *metrics.MetricsService
-	auditService    AuditService
+	tracing      *tracing.TracingService
+	metrics      *metrics.MetricsService
+	auditService AuditService
 	// TODO: Add conditional access repository when implemented
 	// conditionalAccessRepo ConditionalAccessRepository
 }
@@ -348,7 +348,7 @@ func (s *conditionalAccessService) EvaluateAccess(ctx context.Context, accessCon
 	for _, rule := range rules {
 		if s.evaluateRule(ctx, &rule, enrichedContext) {
 			result.MatchedRules = append(result.MatchedRules, rule)
-			
+
 			// Apply rule effect
 			switch rule.Effect {
 			case EffectDeny:
@@ -369,7 +369,7 @@ func (s *conditionalAccessService) EvaluateAccess(ctx context.Context, accessCon
 					"user_id":   accessContext.UserID,
 				})
 			}
-			
+
 			// Add required actions
 			result.RequiredActions = append(result.RequiredActions, rule.Actions...)
 		}
@@ -398,7 +398,7 @@ func (s *conditionalAccessService) EvaluateAccess(ctx context.Context, accessCon
 	})
 
 	s.metrics.IncrementCounter("conditional_access_evaluation", map[string]any{
-		"decision": string(result.Decision),
+		"decision":      string(result.Decision),
 		"rules_matched": len(result.MatchedRules),
 	})
 
@@ -411,7 +411,7 @@ func (s *conditionalAccessService) EvaluateAccessRequest(ctx context.Context, re
 	enhancedContext := *accessContext
 	enhancedContext.RequestedResource = fmt.Sprintf("access_request:%s", request.RequestType)
 	enhancedContext.RequestedAction = "submit_request"
-	
+
 	if enhancedContext.Metadata == nil {
 		enhancedContext.Metadata = make(map[string]any)
 	}
@@ -454,7 +454,7 @@ func (s *conditionalAccessService) EnrichAccessContext(ctx context.Context, base
 func (s *conditionalAccessService) GetDeviceInfo(ctx context.Context, userAgent, ipAddress string) (*DeviceInfo, error) {
 	// TODO: Implement comprehensive device detection
 	// This would typically use a user agent parsing library
-	
+
 	deviceInfo := &DeviceInfo{
 		DeviceID:        s.generateDeviceFingerprint(userAgent, ipAddress),
 		DeviceType:      s.detectDeviceType(userAgent),
@@ -475,14 +475,14 @@ func (s *conditionalAccessService) GetDeviceInfo(ctx context.Context, userAgent,
 func (s *conditionalAccessService) GetLocationInfo(ctx context.Context, ipAddress string) (*LocationInfo, error) {
 	// TODO: Implement IP geolocation lookup
 	// This would typically use a geolocation service like MaxMind, IPinfo, etc.
-	
+
 	locationInfo := &LocationInfo{
-		Country:     "US", // Placeholder
-		Region:      "CA", // Placeholder
-		City:        "San Francisco", // Placeholder
-		IPLocation:  true,
-		IsTrusted:   false, // TODO: Check against trusted locations
-		LastKnown:   time.Now(),
+		Country:    "US",            // Placeholder
+		Region:     "CA",            // Placeholder
+		City:       "San Francisco", // Placeholder
+		IPLocation: true,
+		IsTrusted:  false, // TODO: Check against trusted locations
+		LastKnown:  time.Now(),
 	}
 
 	return locationInfo, nil
@@ -495,7 +495,7 @@ func (s *conditionalAccessService) GetRiskContext(ctx context.Context, userID uu
 	riskLevel := "LOW"
 
 	// Analyze various risk factors
-	
+
 	// New device risk
 	if accessContext.DeviceInfo != nil && !accessContext.DeviceInfo.IsTrusted {
 		riskScore += 20
@@ -649,16 +649,16 @@ func (s *conditionalAccessService) GetTrustedDevices(ctx context.Context, userID
 func (s *conditionalAccessService) getApplicableRules(ctx context.Context, accessContext *AccessContext) []ConditionalAccessRule {
 	// TODO: Implement database query for applicable rules
 	// This would filter rules based on target users, roles, resources, etc.
-	
+
 	// Return sample rules for demonstration
 	return []ConditionalAccessRule{
 		{
-			ID:          uuid.New(),
-			Name:        "Business Hours Only",
-			RuleType:    ConditionalAccessTimeRestriction,
-			Priority:    100,
-			IsActive:    true,
-			Effect:      EffectDeny,
+			ID:       uuid.New(),
+			Name:     "Business Hours Only",
+			RuleType: ConditionalAccessTimeRestriction,
+			Priority: 100,
+			IsActive: true,
+			Effect:   EffectDeny,
 			TimeRestrictions: &TimeRestrictions{
 				AllowedDays: []time.Weekday{time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday},
 				AllowedTimeRanges: []TimeRange{
@@ -729,7 +729,7 @@ func (s *conditionalAccessService) evaluateTimeRestrictions(restrictions *TimeRe
 
 	// Check time ranges
 	currentTime := now.Format("15:04")
-	
+
 	// Check if current time is outside allowed ranges
 	if len(restrictions.AllowedTimeRanges) > 0 {
 		inAllowedRange := false
@@ -880,7 +880,7 @@ func (s *conditionalAccessService) evaluateRiskRestrictions(restrictions *RiskRe
 // evaluateCombinedRestrictions evaluates combined restrictions (AND logic)
 func (s *conditionalAccessService) evaluateCombinedRestrictions(rule *ConditionalAccessRule, accessContext *AccessContext) bool {
 	// All specified restrictions must match for the rule to apply
-	
+
 	if rule.TimeRestrictions != nil {
 		if !s.evaluateTimeRestrictions(rule.TimeRestrictions, accessContext.TimeContext) {
 			return false
@@ -988,7 +988,7 @@ func (s *conditionalAccessService) getNetworkInfo(ipAddress string) *NetworkInfo
 	// - IP geolocation services
 	// - VPN detection services
 	// - Corporate network range checking
-	
+
 	ip := net.ParseIP(ipAddress)
 	if ip == nil {
 		return &NetworkInfo{
@@ -1012,7 +1012,7 @@ func (s *conditionalAccessService) getNetworkInfo(ipAddress string) *NetworkInfo
 // getTimeContext gets current time context
 func (s *conditionalAccessService) getTimeContext() *TimeContext {
 	now := time.Now()
-	
+
 	return &TimeContext{
 		AccessTime:     now,
 		Timezone:       now.Location().String(),
@@ -1059,7 +1059,7 @@ func (s *conditionalAccessService) isCorporateIP(ip net.IP) bool {
 func (s *conditionalAccessService) isWorkingHours(t time.Time) bool {
 	hour := t.Hour()
 	weekday := t.Weekday()
-	
+
 	// Monday to Friday, 9 AM to 5 PM
 	return weekday >= time.Monday && weekday <= time.Friday && hour >= 9 && hour < 17
 }

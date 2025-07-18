@@ -619,7 +619,7 @@ func (r *repository) GetAncestors(ctx context.Context, descendantID uuid.UUID) (
 			UpdatedAt:     row.UpdatedAt,
 			DeletedAt:     row.DeletedAt,
 		}
-		
+
 		entity, err := FromSQLCEntity(dbEntity)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert entity: %w", err)
@@ -764,7 +764,7 @@ func (r *repository) ResetSequence(ctx context.Context, entityID uuid.UUID, key 
 
 	fiscalYearPtr := new(int16)
 	*fiscalYearPtr = int16(fiscalYear)
-	
+
 	err := r.store.ResetEntityStateSequence(ctx, db.ResetEntityStateSequenceParams{
 		EntityID:   entityID,
 		Key:        key,
@@ -885,7 +885,6 @@ func (r *repository) buildUpdateParams(id uuid.UUID, req *UpdateEntityRequest) d
 
 	return params
 }
-
 
 func (r *repository) softDeleteEntity(ctx context.Context, id uuid.UUID) error {
 	return r.store.SoftDeleteEntity(ctx, id)

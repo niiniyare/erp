@@ -107,7 +107,7 @@ var UserResult = ResultType("application/vnd.user", func() {
 		AuditFields()
 	})
 	Required("id", "username", "email", "first_name", "last_name", "user_type", "account_status", "tenant_id")
-	
+
 	View("default", func() {
 		Attribute("id")
 		Attribute("username")
@@ -126,7 +126,7 @@ var UserResult = ResultType("application/vnd.user", func() {
 		Attribute("created_at")
 		Attribute("updated_at")
 	})
-	
+
 	View("minimal", func() {
 		Attribute("id")
 		Attribute("username")

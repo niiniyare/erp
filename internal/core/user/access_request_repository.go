@@ -179,12 +179,12 @@ func (r *accessRequestRepository) UpdateAccessRequestStatus(ctx context.Context,
 	if req.ApprovalComments != nil {
 		approvalComments = *req.ApprovalComments
 	}
-	
+
 	var approvedAtSql sql.NullTime
 	if approvedAt != nil {
 		approvedAtSql = sql.NullTime{Time: *approvedAt, Valid: true}
 	}
-	
+
 	var expiresAtSql sql.NullTime
 	if expiresAt != nil {
 		expiresAtSql = sql.NullTime{Time: *expiresAt, Valid: true}
@@ -240,16 +240,16 @@ func (r *accessRequestRepository) ListAccessRequests(ctx context.Context, req *L
 	if req.RequesterID != nil {
 		requesterID = *req.RequesterID
 	}
-	
+
 	var targetUserID uuid.UUID
 	if req.TargetUserID != nil {
 		targetUserID = *req.TargetUserID
 	}
 
 	params := &db.ListAccessRequestsParams{
-		Column1: approvalStatus,    // approval_status
-		Column2: requesterID,       // requester_id
-		Column3: targetUserID,      // target_user_id
+		Column1: approvalStatus, // approval_status
+		Column2: requesterID,    // requester_id
+		Column3: targetUserID,   // target_user_id
 		Limit:   int32(req.Limit),
 		Offset:  int32(req.Offset),
 	}
@@ -297,12 +297,12 @@ func (r *accessRequestRepository) ListAccessRequestsWithDetails(ctx context.Cont
 	if req.RequesterID != nil {
 		requesterID = *req.RequesterID
 	}
-	
+
 	var targetUserID uuid.UUID
 	if req.TargetUserID != nil {
 		targetUserID = *req.TargetUserID
 	}
-	
+
 	var entityID uuid.UUID
 	if req.EntityID != nil {
 		entityID = *req.EntityID

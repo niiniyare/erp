@@ -28,14 +28,14 @@ type Repository interface {
 	RestoreUser(ctx context.Context, id uuid.UUID) error
 	ListUsers(ctx context.Context, req *ListUsersRequest) ([]*User, error)
 	GetUserWithDetails(ctx context.Context, id uuid.UUID) (*UserWithDetails, error)
-	
+
 	// Person CRUD operations
 	CreatePerson(ctx context.Context, req *CreatePersonRequest) (*Person, error)
 	GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error)
 	GetPersonByEmail(ctx context.Context, email string) (*Person, error)
 	UpdatePerson(ctx context.Context, id uuid.UUID, req *CreatePersonRequest) (*Person, error)
 	DeletePerson(ctx context.Context, id uuid.UUID, permanent bool) error
-	
+
 	// Employee CRUD operations
 	CreateEmployee(ctx context.Context, req *CreateEmployeeRequest) (*Employee, error)
 	GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error)
@@ -43,27 +43,27 @@ type Repository interface {
 	GetEmployeeByNumber(ctx context.Context, number string) (*Employee, error)
 	UpdateEmployee(ctx context.Context, id uuid.UUID, req *CreateEmployeeRequest) (*Employee, error)
 	DeleteEmployee(ctx context.Context, id uuid.UUID, permanent bool) error
-	
+
 	// Authentication operations
 	AuthenticateUser(ctx context.Context, identifier, password string) (*User, error)
 	UpdatePassword(ctx context.Context, userID uuid.UUID, newPassword string) error
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
 	IncrementFailedLogins(ctx context.Context, userID uuid.UUID) error
 	UnlockUser(ctx context.Context, userID uuid.UUID) error
-	
+
 	// User role operations
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*UserRole, error)
 	AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 	RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
-	
+
 	// Validation operations
 	ValidateUserEmail(ctx context.Context, email string, excludeID *uuid.UUID) error
 	ValidateUsername(ctx context.Context, username string, excludeID *uuid.UUID) error
 	ValidateEmployeeNumber(ctx context.Context, number string, excludeID *uuid.UUID) error
-	
+
 	// Search operations
 	SearchUsers(ctx context.Context, query string, limit, offset int) ([]*User, error)
-	
+
 	// Permission evaluation operations
 	GetRoleHierarchy(ctx context.Context, roleID uuid.UUID) ([]*Role, error)
 	GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]*Permission, error)
@@ -136,7 +136,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserRequest) (*U
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "create_user",
+			"operation":  "create_user",
 			"error_type": "sql_error",
 		})
 
@@ -198,7 +198,7 @@ func (r *repository) GetUserByID(ctx context.Context, id uuid.UUID) (*User, erro
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "get_user_by_id",
+			"operation":  "get_user_by_id",
 			"error_type": "sql_error",
 		})
 
@@ -268,7 +268,7 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "get_user_by_email",
+			"operation":  "get_user_by_email",
 			"error_type": "sql_error",
 		})
 
@@ -338,7 +338,7 @@ func (r *repository) GetUserByUsername(ctx context.Context, username string) (*U
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "get_user_by_username",
+			"operation":  "get_user_by_username",
 			"error_type": "sql_error",
 		})
 
@@ -431,7 +431,7 @@ func (r *repository) UpdateUser(ctx context.Context, id uuid.UUID, req *UpdateUs
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "update_user",
+			"operation":  "update_user",
 			"error_type": "sql_error",
 		})
 
@@ -512,7 +512,7 @@ func (r *repository) DeleteUser(ctx context.Context, id uuid.UUID, permanent boo
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "delete_user",
+			"operation":  "delete_user",
 			"error_type": "sql_error",
 		})
 
@@ -578,7 +578,7 @@ func (r *repository) RestoreUser(ctx context.Context, id uuid.UUID) error {
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "restore_user",
+			"operation":  "restore_user",
 			"error_type": "sql_error",
 		})
 
@@ -659,7 +659,7 @@ func (r *repository) ListUsers(ctx context.Context, req *ListUsersRequest) ([]*U
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "list_users",
+			"operation":  "list_users",
 			"error_type": "sql_error",
 		})
 
@@ -730,7 +730,7 @@ func (r *repository) GetUserWithDetails(ctx context.Context, id uuid.UUID) (*Use
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "get_user_with_details",
+			"operation":  "get_user_with_details",
 			"error_type": "sql_error",
 		})
 
@@ -757,7 +757,7 @@ func (r *repository) GetUserWithDetails(ctx context.Context, id uuid.UUID) (*Use
 
 	// Convert the complex result to UserWithDetails
 	result := &UserWithDetails{}
-	
+
 	// Try to use the complete user profile query result directly
 	// If the query returns structured data, we can use it
 	// For now, we'll get the basic user and build the details for robustness
@@ -877,7 +877,7 @@ func (r *repository) UpdatePerson(ctx context.Context, id uuid.UUID, req *Create
 	// TODO: Implement ToSQLCUpdatePersonParams method
 	_ = req // avoid unused variable error
 	_ = id  // avoid unused variable error
-	
+
 	timer.Stop()
 	span.SetStatus(codes.Error, "Update person not implemented yet")
 	return nil, fmt.Errorf("update person not implemented yet")
@@ -964,7 +964,7 @@ func (r *repository) UpdateEmployee(ctx context.Context, id uuid.UUID, req *Crea
 	// TODO: Implement ToSQLCUpdateEmployeeParams method
 	_ = req // avoid unused variable error
 	_ = id  // avoid unused variable error
-	
+
 	timer.Stop()
 	span.SetStatus(codes.Error, "Update employee not implemented yet")
 	return nil, fmt.Errorf("update employee not implemented yet")
@@ -996,8 +996,8 @@ func (r *repository) DeleteEmployee(ctx context.Context, id uuid.UUID, permanent
 
 	// TODO: Implement employee deletion methods
 	_ = permanent // avoid unused variable error
-	_ = id       // avoid unused variable error
-	
+	_ = id        // avoid unused variable error
+
 	timer.Stop()
 	span.SetStatus(codes.Error, "Delete employee not implemented yet")
 	return fmt.Errorf("delete employee not implemented yet")
@@ -1079,7 +1079,7 @@ func (r *repository) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*Use
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "get_user_roles",
+			"operation":  "get_user_roles",
 			"error_type": "sql_error",
 		})
 
@@ -1106,15 +1106,15 @@ func (r *repository) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*Use
 		if sqlcRole.AssignmentType != nil {
 			assignmentType = *sqlcRole.AssignmentType
 		}
-		
+
 		isActive := true
 		if sqlcRole.IsActive != nil {
 			isActive = *sqlcRole.IsActive
 		}
-		
+
 		userRole := &UserRole{
 			ID:             sqlcRole.ID,
-			UserID:         userID, // Use the userID parameter
+			UserID:         userID,      // Use the userID parameter
 			RoleID:         sqlcRole.ID, // Use the role ID
 			EntityID:       sqlcRole.EntityID,
 			AssignmentType: assignmentType,
@@ -1174,11 +1174,11 @@ func (r *repository) ValidateUserEmail(ctx context.Context, email string, exclud
 	if err != nil {
 		return fmt.Errorf("failed to check email availability: %w", err)
 	}
-	
+
 	if !available {
 		return fmt.Errorf("email already exists")
 	}
-	
+
 	return nil
 }
 
@@ -1188,11 +1188,11 @@ func (r *repository) ValidateUsername(ctx context.Context, username string, excl
 	if err != nil {
 		return fmt.Errorf("failed to check username availability: %w", err)
 	}
-	
+
 	if !available {
 		return fmt.Errorf("username already exists")
 	}
-	
+
 	return nil
 }
 
@@ -1202,11 +1202,11 @@ func (r *repository) ValidateEmployeeNumber(ctx context.Context, number string, 
 	if err != nil {
 		return fmt.Errorf("failed to check employee number availability: %w", err)
 	}
-	
+
 	if !available {
 		return fmt.Errorf("employee number already exists")
 	}
-	
+
 	return nil
 }
 
@@ -1246,7 +1246,7 @@ func (r *repository) SearchUsers(ctx context.Context, query string, limit, offse
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "search_users",
+			"operation":  "search_users",
 			"error_type": "sql_error",
 		})
 
@@ -1272,7 +1272,7 @@ func (r *repository) SearchUsers(ctx context.Context, query string, limit, offse
 		if sqlcUser.Username != nil {
 			username = *sqlcUser.Username
 		}
-		
+
 		user := &User{
 			ID:       sqlcUser.ID,
 			Email:    sqlcUser.Email,
@@ -1296,9 +1296,9 @@ func (r *repository) SearchUsers(ctx context.Context, query string, limit, offse
 
 	logger.DebugContext(ctx, "Users search completed successfully",
 		logger.Fields{
-			"query":       query,
+			"query":         query,
 			"results_count": len(users),
-			"duration_ms": duration.Milliseconds(),
+			"duration_ms":   duration.Milliseconds(),
 		})
 
 	return users, nil
@@ -1343,13 +1343,13 @@ func (r *repository) GetRoleHierarchy(ctx context.Context, roleID uuid.UUID) ([]
 	// For now, we'll implement a simple approach - get the role and its parents
 	// In a production system, you'd have a recursive query or use a materialized path
 	roles := make([]*Role, 0)
-	
+
 	// Get the base role
 	sqlcRole, err := r.store.GetRoleByID(ctx, roleID)
 	if err != nil {
 		_ = timer.Stop()
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "get_role_hierarchy",
+			"operation":  "get_role_hierarchy",
 			"error_type": "sql_error",
 		})
 
@@ -1372,7 +1372,7 @@ func (r *repository) GetRoleHierarchy(ctx context.Context, roleID uuid.UUID) ([]
 		span.RecordError(err)
 		return nil, fmt.Errorf("failed to convert role: %w", err)
 	}
-	
+
 	roles = append(roles, role)
 
 	// Get parent roles recursively (simplified implementation)
@@ -1515,10 +1515,10 @@ func (r *repository) GetApplicablePolicies(ctx context.Context, resourceName, ac
 
 	logger.DebugContext(ctx, "Applicable policies retrieved successfully",
 		logger.Fields{
-			"resource_name":   resourceName,
-			"action_name":     actionName,
-			"policies_count":  len(policies),
-			"duration_ms":     duration.Milliseconds(),
+			"resource_name":  resourceName,
+			"action_name":    actionName,
+			"policies_count": len(policies),
+			"duration_ms":    duration.Milliseconds(),
 		})
 
 	return policies, nil
@@ -1548,7 +1548,7 @@ func (r *repository) GetPolicyByID(ctx context.Context, policyID uuid.UUID) (*Po
 
 	if err != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
-			"operation": "get_policy_by_id",
+			"operation":  "get_policy_by_id",
 			"error_type": "sql_error",
 		})
 

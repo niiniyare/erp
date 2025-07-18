@@ -32,9 +32,9 @@ var (
 	ErrInvalidEntityType   = errors.New("invalid entity type")
 
 	//User errors
-	ErrInvalidUserType      = errors.New("Invalid User Type")
-	ErrInvalidAccountStatus = errors.New("Invalid Account Status")
-	ErrAccountLocked        = errors.New("Account is tLocked")
-	ErrEmailAlreadyExists   = errors.New("email already exists")
+	ErrInvalidUserType       = errors.New("Invalid User Type")
+	ErrInvalidAccountStatus  = errors.New("Invalid Account Status")
+	ErrAccountLocked         = errors.New("Account is tLocked")
+	ErrEmailAlreadyExists    = errors.New("email already exists")
 	ErrUsernameAlreadyExists = errors.New("username already exists")
 )

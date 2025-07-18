@@ -47,7 +47,7 @@ var TenantResult = ResultType("application/vnd.tenant", func() {
 		AuditFields()
 	})
 	Required("id", "name", "slug", "status", "created_at", "updated_at")
-	
+
 	View("default", func() {
 		Attribute("id")
 		Attribute("name")
@@ -64,7 +64,7 @@ var TenantResult = ResultType("application/vnd.tenant", func() {
 		Attribute("created_by")
 		Attribute("updated_by")
 	})
-	
+
 	View("minimal", func() {
 		Attribute("id")
 		Attribute("name")

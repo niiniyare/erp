@@ -723,7 +723,7 @@ func (h *EntityHandler) GetEntityChildren(c *gin.Context) {
 
 	logger.InfoContext(ctx, "Entity children retrieved successfully",
 		logger.Fields{
-			"entity_id":     id.String(),
+			"entity_id":      id.String(),
 			"children_count": len(children),
 		})
 

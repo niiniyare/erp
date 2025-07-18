@@ -75,4 +75,3 @@ func TestTenantService(t *testing.T) {
 		mockRepo.AssertExpectations(t)
 	})
 }
-

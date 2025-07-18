@@ -25,43 +25,43 @@ type Service interface {
 	DeleteUser(ctx context.Context, id uuid.UUID, permanent bool) error
 	ListUsers(ctx context.Context, req *ListUsersRequest) ([]*User, error)
 	GetUserWithDetails(ctx context.Context, id uuid.UUID) (*UserWithDetails, error)
-	
+
 	// Person operations
 	CreatePerson(ctx context.Context, req *CreatePersonRequest) (*Person, error)
 	GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error)
 	UpdatePerson(ctx context.Context, id uuid.UUID, req *CreatePersonRequest) (*Person, error)
-	
+
 	// Employee operations
 	CreateEmployee(ctx context.Context, req *CreateEmployeeRequest) (*Employee, error)
 	GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error)
 	UpdateEmployee(ctx context.Context, id uuid.UUID, req *CreateEmployeeRequest) (*Employee, error)
-	
+
 	// Authentication operations
 	AuthenticateUser(ctx context.Context, identifier, password string) (*User, error)
 	UpdatePassword(ctx context.Context, userID uuid.UUID, newPassword string) error
-	
+
 	// Role operations
 	AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 	RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*UserRole, error)
-	
+
 	// Validation operations
 	ValidateUserEmail(ctx context.Context, email string, excludeID *uuid.UUID) error
 	ValidateUsername(ctx context.Context, username string, excludeID *uuid.UUID) error
 	ValidateEmployeeNumber(ctx context.Context, number string, excludeID *uuid.UUID) error
-	
+
 	// Search operations
 	SearchUsers(ctx context.Context, query string, limit, offset int) ([]*User, error)
-	
+
 	// Permission evaluation operations
 	EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResult, error)
 	GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) ([]*EffectivePermission, error)
 	BulkEvaluatePermissions(ctx context.Context, req *BulkPermissionEvaluationRequest) ([]*PermissionEvaluationResult, error)
-	
+
 	// Role hierarchy operations
 	CalculateRoleHierarchy(ctx context.Context, roleID uuid.UUID) ([]*Role, error)
 	GetInheritedPermissions(ctx context.Context, roleID uuid.UUID) ([]*Permission, error)
-	
+
 	// ABAC policy operations
 	EvaluateABACPolicies(ctx context.Context, req *ABACEvaluationRequest) (*ABACEvaluationResult, error)
 	TestPolicy(ctx context.Context, policyID uuid.UUID, req *PolicyTestRequest) (*PolicyTestResult, error)
@@ -69,22 +69,22 @@ type Service interface {
 
 // service implements the Service interface
 type service struct {
-	repo           Repository
-	cache          cache.Service
+	repo            Repository
+	cache           cache.Service
 	permissionCache *PermissionCacheService
-	tracing        *tracing.TracingService
-	metrics        *metrics.MetricsService
+	tracing         *tracing.TracingService
+	metrics         *metrics.MetricsService
 }
 
 // NewService creates a new user service
 func NewService(repo Repository, cache cache.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) Service {
 	permissionCache := NewPermissionCacheService(cache, metrics, tracing)
 	return &service{
-		repo:           repo,
-		cache:          cache,
+		repo:            repo,
+		cache:           cache,
 		permissionCache: permissionCache,
-		tracing:        tracing,
-		metrics:        metrics,
+		tracing:         tracing,
+		metrics:         metrics,
 	}
 }
 
@@ -558,7 +558,9 @@ func (s *service) CreatePerson(ctx context.Context, req *CreatePersonRequest) (*
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
 			attribute.String("person.email", func() string {
-				if req.Email != nil { return *req.Email }
+				if req.Email != nil {
+					return *req.Email
+				}
 				return ""
 			}()),
 			attribute.String("person.first_name", req.FirstName),
@@ -659,7 +661,9 @@ func (s *service) CreateEmployee(ctx context.Context, req *CreateEmployeeRequest
 		tracing.WithAttributes(
 			attribute.String("employee.number", req.EmployeeNumber),
 			attribute.String("employee.position", func() string {
-				if req.PositionTitle != nil { return *req.PositionTitle }
+				if req.PositionTitle != nil {
+					return *req.PositionTitle
+				}
 				return ""
 			}()),
 		))
@@ -1249,7 +1253,7 @@ func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 	// Step 2: Calculate role hierarchy and inherited permissions
 	allRoles := make([]*Role, 0)
 	allPermissions := make([]*Permission, 0)
-	
+
 	for _, userRole := range userRoles {
 		// Get role hierarchy
 		roleHierarchy, err := s.CalculateRoleHierarchy(ctx, userRole.RoleID)
@@ -1295,16 +1299,16 @@ func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 
 	// Step 5: Combine RBAC and ABAC results
 	finalDecision := rbacResult.Allowed && abacResult.Allowed
-	
+
 	// Build result
 	result := PermissionEvaluationResult{
-		Allowed:           finalDecision,
-		PolicyDecisions:   append(rbacResult.PolicyDecisions, abacResult.PolicyDecisions...),
-		EffectiveRoles:    s.extractRoleNames(allRoles),
-		EvaluationTimeMS:  int(time.Since(startTime).Milliseconds()),
-		CacheHit:          false,
-		RBACResult:        rbacResult,
-		ABACResult:        abacResult,
+		Allowed:          finalDecision,
+		PolicyDecisions:  append(rbacResult.PolicyDecisions, abacResult.PolicyDecisions...),
+		EffectiveRoles:   s.extractRoleNames(allRoles),
+		EvaluationTimeMS: int(time.Since(startTime).Milliseconds()),
+		CacheHit:         false,
+		RBACResult:       rbacResult,
+		ABACResult:       abacResult,
 	}
 
 	// Cache the result using the specialized permission cache service
@@ -1322,11 +1326,11 @@ func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 
 	logger.DebugContext(ctx, "Permission evaluation completed",
 		logger.Fields{
-			"user_id":        req.UserID.String(),
-			"resource_name":  req.ResourceName,
-			"action_name":    req.ActionName,
-			"allowed":        finalDecision,
-			"duration_ms":    result.EvaluationTimeMS,
+			"user_id":       req.UserID.String(),
+			"resource_name": req.ResourceName,
+			"action_name":   req.ActionName,
+			"allowed":       finalDecision,
+			"duration_ms":   result.EvaluationTimeMS,
 		})
 
 	return &result, nil
@@ -1430,16 +1434,16 @@ func (s *service) BulkEvaluatePermissions(ctx context.Context, req *BulkPermissi
 		logger.Fields{"requests_count": len(req.Requests)})
 
 	results := make([]*PermissionEvaluationResult, len(req.Requests))
-	
+
 	// Process in parallel for better performance
 	type evalResult struct {
 		index  int
 		result *PermissionEvaluationResult
 		err    error
 	}
-	
+
 	resultChan := make(chan evalResult, len(req.Requests))
-	
+
 	// Launch goroutines for parallel evaluation
 	for i, permReq := range req.Requests {
 		go func(idx int, request *PermissionEvaluationRequest) {
@@ -1447,7 +1451,7 @@ func (s *service) BulkEvaluatePermissions(ctx context.Context, req *BulkPermissi
 			resultChan <- evalResult{index: idx, result: result, err: err}
 		}(i, permReq)
 	}
-	
+
 	// Collect results
 	for i := 0; i < len(req.Requests); i++ {
 		evalRes := <-resultChan
@@ -1456,11 +1460,11 @@ func (s *service) BulkEvaluatePermissions(ctx context.Context, req *BulkPermissi
 				logger.Fields{"index": evalRes.index, "error": evalRes.err.Error()})
 			// Create a denied result for failed evaluations
 			results[evalRes.index] = &PermissionEvaluationResult{
-				Allowed:           false,
-				PolicyDecisions:   []string{"evaluation_failed"},
-				EffectiveRoles:    []string{},
-				EvaluationTimeMS:  0,
-				CacheHit:          false,
+				Allowed:          false,
+				PolicyDecisions:  []string{"evaluation_failed"},
+				EffectiveRoles:   []string{},
+				EvaluationTimeMS: 0,
+				CacheHit:         false,
 			}
 		} else {
 			results[evalRes.index] = evalRes.result
@@ -1516,7 +1520,7 @@ func (s *service) GetInheritedPermissions(ctx context.Context, roleID uuid.UUID)
 	// Check cache first
 	cacheKey := fmt.Sprintf("role:permissions:%s", roleID.String())
 	var permissions []*Permission
-	
+
 	if err := s.cache.Get(ctx, cacheKey, &permissions); err == nil {
 		s.metrics.IncrementCounter("role_permissions_cache_hits_total", metrics.Fields{})
 		return permissions, nil
@@ -1568,8 +1572,8 @@ func (s *service) EvaluateABACPolicies(ctx context.Context, req *ABACEvaluationR
 	// If no policies, default to allow
 	if len(policies) == 0 {
 		return &ABACEvaluationResult{
-			Allowed:           true,
-			PolicyDecisions:   []string{"no_policies_applicable"},
+			Allowed:            true,
+			PolicyDecisions:    []string{"no_policies_applicable"},
 			ApplicablePolicies: []string{},
 		}, nil
 	}
@@ -1592,9 +1596,9 @@ func (s *service) EvaluateABACPolicies(ctx context.Context, req *ABACEvaluationR
 		if !s.policyTargetMatches(policy, req, userContext) {
 			continue
 		}
-		
+
 		applicablePolicies = append(applicablePolicies, policy.Name)
-		
+
 		// Evaluate policy rule
 		allowed, err := s.evaluatePolicyRule(ctx, policy, req, userContext)
 		if err != nil {
@@ -1615,7 +1619,7 @@ func (s *service) EvaluateABACPolicies(ctx context.Context, req *ABACEvaluationR
 		} else {
 			decision += "_not_applicable"
 		}
-		
+
 		policyDecisions = append(policyDecisions, decision)
 	}
 
@@ -1627,8 +1631,8 @@ func (s *service) EvaluateABACPolicies(ctx context.Context, req *ABACEvaluationR
 		PolicyDecisions:    policyDecisions,
 		ApplicablePolicies: applicablePolicies,
 		EvaluationDetails: map[string]any{
-			"allow_count": allowCount,
-			"deny_count":  denyCount,
+			"allow_count":    allowCount,
+			"deny_count":     denyCount,
 			"total_policies": len(policies),
 		},
 	}
@@ -1682,10 +1686,10 @@ func (s *service) TestPolicy(ctx context.Context, policyID uuid.UUID, req *Polic
 
 	// Test target matching
 	targetMatches := s.policyTargetMatches(policy, evalReq, userContext)
-	
+
 	var ruleResult bool
 	var ruleError error
-	
+
 	if targetMatches {
 		// Test rule evaluation
 		ruleResult, ruleError = s.evaluatePolicyRule(ctx, policy, evalReq, userContext)

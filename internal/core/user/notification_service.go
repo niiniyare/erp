@@ -36,30 +36,30 @@ const (
 
 // NotificationRequest represents a notification to be sent
 type NotificationRequest struct {
-	Type        NotificationType    `json:"type"`
-	Channels    []NotificationChannel `json:"channels"`
-	Recipients  []uuid.UUID         `json:"recipients"`
-	Subject     string              `json:"subject"`
-	Message     string              `json:"message"`
-	Data        map[string]any `json:"data"`
-	Priority    string              `json:"priority"`
-	RequestID   uuid.UUID           `json:"request_id"`
+	Type       NotificationType      `json:"type"`
+	Channels   []NotificationChannel `json:"channels"`
+	Recipients []uuid.UUID           `json:"recipients"`
+	Subject    string                `json:"subject"`
+	Message    string                `json:"message"`
+	Data       map[string]any        `json:"data"`
+	Priority   string                `json:"priority"`
+	RequestID  uuid.UUID             `json:"request_id"`
 }
 
 // NotificationService handles all notification-related operations for access requests
 type NotificationService interface {
 	// Core notification operations
 	SendAccessRequestNotification(ctx context.Context, request *AccessRequest, notificationType NotificationType, recipients []uuid.UUID) error
-	
+
 	// Specific workflow notifications
 	NotifyApprovers(ctx context.Context, request *AccessRequest) error
 	NotifyRequester(ctx context.Context, request *AccessRequest, action string) error
 	NotifyStatusChange(ctx context.Context, request *AccessRequest, previousStatus, newStatus ApprovalStatus) error
-	
+
 	// Administrative notifications
 	NotifyExpiredRequests(ctx context.Context, requests []*AccessRequest) error
 	SendBulkNotification(ctx context.Context, notificationReq *NotificationRequest) error
-	
+
 	// User preference management
 	GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreferences, error)
 	UpdateUserNotificationPreferences(ctx context.Context, userID uuid.UUID, prefs *NotificationPreferences) error
@@ -67,15 +67,15 @@ type NotificationService interface {
 
 // NotificationPreferences represents user notification preferences
 type NotificationPreferences struct {
-	UserID                uuid.UUID                          `json:"user_id"`
-	EmailNotifications    bool                               `json:"email_notifications"`
-	InAppNotifications    bool                               `json:"in_app_notifications"`
-	SlackNotifications    bool                               `json:"slack_notifications"`
-	NotificationTypes     map[NotificationType]bool          `json:"notification_types"`
-	PreferredChannels     []NotificationChannel              `json:"preferred_channels"`
-	QuietHours           *QuietHours                        `json:"quiet_hours,omitempty"`
-	CreatedAt            time.Time                          `json:"created_at"`
-	UpdatedAt            time.Time                          `json:"updated_at"`
+	UserID             uuid.UUID                 `json:"user_id"`
+	EmailNotifications bool                      `json:"email_notifications"`
+	InAppNotifications bool                      `json:"in_app_notifications"`
+	SlackNotifications bool                      `json:"slack_notifications"`
+	NotificationTypes  map[NotificationType]bool `json:"notification_types"`
+	PreferredChannels  []NotificationChannel     `json:"preferred_channels"`
+	QuietHours         *QuietHours               `json:"quiet_hours,omitempty"`
+	CreatedAt          time.Time                 `json:"created_at"`
+	UpdatedAt          time.Time                 `json:"updated_at"`
 }
 
 // QuietHours represents hours when notifications should not be sent
@@ -146,18 +146,18 @@ func (s *notificationService) SendAccessRequestNotification(ctx context.Context,
 
 	// Generate notification content
 	subject, message := s.generateNotificationContent(request, notificationType)
-	
+
 	// Prepare notification data
 	data := map[string]any{
-		"request_id":        request.ID,
-		"request_type":      request.RequestType,
-		"requester_id":      request.RequesterID,
-		"entity_id":         request.EntityID,
-		"approval_status":   request.ApprovalStatus,
-		"justification":     request.Justification,
-		"business_reason":   request.BusinessReason,
-		"created_at":        request.CreatedAt,
-		"expires_at":        request.ExpiresAt,
+		"request_id":      request.ID,
+		"request_type":    request.RequestType,
+		"requester_id":    request.RequesterID,
+		"entity_id":       request.EntityID,
+		"approval_status": request.ApprovalStatus,
+		"justification":   request.Justification,
+		"business_reason": request.BusinessReason,
+		"created_at":      request.CreatedAt,
+		"expires_at":      request.ExpiresAt,
 	}
 
 	notificationReq := &NotificationRequest{
@@ -227,7 +227,7 @@ func (s *notificationService) NotifyRequester(ctx context.Context, request *Acce
 	}
 
 	recipients := []uuid.UUID{request.RequesterID}
-	
+
 	// If the request is for someone else, notify them too
 	if request.TargetUserID != nil && *request.TargetUserID != request.RequesterID {
 		recipients = append(recipients, *request.TargetUserID)
@@ -510,7 +510,7 @@ func (s *notificationService) isInQuietHours(quietHours *QuietHours) bool {
 	// This is a simplified implementation
 	now := time.Now()
 	currentHour := now.Hour()
-	
+
 	// Parse start and end times (simplified)
 	// In a real implementation, this would properly handle timezones and time parsing
 	return currentHour >= 22 || currentHour <= 8

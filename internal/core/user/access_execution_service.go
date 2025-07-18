@@ -24,31 +24,31 @@ const (
 
 // TemporaryAccess represents a temporary access grant
 type TemporaryAccess struct {
-	ID            uuid.UUID           `json:"id"`
-	TenantID      uuid.UUID           `json:"tenant_id"`
-	UserID        uuid.UUID           `json:"user_id"`
-	AccessType    RequestType         `json:"access_type"`
-	ResourceID    *uuid.UUID          `json:"resource_id,omitempty"`
-	RoleID        *uuid.UUID          `json:"role_id,omitempty"`
-	PermissionID  *uuid.UUID          `json:"permission_id,omitempty"`
-	EntityID      uuid.UUID           `json:"entity_id"`
-	RequestID     uuid.UUID           `json:"request_id"`
-	GrantedAt     time.Time           `json:"granted_at"`
-	ExpiresAt     *time.Time          `json:"expires_at,omitempty"`
-	IsActive      bool                `json:"is_active"`
-	GrantedBy     uuid.UUID           `json:"granted_by"`
-	RevokedAt     *time.Time          `json:"revoked_at,omitempty"`
-	RevokedBy     *uuid.UUID          `json:"revoked_by,omitempty"`
-	Metadata      map[string]any `json:"metadata,omitempty"`
+	ID           uuid.UUID      `json:"id"`
+	TenantID     uuid.UUID      `json:"tenant_id"`
+	UserID       uuid.UUID      `json:"user_id"`
+	AccessType   RequestType    `json:"access_type"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	RoleID       *uuid.UUID     `json:"role_id,omitempty"`
+	PermissionID *uuid.UUID     `json:"permission_id,omitempty"`
+	EntityID     uuid.UUID      `json:"entity_id"`
+	RequestID    uuid.UUID      `json:"request_id"`
+	GrantedAt    time.Time      `json:"granted_at"`
+	ExpiresAt    *time.Time     `json:"expires_at,omitempty"`
+	IsActive     bool           `json:"is_active"`
+	GrantedBy    uuid.UUID      `json:"granted_by"`
+	RevokedAt    *time.Time     `json:"revoked_at,omitempty"`
+	RevokedBy    *uuid.UUID     `json:"revoked_by,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
 }
 
 // ExecutionResult represents the result of access execution
 type ExecutionResult struct {
-	Success       bool                `json:"success"`
-	AccessGranted []TemporaryAccess   `json:"access_granted,omitempty"`
-	AccessRevoked []uuid.UUID         `json:"access_revoked,omitempty"`
-	ErrorMessage  string              `json:"error_message,omitempty"`
-	ExecutedAt    time.Time           `json:"executed_at"`
+	Success       bool              `json:"success"`
+	AccessGranted []TemporaryAccess `json:"access_granted,omitempty"`
+	AccessRevoked []uuid.UUID       `json:"access_revoked,omitempty"`
+	ErrorMessage  string            `json:"error_message,omitempty"`
+	ExecutedAt    time.Time         `json:"executed_at"`
 }
 
 // AccessExecutionService handles the execution of approved access requests
@@ -57,28 +57,28 @@ type AccessExecutionService interface {
 	ExecuteAccessRequest(ctx context.Context, request *AccessRequest) (*ExecutionResult, error)
 	RevokeAccessRequest(ctx context.Context, request *AccessRequest) (*ExecutionResult, error)
 	ExpireTemporaryAccess(ctx context.Context, accessID uuid.UUID) error
-	
+
 	// Specific execution types
 	ExecuteRoleAssignment(ctx context.Context, request *AccessRequest) (*ExecutionResult, error)
 	ExecutePermissionGrant(ctx context.Context, request *AccessRequest) (*ExecutionResult, error)
 	ExecuteResourceAccess(ctx context.Context, request *AccessRequest) (*ExecutionResult, error)
 	ExecutePrivilegeElevation(ctx context.Context, request *AccessRequest) (*ExecutionResult, error)
-	
+
 	// Temporary access management
 	GetActiveTemporaryAccess(ctx context.Context, userID uuid.UUID) ([]*TemporaryAccess, error)
 	GetTemporaryAccessByRequest(ctx context.Context, requestID uuid.UUID) ([]*TemporaryAccess, error)
 	CleanupExpiredAccess(ctx context.Context) error
-	
+
 	// Access validation
 	ValidateAccessExecution(ctx context.Context, request *AccessRequest) error
 }
 
 // accessExecutionService implements AccessExecutionService
 type accessExecutionService struct {
-	userRepo           Repository
-	userService        Service
-	tracing           *tracing.TracingService
-	metrics           *metrics.MetricsService
+	userRepo    Repository
+	userService Service
+	tracing     *tracing.TracingService
+	metrics     *metrics.MetricsService
 	// TODO: Add temporary access repository when implemented
 	// temporaryAccessRepo TemporaryAccessRepository
 }
@@ -174,7 +174,7 @@ func (s *accessExecutionService) ExecuteRoleAssignment(ctx context.Context, requ
 	}
 
 	targetUserID := s.getTargetUserID(request)
-	
+
 	// Assign the role
 	err := s.userService.AssignUserRole(ctx, targetUserID, *request.RoleID, request.EntityID)
 	if err != nil {
@@ -185,22 +185,22 @@ func (s *accessExecutionService) ExecuteRoleAssignment(ctx context.Context, requ
 	var temporaryAccess []TemporaryAccess
 	if request.ExpiresAt != nil {
 		access := TemporaryAccess{
-			ID:           uuid.New(),
-			TenantID:     request.TenantID,
-			UserID:       targetUserID,
-			AccessType:   RequestTypeRoleAssignment,
-			RoleID:       request.RoleID,
-			EntityID:     request.EntityID,
-			RequestID:    request.ID,
-			GrantedAt:    time.Now(),
-			ExpiresAt:    request.ExpiresAt,
-			IsActive:     true,
-			GrantedBy:    *request.ApprovedBy,
+			ID:         uuid.New(),
+			TenantID:   request.TenantID,
+			UserID:     targetUserID,
+			AccessType: RequestTypeRoleAssignment,
+			RoleID:     request.RoleID,
+			EntityID:   request.EntityID,
+			RequestID:  request.ID,
+			GrantedAt:  time.Now(),
+			ExpiresAt:  request.ExpiresAt,
+			IsActive:   true,
+			GrantedBy:  *request.ApprovedBy,
 		}
-		
+
 		// TODO: Save to database when temporary access repository is implemented
 		temporaryAccess = append(temporaryAccess, access)
-		
+
 		logger.Info("Temporary role assignment created", logger.Fields{
 			"access_id":  access.ID,
 			"user_id":    targetUserID,
@@ -241,15 +241,15 @@ func (s *accessExecutionService) ExecutePermissionGrant(ctx context.Context, req
 		IsActive:     true,
 		GrantedBy:    *request.ApprovedBy,
 		Metadata: map[string]any{
-			"justification":    request.Justification,
-			"business_reason":  request.BusinessReason,
+			"justification":   request.Justification,
+			"business_reason": request.BusinessReason,
 		},
 	}
 
 	// TODO: Create dynamic permission policy in the ABAC system
 	// This would involve creating a temporary policy that grants the specific permission
 	// to the user for the specified duration
-	
+
 	logger.Info("Direct permission grant executed", logger.Fields{
 		"access_id":     access.ID,
 		"user_id":       targetUserID,
@@ -277,21 +277,21 @@ func (s *accessExecutionService) ExecuteResourceAccess(ctx context.Context, requ
 
 	// Create resource-specific access
 	access := TemporaryAccess{
-		ID:          uuid.New(),
-		TenantID:    request.TenantID,
-		UserID:      targetUserID,
-		AccessType:  RequestTypeResourceAccess,
-		ResourceID:  request.ResourceID,
-		EntityID:    request.EntityID,
-		RequestID:   request.ID,
-		GrantedAt:   time.Now(),
-		ExpiresAt:   request.ExpiresAt,
-		IsActive:    true,
-		GrantedBy:   *request.ApprovedBy,
+		ID:         uuid.New(),
+		TenantID:   request.TenantID,
+		UserID:     targetUserID,
+		AccessType: RequestTypeResourceAccess,
+		ResourceID: request.ResourceID,
+		EntityID:   request.EntityID,
+		RequestID:  request.ID,
+		GrantedAt:  time.Now(),
+		ExpiresAt:  request.ExpiresAt,
+		IsActive:   true,
+		GrantedBy:  *request.ApprovedBy,
 		Metadata: map[string]any{
-			"access_level":     "READ_WRITE", // TODO: Make configurable
-			"justification":    request.Justification,
-			"business_reason":  request.BusinessReason,
+			"access_level":    "READ_WRITE", // TODO: Make configurable
+			"justification":   request.Justification,
+			"business_reason": request.BusinessReason,
 		},
 	}
 
@@ -301,7 +301,7 @@ func (s *accessExecutionService) ExecuteResourceAccess(ctx context.Context, requ
 	// 1. A temporary ABAC policy
 	// 2. A resource-specific permission assignment
 	// 3. An entry in a resource access control list
-	
+
 	logger.Info("Resource access granted", logger.Fields{
 		"access_id":   access.ID,
 		"user_id":     targetUserID,
@@ -343,10 +343,10 @@ func (s *accessExecutionService) ExecutePrivilegeElevation(ctx context.Context, 
 		IsActive:   true,
 		GrantedBy:  *request.ApprovedBy,
 		Metadata: map[string]any{
-			"elevation_type":   "ADMINISTRATIVE", // TODO: Make configurable
-			"justification":    request.Justification,
-			"business_reason":  request.BusinessReason,
-			"security_level":   "HIGH",
+			"elevation_type":  "ADMINISTRATIVE", // TODO: Make configurable
+			"justification":   request.Justification,
+			"business_reason": request.BusinessReason,
+			"security_level":  "HIGH",
 		},
 	}
 
@@ -356,7 +356,7 @@ func (s *accessExecutionService) ExecutePrivilegeElevation(ctx context.Context, 
 	// 2. Granting elevated permissions
 	// 3. Bypassing certain access controls (with audit)
 	// 4. Increasing the user's security clearance level
-	
+
 	logger.Info("Privilege elevation granted", logger.Fields{
 		"access_id":  access.ID,
 		"user_id":    targetUserID,
@@ -425,7 +425,7 @@ func (s *accessExecutionService) RevokeAccessRequest(ctx context.Context, reques
 			if access.IsActive {
 				// TODO: Update in database when repository is implemented
 				revokedAccess = append(revokedAccess, access.ID)
-				
+
 				logger.Info("Temporary access revoked", logger.Fields{
 					"access_id": access.ID,
 					"user_id":   access.UserID,
@@ -483,7 +483,7 @@ func (s *accessExecutionService) CleanupExpiredAccess(ctx context.Context) error
 
 	processedCount := 0
 	s.metrics.ObserveHistogram("expired_access_cleaned", float64(processedCount), map[string]any{})
-	
+
 	logger.Info("Completed cleanup of expired temporary access", logger.Fields{
 		"processed_count": processedCount,
 	})
@@ -544,7 +544,7 @@ func (s *accessExecutionService) ValidateAccessExecution(ctx context.Context, re
 		if request.ExpiresAt == nil {
 			return fmt.Errorf("privilege elevation requests must have expiration time")
 		}
-		
+
 		// Check maximum elevation duration (e.g., 72 hours)
 		maxDuration := 72 * time.Hour
 		if request.ExpiresAt.After(time.Now().Add(maxDuration)) {

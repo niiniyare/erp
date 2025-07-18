@@ -176,15 +176,15 @@ type AccessRequestApprovalRequest struct {
 
 // AccessRequestWorkflowEvent represents workflow state changes for audit trail
 type AccessRequestWorkflowEvent struct {
-	ID            uuid.UUID              `json:"id"`
-	RequestID     uuid.UUID              `json:"request_id"`
-	EventType     string                 `json:"event_type"` // CREATED, SUBMITTED, APPROVED, REJECTED, EXPIRED, REVOKED
-	ActorID       *uuid.UUID             `json:"actor_id,omitempty"`
-	PreviousState *ApprovalStatus        `json:"previous_state,omitempty"`
-	NewState      ApprovalStatus         `json:"new_state"`
-	Comments      *string                `json:"comments,omitempty"`
-	Metadata      map[string]any `json:"metadata,omitempty"`
-	CreatedAt     time.Time              `json:"created_at"`
+	ID            uuid.UUID       `json:"id"`
+	RequestID     uuid.UUID       `json:"request_id"`
+	EventType     string          `json:"event_type"` // CREATED, SUBMITTED, APPROVED, REJECTED, EXPIRED, REVOKED
+	ActorID       *uuid.UUID      `json:"actor_id,omitempty"`
+	PreviousState *ApprovalStatus `json:"previous_state,omitempty"`
+	NewState      ApprovalStatus  `json:"new_state"`
+	Comments      *string         `json:"comments,omitempty"`
+	Metadata      map[string]any  `json:"metadata,omitempty"`
+	CreatedAt     time.Time       `json:"created_at"`
 }
 
 // AccessRequestStats represents access request statistics for monitoring
@@ -414,4 +414,3 @@ func (as ApprovalStatus) GetDisplayName() string {
 		return string(as)
 	}
 }
-

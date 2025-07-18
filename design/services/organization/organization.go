@@ -1,28 +1,28 @@
 package organization
 
 import (
+	"github.com/niiniyare/erp/design/types"
 	. "goa.design/goa/v3/dsl"
-	"design/types"
 )
 
 // Service describes the organization management service
 var _ = Service("organization", func() {
 	Description("Organization and entity management service")
-	
+
 	// Apply global middleware
 	HTTP(func() {
 		Path("/api/v1/organizations")
 	})
-	
+
 	// Security requirements
 	Security("jwt", func() {
 		Scope("api:read", "api:write")
 	})
-	
+
 	// Create organization endpoint
 	Method("create", func() {
 		Description("Create a new organization")
-		
+
 		Payload(func() {
 			Attribute("name", String, "Organization name", func() {
 				MinLength(1)
@@ -51,15 +51,15 @@ var _ = Service("organization", func() {
 			})
 			Required("name", "tenant_id")
 		})
-		
+
 		Result(OrganizationResult)
-		
+
 		Error("bad_request")
 		Error("conflict")
 		Error("unauthorized")
 		Error("forbidden")
 		Error("unprocessable_entity")
-		
+
 		HTTP(func() {
 			POST("/")
 			types.CommonHeaders()
@@ -70,7 +70,7 @@ var _ = Service("organization", func() {
 			Response("forbidden", StatusForbidden)
 			Response("unprocessable_entity", StatusUnprocessableEntity)
 		})
-		
+
 		GRPC(func() {
 			Response(CodeOK)
 			Response("bad_request", CodeInvalidArgument)
@@ -80,11 +80,11 @@ var _ = Service("organization", func() {
 			Response("unprocessable_entity", CodeInvalidArgument)
 		})
 	})
-	
+
 	// Get organization by ID
 	Method("get", func() {
 		Description("Get organization by ID")
-		
+
 		Payload(func() {
 			Attribute("id", String, "Organization ID", func() {
 				Format(FormatUUID)
@@ -92,13 +92,13 @@ var _ = Service("organization", func() {
 			})
 			Required("id")
 		})
-		
+
 		Result(OrganizationResult)
-		
+
 		Error("not_found")
 		Error("unauthorized")
 		Error("forbidden")
-		
+
 		HTTP(func() {
 			GET("/{id}")
 			types.CommonHeaders()
@@ -107,7 +107,7 @@ var _ = Service("organization", func() {
 			Response("unauthorized", StatusUnauthorized)
 			Response("forbidden", StatusForbidden)
 		})
-		
+
 		GRPC(func() {
 			Response(CodeOK)
 			Response("not_found", CodeNotFound)
@@ -115,11 +115,11 @@ var _ = Service("organization", func() {
 			Response("forbidden", CodePermissionDenied)
 		})
 	})
-	
+
 	// List organizations with pagination
 	Method("list", func() {
 		Description("List organizations with pagination and filtering")
-		
+
 		Payload(func() {
 			Extend(types.Pagination)
 			Attribute("name_filter", String, "Filter by organization name", func() {
@@ -133,13 +133,13 @@ var _ = Service("organization", func() {
 				Example("active")
 			})
 		})
-		
+
 		Result(types.PaginatedResponse(OrganizationResult))
-		
+
 		Error("bad_request")
 		Error("unauthorized")
 		Error("forbidden")
-		
+
 		HTTP(func() {
 			GET("/")
 			types.CommonHeaders()
@@ -155,7 +155,7 @@ var _ = Service("organization", func() {
 			Response("unauthorized", StatusUnauthorized)
 			Response("forbidden", StatusForbidden)
 		})
-		
+
 		GRPC(func() {
 			Response(CodeOK)
 			Response("bad_request", CodeInvalidArgument)
@@ -163,11 +163,11 @@ var _ = Service("organization", func() {
 			Response("forbidden", CodePermissionDenied)
 		})
 	})
-	
+
 	// Update organization
 	Method("update", func() {
 		Description("Update an existing organization")
-		
+
 		Payload(func() {
 			Attribute("id", String, "Organization ID", func() {
 				Format(FormatUUID)
@@ -200,16 +200,16 @@ var _ = Service("organization", func() {
 			Attribute("address", OrganizationAddress, "Organization address")
 			Required("id")
 		})
-		
+
 		Result(OrganizationResult)
-		
+
 		Error("bad_request")
 		Error("not_found")
 		Error("conflict")
 		Error("unauthorized")
 		Error("forbidden")
 		Error("unprocessable_entity")
-		
+
 		HTTP(func() {
 			PUT("/{id}")
 			types.CommonHeaders()
@@ -221,7 +221,7 @@ var _ = Service("organization", func() {
 			Response("forbidden", StatusForbidden)
 			Response("unprocessable_entity", StatusUnprocessableEntity)
 		})
-		
+
 		GRPC(func() {
 			Response(CodeOK)
 			Response("bad_request", CodeInvalidArgument)
@@ -232,11 +232,11 @@ var _ = Service("organization", func() {
 			Response("unprocessable_entity", CodeInvalidArgument)
 		})
 	})
-	
+
 	// Delete organization
 	Method("delete", func() {
 		Description("Delete an organization (soft delete)")
-		
+
 		Payload(func() {
 			Attribute("id", String, "Organization ID", func() {
 				Format(FormatUUID)
@@ -244,14 +244,14 @@ var _ = Service("organization", func() {
 			})
 			Required("id")
 		})
-		
+
 		Result(Empty)
-		
+
 		Error("not_found")
 		Error("unauthorized")
 		Error("forbidden")
 		Error("conflict") // If organization has dependencies
-		
+
 		HTTP(func() {
 			DELETE("/{id}")
 			types.CommonHeaders()
@@ -261,7 +261,7 @@ var _ = Service("organization", func() {
 			Response("forbidden", StatusForbidden)
 			Response("conflict", StatusConflict)
 		})
-		
+
 		GRPC(func() {
 			Response(CodeOK)
 			Response("not_found", CodeNotFound)
@@ -270,11 +270,11 @@ var _ = Service("organization", func() {
 			Response("conflict", CodeFailedPrecondition)
 		})
 	})
-	
+
 	// Health check endpoint
 	Method("health", func() {
 		Description("Health check for organization service")
-		
+
 		Result(func() {
 			Attribute("status", String, "Service status", func() {
 				Enum("healthy", "degraded", "unhealthy")
@@ -289,16 +289,16 @@ var _ = Service("organization", func() {
 			})
 			Required("status", "timestamp", "version")
 		})
-		
+
 		HTTP(func() {
 			GET("/health")
 			Response(StatusOK)
 		})
-		
+
 		GRPC(func() {
 			Response(CodeOK)
 		})
-		
+
 		// No authentication required for health checks
 		NoSecurity()
 	})
@@ -344,7 +344,7 @@ var OrganizationResult = ResultType("application/vnd.organization", func() {
 		types.AuditFields()
 	})
 	Required("id", "name", "status", "tenant_id", "created_at", "updated_at")
-	
+
 	View("default", func() {
 		Attribute("id")
 		Attribute("name")
@@ -361,7 +361,7 @@ var OrganizationResult = ResultType("application/vnd.organization", func() {
 		Attribute("created_by")
 		Attribute("updated_by")
 	})
-	
+
 	View("minimal", func() {
 		Attribute("id")
 		Attribute("name")

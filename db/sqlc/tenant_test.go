@@ -74,7 +74,7 @@ func generateUniqueTestName(baseName string) string {
 // generateShortUniqueName creates very short unique names for constrained fields
 func generateShortUniqueName(prefix string) string {
 	timestamp := time.Now().UnixNano() % 100000 // 5 digits
-	random := utils.RandomString(3)              // 3 chars
+	random := utils.RandomString(3)             // 3 chars
 	// Format: prefix_12345_ABC (max ~15 chars for short prefixes)
 	return fmt.Sprintf("%s_%05d_%s", prefix, timestamp, random)
 }
@@ -464,7 +464,7 @@ func (suite *TenantTestSuite) TestTenantConfiguration() {
 
 	updatedConfig, err := suite.store.UpdateTenantFeatures(testCtx, newFeatures)
 	suite.Require().NoError(err)
-	
+
 	// Parse both JSON values to compare content rather than byte arrays
 	var expectedFeatures, actualFeatures map[string]bool
 	err = json.Unmarshal(newFeatures, &expectedFeatures)

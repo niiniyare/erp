@@ -9,7 +9,7 @@ var _ = API("awo", func() {
 	Title("Enterprise AWO ERP System API")
 	Description("Comprehensive multi-tenant ERP system with RBAC and ABAC capabilities")
 	Version("1.0.0")
-	
+
 	// Global configuration
 	Server("erp", func() {
 		Host("localhost", func() {
@@ -17,7 +17,7 @@ var _ = API("awo", func() {
 			URI("https://api.awo.com")
 		})
 	})
-	
+
 	// Global CORS policy
 	CORS(func() {
 		Origin("*", func() {
@@ -27,7 +27,7 @@ var _ = API("awo", func() {
 			Credentials()
 		})
 	})
-	
+
 	// Global error responses
 	Error("internal_error", ErrorResult)
 	Error("bad_request", ErrorResult)

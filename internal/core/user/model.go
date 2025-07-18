@@ -44,50 +44,50 @@ func AllAccountStatuses() []AccountStatus {
 
 // User represents a user in the system (domain model)
 type User struct {
-	ID                    uuid.UUID              `json:"id"`
-	TenantID              uuid.UUID              `json:"tenant_id"`
-	EntityID              uuid.UUID              `json:"entity_id"`
-	PersonID              *uuid.UUID             `json:"person_id,omitempty"`
-	EmployeeID            *uuid.UUID             `json:"employee_id,omitempty"`
-	Username              string                 `json:"username"`
-	Email                 string                 `json:"email"`
-	UserType              string                 `json:"user_type"`
-	AccountStatus         AccountStatus          `json:"account_status"`
-	IsActive              bool                   `json:"is_active"`
-	LastLoginAt           *time.Time             `json:"last_login_at,omitempty"`
-	PasswordChangedAt     *time.Time             `json:"password_changed_at,omitempty"`
-	FailedLoginAttempts   int32                  `json:"failed_login_attempts"`
-	LockoutUntil          *time.Time             `json:"lockout_until,omitempty"`
-	SessionTimeoutMinutes int32                  `json:"session_timeout_minutes"`
-	MfaEnabled            bool                   `json:"mfa_enabled"`
+	ID                    uuid.UUID      `json:"id"`
+	TenantID              uuid.UUID      `json:"tenant_id"`
+	EntityID              uuid.UUID      `json:"entity_id"`
+	PersonID              *uuid.UUID     `json:"person_id,omitempty"`
+	EmployeeID            *uuid.UUID     `json:"employee_id,omitempty"`
+	Username              string         `json:"username"`
+	Email                 string         `json:"email"`
+	UserType              string         `json:"user_type"`
+	AccountStatus         AccountStatus  `json:"account_status"`
+	IsActive              bool           `json:"is_active"`
+	LastLoginAt           *time.Time     `json:"last_login_at,omitempty"`
+	PasswordChangedAt     *time.Time     `json:"password_changed_at,omitempty"`
+	FailedLoginAttempts   int32          `json:"failed_login_attempts"`
+	LockoutUntil          *time.Time     `json:"lockout_until,omitempty"`
+	SessionTimeoutMinutes int32          `json:"session_timeout_minutes"`
+	MfaEnabled            bool           `json:"mfa_enabled"`
 	UserAttributes        map[string]any `json:"user_attributes,omitempty"`
 	Settings              map[string]any `json:"settings,omitempty"`
-	CreatedAt             time.Time              `json:"created_at"`
-	UpdatedAt             time.Time              `json:"updated_at"`
-	DeletedAt             *time.Time             `json:"deleted_at,omitempty"`
+	CreatedAt             time.Time      `json:"created_at"`
+	UpdatedAt             time.Time      `json:"updated_at"`
+	DeletedAt             *time.Time     `json:"deleted_at,omitempty"`
 }
 
 // Person represents a person in the system (domain model)
 type Person struct {
-	ID                 uuid.UUID              `json:"id"`
-	TenantID           uuid.UUID              `json:"tenant_id"`
-	EntityID           uuid.UUID              `json:"entity_id"`
-	PersonType         string                 `json:"person_type"`
-	FirstName          string                 `json:"first_name"`
-	LastName           string                 `json:"last_name"`
-	MiddleName         *string                `json:"middle_name,omitempty"`
-	Email              string                 `json:"email,omitempty"`
-	Phone              *string                `json:"phone,omitempty"`
-	BirthDate          *time.Time             `json:"birth_date,omitempty"`
-	NationalID         *string                `json:"national_id,omitempty"`
-	TaxID              *string                `json:"tax_id,omitempty"`
-	Address            []byte                 `json:"address,omitempty"`
+	ID                 uuid.UUID      `json:"id"`
+	TenantID           uuid.UUID      `json:"tenant_id"`
+	EntityID           uuid.UUID      `json:"entity_id"`
+	PersonType         string         `json:"person_type"`
+	FirstName          string         `json:"first_name"`
+	LastName           string         `json:"last_name"`
+	MiddleName         *string        `json:"middle_name,omitempty"`
+	Email              string         `json:"email,omitempty"`
+	Phone              *string        `json:"phone,omitempty"`
+	BirthDate          *time.Time     `json:"birth_date,omitempty"`
+	NationalID         *string        `json:"national_id,omitempty"`
+	TaxID              *string        `json:"tax_id,omitempty"`
+	Address            []byte         `json:"address,omitempty"`
 	SecurityAttributes map[string]any `json:"security_attributes,omitempty"`
 	Metadata           map[string]any `json:"metadata,omitempty"`
-	IsActive           bool                   `json:"is_active"`
-	CreatedAt          time.Time              `json:"created_at"`
-	UpdatedAt          time.Time              `json:"updated_at"`
-	DeletedAt          *time.Time             `json:"deleted_at,omitempty"`
+	IsActive           bool           `json:"is_active"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	DeletedAt          *time.Time     `json:"deleted_at,omitempty"`
 }
 
 type EmploymentStatus string
@@ -131,24 +131,24 @@ func (e EmploymentStatus) String() string {
 
 // Employee represents an employee in the system (domain model)
 type Employee struct {
-	ID               uuid.UUID              `json:"id"`
-	TenantID         uuid.UUID              `json:"tenant_id"`
-	PersonID         uuid.UUID              `json:"person_id"`
-	EmployeeNumber   string                 `json:"employee_number"`
-	EntityID         uuid.UUID              `json:"entity_id"`
-	PositionTitle    *string                `json:"position_title,omite/mpty"`
-	DepartmentID     *uuid.UUID             `json:"department_id,omitempty"`
-	ManagerID        *uuid.UUID             `json:"manager_id,omitempty"`
-	HireDate         time.Time              `json:"hire_date"`
-	TerminationDate  *time.Time             `json:"termination_date,omitempty"`
-	SalaryInfo       map[string]any `json:"salary_info,omitempty"`
-	Status           EmploymentStatus       `json:"employment_status"`
-	WorkSchedule     map[string]any `json:"work_schedule,omitempty"`
-	SecurityLevel    int32                  `json:"security_level"`
-	AccessAttributes map[string]any `json:"access_attributes,omitempty"`
-	CreatedAt        time.Time              `json:"created_at"`
-	UpdatedAt        time.Time              `json:"updated_at"`
-	DeletedAt        *time.Time             `json:"deleted_at,omitempty"`
+	ID               uuid.UUID        `json:"id"`
+	TenantID         uuid.UUID        `json:"tenant_id"`
+	PersonID         uuid.UUID        `json:"person_id"`
+	EmployeeNumber   string           `json:"employee_number"`
+	EntityID         uuid.UUID        `json:"entity_id"`
+	PositionTitle    *string          `json:"position_title,omite/mpty"`
+	DepartmentID     *uuid.UUID       `json:"department_id,omitempty"`
+	ManagerID        *uuid.UUID       `json:"manager_id,omitempty"`
+	HireDate         time.Time        `json:"hire_date"`
+	TerminationDate  *time.Time       `json:"termination_date,omitempty"`
+	SalaryInfo       map[string]any   `json:"salary_info,omitempty"`
+	Status           EmploymentStatus `json:"employment_status"`
+	WorkSchedule     map[string]any   `json:"work_schedule,omitempty"`
+	SecurityLevel    int32            `json:"security_level"`
+	AccessAttributes map[string]any   `json:"access_attributes,omitempty"`
+	CreatedAt        time.Time        `json:"created_at"`
+	UpdatedAt        time.Time        `json:"updated_at"`
+	DeletedAt        *time.Time       `json:"deleted_at,omitempty"`
 }
 
 // UserWithDetails represents user with person and employee details
@@ -192,61 +192,61 @@ type UserSession struct {
 
 // CreateUserRequest represents user creation request
 type CreateUserRequest struct {
-	EntityID              uuid.UUID              `json:"entity_id" validate:"required"`
-	PersonID              *uuid.UUID             `json:"person_id,omitempty"`
-	EmployeeID            *uuid.UUID             `json:"employee_id,omitempty"`
-	Username              string                 `json:"username" validate:"required,min=3,max=50"`
-	Email                 string                 `json:"email" validate:"required,email"`
-	Password              string                 `json:"password" validate:"required,min=8"`
-	UserType              string                 `json:"user_type" validate:"required"`
-	AccountStatus         string                 `json:"account_status"`
-	SessionTimeoutMinutes int32                  `json:"session_timeout_minutes"`
-	MfaEnabled            bool                   `json:"mfa_enabled"`
+	EntityID              uuid.UUID      `json:"entity_id" validate:"required"`
+	PersonID              *uuid.UUID     `json:"person_id,omitempty"`
+	EmployeeID            *uuid.UUID     `json:"employee_id,omitempty"`
+	Username              string         `json:"username" validate:"required,min=3,max=50"`
+	Email                 string         `json:"email" validate:"required,email"`
+	Password              string         `json:"password" validate:"required,min=8"`
+	UserType              string         `json:"user_type" validate:"required"`
+	AccountStatus         string         `json:"account_status"`
+	SessionTimeoutMinutes int32          `json:"session_timeout_minutes"`
+	MfaEnabled            bool           `json:"mfa_enabled"`
 	UserAttributes        map[string]any `json:"user_attributes,omitempty"`
 	Settings              map[string]any `json:"settings,omitempty"`
 }
 
 // CreatePersonRequest represents person creation request
 type CreatePersonRequest struct {
-	EntityID           uuid.UUID              `json:"entity_id" validate:"required"`
-	PersonType         string                 `json:"person_type" validate:"required"`
-	FirstName          string                 `json:"first_name" validate:"required,min=2,max=100"`
-	LastName           string                 `json:"last_name" validate:"required,min=2,max=100"`
-	MiddleName         *string                `json:"middle_name,omitempty"`
-	Email              *string                `json:"email" validate:"required,email"`
-	Phone              *string                `json:"phone,omitempty"`
-	BirthDate          *time.Time             `json:"birth_date,omitempty"`
-	NationalID         *string                `json:"national_id,omitempty"`
-	TaxID              *string                `json:"tax_id,omitempty"`
-	Address            []byte                 `json:"address,omitempty"`
+	EntityID           uuid.UUID      `json:"entity_id" validate:"required"`
+	PersonType         string         `json:"person_type" validate:"required"`
+	FirstName          string         `json:"first_name" validate:"required,min=2,max=100"`
+	LastName           string         `json:"last_name" validate:"required,min=2,max=100"`
+	MiddleName         *string        `json:"middle_name,omitempty"`
+	Email              *string        `json:"email" validate:"required,email"`
+	Phone              *string        `json:"phone,omitempty"`
+	BirthDate          *time.Time     `json:"birth_date,omitempty"`
+	NationalID         *string        `json:"national_id,omitempty"`
+	TaxID              *string        `json:"tax_id,omitempty"`
+	Address            []byte         `json:"address,omitempty"`
 	SecurityAttributes map[string]any `json:"security_attributes,omitempty"`
 	Metadata           map[string]any `json:"metadata,omitempty"`
 }
 
 // CreateEmployeeRequest represents employee creation request
 type CreateEmployeeRequest struct {
-	PersonID         uuid.UUID              `json:"person_id" validate:"required"`
-	EmployeeNumber   string                 `json:"employee_number" validate:"required,min=2,max=50"`
-	EntityID         uuid.UUID              `json:"entity_id" validate:"required"`
-	PositionTitle    *string                `json:"position_title,omitempty"`
-	DepartmentID     *uuid.UUID             `json:"department_id,omitempty"`
-	ManagerID        *uuid.UUID             `json:"manager_id,omitempty"`
-	HireDate         time.Time              `json:"hire_date"`
-	SalaryInfo       map[string]any `json:"salary_info,omitempty"`
-	Status           EmploymentStatus       `json:"employment_status"`
-	WorkSchedule     map[string]any `json:"work_schedule,omitempty"`
-	SecurityLevel    int32                  `json:"security_level"`
-	AccessAttributes map[string]any `json:"access_attributes,omitempty"`
+	PersonID         uuid.UUID        `json:"person_id" validate:"required"`
+	EmployeeNumber   string           `json:"employee_number" validate:"required,min=2,max=50"`
+	EntityID         uuid.UUID        `json:"entity_id" validate:"required"`
+	PositionTitle    *string          `json:"position_title,omitempty"`
+	DepartmentID     *uuid.UUID       `json:"department_id,omitempty"`
+	ManagerID        *uuid.UUID       `json:"manager_id,omitempty"`
+	HireDate         time.Time        `json:"hire_date"`
+	SalaryInfo       map[string]any   `json:"salary_info,omitempty"`
+	Status           EmploymentStatus `json:"employment_status"`
+	WorkSchedule     map[string]any   `json:"work_schedule,omitempty"`
+	SecurityLevel    int32            `json:"security_level"`
+	AccessAttributes map[string]any   `json:"access_attributes,omitempty"`
 }
 
 // UpdateUserRequest represents user update request
 type UpdateUserRequest struct {
-	Username              *string                `json:"username,omitempty"`
-	Email                 *string                `json:"email,omitempty"`
-	UserType              *string                `json:"user_type,omitempty"`
-	AccountStatus         *string                `json:"account_status,omitempty"`
-	SessionTimeoutMinutes *int32                 `json:"session_timeout_minutes,omitempty"`
-	MfaEnabled            *bool                  `json:"mfa_enabled,omitempty"`
+	Username              *string        `json:"username,omitempty"`
+	Email                 *string        `json:"email,omitempty"`
+	UserType              *string        `json:"user_type,omitempty"`
+	AccountStatus         *string        `json:"account_status,omitempty"`
+	SessionTimeoutMinutes *int32         `json:"session_timeout_minutes,omitempty"`
+	MfaEnabled            *bool          `json:"mfa_enabled,omitempty"`
 	UserAttributes        map[string]any `json:"user_attributes,omitempty"`
 	Settings              map[string]any `json:"settings,omitempty"`
 }
@@ -656,59 +656,59 @@ func IsValidEmploymentStatus(status string) bool {
 
 // Role represents a role in the system
 type Role struct {
-	ID           uuid.UUID              `json:"id"`
-	TenantID     uuid.UUID              `json:"tenant_id"`
-	EntityID     uuid.UUID              `json:"entity_id"`
-	Name         string                 `json:"name"`
-	DisplayName  *string                `json:"display_name,omitempty"`
-	Description  *string                `json:"description,omitempty"`
-	RoleType     string                 `json:"role_type"`
-	ParentRoleID *uuid.UUID             `json:"parent_role_id,omitempty"`
-	Level        int32                  `json:"level"`
+	ID           uuid.UUID      `json:"id"`
+	TenantID     uuid.UUID      `json:"tenant_id"`
+	EntityID     uuid.UUID      `json:"entity_id"`
+	Name         string         `json:"name"`
+	DisplayName  *string        `json:"display_name,omitempty"`
+	Description  *string        `json:"description,omitempty"`
+	RoleType     string         `json:"role_type"`
+	ParentRoleID *uuid.UUID     `json:"parent_role_id,omitempty"`
+	Level        int32          `json:"level"`
 	Permissions  map[string]any `json:"permissions"`
 	EntityScope  map[string]any `json:"entity_scope"`
 	Conditions   map[string]any `json:"conditions"`
-	IsActive     bool                   `json:"is_active"`
-	CreatedAt    time.Time              `json:"created_at"`
-	UpdatedAt    time.Time              `json:"updated_at"`
+	IsActive     bool           `json:"is_active"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 // Permission represents a permission in the system
 type Permission struct {
-	ID                uuid.UUID              `json:"id"`
-	TenantID          uuid.UUID              `json:"tenant_id"`
-	ResourceID        uuid.UUID              `json:"resource_id"`
-	ActionID          uuid.UUID              `json:"action_id"`
-	Name              string                 `json:"name"`
-	DisplayName       *string                `json:"display_name,omitempty"`
-	Description       *string                `json:"description,omitempty"`
-	Effect            string                 `json:"effect"` // ALLOW or DENY
+	ID                uuid.UUID      `json:"id"`
+	TenantID          uuid.UUID      `json:"tenant_id"`
+	ResourceID        uuid.UUID      `json:"resource_id"`
+	ActionID          uuid.UUID      `json:"action_id"`
+	Name              string         `json:"name"`
+	DisplayName       *string        `json:"display_name,omitempty"`
+	Description       *string        `json:"description,omitempty"`
+	Effect            string         `json:"effect"` // ALLOW or DENY
 	Conditions        map[string]any `json:"conditions"`
 	DataFilters       map[string]any `json:"data_filters"`
 	FieldRestrictions map[string]any `json:"field_restrictions"`
-	IsActive          bool                   `json:"is_active"`
-	CreatedAt         time.Time              `json:"created_at"`
+	IsActive          bool           `json:"is_active"`
+	CreatedAt         time.Time      `json:"created_at"`
 }
 
 // Policy represents an ABAC policy
 type Policy struct {
-	ID          uuid.UUID              `json:"id"`
-	TenantID    uuid.UUID              `json:"tenant_id"`
-	EntityID    *uuid.UUID             `json:"entity_id,omitempty"`
-	Name        string                 `json:"name"`
-	DisplayName *string                `json:"display_name,omitempty"`
-	Description *string                `json:"description,omitempty"`
-	PolicyType  string                 `json:"policy_type"`
-	Effect      string                 `json:"effect"` // ALLOW or DENY
-	Priority    int32                  `json:"priority"`
-	Category    string                 `json:"category"`
+	ID          uuid.UUID      `json:"id"`
+	TenantID    uuid.UUID      `json:"tenant_id"`
+	EntityID    *uuid.UUID     `json:"entity_id,omitempty"`
+	Name        string         `json:"name"`
+	DisplayName *string        `json:"display_name,omitempty"`
+	Description *string        `json:"description,omitempty"`
+	PolicyType  string         `json:"policy_type"`
+	Effect      string         `json:"effect"` // ALLOW or DENY
+	Priority    int32          `json:"priority"`
+	Category    string         `json:"category"`
 	Target      map[string]any `json:"target"`
 	Rule        map[string]any `json:"rule"`
 	Obligations map[string]any `json:"obligations"`
 	Advice      map[string]any `json:"advice"`
-	IsActive    bool                   `json:"is_active"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
+	IsActive    bool           `json:"is_active"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 // EffectivePermission represents a permission granted to a user through roles
@@ -722,22 +722,22 @@ type EffectivePermission struct {
 
 // PermissionEvaluationRequest represents a permission evaluation request
 type PermissionEvaluationRequest struct {
-	UserID       uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceName string                 `json:"resource_name" validate:"required"`
-	ActionName   string                 `json:"action_name" validate:"required"`
-	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
+	UserID       uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceName string         `json:"resource_name" validate:"required"`
+	ActionName   string         `json:"action_name" validate:"required"`
+	EntityID     *uuid.UUID     `json:"entity_id,omitempty"`
 	Context      map[string]any `json:"context,omitempty"`
 }
 
 // PermissionEvaluationResult represents the result of permission evaluation
 type PermissionEvaluationResult struct {
-	Allowed           bool                  `json:"allowed"`
-	PolicyDecisions   []string              `json:"policy_decisions"`
-	EffectiveRoles    []string              `json:"effective_roles"`
-	EvaluationTimeMS  int                   `json:"evaluation_time_ms"`
-	CacheHit          bool                  `json:"cache_hit"`
-	RBACResult        *RBACEvaluationResult `json:"rbac_result,omitempty"`
-	ABACResult        *ABACEvaluationResult `json:"abac_result,omitempty"`
+	Allowed          bool                  `json:"allowed"`
+	PolicyDecisions  []string              `json:"policy_decisions"`
+	EffectiveRoles   []string              `json:"effective_roles"`
+	EvaluationTimeMS int                   `json:"evaluation_time_ms"`
+	CacheHit         bool                  `json:"cache_hit"`
+	RBACResult       *RBACEvaluationResult `json:"rbac_result,omitempty"`
+	ABACResult       *ABACEvaluationResult `json:"abac_result,omitempty"`
 }
 
 // RBACEvaluationResult represents RBAC evaluation result
@@ -748,18 +748,18 @@ type RBACEvaluationResult struct {
 
 // ABACEvaluationRequest represents ABAC evaluation request
 type ABACEvaluationRequest struct {
-	UserID       uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceName string                 `json:"resource_name" validate:"required"`
-	ActionName   string                 `json:"action_name" validate:"required"`
-	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
+	UserID       uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceName string         `json:"resource_name" validate:"required"`
+	ActionName   string         `json:"action_name" validate:"required"`
+	EntityID     *uuid.UUID     `json:"entity_id,omitempty"`
 	Context      map[string]any `json:"context,omitempty"`
 }
 
 // ABACEvaluationResult represents ABAC evaluation result
 type ABACEvaluationResult struct {
-	Allowed            bool                   `json:"allowed"`
-	PolicyDecisions    []string               `json:"policy_decisions"`
-	ApplicablePolicies []string               `json:"applicable_policies"`
+	Allowed            bool           `json:"allowed"`
+	PolicyDecisions    []string       `json:"policy_decisions"`
+	ApplicablePolicies []string       `json:"applicable_policies"`
 	EvaluationDetails  map[string]any `json:"evaluation_details,omitempty"`
 }
 
@@ -770,20 +770,20 @@ type BulkPermissionEvaluationRequest struct {
 
 // PolicyTestRequest represents a policy test request
 type PolicyTestRequest struct {
-	UserID       uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceName string                 `json:"resource_name" validate:"required"`
-	ActionName   string                 `json:"action_name" validate:"required"`
-	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
+	UserID       uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceName string         `json:"resource_name" validate:"required"`
+	ActionName   string         `json:"action_name" validate:"required"`
+	EntityID     *uuid.UUID     `json:"entity_id,omitempty"`
 	Context      map[string]any `json:"context,omitempty"`
 }
 
 // PolicyTestResult represents the result of policy testing
 type PolicyTestResult struct {
-	PolicyID      uuid.UUID              `json:"policy_id"`
-	PolicyName    string                 `json:"policy_name"`
-	TargetMatches bool                   `json:"target_matches"`
-	RuleResult    bool                   `json:"rule_result"`
-	Effect        string                 `json:"effect"`
+	PolicyID      uuid.UUID      `json:"policy_id"`
+	PolicyName    string         `json:"policy_name"`
+	TargetMatches bool           `json:"target_matches"`
+	RuleResult    bool           `json:"rule_result"`
+	Effect        string         `json:"effect"`
 	Details       map[string]any `json:"details"`
 }
 

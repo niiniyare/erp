@@ -22,13 +22,13 @@ type Service interface {
 	DeleteEntity(ctx context.Context, id uuid.UUID, permanent bool) error
 	RestoreEntity(ctx context.Context, id uuid.UUID) error
 	ListEntities(ctx context.Context, req ListEntitiesRequest) ([]*Entity, error)
-	
+
 	// Hierarchy operations
 	GetEntityChildren(ctx context.Context, entityID uuid.UUID) ([]*Entity, error)
 	GetEntityAncestors(ctx context.Context, entityID uuid.UUID) ([]*Entity, error)
 	GetEntityWithHierarchy(ctx context.Context, entityID uuid.UUID) (*EntityWithHierarchy, error)
 	GetEntityTree(ctx context.Context) ([]*EntityWithHierarchy, error)
-	
+
 	// Entity state operations
 	GetNextSequence(ctx context.Context, req EntitySequenceRequest) (int64, error)
 	ResetSequence(ctx context.Context, req EntitySequenceRequest) error
@@ -73,10 +73,10 @@ func (s *service) CreateEntity(ctx context.Context, req CreateEntityRequest) (*E
 		s.metrics.IncrementCounter("entity_creation_errors", metrics.Fields{
 			"error_type": "invalid_type",
 		})
-		
+
 		logger.WarnContext(ctx, "Invalid entity type provided",
 			logger.Fields{"entity_type": string(req.Type)})
-		
+
 		return nil, errors.ErrInvalidEntityType
 	}
 
@@ -85,14 +85,14 @@ func (s *service) CreateEntity(ctx context.Context, req CreateEntityRequest) (*E
 	if err := s.repo.ValidateEntityName(ctx, req.Name, nil); err != nil {
 		nameSpan.RecordError(err)
 		nameSpan.End()
-		
+
 		s.metrics.IncrementCounter("entity_creation_errors", metrics.Fields{
 			"error_type": "name_exists",
 		})
-		
+
 		logger.WarnContext(ctx, "Entity name already exists",
 			logger.Fields{"entity_name": req.Name})
-		
+
 		return nil, err
 	}
 	nameSpan.End()
@@ -102,14 +102,14 @@ func (s *service) CreateEntity(ctx context.Context, req CreateEntityRequest) (*E
 	if err := s.repo.ValidateEntityCode(ctx, req.Code, nil); err != nil {
 		codeSpan.RecordError(err)
 		codeSpan.End()
-		
+
 		s.metrics.IncrementCounter("entity_creation_errors", metrics.Fields{
 			"error_type": "code_exists",
 		})
-		
+
 		logger.WarnContext(ctx, "Entity code already exists",
 			logger.Fields{"entity_code": req.Code})
-		
+
 		return nil, err
 	}
 	codeSpan.End()
@@ -120,14 +120,14 @@ func (s *service) CreateEntity(ctx context.Context, req CreateEntityRequest) (*E
 		if err := s.repo.ValidateEntityParent(ctx, *req.ParentID, uuid.New()); err != nil {
 			parentSpan.RecordError(err)
 			parentSpan.End()
-			
+
 			s.metrics.IncrementCounter("entity_creation_errors", metrics.Fields{
 				"error_type": "invalid_parent",
 			})
-			
+
 			logger.WarnContext(ctx, "Invalid parent entity",
 				logger.Fields{"parent_id": req.ParentID.String()})
-			
+
 			return nil, err
 		}
 		parentSpan.End()
@@ -145,10 +145,10 @@ func (s *service) CreateEntity(ctx context.Context, req CreateEntityRequest) (*E
 		s.metrics.IncrementCounter("entity_creation_errors", metrics.Fields{
 			"error_type": "repository_error",
 		})
-		
+
 		logger.ErrorContext(ctx, "Failed to create entity",
 			logger.Fields{"error": err.Error()})
-		
+
 		return nil, fmt.Errorf("failed to create entity: %w", err)
 	}
 
@@ -219,7 +219,7 @@ func (s *service) GetEntity(ctx context.Context, identifier string) (*Entity, er
 				logger.Fields{"identifier": identifier})
 			return nil, err
 		}
-		
+
 		logger.ErrorContext(ctx, "Failed to get entity by name",
 			logger.Fields{
 				"identifier": identifier,
@@ -256,7 +256,7 @@ func (s *service) GetEntityByID(ctx context.Context, id uuid.UUID) (*Entity, err
 				logger.Fields{"entity_id": id.String()})
 			return nil, err
 		}
-		
+
 		logger.ErrorContext(ctx, "Failed to get entity by ID",
 			logger.Fields{
 				"entity_id": id.String(),
@@ -302,10 +302,10 @@ func (s *service) UpdateEntity(ctx context.Context, id uuid.UUID, req UpdateEnti
 		s.metrics.IncrementCounter("entity_update_errors", metrics.Fields{
 			"error_type": "invalid_type",
 		})
-		
+
 		logger.WarnContext(ctx, "Invalid entity type provided",
 			logger.Fields{"entity_type": string(*req.Type)})
-		
+
 		return nil, errors.ErrInvalidEntityType
 	}
 
@@ -315,10 +315,10 @@ func (s *service) UpdateEntity(ctx context.Context, id uuid.UUID, req UpdateEnti
 			s.metrics.IncrementCounter("entity_update_errors", metrics.Fields{
 				"error_type": "name_exists",
 			})
-			
+
 			logger.WarnContext(ctx, "Entity name already exists",
 				logger.Fields{"entity_name": *req.Name})
-			
+
 			return nil, err
 		}
 	}
@@ -329,10 +329,10 @@ func (s *service) UpdateEntity(ctx context.Context, id uuid.UUID, req UpdateEnti
 			s.metrics.IncrementCounter("entity_update_errors", metrics.Fields{
 				"error_type": "code_exists",
 			})
-			
+
 			logger.WarnContext(ctx, "Entity code already exists",
 				logger.Fields{"entity_code": *req.Code})
-			
+
 			return nil, err
 		}
 	}
@@ -346,10 +346,10 @@ func (s *service) UpdateEntity(ctx context.Context, id uuid.UUID, req UpdateEnti
 				s.metrics.IncrementCounter("entity_update_errors", metrics.Fields{
 					"error_type": "invalid_parent",
 				})
-				
+
 				logger.WarnContext(ctx, "Invalid parent entity",
 					logger.Fields{"parent_id": req.ParentID.String()})
-				
+
 				return nil, err
 			}
 
@@ -362,13 +362,13 @@ func (s *service) UpdateEntity(ctx context.Context, id uuid.UUID, req UpdateEnti
 				s.metrics.IncrementCounter("entity_update_errors", metrics.Fields{
 					"error_type": "circular_reference",
 				})
-				
+
 				logger.WarnContext(ctx, "Circular reference detected",
 					logger.Fields{
 						"entity_id": id.String(),
 						"parent_id": req.ParentID.String(),
 					})
-				
+
 				return nil, errors.ErrCircularReference
 			}
 		}
@@ -386,13 +386,13 @@ func (s *service) UpdateEntity(ctx context.Context, id uuid.UUID, req UpdateEnti
 		s.metrics.IncrementCounter("entity_update_errors", metrics.Fields{
 			"error_type": "repository_error",
 		})
-		
+
 		logger.ErrorContext(ctx, "Failed to update entity",
 			logger.Fields{
 				"entity_id": id.String(),
 				"error":     err.Error(),
 			})
-		
+
 		return nil, fmt.Errorf("failed to update entity: %w", err)
 	}
 
@@ -450,18 +450,18 @@ func (s *service) DeleteEntity(ctx context.Context, id uuid.UUID, permanent bool
 		if err != nil {
 			return fmt.Errorf("failed to check for children: %w", err)
 		}
-		
+
 		if len(children) > 0 {
 			s.metrics.IncrementCounter("entity_deletion_errors", metrics.Fields{
 				"error_type": "has_children",
 			})
-			
+
 			logger.WarnContext(ctx, "Cannot delete entity with children",
 				logger.Fields{
-					"entity_id":     id.String(),
+					"entity_id":      id.String(),
 					"children_count": len(children),
 				})
-			
+
 			return errors.ErrEntityHasChildren
 		}
 	}
@@ -479,13 +479,13 @@ func (s *service) DeleteEntity(ctx context.Context, id uuid.UUID, permanent bool
 		s.metrics.IncrementCounter("entity_deletion_errors", metrics.Fields{
 			"error_type": "repository_error",
 		})
-		
+
 		logger.ErrorContext(ctx, "Failed to delete entity",
 			logger.Fields{
 				"entity_id": id.String(),
 				"error":     err.Error(),
 			})
-		
+
 		return fmt.Errorf("failed to delete entity: %w", err)
 	}
 
@@ -534,13 +534,13 @@ func (s *service) RestoreEntity(ctx context.Context, id uuid.UUID) error {
 		s.metrics.IncrementCounter("entity_restoration_errors", metrics.Fields{
 			"error_type": "repository_error",
 		})
-		
+
 		logger.ErrorContext(ctx, "Failed to restore entity",
 			logger.Fields{
 				"entity_id": id.String(),
 				"error":     err.Error(),
 			})
-		
+
 		return fmt.Errorf("failed to restore entity: %w", err)
 	}
 
@@ -596,10 +596,10 @@ func (s *service) ListEntities(ctx context.Context, req ListEntitiesRequest) ([]
 		s.metrics.IncrementCounter("entity_list_errors", metrics.Fields{
 			"error_type": "repository_error",
 		})
-		
+
 		logger.ErrorContext(ctx, "Failed to list entities",
 			logger.Fields{"error": err.Error()})
-		
+
 		return nil, fmt.Errorf("failed to list entities: %w", err)
 	}
 
@@ -650,7 +650,7 @@ func (s *service) GetEntityChildren(ctx context.Context, entityID uuid.UUID) ([]
 
 	logger.DebugContext(ctx, "Entity children retrieved successfully",
 		logger.Fields{
-			"entity_id":     entityID.String(),
+			"entity_id":      entityID.String(),
 			"children_count": len(children),
 		})
 
@@ -742,10 +742,10 @@ func (s *service) GetEntityTree(ctx context.Context) ([]*EntityWithHierarchy, er
 		s.metrics.IncrementCounter("entity_tree_errors", metrics.Fields{
 			"error_type": "repository_error",
 		})
-		
+
 		logger.ErrorContext(ctx, "Failed to get entity tree",
 			logger.Fields{"error": err.Error()})
-		
+
 		return nil, fmt.Errorf("failed to get entity tree: %w", err)
 	}
 

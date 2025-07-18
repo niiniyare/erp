@@ -14,7 +14,7 @@ func TracingMiddleware(tracingService *tracing.TracingService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Extract tracing context from HTTP headers
 		ctx := tracingService.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
-		
+
 		// Start HTTP span
 		ctx, span := tracingService.StartSpan(ctx, "http.request",
 			tracing.WithSpanKind(tracing.SpanKindServer),
@@ -28,24 +28,24 @@ func TracingMiddleware(tracingService *tracing.TracingService) gin.HandlerFunc {
 				attribute.String("http.remote_addr", c.ClientIP()),
 			))
 		defer span.End()
-		
+
 		// Update request context with tracing context
 		c.Request = c.Request.WithContext(ctx)
-		
+
 		// Process request
 		c.Next()
-		
+
 		// Set response attributes
 		span.SetAttributes(
 			attribute.Int("http.status_code", c.Writer.Status()),
 			attribute.Int("http.response_size", c.Writer.Size()),
 		)
-		
+
 		// Record errors if any
 		if len(c.Errors) > 0 {
 			tracingService.RecordError(ctx, c.Errors.Last().Err, tracing.WithErrorStatus())
 		}
-		
+
 		// Inject tracing headers into response
 		tracingService.InjectHTTPHeaders(ctx, c.Writer.Header())
 	}
@@ -57,37 +57,37 @@ func MetricsMiddleware(metricsService *metrics.MetricsService) gin.HandlerFunc {
 		start := time.Now()
 		path := c.Request.URL.Path
 		method := c.Request.Method
-		
+
 		// Process request
 		c.Next()
-		
+
 		// Collect metrics
 		duration := time.Since(start)
 		statusCode := c.Writer.Status()
-		
+
 		// Increment request counter
 		metricsService.IncrementCounter("http_requests_total", metrics.Fields{
 			"method": method,
 			"path":   path,
 			"status": statusCodeClass(statusCode),
 		})
-		
+
 		// Record request duration
-		metricsService.ObserveHistogram("http_request_duration_seconds", 
+		metricsService.ObserveHistogram("http_request_duration_seconds",
 			duration.Seconds(), metrics.Fields{
 				"method": method,
 				"path":   path,
 			})
-		
+
 		// Record response size
 		if c.Writer.Size() > 0 {
-			metricsService.ObserveHistogram("http_response_size_bytes", 
+			metricsService.ObserveHistogram("http_response_size_bytes",
 				float64(c.Writer.Size()), metrics.Fields{
 					"method": method,
 					"path":   path,
 				})
 		}
-		
+
 		// Count errors
 		if statusCode >= 400 {
 			metricsService.IncrementCounter("http_errors_total", metrics.Fields{

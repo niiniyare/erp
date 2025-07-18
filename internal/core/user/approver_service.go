@@ -13,50 +13,50 @@ import (
 
 // ApprovalRule represents a rule for determining approvers
 type ApprovalRule struct {
-	ID           uuid.UUID                `json:"id"`
-	TenantID     uuid.UUID                `json:"tenant_id"`
-	EntityID     uuid.UUID                `json:"entity_id"`
-	Name         string                   `json:"name"`
-	RequestType  RequestType              `json:"request_type"`
-	Conditions   map[string]any   `json:"conditions"`   // ABAC-style conditions
-	Approvers    ApproverConfiguration    `json:"approvers"`
-	Priority     int                      `json:"priority"`     // Higher priority rules evaluated first
-	IsActive     bool                     `json:"is_active"`
+	ID          uuid.UUID             `json:"id"`
+	TenantID    uuid.UUID             `json:"tenant_id"`
+	EntityID    uuid.UUID             `json:"entity_id"`
+	Name        string                `json:"name"`
+	RequestType RequestType           `json:"request_type"`
+	Conditions  map[string]any        `json:"conditions"` // ABAC-style conditions
+	Approvers   ApproverConfiguration `json:"approvers"`
+	Priority    int                   `json:"priority"` // Higher priority rules evaluated first
+	IsActive    bool                  `json:"is_active"`
 }
 
 // ApproverConfiguration defines who can approve requests
 type ApproverConfiguration struct {
-	Type                string               `json:"type"` // ROLE_BASED, HIERARCHY_BASED, SPECIFIC_USERS, MIXED
-	RequiredApprovals   int                  `json:"required_approvals"`
-	RoleBasedApprovers  *RoleBasedApprovers  `json:"role_based_approvers,omitempty"`
-	HierarchyApprovers  *HierarchyApprovers  `json:"hierarchy_approvers,omitempty"`
-	SpecificApprovers   []uuid.UUID          `json:"specific_approvers,omitempty"`
-	FallbackApprovers   []uuid.UUID          `json:"fallback_approvers,omitempty"`
+	Type               string              `json:"type"` // ROLE_BASED, HIERARCHY_BASED, SPECIFIC_USERS, MIXED
+	RequiredApprovals  int                 `json:"required_approvals"`
+	RoleBasedApprovers *RoleBasedApprovers `json:"role_based_approvers,omitempty"`
+	HierarchyApprovers *HierarchyApprovers `json:"hierarchy_approvers,omitempty"`
+	SpecificApprovers  []uuid.UUID         `json:"specific_approvers,omitempty"`
+	FallbackApprovers  []uuid.UUID         `json:"fallback_approvers,omitempty"`
 }
 
 // RoleBasedApprovers defines approval based on roles
 type RoleBasedApprovers struct {
-	RequiredRoles     []uuid.UUID `json:"required_roles"`     // Users must have one of these roles
-	MinSecurityLevel  *int        `json:"min_security_level,omitempty"` // Minimum security clearance
-	SameEntity        bool        `json:"same_entity"`        // Must be in same entity
-	ExcludeRequester  bool        `json:"exclude_requester"`  // Cannot approve own requests
+	RequiredRoles    []uuid.UUID `json:"required_roles"`               // Users must have one of these roles
+	MinSecurityLevel *int        `json:"min_security_level,omitempty"` // Minimum security clearance
+	SameEntity       bool        `json:"same_entity"`                  // Must be in same entity
+	ExcludeRequester bool        `json:"exclude_requester"`            // Cannot approve own requests
 }
 
 // HierarchyApprovers defines approval based on organizational hierarchy
 type HierarchyApprovers struct {
-	ManagerLevelsUp   int  `json:"manager_levels_up"`   // How many levels up in hierarchy
-	IncludePeers      bool `json:"include_peers"`       // Include users at same level
-	IncludeSubordinates bool `json:"include_subordinates"` // Include direct reports
+	ManagerLevelsUp      int  `json:"manager_levels_up"`      // How many levels up in hierarchy
+	IncludePeers         bool `json:"include_peers"`          // Include users at same level
+	IncludeSubordinates  bool `json:"include_subordinates"`   // Include direct reports
 	RequireDirectManager bool `json:"require_direct_manager"` // Must be direct manager
 }
 
 // ApproverValidationResult represents the result of approver validation
 type ApproverValidationResult struct {
-	IsValid           bool     `json:"is_valid"`
-	Reason            string   `json:"reason,omitempty"`
+	IsValid           bool           `json:"is_valid"`
+	Reason            string         `json:"reason,omitempty"`
 	ApprovalRules     []ApprovalRule `json:"approval_rules"`
-	RequiredApprovals int      `json:"required_approvals"`
-	SecurityLevel     *int     `json:"security_level,omitempty"`
+	RequiredApprovals int            `json:"required_approvals"`
+	SecurityLevel     *int           `json:"security_level,omitempty"`
 }
 
 // ApproverService handles approver validation and determination
@@ -64,38 +64,38 @@ type ApproverService interface {
 	// Approver validation
 	ValidateApprover(ctx context.Context, approverID uuid.UUID, request *AccessRequest) (*ApproverValidationResult, error)
 	GetEligibleApprovers(ctx context.Context, request *AccessRequest) ([]uuid.UUID, error)
-	
+
 	// Approval rules management
 	CreateApprovalRule(ctx context.Context, rule *ApprovalRule) error
 	GetApprovalRules(ctx context.Context, entityID uuid.UUID, requestType RequestType) ([]*ApprovalRule, error)
 	UpdateApprovalRule(ctx context.Context, ruleID uuid.UUID, rule *ApprovalRule) error
 	DeleteApprovalRule(ctx context.Context, ruleID uuid.UUID) error
-	
+
 	// Hierarchy operations
 	GetUserHierarchy(ctx context.Context, userID uuid.UUID) (*UserHierarchy, error)
 	GetManagerChain(ctx context.Context, userID uuid.UUID, levels int) ([]uuid.UUID, error)
 	GetDirectReports(ctx context.Context, managerID uuid.UUID) ([]uuid.UUID, error)
-	
+
 	// Permission validation
 	CheckApprovalPermissions(ctx context.Context, approverID uuid.UUID, targetResource string, requestType RequestType) (bool, error)
 }
 
 // UserHierarchy represents a user's position in organizational hierarchy
 type UserHierarchy struct {
-	UserID           uuid.UUID   `json:"user_id"`
-	ManagerID        *uuid.UUID  `json:"manager_id,omitempty"`
-	Level            int         `json:"level"`            // Organizational level (0 = top)
-	SecurityLevel    int         `json:"security_level"`   // Security clearance level
-	DepartmentID     *uuid.UUID  `json:"department_id,omitempty"`
-	DirectReports    []uuid.UUID `json:"direct_reports"`
-	ManagerChain     []uuid.UUID `json:"manager_chain"`    // All managers up the chain
+	UserID        uuid.UUID   `json:"user_id"`
+	ManagerID     *uuid.UUID  `json:"manager_id,omitempty"`
+	Level         int         `json:"level"`          // Organizational level (0 = top)
+	SecurityLevel int         `json:"security_level"` // Security clearance level
+	DepartmentID  *uuid.UUID  `json:"department_id,omitempty"`
+	DirectReports []uuid.UUID `json:"direct_reports"`
+	ManagerChain  []uuid.UUID `json:"manager_chain"` // All managers up the chain
 }
 
 // approverService implements ApproverService
 type approverService struct {
-	userRepo     Repository
-	tracing      *tracing.TracingService
-	metrics      *metrics.MetricsService
+	userRepo Repository
+	tracing  *tracing.TracingService
+	metrics  *metrics.MetricsService
 	// TODO: Add approval rules repository when implemented
 	// approvalRulesRepo ApprovalRulesRepository
 }
@@ -125,8 +125,8 @@ func (s *approverService) ValidateApprover(ctx context.Context, approverID uuid.
 	)
 
 	logger.Info("Validating approver", logger.Fields{
-		"approver_id": approverID,
-		"request_id":  request.ID,
+		"approver_id":  approverID,
+		"request_id":   request.ID,
 		"request_type": request.RequestType,
 	})
 
@@ -225,7 +225,7 @@ func (s *approverService) GetEligibleApprovers(ctx context.Context, request *Acc
 
 	// Collect approvers from all applicable rules
 	approverSet := make(map[uuid.UUID]bool)
-	
+
 	for _, rule := range rules {
 		ruleApprovers, err := s.getApproversFromRule(ctx, rule, request)
 		if err != nil {
@@ -273,7 +273,7 @@ func (s *approverService) CreateApprovalRule(ctx context.Context, rule *Approval
 func (s *approverService) GetApprovalRules(ctx context.Context, entityID uuid.UUID, requestType RequestType) ([]*ApprovalRule, error) {
 	// TODO: Implement database storage for approval rules
 	// For now, return default rules based on request type
-	
+
 	defaultRules := s.getDefaultApprovalRules(entityID, requestType)
 	return defaultRules, nil
 }
@@ -341,7 +341,7 @@ func (s *approverService) CheckApprovalPermissions(ctx context.Context, approver
 	// TODO: Implement comprehensive permission checking
 	// This would integrate with the permission evaluation system to check if the approver
 	// has the necessary permissions to approve access to the target resource
-	
+
 	logger.Info("Checking approval permissions", logger.Fields{
 		"approver_id":     approverID,
 		"target_resource": targetResource,
@@ -413,8 +413,8 @@ func (s *approverService) evaluateApprovalRule(ctx context.Context, rule *Approv
 	case "MIXED":
 		// Evaluate multiple criteria (AND logic)
 		return s.evaluateRoleBasedApproval(ctx, rule.Approvers.RoleBasedApprovers, approver, requester, request) ||
-			   s.evaluateHierarchyBasedApproval(ctx, rule.Approvers.HierarchyApprovers, approver, requester, request) ||
-			   s.evaluateSpecificUserApproval(rule.Approvers.SpecificApprovers, approver.ID)
+			s.evaluateHierarchyBasedApproval(ctx, rule.Approvers.HierarchyApprovers, approver, requester, request) ||
+			s.evaluateSpecificUserApproval(rule.Approvers.SpecificApprovers, approver.ID)
 	default:
 		logger.Warn("Unknown approver configuration type", logger.Fields{
 			"type":    rule.Approvers.Type,
@@ -450,7 +450,7 @@ func (s *approverService) evaluateHierarchyBasedApproval(ctx context.Context, co
 
 	// TODO: Implement hierarchy checking
 	// This would check the organizational relationship between approver and requester
-	
+
 	return true // Placeholder
 }
 
@@ -494,7 +494,7 @@ func (s *approverService) getDefaultApprovers(ctx context.Context, request *Acce
 	// - Entity administrators
 	// - Department managers
 	// - System administrators for the tenant
-	
+
 	return []uuid.UUID{}, nil
 }
 

@@ -10,17 +10,17 @@ import (
 
 // Entity represents a business entity in the system (domain model)
 type Entity struct {
-	ID        uuid.UUID              `json:"id"`
-	ParentID  *uuid.UUID             `json:"parent_id,omitempty"`
-	Name      string                 `json:"name"`
-	Code      string                 `json:"code"`
-	Type      EntityType             `json:"type"`
-	IsActive  bool                   `json:"is_active"`
-	IsHidden  bool                   `json:"is_hidden"`
+	ID        uuid.UUID      `json:"id"`
+	ParentID  *uuid.UUID     `json:"parent_id,omitempty"`
+	Name      string         `json:"name"`
+	Code      string         `json:"code"`
+	Type      EntityType     `json:"type"`
+	IsActive  bool           `json:"is_active"`
+	IsHidden  bool           `json:"is_hidden"`
 	Metadata  map[string]any `json:"metadata"`
-	CreatedAt time.Time              `json:"created_at"`
-	UpdatedAt time.Time              `json:"updated_at"`
-	DeletedAt *time.Time             `json:"deleted_at,omitempty"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt *time.Time     `json:"deleted_at,omitempty"`
 }
 
 // EntityType represents the type of entity
@@ -69,23 +69,23 @@ type HierarchyPath struct {
 
 // CreateEntityRequest represents entity creation request
 type CreateEntityRequest struct {
-	ParentID *uuid.UUID             `json:"parent_id,omitempty"`
-	Name     string                 `json:"name" validate:"required,min=2,max=100"`
-	Code     string                 `json:"code" validate:"required,min=2,max=50"`
-	Type     EntityType             `json:"type" validate:"required"`
-	IsActive bool                   `json:"is_active"`
-	IsHidden bool                   `json:"is_hidden"`
+	ParentID *uuid.UUID     `json:"parent_id,omitempty"`
+	Name     string         `json:"name" validate:"required,min=2,max=100"`
+	Code     string         `json:"code" validate:"required,min=2,max=50"`
+	Type     EntityType     `json:"type" validate:"required"`
+	IsActive bool           `json:"is_active"`
+	IsHidden bool           `json:"is_hidden"`
 	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
 // UpdateEntityRequest represents entity update request
 type UpdateEntityRequest struct {
-	ParentID *uuid.UUID             `json:"parent_id,omitempty"`
-	Name     *string                `json:"name,omitempty"`
-	Code     *string                `json:"code,omitempty"`
-	Type     *EntityType            `json:"type,omitempty"`
-	IsActive *bool                  `json:"is_active,omitempty"`
-	IsHidden *bool                  `json:"is_hidden,omitempty"`
+	ParentID *uuid.UUID     `json:"parent_id,omitempty"`
+	Name     *string        `json:"name,omitempty"`
+	Code     *string        `json:"code,omitempty"`
+	Type     *EntityType    `json:"type,omitempty"`
+	IsActive *bool          `json:"is_active,omitempty"`
+	IsHidden *bool          `json:"is_hidden,omitempty"`
 	Metadata map[string]any `json:"metadata,omitempty"`
 }
 

@@ -12,13 +12,13 @@ import (
 
 // NewRouter creates a new router with all handlers
 func NewRouter(
-	tenantService tenant.Service, 
-	entityService entity.Service, 
+	tenantService tenant.Service,
+	entityService entity.Service,
 	userService user.Service,
 	accessRequestService user.AccessRequestService,
 	conditionalAccessService user.ConditionalAccessService,
 	analyticsService user.UserAnalyticsService,
-	tracing *tracing.TracingService, 
+	tracing *tracing.TracingService,
 	metrics *metrics.MetricsService,
 ) *gin.Engine {
 	r := gin.New()
