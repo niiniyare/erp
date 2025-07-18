@@ -19,30 +19,30 @@ BEGIN;
 -- CURRENT TENANT ID FUNCTION
 -- -----------------------------------------------------
 -- Enhanced tenant context function with UUID support and proper error handling
-CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS UUID AS $$
-DECLARE
-    tid_str TEXT;
-BEGIN
-    -- Get the setting with missing_ok=true to avoid exceptions
-    tid_str := current_setting('app.current_tenant_id', true);
-    
-    -- Check if setting exists and is not empty
-    IF tid_str IS NULL OR tid_str = '' THEN
-        RAISE EXCEPTION 'Tenant context not set' USING ERRCODE = 'P0001';
-    END IF;
-    
-    -- Convert to UUID with proper error handling
-    BEGIN
-        RETURN tid_str::UUID;
-    EXCEPTION WHEN invalid_text_representation THEN
-        RAISE EXCEPTION 'Invalid tenant UUID: %', tid_str USING ERRCODE = 'P0002';
-    END;
-END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
-
--- Add function comment
-COMMENT ON FUNCTION current_tenant_id() IS 'Retrieves current tenant UUID from session context with enhanced error handling';
-
+-- CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS UUID AS $$
+-- DECLARE
+--     tid_str TEXT;
+-- BEGIN
+--     -- Get the setting with missing_ok=true to avoid exceptions
+--     tid_str := current_setting('app.current_tenant_id', true);
+--
+--     -- Check if setting exists and is not empty
+--     IF tid_str IS NULL OR tid_str = '' THEN
+--         RAISE EXCEPTION 'Tenant context not set' USING ERRCODE = 'P0001';
+--     END IF;
+--
+--     -- Convert to UUID with proper error handling
+--     BEGIN
+--         RETURN tid_str::UUID;
+--     EXCEPTION WHEN invalid_text_representation THEN
+--         RAISE EXCEPTION 'Invalid tenant UUID: %', tid_str USING ERRCODE = 'P0002';
+--     END;
+-- END;
+-- $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+--
+-- -- Add function comment
+-- COMMENT ON FUNCTION current_tenant_id() IS 'Retrieves current tenant UUID from session context with enhanced error handling';
+--
 -- =====================================================
 -- ROW LEVEL SECURITY POLICIES
 -- =====================================================
@@ -57,33 +57,6 @@ COMMENT ON FUNCTION current_tenant_id() IS 'Retrieves current tenant UUID from s
 -- CREATE POLICY tenant_isolation_policy ON tenants 
 --     USING (id = current_tenant_id());
 
--- Entity management policies
-CREATE POLICY tenant_isolation_policy ON entities 
-    USING (tenant_id = current_tenant_id());
-
-CREATE POLICY tenant_isolation_policy ON hierarchy_paths 
-    USING (tenant_id = current_tenant_id());
-
--- Person and employee policies
-CREATE POLICY tenant_isolation_policy ON persons 
-    USING (tenant_id = current_tenant_id());
-
-CREATE POLICY tenant_isolation_policy ON employees 
-    USING (tenant_id = current_tenant_id());
-
--- User management policies
-CREATE POLICY tenant_isolation_policy ON users 
-    USING (tenant_id = current_tenant_id());
-
-CREATE POLICY tenant_isolation_policy ON roles 
-    USING (tenant_id = current_tenant_id());
-
--- Project management policies
-CREATE POLICY tenant_isolation_policy ON projects 
-    USING (tenant_id = current_tenant_id());
-
-CREATE POLICY tenant_isolation_policy ON budgets 
-    USING (tenant_id = current_tenant_id());
 
 -- Audit and accounting policies
 CREATE POLICY tenant_isolation_policy ON audit_logs 
@@ -148,13 +121,6 @@ CREATE TRIGGER update_user_timestamps
     BEFORE UPDATE ON users 
     FOR EACH ROW EXECUTE FUNCTION update_timestamps();
 
-CREATE TRIGGER update_project_timestamps 
-    BEFORE UPDATE ON projects 
-    FOR EACH ROW EXECUTE FUNCTION update_timestamps();
-
-CREATE TRIGGER update_budget_timestamps 
-    BEFORE UPDATE ON budgets 
-    FOR EACH ROW EXECUTE FUNCTION update_timestamps();
 
 -- Add trigger comments
 COMMENT ON TRIGGER update_tenant_timestamps ON tenants IS 'Automatically updates updated_at timestamp on tenant updates';
@@ -542,7 +508,7 @@ BEGIN
         target_tenant_id,
         COALESCE((SELECT COUNT(*) FROM entities WHERE tenant_id = target_tenant_id), 0)::BIGINT,
         COALESCE((SELECT COUNT(*) FROM users WHERE tenant_id = target_tenant_id), 0)::BIGINT,
-        COALESCE((SELECT COUNT(*) FROM projects WHERE tenant_id = target_tenant_id), 0)::BIGINT,
+        -- COALESCE((SELECT COUNT(*) FROM projects WHERE tenant_id = target_tenant_id), 0)::BIGINT,
         COALESCE((SELECT MAX(depth) FROM hierarchy_paths WHERE tenant_id = target_tenant_id), 0)::INT;
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;

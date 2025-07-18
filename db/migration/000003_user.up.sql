@@ -1329,6 +1329,20 @@ ORDER BY hour_bucket DESC, event_count DESC;
 
 COMMENT ON VIEW audit_summary_view IS 
 'Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.';
+-- Person and employee policies
+CREATE POLICY tenant_isolation_policy ON persons 
+    USING (tenant_id = current_tenant_id());
+
+CREATE POLICY tenant_isolation_policy ON employees 
+    USING (tenant_id = current_tenant_id());
+
+-- User management policies
+CREATE POLICY tenant_isolation_policy ON users 
+    USING (tenant_id = current_tenant_id());
+
+CREATE POLICY tenant_isolation_policy ON roles 
+    USING (tenant_id = current_tenant_id());
+
 
 -- ================================================================================================
 -- SCHEMA COMPLETION

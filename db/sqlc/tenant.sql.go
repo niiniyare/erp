@@ -1126,9 +1126,9 @@ SELECT get_current_tenant_id()
 // Current tenant utilities
 //
 //	SELECT get_current_tenant_id()
-func (q *Queries) GetCurrentTenantID(ctx context.Context) (uuid.UUID, error) {
+func (q *Queries) GetCurrentTenantID(ctx context.Context) (interface{}, error) {
 	row := q.db.QueryRow(ctx, getCurrentTenantID)
-	var get_current_tenant_id uuid.UUID
+	var get_current_tenant_id interface{}
 	err := row.Scan(&get_current_tenant_id)
 	return get_current_tenant_id, err
 }

@@ -609,13 +609,13 @@ func (pcs *PermissionCacheService) FlushPermissionCache(ctx context.Context) err
 }
 
 // GetCacheStats returns cache statistics
-func (pcs *PermissionCacheService) GetCacheStats(ctx context.Context) map[string]interface{} {
+func (pcs *PermissionCacheService) GetCacheStats(ctx context.Context) map[string]any {
 	// In a real implementation, you would collect and return cache statistics
 	// This is a simplified version
-	return map[string]interface{}{
+	return map[string]any{
 		"cache_type": "permission_cache",
 		"status":     "active",
-		"ttl_config": map[string]interface{}{
+		"ttl_config": map[string]any{
 			"short_ttl":    ShortCacheTTL.String(),
 			"medium_ttl":   MediumCacheTTL.String(),
 			"long_ttl":     LongCacheTTL.String(),

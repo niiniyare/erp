@@ -27,7 +27,7 @@ package common
 // type Form struct {
 // 	ID                 int                      `json:"id"`
 // 	Direction          string                   `json:"direction"`
-// 	ALL                []map[string]interface{} `json:"all"`
+// 	ALL                []map[string]any `json:"all"`
 // 	Login              string                   `json:"login"`
 // 	Reference          string                   `json:"reference"`
 // 	Description        string                   `json:"description"`
@@ -45,10 +45,10 @@ package common
 // 	ExtendedLog        bool                     `json:"extendedlog"`
 // 	Method             string                   `json:"method"`
 // 	Precision          int                      `json:"precision"`
-// 	Chart              []map[string]interface{} `json:"chart"`
+// 	Chart              []map[string]any `json:"chart"`
 //
 // 	// Dynamic fields for account entries and other form data
-// 	Fields map[string]interface{} `json:"fields"`
+// 	Fields map[string]any `json:"fields"`
 // }
 //
 // // AccountingService handles accounting operations
@@ -119,7 +119,7 @@ package common
 // 	defer rows.Close()
 //
 // 	// Clear existing results
-// 	form.ALL = make([]map[string]interface{}, 0)
+// 	form.ALL = make([]map[string]any, 0)
 //
 // 	// Fetch all rows and store in form.ALL
 // 	for rows.Next() {
@@ -131,7 +131,7 @@ package common
 // 			return fmt.Errorf("failed to scan dispatch row: %w", err)
 // 		}
 //
-// 		record := map[string]interface{}{
+// 		record := map[string]any{
 // 			"id":          id,
 // 			"description": description,
 // 		}
@@ -163,7 +163,7 @@ package common
 //
 // 	// Initialize fields map if needed
 // 	if form.Fields == nil {
-// 		form.Fields = make(map[string]interface{})
+// 		form.Fields = make(map[string]any)
 // 	}
 //
 // 	// Store retrieved defaults in form
@@ -304,7 +304,7 @@ package common
 // 	defer rows.Close()
 //
 // 	// Initialize chart array
-// 	var chart []map[string]interface{}
+// 	var chart []map[string]any
 //
 // 	// Process each account
 // 	for rows.Next() {
@@ -321,7 +321,7 @@ package common
 // 			finalDescription = translation.String
 // 		}
 //
-// 		account := map[string]interface{}{
+// 		account := map[string]any{
 // 			"accno":       accno,
 // 			"description": finalDescription,
 // 		}
@@ -330,7 +330,7 @@ package common
 //
 // 	// Store chart in form
 // 	if form.Fields == nil {
-// 		form.Fields = make(map[string]interface{})
+// 		form.Fields = make(map[string]any)
 // 	}
 // 	form.Fields["chart"] = chart
 //
@@ -576,7 +576,7 @@ package common
 // type Form struct {
 // 	ID                 int                      `json:"id"`
 // 	Direction          string                   `json:"direction"`
-// 	ALL                []map[string]interface{} `json:"all"`
+// 	ALL                []map[string]any `json:"all"`
 // 	Login              string                   `json:"login"`
 // 	Reference          string                   `json:"reference"`
 // 	Description        string                   `json:"description"`
@@ -594,10 +594,10 @@ package common
 // 	ExtendedLog        bool                     `json:"extendedlog"`
 // 	Method             string                   `json:"method"`
 // 	Precision          int                      `json:"precision"`
-// 	Chart              []map[string]interface{} `json:"chart"`
+// 	Chart              []map[string]any `json:"chart"`
 //
 // 	// Dynamic fields for account entries and other form data
-// 	Fields map[string]interface{} `json:"fields"`
+// 	Fields map[string]any `json:"fields"`
 // }
 //
 // // AccountingService handles accounting operations
@@ -668,7 +668,7 @@ package common
 // 	defer rows.Close()
 //
 // 	// Clear existing results
-// 	form.ALL = make([]map[string]interface{}, 0)
+// 	form.ALL = make([]map[string]any, 0)
 //
 // 	// Fetch all rows and store in form.ALL
 // 	for rows.Next() {
@@ -680,7 +680,7 @@ package common
 // 			return fmt.Errorf("failed to scan dispatch row: %w", err)
 // 		}
 //
-// 		record := map[string]interface{}{
+// 		record := map[string]any{
 // 			"id":          id,
 // 			"description": description,
 // 		}
@@ -712,7 +712,7 @@ package common
 //
 // 	// Initialize fields map if needed
 // 	if form.Fields == nil {
-// 		form.Fields = make(map[string]interface{})
+// 		form.Fields = make(map[string]any)
 // 	}
 //
 // 	// Store retrieved defaults in form
@@ -853,7 +853,7 @@ package common
 // 	defer rows.Close()
 //
 // 	// Initialize chart array
-// 	var chart []map[string]interface{}
+// 	var chart []map[string]any
 //
 // 	// Process each account
 // 	for rows.Next() {
@@ -870,7 +870,7 @@ package common
 // 			finalDescription = translation.String
 // 		}
 //
-// 		account := map[string]interface{}{
+// 		account := map[string]any{
 // 			"accno":       accno,
 // 			"description": finalDescription,
 // 		}
@@ -879,7 +879,7 @@ package common
 //
 // 	// Store chart in form
 // 	if form.Fields == nil {
-// 		form.Fields = make(map[string]interface{})
+// 		form.Fields = make(map[string]any)
 // 	}
 // 	form.Fields["chart"] = chart
 //
@@ -1170,7 +1170,7 @@ package common
 //
 // 	// Initialize fields map if needed
 // 	if form.Fields == nil {
-// 		form.Fields = make(map[string]interface{})
+// 		form.Fields = make(map[string]any)
 // 	}
 //
 // 	// Store retrieved defaults

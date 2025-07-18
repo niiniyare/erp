@@ -55,7 +55,7 @@ func TestPermissionCacheService(t *testing.T) {
 		ResourceName: resourceName,
 		ActionName:   actionName,
 		EntityID:     &entityID,
-		Context:      map[string]interface{}{"department": "engineering"},
+		Context:      map[string]any{"department": "engineering"},
 	}
 	
 	result := &PermissionEvaluationResult{
@@ -383,7 +383,7 @@ func TestPermissionCacheService_GeneratePermissionEvaluationKey(t *testing.T) {
 		ResourceName: "documents",
 		ActionName:   "read",
 		EntityID:     &entityID,
-		Context:      map[string]interface{}{"department": "engineering"},
+		Context:      map[string]any{"department": "engineering"},
 	}
 	
 	req2 := &PermissionEvaluationRequest{
@@ -391,7 +391,7 @@ func TestPermissionCacheService_GeneratePermissionEvaluationKey(t *testing.T) {
 		ResourceName: "documents",
 		ActionName:   "read",
 		EntityID:     &entityID,
-		Context:      map[string]interface{}{"department": "engineering"},
+		Context:      map[string]any{"department": "engineering"},
 	}
 	
 	req3 := &PermissionEvaluationRequest{
@@ -399,7 +399,7 @@ func TestPermissionCacheService_GeneratePermissionEvaluationKey(t *testing.T) {
 		ResourceName: "documents",
 		ActionName:   "write", // Different action
 		EntityID:     &entityID,
-		Context:      map[string]interface{}{"department": "engineering"},
+		Context:      map[string]any{"department": "engineering"},
 	}
 
 	t.Run("GenerateConsistentKeys", func(t *testing.T) {
@@ -431,7 +431,7 @@ func TestPermissionCacheService_GetCacheStats(t *testing.T) {
 	assert.Equal(t, "active", stats["status"])
 	assert.Contains(t, stats, "ttl_config")
 	
-	ttlConfig := stats["ttl_config"].(map[string]interface{})
+	ttlConfig := stats["ttl_config"].(map[string]any)
 	assert.Equal(t, ShortCacheTTL.String(), ttlConfig["short_ttl"])
 	assert.Equal(t, MediumCacheTTL.String(), ttlConfig["medium_ttl"])
 	assert.Equal(t, LongCacheTTL.String(), ttlConfig["long_ttl"])

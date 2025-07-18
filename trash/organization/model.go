@@ -19,7 +19,7 @@ type Organization struct {
 	Description string                 `json:"description,omitempty"`
 	ManagerID   *uuid.UUID             `json:"manager_id,omitempty"`
 	IsActive    bool                   `json:"is_active"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 	CreatedAt   time.Time              `json:"created_at"`
 	UpdatedAt   time.Time              `json:"updated_at"`
 
@@ -52,7 +52,7 @@ type OrganizationUser struct {
 }
 
 func FromSQLCEntity(e db.Entity) *Organization {
-	var metadata map[string]interface{}
+	var metadata map[string]any
 	if e.Settings != nil {
 		_ = json.Unmarshal(e.Settings, &metadata)
 	}

@@ -17,7 +17,7 @@ type Entity struct {
 	Type      EntityType             `json:"type"`
 	IsActive  bool                   `json:"is_active"`
 	IsHidden  bool                   `json:"is_hidden"`
-	Metadata  map[string]interface{} `json:"metadata"`
+	Metadata  map[string]any `json:"metadata"`
 	CreatedAt time.Time              `json:"created_at"`
 	UpdatedAt time.Time              `json:"updated_at"`
 	DeletedAt *time.Time             `json:"deleted_at,omitempty"`
@@ -75,7 +75,7 @@ type CreateEntityRequest struct {
 	Type     EntityType             `json:"type" validate:"required"`
 	IsActive bool                   `json:"is_active"`
 	IsHidden bool                   `json:"is_hidden"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
+	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
 // UpdateEntityRequest represents entity update request
@@ -86,7 +86,7 @@ type UpdateEntityRequest struct {
 	Type     *EntityType            `json:"type,omitempty"`
 	IsActive *bool                  `json:"is_active,omitempty"`
 	IsHidden *bool                  `json:"is_hidden,omitempty"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
+	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
 // ListEntitiesRequest represents entity list request with filters
@@ -108,7 +108,7 @@ type EntitySequenceRequest struct {
 
 // FromSQLCEntity converts SQLC Entity to domain Entity
 func FromSQLCEntity(sqlcEntity *db.Entity) (*Entity, error) {
-	var metadata map[string]interface{}
+	var metadata map[string]any
 	if len(sqlcEntity.Metadata) > 0 {
 		if err := json.Unmarshal(sqlcEntity.Metadata, &metadata); err != nil {
 			return nil, err

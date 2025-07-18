@@ -19,7 +19,7 @@ package common
 // 	Company      string `json:"company"`
 // 	SessionCookie string `json:"sessioncookie"`
 // 	// Add other form fields as needed
-// 	ExtraFields map[string]interface{} `json:"extra_fields"`
+// 	ExtraFields map[string]any `json:"extra_fields"`
 // }
 //
 // // User represents user configuration data
@@ -31,7 +31,7 @@ package common
 // 	Company       string                 `json:"company"`
 // 	Password      string                 `json:"password"`
 // 	SessionCookie string                 `json:"sessioncookie"`
-// 	Config        map[string]interface{} `json:"config"`
+// 	Config        map[string]any `json:"config"`
 // }
 //
 // // Config represents database and application configuration
@@ -127,7 +127,7 @@ package common
 // func (us *UserService) loadUserConfig(memberFile, login string) (*User, error) {
 // 	user := &User{
 // 		Login:  login,
-// 		Config: make(map[string]interface{}),
+// 		Config: make(map[string]any),
 // 	}
 //
 // 	// In a real implementation, you would read from the member file
@@ -292,7 +292,7 @@ package common
 // 	//     Tel:         "555-1234",
 // 	//     OldPassword: "old_pass",
 // 	//     NewPassword: "new_pass",
-// 	//     ExtraFields: make(map[string]interface{}),
+// 	//     ExtraFields: make(map[string]any),
 // 	// }
 //
 // 	// pm := NewPreferenceManager(db)
@@ -313,7 +313,7 @@ package common
 // 	Company       string                 `json:"company"`
 // 	Password      string                 `json:"password,omitempty"`
 // 	SessionCookie string                 `json:"sessioncookie"`
-// 	Settings      map[string]interface{} `json:"settings"`
+// 	Settings      map[string]any `json:"settings"`
 // }
 //
 // // ConvertUserToFileConfig converts User struct to file configuration format

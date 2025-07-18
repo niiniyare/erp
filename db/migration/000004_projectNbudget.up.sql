@@ -1,116 +1,137 @@
--- Projects table (can be under any entity)
-CREATE TABLE projects (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
-    -- parent_project_id INT REFERENCES projects(id), -- Sub-projects
-    name VARCHAR(255) NOT NULL,
-    code VARCHAR(50),
-    description TEXT,
-    project_manager_id  UUID REFERENCES employees(id),
-    start_date DATE,
-    end_date DATE,
-    budget_amount DECIMAL(15,2),
-    actual_cost DECIMAL(15,2) DEFAULT 0,
-    status VARCHAR(20) DEFAULT 'PLANNING'
-        CHECK (status IN ('PLANNING', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED')),
-    metadata JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE UNIQUE INDEX tenant_code_entity_unique_idx
-ON projects (tenant_id, entity_id, code)
-WHERE code IS NOT NULL;
+-- -- Projects table (can be under any entity)
+-- CREATE TABLE projects (
+--     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+--     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
+--     -- parent_project_id INT REFERENCES projects(id), -- Sub-projects
+--     name VARCHAR(255) NOT NULL,
+--     code VARCHAR(50),
+--     description TEXT,
+--     project_manager_id  UUID REFERENCES employees(id),
+--     start_date DATE,
+--     end_date DATE,
+--     budget_amount DECIMAL(15,2),
+--     actual_cost DECIMAL(15,2) DEFAULT 0,
+--     status VARCHAR(20) DEFAULT 'PLANNING'
+--         CHECK (status IN ('PLANNING', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED')),
+--     metadata JSONB DEFAULT '{}'::jsonb,
+--     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+-- CREATE UNIQUE INDEX tenant_code_entity_unique_idx
+-- ON projects (tenant_id, entity_id, code)
+-- WHERE code IS NOT NULL;
+--
+-- -- Budget management
+-- CREATE TABLE budgets (
+--     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+--     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
+--     project_id UUID REFERENCES projects(id), -- Optional project budget
+--     name VARCHAR(255) NOT NULL,
+--     budget_type VARCHAR(20) NOT NULL
+--         CHECK (budget_type IN ('OPERATIONAL', 'CAPITAL', 'PROJECT', 'DEPARTMENT')),
+--     fiscal_year INT NOT NULL,
+--     period_start DATE NOT NULL,
+--     period_end DATE NOT NULL,
+--     total_amount DECIMAL(15,2) NOT NULL,
+--     allocated_amount DECIMAL(15,2) DEFAULT 0,
+--     spent_amount DECIMAL(15,2) DEFAULT 0,
+--     status VARCHAR(20) DEFAULT 'DRAFT'
+--         CHECK (status IN ('DRAFT', 'APPROVED', 'ACTIVE', 'CLOSED')),
+--     approved_by UUID REFERENCES users(id),
+--     approved_at TIMESTAMPTZ,
+--     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+--
+-- -- Multi-tenant Unit of Measure (UOM) table with conversion system
+-- CREATE TABLE uom (
+--     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+--     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
+--     uom_name VARCHAR(255) NOT NULL,
+--     must_be_whole_number BOOLEAN DEFAULT FALSE,
+--     enabled BOOLEAN DEFAULT TRUE,
+--     symbol VARCHAR(50),
+--     common_code VARCHAR(3),
+--     description TEXT,
+--     -- Conversion f qqields
+--     base_uom_id UUID REFERENCES uom(id),
+--     conversion_factor DECIMAL(15,6) DEFAULT 1.0,
+--     uom_type VARCHAR(50), -- 'Weight', 'Length', 'Volume', 'Area', 'Time', 'Count'
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     -- Multi-tenant unique constraint
+--     UNIQUE(tenant_id, entity_id, uom_name)
+-- );
+--
+-- -- Multi-tenant UOM Conversion table for complex conversions
+-- CREATE TABLE uom_conversion (
+--     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+--     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
+--     from_uom_id UUID NOT NULL REFERENCES uom(id),
+--     to_uom_id UUID NOT NULL REFERENCES uom(id),
+--     conversion_factor DECIMAL(15,6) NOT NULL,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     UNIQUE(tenant_id, entity_id, from_uom_id, to_uom_id)
+-- );
+--
+-- -- Add comments to the tables
+-- COMMENT ON TABLE uom IS 'Multi-tenant Unit of Measure definitions with conversion capabilities';
+-- COMMENT ON TABLE uom_conversion IS 'Multi-tenant UOM conversion factors between different units';
+--
+-- -- Add comments to UOM columns
+-- COMMENT ON COLUMN uom.id IS 'Primary key auto-increment identifier';
+-- COMMENT ON COLUMN uom.tenant_id IS 'Tenant identifier for multi-tenancy';
+-- COMMENT ON COLUMN uom.entity_id IS 'Entity identifier within tenant';
+-- COMMENT ON COLUMN uom.uom_name IS 'Name of the unit of measure (unique per tenant/entity)';
+-- COMMENT ON COLUMN uom.must_be_whole_number IS 'Check this to disallow fractions (for Nos)';
+-- COMMENT ON COLUMN uom.enabled IS 'Whether this UOM is active and can be used';
+-- COMMENT ON COLUMN uom.symbol IS 'Short symbol representation of the UOM (e.g., kg, m, pcs)';
+-- COMMENT ON COLUMN uom.common_code IS 'Standard code according to CEFACT/ICG/2010/IC013 or CEFACT/ICG/2010/IC010';
+-- COMMENT ON COLUMN uom.description IS 'Additional description or notes about the UOM';
+-- COMMENT ON COLUMN uom.base_uom_id IS 'Reference to the base unit for this UOM group (NULL for base units)';
+-- COMMENT ON COLUMN uom.conversion_factor IS 'Factor to convert from this UOM to base UOM (1.0 for base units)';
+-- COMMENT ON COLUMN uom.uom_type IS 'Category of measurement (Weight, Length, Volume, etc.)';
+--
+-- -- Add comments to conversion columns
+-- COMMENT ON COLUMN uom_conversion.tenant_id IS 'Tenant identifier for multi-tenancy';
+-- COMMENT ON COLUMN uom_conversion.entity_id IS 'Entity identifier within tenant';
+-- COMMENT ON COLUMN uom_conversion.from_uom_id IS 'Source UOM for conversion';
+-- COMMENT ON COLUMN uom_conversion.to_uom_id IS 'Target UOM for conversion';
+-- COMMENT ON COLUMN uom_conversion.conversion_factor IS 'Factor to multiply from_uom to get to_uom';
+--
+-- -- Create indexes for better performance
+-- CREATE INDEX idx_uom_tenant_entity ON uom(tenant_id, entity_id);
+-- CREATE INDEX idx_uom_enabled ON uom(enabled);
+-- CREATE INDEX idx_uom_tenant_entity_type ON uom(tenant_id, entity_id, uom_type);
+-- CREATE INDEX idx_uom_base_uom_id ON uom(base_uom_id);
+-- CREATE INDEX idx_uom_conversion_tenant_entity ON uom_conversion(tenant_id, entity_id);
+-- CREATE INDEX idx_uom_conversion_from ON uom_conversion(from_uom_id);
+-- CREATE INDEX idx_uom_conversion_to ON uom_conversion(to_uom_id);
+--
+--
+-- -- Project management policies
+-- CREATE POLICY tenant_isolation_policy ON projects 
+--     USING (tenant_id = current_tenant_id());
+--
+-- CREATE POLICY tenant_isolation_policy ON budgets 
+--     USING (tenant_id = current_tenant_id());
+--
+--
+-- CREATE TRIGGER update_project_timestamps 
+--     BEFORE UPDATE ON projects 
+--     FOR EACH ROW EXECUTE FUNCTION update_timestamps();
 
--- Budget management
-CREATE TABLE budgets (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
-    project_id UUID REFERENCES projects(id), -- Optional project budget
-    name VARCHAR(255) NOT NULL,
-    budget_type VARCHAR(20) NOT NULL
-        CHECK (budget_type IN ('OPERATIONAL', 'CAPITAL', 'PROJECT', 'DEPARTMENT')),
-    fiscal_year INT NOT NULL,
-    period_start DATE NOT NULL,
-    period_end DATE NOT NULL,
-    total_amount DECIMAL(15,2) NOT NULL,
-    allocated_amount DECIMAL(15,2) DEFAULT 0,
-    spent_amount DECIMAL(15,2) DEFAULT 0,
-    status VARCHAR(20) DEFAULT 'DRAFT'
-        CHECK (status IN ('DRAFT', 'APPROVED', 'ACTIVE', 'CLOSED')),
-    approved_by UUID REFERENCES users(id),
-    approved_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+-- CREATE TRIGGER update_budget_timestamps 
+--     BEFORE UPDATE ON budgets 
+--     FOR EACH ROW EXECUTE FUNCTION update_timestamps();
+--
+--ENDS HAR3
 
--- Multi-tenant Unit of Measure (UOM) table with conversion system
-CREATE TABLE uom (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
-    uom_name VARCHAR(255) NOT NULL,
-    must_be_whole_number BOOLEAN DEFAULT FALSE,
-    enabled BOOLEAN DEFAULT TRUE,
-    symbol VARCHAR(50),
-    common_code VARCHAR(3),
-    description TEXT,
-    -- Conversion f qqields
-    base_uom_id UUID REFERENCES uom(id),
-    conversion_factor DECIMAL(15,6) DEFAULT 1.0,
-    uom_type VARCHAR(50), -- 'Weight', 'Length', 'Volume', 'Area', 'Time', 'Count'
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    -- Multi-tenant unique constraint
-    UNIQUE(tenant_id, entity_id, uom_name)
-);
 
--- Multi-tenant UOM Conversion table for complex conversions
-CREATE TABLE uom_conversion (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
-    from_uom_id UUID NOT NULL REFERENCES uom(id),
-    to_uom_id UUID NOT NULL REFERENCES uom(id),
-    conversion_factor DECIMAL(15,6) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(tenant_id, entity_id, from_uom_id, to_uom_id)
-);
-
--- Add comments to the tables
-COMMENT ON TABLE uom IS 'Multi-tenant Unit of Measure definitions with conversion capabilities';
-COMMENT ON TABLE uom_conversion IS 'Multi-tenant UOM conversion factors between different units';
-
--- Add comments to UOM columns
-COMMENT ON COLUMN uom.id IS 'Primary key auto-increment identifier';
-COMMENT ON COLUMN uom.tenant_id IS 'Tenant identifier for multi-tenancy';
-COMMENT ON COLUMN uom.entity_id IS 'Entity identifier within tenant';
-COMMENT ON COLUMN uom.uom_name IS 'Name of the unit of measure (unique per tenant/entity)';
-COMMENT ON COLUMN uom.must_be_whole_number IS 'Check this to disallow fractions (for Nos)';
-COMMENT ON COLUMN uom.enabled IS 'Whether this UOM is active and can be used';
-COMMENT ON COLUMN uom.symbol IS 'Short symbol representation of the UOM (e.g., kg, m, pcs)';
-COMMENT ON COLUMN uom.common_code IS 'Standard code according to CEFACT/ICG/2010/IC013 or CEFACT/ICG/2010/IC010';
-COMMENT ON COLUMN uom.description IS 'Additional description or notes about the UOM';
-COMMENT ON COLUMN uom.base_uom_id IS 'Reference to the base unit for this UOM group (NULL for base units)';
-COMMENT ON COLUMN uom.conversion_factor IS 'Factor to convert from this UOM to base UOM (1.0 for base units)';
-COMMENT ON COLUMN uom.uom_type IS 'Category of measurement (Weight, Length, Volume, etc.)';
-
--- Add comments to conversion columns
-COMMENT ON COLUMN uom_conversion.tenant_id IS 'Tenant identifier for multi-tenancy';
-COMMENT ON COLUMN uom_conversion.entity_id IS 'Entity identifier within tenant';
-COMMENT ON COLUMN uom_conversion.from_uom_id IS 'Source UOM for conversion';
-COMMENT ON COLUMN uom_conversion.to_uom_id IS 'Target UOM for conversion';
-COMMENT ON COLUMN uom_conversion.conversion_factor IS 'Factor to multiply from_uom to get to_uom';
-
--- Create indexes for better performance
-CREATE INDEX idx_uom_tenant_entity ON uom(tenant_id, entity_id);
-CREATE INDEX idx_uom_enabled ON uom(enabled);
-CREATE INDEX idx_uom_tenant_entity_type ON uom(tenant_id, entity_id, uom_type);
-CREATE INDEX idx_uom_base_uom_id ON uom(base_uom_id);
-CREATE INDEX idx_uom_conversion_tenant_entity ON uom_conversion(tenant_id, entity_id);
-CREATE INDEX idx_uom_conversion_from ON uom_conversion(from_uom_id);
-CREATE INDEX idx_uom_conversion_to ON uom_conversion(to_uom_id);
 
 -- -- Create trigger to automatically update the updated_at timestamp
 -- CREATE OR REPLACE FUNCTION update_updated_at_column()

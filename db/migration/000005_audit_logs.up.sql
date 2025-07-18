@@ -1,34 +1,34 @@
 
 
--- Audit logging (enhanced)
-CREATE TABLE audit_logs (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
-    action VARCHAR(50) NOT NULL,
-    resource_type VARCHAR(50), -- What was changed
-    resource_id BIGINT, -- ID of the changed resource
-    old_values JSONB,
-    new_values JSONB,
-    ip_address INET,
-    user_agent TEXT,
-    session_id VARCHAR(255),
-    module VARCHAR(50), -- Which module generated the log
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS rls_change_log (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    schema_name TEXT NOT NULL,
-    table_name TEXT NOT NULL,
-    action TEXT NOT NULL,           -- 'apply' or 'remove'
-    policy_name TEXT,
-    policy_type TEXT,
-    command TEXT,
-    dry_run BOOLEAN DEFAULT false,
-    changed_at TIMESTAMPTZ DEFAULT now()
-);
+-- -- Audit logging (enhanced)
+-- CREATE TABLE audit_logs (
+--     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+--     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+--     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
+--     action VARCHAR(50) NOT NULL,
+--     resource_type VARCHAR(50), -- What was changed
+--     resource_id BIGINT, -- ID of the changed resource
+--     old_values JSONB,
+--     new_values JSONB,
+--     ip_address INET,
+--     user_agent TEXT,
+--     session_id VARCHAR(255),
+--     module VARCHAR(50), -- Which module generated the log
+--     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+--
+-- CREATE TABLE IF NOT EXISTS rls_change_log (
+--     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     schema_name TEXT NOT NULL,
+--     table_name TEXT NOT NULL,
+--     action TEXT NOT NULL,           -- 'apply' or 'remove'
+--     policy_name TEXT,
+--     policy_type TEXT,
+--     command TEXT,
+--     dry_run BOOLEAN DEFAULT false,
+--     changed_at TIMESTAMPTZ DEFAULT now()
+-- );
 
 
 /*

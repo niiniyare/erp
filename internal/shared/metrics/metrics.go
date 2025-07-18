@@ -14,7 +14,7 @@ import (
 )
 
 // Fields represents key-value pairs for labels/attributes
-type Fields map[string]interface{}
+type Fields map[string]any
 
 // MetricsProvider defines the interface for metrics collection
 type MetricsProvider interface {

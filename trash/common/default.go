@@ -27,7 +27,7 @@ package common
 // 	FXLossAccno      string
 // 	DBVersion        string
 // 	Optional         string
-// 	Defaults         map[string]interface{}
+// 	Defaults         map[string]any
 // 	Accno            map[string]map[string]AccountInfo
 //
 // 	// Additional fields that appear in the required fields loop
@@ -229,7 +229,7 @@ package common
 // func (ad *AccountingDefaults) DefaultAccounts(myConfig *MyConfig, form *Form) error {
 // 	// Initialize maps
 // 	if form.Defaults == nil {
-// 		form.Defaults = make(map[string]interface{})
+// 		form.Defaults = make(map[string]any)
 // 	}
 // 	if form.Accno == nil {
 // 		form.Accno = make(map[string]map[string]AccountInfo)
@@ -416,7 +416,7 @@ package common
 // 	// Example form and config
 // 	form := &Form{
 // 		Fields:   make(map[string]string),
-// 		Defaults: make(map[string]interface{}),
+// 		Defaults: make(map[string]any),
 // 		Accno:    make(map[string]map[string]AccountInfo),
 // 	}
 //

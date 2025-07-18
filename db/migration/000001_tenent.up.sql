@@ -226,8 +226,7 @@ COMMENT ON FUNCTION set_tenant_context(UUID) IS 'Sets the current tenant context
 -- GET CURRENT TENANT FUNCTION
 -- -----------------------------------------------------
 -- Utility function to retrieve current tenant ID from session
-CREATE OR REPLACE FUNCTION get_current_tenant_id()
-RETURNS UUID AS $$
+CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS UUID AS $$
 BEGIN
     -- Return current tenant ID from session variable, default to NULL if not set
     RETURN COALESCE(nullif(current_setting('app.current_tenant_id', true), ''), NULL)::UUID;
@@ -239,7 +238,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Add function comment
-COMMENT ON FUNCTION get_current_tenant_id() IS 'Retrieves the current tenant ID from session context';
+COMMENT ON FUNCTION current_tenant_id() IS 'Retrieves the current tenant ID from session context';
 
 -- -----------------------------------------------------
 -- TENANT LIMITS CHECKING FUNCTION
@@ -320,7 +319,7 @@ ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
 -- Only allow access to tenant data based on current session context
 CREATE POLICY tenant_isolation_policy ON tenants
     FOR ALL TO application_role
-    USING (id = get_current_tenant_id());
+    USING (id = current_tenant_id());
 
 -- Add policy comment
 COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
@@ -331,7 +330,7 @@ ALTER TABLE tenant_configurations ENABLE ROW LEVEL SECURITY;
 -- Create policy for tenant configurations isolation
 CREATE POLICY tenant_configurations_isolation_policy ON tenant_configurations
     FOR ALL TO application_role
-    USING (tenant_id = get_current_tenant_id());
+    USING (tenant_id = current_tenant_id());
 
 -- Add policy comment
 COMMENT ON POLICY tenant_configurations_isolation_policy ON tenant_configurations IS 'Ensures tenant configuration data isolation';
@@ -342,7 +341,7 @@ ALTER TABLE tenant_usage_stats ENABLE ROW LEVEL SECURITY;
 -- Create policy for tenant usage stats isolation
 CREATE POLICY tenant_usage_stats_isolation_policy ON tenant_usage_stats
     FOR ALL TO application_role
-    USING (tenant_id = get_current_tenant_id());
+    USING (tenant_id = current_tenant_id());
 
 -- Add policy comment
 COMMENT ON POLICY tenant_usage_stats_isolation_policy ON tenant_usage_stats IS 'Ensures tenant usage statistics data isolation';
@@ -358,7 +357,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON tenant_usage_stats TO application_role;
 
 -- Grant execute permissions on functions
 GRANT EXECUTE ON FUNCTION set_tenant_context(UUID) TO application_role;
-GRANT EXECUTE ON FUNCTION get_current_tenant_id() TO application_role;
+GRANT EXECUTE ON FUNCTION current_tenant_id() TO application_role;
 GRANT EXECUTE ON FUNCTION check_tenant_limits(UUID, VARCHAR, INT) TO application_role;
 
 -- =====================================================
@@ -489,7 +488,7 @@ INSERT INTO tenants (
 -- BEGIN
 --     RAISE NOTICE 'ERP/Accounting System Database Migration Completed Successfully!';
 --     RAISE NOTICE 'Created tables: tenants, tenant_configurations, tenant_usage_stats';
---     RAISE NOTICE 'Created functions: set_tenant_context, get_current_tenant_id, check_tenant_limits';
+--     RAISE NOTICE 'Created functions: set_tenant_context, current_tenant_id, check_tenant_limits';
 --     RAISE NOTICE 'Enabled Row Level Security with tenant isolation policies';
 --     RAISE NOTICE 'Next steps: Create entities, accounts, users, and journal_entries tables';
 -- END;

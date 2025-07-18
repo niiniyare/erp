@@ -11,7 +11,16 @@ import (
 )
 
 // NewRouter creates a new router with all handlers
-func NewRouter(tenantService tenant.Service, entityService entity.Service, userService user.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) *gin.Engine {
+func NewRouter(
+	tenantService tenant.Service, 
+	entityService entity.Service, 
+	userService user.Service,
+	accessRequestService user.AccessRequestService,
+	conditionalAccessService user.ConditionalAccessService,
+	analyticsService user.UserAnalyticsService,
+	tracing *tracing.TracingService, 
+	metrics *metrics.MetricsService,
+) *gin.Engine {
 	r := gin.New()
 
 	// Add middleware
@@ -24,7 +33,7 @@ func NewRouter(tenantService tenant.Service, entityService entity.Service, userS
 	tenantHandler := NewTenantHandler(tenantService)
 	entityHandler := NewEntityHandler(entityService, tracing, metrics)
 	userHandler := NewUserHandler(userService, tracing, metrics)
-	// userManagementHandler := NewUserManagementHandler(userService, tracing, metrics)
+	accessRequestHandler := NewAccessRequestHandler(accessRequestService, conditionalAccessService, analyticsService, tracing, metrics)
 	healthHandler := NewHealthHandler()
 
 	// Health check routes
@@ -92,11 +101,32 @@ func NewRouter(tenantService tenant.Service, entityService entity.Service, userS
 			users.GET("/:id/roles", userHandler.GetUserRoles)
 		}
 
-		// Permission Evaluation routes (temporarily disabled - implementation pending)
-		// permissions := v1.Group("/permissions")
-		// {
-		// 	permissions.POST("/evaluate", userManagementHandler.EvaluatePermission)
-		// }
+		// Access Request Workflow routes
+		accessRequests := v1.Group("/access-requests")
+		{
+			accessRequests.POST("/", accessRequestHandler.CreateAccessRequest)
+			accessRequests.GET("/:id", accessRequestHandler.GetAccessRequest)
+			accessRequests.POST("/:id/process", accessRequestHandler.ProcessAccessRequest)
+			accessRequests.DELETE("/:id", accessRequestHandler.RevokeAccessRequest)
+			accessRequests.GET("/", accessRequestHandler.ListAccessRequests)
+			accessRequests.GET("/stats", accessRequestHandler.GetAccessRequestStats)
+		}
+
+		// Conditional Access routes
+		conditionalAccess := v1.Group("/conditional-access")
+		{
+			conditionalAccess.POST("/evaluate", accessRequestHandler.EvaluateConditionalAccess)
+			conditionalAccess.POST("/rules", accessRequestHandler.CreateConditionalAccessRule)
+		}
+
+		// User Analytics routes
+		analytics := v1.Group("/analytics")
+		{
+			analytics.GET("/users/:user_id/behavior", accessRequestHandler.GetUserBehaviorAnalytics)
+			analytics.GET("/users/:user_id/risk", accessRequestHandler.GetUserRiskAssessment)
+			analytics.GET("/users/:user_id/insights", accessRequestHandler.GetUserPersonalizedInsights)
+			analytics.POST("/users/:user_id/detect-anomalies", accessRequestHandler.DetectUserAnomalies)
+		}
 	}
 
 	// Add CORS middleware for API testing

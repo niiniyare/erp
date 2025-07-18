@@ -97,8 +97,28 @@ func main() {
 	entityService := entity.NewService(entityRepo, tracingService, metricsService)
 	userService := user.NewService(userRepo, redisClient, tracingService, metricsService)
 
+	// Initialize advanced user management services
+	auditService := user.NewAuditService(tracingService, metricsService)
+	approverService := user.NewApproverService(userRepo, tracingService, metricsService)
+	notificationService := user.NewNotificationService(userRepo, tracingService, metricsService, nil, nil, approverService)
+	executionService := user.NewAccessExecutionService(userRepo, userService, tracingService, metricsService)
+	accessRequestService := user.NewAccessRequestService(
+		nil, // TODO: Implement AccessRequestRepository
+		userRepo,
+		redisClient,
+		tracingService,
+		metricsService,
+		userService,
+		notificationService,
+		approverService,
+		executionService,
+		auditService,
+	)
+	conditionalAccessService := user.NewConditionalAccessService(tracingService, metricsService, auditService)
+	analyticsService := user.NewUserAnalyticsService(tracingService, metricsService, auditService)
+
 	// Initialize API handlers
-	router := handlers.NewRouter(tenantService, entityService, userService, tracingService, metricsService)
+	router := handlers.NewRouter(tenantService, entityService, userService, accessRequestService, conditionalAccessService, analyticsService, tracingService, metricsService)
 
 	// Start server
 	logger.Info("Server starting", logger.Fields{

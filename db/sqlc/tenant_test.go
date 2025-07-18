@@ -113,14 +113,14 @@ func createComplexTestTenant(t *testing.T, store Store, name string) *Tenant {
 	slug := generateShortUniqueName("slug") // Keep slug very short
 	email := fmt.Sprintf("test@%s.com", generateShortUniqueName("domain"))
 
-	metadata, err := json.Marshal(map[string]interface{}{
+	metadata, err := json.Marshal(map[string]any{
 		"test_data":  true,
 		"created_by": "test_suite",
 		"timestamp":  time.Now().Unix(),
 	})
 	require.NoError(t, err)
 
-	settings, err := json.Marshal(map[string]interface{}{
+	settings, err := json.Marshal(map[string]any{
 		"theme":         "dark",
 		"notifications": true,
 	})
@@ -268,10 +268,10 @@ func (suite *TenantTestSuite) TestCreateTenant() {
 }
 
 func (suite *TenantTestSuite) TestCreateTenantComplete() {
-	metadata, err := json.Marshal(map[string]interface{}{"test": true})
+	metadata, err := json.Marshal(map[string]any{"test": true})
 	suite.Require().NoError(err)
 
-	settings, err := json.Marshal(map[string]interface{}{"theme": "light"})
+	settings, err := json.Marshal(map[string]any{"theme": "light"})
 	suite.Require().NoError(err)
 
 	uniqueName := generateShortUniqueName("Complete")
@@ -408,7 +408,7 @@ func (suite *TenantTestSuite) TestTenantConfiguration() {
 	modules, err := json.Marshal([]string{"accounting", "inventory", "payroll"})
 	suite.Require().NoError(err)
 
-	passwordPolicy, err := json.Marshal(map[string]interface{}{
+	passwordPolicy, err := json.Marshal(map[string]any{
 		"min_length":      12,
 		"require_symbols": true,
 	})
@@ -670,8 +670,8 @@ func (suite *TenantTestSuite) TestAnalytics() {
 	createdTenants := make([]uuid.UUID, 0)
 	for _, industry := range industries {
 		for _, size := range sizes {
-			metadata, _ := json.Marshal(map[string]interface{}{"test": true})
-			settings, _ := json.Marshal(map[string]interface{}{"theme": "light"})
+			metadata, _ := json.Marshal(map[string]any{"test": true})
+			settings, _ := json.Marshal(map[string]any{"theme": "light"})
 
 			// Create very short, unique names
 			uniqueName := generateShortUniqueName(fmt.Sprintf("%s%s", industry, size))

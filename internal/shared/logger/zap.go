@@ -34,7 +34,7 @@ func newZapLogger(config Config) (*zapLogger, error) {
 	zapConfig.Level = zap.NewAtomicLevelAt(logLevelToZap(config.Level))
 
 	// Add initial fields
-	zapConfig.InitialFields = map[string]interface{}{
+	zapConfig.InitialFields = map[string]any{
 		"service": config.ServiceName,
 		"version": config.Version,
 	}

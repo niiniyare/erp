@@ -200,7 +200,7 @@ var Address = Type("Address", func() {
 var Metadata = Type("Metadata", func() {
 	Description("Flexible metadata storage")
 	AdditionalProperties(Any)
-	Example(map[string]interface{}{
+	Example(map[string]any{
 		"department":  "Engineering",
 		"cost_center": "ENG-001",
 		"location":    "New York Office",
@@ -210,7 +210,7 @@ var Metadata = Type("Metadata", func() {
 var SecurityAttributes = Type("SecurityAttributes", func() {
 	Description("Security attributes for ABAC evaluation")
 	AdditionalProperties(Any)
-	Example(map[string]interface{}{
+	Example(map[string]any{
 		"clearance_level": "SECRET",
 		"need_to_know":    []string{"PROJECT_ALPHA", "FINANCE_DATA"},
 		"citizenship":     "US",

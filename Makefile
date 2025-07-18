@@ -1,128 +1,131 @@
 # See https://tech.davis-hansson.com/p/make/
-include .env
-export
+# ============================================================================
+# 🧱 Environment & Defaults
+# ============================================================================
 
 SHELL := bash
-.DELETE_ON_ERROR:
+.ONESHELL:
 .SHELLFLAGS := -eu -o pipefail -c
-MAKEFLAGS += --warn-undefined-variables
-MAKEFLAGS += --no-builtin-rules
-MAKEFLAGS += --no-print-directory
-BIN=$(abspath ~/go/bin)
-
-# Set to use a different compiler. For example, `GO=go1.18rc1 make test`.
-GO ?= go
+.DELETE_ON_ERROR:
+MAKEFLAGS += --warn-undefined-variables --no-builtin-rules --no-print-directory
 .DEFAULT_GOAL := help
-MIGRATION_PATH="db/migration"
+
 DB_NAME ?= ledger
 DB_USER ?= admin
 DB_PSSWD ?= admin
 DB_URL ?= postgresql://$(DB_USER):$(DB_PSSWD)@localhost:5432/$(DB_NAME)?sslmode=disable
-# DB_URL=postgres://wegmjdaf:khexFaRIW0eslZ6GPRY5VFyCM7w_vMVc@tyke.db.elephantsql.com/wegmjdaf?sslmode=disable
-API_VERSION := v1
-PROTO := pkg/api/$(API_VERSION)/proto
-PB := pkg/api/$(API_VERSION)/pb
 
-BUF_VERSION:=0.55.0 88ii8i8i8
-# Only list test and build dependencies
-# Standard dependencies are installed via go get
-DEPEND=\
-	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.2.2 \
-	google.golang.org/protobuf/cmd/protoc-gen-go@latest \
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest \
-	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
-	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
-	google.golang.org/protobuf/cmd/protoc-gen-go \
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc
+MIGRATION_PATH := db/migration/
+SQLC_OUT := db/sqlc
+PROTO := api/proto/v1
+PB := api/pb/v1
 
+REQUIRED_TOOLS := sqlc protoc mockgen migrate dbdocs psql buf
 
+# ============================================================================
+# 🧪 General
+# ============================================================================
 
-clean: ## clean command 
-	@rm -f $(PB)/*.pb.go
+help: ## Show this help
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36mtarget\033[0m\n"} \
+	/^[a-zA-Z0-9_.-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-server:
-	@go run cmd/server
+check-tools: ## Check required tools
+	@$(foreach tool,$(REQUIRED_TOOLS),\
+		command -v $(tool) >/dev/null 2>&1 || { echo >&2 "Missing: $(tool)"; exit 1; };)
 
+clean: ## Clean generated files
+	@rm -f $(PB)/*.go doc/swagger/*.json
 
-	
+ci: check-tools fmt lint test proto sqlc ## Run all essential checks
 
-createdb: ## create postgres database
-	@createdb --username="$(DB_USER)" --owner="$(DB_PSSWD)" $(DB_NAME)
-dropdb:  ## drop postgres database
-	@dropdb $(DB_NAME)
+# ============================================================================
+# 🧬 API Layer (Handlers, Middleware, Routes)
+# ============================================================================
 
-migrateup: ## Create DB and apply migrations
-	@psql -lqt | cut -d \| -f 1 | grep -qw $(DB_NAME) || createdb -U $(DB_USER) $(DB_NAME)
-	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose up
-migratedown:  ## brings down  last one version of thev database schema 
-	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose down 
+proto: check-tools ## Generate gRPC and gateway files
+	@mkdir -p $(PB)
+	@protoc --proto_path=$(PROTO) \
+		--go_out=$(PB) --go_opt=paths=source_relative \
+		--go-grpc_out=$(PB) --go-grpc_opt=paths=source_relative \
+		--grpc-gateway_out=$(PB) --grpc-gateway_opt=paths=source_relative \
+		$(PROTO)/*.proto
 
-migratedrop: ##  drops database schema
-	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose drop
+buf: ## Use Buf to generate proto files
+	@buf generate --output $(PB)
 
-migrateCreate: ## create new migration file
-	migrate create -ext sql -dir "$(MIGRATION_PATH)" -digits 2 -seq $(name) -verbose
+buf-lint: ## Lint proto files with Buf
+	@buf lint | jq
 
+evans: ## Start Evans gRPC REPL
+	@evans --host localhost --port 9090 -r repl
 
-sqlc: ## generates go files from sql Query files using config files  in ./sqlc.yaml
+# ============================================================================
+# 🧠 Core Business Layer (Domain, Services, Interfaces)
+# ============================================================================
+
+sqlc: ## Generate SQLC store code
 	@sqlc generate
 
-test: ## all go unit test 
-	@go test -v -cover ./...
-
-
-mock: ## generates mock from interfaces 
-	@mockgen -package mockdb -destination db/mock/store.go github.com/niiniyare/awo/db/sqlc Querier
-dbdocs: 
-	@dbdocs build docs/schema.dbml
-
-sql2dbml:
-	@sql2dbml db/migration/*.up.sql  --postgres -o db/migration/*schema.dbml
-
-
-help: ## show help message
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m\033[0m\n"} /^[$$()% a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-
-
-testdb: ## runs testing involved or talks to the database
-	@go test -v -cover -count=1 ./db/sqlc/...
-
-seed-airport: ## seed airport sample records to database
-	@psql flight --command='\i cmd/airport/airport.sql'
-
-
-seed-aircraft:  ## seed aircraft sample records to database
-	@psql flight --command='\i cmd/aircraft/aircraft.sql'
-
-
-test/html: ## Go: tests with HTML coverage report
-	bash ./script/test_coverage_browser.sh && rm script/coverage.txt
-
-redis-graph: ## test redis-graph database one the cloud, This is just a test database for this project
-	redis-cli -u redis://default:w1w7iRHouMVw01VqDK0ulA0zV7nTMmAs@redis-16650.c212.ap-south-1-1.ec2.cloud.redislabs.com:16650
-
-
-proto: ## removes files generated before re-generates grpc, grpc gatewayes and swagger doc if needed using protoc compiler 
-	@rm -f $(PB)/*.go
-	@rm -f doc/swagger/*.swagger.json
-	@protoc --proto_path=$(PROTO) --go_out=$(PB) --go_opt=paths=source_relative \
-	--go-grpc_out=$(PB) --go-grpc_opt=paths=source_relative \
-	--grpc-gateway_out=$(PB) --grpc-gateway_opt=paths=source_relative \
-	$(PROTO)/*.proto
-	
-
-evans:
-	evans --host localhost --port 9090 -r repl
-
-buf: ## removes files generated before re-generates grpc, grpc gatewayes and swagger doc if needed using buf
-	buf generate --output $(PB)
-	
-buf-lint: ## lint protobuf files using buf tool
-	@buf lint --error-format=json --exclude-path=pkg/api/v1/proto/google,pkg/api/v1/proto/protoc-gen-openapiv2 | jq
-
-lint: ## Lint code
-	@golangci-lint run ./...
+mock: ## Generate mocks for interfaces
+	@mockgen -package mockstore -destination internal/core/tenant/store/mock.go github.com/your/module/internal/core/tenant Store
 
 fmt: ## Format Go code
 	@go fmt ./...
-.PHONY: clean gen server client test testdb install  createdb  migrateup migratedown migratedrop dropdb sqlc test mock dbdocs sql2dbml migrateup-doc migratedown-doc help seed-airport seed-aircraft test/html redis-graph proto evans buf migrateCreate
+
+lint: ## Lint Go code
+	@golangci-lint run ./...
+
+test: ## Run all tests
+	@go test -v -cover ./...
+
+test-core: ## Run only core layer tests
+	@go test -v ./internal/core/...
+
+# ============================================================================
+# 🗃️ Repository Layer (SQLC Store, Repos, Converters)
+# ============================================================================
+
+test-repo: ## Run tests related to repositories
+	@go test -v ./internal/core/tenant/store/...
+
+# ============================================================================
+# 🏗️ Infrastructure Layer (Database, Redis, Config)
+# ============================================================================
+
+createdb: ## Create the database
+	@createdb --username="$(DB_USER)" --owner="$(DB_USER)" $(DB_NAME)
+
+dropdb: ## Drop the database
+	@dropdb $(DB_NAME)
+
+migrateup: ## Run all up migrations
+	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose up
+
+migratedown: ## Roll back the last migration
+	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose down
+
+migratedrop: ## Drop all schema objects
+	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose drop
+
+migrate-create: ## Create new migration file: make migrate-create name=init_users
+	@name=$(name); \
+	if [ -z "$$name" ]; then echo "Missing name param. Use: make migrate-create name=xyz"; exit 1; fi; \
+	migrate create -ext sql -dir "$(MIGRATION_PATH)" -digits 2 -seq "$$name" -verbose
+
+dbdocs: ## Generate DB docs from DBML
+	@dbdocs build docs/schema.dbml
+
+sql2dbml: ## Convert SQL migration to DBML
+	@sql2dbml $(MIGRATION_PATH)/*.up.sql --postgres -o docs/schema.dbml
+
+# ============================================================================
+# 🚀 App Entry (main.go / wiring)
+# ============================================================================
+
+run: ## Run the app server
+	@go run cmd/server
+
+.PHONY: help clean ci fmt lint test test-core test-repo \
+	createdb dropdb migrateup migratedown migratedrop migrate-create \
+	sqlc mock proto buf buf-lint evans dbdocs sql2dbml run check-tools

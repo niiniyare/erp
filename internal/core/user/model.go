@@ -60,8 +60,8 @@ type User struct {
 	LockoutUntil          *time.Time             `json:"lockout_until,omitempty"`
 	SessionTimeoutMinutes int32                  `json:"session_timeout_minutes"`
 	MfaEnabled            bool                   `json:"mfa_enabled"`
-	UserAttributes        map[string]interface{} `json:"user_attributes,omitempty"`
-	Settings              map[string]interface{} `json:"settings,omitempty"`
+	UserAttributes        map[string]any `json:"user_attributes,omitempty"`
+	Settings              map[string]any `json:"settings,omitempty"`
 	CreatedAt             time.Time              `json:"created_at"`
 	UpdatedAt             time.Time              `json:"updated_at"`
 	DeletedAt             *time.Time             `json:"deleted_at,omitempty"`
@@ -82,8 +82,8 @@ type Person struct {
 	NationalID         *string                `json:"national_id,omitempty"`
 	TaxID              *string                `json:"tax_id,omitempty"`
 	Address            []byte                 `json:"address,omitempty"`
-	SecurityAttributes map[string]interface{} `json:"security_attributes,omitempty"`
-	Metadata           map[string]interface{} `json:"metadata,omitempty"`
+	SecurityAttributes map[string]any `json:"security_attributes,omitempty"`
+	Metadata           map[string]any `json:"metadata,omitempty"`
 	IsActive           bool                   `json:"is_active"`
 	CreatedAt          time.Time              `json:"created_at"`
 	UpdatedAt          time.Time              `json:"updated_at"`
@@ -141,11 +141,11 @@ type Employee struct {
 	ManagerID        *uuid.UUID             `json:"manager_id,omitempty"`
 	HireDate         time.Time              `json:"hire_date"`
 	TerminationDate  *time.Time             `json:"termination_date,omitempty"`
-	SalaryInfo       map[string]interface{} `json:"salary_info,omitempty"`
+	SalaryInfo       map[string]any `json:"salary_info,omitempty"`
 	Status           EmploymentStatus       `json:"employment_status"`
-	WorkSchedule     map[string]interface{} `json:"work_schedule,omitempty"`
+	WorkSchedule     map[string]any `json:"work_schedule,omitempty"`
 	SecurityLevel    int32                  `json:"security_level"`
-	AccessAttributes map[string]interface{} `json:"access_attributes,omitempty"`
+	AccessAttributes map[string]any `json:"access_attributes,omitempty"`
 	CreatedAt        time.Time              `json:"created_at"`
 	UpdatedAt        time.Time              `json:"updated_at"`
 	DeletedAt        *time.Time             `json:"deleted_at,omitempty"`
@@ -202,8 +202,8 @@ type CreateUserRequest struct {
 	AccountStatus         string                 `json:"account_status"`
 	SessionTimeoutMinutes int32                  `json:"session_timeout_minutes"`
 	MfaEnabled            bool                   `json:"mfa_enabled"`
-	UserAttributes        map[string]interface{} `json:"user_attributes,omitempty"`
-	Settings              map[string]interface{} `json:"settings,omitempty"`
+	UserAttributes        map[string]any `json:"user_attributes,omitempty"`
+	Settings              map[string]any `json:"settings,omitempty"`
 }
 
 // CreatePersonRequest represents person creation request
@@ -219,8 +219,8 @@ type CreatePersonRequest struct {
 	NationalID         *string                `json:"national_id,omitempty"`
 	TaxID              *string                `json:"tax_id,omitempty"`
 	Address            []byte                 `json:"address,omitempty"`
-	SecurityAttributes map[string]interface{} `json:"security_attributes,omitempty"`
-	Metadata           map[string]interface{} `json:"metadata,omitempty"`
+	SecurityAttributes map[string]any `json:"security_attributes,omitempty"`
+	Metadata           map[string]any `json:"metadata,omitempty"`
 }
 
 // CreateEmployeeRequest represents employee creation request
@@ -232,11 +232,11 @@ type CreateEmployeeRequest struct {
 	DepartmentID     *uuid.UUID             `json:"department_id,omitempty"`
 	ManagerID        *uuid.UUID             `json:"manager_id,omitempty"`
 	HireDate         time.Time              `json:"hire_date"`
-	SalaryInfo       map[string]interface{} `json:"salary_info,omitempty"`
+	SalaryInfo       map[string]any `json:"salary_info,omitempty"`
 	Status           EmploymentStatus       `json:"employment_status"`
-	WorkSchedule     map[string]interface{} `json:"work_schedule,omitempty"`
+	WorkSchedule     map[string]any `json:"work_schedule,omitempty"`
 	SecurityLevel    int32                  `json:"security_level"`
-	AccessAttributes map[string]interface{} `json:"access_attributes,omitempty"`
+	AccessAttributes map[string]any `json:"access_attributes,omitempty"`
 }
 
 // UpdateUserRequest represents user update request
@@ -247,8 +247,8 @@ type UpdateUserRequest struct {
 	AccountStatus         *string                `json:"account_status,omitempty"`
 	SessionTimeoutMinutes *int32                 `json:"session_timeout_minutes,omitempty"`
 	MfaEnabled            *bool                  `json:"mfa_enabled,omitempty"`
-	UserAttributes        map[string]interface{} `json:"user_attributes,omitempty"`
-	Settings              map[string]interface{} `json:"settings,omitempty"`
+	UserAttributes        map[string]any `json:"user_attributes,omitempty"`
+	Settings              map[string]any `json:"settings,omitempty"`
 }
 
 // ListUsersRequest represents user list request with filters
@@ -284,14 +284,14 @@ type ChangePasswordRequest struct {
 
 // FromSQLCUser converts SQLC User to domain User
 func FromSQLCUser(sqlcUser *db.User) (*User, error) {
-	var userAttributes map[string]interface{}
+	var userAttributes map[string]any
 	if len(sqlcUser.UserAttributes) > 0 {
 		if err := json.Unmarshal(sqlcUser.UserAttributes, &userAttributes); err != nil {
 			return nil, err
 		}
 	}
 
-	var settings map[string]interface{}
+	var settings map[string]any
 	if len(sqlcUser.Settings) > 0 {
 		if err := json.Unmarshal(sqlcUser.Settings, &settings); err != nil {
 			return nil, err
@@ -371,14 +371,14 @@ func FromSQLCUser(sqlcUser *db.User) (*User, error) {
 
 // FromSQLCPerson converts SQLC Person to domain Person
 func FromSQLCPerson(sqlcPerson *db.Person) (*Person, error) {
-	var securityAttributes map[string]interface{}
+	var securityAttributes map[string]any
 	if len(sqlcPerson.SecurityAttributes) > 0 {
 		if err := json.Unmarshal(sqlcPerson.SecurityAttributes, &securityAttributes); err != nil {
 			return nil, err
 		}
 	}
 
-	var metadata map[string]interface{}
+	var metadata map[string]any
 	if len(sqlcPerson.Metadata) > 0 {
 		if err := json.Unmarshal(sqlcPerson.Metadata, &metadata); err != nil {
 			return nil, err
@@ -425,21 +425,21 @@ func FromSQLCPerson(sqlcPerson *db.Person) (*Person, error) {
 
 // FromSQLCEmployee converts SQLC Employee to domain Employee
 func FromSQLCEmployee(sqlcEmployee *db.Employee) (*Employee, error) {
-	var salaryInfo map[string]interface{}
+	var salaryInfo map[string]any
 	if len(sqlcEmployee.SalaryInfo) > 0 {
 		if err := json.Unmarshal(sqlcEmployee.SalaryInfo, &salaryInfo); err != nil {
 			return nil, err
 		}
 	}
 
-	var workSchedule map[string]interface{}
+	var workSchedule map[string]any
 	if len(sqlcEmployee.WorkSchedule) > 0 {
 		if err := json.Unmarshal(sqlcEmployee.WorkSchedule, &workSchedule); err != nil {
 			return nil, err
 		}
 	}
 
-	var accessAttributes map[string]interface{}
+	var accessAttributes map[string]any
 	if len(sqlcEmployee.AccessAttributes) > 0 {
 		if err := json.Unmarshal(sqlcEmployee.AccessAttributes, &accessAttributes); err != nil {
 			return nil, err
@@ -665,9 +665,9 @@ type Role struct {
 	RoleType     string                 `json:"role_type"`
 	ParentRoleID *uuid.UUID             `json:"parent_role_id,omitempty"`
 	Level        int32                  `json:"level"`
-	Permissions  map[string]interface{} `json:"permissions"`
-	EntityScope  map[string]interface{} `json:"entity_scope"`
-	Conditions   map[string]interface{} `json:"conditions"`
+	Permissions  map[string]any `json:"permissions"`
+	EntityScope  map[string]any `json:"entity_scope"`
+	Conditions   map[string]any `json:"conditions"`
 	IsActive     bool                   `json:"is_active"`
 	CreatedAt    time.Time              `json:"created_at"`
 	UpdatedAt    time.Time              `json:"updated_at"`
@@ -683,9 +683,9 @@ type Permission struct {
 	DisplayName       *string                `json:"display_name,omitempty"`
 	Description       *string                `json:"description,omitempty"`
 	Effect            string                 `json:"effect"` // ALLOW or DENY
-	Conditions        map[string]interface{} `json:"conditions"`
-	DataFilters       map[string]interface{} `json:"data_filters"`
-	FieldRestrictions map[string]interface{} `json:"field_restrictions"`
+	Conditions        map[string]any `json:"conditions"`
+	DataFilters       map[string]any `json:"data_filters"`
+	FieldRestrictions map[string]any `json:"field_restrictions"`
 	IsActive          bool                   `json:"is_active"`
 	CreatedAt         time.Time              `json:"created_at"`
 }
@@ -702,10 +702,10 @@ type Policy struct {
 	Effect      string                 `json:"effect"` // ALLOW or DENY
 	Priority    int32                  `json:"priority"`
 	Category    string                 `json:"category"`
-	Target      map[string]interface{} `json:"target"`
-	Rule        map[string]interface{} `json:"rule"`
-	Obligations map[string]interface{} `json:"obligations"`
-	Advice      map[string]interface{} `json:"advice"`
+	Target      map[string]any `json:"target"`
+	Rule        map[string]any `json:"rule"`
+	Obligations map[string]any `json:"obligations"`
+	Advice      map[string]any `json:"advice"`
 	IsActive    bool                   `json:"is_active"`
 	CreatedAt   time.Time              `json:"created_at"`
 	UpdatedAt   time.Time              `json:"updated_at"`
@@ -726,7 +726,7 @@ type PermissionEvaluationRequest struct {
 	ResourceName string                 `json:"resource_name" validate:"required"`
 	ActionName   string                 `json:"action_name" validate:"required"`
 	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Context      map[string]interface{} `json:"context,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
 }
 
 // PermissionEvaluationResult represents the result of permission evaluation
@@ -752,7 +752,7 @@ type ABACEvaluationRequest struct {
 	ResourceName string                 `json:"resource_name" validate:"required"`
 	ActionName   string                 `json:"action_name" validate:"required"`
 	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Context      map[string]interface{} `json:"context,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
 }
 
 // ABACEvaluationResult represents ABAC evaluation result
@@ -760,7 +760,7 @@ type ABACEvaluationResult struct {
 	Allowed            bool                   `json:"allowed"`
 	PolicyDecisions    []string               `json:"policy_decisions"`
 	ApplicablePolicies []string               `json:"applicable_policies"`
-	EvaluationDetails  map[string]interface{} `json:"evaluation_details,omitempty"`
+	EvaluationDetails  map[string]any `json:"evaluation_details,omitempty"`
 }
 
 // BulkPermissionEvaluationRequest represents multiple permission evaluations
@@ -774,7 +774,7 @@ type PolicyTestRequest struct {
 	ResourceName string                 `json:"resource_name" validate:"required"`
 	ActionName   string                 `json:"action_name" validate:"required"`
 	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Context      map[string]interface{} `json:"context,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
 }
 
 // PolicyTestResult represents the result of policy testing
@@ -784,28 +784,28 @@ type PolicyTestResult struct {
 	TargetMatches bool                   `json:"target_matches"`
 	RuleResult    bool                   `json:"rule_result"`
 	Effect        string                 `json:"effect"`
-	Details       map[string]interface{} `json:"details"`
+	Details       map[string]any `json:"details"`
 }
 
 // ===== CONVERSION FUNCTIONS FOR PERMISSION MODELS =====
 
 // FromSQLCRole converts SQLC Role to domain Role
 func FromSQLCRole(sqlcRole *db.Role) (*Role, error) {
-	var permissions map[string]interface{}
+	var permissions map[string]any
 	if len(sqlcRole.Permissions) > 0 {
 		if err := json.Unmarshal(sqlcRole.Permissions, &permissions); err != nil {
 			return nil, err
 		}
 	}
 
-	var entityScope map[string]interface{}
+	var entityScope map[string]any
 	if len(sqlcRole.EntityScope) > 0 {
 		if err := json.Unmarshal(sqlcRole.EntityScope, &entityScope); err != nil {
 			return nil, err
 		}
 	}
 
-	var conditions map[string]interface{}
+	var conditions map[string]any
 	if len(sqlcRole.Conditions) > 0 {
 		if err := json.Unmarshal(sqlcRole.Conditions, &conditions); err != nil {
 			return nil, err
@@ -851,21 +851,21 @@ func FromSQLCRole(sqlcRole *db.Role) (*Role, error) {
 
 // FromSQLCPermission converts SQLC Permission to domain Permission
 func FromSQLCPermission(sqlcPermission *db.Permission) (*Permission, error) {
-	var conditions map[string]interface{}
+	var conditions map[string]any
 	if len(sqlcPermission.Conditions) > 0 {
 		if err := json.Unmarshal(sqlcPermission.Conditions, &conditions); err != nil {
 			return nil, err
 		}
 	}
 
-	var dataFilters map[string]interface{}
+	var dataFilters map[string]any
 	if len(sqlcPermission.DataFilters) > 0 {
 		if err := json.Unmarshal(sqlcPermission.DataFilters, &dataFilters); err != nil {
 			return nil, err
 		}
 	}
 
-	var fieldRestrictions map[string]interface{}
+	var fieldRestrictions map[string]any
 	if len(sqlcPermission.FieldRestrictions) > 0 {
 		if err := json.Unmarshal(sqlcPermission.FieldRestrictions, &fieldRestrictions); err != nil {
 			return nil, err
@@ -909,28 +909,28 @@ func FromSQLCPermission(sqlcPermission *db.Permission) (*Permission, error) {
 
 // FromSQLCPolicy converts SQLC Policy to domain Policy
 func FromSQLCPolicy(sqlcPolicy *db.Policy) (*Policy, error) {
-	var target map[string]interface{}
+	var target map[string]any
 	if len(sqlcPolicy.Target) > 0 {
 		if err := json.Unmarshal(sqlcPolicy.Target, &target); err != nil {
 			return nil, err
 		}
 	}
 
-	var rule map[string]interface{}
+	var rule map[string]any
 	if len(sqlcPolicy.Rule) > 0 {
 		if err := json.Unmarshal(sqlcPolicy.Rule, &rule); err != nil {
 			return nil, err
 		}
 	}
 
-	var obligations map[string]interface{}
+	var obligations map[string]any
 	if len(sqlcPolicy.Obligations) > 0 {
 		if err := json.Unmarshal(sqlcPolicy.Obligations, &obligations); err != nil {
 			return nil, err
 		}
 	}
 
-	var advice map[string]interface{}
+	var advice map[string]any
 	if len(sqlcPolicy.Advice) > 0 {
 		if err := json.Unmarshal(sqlcPolicy.Advice, &advice); err != nil {
 			return nil, err

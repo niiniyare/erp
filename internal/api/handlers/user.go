@@ -1852,7 +1852,7 @@ type EvaluatePermissionRequest struct {
 	ResourceName string                 `json:"resource_name" binding:"required"`
 	ActionName   string                 `json:"action_name" binding:"required"`
 	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Context      map[string]interface{} `json:"context,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
 }
 
 type PermissionEvaluationResponse struct {
@@ -1929,7 +1929,7 @@ type TestPolicyRequest struct {
 	ResourceName string                 `json:"resource_name" binding:"required"`
 	ActionName   string                 `json:"action_name" binding:"required"`
 	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Context      map[string]interface{} `json:"context,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
 }
 
 type TestPolicyResponse struct {
@@ -1938,5 +1938,5 @@ type TestPolicyResponse struct {
 	Effect        string                 `json:"effect"`
 	TargetMatches bool                   `json:"target_matches"`
 	RuleResult    bool                   `json:"rule_result"`
-	Details       map[string]interface{} `json:"details"`
+	Details       map[string]any `json:"details"`
 }

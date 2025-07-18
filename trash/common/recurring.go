@@ -70,7 +70,7 @@ package common
 // type Form struct {
 // 	Sort         string
 // 	Transactions map[string][]RecurringTransaction
-// 	Defaults     map[string]interface{}
+// 	Defaults     map[string]any
 // }
 //
 // // RecurringService handles recurring transaction operations
@@ -238,8 +238,8 @@ package common
 //
 // // Helper methods
 //
-// func (rs *RecurringService) getDefaults() (map[string]interface{}, error) {
-// 	defaults := make(map[string]interface{})
+// func (rs *RecurringService) getDefaults() (map[string]any, error) {
+// 	defaults := make(map[string]any)
 //
 // 	// This would typically query a defaults/config table
 // 	// For now, returning empty map as the original Perl code structure isn't clear

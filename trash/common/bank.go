@@ -18,7 +18,7 @@ package common
 // type Form struct {
 // 	DB *sql.DB
 // 	// Add other form fields as necessary
-// 	ALL []map[string]interface{}
+// 	ALL []map[string]any
 // 	ID int
 // 	// Add other fields from the form as necessary
 // }
@@ -120,7 +120,7 @@ package common
 // 		}
 //
 // 		// Append to form's ALL slice
-// 		form.ALL = append(form.ALL, map[string]interface{}{
+// 		form.ALL = append(form.ALL, map[string]any{
 // 			"id": ba.ID, "accno": ba.AccNo, "description": ba.Description,
 // 			"name": ba.Name, "iban": ba.IBAN, "bic": ba.BIC,
 // 			"membernumber": ba.MemberNumber, "dcn": ba.DCN, "rvc": ba.RVC,

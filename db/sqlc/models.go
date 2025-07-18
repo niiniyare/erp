@@ -138,7 +138,6 @@ type AuditLog struct {
 	CreatedAt       sql.NullTime `json:"created_at"`
 }
 
-
 // Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.
 type AuditSummaryView struct {
 	TenantID        uuid.UUID       `json:"tenant_id"`
@@ -151,26 +150,6 @@ type AuditSummaryView struct {
 	MaxRiskScore    interface{}     `json:"max_risk_score"`
 	DeniedAttempts  int64           `json:"denied_attempts"`
 	AllowedAttempts int64           `json:"allowed_attempts"`
-}
-
-type Budget struct {
-	ID              uuid.UUID      `json:"id"`
-	TenantID        uuid.UUID      `json:"tenant_id"`
-	EntityID        uuid.UUID      `json:"entity_id"`
-	ProjectID       *uuid.UUID     `json:"project_id"`
-	Name            string         `json:"name"`
-	BudgetType      string         `json:"budget_type"`
-	FiscalYear      int32          `json:"fiscal_year"`
-	PeriodStart     time.Time      `json:"period_start"`
-	PeriodEnd       time.Time      `json:"period_end"`
-	TotalAmount     pgtype.Numeric `json:"total_amount"`
-	AllocatedAmount pgtype.Numeric `json:"allocated_amount"`
-	SpentAmount     pgtype.Numeric `json:"spent_amount"`
-	Status          *string        `json:"status"`
-	ApprovedBy      *uuid.UUID     `json:"approved_by"`
-	ApprovedAt      sql.NullTime   `json:"approved_at"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 // Chart of accounts templates (e.g., Standard, Manufacturing, Retail)
@@ -554,24 +533,6 @@ type PolicyEvaluation struct {
 	ExpiresAt        sql.NullTime `json:"expires_at"`
 }
 
-type Project struct {
-	ID               uuid.UUID      `json:"id"`
-	TenantID         uuid.UUID      `json:"tenant_id"`
-	EntityID         uuid.UUID      `json:"entity_id"`
-	Name             string         `json:"name"`
-	Code             *string        `json:"code"`
-	Description      string         `json:"description"`
-	ProjectManagerID *uuid.UUID     `json:"project_manager_id"`
-	StartDate        time.Time      `json:"start_date"`
-	EndDate          time.Time      `json:"end_date"`
-	BudgetAmount     pgtype.Numeric `json:"budget_amount"`
-	ActualCost       pgtype.Numeric `json:"actual_cost"`
-	Status           *string        `json:"status"`
-	Metadata         []byte         `json:"metadata"`
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
-}
-
 // System resources that can be protected by permissions including APIs, UI components, data objects, files, reports, and workflows.
 type Resource struct {
 	ID          uuid.UUID  `json:"id"`
@@ -592,18 +553,6 @@ type Resource struct {
 	IsActive           *bool        `json:"is_active"`
 	CreatedAt          sql.NullTime `json:"created_at"`
 	DeletedAt          sql.NullTime `json:"deleted_at"`
-}
-
-type RlsChangeLog struct {
-	ID         uuid.UUID    `json:"id"`
-	SchemaName string       `json:"schema_name"`
-	TableName  string       `json:"table_name"`
-	Action     string       `json:"action"`
-	PolicyName string       `json:"policy_name"`
-	PolicyType string       `json:"policy_type"`
-	Command    string       `json:"command"`
-	DryRun     *bool        `json:"dry_run"`
-	ChangedAt  sql.NullTime `json:"changed_at"`
 }
 
 // Roles with module association, entity scoping, and hierarchical structure. Supports both RBAC and ABAC with conditional access rules.
@@ -664,6 +613,31 @@ type RolePermissionsSummary struct {
 	ActionNames       interface{} `json:"action_names"`
 	PermissionCount   int64       `json:"permission_count"`
 	AssignedUserCount int64       `json:"assigned_user_count"`
+}
+
+type SecurityNotification struct {
+	ID               uuid.UUID    `json:"id"`
+	TenantID         uuid.UUID    `json:"tenant_id"`
+	UserID           *uuid.UUID   `json:"user_id"`
+	NotificationType string       `json:"notification_type"`
+	Title            string       `json:"title"`
+	Message          string       `json:"message"`
+	Metadata         []byte       `json:"metadata"`
+	Acknowledged     *bool        `json:"acknowledged"`
+	CreatedAt        sql.NullTime `json:"created_at"`
+	ExpiresAt        sql.NullTime `json:"expires_at"`
+}
+
+// Identifies potential security threats through session anomalies and audit patterns
+type SecurityThreatDashboard struct {
+	UserID                 uuid.UUID   `json:"user_id"`
+	Username               *string     `json:"username"`
+	Email                  string      `json:"email"`
+	HighRiskSessions       int64       `json:"high_risk_sessions"`
+	MaxRiskScore           interface{} `json:"max_risk_score"`
+	AnomalyTypes           interface{} `json:"anomaly_types"`
+	CriticalEvents         int64       `json:"critical_events"`
+	LastSuspiciousActivity interface{} `json:"last_suspicious_activity"`
 }
 
 // Core tenant management table for multi-tenant SaaS architecture
@@ -738,52 +712,6 @@ type TenantUsageStat struct {
 	CreatedAt      time.Time      `json:"created_at"`
 }
 
-// Multi-tenant Unit of Measure definitions with conversion capabilities
-type Uom struct {
-	// Primary key auto-increment identifier
-	ID uuid.UUID `json:"id"`
-	// Tenant identifier for multi-tenancy
-	TenantID uuid.UUID `json:"tenant_id"`
-	// Entity identifier within tenant
-	EntityID uuid.UUID `json:"entity_id"`
-	// Name of the unit of measure (unique per tenant/entity)
-	UomName string `json:"uom_name"`
-	// Check this to disallow fractions (for Nos)
-	MustBeWholeNumber *bool `json:"must_be_whole_number"`
-	// Whether this UOM is active and can be used
-	Enabled *bool `json:"enabled"`
-	// Short symbol representation of the UOM (e.g., kg, m, pcs)
-	Symbol *string `json:"symbol"`
-	// Standard code according to CEFACT/ICG/2010/IC013 or CEFACT/ICG/2010/IC010
-	CommonCode *string `json:"common_code"`
-	// Additional description or notes about the UOM
-	Description string `json:"description"`
-	// Reference to the base unit for this UOM group (NULL for base units)
-	BaseUomID *uuid.UUID `json:"base_uom_id"`
-	// Factor to convert from this UOM to base UOM (1.0 for base units)
-	ConversionFactor pgtype.Numeric `json:"conversion_factor"`
-	// Category of measurement (Weight, Length, Volume, etc.)
-	UomType   *string          `json:"uom_type"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-	UpdatedAt pgtype.Timestamp `json:"updated_at"`
-}
-
-// Multi-tenant UOM conversion factors between different units
-type UomConversion struct {
-	ID uuid.UUID `json:"id"`
-	// Tenant identifier for multi-tenancy
-	TenantID uuid.UUID `json:"tenant_id"`
-	// Entity identifier within tenant
-	EntityID uuid.UUID `json:"entity_id"`
-	// Source UOM for conversion
-	FromUomID uuid.UUID `json:"from_uom_id"`
-	// Target UOM for conversion
-	ToUomID uuid.UUID `json:"to_uom_id"`
-	// Factor to multiply from_uom to get to_uom
-	ConversionFactor pgtype.Numeric   `json:"conversion_factor"`
-	CreatedAt        pgtype.Timestamp `json:"created_at"`
-}
-
 // System user accounts with authentication, authorization, and session management. Can be linked to persons/employees or exist independently for service accounts.
 type User struct {
 	ID           uuid.UUID  `json:"id"`
@@ -815,6 +743,12 @@ type User struct {
 	CreatedAt time.Time    `json:"created_at"`
 	UpdatedAt time.Time    `json:"updated_at"`
 	DeletedAt sql.NullTime `json:"deleted_at"`
+	// Password strength score (0-100) based on complexity
+	PasswordStrength *int32 `json:"password_strength"`
+	// Flag if password found in breach databases
+	Compromised *bool `json:"compromised"`
+	// Forces password change on next login
+	RotationRequired *bool `json:"rotation_required"`
 }
 
 // Comprehensive view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.
@@ -844,6 +778,16 @@ type UserCompleteView struct {
 	RoleNames          interface{}  `json:"role_names"`
 	RoleIds            interface{}  `json:"role_ids"`
 	ActiveRoleCount    int64        `json:"active_role_count"`
+}
+
+type UserEffectivePermission struct {
+	UserID              uuid.UUID   `json:"user_id"`
+	TenantID            uuid.UUID   `json:"tenant_id"`
+	ResourceID          uuid.UUID   `json:"resource_id"`
+	ActionID            uuid.UUID   `json:"action_id"`
+	AllowFlag           interface{} `json:"allow_flag"`
+	RolePermissionIds   interface{} `json:"role_permission_ids"`
+	DirectPermissionIds interface{} `json:"direct_permission_ids"`
 }
 
 // Direct permission grants to users bypassing roles. Used for exceptional access, denials, and temporary permissions.
@@ -901,6 +845,12 @@ type UserSession struct {
 	CreatedAt      sql.NullTime `json:"created_at"`
 	LastAccessedAt sql.NullTime `json:"last_accessed_at"`
 	IsActive       *bool        `json:"is_active"`
+	// Dynamic risk assessment score (0-100) for session security
+	RiskScore *int32 `json:"risk_score"`
+	// Detected security anomalies [unusual_location, device_change, impossible_travel]
+	AnomalyFlags []byte `json:"anomaly_flags"`
+	// Timestamp of last MFA verification
+	MfaVerifiedAt sql.NullTime `json:"mfa_verified_at"`
 }
 
 //	Purpose: Stores vendor/supplier information and payment details

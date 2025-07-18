@@ -1,8 +1,8 @@
 -- Down migration for Entities Module
 
 -- Drop foreign key constraints from dependent tables first
-ALTER TABLE uom DROP CONSTRAINT IF EXISTS uom_entity_id_fkey;
-ALTER TABLE uom_conversion DROP CONSTRAINT IF EXISTS uom_conversion_entity_id_fkey;
+-- ALTER TABLE uom DROP CONSTRAINT IF EXISTS uom_entity_id_fkey;
+-- ALTER TABLE uom_conversion DROP CONSTRAINT IF EXISTS uom_conversion_entity_id_fkey;
 ALTER TABLE chartofaccount DROP CONSTRAINT IF EXISTS chartofaccount_entity_id_fkey;
 ALTER TABLE account DROP CONSTRAINT IF EXISTS account_entity_id_fkey;
 

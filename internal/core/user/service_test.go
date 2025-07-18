@@ -309,7 +309,7 @@ func (suite *UserServiceTestSuite) TestEvaluatePermission_Success() {
 		ResourceName: "user_management",
 		ActionName:   "read",
 		EntityID:     &suite.testEntityID,
-		Context:      map[string]interface{}{"department": "hr"},
+		Context:      map[string]any{"department": "hr"},
 	}
 
 	userRoles := []*UserRole{
@@ -668,18 +668,18 @@ func (suite *UserServiceTestSuite) TestTestPolicy_Success() {
 		ResourceName: "documents",
 		ActionName:   "read",
 		EntityID:     &suite.testEntityID,
-		Context:      map[string]interface{}{"department": "finance"},
+		Context:      map[string]any{"department": "finance"},
 	}
 
 	policy := &Policy{
 		ID:     policyID,
 		Name:   "finance_documents_policy",
 		Effect: "ALLOW",
-		Target: map[string]interface{}{
+		Target: map[string]any{
 			"department": "finance",
 		},
-		Rule: map[string]interface{}{
-			"and": []map[string]interface{}{
+		Rule: map[string]any{
+			"and": []map[string]any{
 				{"user.department": "finance"},
 			},
 		},

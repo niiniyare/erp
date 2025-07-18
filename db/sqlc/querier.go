@@ -415,7 +415,7 @@ type Querier interface {
 	//      user_agent, device_info, location_info, expires_at
 	//  ) VALUES (
 	//      current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8
-	//  ) RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active
+	//  ) RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at
 	CreateSession(ctx context.Context, arg CreateSessionParams) (*UserSession, error)
 	// =====================================================
 	// TENANT MANAGEMENT QUERIES (Admin/System Level)
@@ -725,7 +725,7 @@ type Querier interface {
 	//      mfa_enabled, user_attributes, settings
 	//  ) VALUES (
 	//      current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-	//  ) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at
+	//  ) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	//DeactivateAction
 	//
@@ -809,6 +809,64 @@ type Querier interface {
 	//  SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
 	//  WHERE id = $1 AND tenant_id = current_tenant_id()
 	GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*AccessRequest, error)
+	//GetAccessRequestStats
+	//
+	//  SELECT
+	//      COUNT(*) as total_requests,
+	//      COUNT(*) FILTER (WHERE approval_status = 'PENDING') as pending_requests,
+	//      COUNT(*) FILTER (WHERE approval_status = 'APPROVED') as approved_requests,
+	//      COUNT(*) FILTER (WHERE approval_status = 'REJECTED') as rejected_requests,
+	//      COUNT(*) FILTER (WHERE approval_status = 'EXPIRED') as expired_requests,
+	//      COUNT(*) FILTER (WHERE approval_status = 'REVOKED') as revoked_requests,
+	//      COUNT(*) FILTER (WHERE request_type = 'ROLE_ASSIGNMENT') as role_assignment_requests,
+	//      COUNT(*) FILTER (WHERE request_type = 'PERMISSION_GRANT') as permission_grant_requests,
+	//      COUNT(*) FILTER (WHERE request_type = 'RESOURCE_ACCESS') as resource_access_requests,
+	//      COUNT(*) FILTER (WHERE request_type = 'ELEVATION') as elevation_requests,
+	//      COALESCE(AVG(EXTRACT(EPOCH FROM (approved_at - created_at))/3600) FILTER (WHERE approved_at IS NOT NULL), 0)::DECIMAL(5,2) as avg_approval_time_hours
+	//  FROM access_requests
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND ($1::timestamptz IS NULL OR created_at >= $1)
+	//    AND ($2::timestamptz IS NULL OR created_at <= $2)
+	GetAccessRequestStats(ctx context.Context, arg GetAccessRequestStatsParams) (*GetAccessRequestStatsRow, error)
+	//GetAccessRequestsWithDetails
+	//
+	//  SELECT
+	//      ar.id, ar.tenant_id, ar.requester_id, ar.target_user_id, ar.entity_id, ar.request_type, ar.role_id, ar.permission_id, ar.resource_id, ar.justification, ar.business_reason, ar.duration_hours, ar.approval_status, ar.approved_by, ar.approved_at, ar.approval_comments, ar.expires_at, ar.auto_revoke, ar.created_at, ar.updated_at,
+	//      -- Requester details
+	//      ru.username as requester_username, ru.email as requester_email,
+	//      rp.first_name as requester_first_name, rp.last_name as requester_last_name,
+	//      -- Target user details (if different from requester)
+	//      tu.username as target_username, tu.email as target_email,
+	//      tp.first_name as target_first_name, tp.last_name as target_last_name,
+	//      -- Role details
+	//      r.name as role_name, r.display_name as role_display_name,
+	//      -- Permission details
+	//      perm.name as permission_name, perm.display_name as permission_display_name,
+	//      -- Resource details
+	//      res.name as resource_name, res.display_name as resource_display_name,
+	//      -- Approver details
+	//      au.username as approver_username, au.email as approver_email,
+	//      ap.first_name as approver_first_name, ap.last_name as approver_last_name
+	//  FROM access_requests ar
+	//  LEFT JOIN users ru ON ar.requester_id = ru.id AND ru.tenant_id = current_tenant_id()
+	//  LEFT JOIN persons rp ON ru.person_id = rp.id AND rp.tenant_id = current_tenant_id()
+	//  LEFT JOIN users tu ON ar.target_user_id = tu.id AND tu.tenant_id = current_tenant_id()
+	//  LEFT JOIN persons tp ON tu.person_id = tp.id AND tp.tenant_id = current_tenant_id()
+	//  LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+	//  LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+	//  LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+	//  LEFT JOIN users au ON ar.approved_by = au.id AND au.tenant_id = current_tenant_id()
+	//  LEFT JOIN persons ap ON au.person_id = ap.id AND ap.tenant_id = current_tenant_id()
+	//  WHERE ar.tenant_id = current_tenant_id()
+	//    AND ($1::varchar IS NULL OR ar.approval_status = $1)
+	//    AND ($2::uuid IS NULL OR ar.requester_id = $2)
+	//    AND ($3::uuid IS NULL OR ar.target_user_id = $3)
+	//    AND ($4::uuid IS NULL OR ar.entity_id = $4)
+	//    AND ($5::varchar IS NULL OR ar.request_type = $5)
+	//    AND ($6::bool IS NULL OR ($6 = true) OR (ar.expires_at IS NULL OR ar.expires_at > NOW()))
+	//  ORDER BY ar.created_at DESC
+	//  LIMIT $7 OFFSET $8
+	GetAccessRequestsWithDetails(ctx context.Context, arg GetAccessRequestsWithDetailsParams) ([]*GetAccessRequestsWithDetailsRow, error)
 	//GetActionByID
 	//
 	//  SELECT id, tenant_id, name, display_name, description, action_type, action_category, risk_level, requires_approval, is_active, created_at FROM actions
@@ -950,7 +1008,7 @@ type Querier interface {
 	//
 	//
 	//  SELECT
-	//      u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at,
+	//      u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required,
 	//      p.first_name, p.last_name, p.middle_name, p.email as person_email,
 	//      p.phone, p.birth_date, p.national_id, p.address, p.security_attributes as person_security_attributes,
 	//      e.id as employee_id, e.employee_number, e.position_title, e.department_id,
@@ -1013,7 +1071,7 @@ type Querier interface {
 	//
 	//
 	//  SELECT get_current_tenant_id()
-	GetCurrentTenantID(ctx context.Context) (uuid.UUID, error)
+	GetCurrentTenantID(ctx context.Context) (interface{}, error)
 	// Current tenant revenue analytics (RLS-aware)
 	//
 	//  SELECT
@@ -1540,6 +1598,26 @@ type Querier interface {
 	//  WHERE approval_status = 'PENDING' AND tenant_id = current_tenant_id()
 	//  ORDER BY created_at
 	GetPendingAccessRequests(ctx context.Context) ([]*AccessRequest, error)
+	//GetPendingRequestsForApprover
+	//
+	//  SELECT ar.id, ar.tenant_id, ar.requester_id, ar.target_user_id, ar.entity_id, ar.request_type, ar.role_id, ar.permission_id, ar.resource_id, ar.justification, ar.business_reason, ar.duration_hours, ar.approval_status, ar.approved_by, ar.approved_at, ar.approval_comments, ar.expires_at, ar.auto_revoke, ar.created_at, ar.updated_at,
+	//         ru.username as requester_username, ru.email as requester_email,
+	//         rp.first_name as requester_first_name, rp.last_name as requester_last_name,
+	//         r.name as role_name,
+	//         perm.name as permission_name,
+	//         res.name as resource_name
+	//  FROM access_requests ar
+	//  LEFT JOIN users ru ON ar.requester_id = ru.id AND ru.tenant_id = current_tenant_id()
+	//  LEFT JOIN persons rp ON ru.person_id = rp.id AND rp.tenant_id = current_tenant_id()
+	//  LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+	//  LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+	//  LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+	//  WHERE ar.approval_status = 'PENDING'
+	//    AND ar.tenant_id = current_tenant_id()
+	//    AND (ar.expires_at IS NULL OR ar.expires_at > NOW())
+	//  ORDER BY ar.created_at
+	//  LIMIT $1 OFFSET $2
+	GetPendingRequestsForApprover(ctx context.Context, arg GetPendingRequestsForApproverParams) ([]*GetPendingRequestsForApproverRow, error)
 	//GetPermissionByID
 	//
 	//  SELECT id, tenant_id, resource_id, action_id, name, display_name, description, effect, conditions, data_filters, field_restrictions, is_active, created_at FROM permissions
@@ -1553,7 +1631,7 @@ type Querier interface {
 	GetPermissionByResourceAction(ctx context.Context, arg GetPermissionByResourceActionParams) (*Permission, error)
 	//GetPermissionUsers
 	//
-	//  SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, up.effect, up.reason, up.expires_at, up.granted_at
+	//  SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required, up.effect, up.reason, up.expires_at, up.granted_at
 	//  FROM user_permissions up
 	//  JOIN users u ON up.user_id = u.id
 	//  WHERE up.permission_id = $1 AND up.tenant_id = current_tenant_id()
@@ -1745,7 +1823,7 @@ type Querier interface {
 	GetRoleStatistics(ctx context.Context) (*GetRoleStatisticsRow, error)
 	//GetRoleUsers
 	//
-	//  SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, ur.assignment_type, ur.expires_at, ur.assigned_at
+	//  SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required, ur.assignment_type, ur.expires_at, ur.assigned_at
 	//  FROM user_roles ur
 	//  JOIN users u ON ur.user_id = u.id
 	//  WHERE ur.role_id = $1 AND u.tenant_id = current_tenant_id()
@@ -1808,13 +1886,13 @@ type Querier interface {
 	GetRolesSummary(ctx context.Context, dollar_1 uuid.UUID) ([]*RolePermissionsSummary, error)
 	//GetSessionByRefreshToken
 	//
-	//  SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active FROM user_sessions
+	//  SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at FROM user_sessions
 	//  WHERE refresh_token = $1 AND tenant_id = current_tenant_id()
 	//    AND is_active = true AND expires_at > NOW()
 	GetSessionByRefreshToken(ctx context.Context, refreshToken *string) (*UserSession, error)
 	//GetSessionByToken
 	//
-	//  SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active FROM user_sessions
+	//  SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at FROM user_sessions
 	//  WHERE session_token = $1 AND tenant_id = current_tenant_id()
 	//    AND is_active = true AND expires_at > NOW()
 	GetSessionByToken(ctx context.Context, sessionToken string) (*UserSession, error)
@@ -2009,6 +2087,21 @@ type Querier interface {
 	//      AND deleted_at IS NOT NULL
 	//  ORDER BY code
 	GetUnusedEntityCodes(ctx context.Context) ([]*string, error)
+	//GetUserAccessRequestHistory
+	//
+	//  SELECT ar.id, ar.tenant_id, ar.requester_id, ar.target_user_id, ar.entity_id, ar.request_type, ar.role_id, ar.permission_id, ar.resource_id, ar.justification, ar.business_reason, ar.duration_hours, ar.approval_status, ar.approved_by, ar.approved_at, ar.approval_comments, ar.expires_at, ar.auto_revoke, ar.created_at, ar.updated_at,
+	//         r.name as role_name,
+	//         perm.name as permission_name,
+	//         res.name as resource_name
+	//  FROM access_requests ar
+	//  LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+	//  LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+	//  LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+	//  WHERE ar.tenant_id = current_tenant_id()
+	//    AND (ar.requester_id = $1 OR ar.target_user_id = $1)
+	//  ORDER BY ar.created_at DESC
+	//  LIMIT $2 OFFSET $3
+	GetUserAccessRequestHistory(ctx context.Context, arg GetUserAccessRequestHistoryParams) ([]*GetUserAccessRequestHistoryRow, error)
 	//GetUserAuditEvents
 	//
 	//  SELECT id, tenant_id, event_type, event_category, severity, user_id, target_user_id, entity_id, resource_id, action_id, role_id, permission_id, decision, reason, risk_score, context, ip_address, user_agent, session_id, compliance_flags, created_at FROM audit_log
@@ -2019,17 +2112,17 @@ type Querier interface {
 	GetUserAuditEvents(ctx context.Context, arg GetUserAuditEventsParams) ([]*AuditLog, error)
 	//GetUserByEmail
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 	//  WHERE email = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	//GetUserByID
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
 	//GetUserByUsername
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 	//  WHERE username = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 	GetUserByUsername(ctx context.Context, username *string) (*User, error)
 	//GetUserComplete
@@ -2149,7 +2242,7 @@ type Querier interface {
 	GetUserSecuritySummary(ctx context.Context, id uuid.UUID) (*GetUserSecuritySummaryRow, error)
 	//GetUserSessions
 	//
-	//  SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active FROM user_sessions
+	//  SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at FROM user_sessions
 	//  WHERE user_id = $1 AND tenant_id = current_tenant_id() AND is_active = true
 	//  ORDER BY created_at DESC
 	GetUserSessions(ctx context.Context, userID uuid.UUID) ([]*UserSession, error)
@@ -2408,7 +2501,7 @@ type Querier interface {
 	ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Tenant, error)
 	//ListUsers
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 	//  WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
 	//    AND ($1::varchar IS NULL OR user_type = $1)
 	//    AND ($2::varchar IS NULL OR account_status = $2)
@@ -2538,7 +2631,7 @@ type Querier interface {
 	//  UPDATE user_sessions
 	//  SET refresh_token = $2, expires_at = $3, last_accessed_at = NOW()
 	//  WHERE session_token = $1 AND tenant_id = current_tenant_id() AND is_active = true
-	//  RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active
+	//  RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at
 	RefreshSession(ctx context.Context, arg RefreshSessionParams) (*UserSession, error)
 	//RejectAccessRequest
 	//
@@ -2587,6 +2680,13 @@ type Querier interface {
 	//  SET deleted_at = NULL, account_status = 'ACTIVE', updated_at = NOW()
 	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NOT NULL
 	RestoreSoftDeletedUser(ctx context.Context, id uuid.UUID) error
+	//RevokeAccessRequest
+	//
+	//  UPDATE access_requests
+	//  SET approval_status = 'REVOKED', updated_at = NOW()
+	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND approval_status = 'APPROVED'
+	//  RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+	RevokeAccessRequest(ctx context.Context, id uuid.UUID) (*AccessRequest, error)
 	//RevokeDirectPermission
 	//
 	//  UPDATE user_permissions
@@ -2764,6 +2864,14 @@ type Querier interface {
 	//      updated_at = NOW()
 	//  WHERE id = $1 AND tenant_id = current_tenant_id()
 	UnlockUser(ctx context.Context, id uuid.UUID) error
+	//UpdateAccessRequestStatus
+	//
+	//  UPDATE access_requests
+	//  SET approval_status = $2, approved_by = $3, approved_at = $4,
+	//      approval_comments = $5, duration_hours = $6, expires_at = $7, updated_at = NOW()
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+	UpdateAccessRequestStatus(ctx context.Context, arg UpdateAccessRequestStatusParams) (*AccessRequest, error)
 	//UpdateAction
 	//
 	//  UPDATE actions
@@ -3095,7 +3203,7 @@ type Querier interface {
 	//      session_timeout_minutes = $6, mfa_enabled = $7, user_attributes = $8,
 	//      settings = $9, updated_at = NOW()
 	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-	//  RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at
+	//  RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error)
 	//UpdateUserLastLogin
 	//
@@ -3128,7 +3236,7 @@ type Querier interface {
 	//      settings = COALESCE($13, settings),
 	//      updated_at = NOW()
 	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-	//  RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at
+	//  RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 	UpdateUserPartial(ctx context.Context, arg UpdateUserPartialParams) (*User, error)
 	//UpdateUserPassword
 	//

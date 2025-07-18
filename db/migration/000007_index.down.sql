@@ -24,13 +24,13 @@ DROP INDEX IF EXISTS idx_users_entity;
 DROP INDEX IF EXISTS idx_users_email;
 DROP INDEX IF EXISTS idx_users_type;
 
-DROP INDEX IF EXISTS idx_projects_tenant;
-DROP INDEX IF EXISTS idx_projects_entity;
-DROP INDEX IF EXISTS idx_projects_status;
+-- DROP INDEX IF EXISTS idx_projects_tenant;
+-- DROP INDEX IF EXISTS idx_projects_entity;
+-- DROP INDEX IF EXISTS idx_projects_status;
 
-DROP INDEX IF EXISTS idx_budgets_tenant;
-DROP INDEX IF EXISTS idx_budgets_entity;
-DROP INDEX IF EXISTS idx_budgets_year;
+-- DROP INDEX IF EXISTS idx_budgets_tenant;
+-- DROP INDEX IF EXISTS idx_budgets_entity;
+-- DROP INDEX IF EXISTS idx_budgets_year;
 
 DROP INDEX IF EXISTS idx_audit_logs_tenant;
 DROP INDEX IF EXISTS idx_audit_logs_user;
@@ -52,7 +52,7 @@ ALTER TABLE employees DISABLE ROW LEVEL SECURITY;
 ALTER TABLE users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE roles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE user_roles DISABLE ROW LEVEL SECURITY;
-ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
-ALTER TABLE budgets DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
+-- ALTER TABLE budgets DISABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
 -- ALTER TABLE chart_of_accounts DISABLE ROW LEVEL SECURITY;

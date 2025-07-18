@@ -17,13 +17,13 @@ type Tenant struct {
     Status             Status                 `json:"status"`
     Timezone           string                 `json:"timezone"`
     CurrencyCode       string                 `json:"currency_code"`
-    Metadata           map[string]interface{} `json:"metadata"`
+    Metadata           map[string]any `json:"metadata"`
     Industry           *string                `json:"industry"`
     CompanySize        *string                `json:"company_size"`
     TaxID              *string                `json:"tax_id"`
     RegistrationNumber *string                `json:"registration_number"`
     LegalEntityType    *string                `json:"legal_entity_type"`
-    Settings           map[string]interface{} `json:"settings"`
+    Settings           map[string]any `json:"settings"`
     CreatedAt          time.Time              `json:"created_at"`
     UpdatedAt          time.Time              `json:"updated_at"`
     DeletedAt          *time.Time             `json:"deleted_at,omitempty"`
@@ -31,14 +31,14 @@ type Tenant struct {
 
 // FromSQLCTenant converts SQLC Tenant to domain Tenant
 func FromSQLCTenant(sqlcTenant *db.Tenant) (*Tenant, error) {
-    var metadata map[string]interface{}
+    var metadata map[string]any
     if len(sqlcTenant.Metadata) > 0 {
         if err := json.Unmarshal(sqlcTenant.Metadata, &metadata); err != nil {
             return nil, err
         }
     }
     
-    var settings map[string]interface{}
+    var settings map[string]any
     if len(sqlcTenant.Settings) > 0 {
         if err := json.Unmarshal(sqlcTenant.Settings, &settings); err != nil {
             return nil, err
@@ -114,7 +114,7 @@ type CreateTenantRequest struct {
     TaxID              *string                `json:"tax_id,omitempty"`
     RegistrationNumber *string                `json:"registration_number,omitempty"`
     LegalEntityType    *string                `json:"legal_entity_type,omitempty"`
-    Settings           map[string]interface{} `json:"settings,omitempty"`
+    Settings           map[string]any `json:"settings,omitempty"`
 }
 
 // UpdateTenantRequest represents tenant update request  
@@ -128,5 +128,5 @@ type UpdateTenantRequest struct {
     TaxID              *string                `json:"tax_id,omitempty"`
     RegistrationNumber *string                `json:"registration_number,omitempty"`
     LegalEntityType    *string                `json:"legal_entity_type,omitempty"`
-    Settings           map[string]interface{} `json:"settings,omitempty"`
+    Settings           map[string]any `json:"settings,omitempty"`
 }

@@ -89,8 +89,6 @@ DROP POLICY IF EXISTS tenant_isolation_policy ON entities;
 -- =====================================================
 DROP FUNCTION IF EXISTS clear_tenant_context();
 DROP FUNCTION IF EXISTS set_tenant_context_uuid(UUID);
-DROP FUNCTION IF EXISTS current_tenant_id();
-
 -- Commit the transaction
 COMMIT;
 

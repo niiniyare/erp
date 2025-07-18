@@ -68,8 +68,8 @@ package user
 // 	TenantID     uuid.UUID              `json:"tenant_id" validate:"required"`
 // 	IPAddress    string                 `json:"ip_address"`
 // 	UserAgent    string                 `json:"user_agent"`
-// 	DeviceInfo   map[string]interface{} `json:"device_info"`
-// 	LocationInfo map[string]interface{} `json:"location_info"`
+// 	DeviceInfo   map[string]any `json:"device_info"`
+// 	LocationInfo map[string]any `json:"location_info"`
 // 	MFACode      string                 `json:"mfa_code"`
 // }
 //
@@ -308,7 +308,7 @@ package user
 // }
 //
 // func (s *AuthService) logSecurityEvent(ctx context.Context, eventType, category, severity string, userID uuid.UUID, ipAddress, reason string, riskScore int32) {
-// 	contextData := map[string]interface{}{
+// 	contextData := map[string]any{
 // 		"ip_address": ipAddress,
 // 		"timestamp":  time.Now(),
 // 	}

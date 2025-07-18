@@ -15,8 +15,8 @@
 -- =====================================================
 -- Drop foreign key constraints on 'tenants' from other modules.
 -- Ensure all tables that reference 'tenants.id' have their FKs dropped first.
-
 -- Core ERP module constraints
+
 ALTER TABLE IF EXISTS persons DROP CONSTRAINT IF EXISTS persons_tenant_id_fkey;
 ALTER TABLE IF EXISTS employees DROP CONSTRAINT IF EXISTS employees_tenant_id_fkey;
 ALTER TABLE IF EXISTS users DROP CONSTRAINT IF EXISTS users_tenant_id_fkey;
@@ -180,7 +180,6 @@ DROP FUNCTION IF EXISTS manage_rls_across_schemas(TEXT[], TEXT, TEXT, TEXT, BOOL
 -- Drop tenant context functions
 DROP FUNCTION IF EXISTS set_tenant_context_uuid(UUID);
 DROP FUNCTION IF EXISTS clear_tenant_context();
-DROP FUNCTION IF EXISTS current_tenant_id();
 
 -- =====================================================
 -- STEP 7: REVERT PERMISSIONS AND GRANTS
@@ -203,7 +202,7 @@ END $$;
 
 DO $$
 BEGIN
-    REVOKE EXECUTE ON FUNCTION get_current_tenant_id() FROM application_role;
+    REVOKE EXECUTE ON FUNCTION current_tenant_id() FROM application_role;
 EXCEPTION
     WHEN undefined_function THEN
         -- Function doesn't exist, skip
@@ -231,8 +230,6 @@ ALTER TABLE tenant_usage_stats DISABLE ROW LEVEL SECURITY;
 -- Drop tenant limits checking function
 DROP FUNCTION IF EXISTS check_tenant_limits(UUID, VARCHAR, INT);
 
--- Drop get current tenant ID function
-DROP FUNCTION IF EXISTS get_current_tenant_id();
 
 -- Drop set tenant context function
 DROP FUNCTION IF EXISTS set_tenant_context(UUID);
@@ -261,6 +258,9 @@ DROP INDEX IF EXISTS idx_tenants_subdomain;
 DROP INDEX IF EXISTS idx_tenants_status;
 DROP INDEX IF EXISTS idx_tenants_slug;
 DROP TABLE IF EXISTS tenants;
+
+-- Drop get current tenant ID function
+DROP FUNCTION IF EXISTS current_tenant_id();
 
 -- =====================================================
 -- STEP 12: REVERT ROLES AND PERMISSIONS

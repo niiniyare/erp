@@ -246,6 +246,22 @@ CREATE INDEX idx_entities_address_gin ON entities USING gin(address);
 -- 4. For soft deletion queries:
 CREATE INDEX idx_entities_deleted_at ON entities(deleted_at) WHERE deleted_at IS NOT NULL;
 
+CREATE INDEX idx_entities_tenant ON entities(tenant_id);
+CREATE INDEX idx_entities_parent ON entities(parent_id);
+CREATE INDEX idx_entities_type ON entities(type);
+CREATE INDEX idx_hierarchy_paths_tenant ON hierarchy_paths(tenant_id);
+CREATE INDEX idx_hierarchy_paths_ancestor ON hierarchy_paths(ancestor_id);
+
+
+
+-- Entity management policies
+
+CREATE POLICY tenant_isolation_policy ON entities 
+    USING (tenant_id = current_tenant_id());
+
+CREATE POLICY tenant_isolation_policy ON hierarchy_paths 
+    USING (tenant_id = current_tenant_id());
+
 -- =====================================================================
 -- MAINTENANCE CONSIDERATIONS
 -- =====================================================================

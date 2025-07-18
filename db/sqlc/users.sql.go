@@ -1102,7 +1102,7 @@ INSERT INTO user_sessions (
     user_agent, device_info, location_info, expires_at
 ) VALUES (
     current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active
+) RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at
 `
 
 type CreateSessionParams struct {
@@ -1125,7 +1125,7 @@ type CreateSessionParams struct {
 //	    user_agent, device_info, location_info, expires_at
 //	) VALUES (
 //	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8
-//	) RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active
+//	) RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (*UserSession, error) {
 	row := q.db.QueryRow(ctx, createSession,
 		arg.UserID,
@@ -1152,6 +1152,9 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (*
 		&i.CreatedAt,
 		&i.LastAccessedAt,
 		&i.IsActive,
+		&i.RiskScore,
+		&i.AnomalyFlags,
+		&i.MfaVerifiedAt,
 	)
 	return &i, err
 }
@@ -1164,7 +1167,7 @@ INSERT INTO users (
     mfa_enabled, user_attributes, settings
 ) VALUES (
     current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at
+) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 `
 
 type CreateUserParams struct {
@@ -1192,7 +1195,7 @@ type CreateUserParams struct {
 //	    mfa_enabled, user_attributes, settings
 //	) VALUES (
 //	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-//	) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at
+//	) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.EntityID,
@@ -1233,6 +1236,9 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.PasswordStrength,
+		&i.Compromised,
+		&i.RotationRequired,
 	)
 	return &i, err
 }
@@ -1368,6 +1374,278 @@ func (q *Queries) GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*Acce
 		&i.UpdatedAt,
 	)
 	return &i, err
+}
+
+const getAccessRequestStats = `-- name: GetAccessRequestStats :one
+SELECT 
+    COUNT(*) as total_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'PENDING') as pending_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'APPROVED') as approved_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'REJECTED') as rejected_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'EXPIRED') as expired_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'REVOKED') as revoked_requests,
+    COUNT(*) FILTER (WHERE request_type = 'ROLE_ASSIGNMENT') as role_assignment_requests,
+    COUNT(*) FILTER (WHERE request_type = 'PERMISSION_GRANT') as permission_grant_requests,
+    COUNT(*) FILTER (WHERE request_type = 'RESOURCE_ACCESS') as resource_access_requests,
+    COUNT(*) FILTER (WHERE request_type = 'ELEVATION') as elevation_requests,
+    COALESCE(AVG(EXTRACT(EPOCH FROM (approved_at - created_at))/3600) FILTER (WHERE approved_at IS NOT NULL), 0)::DECIMAL(5,2) as avg_approval_time_hours
+FROM access_requests
+WHERE tenant_id = current_tenant_id()
+  AND ($1::timestamptz IS NULL OR created_at >= $1)
+  AND ($2::timestamptz IS NULL OR created_at <= $2)
+`
+
+type GetAccessRequestStatsParams struct {
+	FromDate time.Time `json:"from_date"`
+	ToDate   time.Time `json:"to_date"`
+}
+
+type GetAccessRequestStatsRow struct {
+	TotalRequests           int64          `json:"total_requests"`
+	PendingRequests         int64          `json:"pending_requests"`
+	ApprovedRequests        int64          `json:"approved_requests"`
+	RejectedRequests        int64          `json:"rejected_requests"`
+	ExpiredRequests         int64          `json:"expired_requests"`
+	RevokedRequests         int64          `json:"revoked_requests"`
+	RoleAssignmentRequests  int64          `json:"role_assignment_requests"`
+	PermissionGrantRequests int64          `json:"permission_grant_requests"`
+	ResourceAccessRequests  int64          `json:"resource_access_requests"`
+	ElevationRequests       int64          `json:"elevation_requests"`
+	AvgApprovalTimeHours    pgtype.Numeric `json:"avg_approval_time_hours"`
+}
+
+// GetAccessRequestStats
+//
+//	SELECT
+//	    COUNT(*) as total_requests,
+//	    COUNT(*) FILTER (WHERE approval_status = 'PENDING') as pending_requests,
+//	    COUNT(*) FILTER (WHERE approval_status = 'APPROVED') as approved_requests,
+//	    COUNT(*) FILTER (WHERE approval_status = 'REJECTED') as rejected_requests,
+//	    COUNT(*) FILTER (WHERE approval_status = 'EXPIRED') as expired_requests,
+//	    COUNT(*) FILTER (WHERE approval_status = 'REVOKED') as revoked_requests,
+//	    COUNT(*) FILTER (WHERE request_type = 'ROLE_ASSIGNMENT') as role_assignment_requests,
+//	    COUNT(*) FILTER (WHERE request_type = 'PERMISSION_GRANT') as permission_grant_requests,
+//	    COUNT(*) FILTER (WHERE request_type = 'RESOURCE_ACCESS') as resource_access_requests,
+//	    COUNT(*) FILTER (WHERE request_type = 'ELEVATION') as elevation_requests,
+//	    COALESCE(AVG(EXTRACT(EPOCH FROM (approved_at - created_at))/3600) FILTER (WHERE approved_at IS NOT NULL), 0)::DECIMAL(5,2) as avg_approval_time_hours
+//	FROM access_requests
+//	WHERE tenant_id = current_tenant_id()
+//	  AND ($1::timestamptz IS NULL OR created_at >= $1)
+//	  AND ($2::timestamptz IS NULL OR created_at <= $2)
+func (q *Queries) GetAccessRequestStats(ctx context.Context, arg GetAccessRequestStatsParams) (*GetAccessRequestStatsRow, error) {
+	row := q.db.QueryRow(ctx, getAccessRequestStats, arg.FromDate, arg.ToDate)
+	var i GetAccessRequestStatsRow
+	err := row.Scan(
+		&i.TotalRequests,
+		&i.PendingRequests,
+		&i.ApprovedRequests,
+		&i.RejectedRequests,
+		&i.ExpiredRequests,
+		&i.RevokedRequests,
+		&i.RoleAssignmentRequests,
+		&i.PermissionGrantRequests,
+		&i.ResourceAccessRequests,
+		&i.ElevationRequests,
+		&i.AvgApprovalTimeHours,
+	)
+	return &i, err
+}
+
+const getAccessRequestsWithDetails = `-- name: GetAccessRequestsWithDetails :many
+SELECT 
+    ar.id, ar.tenant_id, ar.requester_id, ar.target_user_id, ar.entity_id, ar.request_type, ar.role_id, ar.permission_id, ar.resource_id, ar.justification, ar.business_reason, ar.duration_hours, ar.approval_status, ar.approved_by, ar.approved_at, ar.approval_comments, ar.expires_at, ar.auto_revoke, ar.created_at, ar.updated_at,
+    -- Requester details
+    ru.username as requester_username, ru.email as requester_email,
+    rp.first_name as requester_first_name, rp.last_name as requester_last_name,
+    -- Target user details (if different from requester)
+    tu.username as target_username, tu.email as target_email,
+    tp.first_name as target_first_name, tp.last_name as target_last_name,
+    -- Role details
+    r.name as role_name, r.display_name as role_display_name,
+    -- Permission details
+    perm.name as permission_name, perm.display_name as permission_display_name,
+    -- Resource details
+    res.name as resource_name, res.display_name as resource_display_name,
+    -- Approver details
+    au.username as approver_username, au.email as approver_email,
+    ap.first_name as approver_first_name, ap.last_name as approver_last_name
+FROM access_requests ar
+LEFT JOIN users ru ON ar.requester_id = ru.id AND ru.tenant_id = current_tenant_id()
+LEFT JOIN persons rp ON ru.person_id = rp.id AND rp.tenant_id = current_tenant_id()
+LEFT JOIN users tu ON ar.target_user_id = tu.id AND tu.tenant_id = current_tenant_id()
+LEFT JOIN persons tp ON tu.person_id = tp.id AND tp.tenant_id = current_tenant_id()
+LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+LEFT JOIN users au ON ar.approved_by = au.id AND au.tenant_id = current_tenant_id()
+LEFT JOIN persons ap ON au.person_id = ap.id AND ap.tenant_id = current_tenant_id()
+WHERE ar.tenant_id = current_tenant_id()
+  AND ($1::varchar IS NULL OR ar.approval_status = $1)
+  AND ($2::uuid IS NULL OR ar.requester_id = $2)
+  AND ($3::uuid IS NULL OR ar.target_user_id = $3)
+  AND ($4::uuid IS NULL OR ar.entity_id = $4)
+  AND ($5::varchar IS NULL OR ar.request_type = $5)
+  AND ($6::bool IS NULL OR ($6 = true) OR (ar.expires_at IS NULL OR ar.expires_at > NOW()))
+ORDER BY ar.created_at DESC
+LIMIT $7 OFFSET $8
+`
+
+type GetAccessRequestsWithDetailsParams struct {
+	Column1 string    `json:"column_1"`
+	Column2 uuid.UUID `json:"column_2"`
+	Column3 uuid.UUID `json:"column_3"`
+	Column4 uuid.UUID `json:"column_4"`
+	Column5 string    `json:"column_5"`
+	Column6 bool      `json:"column_6"`
+	Limit   int32     `json:"limit"`
+	Offset  int32     `json:"offset"`
+}
+
+type GetAccessRequestsWithDetailsRow struct {
+	ID                    uuid.UUID    `json:"id"`
+	TenantID              uuid.UUID    `json:"tenant_id"`
+	RequesterID           uuid.UUID    `json:"requester_id"`
+	TargetUserID          *uuid.UUID   `json:"target_user_id"`
+	EntityID              uuid.UUID    `json:"entity_id"`
+	RequestType           string       `json:"request_type"`
+	RoleID                *uuid.UUID   `json:"role_id"`
+	PermissionID          *uuid.UUID   `json:"permission_id"`
+	ResourceID            *uuid.UUID   `json:"resource_id"`
+	Justification         string       `json:"justification"`
+	BusinessReason        *string      `json:"business_reason"`
+	DurationHours         *int32       `json:"duration_hours"`
+	ApprovalStatus        *string      `json:"approval_status"`
+	ApprovedBy            *uuid.UUID   `json:"approved_by"`
+	ApprovedAt            sql.NullTime `json:"approved_at"`
+	ApprovalComments      string       `json:"approval_comments"`
+	ExpiresAt             sql.NullTime `json:"expires_at"`
+	AutoRevoke            *bool        `json:"auto_revoke"`
+	CreatedAt             sql.NullTime `json:"created_at"`
+	UpdatedAt             sql.NullTime `json:"updated_at"`
+	RequesterUsername     *string      `json:"requester_username"`
+	RequesterEmail        *string      `json:"requester_email"`
+	RequesterFirstName    *string      `json:"requester_first_name"`
+	RequesterLastName     *string      `json:"requester_last_name"`
+	TargetUsername        *string      `json:"target_username"`
+	TargetEmail           *string      `json:"target_email"`
+	TargetFirstName       *string      `json:"target_first_name"`
+	TargetLastName        *string      `json:"target_last_name"`
+	RoleName              *string      `json:"role_name"`
+	RoleDisplayName       *string      `json:"role_display_name"`
+	PermissionName        *string      `json:"permission_name"`
+	PermissionDisplayName *string      `json:"permission_display_name"`
+	ResourceName          *string      `json:"resource_name"`
+	ResourceDisplayName   *string      `json:"resource_display_name"`
+	ApproverUsername      *string      `json:"approver_username"`
+	ApproverEmail         *string      `json:"approver_email"`
+	ApproverFirstName     *string      `json:"approver_first_name"`
+	ApproverLastName      *string      `json:"approver_last_name"`
+}
+
+// GetAccessRequestsWithDetails
+//
+//	SELECT
+//	    ar.id, ar.tenant_id, ar.requester_id, ar.target_user_id, ar.entity_id, ar.request_type, ar.role_id, ar.permission_id, ar.resource_id, ar.justification, ar.business_reason, ar.duration_hours, ar.approval_status, ar.approved_by, ar.approved_at, ar.approval_comments, ar.expires_at, ar.auto_revoke, ar.created_at, ar.updated_at,
+//	    -- Requester details
+//	    ru.username as requester_username, ru.email as requester_email,
+//	    rp.first_name as requester_first_name, rp.last_name as requester_last_name,
+//	    -- Target user details (if different from requester)
+//	    tu.username as target_username, tu.email as target_email,
+//	    tp.first_name as target_first_name, tp.last_name as target_last_name,
+//	    -- Role details
+//	    r.name as role_name, r.display_name as role_display_name,
+//	    -- Permission details
+//	    perm.name as permission_name, perm.display_name as permission_display_name,
+//	    -- Resource details
+//	    res.name as resource_name, res.display_name as resource_display_name,
+//	    -- Approver details
+//	    au.username as approver_username, au.email as approver_email,
+//	    ap.first_name as approver_first_name, ap.last_name as approver_last_name
+//	FROM access_requests ar
+//	LEFT JOIN users ru ON ar.requester_id = ru.id AND ru.tenant_id = current_tenant_id()
+//	LEFT JOIN persons rp ON ru.person_id = rp.id AND rp.tenant_id = current_tenant_id()
+//	LEFT JOIN users tu ON ar.target_user_id = tu.id AND tu.tenant_id = current_tenant_id()
+//	LEFT JOIN persons tp ON tu.person_id = tp.id AND tp.tenant_id = current_tenant_id()
+//	LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+//	LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+//	LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+//	LEFT JOIN users au ON ar.approved_by = au.id AND au.tenant_id = current_tenant_id()
+//	LEFT JOIN persons ap ON au.person_id = ap.id AND ap.tenant_id = current_tenant_id()
+//	WHERE ar.tenant_id = current_tenant_id()
+//	  AND ($1::varchar IS NULL OR ar.approval_status = $1)
+//	  AND ($2::uuid IS NULL OR ar.requester_id = $2)
+//	  AND ($3::uuid IS NULL OR ar.target_user_id = $3)
+//	  AND ($4::uuid IS NULL OR ar.entity_id = $4)
+//	  AND ($5::varchar IS NULL OR ar.request_type = $5)
+//	  AND ($6::bool IS NULL OR ($6 = true) OR (ar.expires_at IS NULL OR ar.expires_at > NOW()))
+//	ORDER BY ar.created_at DESC
+//	LIMIT $7 OFFSET $8
+func (q *Queries) GetAccessRequestsWithDetails(ctx context.Context, arg GetAccessRequestsWithDetailsParams) ([]*GetAccessRequestsWithDetailsRow, error) {
+	rows, err := q.db.Query(ctx, getAccessRequestsWithDetails,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+		arg.Column5,
+		arg.Column6,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetAccessRequestsWithDetailsRow{}
+	for rows.Next() {
+		var i GetAccessRequestsWithDetailsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.RequesterID,
+			&i.TargetUserID,
+			&i.EntityID,
+			&i.RequestType,
+			&i.RoleID,
+			&i.PermissionID,
+			&i.ResourceID,
+			&i.Justification,
+			&i.BusinessReason,
+			&i.DurationHours,
+			&i.ApprovalStatus,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
+			&i.ApprovalComments,
+			&i.ExpiresAt,
+			&i.AutoRevoke,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RequesterUsername,
+			&i.RequesterEmail,
+			&i.RequesterFirstName,
+			&i.RequesterLastName,
+			&i.TargetUsername,
+			&i.TargetEmail,
+			&i.TargetFirstName,
+			&i.TargetLastName,
+			&i.RoleName,
+			&i.RoleDisplayName,
+			&i.PermissionName,
+			&i.PermissionDisplayName,
+			&i.ResourceName,
+			&i.ResourceDisplayName,
+			&i.ApproverUsername,
+			&i.ApproverEmail,
+			&i.ApproverFirstName,
+			&i.ApproverLastName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getActionByID = `-- name: GetActionByID :one
@@ -1849,7 +2127,7 @@ func (q *Queries) GetCompleteEmployeeHierarchy(ctx context.Context, id uuid.UUID
 const getCompleteUserProfile = `-- name: GetCompleteUserProfile :one
 
 SELECT 
-    u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at,
+    u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required,
     p.first_name, p.last_name, p.middle_name, p.email as person_email, 
     p.phone, p.birth_date, p.national_id, p.address, p.security_attributes as person_security_attributes,
     e.id as employee_id, e.employee_number, e.position_title, e.department_id,
@@ -1897,6 +2175,9 @@ type GetCompleteUserProfileRow struct {
 	CreatedAt                time.Time    `json:"created_at"`
 	UpdatedAt                time.Time    `json:"updated_at"`
 	DeletedAt                sql.NullTime `json:"deleted_at"`
+	PasswordStrength         *int32       `json:"password_strength"`
+	Compromised              *bool        `json:"compromised"`
+	RotationRequired         *bool        `json:"rotation_required"`
 	FirstName                *string      `json:"first_name"`
 	LastName                 *string      `json:"last_name"`
 	MiddleName               *string      `json:"middle_name"`
@@ -1927,7 +2208,7 @@ type GetCompleteUserProfileRow struct {
 // ================================================================================================
 //
 //	SELECT
-//	    u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at,
+//	    u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required,
 //	    p.first_name, p.last_name, p.middle_name, p.email as person_email,
 //	    p.phone, p.birth_date, p.national_id, p.address, p.security_attributes as person_security_attributes,
 //	    e.id as employee_id, e.employee_number, e.position_title, e.department_id,
@@ -1976,6 +2257,9 @@ func (q *Queries) GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*Ge
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.PasswordStrength,
+		&i.Compromised,
+		&i.RotationRequired,
 		&i.FirstName,
 		&i.LastName,
 		&i.MiddleName,
@@ -2891,6 +3175,128 @@ func (q *Queries) GetPendingAccessRequests(ctx context.Context) ([]*AccessReques
 	return items, nil
 }
 
+const getPendingRequestsForApprover = `-- name: GetPendingRequestsForApprover :many
+SELECT ar.id, ar.tenant_id, ar.requester_id, ar.target_user_id, ar.entity_id, ar.request_type, ar.role_id, ar.permission_id, ar.resource_id, ar.justification, ar.business_reason, ar.duration_hours, ar.approval_status, ar.approved_by, ar.approved_at, ar.approval_comments, ar.expires_at, ar.auto_revoke, ar.created_at, ar.updated_at, 
+       ru.username as requester_username, ru.email as requester_email,
+       rp.first_name as requester_first_name, rp.last_name as requester_last_name,
+       r.name as role_name, 
+       perm.name as permission_name, 
+       res.name as resource_name
+FROM access_requests ar
+LEFT JOIN users ru ON ar.requester_id = ru.id AND ru.tenant_id = current_tenant_id()
+LEFT JOIN persons rp ON ru.person_id = rp.id AND rp.tenant_id = current_tenant_id()
+LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+WHERE ar.approval_status = 'PENDING' 
+  AND ar.tenant_id = current_tenant_id()
+  AND (ar.expires_at IS NULL OR ar.expires_at > NOW())
+ORDER BY ar.created_at
+LIMIT $1 OFFSET $2
+`
+
+type GetPendingRequestsForApproverParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type GetPendingRequestsForApproverRow struct {
+	ID                 uuid.UUID    `json:"id"`
+	TenantID           uuid.UUID    `json:"tenant_id"`
+	RequesterID        uuid.UUID    `json:"requester_id"`
+	TargetUserID       *uuid.UUID   `json:"target_user_id"`
+	EntityID           uuid.UUID    `json:"entity_id"`
+	RequestType        string       `json:"request_type"`
+	RoleID             *uuid.UUID   `json:"role_id"`
+	PermissionID       *uuid.UUID   `json:"permission_id"`
+	ResourceID         *uuid.UUID   `json:"resource_id"`
+	Justification      string       `json:"justification"`
+	BusinessReason     *string      `json:"business_reason"`
+	DurationHours      *int32       `json:"duration_hours"`
+	ApprovalStatus     *string      `json:"approval_status"`
+	ApprovedBy         *uuid.UUID   `json:"approved_by"`
+	ApprovedAt         sql.NullTime `json:"approved_at"`
+	ApprovalComments   string       `json:"approval_comments"`
+	ExpiresAt          sql.NullTime `json:"expires_at"`
+	AutoRevoke         *bool        `json:"auto_revoke"`
+	CreatedAt          sql.NullTime `json:"created_at"`
+	UpdatedAt          sql.NullTime `json:"updated_at"`
+	RequesterUsername  *string      `json:"requester_username"`
+	RequesterEmail     *string      `json:"requester_email"`
+	RequesterFirstName *string      `json:"requester_first_name"`
+	RequesterLastName  *string      `json:"requester_last_name"`
+	RoleName           *string      `json:"role_name"`
+	PermissionName     *string      `json:"permission_name"`
+	ResourceName       *string      `json:"resource_name"`
+}
+
+// GetPendingRequestsForApprover
+//
+//	SELECT ar.id, ar.tenant_id, ar.requester_id, ar.target_user_id, ar.entity_id, ar.request_type, ar.role_id, ar.permission_id, ar.resource_id, ar.justification, ar.business_reason, ar.duration_hours, ar.approval_status, ar.approved_by, ar.approved_at, ar.approval_comments, ar.expires_at, ar.auto_revoke, ar.created_at, ar.updated_at,
+//	       ru.username as requester_username, ru.email as requester_email,
+//	       rp.first_name as requester_first_name, rp.last_name as requester_last_name,
+//	       r.name as role_name,
+//	       perm.name as permission_name,
+//	       res.name as resource_name
+//	FROM access_requests ar
+//	LEFT JOIN users ru ON ar.requester_id = ru.id AND ru.tenant_id = current_tenant_id()
+//	LEFT JOIN persons rp ON ru.person_id = rp.id AND rp.tenant_id = current_tenant_id()
+//	LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+//	LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+//	LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+//	WHERE ar.approval_status = 'PENDING'
+//	  AND ar.tenant_id = current_tenant_id()
+//	  AND (ar.expires_at IS NULL OR ar.expires_at > NOW())
+//	ORDER BY ar.created_at
+//	LIMIT $1 OFFSET $2
+func (q *Queries) GetPendingRequestsForApprover(ctx context.Context, arg GetPendingRequestsForApproverParams) ([]*GetPendingRequestsForApproverRow, error) {
+	rows, err := q.db.Query(ctx, getPendingRequestsForApprover, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetPendingRequestsForApproverRow{}
+	for rows.Next() {
+		var i GetPendingRequestsForApproverRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.RequesterID,
+			&i.TargetUserID,
+			&i.EntityID,
+			&i.RequestType,
+			&i.RoleID,
+			&i.PermissionID,
+			&i.ResourceID,
+			&i.Justification,
+			&i.BusinessReason,
+			&i.DurationHours,
+			&i.ApprovalStatus,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
+			&i.ApprovalComments,
+			&i.ExpiresAt,
+			&i.AutoRevoke,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RequesterUsername,
+			&i.RequesterEmail,
+			&i.RequesterFirstName,
+			&i.RequesterLastName,
+			&i.RoleName,
+			&i.PermissionName,
+			&i.ResourceName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPermissionByID = `-- name: GetPermissionByID :one
 SELECT id, tenant_id, resource_id, action_id, name, display_name, description, effect, conditions, data_filters, field_restrictions, is_active, created_at FROM permissions 
 WHERE id = $1 AND tenant_id = current_tenant_id()
@@ -2960,7 +3366,7 @@ func (q *Queries) GetPermissionByResourceAction(ctx context.Context, arg GetPerm
 }
 
 const getPermissionUsers = `-- name: GetPermissionUsers :many
-SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, up.effect, up.reason, up.expires_at, up.granted_at
+SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required, up.effect, up.reason, up.expires_at, up.granted_at
 FROM user_permissions up
 JOIN users u ON up.user_id = u.id
 WHERE up.permission_id = $1 AND up.tenant_id = current_tenant_id()
@@ -2993,6 +3399,9 @@ type GetPermissionUsersRow struct {
 	CreatedAt             time.Time    `json:"created_at"`
 	UpdatedAt             time.Time    `json:"updated_at"`
 	DeletedAt             sql.NullTime `json:"deleted_at"`
+	PasswordStrength      *int32       `json:"password_strength"`
+	Compromised           *bool        `json:"compromised"`
+	RotationRequired      *bool        `json:"rotation_required"`
 	Effect                *string      `json:"effect"`
 	Reason                string       `json:"reason"`
 	ExpiresAt             sql.NullTime `json:"expires_at"`
@@ -3001,7 +3410,7 @@ type GetPermissionUsersRow struct {
 
 // GetPermissionUsers
 //
-//	SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, up.effect, up.reason, up.expires_at, up.granted_at
+//	SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required, up.effect, up.reason, up.expires_at, up.granted_at
 //	FROM user_permissions up
 //	JOIN users u ON up.user_id = u.id
 //	WHERE up.permission_id = $1 AND up.tenant_id = current_tenant_id()
@@ -3041,6 +3450,9 @@ func (q *Queries) GetPermissionUsers(ctx context.Context, permissionID uuid.UUID
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.PasswordStrength,
+			&i.Compromised,
+			&i.RotationRequired,
 			&i.Effect,
 			&i.Reason,
 			&i.ExpiresAt,
@@ -3892,7 +4304,7 @@ func (q *Queries) GetRoleStatistics(ctx context.Context) (*GetRoleStatisticsRow,
 }
 
 const getRoleUsers = `-- name: GetRoleUsers :many
-SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, ur.assignment_type, ur.expires_at, ur.assigned_at
+SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required, ur.assignment_type, ur.expires_at, ur.assigned_at
 FROM user_roles ur
 JOIN users u ON ur.user_id = u.id
 WHERE ur.role_id = $1 AND u.tenant_id = current_tenant_id()
@@ -3925,6 +4337,9 @@ type GetRoleUsersRow struct {
 	CreatedAt             time.Time    `json:"created_at"`
 	UpdatedAt             time.Time    `json:"updated_at"`
 	DeletedAt             sql.NullTime `json:"deleted_at"`
+	PasswordStrength      *int32       `json:"password_strength"`
+	Compromised           *bool        `json:"compromised"`
+	RotationRequired      *bool        `json:"rotation_required"`
 	AssignmentType        *string      `json:"assignment_type"`
 	ExpiresAt             sql.NullTime `json:"expires_at"`
 	AssignedAt            time.Time    `json:"assigned_at"`
@@ -3932,7 +4347,7 @@ type GetRoleUsersRow struct {
 
 // GetRoleUsers
 //
-//	SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, ur.assignment_type, ur.expires_at, ur.assigned_at
+//	SELECT u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required, ur.assignment_type, ur.expires_at, ur.assigned_at
 //	FROM user_roles ur
 //	JOIN users u ON ur.user_id = u.id
 //	WHERE ur.role_id = $1 AND u.tenant_id = current_tenant_id()
@@ -3972,6 +4387,9 @@ func (q *Queries) GetRoleUsers(ctx context.Context, roleID uuid.UUID) ([]*GetRol
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.PasswordStrength,
+			&i.Compromised,
+			&i.RotationRequired,
 			&i.AssignmentType,
 			&i.ExpiresAt,
 			&i.AssignedAt,
@@ -4249,14 +4667,14 @@ func (q *Queries) GetRolesSummary(ctx context.Context, dollar_1 uuid.UUID) ([]*R
 }
 
 const getSessionByRefreshToken = `-- name: GetSessionByRefreshToken :one
-SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active FROM user_sessions 
+SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at FROM user_sessions 
 WHERE refresh_token = $1 AND tenant_id = current_tenant_id()
   AND is_active = true AND expires_at > NOW()
 `
 
 // GetSessionByRefreshToken
 //
-//	SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active FROM user_sessions
+//	SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at FROM user_sessions
 //	WHERE refresh_token = $1 AND tenant_id = current_tenant_id()
 //	  AND is_active = true AND expires_at > NOW()
 func (q *Queries) GetSessionByRefreshToken(ctx context.Context, refreshToken *string) (*UserSession, error) {
@@ -4276,19 +4694,22 @@ func (q *Queries) GetSessionByRefreshToken(ctx context.Context, refreshToken *st
 		&i.CreatedAt,
 		&i.LastAccessedAt,
 		&i.IsActive,
+		&i.RiskScore,
+		&i.AnomalyFlags,
+		&i.MfaVerifiedAt,
 	)
 	return &i, err
 }
 
 const getSessionByToken = `-- name: GetSessionByToken :one
-SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active FROM user_sessions 
+SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at FROM user_sessions 
 WHERE session_token = $1 AND tenant_id = current_tenant_id() 
   AND is_active = true AND expires_at > NOW()
 `
 
 // GetSessionByToken
 //
-//	SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active FROM user_sessions
+//	SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at FROM user_sessions
 //	WHERE session_token = $1 AND tenant_id = current_tenant_id()
 //	  AND is_active = true AND expires_at > NOW()
 func (q *Queries) GetSessionByToken(ctx context.Context, sessionToken string) (*UserSession, error) {
@@ -4308,6 +4729,9 @@ func (q *Queries) GetSessionByToken(ctx context.Context, sessionToken string) (*
 		&i.CreatedAt,
 		&i.LastAccessedAt,
 		&i.IsActive,
+		&i.RiskScore,
+		&i.AnomalyFlags,
+		&i.MfaVerifiedAt,
 	)
 	return &i, err
 }
@@ -4511,6 +4935,111 @@ func (q *Queries) GetTenantStatistics(ctx context.Context) (*GetTenantStatistics
 	return &i, err
 }
 
+const getUserAccessRequestHistory = `-- name: GetUserAccessRequestHistory :many
+SELECT ar.id, ar.tenant_id, ar.requester_id, ar.target_user_id, ar.entity_id, ar.request_type, ar.role_id, ar.permission_id, ar.resource_id, ar.justification, ar.business_reason, ar.duration_hours, ar.approval_status, ar.approved_by, ar.approved_at, ar.approval_comments, ar.expires_at, ar.auto_revoke, ar.created_at, ar.updated_at, 
+       r.name as role_name, 
+       perm.name as permission_name, 
+       res.name as resource_name
+FROM access_requests ar
+LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+WHERE ar.tenant_id = current_tenant_id()
+  AND (ar.requester_id = $1 OR ar.target_user_id = $1)
+ORDER BY ar.created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetUserAccessRequestHistoryParams struct {
+	RequesterID uuid.UUID `json:"requester_id"`
+	Limit       int32     `json:"limit"`
+	Offset      int32     `json:"offset"`
+}
+
+type GetUserAccessRequestHistoryRow struct {
+	ID               uuid.UUID    `json:"id"`
+	TenantID         uuid.UUID    `json:"tenant_id"`
+	RequesterID      uuid.UUID    `json:"requester_id"`
+	TargetUserID     *uuid.UUID   `json:"target_user_id"`
+	EntityID         uuid.UUID    `json:"entity_id"`
+	RequestType      string       `json:"request_type"`
+	RoleID           *uuid.UUID   `json:"role_id"`
+	PermissionID     *uuid.UUID   `json:"permission_id"`
+	ResourceID       *uuid.UUID   `json:"resource_id"`
+	Justification    string       `json:"justification"`
+	BusinessReason   *string      `json:"business_reason"`
+	DurationHours    *int32       `json:"duration_hours"`
+	ApprovalStatus   *string      `json:"approval_status"`
+	ApprovedBy       *uuid.UUID   `json:"approved_by"`
+	ApprovedAt       sql.NullTime `json:"approved_at"`
+	ApprovalComments string       `json:"approval_comments"`
+	ExpiresAt        sql.NullTime `json:"expires_at"`
+	AutoRevoke       *bool        `json:"auto_revoke"`
+	CreatedAt        sql.NullTime `json:"created_at"`
+	UpdatedAt        sql.NullTime `json:"updated_at"`
+	RoleName         *string      `json:"role_name"`
+	PermissionName   *string      `json:"permission_name"`
+	ResourceName     *string      `json:"resource_name"`
+}
+
+// GetUserAccessRequestHistory
+//
+//	SELECT ar.id, ar.tenant_id, ar.requester_id, ar.target_user_id, ar.entity_id, ar.request_type, ar.role_id, ar.permission_id, ar.resource_id, ar.justification, ar.business_reason, ar.duration_hours, ar.approval_status, ar.approved_by, ar.approved_at, ar.approval_comments, ar.expires_at, ar.auto_revoke, ar.created_at, ar.updated_at,
+//	       r.name as role_name,
+//	       perm.name as permission_name,
+//	       res.name as resource_name
+//	FROM access_requests ar
+//	LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+//	LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+//	LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+//	WHERE ar.tenant_id = current_tenant_id()
+//	  AND (ar.requester_id = $1 OR ar.target_user_id = $1)
+//	ORDER BY ar.created_at DESC
+//	LIMIT $2 OFFSET $3
+func (q *Queries) GetUserAccessRequestHistory(ctx context.Context, arg GetUserAccessRequestHistoryParams) ([]*GetUserAccessRequestHistoryRow, error) {
+	rows, err := q.db.Query(ctx, getUserAccessRequestHistory, arg.RequesterID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetUserAccessRequestHistoryRow{}
+	for rows.Next() {
+		var i GetUserAccessRequestHistoryRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.RequesterID,
+			&i.TargetUserID,
+			&i.EntityID,
+			&i.RequestType,
+			&i.RoleID,
+			&i.PermissionID,
+			&i.ResourceID,
+			&i.Justification,
+			&i.BusinessReason,
+			&i.DurationHours,
+			&i.ApprovalStatus,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
+			&i.ApprovalComments,
+			&i.ExpiresAt,
+			&i.AutoRevoke,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RoleName,
+			&i.PermissionName,
+			&i.ResourceName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserAuditEvents = `-- name: GetUserAuditEvents :many
 SELECT id, tenant_id, event_type, event_category, severity, user_id, target_user_id, entity_id, resource_id, action_id, role_id, permission_id, decision, reason, risk_score, context, ip_address, user_agent, session_id, compliance_flags, created_at FROM audit_log
 WHERE user_id = $1 AND tenant_id = current_tenant_id()
@@ -4583,13 +5112,13 @@ func (q *Queries) GetUserAuditEvents(ctx context.Context, arg GetUserAuditEvents
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users 
+SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users 
 WHERE email = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
 // GetUserByEmail
 //
-//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 //	WHERE email = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
@@ -4618,18 +5147,21 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, erro
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.PasswordStrength,
+		&i.Compromised,
+		&i.RotationRequired,
 	)
 	return &i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users 
+SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users 
 WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
 // GetUserByID
 //
-//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 //	WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	row := q.db.QueryRow(ctx, getUserByID, id)
@@ -4658,18 +5190,21 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.PasswordStrength,
+		&i.Compromised,
+		&i.RotationRequired,
 	)
 	return &i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users 
+SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users 
 WHERE username = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
 // GetUserByUsername
 //
-//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 //	WHERE username = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetUserByUsername(ctx context.Context, username *string) (*User, error) {
 	row := q.db.QueryRow(ctx, getUserByUsername, username)
@@ -4698,6 +5233,9 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username *string) (*Use
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.PasswordStrength,
+		&i.Compromised,
+		&i.RotationRequired,
 	)
 	return &i, err
 }
@@ -5269,14 +5807,14 @@ func (q *Queries) GetUserSecuritySummary(ctx context.Context, id uuid.UUID) (*Ge
 }
 
 const getUserSessions = `-- name: GetUserSessions :many
-SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active FROM user_sessions 
+SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at FROM user_sessions 
 WHERE user_id = $1 AND tenant_id = current_tenant_id() AND is_active = true
 ORDER BY created_at DESC
 `
 
 // GetUserSessions
 //
-//	SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active FROM user_sessions
+//	SELECT id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at FROM user_sessions
 //	WHERE user_id = $1 AND tenant_id = current_tenant_id() AND is_active = true
 //	ORDER BY created_at DESC
 func (q *Queries) GetUserSessions(ctx context.Context, userID uuid.UUID) ([]*UserSession, error) {
@@ -5302,6 +5840,9 @@ func (q *Queries) GetUserSessions(ctx context.Context, userID uuid.UUID) ([]*Use
 			&i.CreatedAt,
 			&i.LastAccessedAt,
 			&i.IsActive,
+			&i.RiskScore,
+			&i.AnomalyFlags,
+			&i.MfaVerifiedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -6265,7 +6806,7 @@ func (q *Queries) ListRoles(ctx context.Context, arg ListRolesParams) ([]*Role, 
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users 
+SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users 
 WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
   AND ($1::varchar IS NULL OR user_type = $1)
   AND ($2::varchar IS NULL OR account_status = $2)
@@ -6282,7 +6823,7 @@ type ListUsersParams struct {
 
 // ListUsers
 //
-//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at FROM users
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 //	WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
 //	  AND ($1::varchar IS NULL OR user_type = $1)
 //	  AND ($2::varchar IS NULL OR account_status = $2)
@@ -6326,6 +6867,9 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, 
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.PasswordStrength,
+			&i.Compromised,
+			&i.RotationRequired,
 		); err != nil {
 			return nil, err
 		}
@@ -6549,7 +7093,7 @@ const refreshSession = `-- name: RefreshSession :one
 UPDATE user_sessions 
 SET refresh_token = $2, expires_at = $3, last_accessed_at = NOW()
 WHERE session_token = $1 AND tenant_id = current_tenant_id() AND is_active = true
-RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active
+RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at
 `
 
 type RefreshSessionParams struct {
@@ -6563,7 +7107,7 @@ type RefreshSessionParams struct {
 //	UPDATE user_sessions
 //	SET refresh_token = $2, expires_at = $3, last_accessed_at = NOW()
 //	WHERE session_token = $1 AND tenant_id = current_tenant_id() AND is_active = true
-//	RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active
+//	RETURNING id, tenant_id, user_id, session_token, refresh_token, ip_address, user_agent, device_info, location_info, expires_at, created_at, last_accessed_at, is_active, risk_score, anomaly_flags, mfa_verified_at
 func (q *Queries) RefreshSession(ctx context.Context, arg RefreshSessionParams) (*UserSession, error) {
 	row := q.db.QueryRow(ctx, refreshSession, arg.SessionToken, arg.RefreshToken, arg.ExpiresAt)
 	var i UserSession
@@ -6581,6 +7125,9 @@ func (q *Queries) RefreshSession(ctx context.Context, arg RefreshSessionParams) 
 		&i.CreatedAt,
 		&i.LastAccessedAt,
 		&i.IsActive,
+		&i.RiskScore,
+		&i.AnomalyFlags,
+		&i.MfaVerifiedAt,
 	)
 	return &i, err
 }
@@ -6683,6 +7230,47 @@ WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NOT NULL
 func (q *Queries) RestoreSoftDeletedUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, restoreSoftDeletedUser, id)
 	return err
+}
+
+const revokeAccessRequest = `-- name: RevokeAccessRequest :one
+UPDATE access_requests 
+SET approval_status = 'REVOKED', updated_at = NOW()
+WHERE id = $1 AND tenant_id = current_tenant_id() AND approval_status = 'APPROVED'
+RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+`
+
+// RevokeAccessRequest
+//
+//	UPDATE access_requests
+//	SET approval_status = 'REVOKED', updated_at = NOW()
+//	WHERE id = $1 AND tenant_id = current_tenant_id() AND approval_status = 'APPROVED'
+//	RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+func (q *Queries) RevokeAccessRequest(ctx context.Context, id uuid.UUID) (*AccessRequest, error) {
+	row := q.db.QueryRow(ctx, revokeAccessRequest, id)
+	var i AccessRequest
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.RequesterID,
+		&i.TargetUserID,
+		&i.EntityID,
+		&i.RequestType,
+		&i.RoleID,
+		&i.PermissionID,
+		&i.ResourceID,
+		&i.Justification,
+		&i.BusinessReason,
+		&i.DurationHours,
+		&i.ApprovalStatus,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
+		&i.ApprovalComments,
+		&i.ExpiresAt,
+		&i.AutoRevoke,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
 }
 
 const revokeDirectPermission = `-- name: RevokeDirectPermission :exec
@@ -7137,6 +7725,67 @@ WHERE id = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) UnlockUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, unlockUser, id)
 	return err
+}
+
+const updateAccessRequestStatus = `-- name: UpdateAccessRequestStatus :one
+UPDATE access_requests 
+SET approval_status = $2, approved_by = $3, approved_at = $4,
+    approval_comments = $5, duration_hours = $6, expires_at = $7, updated_at = NOW()
+WHERE id = $1 AND tenant_id = current_tenant_id()
+RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+`
+
+type UpdateAccessRequestStatusParams struct {
+	ID               uuid.UUID    `json:"id"`
+	ApprovalStatus   *string      `json:"approval_status"`
+	ApprovedBy       *uuid.UUID   `json:"approved_by"`
+	ApprovedAt       sql.NullTime `json:"approved_at"`
+	ApprovalComments string       `json:"approval_comments"`
+	DurationHours    *int32       `json:"duration_hours"`
+	ExpiresAt        sql.NullTime `json:"expires_at"`
+}
+
+// UpdateAccessRequestStatus
+//
+//	UPDATE access_requests
+//	SET approval_status = $2, approved_by = $3, approved_at = $4,
+//	    approval_comments = $5, duration_hours = $6, expires_at = $7, updated_at = NOW()
+//	WHERE id = $1 AND tenant_id = current_tenant_id()
+//	RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+func (q *Queries) UpdateAccessRequestStatus(ctx context.Context, arg UpdateAccessRequestStatusParams) (*AccessRequest, error) {
+	row := q.db.QueryRow(ctx, updateAccessRequestStatus,
+		arg.ID,
+		arg.ApprovalStatus,
+		arg.ApprovedBy,
+		arg.ApprovedAt,
+		arg.ApprovalComments,
+		arg.DurationHours,
+		arg.ExpiresAt,
+	)
+	var i AccessRequest
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.RequesterID,
+		&i.TargetUserID,
+		&i.EntityID,
+		&i.RequestType,
+		&i.RoleID,
+		&i.PermissionID,
+		&i.ResourceID,
+		&i.Justification,
+		&i.BusinessReason,
+		&i.DurationHours,
+		&i.ApprovalStatus,
+		&i.ApprovedBy,
+		&i.ApprovedAt,
+		&i.ApprovalComments,
+		&i.ExpiresAt,
+		&i.AutoRevoke,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
 }
 
 const updateAction = `-- name: UpdateAction :one
@@ -7942,7 +8591,7 @@ SET username = $2, email = $3, user_type = $4, account_status = $5,
     session_timeout_minutes = $6, mfa_enabled = $7, user_attributes = $8,
     settings = $9, updated_at = NOW()
 WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at
+RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 `
 
 type UpdateUserParams struct {
@@ -7964,7 +8613,7 @@ type UpdateUserParams struct {
 //	    session_timeout_minutes = $6, mfa_enabled = $7, user_attributes = $8,
 //	    settings = $9, updated_at = NOW()
 //	WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-//	RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at
+//	RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.ID,
@@ -8002,6 +8651,9 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.PasswordStrength,
+		&i.Compromised,
+		&i.RotationRequired,
 	)
 	return &i, err
 }
@@ -8041,7 +8693,7 @@ SET
     settings = COALESCE($13, settings),
     updated_at = NOW()
 WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at
+RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 `
 
 type UpdateUserPartialParams struct {
@@ -8085,7 +8737,7 @@ type UpdateUserPartialParams struct {
 //	    settings = COALESCE($13, settings),
 //	    updated_at = NOW()
 //	WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-//	RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at
+//	RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 func (q *Queries) UpdateUserPartial(ctx context.Context, arg UpdateUserPartialParams) (*User, error) {
 	row := q.db.QueryRow(ctx, updateUserPartial,
 		arg.ID,
@@ -8127,6 +8779,9 @@ func (q *Queries) UpdateUserPartial(ctx context.Context, arg UpdateUserPartialPa
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.PasswordStrength,
+		&i.Compromised,
+		&i.RotationRequired,
 	)
 	return &i, err
 }

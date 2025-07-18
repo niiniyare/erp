@@ -1626,7 +1626,7 @@ func (s *service) EvaluateABACPolicies(ctx context.Context, req *ABACEvaluationR
 		Allowed:            finalDecision,
 		PolicyDecisions:    policyDecisions,
 		ApplicablePolicies: applicablePolicies,
-		EvaluationDetails: map[string]interface{}{
+		EvaluationDetails: map[string]any{
 			"allow_count": allowCount,
 			"deny_count":  denyCount,
 			"total_policies": len(policies),
@@ -1697,7 +1697,7 @@ func (s *service) TestPolicy(ctx context.Context, policyID uuid.UUID, req *Polic
 		TargetMatches: targetMatches,
 		RuleResult:    ruleResult && targetMatches,
 		Effect:        policy.Effect,
-		Details: map[string]interface{}{
+		Details: map[string]any{
 			"target_matches": targetMatches,
 			"rule_result":    ruleResult,
 			"rule_error":     ruleError,
@@ -1762,14 +1762,14 @@ func (s *service) extractRoleNames(roles []*Role) []string {
 	return names
 }
 
-func (s *service) buildUserContext(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) (map[string]interface{}, error) {
+func (s *service) buildUserContext(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) (map[string]any, error) {
 	// Get user details with person and employee info
 	userDetails, err := s.repo.GetUserWithDetails(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	context := map[string]interface{}{
+	context := map[string]any{
 		"user_id":    userID.String(),
 		"user_type":  userDetails.User.UserType,
 		"email":      userDetails.User.Email,
@@ -1806,13 +1806,13 @@ func (s *service) permissionMatches(permission *Permission, resourceName, action
 	return true // Placeholder - implement proper matching logic
 }
 
-func (s *service) policyTargetMatches(policy *Policy, req *ABACEvaluationRequest, userContext map[string]interface{}) bool {
+func (s *service) policyTargetMatches(policy *Policy, req *ABACEvaluationRequest, userContext map[string]any) bool {
 	// Simplified target matching - implement full JSON target evaluation
 	// This would parse the policy.Target JSON and match against user context
 	return true // Placeholder - implement proper target matching
 }
 
-func (s *service) evaluatePolicyRule(ctx context.Context, policy *Policy, req *ABACEvaluationRequest, userContext map[string]interface{}) (bool, error) {
+func (s *service) evaluatePolicyRule(ctx context.Context, policy *Policy, req *ABACEvaluationRequest, userContext map[string]any) (bool, error) {
 	// Simplified rule evaluation - implement full JSON rule evaluation engine
 	// This would parse the policy.Rule JSON and evaluate against user context
 	return true, nil // Placeholder - implement proper rule evaluation

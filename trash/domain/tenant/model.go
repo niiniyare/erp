@@ -12,7 +12,7 @@ type Tenant struct {
     Subdomain string             `json:"subdomain"`
     PlanType  PlanType           `json:"plan_type"`
     Status    Status             `json:"status"`
-    Settings  map[string]interface{} `json:"settings"`
+    Settings  map[string]any `json:"settings"`
     CreatedAt time.Time          `json:"created_at"`
     UpdatedAt time.Time          `json:"updated_at"`
 }
@@ -40,7 +40,7 @@ type CreateTenantRequest struct {
     Name      string             `json:"name" validate:"required,min=2,max=100"`
     Subdomain string             `json:"subdomain" validate:"required,min=3,max=50,alphanum"`
     PlanType  PlanType           `json:"plan_type"`
-    Settings  map[string]interface{} `json:"settings,omitempty"`
+    Settings  map[string]any `json:"settings,omitempty"`
 }
 
 // UpdateTenantRequest represents tenant update request  
@@ -48,5 +48,5 @@ type UpdateTenantRequest struct {
     Name     *string            `json:"name,omitempty"`
     PlanType *PlanType          `json:"plan_type,omitempty"`
     Status   *Status            `json:"status,omitempty"`
-    Settings map[string]interface{} `json:"settings,omitempty"`
+    Settings map[string]any `json:"settings,omitempty"`
 }

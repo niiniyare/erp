@@ -844,13 +844,15 @@ SELECT * FROM access_requests
 WHERE id = $1 AND tenant_id = current_tenant_id();
 
 -- name: ListAccessRequests :many
-SELECT * FROM access_requests 
+SELECT * FROM access_requests
 WHERE tenant_id = current_tenant_id()
-  AND ($1::varchar IS NULL OR approval_status = $1)
-  AND ($2::uuid IS NULL OR requester_id = $2)
-  AND ($3::uuid IS NULL OR target_user_id = $3)
+  AND (CAST(@approval_status AS VARCHAR) IS NULL OR approval_status = @approval_status)
+  AND (CAST(@requester_id AS UUID) IS NULL OR requester_id = @requester_id)
+  AND (CAST(@target_user_id AS UUID) IS NULL OR target_user_id = @target_user_id)
 ORDER BY created_at DESC
-LIMIT $4 OFFSET $5;
+LIMIT @limit
+OFFSET @offset;
+
 
 -- name: GetPendingAccessRequests :many
 SELECT * FROM access_requests 
@@ -880,6 +882,108 @@ WHERE id = $1 AND tenant_id = current_tenant_id();
 SELECT * FROM access_requests 
 WHERE expires_at < NOW() AND approval_status = 'APPROVED' 
   AND auto_revoke = true AND tenant_id = current_tenant_id();
+
+-- name: UpdateAccessRequestStatus :one
+UPDATE access_requests 
+SET approval_status = $2, approved_by = $3, approved_at = $4,
+    approval_comments = $5, duration_hours = $6, expires_at = $7, updated_at = NOW()
+WHERE id = $1 AND tenant_id = current_tenant_id()
+RETURNING *;
+
+-- name: GetAccessRequestsWithDetails :many
+SELECT 
+    ar.*,
+    -- Requester details
+    ru.username as requester_username, ru.email as requester_email,
+    rp.first_name as requester_first_name, rp.last_name as requester_last_name,
+    -- Target user details (if different from requester)
+    tu.username as target_username, tu.email as target_email,
+    tp.first_name as target_first_name, tp.last_name as target_last_name,
+    -- Role details
+    r.name as role_name, r.display_name as role_display_name,
+    -- Permission details
+    perm.name as permission_name, perm.display_name as permission_display_name,
+    -- Resource details
+    res.name as resource_name, res.display_name as resource_display_name,
+    -- Approver details
+    au.username as approver_username, au.email as approver_email,
+    ap.first_name as approver_first_name, ap.last_name as approver_last_name
+FROM access_requests ar
+LEFT JOIN users ru ON ar.requester_id = ru.id AND ru.tenant_id = current_tenant_id()
+LEFT JOIN persons rp ON ru.person_id = rp.id AND rp.tenant_id = current_tenant_id()
+LEFT JOIN users tu ON ar.target_user_id = tu.id AND tu.tenant_id = current_tenant_id()
+LEFT JOIN persons tp ON tu.person_id = tp.id AND tp.tenant_id = current_tenant_id()
+LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+LEFT JOIN users au ON ar.approved_by = au.id AND au.tenant_id = current_tenant_id()
+LEFT JOIN persons ap ON au.person_id = ap.id AND ap.tenant_id = current_tenant_id()
+WHERE ar.tenant_id = current_tenant_id()
+  AND ($1::varchar IS NULL OR ar.approval_status = $1)
+  AND ($2::uuid IS NULL OR ar.requester_id = $2)
+  AND ($3::uuid IS NULL OR ar.target_user_id = $3)
+  AND ($4::uuid IS NULL OR ar.entity_id = $4)
+  AND ($5::varchar IS NULL OR ar.request_type = $5)
+  AND ($6::bool IS NULL OR ($6 = true) OR (ar.expires_at IS NULL OR ar.expires_at > NOW()))
+ORDER BY ar.created_at DESC
+LIMIT $7 OFFSET $8;
+
+-- name: GetAccessRequestStats :one
+SELECT 
+    COUNT(*) as total_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'PENDING') as pending_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'APPROVED') as approved_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'REJECTED') as rejected_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'EXPIRED') as expired_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'REVOKED') as revoked_requests,
+    COUNT(*) FILTER (WHERE request_type = 'ROLE_ASSIGNMENT') as role_assignment_requests,
+    COUNT(*) FILTER (WHERE request_type = 'PERMISSION_GRANT') as permission_grant_requests,
+    COUNT(*) FILTER (WHERE request_type = 'RESOURCE_ACCESS') as resource_access_requests,
+    COUNT(*) FILTER (WHERE request_type = 'ELEVATION') as elevation_requests,
+    COALESCE(AVG(EXTRACT(EPOCH FROM (approved_at - created_at))/3600) FILTER (WHERE approved_at IS NOT NULL), 0)::DECIMAL(5,2) as avg_approval_time_hours
+FROM access_requests
+WHERE tenant_id = current_tenant_id()
+  AND (@from_date::timestamptz IS NULL OR created_at >= @from_date)
+  AND (@to_date::timestamptz IS NULL OR created_at <= @to_date);
+
+-- name: RevokeAccessRequest :one
+UPDATE access_requests 
+SET approval_status = 'REVOKED', updated_at = NOW()
+WHERE id = $1 AND tenant_id = current_tenant_id() AND approval_status = 'APPROVED'
+RETURNING *;
+
+-- name: GetUserAccessRequestHistory :many
+SELECT ar.*, 
+       r.name as role_name, 
+       perm.name as permission_name, 
+       res.name as resource_name
+FROM access_requests ar
+LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+WHERE ar.tenant_id = current_tenant_id()
+  AND (ar.requester_id = $1 OR ar.target_user_id = $1)
+ORDER BY ar.created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: GetPendingRequestsForApprover :many
+SELECT ar.*, 
+       ru.username as requester_username, ru.email as requester_email,
+       rp.first_name as requester_first_name, rp.last_name as requester_last_name,
+       r.name as role_name, 
+       perm.name as permission_name, 
+       res.name as resource_name
+FROM access_requests ar
+LEFT JOIN users ru ON ar.requester_id = ru.id AND ru.tenant_id = current_tenant_id()
+LEFT JOIN persons rp ON ru.person_id = rp.id AND rp.tenant_id = current_tenant_id()
+LEFT JOIN roles r ON ar.role_id = r.id AND r.tenant_id = current_tenant_id()
+LEFT JOIN permissions perm ON ar.permission_id = perm.id AND perm.tenant_id = current_tenant_id()
+LEFT JOIN resources res ON ar.resource_id = res.id AND res.tenant_id = current_tenant_id()
+WHERE ar.approval_status = 'PENDING' 
+  AND ar.tenant_id = current_tenant_id()
+  AND (ar.expires_at IS NULL OR ar.expires_at > NOW())
+ORDER BY ar.created_at
+LIMIT $1 OFFSET $2;
 
 -- ================================================================================================
 -- MAINTENANCE AND UTILITY QUERIES
