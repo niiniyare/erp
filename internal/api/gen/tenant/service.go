@@ -37,7 +37,7 @@ type Auther interface {
 }
 
 // APIName is the name of the API as defined in the design.
-const APIName = "erp-system"
+const APIName = "awo"
 
 // APIVersion is the version of the API as defined in the design.
 const APIVersion = "1.0"

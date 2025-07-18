@@ -4,7 +4,7 @@ import (
 	. "goa.design/goa/v3/dsl"
 )
 
-var _ = API("erp-system", func() {
+var _ = API("awo", func() {
     Title("Multi-Tenant ERP System API")
     Description("A scalable multi-tenant ERP system with REST and gRPC interfaces")
     Version("1.0")

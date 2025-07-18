@@ -282,7 +282,7 @@ backup_strategy:
 
 ```yaml
 api_conventions:
-  base_url: "https://api.erp-system.com/v1"
+  base_url: "https://api.awo.com/v1"
   
   url_patterns:
     tenants: "/tenants/{tenant_id}"
@@ -882,16 +882,16 @@ func (ec *EventConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 ```yaml
 auth_configuration:
   oauth2_settings:
-    authorization_server: "https://auth.erp-system.com"
+    authorization_server: "https://auth.awo.com"
     client_id: "erp_client_web"
     client_secret: "${OAUTH_CLIENT_SECRET}"
     scopes: ["openid", "profile", "email", "erp:read", "erp:write"]
     
   jwt_configuration:
-    issuer: "https://auth.erp-system.com"
+    issuer: "https://auth.awo.com"
     audience: "erp-api"
     algorithm: "RS256"
-    public_key_url: "https://auth.erp-system.com/.well-known/jwks.json"
+    public_key_url: "https://auth.awo.com/.well-known/jwks.json"
     token_expiry: "1h"
     refresh_token_expiry: "7d"
     

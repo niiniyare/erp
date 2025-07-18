@@ -3,7 +3,7 @@ Looking at your ambitious ERP project, I'll provide a structured approach that b
 ## Project Structure
 
 ```
-erp-system/
+awo/
 ├── cmd/
 │   ├── api-server/          # REST API server
 │   ├── grpc-server/         # gRPC server  

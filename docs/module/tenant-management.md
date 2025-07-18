@@ -401,7 +401,7 @@ async function provisionTenant(request: TenantProvisioningRequest): Promise<Tena
   return {
     tenant_id: tenant.id,
     tenant_slug: tenant.slug,
-    admin_setup_url: `https://${tenant.slug}.erp-system.com/setup`,
+    admin_setup_url: `https://${tenant.slug}.awo.com/setup`,
     status: 'provisioned'
   };
 }

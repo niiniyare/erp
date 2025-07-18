@@ -5,7 +5,7 @@ import (
 )
 
 // API describes the global properties of the API server.
-var _ = API("erp-system", func() {
+var _ = API("awo", func() {
 	Title("Enterprise ERP System API")
 	Description("Comprehensive multi-tenant ERP system with RBAC and ABAC capabilities")
 	Version("1.0.0")
@@ -14,7 +14,7 @@ var _ = API("erp-system", func() {
 	Server("erp", func() {
 		Host("localhost", func() {
 			URI("http://localhost:8080")
-			URI("https://api.erp-system.com")
+			URI("https://api.awo.com")
 		})
 	})
 	

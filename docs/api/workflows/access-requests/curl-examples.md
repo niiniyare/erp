@@ -67,7 +67,7 @@ curl -X GET http://localhost:8080/health | jq .
 
 # Expected response:
 # {
-#   "service": "erp-system",
+#   "service": "awo",
 #   "status": "ok",
 #   "version": "1.0.0"
 # }

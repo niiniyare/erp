@@ -53,7 +53,7 @@ Your Clean Architecture maps perfectly to Goa's layered approach:
 ## 📁 Complete Goa-Enhanced Directory Structure
 
 ```
-erp-system/
+awo/
 ├── design/                           # 🎨 Goa Design Layer
 │   ├── design.go                     # Main entry point, API metadata
 │   ├── api.go                        # Global API config (CORS, security)
@@ -259,7 +259,7 @@ import (
 )
 
 // API describes the global properties of the API server.
-var _ = API("erp-system", func() {
+var _ = API("awo", func() {
     Title("Enterprise ERP System API")
     Description("Comprehensive ERP system with multi-tenant support")
     Version("1.0.0")
@@ -268,7 +268,7 @@ var _ = API("erp-system", func() {
     Server("erp", func() {
         Host("localhost", func() {
             URI("http://localhost:8080")
-            URI("https://api.erp-system.com")
+            URI("https://api.awo.com")
         })
     })
     
@@ -1349,7 +1349,7 @@ func main() {
     // Add endpoint middleware
     tenantEndpoints.Use(middleware.RequestID())
     tenantEndpoints.Use(middleware.Log(logger))
-    tenantEndpoints.Use(middleware.Trace("erp-system"))
+    tenantEndpoints.Use(middleware.Trace("awo"))
     
     // 8. Setup HTTP transport
     var (
@@ -1378,7 +1378,7 @@ func main() {
     // Goa middleware
     handler = middleware.RequestID()(handler)
     handler = middleware.Log(logger)(handler)
-    handler = middleware.Trace("erp-system")(handler)
+    handler = middleware.Trace("awo")(handler)
     
     // Custom middleware
     handler = middleware.NewAuthMiddleware(cfg.Auth)(handler)
@@ -1509,12 +1509,12 @@ deps:
 # Docker build
 docker-build:
 	@echo "Building Docker image..."
-	docker build -t erp-system:latest .
+	docker build -t awo:latest .
 
 # Docker run
 docker-run:
 	@echo "Running Docker container..."
-	docker run -p 8080:8080 erp-system:latest
+	docker run -p 8080:8080 awo:latest
 ```
 
 ### 2. Goa Generation Script
