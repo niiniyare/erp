@@ -7,23 +7,11 @@ useDefault = true
 [[rules]]
 id = "allow-generated-examples"
 description = "Allow mock tokens in generated API documentation"
-path = '''gen/.*'''
-allowlist.regexes = [
-    '''mock-.*''',
-    '''example-.*''',
-    '''test-.*''',
-    '''placeholder-.*'''
-]
+regex = '''(mock-|example-|test-|placeholder-)[a-zA-Z0-9-]{1,100}'''
+path = '''gen/.*\.md'''
 
 [[rules]]
 id = "allow-docs-examples"  
 description = "Allow placeholder tokens in documentation examples"
-path = '''docs/.*'''
-allowlist.regexes = [
-    '''<.*-token>''',
-    '''<your-.*>''',
-    '''mock-.*''',
-    '''example-.*''',
-    '''test-.*''',
-    '''placeholder-.*'''
-]
+regex = '''(<.*-token>|<your-.*>|mock-.*|example-.*|test-.*|placeholder-.*)'''
+path = '''docs/.*\.md'''
