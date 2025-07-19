@@ -29,12 +29,12 @@ Welcome to the ERP system development guide. This documentation helps new develo
 ### Common Tasks
 | Task | Reference |
 |------|-----------|
-| Creating a new API endpoint | [Code Examples → Handler Layer](./code-examples.md#handler-layer-example) |
-| Adding business logic | [Code Examples → Service Layer](./code-examples.md#service-layer-example) |
-| Database operations | [SQLC Integration](./sqlc-integration.md) |
-| Adding logging/tracing | [Observability → Layer Integration](./observability.md#layer-specific-observability-patterns) |
-| Error handling | [Error Handling Guide](./error-handling.md) |
-| Caching patterns | [Best Practices → Caching](./best-practices.md#caching-pattern) |
+| Creating a new API endpoint | [Code Examples → Handler Layer](./dev/code-examples.md#handler-layer-example) |
+| Adding business logic | [Code Examples → Service Layer](./dev/code-examples.md#service-layer-example) |
+| Database operations | [SQLC Integration](./dev/sqlc-integration.md) |
+| Adding logging/tracing | [Observability → Layer Integration](./dev/observability.md#layer-specific-observability-patterns) |
+| Error handling | [Error Handling Guide](./dev/error-handling.md) |
+| Caching patterns | [Best Practices → Caching](./dev/best-practices.md#caching-pattern) |
 
 ### Layer Responsibilities Quick Reference
 ```
@@ -69,10 +69,10 @@ Infrastructure → Database, Cache, External Services
 
 ## 🆘 Need Help?
 
-- **Architecture questions**: Check [Architecture Overview](./architecture.md)
-- **Implementation help**: See [Code Examples](./code-examples.md)
-- **Performance concerns**: Review [Observability Guide](./observability.md)
-- **Error debugging**: Consult [Error Handling](./error-handling.md)
+- **Architecture questions**: Check [Architecture Overview](./dev/architecture.md)
+- **Implementation help**: See [Code Examples](./dev/code-examples.md)
+- **Performance concerns**: Review [Observability Guide](./dev/observability.md)
+- **Error debugging**: Consult [Error Handling](./dev/error-handling.md)
 
 ---
 
