@@ -1,7 +1,0 @@
-=== Starting Seed & Test (20250716_014947) ===
-CREATE EXTENSION
-CREATE EXTENSION
-SET
-psql:db/seed/seed.sql:14: ERROR:  relation "tenants" does not exist
-LINE 1: INSERT INTO tenants (slug, name, email, subdomain, industry,...
-                    ^

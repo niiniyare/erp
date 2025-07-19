@@ -22,17 +22,17 @@ var _ = API("awo", func() {
 	})
 
 	// Global error responses
-	Error("internal_error", APIErrorResult)
-	Error("bad_request", APIErrorResult)
-	Error("unauthorized", APIErrorResult)
-	Error("forbidden", APIErrorResult)
-	Error("not_found", APIErrorResult)
-	Error("conflict", APIErrorResult)
-	Error("unprocessable_entity", APIErrorResult)
+	Error("internal_error", APIError)
+	Error("bad_request", APIError)
+	Error("unauthorized", APIError)
+	Error("forbidden", APIError)
+	Error("not_found", APIError)
+	Error("conflict", APIError)
+	Error("unprocessable_entity", APIError)
 })
 
-// APIErrorResult defines the error response structure
-var APIErrorResult = ResultType("application/vnd.erp.error", func() {
+// APIError defines the error response structure
+var APIError = ResultType("application/vnd.erp.error", func() {
 	Description("Error response")
 	Attributes(func() {
 		Attribute("code", String, "Error code", func() {

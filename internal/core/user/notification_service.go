@@ -419,6 +419,10 @@ func (s *notificationService) generateNotificationContent(request *AccessRequest
 	switch notificationType {
 	case NotificationTypeAccessRequestCreated:
 		subject := fmt.Sprintf("New Access Request: %s", request.RequestType)
+		businessReason := ""
+		if request.BusinessReason != nil {
+			businessReason = *request.BusinessReason
+		}
 		message := fmt.Sprintf(
 			"A new access request has been submitted and requires your approval.\n\n"+
 				"Request Type: %s\n"+
@@ -428,7 +432,7 @@ func (s *notificationService) generateNotificationContent(request *AccessRequest
 				"Please review and approve/reject this request.",
 			request.RequestType,
 			request.Justification,
-			request.BusinessReason,
+			businessReason,
 			request.CreatedAt.Format(time.RFC3339),
 		)
 		return subject, message
@@ -447,13 +451,17 @@ func (s *notificationService) generateNotificationContent(request *AccessRequest
 
 	case NotificationTypeAccessRequestRejected:
 		subject := "Access Request Rejected"
+		comments := ""
+		if request.ApprovalComments != nil {
+			comments = *request.ApprovalComments
+		}
 		message := fmt.Sprintf(
 			"Your access request has been rejected.\n\n"+
 				"Request Type: %s\n"+
 				"Comments: %s\n\n"+
 				"Please contact your administrator if you need further clarification.",
 			request.RequestType,
-			request.ApprovalComments,
+			comments,
 		)
 		return subject, message
 

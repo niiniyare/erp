@@ -1,0 +1,29 @@
+# Gitleaks configuration
+title = "gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "allow-generated-examples"
+description = "Allow mock tokens in generated API documentation"
+path = '''gen/.*'''
+allowlist.regexes = [
+    '''mock-.*''',
+    '''example-.*''',
+    '''test-.*''',
+    '''placeholder-.*'''
+]
+
+[[rules]]
+id = "allow-docs-examples"  
+description = "Allow placeholder tokens in documentation examples"
+path = '''docs/.*'''
+allowlist.regexes = [
+    '''<.*-token>''',
+    '''<your-.*>''',
+    '''mock-.*''',
+    '''example-.*''',
+    '''test-.*''',
+    '''placeholder-.*'''
+]

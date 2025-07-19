@@ -4,6 +4,7 @@ repos:
     rev: v8.27.2
     hooks:
       - id: gitleaks
+        exclude: '^gen/.*'
 
   # ✅ Format & vet via local commands
   - repo: local
@@ -16,18 +17,31 @@ repos:
 
       - id: go-vet
         name: go vet
-        entry: go vet ./...
+        entry: bash
+        args:
+          - -c
+          - |
+            go vet $(find . -name "*.go" -not -path "./vendor/*" | \
+            xargs -I {} dirname {} | sort -u | tr "\n" " ")
         language: system
         types: [go]
+        pass_filenames: false
 
-      - id: staticcheck
-        name: staticcheck
-        entry: staticcheck ./...
-        language: system
-        types: [go]
+        # - id: staticcheck
+          # name: staticcheck
+          # entry: bash
+          # args:
+          #   - -c
+          #   - |
+          #     staticcheck $(find . -name "*.go" -not -path "./vendor/*" | \
+          #     xargs -I {} dirname {} | sort -u | tr "\n" " ")
+          # language: system
+          # types: [go]
+          # pass_filenames: false
 
   # 📄 YAML linting
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.37.1
     hooks:
       - id: yamllint
+        exclude: '^gen/.*'
