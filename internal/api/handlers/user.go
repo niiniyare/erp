@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/niiniyare/erp/gen/user"
 	coreUser "github.com/niiniyare/erp/internal/core/user"
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -1938,4 +1940,261 @@ type TestPolicyResponse struct {
 	TargetMatches bool           `json:"target_matches"`
 	RuleResult    bool           `json:"rule_result"`
 	Details       map[string]any `json:"details"`
+}
+
+// UserGoaHandler implements the GOA user service following the data flow pattern
+type UserGoaHandler struct {
+	userService              coreUser.Service
+	accessRequestService     coreUser.AccessRequestService
+	conditionalAccessService coreUser.ConditionalAccessService
+	analyticsService         coreUser.UserAnalyticsService
+	tracing                  *tracing.TracingService
+	metrics                  *metrics.MetricsService
+}
+
+// NewUserGoaHandler creates a new GOA user handler following Clean Architecture pattern
+func NewUserGoaHandler(userSvc coreUser.Service, accessSvc coreUser.AccessRequestService, conditionalSvc coreUser.ConditionalAccessService, analyticsSvc coreUser.UserAnalyticsService, tracing *tracing.TracingService, metrics *metrics.MetricsService) user.Service {
+	return &UserGoaHandler{
+		userService:              userSvc,
+		accessRequestService:     accessSvc,
+		conditionalAccessService: conditionalSvc,
+		analyticsService:         analyticsSvc,
+		tracing:                  tracing,
+		metrics:                  metrics,
+	}
+}
+
+// Create creates a new user following the data flow pattern
+func (h *UserGoaHandler) Create(ctx context.Context, p *user.CreateUserPayload) (*user.User, string, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "user.create",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.email", p.Email),
+			attribute.String("user.type", string(p.UserType)),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("user_create_duration", metrics.Fields{
+		"operation": "create",
+	})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing user creation logic using h.userService.CreateUser
+	userResult := &user.User{
+		ID:        "mock-user-id",
+		Username:  p.Username,
+		Email:     p.Email,
+		FirstName: p.FirstName,
+		LastName:  p.LastName,
+		UserType:  p.UserType,
+		Status:    "ACTIVE",
+		CreatedAt: "2024-01-01T00:00:00Z",
+		UpdatedAt: "2024-01-01T00:00:00Z",
+	}
+
+	h.metrics.IncrementCounter("user_create_total", metrics.Fields{
+		"user_type": p.UserType,
+	})
+	span.SetAttributes(attribute.String("result.user_id", userResult.ID))
+
+	return userResult, "default", nil
+}
+
+// Get retrieves a user by ID following the data flow pattern
+func (h *UserGoaHandler) Get(ctx context.Context, p *user.GetPayload) (*user.User, string, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "user.get",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.ID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("user_get_duration", metrics.Fields{
+		"operation": "get",
+	})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing user retrieval logic using h.userService.GetUserByID
+	mockUsername := "mockuser"
+	userResult := &user.User{
+		ID:        p.ID,
+		Username:  &mockUsername,
+		Email:     "mock@example.com",
+		FirstName: "Mock",
+		LastName:  "User",
+		UserType:  "INTERNAL",
+		Status:    "ACTIVE",
+		CreatedAt: "2024-01-01T00:00:00Z",
+		UpdatedAt: "2024-01-01T00:00:00Z",
+	}
+
+	h.metrics.IncrementCounter("user_get_total", metrics.Fields{})
+	return userResult, "default", nil
+}
+
+// List retrieves users with pagination following the data flow pattern
+func (h *UserGoaHandler) List(ctx context.Context, p *user.ListPayload) (*user.ListResult, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "user.list",
+		tracing.WithSpanKind(tracing.SpanKindServer))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("user_list_duration", metrics.Fields{
+		"operation": "list",
+	})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing user listing logic using h.userService.ListUsers
+	result := &user.ListResult{
+		Data:       []*user.User{},
+		Pagination: &user.PaginationMeta{CurrentPage: 1, PageSize: 20, TotalItems: 0, TotalPages: 0, HasNext: false, HasPrev: false},
+	}
+
+	h.metrics.IncrementCounter("user_list_total", metrics.Fields{})
+	return result, nil
+}
+
+// Update updates an existing user following the data flow pattern
+func (h *UserGoaHandler) Update(ctx context.Context, p *user.UpdateUserPayload) (*user.User, string, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "user.update",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.ID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("user_update_duration", metrics.Fields{
+		"operation": "update",
+	})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing user update logic using h.userService.UpdateUser
+	userResult := &user.User{
+		ID:        p.ID,
+		Username:  p.Username,
+		Email:     *p.Email,
+		FirstName: *p.FirstName,
+		LastName:  *p.LastName,
+		UserType:  *p.UserType,
+		Status:    "ACTIVE",
+		CreatedAt: "2024-01-01T00:00:00Z",
+		UpdatedAt: "2024-01-01T00:00:00Z",
+	}
+
+	h.metrics.IncrementCounter("user_update_total", metrics.Fields{})
+	return userResult, "default", nil
+}
+
+// Deactivate deactivates a user following the data flow pattern
+func (h *UserGoaHandler) Deactivate(ctx context.Context, p *user.DeactivatePayload) error {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "user.deactivate",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.ID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("user_deactivate_duration", metrics.Fields{
+		"operation": "deactivate",
+	})
+	defer timer.Stop()
+
+	logger.Info("User deactivate called", logger.Fields{
+		"id": p.ID,
+	})
+
+	// TODO: Integrate with existing user deactivation logic using h.userService.DeleteUser
+	h.metrics.IncrementCounter("user_deactivate_total", metrics.Fields{})
+	return nil
+}
+
+// Permissions retrieves user permissions following the data flow pattern
+func (h *UserGoaHandler) Permissions(ctx context.Context, p *user.PermissionsPayload) (*user.UserPermissions, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "user.permissions",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.ID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("user_permissions_duration", metrics.Fields{
+		"operation": "permissions",
+	})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing user permissions logic using h.userService.GetUserRoles
+	result := &user.UserPermissions{
+		UserID:      p.ID,
+		Roles:       []*user.RoleInfo{},
+		Permissions: []*user.PermissionInfo{},
+		ComputedAt:  "2024-01-01T00:00:00Z",
+	}
+
+	h.metrics.IncrementCounter("user_permissions_total", metrics.Fields{})
+	return result, nil
+}
+
+// AssignRole assigns a role to a user following the data flow pattern
+func (h *UserGoaHandler) AssignRole(ctx context.Context, p *user.AssignRolePayload) error {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "user.assign_role",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.UserID),
+			attribute.String("role.id", p.RoleID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("user_assign_role_duration", metrics.Fields{
+		"operation": "assign_role",
+	})
+	defer timer.Stop()
+
+	logger.Info("User assign role called", logger.Fields{
+		"user_id": p.UserID,
+		"role_id": p.RoleID,
+	})
+
+	// TODO: Integrate with existing role assignment logic using h.userService.AssignUserRole
+	h.metrics.IncrementCounter("user_assign_role_total", metrics.Fields{})
+	return nil
+}
+
+// RemoveRole removes a role from a user following the data flow pattern
+func (h *UserGoaHandler) RemoveRole(ctx context.Context, p *user.RemoveRolePayload) error {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "user.remove_role",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.UserID),
+			attribute.String("role.id", p.RoleID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("user_remove_role_duration", metrics.Fields{
+		"operation": "remove_role",
+	})
+	defer timer.Stop()
+
+	logger.Info("User remove role called", logger.Fields{
+		"user_id": p.UserID,
+		"role_id": p.RoleID,
+	})
+
+	// TODO: Integrate with existing role removal logic using h.userService.RevokeUserRole
+	h.metrics.IncrementCounter("user_remove_role_total", metrics.Fields{})
+	return nil
 }

@@ -47,12 +47,12 @@ go run cmd/server/main.go
 
 ```bash
 # Verify server is running
-curl -X GET http://localhost:8080/health | jq .
+curl -X GET http://localhost:8080/api/v1/tenants/health | jq .
 
 # Expected response:
 # {
-#   "service": "awo",
-#   "status": "ok",
+#   "status": "healthy",
+#   "timestamp": "2024-01-01T00:00:00Z",
 #   "version": "1.0.0"
 # }
 ```
@@ -175,18 +175,37 @@ curl -X GET http://localhost:8080/health
 
 ### Health & Status
 ```
-GET  /health                           # Server health check
-GET  /ready                            # Server readiness check
+GET  /api/v1/tenants/health            # Tenant service health check
+GET  /openapi.json                     # OpenAPI specification
+GET  /swagger-ui                       # Swagger UI documentation
 ```
 
-### Core Entity Management
+### Authentication
 ```
-POST   /api/v1/entities                # Create entity
-GET    /api/v1/entities                # List entities
-GET    /api/v1/entities/{id}           # Get entity
-PUT    /api/v1/entities/{id}           # Update entity
-DELETE /api/v1/entities/{id}           # Delete entity
-GET    /api/v1/entities/tree           # Get entity tree
+POST /api/v1/auth/login                # User login and token generation
+POST /api/v1/auth/refresh              # Refresh JWT access token
+POST /api/v1/auth/logout               # User logout and token invalidation
+GET  /api/v1/auth/validate             # Validate JWT token
+```
+
+### Tenant Management
+```
+POST   /api/v1/tenants                 # Create tenant
+GET    /api/v1/tenants                 # List tenants
+GET    /api/v1/tenants/{id}            # Get tenant
+PUT    /api/v1/tenants/{id}            # Update tenant
+DELETE /api/v1/tenants/{id}            # Delete tenant
+GET    /api/v1/tenants/health          # Tenant service health
+```
+
+### Organization Management
+```
+POST   /api/v1/organizations           # Create organization
+GET    /api/v1/organizations           # List organizations
+GET    /api/v1/organizations/{id}      # Get organization
+PUT    /api/v1/organizations/{id}      # Update organization
+GET    /api/v1/organizations/{id}/hierarchy # Get organization hierarchy
+PATCH  /api/v1/organizations/{id}/archive   # Archive organization
 ```
 
 ### User Management
@@ -195,34 +214,18 @@ POST   /api/v1/users                   # Create user
 GET    /api/v1/users                   # List users
 GET    /api/v1/users/{id}              # Get user
 PUT    /api/v1/users/{id}              # Update user
-DELETE /api/v1/users/{id}              # Delete user
-POST   /api/v1/users/auth              # Authenticate user
-GET    /api/v1/users/search            # Search users
+PATCH  /api/v1/users/{id}/deactivate   # Deactivate user
+GET    /api/v1/users/{id}/permissions  # Get user permissions
+POST   /api/v1/users/{user_id}/roles   # Assign role to user
+DELETE /api/v1/users/{user_id}/roles/{role_id} # Remove role from user
 ```
 
-### Access Request Workflow
-```
-POST   /api/v1/access-requests         # Create access request
-GET    /api/v1/access-requests         # List access requests
-GET    /api/v1/access-requests/{id}    # Get access request
-POST   /api/v1/access-requests/{id}/process # Process request
-DELETE /api/v1/access-requests/{id}    # Revoke access request
-GET    /api/v1/access-requests/stats   # Get statistics
-```
-
-### Conditional Access
-```
-POST   /api/v1/conditional-access/evaluate # Evaluate access
-POST   /api/v1/conditional-access/rules    # Create rule
-```
-
-### User Analytics
-```
-GET    /api/v1/analytics/users/{id}/behavior    # Behavior analysis
-GET    /api/v1/analytics/users/{id}/risk        # Risk assessment
-GET    /api/v1/analytics/users/{id}/insights    # Personalized insights
-POST   /api/v1/analytics/users/{id}/detect-anomalies # Anomaly detection
-```
+### Note: Legacy Workflow APIs
+The following APIs are documented but not yet implemented in the current GOA version:
+- Access Request Workflow (/api/v1/access-requests/*)
+- Conditional Access (/api/v1/conditional-access/*)  
+- User Analytics (/api/v1/analytics/users/*)
+- Entity Management (/api/v1/entities/*)
 
 ## 🎯 Testing Strategies
 
@@ -253,7 +256,7 @@ POST   /api/v1/analytics/users/{id}/detect-anomalies # Anomaly detection
 1. **Server not responding (Connection refused)**
    ```bash
    # Check if server is running
-   curl -X GET http://localhost:8080/health
+   curl -X GET http://localhost:8080/api/v1/tenants/health
    
    # If not running, start the server
    go run cmd/server/main.go

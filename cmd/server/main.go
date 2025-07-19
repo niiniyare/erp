@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/niiniyare/erp/internal/api/handlers"
 	"github.com/niiniyare/erp/internal/core/entity"
@@ -15,6 +16,21 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 
 	db "github.com/niiniyare/erp/db/sqlc"
+
+	// GOA generated packages
+	auth "github.com/niiniyare/erp/gen/auth"
+	authsvr "github.com/niiniyare/erp/gen/http/auth/server"
+	openapisvr "github.com/niiniyare/erp/gen/http/openapi/server"
+	organizationsvr "github.com/niiniyare/erp/gen/http/organization/server"
+	tenantsvr "github.com/niiniyare/erp/gen/http/tenant/server"
+	usersvr "github.com/niiniyare/erp/gen/http/user/server"
+	openapi "github.com/niiniyare/erp/gen/openapi"
+	organization "github.com/niiniyare/erp/gen/organization"
+	goaTenant "github.com/niiniyare/erp/gen/tenant"
+	goaUser "github.com/niiniyare/erp/gen/user"
+	"goa.design/clue/debug"
+	clueLog "goa.design/clue/log"
+	goahttp "goa.design/goa/v3/http"
 )
 
 func main() {
@@ -92,7 +108,7 @@ func main() {
 	entityRepo := entity.NewRepository(store, tracingService, metricsService)
 	userRepo := user.NewRepository(store, tracingService, metricsService)
 
-	// Initialize services
+	// Initialize core business services
 	tenantService := tenant.NewService(tenantRepo, redisClient)
 	entityService := entity.NewService(entityRepo, tracingService, metricsService)
 	userService := user.NewService(userRepo, redisClient, tracingService, metricsService)
@@ -117,16 +133,160 @@ func main() {
 	conditionalAccessService := user.NewConditionalAccessService(tracingService, metricsService, auditService)
 	analyticsService := user.NewUserAnalyticsService(tracingService, metricsService, auditService)
 
-	// Initialize API handlers
-	router := handlers.NewRouter(tenantService, entityService, userService, accessRequestService, conditionalAccessService, analyticsService, tracingService, metricsService)
+	logger.Info("Core business services initialized", logger.Fields{
+		"tenant_service":         "ready",
+		"entity_service":         "ready",
+		"user_service":           "ready",
+		"access_request_service": "ready",
+		"conditional_access":     "ready",
+		"analytics_service":      "ready",
+	})
+
+	// Initialize GOA services using handlers package following Clean Architecture
+	var (
+		authSvc         auth.Service
+		organizationSvc organization.Service
+		tenantSvc       goaTenant.Service
+		userSvc         goaUser.Service
+		openapiSvc      openapi.Service
+	)
+	{
+		// Use handlers package following the data flow pattern
+		authSvc = handlers.NewAuthHandler(userService, tracingService, metricsService)
+		organizationSvc = handlers.NewOrganizationGoaHandler(entityService, tracingService, metricsService)
+		tenantSvc = handlers.NewTenantGoaHandler(tenantService, tracingService, metricsService)
+		userSvc = handlers.NewUserGoaHandler(userService, accessRequestService, conditionalAccessService, analyticsService, tracingService, metricsService)
+		openapiSvc = handlers.NewOpenapiHandler()
+	}
+
+	// Create GOA endpoints
+	var (
+		authEndpoints         *auth.Endpoints
+		organizationEndpoints *organization.Endpoints
+		tenantEndpoints       *goaTenant.Endpoints
+		userEndpoints         *goaUser.Endpoints
+		openapiEndpoints      *openapi.Endpoints
+	)
+	{
+		authEndpoints = auth.NewEndpoints(authSvc)
+		authEndpoints.Use(debug.LogPayloads())
+		authEndpoints.Use(clueLog.Endpoint)
+		organizationEndpoints = organization.NewEndpoints(organizationSvc)
+		organizationEndpoints.Use(debug.LogPayloads())
+		organizationEndpoints.Use(clueLog.Endpoint)
+		tenantEndpoints = goaTenant.NewEndpoints(tenantSvc)
+		tenantEndpoints.Use(debug.LogPayloads())
+		tenantEndpoints.Use(clueLog.Endpoint)
+		userEndpoints = goaUser.NewEndpoints(userSvc)
+		userEndpoints.Use(debug.LogPayloads())
+		userEndpoints.Use(clueLog.Endpoint)
+		openapiEndpoints = openapi.NewEndpoints(openapiSvc)
+		openapiEndpoints.Use(debug.LogPayloads())
+		openapiEndpoints.Use(clueLog.Endpoint)
+	}
+
+	// Create GOA HTTP mux
+	var (
+		dec = goahttp.RequestDecoder
+		enc = goahttp.ResponseEncoder
+	)
+
+	var mux goahttp.Muxer
+	{
+		mux = goahttp.NewMuxer()
+		// Mount debug handlers
+		debug.MountPprofHandlers(debug.Adapt(mux))
+		debug.MountDebugLogEnabler(debug.Adapt(mux))
+	}
+
+	// Create GOA HTTP servers
+	var (
+		authServer         *authsvr.Server
+		organizationServer *organizationsvr.Server
+		tenantServer       *tenantsvr.Server
+		userServer         *usersvr.Server
+		openapiServer      *openapisvr.Server
+	)
+	{
+		eh := func(ctx context.Context, w http.ResponseWriter, err error) {
+			logger.Error("HTTP Error", logger.Fields{"error": err.Error()})
+		}
+		authServer = authsvr.New(authEndpoints, mux, dec, enc, eh, nil)
+		organizationServer = organizationsvr.New(organizationEndpoints, mux, dec, enc, eh, nil)
+		tenantServer = tenantsvr.New(tenantEndpoints, mux, dec, enc, eh, nil)
+		userServer = usersvr.New(userEndpoints, mux, dec, enc, eh, nil)
+		openapiServer = openapisvr.New(openapiEndpoints, mux, dec, enc, eh, nil)
+	}
+
+	// Mount GOA HTTP servers
+	authsvr.Mount(mux, authServer)
+	organizationsvr.Mount(mux, organizationServer)
+	tenantsvr.Mount(mux, tenantServer)
+	usersvr.Mount(mux, userServer)
+	openapisvr.Mount(mux, openapiServer)
+
+	// Create GOA-compatible context with logger
+	format := clueLog.FormatJSON
+	if clueLog.IsTerminal() {
+		format = clueLog.FormatTerminal
+	}
+	ctx := clueLog.Context(context.Background(), clueLog.WithFormat(format))
+
+	// Add logging and debugging to the GOA handler
+	var handler http.Handler = mux
+	handler = clueLog.HTTP(ctx)(handler)
+	handler = debug.HTTP()(handler)
+
+	// Log mounted endpoints
+	for _, m := range authServer.Mounts {
+		logger.Info("GOA HTTP endpoint mounted", logger.Fields{
+			"method":  m.Method,
+			"verb":    m.Verb,
+			"pattern": m.Pattern,
+		})
+	}
+	for _, m := range organizationServer.Mounts {
+		logger.Info("GOA HTTP endpoint mounted", logger.Fields{
+			"method":  m.Method,
+			"verb":    m.Verb,
+			"pattern": m.Pattern,
+		})
+	}
+	for _, m := range tenantServer.Mounts {
+		logger.Info("GOA HTTP endpoint mounted", logger.Fields{
+			"method":  m.Method,
+			"verb":    m.Verb,
+			"pattern": m.Pattern,
+		})
+	}
+	for _, m := range userServer.Mounts {
+		logger.Info("GOA HTTP endpoint mounted", logger.Fields{
+			"method":  m.Method,
+			"verb":    m.Verb,
+			"pattern": m.Pattern,
+		})
+	}
+	for _, m := range openapiServer.Mounts {
+		logger.Info("GOA HTTP endpoint mounted", logger.Fields{
+			"method":  m.Method,
+			"verb":    m.Verb,
+			"pattern": m.Pattern,
+		})
+	}
 
 	// Start server
-	logger.Info("Server starting", logger.Fields{
+	logger.Info("Server starting with GOA integration", logger.Fields{
 		"port":    cfg.Server.Port,
 		"address": ":" + cfg.Server.Port,
 	})
 
-	if err := http.ListenAndServe(":"+cfg.Server.Port, router); err != nil {
+	srv := &http.Server{
+		Addr:              ":" + cfg.Server.Port,
+		Handler:           handler,
+		ReadHeaderTimeout: time.Second * 60,
+	}
+
+	if err := srv.ListenAndServe(); err != nil {
 		logger.Fatal("Server failed to start", logger.Fields{
 			"error": err.Error(),
 			"port":  cfg.Server.Port,

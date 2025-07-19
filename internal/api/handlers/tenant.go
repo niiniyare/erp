@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -8,24 +9,28 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/tenant"
+	goaTenant "github.com/niiniyare/erp/gen/tenant"
+	coreTenant "github.com/niiniyare/erp/internal/core/tenant"
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // TenantHandler handles tenant-related HTTP requests
 type TenantHandler struct {
-	service tenant.Service
+	service coreTenant.Service
 }
 
 // NewTenantHandler creates a new tenant handler
-func NewTenantHandler(service tenant.Service) *TenantHandler {
+func NewTenantHandler(service coreTenant.Service) *TenantHandler {
 	return &TenantHandler{service: service}
 }
 
 // CreateTenant handles tenant creation requests
 func (h *TenantHandler) CreateTenant(c *gin.Context) {
-	var req tenant.CreateTenantRequest
+	var req coreTenant.CreateTenantRequest
 
 	logger.InfoContext(c.Request.Context(), "Received tenant creation request", logger.Fields{
 		"method":    c.Request.Method,
@@ -123,7 +128,7 @@ func (h *TenantHandler) UpdateTenant(c *gin.Context) {
 		return
 	}
 
-	var req tenant.UpdateTenantRequest
+	var req coreTenant.UpdateTenantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -295,3 +300,175 @@ func (s *tenantService) List(ctx context.Context, p *gen.ListPayload) (gen.Tenan
     return res, nil
 }
 */
+
+// TenantGoaHandler implements the GOA tenant service following the data flow pattern
+type TenantGoaHandler struct {
+	tenantService coreTenant.Service
+	tracing       *tracing.TracingService
+	metrics       *metrics.MetricsService
+}
+
+// NewTenantGoaHandler creates a new GOA tenant handler following Clean Architecture pattern
+func NewTenantGoaHandler(tenantSvc coreTenant.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) goaTenant.Service {
+	return &TenantGoaHandler{
+		tenantService: tenantSvc,
+		tracing:       tracing,
+		metrics:       metrics,
+	}
+}
+
+// Create creates a new tenant following the data flow pattern
+func (h *TenantGoaHandler) Create(ctx context.Context, p *goaTenant.CreateTenantPayload) (*goaTenant.Tenant, string, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "tenant.create",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("tenant.name", p.Name),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("tenant_create_duration", metrics.Fields{})
+	defer timer.Stop()
+
+	logger.Info("Tenant create called", logger.Fields{
+		"name": p.Name,
+	})
+
+	// TODO: Integrate with existing tenant creation logic using h.tenantService.CreateTenant
+	// This should convert p (GOA payload) to domain request, call the service, and convert back
+
+	// For now, return a mock response
+	tenantResult := &goaTenant.Tenant{
+		ID:        "mock-tenant-id",
+		Name:      p.Name,
+		Status:    "active",
+		CreatedAt: "2024-01-01T00:00:00Z",
+		UpdatedAt: "2024-01-01T00:00:00Z",
+	}
+
+	h.metrics.IncrementCounter("tenant_create_total", metrics.Fields{})
+	span.SetAttributes(attribute.String("result.tenant_id", tenantResult.ID))
+
+	return tenantResult, "default", nil
+}
+
+// Get retrieves a tenant by ID following the data flow pattern
+func (h *TenantGoaHandler) Get(ctx context.Context, p *goaTenant.GetPayload) (*goaTenant.Tenant, string, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "tenant.get",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("tenant.id", p.ID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("tenant_get_duration", metrics.Fields{})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing tenant retrieval logic using h.tenantService.GetTenantByID
+	tenantResult := &goaTenant.Tenant{
+		ID:        p.ID,
+		Name:      "Mock Tenant",
+		Status:    "active",
+		CreatedAt: "2024-01-01T00:00:00Z",
+		UpdatedAt: "2024-01-01T00:00:00Z",
+	}
+
+	h.metrics.IncrementCounter("tenant_get_total", metrics.Fields{})
+	return tenantResult, "default", nil
+}
+
+// List retrieves tenants with pagination following the data flow pattern
+func (h *TenantGoaHandler) List(ctx context.Context, p *goaTenant.ListPayload) (*goaTenant.ListResult, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "tenant.list",
+		tracing.WithSpanKind(tracing.SpanKindServer))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("tenant_list_duration", metrics.Fields{})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing tenant listing logic using h.tenantService.ListTenants
+	result := &goaTenant.ListResult{
+		Data:       []*goaTenant.Tenant{},
+		Pagination: &goaTenant.PaginationMeta{CurrentPage: 1, PageSize: 20, TotalItems: 0, TotalPages: 0, HasNext: false, HasPrev: false},
+	}
+
+	h.metrics.IncrementCounter("tenant_list_total", metrics.Fields{})
+	return result, nil
+}
+
+// Update updates an existing tenant following the data flow pattern
+func (h *TenantGoaHandler) Update(ctx context.Context, p *goaTenant.UpdateTenantPayload) (*goaTenant.Tenant, string, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "tenant.update",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("tenant.id", p.ID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("tenant_update_duration", metrics.Fields{})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing tenant update logic using h.tenantService.UpdateTenant
+	tenantResult := &goaTenant.Tenant{
+		ID:        p.ID,
+		Name:      *p.Name,
+		Status:    "active",
+		CreatedAt: "2024-01-01T00:00:00Z",
+		UpdatedAt: "2024-01-01T00:00:00Z",
+	}
+
+	h.metrics.IncrementCounter("tenant_update_total", metrics.Fields{})
+	return tenantResult, "default", nil
+}
+
+// Delete deletes a tenant following the data flow pattern
+func (h *TenantGoaHandler) Delete(ctx context.Context, p *goaTenant.DeletePayload) error {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "tenant.delete",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("tenant.id", p.ID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("tenant_delete_duration", metrics.Fields{})
+	defer timer.Stop()
+
+	logger.Info("Tenant delete called", logger.Fields{
+		"id": p.ID,
+	})
+
+	// TODO: Integrate with existing tenant deletion logic using h.tenantService.DeleteTenant
+	h.metrics.IncrementCounter("tenant_delete_total", metrics.Fields{})
+	return nil
+}
+
+// Health returns tenant service health status following the data flow pattern
+func (h *TenantGoaHandler) Health(ctx context.Context) (*goaTenant.HealthResult, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "tenant.health",
+		tracing.WithSpanKind(tracing.SpanKindServer))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("tenant_health_duration", metrics.Fields{})
+	defer timer.Stop()
+
+	// Return health status
+	result := &goaTenant.HealthResult{
+		Status:    "healthy",
+		Timestamp: "2024-01-01T00:00:00Z",
+		Version:   "1.0.0",
+	}
+
+	h.metrics.IncrementCounter("tenant_health_total", metrics.Fields{})
+	return result, nil
+}

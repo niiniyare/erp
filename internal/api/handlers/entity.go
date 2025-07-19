@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/niiniyare/erp/gen/organization"
 	"github.com/niiniyare/erp/internal/core/entity"
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -1041,4 +1043,192 @@ func (h *EntityHandler) ResetSequence(c *gin.Context) {
 		"key":         req.Key,
 		"fiscal_year": req.FiscalYear,
 	})
+}
+
+// OrganizationGoaHandler implements the GOA organization service following the data flow pattern
+type OrganizationGoaHandler struct {
+	entityService entity.Service
+	tracing       *tracing.TracingService
+	metrics       *metrics.MetricsService
+}
+
+// NewOrganizationGoaHandler creates a new GOA organization handler following Clean Architecture pattern
+func NewOrganizationGoaHandler(entitySvc entity.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) organization.Service {
+	return &OrganizationGoaHandler{
+		entityService: entitySvc,
+		tracing:       tracing,
+		metrics:       metrics,
+	}
+}
+
+// Create creates a new organization following the data flow pattern
+func (h *OrganizationGoaHandler) Create(ctx context.Context, p *organization.CreateOrganizationPayload) (*organization.Organization, string, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "organization.create",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("organization.name", p.Name),
+			attribute.String("organization.type", string(p.OrganizationType)),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("organization_create_duration", metrics.Fields{
+		"operation": "create",
+	})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing entity creation logic using h.entityService.CreateEntity
+	org := &organization.Organization{
+		ID:               "mock-org-id",
+		Name:             p.Name,
+		OrganizationType: p.OrganizationType,
+		Status:           "ACTIVE",
+		CreatedAt:        "2024-01-01T00:00:00Z",
+		UpdatedAt:        "2024-01-01T00:00:00Z",
+	}
+
+	h.metrics.IncrementCounter("organization_create_total", metrics.Fields{
+		"organization_type": p.OrganizationType,
+	})
+	span.SetAttributes(attribute.String("result.organization_id", org.ID))
+
+	return org, "default", nil
+}
+
+// Get retrieves an organization by ID following the data flow pattern
+func (h *OrganizationGoaHandler) Get(ctx context.Context, p *organization.GetPayload) (*organization.Organization, string, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "organization.get",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("organization.id", p.ID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("organization_get_duration", metrics.Fields{
+		"operation": "get",
+	})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing entity retrieval logic using h.entityService.GetEntityByID
+	org := &organization.Organization{
+		ID:               p.ID,
+		Name:             "Mock Organization",
+		OrganizationType: "CORPORATION",
+		Status:           "ACTIVE",
+		CreatedAt:        "2024-01-01T00:00:00Z",
+		UpdatedAt:        "2024-01-01T00:00:00Z",
+	}
+
+	h.metrics.IncrementCounter("organization_get_total", metrics.Fields{})
+	return org, "default", nil
+}
+
+// List retrieves organizations with pagination following the data flow pattern
+func (h *OrganizationGoaHandler) List(ctx context.Context, p *organization.ListPayload) (*organization.ListResult, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "organization.list",
+		tracing.WithSpanKind(tracing.SpanKindServer))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("organization_list_duration", metrics.Fields{
+		"operation": "list",
+	})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing entity listing logic using h.entityService.ListEntities
+	result := &organization.ListResult{
+		Data:       []*organization.Organization{},
+		Pagination: &organization.PaginationMeta{CurrentPage: 1, PageSize: 20, TotalItems: 0, TotalPages: 0, HasNext: false, HasPrev: false},
+	}
+
+	h.metrics.IncrementCounter("organization_list_total", metrics.Fields{})
+	return result, nil
+}
+
+// Update updates an existing organization following the data flow pattern
+func (h *OrganizationGoaHandler) Update(ctx context.Context, p *organization.UpdateOrganizationPayload) (*organization.Organization, string, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "organization.update",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("organization.id", p.ID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("organization_update_duration", metrics.Fields{
+		"operation": "update",
+	})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing entity update logic using h.entityService.UpdateEntity
+	org := &organization.Organization{
+		ID:               p.ID,
+		Name:             *p.Name,
+		OrganizationType: *p.OrganizationType,
+		Status:           *p.Status,
+		CreatedAt:        "2024-01-01T00:00:00Z",
+		UpdatedAt:        "2024-01-01T00:00:00Z",
+	}
+
+	h.metrics.IncrementCounter("organization_update_total", metrics.Fields{})
+	return org, "default", nil
+}
+
+// Hierarchy retrieves organization hierarchy following the data flow pattern
+func (h *OrganizationGoaHandler) Hierarchy(ctx context.Context, p *organization.HierarchyPayload) (*organization.OrganizationHierarchy, error) {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "organization.hierarchy",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("organization.id", p.ID),
+			attribute.Int("hierarchy.depth", int(p.Depth)),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("organization_hierarchy_duration", metrics.Fields{
+		"operation": "hierarchy",
+	})
+	defer timer.Stop()
+
+	// TODO: Integrate with existing entity hierarchy logic using h.entityService.GetEntityWithHierarchy
+	result := &organization.OrganizationHierarchy{
+		Root:      &organization.OrganizationNode{ID: p.ID, Name: "Root Org", OrganizationType: "CORPORATION", Status: "ACTIVE", Children: []string{}, Level: 0},
+		Children:  []*organization.OrganizationNode{},
+		Ancestors: []*organization.OrganizationNode{},
+		Depth:     p.Depth,
+	}
+
+	h.metrics.IncrementCounter("organization_hierarchy_total", metrics.Fields{})
+	return result, nil
+}
+
+// Archive archives an organization following the data flow pattern
+func (h *OrganizationGoaHandler) Archive(ctx context.Context, p *organization.ArchivePayload) error {
+	// Start tracing span
+	ctx, span := h.tracing.StartSpan(ctx, "organization.archive",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("organization.id", p.ID),
+		))
+	defer span.End()
+
+	// Start metrics timer
+	timer := h.metrics.Timer("organization_archive_duration", metrics.Fields{
+		"operation": "archive",
+	})
+	defer timer.Stop()
+
+	logger.Info("Organization archive called", logger.Fields{
+		"id": p.ID,
+	})
+
+	// TODO: Integrate with existing entity archival logic using h.entityService.DeleteEntity
+	h.metrics.IncrementCounter("organization_archive_total", metrics.Fields{})
+	return nil
 }

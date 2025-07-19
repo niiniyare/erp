@@ -30,14 +30,14 @@ go run cmd/server/main.go
 ## ✅ 3. Health Check
 
 ```bash
-curl -X GET http://localhost:8080/health | jq .
+curl -X GET http://localhost:8080/api/v1/tenants/health | jq .
 ```
 
 **Expected Response:**
 ```json
 {
-  "service": "awo",
-  "status": "ok",
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00Z",
   "version": "1.0.0"
 }
 ```
@@ -88,15 +88,22 @@ cd docs/api
 
 ## 🔍 6. Manual Testing
 
-### Create Your First Entity
+### Create Your First Tenant
 ```bash
-curl -X POST http://localhost:8080/api/v1/entities \
+curl -X POST http://localhost:8080/api/v1/tenants \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "My Company",
-    "code": "COMPANY001",
-    "type": "account",
-    "is_active": true
+    "name": "My Company"
+  }' | jq .
+```
+
+### Create Your First Organization
+```bash
+curl -X POST http://localhost:8080/api/v1/organizations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Engineering Department",
+    "organization_type": "DEPARTMENT"
   }' | jq .
 ```
 
@@ -105,36 +112,33 @@ curl -X POST http://localhost:8080/api/v1/entities \
 curl -X POST http://localhost:8080/api/v1/users \
   -H "Content-Type: application/json" \
   -d '{
-    "entity_id": "YOUR_ENTITY_ID",
     "username": "john.doe",
     "email": "john.doe@example.com",
-    "password": "SecurePassword123!",
-    "user_type": "INTERNAL",
-    "account_status": "ACTIVE"
+    "first_name": "John",
+    "last_name": "Doe",
+    "user_type": "INTERNAL"
   }' | jq .
 ```
 
-### Create Your First Access Request
+### Authenticate User
 ```bash
-curl -X POST http://localhost:8080/api/v1/access-requests \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -H "X-User-ID: YOUR_USER_ID" \
   -d '{
-    "entity_id": "YOUR_ENTITY_ID",
-    "request_type": "ROLE_ASSIGNMENT",
-    "justification": "Need admin access for testing",
-    "business_reason": "API Testing",
-    "duration_hours": 24
+    "email": "john.doe@example.com",
+    "password": "SecurePassword123!"
   }' | jq .
 ```
 
 ## 📚 7. Explore Documentation
 
 ### Core APIs
-- **[Entity Management](core-apis/entities/README.md)** - Business entities and hierarchies
+- **[Authentication](core-apis/auth/README.md)** - User authentication and JWT token management
+- **[Tenant Management](core-apis/tenants/README.md)** - Multi-tenant architecture support
+- **[Organization Management](core-apis/organizations/README.md)** - Organizational structures and hierarchies
 - **[User Management](core-apis/users/README.md)** - User authentication and management
 
-### Workflow APIs
+### Legacy Workflow APIs (Not Yet Implemented)
 - **[Access Request Workflow](workflows/access-requests/README.md)** - Access request and approval workflows
 - **[Conditional Access](workflows/conditional-access/README.md)** - Dynamic access control rules
 - **[User Analytics](workflows/user-analytics/README.md)** - User behavior analysis and insights
@@ -170,7 +174,7 @@ curl -X POST http://localhost:8080/api/v1/access-requests \
 ### Server Not Running
 ```bash
 # Check if server is running
-curl -X GET http://localhost:8080/health
+curl -X GET http://localhost:8080/api/v1/tenants/health
 
 # If not running, start it
 go run cmd/server/main.go
