@@ -21,7 +21,7 @@ func NewRouter(
 	accessRequestService request.AccessRequestService,
 	conditionalAccessService conditional.ConditionalAccessService,
 	analyticsService analytics.UserAnalyticsService,
-	tracing *tracing.TracingService,
+	tracing tracing.TracingService,
 	metrics *metrics.MetricsService,
 ) *gin.Engine {
 	r := gin.New()

@@ -2,51 +2,46 @@ package audit
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	db "github.com/niiniyare/erp/db/sqlc"
 )
 
-// Repository defines the interface for audit data persistence.
-type Repository interface {
-	CreateAuditEvent(ctx context.Context, event *AuditEvent) error
-	GetAuditEvents(ctx context.Context, req *AuditQueryRequest) ([]*AuditEvent, error)
-	GetUserAuditTrail(ctx context.Context, userID uuid.UUID, fromDate, toDate time.Time) ([]*AuditEvent, error)
-	GetWorkflowAuditTrail(ctx context.Context, requestID uuid.UUID) ([]*WorkflowAuditEvent, error)
+type repository struct {
+	store db.Store
 }
 
-// MockRepository is a mock implementation of the Repository interface for testing purposes.
-type MockRepository struct{}
-
-// NewMockRepository creates a new mock repository.
-func NewMockRepository() Repository {
-	return &MockRepository{}
+// NewRepository creates a new audit repository.
+func NewRepository(store db.Store) Repository {
+	return &repository{
+		store: store,
+	}
 }
 
-// CreateAuditEvent logs the audit event to the console instead of a database.
-func (m *MockRepository) CreateAuditEvent(ctx context.Context, event *AuditEvent) error {
-	logger.Info("Mock CreateAuditEvent called", logger.Fields{
-		"event_id":   event.ID,
-		"event_type": event.EventType,
-	})
-	return nil
-}
+// CreateAuditEvent creates a new audit event in the database.
+func (r *repository) CreateAuditEvent(ctx context.Context, arg AuditEvent) error {
+	params := db.CreateAuditEventParams{
+		EventType: arg.EventType,
+		Reason:    arg.Reason,
+		Context:   arg.Context,
+	}
 
-// GetAuditEvents returns a mock list of audit events.
-func (m *MockRepository) GetAuditEvents(ctx context.Context, req *AuditQueryRequest) ([]*AuditEvent, error) {
-	logger.Info("Mock GetAuditEvents called", nil)
-	return []*AuditEvent{}, nil
-}
+	if arg.UserID != uuid.Nil {
+		params.UserID = &arg.UserID
+	}
+	if arg.EventCategory != "" {
+		params.EventCategory = &arg.EventCategory
+	}
+	if arg.Severity != "" {
+		params.Severity = &arg.Severity
+	}
+	if arg.EntityID.Valid {
+		params.EntityID = &arg.EntityID.UUID
+	}
+	if arg.Decision != "" {
+		params.Decision = &arg.Decision
+	}
 
-// GetUserAuditTrail returns a mock user audit trail.
-func (m *MockRepository) GetUserAuditTrail(ctx context.Context, userID uuid.UUID, fromDate, toDate time.Time) ([]*AuditEvent, error) {
-	logger.Info("Mock GetUserAuditTrail called", logger.Fields{"user_id": userID})
-	return []*AuditEvent{}, nil
-}
-
-// GetWorkflowAuditTrail returns a mock workflow audit trail.
-func (m *MockRepository) GetWorkflowAuditTrail(ctx context.Context, requestID uuid.UUID) ([]*WorkflowAuditEvent, error) {
-	logger.Info("Mock GetWorkflowAuditTrail called", logger.Fields{"request_id": requestID})
-	return []*WorkflowAuditEvent{}, nil
+	_, err := r.store.CreateAuditEvent(ctx, params)
+	return err
 }

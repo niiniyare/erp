@@ -2,6 +2,7 @@ package analytics
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -17,13 +18,13 @@ import (
 )
 
 // Type aliases for external dependencies
-type AuditService = audit.AuditService
-type AuditEventSeverity = audit.AuditEventSeverity
+type AuditService = audit.Service
+type AuditEvent = audit.AuditEvent
 type DeviceInfo = conditional.DeviceInfo
 type LocationInfo = conditional.LocationInfo
 
 const (
-	AuditSeverityHigh = audit.AuditSeverityHigh
+	AuditSeverityHigh = "high"
 )
 
 // UserBehaviorPattern represents a user's behavioral pattern
@@ -652,15 +653,22 @@ func (s *userAnalyticsService) AssessUserRisk(ctx context.Context, userID uuid.U
 
 	// Log security event if high risk detected
 	if overallRiskScore >= 70 {
-		s.auditService.LogSecurityViolation(ctx, userID,
-			fmt.Sprintf("High risk user detected: score %d", overallRiskScore),
-			AuditSeverityHigh,
-			map[string]any{
-				"risk_score":      overallRiskScore,
-				"risk_level":      riskLevel,
-				"risk_categories": riskCategories,
-				"anomalies":       len(behavioralAnomalies),
-			})
+		contextData, _ := json.Marshal(map[string]any{
+			"risk_score":      overallRiskScore,
+			"risk_level":      riskLevel,
+			"risk_categories": riskCategories,
+			"anomalies":       len(behavioralAnomalies),
+		})
+
+		s.auditService.Record(ctx, AuditEvent{
+			UserID:        userID,
+			EventType:     "security_violation",
+			EventCategory: "risk_assessment",
+			Severity:      AuditSeverityHigh,
+			Decision:      "high_risk_detected",
+			Reason:        fmt.Sprintf("High risk user detected: score %d", overallRiskScore),
+			Context:       contextData,
+		})
 	}
 
 	s.metrics.ObserveHistogram("user_risk_score", float64(overallRiskScore), map[string]any{

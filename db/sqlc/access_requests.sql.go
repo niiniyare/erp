@@ -12,6 +12,57 @@ import (
 	"github.com/google/uuid"
 )
 
+const countAccessRequestsByStatus = `-- name: CountAccessRequestsByStatus :one
+SELECT 
+    COUNT(*) as total_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'PENDING') as pending_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'APPROVED') as approved_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'REJECTED') as rejected_requests,
+    COUNT(*) FILTER (WHERE approval_status = 'EXPIRED') as expired_requests
+FROM access_requests
+WHERE tenant_id = current_tenant_id()
+  AND created_at >= $1
+  AND created_at <= $2
+`
+
+type CountAccessRequestsByStatusParams struct {
+	CreatedAt   sql.NullTime `json:"created_at"`
+	CreatedAt_2 sql.NullTime `json:"created_at_2"`
+}
+
+type CountAccessRequestsByStatusRow struct {
+	TotalRequests    int64 `json:"total_requests"`
+	PendingRequests  int64 `json:"pending_requests"`
+	ApprovedRequests int64 `json:"approved_requests"`
+	RejectedRequests int64 `json:"rejected_requests"`
+	ExpiredRequests  int64 `json:"expired_requests"`
+}
+
+// CountAccessRequestsByStatus
+//
+//	SELECT
+//	    COUNT(*) as total_requests,
+//	    COUNT(*) FILTER (WHERE approval_status = 'PENDING') as pending_requests,
+//	    COUNT(*) FILTER (WHERE approval_status = 'APPROVED') as approved_requests,
+//	    COUNT(*) FILTER (WHERE approval_status = 'REJECTED') as rejected_requests,
+//	    COUNT(*) FILTER (WHERE approval_status = 'EXPIRED') as expired_requests
+//	FROM access_requests
+//	WHERE tenant_id = current_tenant_id()
+//	  AND created_at >= $1
+//	  AND created_at <= $2
+func (q *Queries) CountAccessRequestsByStatus(ctx context.Context, arg CountAccessRequestsByStatusParams) (*CountAccessRequestsByStatusRow, error) {
+	row := q.db.QueryRow(ctx, countAccessRequestsByStatus, arg.CreatedAt, arg.CreatedAt_2)
+	var i CountAccessRequestsByStatusRow
+	err := row.Scan(
+		&i.TotalRequests,
+		&i.PendingRequests,
+		&i.ApprovedRequests,
+		&i.RejectedRequests,
+		&i.ExpiredRequests,
+	)
+	return &i, err
+}
+
 const createAccessRequest = `-- name: CreateAccessRequest :one
 INSERT INTO access_requests (
     tenant_id, requester_id, target_user_id, entity_id, request_type,
@@ -122,6 +173,256 @@ func (q *Queries) GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*Acce
 		&i.UpdatedAt,
 	)
 	return &i, err
+}
+
+const getExpiredAccessRequests = `-- name: GetExpiredAccessRequests :many
+SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
+WHERE tenant_id = current_tenant_id()
+  AND approval_status = 'APPROVED'
+  AND expires_at IS NOT NULL
+  AND expires_at < NOW()
+  AND auto_revoke = true
+`
+
+// GetExpiredAccessRequests
+//
+//	SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
+//	WHERE tenant_id = current_tenant_id()
+//	  AND approval_status = 'APPROVED'
+//	  AND expires_at IS NOT NULL
+//	  AND expires_at < NOW()
+//	  AND auto_revoke = true
+func (q *Queries) GetExpiredAccessRequests(ctx context.Context) ([]*AccessRequest, error) {
+	rows, err := q.db.Query(ctx, getExpiredAccessRequests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*AccessRequest{}
+	for rows.Next() {
+		var i AccessRequest
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.RequesterID,
+			&i.TargetUserID,
+			&i.EntityID,
+			&i.RequestType,
+			&i.RoleID,
+			&i.PermissionID,
+			&i.ResourceID,
+			&i.Justification,
+			&i.BusinessReason,
+			&i.DurationHours,
+			&i.ApprovalStatus,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
+			&i.ApprovalComments,
+			&i.ExpiresAt,
+			&i.AutoRevoke,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPendingAccessRequests = `-- name: GetPendingAccessRequests :many
+SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
+WHERE tenant_id = current_tenant_id()
+  AND approval_status = 'PENDING'
+  AND (expires_at IS NULL OR expires_at > NOW())
+ORDER BY created_at ASC
+`
+
+// GetPendingAccessRequests
+//
+//	SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
+//	WHERE tenant_id = current_tenant_id()
+//	  AND approval_status = 'PENDING'
+//	  AND (expires_at IS NULL OR expires_at > NOW())
+//	ORDER BY created_at ASC
+func (q *Queries) GetPendingAccessRequests(ctx context.Context) ([]*AccessRequest, error) {
+	rows, err := q.db.Query(ctx, getPendingAccessRequests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*AccessRequest{}
+	for rows.Next() {
+		var i AccessRequest
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.RequesterID,
+			&i.TargetUserID,
+			&i.EntityID,
+			&i.RequestType,
+			&i.RoleID,
+			&i.PermissionID,
+			&i.ResourceID,
+			&i.Justification,
+			&i.BusinessReason,
+			&i.DurationHours,
+			&i.ApprovalStatus,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
+			&i.ApprovalComments,
+			&i.ExpiresAt,
+			&i.AutoRevoke,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserAccessRequestHistory = `-- name: GetUserAccessRequestHistory :many
+SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
+WHERE tenant_id = current_tenant_id()
+  AND requester_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetUserAccessRequestHistoryParams struct {
+	RequesterID uuid.UUID `json:"requester_id"`
+	Limit       int32     `json:"limit"`
+	Offset      int32     `json:"offset"`
+}
+
+// GetUserAccessRequestHistory
+//
+//	SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
+//	WHERE tenant_id = current_tenant_id()
+//	  AND requester_id = $1
+//	ORDER BY created_at DESC
+//	LIMIT $2 OFFSET $3
+func (q *Queries) GetUserAccessRequestHistory(ctx context.Context, arg GetUserAccessRequestHistoryParams) ([]*AccessRequest, error) {
+	rows, err := q.db.Query(ctx, getUserAccessRequestHistory, arg.RequesterID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*AccessRequest{}
+	for rows.Next() {
+		var i AccessRequest
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.RequesterID,
+			&i.TargetUserID,
+			&i.EntityID,
+			&i.RequestType,
+			&i.RoleID,
+			&i.PermissionID,
+			&i.ResourceID,
+			&i.Justification,
+			&i.BusinessReason,
+			&i.DurationHours,
+			&i.ApprovalStatus,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
+			&i.ApprovalComments,
+			&i.ExpiresAt,
+			&i.AutoRevoke,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAccessRequestsByStatus = `-- name: ListAccessRequestsByStatus :many
+SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
+WHERE tenant_id = current_tenant_id()
+  AND ($1::text IS NULL OR approval_status = $1)
+  AND ($2::uuid IS NULL OR requester_id = $2)
+  AND ($3::uuid IS NULL OR target_user_id = $3)
+ORDER BY created_at DESC
+LIMIT $4 OFFSET $5
+`
+
+type ListAccessRequestsByStatusParams struct {
+	Column1 string    `json:"column_1"`
+	Column2 uuid.UUID `json:"column_2"`
+	Column3 uuid.UUID `json:"column_3"`
+	Limit   int32     `json:"limit"`
+	Offset  int32     `json:"offset"`
+}
+
+// ListAccessRequestsByStatus
+//
+//	SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
+//	WHERE tenant_id = current_tenant_id()
+//	  AND ($1::text IS NULL OR approval_status = $1)
+//	  AND ($2::uuid IS NULL OR requester_id = $2)
+//	  AND ($3::uuid IS NULL OR target_user_id = $3)
+//	ORDER BY created_at DESC
+//	LIMIT $4 OFFSET $5
+func (q *Queries) ListAccessRequestsByStatus(ctx context.Context, arg ListAccessRequestsByStatusParams) ([]*AccessRequest, error) {
+	rows, err := q.db.Query(ctx, listAccessRequestsByStatus,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*AccessRequest{}
+	for rows.Next() {
+		var i AccessRequest
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.RequesterID,
+			&i.TargetUserID,
+			&i.EntityID,
+			&i.RequestType,
+			&i.RoleID,
+			&i.PermissionID,
+			&i.ResourceID,
+			&i.Justification,
+			&i.BusinessReason,
+			&i.DurationHours,
+			&i.ApprovalStatus,
+			&i.ApprovedBy,
+			&i.ApprovedAt,
+			&i.ApprovalComments,
+			&i.ExpiresAt,
+			&i.AutoRevoke,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateAccessRequestStatus = `-- name: UpdateAccessRequestStatus :one

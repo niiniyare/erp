@@ -2,7 +2,6 @@ package request
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -206,7 +205,6 @@ func (req *CreateAccessRequestRequest) ToSQLCCreateParams(tenantID, requesterID 
 	autoRevoke := true // Default to true for security
 
 	return &db.CreateAccessRequestParams{
-		TenantID:       tenantID,
 		RequesterID:    requesterID,
 		TargetUserID:   req.TargetUserID,
 		EntityID:       req.EntityID,
@@ -297,7 +295,7 @@ func (req *CreateAccessRequestRequest) ValidateRequest() error {
 }
 
 // GetRequestTypeDisplayName returns human-readable request type name
-func (rt RequestType) GetDisplayName() string {
+func GetRequestTypeDisplayName(rt RequestType) string {
 	switch rt {
 	case RequestTypeRoleAssignment:
 		return "Role Assignment"
@@ -313,7 +311,7 @@ func (rt RequestType) GetDisplayName() string {
 }
 
 // GetApprovalStatusDisplayName returns human-readable approval status name
-func (as ApprovalStatus) GetDisplayName() string {
+func GetApprovalStatusDisplayName(as ApprovalStatus) string {
 	switch as {
 	case ApprovalStatusPending:
 		return "Pending Approval"

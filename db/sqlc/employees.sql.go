@@ -17,7 +17,7 @@ INSERT INTO employees (
     person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, salary_info, employment_status, work_schedule, security_level, access_attributes
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-) RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, created_at, updated_at, deleted_at
+) RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 `
 
 type CreateEmployeeParams struct {
@@ -41,7 +41,7 @@ type CreateEmployeeParams struct {
 //	    person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, salary_info, employment_status, work_schedule, security_level, access_attributes
 //	) VALUES (
 //	    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-//	) RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, created_at, updated_at, deleted_at
+//	) RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (*Employee, error) {
 	row := q.db.QueryRow(ctx, createEmployee,
 		arg.PersonID,
@@ -74,6 +74,10 @@ func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) 
 		&i.WorkSchedule,
 		&i.SecurityLevel,
 		&i.AccessAttributes,
+		&i.Version,
+		&i.LastValidationRun,
+		&i.ValidationStatus,
+		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -82,12 +86,12 @@ func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) 
 }
 
 const getEmployeeByID = `-- name: GetEmployeeByID :one
-SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, created_at, updated_at, deleted_at FROM employees WHERE id = $1 AND deleted_at IS NULL
+SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM employees WHERE id = $1 AND deleted_at IS NULL
 `
 
 // GetEmployeeByID
 //
-//	SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, created_at, updated_at, deleted_at FROM employees WHERE id = $1 AND deleted_at IS NULL
+//	SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM employees WHERE id = $1 AND deleted_at IS NULL
 func (q *Queries) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error) {
 	row := q.db.QueryRow(ctx, getEmployeeByID, id)
 	var i Employee
@@ -107,6 +111,10 @@ func (q *Queries) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee,
 		&i.WorkSchedule,
 		&i.SecurityLevel,
 		&i.AccessAttributes,
+		&i.Version,
+		&i.LastValidationRun,
+		&i.ValidationStatus,
+		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

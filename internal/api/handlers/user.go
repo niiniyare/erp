@@ -11,7 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/gen/user"
-	coreUser "github.com/niiniyare/erp/internal/core/identity"
+	"github.com/niiniyare/erp/internal/core/access/conditional"
+	"github.com/niiniyare/erp/internal/core/access/request"
+	"github.com/niiniyare/erp/internal/core/analytics"
+	"github.com/niiniyare/erp/internal/core/identity"
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -21,13 +24,13 @@ import (
 
 // UserHandler handles user-related HTTP requests following the data flow pattern
 type UserHandler struct {
-	service coreUser.Service
-	tracing *tracing.TracingService
+	service identity.Service
+	tracing tracing.TracingService
 	metrics *metrics.MetricsService
 }
 
 // NewUserHandler creates a new user handler
-func NewUserHandler(service coreUser.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) *UserHandler {
+func NewUserHandler(service identity.Service, tracing tracing.TracingService, metrics *metrics.MetricsService) *UserHandler {
 	return &UserHandler{
 		service: service,
 		tracing: tracing,
@@ -86,7 +89,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	}
 
 	// Convert to service request with proper type handling
-	serviceReq := &coreUser.CreateUserRequest{
+	serviceReq := &identity.CreateUserRequest{
 		EntityID:   req.EntityID,
 		Username:   req.Username,
 		Email:      req.Email,
@@ -116,7 +119,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	}
 
 	// Call service layer
-	user, err := h.service.CreateUser(ctx, serviceReq)
+	user, err := h.service.RegisterNewUser(ctx, serviceReq)
 	if err != nil {
 		// Record error in span
 		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
@@ -287,7 +290,7 @@ func (h *UserHandler) ListUsers(c *gin.Context) {
 	)
 
 	// Build service request
-	req := &coreUser.ListUsersRequest{
+	req := &identity.ListUsersRequest{
 		Limit:  limit,
 		Offset: offset,
 	}
@@ -406,7 +409,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	}
 
 	// Convert to service request
-	serviceReq := &coreUser.UpdateUserRequest{
+	serviceReq := &identity.UpdateUserRequest{
 		Username:              req.Username,
 		Email:                 req.Email,
 		UserType:              req.UserType,
@@ -503,7 +506,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	span.SetAttributes(attribute.String("user.id", userID.String()))
 
 	// Call service layer (soft delete)
-	err = h.service.DeleteUser(ctx, userID, false)
+	err = h.service.DeleteUser(ctx, userID)
 	if err != nil {
 		// Record error in span
 		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
@@ -586,7 +589,7 @@ func (h *UserHandler) AuthenticateUser(c *gin.Context) {
 	span.SetAttributes(attribute.String("auth.identifier", req.Identifier))
 
 	// Call service layer
-	user, err := h.service.AuthenticateUser(ctx, req.Identifier, req.Password)
+	user, err := h.service.Authenticate(ctx, req.Identifier, req.Password)
 	if err != nil {
 		// Record error in span
 		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
@@ -804,7 +807,7 @@ func (h *UserHandler) UpdateUserPassword(c *gin.Context) {
 	span.SetAttributes(attribute.String("user.id", userID.String()))
 
 	// Call service layer
-	err = h.service.UpdatePassword(ctx, userID, req.NewPassword)
+	err = h.service.ChangePassword(ctx, userID, req.CurrentPassword, req.NewPassword)
 	if err != nil {
 		// Record error in span
 		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
@@ -1039,7 +1042,7 @@ type GetUserRolesResponse struct {
 // Helper functions
 
 // convertUserToResponse converts a domain User to UserResponse
-func (h *UserHandler) convertUserToResponse(u *coreUser.User) UserResponse {
+func (h *UserHandler) convertUserToResponse(u *identity.User) UserResponse {
 	response := UserResponse{
 		ID:        u.ID.String(),
 		EntityID:  u.EntityID.String(),
@@ -1117,12 +1120,14 @@ func (h *UserHandler) EvaluatePermission(c *gin.Context) {
 	}
 
 	// Convert to service request
-	serviceReq := &coreUser.PermissionEvaluationRequest{
+	serviceReq := &identity.PermissionEvaluationRequest{
 		UserID:       req.UserID,
 		ResourceName: req.ResourceName,
 		ActionName:   req.ActionName,
-		EntityID:     req.EntityID,
 		Context:      req.Context,
+	}
+	if req.EntityID != nil {
+		serviceReq.EntityID = *req.EntityID
 	}
 
 	// Call service layer
@@ -1212,19 +1217,21 @@ func (h *UserHandler) BulkEvaluatePermissions(c *gin.Context) {
 	}
 
 	// Convert to service requests
-	serviceRequests := make([]*coreUser.PermissionEvaluationRequest, len(req.Requests))
+	serviceRequests := make([]*identity.PermissionEvaluationRequest, len(req.Requests))
 	for i, r := range req.Requests {
-		serviceRequests[i] = &coreUser.PermissionEvaluationRequest{
+		serviceRequests[i] = &identity.PermissionEvaluationRequest{
 			UserID:       r.UserID,
 			ResourceName: r.ResourceName,
 			ActionName:   r.ActionName,
-			EntityID:     r.EntityID,
 			Context:      r.Context,
+		}
+		if r.EntityID != nil {
+			serviceRequests[i].EntityID = *r.EntityID
 		}
 	}
 
 	// Build bulk request
-	bulkReq := &coreUser.BulkPermissionEvaluationRequest{
+	bulkReq := &identity.BulkPermissionEvaluationRequest{
 		Requests: serviceRequests,
 	}
 
@@ -1319,19 +1326,13 @@ func (h *UserHandler) GetUserEffectivePermissions(c *gin.Context) {
 		return
 	}
 
-	// Get optional entity filter
-	var entityID *uuid.UUID
-	if entityIDStr := c.Query("entity_id"); entityIDStr != "" {
-		if parsed, err := uuid.Parse(entityIDStr); err == nil {
-			entityID = &parsed
-		}
-	}
+	// Note: entity filtering not implemented in current service interface
 
 	// Add user ID to span
 	span.SetAttributes(attribute.String("user.id", userID.String()))
 
 	// Call service layer
-	permissions, err := h.service.GetUserEffectivePermissions(ctx, userID, entityID)
+	permissions, err := h.service.GetUserEffectivePermissions(ctx, userID)
 	if err != nil {
 		// Record error in span
 		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
@@ -1790,16 +1791,18 @@ func (h *UserHandler) TestPolicy(c *gin.Context) {
 	}
 
 	// Convert to service request
-	serviceReq := &coreUser.PolicyTestRequest{
+	serviceReq := &identity.PolicyTestRequest{
 		UserID:       req.UserID,
 		ResourceName: req.ResourceName,
 		ActionName:   req.ActionName,
-		EntityID:     req.EntityID,
 		Context:      req.Context,
+	}
+	if req.EntityID != nil {
+		serviceReq.EntityID = *req.EntityID
 	}
 
 	// Call service layer
-	result, err := h.service.TestPolicy(ctx, policyID, serviceReq)
+	result, err := h.service.TestPolicy(ctx, serviceReq)
 	if err != nil {
 		// Record error in span
 		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
@@ -1836,7 +1839,7 @@ func (h *UserHandler) TestPolicy(c *gin.Context) {
 
 	// Success response
 	c.JSON(http.StatusOK, TestPolicyResponse{
-		PolicyID:      result.PolicyID.String(),
+		PolicyID:      result.PolicyID,
 		PolicyName:    result.PolicyName,
 		Effect:        result.Effect,
 		TargetMatches: result.TargetMatches,
@@ -1944,16 +1947,16 @@ type TestPolicyResponse struct {
 
 // UserGoaHandler implements the GOA user service following the data flow pattern
 type UserGoaHandler struct {
-	userService              coreUser.Service
-	accessRequestService     coreUser.AccessRequestService
-	conditionalAccessService coreUser.ConditionalAccessService
-	analyticsService         coreUser.UserAnalyticsService
-	tracing                  *tracing.TracingService
+	userService              identity.Service
+	accessRequestService     request.AccessRequestService
+	conditionalAccessService conditional.ConditionalAccessService
+	analyticsService         analytics.UserAnalyticsService
+	tracing                  tracing.TracingService
 	metrics                  *metrics.MetricsService
 }
 
 // NewUserGoaHandler creates a new GOA user handler following Clean Architecture pattern
-func NewUserGoaHandler(userSvc coreUser.Service, accessSvc coreUser.AccessRequestService, conditionalSvc coreUser.ConditionalAccessService, analyticsSvc coreUser.UserAnalyticsService, tracing *tracing.TracingService, metrics *metrics.MetricsService) user.Service {
+func NewUserGoaHandler(userSvc identity.Service, accessSvc request.AccessRequestService, conditionalSvc conditional.ConditionalAccessService, analyticsSvc analytics.UserAnalyticsService, tracing tracing.TracingService, metrics *metrics.MetricsService) user.Service {
 	return &UserGoaHandler{
 		userService:              userSvc,
 		accessRequestService:     accessSvc,

@@ -17,7 +17,7 @@ INSERT INTO persons (
     entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
-) RETURNING id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, created_at, updated_at, deleted_at
+) RETURNING id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 `
 
 type CreatePersonParams struct {
@@ -42,7 +42,7 @@ type CreatePersonParams struct {
 //	    entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata
 //	) VALUES (
 //	    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
-//	) RETURNING id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, created_at, updated_at, deleted_at
+//	) RETURNING id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 func (q *Queries) CreatePerson(ctx context.Context, arg CreatePersonParams) (*Person, error) {
 	row := q.db.QueryRow(ctx, createPerson,
 		arg.EntityID,
@@ -77,6 +77,10 @@ func (q *Queries) CreatePerson(ctx context.Context, arg CreatePersonParams) (*Pe
 		&i.SecurityAttributes,
 		&i.Metadata,
 		&i.IsActive,
+		&i.Version,
+		&i.LastValidationRun,
+		&i.ValidationStatus,
+		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -85,12 +89,12 @@ func (q *Queries) CreatePerson(ctx context.Context, arg CreatePersonParams) (*Pe
 }
 
 const getPersonByID = `-- name: GetPersonByID :one
-SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, created_at, updated_at, deleted_at FROM persons WHERE id = $1 AND deleted_at IS NULL
+SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM persons WHERE id = $1 AND deleted_at IS NULL
 `
 
 // GetPersonByID
 //
-//	SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, created_at, updated_at, deleted_at FROM persons WHERE id = $1 AND deleted_at IS NULL
+//	SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM persons WHERE id = $1 AND deleted_at IS NULL
 func (q *Queries) GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error) {
 	row := q.db.QueryRow(ctx, getPersonByID, id)
 	var i Person
@@ -111,6 +115,10 @@ func (q *Queries) GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, err
 		&i.SecurityAttributes,
 		&i.Metadata,
 		&i.IsActive,
+		&i.Version,
+		&i.LastValidationRun,
+		&i.ValidationStatus,
+		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

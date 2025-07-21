@@ -2,48 +2,58 @@ package audit
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	"github.com/niiniyare/erp/internal/shared/token"
 )
 
-func TestAuditService_LogAuditEvent(t *testing.T) {
-	// Initialize mock dependencies
-	mockTracing := tracing.NewMockTracingService()
-	mockMetrics := metrics.NewMockMetricsService()
-	mockRepo := NewMockRepository() // Using the mock repository from this package
-
-	// Create a new AuditService instance
-	svc := NewAuditService(mockTracing, mockMetrics, mockRepo)
-
-	// Create a sample audit event
-	event := &AuditEvent{
-		EventType:     AuditEventAccessGranted,
-		EventCategory: AuditCategoryAccess,
-		Severity:      AuditSeverityInfo,
-		Reason:        "Test access granted",
-		Timestamp:     time.Now(),
-	}
-
-	// Log the audit event
-	err := svc.LogAuditEvent(context.Background(), event)
-
-	// Assert no error occurred
-	assert.NoError(t, err)
-
-	// Optionally, add assertions to check if the mock repository's CreateAuditEvent was called
-	// (This would require adding a method to MockRepository to track calls,
-	// but for a basic test, just checking for no error is sufficient for now)
+// MockRepository is a mock implementation of the Repository interface
+type MockRepository struct {
+	mock.Mock
 }
 
-func TestAuditService_NewAuditService(t *testing.T) {
-	mockTracing := tracing.NewMockTracingService()
-	mockMetrics := metrics.NewMockMetricsService()
-	mockRepo := NewMockRepository()
+func (m *MockRepository) CreateAuditEvent(ctx context.Context, arg AuditEvent) error {
+	args := m.Called(ctx, arg)
+	return args.Error(0)
+}
 
-	svc := NewAuditService(mockTracing, mockMetrics, mockRepo)
-	assert.NotNil(t, svc, "NewAuditService should return a non-nil service")
+func TestRecord(t *testing.T) {
+	// 1. Setup
+	mockRepo := new(MockRepository)
+	auditService := NewService(mockRepo)
+
+	userID := uuid.New()
+	authPayload := &token.Payload{
+		UserID:    userID,
+		IssuedAt:  time.Now(),
+		ExpiredAt: time.Now().Add(time.Hour),
+	}
+	ctx := context.WithValue(context.Background(), token.AuthorizationPayloadKey, authPayload)
+
+	event := AuditEvent{
+		EventType:     "user.login",
+		EventCategory: "AUTH",
+		Severity:      "INFO",
+		Decision:      "SUCCESS",
+		Reason:        "User successfully logged in",
+		Context:       json.RawMessage(`{"ip": "127.0.0.1"}`),
+	}
+
+	// 2. Expectations
+	expectedEvent := event
+	expectedEvent.UserID = userID // The service should set this
+	mockRepo.On("CreateAuditEvent", ctx, expectedEvent).Return(nil)
+
+	// 3. Execution
+	err := auditService.Record(ctx, event)
+
+	// 4. Assertions
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
 }

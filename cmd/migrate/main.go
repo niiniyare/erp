@@ -1,3 +1,7 @@
 package main
 
-// Add migration tool logic here
+import "fmt"
+
+func main() {
+	fmt.Println("Migration tool placeholder")
+}

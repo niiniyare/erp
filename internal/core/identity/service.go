@@ -34,6 +34,17 @@ type Service interface {
 
 	AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 	RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
+
+	// Additional methods needed by handlers
+	ListUsers(ctx context.Context, req *ListUsersRequest) ([]*User, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) error
+	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*Role, error)
+	SearchUsers(ctx context.Context, query string, limit int, offset int) ([]*User, error)
+	EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResult, error)
+	BulkEvaluatePermissions(ctx context.Context, req *BulkPermissionEvaluationRequest) ([]*PermissionEvaluationResult, error)
+	GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID) ([]*UserPermission, error)
+	CalculateRoleHierarchy(ctx context.Context, userID uuid.UUID) ([]*RoleHierarchy, error)
+	TestPolicy(ctx context.Context, req *PolicyTestRequest) (*PolicyTestResult, error)
 }
 
 // service implements the Service interface
@@ -255,6 +266,53 @@ func (s *service) AssignUserRole(ctx context.Context, userID, roleID, entityID u
 func (s *service) RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
 	// TODO: Implement actual role revocation logic
 	return nil
+}
+
+// --- Additional Methods ---
+
+func (s *service) ListUsers(ctx context.Context, req *ListUsersRequest) ([]*User, error) {
+	// TODO: Implement user listing with pagination
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *service) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	// TODO: Implement user deletion
+	return fmt.Errorf("not implemented")
+}
+
+func (s *service) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*Role, error) {
+	// TODO: Implement role retrieval
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *service) SearchUsers(ctx context.Context, query string, limit int, offset int) ([]*User, error) {
+	// TODO: Implement user search with pagination
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResult, error) {
+	// TODO: Implement permission evaluation
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *service) BulkEvaluatePermissions(ctx context.Context, req *BulkPermissionEvaluationRequest) ([]*PermissionEvaluationResult, error) {
+	// TODO: Implement bulk permission evaluation
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *service) GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID) ([]*UserPermission, error) {
+	// TODO: Implement effective permissions retrieval
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *service) CalculateRoleHierarchy(ctx context.Context, userID uuid.UUID) ([]*RoleHierarchy, error) {
+	// TODO: Implement role hierarchy calculation
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (s *service) TestPolicy(ctx context.Context, req *PolicyTestRequest) (*PolicyTestResult, error) {
+	// TODO: Implement policy testing
+	return nil, fmt.Errorf("not implemented")
 }
 
 // --- Private Helpers ---

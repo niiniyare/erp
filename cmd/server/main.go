@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/niiniyare/erp/internal/adapters"
 	"github.com/niiniyare/erp/internal/api/handlers"
 	"github.com/niiniyare/erp/internal/core/access/approval"
 	"github.com/niiniyare/erp/internal/core/access/conditional"
@@ -103,7 +104,8 @@ func main() {
 	})
 
 	// Initialize cache
-	redisClient := cache.NewRedisClient(&cfg.Redis)
+	redisConfig := cache.DefaultRedisConfig(&cfg.Redis)
+	redisClient := cache.NewRedisClient(redisConfig)
 
 	logger.Info("Cache client initialized", logger.Fields{
 		"redis_host": cfg.Redis.Host,
@@ -114,8 +116,8 @@ func main() {
 	tenantRepo := tenant.NewRepository(store)
 	entityRepo := entity.NewRepository(store, tracingService, metricsService)
 	identityRepo := identity.NewRepository(store, tracingService, metricsService)
-	auditRepo := audit.NewRepository(store, tracingService, metricsService)
-	notificationRepo := notification.NewRepository(store, tracingService, metricsService)
+	auditRepo := audit.NewRepository(store)
+	notificationRepo := notification.NewRepository(store)
 
 	// Initialize core business services
 	tenantService := tenant.NewService(tenantRepo, redisClient)
@@ -123,23 +125,27 @@ func main() {
 	identityService := identity.NewService(identityRepo, redisClient, tracingService, metricsService)
 
 	// Initialize domain services
-	auditService := audit.NewAuditService(tracingService, metricsService, auditRepo)
+	auditService := audit.NewService(auditRepo)
 	approverService := approval.NewApproverService(identityService, tracingService, metricsService)
-	notificationService := notification.NewNotificationService(notificationRepo, tracingService, metricsService, nil, nil, approverService)
+	notificationService := notification.NewNotificationService(tracingService, metricsService, nil, nil, notificationRepo)
 	executionService := execution.NewAccessExecutionService(identityRepo, identityService, tracingService, metricsService)
+
+	// Create adapters for interface compatibility
+	userServiceAdapter := adapters.NewUserServiceAdapter(identityService)
+	auditServiceAdapter := adapters.NewAuditServiceAdapter(auditService)
+
 	accessRequestService := request.NewAccessRequestService(
 		nil, // TODO: Implement AccessRequestRepository
-		identityRepo,
 		redisClient,
 		tracingService,
 		metricsService,
-		identityService,
+		userServiceAdapter,
 		notificationService,
 		approverService,
 		executionService,
 		auditService,
 	)
-	conditionalAccessService := conditional.NewConditionalAccessService(tracingService, metricsService, auditService)
+	conditionalAccessService := conditional.NewConditionalAccessService(tracingService, metricsService, auditServiceAdapter)
 	analyticsService := analytics.NewUserAnalyticsService(tracingService, metricsService, auditService)
 
 	logger.Info("Core business services initialized", logger.Fields{
@@ -161,10 +167,10 @@ func main() {
 	)
 	{
 		// Use handlers package following the data flow pattern
-		authSvc = handlers.NewAuthHandler(userService, tracingService, metricsService)
+		authSvc = handlers.NewAuthHandler(identityService, tracingService, metricsService)
 		organizationSvc = handlers.NewOrganizationGoaHandler(entityService, tracingService, metricsService)
 		tenantSvc = handlers.NewTenantGoaHandler(tenantService, tracingService, metricsService)
-		userSvc = handlers.NewUserGoaHandler(userService, accessRequestService, conditionalAccessService, analyticsService, tracingService, metricsService)
+		userSvc = handlers.NewUserGoaHandler(identityService, accessRequestService, conditionalAccessService, analyticsService, tracingService, metricsService)
 		openapiSvc = handlers.NewOpenapiHandler()
 	}
 

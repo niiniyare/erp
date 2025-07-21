@@ -211,10 +211,14 @@ type Employee struct {
 	// Numeric security clearance level (0=lowest, higher numbers = higher clearance)
 	SecurityLevel *int32 `json:"security_level"`
 	// JSONB containing employment-specific ABAC attributes for access control
-	AccessAttributes []byte       `json:"access_attributes"`
-	CreatedAt        time.Time    `json:"created_at"`
-	UpdatedAt        time.Time    `json:"updated_at"`
-	DeletedAt        sql.NullTime `json:"deleted_at"`
+	AccessAttributes  []byte       `json:"access_attributes"`
+	Version           int32        `json:"version"`
+	LastValidationRun sql.NullTime `json:"last_validation_run"`
+	ValidationStatus  *string      `json:"validation_status"`
+	ValidationErrors  []byte       `json:"validation_errors"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
+	DeletedAt         sql.NullTime `json:"deleted_at"`
 }
 
 // Master table for business entities and organizational units. Supports hierarchical structures for companies, subsidiaries, departments, and other organizational divisions. Each entity can maintain its own accounting books, customers, vendors, and fiscal year settings.
@@ -244,8 +248,12 @@ type Entity struct {
 	// Entity logo or image reference - File path or URL to associated image
 	Picture *string `json:"picture"`
 	// Entity-specific configuration - JSON object storing customizable settings and preferences
-	Settings []byte `json:"settings"`
-	Metadata []byte `json:"metadata"`
+	Settings          []byte       `json:"settings"`
+	Metadata          []byte       `json:"metadata"`
+	Version           int32        `json:"version"`
+	LastValidationRun sql.NullTime `json:"last_validation_run"`
+	ValidationStatus  *string      `json:"validation_status"`
+	ValidationErrors  []byte       `json:"validation_errors"`
 	// Record creation timestamp - Automatically set when entity is first created
 	CreatedAt time.Time `json:"created_at"`
 	// Last modification timestamp - Automatically updated when entity record is modified
@@ -257,7 +265,8 @@ type Entity struct {
 // Manages sequential numbering for business documents within entities. Tracks next available sequence numbers for different document types (invoices, purchase orders, estimates, etc.) by fiscal year and entity.
 type Entitystate struct {
 	// Primary key - Unique identifier for the entity state record
-	Uuid uuid.UUID `json:"uuid"`
+	Uuid     uuid.UUID `json:"uuid"`
+	TenantID uuid.UUID `json:"tenant_id"`
 	// Fiscal year for sequence tracking - Allows separate numbering sequences per year
 	FiscalYear *int16 `json:"fiscal_year"`
 	// Document type identifier - Specifies the type of document being numbered (invoice, po, estimate, bill, receipt, etc.)
@@ -267,19 +276,32 @@ type Entitystate struct {
 	// Primary entity reference - The main entity that owns this sequence numbering
 	EntityID uuid.UUID `json:"entity_id"`
 	// Sub-entity reference - Optional reference to a subsidiary or department within the main entity for more granular numbering
-	EntityUnitID *uuid.UUID `json:"entity_unit_id"`
+	EntityUnitID      *uuid.UUID   `json:"entity_unit_id"`
+	Version           int32        `json:"version"`
+	LastValidationRun sql.NullTime `json:"last_validation_run"`
+	ValidationStatus  *string      `json:"validation_status"`
+	ValidationErrors  []byte       `json:"validation_errors"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
 }
 
 // Closure table for efficient entity hierarchy queries. Stores all ancestor-descendant relationships with depth information. Enables fast retrieval of entity trees, subtrees, and hierarchy levels without recursive queries.
 type HierarchyPath struct {
 	// Tenant identifier - Partitions hierarchy data by tenant for multi-tenancy
 	TenantID uuid.UUID `json:"tenant_id"`
+	EntityID uuid.UUID `json:"entity_id"`
 	// Parent entity in the relationship - References entities.uuid
 	AncestorID uuid.UUID `json:"ancestor_id"`
 	// Child entity in the relationship - References entities.uuid
 	DescendantID uuid.UUID `json:"descendant_id"`
 	// Hierarchical distance - 0 for self-reference, 1 for direct parent-child, 2+ for deeper relationships
-	Depth int32 `json:"depth"`
+	Depth             int32        `json:"depth"`
+	Version           int32        `json:"version"`
+	LastValidationRun sql.NullTime `json:"last_validation_run"`
+	ValidationStatus  *string      `json:"validation_status"`
+	ValidationErrors  []byte       `json:"validation_errors"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
 }
 
 // Example queries demonstrating UUID-based hierarchy operations
@@ -429,9 +451,31 @@ type Module struct {
 	// Module category for grouping: CORE, HR, FINANCE, SALES, INVENTORY, etc.
 	Category *string `json:"category"`
 	// Module version for tracking feature updates and compatibility
-	Version   *string      `json:"version"`
-	IsActive  *bool        `json:"is_active"`
-	CreatedAt sql.NullTime `json:"created_at"`
+	Version           *string      `json:"version"`
+	IsActive          *bool        `json:"is_active"`
+	ValidationVersion int32        `json:"validation_version"`
+	LastValidationRun sql.NullTime `json:"last_validation_run"`
+	ValidationStatus  *string      `json:"validation_status"`
+	ValidationErrors  []byte       `json:"validation_errors"`
+	CreatedAt         sql.NullTime `json:"created_at"`
+}
+
+// Stores user notification preferences.
+type NotificationPreference struct {
+	ID                 uuid.UUID `json:"id"`
+	TenantID           uuid.UUID `json:"tenant_id"`
+	UserID             uuid.UUID `json:"user_id"`
+	EmailNotifications bool      `json:"email_notifications"`
+	InAppNotifications bool      `json:"in_app_notifications"`
+	SlackNotifications bool      `json:"slack_notifications"`
+	// JSONB object with notification types as keys and booleans as values.
+	NotificationTypes []byte `json:"notification_types"`
+	// JSONB array of preferred notification channels.
+	PreferredChannels []byte `json:"preferred_channels"`
+	// JSONB object with quiet hours settings.
+	QuietHours []byte    `json:"quiet_hours"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 // Granular permissions combining resources and actions with ABAC conditions, data filters, and field restrictions for fine-grained access control.
@@ -477,10 +521,14 @@ type Person struct {
 	// JSONB containing ABAC attributes like clearance level, department, location for access control
 	SecurityAttributes []byte `json:"security_attributes"`
 	// Flexible JSONB storage for additional person-related data
-	Metadata  []byte    `json:"metadata"`
-	IsActive  bool      `json:"is_active"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Metadata          []byte       `json:"metadata"`
+	IsActive          bool         `json:"is_active"`
+	Version           int32        `json:"version"`
+	LastValidationRun sql.NullTime `json:"last_validation_run"`
+	ValidationStatus  *string      `json:"validation_status"`
+	ValidationErrors  []byte       `json:"validation_errors"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
 	// Soft delete timestamp - NULL means record is active
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
@@ -575,12 +623,16 @@ type Role struct {
 	// JSONB defining which entities this role can access
 	EntityScope []byte `json:"entity_scope"`
 	// JSONB containing time, location, device, and other conditional access rules
-	Conditions   []byte       `json:"conditions"`
-	IsSystemRole *bool        `json:"is_system_role"`
-	IsActive     *bool        `json:"is_active"`
-	CreatedAt    time.Time    `json:"created_at"`
-	UpdatedAt    time.Time    `json:"updated_at"`
-	DeletedAt    sql.NullTime `json:"deleted_at"`
+	Conditions        []byte       `json:"conditions"`
+	IsSystemRole      *bool        `json:"is_system_role"`
+	IsActive          *bool        `json:"is_active"`
+	Version           int32        `json:"version"`
+	LastValidationRun sql.NullTime `json:"last_validation_run"`
+	ValidationStatus  *string      `json:"validation_status"`
+	ValidationErrors  []byte       `json:"validation_errors"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
+	DeletedAt         sql.NullTime `json:"deleted_at"`
 }
 
 // Maps permissions to roles with optional entity-specific scoping and additional conditions for flexible authorization.
@@ -739,10 +791,14 @@ type User struct {
 	// JSONB containing ABAC attributes for fine-grained access control
 	UserAttributes []byte `json:"user_attributes"`
 	// JSONB containing user preferences and application settings
-	Settings  []byte       `json:"settings"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt time.Time    `json:"updated_at"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
+	Settings          []byte       `json:"settings"`
+	Version           int32        `json:"version"`
+	LastValidationRun sql.NullTime `json:"last_validation_run"`
+	ValidationStatus  *string      `json:"validation_status"`
+	ValidationErrors  []byte       `json:"validation_errors"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
+	DeletedAt         sql.NullTime `json:"deleted_at"`
 	// Password strength score (0-100) based on complexity
 	PasswordStrength *int32 `json:"password_strength"`
 	// Flag if password found in breach databases
@@ -840,11 +896,15 @@ type UserSession struct {
 	// JSONB containing device fingerprinting data for security analysis
 	DeviceInfo []byte `json:"device_info"`
 	// JSONB containing geographic and network location data for location-based access control
-	LocationInfo   []byte       `json:"location_info"`
-	ExpiresAt      time.Time    `json:"expires_at"`
-	CreatedAt      sql.NullTime `json:"created_at"`
-	LastAccessedAt sql.NullTime `json:"last_accessed_at"`
-	IsActive       *bool        `json:"is_active"`
+	LocationInfo      []byte       `json:"location_info"`
+	ExpiresAt         time.Time    `json:"expires_at"`
+	Version           int32        `json:"version"`
+	LastValidationRun sql.NullTime `json:"last_validation_run"`
+	ValidationStatus  *string      `json:"validation_status"`
+	ValidationErrors  []byte       `json:"validation_errors"`
+	CreatedAt         sql.NullTime `json:"created_at"`
+	LastAccessedAt    sql.NullTime `json:"last_accessed_at"`
+	IsActive          *bool        `json:"is_active"`
 	// Dynamic risk assessment score (0-100) for session security
 	RiskScore *int32 `json:"risk_score"`
 	// Detected security anomalies [unusual_location, device_change, impossible_travel]

@@ -60,7 +60,7 @@ INSERT INTO users (
     entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, session_timeout_minutes, mfa_enabled, user_attributes, settings
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
+) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 `
 
 type CreateUserParams struct {
@@ -84,7 +84,7 @@ type CreateUserParams struct {
 //	    entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, session_timeout_minutes, mfa_enabled, user_attributes, settings
 //	) VALUES (
 //	    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-//	) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
+//	) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.EntityID,
@@ -122,6 +122,10 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 		&i.MfaSecret,
 		&i.UserAttributes,
 		&i.Settings,
+		&i.Version,
+		&i.LastValidationRun,
+		&i.ValidationStatus,
+		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -134,9 +138,9 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 
 const getCompleteUserProfile = `-- name: GetCompleteUserProfile :one
 SELECT
-    u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required,
-    p.id, p.tenant_id, p.entity_id, p.person_type, p.first_name, p.last_name, p.middle_name, p.email, p.phone, p.birth_date, p.national_id, p.tax_id, p.address, p.security_attributes, p.metadata, p.is_active, p.created_at, p.updated_at, p.deleted_at,
-    e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.security_level, e.access_attributes, e.created_at, e.updated_at, e.deleted_at
+    u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.version, u.last_validation_run, u.validation_status, u.validation_errors, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required,
+    p.id, p.tenant_id, p.entity_id, p.person_type, p.first_name, p.last_name, p.middle_name, p.email, p.phone, p.birth_date, p.national_id, p.tax_id, p.address, p.security_attributes, p.metadata, p.is_active, p.version, p.last_validation_run, p.validation_status, p.validation_errors, p.created_at, p.updated_at, p.deleted_at,
+    e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.security_level, e.access_attributes, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
 FROM
     users u
 LEFT JOIN
@@ -168,6 +172,10 @@ type GetCompleteUserProfileRow struct {
 	MfaSecret             *string      `json:"mfa_secret"`
 	UserAttributes        []byte       `json:"user_attributes"`
 	Settings              []byte       `json:"settings"`
+	Version               int32        `json:"version"`
+	LastValidationRun     sql.NullTime `json:"last_validation_run"`
+	ValidationStatus      *string      `json:"validation_status"`
+	ValidationErrors      []byte       `json:"validation_errors"`
 	CreatedAt             time.Time    `json:"created_at"`
 	UpdatedAt             time.Time    `json:"updated_at"`
 	DeletedAt             sql.NullTime `json:"deleted_at"`
@@ -190,6 +198,10 @@ type GetCompleteUserProfileRow struct {
 	SecurityAttributes    []byte       `json:"security_attributes"`
 	Metadata              []byte       `json:"metadata"`
 	IsActive_2            *bool        `json:"is_active_2"`
+	Version_2             *int32       `json:"version_2"`
+	LastValidationRun_2   sql.NullTime `json:"last_validation_run_2"`
+	ValidationStatus_2    *string      `json:"validation_status_2"`
+	ValidationErrors_2    []byte       `json:"validation_errors_2"`
 	CreatedAt_2           sql.NullTime `json:"created_at_2"`
 	UpdatedAt_2           sql.NullTime `json:"updated_at_2"`
 	DeletedAt_2           sql.NullTime `json:"deleted_at_2"`
@@ -208,6 +220,10 @@ type GetCompleteUserProfileRow struct {
 	WorkSchedule          []byte       `json:"work_schedule"`
 	SecurityLevel         *int32       `json:"security_level"`
 	AccessAttributes      []byte       `json:"access_attributes"`
+	Version_3             *int32       `json:"version_3"`
+	LastValidationRun_3   sql.NullTime `json:"last_validation_run_3"`
+	ValidationStatus_3    *string      `json:"validation_status_3"`
+	ValidationErrors_3    []byte       `json:"validation_errors_3"`
 	CreatedAt_3           sql.NullTime `json:"created_at_3"`
 	UpdatedAt_3           sql.NullTime `json:"updated_at_3"`
 	DeletedAt_3           sql.NullTime `json:"deleted_at_3"`
@@ -216,9 +232,9 @@ type GetCompleteUserProfileRow struct {
 // GetCompleteUserProfile
 //
 //	SELECT
-//	    u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required,
-//	    p.id, p.tenant_id, p.entity_id, p.person_type, p.first_name, p.last_name, p.middle_name, p.email, p.phone, p.birth_date, p.national_id, p.tax_id, p.address, p.security_attributes, p.metadata, p.is_active, p.created_at, p.updated_at, p.deleted_at,
-//	    e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.security_level, e.access_attributes, e.created_at, e.updated_at, e.deleted_at
+//	    u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.version, u.last_validation_run, u.validation_status, u.validation_errors, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required,
+//	    p.id, p.tenant_id, p.entity_id, p.person_type, p.first_name, p.last_name, p.middle_name, p.email, p.phone, p.birth_date, p.national_id, p.tax_id, p.address, p.security_attributes, p.metadata, p.is_active, p.version, p.last_validation_run, p.validation_status, p.validation_errors, p.created_at, p.updated_at, p.deleted_at,
+//	    e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.security_level, e.access_attributes, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
 //	FROM
 //	    users u
 //	LEFT JOIN
@@ -251,6 +267,10 @@ func (q *Queries) GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*Ge
 		&i.MfaSecret,
 		&i.UserAttributes,
 		&i.Settings,
+		&i.Version,
+		&i.LastValidationRun,
+		&i.ValidationStatus,
+		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -273,6 +293,10 @@ func (q *Queries) GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*Ge
 		&i.SecurityAttributes,
 		&i.Metadata,
 		&i.IsActive_2,
+		&i.Version_2,
+		&i.LastValidationRun_2,
+		&i.ValidationStatus_2,
+		&i.ValidationErrors_2,
 		&i.CreatedAt_2,
 		&i.UpdatedAt_2,
 		&i.DeletedAt_2,
@@ -291,6 +315,10 @@ func (q *Queries) GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*Ge
 		&i.WorkSchedule,
 		&i.SecurityLevel,
 		&i.AccessAttributes,
+		&i.Version_3,
+		&i.LastValidationRun_3,
+		&i.ValidationStatus_3,
+		&i.ValidationErrors_3,
 		&i.CreatedAt_3,
 		&i.UpdatedAt_3,
 		&i.DeletedAt_3,
@@ -299,12 +327,12 @@ func (q *Queries) GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*Ge
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE email = $1 AND deleted_at IS NULL
+SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE email = $1 AND deleted_at IS NULL
 `
 
 // GetUserByEmail
 //
-//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE email = $1 AND deleted_at IS NULL
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE email = $1 AND deleted_at IS NULL
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
@@ -329,6 +357,10 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, erro
 		&i.MfaSecret,
 		&i.UserAttributes,
 		&i.Settings,
+		&i.Version,
+		&i.LastValidationRun,
+		&i.ValidationStatus,
+		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -340,12 +372,12 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, erro
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE id = $1 AND deleted_at IS NULL
+SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE id = $1 AND deleted_at IS NULL
 `
 
 // GetUserByID
 //
-//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE id = $1 AND deleted_at IS NULL
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE id = $1 AND deleted_at IS NULL
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	row := q.db.QueryRow(ctx, getUserByID, id)
 	var i User
@@ -370,6 +402,10 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) 
 		&i.MfaSecret,
 		&i.UserAttributes,
 		&i.Settings,
+		&i.Version,
+		&i.LastValidationRun,
+		&i.ValidationStatus,
+		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -381,12 +417,12 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) 
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE username = $1 AND deleted_at IS NULL
+SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE username = $1 AND deleted_at IS NULL
 `
 
 // GetUserByUsername
 //
-//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE username = $1 AND deleted_at IS NULL
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE username = $1 AND deleted_at IS NULL
 func (q *Queries) GetUserByUsername(ctx context.Context, username *string) (*User, error) {
 	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
@@ -411,6 +447,10 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username *string) (*Use
 		&i.MfaSecret,
 		&i.UserAttributes,
 		&i.Settings,
+		&i.Version,
+		&i.LastValidationRun,
+		&i.ValidationStatus,
+		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -448,7 +488,7 @@ func (q *Queries) IncrementFailedLogins(ctx context.Context, id uuid.UUID) error
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
+SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 WHERE
     ($3::text IS NULL OR user_type = $3::text)
 AND ($4::text IS NULL OR account_status = $4::text)
@@ -467,7 +507,7 @@ type ListUsersParams struct {
 
 // ListUsers
 //
-//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 //	WHERE
 //	    ($3::text IS NULL OR user_type = $3::text)
 //	AND ($4::text IS NULL OR account_status = $4::text)
@@ -510,6 +550,10 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, 
 			&i.MfaSecret,
 			&i.UserAttributes,
 			&i.Settings,
+			&i.Version,
+			&i.LastValidationRun,
+			&i.ValidationStatus,
+			&i.ValidationErrors,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -540,7 +584,7 @@ func (q *Queries) RestoreSoftDeletedUser(ctx context.Context, id uuid.UUID) erro
 }
 
 const searchUsersAdvanced = `-- name: SearchUsersAdvanced :many
-SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
+SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 WHERE
     (username ILIKE '%' || $3 || '%' OR email ILIKE '%' || $3 || '%')
 AND deleted_at IS NULL
@@ -556,7 +600,7 @@ type SearchUsersAdvancedParams struct {
 
 // SearchUsersAdvanced
 //
-//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
+//	SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 //	WHERE
 //	    (username ILIKE '%' || $3 || '%' OR email ILIKE '%' || $3 || '%')
 //	AND deleted_at IS NULL
@@ -592,6 +636,10 @@ func (q *Queries) SearchUsersAdvanced(ctx context.Context, arg SearchUsersAdvanc
 			&i.MfaSecret,
 			&i.UserAttributes,
 			&i.Settings,
+			&i.Version,
+			&i.LastValidationRun,
+			&i.ValidationStatus,
+			&i.ValidationErrors,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -644,7 +692,7 @@ SET
     mfa_enabled = COALESCE($6, mfa_enabled),
     updated_at = NOW()
 WHERE id = $7
-RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
+RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 `
 
 type UpdateUserParams struct {
@@ -669,7 +717,7 @@ type UpdateUserParams struct {
 //	    mfa_enabled = COALESCE($6, mfa_enabled),
 //	    updated_at = NOW()
 //	WHERE id = $7
-//	RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
+//	RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.Username,
@@ -702,6 +750,10 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, 
 		&i.MfaSecret,
 		&i.UserAttributes,
 		&i.Settings,
+		&i.Version,
+		&i.LastValidationRun,
+		&i.ValidationStatus,
+		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

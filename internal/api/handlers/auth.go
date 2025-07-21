@@ -15,12 +15,12 @@ import (
 // AuthHandler implements the GOA auth service following the data flow pattern
 type AuthHandler struct {
 	userService identity.Service
-	tracing     *tracing.TracingService
+	tracing     tracing.TracingService
 	metrics     *metrics.MetricsService
 }
 
 // NewAuthHandler creates a new auth handler following Clean Architecture pattern
-func NewAuthHandler(userSvc identity.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) auth.Service {
+func NewAuthHandler(userSvc identity.Service, tracing tracing.TracingService, metrics *metrics.MetricsService) auth.Service {
 	return &AuthHandler{
 		userService: userSvc,
 		tracing:     tracing,

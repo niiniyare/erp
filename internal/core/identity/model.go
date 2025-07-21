@@ -286,3 +286,87 @@ func IsValidEmploymentStatus(status string) bool {
 	}
 	return false
 }
+
+// Role represents a user role assignment
+type Role struct {
+	ID             uuid.UUID  `json:"id"`
+	Name           string     `json:"name"`
+	UserID         uuid.UUID  `json:"user_id"`
+	RoleID         uuid.UUID  `json:"role_id"`
+	EntityID       uuid.UUID  `json:"entity_id"`
+	AssignmentType string     `json:"assignment_type"`
+	AssignedAt     time.Time  `json:"assigned_at"`
+	IsActive       bool       `json:"is_active"`
+	ExpiresAt      *time.Time `json:"expires_at,omitempty"`
+}
+
+// PermissionEvaluationRequest for permission checking
+type PermissionEvaluationRequest struct {
+	UserID       uuid.UUID      `json:"user_id"`
+	Permission   string         `json:"permission"`
+	Resource     string         `json:"resource"`
+	ResourceName string         `json:"resource_name"`
+	ActionName   string         `json:"action_name"`
+	EntityID     uuid.UUID      `json:"entity_id"`
+	Context      map[string]any `json:"context,omitempty"`
+}
+
+// PermissionEvaluationResult contains permission check result
+type PermissionEvaluationResult struct {
+	Allowed          bool     `json:"allowed"`
+	Permissions      []string `json:"permissions"`
+	PolicyDecisions  []string `json:"policy_decisions"`
+	EffectiveRoles   []string `json:"effective_roles"`
+	EvaluationTimeMS int64    `json:"evaluation_time_ms"`
+	CacheHit         bool     `json:"cache_hit"`
+}
+
+// BulkPermissionEvaluationRequest for bulk permission checking
+type BulkPermissionEvaluationRequest struct {
+	Requests []*PermissionEvaluationRequest `json:"requests"`
+}
+
+// PolicyTestRequest for policy testing
+type PolicyTestRequest struct {
+	PolicyID     string         `json:"policy_id"`
+	UserID       uuid.UUID      `json:"user_id"`
+	Context      map[string]any `json:"context"`
+	ResourceName string         `json:"resource_name"`
+	ActionName   string         `json:"action_name"`
+	EntityID     uuid.UUID      `json:"entity_id"`
+}
+
+// Permission represents a user permission
+type Permission struct {
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	ResourceID uuid.UUID `json:"resource_id"`
+	ActionID   uuid.UUID `json:"action_id"`
+	Effect     string    `json:"effect"`
+}
+
+// UserPermission represents an effective permission for a user
+type UserPermission struct {
+	Permission     Permission `json:"permission"`
+	GrantedByRole  Role       `json:"granted_by_role"`
+	AssignmentType string     `json:"assignment_type"`
+	EntityID       uuid.UUID  `json:"entity_id"`
+}
+
+// RoleHierarchy represents a role in a hierarchy
+type RoleHierarchy struct {
+	ID           uuid.UUID  `json:"id"`
+	Name         string     `json:"name"`
+	DisplayName  *string    `json:"display_name,omitempty"`
+	ParentRoleID *uuid.UUID `json:"parent_role_id,omitempty"`
+}
+
+// PolicyTestResult represents the result of policy testing
+type PolicyTestResult struct {
+	PolicyID      string         `json:"policy_id"`
+	PolicyName    string         `json:"policy_name"`
+	Effect        string         `json:"effect"`
+	TargetMatches bool           `json:"target_matches"`
+	RuleResult    bool           `json:"rule_result"`
+	Details       map[string]any `json:"details"`
+}

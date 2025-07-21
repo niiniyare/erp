@@ -22,7 +22,7 @@ type AccessRequestHandler struct {
 	accessRequestService     request.AccessRequestService
 	conditionalAccessService conditional.ConditionalAccessService
 	analyticsService         analytics.UserAnalyticsService
-	tracing                  *tracing.TracingService
+	tracing                  tracing.TracingService
 	metrics                  *metrics.MetricsService
 }
 
@@ -31,7 +31,7 @@ func NewAccessRequestHandler(
 	accessRequestService request.AccessRequestService,
 	conditionalAccessService conditional.ConditionalAccessService,
 	analyticsService analytics.UserAnalyticsService,
-	tracing *tracing.TracingService,
+	tracing tracing.TracingService,
 	metrics *metrics.MetricsService,
 ) *AccessRequestHandler {
 	return &AccessRequestHandler{
@@ -48,7 +48,7 @@ func (h *AccessRequestHandler) CreateAccessRequest(c *gin.Context) {
 	ctx, span := h.tracing.StartSpan(c.Request.Context(), "AccessRequestHandler.CreateAccessRequest")
 	defer span.End()
 
-	var req user.CreateAccessRequestRequest
+	var req request.CreateAccessRequestRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Invalid request body")
@@ -109,7 +109,7 @@ func (h *AccessRequestHandler) ProcessAccessRequest(c *gin.Context) {
 		return
 	}
 
-	var req user.AccessRequestApprovalRequest
+	var req request.AccessRequestApprovalRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Invalid request body")
@@ -212,18 +212,18 @@ func (h *AccessRequestHandler) ListAccessRequests(c *gin.Context) {
 	}
 
 	// Build list request
-	listReq := &user.ListAccessRequestsRequest{
+	listReq := &request.ListAccessRequestsRequest{
 		Limit:  limit,
 		Offset: offset,
 	}
 
 	if status != "" {
-		approvalStatus := user.ApprovalStatus(status)
+		approvalStatus := request.ApprovalStatus(status)
 		listReq.ApprovalStatus = &approvalStatus
 	}
 
 	if requestType != "" {
-		reqType := user.RequestType(requestType)
+		reqType := request.RequestType(requestType)
 		listReq.RequestType = &reqType
 	}
 
@@ -343,7 +343,7 @@ func (h *AccessRequestHandler) EvaluateConditionalAccess(c *gin.Context) {
 	ctx, span := h.tracing.StartSpan(c.Request.Context(), "AccessRequestHandler.EvaluateConditionalAccess")
 	defer span.End()
 
-	var accessContext user.AccessContext
+	var accessContext conditional.AccessContext
 	if err := c.ShouldBindJSON(&accessContext); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Invalid request body")
@@ -464,7 +464,7 @@ func (h *AccessRequestHandler) CreateConditionalAccessRule(c *gin.Context) {
 	ctx, span := h.tracing.StartSpan(c.Request.Context(), "AccessRequestHandler.CreateConditionalAccessRule")
 	defer span.End()
 
-	var rule user.ConditionalAccessRule
+	var rule conditional.ConditionalAccessRule
 	if err := c.ShouldBindJSON(&rule); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Invalid request body")
@@ -555,7 +555,7 @@ func (h *AccessRequestHandler) DetectUserAnomalies(c *gin.Context) {
 		return
 	}
 
-	var activity user.UserActivity
+	var activity analytics.UserActivity
 	if err := c.ShouldBindJSON(&activity); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Invalid request body")

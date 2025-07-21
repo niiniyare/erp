@@ -21,12 +21,12 @@ import (
 // EntityHandler handles entity-related HTTP requests
 type EntityHandler struct {
 	service entity.Service
-	tracing *tracing.TracingService
+	tracing tracing.TracingService
 	metrics *metrics.MetricsService
 }
 
 // NewEntityHandler creates a new entity handler
-func NewEntityHandler(service entity.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) *EntityHandler {
+func NewEntityHandler(service entity.Service, tracing tracing.TracingService, metrics *metrics.MetricsService) *EntityHandler {
 	return &EntityHandler{
 		service: service,
 		tracing: tracing,
@@ -1048,12 +1048,12 @@ func (h *EntityHandler) ResetSequence(c *gin.Context) {
 // OrganizationGoaHandler implements the GOA organization service following the data flow pattern
 type OrganizationGoaHandler struct {
 	entityService entity.Service
-	tracing       *tracing.TracingService
+	tracing       tracing.TracingService
 	metrics       *metrics.MetricsService
 }
 
 // NewOrganizationGoaHandler creates a new GOA organization handler following Clean Architecture pattern
-func NewOrganizationGoaHandler(entitySvc entity.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) organization.Service {
+func NewOrganizationGoaHandler(entitySvc entity.Service, tracing tracing.TracingService, metrics *metrics.MetricsService) organization.Service {
 	return &OrganizationGoaHandler{
 		entityService: entitySvc,
 		tracing:       tracing,

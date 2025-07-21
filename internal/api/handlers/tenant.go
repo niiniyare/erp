@@ -304,12 +304,12 @@ func (s *tenantService) List(ctx context.Context, p *gen.ListPayload) (gen.Tenan
 // TenantGoaHandler implements the GOA tenant service following the data flow pattern
 type TenantGoaHandler struct {
 	tenantService coreTenant.Service
-	tracing       *tracing.TracingService
+	tracing       tracing.TracingService
 	metrics       *metrics.MetricsService
 }
 
 // NewTenantGoaHandler creates a new GOA tenant handler following Clean Architecture pattern
-func NewTenantGoaHandler(tenantSvc coreTenant.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) goaTenant.Service {
+func NewTenantGoaHandler(tenantSvc coreTenant.Service, tracing tracing.TracingService, metrics *metrics.MetricsService) goaTenant.Service {
 	return &TenantGoaHandler{
 		tenantService: tenantSvc,
 		tracing:       tracing,
