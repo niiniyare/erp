@@ -1,16 +1,6 @@
 --- 1. Security Hardening Enhancements:
 
 
--- Session security improvements
-ALTER TABLE user_sessions
-    ADD COLUMN risk_score INT DEFAULT 0,
-    ADD COLUMN anomaly_flags JSONB DEFAULT '[]'::jsonb,
-    ADD COLUMN mfa_verified_at TIMESTAMPTZ;
-
-COMMENT ON COLUMN user_sessions.risk_score IS 'Dynamic risk assessment score (0-100) for session security';
-COMMENT ON COLUMN user_sessions.anomaly_flags IS 'Detected security anomalies [unusual_location, device_change, impossible_travel]';
-COMMENT ON COLUMN user_sessions.mfa_verified_at IS 'Timestamp of last MFA verification';
-
 -- Password security enhancements
 ALTER TABLE users
     ADD COLUMN password_strength INT DEFAULT 0,

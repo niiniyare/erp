@@ -77,7 +77,7 @@ func main() {
 
 	// Initialize metrics
 	metricsService, err := metrics.NewMetricsService(metrics.MetricsConfig{
-		Namespace: "erp",
+		Namespace: "awo-erp",
 		Subsystem: "server",
 		Provider:  "prometheus",
 		Enabled:   true,

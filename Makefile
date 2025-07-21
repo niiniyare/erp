@@ -79,8 +79,112 @@ lint: ## Lint Go code
 test: ## Run all tests
 	@go test -v -cover ./...
 
+test-unit: ## Run unit tests only
+	@echo "🧪 Running unit tests..."
+	@go test -tags=unit -race -timeout=10m -v ./internal/core/... ./internal/shared/... ./internal/adapters/...
+
+test-unit-fast: ## Run unit tests without race detection (faster)
+	@echo "⚡ Running unit tests (fast mode)..."
+	@go test -tags=unit -timeout=5m ./internal/core/... ./internal/shared/... ./internal/adapters/...
+
+test-integration: ## Run integration tests
+	@echo "🔗 Running integration tests..."
+	@echo "🐳 Starting dependencies..."
+	@docker-compose -f docker-compose.test.yml up -d postgres redis || true
+	@sleep 5
+	@go test -tags=integration -timeout=5m -v ./... || (docker-compose -f docker-compose.test.yml down; exit 1)
+	@echo "🧹 Cleaning up dependencies..."
+	@docker-compose -f docker-compose.test.yml down
+
+test-e2e: ## Run end-to-end tests
+	@echo "🌐 Running E2E tests..."
+	@echo "🐳 Starting full environment..."
+	@docker-compose -f docker-compose.test.yml up -d || true
+	@sleep 10
+	@go test -tags=e2e -timeout=15m -v ./test/e2e/... || (docker-compose -f docker-compose.test.yml down; exit 1)
+	@echo "🧹 Cleaning up environment..."
+	@docker-compose -f docker-compose.test.yml down
+
+test-coverage: ## Run tests with coverage report
+	@echo "📊 Running tests with coverage..."
+	@go test -race -timeout=10m -coverprofile=coverage.out ./...
+	@go tool cover -func=coverage.out
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "✅ Coverage report generated: coverage.html"
+
+test-benchmark: ## Run benchmark tests
+	@echo "🏃 Running benchmark tests..."
+	@go test -bench=. -benchmem -timeout=10m ./...
+
 test-core: ## Run only core layer tests
 	@go test -v ./internal/core/...
+
+# Domain-specific tests
+test-identity: ## Run identity domain tests
+	@echo "🆔 Testing identity domain..."
+	@go test -race -timeout=10m -v ./internal/core/identity/...
+
+test-access: ## Run access domain tests  
+	@echo "🔐 Testing access domain..."
+	@go test -race -timeout=10m -v ./internal/core/access/...
+
+test-audit: ## Run audit domain tests
+	@echo "📋 Testing audit domain..."
+	@go test -race -timeout=10m -v ./internal/core/audit/...
+
+test-notification: ## Run notification domain tests
+	@echo "📢 Testing notification domain..."
+	@go test -race -timeout=10m -v ./internal/core/notification/...
+
+test-analytics: ## Run analytics domain tests
+	@echo "📈 Testing analytics domain..."
+	@go test -race -timeout=10m -v ./internal/core/analytics/...
+
+test-all: ## Run complete test suite (unit + integration + e2e)
+	@echo "🎯 Running complete test suite..."
+	@$(MAKE) test-unit
+	@$(MAKE) test-integration  
+	@$(MAKE) test-e2e
+	@echo "✅ All tests completed successfully!"
+
+# Development workflow tests
+dev-test: ## Quick development test cycle
+	@echo "👨‍💻 Running development test cycle..."
+	@$(MAKE) test-unit-fast
+	@go build ./...
+
+dev-test-coverage: ## Development test with coverage
+	@echo "👨‍💻 Running development test with coverage..."
+	@go test -tags=unit -race -timeout=5m -coverprofile=coverage.out ./internal/core/... ./internal/shared/... ./internal/adapters/...
+	@go tool cover -func=coverage.out
+
+# CI/CD pipeline commands  
+ci-test: ## CI test pipeline
+	@echo "🚀 Running CI test pipeline..."
+	@$(MAKE) test-unit
+	@$(MAKE) test-integration
+	@go test -race -timeout=10m -coverprofile=coverage.out ./...
+	@go tool cover -func=coverage.out | tail -1
+
+ci-full: ## Full CI pipeline
+	@echo "🚀 Running full CI pipeline..."
+	@go build ./...
+	@$(MAKE) test-unit
+	@$(MAKE) test-integration
+	@$(MAKE) test-e2e
+	@go test -race -timeout=10m -coverprofile=coverage.out ./...
+	@go tool cover -func=coverage.out | tail -1
+
+# Test cleanup
+test-clean: ## Clean test artifacts
+	@echo "🧹 Cleaning test artifacts..."
+	@rm -f coverage.out coverage.html benchmark.out
+	@docker-compose -f docker-compose.test.yml down -v --remove-orphans || true
+
+test-clean-cache: ## Clean Go test cache
+	@echo "🧹 Cleaning Go test cache..."
+	@go clean -testcache
+	@go clean -cache
 
 # ============================================================================
 # 🗃️ Repository Layer (SQLC Store, Repos, Converters)
