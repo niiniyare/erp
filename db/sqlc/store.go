@@ -112,7 +112,8 @@ func (s *SQLStore) BeginTxWithTenant(ctx context.Context, tenantID uuid.UUID) (p
 	}
 
 	// Set tenant context
-	_, err = tx.Exec(ctx, "SELECT set_config('app.current_tenant_id', $1, true)", tenantID.String())
+	// _, err = tx.Exec(ctx, "SELECT set_config('app.current_tenant_id', $1, true)", tenantID.String())
+	_, err = tx.Exec(ctx, "SELECT set_tenant_context($1)", tenantID.String())
 	if err != nil {
 		tx.Rollback(ctx)
 		return nil, nil, err

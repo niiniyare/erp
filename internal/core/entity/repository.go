@@ -48,12 +48,12 @@ type Repository interface {
 // repository implements the Repository interface
 type repository struct {
 	store   db.Store
-	tracing *tracing.TracingService
-	metrics *metrics.MetricsService
+	tracing tracing.TracingService
+	metrics metrics.MetricsProvider
 }
 
 // NewRepository creates a new entity repository
-func NewRepository(store db.Store, tracing *tracing.TracingService, metrics *metrics.MetricsService) Repository {
+func NewRepository(store db.Store, tracing tracing.TracingService, metrics metrics.MetricsProvider) Repository {
 	return &repository{
 		store:   store,
 		tracing: tracing,

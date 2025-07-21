@@ -47,6 +47,15 @@ CREATE TABLE IF NOT EXISTS persons (
     security_attributes JSONB DEFAULT '{}'::jsonb, -- ABAC attributes: clearance level, department, location, etc.
     metadata JSONB DEFAULT '{}'::jsonb,            -- Additional flexible data storage
     is_active BOOLEAN NOT NULL DEFAULT true,
+    
+    -- Standard validation columns
+    version INTEGER NOT NULL DEFAULT 1,
+    last_validation_run TIMESTAMPTZ,
+    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
+        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
+    ),
+    validation_errors JSONB DEFAULT '[]'::jsonb,
+    
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,                        -- Soft delete timestamp
@@ -77,10 +86,22 @@ COMMENT ON COLUMN persons.deleted_at IS 'Soft delete timestamp - NULL means reco
 -- Enable RLS and create policies
 ALTER TABLE persons ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can only access persons within their tenant
+-- Enhanced RLS policies following recommendations
 CREATE POLICY persons_tenant_isolation ON persons
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
+
+CREATE POLICY persons_admin_access ON persons
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------------------------
 -- EMPLOYEES TABLE
@@ -105,6 +126,15 @@ CREATE TABLE IF NOT EXISTS employees (
     work_schedule JSONB DEFAULT '{}'::jsonb,      -- Flexible work schedule definition
     security_level INTEGER DEFAULT 0,             -- Numeric security clearance level (0=lowest)
     access_attributes JSONB DEFAULT '{}'::jsonb,  -- Employment-specific ABAC attributes
+    
+    -- Standard validation columns
+    version INTEGER NOT NULL DEFAULT 1,
+    last_validation_run TIMESTAMPTZ,
+    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
+        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
+    ),
+    validation_errors JSONB DEFAULT '[]'::jsonb,
+    
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
@@ -129,8 +159,20 @@ COMMENT ON COLUMN employees.salary_info IS 'JSONB containing encrypted/sensitive
 ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY employees_tenant_isolation ON employees
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
+
+CREATE POLICY employees_admin_access ON employees
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------------------------
 -- USERS TABLE
@@ -161,6 +203,15 @@ CREATE TABLE IF NOT EXISTS users (
     mfa_secret VARCHAR(255),
     user_attributes JSONB DEFAULT '{}'::jsonb,     -- ABAC user attributes
     settings JSONB DEFAULT '{}'::jsonb,            -- User preferences and settings
+    
+    -- Standard validation columns
+    version INTEGER NOT NULL DEFAULT 1,
+    last_validation_run TIMESTAMPTZ,
+    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
+        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
+    ),
+    validation_errors JSONB DEFAULT '[]'::jsonb,
+    
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
@@ -190,8 +241,20 @@ COMMENT ON COLUMN users.settings IS 'JSONB containing user preferences and appli
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY users_tenant_isolation ON users
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
+
+CREATE POLICY users_admin_access ON users
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------------------------
 -- USER SESSIONS TABLE
@@ -209,6 +272,15 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     device_info JSONB DEFAULT '{}'::jsonb,         -- Device fingerprinting data
     location_info JSONB DEFAULT '{}'::jsonb,       -- Geographic/network location for ABAC
     expires_at TIMESTAMPTZ NOT NULL,
+    
+    -- Standard validation columns
+    version INTEGER NOT NULL DEFAULT 1,
+    last_validation_run TIMESTAMPTZ,
+    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
+        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
+    ),
+    validation_errors JSONB DEFAULT '[]'::jsonb,
+    
     created_at TIMESTAMPTZ DEFAULT NOW(),
     last_accessed_at TIMESTAMPTZ DEFAULT NOW(),
     is_active BOOLEAN DEFAULT true
@@ -224,8 +296,20 @@ COMMENT ON COLUMN user_sessions.location_info IS 'JSONB containing geographic an
 ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY user_sessions_tenant_isolation ON user_sessions
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
+
+CREATE POLICY user_sessions_admin_access ON user_sessions
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ================================================================================================
 -- ENHANCED RBAC SYSTEM
@@ -245,6 +329,15 @@ CREATE TABLE IF NOT EXISTS modules (
     category VARCHAR(50),                          -- 'CORE', 'HR', 'FINANCE', 'SALES', etc.
     version VARCHAR(20),
     is_active BOOLEAN DEFAULT true,
+    
+    -- Standard validation columns
+    validation_version INTEGER NOT NULL DEFAULT 1,
+    last_validation_run TIMESTAMPTZ,
+    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
+        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
+    ),
+    validation_errors JSONB DEFAULT '[]'::jsonb,
+    
     created_at TIMESTAMPTZ DEFAULT NOW(),
     
     CONSTRAINT modules_name_unique_per_tenant UNIQUE (tenant_id, name)
@@ -260,8 +353,20 @@ COMMENT ON COLUMN modules.version IS 'Module version for tracking feature update
 ALTER TABLE modules ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY modules_tenant_isolation ON modules
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
+
+CREATE POLICY modules_admin_access ON modules
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------------------------
 -- RESOURCES TABLE
@@ -300,8 +405,20 @@ COMMENT ON COLUMN resources.resource_attributes IS 'JSONB containing ABAC attrib
 ALTER TABLE resources ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY resources_tenant_isolation ON resources
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
+
+CREATE POLICY resources_admin_access ON resources
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------------------------
 -- ACTIONS TABLE
@@ -339,8 +456,20 @@ COMMENT ON COLUMN actions.requires_approval IS 'Whether this action requires exp
 ALTER TABLE actions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY actions_tenant_isolation ON actions
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
+
+CREATE POLICY actions_admin_access ON actions
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------------------------
 -- ROLES TABLE
@@ -364,6 +493,15 @@ CREATE TABLE IF NOT EXISTS roles (
     conditions JSONB DEFAULT '{}'::jsonb,          -- Time, location, device conditions
     is_system_role BOOLEAN DEFAULT false,
     is_active BOOLEAN DEFAULT true,
+    
+    -- Standard validation columns
+    version INTEGER NOT NULL DEFAULT 1,
+    last_validation_run TIMESTAMPTZ,
+    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
+        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
+    ),
+    validation_errors JSONB DEFAULT '[]'::jsonb,
+    
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
@@ -385,8 +523,20 @@ COMMENT ON COLUMN roles.conditions IS 'JSONB containing time, location, device, 
 ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY roles_tenant_isolation ON roles
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
+
+CREATE POLICY roles_admin_access ON roles
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------------------------
 -- PERMISSIONS TABLE
@@ -423,8 +573,20 @@ COMMENT ON COLUMN permissions.field_restrictions IS 'JSONB containing column-lev
 ALTER TABLE permissions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY permissions_tenant_isolation ON permissions
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
+
+CREATE POLICY permissions_admin_access ON permissions
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------------------------
 -- ROLE PERMISSIONS MAPPING
@@ -456,8 +618,20 @@ COMMENT ON COLUMN role_permissions.conditions IS 'Additional JSONB conditions be
 ALTER TABLE role_permissions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY role_permissions_tenant_isolation ON role_permissions
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
+
+CREATE POLICY role_permissions_admin_access ON role_permissions
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------------------------
 -- USER ROLE ASSIGNMENTS
@@ -493,14 +667,28 @@ COMMENT ON COLUMN user_roles.conditions IS 'JSONB containing conditional access 
 ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY user_roles_tenant_isolation ON user_roles
-    FOR ALL TO public
+    FOR ALL TO application_role
     USING (
-        EXISTS (
+        current_tenant_id() IS NOT NULL 
+        AND EXISTS (
             SELECT 1 FROM users u 
             WHERE u.id = user_roles.user_id 
-            AND u.tenant_id = current_setting('app.current_tenant_id')::UUID
+            AND u.tenant_id = current_tenant_id()
+        )
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND EXISTS (
+            SELECT 1 FROM users u 
+            WHERE u.id = user_roles.user_id 
+            AND u.tenant_id = current_tenant_id()
         )
     );
+
+CREATE POLICY user_roles_admin_access ON user_roles
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ------------------------------------------------------------------------------------------------
 -- DIRECT USER PERMISSIONS
@@ -535,8 +723,20 @@ COMMENT ON COLUMN user_permissions.granted_by IS 'User who granted this direct p
 ALTER TABLE user_permissions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY user_permissions_tenant_isolation ON user_permissions
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
+
+CREATE POLICY user_permissions_admin_access ON user_permissions
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- ================================================================================================
 -- ABAC SYSTEM
@@ -1329,19 +1529,40 @@ ORDER BY hour_bucket DESC, event_count DESC;
 
 COMMENT ON VIEW audit_summary_view IS 
 'Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.';
--- Person and employee policies
-CREATE POLICY tenant_isolation_policy ON persons 
-    USING (tenant_id = current_tenant_id());
+-- Additional RLS policies for remaining tables that need validation
+ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
+CREATE POLICY audit_log_tenant_isolation ON audit_log
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
 
-CREATE POLICY tenant_isolation_policy ON employees 
-    USING (tenant_id = current_tenant_id());
+CREATE POLICY audit_log_admin_access ON audit_log
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
--- User management policies
-CREATE POLICY tenant_isolation_policy ON users 
-    USING (tenant_id = current_tenant_id());
+ALTER TABLE access_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY access_requests_tenant_isolation ON access_requests
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL 
+        AND tenant_id = current_tenant_id()
+    );
 
-CREATE POLICY tenant_isolation_policy ON roles 
-    USING (tenant_id = current_tenant_id());
+CREATE POLICY access_requests_admin_access ON access_requests
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 
 -- ================================================================================================

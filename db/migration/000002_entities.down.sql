@@ -1,13 +1,28 @@
 -- Down migration for Entities Module
 
+-- Drop triggers first
+DROP TRIGGER IF EXISTS entities_maintain_entity_id ON entities;
+DROP TRIGGER IF EXISTS hierarchy_paths_maintain_entity_id ON hierarchy_paths;
+DROP FUNCTION IF EXISTS maintain_entity_id();
+
+-- Drop RLS policies
+DROP POLICY IF EXISTS admin_full_access_policy ON entitystate;
+DROP POLICY IF EXISTS admin_full_access_policy ON hierarchy_paths;
+DROP POLICY IF EXISTS admin_full_access_policy ON entities;
+DROP POLICY IF EXISTS tenant_isolation_policy ON entitystate;
+DROP POLICY IF EXISTS tenant_isolation_policy ON hierarchy_paths;
+DROP POLICY IF EXISTS tenant_isolation_policy ON entities;
+
+-- Disable RLS
+ALTER TABLE entitystate DISABLE ROW LEVEL SECURITY;
+ALTER TABLE hierarchy_paths DISABLE ROW LEVEL SECURITY;
+ALTER TABLE entities DISABLE ROW LEVEL SECURITY;
+
 -- Drop foreign key constraints from dependent tables first
 -- ALTER TABLE uom DROP CONSTRAINT IF EXISTS uom_entity_id_fkey;
 -- ALTER TABLE uom_conversion DROP CONSTRAINT IF EXISTS uom_conversion_entity_id_fkey;
 ALTER TABLE chartofaccount DROP CONSTRAINT IF EXISTS chartofaccount_entity_id_fkey;
 ALTER TABLE account DROP CONSTRAINT IF EXISTS account_entity_id_fkey;
-
--- Now, drop tables that depend on 'entities' if they are also being managed in this migration
--- (If these tables are managed in other migration files, you might only need to drop the FK constraints)
 
 -- Drop entitystate table
 DROP TABLE IF EXISTS entitystate;

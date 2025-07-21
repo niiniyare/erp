@@ -37,12 +37,12 @@ type Service interface {
 // service implements the Service interface
 type service struct {
 	repo    Repository
-	tracing *tracing.TracingService
-	metrics *metrics.MetricsService
+	tracing tracing.TracingService
+	metrics metrics.MetricsProvider
 }
 
 // NewService creates a new entity service
-func NewService(repo Repository, tracing *tracing.TracingService, metrics *metrics.MetricsService) Service {
+func NewService(repo Repository, tracing tracing.TracingService, metrics metrics.MetricsProvider) Service {
 	return &service{
 		repo:    repo,
 		tracing: tracing,

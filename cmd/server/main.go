@@ -6,9 +6,16 @@ import (
 	"time"
 
 	"github.com/niiniyare/erp/internal/api/handlers"
+	"github.com/niiniyare/erp/internal/core/access/approval"
+	"github.com/niiniyare/erp/internal/core/access/conditional"
+	"github.com/niiniyare/erp/internal/core/access/execution"
+	"github.com/niiniyare/erp/internal/core/access/request"
+	"github.com/niiniyare/erp/internal/core/analytics"
+	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/entity"
+	"github.com/niiniyare/erp/internal/core/identity"
+	"github.com/niiniyare/erp/internal/core/notification"
 	"github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/core/user"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -106,32 +113,34 @@ func main() {
 	// Initialize repositories
 	tenantRepo := tenant.NewRepository(store)
 	entityRepo := entity.NewRepository(store, tracingService, metricsService)
-	userRepo := user.NewRepository(store, tracingService, metricsService)
+	identityRepo := identity.NewRepository(store, tracingService, metricsService)
+	auditRepo := audit.NewRepository(store, tracingService, metricsService)
+	notificationRepo := notification.NewRepository(store, tracingService, metricsService)
 
 	// Initialize core business services
 	tenantService := tenant.NewService(tenantRepo, redisClient)
 	entityService := entity.NewService(entityRepo, tracingService, metricsService)
-	userService := user.NewService(userRepo, redisClient, tracingService, metricsService)
+	identityService := identity.NewService(identityRepo, redisClient, tracingService, metricsService)
 
-	// Initialize advanced user management services
-	auditService := user.NewAuditService(tracingService, metricsService)
-	approverService := user.NewApproverService(userRepo, tracingService, metricsService)
-	notificationService := user.NewNotificationService(userRepo, tracingService, metricsService, nil, nil, approverService)
-	executionService := user.NewAccessExecutionService(userRepo, userService, tracingService, metricsService)
-	accessRequestService := user.NewAccessRequestService(
+	// Initialize domain services
+	auditService := audit.NewAuditService(tracingService, metricsService, auditRepo)
+	approverService := approval.NewApproverService(identityService, tracingService, metricsService)
+	notificationService := notification.NewNotificationService(notificationRepo, tracingService, metricsService, nil, nil, approverService)
+	executionService := execution.NewAccessExecutionService(identityRepo, identityService, tracingService, metricsService)
+	accessRequestService := request.NewAccessRequestService(
 		nil, // TODO: Implement AccessRequestRepository
-		userRepo,
+		identityRepo,
 		redisClient,
 		tracingService,
 		metricsService,
-		userService,
+		identityService,
 		notificationService,
 		approverService,
 		executionService,
 		auditService,
 	)
-	conditionalAccessService := user.NewConditionalAccessService(tracingService, metricsService, auditService)
-	analyticsService := user.NewUserAnalyticsService(tracingService, metricsService, auditService)
+	conditionalAccessService := conditional.NewConditionalAccessService(tracingService, metricsService, auditService)
+	analyticsService := analytics.NewUserAnalyticsService(tracingService, metricsService, auditService)
 
 	logger.Info("Core business services initialized", logger.Fields{
 		"tenant_service":         "ready",

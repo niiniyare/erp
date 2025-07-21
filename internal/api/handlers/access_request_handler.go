@@ -7,7 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/user"
+	"github.com/niiniyare/erp/internal/core/access/conditional"
+	"github.com/niiniyare/erp/internal/core/access/request"
+	"github.com/niiniyare/erp/internal/core/analytics"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -17,18 +19,18 @@ import (
 
 // AccessRequestHandler handles access request workflow endpoints
 type AccessRequestHandler struct {
-	accessRequestService     user.AccessRequestService
-	conditionalAccessService user.ConditionalAccessService
-	analyticsService         user.UserAnalyticsService
+	accessRequestService     request.AccessRequestService
+	conditionalAccessService conditional.ConditionalAccessService
+	analyticsService         analytics.UserAnalyticsService
 	tracing                  *tracing.TracingService
 	metrics                  *metrics.MetricsService
 }
 
 // NewAccessRequestHandler creates a new access request handler
 func NewAccessRequestHandler(
-	accessRequestService user.AccessRequestService,
-	conditionalAccessService user.ConditionalAccessService,
-	analyticsService user.UserAnalyticsService,
+	accessRequestService request.AccessRequestService,
+	conditionalAccessService conditional.ConditionalAccessService,
+	analyticsService analytics.UserAnalyticsService,
 	tracing *tracing.TracingService,
 	metrics *metrics.MetricsService,
 ) *AccessRequestHandler {

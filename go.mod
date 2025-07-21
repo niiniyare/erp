@@ -25,8 +25,6 @@ require (
 	goa.design/clue v1.2.1
 	goa.design/goa/v3 v3.21.1
 	golang.org/x/crypto v0.39.0
-	google.golang.org/grpc v1.73.0
-	google.golang.org/protobuf v1.36.6
 )
 
 require (
@@ -95,5 +93,7 @@ require (
 	golang.org/x/tools v0.34.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
+	google.golang.org/grpc v1.73.0 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

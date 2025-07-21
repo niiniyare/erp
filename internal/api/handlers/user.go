@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/gen/user"
-	coreUser "github.com/niiniyare/erp/internal/core/user"
+	coreUser "github.com/niiniyare/erp/internal/core/identity"
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"

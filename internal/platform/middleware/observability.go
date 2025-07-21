@@ -10,7 +10,7 @@ import (
 )
 
 // TracingMiddleware creates a middleware for distributed tracing
-func TracingMiddleware(tracingService *tracing.TracingService) gin.HandlerFunc {
+func TracingMiddleware(tracingService tracing.TracingService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Extract tracing context from HTTP headers
 		ctx := tracingService.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)

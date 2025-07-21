@@ -4,26 +4,26 @@ This document outlines the plan to refactor the oversized `user` package into sm
 
 ## 1. New Domain-Driven Structure
 
-The current `user` package will be decomposed into the following new packages under `internal/`:
+The current `user` package will be decomposed into the following new packages under `internal/core/`:
 
-- **`internal/identity`**: Core Identity Management.
+- **`internal/core/identity`**: Core Identity Management.
   - **Responsibility**: Manages the core concepts of a user's identity.
   - **Key Components**: `User`, `Person`, `Employee` models, `AuthService` for authentication, and a repository for basic identity CRUD.
 
-- **`internal/access`**: A new parent package for all Authorization and Access Control.
+- **`internal/core/access`**: A new parent package for all Authorization and Access Control.
   - **`access/request`**: The complete access request workflow.
   - **`access/permission`**: Core permission/role models and the evaluation engine.
   - **`access/approval`**: Logic for determining approvers for access requests.
   - **`access/execution`**: Logic for granting/revoking access after approval.
   - **`access/conditional`**: Logic for conditional access policies (e.g., time, location).
 
-- **`internal/audit`**: Centralized Auditing Service.
+- **`internal/core/audit`**: Centralized Auditing Service.
   - **Responsibility**: Provides a single, reliable service for logging all security, access, and workflow events.
 
-- **`internal/notification`**: Centralized Notification Service.
+- **`internal/core/notification`**: Centralized Notification Service.
   - **Responsibility**: Manages sending notifications via various channels (email, Slack, etc.) for system events.
 
-- **`internal/analytics`**: User Behavior Analytics.
+- **`internal/core/analytics`**: User Behavior Analytics.
   - **Responsibility**: Analyzes user activity to detect anomalies, assess risk, and provide insights.
 
 ## 2. Domain Interaction Model
@@ -75,15 +75,15 @@ The new services will interact in a clear, dependency-managed way. The core prin
 This checklist will be followed to execute the refactoring systematically.
 
 - [ ] **1. Create New Directories:**
-  - `internal/identity`
-  - `internal/access/request`
-  - `internal/access/permission`
-  - `internal/access/approval`
-  - `internal/access/execution`
-  - `internal/access/conditional`
-  - `internal/audit`
-  - `internal/notification`
-  - `internal/analytics`
+  - `internal/core/identity`
+  - `internal/core/access/request`
+  - `internal/core/access/permission`
+  - `internal/core/access/approval`
+  - `internal/core/access/execution`
+  - `internal/core/access/conditional`
+  - `internal/core/audit`
+  - `internal/core/notification`
+  - `internal/core/analytics`
 
 - [ ] **2. Move Files:** Move each file from `internal/core/user` to its new corresponding package directory.
 

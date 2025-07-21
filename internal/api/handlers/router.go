@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/niiniyare/erp/internal/core/access/conditional"
+	"github.com/niiniyare/erp/internal/core/access/request"
+	"github.com/niiniyare/erp/internal/core/analytics"
 	"github.com/niiniyare/erp/internal/core/entity"
+	"github.com/niiniyare/erp/internal/core/identity"
 	"github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/core/user"
 	"github.com/niiniyare/erp/internal/platform/middleware"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -14,10 +17,10 @@ import (
 func NewRouter(
 	tenantService tenant.Service,
 	entityService entity.Service,
-	userService user.Service,
-	accessRequestService user.AccessRequestService,
-	conditionalAccessService user.ConditionalAccessService,
-	analyticsService user.UserAnalyticsService,
+	userService identity.Service,
+	accessRequestService request.AccessRequestService,
+	conditionalAccessService conditional.ConditionalAccessService,
+	analyticsService analytics.UserAnalyticsService,
 	tracing *tracing.TracingService,
 	metrics *metrics.MetricsService,
 ) *gin.Engine {

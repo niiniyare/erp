@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/niiniyare/erp/gen/auth"
-	"github.com/niiniyare/erp/internal/core/user"
+	"github.com/niiniyare/erp/internal/core/identity"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -14,13 +14,13 @@ import (
 
 // AuthHandler implements the GOA auth service following the data flow pattern
 type AuthHandler struct {
-	userService user.Service
+	userService identity.Service
 	tracing     *tracing.TracingService
 	metrics     *metrics.MetricsService
 }
 
 // NewAuthHandler creates a new auth handler following Clean Architecture pattern
-func NewAuthHandler(userSvc user.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) auth.Service {
+func NewAuthHandler(userSvc identity.Service, tracing *tracing.TracingService, metrics *metrics.MetricsService) auth.Service {
 	return &AuthHandler{
 		userService: userSvc,
 		tracing:     tracing,
