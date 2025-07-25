@@ -431,7 +431,6 @@ func (s *IdentityServiceTestSuite) TestUpdateUser() {
 	}
 }
 
-
 func (s *IdentityServiceTestSuite) TestAuthenticate() {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("correctpassword"), bcrypt.DefaultCost)
 	user := &User{ID: uuid.New(), Email: "auth@example.com", Username: "authuser"}
@@ -902,16 +901,16 @@ func (s *IdentityServiceTestSuite) TestSearchUsers() {
 
 func (s *IdentityServiceTestSuite) TestEvaluatePermission() {
 	tests := []struct {
-		name          string
-		req           *PermissionEvaluationRequest
+		name           string
+		req            *PermissionEvaluationRequest
 		expectedResult *PermissionEvaluationResult
-		expectedError error
+		expectedError  error
 	}{
 		{
-			name:          "Not Implemented",
-			req:           &PermissionEvaluationRequest{},
+			name:           "Not Implemented",
+			req:            &PermissionEvaluationRequest{},
 			expectedResult: nil,
-			expectedError: fmt.Errorf("not implemented"),
+			expectedError:  fmt.Errorf("not implemented"),
 		},
 	}
 
@@ -931,16 +930,16 @@ func (s *IdentityServiceTestSuite) TestEvaluatePermission() {
 
 func (s *IdentityServiceTestSuite) TestBulkEvaluatePermissions() {
 	tests := []struct {
-		name          string
-		req           *BulkPermissionEvaluationRequest
+		name            string
+		req             *BulkPermissionEvaluationRequest
 		expectedResults []*PermissionEvaluationResult
-		expectedError error
+		expectedError   error
 	}{
 		{
-			name:          "Not Implemented",
-			req:           &BulkPermissionEvaluationRequest{},
+			name:            "Not Implemented",
+			req:             &BulkPermissionEvaluationRequest{},
 			expectedResults: nil,
-			expectedError: fmt.Errorf("not implemented"),
+			expectedError:   fmt.Errorf("not implemented"),
 		},
 	}
 
@@ -989,16 +988,16 @@ func (s *IdentityServiceTestSuite) TestGetUserEffectivePermissions() {
 
 func (s *IdentityServiceTestSuite) TestCalculateRoleHierarchy() {
 	tests := []struct {
-		name          string
-		userID        uuid.UUID
+		name              string
+		userID            uuid.UUID
 		expectedHierarchy []*RoleHierarchy
-		expectedError error
+		expectedError     error
 	}{
 		{
-			name:          "Not Implemented",
-			userID:        uuid.New(),
+			name:              "Not Implemented",
+			userID:            uuid.New(),
 			expectedHierarchy: nil,
-			expectedError: fmt.Errorf("not implemented"),
+			expectedError:     fmt.Errorf("not implemented"),
 		},
 	}
 
@@ -1018,16 +1017,16 @@ func (s *IdentityServiceTestSuite) TestCalculateRoleHierarchy() {
 
 func (s *IdentityServiceTestSuite) TestTestPolicy() {
 	tests := []struct {
-		name          string
-		req           *PolicyTestRequest
+		name           string
+		req            *PolicyTestRequest
 		expectedResult *PolicyTestResult
-		expectedError error
+		expectedError  error
 	}{
 		{
-			name:          "Not Implemented",
-			req:           &PolicyTestRequest{},
+			name:           "Not Implemented",
+			req:            &PolicyTestRequest{},
 			expectedResult: nil,
-			expectedError: fmt.Errorf("not implemented"),
+			expectedError:  fmt.Errorf("not implemented"),
 		},
 	}
 
@@ -1044,7 +1043,6 @@ func (s *IdentityServiceTestSuite) TestTestPolicy() {
 		})
 	}
 }
-
 
 func (s *IdentityServiceTestSuite) TestGetPersonByID() {
 	tests := []struct {
