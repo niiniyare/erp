@@ -81,14 +81,14 @@
 - [ ] **Task**: Define ABAC context models for Temporal
 - [ ] **Task**: Create model validation and serialization
 
-##### **2.3 Basic Repository Layer**
-- [ ] **Task**: Implement policy repository with SQLC
-  - [ ] CRUD operations for policies table
-  - [ ] Query policies by resource/action
-  - [ ] Policy filtering and sorting
-- [ ] **Task**: Implement attribute definition repository
-- [ ] **Task**: Implement policy evaluation cache repository
-- [ ] **Task**: Create repository interfaces and mocks
+##### **2.3 Basic Repository Layer** ✅ **COMPLETED**
+- [x] **Task**: Implement policy repository with SQLC (SQL queries and sqlc generation complete)
+  - [x] CRUD operations for policies table
+  - [x] Query policies by resource/action
+  - [x] Policy filtering and sorting
+- [x] **Task**: Implement attribute definition repository (SQL queries and sqlc generation complete)
+- [x] **Task**: Implement policy evaluation cache repository (SQL queries and sqlc generation complete)
+- [x] **Task**: Create repository interfaces and mocks
 
 ---
 
@@ -413,4 +413,4 @@ go run cmd/api/main.go
 
 ---
 
-**Next Action**: Start Phase 2.3 - Implement basic repository layer with SQLC for ABAC data access.
+**Next Action**: Start Phase 2.1 - Temporal Client Setup.
