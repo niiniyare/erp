@@ -36,6 +36,7 @@ This document outlines the plan to break down large migration files into smaller
 - [-] ~~**010_user_preferences** - user_preferences table~~ (*Obsolete: Implemented as `settings` JSONB column in `users` table.*)
 - [-] ~~**011_password_history** - password_history table~~ (*Obsolete: Schema does not include this table.*)
 - [-] ~~**012_user_activity_log** - user_activity_log table~~ (*Obsolete: Functionality covered by `audit_log` table in Phase 4.*)
+- [-] ~~**notification_preferences** - notification_preferences table~~ (*Obsolete: Implemented as `settings` JSONB column in `users` table.*)
 
 ## Phase 3: Authorization System
 **Target: 8 migrations**

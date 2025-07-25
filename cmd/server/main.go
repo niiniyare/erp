@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/niiniyare/erp/internal/adapters"
@@ -88,6 +89,22 @@ func main() {
 
 	// Build database URL from config
 	databaseURL := cfg.Database.GetDatabaseURL()
+
+	// Run database migrations before initializing the store
+	migrationURL := os.Getenv("MIGRATION_URL")
+	if migrationURL == "" {
+		migrationURL = "file://db/migration" // Default migration path
+	}
+
+	logger.Info("Running database migrations", logger.Fields{
+		"migration_url": migrationURL,
+		"db_host":       cfg.Database.Host,
+		"db_name":       cfg.Database.Database,
+	})
+
+	runDBMigration(migrationURL, databaseURL)
+
+	logger.Info("Database migrations completed successfully")
 
 	// Initialize database store using SQLC
 	store, err := db.NewDB(databaseURL)
