@@ -8,6 +8,14 @@
 
 **System Relationship**: The new ABAC module (`@internal/core/abac/`) complements the existing access control system (`@internal/core/access/`) by providing automated policy-based decisions while the existing system handles human approval workflows.
 
+## 📋 Implementation Guidelines
+
+**Critical Requirements:**
+- **Tenant Context Lifecycle**: Follow tenant context management guidelines from `@docs/TENANT_CONTEXT_LIFECYCLE.md` for all ABAC operations
+- **Shared Components**: Use existing infrastructure from `@internal/shared/` for errors, logging, tracing, and metrics
+- **Database Integration**: Ensure proper RLS (Row Level Security) enforcement and SQLC integration
+- **Multi-Tenant Isolation**: All ABAC operations must respect tenant boundaries with proper context propagation
+
 ## 🎯 Phase-Based Implementation Plan
 
 ### **Phase 1: Module Restructuring** ⏱️ **Est: 3-4 days**
@@ -61,24 +69,24 @@
 
 ### **Phase 2: Temporal Workflow Foundation** ⏱️ **Est: 5-6 days**
 
-##### **2.1 Temporal Client Setup**
-- [ ] **Task**: Create Temporal client wrapper
-  - [ ] Connection management
-  - [ ] Worker configuration
-  - [ ] Workflow/activity registration
-  - [ ] Error handling and retries
-- [ ] **Task**: Configure Temporal server connection
-- [ ] **Task**: Set up development/testing Temporal instance
+##### **2.1 Temporal Client Setup** ✅ **COMPLETED**
+- [x] **Task**: Create Temporal client wrapper
+  - [x] Connection management
+  - [x] Worker configuration
+  - [x] Workflow/activity registration
+  - [x] Error handling and retries
+- [x] **Task**: Configure Temporal server connection
+- [x] **Task**: Set up development/testing Temporal instance
 
-##### **2.2 Core ABAC Models**
-- [ ] **Task**: Define workflow request/response models
+##### **2.2 Core ABAC Models** ⏳ **IN PROGRESS**
+- [x] **Task**: Define workflow request/response models
   ```go
   type PermissionEvaluationWorkflowRequest
   type AccessRequestWorkflowRequest  
   type PolicyTestWorkflowRequest
   ```
-- [ ] **Task**: Define activity input/output models
-- [ ] **Task**: Define ABAC context models for Temporal
+- [x] **Task**: Define activity input/output models
+- [x] **Task**: Define ABAC context models for Temporal
 - [ ] **Task**: Create model validation and serialization
 
 ##### **2.3 Basic Repository Layer** ✅ **COMPLETED**
@@ -344,11 +352,11 @@
 
 ## 📊 Progress Tracking
 
-### **Overall Progress: 32/180 tasks completed (17.8%)**
+### **Overall Progress: 22/143 tasks completed (15.38%)**
 
 #### **Phase Completion Status:**
 - **Phase 1**: 12/12 tasks (100%) - ✅ **COMPLETE**
-- **Phase 2**: 0/10 tasks (0%) - ⏳ **Pending**
+- **Phase 2**: 10/11 tasks (90.9%) - ⏳ **In Progress**
 - **Phase 3**: 0/20 tasks (0%) - ⏳ **Pending**
 - **Phase 4**: 0/12 tasks (0%) - ⏳ **Pending**
 - **Phase 5**: 0/18 tasks (0%) - ⏳ **Pending**
@@ -363,7 +371,7 @@
 - **Target Completion**: 8-10 weeks (accounting for testing and refinement)
 
 ### **Current Sprint Focus:**
-**Phase 2: Temporal Workflow Foundation** - Repository layer and database integration
+**Phase 2: Temporal Workflow Foundation** - Core ABAC Models (Validation and Serialization)
 
 ### **Phase 1 Status: ✅ COMPLETE (100%)**
 **Major Achievements:**
@@ -374,6 +382,33 @@
 - ✅ Temporal client wrapper with worker setup complete
 - ✅ Comprehensive ABAC models defined
 - ✅ All ABAC database tables successfully created and indexed
+
+### **Phase 2.1 Status: ✅ COMPLETE (100%)**
+**Major Achievements:**
+- ✅ Temporal client wrapper created (`internal/core/abac/client/temporal_client.go`).
+- ✅ Temporal client configured for connection, workflow/activity registration, and error handling.
+- ✅ Integration with `tenant.Service` for database session tenant context management (SetTenant/ResetTenant) implemented.
+- ✅ Integration with shared `errors`, `logger`, `metrics`, and `tracing` for robust observability.
+
+### **Phase 2.3 Status: ✅ COMPLETE (100%)**
+**Major Achievements:**
+- ✅ SQL queries for Policy, Attribute Definition, and Policy Evaluation repositories created.
+- ✅ SQLC generation for these repositories completed.
+- ✅ Go interfaces for ABAC repositories defined.
+- ✅ Concrete Go implementations for ABAC repositories created.
+- ✅ Mocks for ABAC repository interfaces generated.
+
+
+
+### **Phase 2.3 Status: ✅ COMPLETE (100%)**
+**Major Achievements:**
+- ✅ SQL queries for Policy, Attribute Definition, and Policy Evaluation repositories created.
+- ✅ SQLC generation for these repositories completed.
+- ✅ Go interfaces for ABAC repositories defined.
+- ✅ Concrete Go implementations for ABAC repositories created.
+- ✅ Mocks for ABAC repository interfaces generated.
+
+
 
 ---
 
@@ -405,12 +440,12 @@ make migrate-up
 temporal server start-dev
 
 # Run ABAC workers
-go run cmd/abac-worker/main.go
+go run cmd/worker/main.go
 
 # Run API server with ABAC endpoints
-go run cmd/api/main.go
+go run cmd/server/main.go
 ```
 
 ---
 
-**Next Action**: Start Phase 2.1 - Temporal Client Setup.
+**Next Action**: Start Phase 3.1 - Implement Attribute Collection Activities.
