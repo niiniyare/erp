@@ -545,9 +545,6 @@ INSERT INTO tenants (name, slug, email, subdomain, status, industry)
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
--- name: SetCurrentTenant :exec
-SET app.current_tenant = $1 ; -- Example session variable
---
 -- name: GetTenantByID :one
 SELECT * FROM tenants
 WHERE id = $1 AND deleted_at IS NULL;
@@ -646,8 +643,6 @@ RETURNING *;
 -- =====================================================
 
 -- Current tenant utilities
--- name: GetCurrentTenantID :one
-SELECT get_current_tenant_id();
 
 -- name: CheckCurrentTenantExists :one
 SELECT EXISTS(
@@ -732,3 +727,26 @@ WHERE (sqlc.narg('name_filter')::varchar IS NULL OR name ILIKE '%' || sqlc.narg(
   AND (sqlc.narg('status_filter')::varchar IS NULL OR status = sqlc.narg('status_filter'))
   AND (sqlc.narg('industry_filter')::varchar IS NULL OR industry = sqlc.narg('industry_filter'))
   AND deleted_at IS NULL;
+
+-- =====================================================
+-- REPOSITORY INTERFACE REQUIRED QUERIES
+-- =====================================================
+
+-- name: ResolveSubdomainToID :one
+SELECT id FROM tenants
+WHERE subdomain = $1 AND deleted_at IS NULL;
+
+-- name: ResetTenantContext :exec
+SELECT set_config('app.current_tenant_id', '', false);
+
+-- name: GetCurrentTenantID :one
+SELECT CASE 
+    WHEN current_setting('app.current_tenant_id', true) = '' THEN NULL
+    ELSE current_setting('app.current_tenant_id')::uuid
+END;
+
+-- name: ValidateCurrentTenant :exec
+SELECT 1 FROM tenants 
+WHERE id = current_setting('app.current_tenant_id')::uuid 
+  AND deleted_at IS NULL 
+  AND status = 'active';

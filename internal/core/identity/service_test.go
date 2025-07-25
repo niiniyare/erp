@@ -74,6 +74,45 @@ func (s *IdentityServiceTestSuite) TestRegisterNewUser() {
 				cache.EXPECT().Delete(gomock.Any(), fmt.Sprintf("user:username:%s", user.Username)).Return(nil).AnyTimes()
 			},
 		},
+		{
+			name: "Failure - Empty Password",
+			req: &CreateUserRequest{
+				Email:    "test.user@example.com",
+				Username: "test.user",
+				Password: "",
+			},
+			expectedUser:  nil,
+			expectedError: fmt.Errorf("validation: password must be at least 8 characters"),
+			mockExpectations: func(repo *MockRepository, cache *cache.MockService, user *User) {
+				// No repository or cache calls expected
+			},
+		},
+		{
+			name: "Failure - Password Too Short",
+			req: &CreateUserRequest{
+				Email:    "test.user@example.com",
+				Username: "test.user",
+				Password: "short",
+			},
+			expectedUser:  nil,
+			expectedError: fmt.Errorf("validation: password must be at least 8 characters"),
+			mockExpectations: func(repo *MockRepository, cache *cache.MockService, user *User) {
+				// No repository or cache calls expected
+			},
+		},
+		{
+			name: "Failure - CreateUser Repository Error",
+			req: &CreateUserRequest{
+				Email:    "test.user@example.com",
+				Username: "test.user",
+				Password: "a-very-secure-password",
+			},
+			expectedUser:  nil,
+			expectedError: errors.New("repository error"),
+			mockExpectations: func(repo *MockRepository, cache *cache.MockService, user *User) {
+				repo.EXPECT().CreateUser(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("repository error"))
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -89,11 +128,12 @@ func (s *IdentityServiceTestSuite) TestRegisterNewUser() {
 
 			if tc.expectedError != nil {
 				require.Error(s.T(), err)
-				require.Equal(s.T(), tc.expectedError, err)
+				require.Equal(s.T(), tc.expectedError.Error(), err.Error()) // Compare error strings for fmt.Errorf
 			} else {
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), user)
 				require.Equal(s.T(), tc.expectedUser.Email, user.Email)
+				require.Equal(s.T(), tc.expectedUser.Username, user.Username)
 			}
 		})
 	}

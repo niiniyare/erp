@@ -22,3 +22,13 @@ find "$BASE_DIR" -type f \( -name "repository.go" -o -name "*_service.go" \) -pr
 done
 
 echo "Mock generation complete."
+
+# Generate mock for db/sqlc/store.go
+DB_STORE_SOURCE="db/sqlc/store.go"
+DB_STORE_DESTINATION="db/sqlc/mock_store.go"
+DB_STORE_PACKAGE="db"
+
+echo "Generating mock for $DB_STORE_SOURCE"
+go run go.uber.org/mock/mockgen -source="$DB_STORE_SOURCE" -destination="$DB_STORE_DESTINATION" -package="$DB_STORE_PACKAGE"
+
+echo "All mock generation complete."

@@ -54,13 +54,18 @@ func (q *Queries) BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTena
 }
 
 const checkCurrentTenantExists = `-- name: CheckCurrentTenantExists :one
+
+
 SELECT EXISTS(
     SELECT 1 FROM tenants 
     WHERE id = get_current_tenant_id() AND deleted_at IS NULL
 )
 `
 
-// CheckCurrentTenantExists
+// =====================================================
+// UTILITY QUERIES
+// =====================================================
+// Current tenant utilities
 //
 //	SELECT EXISTS(
 //	    SELECT 1 FROM tenants
@@ -1116,21 +1121,23 @@ func (q *Queries) GetCurrentTenant(ctx context.Context) (*Tenant, error) {
 }
 
 const getCurrentTenantID = `-- name: GetCurrentTenantID :one
-
-SELECT get_current_tenant_id()
+SELECT CASE 
+    WHEN current_setting('app.current_tenant_id', true) = '' THEN NULL
+    ELSE current_setting('app.current_tenant_id')::uuid
+END
 `
 
-// =====================================================
-// UTILITY QUERIES
-// =====================================================
-// Current tenant utilities
+// GetCurrentTenantID
 //
-//	SELECT get_current_tenant_id()
-func (q *Queries) GetCurrentTenantID(ctx context.Context) (interface{}, error) {
+//	SELECT CASE
+//	    WHEN current_setting('app.current_tenant_id', true) = '' THEN NULL
+//	    ELSE current_setting('app.current_tenant_id')::uuid
+//	END
+func (q *Queries) GetCurrentTenantID(ctx context.Context) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, getCurrentTenantID)
-	var get_current_tenant_id interface{}
-	err := row.Scan(&get_current_tenant_id)
-	return get_current_tenant_id, err
+	var column_1 uuid.UUID
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const getCurrentTenantRevenueAnalytics = `-- name: GetCurrentTenantRevenueAnalytics :one
@@ -1317,7 +1324,7 @@ SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metada
 WHERE id = $1 AND deleted_at IS NULL
 `
 
-// Example session variable
+// GetTenantByID
 //
 //	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 //	WHERE id = $1 AND deleted_at IS NULL
@@ -1956,6 +1963,37 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Te
 	return items, nil
 }
 
+const resetTenantContext = `-- name: ResetTenantContext :exec
+SELECT set_config('app.current_tenant_id', '', false)
+`
+
+// ResetTenantContext
+//
+//	SELECT set_config('app.current_tenant_id', '', false)
+func (q *Queries) ResetTenantContext(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, resetTenantContext)
+	return err
+}
+
+const resolveSubdomainToID = `-- name: ResolveSubdomainToID :one
+
+SELECT id FROM tenants
+WHERE subdomain = $1 AND deleted_at IS NULL
+`
+
+// =====================================================
+// REPOSITORY INTERFACE REQUIRED QUERIES
+// =====================================================
+//
+//	SELECT id FROM tenants
+//	WHERE subdomain = $1 AND deleted_at IS NULL
+func (q *Queries) ResolveSubdomainToID(ctx context.Context, subdomain *string) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, resolveSubdomainToID, subdomain)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const searchTenantsByName = `-- name: SearchTenantsByName :many
 SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
 WHERE name ILIKE '%' || $1 || '%' 
@@ -2014,18 +2052,6 @@ func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNa
 		return nil, err
 	}
 	return items, nil
-}
-
-const setCurrentTenant = `-- name: SetCurrentTenant :exec
-SET app.current_tenant = $1
-`
-
-// SetCurrentTenant
-//
-//	SET app.current_tenant = $1
-func (q *Queries) SetCurrentTenant(ctx context.Context, dollar_1 interface{}) error {
-	_, err := q.db.Exec(ctx, setCurrentTenant, dollar_1)
-	return err
 }
 
 const setTenantContext = `-- name: SetTenantContext :exec
@@ -2833,4 +2859,22 @@ func (q *Queries) UpdateTenantUsageStats(ctx context.Context, arg UpdateTenantUs
 		&i.CreatedAt,
 	)
 	return &i, err
+}
+
+const validateCurrentTenant = `-- name: ValidateCurrentTenant :exec
+SELECT 1 FROM tenants 
+WHERE id = current_setting('app.current_tenant_id')::uuid 
+  AND deleted_at IS NULL 
+  AND status = 'active'
+`
+
+// ValidateCurrentTenant
+//
+//	SELECT 1 FROM tenants
+//	WHERE id = current_setting('app.current_tenant_id')::uuid
+//	  AND deleted_at IS NULL
+//	  AND status = 'active'
+func (q *Queries) ValidateCurrentTenant(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, validateCurrentTenant)
+	return err
 }

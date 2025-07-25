@@ -41,7 +41,6 @@ type AccessRequest struct {
 	UpdatedAt  sql.NullTime `json:"updated_at"`
 }
 
-// Individual accounts within chart of accounts with hierarchical structure
 type Account struct {
 	ID          uuid.UUID        `json:"id"`
 	Created     pgtype.Timestamp `json:"created"`
@@ -54,14 +53,12 @@ type Account struct {
 	AccountCode string           `json:"account_code"`
 	AccountName string           `json:"account_name"`
 	AccountType string           `json:"account_type"`
-	// Account role: cash, ar, ap, inventory, revenue, expense, equity, etc.
-	AccountRole *string `json:"account_role"`
-	// Normal balance type: DEBIT (assets, expenses) or CREDIT (liabilities, equity, revenue)
-	BalanceType string    `json:"balance_type"`
-	Locked      bool      `json:"locked"`
-	Active      bool      `json:"active"`
-	CoaID       uuid.UUID `json:"coa__id"`
-	RoleDefault *bool     `json:"role_default"`
+	AccountRole *string          `json:"account_role"`
+	BalanceType string           `json:"balance_type"`
+	Locked      bool             `json:"locked"`
+	Active      bool             `json:"active"`
+	CoaID       uuid.UUID        `json:"coa__id"`
+	RoleDefault *bool            `json:"role_default"`
 }
 
 // Defines actions that can be performed on resources with risk assessment and approval workflow requirements.
@@ -81,31 +78,6 @@ type Action struct {
 	RequiresApproval *bool        `json:"requires_approval"`
 	IsActive         *bool        `json:"is_active"`
 	CreatedAt        sql.NullTime `json:"created_at"`
-}
-
-// Defines attributes used in ABAC policies with data types, validation rules, and security controls for consistent attribute management.
-type AttributeDefinition struct {
-	ID          uuid.UUID `json:"id"`
-	TenantID    uuid.UUID `json:"tenant_id"`
-	Name        string    `json:"name"`
-	DisplayName *string   `json:"display_name"`
-	Description string    `json:"description"`
-	// Attribute data type: STRING, NUMBER, BOOLEAN, DATE, TIME, JSON, ARRAY, ENUM
-	DataType string `json:"data_type"`
-	// Attribute category: USER (user attributes), RESOURCE (resource attributes), ENVIRONMENT (context), ACTION (action attributes), ENTITY (entity attributes), SESSION (session context)
-	Category   string `json:"category"`
-	IsRequired *bool  `json:"is_required"`
-	// Whether attribute contains PII or sensitive data requiring special handling
-	IsSensitive  *bool  `json:"is_sensitive"`
-	DefaultValue string `json:"default_value"`
-	// JSONB array of allowed values for ENUM data type
-	AllowedValues []byte `json:"allowed_values"`
-	// JSONB containing custom validation rules (regex, ranges, etc.)
-	ValidationRules []byte `json:"validation_rules"`
-	// Whether attribute values must be encrypted at rest
-	EncryptionRequired *bool        `json:"encryption_required"`
-	IsActive           *bool        `json:"is_active"`
-	CreatedAt          sql.NullTime `json:"created_at"`
 }
 
 // Comprehensive audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.
@@ -152,7 +124,26 @@ type AuditSummaryView struct {
 	AllowedAttempts int64           `json:"allowed_attempts"`
 }
 
-// Chart of accounts templates (e.g., Standard, Manufacturing, Retail)
+type Budget struct {
+	ID              uuid.UUID      `json:"id"`
+	TenantID        uuid.UUID      `json:"tenant_id"`
+	EntityID        uuid.UUID      `json:"entity_id"`
+	ProjectID       *uuid.UUID     `json:"project_id"`
+	Name            string         `json:"name"`
+	BudgetType      string         `json:"budget_type"`
+	FiscalYear      int32          `json:"fiscal_year"`
+	PeriodStart     time.Time      `json:"period_start"`
+	PeriodEnd       time.Time      `json:"period_end"`
+	TotalAmount     pgtype.Numeric `json:"total_amount"`
+	AllocatedAmount pgtype.Numeric `json:"allocated_amount"`
+	SpentAmount     pgtype.Numeric `json:"spent_amount"`
+	Status          *string        `json:"status"`
+	ApprovedBy      *uuid.UUID     `json:"approved_by"`
+	ApprovedAt      sql.NullTime   `json:"approved_at"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+}
+
 type Chartofaccount struct {
 	ID          uuid.UUID        `json:"id"`
 	TenantID    uuid.UUID        `json:"tenant_id"`
@@ -167,9 +158,6 @@ type Chartofaccount struct {
 	Active      bool             `json:"active"`
 }
 
-// * Purpose: Stores customer information and contact details
-// * Description: Maintains customer database with contact information, billing
-// *              details, and sales tax rates for invoicing purposes
 type Customer struct {
 	Created        pgtype.Timestamp `json:"created"`
 	Updated        pgtype.Timestamp `json:"updated"`
@@ -191,23 +179,32 @@ type Customer struct {
 
 // Employee records extending persons with employment-specific data, organizational hierarchy, and security levels for access control.
 type Employee struct {
-	ID       uuid.UUID `json:"id"`
+	// UUID primary key for the employee record
+	ID uuid.UUID `json:"id"`
+	// Foreign key to tenants table for multi-tenant isolation
 	TenantID uuid.UUID `json:"tenant_id"`
+	// Foreign key to persons table linking to personal information
 	PersonID uuid.UUID `json:"person_id"`
 	// Unique employee identifier within tenant
-	EmployeeNumber string    `json:"employee_number"`
-	EntityID       uuid.UUID `json:"entity_id"`
-	PositionTitle  *string   `json:"position_title"`
+	EmployeeNumber string `json:"employee_number"`
+	// Foreign key to entities table for organizational assignment
+	EntityID uuid.UUID `json:"entity_id"`
+	// Employee's job title or position
+	PositionTitle *string `json:"position_title"`
 	// Foreign key to entities table representing department
 	DepartmentID *uuid.UUID `json:"department_id"`
 	// Self-referential foreign key for organizational hierarchy
-	ManagerID       *uuid.UUID `json:"manager_id"`
-	HireDate        time.Time  `json:"hire_date"`
-	TerminationDate time.Time  `json:"termination_date"`
+	ManagerID *uuid.UUID `json:"manager_id"`
+	// Date when employee was hired
+	HireDate time.Time `json:"hire_date"`
+	// Date when employee was terminated (if applicable)
+	TerminationDate time.Time `json:"termination_date"`
 	// JSONB containing encrypted/sensitive salary and compensation data
-	SalaryInfo       []byte  `json:"salary_info"`
+	SalaryInfo []byte `json:"salary_info"`
+	// Current employment status: ACTIVE, INACTIVE, TERMINATED, ON_LEAVE, SUSPENDED
 	EmploymentStatus *string `json:"employment_status"`
-	WorkSchedule     []byte  `json:"work_schedule"`
+	// JSONB containing flexible work schedule definition
+	WorkSchedule []byte `json:"work_schedule"`
 	// Numeric security clearance level (0=lowest, higher numbers = higher clearance)
 	SecurityLevel *int32 `json:"security_level"`
 	// JSONB containing employment-specific ABAC attributes for access control
@@ -218,7 +215,8 @@ type Employee struct {
 	ValidationErrors  []byte       `json:"validation_errors"`
 	CreatedAt         time.Time    `json:"created_at"`
 	UpdatedAt         time.Time    `json:"updated_at"`
-	DeletedAt         sql.NullTime `json:"deleted_at"`
+	// Soft delete timestamp - NULL means record is active
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
 // Master table for business entities and organizational units. Supports hierarchical structures for companies, subsidiaries, departments, and other organizational divisions. Each entity can maintain its own accounting books, customers, vendors, and fiscal year settings.
@@ -265,7 +263,8 @@ type Entity struct {
 // Manages sequential numbering for business documents within entities. Tracks next available sequence numbers for different document types (invoices, purchase orders, estimates, etc.) by fiscal year and entity.
 type Entitystate struct {
 	// Primary key - Unique identifier for the entity state record
-	Uuid     uuid.UUID `json:"uuid"`
+	Uuid uuid.UUID `json:"uuid"`
+	// Foreign key to tenants table for multi-tenant isolation
 	TenantID uuid.UUID `json:"tenant_id"`
 	// Fiscal year for sequence tracking - Allows separate numbering sequences per year
 	FiscalYear *int16 `json:"fiscal_year"`
@@ -289,6 +288,7 @@ type Entitystate struct {
 type HierarchyPath struct {
 	// Tenant identifier - Partitions hierarchy data by tenant for multi-tenancy
 	TenantID uuid.UUID `json:"tenant_id"`
+	// Entity identifier - References the entity this path record belongs to
 	EntityID uuid.UUID `json:"entity_id"`
 	// Parent entity in the relationship - References entities.uuid
 	AncestorID uuid.UUID `json:"ancestor_id"`
@@ -302,27 +302,6 @@ type HierarchyPath struct {
 	ValidationErrors  []byte       `json:"validation_errors"`
 	CreatedAt         time.Time    `json:"created_at"`
 	UpdatedAt         time.Time    `json:"updated_at"`
-}
-
-// Example queries demonstrating UUID-based hierarchy operations
-type HierarchyUuidExample struct {
-	Description string `json:"description"`
-	Example1    string `json:"example_1"`
-	Query1      string `json:"query_1"`
-	Example2    string `json:"example_2"`
-	Query2      string `json:"query_2"`
-	Example3    string `json:"example_3"`
-	Query3      string `json:"query_3"`
-	Example4    string `json:"example_4"`
-	Query4      string `json:"query_4"`
-	Example5    string `json:"example_5"`
-	Query5      string `json:"query_5"`
-	Example6    string `json:"example_6"`
-	Query6      string `json:"query_6"`
-	Example7    string `json:"example_7"`
-	Query7      string `json:"query_7"`
-	Example8    string `json:"example_8"`
-	Query8      string `json:"query_8"`
 }
 
 type InventoryBalance struct {
@@ -402,29 +381,25 @@ type ItemCategory struct {
 	CreatedAt   time.Time  `json:"created_at"`
 }
 
-// Journal entries for double-entry bookkeeping with audit trail
 type Journalentry struct {
-	ID          uuid.UUID        `json:"id"`
-	Created     pgtype.Timestamp `json:"created"`
-	Updated     pgtype.Timestamp `json:"updated"`
-	TenantID    uuid.UUID        `json:"tenant_id"`
-	EntityID    uuid.UUID        `json:"entity_id"`
-	PostedBy    *uuid.UUID       `json:"posted_by"`
-	CreatedBy   *uuid.UUID       `json:"created_by"`
-	JeNumber    string           `json:"je_number"`
-	Timestamp   pgtype.Timestamp `json:"timestamp"`
-	Description *string          `json:"description"`
-	Activity    *string          `json:"activity"`
-	// Source system: invoice, bill, manual, etc.
-	Origin *string `json:"origin"`
-	// Whether the journal entry affects account balances
-	Posted         bool      `json:"posted"`
-	Locked         bool      `json:"locked"`
-	LedgerID       uuid.UUID `json:"ledger_id"`
-	IsClosingEntry bool      `json:"is_closing_entry"`
+	ID             uuid.UUID        `json:"id"`
+	Created        pgtype.Timestamp `json:"created"`
+	Updated        pgtype.Timestamp `json:"updated"`
+	TenantID       uuid.UUID        `json:"tenant_id"`
+	EntityID       uuid.UUID        `json:"entity_id"`
+	PostedBy       *uuid.UUID       `json:"posted_by"`
+	CreatedBy      *uuid.UUID       `json:"created_by"`
+	JeNumber       string           `json:"je_number"`
+	Timestamp      pgtype.Timestamp `json:"timestamp"`
+	Description    *string          `json:"description"`
+	Activity       *string          `json:"activity"`
+	Origin         *string          `json:"origin"`
+	Posted         bool             `json:"posted"`
+	Locked         bool             `json:"locked"`
+	LedgerID       uuid.UUID        `json:"ledger_id"`
+	IsClosingEntry bool             `json:"is_closing_entry"`
 }
 
-// Ledgers group related journal entries (e.g., monthly ledgers, project ledgers)
 type Ledger struct {
 	ID             uuid.UUID        `json:"id"`
 	Created        pgtype.Timestamp `json:"created"`
@@ -460,24 +435,6 @@ type Module struct {
 	CreatedAt         sql.NullTime `json:"created_at"`
 }
 
-// Stores user notification preferences.
-type NotificationPreference struct {
-	ID                 uuid.UUID `json:"id"`
-	TenantID           uuid.UUID `json:"tenant_id"`
-	UserID             uuid.UUID `json:"user_id"`
-	EmailNotifications bool      `json:"email_notifications"`
-	InAppNotifications bool      `json:"in_app_notifications"`
-	SlackNotifications bool      `json:"slack_notifications"`
-	// JSONB object with notification types as keys and booleans as values.
-	NotificationTypes []byte `json:"notification_types"`
-	// JSONB array of preferred notification channels.
-	PreferredChannels []byte `json:"preferred_channels"`
-	// JSONB object with quiet hours settings.
-	QuietHours []byte    `json:"quiet_hours"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-}
-
 // Granular permissions combining resources and actions with ABAC conditions, data filters, and field restrictions for fine-grained access control.
 type Permission struct {
 	ID          uuid.UUID `json:"id"`
@@ -508,20 +465,30 @@ type Person struct {
 	// Foreign key to entities table for hierarchical organization
 	EntityID uuid.UUID `json:"entity_id"`
 	// Classification of person: INDIVIDUAL, EMPLOYEE, CONTACT, CUSTOMER, VENDOR, CONTRACTOR
-	PersonType string    `json:"person_type"`
-	FirstName  string    `json:"first_name"`
-	LastName   string    `json:"last_name"`
-	MiddleName *string   `json:"middle_name"`
-	Email      *string   `json:"email"`
-	Phone      *string   `json:"phone"`
-	BirthDate  time.Time `json:"birth_date"`
-	NationalID *string   `json:"national_id"`
-	TaxID      *string   `json:"tax_id"`
-	Address    []byte    `json:"address"`
+	PersonType string `json:"person_type"`
+	// Person's first/given name
+	FirstName string `json:"first_name"`
+	// Person's last/family name
+	LastName string `json:"last_name"`
+	// Person's middle name or initial (optional)
+	MiddleName *string `json:"middle_name"`
+	// Person's email address (must be unique per tenant when not deleted)
+	Email *string `json:"email"`
+	// Person's primary phone number
+	Phone *string `json:"phone"`
+	// Person's date of birth
+	BirthDate time.Time `json:"birth_date"`
+	// Government-issued national ID number (unique per tenant)
+	NationalID *string `json:"national_id"`
+	// Tax identification number
+	TaxID *string `json:"tax_id"`
+	// Person's address stored as JSONB for flexible structure
+	Address []byte `json:"address"`
 	// JSONB containing ABAC attributes like clearance level, department, location for access control
 	SecurityAttributes []byte `json:"security_attributes"`
 	// Flexible JSONB storage for additional person-related data
-	Metadata          []byte       `json:"metadata"`
+	Metadata []byte `json:"metadata"`
+	// Whether the person record is currently active
 	IsActive          bool         `json:"is_active"`
 	Version           int32        `json:"version"`
 	LastValidationRun sql.NullTime `json:"last_validation_run"`
@@ -563,22 +530,22 @@ type Policy struct {
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
-// Caches ABAC policy evaluation results for performance optimization with configurable TTL and context tracking.
-type PolicyEvaluation struct {
-	ID         uuid.UUID `json:"id"`
-	TenantID   uuid.UUID `json:"tenant_id"`
-	UserID     uuid.UUID `json:"user_id"`
-	ResourceID uuid.UUID `json:"resource_id"`
-	ActionID   uuid.UUID `json:"action_id"`
-	// SHA-256 hash of evaluation context for cache key uniqueness
-	ContextHash string `json:"context_hash"`
-	Decision    string `json:"decision"`
-	// Array of policy UUIDs that were evaluated and fired
-	ApplicablePolicies []uuid.UUID `json:"applicable_policies"`
-	// Policy evaluation time in milliseconds for performance monitoring
-	EvaluationTimeMs *int32       `json:"evaluation_time_ms"`
-	EvaluatedAt      sql.NullTime `json:"evaluated_at"`
-	ExpiresAt        sql.NullTime `json:"expires_at"`
+type Project struct {
+	ID               uuid.UUID      `json:"id"`
+	TenantID         uuid.UUID      `json:"tenant_id"`
+	EntityID         uuid.UUID      `json:"entity_id"`
+	Name             string         `json:"name"`
+	Code             *string        `json:"code"`
+	Description      string         `json:"description"`
+	ProjectManagerID *uuid.UUID     `json:"project_manager_id"`
+	StartDate        time.Time      `json:"start_date"`
+	EndDate          time.Time      `json:"end_date"`
+	BudgetAmount     pgtype.Numeric `json:"budget_amount"`
+	ActualCost       pgtype.Numeric `json:"actual_cost"`
+	Status           *string        `json:"status"`
+	Metadata         []byte         `json:"metadata"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
 }
 
 // System resources that can be protected by permissions including APIs, UI components, data objects, files, reports, and workflows.
@@ -667,31 +634,6 @@ type RolePermissionsSummary struct {
 	AssignedUserCount int64       `json:"assigned_user_count"`
 }
 
-type SecurityNotification struct {
-	ID               uuid.UUID    `json:"id"`
-	TenantID         uuid.UUID    `json:"tenant_id"`
-	UserID           *uuid.UUID   `json:"user_id"`
-	NotificationType string       `json:"notification_type"`
-	Title            string       `json:"title"`
-	Message          string       `json:"message"`
-	Metadata         []byte       `json:"metadata"`
-	Acknowledged     *bool        `json:"acknowledged"`
-	CreatedAt        sql.NullTime `json:"created_at"`
-	ExpiresAt        sql.NullTime `json:"expires_at"`
-}
-
-// Identifies potential security threats through session anomalies and audit patterns
-type SecurityThreatDashboard struct {
-	UserID                 uuid.UUID   `json:"user_id"`
-	Username               *string     `json:"username"`
-	Email                  string      `json:"email"`
-	HighRiskSessions       int64       `json:"high_risk_sessions"`
-	MaxRiskScore           interface{} `json:"max_risk_score"`
-	AnomalyTypes           interface{} `json:"anomaly_types"`
-	CriticalEvents         int64       `json:"critical_events"`
-	LastSuspiciousActivity interface{} `json:"last_suspicious_activity"`
-}
-
 // Core tenant management table for multi-tenant SaaS architecture
 type Tenant struct {
 	// Universal unique identifier for external API references
@@ -764,30 +706,71 @@ type TenantUsageStat struct {
 	CreatedAt      time.Time      `json:"created_at"`
 }
 
+type Uom struct {
+	ID                uuid.UUID        `json:"id"`
+	TenantID          uuid.UUID        `json:"tenant_id"`
+	EntityID          uuid.UUID        `json:"entity_id"`
+	UomName           string           `json:"uom_name"`
+	MustBeWholeNumber *bool            `json:"must_be_whole_number"`
+	Enabled           *bool            `json:"enabled"`
+	Symbol            *string          `json:"symbol"`
+	CommonCode        *string          `json:"common_code"`
+	Description       string           `json:"description"`
+	BaseUomID         *uuid.UUID       `json:"base_uom_id"`
+	ConversionFactor  pgtype.Numeric   `json:"conversion_factor"`
+	UomType           *string          `json:"uom_type"`
+	CreatedAt         pgtype.Timestamp `json:"created_at"`
+	UpdatedAt         pgtype.Timestamp `json:"updated_at"`
+}
+
+type UomConversion struct {
+	ID               uuid.UUID        `json:"id"`
+	TenantID         uuid.UUID        `json:"tenant_id"`
+	EntityID         uuid.UUID        `json:"entity_id"`
+	FromUomID        uuid.UUID        `json:"from_uom_id"`
+	ToUomID          uuid.UUID        `json:"to_uom_id"`
+	ConversionFactor pgtype.Numeric   `json:"conversion_factor"`
+	CreatedAt        pgtype.Timestamp `json:"created_at"`
+}
+
 // System user accounts with authentication, authorization, and session management. Can be linked to persons/employees or exist independently for service accounts.
 type User struct {
-	ID           uuid.UUID  `json:"id"`
-	TenantID     uuid.UUID  `json:"tenant_id"`
-	EntityID     uuid.UUID  `json:"entity_id"`
-	PersonID     *uuid.UUID `json:"person_id"`
-	EmployeeID   *uuid.UUID `json:"employee_id"`
-	Username     *string    `json:"username"`
-	Email        string     `json:"email"`
-	PasswordHash *string    `json:"password_hash"`
+	// UUID primary key for the user record
+	ID uuid.UUID `json:"id"`
+	// Foreign key to tenants table for multi-tenant isolation
+	TenantID uuid.UUID `json:"tenant_id"`
+	// Foreign key to entities table for organizational assignment
+	EntityID uuid.UUID `json:"entity_id"`
+	// Optional foreign key to persons table (NULL for service accounts)
+	PersonID *uuid.UUID `json:"person_id"`
+	// Optional foreign key to employees table (NULL for non-employee users)
+	EmployeeID *uuid.UUID `json:"employee_id"`
+	// Unique username for login (optional, email can be used instead)
+	Username *string `json:"username"`
+	// Email address for login and communication (must be unique per tenant)
+	Email string `json:"email"`
+	// Hashed password for authentication
+	PasswordHash *string `json:"password_hash"`
 	// Classification of user account: INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, ADMIN
 	UserType string `json:"user_type"`
 	// Current account status affecting login ability
-	AccountStatus     *string      `json:"account_status"`
-	IsActive          bool         `json:"is_active"`
-	LastLoginAt       sql.NullTime `json:"last_login_at"`
+	AccountStatus *string `json:"account_status"`
+	// Whether the user account is currently active
+	IsActive bool `json:"is_active"`
+	// Timestamp of last successful login
+	LastLoginAt sql.NullTime `json:"last_login_at"`
+	// Timestamp of last password change
 	PasswordChangedAt sql.NullTime `json:"password_changed_at"`
 	// Counter for failed login attempts for security monitoring
-	FailedLoginAttempts *int32       `json:"failed_login_attempts"`
-	LockoutUntil        sql.NullTime `json:"lockout_until"`
+	FailedLoginAttempts *int32 `json:"failed_login_attempts"`
+	// Timestamp until which account is locked due to failed attempts
+	LockoutUntil sql.NullTime `json:"lockout_until"`
 	// Session timeout in minutes (default 480 = 8 hours)
-	SessionTimeoutMinutes *int32  `json:"session_timeout_minutes"`
-	MfaEnabled            *bool   `json:"mfa_enabled"`
-	MfaSecret             *string `json:"mfa_secret"`
+	SessionTimeoutMinutes *int32 `json:"session_timeout_minutes"`
+	// Whether multi-factor authentication is enabled
+	MfaEnabled *bool `json:"mfa_enabled"`
+	// Secret key for MFA token generation
+	MfaSecret *string `json:"mfa_secret"`
 	// JSONB containing ABAC attributes for fine-grained access control
 	UserAttributes []byte `json:"user_attributes"`
 	// JSONB containing user preferences and application settings
@@ -798,13 +781,8 @@ type User struct {
 	ValidationErrors  []byte       `json:"validation_errors"`
 	CreatedAt         time.Time    `json:"created_at"`
 	UpdatedAt         time.Time    `json:"updated_at"`
-	DeletedAt         sql.NullTime `json:"deleted_at"`
-	// Password strength score (0-100) based on complexity
-	PasswordStrength *int32 `json:"password_strength"`
-	// Flag if password found in breach databases
-	Compromised *bool `json:"compromised"`
-	// Forces password change on next login
-	RotationRequired *bool `json:"rotation_required"`
+	// Soft delete timestamp - NULL means record is active
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
 // Comprehensive view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.
@@ -836,35 +814,6 @@ type UserCompleteView struct {
 	ActiveRoleCount    int64        `json:"active_role_count"`
 }
 
-type UserEffectivePermission struct {
-	UserID              uuid.UUID   `json:"user_id"`
-	TenantID            uuid.UUID   `json:"tenant_id"`
-	ResourceID          uuid.UUID   `json:"resource_id"`
-	ActionID            uuid.UUID   `json:"action_id"`
-	AllowFlag           interface{} `json:"allow_flag"`
-	RolePermissionIds   interface{} `json:"role_permission_ids"`
-	DirectPermissionIds interface{} `json:"direct_permission_ids"`
-}
-
-// Direct permission grants to users bypassing roles. Used for exceptional access, denials, and temporary permissions.
-type UserPermission struct {
-	ID           uuid.UUID  `json:"id"`
-	TenantID     uuid.UUID  `json:"tenant_id"`
-	UserID       uuid.UUID  `json:"user_id"`
-	PermissionID uuid.UUID  `json:"permission_id"`
-	EntityID     *uuid.UUID `json:"entity_id"`
-	// Permission effect: ALLOW (grant access) or DENY (explicitly deny - overrides role permissions)
-	Effect *string `json:"effect"`
-	// Business justification for this direct permission assignment
-	Reason string `json:"reason"`
-	// User who granted this direct permission
-	GrantedBy  *uuid.UUID   `json:"granted_by"`
-	GrantedAt  sql.NullTime `json:"granted_at"`
-	ExpiresAt  sql.NullTime `json:"expires_at"`
-	Conditions []byte       `json:"conditions"`
-	IsActive   *bool        `json:"is_active"`
-}
-
 // Assigns roles to users with entity context, delegation support, and temporal controls for dynamic authorization.
 type UserRole struct {
 	ID       uuid.UUID `json:"id"`
@@ -886,37 +835,164 @@ type UserRole struct {
 
 // Active user sessions with security context including device, location, and access patterns for ABAC evaluation and security monitoring.
 type UserSession struct {
-	ID           uuid.UUID   `json:"id"`
-	TenantID     uuid.UUID   `json:"tenant_id"`
-	UserID       uuid.UUID   `json:"user_id"`
-	SessionToken string      `json:"session_token"`
-	RefreshToken *string     `json:"refresh_token"`
-	IpAddress    *netip.Addr `json:"ip_address"`
-	UserAgent    string      `json:"user_agent"`
+	// UUID primary key for the session record
+	ID uuid.UUID `json:"id"`
+	// Foreign key to tenants table for multi-tenant isolation
+	TenantID uuid.UUID `json:"tenant_id"`
+	// Foreign key to users table identifying the session owner
+	UserID uuid.UUID `json:"user_id"`
+	// Unique session token for authentication
+	SessionToken string `json:"session_token"`
+	// Token used for session renewal
+	RefreshToken *string `json:"refresh_token"`
+	// IP address of the client
+	IpAddress *netip.Addr `json:"ip_address"`
+	// Browser/client user agent string
+	UserAgent string `json:"user_agent"`
 	// JSONB containing device fingerprinting data for security analysis
 	DeviceInfo []byte `json:"device_info"`
 	// JSONB containing geographic and network location data for location-based access control
-	LocationInfo      []byte       `json:"location_info"`
+	LocationInfo []byte `json:"location_info"`
+	// Session expiration timestamp
 	ExpiresAt         time.Time    `json:"expires_at"`
 	Version           int32        `json:"version"`
 	LastValidationRun sql.NullTime `json:"last_validation_run"`
 	ValidationStatus  *string      `json:"validation_status"`
 	ValidationErrors  []byte       `json:"validation_errors"`
-	CreatedAt         sql.NullTime `json:"created_at"`
-	LastAccessedAt    sql.NullTime `json:"last_accessed_at"`
-	IsActive          *bool        `json:"is_active"`
-	// Dynamic risk assessment score (0-100) for session security
-	RiskScore *int32 `json:"risk_score"`
-	// Detected security anomalies [unusual_location, device_change, impossible_travel]
-	AnomalyFlags []byte `json:"anomaly_flags"`
-	// Timestamp of last MFA verification
-	MfaVerifiedAt sql.NullTime `json:"mfa_verified_at"`
+	// Session creation timestamp
+	CreatedAt sql.NullTime `json:"created_at"`
+	// Last activity timestamp for session timeout tracking
+	LastAccessedAt sql.NullTime `json:"last_accessed_at"`
+	// Whether the session is currently active
+	IsActive *bool `json:"is_active"`
 }
 
-//	Purpose: Stores vendor/supplier information and payment details
-//	* Description:
-//
-// Maintains vendor database with contact information and banking details for bill payments and purchase orders
+type VActiveEntity struct {
+	TenantName     string    `json:"tenant_name"`
+	EntityID       uuid.UUID `json:"entity_id"`
+	EntityName     string    `json:"entity_name"`
+	EntityType     string    `json:"entity_type"`
+	EntityCode     *string   `json:"entity_code"`
+	CompanyName    *string   `json:"company_name"`
+	RegionalName   *string   `json:"regional_name"`
+	DepartmentName *string   `json:"department_name"`
+	IsActive       bool      `json:"is_active"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+type VCompanyStructure struct {
+	TenantName        string    `json:"tenant_name"`
+	CompanyID         uuid.UUID `json:"company_id"`
+	CompanyName       string    `json:"company_name"`
+	CompanyCode       *string   `json:"company_code"`
+	EntityID          uuid.UUID `json:"entity_id"`
+	EntityName        string    `json:"entity_name"`
+	EntityType        string    `json:"entity_type"`
+	EntityCode        *string   `json:"entity_code"`
+	LevelsFromCompany int32     `json:"levels_from_company"`
+}
+
+type VCostCenterInfo struct {
+	TenantName        string    `json:"tenant_name"`
+	CostCenterID      uuid.UUID `json:"cost_center_id"`
+	CostCenter        string    `json:"cost_center"`
+	CostCenterCode    *string   `json:"cost_center_code"`
+	DepartmentID      uuid.UUID `json:"department_id"`
+	Department        string    `json:"department"`
+	RegionalID        uuid.UUID `json:"regional_id"`
+	Regional          string    `json:"regional"`
+	CompanyID         uuid.UUID `json:"company_id"`
+	Company           string    `json:"company"`
+	CostCenterActive  bool      `json:"cost_center_active"`
+	CostCenterCreated time.Time `json:"cost_center_created"`
+}
+
+type VDepartmentSummary struct {
+	TenantName        string    `json:"tenant_name"`
+	DepartmentID      uuid.UUID `json:"department_id"`
+	DepartmentName    string    `json:"department_name"`
+	DepartmentCode    *string   `json:"department_code"`
+	RegionalID        uuid.UUID `json:"regional_id"`
+	RegionalName      string    `json:"regional_name"`
+	CompanyID         uuid.UUID `json:"company_id"`
+	CompanyName       string    `json:"company_name"`
+	CostCenterCount   int64     `json:"cost_center_count"`
+	DepartmentActive  bool      `json:"department_active"`
+	DepartmentCreated time.Time `json:"department_created"`
+}
+
+type VEntityChange struct {
+	TenantName       string       `json:"tenant_name"`
+	EntityID         uuid.UUID    `json:"entity_id"`
+	EntityName       string       `json:"entity_name"`
+	EntityType       string       `json:"entity_type"`
+	ValidationStatus *string      `json:"validation_status"`
+	CreatedAt        time.Time    `json:"created_at"`
+	UpdatedAt        time.Time    `json:"updated_at"`
+	DeletedAt        sql.NullTime `json:"deleted_at"`
+	ChangeType       string       `json:"change_type"`
+}
+
+type VEntityPath struct {
+	TenantName     string    `json:"tenant_name"`
+	AncestorID     uuid.UUID `json:"ancestor_id"`
+	AncestorName   string    `json:"ancestor_name"`
+	AncestorType   string    `json:"ancestor_type"`
+	DescendantID   uuid.UUID `json:"descendant_id"`
+	DescendantName string    `json:"descendant_name"`
+	DescendantType string    `json:"descendant_type"`
+	Depth          int32     `json:"depth"`
+}
+
+type VEntityStructure struct {
+	TenantName   string    `json:"tenant_name"`
+	CostCenterID uuid.UUID `json:"cost_center_id"`
+	CostCenter   string    `json:"cost_center"`
+	DepartmentID uuid.UUID `json:"department_id"`
+	Department   string    `json:"department"`
+	RegionalID   uuid.UUID `json:"regional_id"`
+	Regional     string    `json:"regional"`
+	CompanyID    uuid.UUID `json:"company_id"`
+	Company      string    `json:"company"`
+}
+
+type VTenantEntitySummary struct {
+	TenantID           uuid.UUID `json:"tenant_id"`
+	TenantName         string    `json:"tenant_name"`
+	TenantStatus       string    `json:"tenant_status"`
+	TotalEntities      int64     `json:"total_entities"`
+	CompanyCount       int64     `json:"company_count"`
+	RegionalCount      int64     `json:"regional_count"`
+	DepartmentCount    int64     `json:"department_count"`
+	CostCenterCount    int64     `json:"cost_center_count"`
+	ProjectCount       int64     `json:"project_count"`
+	ActiveEntities     int64     `json:"active_entities"`
+	NonDeletedEntities int64     `json:"non_deleted_entities"`
+}
+
+type VTenantHierarchy struct {
+	TenantName string    `json:"tenant_name"`
+	EntityID   uuid.UUID `json:"entity_id"`
+	EntityName string    `json:"entity_name"`
+	EntityType string    `json:"entity_type"`
+	FullPath   string    `json:"full_path"`
+	Depth      int32     `json:"depth"`
+}
+
+type VTenantResourceUtilization struct {
+	TenantID           uuid.UUID   `json:"tenant_id"`
+	TenantName         string      `json:"tenant_name"`
+	TenantStatus       string      `json:"tenant_status"`
+	TotalEntities      int64       `json:"total_entities"`
+	ActiveEntities     int64       `json:"active_entities"`
+	NonDeletedEntities int64       `json:"non_deleted_entities"`
+	SequenceStates     int64       `json:"sequence_states"`
+	DocumentTypes      int64       `json:"document_types"`
+	LastEntityCreated  interface{} `json:"last_entity_created"`
+	LastEntityUpdated  interface{} `json:"last_entity_updated"`
+}
+
 type Vendor struct {
 	Created        pgtype.Timestamp `json:"created"`
 	Updated        pgtype.Timestamp `json:"updated"`

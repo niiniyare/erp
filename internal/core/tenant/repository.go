@@ -590,7 +590,7 @@ func (r *repository) GetTenant(ctx context.Context) (uuid.UUID, error) {
 	})
 
 	// Use SQLC-generated GetCurrentTenantID function
-	tenantIDInterface, err := r.store.GetCurrentTenantID(ctx)
+	tenantID, err := r.store.GetCurrentTenantID(ctx)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to get current tenant ID")
@@ -602,38 +602,14 @@ func (r *repository) GetTenant(ctx context.Context) (uuid.UUID, error) {
 		return uuid.Nil, fmt.Errorf("failed to get current tenant ID: %w", err)
 	}
 
-	// Handle nil case (no tenant context set)
-	if tenantIDInterface == nil {
+	// Handle nil case (no tenant context set) - check if UUID is nil
+	if tenantID == uuid.Nil {
 		span.SetStatus(codes.Error, "No tenant context set")
 
 		logger.WarnContext(ctx, "No tenant context set in database session", logger.Fields{
 			"operation": "repository.GetTenant",
 		})
 		return uuid.Nil, fmt.Errorf("no tenant context set in database session")
-	}
-
-	// Convert interface{} to UUID
-	var tenantID uuid.UUID
-	switch v := tenantIDInterface.(type) {
-	case string:
-		tenantID, err = uuid.Parse(v)
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Invalid tenant ID format")
-			return uuid.Nil, fmt.Errorf("invalid tenant ID format: %w", err)
-		}
-	case uuid.UUID:
-		tenantID = v
-	case []byte:
-		tenantID, err = uuid.FromBytes(v)
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, "Invalid tenant ID bytes")
-			return uuid.Nil, fmt.Errorf("invalid tenant ID bytes: %w", err)
-		}
-	default:
-		span.SetStatus(codes.Error, "Unexpected tenant ID type")
-		return uuid.Nil, fmt.Errorf("unexpected tenant ID type: %T", v)
 	}
 
 	span.SetAttributes(attribute.String("tenant.current_id", tenantID.String()))
@@ -656,9 +632,8 @@ func (r *repository) ResetTenant(ctx context.Context) error {
 		"operation": "repository.ResetTenant",
 	})
 
-	// Reset tenant context by setting it to NULL/empty
-	// Use the same SetTenantContext method but with a nil UUID or empty string
-	_, err := r.store.GetPool().Exec(ctx, "SELECT set_config('app.current_tenant_id', NULL, false)")
+	// Use SQLC-generated ResetTenantContext function
+	err := r.store.ResetTenantContext(ctx)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to reset tenant context")
