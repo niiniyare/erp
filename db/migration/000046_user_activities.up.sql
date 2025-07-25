@@ -7,7 +7,7 @@
 
 -- Main partitioned table for user activity tracking
 CREATE TABLE user_activities (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     session_id UUID REFERENCES user_sessions(id) ON DELETE SET NULL,
@@ -42,7 +42,9 @@ CREATE TABLE user_activities (
     
     -- Constraints
     CONSTRAINT user_activities_anomaly_score_range 
-        CHECK (anomaly_score >= 0.00 AND anomaly_score <= 100.00)
+        CHECK (anomaly_score >= 0.00 AND anomaly_score <= 100.00),
+    -- Composite primary key including partition column
+    PRIMARY KEY (id, timestamp)
 ) PARTITION BY RANGE (timestamp);
 
 -- Create initial partitions (last 3 months + next 3 months)
@@ -113,7 +115,6 @@ CREATE POLICY user_activities_admin_bypass ON user_activities
 -- Grant permissions
 GRANT SELECT, INSERT, UPDATE ON user_activities TO application_role;
 GRANT ALL PRIVILEGES ON user_activities TO admin_role;
-GRANT USAGE ON SEQUENCE user_activities_id_seq TO application_role;
 
 -- Table and column comments for documentation
 COMMENT ON TABLE user_activities IS 'Partitioned table for user activity tracking and behavioral analytics supporting ABAC evaluation';

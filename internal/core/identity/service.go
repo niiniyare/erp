@@ -40,11 +40,6 @@ type Service interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*Role, error)
 	SearchUsers(ctx context.Context, query string, limit int, offset int) ([]*User, error)
-	EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResult, error)
-	BulkEvaluatePermissions(ctx context.Context, req *BulkPermissionEvaluationRequest) ([]*PermissionEvaluationResult, error)
-	GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID) ([]*UserPermission, error)
-	CalculateRoleHierarchy(ctx context.Context, userID uuid.UUID) ([]*RoleHierarchy, error)
-	TestPolicy(ctx context.Context, req *PolicyTestRequest) (*PolicyTestResult, error)
 }
 
 // service implements the Service interface
@@ -288,30 +283,6 @@ func (s *service) SearchUsers(ctx context.Context, query string, limit int, offs
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResult, error) {
-	// TODO: Implement permission evaluation
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (s *service) BulkEvaluatePermissions(ctx context.Context, req *BulkPermissionEvaluationRequest) ([]*PermissionEvaluationResult, error) {
-	// TODO: Implement bulk permission evaluation
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (s *service) GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID) ([]*UserPermission, error) {
-	// TODO: Implement effective permissions retrieval
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (s *service) CalculateRoleHierarchy(ctx context.Context, userID uuid.UUID) ([]*RoleHierarchy, error) {
-	// TODO: Implement role hierarchy calculation
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (s *service) TestPolicy(ctx context.Context, req *PolicyTestRequest) (*PolicyTestResult, error) {
-	// TODO: Implement policy testing
-	return nil, fmt.Errorf("not implemented")
-}
 
 // --- Private Helpers ---
 

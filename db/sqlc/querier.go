@@ -544,7 +544,7 @@ type Querier interface {
 	//      entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, session_timeout_minutes, mfa_enabled, user_attributes, settings
 	//  ) VALUES (
 	//      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-	//  ) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  ) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	//CreateUserNotificationPreferences
 	//
@@ -651,7 +651,7 @@ type Querier interface {
 	//GetCompleteUserProfile
 	//
 	//  SELECT
-	//      u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.version, u.last_validation_run, u.validation_status, u.validation_errors, u.created_at, u.updated_at, u.deleted_at,
+	//      u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.version, u.last_validation_run, u.validation_status, u.validation_errors, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required,
 	//      p.id, p.tenant_id, p.entity_id, p.person_type, p.first_name, p.last_name, p.middle_name, p.email, p.phone, p.birth_date, p.national_id, p.tax_id, p.address, p.security_attributes, p.metadata, p.is_active, p.version, p.last_validation_run, p.validation_status, p.validation_errors, p.created_at, p.updated_at, p.deleted_at,
 	//      e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.security_level, e.access_attributes, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
 	//  FROM
@@ -1232,15 +1232,15 @@ type Querier interface {
 	GetUserAccessRequestHistory(ctx context.Context, arg GetUserAccessRequestHistoryParams) ([]*AccessRequest, error)
 	//GetUserByEmail
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM users WHERE email = $1 AND deleted_at IS NULL
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE email = $1 AND deleted_at IS NULL
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	//GetUserByID
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM users WHERE id = $1 AND deleted_at IS NULL
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE id = $1 AND deleted_at IS NULL
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
 	//GetUserByUsername
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM users WHERE username = $1 AND deleted_at IS NULL
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE username = $1 AND deleted_at IS NULL
 	GetUserByUsername(ctx context.Context, username *string) (*User, error)
 	//GetUserNotificationPreferences
 	//
@@ -1349,7 +1349,7 @@ type Querier interface {
 	ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Tenant, error)
 	//ListUsers
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM users
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 	//  WHERE
 	//      ($3::text IS NULL OR user_type = $3::text)
 	//  AND ($4::text IS NULL OR account_status = $4::text)
@@ -1506,7 +1506,7 @@ type Querier interface {
 	SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]*Tenant, error)
 	//SearchUsersAdvanced
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM users
+	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
 	//  WHERE
 	//      (username ILIKE '%' || $3 || '%' OR email ILIKE '%' || $3 || '%')
 	//  AND deleted_at IS NULL
@@ -1746,7 +1746,7 @@ type Querier interface {
 	//      mfa_enabled = COALESCE($6, mfa_enabled),
 	//      updated_at = NOW()
 	//  WHERE id = $7
-	//  RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error)
 	//UpdateUserLastLogin
 	//
