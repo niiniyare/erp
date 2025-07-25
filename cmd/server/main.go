@@ -24,6 +24,8 @@ import (
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	db "github.com/niiniyare/erp/db/sqlc"
 
 	// GOA generated packages
