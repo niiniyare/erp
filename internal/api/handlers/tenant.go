@@ -87,7 +87,7 @@ func (h *TenantHandler) GetTenant(c *gin.Context) {
 		return
 	}
 
-	t, err := h.service.GetTenant(c.Request.Context(), id)
+	t, err := h.service.GetTenantByID(c.Request.Context(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, sharedErrors.ErrTenantNotFound):
@@ -134,7 +134,7 @@ func (h *TenantHandler) UpdateTenant(c *gin.Context) {
 		return
 	}
 
-	err = h.service.UpdateTenant(c.Request.Context(), id, req)
+	_, err = h.service.UpdateTenant(c.Request.Context(), id, req)
 	if err != nil {
 		switch {
 		case errors.Is(err, sharedErrors.ErrTenantNotFound):

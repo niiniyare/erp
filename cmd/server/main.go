@@ -130,14 +130,14 @@ func main() {
 	})
 
 	// Initialize repositories
-	tenantRepo := tenant.NewRepository(store)
+	tenantRepo := tenant.NewRepository(store, tracingService)
 	entityRepo := entity.NewRepository(store, tracingService, metricsService)
 	identityRepo := identity.NewRepository(store, tracingService, metricsService)
 	auditRepo := audit.NewRepository(store)
 	notificationRepo := notification.NewRepository(store)
 
 	// Initialize core business services
-	tenantService := tenant.NewService(tenantRepo, redisClient)
+	tenantService := tenant.NewService(tenantRepo, redisClient, tracingService)
 	entityService := entity.NewService(entityRepo, tracingService, metricsService)
 	identityService := identity.NewService(identityRepo, redisClient, tracingService, metricsService)
 
