@@ -38,7 +38,7 @@ func main() {
 		log.Fatalf("❌ Tenant context operations test failed: %v", err)
 	}
 
-	// Run session persistence test  
+	// Run session persistence test
 	fmt.Println("\n" + strings.Repeat("=", 60))
 	if err := runner.TestSessionPersistence(); err != nil {
 		log.Fatalf("❌ Session persistence test failed: %v", err)

@@ -126,7 +126,7 @@ type TenantDatabaseContextTestSuite struct {
 
 func (suite *TenantDatabaseContextTestSuite) SetupSuite() {
 	suite.ctx = context.Background()
-	
+
 	// Check if database tests should be skipped
 	databaseURL := os.Getenv("TEST_DATABASE_URL")
 	if databaseURL == "" {
@@ -150,11 +150,11 @@ func (suite *TenantDatabaseContextTestSuite) SetupSuite() {
 
 	// Create store and repository
 	suite.store = db.NewStore(suite.pool)
-	
+
 	// Create a mock tracer for testing
 	mockTracer := &MockTracingService{}
 	mockSpan := &MockSpan{}
-	
+
 	// Setup basic mock expectations - we don't care about tracing in database tests
 	mockTracer.On("StartSpan", suite.ctx, "", []tracing.SpanOption(nil)).Return(
 		suite.ctx, mockSpan).Maybe()
@@ -162,7 +162,7 @@ func (suite *TenantDatabaseContextTestSuite) SetupSuite() {
 	mockSpan.On("SetAttributes", []interface{}{}).Return().Maybe()
 	mockSpan.On("RecordError", nil, []tracing.ErrorOption(nil)).Return().Maybe()
 	mockSpan.On("SetStatus", nil, "").Return().Maybe()
-	
+
 	suite.repository = NewRepository(suite.store, mockTracer)
 }
 
@@ -182,10 +182,10 @@ func (suite *TenantDatabaseContextTestSuite) SetupTest() {
 		Status:    "active",
 		Industry:  stringPtr("technology"),
 	}
-	
+
 	sqlcTenant, err := suite.store.CreateTenant(suite.ctx, params)
 	require.NoError(suite.T(), err)
-	
+
 	suite.testTenant, err = FromSQLCTenant(sqlcTenant)
 	require.NoError(suite.T(), err)
 	suite.testTenantID = suite.testTenant.ID
@@ -202,8 +202,8 @@ func (suite *TenantDatabaseContextTestSuite) TearDownTest() {
 // TestPostgreSQLSessionContext tests PostgreSQL session context management
 func (suite *TenantDatabaseContextTestSuite) TestPostgreSQLSessionContext() {
 	tests := []struct {
-		name      string
-		test      func()
+		name string
+		test func()
 	}{
 		{
 			name: "SetTenantContext_Success",
@@ -211,7 +211,7 @@ func (suite *TenantDatabaseContextTestSuite) TestPostgreSQLSessionContext() {
 				// Set tenant context
 				err := suite.store.SetTenantContext(suite.ctx, suite.testTenantID)
 				assert.NoError(suite.T(), err)
-				
+
 				// Verify context was set
 				currentID, err := suite.store.GetCurrentTenantID(suite.ctx)
 				assert.NoError(suite.T(), err)
@@ -219,21 +219,21 @@ func (suite *TenantDatabaseContextTestSuite) TestPostgreSQLSessionContext() {
 			},
 		},
 		{
-			name: "ResetTenantContext_Success", 
+			name: "ResetTenantContext_Success",
 			test: func() {
 				// First set a tenant context
 				err := suite.store.SetTenantContext(suite.ctx, suite.testTenantID)
 				require.NoError(suite.T(), err)
-				
+
 				// Verify it's set
 				currentID, err := suite.store.GetCurrentTenantID(suite.ctx)
 				require.NoError(suite.T(), err)
 				assert.Equal(suite.T(), suite.testTenantID, currentID)
-				
+
 				// Reset the context
 				err = suite.store.ResetTenantContext(suite.ctx)
 				assert.NoError(suite.T(), err)
-				
+
 				// Verify context was reset (should return uuid.Nil)
 				resetID, err := suite.store.GetCurrentTenantID(suite.ctx)
 				assert.NoError(suite.T(), err)
@@ -246,7 +246,7 @@ func (suite *TenantDatabaseContextTestSuite) TestPostgreSQLSessionContext() {
 				// Ensure no context is set first
 				err := suite.store.ResetTenantContext(suite.ctx)
 				require.NoError(suite.T(), err)
-				
+
 				// Try to get current tenant ID with no context
 				tenantID, err := suite.store.GetCurrentTenantID(suite.ctx)
 				assert.NoError(suite.T(), err)
@@ -254,7 +254,7 @@ func (suite *TenantDatabaseContextTestSuite) TestPostgreSQLSessionContext() {
 			},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			tt.test()
@@ -273,10 +273,10 @@ func (suite *TenantDatabaseContextTestSuite) TestTenantContextSwitching() {
 		Status:    "active",
 		Industry:  stringPtr("finance"),
 	}
-	
+
 	sqlcTenant2, err := suite.store.CreateTenant(suite.ctx, params2)
 	require.NoError(suite.T(), err)
-	
+
 	testTenant2, err := FromSQLCTenant(sqlcTenant2)
 	require.NoError(suite.T(), err)
 	defer func() {
@@ -290,23 +290,23 @@ func (suite *TenantDatabaseContextTestSuite) TestTenantContextSwitching() {
 		// Start with first tenant
 		err := suite.store.SetTenantContext(suite.ctx, suite.testTenantID)
 		require.NoError(suite.T(), err)
-		
+
 		currentID, err := suite.store.GetCurrentTenantID(suite.ctx)
 		require.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.testTenantID, currentID)
-		
+
 		// Switch to second tenant
 		err = suite.store.SetTenantContext(suite.ctx, testTenant2.ID)
 		require.NoError(suite.T(), err)
-		
+
 		currentID, err = suite.store.GetCurrentTenantID(suite.ctx)
 		require.NoError(suite.T(), err)
 		assert.Equal(suite.T(), testTenant2.ID, currentID)
-		
+
 		// Switch back to first tenant
 		err = suite.store.SetTenantContext(suite.ctx, suite.testTenantID)
 		require.NoError(suite.T(), err)
-		
+
 		currentID, err = suite.store.GetCurrentTenantID(suite.ctx)
 		require.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.testTenantID, currentID)
@@ -324,7 +324,7 @@ func (suite *TenantDatabaseContextTestSuite) TestRepositorySessionContext() {
 			test: func() {
 				err := suite.repository.SetTenant(suite.ctx, suite.testTenantID)
 				assert.NoError(suite.T(), err)
-				
+
 				// Verify tenant was set
 				tenantID, err := suite.repository.GetTenant(suite.ctx)
 				assert.NoError(suite.T(), err)
@@ -337,7 +337,7 @@ func (suite *TenantDatabaseContextTestSuite) TestRepositorySessionContext() {
 				// Set tenant first
 				err := suite.repository.SetTenant(suite.ctx, suite.testTenantID)
 				require.NoError(suite.T(), err)
-				
+
 				// Get tenant ID
 				tenantID, err := suite.repository.GetTenant(suite.ctx)
 				assert.NoError(suite.T(), err)
@@ -350,16 +350,16 @@ func (suite *TenantDatabaseContextTestSuite) TestRepositorySessionContext() {
 				// Set tenant context first
 				err := suite.repository.SetTenant(suite.ctx, suite.testTenantID)
 				require.NoError(suite.T(), err)
-				
+
 				// Verify it's set
 				tenantID, err := suite.repository.GetTenant(suite.ctx)
 				require.NoError(suite.T(), err)
 				assert.Equal(suite.T(), suite.testTenantID, tenantID)
-				
+
 				// Reset tenant context
 				err = suite.repository.ResetTenant(suite.ctx)
 				assert.NoError(suite.T(), err)
-				
+
 				// Verify it was reset - should return error about no tenant context
 				_, err = suite.repository.GetTenant(suite.ctx)
 				assert.Error(suite.T(), err)
@@ -372,7 +372,7 @@ func (suite *TenantDatabaseContextTestSuite) TestRepositorySessionContext() {
 				// Ensure no context is set
 				err := suite.repository.ResetTenant(suite.ctx)
 				require.NoError(suite.T(), err)
-				
+
 				// Try to get tenant with no context
 				_, err = suite.repository.GetTenant(suite.ctx)
 				assert.Error(suite.T(), err)
@@ -380,7 +380,7 @@ func (suite *TenantDatabaseContextTestSuite) TestRepositorySessionContext() {
 			},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			tt.test()
@@ -399,10 +399,10 @@ func (suite *TenantDatabaseContextTestSuite) TestTenantContextIsolation() {
 		Status:    "active",
 		Industry:  stringPtr("retail"),
 	}
-	
+
 	sqlcTenant2, err := suite.store.CreateTenant(suite.ctx, params2)
 	require.NoError(suite.T(), err)
-	
+
 	testTenant2, err := FromSQLCTenant(sqlcTenant2)
 	require.NoError(suite.T(), err)
 	defer func() {
@@ -415,26 +415,26 @@ func (suite *TenantDatabaseContextTestSuite) TestTenantContextIsolation() {
 		// Set first tenant context
 		err := suite.repository.SetTenant(suite.ctx, suite.testTenantID)
 		require.NoError(suite.T(), err)
-		
+
 		// Verify first tenant is active
 		tenantID, err := suite.repository.GetTenant(suite.ctx)
 		require.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.testTenantID, tenantID)
-		
+
 		// Switch to second tenant
 		err = suite.repository.SetTenant(suite.ctx, testTenant2.ID)
 		require.NoError(suite.T(), err)
-		
+
 		// Verify second tenant is now active (and first is not)
 		tenantID, err = suite.repository.GetTenant(suite.ctx)
 		require.NoError(suite.T(), err)
 		assert.Equal(suite.T(), testTenant2.ID, tenantID)
 		assert.NotEqual(suite.T(), suite.testTenantID, tenantID)
-		
+
 		// Switch back to first tenant
 		err = suite.repository.SetTenant(suite.ctx, suite.testTenantID)
 		require.NoError(suite.T(), err)
-		
+
 		// Verify first tenant is active again
 		tenantID, err = suite.repository.GetTenant(suite.ctx)
 		require.NoError(suite.T(), err)
@@ -449,36 +449,36 @@ func (suite *TenantDatabaseContextTestSuite) TestEndToEndTenantWorkflow() {
 		// 1. Start with no tenant context
 		err := suite.repository.ResetTenant(suite.ctx)
 		require.NoError(suite.T(), err)
-		
+
 		// 2. Verify no context is set
 		_, err = suite.repository.GetTenant(suite.ctx)
 		assert.Error(suite.T(), err)
 		assert.Contains(suite.T(), err.Error(), "no tenant context set")
-		
+
 		// 3. Set tenant context
 		err = suite.repository.SetTenant(suite.ctx, suite.testTenantID)
 		require.NoError(suite.T(), err)
-		
+
 		// 4. Verify tenant context is set correctly
 		tenantID, err := suite.repository.GetTenant(suite.ctx)
 		require.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.testTenantID, tenantID)
-		
+
 		// 5. Test repository operations with tenant context
 		tenant, err := suite.repository.GetByID(suite.ctx, suite.testTenantID)
 		require.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.testTenantID, tenant.ID)
 		assert.Equal(suite.T(), "Database Test Tenant", tenant.Name)
-		
+
 		// 6. Test subdomain resolution
 		resolvedID, err := suite.repository.ResolveSubdomainToID(suite.ctx, "db-test")
 		require.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.testTenantID, resolvedID)
-		
+
 		// 7. Reset tenant context
 		err = suite.repository.ResetTenant(suite.ctx)
 		require.NoError(suite.T(), err)
-		
+
 		// 8. Verify context was reset
 		_, err = suite.repository.GetTenant(suite.ctx)
 		assert.Error(suite.T(), err)
@@ -492,30 +492,30 @@ func (suite *TenantDatabaseContextTestSuite) TestPerformanceWithTenantContext() 
 		// Measure time for multiple context switches
 		iterations := 100
 		start := time.Now()
-		
+
 		for i := 0; i < iterations; i++ {
 			// Set tenant context
 			err := suite.repository.SetTenant(suite.ctx, suite.testTenantID)
 			require.NoError(suite.T(), err)
-			
+
 			// Get tenant context
 			tenantID, err := suite.repository.GetTenant(suite.ctx)
 			require.NoError(suite.T(), err)
 			assert.Equal(suite.T(), suite.testTenantID, tenantID)
-			
+
 			// Reset tenant context
 			err = suite.repository.ResetTenant(suite.ctx)
 			require.NoError(suite.T(), err)
 		}
-		
+
 		elapsed := time.Since(start)
 		avgTime := elapsed / time.Duration(iterations)
-		
-		suite.T().Logf("Performed %d tenant context operations in %v (avg: %v per operation)", 
+
+		suite.T().Logf("Performed %d tenant context operations in %v (avg: %v per operation)",
 			iterations*3, elapsed, avgTime)
-		
+
 		// Assert reasonable performance (should be much faster than 1ms per operation)
-		assert.Less(suite.T(), avgTime, 10*time.Millisecond, 
+		assert.Less(suite.T(), avgTime, 10*time.Millisecond,
 			"Tenant context operations should be fast")
 	})
 }
