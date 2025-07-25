@@ -68,8 +68,7 @@ sqlc: ## Generate SQLC store code
 	@sqlc generate
 
 mock: ## Generate mocks for interfaces
-	@mockgen -package mockstore -destination internal/core/tenant/store/mock.go github.com/your/module/internal/core/tenant Store
-
+	@./generate_all_mocks.sh
 fmt: ## Format Go code
 	@go fmt ./...
 

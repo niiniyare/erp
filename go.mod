@@ -84,6 +84,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.7.0 // indirect
 	go.temporal.io/api v1.46.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/mod v0.25.0 // indirect

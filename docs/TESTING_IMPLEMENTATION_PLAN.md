@@ -392,32 +392,40 @@ test-benchmark:
 - **Speed**: Fast feedback loop for developers
 - **Confidence**: High confidence in deployments
 
-## Implementation Timeline
+##  Implementation Plan
+**Please follow the implementation plan below. After you complete a task, please check it coverprofile and stage the changes in git.**
 
-### Week 1-2: Unit Test Foundation
-- Set up testify suite structure
-- Implement core service tests
-- Achieve 80% coverage on business logic
+### Phase 1: Unit Test Foundation
+   - [ ] Set up testify suite structure
+   - [ ] Implement core service tests
+   - [ ] Achieve 80% coverage on business logic
 
-### Week 3: Integration Tests  
-- Database integration tests
-- Service interaction tests
-- External API contract tests
+###  Phase 2: Integration Tests
+   - [ ] Database integration tests
+   - [ ] Service interaction tests
+   - [ ] External API contract tests
 
-### Week 4: API Tests
-- HTTP handler tests
-- GOA service tests
-- API contract validation
+###  Phase 3: API Tests
+   - [ ] HTTP handler tests
+   - [ ] GOA service tests
+   - [ ] API contract validation
 
-### Week 5: E2E & Performance
-- End-to-end user journeys
-- Load and stress testing
-- Performance benchmarking
+### Phase 4: E2E & Performance
+   - [ ] End-to-end user journeys
+   - [ ] Load and stress testing
+   - [ ] Performance benchmarking
 
-### Week 6: CI/CD Integration
-- Automated test pipeline
-- Quality gates implementation
-- Monitoring and alerting
+### Phase 5: CI/CD Integration
+   - [ ] Automated test pipeline
+   - [ ] Quality gates implementation
+   - [ ] Monitoring and alerting
+
+  *Note on Testing:*
+
+   * SQLC Testing: All sqlc tests will use a real database, not a mock.
+   * Repository Testing: All repository tests will use uber-go/mock for mocking dependencies.
+
+
 
 ## Maintenance Strategy
 
@@ -432,4 +440,4 @@ test-benchmark:
 - **Troubleshooting**: Common test issues and solutions
 - **Best Practices**: Evolving testing patterns
 
-This comprehensive testing strategy ensures robust quality assurance across all layers of the refactored Awo ERP system, providing confidence in the Clean Architecture implementation and supporting future development efforts.
+This testing strategy ensures robust quality assurance across all layers of the refactored Awo ERP system, providing confidence in the Clean Architecture implementation and supporting future development efforts.
