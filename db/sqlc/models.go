@@ -435,6 +435,24 @@ type Module struct {
 	CreatedAt         sql.NullTime `json:"created_at"`
 }
 
+// Stores user notification preferences.
+type NotificationPreference struct {
+	ID                 uuid.UUID `json:"id"`
+	TenantID           uuid.UUID `json:"tenant_id"`
+	UserID             uuid.UUID `json:"user_id"`
+	EmailNotifications bool      `json:"email_notifications"`
+	InAppNotifications bool      `json:"in_app_notifications"`
+	SlackNotifications bool      `json:"slack_notifications"`
+	// JSONB object with notification types as keys and booleans as values.
+	NotificationTypes []byte `json:"notification_types"`
+	// JSONB array of preferred notification channels.
+	PreferredChannels []byte `json:"preferred_channels"`
+	// JSONB object with quiet hours settings.
+	QuietHours []byte    `json:"quiet_hours"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
 // Granular permissions combining resources and actions with ABAC conditions, data filters, and field restrictions for fine-grained access control.
 type Permission struct {
 	ID          uuid.UUID `json:"id"`

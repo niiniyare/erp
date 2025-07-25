@@ -573,6 +573,21 @@ func (mr *MockStoreMockRecorder) CreateUser(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockStore)(nil).CreateUser), ctx, arg)
 }
 
+// CreateUserNotificationPreferences mocks base method.
+func (m *MockStore) CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUserNotificationPreferences", ctx, arg)
+	ret0, _ := ret[0].(*NotificationPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateUserNotificationPreferences indicates an expected call of CreateUserNotificationPreferences.
+func (mr *MockStoreMockRecorder) CreateUserNotificationPreferences(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserNotificationPreferences", reflect.TypeOf((*MockStore)(nil).CreateUserNotificationPreferences), ctx, arg)
+}
+
 // DeleteEntityState mocks base method.
 func (m *MockStore) DeleteEntityState(ctx context.Context, arg DeleteEntityStateParams) error {
 	m.ctrl.T.Helper()
@@ -1707,6 +1722,21 @@ func (mr *MockStoreMockRecorder) GetUserByUsername(ctx, username any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUsername", reflect.TypeOf((*MockStore)(nil).GetUserByUsername), ctx, username)
 }
 
+// GetUserNotificationPreferences mocks base method.
+func (m *MockStore) GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserNotificationPreferences", ctx, userID)
+	ret0, _ := ret[0].(*NotificationPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserNotificationPreferences indicates an expected call of GetUserNotificationPreferences.
+func (mr *MockStoreMockRecorder) GetUserNotificationPreferences(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserNotificationPreferences", reflect.TypeOf((*MockStore)(nil).GetUserNotificationPreferences), ctx, userID)
+}
+
 // GetUserPasswordByID mocks base method.
 func (m *MockStore) GetUserPasswordByID(ctx context.Context, id uuid.UUID) (*string, error) {
 	m.ctrl.T.Helper()
@@ -2484,6 +2514,21 @@ func (m *MockStore) UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error
 func (mr *MockStoreMockRecorder) UpdateUserLastLogin(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserLastLogin", reflect.TypeOf((*MockStore)(nil).UpdateUserLastLogin), ctx, id)
+}
+
+// UpdateUserNotificationPreferences mocks base method.
+func (m *MockStore) UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUserNotificationPreferences", ctx, arg)
+	ret0, _ := ret[0].(*NotificationPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateUserNotificationPreferences indicates an expected call of UpdateUserNotificationPreferences.
+func (mr *MockStoreMockRecorder) UpdateUserNotificationPreferences(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserNotificationPreferences", reflect.TypeOf((*MockStore)(nil).UpdateUserNotificationPreferences), ctx, arg)
 }
 
 // UpdateUserPassword mocks base method.

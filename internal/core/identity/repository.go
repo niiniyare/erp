@@ -371,9 +371,6 @@ func fromSQLCCompleteUserProfile(row *db.GetCompleteUserProfileRow) (*UserWithDe
 		CreatedAt:             row.CreatedAt,
 		UpdatedAt:             row.UpdatedAt,
 		DeletedAt:             row.DeletedAt,
-		PasswordStrength:      row.PasswordStrength,
-		Compromised:           row.Compromised,
-		RotationRequired:      row.RotationRequired,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert user from profile: %w", err)

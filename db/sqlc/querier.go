@@ -546,6 +546,22 @@ type Querier interface {
 	//      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 	//  ) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
+	//CreateUserNotificationPreferences
+	//
+	//  INSERT INTO notification_preferences (
+	//    tenant_id,
+	//    user_id,
+	//    email_notifications,
+	//    in_app_notifications,
+	//    slack_notifications,
+	//    notification_types,
+	//    preferred_channels,
+	//    quiet_hours
+	//  ) VALUES (
+	//    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7
+	//  )
+	//  RETURNING id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
+	CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	//DeleteEntityState
 	//
 	//  DELETE FROM entitystate
@@ -1226,6 +1242,11 @@ type Querier interface {
 	//
 	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM users WHERE username = $1 AND deleted_at IS NULL
 	GetUserByUsername(ctx context.Context, username *string) (*User, error)
+	//GetUserNotificationPreferences
+	//
+	//  SELECT id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at FROM notification_preferences
+	//  WHERE user_id = $1 AND tenant_id = current_tenant_id()
+	GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreference, error)
 	//GetUserPasswordByID
 	//
 	//  SELECT password_hash FROM users WHERE id = $1 AND deleted_at IS NULL
@@ -1731,6 +1752,20 @@ type Querier interface {
 	//
 	//  UPDATE users SET last_login_at = NOW() WHERE id = $1
 	UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error
+	//UpdateUserNotificationPreferences
+	//
+	//  UPDATE notification_preferences
+	//  SET
+	//    email_notifications = $2,
+	//    in_app_notifications = $3,
+	//    slack_notifications = $4,
+	//    notification_types = $5,
+	//    preferred_channels = $6,
+	//    quiet_hours = $7,
+	//    updated_at = NOW()
+	//  WHERE user_id = $1 AND tenant_id = current_tenant_id()
+	//  RETURNING id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
+	UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	//UpdateUserPassword
 	//
 	//  UPDATE users SET password_hash = $2, updated_at = NOW() WHERE id = $1
