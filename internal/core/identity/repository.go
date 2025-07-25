@@ -33,6 +33,9 @@ type Repository interface {
 	// Employee operations
 	CreateEmployee(ctx context.Context, req *CreateEmployeeRequest) (*Employee, error)
 	GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error)
+
+	AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
+	RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 }
 
 // repository implements the Repository interface
@@ -202,6 +205,16 @@ func (r *repository) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employ
 		return nil, fmt.Errorf("failed to get employee: %w", err)
 	}
 	return fromSQLCEmployee(sqlcEmployee)
+}
+
+func (r *repository) AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
+	// TODO: Implement actual database interaction for assigning user roles
+	return nil
+}
+
+func (r *repository) RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
+	// TODO: Implement actual database interaction for revoking user roles
+	return nil
 }
 
 // --- Conversion Helpers ---

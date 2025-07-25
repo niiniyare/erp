@@ -259,13 +259,11 @@ func (s *service) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee,
 }
 
 func (s *service) AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
-	// TODO: Implement actual role assignment logic
-	return nil
+	return s.repo.AssignUserRole(ctx, userID, roleID, entityID)
 }
 
 func (s *service) RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
-	// TODO: Implement actual role revocation logic
-	return nil
+	return s.repo.RevokeUserRole(ctx, userID, roleID, entityID)
 }
 
 // --- Additional Methods ---

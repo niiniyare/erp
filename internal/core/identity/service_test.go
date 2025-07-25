@@ -175,6 +175,16 @@ func (s *IdentityServiceTestSuite) TestGetUserByID() {
 				})
 			},
 		},
+		{
+			name:          "Failure - Repo Error",
+			userID:        userID,
+			expectedUser:  nil,
+			expectedError: errors.New("repository error"),
+			mockExpectations: func(repo *MockRepository, cache *cache.MockService, userID uuid.UUID, user *User) {
+				cache.EXPECT().Get(gomock.Any(), fmt.Sprintf("user:id:%s", userID), gomock.Any()).Return(errors.New("cache miss"))
+				repo.EXPECT().GetUserByID(gomock.Any(), userID).Return(nil, errors.New("repository error"))
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -231,6 +241,16 @@ func (s *IdentityServiceTestSuite) TestGetUserByEmail() {
 					*destPtr = *user
 					return nil
 				})
+			},
+		},
+		{
+			name:          "Failure - Repo Error",
+			email:         "email.error@example.com",
+			expectedUser:  nil,
+			expectedError: errors.New("repository error"),
+			mockExpectations: func(repo *MockRepository, cache *cache.MockService, email string, user *User) {
+				cache.EXPECT().Get(gomock.Any(), fmt.Sprintf("user:email:%s", email), gomock.Any()).Return(errors.New("cache miss"))
+				repo.EXPECT().GetUserByEmail(gomock.Any(), email).Return(nil, errors.New("repository error"))
 			},
 		},
 	}
@@ -290,6 +310,16 @@ func (s *IdentityServiceTestSuite) TestGetUserByUsername() {
 					*destPtr = *user
 					return nil
 				})
+			},
+		},
+		{
+			name:          "Failure - Repo Error",
+			username:      "username.error",
+			expectedUser:  nil,
+			expectedError: errors.New("repository error"),
+			mockExpectations: func(repo *MockRepository, cache *cache.MockService, username string, user *User) {
+				cache.EXPECT().Get(gomock.Any(), fmt.Sprintf("user:username:%s", username), gomock.Any()).Return(errors.New("cache miss"))
+				repo.EXPECT().GetUserByUsername(gomock.Any(), username).Return(nil, errors.New("repository error"))
 			},
 		},
 	}
@@ -352,6 +382,29 @@ func (s *IdentityServiceTestSuite) TestUpdateUser() {
 				cache.EXPECT().Set(gomock.Any(), fmt.Sprintf("user:username:%s", updatedUser.Username), updatedUser, 30*time.Minute).Return(nil).AnyTimes()
 			},
 		},
+		{
+			name:          "Failure - GetUserByID Error",
+			userID:        userID,
+			req:           req,
+			originalUser:  nil,
+			expectedUser:  nil,
+			expectedError: errors.New("get user by id error"),
+			mockExpectations: func(repo *MockRepository, cache *cache.MockService, userID uuid.UUID, originalUser, updatedUser *User, req *UpdateUserRequest) {
+				repo.EXPECT().GetUserByID(gomock.Any(), userID).Return(nil, errors.New("get user by id error"))
+			},
+		},
+		{
+			name:          "Failure - UpdateUser Error",
+			userID:        userID,
+			req:           req,
+			originalUser:  originalUser,
+			expectedUser:  nil,
+			expectedError: errors.New("update user error"),
+			mockExpectations: func(repo *MockRepository, cache *cache.MockService, userID uuid.UUID, originalUser, updatedUser *User, req *UpdateUserRequest) {
+				repo.EXPECT().GetUserByID(gomock.Any(), userID).Return(originalUser, nil)
+				repo.EXPECT().UpdateUser(gomock.Any(), userID, req).Return(nil, errors.New("update user error"))
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -377,6 +430,7 @@ func (s *IdentityServiceTestSuite) TestUpdateUser() {
 		})
 	}
 }
+
 
 func (s *IdentityServiceTestSuite) TestAuthenticate() {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("correctpassword"), bcrypt.DefaultCost)
@@ -447,6 +501,18 @@ func (s *IdentityServiceTestSuite) TestAuthenticate() {
 			expectedError:  shared_errors.ErrAuthenticationFailed,
 			mockExpectations: func(repo *MockRepository, identifier string, user *User, hashedPassword string) {
 				repo.EXPECT().GetUserByUsername(gomock.Any(), identifier).Return(nil, errors.New("not found"))
+			},
+		},
+		{
+			name:           "Failure - GetUserPassword Error",
+			identifier:     "auth@example.com",
+			password:       "correctpassword",
+			hashedPassword: "",
+			expectedUser:   user,
+			expectedError:  shared_errors.ErrAuthenticationFailed,
+			mockExpectations: func(repo *MockRepository, identifier string, user *User, hashedPassword string) {
+				repo.EXPECT().GetUserByEmail(gomock.Any(), identifier).Return(user, nil)
+				repo.EXPECT().GetUserPassword(gomock.Any(), user.ID).Return("", errors.New("db error"))
 			},
 		},
 	}
@@ -572,7 +638,17 @@ func (s *IdentityServiceTestSuite) TestAssignUserRole() {
 			entityID:      uuid.New(),
 			expectedError: nil,
 			mockExpectations: func(repo *MockRepository, userID, roleID, entityID uuid.UUID) {
-				// repo.EXPECT().AssignUserRole(gomock.Any(), userID, roleID, entityID).Return(nil)
+				repo.EXPECT().AssignUserRole(gomock.Any(), userID, roleID, entityID).Return(nil)
+			},
+		},
+		{
+			name:          "Failure - Repo Error",
+			userID:        uuid.New(),
+			roleID:        uuid.New(),
+			entityID:      uuid.New(),
+			expectedError: errors.New("repository error"),
+			mockExpectations: func(repo *MockRepository, userID, roleID, entityID uuid.UUID) {
+				repo.EXPECT().AssignUserRole(gomock.Any(), userID, roleID, entityID).Return(errors.New("repository error"))
 			},
 		},
 	}
@@ -614,7 +690,17 @@ func (s *IdentityServiceTestSuite) TestRevokeUserRole() {
 			entityID:      uuid.New(),
 			expectedError: nil,
 			mockExpectations: func(repo *MockRepository, userID, roleID, entityID uuid.UUID) {
-				// repo.EXPECT().RevokeUserRole(gomock.Any(), userID, roleID, entityID).Return(nil)
+				repo.EXPECT().RevokeUserRole(gomock.Any(), userID, roleID, entityID).Return(nil)
+			},
+		},
+		{
+			name:          "Failure - Repo Error",
+			userID:        uuid.New(),
+			roleID:        uuid.New(),
+			entityID:      uuid.New(),
+			expectedError: errors.New("repository error"),
+			mockExpectations: func(repo *MockRepository, userID, roleID, entityID uuid.UUID) {
+				repo.EXPECT().RevokeUserRole(gomock.Any(), userID, roleID, entityID).Return(errors.New("repository error"))
 			},
 		},
 	}
@@ -636,6 +722,61 @@ func (s *IdentityServiceTestSuite) TestRevokeUserRole() {
 			} else {
 				require.NoError(s.T(), err)
 			}
+		})
+	}
+}
+
+func (s *IdentityServiceTestSuite) TestListUsers() {
+	tests := []struct {
+		name          string
+		req           *ListUsersRequest
+		expectedUsers []*User
+		expectedError error
+	}{
+		{
+			name:          "Not Implemented",
+			req:           &ListUsersRequest{},
+			expectedUsers: nil,
+			expectedError: fmt.Errorf("not implemented"),
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			defer s.TearDownTest()
+
+			users, err := s.service.ListUsers(context.Background(), tc.req)
+
+			require.Error(s.T(), err)
+			require.Equal(s.T(), tc.expectedError.Error(), err.Error())
+			require.Nil(s.T(), users)
+		})
+	}
+}
+
+func (s *IdentityServiceTestSuite) TestDeleteUser() {
+	tests := []struct {
+		name          string
+		userID        uuid.UUID
+		expectedError error
+	}{
+		{
+			name:          "Not Implemented",
+			userID:        uuid.New(),
+			expectedError: fmt.Errorf("not implemented"),
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			defer s.TearDownTest()
+
+			err := s.service.DeleteUser(context.Background(), tc.userID)
+
+			require.Error(s.T(), err)
+			require.Equal(s.T(), tc.expectedError.Error(), err.Error())
 		})
 	}
 }
@@ -696,6 +837,214 @@ func (s *IdentityServiceTestSuite) TestCreatePerson() {
 		})
 	}
 }
+
+func (s *IdentityServiceTestSuite) TestGetUserRoles() {
+	tests := []struct {
+		name          string
+		userID        uuid.UUID
+		expectedRoles []*Role
+		expectedError error
+	}{
+		{
+			name:          "Not Implemented",
+			userID:        uuid.New(),
+			expectedRoles: nil,
+			expectedError: fmt.Errorf("not implemented"),
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			defer s.TearDownTest()
+
+			roles, err := s.service.GetUserRoles(context.Background(), tc.userID)
+
+			require.Error(s.T(), err)
+			require.Equal(s.T(), tc.expectedError.Error(), err.Error())
+			require.Nil(s.T(), roles)
+		})
+	}
+}
+
+func (s *IdentityServiceTestSuite) TestSearchUsers() {
+	tests := []struct {
+		name          string
+		query         string
+		limit         int
+		offset        int
+		expectedUsers []*User
+		expectedError error
+	}{
+		{
+			name:          "Not Implemented",
+			query:         "test",
+			limit:         10,
+			offset:        0,
+			expectedUsers: nil,
+			expectedError: fmt.Errorf("not implemented"),
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			defer s.TearDownTest()
+
+			users, err := s.service.SearchUsers(context.Background(), tc.query, tc.limit, tc.offset)
+
+			require.Error(s.T(), err)
+			require.Equal(s.T(), tc.expectedError.Error(), err.Error())
+			require.Nil(s.T(), users)
+		})
+	}
+}
+
+func (s *IdentityServiceTestSuite) TestEvaluatePermission() {
+	tests := []struct {
+		name          string
+		req           *PermissionEvaluationRequest
+		expectedResult *PermissionEvaluationResult
+		expectedError error
+	}{
+		{
+			name:          "Not Implemented",
+			req:           &PermissionEvaluationRequest{},
+			expectedResult: nil,
+			expectedError: fmt.Errorf("not implemented"),
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			defer s.TearDownTest()
+
+			result, err := s.service.EvaluatePermission(context.Background(), tc.req)
+
+			require.Error(s.T(), err)
+			require.Equal(s.T(), tc.expectedError.Error(), err.Error())
+			require.Nil(s.T(), result)
+		})
+	}
+}
+
+func (s *IdentityServiceTestSuite) TestBulkEvaluatePermissions() {
+	tests := []struct {
+		name          string
+		req           *BulkPermissionEvaluationRequest
+		expectedResults []*PermissionEvaluationResult
+		expectedError error
+	}{
+		{
+			name:          "Not Implemented",
+			req:           &BulkPermissionEvaluationRequest{},
+			expectedResults: nil,
+			expectedError: fmt.Errorf("not implemented"),
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			defer s.TearDownTest()
+
+			results, err := s.service.BulkEvaluatePermissions(context.Background(), tc.req)
+
+			require.Error(s.T(), err)
+			require.Equal(s.T(), tc.expectedError.Error(), err.Error())
+			require.Nil(s.T(), results)
+		})
+	}
+}
+
+func (s *IdentityServiceTestSuite) TestGetUserEffectivePermissions() {
+	tests := []struct {
+		name          string
+		userID        uuid.UUID
+		expectedPerms []*UserPermission
+		expectedError error
+	}{
+		{
+			name:          "Not Implemented",
+			userID:        uuid.New(),
+			expectedPerms: nil,
+			expectedError: fmt.Errorf("not implemented"),
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			defer s.TearDownTest()
+
+			perms, err := s.service.GetUserEffectivePermissions(context.Background(), tc.userID)
+
+			require.Error(s.T(), err)
+			require.Equal(s.T(), tc.expectedError.Error(), err.Error())
+			require.Nil(s.T(), perms)
+		})
+	}
+}
+
+func (s *IdentityServiceTestSuite) TestCalculateRoleHierarchy() {
+	tests := []struct {
+		name          string
+		userID        uuid.UUID
+		expectedHierarchy []*RoleHierarchy
+		expectedError error
+	}{
+		{
+			name:          "Not Implemented",
+			userID:        uuid.New(),
+			expectedHierarchy: nil,
+			expectedError: fmt.Errorf("not implemented"),
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			defer s.TearDownTest()
+
+			hierarchy, err := s.service.CalculateRoleHierarchy(context.Background(), tc.userID)
+
+			require.Error(s.T(), err)
+			require.Equal(s.T(), tc.expectedError.Error(), err.Error())
+			require.Nil(s.T(), hierarchy)
+		})
+	}
+}
+
+func (s *IdentityServiceTestSuite) TestTestPolicy() {
+	tests := []struct {
+		name          string
+		req           *PolicyTestRequest
+		expectedResult *PolicyTestResult
+		expectedError error
+	}{
+		{
+			name:          "Not Implemented",
+			req:           &PolicyTestRequest{},
+			expectedResult: nil,
+			expectedError: fmt.Errorf("not implemented"),
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			defer s.TearDownTest()
+
+			result, err := s.service.TestPolicy(context.Background(), tc.req)
+
+			require.Error(s.T(), err)
+			require.Equal(s.T(), tc.expectedError.Error(), err.Error())
+			require.Nil(s.T(), result)
+		})
+	}
+}
+
 
 func (s *IdentityServiceTestSuite) TestGetPersonByID() {
 	tests := []struct {

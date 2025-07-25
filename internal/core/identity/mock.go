@@ -41,6 +41,20 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
+// AssignUserRole mocks base method.
+func (m *MockRepository) AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AssignUserRole", ctx, userID, roleID, entityID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AssignUserRole indicates an expected call of AssignUserRole.
+func (mr *MockRepositoryMockRecorder) AssignUserRole(ctx, userID, roleID, entityID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignUserRole", reflect.TypeOf((*MockRepository)(nil).AssignUserRole), ctx, userID, roleID, entityID)
+}
+
 // CreateEmployee mocks base method.
 func (m *MockRepository) CreateEmployee(ctx context.Context, req *CreateEmployeeRequest) (*Employee, error) {
 	m.ctrl.T.Helper()
@@ -203,6 +217,20 @@ func (m *MockRepository) GetUserWithDetails(ctx context.Context, id uuid.UUID) (
 func (mr *MockRepositoryMockRecorder) GetUserWithDetails(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserWithDetails", reflect.TypeOf((*MockRepository)(nil).GetUserWithDetails), ctx, id)
+}
+
+// RevokeUserRole mocks base method.
+func (m *MockRepository) RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RevokeUserRole", ctx, userID, roleID, entityID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RevokeUserRole indicates an expected call of RevokeUserRole.
+func (mr *MockRepositoryMockRecorder) RevokeUserRole(ctx, userID, roleID, entityID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeUserRole", reflect.TypeOf((*MockRepository)(nil).RevokeUserRole), ctx, userID, roleID, entityID)
 }
 
 // UpdatePassword mocks base method.
