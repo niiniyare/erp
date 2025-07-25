@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	cache "github.com/niiniyare/erp/internal/platform/cache"
+	"github.com/niiniyare/erp/internal/platform/cache"
 	shared_errors "github.com/niiniyare/erp/internal/shared/errors"
-	metrics "github.com/niiniyare/erp/internal/shared/metrics"
-	tracing "github.com/niiniyare/erp/internal/shared/tracing"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
@@ -78,7 +78,7 @@ func (s *IdentityServiceTestSuite) TestRegisterNewUser() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			s.SetupTest() // Reset mocks for each sub-test
+			s.SetupTest()
 			defer s.TearDownTest()
 
 			if tc.mockExpectations != nil {
@@ -100,6 +100,9 @@ func (s *IdentityServiceTestSuite) TestRegisterNewUser() {
 }
 
 func (s *IdentityServiceTestSuite) TestGetUserByID() {
+	userID := uuid.New()
+	expectedUser := &User{ID: userID, Email: "cache.miss@example.com"}
+
 	tests := []struct {
 		name             string
 		userID           uuid.UUID
@@ -109,8 +112,8 @@ func (s *IdentityServiceTestSuite) TestGetUserByID() {
 	}{
 		{
 			name:          "Success - Cache Miss",
-			userID:        uuid.New(),
-			expectedUser:  &User{ID: uuid.New(), Email: "cache.miss@example.com"},
+			userID:        userID,
+			expectedUser:  expectedUser,
 			expectedError: nil,
 			mockExpectations: func(repo *MockRepository, cache *cache.MockService, userID uuid.UUID, user *User) {
 				cache.EXPECT().Get(gomock.Any(), fmt.Sprintf("user:id:%s", userID), gomock.Any()).Return(errors.New("cache miss"))
@@ -121,8 +124,8 @@ func (s *IdentityServiceTestSuite) TestGetUserByID() {
 		},
 		{
 			name:          "Success - Cache Hit",
-			userID:        uuid.New(),
-			expectedUser:  &User{ID: uuid.New(), Email: "cache.hit@example.com"},
+			userID:        userID,
+			expectedUser:  expectedUser,
 			expectedError: nil,
 			mockExpectations: func(repo *MockRepository, cache *cache.MockService, userID uuid.UUID, user *User) {
 				cache.EXPECT().Get(gomock.Any(), fmt.Sprintf("user:id:%s", userID), gomock.Any()).DoAndReturn(func(_ context.Context, _ string, dest interface{}) error {
@@ -275,6 +278,13 @@ func (s *IdentityServiceTestSuite) TestGetUserByUsername() {
 }
 
 func (s *IdentityServiceTestSuite) TestUpdateUser() {
+	userID := uuid.New()
+	originalUser := &User{ID: userID, Email: "original@example.com", Username: "originaluser"}
+	updatedEmail := "updated@example.com"
+	updatedUsername := "updateduser"
+	req := &UpdateUserRequest{Email: &updatedEmail, Username: &updatedUsername}
+	expectedUser := &User{ID: userID, Email: updatedEmail, Username: updatedUsername}
+
 	tests := []struct {
 		name             string
 		userID           uuid.UUID
@@ -285,15 +295,11 @@ func (s *IdentityServiceTestSuite) TestUpdateUser() {
 		mockExpectations func(repo *MockRepository, cache *cache.MockService, userID uuid.UUID, originalUser, updatedUser *User, req *UpdateUserRequest)
 	}{
 		{
-			name:   "Success",
-			userID: uuid.New(),
-			req: func() *UpdateUserRequest {
-				updatedEmail := "updated@example.com"
-				updatedUsername := "updateduser"
-				return &UpdateUserRequest{Email: &updatedEmail, Username: &updatedUsername}
-			}(),
-			originalUser:  &User{ID: uuid.New(), Email: "original@example.com", Username: "originaluser"},
-			expectedUser:  &User{ID: uuid.New(), Email: "updated@example.com", Username: "updateduser"},
+			name:          "Success",
+			userID:        userID,
+			req:           req,
+			originalUser:  originalUser,
+			expectedUser:  expectedUser,
 			expectedError: nil,
 			mockExpectations: func(repo *MockRepository, cache *cache.MockService, userID uuid.UUID, originalUser, updatedUser *User, req *UpdateUserRequest) {
 				repo.EXPECT().GetUserByID(gomock.Any(), userID).Return(originalUser, nil)
@@ -333,6 +339,9 @@ func (s *IdentityServiceTestSuite) TestUpdateUser() {
 }
 
 func (s *IdentityServiceTestSuite) TestAuthenticate() {
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("correctpassword"), bcrypt.DefaultCost)
+	user := &User{ID: uuid.New(), Email: "auth@example.com", Username: "authuser"}
+
 	tests := []struct {
 		name             string
 		identifier       string
@@ -343,45 +352,36 @@ func (s *IdentityServiceTestSuite) TestAuthenticate() {
 		mockExpectations func(repo *MockRepository, identifier string, user *User, hashedPassword string)
 	}{
 		{
-			name:       "Success - By Email",
-			identifier: "auth@example.com",
-			password:   "correctpassword",
-			hashedPassword: func() string {
-				hp, _ := bcrypt.GenerateFromPassword([]byte("correctpassword"), bcrypt.DefaultCost)
-				return string(hp)
-			}(),
-			expectedUser:  &User{ID: uuid.New(), Email: "auth@example.com", Username: "authuser"},
-			expectedError: nil,
+			name:           "Success - By Email",
+			identifier:     "auth@example.com",
+			password:       "correctpassword",
+			hashedPassword: string(hashedPassword),
+			expectedUser:   user,
+			expectedError:  nil,
 			mockExpectations: func(repo *MockRepository, identifier string, user *User, hashedPassword string) {
 				repo.EXPECT().GetUserByEmail(gomock.Any(), identifier).Return(user, nil)
 				repo.EXPECT().GetUserPassword(gomock.Any(), user.ID).Return(hashedPassword, nil)
 			},
 		},
 		{
-			name:       "Success - By Username",
-			identifier: "authuser",
-			password:   "correctpassword",
-			hashedPassword: func() string {
-				hp, _ := bcrypt.GenerateFromPassword([]byte("correctpassword"), bcrypt.DefaultCost)
-				return string(hp)
-			}(),
-			expectedUser:  &User{ID: uuid.New(), Email: "auth@example.com", Username: "authuser"},
-			expectedError: nil,
+			name:           "Success - By Username",
+			identifier:     "authuser",
+			password:       "correctpassword",
+			hashedPassword: string(hashedPassword),
+			expectedUser:   user,
+			expectedError:  nil,
 			mockExpectations: func(repo *MockRepository, identifier string, user *User, hashedPassword string) {
 				repo.EXPECT().GetUserByUsername(gomock.Any(), identifier).Return(user, nil)
 				repo.EXPECT().GetUserPassword(gomock.Any(), user.ID).Return(hashedPassword, nil)
 			},
 		},
 		{
-			name:       "Failure - Incorrect Password",
-			identifier: "auth@example.com",
-			password:   "wrongpassword",
-			hashedPassword: func() string {
-				hp, _ := bcrypt.GenerateFromPassword([]byte("correctpassword"), bcrypt.DefaultCost)
-				return string(hp)
-			}(),
-			expectedUser:  &User{ID: uuid.New(), Email: "auth@example.com", Username: "authuser"},
-			expectedError: shared_errors.ErrAuthenticationFailed,
+			name:           "Failure - Incorrect Password",
+			identifier:     "auth@example.com",
+			password:       "wrongpassword",
+			hashedPassword: string(hashedPassword),
+			expectedUser:   user,
+			expectedError:  shared_errors.ErrAuthenticationFailed,
 			mockExpectations: func(repo *MockRepository, identifier string, user *User, hashedPassword string) {
 				repo.EXPECT().GetUserByEmail(gomock.Any(), identifier).Return(user, nil)
 				repo.EXPECT().GetUserPassword(gomock.Any(), user.ID).Return(hashedPassword, nil)
@@ -434,6 +434,10 @@ func (s *IdentityServiceTestSuite) TestAuthenticate() {
 }
 
 func (s *IdentityServiceTestSuite) TestChangePassword() {
+	userID := uuid.New()
+	oldHashedPassword, _ := bcrypt.GenerateFromPassword([]byte("oldpassword"), bcrypt.DefaultCost)
+	wrongHashedPassword, _ := bcrypt.GenerateFromPassword([]byte("correctpassword"), bcrypt.DefaultCost)
+
 	tests := []struct {
 		name              string
 		userID            uuid.UUID
@@ -444,37 +448,31 @@ func (s *IdentityServiceTestSuite) TestChangePassword() {
 		mockExpectations  func(repo *MockRepository, userID uuid.UUID, oldHashedPassword string, newPassword string)
 	}{
 		{
-			name:        "Success",
-			userID:      uuid.New(),
-			oldPassword: "oldpassword",
-			newPassword: "newpassword",
-			oldHashedPassword: func() string {
-				hp, _ := bcrypt.GenerateFromPassword([]byte("oldpassword"), bcrypt.DefaultCost)
-				return string(hp)
-			}(),
-			expectedError: nil,
+			name:              "Success",
+			userID:            userID,
+			oldPassword:       "oldpassword",
+			newPassword:       "newpassword",
+			oldHashedPassword: string(oldHashedPassword),
+			expectedError:     nil,
 			mockExpectations: func(repo *MockRepository, userID uuid.UUID, oldHashedPassword string, newPassword string) {
 				repo.EXPECT().GetUserPassword(gomock.Any(), userID).Return(oldHashedPassword, nil)
 				repo.EXPECT().UpdatePassword(gomock.Any(), userID, gomock.Any()).Return(nil)
 			},
 		},
 		{
-			name:        "Failure - Incorrect Old Password",
-			userID:      uuid.New(),
-			oldPassword: "wrongpassword",
-			newPassword: "newpassword",
-			oldHashedPassword: func() string {
-				hp, _ := bcrypt.GenerateFromPassword([]byte("correctpassword"), bcrypt.DefaultCost)
-				return string(hp)
-			}(),
-			expectedError: shared_errors.ErrAuthenticationFailed,
+			name:              "Failure - Incorrect Old Password",
+			userID:            userID,
+			oldPassword:       "wrongpassword",
+			newPassword:       "newpassword",
+			oldHashedPassword: string(wrongHashedPassword),
+			expectedError:     shared_errors.ErrAuthenticationFailed,
 			mockExpectations: func(repo *MockRepository, userID uuid.UUID, oldHashedPassword string, newPassword string) {
 				repo.EXPECT().GetUserPassword(gomock.Any(), userID).Return(oldHashedPassword, nil)
 			},
 		},
 		{
 			name:              "Failure - GetUserPassword Error",
-			userID:            uuid.New(),
+			userID:            userID,
 			oldPassword:       "oldpassword",
 			newPassword:       "newpassword",
 			oldHashedPassword: "",
@@ -484,15 +482,12 @@ func (s *IdentityServiceTestSuite) TestChangePassword() {
 			},
 		},
 		{
-			name:        "Failure - UpdatePassword Error",
-			userID:      uuid.New(),
-			oldPassword: "oldpassword",
-			newPassword: "newpassword",
-			oldHashedPassword: func() string {
-				hp, _ := bcrypt.GenerateFromPassword([]byte("oldpassword"), bcrypt.DefaultCost)
-				return string(hp)
-			}(),
-			expectedError: errors.New("db update error"),
+			name:              "Failure - UpdatePassword Error",
+			userID:            userID,
+			oldPassword:       "oldpassword",
+			newPassword:       "newpassword",
+			oldHashedPassword: string(oldHashedPassword),
+			expectedError:     errors.New("db update error"),
 			mockExpectations: func(repo *MockRepository, userID uuid.UUID, oldHashedPassword string, newPassword string) {
 				repo.EXPECT().GetUserPassword(gomock.Any(), userID).Return(oldHashedPassword, nil)
 				repo.EXPECT().UpdatePassword(gomock.Any(), userID, gomock.Any()).Return(errors.New("db update error"))
@@ -510,6 +505,90 @@ func (s *IdentityServiceTestSuite) TestChangePassword() {
 			}
 
 			err := s.service.ChangePassword(context.Background(), tc.userID, tc.oldPassword, tc.newPassword)
+
+			if tc.expectedError != nil {
+				require.Error(s.T(), err)
+				require.Equal(s.T(), tc.expectedError, err)
+			} else {
+				require.NoError(s.T(), err)
+			}
+		})
+	}
+}
+
+func (s *IdentityServiceTestSuite) TestAssignUserRole() {
+	tests := []struct {
+		name             string
+		userID           uuid.UUID
+		roleID           uuid.UUID
+		entityID         uuid.UUID
+		expectedError    error
+		mockExpectations func(repo *MockRepository, userID, roleID, entityID uuid.UUID)
+	}{
+		{
+			name:          "Success",
+			userID:        uuid.New(),
+			roleID:        uuid.New(),
+			entityID:      uuid.New(),
+			expectedError: nil,
+			mockExpectations: func(repo *MockRepository, userID, roleID, entityID uuid.UUID) {
+				// repo.EXPECT().AssignUserRole(gomock.Any(), userID, roleID, entityID).Return(nil)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest() // Reset mocks for each sub-test
+			defer s.TearDownTest()
+
+			if tc.mockExpectations != nil {
+				tc.mockExpectations(s.mockRepo, tc.userID, tc.roleID, tc.entityID)
+			}
+
+			err := s.service.AssignUserRole(context.Background(), tc.userID, tc.roleID, tc.entityID)
+
+			if tc.expectedError != nil {
+				require.Error(s.T(), err)
+				require.Equal(s.T(), tc.expectedError, err)
+			} else {
+				require.NoError(s.T(), err)
+			}
+		})
+	}
+}
+
+func (s *IdentityServiceTestSuite) TestRevokeUserRole() {
+	tests := []struct {
+		name             string
+		userID           uuid.UUID
+		roleID           uuid.UUID
+		entityID         uuid.UUID
+		expectedError    error
+		mockExpectations func(repo *MockRepository, userID, roleID, entityID uuid.UUID)
+	}{
+		{
+			name:          "Success",
+			userID:        uuid.New(),
+			roleID:        uuid.New(),
+			entityID:      uuid.New(),
+			expectedError: nil,
+			mockExpectations: func(repo *MockRepository, userID, roleID, entityID uuid.UUID) {
+				// repo.EXPECT().RevokeUserRole(gomock.Any(), userID, roleID, entityID).Return(nil)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest() // Reset mocks for each sub-test
+			defer s.TearDownTest()
+
+			if tc.mockExpectations != nil {
+				tc.mockExpectations(s.mockRepo, tc.userID, tc.roleID, tc.entityID)
+			}
+
+			err := s.service.RevokeUserRole(context.Background(), tc.userID, tc.roleID, tc.entityID)
 
 			if tc.expectedError != nil {
 				require.Error(s.T(), err)
@@ -733,64 +812,6 @@ func (s *IdentityServiceTestSuite) TestGetEmployeeByID() {
 				require.NotNil(s.T(), employee)
 				require.Equal(s.T(), tc.expectedEmployee, employee)
 			}
-		})
-	}
-}
-
-func (s *IdentityServiceTestSuite) TestAssignUserRole() {
-	tests := []struct {
-		name          string
-		userID        uuid.UUID
-		roleID        uuid.UUID
-		entityID      uuid.UUID
-		expectedError error
-	}{
-		{
-			name:          "Success",
-			userID:        uuid.New(),
-			roleID:        uuid.New(),
-			entityID:      uuid.New(),
-			expectedError: nil,
-		},
-	}
-
-	for _, tc := range tests {
-		s.Run(tc.name, func() {
-			s.SetupTest()
-			defer s.TearDownTest()
-
-			err := s.service.AssignUserRole(context.Background(), tc.userID, tc.roleID, tc.entityID)
-
-			require.NoError(s.T(), err)
-		})
-	}
-}
-
-func (s *IdentityServiceTestSuite) TestRevokeUserRole() {
-	tests := []struct {
-		name          string
-		userID        uuid.UUID
-		roleID        uuid.UUID
-		entityID      uuid.UUID
-		expectedError error
-	}{
-		{
-			name:          "Success",
-			userID:        uuid.New(),
-			roleID:        uuid.New(),
-			entityID:      uuid.New(),
-			expectedError: nil,
-		},
-	}
-
-	for _, tc := range tests {
-		s.Run(tc.name, func() {
-			s.SetupTest()
-			defer s.TearDownTest()
-
-			err := s.service.RevokeUserRole(context.Background(), tc.userID, tc.roleID, tc.entityID)
-
-			require.NoError(s.T(), err)
 		})
 	}
 }
