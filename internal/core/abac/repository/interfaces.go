@@ -6,218 +6,263 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/core/abac/models"
+	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// PolicyRepository defines the interface for policy data access
-type PolicyRepository interface {
-	// Policy CRUD operations
-	CreatePolicy(ctx context.Context, policy *Policy) error
-	GetPolicyByID(ctx context.Context, id uuid.UUID) (*Policy, error)
-	UpdatePolicy(ctx context.Context, id uuid.UUID, policy *Policy) error
-	DeletePolicy(ctx context.Context, id uuid.UUID) error
-	ListPolicies(ctx context.Context, filter *PolicyFilter) ([]*Policy, error)
-
-	// Policy queries for ABAC evaluation
-	GetApplicablePolicies(ctx context.Context, resourceName, actionName string, entityID uuid.UUID) ([]*Policy, error)
-	GetPoliciesByTarget(ctx context.Context, target map[string]interface{}) ([]*Policy, error)
-	GetPoliciesByPriority(ctx context.Context, minPriority int) ([]*Policy, error)
-
-	// Policy validation and testing
-	ValidatePolicyRule(ctx context.Context, rule map[string]interface{}) error
-	TestPolicy(ctx context.Context, policyID uuid.UUID, testContext map[string]interface{}) (*models.PolicyTestResult, error)
-}
-
-// AttributeDefinitionRepository defines the interface for attribute definition data access
+// AttributeDefinitionRepository defines the interface for attribute definition persistence
 type AttributeDefinitionRepository interface {
-	// Attribute definition CRUD operations
-	CreateAttributeDefinition(ctx context.Context, attr *AttributeDefinition) error
-	GetAttributeDefinitionByID(ctx context.Context, id uuid.UUID) (*AttributeDefinition, error)
-	GetAttributeDefinitionByName(ctx context.Context, name string) (*AttributeDefinition, error)
-	UpdateAttributeDefinition(ctx context.Context, id uuid.UUID, attr *AttributeDefinition) error
+	// Core CRUD operations
+	CreateAttributeDefinition(ctx context.Context, req *CreateAttributeDefinitionRequest) (*models.AttributeDefinition, error)
+	GetAttributeDefinitionByID(ctx context.Context, id uuid.UUID) (*models.AttributeDefinition, error)
+	GetAttributeDefinitionByName(ctx context.Context, name string) (*models.AttributeDefinition, error)
+	UpdateAttributeDefinition(ctx context.Context, id uuid.UUID, req *UpdateAttributeDefinitionRequest) (*models.AttributeDefinition, error)
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
-	ListAttributeDefinitions(ctx context.Context, filter *AttributeFilter) ([]*AttributeDefinition, error)
 
-	// Attribute queries
-	GetAttributesByCategory(ctx context.Context, category string) ([]*AttributeDefinition, error)
-	ValidateAttributeValue(ctx context.Context, name string, value interface{}) error
+	// List and search operations
+	ListAttributeDefinitions(ctx context.Context, req *ListAttributeDefinitionsRequest) ([]*models.AttributeDefinition, error)
+	GetAttributeDefinitionsByCategory(ctx context.Context, category types.AttributeCategory) ([]*models.AttributeDefinition, error)
+	GetRequiredAttributeDefinitions(ctx context.Context) ([]*models.AttributeDefinition, error)
+
+	// Bulk operations
+	GetAttributeDefinitionsByIDs(ctx context.Context, ids []uuid.UUID) ([]*models.AttributeDefinition, error)
 }
 
-// PolicyEvaluationCacheRepository defines the interface for policy evaluation caching
-type PolicyEvaluationCacheRepository interface {
+// PolicyRepository defines the interface for policy persistence
+type PolicyRepository interface {
+	// Core CRUD operations
+	CreatePolicy(ctx context.Context, req *CreatePolicyRequest) (*models.Policy, error)
+	GetPolicyByID(ctx context.Context, id uuid.UUID) (*models.Policy, error)
+	GetPolicyByName(ctx context.Context, name string) (*models.Policy, error)
+	UpdatePolicy(ctx context.Context, id uuid.UUID, req *UpdatePolicyRequest) (*models.Policy, error)
+	DeletePolicy(ctx context.Context, id uuid.UUID) error
+
+	// List and search operations
+	ListPolicies(ctx context.Context, req *ListPoliciesRequest) ([]*models.Policy, error)
+	GetPoliciesByCategory(ctx context.Context, category types.PolicyCategory) ([]*models.Policy, error)
+	GetPoliciesByType(ctx context.Context, policyType types.PolicyType) ([]*models.Policy, error)
+	GetActivePolicies(ctx context.Context) ([]*models.Policy, error)
+
+	// Evaluation operations
+	GetPoliciesForEvaluation(ctx context.Context, req *GetPoliciesForEvaluationRequest) ([]*models.Policy, error)
+	GetApplicablePolicies(ctx context.Context, resourceType, action string) ([]*models.Policy, error)
+
+	// Bulk operations
+	GetPoliciesByIDs(ctx context.Context, ids []uuid.UUID) ([]*models.Policy, error)
+
+	// Version management
+	GetPolicyVersions(ctx context.Context, policyID uuid.UUID) ([]*models.Policy, error)
+	GetLatestPolicyVersion(ctx context.Context, policyName string) (*models.Policy, error)
+
+	// Conflict analysis
+	GetConflictingPolicies(ctx context.Context, policy *models.Policy) ([]*models.Policy, error)
+}
+
+// PolicyEvaluationRepository defines the interface for policy evaluation caching
+type PolicyEvaluationRepository interface {
 	// Cache operations
-	StorePolicyEvaluation(ctx context.Context, entry *models.PolicyEvaluationCacheEntry) error
-	GetPolicyEvaluation(ctx context.Context, cacheKey string) (*models.PolicyEvaluationCacheEntry, error)
-	InvalidatePolicyEvaluations(ctx context.Context, userID uuid.UUID, resourcePattern string) error
-	DeleteExpiredEntries(ctx context.Context) (int, error)
+	CacheEvaluationResult(ctx context.Context, req *CacheEvaluationResultRequest) error
+	GetCachedEvaluationResult(ctx context.Context, req *GetCachedEvaluationResultRequest) (*models.PolicyEvaluationResult, error)
+	InvalidateEvaluationCache(ctx context.Context, req *InvalidateEvaluationCacheRequest) error
 
-	// Cache management
-	GetCacheStats(ctx context.Context) (*CacheStats, error)
-	ClearCache(ctx context.Context) error
+	// Bulk cache operations
+	GetCachedEvaluationResults(ctx context.Context, requests []*GetCachedEvaluationResultRequest) ([]*models.PolicyEvaluationResult, error)
+	InvalidateEvaluationCacheByPolicyID(ctx context.Context, policyID uuid.UUID) error
+	InvalidateEvaluationCacheByUserID(ctx context.Context, userID uuid.UUID) error
+
+	// Cache maintenance
+	CleanupExpiredEvaluations(ctx context.Context) error
+	GetEvaluationCacheStats(ctx context.Context) (*EvaluationCacheStats, error)
 }
 
-// UserActivityRepository defines the interface for user activity tracking
-type UserActivityRepository interface {
-	// Activity logging
-	LogActivity(ctx context.Context, activity *UserActivity) error
-	LogBulkActivities(ctx context.Context, activities []*UserActivity) error
+// AttributeRepository defines the interface for attribute value persistence
+type AttributeRepository interface {
+	// Attribute value operations
+	StoreAttributeValue(ctx context.Context, req *StoreAttributeValueRequest) (*models.AttributeValue, error)
+	GetAttributeValue(ctx context.Context, definitionID uuid.UUID, entityID uuid.UUID) (*models.AttributeValue, error)
+	GetAttributeValuesByEntity(ctx context.Context, entityID uuid.UUID, category types.AttributeCategory) ([]*models.AttributeValue, error)
+	UpdateAttributeValue(ctx context.Context, definitionID, entityID uuid.UUID, value any) (*models.AttributeValue, error)
+	DeleteAttributeValue(ctx context.Context, definitionID, entityID uuid.UUID) error
 
-	// Activity queries
-	GetUserActivities(ctx context.Context, userID uuid.UUID, filter *ActivityFilter) ([]*UserActivity, error)
-	GetActivitiesByResource(ctx context.Context, resourceName string, filter *ActivityFilter) ([]*UserActivity, error)
-	GetHighRiskActivities(ctx context.Context, threshold float64, filter *ActivityFilter) ([]*UserActivity, error)
+	// Bulk operations
+	StoreAttributeValues(ctx context.Context, values []*StoreAttributeValueRequest) ([]*models.AttributeValue, error)
+	GetAttributeValuesByDefinitions(ctx context.Context, definitionIDs []uuid.UUID, entityID uuid.UUID) ([]*models.AttributeValue, error)
 
-	// Analytics
-	GetUserBehaviorAnalytics(ctx context.Context, userID uuid.UUID, period time.Duration) (*UserBehaviorAnalytics, error)
-	GetResourceAccessPattern(ctx context.Context, resourceName string, period time.Duration) (*ResourceAccessPattern, error)
-	CalculateAnomalyScore(ctx context.Context, userID uuid.UUID, activity *UserActivity) (float64, error)
+	// Context operations
+	BuildAttributeContext(ctx context.Context, req *BuildAttributeContextRequest) (*models.AttributeContext, error)
+	GetUserAttributeContext(ctx context.Context, userID uuid.UUID) (*models.AttributeContext, error)
+	GetResourceAttributeContext(ctx context.Context, resourceType string, resourceID uuid.UUID) (*models.AttributeContext, error)
+
+	// Maintenance
+	CleanupExpiredAttributes(ctx context.Context) error
+	GetAttributeStats(ctx context.Context) (*AttributeStats, error)
 }
 
-// Domain models for repository layer
+// ─── REQUEST/RESPONSE MODELS ─────────────────────────────────────────────
 
-// Policy represents a policy in the database
-type Policy struct {
-	ID          uuid.UUID              `json:"id"`
-	TenantID    uuid.UUID              `json:"tenant_id"`
-	EntityID    *uuid.UUID             `json:"entity_id,omitempty"`
-	Name        string                 `json:"name"`
-	DisplayName *string                `json:"display_name,omitempty"`
-	Description *string                `json:"description,omitempty"`
-	PolicyType  string                 `json:"policy_type"`
-	Effect      string                 `json:"effect"`
-	Priority    int                    `json:"priority"`
-	Category    string                 `json:"category"`
-	Target      map[string]interface{} `json:"target"`
-	Rule        map[string]interface{} `json:"rule"`
-	Obligations map[string]interface{} `json:"obligations"`
-	Advice      map[string]interface{} `json:"advice"`
-	IsActive    bool                   `json:"is_active"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
-	CreatedBy   *uuid.UUID             `json:"created_by,omitempty"`
-	DeletedAt   *time.Time             `json:"deleted_at,omitempty"`
+// CreateAttributeDefinitionRequest represents attribute definition creation request
+type CreateAttributeDefinitionRequest struct {
+	Name            string                  `json:"name" validate:"required,min=1,max=100"`
+	DisplayName     *string                 `json:"display_name,omitempty"`
+	Description     *string                 `json:"description,omitempty"`
+	DataType        types.AttributeDataType `json:"data_type" validate:"required"`
+	Category        types.AttributeCategory `json:"category" validate:"required"`
+	IsRequired      bool                    `json:"is_required"`
+	IsSensitive     bool                    `json:"is_sensitive"`
+	DefaultValue    *string                 `json:"default_value,omitempty"`
+	AllowedValues   []string                `json:"allowed_values,omitempty"`
+	ValidationRules map[string]any          `json:"validation_rules,omitempty"`
 }
 
-// AttributeDefinition represents an attribute definition in the database
-type AttributeDefinition struct {
-	ID                  uuid.UUID              `json:"id"`
-	TenantID            uuid.UUID              `json:"tenant_id"`
-	Name                string                 `json:"name"`
-	DisplayName         *string                `json:"display_name,omitempty"`
-	Description         *string                `json:"description,omitempty"`
-	DataType            string                 `json:"data_type"`
-	Category            string                 `json:"category"`
-	IsRequired          bool                   `json:"is_required"`
-	IsSensitive         bool                   `json:"is_sensitive"`
-	DefaultValue        *string                `json:"default_value,omitempty"`
-	AllowedValues       map[string]interface{} `json:"allowed_values,omitempty"`
-	ValidationRules     map[string]interface{} `json:"validation_rules"`
-	EncryptionRequired  bool                   `json:"encryption_required"`
-	IsActive            bool                   `json:"is_active"`
-	CreatedAt           time.Time              `json:"created_at"`
+// UpdateAttributeDefinitionRequest represents attribute definition update request
+type UpdateAttributeDefinitionRequest struct {
+	DisplayName     *string        `json:"display_name,omitempty"`
+	Description     *string        `json:"description,omitempty"`
+	IsRequired      *bool          `json:"is_required,omitempty"`
+	IsSensitive     *bool          `json:"is_sensitive,omitempty"`
+	DefaultValue    *string        `json:"default_value,omitempty"`
+	AllowedValues   []string       `json:"allowed_values,omitempty"`
+	ValidationRules map[string]any `json:"validation_rules,omitempty"`
+	IsActive        *bool          `json:"is_active,omitempty"`
 }
 
-// UserActivity represents a user activity in the database
-type UserActivity struct {
-	ID               uuid.UUID              `json:"id"`
-	UserID           uuid.UUID              `json:"user_id"`
-	TenantID         uuid.UUID              `json:"tenant_id"`
-	SessionID        *uuid.UUID             `json:"session_id,omitempty"`
-	ActivityType     string                 `json:"activity_type"`
-	Module           *string                `json:"module,omitempty"`
-	ResourceType     *string                `json:"resource_type,omitempty"`
-	ResourceID       *uuid.UUID             `json:"resource_id,omitempty"`
-	ActionPerformed  *string                `json:"action_performed,omitempty"`
-	IPAddress        *string                `json:"ip_address,omitempty"`
-	UserAgent        *string                `json:"user_agent,omitempty"`
-	DeviceFingerprint *string               `json:"device_fingerprint,omitempty"`
-	LocationData     map[string]interface{} `json:"location_data"`
-	RequestMethod    *string                `json:"request_method,omitempty"`
-	RequestPath      *string                `json:"request_path,omitempty"`
-	RequestParams    map[string]interface{} `json:"request_params"`
-	ResponseStatus   *int                   `json:"response_status,omitempty"`
-	ResponseTimeMS   *int                   `json:"response_time_ms,omitempty"`
-	RiskIndicators   map[string]interface{} `json:"risk_indicators"`
-	AnomalyScore     float64                `json:"anomaly_score"`
-	Timestamp        time.Time              `json:"timestamp"`
-	AdditionalData   map[string]interface{} `json:"additional_data"`
+// ListAttributeDefinitionsRequest represents attribute definition list request
+type ListAttributeDefinitionsRequest struct {
+	Category    *types.AttributeCategory `json:"category,omitempty"`
+	DataType    *types.AttributeDataType `json:"data_type,omitempty"`
+	IsRequired  *bool                    `json:"is_required,omitempty"`
+	IsSensitive *bool                    `json:"is_sensitive,omitempty"`
+	IsActive    *bool                    `json:"is_active,omitempty"`
+	Limit       int                      `json:"limit"`
+	Offset      int                      `json:"offset"`
 }
 
-// Filter types for repository queries
-
-// PolicyFilter represents filters for policy queries  
-type PolicyFilter struct {
-	TenantID     *uuid.UUID `json:"tenant_id,omitempty"`
-	EntityID     *uuid.UUID `json:"entity_id,omitempty"`
-	PolicyType   *string    `json:"policy_type,omitempty"`
-	Effect       *string    `json:"effect,omitempty"`
-	Category     *string    `json:"category,omitempty"`
-	IsActive     *bool      `json:"is_active,omitempty"`
-	MinPriority  *int       `json:"min_priority,omitempty"`
-	MaxPriority  *int       `json:"max_priority,omitempty"`
-	CreatedAfter *time.Time `json:"created_after,omitempty"`
-	Limit        int        `json:"limit,omitempty"`
-	Offset       int        `json:"offset,omitempty"`
+// CreatePolicyRequest represents policy creation request
+type CreatePolicyRequest struct {
+	Name               string                         `json:"name" validate:"required,min=1,max=100"`
+	DisplayName        *string                        `json:"display_name,omitempty"`
+	Description        *string                        `json:"description,omitempty"`
+	PolicyType         types.PolicyType               `json:"policy_type" validate:"required"`
+	Effect             types.PolicyEffect             `json:"effect" validate:"required"`
+	Priority           int32                          `json:"priority"`
+	Category           types.PolicyCategory           `json:"category" validate:"required"`
+	Target             map[string]any                 `json:"target" validate:"required"`
+	Rule               map[string]any                 `json:"rule" validate:"required"`
+	Obligations        map[string]any                 `json:"obligations,omitempty"`
+	Advice             map[string]any                 `json:"advice,omitempty"`
+	CombiningAlgorithm types.PolicyCombiningAlgorithm `json:"combining_algorithm"`
+	ExpiresAt          *time.Time                     `json:"expires_at,omitempty"`
+	CreatedBy          uuid.UUID                      `json:"created_by" validate:"required"`
 }
 
-// AttributeFilter represents filters for attribute definition queries
-type AttributeFilter struct {
-	TenantID     *uuid.UUID `json:"tenant_id,omitempty"`
-	Category     *string    `json:"category,omitempty"`
-	DataType     *string    `json:"data_type,omitempty"`
-	IsRequired   *bool      `json:"is_required,omitempty"`
-	IsSensitive  *bool      `json:"is_sensitive,omitempty"`
-	IsActive     *bool      `json:"is_active,omitempty"`
-	Limit        int        `json:"limit,omitempty"`
-	Offset       int        `json:"offset,omitempty"`
+// UpdatePolicyRequest represents policy update request
+type UpdatePolicyRequest struct {
+	DisplayName        *string                         `json:"display_name,omitempty"`
+	Description        *string                         `json:"description,omitempty"`
+	Priority           *int32                          `json:"priority,omitempty"`
+	Target             map[string]any                  `json:"target,omitempty"`
+	Rule               map[string]any                  `json:"rule,omitempty"`
+	Obligations        map[string]any                  `json:"obligations,omitempty"`
+	Advice             map[string]any                  `json:"advice,omitempty"`
+	CombiningAlgorithm *types.PolicyCombiningAlgorithm `json:"combining_algorithm,omitempty"`
+	IsActive           *bool                           `json:"is_active,omitempty"`
+	ExpiresAt          *time.Time                      `json:"expires_at,omitempty"`
 }
 
-// ActivityFilter represents filters for user activity queries
-type ActivityFilter struct {
-	TenantID        *uuid.UUID `json:"tenant_id,omitempty"`
-	UserID          *uuid.UUID `json:"user_id,omitempty"`
-	ActivityType    *string    `json:"activity_type,omitempty"`
-	ResourceType    *string    `json:"resource_type,omitempty"`
-	MinAnomalyScore *float64   `json:"min_anomaly_score,omitempty"`
-	StartTime       *time.Time `json:"start_time,omitempty"`
-	EndTime         *time.Time `json:"end_time,omitempty"`
-	Limit           int        `json:"limit,omitempty"`
-	Offset          int        `json:"offset,omitempty"`
+// ListPoliciesRequest represents policy list request
+type ListPoliciesRequest struct {
+	PolicyType *types.PolicyType     `json:"policy_type,omitempty"`
+	Effect     *types.PolicyEffect   `json:"effect,omitempty"`
+	Category   *types.PolicyCategory `json:"category,omitempty"`
+	IsActive   *bool                 `json:"is_active,omitempty"`
+	CreatedBy  *uuid.UUID            `json:"created_by,omitempty"`
+	Limit      int                   `json:"limit"`
+	Offset     int                   `json:"offset"`
 }
 
-// Analytics types
-
-// CacheStats represents cache performance statistics
-type CacheStats struct {
-	TotalEntries    int64     `json:"total_entries"`
-	ExpiredEntries  int64     `json:"expired_entries"`
-	HitRate         float64   `json:"hit_rate"`
-	MissRate        float64   `json:"miss_rate"`
-	AverageAge      time.Duration `json:"average_age"`
-	LastCleanup     time.Time `json:"last_cleanup"`
+// GetPoliciesForEvaluationRequest represents request for policies applicable to evaluation
+type GetPoliciesForEvaluationRequest struct {
+	ResourceType string         `json:"resource_type" validate:"required"`
+	Action       string         `json:"action" validate:"required"`
+	UserType     *string        `json:"user_type,omitempty"`
+	EntityID     *uuid.UUID     `json:"entity_id,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
 }
 
-// UserBehaviorAnalytics represents user behavior analysis results
-type UserBehaviorAnalytics struct {
-	UserID                 uuid.UUID              `json:"user_id"`
-	AnalysisPeriod        time.Duration          `json:"analysis_period"`
-	TotalActivities       int64                  `json:"total_activities"`
-	UniqueResources       int64                  `json:"unique_resources"`
-	AverageAnomalyScore   float64              `json:"average_anomaly_score"`
-	PeakUsageHours        []int                `json:"peak_usage_hours"`
-	CommonLocations       []string             `json:"common_locations"`
-	FrequentResources     []string             `json:"frequent_resources"`
-	RiskFactors           []string             `json:"risk_factors"`
-	BehaviorPattern       map[string]interface{} `json:"behavior_pattern"`
+// CacheEvaluationResultRequest represents cache evaluation result request
+type CacheEvaluationResultRequest struct {
+	UserID             uuid.UUID                      `json:"user_id" validate:"required"`
+	ResourceType       string                         `json:"resource_type" validate:"required"`
+	ResourceID         *uuid.UUID                     `json:"resource_id,omitempty"`
+	Action             string                         `json:"action" validate:"required"`
+	ContextHash        string                         `json:"context_hash" validate:"required"`
+	Decision           types.PolicyDecisionType       `json:"decision" validate:"required"`
+	ApplicablePolicies []uuid.UUID                    `json:"applicable_policies"`
+	EvaluationTimeMS   int64                          `json:"evaluation_time_ms"`
+	ExpiresAt          time.Time                      `json:"expires_at"`
+	Result             *models.PolicyEvaluationResult `json:"result"`
 }
 
-// ResourceAccessPattern represents resource access pattern analysis
-type ResourceAccessPattern struct {
-	ResourceName        string    `json:"resource_name"`
-	TotalAccesses       int64     `json:"total_accesses"`
-	UniqueUsers         int64     `json:"unique_users"`
-	AverageResponseTime float64   `json:"average_response_time"`
-	PeakAccessHours     []int     `json:"peak_access_hours"`
-	CommonActions       []string  `json:"common_actions"`
-	AccessTrend         string    `json:"access_trend"` // INCREASING, DECREASING, STABLE
-	LastAccessed        time.Time `json:"last_accessed"`
+// GetCachedEvaluationResultRequest represents get cached evaluation result request
+type GetCachedEvaluationResultRequest struct {
+	UserID       uuid.UUID  `json:"user_id" validate:"required"`
+	ResourceType string     `json:"resource_type" validate:"required"`
+	ResourceID   *uuid.UUID `json:"resource_id,omitempty"`
+	Action       string     `json:"action" validate:"required"`
+	ContextHash  string     `json:"context_hash" validate:"required"`
+}
+
+// InvalidateEvaluationCacheRequest represents invalidate evaluation cache request
+type InvalidateEvaluationCacheRequest struct {
+	UserID        *uuid.UUID  `json:"user_id,omitempty"`
+	ResourceType  *string     `json:"resource_type,omitempty"`
+	ResourceID    *uuid.UUID  `json:"resource_id,omitempty"`
+	Action        *string     `json:"action,omitempty"`
+	PolicyIDs     []uuid.UUID `json:"policy_ids,omitempty"`
+	InvalidateAll bool        `json:"invalidate_all"`
+}
+
+// StoreAttributeValueRequest represents store attribute value request
+type StoreAttributeValueRequest struct {
+	DefinitionID uuid.UUID             `json:"definition_id" validate:"required"`
+	EntityID     uuid.UUID             `json:"entity_id" validate:"required"`
+	EntityType   string                `json:"entity_type" validate:"required"`
+	Value        any                   `json:"value" validate:"required"`
+	Source       types.AttributeSource `json:"source" validate:"required"`
+	Confidence   float64               `json:"confidence"`
+	ExpiresAt    *time.Time            `json:"expires_at,omitempty"`
+}
+
+// BuildAttributeContextRequest represents build attribute context request
+type BuildAttributeContextRequest struct {
+	UserID          uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType    string         `json:"resource_type" validate:"required"`
+	ResourceID      *uuid.UUID     `json:"resource_id,omitempty"`
+	Action          string         `json:"action" validate:"required"`
+	EntityID        *uuid.UUID     `json:"entity_id,omitempty"`
+	SessionData     map[string]any `json:"session_data,omitempty"`
+	EnvironmentData map[string]any `json:"environment_data,omitempty"`
+}
+
+// ─── STATISTICS MODELS ─────────────────────────────────────────────
+
+// EvaluationCacheStats represents evaluation cache statistics
+type EvaluationCacheStats struct {
+	TotalCachedEvaluations int64            `json:"total_cached_evaluations"`
+	CacheHitRate           float64          `json:"cache_hit_rate"`
+	CacheMissRate          float64          `json:"cache_miss_rate"`
+	ExpiredEvaluations     int64            `json:"expired_evaluations"`
+	AverageEvaluationTime  time.Duration    `json:"average_evaluation_time"`
+	EvaluationsByDecision  map[string]int64 `json:"evaluations_by_decision"`
+	EvaluationsByResource  map[string]int64 `json:"evaluations_by_resource"`
+}
+
+// AttributeStats represents attribute statistics
+type AttributeStats struct {
+	TotalAttributes      int64            `json:"total_attributes"`
+	AttributesByCategory map[string]int64 `json:"attributes_by_category"`
+	AttributesByDataType map[string]int64 `json:"attributes_by_data_type"`
+	AttributesBySource   map[string]int64 `json:"attributes_by_source"`
+	ExpiredAttributes    int64            `json:"expired_attributes"`
+	SensitiveAttributes  int64            `json:"sensitive_attributes"`
+	RequiredAttributes   int64            `json:"required_attributes"`
 }

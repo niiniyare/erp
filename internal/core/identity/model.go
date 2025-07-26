@@ -299,4 +299,3 @@ type Role struct {
 	IsActive       bool       `json:"is_active"`
 	ExpiresAt      *time.Time `json:"expires_at,omitempty"`
 }
-

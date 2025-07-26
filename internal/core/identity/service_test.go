@@ -899,11 +899,6 @@ func (s *IdentityServiceTestSuite) TestSearchUsers() {
 	}
 }
 
-
-
-
-
-
 func (s *IdentityServiceTestSuite) TestGetPersonByID() {
 	tests := []struct {
 		name             string

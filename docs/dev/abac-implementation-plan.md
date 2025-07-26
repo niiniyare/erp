@@ -102,21 +102,21 @@
 
 ### **Phase 3: Core ABAC Activities** ⏱️ **Est: 7-8 days**
 
-##### **3.1 Attribute Collection Activities**
-- [ ] **Task**: Implement `CollectUserAttributesActivity`
-  - [ ] Get user data from identity service
-  - [ ] Get person attributes (if linked)
-  - [ ] Get employee attributes (if linked)
-  - [ ] Combine into unified attribute map
-- [ ] **Task**: Implement `CollectResourceAttributesActivity`
-  - [ ] Get resource metadata from database
-  - [ ] Apply resource-specific attribute rules
-  - [ ] Handle dynamic resource attributes
-- [ ] **Task**: Implement `BuildEnvironmentContextActivity`
-  - [ ] Time context (current time, business hours)
-  - [ ] Location context (IP geolocation)
-  - [ ] Device context (user agent parsing)
-  - [ ] Risk context (behavioral analysis)
+##### **3.1 Attribute Collection Activities** ✅ **COMPLETED**
+- [x] **Task**: Implement `CollectUserAttributesActivity`
+  - [x] Get user data from identity service
+  - [x] Get person attributes (if linked)
+  - [x] Get employee attributes (if linked)
+  - [x] Combine into unified attribute map
+- [x] **Task**: Implement `CollectResourceAttributesActivity`
+  - [x] Get resource metadata from database
+  - [x] Apply resource-specific attribute rules
+  - [x] Handle dynamic resource attributes
+- [x] **Task**: Implement `BuildEnvironmentContextActivity`
+  - [x] Time context (current time, business hours)
+  - [x] Location context (IP geolocation)
+  - [x] Device context (user agent parsing)
+  - [x] Risk context (behavioral analysis)
 
 ##### **3.2 Policy Evaluation Activities**
 - [ ] **Task**: Implement `EvaluatePoliciesActivity`
@@ -390,23 +390,7 @@
 - ✅ Integration with `tenant.Service` for database session tenant context management (SetTenant/ResetTenant) implemented.
 - ✅ Integration with shared `errors`, `logger`, `metrics`, and `tracing` for robust observability.
 
-### **Phase 2.3 Status: ✅ COMPLETE (100%)**
-**Major Achievements:**
-- ✅ SQL queries for Policy, Attribute Definition, and Policy Evaluation repositories created.
-- ✅ SQLC generation for these repositories completed.
-- ✅ Go interfaces for ABAC repositories defined.
-- ✅ Concrete Go implementations for ABAC repositories created.
-- ✅ Mocks for ABAC repository interfaces generated.
 
-
-
-### **Phase 2.3 Status: ✅ COMPLETE (100%)**
-**Major Achievements:**
-- ✅ SQL queries for Policy, Attribute Definition, and Policy Evaluation repositories created.
-- ✅ SQLC generation for these repositories completed.
-- ✅ Go interfaces for ABAC repositories defined.
-- ✅ Concrete Go implementations for ABAC repositories created.
-- ✅ Mocks for ABAC repository interfaces generated.
 
 
 
@@ -448,4 +432,4 @@ go run cmd/server/main.go
 
 ---
 
-**Next Action**: Start Phase 3.1 - Implement Attribute Collection Activities.
+**Next Action**: Start Phase 3.2 - Implement Policy Evaluation Activities.

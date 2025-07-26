@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"erp/db/sqlc"
-	"erp/internal/core/abac"
+	"github.com/niiniyare/erp/db/sqlc"
+	// "github.com/niiniyare/erp/internal/core/abac" // TODO: Fix import path
 )
 
 // SQLCPolicyRepository implements the PolicyRepository interface using sqlc.
@@ -166,9 +166,9 @@ func (r *SQLCPolicyEvaluationRepository) GetPolicyEvaluation(ctx context.Context
 // GetPolicyEvaluationByContextHash retrieves a policy evaluation by context hash.
 func (r *SQLCPolicyEvaluationRepository) GetPolicyEvaluationByContextHash(ctx context.Context, userID uuid.UUID, resourceID uuid.UUID, actionID uuid.UUID, contextHash string) (sqlc.PolicyEvaluation, error) {
 	return r.queries.GetPolicyEvaluationByContextHash(ctx, sqlc.GetPolicyEvaluationByContextHashParams{
-		UserID:     userID,
-		ResourceID: resourceID,
-		ActionID:   actionID,
+		UserID:      userID,
+		ResourceID:  resourceID,
+		ActionID:    actionID,
 		ContextHash: contextHash,
 	})
 }

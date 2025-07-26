@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"erp/internal/shared/errors"
+	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/shared/errors"
 )
 
 // validate holds the singleton validator instance.

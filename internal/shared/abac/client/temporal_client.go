@@ -7,12 +7,12 @@ import (
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/client"
 
-	"erp/internal/core/abac"
-	"erp/internal/core/tenant"
-	"erp/internal/shared/errors"
-	"erp/internal/shared/logger"
-	"erp/internal/shared/metrics"
-	"erp/internal/shared/tracing"
+	// "github.com/niiniyare/erp/internal/core/abac" // TODO: Fix import path
+	"github.com/niiniyare/erp/internal/core/tenant"
+	"github.com/niiniyare/erp/internal/shared/errors"
+	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
 // TemporalClient defines the interface for interacting with ABAC Temporal workflows.
@@ -23,11 +23,11 @@ type TemporalClient interface {
 
 // temporalClient implements the TemporalClient interface.
 type temporalClient struct {
-	temporalClient      client.Client
-	tenantService       tenant.Service
-	logger              logger.Logger
-	metrics             metrics.MetricsProvider
-	tracer              tracing.TracingService
+	temporalClient client.Client
+	tenantService  tenant.Service
+	logger         logger.Logger
+	metrics        metrics.MetricsProvider
+	tracer         tracing.TracingService
 }
 
 // NewTemporalClient creates a new TemporalClient instance.
@@ -39,11 +39,11 @@ func NewTemporalClient(
 	tracer tracing.TracingService,
 ) TemporalClient {
 	return &temporalClient{
-		temporalClient:      temporalClient,
-		tenantService:       tenantService,
-		logger:              logger,
-		metrics:             metrics,
-		tracer:              tracer,
+		temporalClient: temporalClient,
+		tenantService:  tenantService,
+		logger:         logger,
+		metrics:        metrics,
+		tracer:         tracer,
 	}
 }
 

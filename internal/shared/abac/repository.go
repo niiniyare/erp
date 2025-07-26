@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"erp/db/sqlc"
+	"github.com/niiniyare/erp/db/sqlc"
 )
 
 // PolicyRepository defines the interface for interacting with ABAC policies.

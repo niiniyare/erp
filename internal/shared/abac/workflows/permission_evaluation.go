@@ -2,12 +2,14 @@ package workflows
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"go.temporal.io/sdk/workflow"
 
-	"erp/internal/core/abac"
-	"erp/internal/shared/errors"
+	"github.com/niiniyare/erp/internal/shared/abac"
+	"github.com/niiniyare/erp/internal/shared/errors"
 )
 
 // PermissionEvaluationWorkflow is a Temporal workflow that orchestrates the ABAC permission evaluation process.
@@ -30,7 +32,7 @@ func PermissionEvaluationWorkflow(ctx workflow.Context, request abac.PermissionE
 
 	// Initialize response
 	response := &abac.PermissionEvaluationWorkflowResponse{
-		Allowed: false,
+		Allowed:         false,
 		PolicyDecisions: []abac.PolicyDecision{},
 		EffectiveRoles:  []string{},
 	}
@@ -73,13 +75,13 @@ func PermissionEvaluationWorkflow(ctx workflow.Context, request abac.PermissionE
 	// Combine all attributes
 	allAttributes := make(map[string]interface{})
 	for k, v := range userAttrsOutput.Attributes {
-		allAttributes["user." + k] = v
+		allAttributes["user."+k] = v
 	}
 	for k, v := range resourceAttrsOutput.Attributes {
-		allAttributes["resource." + k] = v
+		allAttributes["resource."+k] = v
 	}
 	for k, v := range envContextOutput.Context {
-		allAttributes["env." + k] = v
+		allAttributes["env."+k] = v
 	}
 	// Add request context attributes directly
 	for k, v := range request.Context {
@@ -104,15 +106,15 @@ func PermissionEvaluationWorkflow(ctx workflow.Context, request abac.PermissionE
 
 	// 5. Cache Policy Result Activity (fire and forget, or handle errors if critical)
 	cacheInput := abac.CachePolicyResultActivityInput{
-		TenantID:         request.TenantID,
-		UserID:           request.UserID,
-		ResourceID:       request.ResourceID,
-		ActionID:         request.ActionID,
-		ContextHash:      generateContextHash(allAttributes), // Implement this helper
-		Decision:         fmt.Sprintf("%v", policyEvalOutput.Allowed), // Convert bool to string
+		TenantID:           request.TenantID,
+		UserID:             request.UserID,
+		ResourceID:         request.ResourceID,
+		ActionID:           request.ActionID,
+		ContextHash:        generateContextHash(allAttributes),          // Implement this helper
+		Decision:           fmt.Sprintf("%v", policyEvalOutput.Allowed), // Convert bool to string
 		ApplicablePolicies: extractPolicyIDs(policyEvalOutput.PolicyDecisions),
-		EvaluationTimeMS: int(workflow.Since(ctx, startTime).Milliseconds()),
-		ExpiresAt:        workflow.Now(ctx).Add(1 * time.Hour), // Cache for 1 hour
+		EvaluationTimeMS:   int(workflow.Since(ctx, startTime).Milliseconds()),
+		ExpiresAt:          workflow.Now(ctx).Add(1 * time.Hour), // Cache for 1 hour
 	}
 	_ = workflow.ExecuteActivity(ctx, "CachePolicyResultActivity", cacheInput).Get(ctx, nil) // Ignore error for caching
 

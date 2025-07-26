@@ -90,7 +90,7 @@ func (a *CacheActivities) CachePolicyEvaluation(
 	// TODO: Replace with actual cache repository call
 	// err := a.cacheRepo.StorePolicyEvaluation(ctx, cacheKey, entry)
 	// if err != nil {
-	//     a.logger.Error("Failed to cache policy evaluation", 
+	//     a.logger.Error("Failed to cache policy evaluation",
 	//         "cache_key", cacheKey,
 	//         "user_id", entry.UserID,
 	//         "resource", entry.ResourceName,
@@ -100,7 +100,7 @@ func (a *CacheActivities) CachePolicyEvaluation(
 	// }
 
 	// Mock implementation
-	a.logger.Info("Policy evaluation cached", 
+	a.logger.Info("Policy evaluation cached",
 		"cache_key", cacheKey,
 		"user_id", entry.UserID,
 		"resource", entry.ResourceName,
@@ -129,7 +129,7 @@ func (a *CacheActivities) InvalidatePolicyCache(
 	// TODO: Replace with actual cache repository call
 	// err := a.cacheRepo.InvalidatePolicyEvaluations(ctx, userID, resourcePattern)
 	// if err != nil {
-	//     a.logger.Error("Failed to invalidate policy cache", 
+	//     a.logger.Error("Failed to invalidate policy cache",
 	//         "user_id", userID,
 	//         "resource_pattern", resourcePattern,
 	//         "error", err)
@@ -137,7 +137,7 @@ func (a *CacheActivities) InvalidatePolicyCache(
 	// }
 
 	// Mock implementation
-	a.logger.Info("Policy cache invalidated", 
+	a.logger.Info("Policy cache invalidated",
 		"user_id", userID,
 		"resource_pattern", resourcePattern)
 
@@ -176,7 +176,7 @@ func (a *CacheActivities) GetUserEffectiveRoles(
 	// This would typically involve checking user_roles table with entity_id
 	effectiveRoles = append(effectiveRoles, "entity_member")
 
-	a.logger.Debug("Retrieved effective roles", 
+	a.logger.Debug("Retrieved effective roles",
 		"user_id", userID,
 		"entity_id", entityID,
 		"roles", effectiveRoles)
@@ -195,14 +195,14 @@ func (a *CacheActivities) LogPermissionEvaluation(
 	// TODO: Replace with actual audit service call
 	// err := a.auditService.LogPermissionEvaluation(ctx, auditData)
 	// if err != nil {
-	//     a.logger.Error("Failed to log permission evaluation", 
+	//     a.logger.Error("Failed to log permission evaluation",
 	//         "audit_data", auditData,
 	//         "error", err)
 	//     return err
 	// }
 
 	// For now, just log the evaluation
-	a.logger.Info("Permission evaluation completed", 
+	a.logger.Info("Permission evaluation completed",
 		"user_id", auditData["user_id"],
 		"resource", auditData["resource_name"],
 		"action", auditData["action_name"],
@@ -222,9 +222,9 @@ func (a *CacheActivities) generateCacheKey(
 	contextHash string,
 ) string {
 	// Create a deterministic cache key
-	keyData := fmt.Sprintf("policy_eval:%s:%s:%s:%s", 
+	keyData := fmt.Sprintf("policy_eval:%s:%s:%s:%s",
 		userID.String(), resourceName, actionName, contextHash)
-	
+
 	// Hash the key to ensure consistent length and avoid special characters
 	hash := sha256.Sum256([]byte(keyData))
 	return hex.EncodeToString(hash[:])
@@ -240,7 +240,7 @@ func (a *CacheActivities) GenerateContextHash(
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal context: %w", err)
 	}
-	
+
 	// Generate SHA-256 hash
 	hash := sha256.Sum256(contextJSON)
 	return hex.EncodeToString(hash[:]), nil
@@ -292,13 +292,13 @@ func (a *CacheActivities) WarmupCache(
 		for _, resource := range commonResources {
 			// Common actions to warm up
 			commonActions := []string{"read", "write", "delete", "admin"}
-			
+
 			for _, action := range commonActions {
 				// TODO: Pre-evaluate and cache the permission
 				// This would involve calling the permission evaluation workflow
 				// and storing the result in cache
-				
-				a.logger.Debug("Cache warmup", 
+
+				a.logger.Debug("Cache warmup",
 					"user_id", userID,
 					"resource", resource,
 					"action", action)

@@ -209,6 +209,83 @@ var (
 				WithSuggestion("Review the entity hierarchy to remove circular references").
 				WithSuggestion("An entity cannot be a parent of itself or its ancestors")
 
+	// ─── ABAC ERRORS ─────────────────────────────────────────────
+
+	// Policy Errors
+	ErrPolicyNotFound = NewBusinessError("POLICY_NOT_FOUND", "ABAC policy not found").
+				WithHTTPStatus(http.StatusNotFound).
+				WithCategory(CategorySecurity).
+				WithSuggestion("Verify the policy ID is correct").
+				WithSuggestion("Check if the policy exists and is active")
+
+	ErrPolicyInvalid = NewBusinessError("POLICY_INVALID", "ABAC policy validation failed").
+				WithHTTPStatus(http.StatusBadRequest).
+				WithCategory(CategoryValidation).
+				WithSuggestion("Review policy structure and rules").
+				WithSuggestion("Ensure all required fields are provided")
+
+	ErrPolicyConflict = NewBusinessError("POLICY_CONFLICT", "Conflicting ABAC policies detected").
+				WithHTTPStatus(http.StatusConflict).
+				WithCategory(CategorySecurity).
+				WithSuggestion("Review policy priorities and combining algorithms").
+				WithSuggestion("Resolve conflicting policy rules")
+
+	ErrPolicyExpired = NewBusinessError("POLICY_EXPIRED", "ABAC policy has expired").
+				WithHTTPStatus(http.StatusGone).
+				WithCategory(CategorySecurity).
+				WithSuggestion("Update the policy expiration date").
+				WithSuggestion("Create a new version of the policy if needed")
+
+	// Attribute Errors
+	ErrAttributeNotFound = NewBusinessError("ATTRIBUTE_NOT_FOUND", "Required attribute not found").
+				WithHTTPStatus(http.StatusNotFound).
+				WithCategory(CategorySecurity).
+				WithSuggestion("Ensure all required attributes are available").
+				WithSuggestion("Check attribute collection configuration")
+
+	ErrAttributeInvalid = NewBusinessError("ATTRIBUTE_INVALID", "Attribute value validation failed").
+				WithHTTPStatus(http.StatusBadRequest).
+				WithCategory(CategoryValidation).
+				WithSuggestion("Verify attribute value matches the expected data type").
+				WithSuggestion("Check attribute constraints and allowed values")
+
+	ErrAttributeExpired = NewBusinessError("ATTRIBUTE_EXPIRED", "Attribute value has expired").
+				WithHTTPStatus(http.StatusGone).
+				WithCategory(CategorySecurity).
+				WithSuggestion("Refresh attribute values from their sources").
+				WithSuggestion("Check attribute TTL configuration")
+
+	ErrAttributeDefinitionInvalid = NewBusinessError("ATTRIBUTE_DEFINITION_INVALID", "Attribute definition validation failed").
+					WithHTTPStatus(http.StatusBadRequest).
+					WithCategory(CategoryValidation).
+					WithSuggestion("Check attribute definition structure and constraints").
+					WithSuggestion("Ensure data type and category are valid")
+
+	// Evaluation Errors
+	ErrEvaluationFailed = NewBusinessError("EVALUATION_FAILED", "Policy evaluation failed").
+				WithHTTPStatus(http.StatusInternalServerError).
+				WithCategory(CategorySecurity).
+				WithSuggestion("Check policy rules and attribute availability").
+				WithSuggestion("Review evaluation context and parameters")
+
+	ErrEvaluationTimeout = NewBusinessError("EVALUATION_TIMEOUT", "Policy evaluation timed out").
+				WithHTTPStatus(http.StatusRequestTimeout).
+				WithCategory(CategorySecurity).
+				WithSuggestion("Simplify policy rules for better performance").
+				WithSuggestion("Check system resources and performance")
+
+	ErrCombiningAlgorithmFailed = NewBusinessError("COMBINING_ALGORITHM_FAILED", "Policy combining algorithm failed").
+					WithHTTPStatus(http.StatusInternalServerError).
+					WithCategory(CategorySecurity).
+					WithSuggestion("Review policy combining algorithm configuration").
+					WithSuggestion("Check for conflicting policy decisions")
+
+	ErrInsufficientAttributes = NewBusinessError("INSUFFICIENT_ATTRIBUTES", "Insufficient attributes for policy evaluation").
+					WithHTTPStatus(http.StatusBadRequest).
+					WithCategory(CategorySecurity).
+					WithSuggestion("Provide all required attributes for evaluation").
+					WithSuggestion("Check attribute collection sources")
+
 	// ErrEntityHasChildren indicates entity has child entities
 	ErrEntityHasChildren = NewBusinessError("ENTITY_HAS_CHILDREN", "Entity has child entities and cannot be deleted").
 				WithHTTPStatus(http.StatusConflict).

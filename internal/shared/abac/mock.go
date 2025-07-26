@@ -11,7 +11,7 @@ package abac
 
 import (
 	context "context"
-	sqlc "erp/db/sqlc"
+	sqlc "github.com/niiniyare/erp/db/sqlc"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"

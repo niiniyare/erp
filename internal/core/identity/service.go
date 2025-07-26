@@ -283,7 +283,6 @@ func (s *service) SearchUsers(ctx context.Context, query string, limit int, offs
 	return nil, fmt.Errorf("not implemented")
 }
 
-
 // --- Private Helpers ---
 
 func (s *service) hashPassword(password string) (string, error) {

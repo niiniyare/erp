@@ -139,180 +139,246 @@ CREATE TABLE user_sessions (
 - **Location tracking**: Geographic and network location for access control
 - **Security monitoring**: IP tracking and session analytics
 
-## 🔐 RBAC System
+<!-- ## 🔐 RBAC System -->
+<!---->
+<!-- ### Module-Based Organization -->
+<!---->
+<!-- The system organizes functionality into modules for scalable permission management: -->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE modules ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -->
+<!--     name VARCHAR(50) NOT NULL, -->
+<!--     display_name VARCHAR(100), -->
+<!--     description TEXT, -->
+<!--     category VARCHAR(50), -- 'CORE', 'HR', 'FINANCE', 'SALES', etc. -->
+<!--     version VARCHAR(20), -->
+<!--     is_active BOOLEAN DEFAULT true, -->
+<!--     created_at TIMESTAMPTZ DEFAULT NOW() -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Standard Module Categories:** -->
+<!-- - **CORE**: System administration and basic functionality -->
+<!-- - **HR**: Human resources management -->
+<!-- - **FINANCE**: Financial operations and accounting -->
+<!-- - **SALES**: Sales and customer management -->
+<!-- - **INVENTORY**: Warehouse and inventory management -->
+<!-- - **PROJECT**: Project management and tracking -->
+<!---->
+<!-- ### Resource Definition -->
+<!---->
+<!-- Resources represent system objects that can be protected: -->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE resources ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -->
+<!--     module_id UUID NOT NULL REFERENCES modules(id) ON DELETE CASCADE, -->
+<!--     entity_id UUID REFERENCES entities(uuid), -->
+<!--     name VARCHAR(100) NOT NULL, -->
+<!--     display_name VARCHAR(150), -->
+<!--     description TEXT, -->
+<!--     resource_type VARCHAR(50) NOT NULL  -->
+<!--         CHECK (resource_type IN ('API', 'UI', 'DATA', 'FILE', 'REPORT', 'WORKFLOW', 'FUNCTION')), -->
+<!--     parent_resource_id UUID REFERENCES resources(id), -->
+<!--     path VARCHAR(500), -- URL path, API endpoint, file path -->
+<!--     resource_attributes JSONB DEFAULT '{}'::jsonb, -- ABAC attributes -->
+<!--     is_active BOOLEAN DEFAULT true, -->
+<!--     created_at TIMESTAMPTZ DEFAULT NOW(), -->
+<!--     deleted_at TIMESTAMPTZ -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Resource Types:** -->
+<!-- - **API**: REST endpoints and GraphQL operations -->
+<!-- - **UI**: User interface components and pages -->
+<!-- - **DATA**: Database tables and data objects -->
+<!-- - **FILE**: Documents and file system resources -->
+<!-- - **REPORT**: Generated reports and analytics -->
+<!-- - **WORKFLOW**: Business process workflows -->
+<!-- - **FUNCTION**: System functions and procedures -->
+<!---->
+<!-- ### Action Definition -->
+<!---->
+<!-- Actions define what operations can be performed on resources: -->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE actions ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -->
+<!--     name VARCHAR(100) NOT NULL, -->
+<!--     display_name VARCHAR(150), -->
+<!--     description TEXT, -->
+<!--     action_type VARCHAR(50) NOT NULL  -->
+<!--         CHECK (action_type IN ('CREATE', 'READ', 'UPDATE', 'DELETE', 'EXECUTE', 'APPROVE', 'REJECT', 'EXPORT', 'IMPORT')), -->
+<!--     action_category VARCHAR(50) DEFAULT 'STANDARD' -->
+<!--         CHECK (action_category IN ('STANDARD', 'ADMINISTRATIVE', 'SENSITIVE', 'BULK', 'SYSTEM')), -->
+<!--     risk_level VARCHAR(20) DEFAULT 'LOW' -->
+<!--         CHECK (risk_level IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')), -->
+<!--     requires_approval BOOLEAN DEFAULT false, -->
+<!--     is_active BOOLEAN DEFAULT true, -->
+<!--     created_at TIMESTAMPTZ DEFAULT NOW() -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Risk-Based Actions:** -->
+<!-- - **LOW**: Standard CRUD operations -->
+<!-- - **MEDIUM**: Bulk operations and data exports -->
+<!-- - **HIGH**: Administrative functions and approvals -->
+<!-- - **CRITICAL**: System configuration and security changes -->
+<!---->
+<!-- ### Role Management -->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE roles ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -->
+<!--     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT, -->
+<!--     name VARCHAR(50) NOT NULL, -->
+<!--     display_name VARCHAR(100), -->
+<!--     description TEXT, -->
+<!--     module_id UUID REFERENCES modules(id), -- Module association -->
+<!--     role_type VARCHAR(20) DEFAULT 'CUSTOM' -->
+<!--         CHECK (role_type IN ('SYSTEM', 'TENANT', 'ENTITY', 'CUSTOM', 'FUNCTIONAL')), -->
+<!--     parent_role_id UUID REFERENCES roles(id), -- Role hierarchy -->
+<!--     level INTEGER DEFAULT 0, -- Calculated hierarchy level -->
+<!--     permissions JSONB NOT NULL DEFAULT '{}'::jsonb, -- Cached permissions -->
+<!--     entity_scope JSONB DEFAULT '{}'::jsonb, -- Entity access rules -->
+<!--     conditions JSONB DEFAULT '{}'::jsonb, -- Conditional access -->
+<!--     is_system_role BOOLEAN DEFAULT false, -->
+<!--     is_active BOOLEAN DEFAULT true, -->
+<!--     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -->
+<!--     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -->
+<!--     deleted_at TIMESTAMPTZ -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Role Hierarchy Features:** -->
+<!-- - **Inheritance**: Child roles inherit parent permissions -->
+<!-- - **Scoping**: Entity-specific role assignments -->
+<!-- - **Conditions**: Time, location, and device restrictions -->
+<!-- - **Performance optimization**: Cached permission calculations -->
+<!---->
+<!-- ### Granular Permissions -->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE permissions ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -->
+<!--     resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE, -->
+<!--     action_id UUID NOT NULL REFERENCES actions(id) ON DELETE CASCADE, -->
+<!--     name VARCHAR(200) NOT NULL, -->
+<!--     display_name VARCHAR(250), -->
+<!--     description TEXT, -->
+<!--     effect VARCHAR(20) DEFAULT 'ALLOW' CHECK (effect IN ('ALLOW', 'DENY')), -->
+<!--     conditions JSONB DEFAULT '{}'::jsonb, -- ABAC conditions -->
+<!--     data_filters JSONB DEFAULT '{}'::jsonb, -- Row-level security -->
+<!--     field_restrictions JSONB DEFAULT '{}'::jsonb, -- Column restrictions -->
+<!--     is_active BOOLEAN DEFAULT true, -->
+<!--     created_at TIMESTAMPTZ DEFAULT NOW() -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Advanced Permission Features:** -->
+<!-- - **ALLOW/DENY effects**: Explicit permission grants and denials -->
+<!-- - **Data filters**: Row-level security with dynamic conditions -->
+<!-- - **Field restrictions**: Column-level access control -->
+<!-- - **ABAC integration**: Attribute-based conditional access -->
+<!---->
+<!-- ### User Role Assignments -->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE user_roles ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -->
+<!--     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE, -->
+<!--     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT, -->
+<!--     assignment_type VARCHAR(20) DEFAULT 'DIRECT' -->
+<!--         CHECK (assignment_type IN ('DIRECT', 'INHERITED', 'DELEGATED', 'TEMPORARY')), -->
+<!--     delegated_by UUID REFERENCES users(id), -->
+<!--     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -->
+<!--     assigned_by UUID REFERENCES users(id), -->
+<!--     expires_at TIMESTAMPTZ, -- Temporary assignments -->
+<!--     conditions JSONB DEFAULT '{}'::jsonb, -- Conditional access -->
+<!--     is_active BOOLEAN DEFAULT true -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Assignment Types:** -->
+<!-- - **DIRECT**: Explicitly assigned by administrator -->
+<!-- - **INHERITED**: Inherited from organizational hierarchy -->
+<!-- - **DELEGATED**: Temporarily delegated by another user -->
+<!-- - **TEMPORARY**: Time-limited assignments with auto-expiration -->
 
-### Module-Based Organization
+## 🎯 ABAC System
 
-The system organizes functionality into modules for scalable permission management:
+we need to dissect the complexities, implementation challenges, and nuanced interactions that lie beneath the elegant flow diagram. Let's excavate the layers:
 
-```sql
-CREATE TABLE modules (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    name VARCHAR(50) NOT NULL,
-    display_name VARCHAR(100),
-    description TEXT,
-    category VARCHAR(50), -- 'CORE', 'HR', 'FINANCE', 'SALES', etc.
-    version VARCHAR(20),
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+**1. "Conditional": Beyond Simple IF-THEN - The Engine's Intricacies**
+    *   **Attribute Provenance & Trust:** Where do attributes *really* come from? How is their integrity and timeliness guaranteed? A `user.clearance = "Top Secret"` is useless if the HR system feeding it has a 24-hour delay or is compromised. ABAC relies on a **Trusted Attribute Ecosystem** (Identity Providers, HR Systems, CMDBs, Environmental Sensors, etc.) with defined SLAs and verification mechanisms (e.g., digital signatures).
+    *   **Policy Complexity & Conflict Resolution:** What happens when multiple policies apply?
+        *   `Policy A:` `IF user.role=="Doctor" THEN PERMIT access_to(patient_record)`
+        *   `Policy B:` `IF patient.opt_out == true AND user.department != "Billing" THEN DENY access_to(patient_record)`
+        *   Does a Doctor (`Policy A: PERMIT`) get access if the patient opted out (`Policy B: DENY`)? ABAC requires a **Combining Algorithm** (e.g., Deny-overrides, Permit-overrides, First-applicable) defined at a policy *set* level. This becomes critical and complex at scale.
+    *   **Dynamic Attribute Evaluation Cost:** Evaluating `current_time BETWEEN 9:00 AND 17:00` is cheap. Evaluating `user.must_comply_with_region(resource.geo_location)` might involve complex geofencing lookups or API calls. The **Policy Decision Point (PDP)** must balance decision accuracy with latency. Caching strategies and pre-fetching become essential.
+    *   **Partial Evaluation & Missing Attributes:** What if a required attribute (`contractor_project_id`) is missing? Does the PDP default to `DENY` (`Fail-Secure`), request the attribute (causing latency), or use a default value? Handling incomplete attribute sets is a major design consideration.
 
-**Standard Module Categories:**
-- **CORE**: System administration and basic functionality
-- **HR**: Human resources management
-- **FINANCE**: Financial operations and accounting
-- **SALES**: Sales and customer management
-- **INVENTORY**: Warehouse and inventory management
-- **PROJECT**: Project management and tracking
+**2. "Permission": The Ephemeral Nature of Authorization**
+    *   **Beyond Binary (PERMIT/DENY):** While the core decision is binary, real-world ABAC systems often return richer **Obligations** and **Advice** alongside the decision:
+        *   `PERMIT WITH OBLIGATION log_access(reason="Sensitive Data", level=HIGH)`
+        *   `DENY WITH ADVICE redirect_to(approval_portal)`
+        *   The **Policy Enforcement Point (PEP)** must understand and enforce these extensions.
+    *   **Decision Caching & Staleness:** Can a `PERMIT` decision be cached? For how long? If the user's `employment_status` changes from "Active" to "Terminated" 5 seconds after a cached `PERMIT`, the system is vulnerable. Defining **Attribute Freshness Requirements** and **Cache Invalidation Strategies** per policy/attribute is critical for security and performance.
 
-### Resource Definition
+**3. "Approval": Integrating External Workflows - The Hidden Chasm**
+    *   **State Management & Idempotency:** How does the PDP track an outstanding approval request? What happens if the same request is intercepted again before approval is granted/denied? The approval mechanism needs robust **Correlation IDs** and state management to avoid duplicate requests or race conditions.
+    *   **Attribute Generation vs. Decision Delegation:** Is the approval workflow simply generating a new attribute (`approval.status = GRANTED`), or is it making a *de facto* access decision itself? True ABAC keeps the decision logic within the PDP using attributes. The approval service should be an *attribute provider*, not a mini-PDP. This distinction impacts auditability and policy coherence.
+    *   **Escalation & Timeouts:** What if the manager doesn't approve within 24 hours? Does the request expire (`DENY`), escalate to *their* manager, or remain pending indefinitely? Approval workflows add significant process complexity to the core ABAC engine.
 
-Resources represent system objects that can be protected:
+**4. "Execution": PEP - The Gatekeeper's Burden**
+    *   **Policy Information Point (PIP) Integration:** The PEP often needs to collect resource/environment attributes *itself* (e.g., `file.sensitivity_level`, `current_device.security_posture`) before sending the request to the PDP. This requires the PEP to integrate with various **Policy Information Points (PIPs)**.
+    *   **Handling Obligations:** Enforcing `log_access` or `transform_data` obligations requires the PEP to have additional capabilities beyond simple allow/deny. It becomes a policy *enforcement and execution* point.
+    *   **Stateful Operations:** How does the PEP handle long-running actions (e.g., "Open a document for editing")? Does the initial `PERMIT` cover the entire session, or must the PEP continuously re-authorize? Session management intertwined with ABAC is complex.
 
-```sql
-CREATE TABLE resources (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    module_id UUID NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
-    entity_id UUID REFERENCES entities(uuid),
-    name VARCHAR(100) NOT NULL,
-    display_name VARCHAR(150),
-    description TEXT,
-    resource_type VARCHAR(50) NOT NULL 
-        CHECK (resource_type IN ('API', 'UI', 'DATA', 'FILE', 'REPORT', 'WORKFLOW', 'FUNCTION')),
-    parent_resource_id UUID REFERENCES resources(id),
-    path VARCHAR(500), -- URL path, API endpoint, file path
-    resource_attributes JSONB DEFAULT '{}'::jsonb, -- ABAC attributes
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ
-);
-```
+**5. "Request": Context is King - The Unspoken Complexity**
+    *   **Action Granularity:** Is the request `"Read Document X"` or `"Copy Paragraph from Document X to Document Y"`? The finer the action granularity, the more precise (and complex) the policies need to be. Defining the actionable verbs is fundamental.
+    *   **Implicit Context:** What contextual attributes are *assumed*? (e.g., Is the user on a corporate-managed device? On the corporate network? Using MFA?). Capturing and verifying this implicit context reliably is challenging but essential for policies like `IF user.location == "OFFICE_NETWORK" THEN PERMIT`.
 
-**Resource Types:**
-- **API**: REST endpoints and GraphQL operations
-- **UI**: User interface components and pages
-- **DATA**: Database tables and data objects
-- **FILE**: Documents and file system resources
-- **REPORT**: Generated reports and analytics
-- **WORKFLOW**: Business process workflows
-- **FUNCTION**: System functions and procedures
+**The Deeper ABAC Flow (Reality Check):**
 
-### Action Definition
+1.  **Request:** User/System attempts action `A` on Resource `R`.
+2.  **PEP Intercept:** Captures *known* Subject (`S`), Resource (`R`), Action (`A`). Identifies *needed* Env/Res attributes.
+3.  **PIP Queries (PEP/PDP):** PEP/PDP queries various PIPs to gather attributes `S.attr1`, `S.attr2`, `R.attr3`, `ENV.attr4`, `ENV.attr5`. *(Latency, Errors Possible)*
+4.  **Policy Retrieval (PDP):** PDP finds *all* policies applicable to `S`, `R`, `A`, `ENV`. *(Complexity)*
+5.  **Policy Evaluation (PDP):**
+    *   Evaluate conditions using gathered attributes.
+    *   **IF** an `approval_required` condition triggers:
+        *   Suspend evaluation. Initiate approval workflow with correlation ID `CID`.
+        *   Approval workflow runs (generates `approval.status(CID)=GRANTED/DENIED` as a *new attribute*). *(Significant Delay, State Management)*
+        *   PDP re-triggered or polls for `approval.status(CID)`.
+        *   PDP resumes evaluation with new attribute.
+6.  **Conflict Resolution (PDP):** Applies Combining Algorithm to all applicable policy outcomes. *(Critical Security Logic)*
+7.  **Decision + Obligations (PDP):** Returns `PERMIT`/`DENY` + any Obligations/Advice.
+8.  **PEP Execution:**
+    *   Enforces `PERMIT`/`DENY`.
+    *   Executes Obligations (e.g., logs, transforms data, triggers alerts).
+    *   **Potentially:** Manages session state for ongoing access.
 
-Actions define what operations can be performed on resources:
+**The Core Challenge: Managing Emergent Complexity**
 
-```sql
-CREATE TABLE actions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL,
-    display_name VARCHAR(150),
-    description TEXT,
-    action_type VARCHAR(50) NOT NULL 
-        CHECK (action_type IN ('CREATE', 'READ', 'UPDATE', 'DELETE', 'EXECUTE', 'APPROVE', 'REJECT', 'EXPORT', 'IMPORT')),
-    action_category VARCHAR(50) DEFAULT 'STANDARD'
-        CHECK (action_category IN ('STANDARD', 'ADMINISTRATIVE', 'SENSITIVE', 'BULK', 'SYSTEM')),
-    risk_level VARCHAR(20) DEFAULT 'LOW'
-        CHECK (risk_level IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
-    requires_approval BOOLEAN DEFAULT false,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+ABAC's power (dynamic, attribute-based decisions) is also its Achilles' heel. The interactions between:
 
-**Risk-Based Actions:**
-- **LOW**: Standard CRUD operations
-- **MEDIUM**: Bulk operations and data exports
-- **HIGH**: Administrative functions and approvals
-- **CRITICAL**: System configuration and security changes
+*   A distributed, real-time attribute fabric
+*   Complex, potentially conflicting policy sets
+*   External workflows (approvals)
+*   Obligation enforcement
+*   Performance demands
 
-### Role Management
+...create a system where the behavior can become emergent and hard to predict. Rigorous **Policy Analysis Tools** (simulation, "what-if" testing), **Attribute Governance**, and **Comprehensive Auditing** are not just nice-to-haves; they are essential for secure and manageable ABAC implementations.
 
-```sql
-CREATE TABLE roles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
-    name VARCHAR(50) NOT NULL,
-    display_name VARCHAR(100),
-    description TEXT,
-    module_id UUID REFERENCES modules(id), -- Module association
-    role_type VARCHAR(20) DEFAULT 'CUSTOM'
-        CHECK (role_type IN ('SYSTEM', 'TENANT', 'ENTITY', 'CUSTOM', 'FUNCTIONAL')),
-    parent_role_id UUID REFERENCES roles(id), -- Role hierarchy
-    level INTEGER DEFAULT 0, -- Calculated hierarchy level
-    permissions JSONB NOT NULL DEFAULT '{}'::jsonb, -- Cached permissions
-    entity_scope JSONB DEFAULT '{}'::jsonb, -- Entity access rules
-    conditions JSONB DEFAULT '{}'::jsonb, -- Conditional access
-    is_system_role BOOLEAN DEFAULT false,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ
-);
-```
-
-**Role Hierarchy Features:**
-- **Inheritance**: Child roles inherit parent permissions
-- **Scoping**: Entity-specific role assignments
-- **Conditions**: Time, location, and device restrictions
-- **Performance optimization**: Cached permission calculations
-
-### Granular Permissions
-
-```sql
-CREATE TABLE permissions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
-    action_id UUID NOT NULL REFERENCES actions(id) ON DELETE CASCADE,
-    name VARCHAR(200) NOT NULL,
-    display_name VARCHAR(250),
-    description TEXT,
-    effect VARCHAR(20) DEFAULT 'ALLOW' CHECK (effect IN ('ALLOW', 'DENY')),
-    conditions JSONB DEFAULT '{}'::jsonb, -- ABAC conditions
-    data_filters JSONB DEFAULT '{}'::jsonb, -- Row-level security
-    field_restrictions JSONB DEFAULT '{}'::jsonb, -- Column restrictions
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-**Advanced Permission Features:**
-- **ALLOW/DENY effects**: Explicit permission grants and denials
-- **Data filters**: Row-level security with dynamic conditions
-- **Field restrictions**: Column-level access control
-- **ABAC integration**: Attribute-based conditional access
-
-### User Role Assignments
-
-```sql
-CREATE TABLE user_roles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
-    assignment_type VARCHAR(20) DEFAULT 'DIRECT'
-        CHECK (assignment_type IN ('DIRECT', 'INHERITED', 'DELEGATED', 'TEMPORARY')),
-    delegated_by UUID REFERENCES users(id),
-    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    assigned_by UUID REFERENCES users(id),
-    expires_at TIMESTAMPTZ, -- Temporary assignments
-    conditions JSONB DEFAULT '{}'::jsonb, -- Conditional access
-    is_active BOOLEAN DEFAULT true
-);
-```
-
-**Assignment Types:**
-- **DIRECT**: Explicitly assigned by administrator
-- **INHERITED**: Inherited from organizational hierarchy
-- **DELEGATED**: Temporarily delegated by another user
-- **TEMPORARY**: Time-limited assignments with auto-expiration
-
-## 🎯 Advanced ABAC System
+**In essence:** ABAC is not just a set of components; it's a complex, dynamic **authorization ecosystem**. Understanding the deep interplay of "Request," "Conditional" (attributes + policies + combining logic), "Permission" (decision + obligations), "Approval" (external workflow integration), and "Execution" (PEP capabilities + obligation handling), along with the underlying challenges of attribute trust, performance, and complexity management, is crucial for moving beyond theory into practical, secure deployment.
 
 ### Attribute Definitions
 
@@ -341,6 +407,10 @@ CREATE TABLE attribute_definitions (
 ```
 
 ### ABAC Policies
+
+
+
+#### Database structure 
 
 Advanced policy engine with rule-based evaluation:
 

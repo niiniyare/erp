@@ -208,13 +208,19 @@ func (r *repository) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employ
 }
 
 func (r *repository) AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
-	// TODO: Implement actual database interaction for assigning user roles
-	return nil
+	return r.store.AssignUserRole(ctx, db.AssignUserRoleParams{
+		UserID:   userID,
+		RoleID:   roleID,
+		EntityID: entityID,
+	})
 }
 
 func (r *repository) RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
-	// TODO: Implement actual database interaction for revoking user roles
-	return nil
+	return r.store.RevokeUserRole(ctx, db.RevokeUserRoleParams{
+		UserID:   userID,
+		RoleID:   roleID,
+		EntityID: entityID,
+	})
 }
 
 // --- Conversion Helpers ---
