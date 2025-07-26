@@ -4,6 +4,18 @@
 
 This document tracks the implementation progress of the Attribute-Based Access Control (ABAC) system for the ERP platform. The ABAC system will provide fine-grained, dynamic access control based on user attributes, resource attributes, environmental context, and organizational policies.
 
+## 🎯 Critical Implementation Requirements
+
+**Mandatory Integration Points:**
+- **Tenant Context Lifecycle**: All ABAC operations MUST follow tenant context management guidelines from `@docs/TENANT_CONTEXT_LIFECYCLE.md`
+- **Shared Infrastructure**: MUST use existing infrastructure from `@internal/shared/` for:
+  - `errors/` - Enhanced error handling with ABAC-specific error codes
+  - `tracing/` - Distributed tracing for policy evaluation flows
+  - `logger/` - Structured logging with security audit trails
+  - `metrics/` - Performance monitoring and cache statistics
+- **Database Integration**: Ensure proper RLS (Row Level Security) enforcement and SQLC integration
+- **Multi-Tenant Isolation**: All ABAC operations must respect tenant boundaries with proper context propagation
+
 ## 🎯 Implementation Goals
 
 - [ ] Implement comprehensive ABAC policy engine
@@ -78,21 +90,21 @@ This document tracks the implementation progress of the Attribute-Based Access C
 ## Phase 2: Attribute Management System (Week 2-3)
 
 ### 2.1 Attribute Definition Service
-- [ ] Implement `AttributeDefinitionService` interface
-- [ ] Create attribute validation logic
+- [ ] Implement `AttributeDefinitionService` interface with `@internal/shared/errors` integration
+- [ ] Create attribute validation logic using shared error handling patterns
 - [ ] Implement attribute data type handling (STRING, NUMBER, BOOLEAN, DATE, JSON, ARRAY, ENUM)
 - [ ] Add attribute category management (USER, RESOURCE, ENVIRONMENT, ACTION, ENTITY, SESSION)
-- [ ] Implement default value and allowed values logic
-- [ ] Create attribute encryption/decryption for sensitive data
+- [ ] Implement default value and allowed values logic with tenant context awareness
+- [ ] Create attribute encryption/decryption for sensitive data following TENANT_CONTEXT_LIFECYCLE patterns
 
 ### 2.2 Attribute Collection Engine
-- [ ] Implement `AttributeCollector` interface
-- [ ] Create user attribute collector (from identity module)
-- [ ] Create resource attribute collector
-- [ ] Create environment attribute collector (time, location, device)
-- [ ] Create session attribute collector
-- [ ] Implement attribute caching with TTL
-- [ ] Add attribute freshness validation
+- [ ] Implement `AttributeCollector` interface with `@internal/shared/tracing` integration
+- [ ] Create user attribute collector (from identity module) following tenant context patterns
+- [ ] Create resource attribute collector with proper RLS enforcement
+- [ ] Create environment attribute collector (time, location, device) using shared logging
+- [ ] Create session attribute collector respecting tenant boundaries
+- [ ] Implement attribute caching with TTL using tenant-aware cache keys
+- [ ] Add attribute freshness validation with `@internal/shared/metrics` monitoring
 
 ### 2.3 Attribute Sources Integration
 - [ ] Integrate with identity service for user attributes
@@ -112,13 +124,13 @@ This document tracks the implementation progress of the Attribute-Based Access C
 ## Phase 3: Policy Engine Core (Week 3-5)
 
 ### 3.1 Policy Evaluation Engine
-- [ ] Implement `PolicyEvaluationEngine` interface
-- [ ] Create policy target matching logic
-- [ ] Implement policy rule evaluation engine
-- [ ] Create condition evaluation logic (AND, OR, NOT operations)
-- [ ] Implement comparison operators (EQ, NE, GT, LT, GTE, LTE, IN, NOT_IN, LIKE, REGEX)
-- [ ] Add function evaluation support (time_between, geo_within, etc.)
-- [ ] Implement policy obligations and advice handling
+- [ ] Implement `PolicyEvaluationEngine` interface with full `@internal/shared/` integration
+- [ ] Create policy target matching logic with tenant context validation per TENANT_CONTEXT_LIFECYCLE
+- [ ] Implement policy rule evaluation engine using `@internal/shared/errors` for enhanced error reporting
+- [ ] Create condition evaluation logic (AND, OR, NOT operations) with structured logging
+- [ ] Implement comparison operators (EQ, NE, GT, LT, GTE, LTE, IN, NOT_IN, LIKE, REGEX) with performance metrics
+- [ ] Add function evaluation support (time_between, geo_within, etc.) with distributed tracing
+- [ ] Implement policy obligations and advice handling following tenant isolation patterns
 
 ### 3.2 Policy Combining Algorithms
 - [ ] Implement `DenyOverrides` combining algorithm
@@ -129,12 +141,12 @@ This document tracks the implementation progress of the Attribute-Based Access C
 - [ ] Add policy priority-based resolution
 
 ### 3.3 Policy Decision Point (PDP)
-- [ ] Implement main `PolicyDecisionPoint` service
-- [ ] Create policy retrieval and filtering logic
-- [ ] Implement decision caching with context-aware keys
-- [ ] Add performance monitoring and metrics
-- [ ] Implement decision audit logging
-- [ ] Create policy evaluation result formatting
+- [ ] Implement main `PolicyDecisionPoint` service ensuring tenant context lifecycle compliance
+- [ ] Create policy retrieval and filtering logic using SQLC with automatic tenant filtering
+- [ ] Implement decision caching with tenant-aware context keys following TENANT_CONTEXT_LIFECYCLE
+- [ ] Add performance monitoring and metrics using `@internal/shared/metrics`
+- [ ] Implement decision audit logging with `@internal/shared/logger` for security compliance
+- [ ] Create policy evaluation result formatting with `@internal/shared/errors` integration
 
 ### 3.4 Policy Information Point (PIP)
 - [ ] Implement `PolicyInformationPoint` interface
@@ -1015,6 +1027,12 @@ Request → PEP → PDP ↔ PIP (attributes)
 **Last Updated:** January 26, 2025  
 **Next Review:** February 2, 2025  
 **Overall Progress:** 12.5% Complete (Phase 1 of 8 completed)
+
+## 🔗 Reference Documents
+
+- **Tenant Context Management**: `@docs/TENANT_CONTEXT_LIFECYCLE.md` - MUST be followed for all ABAC operations
+- **Shared Infrastructure**: `@internal/shared/` - errors, tracing, logger, metrics components
+- **Database Patterns**: SQLC integration with RLS enforcement and automatic tenant filtering
 
 ---
 
