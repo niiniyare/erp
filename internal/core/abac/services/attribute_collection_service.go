@@ -33,7 +33,7 @@ type AttributeCollectionService interface {
 
 	// Comprehensive collection
 	CollectAllAttributes(ctx context.Context, req *AttributeCollectionRequest) (*models.AttributeContext, error)
-	
+
 	// Validation and enrichment
 	ValidateAttributes(ctx context.Context, attributes map[string]*models.AttributeValue) error
 	EnrichAttributeContext(ctx context.Context, context *models.AttributeContext) (*models.AttributeContext, error)
@@ -64,13 +64,13 @@ type EnvironmentAttributeRequest struct {
 
 // attributeCollectionService implements AttributeCollectionService
 type attributeCollectionService struct {
-	attrDefRepo   repository.AttributeDefinitionRepository
-	attrRepo      repository.AttributeRepository
-	identityRepo  identity.Repository
-	cache         cache.Service
-	tracing       tracing.TracingService
-	metrics       metrics.Provider  
-	logger        logger.Logger
+	attrDefRepo  repository.AttributeDefinitionRepository
+	attrRepo     repository.AttributeRepository
+	identityRepo identity.Repository
+	cache        cache.Service
+	tracing      tracing.TracingService
+	metrics      metrics.Provider
+	logger       logger.Logger
 }
 
 // NewAttributeCollectionService creates a new attribute collection service
@@ -351,10 +351,10 @@ func (s *attributeCollectionService) CollectSessionAttributes(ctx context.Contex
 	for key, value := range sessionData {
 		// Normalize key name
 		normalizedKey := s.normalizeAttributeName(key)
-		
+
 		// Determine data type
 		dataType := s.inferDataType(value)
-		
+
 		s.addAttributeIfDefined(attributes, sessionAttrDefs, normalizedKey, value, dataType, types.AttributeSourceSession)
 	}
 
@@ -780,7 +780,7 @@ func (s *attributeCollectionService) collectBasicResourceAttributes(
 	attributes map[string]*models.AttributeValue,
 ) {
 	s.addAttributeIfDefined(attributes, attrDefs, "resource_type", resourceType, types.AttributeDataTypeString, types.AttributeSourceResource)
-	
+
 	if resourceID != nil {
 		s.addAttributeIfDefined(attributes, attrDefs, "resource_id", *resourceID, types.AttributeDataTypeString, types.AttributeSourceResource)
 	}
@@ -958,15 +958,15 @@ func (s *attributeCollectionService) categorizeResourceType(resourceType string)
 // addComputedAttributes adds computed attributes based on existing attributes
 func (s *attributeCollectionService) addComputedAttributes(attrContext *models.AttributeContext) {
 	// Add computed attributes based on existing data
-	
+
 	// Compute user risk score based on various factors
 	if userRiskScore := s.computeUserRiskScore(attrContext); userRiskScore >= 0 {
 		attrContext.UserAttributes["computed_risk_score"] = &models.AttributeValue{
-			Name:     "computed_risk_score",
-			Value:    userRiskScore,
-			DataType: types.AttributeDataTypeNumber,
-			Category: types.AttributeCategoryUser,
-			Source:   types.AttributeSourceComputed,
+			Name:      "computed_risk_score",
+			Value:     userRiskScore,
+			DataType:  types.AttributeDataTypeNumber,
+			Category:  types.AttributeCategoryUser,
+			Source:    types.AttributeSourceComputed,
 			Timestamp: time.Now(),
 		}
 	}
@@ -974,11 +974,11 @@ func (s *attributeCollectionService) addComputedAttributes(attrContext *models.A
 	// Compute access pattern based on time and location
 	if accessPattern := s.computeAccessPattern(attrContext); accessPattern != "" {
 		attrContext.EnvironmentAttributes["computed_access_pattern"] = &models.AttributeValue{
-			Name:     "computed_access_pattern",
-			Value:    accessPattern,
-			DataType: types.AttributeDataTypeString,
-			Category: types.AttributeCategoryEnvironment,
-			Source:   types.AttributeSourceComputed,
+			Name:      "computed_access_pattern",
+			Value:     accessPattern,
+			DataType:  types.AttributeDataTypeString,
+			Category:  types.AttributeCategoryEnvironment,
+			Source:    types.AttributeSourceComputed,
 			Timestamp: time.Now(),
 		}
 	}
@@ -987,21 +987,21 @@ func (s *attributeCollectionService) addComputedAttributes(attrContext *models.A
 // addDerivedAttributes adds derived attributes
 func (s *attributeCollectionService) addDerivedAttributes(attrContext *models.AttributeContext) {
 	// Add derived attributes based on business logic
-	
+
 	// TODO: Implement based on your business requirements
 }
 
 // computeUserRiskScore computes a risk score for the user
 func (s *attributeCollectionService) computeUserRiskScore(attrContext *models.AttributeContext) float64 {
 	score := 0.0
-	
+
 	// TODO: Implement risk scoring algorithm based on your requirements
 	// Example factors:
 	// - Failed login attempts
 	// - Account age
 	// - Previous access patterns
 	// - Security level
-	
+
 	return score
 }
 
@@ -1012,7 +1012,7 @@ func (s *attributeCollectionService) computeAccessPattern(attrContext *models.At
 	// - "normal_hours" vs "after_hours"
 	// - "usual_location" vs "unusual_location"
 	// - "typical_device" vs "new_device"
-	
+
 	return "normal"
 }
 

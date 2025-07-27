@@ -1,0 +1,758 @@
+package abac
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/niiniyare/erp/internal/core/abac/repository"
+	"github.com/niiniyare/erp/internal/shared/errors"
+	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+)
+
+// Mock AuditLogRepository
+type MockAuditLogRepository struct {
+	mock.Mock
+}
+
+func (m *MockAuditLogRepository) CreateAuditEvent(ctx context.Context, event *AuditEvent) error {
+	args := m.Called(ctx, event)
+	return args.Error(0)
+}
+
+func (m *MockAuditLogRepository) QueryAuditEvents(ctx context.Context, filters map[string]interface{}, page, pageSize int) ([]AuditEvent, int, error) {
+	args := m.Called(ctx, filters, page, pageSize)
+	return args.Get(0).([]AuditEvent), args.Int(1), args.Error(2)
+}
+
+// Test Suite for Security Compliance Manager
+func TestSecurityComplianceManager(t *testing.T) {
+	t.Run("TestEncryptSensitiveData_Success", func(t *testing.T) {
+		// Setup
+		mockRepo := &MockAuditLogRepository{}
+		mockLogger := logger.NewMockLogger()
+		mockMetrics := metrics.NewMockMetricsProvider()
+		mockTracer := tracing.NewMockTracingService()
+
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		manager := NewSecurityComplianceManager(
+			mockRepo,
+			encryptionKey,
+			mockLogger,
+			mockMetrics,
+			mockTracer,
+		)
+
+		// Test data
+		actorID := uuid.New()
+		dataID := uuid.New()
+		request := &EncryptDataRequest{
+			DataID:        &dataID,
+			Data:          "sensitive personal information",
+			DataType:      "personal_data",
+			SecurityLevel: SecurityLevelHigh,
+			ActorID:       &actorID,
+		}
+
+		// Mock expectations for audit logging
+		mockRepo.On("CreateAuditEvent", mock.Anything, mock.MatchedBy(func(event *AuditEvent) bool {
+			return event.EventType == AuditEventTypeDataEncryption &&
+				event.ActorID == &actorID &&
+				event.Action == "encrypt"
+		})).Return(nil)
+
+		// Execute
+		result, err := manager.EncryptSensitiveData(context.Background(), request)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.NotEmpty(t, result.EncryptedData)
+		assert.True(t, result.IsEncrypted)
+		assert.Equal(t, DataClassificationPersonal, result.Classification)
+		assert.Equal(t, SecurityLevelHigh, result.SecurityLevel)
+		assert.Equal(t, "AES-256-GCM", result.EncryptionMethod)
+		assert.NotEqual(t, request.Data, result.EncryptedData)
+
+		// Verify mock calls
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("TestEncryptSensitiveData_NoEncryptionRequired", func(t *testing.T) {
+		// Setup
+		mockRepo := &MockAuditLogRepository{}
+		mockLogger := logger.NewMockLogger()
+		mockMetrics := metrics.NewMockMetricsProvider()
+		mockTracer := tracing.NewMockTracingService()
+
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		manager := NewSecurityComplianceManager(
+			mockRepo,
+			encryptionKey,
+			mockLogger,
+			mockMetrics,
+			mockTracer,
+		)
+
+		// Test data - public data with low security level
+		actorID := uuid.New()
+		dataID := uuid.New()
+		request := &EncryptDataRequest{
+			DataID:        &dataID,
+			Data:          "public information",
+			DataType:      "public",
+			SecurityLevel: SecurityLevelLow,
+			ActorID:       &actorID,
+		}
+
+		// Execute
+		result, err := manager.EncryptSensitiveData(context.Background(), request)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, request.Data, result.EncryptedData) // Data should not be encrypted
+		assert.False(t, result.IsEncrypted)
+		assert.Equal(t, DataClassificationPublic, result.Classification)
+
+		// Verify no audit event was created for non-encrypted data
+		mockRepo.AssertNotCalled(t, "CreateAuditEvent")
+	})
+
+	t.Run("TestDecryptSensitiveData_Success", func(t *testing.T) {
+		// Setup
+		mockRepo := &MockAuditLogRepository{}
+		mockLogger := logger.NewMockLogger()
+		mockMetrics := metrics.NewMockMetricsProvider()
+		mockTracer := tracing.NewMockTracingService()
+
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		manager := NewSecurityComplianceManager(
+			mockRepo,
+			encryptionKey,
+			mockLogger,
+			mockMetrics,
+			mockTracer,
+		)
+
+		// First encrypt some data
+		originalData := "sensitive information to decrypt"
+		actorID := uuid.New()
+		dataID := uuid.New()
+
+		encryptRequest := &EncryptDataRequest{
+			DataID:        &dataID,
+			Data:          originalData,
+			DataType:      "personal_data",
+			SecurityLevel: SecurityLevelHigh,
+			ActorID:       &actorID,
+		}
+
+		// Mock audit for encryption
+		mockRepo.On("CreateAuditEvent", mock.Anything, mock.MatchedBy(func(event *AuditEvent) bool {
+			return event.EventType == AuditEventTypeDataEncryption
+		})).Return(nil)
+
+		encryptResult, err := manager.EncryptSensitiveData(context.Background(), encryptRequest)
+		require.NoError(t, err)
+
+		// Now decrypt the data
+		decryptRequest := &DecryptDataRequest{
+			DataID:        &dataID,
+			EncryptedData: encryptResult.EncryptedData,
+			Purpose:       "data access for authorized user",
+			ActorID:       &actorID,
+		}
+
+		// Mock audit for decryption
+		mockRepo.On("CreateAuditEvent", mock.Anything, mock.MatchedBy(func(event *AuditEvent) bool {
+			return event.EventType == AuditEventTypeDataDecryption &&
+				event.ActorID == &actorID &&
+				event.Action == "decrypt"
+		})).Return(nil)
+
+		// Execute
+		result, err := manager.DecryptSensitiveData(context.Background(), decryptRequest)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, originalData, result.DecryptedData)
+		assert.True(t, result.AccessLogged)
+
+		// Verify mock calls
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("TestRecordAuditEvent_Success", func(t *testing.T) {
+		// Setup
+		mockRepo := &MockAuditLogRepository{}
+		mockLogger := logger.NewMockLogger()
+		mockMetrics := metrics.NewMockMetricsProvider()
+		mockTracer := tracing.NewMockTracingService()
+
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		manager := NewSecurityComplianceManager(
+			mockRepo,
+			encryptionKey,
+			mockLogger,
+			mockMetrics,
+			mockTracer,
+		)
+
+		// Test data
+		actorID := uuid.New()
+		resourceID := uuid.New()
+		request := &AuditEventRequest{
+			EventType:    AuditEventTypePolicyEvaluation,
+			ActorID:      &actorID,
+			ResourceType: "document",
+			ResourceID:   &resourceID,
+			Action:       "read",
+			Result:       stringPtr("PERMIT"),
+			Details: map[string]interface{}{
+				"policy_id": uuid.New().String(),
+				"decision":  "PERMIT",
+			},
+			Timestamp: time.Now(),
+			IPAddress: stringPtr("192.168.1.100"),
+			UserAgent: stringPtr("Mozilla/5.0 (Test Browser)"),
+			SessionID: stringPtr("session-123"),
+		}
+
+		// Mock expectations
+		mockRepo.On("CreateAuditEvent", mock.Anything, mock.MatchedBy(func(event *AuditEvent) bool {
+			return event.EventType == request.EventType &&
+				event.ActorID == request.ActorID &&
+				event.Action == request.Action
+		})).Return(nil)
+
+		// Execute
+		err := manager.RecordAuditEvent(context.Background(), request)
+
+		// Assert
+		require.NoError(t, err)
+
+		// Verify mock calls
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("TestQueryAuditLog_Success", func(t *testing.T) {
+		// Setup
+		mockRepo := &MockAuditLogRepository{}
+		mockLogger := logger.NewMockLogger()
+		mockMetrics := metrics.NewMockMetricsProvider()
+		mockTracer := tracing.NewMockTracingService()
+
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		manager := NewSecurityComplianceManager(
+			mockRepo,
+			encryptionKey,
+			mockLogger,
+			mockMetrics,
+			mockTracer,
+		)
+
+		// Test data
+		actorID := uuid.New()
+		startTime := time.Now().Add(-24 * time.Hour)
+		endTime := time.Now()
+
+		request := &AuditQueryRequest{
+			ActorID:      &actorID,
+			EventType:    &AuditEventTypePolicyEvaluation,
+			ResourceType: "document",
+			StartTime:    &startTime,
+			EndTime:      &endTime,
+			Page:         1,
+			PageSize:     20,
+		}
+
+		// Mock audit events
+		mockEvents := []AuditEvent{
+			{
+				ID:           uuid.New(),
+				EventType:    AuditEventTypePolicyEvaluation,
+				ActorID:      &actorID,
+				ResourceType: "document",
+				Action:       "read",
+				Timestamp:    time.Now().Add(-1 * time.Hour),
+			},
+			{
+				ID:           uuid.New(),
+				EventType:    AuditEventTypePolicyEvaluation,
+				ActorID:      &actorID,
+				ResourceType: "document",
+				Action:       "write",
+				Timestamp:    time.Now().Add(-2 * time.Hour),
+			},
+		}
+
+		expectedFilters := map[string]interface{}{
+			"actor_id":      actorID,
+			"event_type":    AuditEventTypePolicyEvaluation,
+			"resource_type": "document",
+			"start_time":    startTime,
+			"end_time":      endTime,
+		}
+
+		// Mock expectations
+		mockRepo.On("QueryAuditEvents", mock.Anything, expectedFilters, 1, 20).Return(mockEvents, 50, nil)
+
+		// Mock audit query event
+		mockRepo.On("CreateAuditEvent", mock.Anything, mock.MatchedBy(func(event *AuditEvent) bool {
+			return event.EventType == AuditEventTypeAuditQuery &&
+				event.Action == "query"
+		})).Return(nil)
+
+		// Execute
+		result, err := manager.QueryAuditLog(context.Background(), request)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Len(t, result.Events, 2)
+		assert.Equal(t, 50, result.TotalCount)
+		assert.Equal(t, 1, result.Page)
+		assert.Equal(t, 20, result.PageSize)
+
+		// Verify mock calls
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("TestGenerateComplianceReport_GDPR", func(t *testing.T) {
+		// Setup
+		mockRepo := &MockAuditLogRepository{}
+		mockLogger := logger.NewMockLogger()
+		mockMetrics := metrics.NewMockMetricsProvider()
+		mockTracer := tracing.NewMockTracingService()
+
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		manager := NewSecurityComplianceManager(
+			mockRepo,
+			encryptionKey,
+			mockLogger,
+			mockMetrics,
+			mockTracer,
+		)
+
+		// Test data
+		requestedBy := uuid.New()
+		startTime := time.Now().Add(-30 * 24 * time.Hour) // 30 days ago
+		endTime := time.Now()
+
+		request := &ComplianceReportRequest{
+			Framework:   ComplianceFrameworkGDPR,
+			PeriodStart: startTime,
+			PeriodEnd:   endTime,
+			RequestedBy: &requestedBy,
+			Scope:       []string{"data_protection", "user_rights"},
+		}
+
+		// Mock audit event for report generation
+		mockRepo.On("CreateAuditEvent", mock.Anything, mock.MatchedBy(func(event *AuditEvent) bool {
+			return event.EventType == AuditEventTypeComplianceReport &&
+				event.ActorID == &requestedBy &&
+				event.Action == "generate"
+		})).Return(nil)
+
+		// Execute
+		result, err := manager.GenerateComplianceReport(context.Background(), request)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, ComplianceFrameworkGDPR, result.Framework)
+		assert.Equal(t, startTime, result.PeriodStart)
+		assert.Equal(t, endTime, result.PeriodEnd)
+		assert.Equal(t, &requestedBy, result.GeneratedBy)
+		assert.Equal(t, ComplianceStatusCompliant, result.Status)
+		assert.Greater(t, result.Score, 0.0)
+
+		// Verify mock calls
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("TestProcessDataSubjectRequest_Access", func(t *testing.T) {
+		// Setup
+		mockRepo := &MockAuditLogRepository{}
+		mockLogger := logger.NewMockLogger()
+		mockMetrics := metrics.NewMockMetricsProvider()
+		mockTracer := tracing.NewMockTracingService()
+
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		manager := NewSecurityComplianceManager(
+			mockRepo,
+			encryptionKey,
+			mockLogger,
+			mockMetrics,
+			mockTracer,
+		)
+
+		// Test data
+		subjectID := uuid.New()
+		request := &DataSubjectRequest{
+			SubjectID:   subjectID,
+			RequestType: DataSubjectRequestTypeAccess,
+		}
+
+		// Mock audit event for data subject request
+		mockRepo.On("CreateAuditEvent", mock.Anything, mock.MatchedBy(func(event *AuditEvent) bool {
+			return event.EventType == AuditEventTypeDataSubjectRequest &&
+				event.ActorID == &subjectID &&
+				event.Action == string(DataSubjectRequestTypeAccess)
+		})).Return(nil)
+
+		// Execute
+		result, err := manager.ProcessDataSubjectRequest(context.Background(), request)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, "completed", result.Status)
+
+		// Verify mock calls
+		mockRepo.AssertExpectations(t)
+	})
+}
+
+// Test Suite for Encryption Service
+func TestEncryptionService(t *testing.T) {
+	t.Run("TestEncryptDecryptRoundTrip", func(t *testing.T) {
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		service := NewEncryptionService(encryptionKey)
+
+		originalData := "sensitive data for encryption test"
+		additionalData := []byte("additional authenticated data")
+
+		// Encrypt
+		encryptedData, err := service.Encrypt(originalData, additionalData)
+		require.NoError(t, err)
+		assert.NotEmpty(t, encryptedData)
+		assert.NotEqual(t, originalData, encryptedData)
+
+		// Decrypt
+		decryptedData, err := service.Decrypt(encryptedData, additionalData)
+		require.NoError(t, err)
+		assert.Equal(t, originalData, decryptedData)
+	})
+
+	t.Run("TestEncryptDecryptWithoutAdditionalData", func(t *testing.T) {
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		service := NewEncryptionService(encryptionKey)
+
+		originalData := "simple encryption test"
+
+		// Encrypt without additional data
+		encryptedData, err := service.Encrypt(originalData, nil)
+		require.NoError(t, err)
+		assert.NotEmpty(t, encryptedData)
+
+		// Decrypt without additional data
+		decryptedData, err := service.Decrypt(encryptedData, nil)
+		require.NoError(t, err)
+		assert.Equal(t, originalData, decryptedData)
+	})
+
+	t.Run("TestDecryptWithWrongAdditionalData", func(t *testing.T) {
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		service := NewEncryptionService(encryptionKey)
+
+		originalData := "data with specific additional auth data"
+		correctAdditionalData := []byte("correct additional data")
+		wrongAdditionalData := []byte("wrong additional data")
+
+		// Encrypt with correct additional data
+		encryptedData, err := service.Encrypt(originalData, correctAdditionalData)
+		require.NoError(t, err)
+
+		// Try to decrypt with wrong additional data
+		_, err = service.Decrypt(encryptedData, wrongAdditionalData)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "decryption failed")
+	})
+
+	t.Run("TestDecryptInvalidData", func(t *testing.T) {
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		service := NewEncryptionService(encryptionKey)
+
+		// Test with invalid base64
+		_, err := service.Decrypt("invalid-base64-!", nil)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to decode base64")
+
+		// Test with too short ciphertext
+		shortCiphertext := "YWJj" // "abc" in base64, too short for nonce
+		_, err = service.Decrypt(shortCiphertext, nil)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "ciphertext too short")
+	})
+
+	t.Run("TestEncryptEmptyString", func(t *testing.T) {
+		encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+		service := NewEncryptionService(encryptionKey)
+
+		// Encrypt empty string
+		encryptedData, err := service.Encrypt("", nil)
+		require.NoError(t, err)
+		assert.NotEmpty(t, encryptedData)
+
+		// Decrypt empty string
+		decryptedData, err := service.Decrypt(encryptedData, nil)
+		require.NoError(t, err)
+		assert.Equal(t, "", decryptedData)
+	})
+}
+
+// Test Suite for Data Classification
+func TestDataClassification(t *testing.T) {
+	manager := &securityComplianceManager{}
+
+	testCases := []struct {
+		data          string
+		dataType      string
+		expectedClass DataClassification
+	}{
+		{"john.doe@example.com", "pii", DataClassificationPersonal},
+		{"123-45-6789", "personal_data", DataClassificationPersonal},
+		{"1000.50", "financial", DataClassificationFinancial},
+		{"credit_card_number", "payment", DataClassificationFinancial},
+		{"blood_type_A+", "health", DataClassificationHealth},
+		{"medical_record_123", "medical", DataClassificationHealth},
+		{"company_secrets", "confidential", DataClassificationConfidential},
+		{"internal_memo", "secret", DataClassificationConfidential},
+		{"public_announcement", "public", DataClassificationPublic},
+		{"general_info", "general", DataClassificationPublic},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("Classify_%s_%s", tc.dataType, tc.expectedClass), func(t *testing.T) {
+			classification := manager.classifyData(tc.data, tc.dataType)
+			assert.Equal(t, tc.expectedClass, classification)
+		})
+	}
+}
+
+// Test Suite for Encryption Requirements
+func TestEncryptionRequirements(t *testing.T) {
+	manager := &securityComplianceManager{}
+
+	testCases := []struct {
+		classification DataClassification
+		securityLevel  SecurityLevel
+		shouldEncrypt  bool
+	}{
+		{DataClassificationPersonal, SecurityLevelLow, true},
+		{DataClassificationPersonal, SecurityLevelHigh, true},
+		{DataClassificationFinancial, SecurityLevelLow, true},
+		{DataClassificationHealth, SecurityLevelMedium, true},
+		{DataClassificationConfidential, SecurityLevelHigh, true},
+		{DataClassificationConfidential, SecurityLevelMedium, false},
+		{DataClassificationPublic, SecurityLevelLow, false},
+		{DataClassificationPublic, SecurityLevelCritical, true},
+		{DataClassificationInternal, SecurityLevelLow, false},
+		{DataClassificationInternal, SecurityLevelCritical, true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("Encrypt_%s_%s", tc.classification, tc.securityLevel), func(t *testing.T) {
+			shouldEncrypt := manager.requiresEncryption(tc.classification, tc.securityLevel)
+			assert.Equal(t, tc.shouldEncrypt, shouldEncrypt)
+		})
+	}
+}
+
+// Test Suite for Audit Logger
+func TestAuditLogger(t *testing.T) {
+	t.Run("TestAuditEventBuffering", func(t *testing.T) {
+		mockRepo := &MockAuditLogRepository{}
+		mockLogger := logger.NewMockLogger()
+
+		auditLogger := NewAuditLogger(mockRepo, mockLogger)
+
+		// Create test events
+		events := make([]AuditEvent, 5)
+		for i := 0; i < 5; i++ {
+			events[i] = AuditEvent{
+				ID:        uuid.New(),
+				EventType: AuditEventTypePolicyEvaluation,
+				Action:    "test_action",
+				Timestamp: time.Now(),
+			}
+		}
+
+		// Buffer events
+		for _, event := range events {
+			err := auditLogger.Buffer(event)
+			require.NoError(t, err)
+		}
+
+		// Verify buffer contains events
+		assert.Len(t, auditLogger.buffer, 5)
+	})
+
+	t.Run("TestAuditEventFlush", func(t *testing.T) {
+		mockRepo := &MockAuditLogRepository{}
+		mockLogger := logger.NewMockLogger()
+
+		auditLogger := NewAuditLogger(mockRepo, mockLogger)
+
+		// Create test event
+		event := AuditEvent{
+			ID:        uuid.New(),
+			EventType: AuditEventTypePolicyEvaluation,
+			Action:    "test_action",
+			Timestamp: time.Now(),
+		}
+
+		// Mock repository call
+		mockRepo.On("CreateAuditEvent", mock.Anything, &event).Return(nil)
+
+		// Buffer and flush
+		err := auditLogger.Buffer(event)
+		require.NoError(t, err)
+
+		auditLogger.flush()
+
+		// Verify buffer is empty after flush
+		assert.Empty(t, auditLogger.buffer)
+
+		// Verify mock calls
+		mockRepo.AssertExpectations(t)
+	})
+}
+
+// Test Suite for Compliance Engine
+func TestComplianceEngine(t *testing.T) {
+	t.Run("TestGetFramework_GDPR", func(t *testing.T) {
+		engine := NewComplianceEngine()
+
+		framework, err := engine.GetFramework(ComplianceFrameworkGDPR)
+		require.NoError(t, err)
+		assert.NotNil(t, framework)
+		assert.Equal(t, "General Data Protection Regulation", framework.Name)
+		assert.Equal(t, "2018", framework.Version)
+		assert.Contains(t, framework.Regions, "EU")
+		assert.Contains(t, framework.Requirements, "data_protection")
+	})
+
+	t.Run("TestGetFramework_SOX", func(t *testing.T) {
+		engine := NewComplianceEngine()
+
+		framework, err := engine.GetFramework(ComplianceFrameworkSOX)
+		require.NoError(t, err)
+		assert.NotNil(t, framework)
+		assert.Equal(t, "Sarbanes-Oxley Act", framework.Name)
+		assert.Equal(t, "2002", framework.Version)
+		assert.Contains(t, framework.Regions, "US")
+		assert.Contains(t, framework.Requirements, "financial_controls")
+	})
+
+	t.Run("TestGetFramework_HIPAA", func(t *testing.T) {
+		engine := NewComplianceEngine()
+
+		framework, err := engine.GetFramework(ComplianceFrameworkHIPAA)
+		require.NoError(t, err)
+		assert.NotNil(t, framework)
+		assert.Equal(t, "Health Insurance Portability and Accountability Act", framework.Name)
+		assert.Equal(t, "1996", framework.Version)
+		assert.Contains(t, framework.Regions, "US")
+		assert.Contains(t, framework.Requirements, "health_data_protection")
+	})
+
+	t.Run("TestGetFramework_NotFound", func(t *testing.T) {
+		engine := NewComplianceEngine()
+
+		framework, err := engine.GetFramework("invalid_framework")
+		assert.Error(t, err)
+		assert.Nil(t, framework)
+		assert.Contains(t, err.Error(), "compliance framework not found")
+	})
+}
+
+// Benchmark tests
+func BenchmarkEncryption(b *testing.B) {
+	encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+	service := NewEncryptionService(encryptionKey)
+	data := "sensitive data for benchmarking encryption performance"
+
+	b.Run("Encrypt", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_, _ = service.Encrypt(data, nil)
+		}
+	})
+
+	// Pre-encrypt for decrypt benchmark
+	encryptedData, _ := service.Encrypt(data, nil)
+
+	b.Run("Decrypt", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_, _ = service.Decrypt(encryptedData, nil)
+		}
+	})
+}
+
+func BenchmarkDataClassification(b *testing.B) {
+	manager := &securityComplianceManager{}
+
+	testData := []struct {
+		data     string
+		dataType string
+	}{
+		{"john.doe@example.com", "pii"},
+		{"1000.50", "financial"},
+		{"blood_type_A+", "health"},
+		{"company_secrets", "confidential"},
+		{"public_announcement", "public"},
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, td := range testData {
+			_ = manager.classifyData(td.data, td.dataType)
+		}
+	}
+}
+
+func BenchmarkAuditEventCreation(b *testing.B) {
+	mockRepo := &MockAuditLogRepository{}
+	mockLogger := logger.NewMockLogger()
+	mockMetrics := metrics.NewMockMetricsProvider()
+	mockTracer := tracing.NewMockTracingService()
+
+	encryptionKey := []byte("test-key-for-encryption-32-bytes!")
+	manager := NewSecurityComplianceManager(
+		mockRepo,
+		encryptionKey,
+		mockLogger,
+		mockMetrics,
+		mockTracer,
+	)
+
+	// Mock successful audit event creation
+	mockRepo.On("CreateAuditEvent", mock.Anything, mock.Anything).Return(nil)
+
+	actorID := uuid.New()
+	resourceID := uuid.New()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		request := &AuditEventRequest{
+			EventType:    AuditEventTypePolicyEvaluation,
+			ActorID:      &actorID,
+			ResourceType: "document",
+			ResourceID:   &resourceID,
+			Action:       "read",
+			Timestamp:    time.Now(),
+		}
+
+		_ = manager.RecordAuditEvent(context.Background(), request)
+	}
+}

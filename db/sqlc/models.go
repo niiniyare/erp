@@ -105,6 +105,50 @@ type AttributeDefinition struct {
 	CreatedAt          sql.NullTime `json:"created_at"`
 }
 
+// Defines external sources for attribute collection with configuration, authentication, and caching controls.
+type AttributeSource struct {
+	ID          uuid.UUID `json:"id"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	Name        string    `json:"name"`
+	DisplayName *string   `json:"display_name"`
+	Description string    `json:"description"`
+	// Type of attribute source: LDAP, DATABASE, REST_API, GRAPHQL, FILE, MANUAL
+	SourceType string `json:"source_type"`
+	// JSONB containing source-specific configuration (URLs, queries, etc.)
+	Configuration []byte `json:"configuration"`
+	// JSONB containing authentication details (should be encrypted)
+	Authentication  []byte `json:"authentication"`
+	CacheTtlMinutes *int32 `json:"cache_ttl_minutes"`
+	IsActive        *bool  `json:"is_active"`
+	// Source priority for attribute resolution (higher numbers processed first)
+	Priority  *int32       `json:"priority"`
+	CreatedAt sql.NullTime `json:"created_at"`
+	UpdatedAt sql.NullTime `json:"updated_at"`
+}
+
+// Stores actual attribute values for entities with versioning, encryption, and temporal support for ABAC policy evaluation.
+type AttributeValue struct {
+	ID           uuid.UUID `json:"id"`
+	TenantID     uuid.UUID `json:"tenant_id"`
+	DefinitionID uuid.UUID `json:"definition_id"`
+	// The UUID of the entity this attribute belongs to (user, resource, document, etc.)
+	EntityID uuid.UUID `json:"entity_id"`
+	// The actual attribute value in string format
+	Value string `json:"value"`
+	// Encrypted version of the value when encryption is required
+	EncryptedValue []byte `json:"encrypted_value"`
+	IsEncrypted    *bool  `json:"is_encrypted"`
+	Version        *int32 `json:"version"`
+	// When this attribute value becomes effective (for temporal policies)
+	EffectiveFrom sql.NullTime `json:"effective_from"`
+	// When this attribute value expires (null for current values)
+	EffectiveTo sql.NullTime `json:"effective_to"`
+	CreatedAt   sql.NullTime `json:"created_at"`
+	CreatedBy   *uuid.UUID   `json:"created_by"`
+	UpdatedAt   sql.NullTime `json:"updated_at"`
+	UpdatedBy   *uuid.UUID   `json:"updated_by"`
+}
+
 // Comprehensive audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.
 type AuditLog struct {
 	ID        uuid.UUID `json:"id"`
@@ -573,20 +617,28 @@ type Policy struct {
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
-// Caches ABAC policy evaluation results for performance optimization with configurable TTL and context tracking.
+// Caches ABAC policy evaluation results with flexible resource types and detailed decision tracking for performance optimization.
 type PolicyEvaluation struct {
-	ID         uuid.UUID `json:"id"`
-	TenantID   uuid.UUID `json:"tenant_id"`
-	UserID     uuid.UUID `json:"user_id"`
-	ResourceID uuid.UUID `json:"resource_id"`
-	ActionID   uuid.UUID `json:"action_id"`
+	ID       uuid.UUID `json:"id"`
+	TenantID uuid.UUID `json:"tenant_id"`
+	UserID   uuid.UUID `json:"user_id"`
+	// Type of resource being accessed (user, document, report, system, etc.)
+	ResourceType string `json:"resource_type"`
+	// Optional specific resource identifier
+	ResourceID *uuid.UUID `json:"resource_id"`
+	// Action being performed (read, write, delete, execute, etc.)
+	Action   string     `json:"action"`
+	EntityID *uuid.UUID `json:"entity_id"`
 	// SHA-256 hash of evaluation context for cache key uniqueness
 	ContextHash string `json:"context_hash"`
 	Decision    string `json:"decision"`
-	// Array of policy UUIDs that were evaluated and fired
+	// Array of policy UUIDs that were evaluated and contributed to the decision
 	ApplicablePolicies []uuid.UUID `json:"applicable_policies"`
+	// JSONB array containing detailed policy decision information
+	PolicyDecisions []byte `json:"policy_decisions"`
 	// Policy evaluation time in milliseconds for performance monitoring
 	EvaluationTimeMs *int32       `json:"evaluation_time_ms"`
+	CacheKey         *string      `json:"cache_key"`
 	EvaluatedAt      sql.NullTime `json:"evaluated_at"`
 	ExpiresAt        sql.NullTime `json:"expires_at"`
 }

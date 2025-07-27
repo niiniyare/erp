@@ -1,0 +1,1014 @@
+package abac
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/niiniyare/erp/internal/core/abac/models"
+	"github.com/niiniyare/erp/internal/shared/errors"
+	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+	"github.com/niiniyare/erp/internal/shared/types"
+)
+
+// Mock implementations
+type MockPolicyRepository struct {
+	mock.Mock
+}
+
+func (m *MockPolicyRepository) GetPolicyByID(ctx context.Context, id uuid.UUID) (*models.Policy, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Policy), args.Error(1)
+}
+
+func (m *MockPolicyRepository) CreatePolicy(ctx context.Context, req *CreatePolicyRequest) (*models.Policy, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*models.Policy), args.Error(1)
+}
+
+func (m *MockPolicyRepository) UpdatePolicy(ctx context.Context, req *UpdatePolicyRequest) (*models.Policy, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*models.Policy), args.Error(1)
+}
+
+func (m *MockPolicyRepository) DeletePolicy(ctx context.Context, id uuid.UUID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPolicyRepository) ListPolicies(ctx context.Context, req *ListPoliciesRequest) (*PolicyListResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*PolicyListResult), args.Error(1)
+}
+
+type MockAttributeResolver struct {
+	mock.Mock
+}
+
+func (m *MockAttributeResolver) ResolveAttributes(ctx context.Context, req *AttributeResolutionRequest) (*AttributeResolutionResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*AttributeResolutionResult), args.Error(1)
+}
+
+func (m *MockAttributeResolver) ResolveAttribute(ctx context.Context, req *SingleAttributeResolutionRequest) (*SingleAttributeResolutionResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*SingleAttributeResolutionResult), args.Error(1)
+}
+
+func (m *MockAttributeResolver) CreateAttributeDependency(ctx context.Context, req *CreateDependencyRequest) (*AttributeDependencyResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*AttributeDependencyResult), args.Error(1)
+}
+
+func (m *MockAttributeResolver) UpdateAttributeDependency(ctx context.Context, req *UpdateDependencyRequest) (*AttributeDependencyResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*AttributeDependencyResult), args.Error(1)
+}
+
+func (m *MockAttributeResolver) GetAttributeDependencies(ctx context.Context, req *GetDependenciesRequest) (*DependenciesResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*DependenciesResult), args.Error(1)
+}
+
+func (m *MockAttributeResolver) PreloadCache(ctx context.Context, req *PreloadCacheRequest) (*PreloadCacheResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*PreloadCacheResult), args.Error(1)
+}
+
+func (m *MockAttributeResolver) InvalidateCache(ctx context.Context, req *CacheInvalidationRequest) (*CacheInvalidationResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*CacheInvalidationResult), args.Error(1)
+}
+
+func (m *MockAttributeResolver) GetCacheStatistics(ctx context.Context, req *CacheStatisticsRequest) (*CacheStatistics, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*CacheStatistics), args.Error(1)
+}
+
+func (m *MockAttributeResolver) ConfigureCacheStrategy(ctx context.Context, req *ConfigureCacheStrategyRequest) (*CacheStrategyResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*CacheStrategyResult), args.Error(1)
+}
+
+func (m *MockAttributeResolver) OptimizeCacheConfiguration(ctx context.Context, req *OptimizeCacheRequest) (*CacheOptimizationResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*CacheOptimizationResult), args.Error(1)
+}
+
+func (m *MockAttributeResolver) GetResolutionMetrics(ctx context.Context, req *ResolutionMetricsRequest) (*ResolutionMetrics, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*ResolutionMetrics), args.Error(1)
+}
+
+func (m *MockAttributeResolver) AnalyzeResolutionPatterns(ctx context.Context, req *ResolutionPatternRequest) (*ResolutionPatternAnalysis, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*ResolutionPatternAnalysis), args.Error(1)
+}
+
+type MockExternalSourceManager struct {
+	mock.Mock
+}
+
+func (m *MockExternalSourceManager) RegisterLDAPSource(ctx context.Context, req *RegisterLDAPSourceRequest) (*ExternalAttributeSource, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*ExternalAttributeSource), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) RegisterRESTAPISource(ctx context.Context, req *RegisterRESTAPISourceRequest) (*ExternalAttributeSource, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*ExternalAttributeSource), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) RegisterDatabaseSource(ctx context.Context, req *RegisterDatabaseSourceRequest) (*ExternalAttributeSource, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*ExternalAttributeSource), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) RegisterCustomSource(ctx context.Context, req *RegisterCustomSourceRequest) (*ExternalAttributeSource, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*ExternalAttributeSource), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) UpdateAttributeSource(ctx context.Context, req *UpdateAttributeSourceRequest) (*ExternalAttributeSource, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*ExternalAttributeSource), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) DeleteAttributeSource(ctx context.Context, sourceID uuid.UUID) error {
+	args := m.Called(ctx, sourceID)
+	return args.Error(0)
+}
+
+func (m *MockExternalSourceManager) GetAttributeSource(ctx context.Context, sourceID uuid.UUID) (*ExternalAttributeSourceDetails, error) {
+	args := m.Called(ctx, sourceID)
+	return args.Get(0).(*ExternalAttributeSourceDetails), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) ListAttributeSources(ctx context.Context, req *ListAttributeSourcesRequest) (*AttributeSourceListResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*AttributeSourceListResult), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) TestSourceConnection(ctx context.Context, sourceID uuid.UUID) (*SourceConnectionTestResult, error) {
+	args := m.Called(ctx, sourceID)
+	return args.Get(0).(*SourceConnectionTestResult), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) ValidateSourceConfiguration(ctx context.Context, req *ValidateSourceConfigRequest) (*SourceConfigValidationResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*SourceConfigValidationResult), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) FetchAttributes(ctx context.Context, req *FetchAttributesRequest) (*ExternalAttributesResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*ExternalAttributesResult), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) BatchFetchAttributes(ctx context.Context, req *BatchFetchAttributesRequest) (*BatchExternalAttributesResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*BatchExternalAttributesResult), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) GetSourceHealth(ctx context.Context, sourceID uuid.UUID) (*ExternalSourceHealthStatus, error) {
+	args := m.Called(ctx, sourceID)
+	return args.Get(0).(*ExternalSourceHealthStatus), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) GetSourceMetrics(ctx context.Context, req *SourceMetricsRequest) (*ExternalSourceMetrics, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*ExternalSourceMetrics), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) SynchronizeAttributes(ctx context.Context, req *SynchronizeAttributesRequest) (*SynchronizationResult, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*SynchronizationResult), args.Error(1)
+}
+
+func (m *MockExternalSourceManager) ScheduleAttributeSync(ctx context.Context, req *ScheduleSyncRequest) (*SyncSchedule, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*SyncSchedule), args.Error(1)
+}
+
+// Test Suite for Policy Evaluation Engine
+func TestPolicyEvaluationEngine(t *testing.T) {
+	t.Run("TestEvaluatePolicy_Success", func(t *testing.T) {
+		// Setup
+		mockRepo := &MockPolicyRepository{}
+		mockResolver := &MockAttributeResolver{}
+		mockExternal := &MockExternalSourceManager{}
+
+		mockLogger := logger.NewMockLogger()
+		mockMetrics := metrics.NewMockMetricsProvider()
+		mockTracer := tracing.NewMockTracingService()
+
+		engine := NewPolicyEvaluationEngine(
+			mockRepo,
+			mockResolver,
+			mockExternal,
+			mockLogger,
+			mockMetrics,
+			mockTracer,
+		)
+
+		// Test data
+		policyID := uuid.New()
+		userID := uuid.New()
+		resourceID := uuid.New()
+
+		policy := &models.Policy{
+			ID:                 policyID,
+			Name:               "Test Policy",
+			Status:             types.PolicyStatusActive,
+			Effect:             types.PolicyEffectPermit,
+			CombiningAlgorithm: types.CombiningAlgorithmDenyOverrides,
+			Rules: []*models.PolicyRule{
+				{
+					ID:     uuid.New(),
+					Effect: types.PolicyEffectPermit,
+					Condition: &models.PolicyCondition{
+						Expression: "subject.roles contains 'admin'",
+					},
+				},
+			},
+		}
+
+		request := &PolicyEvaluationRequest{
+			RequestID: uuid.New(),
+			PolicyID:  policyID,
+			Subject: SubjectContext{
+				UserID: userID,
+				Roles:  []string{"admin"},
+				Attributes: map[string]interface{}{
+					"department": "engineering",
+				},
+			},
+			Resource: ResourceContext{
+				ResourceID:   resourceID,
+				ResourceType: "document",
+				Attributes: map[string]interface{}{
+					"classification": "internal",
+				},
+			},
+			Action: ActionContext{
+				Action: "read",
+			},
+			Environment: EnvironmentContext{
+				Timestamp: time.Now(),
+			},
+			EvaluationMode: EvaluationModeStandard,
+			Options: PolicyEvaluationOptions{
+				IncludeExplanation:  true,
+				TrackAttributeUsage: true,
+				EnableCaching:       true,
+			},
+		}
+
+		// Mock expectations
+		mockRepo.On("GetPolicyByID", mock.Anything, policyID).Return(policy, nil)
+
+		// Execute
+		result, err := engine.EvaluatePolicy(context.Background(), request)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, request.RequestID, result.RequestID)
+		assert.Equal(t, policyID, result.PolicyID)
+		assert.Equal(t, types.PolicyDecisionPermit, result.Decision)
+		assert.False(t, result.CacheHit)
+		assert.Greater(t, result.EvaluationTime, time.Duration(0))
+
+		// Verify mock calls
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("TestEvaluatePolicy_PolicyNotFound", func(t *testing.T) {
+		// Setup
+		mockRepo := &MockPolicyRepository{}
+		mockResolver := &MockAttributeResolver{}
+		mockExternal := &MockExternalSourceManager{}
+
+		mockLogger := logger.NewMockLogger()
+		mockMetrics := metrics.NewMockMetricsProvider()
+		mockTracer := tracing.NewMockTracingService()
+
+		engine := NewPolicyEvaluationEngine(
+			mockRepo,
+			mockResolver,
+			mockExternal,
+			mockLogger,
+			mockMetrics,
+			mockTracer,
+		)
+
+		// Test data
+		policyID := uuid.New()
+
+		request := &PolicyEvaluationRequest{
+			RequestID: uuid.New(),
+			PolicyID:  policyID,
+			Subject: SubjectContext{
+				UserID: uuid.New(),
+			},
+			Resource: ResourceContext{
+				ResourceID:   uuid.New(),
+				ResourceType: "document",
+			},
+			Action: ActionContext{
+				Action: "read",
+			},
+		}
+
+		// Mock expectations
+		mockRepo.On("GetPolicyByID", mock.Anything, policyID).Return(nil, errors.NewNotFoundError("policy not found", "policy_id", policyID))
+
+		// Execute
+		result, err := engine.EvaluatePolicy(context.Background(), request)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "failed to retrieve policy")
+
+		// Verify mock calls
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("TestEvaluatePolicy_InactivePolicy", func(t *testing.T) {
+		// Setup
+		mockRepo := &MockPolicyRepository{}
+		mockResolver := &MockAttributeResolver{}
+		mockExternal := &MockExternalSourceManager{}
+
+		mockLogger := logger.NewMockLogger()
+		mockMetrics := metrics.NewMockMetricsProvider()
+		mockTracer := tracing.NewMockTracingService()
+
+		engine := NewPolicyEvaluationEngine(
+			mockRepo,
+			mockResolver,
+			mockExternal,
+			mockLogger,
+			mockMetrics,
+			mockTracer,
+		)
+
+		// Test data
+		policyID := uuid.New()
+
+		policy := &models.Policy{
+			ID:     policyID,
+			Name:   "Inactive Policy",
+			Status: types.PolicyStatusInactive,
+			Effect: types.PolicyEffectPermit,
+		}
+
+		request := &PolicyEvaluationRequest{
+			RequestID: uuid.New(),
+			PolicyID:  policyID,
+			Subject: SubjectContext{
+				UserID: uuid.New(),
+			},
+			Resource: ResourceContext{
+				ResourceID:   uuid.New(),
+				ResourceType: "document",
+			},
+			Action: ActionContext{
+				Action: "read",
+			},
+		}
+
+		// Mock expectations
+		mockRepo.On("GetPolicyByID", mock.Anything, policyID).Return(policy, nil)
+
+		// Execute
+		result, err := engine.EvaluatePolicy(context.Background(), request)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, types.PolicyDecisionNotApplicable, result.Decision)
+
+		// Verify mock calls
+		mockRepo.AssertExpectations(t)
+	})
+}
+
+// Test Suite for Combining Algorithms
+func TestCombiningAlgorithms(t *testing.T) {
+	engine := &policyEvaluationEngine{}
+
+	t.Run("TestDenyOverrides", func(t *testing.T) {
+		ruleResults := []RuleEvaluationResult{
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionPermit,
+				Applicable: true,
+			},
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionDeny,
+				Applicable: true,
+			},
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionPermit,
+				Applicable: true,
+			},
+		}
+
+		result := engine.applyDenyOverrides(ruleResults)
+		assert.Equal(t, types.PolicyDecisionDeny, result)
+	})
+
+	t.Run("TestPermitOverrides", func(t *testing.T) {
+		ruleResults := []RuleEvaluationResult{
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionDeny,
+				Applicable: true,
+			},
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionPermit,
+				Applicable: true,
+			},
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionDeny,
+				Applicable: true,
+			},
+		}
+
+		result := engine.applyPermitOverrides(ruleResults)
+		assert.Equal(t, types.PolicyDecisionPermit, result)
+	})
+
+	t.Run("TestFirstApplicable", func(t *testing.T) {
+		ruleResults := []RuleEvaluationResult{
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionDeny,
+				Applicable: false,
+			},
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionPermit,
+				Applicable: true,
+			},
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionDeny,
+				Applicable: true,
+			},
+		}
+
+		result := engine.applyFirstApplicable(ruleResults)
+		assert.Equal(t, types.PolicyDecisionPermit, result)
+	})
+
+	t.Run("TestOnlyOneApplicable_Success", func(t *testing.T) {
+		ruleResults := []RuleEvaluationResult{
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionDeny,
+				Applicable: false,
+			},
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionPermit,
+				Applicable: true,
+			},
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionDeny,
+				Applicable: false,
+			},
+		}
+
+		result, err := engine.applyOnlyOneApplicable(ruleResults)
+		require.NoError(t, err)
+		assert.Equal(t, types.PolicyDecisionPermit, result)
+	})
+
+	t.Run("TestOnlyOneApplicable_MultipleApplicable", func(t *testing.T) {
+		ruleResults := []RuleEvaluationResult{
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionPermit,
+				Applicable: true,
+			},
+			{
+				RuleID:     uuid.New(),
+				Decision:   types.PolicyDecisionDeny,
+				Applicable: true,
+			},
+		}
+
+		result, err := engine.applyOnlyOneApplicable(ruleResults)
+		assert.Error(t, err)
+		assert.Equal(t, types.PolicyDecisionIndeterminate, result)
+		assert.Contains(t, err.Error(), "multiple applicable rules")
+	})
+}
+
+// Test Suite for Rule Engine Operators
+func TestRuleEngineOperators(t *testing.T) {
+	t.Run("TestEqualOperator", func(t *testing.T) {
+		op := &EqualOperator{}
+
+		result, err := op.Evaluate("test", "test")
+		require.NoError(t, err)
+		assert.True(t, result)
+
+		result, err = op.Evaluate("test", "different")
+		require.NoError(t, err)
+		assert.False(t, result)
+
+		result, err = op.Evaluate(123, 123)
+		require.NoError(t, err)
+		assert.True(t, result)
+	})
+
+	t.Run("TestNotEqualOperator", func(t *testing.T) {
+		op := &NotEqualOperator{}
+
+		result, err := op.Evaluate("test", "different")
+		require.NoError(t, err)
+		assert.True(t, result)
+
+		result, err = op.Evaluate("test", "test")
+		require.NoError(t, err)
+		assert.False(t, result)
+	})
+
+	t.Run("TestAndOperator", func(t *testing.T) {
+		op := &AndOperator{}
+
+		result, err := op.Evaluate(true, true)
+		require.NoError(t, err)
+		assert.True(t, result)
+
+		result, err = op.Evaluate(true, false)
+		require.NoError(t, err)
+		assert.False(t, result)
+
+		result, err = op.Evaluate(false, false)
+		require.NoError(t, err)
+		assert.False(t, result)
+
+		// Test with non-boolean values
+		_, err = op.Evaluate("test", true)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "AND operator requires boolean operands")
+	})
+
+	t.Run("TestOrOperator", func(t *testing.T) {
+		op := &OrOperator{}
+
+		result, err := op.Evaluate(true, false)
+		require.NoError(t, err)
+		assert.True(t, result)
+
+		result, err = op.Evaluate(false, true)
+		require.NoError(t, err)
+		assert.True(t, result)
+
+		result, err = op.Evaluate(false, false)
+		require.NoError(t, err)
+		assert.False(t, result)
+	})
+
+	t.Run("TestContainsOperator", func(t *testing.T) {
+		op := &ContainsOperator{}
+
+		result, err := op.Evaluate("hello world", "world")
+		require.NoError(t, err)
+		assert.True(t, result)
+
+		result, err = op.Evaluate("hello world", "foo")
+		require.NoError(t, err)
+		assert.False(t, result)
+
+		// Test with non-string values
+		_, err = op.Evaluate(123, "test")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "CONTAINS operator requires string operands")
+	})
+
+	t.Run("TestRegexMatchOperator", func(t *testing.T) {
+		op := &RegexMatchOperator{}
+
+		result, err := op.Evaluate("test123", `test\d+`)
+		require.NoError(t, err)
+		assert.True(t, result)
+
+		result, err = op.Evaluate("testABC", `test\d+`)
+		require.NoError(t, err)
+		assert.False(t, result)
+
+		// Test with invalid regex
+		_, err = op.Evaluate("test", "[invalid")
+		assert.Error(t, err)
+	})
+}
+
+// Test Suite for Rule Engine Functions
+func TestRuleEngineFunctions(t *testing.T) {
+	t.Run("TestStringLengthFunction", func(t *testing.T) {
+		fn := &StringLengthFunction{}
+
+		result, err := fn.Execute([]interface{}{"hello"})
+		require.NoError(t, err)
+		assert.Equal(t, 5, result)
+
+		result, err = fn.Execute([]interface{}{""})
+		require.NoError(t, err)
+		assert.Equal(t, 0, result)
+
+		// Test with wrong number of arguments
+		_, err = fn.Execute([]interface{}{"hello", "world"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "strlen function requires exactly 1 argument")
+
+		// Test with non-string argument
+		_, err = fn.Execute([]interface{}{123})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "strlen function requires string argument")
+	})
+
+	t.Run("TestUpperCaseFunction", func(t *testing.T) {
+		fn := &UpperCaseFunction{}
+
+		result, err := fn.Execute([]interface{}{"hello"})
+		require.NoError(t, err)
+		assert.Equal(t, "HELLO", result)
+
+		result, err = fn.Execute([]interface{}{"Hello World"})
+		require.NoError(t, err)
+		assert.Equal(t, "HELLO WORLD", result)
+	})
+
+	t.Run("TestLowerCaseFunction", func(t *testing.T) {
+		fn := &LowerCaseFunction{}
+
+		result, err := fn.Execute([]interface{}{"HELLO"})
+		require.NoError(t, err)
+		assert.Equal(t, "hello", result)
+
+		result, err = fn.Execute([]interface{}{"Hello World"})
+		require.NoError(t, err)
+		assert.Equal(t, "hello world", result)
+	})
+
+	t.Run("TestTrimFunction", func(t *testing.T) {
+		fn := &TrimFunction{}
+
+		result, err := fn.Execute([]interface{}{"  hello world  "})
+		require.NoError(t, err)
+		assert.Equal(t, "hello world", result)
+
+		result, err = fn.Execute([]interface{}{"hello"})
+		require.NoError(t, err)
+		assert.Equal(t, "hello", result)
+	})
+
+	t.Run("TestSubstringFunction", func(t *testing.T) {
+		fn := &SubstringFunction{}
+
+		result, err := fn.Execute([]interface{}{"hello world", 0, 5})
+		require.NoError(t, err)
+		assert.Equal(t, "hello", result)
+
+		result, err := fn.Execute([]interface{}{"hello world", 6, 5})
+		require.NoError(t, err)
+		assert.Equal(t, "world", result)
+
+		// Test with bounds beyond string length
+		result, err = fn.Execute([]interface{}{"hello", 0, 10})
+		require.NoError(t, err)
+		assert.Equal(t, "hello", result)
+
+		// Test with negative start
+		result, err = fn.Execute([]interface{}{"hello", -1, 3})
+		require.NoError(t, err)
+		assert.Equal(t, "", result)
+
+		// Test with wrong number of arguments
+		_, err = fn.Execute([]interface{}{"hello"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "substr function requires exactly 3 arguments")
+	})
+
+	t.Run("TestDefaultFunction", func(t *testing.T) {
+		fn := &DefaultFunction{}
+
+		result, err := fn.Execute([]interface{}{"value", "default"})
+		require.NoError(t, err)
+		assert.Equal(t, "value", result)
+
+		result, err = fn.Execute([]interface{}{nil, "default"})
+		require.NoError(t, err)
+		assert.Equal(t, "default", result)
+
+		// Test with wrong number of arguments
+		_, err = fn.Execute([]interface{}{"value"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "default function requires exactly 2 arguments")
+	})
+
+	t.Run("TestTypeFunction", func(t *testing.T) {
+		fn := &TypeFunction{}
+
+		result, err := fn.Execute([]interface{}{"hello"})
+		require.NoError(t, err)
+		assert.Equal(t, "string", result)
+
+		result, err = fn.Execute([]interface{}{123})
+		require.NoError(t, err)
+		assert.Equal(t, "int", result)
+
+		result, err = fn.Execute([]interface{}{true})
+		require.NoError(t, err)
+		assert.Equal(t, "bool", result)
+	})
+
+	t.Run("TestExistsFunction", func(t *testing.T) {
+		fn := &ExistsFunction{}
+
+		result, err := fn.Execute([]interface{}{"value"})
+		require.NoError(t, err)
+		assert.Equal(t, true, result)
+
+		result, err = fn.Execute([]interface{}{nil})
+		require.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+}
+
+// Test Suite for Evaluation Context
+func TestEvaluationAttributeContext(t *testing.T) {
+	t.Run("TestGetSubjectAttribute", func(t *testing.T) {
+		userID := uuid.New()
+		ctx := &EvaluationAttributeContext{
+			Subject: SubjectContext{
+				UserID: userID,
+				Roles:  []string{"admin", "user"},
+				Groups: []string{"engineering"},
+				Attributes: map[string]interface{}{
+					"department": "engineering",
+					"level":      "senior",
+				},
+			},
+			UsedPaths: make([]string, 0),
+		}
+
+		// Test built-in subject attributes
+		value, found := ctx.getSubjectAttribute("id")
+		assert.True(t, found)
+		assert.Equal(t, userID, value)
+
+		value, found = ctx.getSubjectAttribute("roles")
+		assert.True(t, found)
+		assert.Equal(t, []string{"admin", "user"}, value)
+
+		value, found = ctx.getSubjectAttribute("groups")
+		assert.True(t, found)
+		assert.Equal(t, []string{"engineering"}, value)
+
+		// Test custom subject attributes
+		value, found = ctx.getSubjectAttribute("department")
+		assert.True(t, found)
+		assert.Equal(t, "engineering", value)
+
+		value, found = ctx.getSubjectAttribute("level")
+		assert.True(t, found)
+		assert.Equal(t, "senior", value)
+
+		// Test non-existent attribute
+		value, found = ctx.getSubjectAttribute("nonexistent")
+		assert.False(t, found)
+		assert.Nil(t, value)
+	})
+
+	t.Run("TestGetResourceAttribute", func(t *testing.T) {
+		resourceID := uuid.New()
+		ownerID := uuid.New()
+		ctx := &EvaluationAttributeContext{
+			Resource: ResourceContext{
+				ResourceID:   resourceID,
+				ResourceType: "document",
+				Owner:        &ownerID,
+				Attributes: map[string]interface{}{
+					"classification": "confidential",
+					"department":     "hr",
+				},
+			},
+			UsedPaths: make([]string, 0),
+		}
+
+		// Test built-in resource attributes
+		value, found := ctx.getResourceAttribute("id")
+		assert.True(t, found)
+		assert.Equal(t, resourceID, value)
+
+		value, found = ctx.getResourceAttribute("type")
+		assert.True(t, found)
+		assert.Equal(t, "document", value)
+
+		value, found = ctx.getResourceAttribute("owner")
+		assert.True(t, found)
+		assert.Equal(t, &ownerID, value)
+
+		// Test custom resource attributes
+		value, found = ctx.getResourceAttribute("classification")
+		assert.True(t, found)
+		assert.Equal(t, "confidential", value)
+
+		// Test non-existent attribute
+		value, found = ctx.getResourceAttribute("nonexistent")
+		assert.False(t, found)
+		assert.Nil(t, value)
+	})
+
+	t.Run("TestGetAttribute", func(t *testing.T) {
+		userID := uuid.New()
+		ctx := &EvaluationAttributeContext{
+			Subject: SubjectContext{
+				UserID: userID,
+				Roles:  []string{"admin"},
+			},
+			Resource: ResourceContext{
+				ResourceType: "document",
+			},
+			Action: ActionContext{
+				Action: "read",
+			},
+			Environment: EnvironmentContext{
+				Timestamp: time.Now(),
+			},
+			UsedPaths: make([]string, 0),
+		}
+
+		// Test subject attribute access
+		value, found := ctx.GetAttribute("subject.roles")
+		assert.True(t, found)
+		assert.Equal(t, []string{"admin"}, value)
+
+		// Test resource attribute access
+		value, found = ctx.GetAttribute("resource.type")
+		assert.True(t, found)
+		assert.Equal(t, "document", value)
+
+		// Test action attribute access
+		value, found = ctx.GetAttribute("action.action")
+		assert.True(t, found)
+		assert.Equal(t, "read", value)
+
+		// Test environment attribute access
+		value, found = ctx.GetAttribute("environment.timestamp")
+		assert.True(t, found)
+		assert.IsType(t, time.Time{}, value)
+
+		// Verify usage tracking
+		usage := ctx.GetUsedAttributes()
+		assert.Len(t, usage, 4)
+		assert.Contains(t, ctx.UsedPaths, "subject.roles")
+		assert.Contains(t, ctx.UsedPaths, "resource.type")
+		assert.Contains(t, ctx.UsedPaths, "action.action")
+		assert.Contains(t, ctx.UsedPaths, "environment.timestamp")
+	})
+
+	t.Run("TestAttributePathCategorization", func(t *testing.T) {
+		ctx := &EvaluationAttributeContext{}
+
+		assert.Equal(t, "subject", ctx.categorizeAttributePath("subject.roles"))
+		assert.Equal(t, "resource", ctx.categorizeAttributePath("resource.type"))
+		assert.Equal(t, "action", ctx.categorizeAttributePath("action.name"))
+		assert.Equal(t, "environment", ctx.categorizeAttributePath("environment.time"))
+		assert.Equal(t, "unknown", ctx.categorizeAttributePath("invalid"))
+		assert.Equal(t, "unknown", ctx.categorizeAttributePath(""))
+	})
+}
+
+// Benchmark tests
+func BenchmarkPolicyEvaluation(b *testing.B) {
+	// Setup
+	mockRepo := &MockPolicyRepository{}
+	mockResolver := &MockAttributeResolver{}
+	mockExternal := &MockExternalSourceManager{}
+
+	mockLogger := logger.NewMockLogger()
+	mockMetrics := metrics.NewMockMetricsProvider()
+	mockTracer := tracing.NewMockTracingService()
+
+	engine := NewPolicyEvaluationEngine(
+		mockRepo,
+		mockResolver,
+		mockExternal,
+		mockLogger,
+		mockMetrics,
+		mockTracer,
+	)
+
+	policyID := uuid.New()
+	policy := &models.Policy{
+		ID:                 policyID,
+		Name:               "Benchmark Policy",
+		Status:             types.PolicyStatusActive,
+		Effect:             types.PolicyEffectPermit,
+		CombiningAlgorithm: types.CombiningAlgorithmDenyOverrides,
+		Rules: []*models.PolicyRule{
+			{
+				ID:     uuid.New(),
+				Effect: types.PolicyEffectPermit,
+				Condition: &models.PolicyCondition{
+					Expression: "subject.roles contains 'admin'",
+				},
+			},
+		},
+	}
+
+	request := &PolicyEvaluationRequest{
+		RequestID: uuid.New(),
+		PolicyID:  policyID,
+		Subject: SubjectContext{
+			UserID: uuid.New(),
+			Roles:  []string{"admin"},
+		},
+		Resource: ResourceContext{
+			ResourceID:   uuid.New(),
+			ResourceType: "document",
+		},
+		Action: ActionContext{
+			Action: "read",
+		},
+		Environment: EnvironmentContext{
+			Timestamp: time.Now(),
+		},
+		EvaluationMode: EvaluationModeStandard,
+	}
+
+	mockRepo.On("GetPolicyByID", mock.Anything, policyID).Return(policy, nil)
+
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_, err := engine.EvaluatePolicy(context.Background(), request)
+			if err != nil {
+				b.Fatal(err)
+			}
+		}
+	})
+}
+
+func BenchmarkRuleEngineOperators(b *testing.B) {
+	b.Run("EqualOperator", func(b *testing.B) {
+		op := &EqualOperator{}
+		for i := 0; i < b.N; i++ {
+			_, _ = op.Evaluate("test", "test")
+		}
+	})
+
+	b.Run("ContainsOperator", func(b *testing.B) {
+		op := &ContainsOperator{}
+		for i := 0; i < b.N; i++ {
+			_, _ = op.Evaluate("hello world", "world")
+		}
+	})
+
+	b.Run("RegexMatchOperator", func(b *testing.B) {
+		op := &RegexMatchOperator{}
+		for i := 0; i < b.N; i++ {
+			_, _ = op.Evaluate("test123", `test\d+`)
+		}
+	})
+}
+
+func BenchmarkRuleEngineFunctions(b *testing.B) {
+	b.Run("StringLengthFunction", func(b *testing.B) {
+		fn := &StringLengthFunction{}
+		args := []interface{}{"hello world"}
+		for i := 0; i < b.N; i++ {
+			_, _ = fn.Execute(args)
+		}
+	})
+
+	b.Run("SubstringFunction", func(b *testing.B) {
+		fn := &SubstringFunction{}
+		args := []interface{}{"hello world", 0, 5}
+		for i := 0; i < b.N; i++ {
+			_, _ = fn.Execute(args)
+		}
+	})
+}

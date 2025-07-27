@@ -363,8 +363,8 @@ func (r *attributeDefinitionRepository) ListAttributeDefinitions(ctx context.Con
 
 	r.logger.InfoContext(ctx, "Listed attribute definitions",
 		logger.Fields{
-			"count":           len(attrDefs),
-			"list_time_ms":    time.Since(startTime).Milliseconds(),
+			"count":        len(attrDefs),
+			"list_time_ms": time.Since(startTime).Milliseconds(),
 		})
 
 	return attrDefs, nil
@@ -613,7 +613,7 @@ func (r *attributeDefinitionRepository) fromSQLCAttributeDefinition(sqlcAttrDef 
 // buildListCacheKey builds a cache key for list operations
 func (r *attributeDefinitionRepository) buildListCacheKey(req *ListAttributeDefinitionsRequest) string {
 	key := "attribute_defs:list"
-	
+
 	if req.Category != nil {
 		key += fmt.Sprintf(":category:%s", *req.Category)
 	}
@@ -630,7 +630,7 @@ func (r *attributeDefinitionRepository) buildListCacheKey(req *ListAttributeDefi
 		key += fmt.Sprintf(":active:%t", *req.IsActive)
 	}
 	key += fmt.Sprintf(":limit:%d:offset:%d", req.Limit, req.Offset)
-	
+
 	return key
 }
 

@@ -2,11 +2,11 @@
 
 -- name: CreatePolicy :one
 INSERT INTO policies (
-    id, tenant_id, entity_id, name, display_name, description, policy_type,
+    tenant_id, entity_id, name, display_name, description, policy_type,
     effect, priority, category, target, rule, obligations, advice, is_active, created_by
 ) VALUES (
-    $1, current_tenant_id(), $2, $3, $4, $5, $6,
-    $7, $8, $9, $10, $11, $12, $13, $14, $15
+    current_tenant_id(), $1, $2, $3, $4, $5,
+    $6, $7, $8, $9, $10, $11, $12, $13, $14
 ) RETURNING *;
 
 -- name: GetPolicy :one
@@ -86,3 +86,53 @@ WHERE p.tenant_id = current_tenant_id()
     p.target->'resources' ? $1::text OR p.target->'actions' ? $2::text
   )
 ORDER BY p.priority DESC, p.created_at ASC;
+
+-- ABAC-specific queries for policy evaluation
+
+-- name: GetPoliciesForEvaluation :many
+SELECT * FROM policies 
+WHERE tenant_id = current_tenant_id()
+  AND is_active = true 
+  AND deleted_at IS NULL
+  AND (
+    $1::UUID IS NULL OR 
+    entity_id IS NULL OR 
+    entity_id = $1
+  )
+  AND (
+    target->>'resource_type' = $2 OR 
+    target->>'resource_type' = '*' OR 
+    target->>'resource_type' IS NULL
+  )
+  AND (
+    target->>'action' = $3 OR 
+    target->>'action' = '*' OR 
+    target->>'action' IS NULL
+  )
+ORDER BY priority DESC, created_at ASC;
+
+-- name: GetPoliciesByIDs :many
+SELECT * FROM policies 
+WHERE id = ANY($1::UUID[]) 
+  AND tenant_id = current_tenant_id();
+
+-- name: CountPolicies :one
+SELECT COUNT(*) FROM policies 
+WHERE tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+  AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
+  AND ($2::VARCHAR IS NULL OR category = $2)
+  AND ($3::BOOLEAN IS NULL OR is_active = $3);
+
+-- name: GetPoliciesByEntityID :many
+SELECT * FROM policies 
+WHERE tenant_id = current_tenant_id()
+  AND (entity_id = $1 OR entity_id IS NULL)
+  AND is_active = true
+  AND deleted_at IS NULL
+ORDER BY priority DESC, created_at ASC;
+
+-- name: UpdatePolicyStatus :exec
+UPDATE policies 
+SET is_active = $2, updated_at = NOW()
+WHERE id = $1 AND tenant_id = current_tenant_id();

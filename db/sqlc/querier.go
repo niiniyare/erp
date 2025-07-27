@@ -63,6 +63,25 @@ type Querier interface {
 	//  SET status = $1, updated_at = NOW()
 	//  WHERE id = ANY($2::UUID[]) AND deleted_at IS NULL
 	BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error
+	// Policy Evaluations CRUD Operations and Cache Management for ABAC
+	//
+	//
+	//  INSERT INTO policy_evaluations (
+	//      tenant_id, user_id, resource_type, resource_id, action, entity_id,
+	//      context_hash, decision, applicable_policies, policy_decisions,
+	//      evaluation_time_ms, cache_key, expires_at
+	//  ) VALUES (
+	//      current_tenant_id(), $1, $2, $3, $4, $5,
+	//      $6, $7, $8, $9, $10, $11, $12
+	//  ) ON CONFLICT (tenant_id, user_id, resource_type, resource_id, action, context_hash)
+	//  DO UPDATE SET
+	//      decision = EXCLUDED.decision,
+	//      applicable_policies = EXCLUDED.applicable_policies,
+	//      policy_decisions = EXCLUDED.policy_decisions,
+	//      evaluation_time_ms = EXCLUDED.evaluation_time_ms,
+	//      evaluated_at = NOW(),
+	//      expires_at = EXCLUDED.expires_at
+	CacheEvaluationResult(ctx context.Context, arg CacheEvaluationResultParams) error
 	//CheckCircularReference
 	//
 	//  SELECT EXISTS(
@@ -121,6 +140,11 @@ type Querier interface {
 	//
 	//  SELECT COUNT(*) = 0 FROM users WHERE username = $1 AND deleted_at IS NULL
 	CheckUsernameAvailability(ctx context.Context, username *string) (bool, error)
+	//CleanupExpiredEvaluations
+	//
+	//  DELETE FROM policy_evaluations
+	//  WHERE expires_at < NOW()
+	CleanupExpiredEvaluations(ctx context.Context) error
 	// =====================================================================
 	// 7. MAINTENANCE AND CLEANUP QUERIES
 	// =====================================================================
@@ -146,6 +170,14 @@ type Querier interface {
 	//    AND created_at >= $1
 	//    AND created_at <= $2
 	CountAccessRequestsByStatus(ctx context.Context, arg CountAccessRequestsByStatusParams) (*CountAccessRequestsByStatusRow, error)
+	//CountAttributeDefinitions
+	//
+	//  SELECT COUNT(*) FROM attribute_definitions
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
+	//    AND ($2::VARCHAR IS NULL OR category = $2)
+	//    AND ($3::BOOLEAN IS NULL OR is_active = $3)
+	CountAttributeDefinitions(ctx context.Context, arg CountAttributeDefinitionsParams) (int64, error)
 	//CountEntitiesWithFilters
 	//
 	//  SELECT COUNT(*) AS count
@@ -156,6 +188,18 @@ type Querier interface {
 	//      AND ($2::BOOLEAN IS NULL OR is_active = $2)
 	//      AND ($3::BOOLEAN IS NULL OR hidden = $3)
 	CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error)
+	//CountEvaluationsByDecision
+	//
+	//  SELECT
+	//      COUNT(CASE WHEN decision = 'ALLOW' THEN 1 END) as allow_count,
+	//      COUNT(CASE WHEN decision = 'DENY' THEN 1 END) as deny_count,
+	//      COUNT(CASE WHEN decision = 'NOT_APPLICABLE' THEN 1 END) as not_applicable_count,
+	//      COUNT(*) as total_count
+	//  FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND evaluated_at >= $1
+	//    AND evaluated_at <= $2
+	CountEvaluationsByDecision(ctx context.Context, arg CountEvaluationsByDecisionParams) (*CountEvaluationsByDecisionRow, error)
 	//CountFilteredTenants
 	//
 	//  SELECT COUNT(*) FROM tenants
@@ -164,6 +208,15 @@ type Querier interface {
 	//    AND ($3::varchar IS NULL OR industry = $3)
 	//    AND deleted_at IS NULL
 	CountFilteredTenants(ctx context.Context, arg CountFilteredTenantsParams) (int64, error)
+	//CountPolicies
+	//
+	//  SELECT COUNT(*) FROM policies
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	//    AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
+	//    AND ($2::VARCHAR IS NULL OR category = $2)
+	//    AND ($3::BOOLEAN IS NULL OR is_active = $3)
+	CountPolicies(ctx context.Context, arg CountPoliciesParams) (int64, error)
 	//CountTenants
 	//
 	//  SELECT COUNT(*) FROM tenants
@@ -183,13 +236,23 @@ type Querier interface {
 	//
 	//
 	//  INSERT INTO attribute_definitions (
-	//      id, tenant_id, name, display_name, description, data_type, category,
+	//      tenant_id, name, display_name, description, data_type, category,
 	//      is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active
 	//  ) VALUES (
-	//      $1, current_tenant_id(), $2, $3, $4, $5, $6,
-	//      $7, $8, $9, $10, $11, $12, $13
+	//      current_tenant_id(), $1, $2, $3, $4, $5,
+	//      $6, $7, $8, $9, $10, $11, $12
 	//  ) RETURNING id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at
 	CreateAttributeDefinition(ctx context.Context, arg CreateAttributeDefinitionParams) (*AttributeDefinition, error)
+	// Attribute Values Operations
+	//
+	//  INSERT INTO attribute_values (
+	//      tenant_id, definition_id, entity_id, value, encrypted_value, is_encrypted,
+	//      version, effective_from, effective_to, created_by
+	//  ) VALUES (
+	//      current_tenant_id(), $1, $2, $3, $4, $5,
+	//      $6, $7, $8, $9
+	//  ) RETURNING id, tenant_id, definition_id, entity_id, value, encrypted_value, is_encrypted, version, effective_from, effective_to, created_at, created_by, updated_at, updated_by
+	CreateAttributeValue(ctx context.Context, arg CreateAttributeValueParams) (*AttributeValue, error)
 	//CreateAuditEvent
 	//
 	//  INSERT INTO audit_log (
@@ -256,24 +319,13 @@ type Querier interface {
 	//
 	//
 	//  INSERT INTO policies (
-	//      id, tenant_id, entity_id, name, display_name, description, policy_type,
+	//      tenant_id, entity_id, name, display_name, description, policy_type,
 	//      effect, priority, category, target, rule, obligations, advice, is_active, created_by
 	//  ) VALUES (
-	//      $1, current_tenant_id(), $2, $3, $4, $5, $6,
-	//      $7, $8, $9, $10, $11, $12, $13, $14, $15
+	//      current_tenant_id(), $1, $2, $3, $4, $5,
+	//      $6, $7, $8, $9, $10, $11, $12, $13, $14
 	//  ) RETURNING id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
 	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*Policy, error)
-	// Policy Evaluations CRUD Operations and Cache Management
-	//
-	//
-	//  INSERT INTO policy_evaluations (
-	//      id, tenant_id, user_id, resource_id, action_id, context_hash,
-	//      decision, applicable_policies, evaluation_time_ms, expires_at
-	//  ) VALUES (
-	//      $1, current_tenant_id(), $2, $3, $4, $5,
-	//      $6, $7, $8, $9
-	//  ) RETURNING id, tenant_id, user_id, resource_id, action_id, context_hash, decision, applicable_policies, evaluation_time_ms, evaluated_at, expires_at
-	CreatePolicyEvaluation(ctx context.Context, arg CreatePolicyEvaluationParams) (*PolicyEvaluation, error)
 	// =====================================================
 	// TENANT MANAGEMENT QUERIES (Admin/System Level)
 	// Note: These queries are for system administrators managing tenants
@@ -600,27 +652,22 @@ type Querier interface {
 	//  DELETE FROM attribute_definitions
 	//  WHERE id = $1 AND tenant_id = current_tenant_id()
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
+	//DeleteAttributeValue
+	//
+	//  DELETE FROM attribute_values
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	DeleteAttributeValue(ctx context.Context, id uuid.UUID) error
 	//DeleteEntityState
 	//
 	//  DELETE FROM entitystate
 	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
 	DeleteEntityState(ctx context.Context, arg DeleteEntityStateParams) error
-	//DeleteExpiredPolicyEvaluations
-	//
-	//  DELETE FROM policy_evaluations
-	//  WHERE expires_at <= NOW()
-	DeleteExpiredPolicyEvaluations(ctx context.Context) error
 	//DeleteHierarchyPaths
 	//
 	//  DELETE FROM hierarchy_paths
 	//  WHERE tenant_id = current_tenant_id()
 	//      AND (ancestor_id = $1 OR descendant_id = $1)
 	DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID) error
-	//DeletePolicyEvaluation
-	//
-	//  DELETE FROM policy_evaluations
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
-	DeletePolicyEvaluation(ctx context.Context, id uuid.UUID) error
 	//DeleteTenant
 	//
 	//  DELETE FROM tenants
@@ -634,6 +681,12 @@ type Querier interface {
 	//  DELETE FROM tenant_usage_stats
 	//  WHERE period_start = $1
 	DeleteTenantUsageStats(ctx context.Context, periodStart time.Time) error
+	//ExpireAttributeValue
+	//
+	//  UPDATE attribute_values
+	//  SET effective_to = NOW(), updated_at = NOW(), updated_by = $2
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	ExpireAttributeValue(ctx context.Context, arg ExpireAttributeValueParams) error
 	// =====================================================
 	// ADVANCED QUERIES WITH FILTERS
 	// =====================================================
@@ -711,13 +764,73 @@ type Querier interface {
 	//GetAttributeDefinition
 	//
 	//  SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
-	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
 	GetAttributeDefinition(ctx context.Context, id uuid.UUID) (*AttributeDefinition, error)
 	//GetAttributeDefinitionByName
 	//
 	//  SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
-	//  WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  WHERE name = $1 AND tenant_id = current_tenant_id()
 	GetAttributeDefinitionByName(ctx context.Context, name string) (*AttributeDefinition, error)
+	//GetAttributeStats
+	//
+	//  SELECT
+	//      COUNT(DISTINCT ad.id) as total_definitions,
+	//      COUNT(DISTINCT av.id) as total_values,
+	//      COUNT(DISTINCT av.entity_id) as entities_with_attributes,
+	//      COUNT(DISTINCT CASE WHEN ad.category = 'USER' THEN av.id END) as user_attributes,
+	//      COUNT(DISTINCT CASE WHEN ad.category = 'RESOURCE' THEN av.id END) as resource_attributes,
+	//      COUNT(DISTINCT CASE WHEN ad.category = 'ENVIRONMENT' THEN av.id END) as environment_attributes
+	//  FROM attribute_definitions ad
+	//  LEFT JOIN attribute_values av ON ad.id = av.definition_id
+	//      AND av.tenant_id = current_tenant_id()
+	//      AND (av.effective_to IS NULL OR av.effective_to > NOW())
+	//  WHERE ad.tenant_id = current_tenant_id()
+	//    AND ad.is_active = true
+	GetAttributeStats(ctx context.Context) (*GetAttributeStatsRow, error)
+	//GetAttributeValue
+	//
+	//  SELECT av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by, ad.name as attribute_name, ad.data_type, ad.category
+	//  FROM attribute_values av
+	//  JOIN attribute_definitions ad ON av.definition_id = ad.id
+	//  WHERE av.id = $1
+	//    AND av.tenant_id = current_tenant_id()
+	GetAttributeValue(ctx context.Context, id uuid.UUID) (*GetAttributeValueRow, error)
+	//GetAttributeValueByEntityAndName
+	//
+	//  SELECT av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by, ad.name as attribute_name, ad.data_type, ad.category
+	//  FROM attribute_values av
+	//  JOIN attribute_definitions ad ON av.definition_id = ad.id
+	//  WHERE av.entity_id = $1
+	//    AND ad.name = $2
+	//    AND av.tenant_id = current_tenant_id()
+	//    AND (av.effective_to IS NULL OR av.effective_to > NOW())
+	//  ORDER BY av.effective_from DESC
+	//  LIMIT 1
+	GetAttributeValueByEntityAndName(ctx context.Context, arg GetAttributeValueByEntityAndNameParams) (*GetAttributeValueByEntityAndNameRow, error)
+	//GetAttributeValuesByEntity
+	//
+	//  SELECT av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by, ad.name as attribute_name, ad.data_type, ad.category
+	//  FROM attribute_values av
+	//  JOIN attribute_definitions ad ON av.definition_id = ad.id
+	//  WHERE av.entity_id = $1
+	//    AND av.tenant_id = current_tenant_id()
+	//    AND ($2::VARCHAR IS NULL OR ad.category = $2)
+	//    AND (av.effective_to IS NULL OR av.effective_to > NOW())
+	//  ORDER BY ad.name ASC
+	GetAttributeValuesByEntity(ctx context.Context, arg GetAttributeValuesByEntityParams) ([]*GetAttributeValuesByEntityRow, error)
+	//GetCachedEvaluationResult
+	//
+	//  SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND user_id = $1
+	//    AND resource_type = $2
+	//    AND ($3::UUID IS NULL AND resource_id IS NULL OR resource_id = $3)
+	//    AND action = $4
+	//    AND context_hash = $5
+	//    AND expires_at > NOW()
+	//  ORDER BY evaluated_at DESC
+	//  LIMIT 1
+	GetCachedEvaluationResult(ctx context.Context, arg GetCachedEvaluationResultParams) (*PolicyEvaluation, error)
 	//GetCompleteUserProfile
 	//
 	//  SELECT
@@ -1085,6 +1198,50 @@ type Querier interface {
 	//  WHERE e.uuid = $1 AND e.tenant_id = $2 AND e.deleted_at IS NULL
 	//  GROUP BY e.uuid, parent_e.name
 	GetEntityWithHierarchyInfo(ctx context.Context, arg GetEntityWithHierarchyInfoParams) (*GetEntityWithHierarchyInfoRow, error)
+	//GetEvaluationCacheStats
+	//
+	//  SELECT
+	//      COUNT(*) as total_cached_evaluations,
+	//      COUNT(CASE WHEN expires_at > NOW() THEN 1 END) as active_evaluations,
+	//      COUNT(CASE WHEN expires_at <= NOW() THEN 1 END) as expired_evaluations,
+	//      COUNT(DISTINCT user_id) as unique_users,
+	//      COUNT(DISTINCT resource_type) as unique_resource_types,
+	//      COUNT(DISTINCT action) as unique_actions,
+	//      AVG(evaluation_time_ms) as avg_evaluation_time_ms,
+	//      MIN(evaluation_time_ms) as min_evaluation_time_ms,
+	//      MAX(evaluation_time_ms) as max_evaluation_time_ms,
+	//      ROUND(
+	//          (COUNT(CASE WHEN expires_at > NOW() THEN 1 END)::NUMERIC /
+	//           NULLIF(COUNT(*), 0)) * 100, 2
+	//      ) as cache_hit_rate
+	//  FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	GetEvaluationCacheStats(ctx context.Context) (*GetEvaluationCacheStatsRow, error)
+	//GetEvaluationMetrics
+	//
+	//  SELECT
+	//      AVG(evaluation_time_ms) as avg_evaluation_time,
+	//      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY evaluation_time_ms) as median_evaluation_time,
+	//      PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY evaluation_time_ms) as p95_evaluation_time,
+	//      PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY evaluation_time_ms) as p99_evaluation_time,
+	//      COUNT(*) as total_evaluations,
+	//      COUNT(DISTINCT user_id) as unique_users,
+	//      COUNT(DISTINCT resource_type || ':' || COALESCE(resource_id::TEXT, '')) as unique_resources
+	//  FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND evaluated_at >= $1
+	//    AND evaluated_at <= $2
+	GetEvaluationMetrics(ctx context.Context, arg GetEvaluationMetricsParams) (*GetEvaluationMetricsRow, error)
+	//GetEvaluationsByDecision
+	//
+	//  SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND decision = $1
+	//    AND evaluated_at >= $2
+	//    AND evaluated_at <= $3
+	//  ORDER BY evaluated_at DESC
+	//  LIMIT $4 OFFSET $5
+	GetEvaluationsByDecision(ctx context.Context, arg GetEvaluationsByDecisionParams) ([]*PolicyEvaluation, error)
 	//GetExpiredAccessRequests
 	//
 	//  SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
@@ -1144,6 +1301,45 @@ type Querier interface {
 	//
 	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM persons WHERE id = $1 AND deleted_at IS NULL
 	GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error)
+	//GetPoliciesByEntityID
+	//
+	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND (entity_id = $1 OR entity_id IS NULL)
+	//    AND is_active = true
+	//    AND deleted_at IS NULL
+	//  ORDER BY priority DESC, created_at ASC
+	GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID) ([]*Policy, error)
+	//GetPoliciesByIDs
+	//
+	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
+	//  WHERE id = ANY($1::UUID[])
+	//    AND tenant_id = current_tenant_id()
+	GetPoliciesByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]*Policy, error)
+	// ABAC-specific queries for policy evaluation
+	//
+	//
+	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND is_active = true
+	//    AND deleted_at IS NULL
+	//    AND (
+	//      $1::UUID IS NULL OR
+	//      entity_id IS NULL OR
+	//      entity_id = $1
+	//    )
+	//    AND (
+	//      target->>'resource_type' = $2 OR
+	//      target->>'resource_type' = '*' OR
+	//      target->>'resource_type' IS NULL
+	//    )
+	//    AND (
+	//      target->>'action' = $3 OR
+	//      target->>'action' = '*' OR
+	//      target->>'action' IS NULL
+	//    )
+	//  ORDER BY priority DESC, created_at ASC
+	GetPoliciesForEvaluation(ctx context.Context, arg GetPoliciesForEvaluationParams) ([]*Policy, error)
 	//GetPolicy
 	//
 	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
@@ -1154,21 +1350,6 @@ type Querier interface {
 	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
 	//  WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 	GetPolicyByName(ctx context.Context, name string) (*Policy, error)
-	//GetPolicyEvaluation
-	//
-	//  SELECT id, tenant_id, user_id, resource_id, action_id, context_hash, decision, applicable_policies, evaluation_time_ms, evaluated_at, expires_at FROM policy_evaluations
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
-	GetPolicyEvaluation(ctx context.Context, id uuid.UUID) (*PolicyEvaluation, error)
-	//GetPolicyEvaluationByContextHash
-	//
-	//  SELECT id, tenant_id, user_id, resource_id, action_id, context_hash, decision, applicable_policies, evaluation_time_ms, evaluated_at, expires_at FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
-	//      AND user_id = $1
-	//      AND resource_id = $2
-	//      AND action_id = $3
-	//      AND context_hash = $4
-	//      AND expires_at > NOW()
-	GetPolicyEvaluationByContextHash(ctx context.Context, arg GetPolicyEvaluationByContextHashParams) (*PolicyEvaluation, error)
 	//GetRecentlyDeletedEntities
 	//
 	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
@@ -1190,6 +1371,16 @@ type Querier interface {
 	//  ORDER BY updated_at DESC
 	//  LIMIT $2
 	GetRecentlyModifiedEntities(ctx context.Context, arg GetRecentlyModifiedEntitiesParams) ([]*Entity, error)
+	//GetResourceEvaluationHistory
+	//
+	//  SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND resource_type = $1
+	//    AND ($2::UUID IS NULL OR resource_id = $2)
+	//    AND ($3::VARCHAR IS NULL OR action = $3)
+	//  ORDER BY evaluated_at DESC
+	//  LIMIT $4 OFFSET $5
+	GetResourceEvaluationHistory(ctx context.Context, arg GetResourceEvaluationHistoryParams) ([]*PolicyEvaluation, error)
 	//GetTenantByEmail
 	//
 	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
@@ -1337,6 +1528,16 @@ type Querier interface {
 	//
 	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE username = $1 AND deleted_at IS NULL
 	GetUserByUsername(ctx context.Context, username *string) (*User, error)
+	//GetUserEvaluationHistory
+	//
+	//  SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND user_id = $1
+	//    AND ($2::VARCHAR IS NULL OR resource_type = $2)
+	//    AND ($3::VARCHAR IS NULL OR action = $3)
+	//  ORDER BY evaluated_at DESC
+	//  LIMIT $4 OFFSET $5
+	GetUserEvaluationHistory(ctx context.Context, arg GetUserEvaluationHistoryParams) ([]*PolicyEvaluation, error)
 	//GetUserNotificationPreferences
 	//
 	//  SELECT id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at FROM notification_preferences
@@ -1367,6 +1568,36 @@ type Querier interface {
 	//
 	//  UPDATE users SET failed_login_attempts = failed_login_attempts + 1 WHERE id = $1
 	IncrementFailedLogins(ctx context.Context, id uuid.UUID) error
+	//InvalidateActionEvaluations
+	//
+	//  DELETE FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND action = $1
+	InvalidateActionEvaluations(ctx context.Context, action string) error
+	//InvalidateAllEvaluations
+	//
+	//  DELETE FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	InvalidateAllEvaluations(ctx context.Context) error
+	//InvalidatePolicyEvaluations
+	//
+	//  DELETE FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND applicable_policies && $1::UUID[]
+	InvalidatePolicyEvaluations(ctx context.Context, dollar_1 []uuid.UUID) error
+	//InvalidateResourceEvaluations
+	//
+	//  DELETE FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND resource_type = $1
+	//    AND ($2::UUID IS NULL OR resource_id = $2)
+	InvalidateResourceEvaluations(ctx context.Context, arg InvalidateResourceEvaluationsParams) error
+	//InvalidateUserEvaluations
+	//
+	//  DELETE FROM policy_evaluations
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND user_id = $1
+	InvalidateUserEvaluations(ctx context.Context, userID uuid.UUID) error
 	//IsEntityAncestor
 	//
 	//  SELECT EXISTS(
@@ -1403,13 +1634,17 @@ type Querier interface {
 	//
 	//
 	//  SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
-	//  WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
-	//  ORDER BY name
-	ListAttributeDefinitions(ctx context.Context) ([]*AttributeDefinition, error)
+	//  WHERE tenant_id = current_tenant_id()
+	//    AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
+	//    AND ($2::VARCHAR IS NULL OR category = $2)
+	//    AND ($3::BOOLEAN IS NULL OR is_active = $3)
+	//  ORDER BY name ASC
+	//  LIMIT $4 OFFSET $5
+	ListAttributeDefinitions(ctx context.Context, arg ListAttributeDefinitionsParams) ([]*AttributeDefinition, error)
 	//ListAttributeDefinitionsByCategory
 	//
 	//  SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
-	//  WHERE tenant_id = current_tenant_id() AND category = $1 AND deleted_at IS NULL
+	//  WHERE tenant_id = current_tenant_id() AND category = $1 AND is_active = true
 	//  ORDER BY name
 	ListAttributeDefinitionsByCategory(ctx context.Context, category string) ([]*AttributeDefinition, error)
 	// Entity Listing and Filtering
@@ -1478,13 +1713,6 @@ type Querier interface {
 	//  WHERE tenant_id = current_tenant_id() AND effect = $1 AND deleted_at IS NULL
 	//  ORDER BY name
 	ListPoliciesByEffect(ctx context.Context, effect *string) ([]*Policy, error)
-	//ListPolicyEvaluationsForUser
-	//
-	//  SELECT id, tenant_id, user_id, resource_id, action_id, context_hash, decision, applicable_policies, evaluation_time_ms, evaluated_at, expires_at FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id() AND user_id = $1
-	//  ORDER BY evaluated_at DESC
-	//  LIMIT $2 OFFSET $3
-	ListPolicyEvaluationsForUser(ctx context.Context, arg ListPolicyEvaluationsForUserParams) ([]*PolicyEvaluation, error)
 	//ListTenants
 	//
 	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
@@ -1725,9 +1953,24 @@ type Querier interface {
 	//      encryption_required = COALESCE($12, encryption_required),
 	//      is_active = COALESCE($13, is_active),
 	//      updated_at = NOW()
-	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
 	//  RETURNING id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at
 	UpdateAttributeDefinition(ctx context.Context, arg UpdateAttributeDefinitionParams) (*AttributeDefinition, error)
+	//UpdateAttributeValue
+	//
+	//  UPDATE attribute_values
+	//  SET
+	//      value = COALESCE($2, value),
+	//      encrypted_value = COALESCE($3, encrypted_value),
+	//      is_encrypted = COALESCE($4, is_encrypted),
+	//      version = version + 1,
+	//      effective_from = COALESCE($5, effective_from),
+	//      effective_to = COALESCE($6, effective_to),
+	//      updated_at = NOW(),
+	//      updated_by = $7
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  RETURNING id, tenant_id, definition_id, entity_id, value, encrypted_value, is_encrypted, version, effective_from, effective_to, created_at, created_by, updated_at, updated_by
+	UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (*AttributeValue, error)
 	//UpdateCurrentTenant
 	//
 	//  UPDATE tenants
@@ -1799,6 +2042,12 @@ type Querier interface {
 	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 	//  RETURNING id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
 	UpdatePolicy(ctx context.Context, arg UpdatePolicyParams) (*Policy, error)
+	//UpdatePolicyStatus
+	//
+	//  UPDATE policies
+	//  SET is_active = $2, updated_at = NOW()
+	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	UpdatePolicyStatus(ctx context.Context, arg UpdatePolicyStatusParams) error
 	//UpdateTenant
 	//
 	//  UPDATE tenants

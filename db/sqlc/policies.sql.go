@@ -11,19 +11,48 @@ import (
 	"github.com/google/uuid"
 )
 
+const countPolicies = `-- name: CountPolicies :one
+SELECT COUNT(*) FROM policies 
+WHERE tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+  AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
+  AND ($2::VARCHAR IS NULL OR category = $2)
+  AND ($3::BOOLEAN IS NULL OR is_active = $3)
+`
+
+type CountPoliciesParams struct {
+	Column1 string `json:"column_1"`
+	Column2 string `json:"column_2"`
+	Column3 bool   `json:"column_3"`
+}
+
+// CountPolicies
+//
+//	SELECT COUNT(*) FROM policies
+//	WHERE tenant_id = current_tenant_id()
+//	  AND deleted_at IS NULL
+//	  AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
+//	  AND ($2::VARCHAR IS NULL OR category = $2)
+//	  AND ($3::BOOLEAN IS NULL OR is_active = $3)
+func (q *Queries) CountPolicies(ctx context.Context, arg CountPoliciesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countPolicies, arg.Column1, arg.Column2, arg.Column3)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createPolicy = `-- name: CreatePolicy :one
 
 INSERT INTO policies (
-    id, tenant_id, entity_id, name, display_name, description, policy_type,
+    tenant_id, entity_id, name, display_name, description, policy_type,
     effect, priority, category, target, rule, obligations, advice, is_active, created_by
 ) VALUES (
-    $1, current_tenant_id(), $2, $3, $4, $5, $6,
-    $7, $8, $9, $10, $11, $12, $13, $14, $15
+    current_tenant_id(), $1, $2, $3, $4, $5,
+    $6, $7, $8, $9, $10, $11, $12, $13, $14
 ) RETURNING id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
 `
 
 type CreatePolicyParams struct {
-	ID          uuid.UUID  `json:"id"`
 	EntityID    *uuid.UUID `json:"entity_id"`
 	Name        string     `json:"name"`
 	DisplayName *string    `json:"display_name"`
@@ -43,15 +72,14 @@ type CreatePolicyParams struct {
 // Policies CRUD Operations
 //
 //	INSERT INTO policies (
-//	    id, tenant_id, entity_id, name, display_name, description, policy_type,
+//	    tenant_id, entity_id, name, display_name, description, policy_type,
 //	    effect, priority, category, target, rule, obligations, advice, is_active, created_by
 //	) VALUES (
-//	    $1, current_tenant_id(), $2, $3, $4, $5, $6,
-//	    $7, $8, $9, $10, $11, $12, $13, $14, $15
+//	    current_tenant_id(), $1, $2, $3, $4, $5,
+//	    $6, $7, $8, $9, $10, $11, $12, $13, $14
 //	) RETURNING id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
 func (q *Queries) CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*Policy, error) {
 	row := q.db.QueryRow(ctx, createPolicy,
-		arg.ID,
 		arg.EntityID,
 		arg.Name,
 		arg.DisplayName,
@@ -122,6 +150,206 @@ type GetApplicablePoliciesParams struct {
 //	ORDER BY p.priority DESC, p.created_at ASC
 func (q *Queries) GetApplicablePolicies(ctx context.Context, arg GetApplicablePoliciesParams) ([]*Policy, error) {
 	rows, err := q.db.Query(ctx, getApplicablePolicies, arg.Column1, arg.Column2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Policy{}
+	for rows.Next() {
+		var i Policy
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.EntityID,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.PolicyType,
+			&i.Effect,
+			&i.Priority,
+			&i.Category,
+			&i.Target,
+			&i.Rule,
+			&i.Obligations,
+			&i.Advice,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPoliciesByEntityID = `-- name: GetPoliciesByEntityID :many
+SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies 
+WHERE tenant_id = current_tenant_id()
+  AND (entity_id = $1 OR entity_id IS NULL)
+  AND is_active = true
+  AND deleted_at IS NULL
+ORDER BY priority DESC, created_at ASC
+`
+
+// GetPoliciesByEntityID
+//
+//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
+//	WHERE tenant_id = current_tenant_id()
+//	  AND (entity_id = $1 OR entity_id IS NULL)
+//	  AND is_active = true
+//	  AND deleted_at IS NULL
+//	ORDER BY priority DESC, created_at ASC
+func (q *Queries) GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID) ([]*Policy, error) {
+	rows, err := q.db.Query(ctx, getPoliciesByEntityID, entityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Policy{}
+	for rows.Next() {
+		var i Policy
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.EntityID,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.PolicyType,
+			&i.Effect,
+			&i.Priority,
+			&i.Category,
+			&i.Target,
+			&i.Rule,
+			&i.Obligations,
+			&i.Advice,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPoliciesByIDs = `-- name: GetPoliciesByIDs :many
+SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies 
+WHERE id = ANY($1::UUID[]) 
+  AND tenant_id = current_tenant_id()
+`
+
+// GetPoliciesByIDs
+//
+//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
+//	WHERE id = ANY($1::UUID[])
+//	  AND tenant_id = current_tenant_id()
+func (q *Queries) GetPoliciesByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]*Policy, error) {
+	rows, err := q.db.Query(ctx, getPoliciesByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Policy{}
+	for rows.Next() {
+		var i Policy
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.EntityID,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.PolicyType,
+			&i.Effect,
+			&i.Priority,
+			&i.Category,
+			&i.Target,
+			&i.Rule,
+			&i.Obligations,
+			&i.Advice,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPoliciesForEvaluation = `-- name: GetPoliciesForEvaluation :many
+
+SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies 
+WHERE tenant_id = current_tenant_id()
+  AND is_active = true 
+  AND deleted_at IS NULL
+  AND (
+    $1::UUID IS NULL OR 
+    entity_id IS NULL OR 
+    entity_id = $1
+  )
+  AND (
+    target->>'resource_type' = $2 OR 
+    target->>'resource_type' = '*' OR 
+    target->>'resource_type' IS NULL
+  )
+  AND (
+    target->>'action' = $3 OR 
+    target->>'action' = '*' OR 
+    target->>'action' IS NULL
+  )
+ORDER BY priority DESC, created_at ASC
+`
+
+type GetPoliciesForEvaluationParams struct {
+	Column1  uuid.UUID `json:"column_1"`
+	Target   []byte    `json:"target"`
+	Target_2 []byte    `json:"target_2"`
+}
+
+// ABAC-specific queries for policy evaluation
+//
+//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
+//	WHERE tenant_id = current_tenant_id()
+//	  AND is_active = true
+//	  AND deleted_at IS NULL
+//	  AND (
+//	    $1::UUID IS NULL OR
+//	    entity_id IS NULL OR
+//	    entity_id = $1
+//	  )
+//	  AND (
+//	    target->>'resource_type' = $2 OR
+//	    target->>'resource_type' = '*' OR
+//	    target->>'resource_type' IS NULL
+//	  )
+//	  AND (
+//	    target->>'action' = $3 OR
+//	    target->>'action' = '*' OR
+//	    target->>'action' IS NULL
+//	  )
+//	ORDER BY priority DESC, created_at ASC
+func (q *Queries) GetPoliciesForEvaluation(ctx context.Context, arg GetPoliciesForEvaluationParams) ([]*Policy, error) {
+	rows, err := q.db.Query(ctx, getPoliciesForEvaluation, arg.Column1, arg.Target, arg.Target_2)
 	if err != nil {
 		return nil, err
 	}
@@ -628,4 +856,25 @@ func (q *Queries) UpdatePolicy(ctx context.Context, arg UpdatePolicyParams) (*Po
 		&i.DeletedAt,
 	)
 	return &i, err
+}
+
+const updatePolicyStatus = `-- name: UpdatePolicyStatus :exec
+UPDATE policies 
+SET is_active = $2, updated_at = NOW()
+WHERE id = $1 AND tenant_id = current_tenant_id()
+`
+
+type UpdatePolicyStatusParams struct {
+	ID       uuid.UUID `json:"id"`
+	IsActive *bool     `json:"is_active"`
+}
+
+// UpdatePolicyStatus
+//
+//	UPDATE policies
+//	SET is_active = $2, updated_at = NOW()
+//	WHERE id = $1 AND tenant_id = current_tenant_id()
+func (q *Queries) UpdatePolicyStatus(ctx context.Context, arg UpdatePolicyStatusParams) error {
+	_, err := q.db.Exec(ctx, updatePolicyStatus, arg.ID, arg.IsActive)
+	return err
 }
