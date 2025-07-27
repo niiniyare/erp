@@ -72,8 +72,14 @@ mock: ## Generate mocks for interfaces
 fmt: ## Format Go code
 	@go fmt ./...
 
+goa: ## generate goa 
+	@goa gen github.com/niiniyare/erp/internal/api/design -o internal/api
+
 lint: ## Lint Go code
 	@golangci-lint run ./...
+
+gen: sqlc goa ##  generate All 
+
 
 test: ## Run all tests
 	@go test -v -cover ./...
