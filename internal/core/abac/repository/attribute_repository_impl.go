@@ -3,11 +3,14 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/abac/models"
+	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -15,10 +18,10 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// attributeRepository implements AttributeRepository using SQLC
+// attributeRepository implements AttributeRepository using SQLC and Store
 type attributeRepository struct {
-	db      sqlc.DBTX
-	queries *sqlc.Queries
+	store   sqlc.Store
+	cache   cache.Service
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
 	tracer  tracing.TracingService
@@ -26,14 +29,15 @@ type attributeRepository struct {
 
 // NewAttributeRepository creates a new attribute repository implementation
 func NewAttributeRepository(
-	db sqlc.DBTX,
+	store sqlc.Store,
+	cache cache.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
 	tracer tracing.TracingService,
 ) AttributeRepository {
 	return &attributeRepository{
-		db:      db,
-		queries: sqlc.New(db),
+		store:   store,
+		cache:   cache,
 		logger:  logger,
 		metrics: metrics,
 		tracer:  tracer,
@@ -72,7 +76,19 @@ func (r *attributeRepository) CreateAttributeDefinition(ctx context.Context, req
 		IsActive:           req.IsActive,
 	}
 
-	attrDef, err := r.queries.CreateAttributeDefinition(ctx, params)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	var attrDef sqlc.AttributeDefinition
+	// Use tenant-aware transaction
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, txStore sqlc.Store) error {
+		var err error
+		attrDef, err = txStore.CreateAttributeDefinition(ctx, params)
+		return err
+	})
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("attribute_repository", "create_definition_failed")
@@ -100,7 +116,22 @@ func (r *attributeRepository) GetAttributeDefinitionByID(ctx context.Context, id
 		))
 	defer span.End()
 
-	attrDef, err := r.queries.GetAttributeDefinition(ctx, id)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	// Try cache first
+	cacheKey := fmt.Sprintf("attr_def:%s", id.String())
+	var attrDef *models.AttributeDefinition
+	if err := r.cache.Get(ctx, cacheKey, &attrDef); err == nil {
+		r.metrics.IncrementCounter("attribute_repository_definition_cache_hit")
+		return attrDef, nil
+	}
+
+	// Cache miss - get from database
+	sqlcAttrDef, err := r.store.GetAttributeDefinition(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			r.metrics.IncrementCounter("attribute_repository_definition_not_found")
@@ -111,8 +142,16 @@ func (r *attributeRepository) GetAttributeDefinitionByID(ctx context.Context, id
 		return nil, errors.NewBusinessErrorWithContext(ctx, "ATTRIBUTE_DEFINITION_GET_FAILED", "Failed to get attribute definition").WithErr(err)
 	}
 
+	// Convert to domain model
+	attrDef = r.convertSQLCAttributeDefinitionToModel(sqlcAttrDef)
+
+	// Cache the result
+	if err := r.cache.Set(ctx, cacheKey, attrDef, 30*time.Minute); err != nil {
+		r.logger.WarnContext(ctx, "Failed to cache attribute definition", logger.Fields{"error": err.Error()})
+	}
+
 	r.metrics.IncrementSuccessCount("attribute_repository_get_definition")
-	return r.convertSQLCAttributeDefinitionToModel(attrDef), nil
+	return attrDef, nil
 }
 
 // GetAttributeDefinitionByName retrieves an attribute definition by name
@@ -123,7 +162,53 @@ func (r *attributeRepository) GetAttributeDefinitionByName(ctx context.Context, 
 		))
 	defer span.End()
 
-	attrDef, err := r.queries.GetAttributeDefinitionByName(ctx, name)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	// Try cache first
+	cacheKey := fmt.Sprintf("attr_def_name:%s", name)
+	var attrDef *models.AttributeDefinition
+	if err := r.cache.Get(ctx, cacheKey, &attrDef); err == nil {
+		r.metrics.IncrementCounter("attribute_repository_definition_name_cache_hit")
+		return attrDef, nil
+	}
+
+	// Cache miss - get from database
+	sqlcAttrDef, err := r.store.GetAttributeDefinitionByName(ctx, name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			r.metrics.IncrementCounter("attribute_repository_definition_not_found")
+			return nil, errors.NewBusinessErrorWithContext(ctx, "ATTRIBUTE_DEFINITION_NOT_FOUND", "Attribute definition not found")
+		}
+		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		r.metrics.IncrementErrorCount("attribute_repository", "get_definition_by_name_failed")
+		return nil, errors.NewBusinessErrorWithContext(ctx, "ATTRIBUTE_DEFINITION_GET_FAILED", "Failed to get attribute definition by name").WithErr(err)
+	}
+
+	// Convert to domain model
+	attrDef = r.convertSQLCAttributeDefinitionToModel(sqlcAttrDef)
+
+	// Cache the result
+	if err := r.cache.Set(ctx, cacheKey, attrDef, 30*time.Minute); err != nil {
+		r.logger.WarnContext(ctx, "Failed to cache attribute definition by name", logger.Fields{"error": err.Error()})
+	}
+
+	r.metrics.IncrementSuccessCount("attribute_repository_get_definition_by_name")
+	return attrDef, nil
+}
+
+// GetAttributeDefinitionByName retrieves an attribute definition by name
+func (r *attributeRepository) GetAttributeDefinitionByName(ctx context.Context, name string) (*models.AttributeDefinition, error) {
+	ctx, span := r.tracer.StartSpan(ctx, "abac.repository.GetAttributeDefinitionByName",
+		tracing.WithAttributes(
+			tracing.StringAttribute("name", name),
+		))
+	defer span.End()
+
+	sqlcAttrDef, err := r.store.GetAttributeDefinitionByName(ctx, name)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			r.metrics.IncrementCounter("attribute_repository_definition_not_found")
@@ -162,7 +247,19 @@ func (r *attributeRepository) UpdateAttributeDefinition(ctx context.Context, req
 		IsActive:           req.IsActive,
 	}
 
-	attrDef, err := r.queries.UpdateAttributeDefinition(ctx, params)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	var attrDef sqlc.AttributeDefinition
+	// Use tenant-aware transaction
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, txStore sqlc.Store) error {
+		var err error
+		attrDef, err = txStore.UpdateAttributeDefinition(ctx, params)
+		return err
+	})
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("attribute_repository", "update_definition_failed")
@@ -181,7 +278,16 @@ func (r *attributeRepository) DeleteAttributeDefinition(ctx context.Context, id 
 		))
 	defer span.End()
 
-	err := r.queries.DeleteAttributeDefinition(ctx, id)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	// Use tenant-aware transaction
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, txStore sqlc.Store) error {
+		return txStore.DeleteAttributeDefinition(ctx, id)
+	})
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("attribute_repository", "delete_definition_failed")
@@ -209,7 +315,44 @@ func (r *attributeRepository) ListAttributeDefinitions(ctx context.Context, req 
 		Column5: int32(req.Offset),
 	}
 
-	attrDefs, err := r.queries.ListAttributeDefinitions(ctx, params)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	// Try cache first for list
+	cacheKey := fmt.Sprintf("attr_defs:search:%s:cat:%s:active:%v:limit:%d:offset:%d",
+		*req.Search, *req.Category, *req.IsActive, req.Limit, req.Offset)
+	var attrDefs []sqlc.ListAttributeDefinitionsRow
+	if err := r.cache.Get(ctx, cacheKey, &attrDefs); err == nil {
+		r.metrics.IncrementCounter("attribute_repository_list_cache_hit")
+		// Convert cached results
+		result := make([]*models.AttributeDefinition, len(attrDefs))
+		for i, attrDef := range attrDefs {
+			result[i] = r.convertSQLCAttributeDefinitionToModel(sqlc.AttributeDefinition{
+				ID:                 attrDef.ID,
+				TenantID:           attrDef.TenantID,
+				Name:               attrDef.Name,
+				DisplayName:        attrDef.DisplayName,
+				Description:        attrDef.Description,
+				DataType:           attrDef.DataType,
+				Category:           attrDef.Category,
+				IsRequired:         attrDef.IsRequired,
+				IsSensitive:        attrDef.IsSensitive,
+				DefaultValue:       attrDef.DefaultValue,
+				AllowedValues:      attrDef.AllowedValues,
+				ValidationRules:    attrDef.ValidationRules,
+				EncryptionRequired: attrDef.EncryptionRequired,
+				IsActive:           attrDef.IsActive,
+				CreatedAt:          attrDef.CreatedAt,
+			})
+		}
+		return result, nil
+	}
+
+	// Cache miss - get from database
+	attrDefs, err := r.store.ListAttributeDefinitions(ctx, params)
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("attribute_repository", "list_definitions_failed")
@@ -220,7 +363,28 @@ func (r *attributeRepository) ListAttributeDefinitions(ctx context.Context, req 
 
 	result := make([]*models.AttributeDefinition, len(attrDefs))
 	for i, attrDef := range attrDefs {
-		result[i] = r.convertSQLCAttributeDefinitionToModel(attrDef)
+		result[i] = r.convertSQLCAttributeDefinitionToModel(sqlc.AttributeDefinition{
+			ID:                 attrDef.ID,
+			TenantID:           attrDef.TenantID,
+			Name:               attrDef.Name,
+			DisplayName:        attrDef.DisplayName,
+			Description:        attrDef.Description,
+			DataType:           attrDef.DataType,
+			Category:           attrDef.Category,
+			IsRequired:         attrDef.IsRequired,
+			IsSensitive:        attrDef.IsSensitive,
+			DefaultValue:       attrDef.DefaultValue,
+			AllowedValues:      attrDef.AllowedValues,
+			ValidationRules:    attrDef.ValidationRules,
+			EncryptionRequired: attrDef.EncryptionRequired,
+			IsActive:           attrDef.IsActive,
+			CreatedAt:          attrDef.CreatedAt,
+		})
+	}
+
+	// Cache the results
+	if err := r.cache.Set(ctx, cacheKey, attrDefs, 15*time.Minute); err != nil {
+		r.logger.WarnContext(ctx, "Failed to cache attribute definitions list", logger.Fields{"error": err.Error()})
 	}
 
 	return result, nil
@@ -247,7 +411,19 @@ func (r *attributeRepository) CreateAttributeValue(ctx context.Context, req *Cre
 		CreatedBy:      req.CreatedBy,
 	}
 
-	attrValue, err := r.queries.CreateAttributeValue(ctx, params)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	var attrValue sqlc.AttributeValue
+	// Use tenant-aware transaction
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, txStore sqlc.Store) error {
+		var err error
+		attrValue, err = txStore.CreateAttributeValue(ctx, params)
+		return err
+	})
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("attribute_repository", "create_value_failed")
@@ -278,7 +454,27 @@ func (r *attributeRepository) GetAttributeValuesByEntity(ctx context.Context, en
 		Column2:  categoryStr,
 	}
 
-	rows, err := r.queries.GetAttributeValuesByEntity(ctx, params)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	// Try cache first
+	cacheKey := fmt.Sprintf("entity_attrs:%s:%s", entityID.String(), string(category))
+	var rows []sqlc.GetAttributeValuesByEntityRow
+	if err := r.cache.Get(ctx, cacheKey, &rows); err == nil {
+		r.metrics.IncrementCounter("attribute_repository_entity_values_cache_hit")
+		// Convert cached results
+		result := make([]*models.AttributeValue, len(rows))
+		for i, row := range rows {
+			result[i] = r.convertSQLCAttributeValueRowToModel(row)
+		}
+		return result, nil
+	}
+
+	// Cache miss - get from database
+	rows, err := r.store.GetAttributeValuesByEntity(ctx, params)
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("attribute_repository", "get_values_by_entity_failed")
@@ -292,6 +488,11 @@ func (r *attributeRepository) GetAttributeValuesByEntity(ctx context.Context, en
 		result[i] = r.convertSQLCAttributeValueRowToModel(row)
 	}
 
+	// Cache the results
+	if err := r.cache.Set(ctx, cacheKey, rows, 20*time.Minute); err != nil {
+		r.logger.WarnContext(ctx, "Failed to cache entity attribute values", logger.Fields{"error": err.Error()})
+	}
+
 	return result, nil
 }
 
@@ -300,7 +501,13 @@ func (r *attributeRepository) GetAttributeStats(ctx context.Context) (*Attribute
 	ctx, span := r.tracer.StartSpan(ctx, "abac.repository.GetAttributeStats")
 	defer span.End()
 
-	stats, err := r.queries.GetAttributeStats(ctx)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	stats, err := r.store.GetAttributeStats(ctx)
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("attribute_repository", "get_stats_failed")

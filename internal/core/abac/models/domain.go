@@ -192,7 +192,8 @@ func (p *Policy) LogEvaluation(ctx context.Context, log logger.Logger, decision 
 }
 
 // RecordMetrics records policy evaluation metrics
-func (p *Policy) RecordMetrics(ctx context.Context, m metrics.Provider, decision types.PolicyDecisionType, evaluationTime time.Duration) {
+func (p *Policy) RecordMetrics(ctx context.Context, m metrics.MetricsProvider, decision types.PolicyDecisionType, evaluationTime time.Duration) {
+
 	// Policy evaluation counter
 	policyCounter := m.Counter(
 		"abac_policy_evaluations_total",
@@ -200,7 +201,7 @@ func (p *Policy) RecordMetrics(ctx context.Context, m metrics.Provider, decision
 		"policy_id", "policy_name", "policy_type", "effect", "decision", "tenant_id",
 	)
 
-	policyCounter.Inc(ctx, metrics.Fields{
+	policyCounter.Inc(metrics.Fields{
 		"policy_id":   p.ID.String(),
 		"policy_name": p.Name,
 		"policy_type": string(p.PolicyType),
@@ -217,7 +218,7 @@ func (p *Policy) RecordMetrics(ctx context.Context, m metrics.Provider, decision
 		"policy_type", "policy_effect", "decision",
 	)
 
-	durationHist.Observe(ctx, evaluationTime.Seconds(), metrics.Fields{
+	durationHist.Observe(evaluationTime.Seconds(), metrics.Fields{
 		"policy_type":   string(p.PolicyType),
 		"policy_effect": string(p.Effect),
 		"decision":      string(decision),
@@ -385,7 +386,7 @@ func (per *PolicyEvaluationResult) GetTraceAttributes() []attribute.KeyValue {
 }
 
 // RecordMetrics records evaluation result metrics
-func (per *PolicyEvaluationResult) RecordMetrics(ctx context.Context, m metrics.Provider) {
+func (per *PolicyEvaluationResult) RecordMetrics(ctx context.Context, m metrics.MetricsProvider) {
 	// Evaluation result counter
 	resultCounter := m.Counter(
 		"abac_evaluations_total",
@@ -393,7 +394,7 @@ func (per *PolicyEvaluationResult) RecordMetrics(ctx context.Context, m metrics.
 		"decision", "status", "cache_hit", "tenant_id",
 	)
 
-	resultCounter.Inc(ctx, metrics.Fields{
+	resultCounter.Inc(metrics.Fields{
 		"decision":  string(per.Decision),
 		"status":    string(per.Status),
 		"cache_hit": fmt.Sprintf("%t", per.CacheHit),
@@ -408,7 +409,7 @@ func (per *PolicyEvaluationResult) RecordMetrics(ctx context.Context, m metrics.
 		"decision", "status", "cache_hit",
 	)
 
-	durationHist.Observe(ctx, float64(per.EvaluationTimeMS)/1000.0, metrics.Fields{
+	durationHist.Observe(float64(per.EvaluationTimeMS)/1000.0, metrics.Fields{
 		"decision":  string(per.Decision),
 		"status":    string(per.Status),
 		"cache_hit": fmt.Sprintf("%t", per.CacheHit),
@@ -422,7 +423,7 @@ func (per *PolicyEvaluationResult) RecordMetrics(ctx context.Context, m metrics.
 		"decision", "status",
 	)
 
-	policyCountHist.Observe(ctx, float64(len(per.ApplicablePolicies)), metrics.Fields{
+	policyCountHist.Observe(float64(len(per.ApplicablePolicies)), metrics.Fields{
 		"decision": string(per.Decision),
 		"status":   string(per.Status),
 	})

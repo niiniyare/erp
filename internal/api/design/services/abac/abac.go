@@ -1,329 +1,179 @@
 package abac
 
 import (
-	. "github.com/niiniyare/erp/internal/api/design/types"
+	"github.com/niiniyare/erp/internal/api/design/types"
 	. "goa.design/goa/v3/dsl"
 )
 
-// Service describes the ABAC (Attribute-Based Access Control) service
 var _ = Service("abac", func() {
-	Description("ABAC service for fine-grained access control and policy evaluation")
+	Description("Attribute-Based Access Control (ABAC) service for managing policies and evaluating permissions.")
 
-	HTTP(func() {
-		Path("/api/v1/abac")
-	})
+	Security("jwt")
 
-	// Security requirements
-	Security("jwt", func() {
-		Scope("api:read")
-		Scope("api:write")
-	})
+	Error("unauthorized", String, "Unauthorized access")
+	Error("forbidden", String, "Forbidden access")
+	Error("not_found", String, "Resource not found")
+	Error("bad_request", String, "Bad request")
 
-	// Policy Decision Point (PDP) endpoint
 	Method("evaluate", func() {
-		Description("Evaluate access decision using ABAC policies")
-
-		Payload(PolicyEvaluationRequest)
-		Result(PolicyEvaluationResponse)
-
-		Error("bad_request")
-		Error("unauthorized")
-		Error("forbidden")
-		Error("internal_error")
-
+		Description("Evaluate a policy decision request.")
+		Payload(func() {
+			Token("token", String, "JWT token")
+			Attribute("user_id", String, "User ID")
+			Attribute("resource_type", String, "Resource type")
+			Attribute("resource_id", String, "Resource ID")
+			Attribute("action", String, "Action")
+			Attribute("context", MapOf(String, Any), "Context")
+			Attribute("use_cache", Boolean, "Use cache")
+			Attribute("cache_results", Boolean, "Cache results")
+			Attribute("include_advice", Boolean, "Include advice")
+			Attribute("explain_decision", Boolean, "Explain decision")
+			Attribute("request_id", String, "Request ID")
+		})
+		Result(types.PolicyEvaluationResponse)
 		HTTP(func() {
-			POST("/evaluate")
+			POST("/abac/evaluate")
 			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("unauthorized", StatusUnauthorized)
-			Response("forbidden", StatusForbidden)
-			Response("internal_error", StatusInternalServerError)
 		})
 	})
 
-	// Bulk policy evaluation
 	Method("evaluate_bulk", func() {
-		Description("Evaluate multiple access decisions in a single request")
-
-		Payload(BulkPolicyEvaluationRequest)
-		Result(BulkPolicyEvaluationResponse)
-
-		Error("bad_request")
-		Error("unauthorized")
-		Error("internal_error")
-
+		Description("Evaluate a bulk policy decision request.")
+		Payload(func() {
+			Token("token", String, "JWT token")
+			Attribute("user_id", String, "User ID")
+			Attribute("requests", ArrayOf(types.PolicyEvaluationRequest), "Requests")
+			Attribute("request_id", String, "Request ID")
+			Attribute("fail_fast", Boolean, "Fail fast")
+			Attribute("use_cache", Boolean, "Use cache")
+			Attribute("cache_results", Boolean, "Cache results")
+		})
+		Result(types.BulkPolicyEvaluationResponse)
 		HTTP(func() {
-			POST("/evaluate/bulk")
+			POST("/abac/evaluate-bulk")
 			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("unauthorized", StatusUnauthorized)
-			Response("internal_error", StatusInternalServerError)
 		})
 	})
 
-	// Simple authorization check
 	Method("authorize", func() {
-		Description("Simple authorization check - returns boolean result")
-
-		Payload(AuthorizationRequest)
-		Result(AuthorizationResponse)
-
-		Error("bad_request")
-		Error("unauthorized")
-		Error("internal_error")
-
+		Description("Simple authorization check.")
+		Payload(func() {
+			Token("token", String, "JWT token")
+			Attribute("user_id", String, "User ID")
+			Attribute("resource_type", String, "Resource type")
+			Attribute("resource_id", String, "Resource ID")
+			Attribute("action", String, "Action")
+			Attribute("context", MapOf(String, Any), "Context")
+		})
+		Result(types.AuthorizationResponse)
 		HTTP(func() {
-			POST("/authorize")
+			POST("/abac/authorize")
 			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("unauthorized", StatusUnauthorized)
-			Response("internal_error", StatusInternalServerError)
 		})
 	})
 
-	// Decision explanation endpoint
 	Method("explain", func() {
-		Description("Get detailed explanation of how a decision was made")
-
-		Payload(PolicyExplanationRequest)
-		Result(PolicyExplanationResponse)
-
-		Error("bad_request")
-		Error("unauthorized")
-		Error("internal_error")
-
+		Description("Explain a policy decision.")
+		Payload(func() {
+			Token("token", String, "JWT token")
+			Attribute("user_id", String, "User ID")
+			Attribute("resource_type", String, "Resource type")
+			Attribute("resource_id", String, "Resource ID")
+			Attribute("action", String, "Action")
+			Attribute("context", MapOf(String, Any), "Context")
+			Attribute("detail_level", String, "Detail level")
+		})
+		Result(types.PolicyExplanationResponse)
 		HTTP(func() {
-			POST("/explain")
+			POST("/abac/explain")
 			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("unauthorized", StatusUnauthorized)
-			Response("internal_error", StatusInternalServerError)
 		})
 	})
 
-	// Policy discovery
 	Method("discover_policies", func() {
-		Description("Discover applicable policies for a given request")
-
-		Payload(PolicyDiscoveryRequest)
-		Result(PolicyDiscoveryResponse)
-
-		Error("bad_request")
-		Error("unauthorized")
-		Error("internal_error")
-
+		Description("Discover applicable policies.")
+		Payload(func() {
+			Token("token", String, "JWT token")
+			Attribute("user_id", String, "User ID")
+			Attribute("resource_type", String, "Resource type")
+			Attribute("action", String, "Action")
+			Attribute("context", MapOf(String, Any), "Context")
+		})
+		Result(types.PolicyDiscoveryResponse)
 		HTTP(func() {
-			POST("/policies/discover")
+			POST("/abac/discover-policies")
 			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("unauthorized", StatusUnauthorized)
-			Response("internal_error", StatusInternalServerError)
 		})
 	})
 
-	// Attribute collection endpoint
 	Method("collect_attributes", func() {
-		Description("Collect attributes for a given context")
-
-		Payload(AttributeCollectionRequest)
-		Result(AttributeCollectionResponse)
-
-		Error("bad_request")
-		Error("unauthorized")
-		Error("internal_error")
-
+		Description("Collect attributes for a given context.")
+		Payload(func() {
+			Token("token", String, "JWT token")
+			Attribute("user_id", String, "User ID")
+			Attribute("resource_type", String, "Resource type")
+			Attribute("resource_id", String, "Resource ID")
+			Attribute("action", String, "Action")
+			Attribute("entity_id", String, "Entity ID")
+			Attribute("include_expired", Boolean, "Include expired")
+		})
+		Result(types.AttributeCollectionResponse)
 		HTTP(func() {
-			POST("/attributes/collect")
+			POST("/abac/collect-attributes")
 			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("unauthorized", StatusUnauthorized)
-			Response("internal_error", StatusInternalServerError)
 		})
 	})
 
-	// Decision audit log
 	Method("audit_decisions", func() {
-		Description("Get decision audit history for a user")
-
+		Description("Get a history of policy decisions.")
 		Payload(func() {
-			// Authentication and common headers
-			JWTToken()
-			Attribute("tenant_id", String, "Tenant identifier", func() {
-				Format(FormatUUID)
-				Example("123e4567-e89b-12d3-a456-426614174000")
-			})
-			Attribute("entity_id", String, "Entity identifier", func() {
-				Format(FormatUUID)
-				Example("987fcdeb-51d2-43b8-a456-426614174000")
-			})
-			Attribute("current_user_id", String, "Current user identifier", func() {
-				Format(FormatUUID)
-				Example("456e7890-e89b-12d3-a456-426614174000")
-			})
-
-			Attribute("user_id", String, "User ID to get audit history for", func() {
-				Format(FormatUUID)
-				Example("550e8400-e29b-41d4-a716-446655440000")
-			})
-			Attribute("limit", UInt, "Maximum number of records to return", func() {
-				Default(100)
-				Maximum(1000)
-				Example(50)
-			})
-			Attribute("start_date", String, "Start date for audit filter", func() {
-				Format(FormatDateTime)
-				Example("2023-12-01T00:00:00Z")
-			})
-			Attribute("end_date", String, "End date for audit filter", func() {
-				Format(FormatDateTime)
-				Example("2023-12-07T23:59:59Z")
-			})
-			Required("token", "tenant_id", "entity_id", "current_user_id", "user_id")
+			Token("token", String, "JWT token")
+			Attribute("user_id", String, "User ID")
+			Attribute("limit", UInt, "Limit")
 		})
-
-		Result(DecisionAuditResponse)
-
-		Error("bad_request")
-		Error("unauthorized")
-		Error("not_found")
-		Error("internal_error")
-
+		Result(types.DecisionAuditResponse)
 		HTTP(func() {
-			GET("/audit/decisions/{user_id}")
-			Param("limit")
-			Param("start_date")
-			Param("end_date")
+			GET("/abac/audit")
 			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("unauthorized", StatusUnauthorized)
-			Response("not_found", StatusNotFound)
-			Response("internal_error", StatusInternalServerError)
 		})
 	})
 
-	// Cache management
 	Method("invalidate_cache", func() {
-		Description("Invalidate cached policy evaluations")
-
+		Description("Invalidate the ABAC cache.")
 		Payload(func() {
-			// Authentication and common headers
-			JWTToken()
-			Attribute("tenant_id", String, "Tenant identifier", func() {
-				Format(FormatUUID)
-				Example("123e4567-e89b-12d3-a456-426614174000")
-			})
-			Attribute("entity_id", String, "Entity identifier", func() {
-				Format(FormatUUID)
-				Example("987fcdeb-51d2-43b8-a456-426614174000")
-			})
-			Attribute("current_user_id", String, "Current user identifier", func() {
-				Format(FormatUUID)
-				Example("456e7890-e89b-12d3-a456-426614174000")
-			})
-
-			Attribute("user_id", String, "User ID to invalidate cache for", func() {
-				Format(FormatUUID)
-				Example("550e8400-e29b-41d4-a716-446655440000")
-			})
-			Attribute("resource_type", String, "Resource type to invalidate", func() {
-				Example("document")
-			})
-			Attribute("pattern", String, "Cache key pattern to invalidate", func() {
-				Example("policy_eval:*")
-			})
-			Required("token", "tenant_id", "entity_id", "current_user_id")
+			Token("token", String, "JWT token")
+			Attribute("user_id", String, "User ID")
+			Attribute("resource_type", String, "Resource type")
+			Attribute("pattern", String, "Pattern")
 		})
-
-		Result(func() {
-			Attribute("invalidated_count", UInt, "Number of cache entries invalidated")
-			Attribute("success", Boolean, "Whether the operation was successful")
-			Required("invalidated_count", "success")
-		})
-
-		Error("bad_request")
-		Error("unauthorized")
-		Error("internal_error")
-
+		Result(types.InvalidateCacheResult)
 		HTTP(func() {
-			POST("/cache/invalidate")
+			POST("/abac/invalidate-cache")
 			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("unauthorized", StatusUnauthorized)
-			Response("internal_error", StatusInternalServerError)
-		})
-
-		// Only admin users can invalidate cache
-		Security("jwt", func() {
-			Scope("admin")
 		})
 	})
 
-	// Health check
 	Method("health", func() {
-		Description("Health check for ABAC service")
-
-		Result(func() {
-			Attribute("status", String, "Service status", func() {
-				Enum("healthy", "degraded", "unhealthy")
-				Example("healthy")
-			})
-			Attribute("timestamp", String, "Check timestamp", func() {
-				Format(FormatDateTime)
-				Example("2023-12-07T10:30:00Z")
-			})
-			Attribute("version", String, "Service version", func() {
-				Example("1.0.0")
-			})
-			Attribute("components", MapOf(String, ComponentHealth), "Component health status")
-			Required("status", "timestamp", "version")
+		Description("Health check for the ABAC service.")
+		Payload(func() {
+			Token("token", String, "JWT token")
 		})
-
+		Result(types.HealthResult)
 		HTTP(func() {
-			GET("/health")
+			GET("/abac/health")
 			Response(StatusOK)
 		})
-
-		// No authentication required for health checks
-		NoSecurity()
 	})
 
-	// Metrics endpoint
 	Method("metrics", func() {
-		Description("Get ABAC service metrics")
-
+		Description("Get performance metrics for the ABAC service.")
 		Payload(func() {
-			// Authentication and common headers
-			JWTToken()
-			Attribute("tenant_id", String, "Tenant identifier", func() {
-				Format(FormatUUID)
-				Example("123e4567-e89b-12d3-a456-426614174000")
-			})
-			Attribute("entity_id", String, "Entity identifier", func() {
-				Format(FormatUUID)
-				Example("987fcdeb-51d2-43b8-a456-426614174000")
-			})
-			Attribute("current_user_id", String, "Current user identifier", func() {
-				Format(FormatUUID)
-				Example("456e7890-e89b-12d3-a456-426614174000")
-			})
-			Required("token", "tenant_id", "entity_id", "current_user_id")
+			Token("token", String, "JWT token")
 		})
-
-		Result(func() {
-			Attribute("evaluation_metrics", EvaluationMetrics, "Policy evaluation metrics")
-			Attribute("cache_metrics", CacheMetrics, "Cache performance metrics")
-			Attribute("attribute_metrics", AttributeMetrics, "Attribute collection metrics")
-			Required("evaluation_metrics", "cache_metrics", "attribute_metrics")
-		})
-
+		Result(types.MetricsResult)
 		HTTP(func() {
-			GET("/metrics")
+			GET("/abac/metrics")
 			Response(StatusOK)
-		})
-
-		// Only admin users can view metrics
-		Security("jwt", func() {
-			Scope("admin")
 		})
 	})
 })

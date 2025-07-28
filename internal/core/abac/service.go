@@ -376,7 +376,6 @@ func (s *service) BulkEvaluatePermissions(ctx context.Context, req *BulkPermissi
 			"total_requests":   result.TotalRequests,
 			"successful_count": result.SuccessfulCount,
 			"failed_count":     result.FailedCount,
-			"total_time_ms":    result.TotalTimeMS,
 			"average_time_ms":  result.AverageTimeMS,
 			"request_id":       requestID,
 		})
@@ -425,6 +424,7 @@ func (s *service) TestPolicy(ctx context.Context, req *PolicyTestRequest) (*Poli
 	policy, err := s.policyRepo.GetPolicyByID(ctx, req.PolicyID)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		s.metrics.IncrementErrorCount("abac_test_policy", "policy_not_found")
 		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_NOT_FOUND", "Policy not found for testing").WithErr(err)
 	}
 
@@ -447,6 +447,10 @@ func (s *service) TestPolicy(ctx context.Context, req *PolicyTestRequest) (*Poli
 		RequestID:        requestID,
 		Timestamp:        time.Now(),
 	}
+
+	s.metrics.IncrementSuccessCount("abac_test_policy")
+	s.metrics.ObserveHistogram("abac_test_policy_duration_seconds", totalDuration.Seconds(),
+		metrics.Fields{"policy_id": policy.ID.String()})
 
 	s.logger.InfoContext(ctx, "Policy test completed",
 		logger.Fields{
@@ -482,21 +486,43 @@ func (s *service) GetUserEffectivePermissions(ctx context.Context, userID uuid.U
 			"entity_id": entityID,
 		})
 
-	// This is a placeholder implementation
-	// In a full implementation, you would:
-	// 1. Get all policies applicable to the user
-	// 2. Evaluate them to determine effective permissions
-	// 3. Cache the results
+	// Get user roles from identity service
+	userRoles, err := s.identityService.GetUserRoles(ctx, userID)
+	if err != nil {
+		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		s.metrics.IncrementErrorCount("abac_get_effective_permissions", "get_user_roles_failed")
+		return nil, errors.NewBusinessErrorWithContext(ctx, "GET_USER_ROLES_FAILED", "Failed to retrieve user roles").WithErr(err)
+	}
 
-	permissions := &UserEffectivePermissions{
+	roles := make([]string, len(userRoles))
+	for i, role := range userRoles {
+		roles[i] = role.Name
+	}
+
+	// This is a placeholder implementation for permissions.
+	// In a full implementation, you would evaluate policies based on user roles and other attributes.
+	permissions := make(map[string][]string)
+
+	result := &UserEffectivePermissions{
 		UserID:      userID,
 		EntityID:    entityID,
-		Permissions: make(map[string][]string),
-		Roles:       []string{},
+		Permissions: permissions,
+		Roles:       roles,
 		Timestamp:   time.Now(),
 	}
 
-	return permissions, nil
+	s.metrics.IncrementSuccessCount("abac_get_effective_permissions")
+	s.metrics.RecordGauge("abac_user_effective_roles_count", float64(len(roles)),
+		metrics.Fields{"user_id": userID.String()})
+
+	s.logger.InfoContext(ctx, "User effective permissions retrieved",
+		logger.Fields{
+			"user_id":           userID,
+			"role_count":        len(roles),
+			"permissions_count": len(permissions),
+		})
+
+	return result, nil
 }
 
 // RoleHierarchy represents a user's role hierarchy
@@ -522,16 +548,46 @@ func (s *service) CalculateRoleHierarchy(ctx context.Context, userID uuid.UUID, 
 			"entity_id": entityID,
 		})
 
-	// This is a placeholder implementation
-	hierarchy := &RoleHierarchy{
+	// Get user roles from identity service
+	userRoles, err := s.identityService.GetUserRoles(ctx, userID)
+	if err != nil {
+		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		s.metrics.IncrementErrorCount("abac_calculate_role_hierarchy", "get_user_roles_failed")
+		return nil, errors.NewBusinessErrorWithContext(ctx, "GET_USER_ROLES_FAILED", "Failed to retrieve user roles for hierarchy calculation").WithErr(err)
+	}
+
+	roles := make([]string, len(userRoles))
+	for i, role := range userRoles {
+		roles[i] = role.Name
+	}
+
+	// This is a placeholder implementation for hierarchy calculation.
+	// In a full implementation, you would traverse role relationships (e.g., parent roles).
+	hierarchy := make(map[string][]string)
+	for _, role := range roles {
+		hierarchy[role] = []string{} // For now, no inherited roles
+	}
+
+	result := &RoleHierarchy{
 		UserID:    userID,
 		EntityID:  entityID,
-		Roles:     []string{},
-		Hierarchy: make(map[string][]string),
+		Roles:     roles,
+		Hierarchy: hierarchy,
 		Timestamp: time.Now(),
 	}
 
-	return hierarchy, nil
+	s.metrics.IncrementSuccessCount("abac_calculate_role_hierarchy")
+	s.metrics.RecordGauge("abac_user_role_hierarchy_depth", float64(1), // Placeholder depth
+		metrics.Fields{"user_id": userID.String()})
+
+	s.logger.InfoContext(ctx, "Role hierarchy calculated",
+		logger.Fields{
+			"user_id":           userID,
+			"role_count":        len(roles),
+			"hierarchy_entries": len(hierarchy),
+		})
+
+	return result, nil
 }
 
 // InvalidateUserCache invalidates cache entries for a specific user
@@ -548,7 +604,16 @@ func (s *service) InvalidateUserCache(ctx context.Context, userID uuid.UUID) err
 	}
 
 	_, err := s.cacheActivities.InvalidatePolicyCache(ctx, input)
-	return err
+	if err != nil {
+		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		s.metrics.IncrementErrorCount("abac_invalidate_user_cache", "activity_failed")
+		return errors.NewBusinessErrorWithContext(ctx, "CACHE_INVALIDATION_FAILED", "Failed to invalidate user cache").WithErr(err)
+	}
+
+	s.metrics.IncrementSuccessCount("abac_invalidate_user_cache")
+	s.logger.InfoContext(ctx, "User cache invalidated", logger.Fields{"user_id": userID})
+
+	return nil
 }
 
 // InvalidatePolicyCache invalidates cache entries for specific policies
@@ -565,7 +630,16 @@ func (s *service) InvalidatePolicyCache(ctx context.Context, policyIDs []uuid.UU
 	}
 
 	_, err := s.cacheActivities.InvalidatePolicyCache(ctx, input)
-	return err
+	if err != nil {
+		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		s.metrics.IncrementErrorCount("abac_invalidate_policy_cache", "activity_failed")
+		return errors.NewBusinessErrorWithContext(ctx, "CACHE_INVALIDATION_FAILED", "Failed to invalidate policy cache").WithErr(err)
+	}
+
+	s.metrics.IncrementSuccessCount("abac_invalidate_policy_cache")
+	s.logger.InfoContext(ctx, "Policy cache invalidated", logger.Fields{"policy_ids_count": len(policyIDs)})
+
+	return nil
 }
 
 // CacheStatistics represents cache performance statistics
@@ -586,14 +660,25 @@ func (s *service) GetCacheStatistics(ctx context.Context) (*CacheStatistics, err
 
 	stats, err := s.cacheActivities.GetCacheStats(ctx, input)
 	if err != nil {
-		return nil, err
+		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		s.metrics.IncrementErrorCount("abac_get_cache_statistics", "activity_failed")
+		return nil, errors.NewBusinessErrorWithContext(ctx, "GET_CACHE_STATS_FAILED", "Failed to retrieve cache statistics").WithErr(err)
 	}
 
-	return &CacheStatistics{
+	result := &CacheStatistics{
 		PolicyEvaluationStats: stats.PolicyEvaluationStats,
 		AttributeStats:        stats.AttributeStats,
 		GeneratedAt:           stats.GeneratedAt,
-	}, nil
+	}
+
+	s.metrics.IncrementSuccessCount("abac_get_cache_statistics")
+	s.logger.InfoContext(ctx, "Cache statistics retrieved",
+		logger.Fields{
+			"total_cached_evaluations": stats.PolicyEvaluationStats.TotalCachedEvaluations,
+			"cache_hit_rate":           stats.PolicyEvaluationStats.CacheHitRate,
+		})
+
+	return result, nil
 }
 
 // Helper methods

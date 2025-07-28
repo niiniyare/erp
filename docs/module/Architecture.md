@@ -1,4 +1,4 @@
-Looking at your ambitious ERP project, I'll provide a structured approach that balances simplicity for solo development with scalability for future growth. Here's my recommended architecture:
+Looking at your ambitious Awo ERP project, I'll provide a structured approach that balances simplicity for solo development with scalability for future growth. Here's my recommended architecture:
 
 ## Project Structure
 

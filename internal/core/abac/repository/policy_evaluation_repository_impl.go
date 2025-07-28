@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/abac/models"
+	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -17,10 +19,10 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// policyEvaluationRepository implements PolicyEvaluationRepository using SQLC
+// policyEvaluationRepository implements PolicyEvaluationRepository using SQLC and Store
 type policyEvaluationRepository struct {
-	db      sqlc.DBTX
-	queries *sqlc.Queries
+	store   sqlc.Store
+	cache   cache.Service
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
 	tracer  tracing.TracingService
@@ -28,14 +30,15 @@ type policyEvaluationRepository struct {
 
 // NewPolicyEvaluationRepository creates a new policy evaluation repository implementation
 func NewPolicyEvaluationRepository(
-	db sqlc.DBTX,
+	store sqlc.Store,
+	cache cache.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
 	tracer tracing.TracingService,
 ) PolicyEvaluationRepository {
 	return &policyEvaluationRepository{
-		db:      db,
-		queries: sqlc.New(db),
+		store:   store,
+		cache:   cache,
 		logger:  logger,
 		metrics: metrics,
 		tracer:  tracer,
@@ -104,7 +107,16 @@ func (r *policyEvaluationRepository) CacheEvaluationResult(ctx context.Context, 
 		ExpiresAt:          req.ExpiresAt,
 	}
 
-	err := r.queries.CacheEvaluationResult(ctx, params)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	// Use tenant-aware transaction
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, txStore sqlc.Store) error {
+		return txStore.CacheEvaluationResult(ctx, params)
+	})
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("policy_evaluation_repository", "cache_failed")
@@ -133,7 +145,30 @@ func (r *policyEvaluationRepository) GetCachedEvaluationResult(ctx context.Conte
 		ContextHash:  req.ContextHash,
 	}
 
-	evaluation, err := r.queries.GetCachedEvaluationResult(ctx, params)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	// Try cache first
+	cacheKey := fmt.Sprintf("eval:%s:%s:%s:%s", req.UserID.String(), req.ResourceType, req.Action, req.ContextHash)
+	var evaluation sqlc.GetCachedEvaluationResultRow
+	if err := r.cache.Get(ctx, cacheKey, &evaluation); err == nil {
+		r.metrics.IncrementCounter("policy_evaluation_repository_cache_hit")
+		// Convert and return cached result
+		var policyDecisions []*models.PolicyDecision
+		result := &CachedEvaluationResult{
+			Decision:        types.PolicyDecisionType(evaluation.Decision),
+			PolicyDecisions: policyDecisions,
+			CachedAt:        evaluation.EvaluatedAt,
+			ExpiresAt:       evaluation.ExpiresAt,
+		}
+		return result, nil
+	}
+
+	// Cache miss - get from database
+	evaluation, err := r.store.GetCachedEvaluationResult(ctx, params)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			r.metrics.IncrementCounter("policy_evaluation_repository_cache_miss")
@@ -176,22 +211,30 @@ func (r *policyEvaluationRepository) InvalidateEvaluationCache(ctx context.Conte
 			"invalidate_all": req.InvalidateAll,
 		})
 
-	var err error
-
-	if req.InvalidateAll {
-		err = r.queries.InvalidateAllEvaluations(ctx)
-	} else if req.UserID != nil {
-		err = r.queries.InvalidateUserEvaluations(ctx, *req.UserID)
-	} else if req.ResourceType != nil {
-		err = r.queries.InvalidateResourceEvaluations(ctx, sqlc.InvalidateResourceEvaluationsParams{
-			ResourceType: *req.ResourceType,
-			Column2:      req.ResourceID,
-		})
-	} else if req.Action != nil {
-		err = r.queries.InvalidateActionEvaluations(ctx, *req.Action)
-	} else if len(req.PolicyIDs) > 0 {
-		err = r.queries.InvalidatePolicyEvaluations(ctx, req.PolicyIDs)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
 	}
+
+	// Use tenant-aware transaction
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, txStore sqlc.Store) error {
+		if req.InvalidateAll {
+			return txStore.InvalidateAllEvaluations(ctx)
+		} else if req.UserID != nil {
+			return txStore.InvalidateUserEvaluations(ctx, *req.UserID)
+		} else if req.ResourceType != nil {
+			return txStore.InvalidateResourceEvaluations(ctx, sqlc.InvalidateResourceEvaluationsParams{
+				ResourceType: *req.ResourceType,
+				Column2:      req.ResourceID,
+			})
+		} else if req.Action != nil {
+			return txStore.InvalidateActionEvaluations(ctx, *req.Action)
+		} else if len(req.PolicyIDs) > 0 {
+			return txStore.InvalidatePolicyEvaluations(ctx, req.PolicyIDs)
+		}
+		return nil
+	})
 
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
@@ -210,7 +253,7 @@ func (r *policyEvaluationRepository) CleanupExpiredEvaluations(ctx context.Conte
 
 	r.logger.InfoContext(ctx, "Cleaning up expired policy evaluations")
 
-	err := r.queries.CleanupExpiredEvaluations(ctx)
+	err := r.store.CleanupExpiredEvaluations(ctx)
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("policy_evaluation_repository", "cleanup_failed")
@@ -226,7 +269,7 @@ func (r *policyEvaluationRepository) GetEvaluationCacheStats(ctx context.Context
 	ctx, span := r.tracer.StartSpan(ctx, "abac.repository.GetEvaluationCacheStats")
 	defer span.End()
 
-	stats, err := r.queries.GetEvaluationCacheStats(ctx)
+	stats, err := r.store.GetEvaluationCacheStats(ctx)
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("policy_evaluation_repository", "get_stats_failed")
@@ -274,7 +317,7 @@ func (r *policyEvaluationRepository) GetUserEvaluationHistory(ctx context.Contex
 		Column5: int32(req.Offset),
 	}
 
-	evaluations, err := r.queries.GetUserEvaluationHistory(ctx, params)
+	evaluations, err := r.store.GetUserEvaluationHistory(ctx, params)
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("policy_evaluation_repository", "get_user_history_failed")
@@ -301,7 +344,7 @@ func (r *policyEvaluationRepository) GetEvaluationMetrics(ctx context.Context, r
 		Column2: req.EndTime,
 	}
 
-	metrics, err := r.queries.GetEvaluationMetrics(ctx, params)
+	metrics, err := r.store.GetEvaluationMetrics(ctx, params)
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("policy_evaluation_repository", "get_metrics_failed")

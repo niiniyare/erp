@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/abac/models"
+	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -17,10 +19,10 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// policyRepository implements PolicyRepository using SQLC
+// policyRepository implements PolicyRepository using SQLC and Store
 type policyRepository struct {
-	db      sqlc.DBTX
-	queries *sqlc.Queries
+	store   sqlc.Store
+	cache   cache.Service
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
 	tracer  tracing.TracingService
@@ -28,21 +30,22 @@ type policyRepository struct {
 
 // NewPolicyRepository creates a new policy repository implementation
 func NewPolicyRepository(
-	db sqlc.DBTX,
+	store sqlc.Store,
+	cache cache.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
 	tracer tracing.TracingService,
 ) PolicyRepository {
 	return &policyRepository{
-		db:      db,
-		queries: sqlc.New(db),
+		store:   store,
+		cache:   cache,
 		logger:  logger,
 		metrics: metrics,
 		tracer:  tracer,
 	}
 }
 
-// CreatePolicy creates a new policy
+// CreatePolicy creates a new policy using tenant-aware transaction
 func (r *policyRepository) CreatePolicy(ctx context.Context, req *CreatePolicyRequest) (*models.Policy, error) {
 	ctx, span := r.tracer.StartSpan(ctx, "abac.repository.CreatePolicy",
 		tracing.WithAttributes(
@@ -58,24 +61,42 @@ func (r *policyRepository) CreatePolicy(ctx context.Context, req *CreatePolicyRe
 			"effect":      req.Effect,
 		})
 
-	params := sqlc.CreatePolicyParams{
-		EntityID:    req.EntityID,
-		Name:        req.Name,
-		DisplayName: req.DisplayName,
-		Description: req.Description,
-		PolicyType:  string(req.PolicyType),
-		Effect:      string(req.Effect),
-		Priority:    req.Priority,
-		Category:    string(req.Category),
-		Target:      req.Target,
-		Rule:        req.Rule,
-		Obligations: req.Obligations,
-		Advice:      req.Advice,
-		IsActive:    req.IsActive,
-		CreatedBy:   req.CreatedBy,
+	// Extract tenant ID from context (injected by middleware)
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context is required for policy creation")
 	}
 
-	policy, err := r.queries.CreatePolicy(ctx, params)
+	var policy *models.Policy
+
+	// Use tenant-aware transaction for policy creation
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, txStore sqlc.Store) error {
+		params := sqlc.CreatePolicyParams{
+			Name:        req.Name,
+			DisplayName: req.DisplayName,
+			Description: req.Description,
+			PolicyType:  string(req.PolicyType),
+			Effect:      string(req.Effect),
+			Priority:    req.Priority,
+			Category:    string(req.Category),
+			Target:      req.Target,
+			Rule:        req.Rule,
+			Obligations: req.Obligations,
+			Advice:      req.Advice,
+			CreatedBy:   req.CreatedBy,
+		}
+
+		// Use transaction store queries (tenant context is already set)
+		sqlcPolicy, err := txStore.CreatePolicy(ctx, params)
+		if err != nil {
+			return err
+		}
+
+		// Convert SQLC model to domain model
+		policy = r.convertSQLCPolicyToModel(sqlcPolicy)
+		return nil
+	})
+
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("policy_repository", "create_failed")
@@ -84,18 +105,16 @@ func (r *policyRepository) CreatePolicy(ctx context.Context, req *CreatePolicyRe
 
 	r.metrics.IncrementSuccessCount("policy_repository_create")
 
-	result := r.convertSQLCPolicyToModel(policy)
-
 	r.logger.InfoContext(ctx, "Policy created successfully",
 		logger.Fields{
-			"policy_id": result.ID,
-			"name":      result.Name,
+			"policy_id": policy.ID,
+			"name":      policy.Name,
 		})
 
-	return result, nil
+	return policy, nil
 }
 
-// GetPolicyByID retrieves a policy by ID
+// GetPolicyByID retrieves a policy by ID with cache integration
 func (r *policyRepository) GetPolicyByID(ctx context.Context, id uuid.UUID) (*models.Policy, error) {
 	ctx, span := r.tracer.StartSpan(ctx, "abac.repository.GetPolicyByID",
 		tracing.WithAttributes(
@@ -103,7 +122,22 @@ func (r *policyRepository) GetPolicyByID(ctx context.Context, id uuid.UUID) (*mo
 		))
 	defer span.End()
 
-	policy, err := r.queries.GetPolicy(ctx, id)
+	// Extract tenant ID from context for cache key prefixing
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context is required for policy retrieval")
+	}
+
+	// Try cache first (Redis will automatically prefix with tenant_id)
+	cacheKey := fmt.Sprintf("policy:%s", id.String())
+	var policy *models.Policy
+	if err := r.cache.Get(ctx, cacheKey, &policy); err == nil {
+		r.metrics.IncrementCounter("policy_repository_cache_hit")
+		return policy, nil
+	}
+
+	// Cache miss - get from database (RLS automatically filters by tenant)
+	sqlcPolicy, err := r.store.GetPolicyByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			r.metrics.IncrementCounter("policy_repository_not_found")
@@ -114,8 +148,16 @@ func (r *policyRepository) GetPolicyByID(ctx context.Context, id uuid.UUID) (*mo
 		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_GET_FAILED", "Failed to get policy").WithErr(err)
 	}
 
+	// Convert to domain model
+	policy = r.convertSQLCPolicyToModel(sqlcPolicy)
+
+	// Cache the result (15 minute TTL)
+	if err := r.cache.Set(ctx, cacheKey, policy, 15*time.Minute); err != nil {
+		r.logger.WarnContext(ctx, "Failed to cache policy", logger.Fields{"error": err.Error()})
+	}
+
 	r.metrics.IncrementSuccessCount("policy_repository_get")
-	return r.convertSQLCPolicyToModel(policy), nil
+	return policy, nil
 }
 
 // GetPolicyByName retrieves a policy by name
@@ -126,7 +168,42 @@ func (r *policyRepository) GetPolicyByName(ctx context.Context, name string) (*m
 		))
 	defer span.End()
 
-	policy, err := r.queries.GetPolicyByName(ctx, name)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	// Try cache first
+	cacheKey := fmt.Sprintf("policy_name:%s", name)
+	var policy *models.Policy
+	if err := r.cache.Get(ctx, cacheKey, &policy); err == nil {
+		r.metrics.IncrementCounter("policy_repository_name_cache_hit")
+		return policy, nil
+	}
+
+	// Cache miss - get from database
+	sqlcPolicy, err := r.store.GetPolicyByName(ctx, name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			r.metrics.IncrementCounter("policy_repository_not_found")
+			return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_NOT_FOUND", "Policy not found")
+		}
+		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		r.metrics.IncrementErrorCount("policy_repository", "get_by_name_failed")
+		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_GET_FAILED", "Failed to get policy by name").WithErr(err)
+	}
+
+	// Convert to domain model
+	policy = r.convertSQLCPolicyToModel(sqlcPolicy)
+
+	// Cache the result
+	if err := r.cache.Set(ctx, cacheKey, policy, 15*time.Minute); err != nil {
+		r.logger.WarnContext(ctx, "Failed to cache policy by name", logger.Fields{"error": err.Error()})
+	}
+
+	r.metrics.IncrementSuccessCount("policy_repository_get_by_name")
+	return policy, nil
 	if err != nil {
 		if err == sql.ErrNoRows {
 			r.metrics.IncrementCounter("policy_repository_not_found")
@@ -166,7 +243,39 @@ func (r *policyRepository) UpdatePolicy(ctx context.Context, req *UpdatePolicyRe
 		IsActive:    req.IsActive,
 	}
 
-	policy, err := r.queries.UpdatePolicy(ctx, params)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	var policy sqlc.Policy
+	// Use tenant-aware transaction
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, txStore sqlc.Store) error {
+		var err error
+		policy, err = txStore.UpdatePolicy(ctx, params)
+		return err
+	})
+
+	if err != nil {
+		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		r.metrics.IncrementErrorCount("policy_repository", "update_failed")
+		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_UPDATE_FAILED", "Failed to update policy").WithErr(err)
+	}
+
+	// Invalidate cache entries for this policy
+	cacheKeys := []string{
+		fmt.Sprintf("policy:%s", policy.ID.String()),
+		fmt.Sprintf("policy_name:%s", policy.Name),
+	}
+	for _, key := range cacheKeys {
+		if err := r.cache.Delete(ctx, key); err != nil {
+			r.logger.WarnContext(ctx, "Failed to invalidate policy cache", logger.Fields{"key": key, "error": err.Error()})
+		}
+	}
+
+	r.metrics.IncrementSuccessCount("policy_repository_update")
+	return r.convertSQLCPolicyToModel(policy), nil
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("policy_repository", "update_failed")
@@ -185,7 +294,35 @@ func (r *policyRepository) DeletePolicy(ctx context.Context, id uuid.UUID) error
 		))
 	defer span.End()
 
-	err := r.queries.SoftDeletePolicy(ctx, id)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+	}
+
+	// Use tenant-aware transaction
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, txStore sqlc.Store) error {
+		return txStore.SoftDeletePolicy(ctx, id)
+	})
+
+	if err != nil {
+		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		r.metrics.IncrementErrorCount("policy_repository", "delete_failed")
+		return errors.NewBusinessErrorWithContext(ctx, "POLICY_DELETE_FAILED", "Failed to delete policy").WithErr(err)
+	}
+
+	// Invalidate cache entries for this policy
+	cacheKey := fmt.Sprintf("policy:%s", id.String())
+	if err := r.cache.Delete(ctx, cacheKey); err != nil {
+		r.logger.WarnContext(ctx, "Failed to invalidate deleted policy cache", logger.Fields{"error": err.Error()})
+	}
+
+	r.metrics.IncrementSuccessCount("policy_repository_delete")
+
+	r.logger.InfoContext(ctx, "Policy deleted successfully",
+		logger.Fields{"policy_id": id})
+
+	return nil
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("policy_repository", "delete_failed")
@@ -210,7 +347,13 @@ func (r *policyRepository) ListPolicies(ctx context.Context, req *ListPoliciesRe
 
 	if req.Search != "" || req.Category != "" || req.IsActive != nil {
 		// Use filtered search
-		count, err := r.queries.CountPolicies(ctx, sqlc.CountPoliciesParams{
+		// Extract tenant ID from context
+		tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+		if !ok {
+			return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+		}
+
+		count, err := r.store.CountPolicies(ctx, sqlc.CountPoliciesParams{
 			Column1: &req.Search,
 			Column2: &req.Category,
 			Column3: req.IsActive,
@@ -225,9 +368,15 @@ func (r *policyRepository) ListPolicies(ctx context.Context, req *ListPoliciesRe
 
 		// Get filtered policies (this would need a custom query)
 		// For now, fallback to basic list
-		policies, err = r.queries.ListPolicies(ctx)
+		policies, err = r.store.ListPolicies(ctx)
 	} else {
-		policies, err = r.queries.ListPolicies(ctx)
+		// Extract tenant ID from context
+		tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+		if !ok {
+			return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context required")
+		}
+
+		policies, err = r.store.ListPolicies(ctx)
 	}
 
 	if err != nil {
@@ -246,7 +395,7 @@ func (r *policyRepository) ListPolicies(ctx context.Context, req *ListPoliciesRe
 	return result, nil
 }
 
-// GetPoliciesForEvaluation gets policies applicable for evaluation
+// GetPoliciesForEvaluation gets policies applicable for evaluation with caching
 func (r *policyRepository) GetPoliciesForEvaluation(ctx context.Context, req *GetPoliciesForEvaluationRequest) ([]*models.Policy, error) {
 	ctx, span := r.tracer.StartSpan(ctx, "abac.repository.GetPoliciesForEvaluation",
 		tracing.WithAttributes(
@@ -255,7 +404,24 @@ func (r *policyRepository) GetPoliciesForEvaluation(ctx context.Context, req *Ge
 		))
 	defer span.End()
 
-	policies, err := r.queries.GetPoliciesForEvaluation(ctx, sqlc.GetPoliciesForEvaluationParams{
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context is required for policy evaluation")
+	}
+
+	// Create cache key for evaluation policies (Redis automatically prefixes with tenant_id)
+	cacheKey := fmt.Sprintf("policies:eval:%s:%s", req.ResourceType, req.Action)
+	var policies []*models.Policy
+
+	// Try cache first
+	if err := r.cache.Get(ctx, cacheKey, &policies); err == nil {
+		r.metrics.IncrementCounter("policy_repository_eval_cache_hit")
+		return policies, nil
+	}
+
+	// Cache miss - get from database (RLS automatically filters by tenant)
+	sqlcPolicies, err := r.store.GetPoliciesForEvaluation(ctx, sqlc.GetPoliciesForEvaluationParams{
 		Column1: req.EntityID,
 		Column2: req.ResourceType,
 		Column3: req.Action,
@@ -266,17 +432,22 @@ func (r *policyRepository) GetPoliciesForEvaluation(ctx context.Context, req *Ge
 		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_EVALUATION_GET_FAILED", "Failed to get policies for evaluation").WithErr(err)
 	}
 
-	r.metrics.IncrementSuccessCount("policy_repository_get_for_evaluation")
-
-	result := make([]*models.Policy, len(policies))
-	for i, policy := range policies {
-		result[i] = r.convertSQLCPolicyToModel(policy)
+	// Convert to domain models
+	policies = make([]*models.Policy, len(sqlcPolicies))
+	for i, policy := range sqlcPolicies {
+		policies[i] = r.convertSQLCPolicyToModel(policy)
 	}
 
-	return result, nil
+	// Cache the result (10 minute TTL for evaluation policies)
+	if err := r.cache.Set(ctx, cacheKey, policies, 10*time.Minute); err != nil {
+		r.logger.WarnContext(ctx, "Failed to cache evaluation policies", logger.Fields{"error": err.Error()})
+	}
+
+	r.metrics.IncrementSuccessCount("policy_repository_get_for_evaluation")
+	return policies, nil
 }
 
-// GetPoliciesByIDs gets policies by their IDs
+// GetPoliciesByIDs gets policies by their IDs using bulk cache operations
 func (r *policyRepository) GetPoliciesByIDs(ctx context.Context, ids []uuid.UUID) ([]*models.Policy, error) {
 	ctx, span := r.tracer.StartSpan(ctx, "abac.repository.GetPoliciesByIDs",
 		tracing.WithAttributes(
@@ -284,21 +455,53 @@ func (r *policyRepository) GetPoliciesByIDs(ctx context.Context, ids []uuid.UUID
 		))
 	defer span.End()
 
-	policies, err := r.queries.GetPoliciesByIDs(ctx, ids)
+	// Extract tenant ID from context
+	tenantID, ok := ctx.Value("tenant_id").(uuid.UUID)
+	if !ok {
+		return nil, errors.NewBusinessError("TENANT_CONTEXT_REQUIRED", "Valid tenant context is required for policy retrieval")
+	}
+
+	// Build cache keys for bulk operations
+	cacheKeys := make([]string, len(ids))
+	for i, id := range ids {
+		cacheKeys[i] = fmt.Sprintf("policy:%s", id.String())
+	}
+
+	// Try bulk cache get first
+	var cachedPolicies []*models.Policy
+	if err := r.cache.MGet(ctx, cacheKeys, &cachedPolicies); err == nil && len(cachedPolicies) == len(ids) {
+		r.metrics.IncrementCounter("policy_repository_bulk_cache_hit")
+		return cachedPolicies, nil
+	}
+
+	// Cache miss - get from database (RLS automatically filters by tenant)
+	sqlcPolicies, err := r.store.GetPoliciesByIDs(ctx, ids)
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementErrorCount("policy_repository", "get_by_ids_failed")
 		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICIES_GET_FAILED", "Failed to get policies by IDs").WithErr(err)
 	}
 
-	r.metrics.IncrementSuccessCount("policy_repository_get_by_ids")
+	// Convert to domain models
+	policies := make([]*models.Policy, len(sqlcPolicies))
+	cacheData := make(map[string]interface{})
 
-	result := make([]*models.Policy, len(policies))
-	for i, policy := range policies {
-		result[i] = r.convertSQLCPolicyToModel(policy)
+	for i, sqlcPolicy := range sqlcPolicies {
+		policy := r.convertSQLCPolicyToModel(sqlcPolicy)
+		policies[i] = policy
+
+		// Prepare for bulk cache set
+		cacheKey := fmt.Sprintf("policy:%s", policy.ID.String())
+		cacheData[cacheKey] = policy
 	}
 
-	return result, nil
+	// Bulk cache the results (15 minute TTL)
+	if err := r.cache.MSet(ctx, cacheData, 15*time.Minute); err != nil {
+		r.logger.WarnContext(ctx, "Failed to bulk cache policies", logger.Fields{"error": err.Error()})
+	}
+
+	r.metrics.IncrementSuccessCount("policy_repository_get_by_ids")
+	return policies, nil
 }
 
 // Helper method to convert SQLC Policy to domain model

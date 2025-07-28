@@ -25,7 +25,7 @@ type attributeDefinitionRepository struct {
 	store   db.Store
 	cache   cache.Service
 	tracing tracing.TracingService
-	metrics metrics.Provider
+	metrics metrics.MetricsProvider
 	logger  logger.Logger
 }
 
@@ -34,7 +34,7 @@ func NewAttributeDefinitionRepository(
 	store db.Store,
 	cache cache.Service,
 	tracing tracing.TracingService,
-	metrics metrics.Provider,
+	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) AttributeDefinitionRepository {
 	return &attributeDefinitionRepository{
