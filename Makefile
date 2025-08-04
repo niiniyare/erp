@@ -64,6 +64,8 @@ evans: ## Start Evans gRPC REPL
 # 🧠 Core Business Layer (Domain, Services, Interfaces)
 # ============================================================================
 
+sqlc-lint: ## detection of basd queries
+	@./db/queries/lint.sh
 sqlc: ## Generate SQLC store code
 	@sqlc generate
 
@@ -72,7 +74,7 @@ mock: ## Generate mocks for interfaces
 fmt: ## Format Go code
 	@go fmt ./...
 
-goa: ## generate goa 
+goa: ## generate 7oa 
 	@goa gen github.com/niiniyare/erp/internal/api/design -o internal/api
 
 lint: ## Lint Go code
@@ -233,7 +235,7 @@ sql2dbml: ## Convert SQL migration to DBML
 # ============================================================================
 
 run: ## Run the app server
-	@go run cmd/server
+	@go run ./cmd/server/*.go
 
 .PHONY: help clean ci fmt lint test test-core test-repo \
 	createdb dropdb migrateup migratedown migratedrop migrate-create \

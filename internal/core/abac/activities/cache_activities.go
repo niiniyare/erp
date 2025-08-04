@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
@@ -67,11 +68,11 @@ type CachePolicyEvaluationOutput struct {
 func (a *CacheActivities) CachePolicyEvaluation(ctx context.Context, input *CachePolicyEvaluationInput) (*CachePolicyEvaluationOutput, error) {
 	ctx, span := a.tracer.StartSpan(ctx, "abac.activities.CachePolicyEvaluation",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", input.UserID.String()),
-			tracing.StringAttribute("resource_type", input.ResourceType),
-			tracing.StringAttribute("action", input.Action),
-			tracing.StringAttribute("decision", string(input.Decision)),
-			tracing.StringAttribute("request_id", input.RequestID),
+			attribute.String("user_id", input.UserID.String()),
+			attribute.String("resource_type", input.ResourceType),
+			attribute.String("action", input.Action),
+			attribute.String("decision", string(input.Decision)),
+			attribute.String("request_id", input.RequestID),
 		))
 	defer span.End()
 
@@ -113,7 +114,7 @@ func (a *CacheActivities) CachePolicyEvaluation(ctx context.Context, input *Cach
 		ExpiresAt:          expiresAt,
 		Result: &models.PolicyEvaluationResult{
 			Decision:        input.Decision,
-			PolicyDecisions: input.PolicyDecisions,
+			PolicyDecisions: ConvertPolicyDecisionsToInfo(input.PolicyDecisions),
 		},
 	}
 
@@ -121,7 +122,7 @@ func (a *CacheActivities) CachePolicyEvaluation(ctx context.Context, input *Cach
 	err := a.policyEvaluationRepo.CacheEvaluationResult(ctx, cacheReq)
 	if err != nil {
 		a.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		a.metrics.IncrementErrorCount("policy_evaluation_cache", "cache_store_failed")
+		a.metrics.IncrementCounter("policy_evaluation_cache_failed", metrics.Fields{"reason": "cache_store_failed"})
 
 		// Log but don't fail the operation - caching is not critical
 		a.logger.WarnContext(ctx, "Failed to cache policy evaluation result",
@@ -138,11 +139,11 @@ func (a *CacheActivities) CachePolicyEvaluation(ctx context.Context, input *Cach
 	}
 
 	duration := time.Since(startTime)
-	span.SetAttributes(tracing.BoolAttribute("cache_success", true))
+	span.SetAttributes(attribute.Bool("cache_success", true))
 
 	a.metrics.ObserveHistogram("abac_cache_store_duration_seconds", duration.Seconds(),
 		metrics.Fields{"operation": "policy_evaluation"})
-	a.metrics.IncrementSuccessCount("policy_evaluation_cache_store")
+	a.metrics.IncrementCounter("policy_evaluation_cache_store_success", metrics.Fields{"operation": "cache_store"})
 
 	a.logger.InfoContext(ctx, "Policy evaluation result cached successfully",
 		logger.Fields{
@@ -182,10 +183,10 @@ type GetCachedPolicyEvaluationOutput struct {
 func (a *CacheActivities) GetCachedPolicyEvaluation(ctx context.Context, input *GetCachedPolicyEvaluationInput) (*GetCachedPolicyEvaluationOutput, error) {
 	ctx, span := a.tracer.StartSpan(ctx, "abac.activities.GetCachedPolicyEvaluation",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", input.UserID.String()),
-			tracing.StringAttribute("resource_type", input.ResourceType),
-			tracing.StringAttribute("action", input.Action),
-			tracing.StringAttribute("request_id", input.RequestID),
+			attribute.String("user_id", input.UserID.String()),
+			attribute.String("resource_type", input.ResourceType),
+			attribute.String("action", input.Action),
+			attribute.String("request_id", input.RequestID),
 		))
 	defer span.End()
 
@@ -202,7 +203,7 @@ func (a *CacheActivities) GetCachedPolicyEvaluation(ctx context.Context, input *
 	result, err := a.policyEvaluationRepo.GetCachedEvaluationResult(ctx, getCacheReq)
 	if err != nil {
 		// Cache miss is not an error
-		a.metrics.IncrementCounter("policy_evaluation_cache_miss")
+		a.metrics.IncrementCounter("policy_evaluation_cache_miss", metrics.Fields{"operation": "get_cached"})
 
 		duration := time.Since(startTime)
 		a.metrics.ObserveHistogram("abac_cache_retrieve_duration_seconds", duration.Seconds(),
@@ -214,9 +215,9 @@ func (a *CacheActivities) GetCachedPolicyEvaluation(ctx context.Context, input *
 	}
 
 	duration := time.Since(startTime)
-	span.SetAttributes(tracing.BoolAttribute("cache_hit", true))
+	span.SetAttributes(attribute.Bool("cache_hit", true))
 
-	a.metrics.IncrementCounter("policy_evaluation_cache_hit")
+	a.metrics.IncrementCounter("policy_evaluation_cache_hit", metrics.Fields{"operation": "get_cached"})
 	a.metrics.ObserveHistogram("abac_cache_retrieve_duration_seconds", duration.Seconds(),
 		metrics.Fields{"operation": "policy_evaluation", "hit": "true"})
 
@@ -232,7 +233,7 @@ func (a *CacheActivities) GetCachedPolicyEvaluation(ctx context.Context, input *
 	return &GetCachedPolicyEvaluationOutput{
 		Found:           true,
 		Decision:        result.Decision,
-		PolicyDecisions: result.PolicyDecisions,
+		PolicyDecisions: ConvertPolicyDecisionInfoToDecision(result.PolicyDecisions),
 		CachedAt:        result.CachedAt,
 		ExpiresAt:       result.ExpiresAt,
 	}, nil
@@ -259,8 +260,8 @@ type InvalidatePolicyCacheOutput struct {
 func (a *CacheActivities) InvalidatePolicyCache(ctx context.Context, input *InvalidatePolicyCacheInput) (*InvalidatePolicyCacheOutput, error) {
 	ctx, span := a.tracer.StartSpan(ctx, "abac.activities.InvalidatePolicyCache",
 		tracing.WithAttributes(
-			tracing.BoolAttribute("invalidate_all", input.InvalidateAll),
-			tracing.StringAttribute("request_id", input.RequestID),
+			attribute.Bool("invalidate_all", input.InvalidateAll),
+			attribute.String("request_id", input.RequestID),
 		))
 	defer span.End()
 
@@ -288,15 +289,15 @@ func (a *CacheActivities) InvalidatePolicyCache(ctx context.Context, input *Inva
 	err := a.policyEvaluationRepo.InvalidateEvaluationCache(ctx, invalidateReq)
 	if err != nil {
 		a.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		a.metrics.IncrementErrorCount("policy_evaluation_cache", "invalidation_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "CACHE_INVALIDATION_FAILED", "Failed to invalidate policy cache").WithErr(err)
+		a.metrics.IncrementCounter("policy_evaluation_cache_invalidation_failed", metrics.Fields{"reason": "invalidation_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "CACHE_INVALIDATION_FAILED", "Failed to invalidate policy cache").WithDetail("error", err.Error())
 	}
 
 	duration := time.Since(startTime)
 
 	a.metrics.ObserveHistogram("abac_cache_invalidation_duration_seconds", duration.Seconds(),
 		metrics.Fields{"invalidate_all": fmt.Sprintf("%t", input.InvalidateAll)})
-	a.metrics.IncrementSuccessCount("policy_evaluation_cache_invalidation")
+	a.metrics.IncrementCounter("policy_evaluation_cache_invalidation_success", metrics.Fields{"operation": "invalidate"})
 
 	a.logger.InfoContext(ctx, "Policy evaluation cache invalidated successfully",
 		logger.Fields{
@@ -327,7 +328,7 @@ type CleanupExpiredCacheOutput struct {
 func (a *CacheActivities) CleanupExpiredCache(ctx context.Context, input *CleanupExpiredCacheInput) (*CleanupExpiredCacheOutput, error) {
 	ctx, span := a.tracer.StartSpan(ctx, "abac.activities.CleanupExpiredCache",
 		tracing.WithAttributes(
-			tracing.StringAttribute("request_id", input.RequestID),
+			attribute.String("request_id", input.RequestID),
 		))
 	defer span.End()
 
@@ -343,14 +344,14 @@ func (a *CacheActivities) CleanupExpiredCache(ctx context.Context, input *Cleanu
 	err := a.policyEvaluationRepo.CleanupExpiredEvaluations(ctx)
 	if err != nil {
 		a.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		a.metrics.IncrementErrorCount("policy_evaluation_cache", "cleanup_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "CACHE_CLEANUP_FAILED", "Failed to cleanup expired cache entries").WithErr(err)
+		a.metrics.IncrementCounter("policy_evaluation_cache_cleanup_failed", metrics.Fields{"reason": "cleanup_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "CACHE_CLEANUP_FAILED", "Failed to cleanup expired cache entries").WithDetail("error", err.Error())
 	}
 
 	duration := time.Since(startTime)
 
 	a.metrics.ObserveHistogram("abac_cache_cleanup_duration_seconds", duration.Seconds(), metrics.Fields{})
-	a.metrics.IncrementSuccessCount("policy_evaluation_cache_cleanup")
+	a.metrics.IncrementCounter("policy_evaluation_cache_cleanup_success", metrics.Fields{"operation": "cleanup"})
 
 	a.logger.InfoContext(ctx, "Cache cleanup completed",
 		logger.Fields{
@@ -380,7 +381,7 @@ type GetCacheStatsOutput struct {
 func (a *CacheActivities) GetCacheStats(ctx context.Context, input *GetCacheStatsInput) (*GetCacheStatsOutput, error) {
 	ctx, span := a.tracer.StartSpan(ctx, "abac.activities.GetCacheStats",
 		tracing.WithAttributes(
-			tracing.StringAttribute("request_id", input.RequestID),
+			attribute.String("request_id", input.RequestID),
 		))
 	defer span.End()
 
@@ -410,7 +411,7 @@ func (a *CacheActivities) GetCacheStats(ctx context.Context, input *GetCacheStat
 		logger.Fields{
 			"policy_eval_cache_hit_rate": evalStats.CacheHitRate,
 			"total_cached_evaluations":   evalStats.TotalCachedEvaluations,
-			"total_attributes":           attrStats.TotalAttributes,
+			"total_attributes":           attrStats.UserAttributes + attrStats.ResourceAttributes + attrStats.EnvironmentAttributes,
 			"duration_ms":                duration.Milliseconds(),
 			"request_id":                 input.RequestID,
 		})
@@ -442,8 +443,8 @@ type WarmupCacheOutput struct {
 func (a *CacheActivities) WarmupCache(ctx context.Context, input *WarmupCacheInput) (*WarmupCacheOutput, error) {
 	ctx, span := a.tracer.StartSpan(ctx, "abac.activities.WarmupCache",
 		tracing.WithAttributes(
-			tracing.StringAttribute("priority", input.Priority),
-			tracing.StringAttribute("request_id", input.RequestID),
+			attribute.String("priority", input.Priority),
+			attribute.String("request_id", input.RequestID),
 		))
 	defer span.End()
 
@@ -495,7 +496,7 @@ func (a *CacheActivities) WarmupCache(ctx context.Context, input *WarmupCacheInp
 
 	a.metrics.ObserveHistogram("abac_cache_warmup_duration_seconds", duration.Seconds(),
 		metrics.Fields{"priority": input.Priority})
-	a.metrics.RecordGauge("abac_cache_warmed_entries", float64(warmedCount),
+	a.metrics.SetGauge("abac_cache_warmed_entries", float64(warmedCount),
 		metrics.Fields{"priority": input.Priority})
 
 	a.logger.InfoContext(ctx, "Cache warmup completed",
@@ -526,3 +527,5 @@ func (a *CacheActivities) generateCacheKey(input *CachePolicyEvaluationInput) st
 		input.Action,
 		input.ContextHash)
 }
+
+// Conversion functions moved to policy_evaluation.go to avoid duplication

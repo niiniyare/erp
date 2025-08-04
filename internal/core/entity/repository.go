@@ -643,10 +643,7 @@ func (r *repository) GetEntityWithHierarchy(ctx context.Context, entityID uuid.U
 
 	// Get hierarchy information
 	// Using a dummy tenant ID since the function uses current_tenant_id() in the query
-	hierarchyInfo, err := r.store.GetEntityWithHierarchyInfo(ctx, db.GetEntityWithHierarchyInfoParams{
-		Uuid:     entityID,
-		TenantID: uuid.New(), // This will be ignored as query uses current_tenant_id()
-	})
+	hierarchyInfo, err := r.store.GetEntityWithHierarchyInfo(ctx, entityID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get hierarchy info: %w", err)
 	}
@@ -670,7 +667,7 @@ func (r *repository) GetEntityTree(ctx context.Context) ([]*EntityWithHierarchy,
 	ctx, span := r.tracing.StartSpan(ctx, "repository.get_entity_tree")
 	defer span.End()
 
-	sqlcRows, err := r.store.GetEntityTreeStructure(ctx, uuid.New()) // Dummy tenant ID
+	sqlcRows, err := r.store.GetEntityTreeStructure(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get entity tree: %w", err)
 	}

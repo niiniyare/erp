@@ -2,9 +2,10 @@ package tenant
 
 import (
 	"encoding/json"
+	"time"
+
 	"github.com/google/uuid"
 	db "github.com/niiniyare/erp/db/sqlc"
-	"time"
 )
 
 // Tenant represents a tenant in the system (domain model)

@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
 	"github.com/niiniyare/erp/internal/core/abac/activities"
+	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
@@ -42,7 +44,7 @@ func PolicyEvaluationWorkflow(ctx workflow.Context, input PolicyEvaluationWorkfl
 	// Set activity options
 	activityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: 30 * time.Second,
-		RetryPolicy: &workflow.RetryPolicy{
+		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    time.Second,
 			BackoffCoefficient: 2.0,
 			MaximumInterval:    30 * time.Second,
@@ -316,14 +318,16 @@ func generateContextHash(attributes map[string]interface{}) string {
 }
 
 // convertToWorkflowPolicyDecisions converts repository policy decisions to workflow format
-func convertToWorkflowPolicyDecisions(decisions []*activities.PolicyDecision) []*activities.PolicyDecisionResult {
+func convertToWorkflowPolicyDecisions(decisions []*models.PolicyDecision) []*activities.PolicyDecisionResult {
 	results := make([]*activities.PolicyDecisionResult, len(decisions))
 	for i, decision := range decisions {
 		results[i] = &activities.PolicyDecisionResult{
-			PolicyID:   decision.PolicyID,
-			PolicyName: decision.PolicyName,
-			Effect:     decision.Effect,
-			Reason:     decision.Reason,
+			PolicyID:      decision.PolicyID,
+			Decision:      decision.Decision,
+			Reason:        decision.Reason,
+			MatchedRule:   decision.MatchedRule,
+			EvaluationMS:  decision.EvaluationMS,
+			TargetMatched: decision.TargetMatched,
 		}
 	}
 	return results

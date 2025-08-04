@@ -2,14 +2,12 @@ package abac
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -183,29 +181,11 @@ type AttributeCollectionOptions struct {
 	TransformationRules []TransformationRule `json:"transformation_rules,omitempty"`
 }
 
-type FallbackStrategy string
-
-const (
-	FallbackStrategyNone     FallbackStrategy = "none"
-	FallbackStrategyDefault  FallbackStrategy = "default"
-	FallbackStrategyCached   FallbackStrategy = "cached"
-	FallbackStrategyDerived  FallbackStrategy = "derived"
-	FallbackStrategyComputed FallbackStrategy = "computed"
-)
-
 type SourcePreference struct {
 	AttributeName    string      `json:"attribute_name"`
 	PreferredSources []uuid.UUID `json:"preferred_sources"`
 	SourceOrder      []uuid.UUID `json:"source_order"`
 	MaxSources       int32       `json:"max_sources"`
-}
-
-type RetryPolicy struct {
-	MaxRetries        int32         `json:"max_retries"`
-	InitialDelay      time.Duration `json:"initial_delay"`
-	BackoffMultiplier float64       `json:"backoff_multiplier"`
-	MaxDelay          time.Duration `json:"max_delay"`
-	RetryConditions   []string      `json:"retry_conditions"`
 }
 
 type TransformationRule struct {
@@ -344,14 +324,7 @@ const (
 )
 
 func (ac *attributeCollector) CollectAttributes(ctx context.Context, req *AttributeCollectionRequest) (*AttributeCollectionResult, error) {
-	ctx, span := ac.tracer.StartSpan(ctx, "abac.attribute_collector.CollectAttributes",
-		tracing.WithAttributes(
-			tracing.StringAttribute("request_id", req.RequestID.String()),
-			tracing.StringAttribute("target_type", string(req.TargetType)),
-			tracing.StringAttribute("target_id", req.TargetID.String()),
-			tracing.IntAttribute("required_attributes", len(req.RequiredAttributes)),
-			tracing.StringAttribute("priority", string(req.Priority)),
-		))
+	ctx, span := ac.tracer.StartSpan(ctx, "abac.attribute_collector.CollectAttributes")
 	defer span.End()
 
 	startTime := time.Now()
@@ -377,8 +350,8 @@ func (ac *attributeCollector) CollectAttributes(ctx context.Context, req *Attrib
 
 	collectionPlan, err := ac.GetCollectionPlan(ctx, planRequest)
 	if err != nil {
-		ac.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "COLLECTION_PLAN_FAILED", "Failed to generate collection plan").WithErr(err)
+		ac.tracer.RecordError(ctx, err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "COLLECTION_PLAN_FAILED", "Failed to generate collection plan")
 	}
 
 	// Step 2: Check cache for existing attributes
@@ -406,14 +379,14 @@ func (ac *attributeCollector) CollectAttributes(ctx context.Context, req *Attrib
 	collectionResult.Timestamp = time.Now()
 
 	// Record metrics
-	ac.metrics.IncrementSuccessCount("attribute_collector_collection")
+	ac.metrics.IncrementCounter("attribute_collector_collection_success", metrics.Fields{})
 	ac.metrics.ObserveHistogram("attribute_collection_duration_seconds", executionTime.Seconds(),
 		metrics.Fields{
 			"target_type":       string(req.TargetType),
 			"attributes_count":  fmt.Sprintf("%d", len(req.RequiredAttributes)),
 			"collection_status": string(collectionResult.CollectionStatus),
 		})
-	ac.metrics.RecordGauge("attribute_collection_cache_hit_rate",
+	ac.metrics.SetGauge("attribute_collection_cache_hit_rate",
 		float64(collectionResult.CollectionMetadata.CacheHits)/float64(collectionResult.CollectionMetadata.CacheHits+collectionResult.CollectionMetadata.CacheMisses)*100,
 		metrics.Fields{"target_type": string(req.TargetType)})
 
@@ -467,12 +440,7 @@ type UserCollectionSummary struct {
 }
 
 func (ac *attributeCollector) CollectUserAttributes(ctx context.Context, req *UserAttributeRequest) (*UserAttributeResult, error) {
-	ctx, span := ac.tracer.StartSpan(ctx, "abac.attribute_collector.CollectUserAttributes",
-		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", req.UserID.String()),
-			tracing.IntAttribute("required_attributes", len(req.RequiredAttributes)),
-			tracing.BoolAttribute("include_roles", req.IncludeRoles),
-		))
+	ctx, span := ac.tracer.StartSpan(ctx, "abac.attribute_collector.CollectUserAttributes")
 	defer span.End()
 
 	startTime := time.Now()
@@ -492,7 +460,7 @@ func (ac *attributeCollector) CollectUserAttributes(ctx context.Context, req *Us
 	// Collect base attributes
 	baseResult, err := ac.CollectAttributes(ctx, collectionReq)
 	if err != nil {
-		ac.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		ac.tracer.RecordError(ctx, err)
 		return nil, err
 	}
 
@@ -546,7 +514,7 @@ func (ac *attributeCollector) CollectUserAttributes(ctx context.Context, req *Us
 		Timestamp:          time.Now(),
 	}
 
-	ac.metrics.IncrementSuccessCount("attribute_collector_user_collection")
+	ac.metrics.IncrementCounter("attribute_collector_user_collection_success", metrics.Fields{})
 
 	return result, nil
 }
@@ -625,20 +593,8 @@ type BatchAggregatedMetrics struct {
 	SourcePerformance   map[uuid.UUID]SourcePerformanceMetrics `json:"source_performance"`
 }
 
-type SourcePerformanceMetrics struct {
-	ResponseTime   time.Duration `json:"response_time"`
-	SuccessRate    float64       `json:"success_rate"`
-	QualityScore   float64       `json:"quality_score"`
-	AttributeCount int32         `json:"attribute_count"`
-}
-
 func (ac *attributeCollector) BatchCollectAttributes(ctx context.Context, req *BatchAttributeCollectionRequest) (*BatchAttributeCollectionResult, error) {
-	ctx, span := ac.tracer.StartSpan(ctx, "abac.attribute_collector.BatchCollectAttributes",
-		tracing.WithAttributes(
-			tracing.StringAttribute("batch_id", req.BatchID.String()),
-			tracing.IntAttribute("batch_size", len(req.CollectionRequests)),
-			tracing.StringAttribute("priority", string(req.Priority)),
-		))
+	ctx, span := ac.tracer.StartSpan(ctx, "abac.attribute_collector.BatchCollectAttributes")
 	defer span.End()
 
 	startTime := time.Now()
@@ -729,8 +685,8 @@ func (ac *attributeCollector) BatchCollectAttributes(ctx context.Context, req *B
 		Timestamp:         time.Now(),
 	}
 
-	ac.metrics.IncrementSuccessCount("attribute_collector_batch_collection")
-	ac.metrics.RecordGauge("batch_collection_throughput", aggregatedMetrics.ThroughputPerSecond,
+	ac.metrics.IncrementCounter("attribute_collector_batch_collection_success", metrics.Fields{})
+	ac.metrics.SetGauge("batch_collection_throughput", aggregatedMetrics.ThroughputPerSecond,
 		metrics.Fields{"batch_size": fmt.Sprintf("%d", len(req.CollectionRequests))})
 
 	ac.logger.InfoContext(ctx, "Batch attribute collection completed",
@@ -1085,8 +1041,13 @@ type CollectionPlanRequest struct {
 }
 type AttributeCollectionPlan struct{}
 type RegisterAttributeSourceRequest struct{}
-type AttributeSource struct{}
-type UpdateAttributeSourceRequest struct{}
+type AttributeSource struct {
+	SourceType      string    `json:"source_type"` // "direct_role", "inherited_role", "group", "computed"
+	SourceID        uuid.UUID `json:"source_id"`
+	SourceName      string    `json:"source_name"`
+	InheritancePath []string  `json:"inheritance_path,omitempty"`
+}
+
 type AttributeSourceQueryRequest struct{}
 type AttributeSourceQueryResult struct{}
 type CollectionMetricsRequest struct{}

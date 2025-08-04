@@ -24,15 +24,15 @@ func NewABACAdapter() *ABACAdapter {
 
 // ConvertToDecisionRequest converts Goa policy evaluation request to domain decision request
 func (a *ABACAdapter) ConvertToDecisionRequest(p *goaABAC.PolicyEvaluationRequest) (*abacServices.DecisionRequest, error) {
-	userID, err := uuid.Parse(p.UserID)
+	userID, err := uuid.Parse(*p.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID: %w", err)
 	}
 
 	req := &abacServices.DecisionRequest{
 		UserID:          userID,
-		ResourceType:    p.ResourceType,
-		Action:          p.Action,
+		ResourceType:    *p.ResourceType,
+		Action:          *p.Action,
 		Context:         p.Context,
 		UseCache:        *p.UseCache,
 		CacheResults:    *p.CacheResults,
@@ -48,13 +48,8 @@ func (a *ABACAdapter) ConvertToDecisionRequest(p *goaABAC.PolicyEvaluationReques
 		req.ResourceID = &resourceID
 	}
 
-	if p.EntityID != nil {
-		entityID, err := uuid.Parse(*p.EntityID)
-		if err != nil {
-			return nil, fmt.Errorf("invalid entity ID: %w", err)
-		}
-		req.EntityID = &entityID
-	}
+	// Note: EntityID field doesn't exist in PolicyEvaluationRequest
+	// Remove this section if not needed or add the field to the Goa design
 
 	if p.RequestID != nil {
 		req.RequestID = *p.RequestID
@@ -65,14 +60,21 @@ func (a *ABACAdapter) ConvertToDecisionRequest(p *goaABAC.PolicyEvaluationReques
 
 // ConvertToPolicyEvaluationResponse converts domain decision response to Goa response
 func (a *ABACAdapter) ConvertToPolicyEvaluationResponse(resp *abacServices.DecisionResponse) *goaABAC.PolicyEvaluationResponse {
+	decision := string(resp.Decision)
+	allowed := resp.Allowed
+	evaluationTimeMs := uint(resp.EvaluationTime.Milliseconds())
+	evaluatedAt := resp.EvaluatedAt.Format(time.RFC3339)
+	cacheHit := resp.CacheHit
+	policyCount := uint(resp.PolicyCount)
+
 	goaResp := &goaABAC.PolicyEvaluationResponse{
-		Decision:         string(resp.Decision),
-		Allowed:          resp.Allowed,
-		EvaluationTimeMs: uint(resp.EvaluationTime.Milliseconds()),
-		EvaluatedAt:      resp.EvaluatedAt.Format(time.RFC3339),
+		Decision:         &decision,
+		Allowed:          &allowed,
+		EvaluationTimeMs: &evaluationTimeMs,
+		EvaluatedAt:      &evaluatedAt,
 		RequestID:        &resp.RequestID,
-		CacheHit:         resp.CacheHit,
-		PolicyCount:      uint(resp.PolicyCount),
+		CacheHit:         &cacheHit,
+		PolicyCount:      &policyCount,
 	}
 
 	// Convert obligations
@@ -106,13 +108,19 @@ func (a *ABACAdapter) ConvertToPolicyEvaluationResponse(resp *abacServices.Decis
 
 // ConvertToBulkPolicyEvaluationResponse converts domain bulk response to Goa response
 func (a *ABACAdapter) ConvertToBulkPolicyEvaluationResponse(resp *abacServices.BulkDecisionResponse) *goaABAC.BulkPolicyEvaluationResponse {
+	successCount := uint(resp.SuccessCount)
+	errorCount := uint(resp.ErrorCount)
+	totalRequests := uint(resp.TotalRequests)
+	evaluationTimeMs := uint(resp.EvaluationTime.Milliseconds())
+	partialFailure := resp.PartialFailure
+
 	goaResp := &goaABAC.BulkPolicyEvaluationResponse{
-		SuccessCount:     uint(resp.SuccessCount),
-		ErrorCount:       uint(resp.ErrorCount),
-		TotalRequests:    uint(resp.TotalRequests),
-		EvaluationTimeMs: uint(resp.EvaluationTime.Milliseconds()),
+		SuccessCount:     &successCount,
+		ErrorCount:       &errorCount,
+		TotalRequests:    &totalRequests,
+		EvaluationTimeMs: &evaluationTimeMs,
 		RequestID:        &resp.RequestID,
-		PartialFailure:   resp.PartialFailure,
+		PartialFailure:   &partialFailure,
 	}
 
 	// Convert individual responses
@@ -126,10 +134,14 @@ func (a *ABACAdapter) ConvertToBulkPolicyEvaluationResponse(resp *abacServices.B
 
 // ConvertToPolicyExplanationResponse converts domain explanation to Goa response
 func (a *ABACAdapter) ConvertToPolicyExplanationResponse(explanation *abacServices.DecisionExplanation) *goaABAC.PolicyExplanationResponse {
+	finalDecision := string(explanation.FinalDecision)
+	reasoningSummary := explanation.ReasoningSummary
+	combiningAlgorithm := explanation.CombiningAlgorithm
+
 	goaResp := &goaABAC.PolicyExplanationResponse{
-		FinalDecision:      string(explanation.FinalDecision),
-		ReasoningSummary:   explanation.ReasoningSummary,
-		CombiningAlgorithm: explanation.CombiningAlgorithm,
+		FinalDecision:      &finalDecision,
+		ReasoningSummary:   &reasoningSummary,
+		CombiningAlgorithm: &combiningAlgorithm,
 		AttributesUsed:     explanation.AttributesUsed,
 		Recommendations:    explanation.Recommendations,
 	}
@@ -154,13 +166,19 @@ func (a *ABACAdapter) ConvertToPolicyExplanationResponse(explanation *abacServic
 func (a *ABACAdapter) ConvertToPolicySummaries(policies []*abacServices.PolicySummary) []*goaABAC.PolicySummary {
 	goaPolicies := make([]*goaABAC.PolicySummary, len(policies))
 	for i, policy := range policies {
+		id := policy.ID.String()
+		name := policy.Name
+		effect := string(policy.Effect)
+		priority := uint(policy.Priority)
+		applicable := policy.Applicable
+
 		goaPolicies[i] = &goaABAC.PolicySummary{
-			ID:          policy.ID.String(),
-			Name:        policy.Name,
+			ID:          &id,
+			Name:        &name,
 			Description: &policy.Description,
-			Effect:      string(policy.Effect),
-			Priority:    uint(policy.Priority),
-			Applicable:  policy.Applicable,
+			Effect:      &effect,
+			Priority:    &priority,
+			Applicable:  &applicable,
 		}
 	}
 	return goaPolicies
@@ -168,8 +186,9 @@ func (a *ABACAdapter) ConvertToPolicySummaries(policies []*abacServices.PolicySu
 
 // ConvertToAttributeCollectionResponse converts domain attribute context to Goa response
 func (a *ABACAdapter) ConvertToAttributeCollectionResponse(attrContext *abacModels.AttributeContext, collectionTime time.Duration) *goaABAC.AttributeCollectionResponse {
+	collectionTimeMs := uint(collectionTime.Milliseconds())
 	goaResp := &goaABAC.AttributeCollectionResponse{
-		CollectionTimeMs: uint(collectionTime.Milliseconds()),
+		CollectionTimeMs: &collectionTimeMs,
 	}
 
 	// Count total attributes
@@ -211,7 +230,8 @@ func (a *ABACAdapter) ConvertToAttributeCollectionResponse(attrContext *abacMode
 		totalAttrs += len(attrContext.SessionAttributes)
 	}
 
-	goaResp.TotalAttributes = uint(totalAttrs)
+	totalAttributes := uint(totalAttrs)
+	goaResp.TotalAttributes = &totalAttributes
 
 	return goaResp
 }
@@ -220,20 +240,33 @@ func (a *ABACAdapter) ConvertToAttributeCollectionResponse(attrContext *abacMode
 func (a *ABACAdapter) ConvertToDecisionAuditEntries(decisions []*abacServices.DecisionAuditLog) []*goaABAC.DecisionAuditEntry {
 	goaEntries := make([]*goaABAC.DecisionAuditEntry, len(decisions))
 	for i, decision := range decisions {
+		id := decision.ID.String()
+		userID := decision.UserID.String()
+		resourceType := decision.ResourceType
+		action := decision.Action
+		dec := string(decision.Decision)
+		allowed := decision.Allowed
+		evaluationTimeMs := uint(decision.EvaluationTime.Milliseconds())
+		evaluatedAt := decision.EvaluatedAt.Format(time.RFC3339)
+		policyCount := uint(decision.PolicyCount)
+		cacheHit := decision.CacheHit
+		createdAt := decision.EvaluatedAt.Format(time.RFC3339)
+		updatedAt := decision.EvaluatedAt.Format(time.RFC3339)
+
 		goaEntries[i] = &goaABAC.DecisionAuditEntry{
-			ID:               decision.ID.String(),
-			UserID:           decision.UserID.String(),
-			ResourceType:     decision.ResourceType,
-			Action:           decision.Action,
-			Decision:         string(decision.Decision),
-			Allowed:          decision.Allowed,
-			EvaluationTimeMs: uint(decision.EvaluationTime.Milliseconds()),
-			EvaluatedAt:      decision.EvaluatedAt.Format(time.RFC3339),
-			PolicyCount:      uint(decision.PolicyCount),
-			CacheHit:         decision.CacheHit,
+			ID:               &id,
+			UserID:           &userID,
+			ResourceType:     &resourceType,
+			Action:           &action,
+			Decision:         &dec,
+			Allowed:          &allowed,
+			EvaluationTimeMs: &evaluationTimeMs,
+			EvaluatedAt:      &evaluatedAt,
+			PolicyCount:      &policyCount,
+			CacheHit:         &cacheHit,
 			RequestID:        &decision.RequestID,
-			CreatedAt:        decision.EvaluatedAt.Format(time.RFC3339),
-			UpdatedAt:        decision.EvaluatedAt.Format(time.RFC3339),
+			CreatedAt:        &createdAt,
+			UpdatedAt:        &updatedAt,
 		}
 
 		if decision.ResourceID != nil {
@@ -253,29 +286,43 @@ func (a *ABACAdapter) ConvertToDecisionAuditEntries(decisions []*abacServices.De
 // Helper conversion methods
 
 func (a *ABACAdapter) convertPolicyObligation(obligation *abacModels.PolicyObligation) *goaABAC.PolicyObligation {
+	id := obligation.ID
+	type_ := obligation.Type
+	description := obligation.Description
+
 	return &goaABAC.PolicyObligation{
-		ID:          obligation.ID,
-		Type:        obligation.Type,
-		Description: obligation.Description,
+		ID:          &id,
+		Type:        &type_,
+		Description: &description,
 		Parameters:  obligation.Parameters,
 	}
 }
 
 func (a *ABACAdapter) convertPolicyAdvice(advice *abacModels.PolicyAdvice) *goaABAC.PolicyAdvice {
+	id := advice.ID
+	type_ := advice.Type
+	description := advice.Description
+	// Note: Severity field doesn't exist in models.PolicyAdvice, using Type as severity
+	severity := advice.Type
+
 	return &goaABAC.PolicyAdvice{
-		ID:          advice.ID,
-		Type:        advice.Type,
-		Description: advice.Description,
-		Severity:    advice.Severity,
+		ID:          &id,
+		Type:        &type_,
+		Description: &description,
+		Severity:    &severity,
 		Parameters:  advice.Parameters,
 	}
 }
 
 func (a *ABACAdapter) convertPolicyExplanation(explanation *abacServices.DecisionExplanation) *goaABAC.PolicyExplanation {
+	finalDecision := string(explanation.FinalDecision)
+	reasoningSummary := explanation.ReasoningSummary
+	combiningAlgorithm := explanation.CombiningAlgorithm
+
 	goaExplanation := &goaABAC.PolicyExplanation{
-		FinalDecision:      string(explanation.FinalDecision),
-		ReasoningSummary:   explanation.ReasoningSummary,
-		CombiningAlgorithm: explanation.CombiningAlgorithm,
+		FinalDecision:      &finalDecision,
+		ReasoningSummary:   &reasoningSummary,
+		CombiningAlgorithm: &combiningAlgorithm,
 		AttributesUsed:     explanation.AttributesUsed,
 		Recommendations:    explanation.Recommendations,
 	}
@@ -297,41 +344,67 @@ func (a *ABACAdapter) convertPolicyExplanation(explanation *abacServices.Decisio
 }
 
 func (a *ABACAdapter) convertPolicyEvaluationSummary(eval *abacServices.PolicyEvaluationSummary) *goaABAC.PolicyEvaluationSummary {
+	policyName := eval.PolicyName
+	decision := string(eval.Decision)
+	applicable := eval.Applicable
+	reason := eval.Reason
+
 	return &goaABAC.PolicyEvaluationSummary{
-		PolicyName:   eval.PolicyName,
-		Decision:     string(eval.Decision),
-		Applicable:   eval.Applicable,
+		PolicyName:   &policyName,
+		Decision:     &decision,
+		Applicable:   &applicable,
 		MatchedRules: eval.MatchedRules,
 		FailedRules:  eval.FailedRules,
-		Reason:       eval.Reason,
+		Reason:       &reason,
 	}
 }
 
 func (a *ABACAdapter) convertConflictResolutionSummary(resolution *abacServices.ConflictResolutionSummary) *goaABAC.ConflictResolutionSummary {
+	conflictDetected := resolution.ConflictDetected
+	resolutionMethod := resolution.ResolutionMethod
+	explanation := resolution.Explanation
+
 	return &goaABAC.ConflictResolutionSummary{
-		ConflictDetected:    resolution.ConflictDetected,
+		ConflictDetected:    &conflictDetected,
 		ConflictingPolicies: resolution.ConflictingPolicies,
-		ResolutionMethod:    resolution.ResolutionMethod,
+		ResolutionMethod:    &resolutionMethod,
 		WinningPolicy:       &resolution.WinningPolicy,
-		Explanation:         resolution.Explanation,
+		Explanation:         &explanation,
 	}
 }
 
 func (a *ABACAdapter) convertDecisionAuditTrail(trail *abacServices.DecisionAuditTrail) *goaABAC.DecisionAuditTrail {
+	// Convert AttributesSeen from map[string]string to map[string]any
+	attributesSeen := make(map[string]any)
+	for k, v := range trail.AttributesSeen {
+		attributesSeen[k] = v
+	}
+
 	goaTrail := &goaABAC.DecisionAuditTrail{
 		PoliciesApplied: trail.PoliciesApplied,
-		AttributesSeen:  trail.AttributesSeen,
+		AttributesSeen:  attributesSeen,
 	}
 
 	// Convert evaluation steps
 	if len(trail.EvaluationSteps) > 0 {
 		goaTrail.EvaluationSteps = make([]*goaABAC.EvaluationStep, len(trail.EvaluationSteps))
 		for i, step := range trail.EvaluationSteps {
+			stepType := step.StepType
+			description := step.Description
+			durationMs := uint(step.Duration.Milliseconds())
+
+			// Convert result to string pointer if it's not nil
+			var resultPtr *string
+			if step.Result != nil {
+				resultStr := fmt.Sprintf("%v", step.Result)
+				resultPtr = &resultStr
+			}
+
 			goaTrail.EvaluationSteps[i] = &goaABAC.EvaluationStep{
-				StepType:    step.StepType,
-				Description: step.Description,
-				Result:      step.Result,
-				DurationMs:  uint(step.Duration.Milliseconds()),
+				StepType:    &stepType,
+				Description: &description,
+				Result:      resultPtr,
+				DurationMs:  &durationMs,
 				Metadata:    step.Metadata,
 			}
 		}
@@ -341,24 +414,35 @@ func (a *ABACAdapter) convertDecisionAuditTrail(trail *abacServices.DecisionAudi
 	if len(trail.CacheEvents) > 0 {
 		goaTrail.CacheEvents = make([]*goaABAC.CacheEvent, len(trail.CacheEvents))
 		for i, event := range trail.CacheEvents {
+			eventType := event.EventType
+			hit := event.Hit
+			timestamp := event.Timestamp.Format(time.RFC3339)
+
 			goaTrail.CacheEvents[i] = &goaABAC.CacheEvent{
-				EventType: event.EventType,
+				EventType: &eventType,
 				CacheKey:  &event.CacheKey,
-				Hit:       event.Hit,
-				Timestamp: event.Timestamp.Format(time.RFC3339),
+				Hit:       &hit,
+				Timestamp: &timestamp,
 			}
 		}
 	}
 
 	// Convert timing
 	if trail.Timing != nil {
+		attributeCollectionMs := uint(trail.Timing.AttributeCollectionTime.Milliseconds())
+		attributeValidationMs := uint(trail.Timing.AttributeValidationTime.Milliseconds())
+		policyRetrievalMs := uint(trail.Timing.PolicyRetrievalTime.Milliseconds())
+		policyEvaluationMs := uint(trail.Timing.PolicyEvaluationTime.Milliseconds())
+		cacheOperationMs := uint(trail.Timing.CacheOperationTime.Milliseconds())
+		totalMs := uint(trail.Timing.TotalTime.Milliseconds())
+
 		goaTrail.Timing = &goaABAC.EvaluationTiming{
-			AttributeCollectionMs: uint(trail.Timing.AttributeCollectionTime.Milliseconds()),
-			AttributeValidationMs: uint(trail.Timing.AttributeValidationTime.Milliseconds()),
-			PolicyRetrievalMs:     uint(trail.Timing.PolicyRetrievalTime.Milliseconds()),
-			PolicyEvaluationMs:    uint(trail.Timing.PolicyEvaluationTime.Milliseconds()),
-			CacheOperationMs:      uint(trail.Timing.CacheOperationTime.Milliseconds()),
-			TotalMs:               uint(trail.Timing.TotalTime.Milliseconds()),
+			AttributeCollectionMs: &attributeCollectionMs,
+			AttributeValidationMs: &attributeValidationMs,
+			PolicyRetrievalMs:     &policyRetrievalMs,
+			PolicyEvaluationMs:    &policyEvaluationMs,
+			CacheOperationMs:      &cacheOperationMs,
+			TotalMs:               &totalMs,
 		}
 	}
 
@@ -367,19 +451,25 @@ func (a *ABACAdapter) convertDecisionAuditTrail(trail *abacServices.DecisionAudi
 
 func (a *ABACAdapter) convertAttributeMap(attributes map[string]*abacModels.AttributeValue) map[string]*goaABAC.AttributeValue {
 	goaAttrs := make(map[string]*goaABAC.AttributeValue)
-	for name, attr := range attributes {
-		goaAttrs[name] = &goaABAC.AttributeValue{
-			Name:        attr.Name,
+	for attrName, attr := range attributes {
+		name := attr.Name
+		dataType := string(attr.DataType)
+		category := string(attr.Category)
+		source := string(attr.Source)
+		collectedAt := attr.Timestamp.Format(time.RFC3339)
+
+		goaAttrs[attrName] = &goaABAC.AttributeValue{
+			Name:        &name,
 			Value:       attr.Value,
-			DataType:    string(attr.DataType),
-			Category:    string(attr.Category),
-			Source:      &attr.Source,
-			CollectedAt: attr.CollectedAt.Format(time.RFC3339),
+			DataType:    &dataType,
+			Category:    &category,
+			Source:      &source,
+			CollectedAt: &collectedAt,
 		}
 
 		if attr.ExpiresAt != nil {
 			expiresAt := attr.ExpiresAt.Format(time.RFC3339)
-			goaAttrs[name].ExpiresAt = &expiresAt
+			goaAttrs[attrName].ExpiresAt = &expiresAt
 		}
 	}
 	return goaAttrs

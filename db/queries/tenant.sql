@@ -231,7 +231,7 @@
 -- Instead of explicitly adding "WHERE tenant_id = $1" to every query, we rely on:
 --
 -- 1. set_tenant_context($1) - Sets current tenant for the session
--- 2. get_current_tenant_id() - Returns current tenant from session
+-- 2. current_tenant_id() - Returns current tenant from session
 -- 3. RLS policies - Automatically add tenant filtering to queries
 --
 -- QUERY TYPES:
@@ -256,11 +256,11 @@ INSERT INTO tenant_configurations (
     default_currency, date_format, number_format, language_code,
     password_policy, webhook_endpoints, api_rate_limits
 ) VALUES (
-    get_current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
 ) RETURNING *;
 
 -- name: GetTenantConfiguration :one
-SELECT * FROM tenant_configurations WHERE tenant_id = current_setting('app.current_tenant_id')::uuid;
+SELECT * FROM tenant_configurations WHERE tenant_id = current_tenant_id();
 
 -- name: UpdateTenantConfiguration :one
 UPDATE tenant_configurations
@@ -281,6 +281,7 @@ SET
     webhook_endpoints = COALESCE(sqlc.narg('webhook_endpoints'), webhook_endpoints),
     api_rate_limits = COALESCE(sqlc.narg('api_rate_limits'), api_rate_limits),
     updated_at = NOW()
+    WHERE tenant_id =current_tenant_id() 
 RETURNING *;
 
 -- name: UpdateTenantFeatures :one
@@ -316,17 +317,18 @@ INSERT INTO tenant_usage_stats (
     total_transactions, storage_used, api_calls, avg_response_time,
     error_rate, monthly_revenue
 ) VALUES (
-    get_current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 ) RETURNING *;
 
 -- name: GetTenantUsageStats :one
 SELECT * FROM tenant_usage_stats
-WHERE period_start = $1;
+WHERE period_start = $1 AND tenant_id = current_tenant_id();
 
 -- name: GetTenantUsageStatsRange :many
 SELECT * FROM tenant_usage_stats
 WHERE period_start >= $1 
   AND period_end <= $2
+  AND tenant_id = current_tenant_id()
 ORDER BY period_start DESC;
 
 -- name: UpdateTenantUsageStats :one
@@ -340,7 +342,7 @@ SET
     avg_response_time = COALESCE(sqlc.narg('avg_response_time'), avg_response_time),
     error_rate = COALESCE(sqlc.narg('error_rate'), error_rate),
     monthly_revenue = COALESCE(sqlc.narg('monthly_revenue'), monthly_revenue)
-WHERE period_start = @period_start
+WHERE period_start = @period_start AND tenant_id = current_tenant_id()
 RETURNING *;
 
 -- name: DeleteTenantUsageStats :exec
@@ -360,10 +362,10 @@ LIMIT 1;
 SELECT set_tenant_context($1);
 
 -- name: CheckTenantLimits :one
-SELECT check_tenant_limits(get_current_tenant_id(), $1, $2);
+SELECT check_tenant_limits(current_tenant_id(), $1, $2);
 
 -- name: CreateDefaultTenantConfiguration :exec
-SELECT create_default_tenant_configuration(get_current_tenant_id());
+SELECT create_default_tenant_configuration(current_tenant_id());
 
 -- =====================================================
 -- ENHANCED TENANT QUERIES WITH NEW FIELDS
@@ -410,13 +412,13 @@ RETURNING *;
 -- name: UpdateTenantMetadata :one
 UPDATE tenants
 SET metadata = $1, updated_at = NOW()
-WHERE id = get_current_tenant_id() AND deleted_at IS NULL
+WHERE id = current_tenant_id() AND deleted_at IS NULL
 RETURNING *;
 
 -- name: UpdateTenantSettings :one
 UPDATE tenants
 SET settings = $1, updated_at = NOW()
-WHERE id = get_current_tenant_id() AND deleted_at IS NULL
+WHERE id = current_tenant_id() AND deleted_at IS NULL
 RETURNING *;
 
 -- name: GetTenantsByCompanySize :many
@@ -630,12 +632,12 @@ LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: GetCurrentTenant :one
 SELECT * FROM tenants
-WHERE id = get_current_tenant_id() AND deleted_at IS NULL;
+WHERE id = current_tenant_id() AND deleted_at IS NULL;
 
 -- name: UpdateCurrentTenant :one
 UPDATE tenants
 SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
-WHERE id = get_current_tenant_id() AND deleted_at IS NULL
+WHERE id = current_tenant_id() AND deleted_at IS NULL
 RETURNING *;
 
 -- =====================================================
@@ -647,7 +649,7 @@ RETURNING *;
 -- name: CheckCurrentTenantExists :one
 SELECT EXISTS(
     SELECT 1 FROM tenants 
-    WHERE id = get_current_tenant_id() AND deleted_at IS NULL
+    WHERE id = current_tenant_id() AND deleted_at IS NULL
 );
 
 -- name: GetTenantStats :one

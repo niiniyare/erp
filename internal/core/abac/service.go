@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac/activities"
 	"github.com/niiniyare/erp/internal/core/abac/models"
@@ -33,7 +34,10 @@ type Service interface {
 	// Cache Management
 	InvalidateUserCache(ctx context.Context, userID uuid.UUID) error
 	InvalidatePolicyCache(ctx context.Context, policyIDs []uuid.UUID) error
-	GetCacheStatistics(ctx context.Context) (*CacheStatistics, error)
+	GetCacheStatistics(ctx context.Context) (*activities.GetCacheStatsOutput, error)
+
+	// Decision History
+	GetDecisionHistory(ctx context.Context, userID uuid.UUID, limit int) ([]*DecisionHistoryEntry, error)
 }
 
 // service implements the ABAC service
@@ -119,9 +123,9 @@ type PermissionEvaluationResult struct {
 func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResult, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.service.EvaluatePermission",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", req.UserID.String()),
-			tracing.StringAttribute("resource_type", req.ResourceType),
-			tracing.StringAttribute("action", req.Action),
+			attribute.String("user_id", req.UserID.String()),
+			attribute.String("resource_type", req.ResourceType),
+			attribute.String("action", req.Action),
 		))
 	defer span.End()
 
@@ -143,7 +147,7 @@ func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 	currentTenant, err := s.tenantService.GetCurrentTenant(ctx)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "TENANT_CONTEXT_REQUIRED", "Valid tenant context is required for ABAC evaluation").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "TENANT_CONTEXT_REQUIRED", "Valid tenant context is required for ABAC evaluation")
 	}
 
 	// Collect user attributes
@@ -156,7 +160,7 @@ func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 	userAttrs, err := s.attributeCollectionActivities.CollectUserAttributes(ctx, userAttrInput)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "USER_ATTRIBUTE_COLLECTION_FAILED", "Failed to collect user attributes").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "USER_ATTRIBUTE_COLLECTION_FAILED", "Failed to collect user attributes")
 	}
 
 	// Collect resource attributes
@@ -170,7 +174,7 @@ func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 	resourceAttrs, err := s.attributeCollectionActivities.CollectResourceAttributes(ctx, resourceAttrInput)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "RESOURCE_ATTRIBUTE_COLLECTION_FAILED", "Failed to collect resource attributes").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "RESOURCE_ATTRIBUTE_COLLECTION_FAILED", "Failed to collect resource attributes")
 	}
 
 	// Build environment context
@@ -190,7 +194,7 @@ func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 	envContext, err := s.attributeCollectionActivities.BuildEnvironmentContext(ctx, envContextInput)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "ENVIRONMENT_CONTEXT_FAILED", "Failed to build environment context").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "ENVIRONMENT_CONTEXT_FAILED", "Failed to build environment context")
 	}
 
 	// Combine all attributes
@@ -235,14 +239,14 @@ func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 	evalResult, err := s.policyEvaluationActivities.EvaluatePolicies(ctx, evalInput)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_EVALUATION_FAILED", "Failed to evaluate policies").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_EVALUATION_FAILED", "Failed to evaluate policies")
 	}
 
 	totalDuration := time.Since(startTime)
-	span.SetAttributes(
-		tracing.StringAttribute("decision", string(evalResult.Decision)),
-		tracing.BoolAttribute("cache_hit", evalResult.CacheHit),
-		tracing.IntAttribute("policies_evaluated", len(evalResult.PolicyDecisions)),
+	tracing.WithAttributes(
+		attribute.String("decision", string(evalResult.Decision)),
+		attribute.Bool("cache_hit", evalResult.CacheHit),
+		attribute.Int("policies_evaluated", len(evalResult.PolicyDecisions)),
 	)
 
 	// Record metrics
@@ -264,9 +268,9 @@ func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 		logger.Fields{
 			"decision":           result.Decision,
 			"policies_evaluated": len(result.PolicyDecisions),
-			"evaluation_time_ms": result.EvaluationTimeMS,
-			"cache_hit":          result.CacheHit,
-			"request_id":         requestID,
+			// "evaluation_time_ms": result.EvaluationTimeMS,
+			"cache_hit":  result.CacheHit,
+			"request_id": requestID,
 		})
 
 	return result, nil
@@ -294,7 +298,7 @@ type BulkPermissionEvaluationResult struct {
 func (s *service) BulkEvaluatePermissions(ctx context.Context, req *BulkPermissionEvaluationRequest) (*BulkPermissionEvaluationResult, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.service.BulkEvaluatePermissions",
 		tracing.WithAttributes(
-			tracing.IntAttribute("request_count", len(req.Requests)),
+			attribute.Int("request_count", len(req.Requests)),
 		))
 	defer span.End()
 
@@ -350,8 +354,8 @@ func (s *service) BulkEvaluatePermissions(ctx context.Context, req *BulkPermissi
 	averageTime := float64(totalDuration.Milliseconds()) / float64(len(req.Requests))
 
 	span.SetAttributes(
-		tracing.IntAttribute("successful_count", successCount),
-		tracing.IntAttribute("failed_count", failedCount),
+		attribute.Int("successful_count", successCount),
+		attribute.Int("failed_count", failedCount),
 	)
 
 	// Record bulk metrics
@@ -384,27 +388,15 @@ func (s *service) BulkEvaluatePermissions(ctx context.Context, req *BulkPermissi
 }
 
 // PolicyTestRequest represents a policy test request
-type PolicyTestRequest struct {
-	PolicyID    uuid.UUID              `json:"policy_id" validate:"required"`
-	TestContext map[string]interface{} `json:"test_context" validate:"required"`
-	RequestID   string                 `json:"request_id,omitempty"`
-}
+// PolicyTestRequest type already defined in policy_testing.go
 
-// PolicyTestResult represents the result of policy testing
-type PolicyTestResult struct {
-	PolicyID         uuid.UUID              `json:"policy_id"`
-	PolicyName       string                 `json:"policy_name"`
-	EvaluationResult *models.PolicyDecision `json:"evaluation_result"`
-	EvaluationTimeMS int64                  `json:"evaluation_time_ms"`
-	RequestID        string                 `json:"request_id"`
-	Timestamp        time.Time              `json:"timestamp"`
-}
+// PolicyTestResult type already defined in policy_testing.go
 
 // TestPolicy tests a specific policy against provided context
 func (s *service) TestPolicy(ctx context.Context, req *PolicyTestRequest) (*PolicyTestResult, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.service.TestPolicy",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_id", req.PolicyID.String()),
+			attribute.String("policy_id", req.PolicyID.String()),
 		))
 	defer span.End()
 
@@ -424,40 +416,40 @@ func (s *service) TestPolicy(ctx context.Context, req *PolicyTestRequest) (*Poli
 	policy, err := s.policyRepo.GetPolicyByID(ctx, req.PolicyID)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("abac_test_policy", "policy_not_found")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_NOT_FOUND", "Policy not found for testing").WithErr(err)
+		s.metrics.IncrementCounter("abac_test_policy_errors", metrics.Fields{"reason": "policy_not_found"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_NOT_FOUND", "Policy not found for testing")
 	}
 
 	// This is a simplified policy test implementation
 	// In a full implementation, you would use the policy evaluation activities
-	decision := &models.PolicyDecision{
-		PolicyID:   policy.ID,
-		PolicyName: policy.Name,
-		Effect:     policy.Effect,
-		Reason:     "Policy test evaluation",
-	}
+	// decision := &models.PolicyDecision{
+	// 	PolicyID:   policy.ID,
+	// 	// PolicyName: policy.Name,
+	// 	// Effect:     policy.Effect,
+	// 	Reason:     "Policy test evaluation",
+	// }
 
 	totalDuration := time.Since(startTime)
 
 	result := &PolicyTestResult{
-		PolicyID:         policy.ID,
-		PolicyName:       policy.Name,
-		EvaluationResult: decision,
-		EvaluationTimeMS: totalDuration.Milliseconds(),
-		RequestID:        requestID,
-		Timestamp:        time.Now(),
+		PolicyID:   policy.ID,
+		PolicyName: policy.Name,
+		// EvaluationResult: decision,
+		// EvaluationTimeMS: totalDuration.Milliseconds(),
+		// RequestID:        requestID,
+		Timestamp: time.Now(),
 	}
 
-	s.metrics.IncrementSuccessCount("abac_test_policy")
+	s.metrics.IncrementCounter("abac_test_policy", nil)
 	s.metrics.ObserveHistogram("abac_test_policy_duration_seconds", totalDuration.Seconds(),
 		metrics.Fields{"policy_id": policy.ID.String()})
 
 	s.logger.InfoContext(ctx, "Policy test completed",
 		logger.Fields{
-			"policy_id":          result.PolicyID,
-			"policy_name":        result.PolicyName,
-			"evaluation_time_ms": result.EvaluationTimeMS,
-			"request_id":         requestID,
+			"policy_id":   result.PolicyID,
+			"policy_name": result.PolicyName,
+			// "evaluation_time_ms": result.EvaluationTimeMS,
+			"request_id": requestID,
 		})
 
 	return result, nil
@@ -476,7 +468,7 @@ type UserEffectivePermissions struct {
 func (s *service) GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) (*UserEffectivePermissions, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.service.GetUserEffectivePermissions",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", userID.String()),
+			attribute.String("user_id", userID.String()),
 		))
 	defer span.End()
 
@@ -490,8 +482,8 @@ func (s *service) GetUserEffectivePermissions(ctx context.Context, userID uuid.U
 	userRoles, err := s.identityService.GetUserRoles(ctx, userID)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("abac_get_effective_permissions", "get_user_roles_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "GET_USER_ROLES_FAILED", "Failed to retrieve user roles").WithErr(err)
+		s.metrics.IncrementCounter("abac_get_effective_permissions_errors", metrics.Fields{"reason": "get_user_roles_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "GET_USER_ROLES_FAILED", "Failed to retrieve user roles")
 	}
 
 	roles := make([]string, len(userRoles))
@@ -511,8 +503,8 @@ func (s *service) GetUserEffectivePermissions(ctx context.Context, userID uuid.U
 		Timestamp:   time.Now(),
 	}
 
-	s.metrics.IncrementSuccessCount("abac_get_effective_permissions")
-	s.metrics.RecordGauge("abac_user_effective_roles_count", float64(len(roles)),
+	s.metrics.IncrementCounter("abac_get_effective_permissions", nil)
+	s.metrics.SetGauge("abac_user_effective_roles_count", float64(len(roles)),
 		metrics.Fields{"user_id": userID.String()})
 
 	s.logger.InfoContext(ctx, "User effective permissions retrieved",
@@ -538,7 +530,7 @@ type RoleHierarchy struct {
 func (s *service) CalculateRoleHierarchy(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) (*RoleHierarchy, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.service.CalculateRoleHierarchy",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", userID.String()),
+			attribute.String("user_id", userID.String()),
 		))
 	defer span.End()
 
@@ -552,8 +544,8 @@ func (s *service) CalculateRoleHierarchy(ctx context.Context, userID uuid.UUID, 
 	userRoles, err := s.identityService.GetUserRoles(ctx, userID)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("abac_calculate_role_hierarchy", "get_user_roles_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "GET_USER_ROLES_FAILED", "Failed to retrieve user roles for hierarchy calculation").WithErr(err)
+		s.metrics.IncrementCounter("abac_calculate_role_hierarchy_errors", metrics.Fields{"reason": "get_user_roles_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "GET_USER_ROLES_FAILED", "Failed to retrieve user roles for hierarchy calculation")
 	}
 
 	roles := make([]string, len(userRoles))
@@ -576,8 +568,8 @@ func (s *service) CalculateRoleHierarchy(ctx context.Context, userID uuid.UUID, 
 		Timestamp: time.Now(),
 	}
 
-	s.metrics.IncrementSuccessCount("abac_calculate_role_hierarchy")
-	s.metrics.RecordGauge("abac_user_role_hierarchy_depth", float64(1), // Placeholder depth
+	s.metrics.IncrementCounter("abac_calculate_role_hierarchy", nil)
+	s.metrics.SetGauge("abac_user_role_hierarchy_depth", float64(1), // Placeholder depth
 		metrics.Fields{"user_id": userID.String()})
 
 	s.logger.InfoContext(ctx, "Role hierarchy calculated",
@@ -594,7 +586,7 @@ func (s *service) CalculateRoleHierarchy(ctx context.Context, userID uuid.UUID, 
 func (s *service) InvalidateUserCache(ctx context.Context, userID uuid.UUID) error {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.service.InvalidateUserCache",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", userID.String()),
+			attribute.String("user_id", userID.String()),
 		))
 	defer span.End()
 
@@ -606,11 +598,11 @@ func (s *service) InvalidateUserCache(ctx context.Context, userID uuid.UUID) err
 	_, err := s.cacheActivities.InvalidatePolicyCache(ctx, input)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("abac_invalidate_user_cache", "activity_failed")
-		return errors.NewBusinessErrorWithContext(ctx, "CACHE_INVALIDATION_FAILED", "Failed to invalidate user cache").WithErr(err)
+		s.metrics.IncrementCounter("abac_invalidate_user_cache_errors", metrics.Fields{"reason": "activity_failed"})
+		return errors.NewBusinessErrorWithContext(ctx, "CACHE_INVALIDATION_FAILED", "Failed to invalidate user cache")
 	}
 
-	s.metrics.IncrementSuccessCount("abac_invalidate_user_cache")
+	s.metrics.IncrementCounter("abac_invalidate_user_cache", nil)
 	s.logger.InfoContext(ctx, "User cache invalidated", logger.Fields{"user_id": userID})
 
 	return nil
@@ -620,7 +612,7 @@ func (s *service) InvalidateUserCache(ctx context.Context, userID uuid.UUID) err
 func (s *service) InvalidatePolicyCache(ctx context.Context, policyIDs []uuid.UUID) error {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.service.InvalidatePolicyCache",
 		tracing.WithAttributes(
-			tracing.IntAttribute("policy_count", len(policyIDs)),
+			attribute.Int("policy_count", len(policyIDs)),
 		))
 	defer span.End()
 
@@ -632,25 +624,34 @@ func (s *service) InvalidatePolicyCache(ctx context.Context, policyIDs []uuid.UU
 	_, err := s.cacheActivities.InvalidatePolicyCache(ctx, input)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("abac_invalidate_policy_cache", "activity_failed")
-		return errors.NewBusinessErrorWithContext(ctx, "CACHE_INVALIDATION_FAILED", "Failed to invalidate policy cache").WithErr(err)
+		s.metrics.IncrementCounter("abac_invalidate_policy_cache_errors", metrics.Fields{"reason": "activity_failed"})
+		return errors.NewBusinessErrorWithContext(ctx, "CACHE_INVALIDATION_FAILED", "Failed to invalidate policy cache")
 	}
 
-	s.metrics.IncrementSuccessCount("abac_invalidate_policy_cache")
+	s.metrics.IncrementCounter("abac_invalidate_policy_cache", nil)
 	s.logger.InfoContext(ctx, "Policy cache invalidated", logger.Fields{"policy_ids_count": len(policyIDs)})
 
 	return nil
 }
 
-// CacheStatistics represents cache performance statistics
-type CacheStatistics struct {
-	PolicyEvaluationStats *repository.EvaluationCacheStats `json:"policy_evaluation_stats"`
-	AttributeStats        *repository.AttributeStats       `json:"attribute_stats"`
-	GeneratedAt           time.Time                        `json:"generated_at"`
+// DecisionHistoryEntry represents a decision history entry
+type DecisionHistoryEntry struct {
+	ID             uuid.UUID                `json:"id"`
+	UserID         uuid.UUID                `json:"user_id"`
+	ResourceType   string                   `json:"resource_type"`
+	ResourceID     uuid.UUID                `json:"resource_id"`
+	Action         string                   `json:"action"`
+	Decision       types.PolicyDecisionType `json:"decision"`
+	Allowed        bool                     `json:"allowed"`
+	EvaluationTime time.Duration            `json:"evaluation_time"`
+	EvaluatedAt    time.Time                `json:"evaluated_at"`
+	PolicyCount    int                      `json:"policy_count"`
+	CacheHit       bool                     `json:"cache_hit"`
+	RequestID      string                   `json:"request_id"`
 }
 
 // GetCacheStatistics gets cache performance statistics
-func (s *service) GetCacheStatistics(ctx context.Context) (*CacheStatistics, error) {
+func (s *service) GetCacheStatistics(ctx context.Context) (*activities.GetCacheStatsOutput, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.service.GetCacheStatistics")
 	defer span.End()
 
@@ -661,21 +662,81 @@ func (s *service) GetCacheStatistics(ctx context.Context) (*CacheStatistics, err
 	stats, err := s.cacheActivities.GetCacheStats(ctx, input)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("abac_get_cache_statistics", "activity_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "GET_CACHE_STATS_FAILED", "Failed to retrieve cache statistics").WithErr(err)
+		s.metrics.IncrementCounter("abac_get_cache_statistics_errors", metrics.Fields{"reason": "activity_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "GET_CACHE_STATS_FAILED", "Failed to retrieve cache statistics")
 	}
 
-	result := &CacheStatistics{
-		PolicyEvaluationStats: stats.PolicyEvaluationStats,
-		AttributeStats:        stats.AttributeStats,
-		GeneratedAt:           stats.GeneratedAt,
-	}
+	return stats, nil
+}
 
-	s.metrics.IncrementSuccessCount("abac_get_cache_statistics")
-	s.logger.InfoContext(ctx, "Cache statistics retrieved",
+// GetDecisionHistory gets the decision history for a user
+func (s *service) GetDecisionHistory(ctx context.Context, userID uuid.UUID, limit int) ([]*DecisionHistoryEntry, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "abac.service.GetDecisionHistory",
+		tracing.WithAttributes(
+			attribute.String("user_id", userID.String()),
+			attribute.Int("limit", limit),
+		))
+	defer span.End()
+
+	s.logger.InfoContext(ctx, "Getting decision history",
 		logger.Fields{
-			"total_cached_evaluations": stats.PolicyEvaluationStats.TotalCachedEvaluations,
-			"cache_hit_rate":           stats.PolicyEvaluationStats.CacheHitRate,
+			"user_id": userID,
+			"limit":   limit,
+		})
+
+	// Get user evaluation history from repository
+	req := &repository.GetUserEvaluationHistoryRequest{
+		UserID:       userID,
+		ResourceType: nil, // Get all resource types
+		Action:       nil, // Get all actions
+		Limit:        limit,
+		Offset:       0,
+	}
+
+	evaluations, err := s.policyEvaluationRepo.GetUserEvaluationHistory(ctx, req)
+	if err != nil {
+		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		s.metrics.IncrementCounter("abac_get_decision_history_errors", metrics.Fields{"reason": "get_history_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "GET_DECISION_HISTORY_FAILED", "Failed to retrieve decision history")
+	}
+
+	// Convert to decision history entries
+	result := make([]*DecisionHistoryEntry, len(evaluations))
+	for i, evaluation := range evaluations {
+		resourceID := uuid.UUID{}
+		if evaluation.ResourceID != nil {
+			resourceID = *evaluation.ResourceID
+		}
+
+		evaluationTime := time.Duration(0)
+		if evaluation.EvaluationTimeMS != nil {
+			evaluationTime = time.Duration(*evaluation.EvaluationTimeMS) * time.Millisecond
+		}
+
+		result[i] = &DecisionHistoryEntry{
+			ID:             evaluation.ID,
+			UserID:         evaluation.UserID,
+			ResourceType:   evaluation.ResourceType,
+			ResourceID:     resourceID,
+			Action:         evaluation.Action,
+			Decision:       evaluation.Decision,
+			Allowed:        evaluation.Decision == types.PolicyDecisionAllow,
+			EvaluationTime: evaluationTime,
+			EvaluatedAt:    evaluation.EvaluatedAt,
+			PolicyCount:    len(evaluation.PolicyDecisions),
+			CacheHit:       false,                               // This would need to be tracked separately
+			RequestID:      "history-" + evaluation.ID.String(), // Generate request ID for history
+		}
+	}
+
+	s.metrics.IncrementCounter("abac_get_decision_history", nil)
+	s.metrics.SetGauge("abac_decision_history_count", float64(len(result)),
+		metrics.Fields{"user_id": userID.String()})
+
+	s.logger.InfoContext(ctx, "Decision history retrieved",
+		logger.Fields{
+			"user_id":     userID,
+			"entry_count": len(result),
 		})
 
 	return result, nil
@@ -708,7 +769,7 @@ func (s *service) recordEvaluationMetrics(ctx context.Context, req *PermissionEv
 
 	s.metrics.IncrementCounter("abac_permission_evaluations_total", labels)
 	s.metrics.ObserveHistogram("abac_permission_evaluation_duration_seconds", duration.Seconds(), labels)
-	s.metrics.RecordGauge("abac_permission_policies_evaluated", float64(len(result.PolicyDecisions)), labels)
+	s.metrics.SetGauge("abac_permission_policies_evaluated", float64(len(result.PolicyDecisions)), labels)
 }
 
 // auditPermissionEvaluation creates an audit log entry

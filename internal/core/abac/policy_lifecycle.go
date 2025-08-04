@@ -2,15 +2,14 @@ package abac
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
-	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -142,9 +141,10 @@ type PolicyImpactRecommendation struct {
 func (pm *policyManager) AnalyzePolicyImpact(ctx context.Context, req *PolicyImpactRequest) (*PolicyImpactResult, error) {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.AnalyzePolicyImpact",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_id", req.PolicyID.String()),
-			tracing.StringAttribute("analysis_type", req.AnalysisType),
-		))
+			attribute.String("policy_id", req.PolicyID.String()),
+			attribute.String("analysis_type", req.AnalysisType),
+		),
+	)
 	defer span.End()
 
 	pm.logger.InfoContext(ctx, "Starting policy impact analysis",
@@ -158,7 +158,7 @@ func (pm *policyManager) AnalyzePolicyImpact(ctx context.Context, req *PolicyImp
 	policy, err := pm.policyRepo.GetPolicyByID(ctx, req.PolicyID)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_NOT_FOUND", "Policy not found for impact analysis").WithErr(err)
+		return nil, fmt.Errorf("policy not found for impact analysis: %w", err)
 	}
 
 	// Analyze current impact
@@ -194,9 +194,25 @@ func (pm *policyManager) AnalyzePolicyImpact(ctx context.Context, req *PolicyImp
 	recommendations := pm.generateImpactRecommendations(ctx, policy, impactSummary, req)
 
 	// Record metrics
-	pm.metrics.IncrementSuccessCount("policy_manager_impact_analysis")
-	pm.metrics.RecordGauge("policy_impact_users_affected", float64(impactSummary.TotalUsersAffected),
-		metrics.Fields{"policy_id": req.PolicyID.String()})
+	// Record metrics
+	impactCounter := pm.metrics.Counter(
+		"abac_policy_impact_analysis_total",
+		"Total policy impact analyses performed",
+		"policy_id", "analysis_type",
+	)
+	impactCounter.Inc(metrics.Fields{
+		"policy_id":     req.PolicyID.String(),
+		"analysis_type": req.AnalysisType,
+	})
+
+	userGauge := pm.metrics.Gauge(
+		"abac_policy_impact_users_affected",
+		"Number of users affected by policy impact",
+		"policy_id",
+	)
+	userGauge.Set(float64(impactSummary.TotalUsersAffected), metrics.Fields{
+		"policy_id": req.PolicyID.String(),
+	})
 
 	result := &PolicyImpactResult{
 		PolicyID:         req.PolicyID,
@@ -275,9 +291,10 @@ type PolicyResolutionStep struct {
 func (pm *policyManager) DetectPolicyConflicts(ctx context.Context, req *PolicyConflictRequest) (*PolicyConflictResult, error) {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.DetectPolicyConflicts",
 		tracing.WithAttributes(
-			tracing.StringAttribute("analysis_depth", req.AnalysisDepth),
-			tracing.IntAttribute("policy_set_size", len(req.PolicySet)),
-		))
+			attribute.String("analysis_depth", req.AnalysisDepth),
+			attribute.Int("policy_set_size", len(req.PolicySet)),
+		),
+	)
 	defer span.End()
 
 	pm.logger.InfoContext(ctx, "Starting policy conflict detection",
@@ -297,7 +314,7 @@ func (pm *policyManager) DetectPolicyConflicts(ctx context.Context, req *PolicyC
 		policy, err := pm.policyRepo.GetPolicyByID(ctx, *req.PolicyID)
 		if err != nil {
 			pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-			return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_NOT_FOUND", "Policy not found for conflict analysis").WithErr(err)
+			return nil, fmt.Errorf("policy not found for conflict analysis: %w", err)
 		}
 		policiesToAnalyze = []*models.Policy{policy}
 
@@ -322,7 +339,7 @@ func (pm *policyManager) DetectPolicyConflicts(ctx context.Context, req *PolicyC
 		policiesToAnalyze, err = pm.policyRepo.GetPoliciesByIDs(ctx, req.PolicySet)
 		if err != nil {
 			pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-			return nil, errors.NewBusinessErrorWithContext(ctx, "POLICIES_NOT_FOUND", "Failed to get policies for conflict analysis").WithErr(err)
+			return nil, fmt.Errorf("failed to get policies for conflict analysis: %w", err)
 		}
 	} else {
 		// Analyze conflicts across all policies
@@ -333,7 +350,7 @@ func (pm *policyManager) DetectPolicyConflicts(ctx context.Context, req *PolicyC
 		policiesToAnalyze, err = pm.policyRepo.ListPolicies(ctx, listReq)
 		if err != nil {
 			pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-			return nil, errors.NewBusinessErrorWithContext(ctx, "POLICIES_LIST_FAILED", "Failed to list policies for conflict analysis").WithErr(err)
+			return nil, fmt.Errorf("failed to list policies for conflict analysis: %w", err)
 		}
 	}
 
@@ -347,9 +364,24 @@ func (pm *policyManager) DetectPolicyConflicts(ctx context.Context, req *PolicyC
 	resolutionPlan := pm.generateConflictResolutionPlan(ctx, detectedConflicts)
 
 	// Record metrics
-	pm.metrics.IncrementSuccessCount("policy_manager_conflict_detection")
-	pm.metrics.RecordGauge("policy_conflicts_detected", float64(conflictSummary.TotalConflicts),
-		metrics.Fields{"analysis_depth": req.AnalysisDepth})
+	// Record metrics
+	conflictCounter := pm.metrics.Counter(
+		"abac_policy_conflict_detection_total",
+		"Total policy conflict detections performed",
+		"analysis_depth",
+	)
+	conflictCounter.Inc(metrics.Fields{
+		"analysis_depth": req.AnalysisDepth,
+	})
+
+	conflictGauge := pm.metrics.Gauge(
+		"abac_policy_conflicts_detected",
+		"Number of policy conflicts detected",
+		"analysis_depth",
+	)
+	conflictGauge.Set(float64(conflictSummary.TotalConflicts), metrics.Fields{
+		"analysis_depth": req.AnalysisDepth,
+	})
 
 	result := &PolicyConflictResult{
 		AnalyzedPolicies:  int32(len(policiesToAnalyze)),
@@ -415,9 +447,10 @@ type PolicyChangelogEntry struct {
 func (pm *policyManager) CreatePolicyVersion(ctx context.Context, req *CreatePolicyVersionRequest) (*PolicyVersionResult, error) {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.CreatePolicyVersion",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_id", req.PolicyID.String()),
-			tracing.StringAttribute("version_type", req.VersionType),
-		))
+			attribute.String("policy_id", req.PolicyID.String()),
+			attribute.String("version_type", req.VersionType),
+		),
+	)
 	defer span.End()
 
 	pm.logger.InfoContext(ctx, "Creating policy version",
@@ -431,7 +464,7 @@ func (pm *policyManager) CreatePolicyVersion(ctx context.Context, req *CreatePol
 	originalPolicy, err := pm.policyRepo.GetPolicyByID(ctx, req.PolicyID)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_NOT_FOUND", "Original policy not found for versioning").WithErr(err)
+		return nil, fmt.Errorf("original policy not found for versioning: %w", err)
 	}
 
 	// Generate version number
@@ -447,20 +480,25 @@ func (pm *policyManager) CreatePolicyVersion(ctx context.Context, req *CreatePol
 	}
 
 	createReq := &repository.CreatePolicyRequest{
-		EntityID:    originalPolicy.EntityID,
-		Name:        newVersionName,
-		DisplayName: req.Changes.DisplayName,
-		Description: req.Changes.Description,
-		PolicyType:  originalPolicy.PolicyType,
-		Effect:      originalPolicy.Effect,
-		Priority:    originalPolicy.Priority,
-		Category:    originalPolicy.Category,
-		Target:      originalPolicy.Target,
-		Rule:        originalPolicy.Rule,
-		Obligations: originalPolicy.Obligations,
-		Advice:      originalPolicy.Advice,
-		IsActive:    false, // New versions start inactive
-		CreatedBy:   req.CreatedBy,
+		Name:               newVersionName,
+		DisplayName:        req.Changes.DisplayName,
+		Description:        req.Changes.Description,
+		PolicyType:         originalPolicy.PolicyType,
+		Effect:             originalPolicy.Effect,
+		Priority:           originalPolicy.Priority,
+		Category:           originalPolicy.Category,
+		Target:             originalPolicy.Target,
+		Rule:               originalPolicy.Rule,
+		Obligations:        originalPolicy.Obligations,
+		Advice:             originalPolicy.Advice,
+		CombiningAlgorithm: originalPolicy.CombiningAlgorithm,
+		ExpiresAt:          originalPolicy.ExpiresAt,
+		CreatedBy: func() uuid.UUID {
+			if req.CreatedBy != nil {
+				return *req.CreatedBy
+			}
+			return originalPolicy.CreatedBy
+		}(),
 	}
 
 	// Apply changes
@@ -498,8 +536,13 @@ func (pm *policyManager) CreatePolicyVersion(ctx context.Context, req *CreatePol
 	newVersion, err := pm.policyRepo.CreatePolicy(ctx, createReq)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		pm.metrics.IncrementErrorCount("policy_manager", "version_create_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_VERSION_CREATE_FAILED", "Failed to create policy version").WithErr(err)
+		errorCounter := pm.metrics.Counter(
+			"abac_policy_version_create_errors_total",
+			"Total policy version creation errors",
+			"error_type",
+		)
+		errorCounter.Inc(metrics.Fields{"error_type": "version_create_failed"})
+		return nil, fmt.Errorf("failed to create policy version: %w", err)
 	}
 
 	versionInfo := PolicyVersionInfo{
@@ -512,7 +555,15 @@ func (pm *policyManager) CreatePolicyVersion(ctx context.Context, req *CreatePol
 	}
 
 	// Record metrics
-	pm.metrics.IncrementSuccessCount("policy_manager_version_created")
+	// Record metrics
+	versionCounter := pm.metrics.Counter(
+		"abac_policy_version_created_total",
+		"Total policy versions created",
+		"version_type",
+	)
+	versionCounter.Inc(metrics.Fields{
+		"version_type": req.VersionType,
+	})
 	pm.metrics.IncrementCounter("policy_versions_total",
 		metrics.Fields{"version_type": req.VersionType})
 
@@ -558,8 +609,9 @@ type ArchivePolicyRequest struct {
 func (pm *policyManager) ActivatePolicy(ctx context.Context, req *ActivatePolicyRequest) error {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.ActivatePolicy",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_id", req.PolicyID.String()),
-		))
+			attribute.String("policy_id", req.PolicyID.String()),
+		),
+	)
 	defer span.End()
 
 	pm.logger.InfoContext(ctx, "Activating policy",
@@ -576,20 +628,24 @@ func (pm *policyManager) ActivatePolicy(ctx context.Context, req *ActivatePolicy
 	}
 
 	if policy.IsActive {
-		return errors.NewBusinessErrorWithContext(ctx, "POLICY_ALREADY_ACTIVE", "Policy is already active")
+		return fmt.Errorf("policy is already active")
 	}
 
 	// Activate the policy
 	updateReq := &repository.UpdatePolicyRequest{
-		ID:       req.PolicyID,
 		IsActive: &[]bool{true}[0],
 	}
 
-	_, err = pm.policyRepo.UpdatePolicy(ctx, updateReq)
+	_, err = pm.policyRepo.UpdatePolicy(ctx, req.PolicyID, updateReq)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		pm.metrics.IncrementErrorCount("policy_manager", "activate_failed")
-		return errors.NewBusinessErrorWithContext(ctx, "POLICY_ACTIVATE_FAILED", "Failed to activate policy").WithErr(err)
+		errorCounter := pm.metrics.Counter(
+			"abac_policy_activate_errors_total",
+			"Total policy activation errors",
+			"error_type",
+		)
+		errorCounter.Inc(metrics.Fields{"error_type": "activate_failed"})
+		return fmt.Errorf("failed to activate policy: %w", err)
 	}
 
 	// Invalidate related cache
@@ -603,7 +659,15 @@ func (pm *policyManager) ActivatePolicy(ctx context.Context, req *ActivatePolicy
 		}
 	}()
 
-	pm.metrics.IncrementSuccessCount("policy_manager_activate")
+	// Record metrics
+	activateCounter := pm.metrics.Counter(
+		"abac_policy_activate_total",
+		"Total policy activations",
+		"policy_id",
+	)
+	activateCounter.Inc(metrics.Fields{
+		"policy_id": req.PolicyID.String(),
+	})
 
 	pm.logger.InfoContext(ctx, "Policy activated successfully",
 		logger.Fields{
@@ -617,8 +681,9 @@ func (pm *policyManager) ActivatePolicy(ctx context.Context, req *ActivatePolicy
 func (pm *policyManager) DeactivatePolicy(ctx context.Context, req *DeactivatePolicyRequest) error {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.DeactivatePolicy",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_id", req.PolicyID.String()),
-		))
+			attribute.String("policy_id", req.PolicyID.String()),
+		),
+	)
 	defer span.End()
 
 	pm.logger.InfoContext(ctx, "Deactivating policy",
@@ -635,20 +700,24 @@ func (pm *policyManager) DeactivatePolicy(ctx context.Context, req *DeactivatePo
 	}
 
 	if !policy.IsActive {
-		return errors.NewBusinessErrorWithContext(ctx, "POLICY_ALREADY_INACTIVE", "Policy is already inactive")
+		return fmt.Errorf("policy is already inactive")
 	}
 
 	// Deactivate the policy
 	updateReq := &repository.UpdatePolicyRequest{
-		ID:       req.PolicyID,
 		IsActive: &[]bool{false}[0],
 	}
 
-	_, err = pm.policyRepo.UpdatePolicy(ctx, updateReq)
+	_, err = pm.policyRepo.UpdatePolicy(ctx, req.PolicyID, updateReq)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		pm.metrics.IncrementErrorCount("policy_manager", "deactivate_failed")
-		return errors.NewBusinessErrorWithContext(ctx, "POLICY_DEACTIVATE_FAILED", "Failed to deactivate policy").WithErr(err)
+		errorCounter := pm.metrics.Counter(
+			"abac_policy_deactivate_errors_total",
+			"Total policy deactivation errors",
+			"error_type",
+		)
+		errorCounter.Inc(metrics.Fields{"error_type": "deactivate_failed"})
+		return fmt.Errorf("failed to deactivate policy: %w", err)
 	}
 
 	// Invalidate related cache
@@ -662,7 +731,15 @@ func (pm *policyManager) DeactivatePolicy(ctx context.Context, req *DeactivatePo
 		}
 	}()
 
-	pm.metrics.IncrementSuccessCount("policy_manager_deactivate")
+	// Record metrics
+	deactivateCounter := pm.metrics.Counter(
+		"abac_policy_deactivate_total",
+		"Total policy deactivations",
+		"policy_id",
+	)
+	deactivateCounter.Inc(metrics.Fields{
+		"policy_id": req.PolicyID.String(),
+	})
 
 	pm.logger.InfoContext(ctx, "Policy deactivated successfully",
 		logger.Fields{
@@ -676,8 +753,9 @@ func (pm *policyManager) DeactivatePolicy(ctx context.Context, req *DeactivatePo
 func (pm *policyManager) ArchivePolicy(ctx context.Context, req *ArchivePolicyRequest) error {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.ArchivePolicy",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_id", req.PolicyID.String()),
-		))
+			attribute.String("policy_id", req.PolicyID.String()),
+		),
+	)
 	defer span.End()
 
 	pm.logger.InfoContext(ctx, "Archiving policy",
@@ -709,11 +787,24 @@ func (pm *policyManager) ArchivePolicy(ctx context.Context, req *ArchivePolicyRe
 	err = pm.policyRepo.DeletePolicy(ctx, req.PolicyID)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		pm.metrics.IncrementErrorCount("policy_manager", "archive_failed")
-		return errors.NewBusinessErrorWithContext(ctx, "POLICY_ARCHIVE_FAILED", "Failed to archive policy").WithErr(err)
+		errorCounter := pm.metrics.Counter(
+			"abac_policy_archive_errors_total",
+			"Total policy archive errors",
+			"error_type",
+		)
+		errorCounter.Inc(metrics.Fields{"error_type": "archive_failed"})
+		return fmt.Errorf("failed to archive policy: %w", err)
 	}
 
-	pm.metrics.IncrementSuccessCount("policy_manager_archive")
+	// Record metrics
+	archiveCounter := pm.metrics.Counter(
+		"abac_policy_archive_total",
+		"Total policy archives",
+		"policy_id",
+	)
+	archiveCounter.Inc(metrics.Fields{
+		"policy_id": req.PolicyID.String(),
+	})
 
 	pm.logger.InfoContext(ctx, "Policy archived successfully",
 		logger.Fields{

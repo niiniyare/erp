@@ -56,7 +56,7 @@ WHERE tenant_id = current_tenant_id();
 
 -- name: CleanupExpiredEvaluations :exec
 DELETE FROM policy_evaluations 
-WHERE expires_at < NOW();
+WHERE expires_at < NOW() AND tenant_id = current_tenant_id();
 
 -- name: GetEvaluationCacheStats :one
 SELECT 

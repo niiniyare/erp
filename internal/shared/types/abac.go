@@ -346,3 +346,6 @@ func AllAttributeSources() []AttributeSource {
 		AttributeSourceCache,
 	}
 }
+
+// CombiningAlgorithm is an alias for PolicyCombiningAlgorithm
+type CombiningAlgorithm = PolicyCombiningAlgorithm

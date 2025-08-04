@@ -1119,59 +1119,23 @@ func (h *UserHandler) EvaluatePermission(c *gin.Context) {
 		return
 	}
 
-	// Convert to service request
-	serviceReq := &identity.PermissionEvaluationRequest{
-		UserID:       req.UserID,
-		ResourceName: req.ResourceName,
-		ActionName:   req.ActionName,
-		Context:      req.Context,
-	}
-	if req.EntityID != nil {
-		serviceReq.EntityID = *req.EntityID
-	}
+	// ABAC functionality has been moved to the dedicated ABAC service
+	// Users should use the /api/v1/abac/evaluate endpoint instead
 
-	// Call service layer
-	result, err := h.service.EvaluatePermission(ctx, serviceReq)
-	if err != nil {
-		// Record error in span
-		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
-
-		// Increment error counter
-		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
-			"method":     c.Request.Method,
-			"endpoint":   "/api/v1/users/permissions/evaluate",
-			"error_type": "business_error",
-		})
-
-		// Log error
-		logger.ErrorContext(ctx, "Failed to evaluate permission",
-			logger.Fields{"error": err.Error()})
-
-		// Handle specific errors
-		switch {
-		case errors.Is(err, sharedErrors.ErrUserNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-		}
-		return
-	}
-
-	// Success metrics
-	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
-		"method":   c.Request.Method,
-		"endpoint": "/api/v1/users/permissions/evaluate",
-		"status":   "success",
+	// Increment error counter
+	h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+		"method":     c.Request.Method,
+		"endpoint":   "/api/v1/users/permissions/evaluate",
+		"error_type": "service_moved",
 	})
 
-	// Success response
-	c.JSON(http.StatusOK, PermissionEvaluationResponse{
-		Allowed:          result.Allowed,
-		PolicyDecisions:  result.PolicyDecisions,
-		EffectiveRoles:   result.EffectiveRoles,
-		EvaluationTimeMS: int32(result.EvaluationTimeMS),
-		CacheHit:         result.CacheHit,
+	// Return error response indicating service has moved
+	c.JSON(http.StatusGone, gin.H{
+		"error":       "ABAC functionality has been moved to the dedicated ABAC service",
+		"message":     "Please use /api/v1/abac/evaluate endpoint instead",
+		"redirect_to": "/api/v1/abac/evaluate",
 	})
+	return
 }
 
 // BulkEvaluatePermissions handles bulk permission evaluation
@@ -1216,72 +1180,23 @@ func (h *UserHandler) BulkEvaluatePermissions(c *gin.Context) {
 		return
 	}
 
-	// Convert to service requests
-	serviceRequests := make([]*identity.PermissionEvaluationRequest, len(req.Requests))
-	for i, r := range req.Requests {
-		serviceRequests[i] = &identity.PermissionEvaluationRequest{
-			UserID:       r.UserID,
-			ResourceName: r.ResourceName,
-			ActionName:   r.ActionName,
-			Context:      r.Context,
-		}
-		if r.EntityID != nil {
-			serviceRequests[i].EntityID = *r.EntityID
-		}
-	}
+	// ABAC functionality has been moved to the dedicated ABAC service
+	// Users should use the /api/v1/abac/evaluate-bulk endpoint instead
 
-	// Build bulk request
-	bulkReq := &identity.BulkPermissionEvaluationRequest{
-		Requests: serviceRequests,
-	}
-
-	// Call service layer
-	results, err := h.service.BulkEvaluatePermissions(ctx, bulkReq)
-	if err != nil {
-		// Record error in span
-		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
-
-		// Increment error counter
-		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
-			"method":     c.Request.Method,
-			"endpoint":   "/api/v1/users/permissions/bulk-evaluate",
-			"error_type": "business_error",
-		})
-
-		// Log error
-		logger.ErrorContext(ctx, "Failed to bulk evaluate permissions",
-			logger.Fields{"error": err.Error()})
-
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-		return
-	}
-
-	// Convert results to response format
-	responseResults := make([]PermissionEvaluationResponse, len(results))
-	totalEvaluationTime := int32(0)
-	for i, result := range results {
-		responseResults[i] = PermissionEvaluationResponse{
-			Allowed:          result.Allowed,
-			PolicyDecisions:  result.PolicyDecisions,
-			EffectiveRoles:   result.EffectiveRoles,
-			EvaluationTimeMS: int32(result.EvaluationTimeMS),
-			CacheHit:         result.CacheHit,
-		}
-		totalEvaluationTime += int32(result.EvaluationTimeMS)
-	}
-
-	// Success metrics
-	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
-		"method":   c.Request.Method,
-		"endpoint": "/api/v1/users/permissions/bulk-evaluate",
-		"status":   "success",
+	// Increment error counter
+	h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+		"method":     c.Request.Method,
+		"endpoint":   "/api/v1/users/permissions/bulk-evaluate",
+		"error_type": "service_moved",
 	})
 
-	// Success response
-	c.JSON(http.StatusOK, BulkEvaluatePermissionsResponse{
-		Results:               responseResults,
-		TotalEvaluationTimeMS: totalEvaluationTime,
+	// Return error response indicating service has moved
+	c.JSON(http.StatusGone, gin.H{
+		"error":       "ABAC functionality has been moved to the dedicated ABAC service",
+		"message":     "Please use /api/v1/abac/evaluate-bulk endpoint instead",
+		"redirect_to": "/api/v1/abac/evaluate-bulk",
 	})
+	return
 }
 
 // GetUserEffectivePermissions handles getting user effective permissions
@@ -1331,60 +1246,23 @@ func (h *UserHandler) GetUserEffectivePermissions(c *gin.Context) {
 	// Add user ID to span
 	span.SetAttributes(attribute.String("user.id", userID.String()))
 
-	// Call service layer
-	permissions, err := h.service.GetUserEffectivePermissions(ctx, userID)
-	if err != nil {
-		// Record error in span
-		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+	// ABAC functionality has been moved to the dedicated ABAC service
+	// Users should use the appropriate ABAC endpoints instead
 
-		// Increment error counter
-		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
-			"method":     c.Request.Method,
-			"endpoint":   "/api/v1/users/{id}/effective-permissions",
-			"error_type": "business_error",
-		})
-
-		// Log error
-		logger.ErrorContext(ctx, "Failed to get user effective permissions",
-			logger.Fields{"user_id": userID.String(), "error": err.Error()})
-
-		// Handle specific errors
-		switch {
-		case errors.Is(err, sharedErrors.ErrUserNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-		}
-		return
-	}
-
-	// Convert to response format
-	permissionResponses := make([]EffectivePermissionResponse, len(permissions))
-	for i, perm := range permissions {
-		permissionResponses[i] = EffectivePermissionResponse{
-			PermissionID:   perm.Permission.ID.String(),
-			PermissionName: perm.Permission.Name,
-			ResourceName:   perm.Permission.ResourceID.String(),
-			ActionName:     perm.Permission.ActionID.String(),
-			Effect:         perm.Permission.Effect,
-			GrantedByRole:  perm.GrantedByRole.Name,
-			AssignmentType: perm.AssignmentType,
-			EntityID:       perm.EntityID.String(),
-		}
-	}
-
-	// Success metrics
-	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
-		"method":   c.Request.Method,
-		"endpoint": "/api/v1/users/{id}/effective-permissions",
-		"status":   "success",
+	// Increment error counter
+	h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+		"method":     c.Request.Method,
+		"endpoint":   "/api/v1/users/{id}/effective-permissions",
+		"error_type": "service_moved",
 	})
 
-	// Success response
-	c.JSON(http.StatusOK, GetUserEffectivePermissionsResponse{
-		Permissions: permissionResponses,
-		TotalCount:  len(permissions),
+	// Return error response indicating service has moved
+	c.JSON(http.StatusGone, gin.H{
+		"error":   "ABAC functionality has been moved to the dedicated ABAC service",
+		"message": "Please use the appropriate ABAC endpoints instead",
+		"user_id": userID.String(),
 	})
+	return
 }
 
 // ===== ROLE MANAGEMENT HANDLERS =====
@@ -1662,76 +1540,23 @@ func (h *UserHandler) GetRoleHierarchy(c *gin.Context) {
 		return
 	}
 
-	// Call service layer
-	hierarchy, err := h.service.CalculateRoleHierarchy(ctx, roleID)
-	if err != nil {
-		// Record error in span
-		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+	// ABAC functionality has been moved to the dedicated ABAC service
+	// This functionality is no longer available through the user service
 
-		// Increment error counter
-		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
-			"method":     c.Request.Method,
-			"endpoint":   "/api/v1/users/roles/{role_id}/hierarchy",
-			"error_type": "business_error",
-		})
-
-		// Log error
-		logger.ErrorContext(ctx, "Failed to get role hierarchy",
-			logger.Fields{"role_id": roleID.String(), "error": err.Error()})
-
-		// Handle specific errors
-		switch {
-		case errors.Is(err, sharedErrors.ErrRoleNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-		}
-		return
-	}
-
-	// Convert to response format
-	hroleResponses := make([]RoleHierarchyResponse, len(hierarchy))
-	maxDepth := int32(0)
-	for i, role := range hierarchy {
-		level := int32(i) // Simple level calculation based on order
-		if level > maxDepth {
-			maxDepth = level
-		}
-
-		hroleResponses[i] = RoleHierarchyResponse{
-			ID:   role.ID.String(),
-			Name: role.Name,
-			DisplayName: func() string {
-				if role.DisplayName != nil {
-					return *role.DisplayName
-				}
-				return ""
-			}(),
-			Level: level,
-			ParentRoleID: func() *string {
-				if role.ParentRoleID != nil {
-					parentID := role.ParentRoleID.String()
-					return &parentID
-				}
-				return nil
-			}(),
-			ChildrenCount:    0, // TODO: Calculate children count
-			PermissionsCount: 0, // TODO: Calculate permissions count
-		}
-	}
-
-	// Success metrics
-	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
-		"method":   c.Request.Method,
-		"endpoint": "/api/v1/users/roles/{role_id}/hierarchy",
-		"status":   "success",
+	// Increment error counter
+	h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+		"method":     c.Request.Method,
+		"endpoint":   "/api/v1/users/roles/{role_id}/hierarchy",
+		"error_type": "service_moved",
 	})
 
-	// Success response
-	c.JSON(http.StatusOK, GetRoleHierarchyResponse{
-		Roles:      hroleResponses,
-		TotalDepth: maxDepth,
+	// Return error response indicating service has moved
+	c.JSON(http.StatusGone, gin.H{
+		"error":   "ABAC functionality has been moved to the dedicated ABAC service",
+		"message": "This functionality is no longer available through the user service",
+		"role_id": roleID.String(),
 	})
+	return
 }
 
 // TestPolicy handles ABAC policy testing
@@ -1790,62 +1615,23 @@ func (h *UserHandler) TestPolicy(c *gin.Context) {
 		return
 	}
 
-	// Convert to service request
-	serviceReq := &identity.PolicyTestRequest{
-		UserID:       req.UserID,
-		ResourceName: req.ResourceName,
-		ActionName:   req.ActionName,
-		Context:      req.Context,
-	}
-	if req.EntityID != nil {
-		serviceReq.EntityID = *req.EntityID
-	}
+	// ABAC functionality has been moved to the dedicated ABAC service
+	// Users should use the appropriate ABAC endpoints for policy testing
 
-	// Call service layer
-	result, err := h.service.TestPolicy(ctx, serviceReq)
-	if err != nil {
-		// Record error in span
-		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
-
-		// Increment error counter
-		h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
-			"method":     c.Request.Method,
-			"endpoint":   "/api/v1/users/policies/{policy_id}/test",
-			"error_type": "business_error",
-		})
-
-		// Log error
-		logger.ErrorContext(ctx, "Failed to test policy",
-			logger.Fields{"policy_id": policyID.String(), "error": err.Error()})
-
-		// Handle specific errors
-		switch {
-		case errors.Is(err, sharedErrors.ErrUserNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		case errors.Is(err, sharedErrors.ErrNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": "Policy not found"})
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-		}
-		return
-	}
-
-	// Success metrics
-	h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
-		"method":   c.Request.Method,
-		"endpoint": "/api/v1/users/policies/{policy_id}/test",
-		"status":   "success",
+	// Increment error counter
+	h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
+		"method":     c.Request.Method,
+		"endpoint":   "/api/v1/users/policies/{policy_id}/test",
+		"error_type": "service_moved",
 	})
 
-	// Success response
-	c.JSON(http.StatusOK, TestPolicyResponse{
-		PolicyID:      result.PolicyID,
-		PolicyName:    result.PolicyName,
-		Effect:        result.Effect,
-		TargetMatches: result.TargetMatches,
-		RuleResult:    result.RuleResult,
-		Details:       result.Details,
+	// Return error response indicating service has moved
+	c.JSON(http.StatusGone, gin.H{
+		"error":     "ABAC functionality has been moved to the dedicated ABAC service",
+		"message":   "Please use the appropriate ABAC endpoints for policy testing",
+		"policy_id": policyID.String(),
 	})
+	return
 }
 
 // ===== ADDITIONAL REQUEST/RESPONSE TYPES =====

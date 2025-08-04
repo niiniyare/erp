@@ -88,33 +88,64 @@ WHERE p.tenant_id = current_tenant_id()
 ORDER BY p.priority DESC, p.created_at ASC;
 
 -- ABAC-specific queries for policy evaluation
-
 -- name: GetPoliciesForEvaluation :many
-SELECT * FROM policies 
+SELECT
+  id AS policy_id,
+  entity_id,
+  name,
+  effect,
+  priority,
+  category,
+  target,
+  rule,
+  obligations,
+  is_active,
+  created_at
+FROM policies
 WHERE tenant_id = current_tenant_id()
   AND is_active = true 
   AND deleted_at IS NULL
   AND (
-    $1::UUID IS NULL OR 
+    sqlc.arg('entity_id')::UUID IS NULL OR 
     entity_id IS NULL OR 
-    entity_id = $1
+    entity_id = sqlc.arg('entity_id')
   )
   AND (
-    target->>'resource_type' = $2 OR 
+    target->>'resource_type' = sqlc.arg('resource_type') OR 
     target->>'resource_type' = '*' OR 
     target->>'resource_type' IS NULL
   )
   AND (
-    target->>'action' = $3 OR 
+    target->>'action' = sqlc.arg('action') OR 
     target->>'action' = '*' OR 
     target->>'action' IS NULL
   )
 ORDER BY priority DESC, created_at ASC;
+-- -- name: GetPoliciesForEvaluation :many
+-- SELECT * FROM policies 
+-- WHERE tenant_id = current_tenant_id()
+--   AND is_active = true 
+--   AND deleted_at IS NULL
+--   AND (
+--     $1::UUID IS NULL OR 
+--     entity_id IS NULL OR 
+--     entity_id = $1
+--   )
+--   AND (
+--     target->>'resource_type' = $2 OR 
+--     target->>'resource_type' = '*' OR 
+--     target->>'resource_type' IS NULL
+--   )
+--   AND (
+--     target->>'action' = $3 OR 
+--     target->>'action' = '*' OR 
+--     target->>'action' IS NULL
+--   )
+-- ORDER BY priority DESC, created_at ASC;
 
 -- name: GetPoliciesByIDs :many
 SELECT * FROM policies 
-WHERE id = ANY($1::UUID[]) 
-  AND tenant_id = current_tenant_id();
+WHERE id = ANY($1::UUID[]);
 
 -- name: CountPolicies :one
 SELECT COUNT(*) FROM policies 

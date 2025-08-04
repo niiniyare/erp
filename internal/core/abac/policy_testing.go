@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/core/abac/repository"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -23,6 +23,7 @@ type PolicyTestRequest struct {
 	TestCases   []PolicyTestCase `json:"test_cases" validate:"required,min=1"`
 	Description string           `json:"description,omitempty"`
 	CreatedBy   *uuid.UUID       `json:"created_by,omitempty"`
+	RequestID   string           `json:"request_id,omitempty"`
 }
 
 type PolicyTestCase struct {
@@ -104,8 +105,8 @@ type PolicyPerformanceStats struct {
 func (pm *policyManager) TestPolicy(ctx context.Context, req *PolicyTestRequest) (*PolicyTestResult, error) {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.TestPolicy",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_id", req.PolicyID.String()),
-			tracing.IntAttribute("test_cases", len(req.TestCases)),
+			attribute.String("policy_id", req.PolicyID.String()),
+			attribute.Int("test_cases", len(req.TestCases)),
 		))
 	defer span.End()
 
@@ -122,7 +123,7 @@ func (pm *policyManager) TestPolicy(ctx context.Context, req *PolicyTestRequest)
 	policy, err := pm.policyRepo.GetPolicyByID(ctx, req.PolicyID)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_NOT_FOUND", "Policy not found for testing").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_NOT_FOUND", "Policy not found for testing")
 	}
 
 	// Execute test cases
@@ -162,8 +163,8 @@ func (pm *policyManager) TestPolicy(ctx context.Context, req *PolicyTestRequest)
 	summary := pm.generateTestSummary(ctx, policy, testCaseResults)
 
 	// Record metrics
-	pm.metrics.IncrementSuccessCount("policy_manager_test")
-	pm.metrics.RecordGauge("policy_test_success_rate", successRate,
+	pm.metrics.IncrementCounter("policy_manager_test", nil)
+	pm.metrics.SetGauge("policy_test_success_rate", successRate,
 		metrics.Fields{"policy_id": req.PolicyID.String()})
 	pm.metrics.ObserveHistogram("policy_test_duration_seconds", executionTime.Seconds(),
 		metrics.Fields{"test_cases": fmt.Sprintf("%d", totalTests)})
@@ -238,10 +239,9 @@ func (pm *policyManager) executeTestCase(ctx context.Context, policy *models.Pol
 
 	result.PolicyDecisions = []*models.PolicyDecision{
 		{
-			PolicyID:   policy.ID,
-			PolicyName: policy.Name,
-			Effect:     policy.Effect,
-			Reason:     "Test case evaluation",
+			PolicyID: policy.ID,
+			Decision: types.PolicyDecisionAllow,
+			Reason:   "Test case evaluation",
 		},
 	}
 
@@ -382,9 +382,9 @@ type PolicySimulationPerformance struct {
 func (pm *policyManager) SimulatePolicyChange(ctx context.Context, req *PolicySimulationRequest) (*PolicySimulationResult, error) {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.SimulatePolicyChange",
 		tracing.WithAttributes(
-			tracing.StringAttribute("scenario_name", req.Scenario.Name),
-			tracing.StringAttribute("simulation_mode", req.SimulationMode),
-			tracing.IntAttribute("changes_count", len(req.Changes)),
+			attribute.String("scenario_name", req.Scenario.Name),
+			attribute.String("simulation_mode", req.SimulationMode),
+			attribute.Int("changes_count", len(req.Changes)),
 		))
 	defer span.End()
 
@@ -402,14 +402,14 @@ func (pm *policyManager) SimulatePolicyChange(ctx context.Context, req *PolicySi
 	baselineSnapshot, err := pm.captureBaselineSnapshot(ctx, req.TestDataSet)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "SIMULATION_BASELINE_FAILED", "Failed to capture baseline snapshot").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "SIMULATION_BASELINE_FAILED", "Failed to capture baseline snapshot")
 	}
 
 	// Step 2: Apply changes in simulation environment
 	projectedSnapshot, err := pm.simulateChanges(ctx, req.Changes, req.TestDataSet)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "SIMULATION_CHANGES_FAILED", "Failed to simulate policy changes").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "SIMULATION_CHANGES_FAILED", "Failed to simulate policy changes")
 	}
 
 	// Step 3: Analyze impact
@@ -421,7 +421,7 @@ func (pm *policyManager) SimulatePolicyChange(ctx context.Context, req *PolicySi
 	executionTime := time.Since(startTime)
 
 	// Record metrics
-	pm.metrics.IncrementSuccessCount("policy_manager_simulation")
+	pm.metrics.IncrementCounter("policy_manager_simulation", nil)
 	pm.metrics.ObserveHistogram("policy_simulation_duration_seconds", executionTime.Seconds(),
 		metrics.Fields{
 			"mode":    req.SimulationMode,

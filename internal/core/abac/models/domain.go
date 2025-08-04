@@ -17,24 +17,39 @@ import (
 
 // ─── CORE ABAC DOMAIN MODELS ─────────────────────────────────────────────
 
+// AttributeSource represents an external source for attribute collection
+type AttributeSource struct {
+	ID        uuid.UUID              `json:"id"`
+	TenantID  uuid.UUID              `json:"tenant_id"`
+	Name      string                 `json:"name"`
+	Type      string                 `json:"type"` // "ldap", "rest_api", "database", etc.
+	Config    map[string]interface{} `json:"config"`
+	IsActive  bool                   `json:"is_active"`
+	Priority  int32                  `json:"priority"`
+	CreatedAt time.Time              `json:"created_at"`
+	UpdatedAt time.Time              `json:"updated_at"`
+	DeletedAt *time.Time             `json:"deleted_at,omitempty"`
+}
+
 // AttributeDefinition defines the structure and constraints of an attribute
 type AttributeDefinition struct {
-	ID              uuid.UUID               `json:"id"`
-	TenantID        uuid.UUID               `json:"tenant_id"`
-	Name            string                  `json:"name"`
-	DisplayName     *string                 `json:"display_name,omitempty"`
-	Description     *string                 `json:"description,omitempty"`
-	DataType        types.AttributeDataType `json:"data_type"`
-	Category        types.AttributeCategory `json:"category"`
-	IsRequired      bool                    `json:"is_required"`
-	IsSensitive     bool                    `json:"is_sensitive"`
-	DefaultValue    *string                 `json:"default_value,omitempty"`
-	AllowedValues   []string                `json:"allowed_values,omitempty"`
-	ValidationRules map[string]any          `json:"validation_rules,omitempty"`
-	IsActive        bool                    `json:"is_active"`
-	CreatedAt       time.Time               `json:"created_at"`
-	UpdatedAt       time.Time               `json:"updated_at"`
-	DeletedAt       *time.Time              `json:"deleted_at,omitempty"`
+	ID                 uuid.UUID               `json:"id"`
+	TenantID           uuid.UUID               `json:"tenant_id"`
+	Name               string                  `json:"name"`
+	DisplayName        *string                 `json:"display_name,omitempty"`
+	Description        *string                 `json:"description,omitempty"`
+	DataType           types.AttributeDataType `json:"data_type"`
+	Category           types.AttributeCategory `json:"category"`
+	IsRequired         bool                    `json:"is_required"`
+	IsSensitive        bool                    `json:"is_sensitive"`
+	DefaultValue       *string                 `json:"default_value,omitempty"`
+	AllowedValues      []string                `json:"allowed_values,omitempty"`
+	ValidationRules    map[string]any          `json:"validation_rules,omitempty"`
+	EncryptionRequired bool                    `json:"encryption_required"`
+	IsActive           bool                    `json:"is_active"`
+	CreatedAt          time.Time               `json:"created_at"`
+	UpdatedAt          time.Time               `json:"updated_at"`
+	DeletedAt          *time.Time              `json:"deleted_at,omitempty"`
 }
 
 // Validate validates the attribute definition using shared error handling
@@ -309,6 +324,8 @@ type PolicyEvaluationResult struct {
 	Advice             []PolicyAdvice           `json:"advice,omitempty"`
 	EvaluationContext  map[string]any           `json:"evaluation_context,omitempty"`
 	EvaluatedAt        time.Time                `json:"evaluated_at"`
+	CachedAt           time.Time                `json:"cached_at,omitempty"`
+	ExpiresAt          time.Time                `json:"expires_at,omitempty"`
 	TenantID           uuid.UUID                `json:"tenant_id"`
 	Error              *string                  `json:"error,omitempty"`
 }
@@ -582,4 +599,68 @@ func NewAttributeContext(tenantID uuid.UUID) *AttributeContext {
 		CollectedAt:           time.Now(),
 		TenantID:              tenantID,
 	}
+}
+
+// PolicyEvaluation represents a stored policy evaluation record
+type PolicyEvaluation struct {
+	ID                 uuid.UUID                `json:"id"`
+	TenantID           uuid.UUID                `json:"tenant_id"`
+	UserID             uuid.UUID                `json:"user_id"`
+	ResourceType       string                   `json:"resource_type"`
+	ResourceID         *uuid.UUID               `json:"resource_id,omitempty"`
+	Action             string                   `json:"action"`
+	EntityID           *uuid.UUID               `json:"entity_id,omitempty"`
+	ContextHash        string                   `json:"context_hash"`
+	Decision           types.PolicyDecisionType `json:"decision"`
+	ApplicablePolicies []uuid.UUID              `json:"applicable_policies"`
+	PolicyDecisions    []*PolicyDecision        `json:"policy_decisions"`
+	EvaluationTimeMS   *int64                   `json:"evaluation_time_ms,omitempty"`
+	EvaluatedAt        time.Time                `json:"evaluated_at"`
+	ExpiresAt          time.Time                `json:"expires_at"`
+}
+
+type PolicyDecision struct {
+	PolicyID      uuid.UUID                `json:"policy_id"`
+	Decision      types.PolicyDecisionType `json:"decision"`
+	Reason        string                   `json:"reason,omitempty"`
+	MatchedRule   string                   `json:"matched_rule,omitempty"`
+	EvaluationMS  int64                    `json:"evaluation_ms,omitempty"`
+	TargetMatched bool                     `json:"target_matched"`
+}
+
+// PolicyRule represents a policy rule for evaluation
+type PolicyRule struct {
+	ID         string         `json:"id"`
+	Name       string         `json:"name,omitempty"`
+	Expression string         `json:"expression"`
+	Attributes map[string]any `json:"attributes,omitempty"`
+	Conditions []string       `json:"conditions,omitempty"`
+	Parameters map[string]any `json:"parameters,omitempty"`
+}
+
+// PolicyTarget represents a policy target for evaluation
+type PolicyTarget struct {
+	Resources     []string       `json:"resources,omitempty"`
+	Actions       []string       `json:"actions,omitempty"`
+	Subjects      []string       `json:"subjects,omitempty"`
+	Environment   map[string]any `json:"environment,omitempty"`
+	ResourceTypes []string       `json:"resource_types,omitempty"`
+}
+
+// PolicyCondition represents a policy condition for evaluation
+type PolicyCondition struct {
+	ID         string         `json:"id"`
+	Type       string         `json:"type"`
+	Expression string         `json:"expression"`
+	Attributes map[string]any `json:"attributes,omitempty"`
+	Operator   string         `json:"operator,omitempty"`
+	Values     []any          `json:"values,omitempty"`
+}
+
+// AttributeMatch represents an attribute match condition for evaluation
+type AttributeMatch struct {
+	AttributeName string `json:"attribute_name"`
+	MatchType     string `json:"match_type"` // equals, contains, regex, in
+	Value         any    `json:"value"`
+	CaseSensitive bool   `json:"case_sensitive"`
 }

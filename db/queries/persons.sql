@@ -6,4 +6,4 @@ INSERT INTO persons (
 ) RETURNING *;
 
 -- name: GetPersonByID :one
-SELECT * FROM persons WHERE id = $1 AND deleted_at IS NULL;
+SELECT * FROM persons WHERE id = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id();

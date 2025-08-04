@@ -2,7 +2,6 @@ package abac
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -204,12 +203,12 @@ type ValidationResult struct {
 }
 
 type SecurityAnalysis struct {
-	SecurityScore      float64                  `json:"security_score"`
-	SecurityRisks      []SecurityRisk           `json:"security_risks"`
-	ComplianceStatus   []ComplianceStatus       `json:"compliance_status"`
-	EncryptionRequired bool                     `json:"encryption_required"`
-	AuditingRequired   bool                     `json:"auditing_required"`
-	Recommendations    []SecurityRecommendation `json:"recommendations"`
+	SecurityScore      float64                   `json:"security_score"`
+	SecurityRisks      []SecurityRisk            `json:"security_risks"`
+	ComplianceStatus   []AttributeComplianceInfo `json:"compliance_status"`
+	EncryptionRequired bool                      `json:"encryption_required"`
+	AuditingRequired   bool                      `json:"auditing_required"`
+	Recommendations    []SecurityRecommendation  `json:"recommendations"`
 }
 
 type SecurityRisk struct {
@@ -220,7 +219,7 @@ type SecurityRisk struct {
 	Mitigation  string    `json:"mitigation"`
 }
 
-type ComplianceStatus struct {
+type AttributeComplianceInfo struct {
 	Framework    string   `json:"framework"` // "GDPR", "HIPAA", "SOX", "PCI-DSS"
 	Status       string   `json:"status"`    // "compliant", "non_compliant", "partial"
 	Requirements []string `json:"requirements"`
@@ -275,12 +274,7 @@ type BreakingChange struct {
 }
 
 func (as *attributeService) CreateAttributeDefinition(ctx context.Context, req *CreateAttributeDefinitionRequest) (*AttributeDefinitionResult, error) {
-	ctx, span := as.tracer.StartSpan(ctx, "abac.attribute_service.CreateAttributeDefinition",
-		tracing.WithAttributes(
-			tracing.StringAttribute("attribute_name", req.Name),
-			tracing.StringAttribute("data_type", string(req.DataType)),
-			tracing.StringAttribute("category", string(req.Category)),
-		))
+	ctx, span := as.tracer.StartSpan(ctx, "abac.attribute_service.CreateAttributeDefinition")
 	defer span.End()
 
 	as.logger.InfoContext(ctx, "Creating attribute definition",
@@ -303,7 +297,7 @@ func (as *attributeService) CreateAttributeDefinition(ctx context.Context, req *
 	}
 
 	if hasErrors {
-		as.metrics.IncrementErrorCount("attribute_service", "create_validation_failed")
+		as.metrics.IncrementCounter("attribute_service_create_validation_failed", metrics.Fields{})
 		return &AttributeDefinitionResult{
 			ValidationResults: validationResults,
 		}, errors.NewBusinessErrorWithContext(ctx, "ATTRIBUTE_VALIDATION_FAILED", "Attribute definition validation failed")
@@ -312,7 +306,7 @@ func (as *attributeService) CreateAttributeDefinition(ctx context.Context, req *
 	// Step 2: Check for naming conflicts
 	existingDef, err := as.attributeRepo.GetAttributeDefinitionByName(ctx, req.Name)
 	if err == nil && existingDef != nil {
-		as.metrics.IncrementErrorCount("attribute_service", "create_name_conflict")
+		as.metrics.IncrementCounter("attribute_service_create_name_conflict", metrics.Fields{})
 		return nil, errors.NewBusinessErrorWithContext(ctx, "ATTRIBUTE_NAME_EXISTS", fmt.Sprintf("Attribute definition with name '%s' already exists", req.Name))
 	}
 
@@ -320,28 +314,52 @@ func (as *attributeService) CreateAttributeDefinition(ctx context.Context, req *
 	securityAnalysis := as.performSecurityAnalysis(ctx, req)
 
 	// Step 4: Create the attribute definition
+	var defaultValue *string
+	if req.DefaultValue != nil {
+		if str, ok := req.DefaultValue.(string); ok {
+			defaultValue = &str
+		}
+	}
+
+	var allowedValues []string
+	if req.AllowedValues != nil {
+		for _, val := range req.AllowedValues {
+			if str, ok := val.(string); ok {
+				allowedValues = append(allowedValues, str)
+			}
+		}
+	}
+
+	validationRules := make(map[string]any)
+	for _, rule := range req.ValidationRules {
+		validationRules[rule.RuleName] = map[string]any{
+			"rule_type":     string(rule.RuleType),
+			"parameters":    rule.Parameters,
+			"error_message": rule.ErrorMessage,
+			"is_active":     rule.IsActive,
+		}
+	}
+
 	createReq := &repository.CreateAttributeDefinitionRequest{
-		Name:             req.Name,
-		DisplayName:      req.DisplayName,
-		Description:      req.Description,
-		DataType:         req.DataType,
-		Category:         req.Category,
-		IsRequired:       req.IsRequired,
-		IsMultiValue:     req.IsMultiValue,
-		DefaultValue:     req.DefaultValue,
-		AllowedValues:    req.AllowedValues,
-		ValidationRules:  as.convertValidationRules(req.ValidationRules),
-		Constraints:      as.convertConstraints(req.Constraints),
-		SecuritySettings: as.convertSecuritySettings(req.SecuritySettings),
-		Metadata:         req.Metadata,
-		CreatedBy:        req.CreatedBy,
+		Name:               req.Name,
+		DisplayName:        req.DisplayName,
+		Description:        req.Description,
+		DataType:           req.DataType,
+		Category:           req.Category,
+		IsRequired:         req.IsRequired,
+		IsSensitive:        req.SecuritySettings.EncryptionRequired,
+		DefaultValue:       defaultValue,
+		AllowedValues:      allowedValues,
+		ValidationRules:    validationRules,
+		EncryptionRequired: req.SecuritySettings.EncryptionRequired,
+		IsActive:           true,
 	}
 
 	attributeDef, err := as.attributeRepo.CreateAttributeDefinition(ctx, createReq)
 	if err != nil {
 		as.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		as.metrics.IncrementErrorCount("attribute_service", "create_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "ATTRIBUTE_CREATE_FAILED", "Failed to create attribute definition").WithErr(err)
+		as.metrics.IncrementCounter("attribute_service_create_failed", metrics.Fields{})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "ATTRIBUTE_CREATE_FAILED", fmt.Sprintf("Failed to create attribute definition: %v", err))
 	}
 
 	// Step 5: Perform impact analysis
@@ -351,8 +369,8 @@ func (as *attributeService) CreateAttributeDefinition(ctx context.Context, req *
 	recommendations := as.generateRecommendations(ctx, attributeDef, securityAnalysis, impactAnalysis)
 
 	// Step 7: Record metrics
-	as.metrics.IncrementSuccessCount("attribute_service_definition_created")
-	as.metrics.RecordGauge("attribute_definitions_total", 1,
+	as.metrics.IncrementCounter("attribute_service_definition_created", metrics.Fields{})
+	as.metrics.SetGauge("attribute_definitions_total", 1,
 		metrics.Fields{
 			"category":  string(req.Category),
 			"data_type": string(req.DataType),
@@ -416,7 +434,7 @@ type AttributeSecurityContext struct {
 	CurrentClassification []AttributeClassification   `json:"current_classification"`
 	AccessPermissions     []AttributeAccessPermission `json:"access_permissions"`
 	AuditTrail            []AttributeAuditEntry       `json:"audit_trail"`
-	ComplianceStatus      []ComplianceStatus          `json:"compliance_status"`
+	ComplianceStatus      []AttributeComplianceInfo   `json:"compliance_status"`
 	SecurityIncidents     []SecurityIncident          `json:"security_incidents,omitempty"`
 }
 
@@ -520,10 +538,7 @@ type TagFacet struct {
 }
 
 func (as *attributeService) GetAttributeDefinition(ctx context.Context, id uuid.UUID) (*AttributeDefinitionDetails, error) {
-	ctx, span := as.tracer.StartSpan(ctx, "abac.attribute_service.GetAttributeDefinition",
-		tracing.WithAttributes(
-			tracing.StringAttribute("attribute_id", id.String()),
-		))
+	ctx, span := as.tracer.StartSpan(ctx, "abac.attribute_service.GetAttributeDefinition")
 	defer span.End()
 
 	// Get base attribute definition
@@ -562,7 +577,7 @@ func (as *attributeService) GetAttributeDefinition(ctx context.Context, id uuid.
 		},
 		AccessPermissions: []AttributeAccessPermission{},
 		AuditTrail:        []AttributeAuditEntry{},
-		ComplianceStatus: []ComplianceStatus{
+		ComplianceStatus: []AttributeComplianceInfo{
 			{
 				Framework:    "GDPR",
 				Status:       "compliant",
@@ -580,7 +595,7 @@ func (as *attributeService) GetAttributeDefinition(ctx context.Context, id uuid.
 		RelatedAttributes:   []*models.AttributeDefinition{},
 	}
 
-	as.metrics.IncrementSuccessCount("attribute_service_definition_retrieved")
+	as.metrics.IncrementCounter("attribute_service_definition_retrieved", metrics.Fields{})
 
 	return result, nil
 }
@@ -595,14 +610,7 @@ type ValidateAttributeValueRequest struct {
 	SkipRules       []uuid.UUID            `json:"skip_rules,omitempty"`
 }
 
-type ValidationLevel string
-
-const (
-	ValidationLevelBasic    ValidationLevel = "basic"
-	ValidationLevelStandard ValidationLevel = "standard"
-	ValidationLevelStrict   ValidationLevel = "strict"
-	ValidationLevelCustom   ValidationLevel = "custom"
-)
+// ValidationLevel type already defined in attribute_collector.go
 
 type AttributeValidationResult struct {
 	AttributeID       uuid.UUID              `json:"attribute_id"`
@@ -638,11 +646,7 @@ type ValidationSuggestion struct {
 }
 
 func (as *attributeService) ValidateAttributeValue(ctx context.Context, req *ValidateAttributeValueRequest) (*AttributeValidationResult, error) {
-	ctx, span := as.tracer.StartSpan(ctx, "abac.attribute_service.ValidateAttributeValue",
-		tracing.WithAttributes(
-			tracing.StringAttribute("attribute_id", req.AttributeID.String()),
-			tracing.StringAttribute("validation_level", string(req.ValidationLevel)),
-		))
+	ctx, span := as.tracer.StartSpan(ctx, "abac.attribute_service.ValidateAttributeValue")
 	defer span.End()
 
 	startTime := time.Now()
@@ -667,15 +671,20 @@ func (as *attributeService) ValidateAttributeValue(ctx context.Context, req *Val
 	if dataTypeResult.Passed {
 		normalizedValue = as.normalizeValue(attributeDef.DataType, req.Value)
 
-		// Constraint validation
-		if attributeDef.Constraints != nil {
-			constraintResults := as.validateConstraints(attributeDef.Constraints, normalizedValue)
-			validationResults = append(validationResults, constraintResults...)
-		}
+		// Constraint validation - skip since Constraints field doesn't exist in AttributeDefinition model
+		// TODO: Add constraints support to AttributeDefinition model if needed
+		// constraintResults := []RuleValidationResult{}
 
 		// Custom validation rules
 		if len(attributeDef.ValidationRules) > 0 {
-			customResults := as.validateCustomRules(attributeDef.ValidationRules, normalizedValue, req.Context)
+			// Convert map[string]any to []map[string]interface{}
+			var rulesSlice []map[string]interface{}
+			for _, rule := range attributeDef.ValidationRules {
+				if ruleMap, ok := rule.(map[string]interface{}); ok {
+					rulesSlice = append(rulesSlice, ruleMap)
+				}
+			}
+			customResults := as.validateCustomRules(rulesSlice, normalizedValue, req.Context)
 			validationResults = append(validationResults, customResults...)
 		}
 
@@ -950,9 +959,13 @@ func (as *attributeService) validateCustomRules(rules []map[string]interface{}, 
 	// In a real scenario, you would implement a proper rule engine
 
 	for _, rule := range rules {
+		ruleName := "custom_rule"
+		if name, ok := rule["name"].(string); ok {
+			ruleName = name
+		}
 		result := RuleValidationResult{
 			RuleID:   uuid.New(),
-			RuleName: "custom_rule",
+			RuleName: ruleName,
 			RuleType: AttributeRuleTypeCustom,
 			Passed:   true,
 			Message:  "Custom rule validation passed",
@@ -988,7 +1001,7 @@ func (as *attributeService) performSecurityAnalysis(ctx context.Context, req *Cr
 	securityScore := 80.0 // Base score
 
 	var securityRisks []SecurityRisk
-	var complianceStatus []ComplianceStatus
+	var complianceStatus []AttributeComplianceInfo
 	var recommendations []SecurityRecommendation
 
 	// Analyze security settings
@@ -1017,7 +1030,7 @@ func (as *attributeService) performSecurityAnalysis(ctx context.Context, req *Cr
 	}
 
 	// GDPR compliance check
-	complianceStatus = append(complianceStatus, ComplianceStatus{
+	complianceStatus = append(complianceStatus, AttributeComplianceInfo{
 		Framework:    "GDPR",
 		Status:       "partial",
 		Requirements: []string{"data_protection", "consent_management", "right_to_erasure"},

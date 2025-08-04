@@ -72,12 +72,24 @@ type PolicyEvaluationRepository interface {
 	// Cache maintenance
 	CleanupExpiredEvaluations(ctx context.Context) error
 	GetEvaluationCacheStats(ctx context.Context) (*EvaluationCacheStats, error)
+
+	// History and metrics
+	GetUserEvaluationHistory(ctx context.Context, req *GetUserEvaluationHistoryRequest) ([]*models.PolicyEvaluation, error)
+	GetEvaluationMetrics(ctx context.Context, req *GetEvaluationMetricsRequest) (*EvaluationMetrics, error)
 }
 
 // AttributeRepository defines the interface for attribute value persistence
 type AttributeRepository interface {
+	// Attribute definition operations
+	CreateAttributeDefinition(ctx context.Context, req *CreateAttributeDefinitionRequest) (*models.AttributeDefinition, error)
+	GetAttributeDefinitionByID(ctx context.Context, id uuid.UUID) (*models.AttributeDefinition, error)
+	GetAttributeDefinitionByName(ctx context.Context, name string) (*models.AttributeDefinition, error)
+	UpdateAttributeDefinition(ctx context.Context, req *UpdateAttributeDefinitionRequest) (*models.AttributeDefinition, error)
+	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
+	ListAttributeDefinitions(ctx context.Context, req *ListAttributeDefinitionsRequest) ([]*models.AttributeDefinition, error)
+
 	// Attribute value operations
-	StoreAttributeValue(ctx context.Context, req *StoreAttributeValueRequest) (*models.AttributeValue, error)
+	CreateAttributeValue(ctx context.Context, req *CreateAttributeValueRequest) (*models.AttributeValue, error)
 	GetAttributeValue(ctx context.Context, definitionID uuid.UUID, entityID uuid.UUID) (*models.AttributeValue, error)
 	GetAttributeValuesByEntity(ctx context.Context, entityID uuid.UUID, category types.AttributeCategory) ([]*models.AttributeValue, error)
 	UpdateAttributeValue(ctx context.Context, definitionID, entityID uuid.UUID, value any) (*models.AttributeValue, error)
@@ -97,37 +109,160 @@ type AttributeRepository interface {
 	GetAttributeStats(ctx context.Context) (*AttributeStats, error)
 }
 
+// AttributeSourceRepository defines the interface for external attribute source management
+type AttributeSourceRepository interface {
+	// Source CRUD operations
+	CreateAttributeSource(ctx context.Context, req *CreateAttributeSourceRequest) (*models.AttributeSource, error)
+	GetAttributeSourceByID(ctx context.Context, id uuid.UUID) (*models.AttributeSource, error)
+	UpdateAttributeSource(ctx context.Context, id uuid.UUID, req *UpdateAttributeSourceRequest) (*models.AttributeSource, error)
+	DeleteAttributeSource(ctx context.Context, id uuid.UUID) error
+
+	// Source listing and filtering
+	ListAttributeSources(ctx context.Context, req *ListAttributeSourcesRequest) ([]*models.AttributeSource, error)
+	GetAttributeSourcesByType(ctx context.Context, sourceType string) ([]*models.AttributeSource, error)
+	GetActiveAttributeSources(ctx context.Context) ([]*models.AttributeSource, error)
+
+	// Source health and metrics
+	UpdateSourceHealth(ctx context.Context, sourceID uuid.UUID, health *SourceHealthStatus) error
+	GetSourceMetrics(ctx context.Context, sourceID uuid.UUID) (*SourceMetrics, error)
+}
+
 // ─── REQUEST/RESPONSE MODELS ─────────────────────────────────────────────
+
+// CreateAttributeSourceRequest represents attribute source creation request
+type CreateAttributeSourceRequest struct {
+	Name     string                 `json:"name"`
+	Type     string                 `json:"type"`
+	Config   map[string]interface{} `json:"config"`
+	TenantID uuid.UUID              `json:"tenant_id"`
+	IsActive bool                   `json:"is_active"`
+}
+
+// UpdateAttributeSourceRequest represents attribute source update request
+type UpdateAttributeSourceRequest struct {
+	Name     *string                `json:"name,omitempty"`
+	Config   map[string]interface{} `json:"config,omitempty"`
+	IsActive *bool                  `json:"is_active,omitempty"`
+}
+
+// ListAttributeSourcesRequest represents attribute source listing request
+type ListAttributeSourcesRequest struct {
+	TenantID   uuid.UUID `json:"tenant_id"`
+	SourceType string    `json:"source_type,omitempty"`
+	Active     *bool     `json:"active,omitempty"`
+	Limit      int32     `json:"limit,omitempty"`
+	Offset     int32     `json:"offset,omitempty"`
+}
+
+// SourceHealthStatus represents the health status of an attribute source
+type SourceHealthStatus struct {
+	SourceID     uuid.UUID `json:"source_id"`
+	IsHealthy    bool      `json:"is_healthy"`
+	LastChecked  time.Time `json:"last_checked"`
+	ErrorMessage string    `json:"error_message,omitempty"`
+}
+
+// SourceMetrics represents metrics for an attribute source
+type SourceMetrics struct {
+	SourceID        uuid.UUID     `json:"source_id"`
+	RequestCount    int64         `json:"request_count"`
+	SuccessCount    int64         `json:"success_count"`
+	ErrorCount      int64         `json:"error_count"`
+	AverageLatency  time.Duration `json:"average_latency"`
+	LastRequestTime time.Time     `json:"last_request_time"`
+}
+
+// AuditLogRepository defines the interface for audit log persistence
+type AuditLogRepository interface {
+	// Audit log operations
+	CreateAuditLog(ctx context.Context, req *CreateAuditLogRequest) error
+	GetAuditLogs(ctx context.Context, req *GetAuditLogsRequest) ([]*AuditLogEntry, error)
+	GetAuditLogsByEntity(ctx context.Context, entityID uuid.UUID, entityType string) ([]*AuditLogEntry, error)
+	SearchAuditLogs(ctx context.Context, req *SearchAuditLogsRequest) ([]*AuditLogEntry, error)
+
+	// Cleanup operations
+	CleanupOldAuditLogs(ctx context.Context, retentionDays int32) error
+}
+
+// CreateAuditLogRequest represents audit log creation request
+type CreateAuditLogRequest struct {
+	EventType  string                 `json:"event_type"`
+	EntityID   uuid.UUID              `json:"entity_id"`
+	EntityType string                 `json:"entity_type"`
+	UserID     uuid.UUID              `json:"user_id"`
+	Action     string                 `json:"action"`
+	Details    map[string]interface{} `json:"details,omitempty"`
+	IPAddress  string                 `json:"ip_address,omitempty"`
+	UserAgent  string                 `json:"user_agent,omitempty"`
+}
+
+// GetAuditLogsRequest represents audit logs retrieval request
+type GetAuditLogsRequest struct {
+	StartTime  *time.Time `json:"start_time,omitempty"`
+	EndTime    *time.Time `json:"end_time,omitempty"`
+	EventType  string     `json:"event_type,omitempty"`
+	EntityType string     `json:"entity_type,omitempty"`
+	UserID     *uuid.UUID `json:"user_id,omitempty"`
+	Limit      int32      `json:"limit,omitempty"`
+	Offset     int32      `json:"offset,omitempty"`
+}
+
+// SearchAuditLogsRequest represents audit logs search request
+type SearchAuditLogsRequest struct {
+	Query     string     `json:"query"`
+	StartTime *time.Time `json:"start_time,omitempty"`
+	EndTime   *time.Time `json:"end_time,omitempty"`
+	Limit     int32      `json:"limit,omitempty"`
+	Offset    int32      `json:"offset,omitempty"`
+}
+
+// AuditLogEntry represents an audit log entry
+type AuditLogEntry struct {
+	ID         uuid.UUID              `json:"id"`
+	EventType  string                 `json:"event_type"`
+	EntityID   uuid.UUID              `json:"entity_id"`
+	EntityType string                 `json:"entity_type"`
+	UserID     uuid.UUID              `json:"user_id"`
+	Action     string                 `json:"action"`
+	Details    map[string]interface{} `json:"details,omitempty"`
+	IPAddress  string                 `json:"ip_address,omitempty"`
+	UserAgent  string                 `json:"user_agent,omitempty"`
+	CreatedAt  time.Time              `json:"created_at"`
+}
 
 // CreateAttributeDefinitionRequest represents attribute definition creation request
 type CreateAttributeDefinitionRequest struct {
-	Name            string                  `json:"name" validate:"required,min=1,max=100"`
-	DisplayName     *string                 `json:"display_name,omitempty"`
-	Description     *string                 `json:"description,omitempty"`
-	DataType        types.AttributeDataType `json:"data_type" validate:"required"`
-	Category        types.AttributeCategory `json:"category" validate:"required"`
-	IsRequired      bool                    `json:"is_required"`
-	IsSensitive     bool                    `json:"is_sensitive"`
-	DefaultValue    *string                 `json:"default_value,omitempty"`
-	AllowedValues   []string                `json:"allowed_values,omitempty"`
-	ValidationRules map[string]any          `json:"validation_rules,omitempty"`
+	Name               string                  `json:"name" validate:"required,min=1,max=100"`
+	DisplayName        *string                 `json:"display_name,omitempty"`
+	Description        *string                 `json:"description,omitempty"`
+	DataType           types.AttributeDataType `json:"data_type" validate:"required"`
+	Category           types.AttributeCategory `json:"category" validate:"required"`
+	IsRequired         bool                    `json:"is_required"`
+	IsSensitive        bool                    `json:"is_sensitive"`
+	DefaultValue       *string                 `json:"default_value,omitempty"`
+	AllowedValues      []string                `json:"allowed_values,omitempty"`
+	ValidationRules    map[string]any          `json:"validation_rules,omitempty"`
+	EncryptionRequired bool                    `json:"encryption_required"`
+	IsActive           bool                    `json:"is_active"`
 }
 
 // UpdateAttributeDefinitionRequest represents attribute definition update request
 type UpdateAttributeDefinitionRequest struct {
-	DisplayName     *string        `json:"display_name,omitempty"`
-	Description     *string        `json:"description,omitempty"`
-	IsRequired      *bool          `json:"is_required,omitempty"`
-	IsSensitive     *bool          `json:"is_sensitive,omitempty"`
-	DefaultValue    *string        `json:"default_value,omitempty"`
-	AllowedValues   []string       `json:"allowed_values,omitempty"`
-	ValidationRules map[string]any `json:"validation_rules,omitempty"`
-	IsActive        *bool          `json:"is_active,omitempty"`
+	DisplayName        *string        `json:"display_name,omitempty"`
+	Description        *string        `json:"description,omitempty"`
+	IsRequired         *bool          `json:"is_required,omitempty"`
+	IsSensitive        *bool          `json:"is_sensitive,omitempty"`
+	DefaultValue       *string        `json:"default_value,omitempty"`
+	AllowedValues      []string       `json:"allowed_values,omitempty"`
+	ValidationRules    map[string]any `json:"validation_rules,omitempty"`
+	IsActive           *bool          `json:"is_active,omitempty"`
+	EncryptionRequired *bool          `json:"encryption_required,omitempty"`
 }
 
 // ListAttributeDefinitionsRequest represents attribute definition list request
 type ListAttributeDefinitionsRequest struct {
 	Category    *types.AttributeCategory `json:"category,omitempty"`
+	Search      string                   `json:"search"`
 	DataType    *types.AttributeDataType `json:"data_type,omitempty"`
 	IsRequired  *bool                    `json:"is_required,omitempty"`
 	IsSensitive *bool                    `json:"is_sensitive,omitempty"`
@@ -232,6 +367,19 @@ type StoreAttributeValueRequest struct {
 	ExpiresAt    *time.Time            `json:"expires_at,omitempty"`
 }
 
+// CreateAttributeValueRequest represents create attribute value request
+type CreateAttributeValueRequest struct {
+	DefinitionID   uuid.UUID  `json:"definition_id" validate:"required"`
+	EntityID       uuid.UUID  `json:"entity_id" validate:"required"`
+	Value          string     `json:"value" validate:"required"`
+	EncryptedValue []byte     `json:"encrypted_value,omitempty"`
+	IsEncrypted    bool       `json:"is_encrypted"`
+	Version        int32      `json:"version"`
+	EffectiveFrom  time.Time  `json:"effective_from" validate:"required"`
+	EffectiveTo    *time.Time `json:"effective_to,omitempty"`
+	CreatedBy      uuid.UUID  `json:"created_by" validate:"required"`
+}
+
 // BuildAttributeContextRequest represents build attribute context request
 type BuildAttributeContextRequest struct {
 	UserID          uuid.UUID      `json:"user_id" validate:"required"`
@@ -258,11 +406,48 @@ type EvaluationCacheStats struct {
 
 // AttributeStats represents attribute statistics
 type AttributeStats struct {
-	TotalAttributes      int64            `json:"total_attributes"`
-	AttributesByCategory map[string]int64 `json:"attributes_by_category"`
-	AttributesByDataType map[string]int64 `json:"attributes_by_data_type"`
-	AttributesBySource   map[string]int64 `json:"attributes_by_source"`
-	ExpiredAttributes    int64            `json:"expired_attributes"`
-	SensitiveAttributes  int64            `json:"sensitive_attributes"`
-	RequiredAttributes   int64            `json:"required_attributes"`
+	TotalDefinitions       int   `json:"total_definitions"`
+	TotalValues            int   `json:"total_values"`
+	EntitiesWithAttributes int   `json:"entities_with_attributes"`
+	UserAttributes         int64 `json:"user_attributes"`
+	ResourceAttributes     int64 `json:"resource_attributes"`
+	EnvironmentAttributes  int64 `json:"environment_attributes"`
+}
+
+// ─── HISTORY AND METRICS REQUEST TYPES ────────────────────────────────────
+
+// GetUserEvaluationHistoryRequest represents a request to get user evaluation history
+type GetUserEvaluationHistoryRequest struct {
+	UserID       uuid.UUID `json:"user_id" validate:"required"`
+	ResourceType *string   `json:"resource_type,omitempty"`
+	Action       *string   `json:"action,omitempty"`
+	Limit        int       `json:"limit" validate:"min=1,max=1000"`
+	Offset       int       `json:"offset" validate:"min=0"`
+}
+
+// GetEvaluationMetricsRequest represents a request to get evaluation metrics
+type GetEvaluationMetricsRequest struct {
+	StartTime time.Time `json:"start_time" validate:"required"`
+	EndTime   time.Time `json:"end_time" validate:"required"`
+}
+
+// ─── RESULT TYPES ──────────────────────────────────────────────────────────
+
+// CachedEvaluationResult represents a cached evaluation result
+type CachedEvaluationResult struct {
+	Decision        types.PolicyDecisionType `json:"decision"`
+	PolicyDecisions []*models.PolicyDecision `json:"policy_decisions"`
+	CachedAt        time.Time                `json:"cached_at"`
+	ExpiresAt       time.Time                `json:"expires_at"`
+}
+
+// EvaluationMetrics represents evaluation performance metrics
+type EvaluationMetrics struct {
+	TotalEvaluations       int     `json:"total_evaluations"`
+	UniqueUsers            int     `json:"unique_users"`
+	UniqueResources        int     `json:"unique_resources"`
+	AvgEvaluationTimeMS    float64 `json:"avg_evaluation_time_ms"`
+	MedianEvaluationTimeMS float64 `json:"median_evaluation_time_ms"`
+	P95EvaluationTimeMS    float64 `json:"p95_evaluation_time_ms"`
+	P99EvaluationTimeMS    float64 `json:"p99_evaluation_time_ms"`
 }

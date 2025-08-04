@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
@@ -16,24 +17,9 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
+// Missing type definitions
+
 // HybridEvaluator provides RBAC-ABAC hybrid evaluation capabilities
-type HybridEvaluator interface {
-	// Hybrid Evaluation
-	EvaluateHybrid(ctx context.Context, req *HybridEvaluationRequest) (*HybridEvaluationResult, error)
-
-	// Role-Based Attribute Inheritance
-	InheritAttributesFromRoles(ctx context.Context, req *RoleAttributeInheritanceRequest) (*RoleAttributeInheritanceResult, error)
-
-	// Permission Elevation
-	EvaluatePermissionElevation(ctx context.Context, req *PermissionElevationRequest) (*PermissionElevationResult, error)
-
-	// Migration Support
-	CreateMigrationPlan(ctx context.Context, req *MigrationPlanRequest) (*MigrationPlanResult, error)
-	ExecuteMigrationStep(ctx context.Context, req *MigrationStepRequest) (*MigrationStepResult, error)
-
-	// Compatibility
-	EvaluateRBACCompatibility(ctx context.Context, req *RBACCompatibilityRequest) (*RBACCompatibilityResult, error)
-}
 
 // hybridEvaluator implements HybridEvaluator
 type hybridEvaluator struct {
@@ -76,17 +62,6 @@ type HybridEvaluationRequest struct {
 	EvaluationMode HybridEvaluationMode    `json:"evaluation_mode"`
 	Options        HybridEvaluationOptions `json:"options"`
 }
-
-type HybridEvaluationMode string
-
-const (
-	HybridModeRBACFirst  HybridEvaluationMode = "rbac_first"  // Try RBAC first, fallback to ABAC
-	HybridModeABACFirst  HybridEvaluationMode = "abac_first"  // Try ABAC first, fallback to RBAC
-	HybridModeStrictRBAC HybridEvaluationMode = "strict_rbac" // RBAC only with attribute enrichment
-	HybridModeStrictABAC HybridEvaluationMode = "strict_abac" // ABAC only
-	HybridModeUnion      HybridEvaluationMode = "union"       // Allow if either system allows
-	HybridModeIntersect  HybridEvaluationMode = "intersect"   // Allow only if both systems allow
-)
 
 type HybridEvaluationOptions struct {
 	IncludeRoleInfo           bool `json:"include_role_info"`
@@ -182,13 +157,17 @@ type PerformanceComparison struct {
 	RecommendedMode   HybridEvaluationMode `json:"recommended_mode"`
 }
 
-func (he *hybridEvaluator) EvaluateHybrid(ctx context.Context, req *HybridEvaluationRequest) (*HybridEvaluationResult, error) {
+func (he *hybridEvaluator) EvaluateHybrid(ctx context.Context, req interface{}) (interface{}, error) {
+	hybridReq, ok := req.(*HybridEvaluationRequest)
+	if !ok {
+		return nil, fmt.Errorf("invalid request type for hybrid evaluation")
+	}
 	ctx, span := he.tracer.StartSpan(ctx, "abac.hybrid_evaluator.EvaluateHybrid",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", req.UserID.String()),
-			tracing.StringAttribute("resource_type", req.ResourceType),
-			tracing.StringAttribute("action", req.Action),
-			tracing.StringAttribute("evaluation_mode", string(req.EvaluationMode)),
+			attribute.String("user_id", hybridReq.UserID.String()),
+			attribute.String("resource_type", hybridReq.ResourceType),
+			attribute.String("action", hybridReq.Action),
+			attribute.String("evaluation_mode", string(hybridReq.EvaluationMode)),
 		))
 	defer span.End()
 
@@ -196,10 +175,10 @@ func (he *hybridEvaluator) EvaluateHybrid(ctx context.Context, req *HybridEvalua
 
 	he.logger.InfoContext(ctx, "Starting hybrid evaluation",
 		logger.Fields{
-			"user_id":         req.UserID,
-			"resource_type":   req.ResourceType,
-			"action":          req.Action,
-			"evaluation_mode": req.EvaluationMode,
+			"user_id":         hybridReq.UserID,
+			"resource_type":   hybridReq.ResourceType,
+			"action":          hybridReq.Action,
+			"evaluation_mode": hybridReq.EvaluationMode,
 		})
 
 	var rbacResult *RBACEvaluationResult
@@ -209,21 +188,21 @@ func (he *hybridEvaluator) EvaluateHybrid(ctx context.Context, req *HybridEvalua
 	var err error
 
 	// Execute evaluation based on mode
-	switch req.EvaluationMode {
-	case HybridModeRBACFirst:
-		rbacResult, abacResult, finalDecision, decisionSource, err = he.evaluateRBACFirst(ctx, req)
-	case HybridModeABACFirst:
-		rbacResult, abacResult, finalDecision, decisionSource, err = he.evaluateABACFirst(ctx, req)
-	case HybridModeStrictRBAC:
-		rbacResult, finalDecision, decisionSource, err = he.evaluateStrictRBAC(ctx, req)
-	case HybridModeStrictABAC:
-		abacResult, finalDecision, decisionSource, err = he.evaluateStrictABAC(ctx, req)
-	case HybridModeUnion:
-		rbacResult, abacResult, finalDecision, decisionSource, err = he.evaluateUnion(ctx, req)
-	case HybridModeIntersect:
-		rbacResult, abacResult, finalDecision, decisionSource, err = he.evaluateIntersect(ctx, req)
+	switch hybridReq.EvaluationMode {
+	case "rbac_first":
+		rbacResult, abacResult, finalDecision, decisionSource, err = he.evaluateRBACFirst(ctx, hybridReq)
+	case "abac_first":
+		rbacResult, abacResult, finalDecision, decisionSource, err = he.evaluateABACFirst(ctx, hybridReq)
+	case "strict_rbac":
+		rbacResult, finalDecision, decisionSource, err = he.evaluateStrictRBAC(ctx, hybridReq)
+	case "strict_abac":
+		abacResult, finalDecision, decisionSource, err = he.evaluateStrictABAC(ctx, hybridReq)
+	case "union":
+		rbacResult, abacResult, finalDecision, decisionSource, err = he.evaluateUnion(ctx, hybridReq)
+	case "intersect":
+		rbacResult, abacResult, finalDecision, decisionSource, err = he.evaluateIntersect(ctx, hybridReq)
 	default:
-		return nil, errors.NewBusinessErrorWithContext(ctx, "INVALID_EVALUATION_MODE", "Invalid hybrid evaluation mode")
+		return nil, errors.ErrInvalidInput
 	}
 
 	if err != nil {
@@ -236,13 +215,13 @@ func (he *hybridEvaluator) EvaluateHybrid(ctx context.Context, req *HybridEvalua
 	// Generate combined analysis if both systems were evaluated
 	var combinedAnalysis *CombinedAnalysis
 	if rbacResult != nil && abacResult != nil {
-		combinedAnalysis = he.generateCombinedAnalysis(ctx, req, rbacResult, abacResult, executionTime)
+		combinedAnalysis = he.generateCombinedAnalysis(ctx, hybridReq, rbacResult, abacResult, executionTime)
 	}
 
 	// Check for permission elevation if enabled
 	var permissionElevation *PermissionElevationInfo
-	if req.Options.EnablePermissionElevation && finalDecision == types.PolicyDecisionDeny {
-		elevationResult, err := he.checkPermissionElevation(ctx, req, rbacResult, abacResult)
+	if hybridReq.Options.EnablePermissionElevation && finalDecision == types.PolicyDecisionDeny {
+		elevationResult, err := he.checkPermissionElevation(ctx, hybridReq, rbacResult, abacResult)
 		if err != nil {
 			he.logger.WarnContext(ctx, "Failed to check permission elevation", logger.Fields{"error": err.Error()})
 		} else if elevationResult.ElevationAvailable {
@@ -253,17 +232,15 @@ func (he *hybridEvaluator) EvaluateHybrid(ctx context.Context, req *HybridEvalua
 	}
 
 	// Record metrics
-	he.metrics.IncrementSuccessCount("hybrid_evaluator_evaluation")
-	he.metrics.RecordGauge("hybrid_evaluation_decision_allow",
-		func() float64 {
-			if finalDecision == types.PolicyDecisionAllow {
-				return 1
-			}
-			return 0
-		}(),
-		metrics.Fields{"mode": string(req.EvaluationMode), "source": string(decisionSource)})
+	he.metrics.IncrementCounter("hybrid_evaluator_evaluation", metrics.Fields{})
+	allowValue := float64(0)
+	if finalDecision == types.PolicyDecisionAllow {
+		allowValue = 1
+	}
+	he.metrics.SetGauge("hybrid_evaluation_decision_allow", allowValue,
+		metrics.Fields{"mode": string(hybridReq.EvaluationMode), "source": string(decisionSource)})
 	he.metrics.ObserveHistogram("hybrid_evaluation_duration_seconds", executionTime.Seconds(),
-		metrics.Fields{"mode": string(req.EvaluationMode)})
+		metrics.Fields{"mode": string(hybridReq.EvaluationMode)})
 
 	result := &HybridEvaluationResult{
 		Decision:            finalDecision,
@@ -278,7 +255,7 @@ func (he *hybridEvaluator) EvaluateHybrid(ctx context.Context, req *HybridEvalua
 
 	he.logger.InfoContext(ctx, "Hybrid evaluation completed",
 		logger.Fields{
-			"user_id":         req.UserID,
+			"user_id":         hybridReq.UserID,
 			"decision":        finalDecision,
 			"decision_source": decisionSource,
 			"execution_time":  executionTime.Milliseconds(),
@@ -314,12 +291,7 @@ type AttributeValue struct {
 	Constraints map[string]interface{} `json:"constraints,omitempty"`
 }
 
-type AttributeSource struct {
-	SourceType      string    `json:"source_type"` // "direct_role", "inherited_role", "group", "computed"
-	SourceID        uuid.UUID `json:"source_id"`
-	SourceName      string    `json:"source_name"`
-	InheritancePath []string  `json:"inheritance_path,omitempty"`
-}
+// AttributeSource type removed - using the one from attribute_collector.go
 
 type RoleHierarchyLevel struct {
 	Level      int32       `json:"level"`
@@ -340,9 +312,9 @@ type AttributeConflictResolution struct {
 func (he *hybridEvaluator) InheritAttributesFromRoles(ctx context.Context, req *RoleAttributeInheritanceRequest) (*RoleAttributeInheritanceResult, error) {
 	ctx, span := he.tracer.StartSpan(ctx, "abac.hybrid_evaluator.InheritAttributesFromRoles",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", req.UserID.String()),
-			tracing.BoolAttribute("include_groups", req.IncludeGroups),
-			tracing.BoolAttribute("include_transitive", req.IncludeTransitive),
+			attribute.String("user_id", req.UserID.String()),
+			attribute.Bool("include_groups", req.IncludeGroups),
+			attribute.Bool("include_transitive", req.IncludeTransitive),
 		))
 	defer span.End()
 
@@ -390,8 +362,8 @@ func (he *hybridEvaluator) InheritAttributesFromRoles(ctx context.Context, req *
 
 	executionTime := time.Since(startTime)
 
-	he.metrics.IncrementSuccessCount("hybrid_evaluator_attribute_inheritance")
-	he.metrics.RecordGauge("inherited_attributes_count", float64(len(inheritedAttributes)),
+	he.metrics.IncrementCounter("hybrid_evaluator_attribute_inheritance", metrics.Fields{})
+	he.metrics.SetGauge("inherited_attributes_count", float64(len(inheritedAttributes)),
 		metrics.Fields{"user_id": req.UserID.String()})
 
 	result := &RoleAttributeInheritanceResult{
@@ -511,9 +483,9 @@ type AvailableElevationMethod struct {
 func (he *hybridEvaluator) EvaluatePermissionElevation(ctx context.Context, req *PermissionElevationRequest) (*PermissionElevationResult, error) {
 	ctx, span := he.tracer.StartSpan(ctx, "abac.hybrid_evaluator.EvaluatePermissionElevation",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", req.UserID.String()),
-			tracing.StringAttribute("resource_type", req.ResourceType),
-			tracing.StringAttribute("action", req.Action),
+			attribute.String("user_id", req.UserID.String()),
+			attribute.String("resource_type", req.ResourceType),
+			attribute.String("action", req.Action),
 		))
 	defer span.End()
 
@@ -575,8 +547,8 @@ func (he *hybridEvaluator) EvaluatePermissionElevation(ctx context.Context, req 
 		Timestamp:      time.Now(),
 	}
 
-	he.metrics.IncrementSuccessCount("hybrid_evaluator_permission_elevation")
-	he.metrics.RecordGauge("permission_elevation_risk_score", riskAssessment.RiskScore,
+	he.metrics.IncrementCounter("hybrid_evaluator_permission_elevation", metrics.Fields{})
+	he.metrics.SetGauge("permission_elevation_risk_score", riskAssessment.RiskScore,
 		metrics.Fields{"user_id": req.UserID.String(), "risk_level": riskAssessment.RiskLevel})
 
 	he.logger.InfoContext(ctx, "Permission elevation evaluated",
@@ -750,7 +722,7 @@ func (he *hybridEvaluator) generateCombinedAnalysis(ctx context.Context, req *Hy
 			RBACExecutionTime: rbacResult.ExecutionTime,
 			ABACExecutionTime: abacResult.ExecutionTime,
 			HybridOverhead:    totalTime - rbacResult.ExecutionTime - abacResult.ExecutionTime,
-			RecommendedMode:   HybridModeABACFirst,
+			RecommendedMode:   "abac_first",
 		},
 	}
 }

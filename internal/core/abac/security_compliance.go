@@ -7,22 +7,18 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/internal/shared/types"
 )
 
 // SecurityComplianceManager manages security and compliance for ABAC
@@ -94,6 +90,26 @@ func NewSecurityComplianceManager(
 	}
 }
 
+func (scm *securityComplianceManager) ValidateSecurityContext(ctx context.Context, req *SecurityContextValidationRequest) (*SecurityValidationResult, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "ValidateSecurityContext is not implemented")
+}
+
+func (scm *securityComplianceManager) EnforceSecurityPolicies(ctx context.Context, req *SecurityEnforcementRequest) (*SecurityEnforcementResult, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "EnforceSecurityPolicies is not implemented")
+}
+
+func (scm *securityComplianceManager) ExportAuditLog(ctx context.Context, req *AuditExportRequest) (*AuditExportResult, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "ExportAuditLog is not implemented")
+}
+
+func (scm *securityComplianceManager) GenerateSecurityMetrics(ctx context.Context, req *SecurityMetricsRequest) (*SecurityMetrics, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GenerateSecurityMetrics is not implemented")
+}
+
+func (scm *securityComplianceManager) UpdateRiskProfile(ctx context.Context, req *RiskProfileUpdateRequest) (*RiskProfile, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "UpdateRiskProfile is not implemented")
+}
+
 // Data Protection Implementation
 
 type EncryptionService struct {
@@ -123,19 +139,19 @@ func NewEncryptionService(key []byte) *EncryptionService {
 }
 
 func (scm *securityComplianceManager) EncryptSensitiveData(ctx context.Context, req *EncryptDataRequest) (*EncryptedDataResult, error) {
-	span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.EncryptSensitiveData")
+	ctx, span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.EncryptSensitiveData", nil)
 	defer span.End()
 
 	startTime := time.Now()
 	defer func() {
 		duration := time.Since(startTime)
-		scm.metrics.RecordHistogram("abac.security.encryption.duration",
-			duration.Seconds(), map[string]string{"data_type": req.DataType})
+		scm.metrics.ObserveHistogram("abac.security.encryption.duration",
+			duration.Seconds(), metrics.Fields{"data_type": req.DataType})
 	}()
 
 	// Validate request
 	if err := scm.validateEncryptionRequest(req); err != nil {
-		return nil, errors.Wrap(err, "encryption request validation failed")
+		return nil, fmt.Errorf("encryption request validation failed: %w", err)
 	}
 
 	// Apply data classification
@@ -154,8 +170,8 @@ func (scm *securityComplianceManager) EncryptSensitiveData(ctx context.Context, 
 	// Encrypt data
 	encryptedData, err := scm.encryptionService.Encrypt(req.Data, req.AdditionalData)
 	if err != nil {
-		scm.logger.Error("Failed to encrypt data", "error", err, "data_type", req.DataType)
-		return nil, errors.Wrap(err, "data encryption failed")
+		scm.logger.Error("Failed to encrypt data", logger.Fields{"error": err, "data_type": req.DataType})
+		return nil, fmt.Errorf("data encryption failed: %w", err)
 	}
 
 	// Record audit event
@@ -175,13 +191,15 @@ func (scm *securityComplianceManager) EncryptSensitiveData(ctx context.Context, 
 	}
 
 	if err := scm.RecordAuditEvent(ctx, auditReq); err != nil {
-		scm.logger.Error("Failed to record encryption audit event", "error", err)
+		scm.logger.Error("Failed to record encryption audit event", logger.Fields{"error": err})
 	}
 
 	scm.logger.Debug("Data encrypted successfully",
-		"data_type", req.DataType,
-		"classification", classification,
-		"security_level", req.SecurityLevel)
+		logger.Fields{
+			"data_type":      req.DataType,
+			"classification": classification,
+			"security_level": req.SecurityLevel,
+		})
 
 	return &EncryptedDataResult{
 		EncryptedData:    encryptedData,
@@ -197,19 +215,19 @@ func (scm *securityComplianceManager) EncryptSensitiveData(ctx context.Context, 
 }
 
 func (scm *securityComplianceManager) DecryptSensitiveData(ctx context.Context, req *DecryptDataRequest) (*DecryptedDataResult, error) {
-	span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.DecryptSensitiveData")
+	ctx, span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.DecryptSensitiveData")
 	defer span.End()
 
 	// Validate access permissions
 	if err := scm.validateDecryptionAccess(ctx, req); err != nil {
-		return nil, errors.Wrap(err, "decryption access denied")
+		return nil, fmt.Errorf("decryption access denied: %w", err)
 	}
 
 	// Decrypt data
 	decryptedData, err := scm.encryptionService.Decrypt(req.EncryptedData, req.AdditionalData)
 	if err != nil {
-		scm.logger.Error("Failed to decrypt data", "error", err)
-		return nil, errors.Wrap(err, "data decryption failed")
+		scm.logger.Error("Failed to decrypt data", logger.Fields{"error": err})
+		return nil, fmt.Errorf("data decryption failed: %w", err)
 	}
 
 	// Record audit event
@@ -226,7 +244,7 @@ func (scm *securityComplianceManager) DecryptSensitiveData(ctx context.Context, 
 	}
 
 	if err := scm.RecordAuditEvent(ctx, auditReq); err != nil {
-		scm.logger.Error("Failed to record decryption audit event", "error", err)
+		scm.logger.Error("Failed to record decryption audit event", logger.Fields{"error": err})
 	}
 
 	return &DecryptedDataResult{
@@ -258,7 +276,7 @@ func NewAuditLogger(repo repository.AuditLogRepository, logger logger.Logger) *A
 }
 
 func (scm *securityComplianceManager) RecordAuditEvent(ctx context.Context, req *AuditEventRequest) error {
-	span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.RecordAuditEvent")
+	ctx, span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.RecordAuditEvent")
 	defer span.End()
 
 	// Create audit event
@@ -279,42 +297,92 @@ func (scm *securityComplianceManager) RecordAuditEvent(ctx context.Context, req 
 
 	// Add to audit buffer
 	if err := scm.auditLogger.Buffer(auditEvent); err != nil {
-		scm.logger.Error("Failed to buffer audit event", "error", err)
-		return errors.Wrap(err, "audit event buffering failed")
+		scm.logger.Error("Failed to buffer audit event", logger.Fields{"error": err})
+		return fmt.Errorf("audit event buffering failed: %w", err)
 	}
 
 	// Record security metrics
-	scm.metrics.RecordCounter("abac.audit.event", 1, map[string]string{
+	scm.metrics.IncrementCounter("abac.audit.event", metrics.Fields{
 		"event_type":    string(req.EventType),
 		"action":        req.Action,
 		"resource_type": req.ResourceType,
 	})
 
 	scm.logger.Debug("Audit event recorded",
-		"event_type", req.EventType,
-		"actor_id", req.ActorID,
-		"action", req.Action)
+		logger.Fields{
+			"event_type": req.EventType,
+			"actor_id":   req.ActorID,
+			"action":     req.Action,
+		})
 
 	return nil
 }
 
 func (scm *securityComplianceManager) QueryAuditLog(ctx context.Context, req *AuditQueryRequest) (*AuditQueryResult, error) {
-	span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.QueryAuditLog")
+	ctx, span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.QueryAuditLog")
 	defer span.End()
 
 	// Validate query permissions
 	if err := scm.validateAuditQueryAccess(ctx, req); err != nil {
-		return nil, errors.Wrap(err, "audit query access denied")
+		return nil, fmt.Errorf("audit query access denied: %w", err)
 	}
 
 	// Build query filters
-	filters := scm.buildAuditFilters(req)
+	getLogsReq := &repository.GetAuditLogsRequest{
+		StartTime:  req.StartTime,
+		EndTime:    req.EndTime,
+		UserID:     req.ActorID,
+		Limit:      int32(req.PageSize),
+		Offset:     int32(req.Page * req.PageSize),
+		EntityType: req.ResourceType,
+	}
+	if req.EventType != nil {
+		getLogsReq.EventType = string(*req.EventType)
+	}
 
 	// Execute query
-	events, totalCount, err := scm.auditRepo.QueryAuditEvents(ctx, filters, req.Page, req.PageSize)
+	auditLogEntries, err := scm.auditRepo.GetAuditLogs(ctx, getLogsReq)
 	if err != nil {
-		scm.logger.Error("Failed to query audit log", "error", err)
-		return nil, errors.Wrap(err, "audit log query failed")
+		scm.logger.Error("Failed to query audit log", logger.Fields{"error": err})
+		return nil, fmt.Errorf("audit log query failed: %w", err)
+	}
+
+	// Convert audit log entries to audit events
+	events := make([]AuditEvent, len(auditLogEntries))
+	for i, entry := range auditLogEntries {
+		var resourceID *uuid.UUID
+		if entry.EntityID != uuid.Nil {
+			id := entry.EntityID
+			resourceID = &id
+		}
+		var actorID *uuid.UUID
+		if entry.UserID != uuid.Nil {
+			id := entry.UserID
+			actorID = &id
+		}
+		var ipAddress *string
+		if entry.IPAddress != "" {
+			ip := entry.IPAddress
+			ipAddress = &ip
+		}
+		var userAgent *string
+		if entry.UserAgent != "" {
+			ua := entry.UserAgent
+			userAgent = &ua
+		}
+
+		events[i] = AuditEvent{
+			ID:           entry.ID,
+			EventType:    AuditEventType(entry.EventType),
+			ActorID:      actorID,
+			ResourceType: entry.EntityType,
+			ResourceID:   resourceID,
+			Action:       entry.Action,
+			Details:      entry.Details,
+			Timestamp:    entry.CreatedAt,
+			IPAddress:    ipAddress,
+			UserAgent:    userAgent,
+		}
 	}
 
 	// Record audit query event
@@ -324,19 +392,19 @@ func (scm *securityComplianceManager) QueryAuditLog(ctx context.Context, req *Au
 		ResourceType: "audit_log",
 		Action:       "query",
 		Details: map[string]interface{}{
-			"filters":      filters,
+			"filters":      getLogsReq,
 			"result_count": len(events),
 		},
 		Timestamp: time.Now(),
 	}
 
 	if err := scm.RecordAuditEvent(ctx, queryAuditReq); err != nil {
-		scm.logger.Error("Failed to record audit query event", "error", err)
+		scm.logger.Error("Failed to record audit query event", logger.Fields{"error": err})
 	}
 
 	return &AuditQueryResult{
 		Events:     events,
-		TotalCount: totalCount,
+		TotalCount: len(events), // Not ideal, but the repo doesn't return total count
 		Page:       req.Page,
 		PageSize:   req.PageSize,
 	}, nil
@@ -363,32 +431,32 @@ func NewComplianceEngine() *ComplianceEngine {
 }
 
 func (scm *securityComplianceManager) GenerateComplianceReport(ctx context.Context, req *ComplianceReportRequest) (*ComplianceReport, error) {
-	span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.GenerateComplianceReport")
+	ctx, span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.GenerateComplianceReport")
 	defer span.End()
 
 	startTime := time.Now()
 	defer func() {
 		duration := time.Since(startTime)
-		scm.metrics.RecordHistogram("abac.compliance.report_generation.duration",
-			duration.Seconds(), map[string]string{"framework": string(req.Framework)})
+		scm.metrics.ObserveHistogram("abac.compliance.report_generation.duration",
+			duration.Seconds(), metrics.Fields{"framework": string(req.Framework)})
 	}()
 
 	// Validate compliance framework
 	framework, err := scm.complianceEngine.GetFramework(req.Framework)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid compliance framework")
+		return nil, fmt.Errorf("invalid compliance framework: %w", err)
 	}
 
 	// Collect compliance data
 	data, err := scm.collectComplianceData(ctx, req)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to collect compliance data")
+		return nil, fmt.Errorf("failed to collect compliance data: %w", err)
 	}
 
 	// Generate framework-specific report
 	report, err := scm.generateFrameworkReport(ctx, framework, data, req)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to generate compliance report")
+		return nil, fmt.Errorf("failed to generate compliance report: %w", err)
 	}
 
 	// Record audit event
@@ -407,25 +475,27 @@ func (scm *securityComplianceManager) GenerateComplianceReport(ctx context.Conte
 	}
 
 	if err := scm.RecordAuditEvent(ctx, auditReq); err != nil {
-		scm.logger.Error("Failed to record compliance report audit event", "error", err)
+		scm.logger.Error("Failed to record compliance report audit event", logger.Fields{"error": err})
 	}
 
 	scm.logger.Info("Compliance report generated",
-		"framework", req.Framework,
-		"period", fmt.Sprintf("%v to %v", req.PeriodStart, req.PeriodEnd),
-		"findings_count", len(report.Findings))
+		logger.Fields{
+			"framework":      req.Framework,
+			"period":         fmt.Sprintf("%v to %v", req.PeriodStart, req.PeriodEnd),
+			"findings_count": len(report.Findings),
+		})
 
 	return report, nil
 }
 
 func (scm *securityComplianceManager) ValidateComplianceRequirements(ctx context.Context, req *ComplianceValidationRequest) (*ComplianceValidationResult, error) {
-	span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.ValidateComplianceRequirements")
+	ctx, span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.ValidateComplianceRequirements")
 	defer span.End()
 
 	// Get compliance rules for framework
 	rules, err := scm.complianceEngine.GetFrameworkRules(req.Framework)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get compliance rules")
+		return nil, fmt.Errorf("failed to get compliance rules: %w", err)
 	}
 
 	// Validate against each rule
@@ -434,7 +504,7 @@ func (scm *securityComplianceManager) ValidateComplianceRequirements(ctx context
 	for _, rule := range rules {
 		violation, err := scm.validateComplianceRule(ctx, rule, req.Context)
 		if err != nil {
-			scm.logger.Error("Failed to validate compliance rule", "error", err, "rule_id", rule.ID)
+			scm.logger.Error("Failed to validate compliance rule", logger.Fields{"error": err, "rule_id": rule.ID})
 			continue
 		}
 
@@ -479,7 +549,7 @@ func NewPrivacyController() *PrivacyController {
 }
 
 func (scm *securityComplianceManager) ApplyPrivacyFilters(ctx context.Context, req *PrivacyFilterRequest) (*PrivacyFilterResult, error) {
-	span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.ApplyPrivacyFilters")
+	ctx, span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.ApplyPrivacyFilters")
 	defer span.End()
 
 	// Determine applicable privacy regulations
@@ -492,13 +562,13 @@ func (scm *securityComplianceManager) ApplyPrivacyFilters(ctx context.Context, r
 	for _, regulation := range regulations {
 		processor, err := scm.privacyController.GetDataProcessor(regulation)
 		if err != nil {
-			scm.logger.Error("Failed to get data processor", "error", err, "regulation", regulation)
+			scm.logger.Error("Failed to get data processor", logger.Fields{"error": err, "regulation": regulation})
 			continue
 		}
 
 		filtered, filters, err := processor.ApplyFilters(ctx, filteredData, req.DataContext)
 		if err != nil {
-			scm.logger.Error("Failed to apply privacy filters", "error", err, "regulation", regulation)
+			scm.logger.Error("Failed to apply privacy filters", logger.Fields{"error": err, "regulation": regulation})
 			continue
 		}
 
@@ -509,7 +579,7 @@ func (scm *securityComplianceManager) ApplyPrivacyFilters(ctx context.Context, r
 	// Check consent requirements
 	consentRequired, err := scm.privacyController.CheckConsentRequirements(ctx, req.DataContext)
 	if err != nil {
-		scm.logger.Error("Failed to check consent requirements", "error", err)
+		scm.logger.Error("Failed to check consent requirements", logger.Fields{"error": err})
 	}
 
 	result := &PrivacyFilterResult{
@@ -524,12 +594,12 @@ func (scm *securityComplianceManager) ApplyPrivacyFilters(ctx context.Context, r
 }
 
 func (scm *securityComplianceManager) ProcessDataSubjectRequest(ctx context.Context, req *DataSubjectRequest) (*DataSubjectResponse, error) {
-	span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.ProcessDataSubjectRequest")
+	ctx, span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.ProcessDataSubjectRequest")
 	defer span.End()
 
 	// Validate data subject identity
 	if err := scm.validateDataSubjectIdentity(ctx, req); err != nil {
-		return nil, errors.Wrap(err, "data subject identity validation failed")
+		return nil, fmt.Errorf("data subject identity validation failed: %w", err)
 	}
 
 	// Process request based on type
@@ -548,11 +618,11 @@ func (scm *securityComplianceManager) ProcessDataSubjectRequest(ctx context.Cont
 	case DataSubjectRequestTypeRestriction:
 		response, err = scm.processDataRestrictionRequest(ctx, req)
 	default:
-		return nil, errors.NewInvalidInputError("unsupported data subject request type", "type", req.RequestType)
+		return nil, errors.ErrInvalidInput.WithDetail("type", string(req.RequestType))
 	}
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to process data subject request")
+		return nil, fmt.Errorf("failed to process data subject request: %w", err)
 	}
 
 	// Record audit event
@@ -570,13 +640,15 @@ func (scm *securityComplianceManager) ProcessDataSubjectRequest(ctx context.Cont
 	}
 
 	if err := scm.RecordAuditEvent(ctx, auditReq); err != nil {
-		scm.logger.Error("Failed to record data subject request audit event", "error", err)
+		scm.logger.Error("Failed to record data subject request audit event", logger.Fields{"error": err})
 	}
 
 	scm.logger.Info("Data subject request processed",
-		"request_type", req.RequestType,
-		"subject_id", req.SubjectID,
-		"status", response.Status)
+		logger.Fields{
+			"request_type": req.RequestType,
+			"subject_id":   req.SubjectID,
+			"status":       response.Status,
+		})
 
 	return response, nil
 }
@@ -584,7 +656,7 @@ func (scm *securityComplianceManager) ProcessDataSubjectRequest(ctx context.Cont
 // Security Monitoring Implementation
 
 type SecurityMonitor struct {
-	anomalyDetectors map[string]AnomalyDetector
+	anomalyDetectors map[string]SecurityAnomalyDetector
 	alertManager     *SecurityAlertManager
 	threatDetector   *ThreatDetector
 	riskCalculator   *RiskCalculator
@@ -593,7 +665,7 @@ type SecurityMonitor struct {
 
 func NewSecurityMonitor() *SecurityMonitor {
 	return &SecurityMonitor{
-		anomalyDetectors: make(map[string]AnomalyDetector),
+		anomalyDetectors: make(map[string]SecurityAnomalyDetector),
 		alertManager:     NewSecurityAlertManager(),
 		threatDetector:   NewThreatDetector(),
 		riskCalculator:   NewRiskCalculator(),
@@ -601,13 +673,13 @@ func NewSecurityMonitor() *SecurityMonitor {
 }
 
 func (scm *securityComplianceManager) DetectSecurityAnomalies(ctx context.Context, req *SecurityAnomalyRequest) (*SecurityAnomalyResult, error) {
-	span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.DetectSecurityAnomalies")
+	ctx, span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.DetectSecurityAnomalies")
 	defer span.End()
 
 	// Collect security events
 	events, err := scm.collectSecurityEvents(ctx, req)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to collect security events")
+		return nil, fmt.Errorf("failed to collect security events: %w", err)
 	}
 
 	// Detect anomalies using various detectors
@@ -616,7 +688,7 @@ func (scm *securityComplianceManager) DetectSecurityAnomalies(ctx context.Contex
 	for detectorName, detector := range scm.securityMonitor.anomalyDetectors {
 		detected, err := detector.DetectAnomalies(ctx, events)
 		if err != nil {
-			scm.logger.Error("Anomaly detection failed", "error", err, "detector", detectorName)
+			scm.logger.Error("Anomaly detection failed", logger.Fields{"error": err, "detector": detectorName})
 			continue
 		}
 
@@ -632,7 +704,7 @@ func (scm *securityComplianceManager) DetectSecurityAnomalies(ctx context.Contex
 		if anomaly.Severity >= SecuritySeverityMedium {
 			alert, err := scm.securityMonitor.alertManager.CreateAlert(ctx, anomaly)
 			if err != nil {
-				scm.logger.Error("Failed to create security alert", "error", err)
+				scm.logger.Error("Failed to create security alert", logger.Fields{"error": err})
 				continue
 			}
 			alerts = append(alerts, *alert)
@@ -670,13 +742,13 @@ func NewRiskAssessor() *RiskAssessor {
 }
 
 func (scm *securityComplianceManager) AssessSecurityRisk(ctx context.Context, req *SecurityRiskRequest) (*SecurityRiskAssessment, error) {
-	span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.AssessSecurityRisk")
+	ctx, span := scm.tracer.StartSpan(ctx, "SecurityComplianceManager.AssessSecurityRisk")
 	defer span.End()
 
 	// Collect risk factors
 	factors, err := scm.collectRiskFactors(ctx, req)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to collect risk factors")
+		return nil, fmt.Errorf("failed to collect risk factors: %w", err)
 	}
 
 	// Apply risk models
@@ -685,7 +757,7 @@ func (scm *securityComplianceManager) AssessSecurityRisk(ctx context.Context, re
 	for modelName, model := range scm.riskAssessor.riskModels {
 		score, err := model.CalculateRisk(factors)
 		if err != nil {
-			scm.logger.Error("Risk calculation failed", "error", err, "model", modelName)
+			scm.logger.Error("Risk calculation failed", logger.Fields{"error": err, "model": modelName})
 			continue
 		}
 
@@ -724,7 +796,7 @@ func (es *EncryptionService) Encrypt(data string, additionalData []byte) (string
 	// Generate nonce
 	nonce := make([]byte, es.gcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return "", errors.Wrap(err, "failed to generate nonce")
+		return "", fmt.Errorf("failed to generate nonce: %w", err)
 	}
 
 	// Encrypt data
@@ -742,13 +814,13 @@ func (es *EncryptionService) Decrypt(encryptedData string, additionalData []byte
 	// Decode from base64
 	ciphertext, err := base64.StdEncoding.DecodeString(encryptedData)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to decode base64")
+		return "", fmt.Errorf("failed to decode base64: %w", err)
 	}
 
 	// Extract nonce
 	nonceSize := es.gcm.NonceSize()
 	if len(ciphertext) < nonceSize {
-		return "", errors.NewInvalidInputError("ciphertext too short", "length", len(ciphertext))
+		return "", fmt.Errorf("ciphertext too short: length %d", len(ciphertext))
 	}
 
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
@@ -756,7 +828,7 @@ func (es *EncryptionService) Decrypt(encryptedData string, additionalData []byte
 	// Decrypt data
 	plaintext, err := es.gcm.Open(nil, nonce, ciphertext, additionalData)
 	if err != nil {
-		return "", errors.Wrap(err, "decryption failed")
+		return "", fmt.Errorf("decryption failed: %w", err)
 	}
 
 	return string(plaintext), nil
@@ -800,8 +872,33 @@ func (al *AuditLogger) flush() {
 	// Write to repository
 	ctx := context.Background()
 	for _, event := range events {
-		if err := al.repo.CreateAuditEvent(ctx, &event); err != nil {
-			al.logger.Error("Failed to persist audit event", "error", err, "event_id", event.ID)
+		var userID, entityID uuid.UUID
+		if event.ActorID != nil {
+			userID = *event.ActorID
+		}
+		if event.ResourceID != nil {
+			entityID = *event.ResourceID
+		}
+		var ipAddress, userAgent string
+		if event.IPAddress != nil {
+			ipAddress = *event.IPAddress
+		}
+		if event.UserAgent != nil {
+			userAgent = *event.UserAgent
+		}
+
+		req := &repository.CreateAuditLogRequest{
+			EventType:  string(event.EventType),
+			EntityID:   entityID,
+			EntityType: event.ResourceType,
+			UserID:     userID,
+			Action:     event.Action,
+			Details:    event.Details,
+			IPAddress:  ipAddress,
+			UserAgent:  userAgent,
+		}
+		if err := al.repo.CreateAuditLog(ctx, req); err != nil {
+			al.logger.Error("Failed to persist audit event", logger.Fields{"error": err, "event_id": event.ID})
 		}
 	}
 }
@@ -810,10 +907,10 @@ func (al *AuditLogger) flush() {
 
 func (scm *securityComplianceManager) validateEncryptionRequest(req *EncryptDataRequest) error {
 	if req.Data == "" {
-		return errors.NewInvalidInputError("data is required for encryption", "data", "empty")
+		return errors.ErrInvalidInput.WithDetail("data", "empty")
 	}
 	if req.DataType == "" {
-		return errors.NewInvalidInputError("data type is required", "data_type", "empty")
+		return errors.ErrInvalidInput.WithDetail("data_type", "empty")
 	}
 	return nil
 }
@@ -909,7 +1006,7 @@ func (ce *ComplianceEngine) GetFramework(framework ComplianceFramework) (*Framew
 
 	config, exists := ce.frameworks[framework]
 	if !exists {
-		return nil, errors.NewNotFoundError("compliance framework not found", "framework", framework)
+		return nil, errors.ErrNotFound.WithDetail("framework", string(framework))
 	}
 
 	return config, nil
@@ -1119,7 +1216,8 @@ type ComplianceStatus string
 const (
 	ComplianceStatusCompliant    ComplianceStatus = "compliant"
 	ComplianceStatusNonCompliant ComplianceStatus = "non_compliant"
-	ComplianceStatusPartial      ComplianceStatus = "partial"
+	ComplianceStatusInProgress   ComplianceStatus = "in_progress"
+	ComplianceStatusError        ComplianceStatus = "error"
 )
 
 type RiskLevel string
@@ -1208,7 +1306,8 @@ type DataSubjectResponse struct {
 	Status string `json:"status"`
 }
 
-type AnomalyDetector interface {
+// AnomalyDetector type already defined in monitoring_service.go - using SecurityAnomalyDetector
+type SecurityAnomalyDetector interface {
 	DetectAnomalies(ctx context.Context, events []SecurityEvent) ([]SecurityAnomaly, error)
 }
 

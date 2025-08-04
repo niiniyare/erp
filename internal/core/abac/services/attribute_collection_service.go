@@ -69,7 +69,7 @@ type attributeCollectionService struct {
 	identityRepo identity.Repository
 	cache        cache.Service
 	tracing      tracing.TracingService
-	metrics      metrics.Provider
+	metrics      metrics.MetricsProvider
 	logger       logger.Logger
 }
 
@@ -80,7 +80,7 @@ func NewAttributeCollectionService(
 	identityRepo identity.Repository,
 	cache cache.Service,
 	tracing tracing.TracingService,
-	metrics metrics.Provider,
+	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) AttributeCollectionService {
 	return &attributeCollectionService{
@@ -629,7 +629,7 @@ func (s *attributeCollectionService) ValidateAttributes(ctx context.Context, att
 		attrDef, err := s.attrDefRepo.GetAttributeDefinitionByName(ctx, name)
 		if err != nil {
 			// If attribute definition not found, skip validation but log warning
-			if errors.IsBusinessError(err, "ATTRIBUTE_NOT_FOUND") {
+			if errors.IsBusinessErrorCode(err, "ATTRIBUTE_NOT_FOUND") {
 				s.logger.WarnContext(ctx, "Attribute definition not found for collected attribute",
 					logger.Fields{"attribute_name": name})
 				continue
@@ -1044,7 +1044,7 @@ func (s *attributeCollectionService) recordCollectionMetrics(ctx context.Context
 		"category", "status",
 	)
 
-	counter.Inc(ctx, metrics.Fields{
+	counter.Inc(metrics.Fields{
 		"category": category,
 		"status":   status,
 	})
@@ -1057,7 +1057,7 @@ func (s *attributeCollectionService) recordCollectionMetrics(ctx context.Context
 		"category", "status",
 	)
 
-	histogram.Observe(ctx, duration.Seconds(), metrics.Fields{
+	histogram.Observe(duration.Seconds(), metrics.Fields{
 		"category": category,
 		"status":   status,
 	})
@@ -1071,7 +1071,7 @@ func (s *attributeCollectionService) recordCollectionMetrics(ctx context.Context
 			"category", "status",
 		)
 
-		countHist.Observe(ctx, float64(count), metrics.Fields{
+		countHist.Observe(float64(count), metrics.Fields{
 			"category": category,
 			"status":   status,
 		})

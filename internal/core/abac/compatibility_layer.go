@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -15,6 +14,11 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 	"github.com/niiniyare/erp/internal/shared/types"
 )
+
+// Missing type definitions
+type HybridEvaluator interface {
+	EvaluateHybrid(ctx context.Context, req interface{}) (interface{}, error)
+}
 
 // CompatibilityLayer provides RBAC-ABAC compatibility features
 type CompatibilityLayer interface {
@@ -158,13 +162,7 @@ type CompatibilityIssue struct {
 }
 
 func (cl *compatibilityLayer) EvaluateLegacyRBAC(ctx context.Context, req *LegacyRBACRequest) (*LegacyRBACResult, error) {
-	ctx, span := cl.tracer.StartSpan(ctx, "abac.compatibility_layer.EvaluateLegacyRBAC",
-		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", req.UserID.String()),
-			tracing.StringAttribute("resource_type", req.ResourceType),
-			tracing.StringAttribute("action", req.Action),
-			tracing.StringAttribute("legacy_mode", string(req.LegacyMode)),
-		))
+	ctx, span := cl.tracer.StartSpan(ctx, "abac.compatibility_layer.EvaluateLegacyRBAC")
 	defer span.End()
 
 	startTime := time.Now()
@@ -211,8 +209,8 @@ func (cl *compatibilityLayer) EvaluateLegacyRBAC(ctx context.Context, req *Legac
 		Timestamp:           time.Now(),
 	}
 
-	cl.metrics.IncrementSuccessCount("compatibility_layer_legacy_rbac")
-	cl.metrics.RecordGauge("legacy_rbac_decision_allow",
+	cl.metrics.IncrementCounter("compatibility_layer_legacy_rbac", metrics.Fields{})
+	cl.metrics.SetGauge("legacy_rbac_decision_allow",
 		func() float64 {
 			if decision == types.PolicyDecisionAllow {
 				return 1
@@ -319,11 +317,7 @@ type TranslationValidation struct {
 }
 
 func (cl *compatibilityLayer) TranslateRBACToABAC(ctx context.Context, req *RBACTranslationRequest) (*RBACTranslationResult, error) {
-	ctx, span := cl.tracer.StartSpan(ctx, "abac.compatibility_layer.TranslateRBACToABAC",
-		tracing.WithAttributes(
-			tracing.StringAttribute("translation_mode", string(req.TranslationMode)),
-			tracing.StringAttribute("role_name", req.RoleName),
-		))
+	ctx, span := cl.tracer.StartSpan(ctx, "abac.compatibility_layer.TranslateRBACToABAC")
 	defer span.End()
 
 	startTime := time.Now()
@@ -384,10 +378,10 @@ func (cl *compatibilityLayer) TranslateRBACToABAC(ctx context.Context, req *RBAC
 		Timestamp:         time.Now(),
 	}
 
-	cl.metrics.IncrementSuccessCount("compatibility_layer_translation")
-	cl.metrics.RecordGauge("translation_policies_created", float64(len(createdPolicies)),
+	cl.metrics.IncrementCounter("compatibility_layer_translation", metrics.Fields{})
+	cl.metrics.SetGauge("translation_policies_created", float64(len(createdPolicies)),
 		metrics.Fields{"mode": string(req.TranslationMode)})
-	cl.metrics.RecordGauge("translation_attributes_created", float64(len(createdAttributes)),
+	cl.metrics.SetGauge("translation_attributes_created", float64(len(createdAttributes)),
 		metrics.Fields{"mode": string(req.TranslationMode)})
 
 	cl.logger.InfoContext(ctx, "RBAC to ABAC translation completed",
@@ -442,22 +436,8 @@ type ResourceCriteria struct {
 	Categories    []string    `json:"categories,omitempty"`
 }
 
-type FallbackStrategy struct {
-	PrimaryMode       HybridEvaluationMode `json:"primary_mode"`
-	FallbackMode      HybridEvaluationMode `json:"fallback_mode"`
-	TriggerConditions []FallbackTrigger    `json:"trigger_conditions"`
-	AutoRollback      bool                 `json:"auto_rollback"`
-	AlertThresholds   map[string]float64   `json:"alert_thresholds"`
-}
-
-type FallbackTrigger string
-
-const (
-	FallbackTriggerErrorRate        FallbackTrigger = "error_rate"
-	FallbackTriggerLatency          FallbackTrigger = "latency"
-	FallbackTriggerAvailability     FallbackTrigger = "availability"
-	FallbackTriggerDecisionMismatch FallbackTrigger = "decision_mismatch"
-)
+// FallbackStrategy and FallbackTrigger types moved to shared_types.go
+// Use SystemFallbackStrategy for this struct type
 
 type MonitoringConfig struct {
 	EnableDetailedLogging bool          `json:"enable_detailed_logging"`
@@ -560,11 +540,7 @@ type SafetyMeasure struct {
 }
 
 func (cl *compatibilityLayer) ConfigureGradualMigration(ctx context.Context, req *GradualMigrationConfig) (*GradualMigrationResult, error) {
-	ctx, span := cl.tracer.StartSpan(ctx, "abac.compatibility_layer.ConfigureGradualMigration",
-		tracing.WithAttributes(
-			tracing.StringAttribute("config_name", req.ConfigName),
-			tracing.IntAttribute("phases_count", len(req.MigrationPhases)),
-		))
+	ctx, span := cl.tracer.StartSpan(ctx, "abac.compatibility_layer.ConfigureGradualMigration")
 	defer span.End()
 
 	startTime := time.Now()
@@ -605,8 +581,8 @@ func (cl *compatibilityLayer) ConfigureGradualMigration(ctx context.Context, req
 		Timestamp:           time.Now(),
 	}
 
-	cl.metrics.IncrementSuccessCount("compatibility_layer_gradual_migration_configured")
-	cl.metrics.RecordGauge("gradual_migration_phases", float64(len(req.MigrationPhases)),
+	cl.metrics.IncrementCounter("compatibility_layer_gradual_migration_configured", metrics.Fields{})
+	cl.metrics.SetGauge("gradual_migration_phases", float64(len(req.MigrationPhases)),
 		metrics.Fields{"config_id": req.ConfigID.String()})
 
 	cl.logger.InfoContext(ctx, "Gradual migration configured successfully",

@@ -40,16 +40,55 @@ RETURNING *;
 DELETE FROM attribute_definitions
 WHERE id = $1 AND tenant_id = current_tenant_id();
 
+-- name: SoftDeleteAttributeDefinition :exec
+UPDATE attribute_definitions
+SET deleted_at = NOW()
+WHERE id = $1 AND tenant_id = current_tenant_id();
+
+-- name: GetAttributeDefinitionsByIDs :many
+SELECT * FROM attribute_definitions
+WHERE id = ANY($1::UUID[]) AND tenant_id = current_tenant_id();
+
+-- name: GetRequiredAttributeDefinitions :many
+SELECT * FROM attribute_definitions
+WHERE is_required = true AND tenant_id = current_tenant_id();
+
+
 -- Attribute Definition Listing and Filtering
 
 -- name: ListAttributeDefinitions :many
-SELECT * FROM attribute_definitions
+SELECT
+  id,
+  tenant_id,
+  name,
+  display_name,
+  description,
+  data_type,
+  category,
+  is_required,
+  is_sensitive,
+  default_value,
+  allowed_values,
+  validation_rules,
+  encryption_required,
+  is_active,
+  created_at
+FROM attribute_definitions
 WHERE tenant_id = current_tenant_id()
-  AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
-  AND ($2::VARCHAR IS NULL OR category = $2)
-  AND ($3::BOOLEAN IS NULL OR is_active = $3)
+  AND (
+    sqlc.arg('search')::VARCHAR IS NULL OR 
+    name ILIKE '%' || sqlc.arg('search') || '%'
+  )
+  AND (
+    sqlc.arg('category')::VARCHAR IS NULL OR 
+    category = sqlc.arg('category')
+  )
+  AND (
+    sqlc.arg('is_active')::BOOLEAN IS NULL OR 
+    is_active = sqlc.arg('is_active')
+  )
 ORDER BY name ASC
-LIMIT $4 OFFSET $5;
+LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: ListAttributeDefinitionsByCategory :many
 SELECT * FROM attribute_definitions
@@ -77,18 +116,42 @@ INSERT INTO attribute_values (
 SELECT av.*, ad.name as attribute_name, ad.data_type, ad.category
 FROM attribute_values av
 JOIN attribute_definitions ad ON av.definition_id = ad.id
-WHERE av.id = $1 
-  AND av.tenant_id = current_tenant_id();
+WHERE av.id = $1;
 
 -- name: GetAttributeValuesByEntity :many
-SELECT av.*, ad.name as attribute_name, ad.data_type, ad.category
+SELECT
+  av.id,
+  av.tenant_id,
+  av.entity_id,
+  av.definition_id,
+  av.value,
+  av.effective_from,
+  av.effective_to,
+  av.created_at,
+  ad.name AS attribute_name,
+  ad.data_type,
+  ad.category
 FROM attribute_values av
 JOIN attribute_definitions ad ON av.definition_id = ad.id
-WHERE av.entity_id = $1 
-  AND av.tenant_id = current_tenant_id()
-  AND ($2::VARCHAR IS NULL OR ad.category = $2)
-  AND (av.effective_to IS NULL OR av.effective_to > NOW())
+WHERE av.entity_id = sqlc.arg('entity_id')
+  AND (
+    sqlc.arg('category')::VARCHAR IS NULL OR 
+    ad.category = sqlc.arg('category')
+  )
+  AND (
+    av.effective_to IS NULL OR 
+    av.effective_to > NOW()
+  )
 ORDER BY ad.name ASC;
+-- -- name: GetAttributeValuesByEntity :many
+-- SELECT av.*, ad.name as attribute_name, ad.data_type, ad.category
+-- FROM attribute_values av
+-- JOIN attribute_definitions ad ON av.definition_id = ad.id
+-- WHERE av.entity_id = $1 
+--   AND av.tenant_id = current_tenant_id()
+--   AND ($2::VARCHAR IS NULL OR ad.category = $2)
+--   AND (av.effective_to IS NULL OR av.effective_to > NOW())
+-- ORDER BY ad.name ASC;
 
 -- name: GetAttributeValueByEntityAndName :one
 SELECT av.*, ad.name as attribute_name, ad.data_type, ad.category
@@ -122,7 +185,7 @@ WHERE id = $1 AND tenant_id = current_tenant_id();
 
 -- name: DeleteAttributeValue :exec
 DELETE FROM attribute_values 
-WHERE id = $1 AND tenant_id = current_tenant_id();
+WHERE definition_id = $1 AND entity_id = $2 AND tenant_id = current_tenant_id();
 
 -- name: GetAttributeStats :one
 SELECT 

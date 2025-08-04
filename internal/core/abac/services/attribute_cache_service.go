@@ -73,6 +73,33 @@ type AttributeCacheStats struct {
 	CacheSizeBytes       int64            `json:"cache_size_bytes"`
 }
 
+// AttributeCacheWrapper wraps an attribute with cache metadata
+type AttributeCacheWrapper struct {
+	AttributeValue *models.AttributeValue `json:"attribute_value"`
+	CachedAt       time.Time              `json:"cached_at"`
+	ExpiresAt      time.Time              `json:"expires_at"`
+	AccessCount    int64                  `json:"access_count"`
+	LastAccessed   time.Time              `json:"last_accessed"`
+}
+
+// AttributeCollectionWrapper wraps a collection of attributes with cache metadata
+type AttributeCollectionWrapper struct {
+	Attributes   map[string]*models.AttributeValue `json:"attributes"`
+	CachedAt     time.Time                         `json:"cached_at"`
+	ExpiresAt    time.Time                         `json:"expires_at"`
+	AccessCount  int64                             `json:"access_count"`
+	LastAccessed time.Time                         `json:"last_accessed"`
+}
+
+// AttributeContextWrapper wraps an attribute context with cache metadata
+type AttributeContextWrapper struct {
+	AttributeContext *models.AttributeContext `json:"attribute_context"`
+	CachedAt         time.Time                `json:"cached_at"`
+	ExpiresAt        time.Time                `json:"expires_at"`
+	AccessCount      int64                    `json:"access_count"`
+	LastAccessed     time.Time                `json:"last_accessed"`
+}
+
 // CacheKeyBuilder provides methods for building cache keys
 type CacheKeyBuilder struct {
 	tenantID uuid.UUID
@@ -87,7 +114,7 @@ func NewCacheKeyBuilder(tenantID uuid.UUID) *CacheKeyBuilder {
 type attributeCacheService struct {
 	cache   cache.Service
 	tracing tracing.TracingService
-	metrics metrics.Provider
+	metrics metrics.MetricsProvider
 	logger  logger.Logger
 }
 
@@ -95,7 +122,7 @@ type attributeCacheService struct {
 func NewAttributeCacheService(
 	cache cache.Service,
 	tracing tracing.TracingService,
-	metrics metrics.Provider,
+	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) AttributeCacheService {
 	return &attributeCacheService{
@@ -798,120 +825,92 @@ func (b *CacheKeyBuilder) hashAttributeCollectionRequest(req *AttributeCollectio
 	return finalHash[:32] // Use first 32 characters for reasonable key length
 }
 
-// ─── CACHE WRAPPER TYPES ─────────────────────────────────────────────
+// ─── HELPER METHODS ─────────────────────────────────────────────
 
-// // AttributeCacheWrapper wraps an attribute value with cache metadata
-// type AttributeCacheWrapper struct {
-// 	AttributeValue *models.AttributeValue `json:"attribute_value"`
-// 	CachedAt       time.Time              `json:"cached_at"`
-// 	ExpiresAt      time.Time              `json:"expires_at"`
-// 	AccessCount    int64                  `json:"access_count"`
-// 	LastAccessed   time.Time              `json:"last_accessed"`
-// }
-//
-// // AttributeCollectionWrapper wraps an attribute collection with cache metadata
-// type AttributeCollectionWrapper struct {
-// 	Attributes   map[string]*models.AttributeValue `json:"attributes"`
-// 	CachedAt     time.Time                         `json:"cached_at"`
-// 	ExpiresAt    time.Time                         `json:"expires_at"`
-// 	AccessCount  int64                             `json:"access_count"`
-// 	LastAccessed time.Time                         `json:"last_accessed"`
-// }
-//
-// // AttributeContextWrapper wraps an attribute context with cache metadata
-// type AttributeContextWrapper struct {
-// 	AttributeContext *models.AttributeContext `json:"attribute_context"`
-// 	CachedAt         time.Time                `json:"cached_at"`
-// 	ExpiresAt        time.Time                `json:"expires_at"`
-// 	AccessCount      int64                    `json:"access_count"`
-// 	LastAccessed     time.Time                `json:"last_accessed"`
-// }
-//
-// // ─── HELPER METHODS ─────────────────────────────────────────────
-//
-// // recordCacheMetrics records cache operation metrics
-// func (s *attributeCacheService) recordCacheMetrics(ctx context.Context, operation, status string, duration time.Duration) {
-// 	// Cache operation counter
-// 	counter := s.metrics.Counter(
-// 		"abac_attribute_cache_operations_total",
-// 		"Total number of attribute cache operations",
-// 		"operation", "status",
-// 	)
-//
-// 	counter.Inc(ctx, metrics.Fields{
-// 		"operation": operation,
-// 		"status":    status,
-// 	})
-//
-// 	// Cache operation duration histogram
-// 	histogram := s.metrics.Histogram(
-// 		"abac_attribute_cache_operation_duration_seconds",
-// 		"Duration of attribute cache operations",
-// 		metrics.StandardHTTPDurationBuckets(),
-// 		"operation", "status",
-// 	)
-//
-// 	histogram.Observe(ctx, duration.Seconds(), metrics.Fields{
-// 		"operation": operation,
-// 		"status":    status,
-// 	})
-// }
-//
-// // recordBatchCacheMetrics records batch cache operation metrics
-// func (s *attributeCacheService) recordBatchCacheMetrics(ctx context.Context, operation string, hitCount, missCount int, duration time.Duration) {
-// 	totalCount := hitCount + missCount
-// 	hitRate := 0.0
-// 	if totalCount > 0 {
-// 		hitRate = float64(hitCount) / float64(totalCount)
-// 	}
-//
-// 	// Batch operation counter
-// 	counter := s.metrics.Counter(
-// 		"abac_attribute_cache_batch_operations_total",
-// 		"Total number of batch attribute cache operations",
-// 		"operation",
-// 	)
-//
-// 	counter.Inc(ctx, metrics.Fields{
-// 		"operation": operation,
-// 	})
-//
-// 	// Batch hit rate histogram
-// 	hitRateHist := s.metrics.Histogram(
-// 		"abac_attribute_cache_batch_hit_rate",
-// 		"Hit rate for batch cache operations",
-// 		[]float64{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0},
-// 		"operation",
-// 	)
-//
-// 	hitRateHist.Observe(ctx, hitRate, metrics.Fields{
-// 		"operation": operation,
-// 	})
-//
-// 	// Batch size histogram
-// 	sizeHist := s.metrics.Histogram(
-// 		"abac_attribute_cache_batch_size",
-// 		"Size of batch cache operations",
-// 		[]float64{1, 5, 10, 20, 50, 100, 200, 500},
-// 		"operation",
-// 	)
-//
-// 	sizeHist.Observe(ctx, float64(totalCount), metrics.Fields{
-// 		"operation": operation,
-// 	})
-//
-// 	// Duration histogram
-// 	durationHist := s.metrics.Histogram(
-// 		"abac_attribute_cache_batch_duration_seconds",
-// 		"Duration of batch cache operations",
-// 		metrics.StandardHTTPDurationBuckets(),
-// 		"operation",
-// 	)
-//
-// 	durationHist.Observe(ctx, duration.Seconds(), metrics.Fields{
-// 		"operation": operation,
-// 	})
-// }
+// recordCacheMetrics records cache operation metrics
+func (s *attributeCacheService) recordCacheMetrics(ctx context.Context, operation, status string, duration time.Duration) {
+	// Cache operation counter
+	counter := s.metrics.Counter(
+		"abac_attribute_cache_operations_total",
+		"Total number of attribute cache operations",
+		"operation", "status",
+	)
+
+	counter.Inc(metrics.Fields{
+		"operation": operation,
+		"status":    status,
+	})
+
+	// Cache operation duration histogram
+	histogram := s.metrics.Histogram(
+		"abac_attribute_cache_operation_duration_seconds",
+		"Duration of attribute cache operations",
+		metrics.StandardHTTPDurationBuckets(),
+		"operation", "status",
+	)
+
+	histogram.Observe(duration.Seconds(), metrics.Fields{
+		"operation": operation,
+		"status":    status,
+	})
+}
+
+// recordBatchCacheMetrics records batch cache operation metrics
+func (s *attributeCacheService) recordBatchCacheMetrics(ctx context.Context, operation string, hitCount, missCount int, duration time.Duration) {
+	totalCount := hitCount + missCount
+	hitRate := 0.0
+	if totalCount > 0 {
+		hitRate = float64(hitCount) / float64(totalCount)
+	}
+
+	// Batch operation counter
+	counter := s.metrics.Counter(
+		"abac_attribute_cache_batch_operations_total",
+		"Total number of batch attribute cache operations",
+		"operation",
+	)
+
+	counter.Inc(metrics.Fields{
+		"operation": operation,
+	})
+
+	// Batch hit rate histogram
+	hitRateHist := s.metrics.Histogram(
+		"abac_attribute_cache_batch_hit_rate",
+		"Hit rate for batch cache operations",
+		[]float64{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0},
+		"operation",
+	)
+
+	hitRateHist.Observe(hitRate, metrics.Fields{
+		"operation": operation,
+	})
+
+	// Batch size histogram
+	sizeHist := s.metrics.Histogram(
+		"abac_attribute_cache_batch_size",
+		"Size of batch cache operations",
+		[]float64{1, 5, 10, 20, 50, 100, 200, 500},
+		"operation",
+	)
+
+	sizeHist.Observe(float64(totalCount), metrics.Fields{
+		"operation": operation,
+	})
+
+	// Duration histogram
+	durationHist := s.metrics.Histogram(
+		"abac_attribute_cache_batch_duration_seconds",
+		"Duration of batch cache operations",
+		metrics.StandardHTTPDurationBuckets(),
+		"operation",
+	)
+
+	durationHist.Observe(duration.Seconds(), metrics.Fields{
+		"operation": operation,
+	})
+}
+
 //
 //
 //   // hashAttributeCollectionRequest creates a hash of the collection request for cache key

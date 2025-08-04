@@ -50,14 +50,14 @@ CREATE POLICY policy_evaluations_tenant_isolation ON policy_evaluations
 -- Create indexes for performance
 CREATE INDEX idx_policy_evaluations_cache_lookup ON policy_evaluations(
     tenant_id, user_id, resource_type, resource_id, action, context_hash
-) WHERE expires_at > NOW();
+);
 
 CREATE INDEX idx_policy_evaluations_user_resource ON policy_evaluations(
     tenant_id, user_id, resource_type
-) WHERE expires_at > NOW();
+);
 
 CREATE INDEX idx_policy_evaluations_expires_at ON policy_evaluations(expires_at);
 
 CREATE INDEX idx_policy_evaluations_resource_action ON policy_evaluations(
     tenant_id, resource_type, action
-) WHERE expires_at > NOW();
+);

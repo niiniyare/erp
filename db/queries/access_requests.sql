@@ -52,10 +52,10 @@ LIMIT $2 OFFSET $3;
 -- name: CountAccessRequestsByStatus :one
 SELECT 
     COUNT(*) as total_requests,
-    COUNT(*) FILTER (WHERE approval_status = 'PENDING') as pending_requests,
-    COUNT(*) FILTER (WHERE approval_status = 'APPROVED') as approved_requests,
-    COUNT(*) FILTER (WHERE approval_status = 'REJECTED') as rejected_requests,
-    COUNT(*) FILTER (WHERE approval_status = 'EXPIRED') as expired_requests
+    SUM(CASE WHEN approval_status = 'PENDING' THEN 1 ELSE 0 END) as pending_requests,
+    SUM(CASE WHEN approval_status = 'APPROVED' THEN 1 ELSE 0 END) as approved_requests,
+    SUM(CASE WHEN approval_status = 'REJECTED' THEN 1 ELSE 0 END) as rejected_requests,
+    SUM(CASE WHEN approval_status = 'EXPIRED' THEN 1 ELSE 0 END) as expired_requests
 FROM access_requests
 WHERE tenant_id = current_tenant_id()
   AND created_at >= $1

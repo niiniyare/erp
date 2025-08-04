@@ -76,7 +76,7 @@ type ValidationContext struct {
 type attributeValidationService struct {
 	attrDefRepo repository.AttributeDefinitionRepository
 	tracing     tracing.TracingService
-	metrics     metrics.Provider
+	metrics     metrics.MetricsProvider
 	logger      logger.Logger
 }
 
@@ -84,7 +84,7 @@ type attributeValidationService struct {
 func NewAttributeValidationService(
 	attrDefRepo repository.AttributeDefinitionRepository,
 	tracing tracing.TracingService,
-	metrics metrics.Provider,
+	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) AttributeValidationService {
 	return &attributeValidationService{
@@ -110,7 +110,7 @@ func (s *attributeValidationService) ValidateAttribute(ctx context.Context, attr
 	}()
 
 	// Check if attribute is required
-	if definition.Required && (attrValue.Value == nil || isEmptyValue(attrValue.Value)) {
+	if definition.IsRequired && (attrValue.Value == nil || isEmptyValue(attrValue.Value)) {
 		err := errors.NewBusinessError("ATTRIBUTE_REQUIRED", "Required attribute is missing or empty").
 			WithDetail("attribute_name", attrValue.Name).
 			WithDetail("category", string(attrValue.Category))
@@ -132,8 +132,8 @@ func (s *attributeValidationService) ValidateAttribute(ctx context.Context, attr
 	}
 
 	// Validate constraints
-	if definition.Constraints != nil {
-		if err := s.ValidateConstraints(ctx, attrValue.Value, definition.Constraints); err != nil {
+	if definition.ValidationRules != nil {
+		if err := s.ValidateConstraints(ctx, attrValue.Value, definition.ValidationRules); err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, "Constraint validation failed")
 			return err
@@ -142,7 +142,12 @@ func (s *attributeValidationService) ValidateAttribute(ctx context.Context, attr
 
 	// Validate allowed values (enum validation)
 	if len(definition.AllowedValues) > 0 {
-		if err := s.ValidateEnumValues(ctx, attrValue.Value, definition.AllowedValues); err != nil {
+		// Convert []string to []interface{} for validation
+		allowedValues := make([]interface{}, len(definition.AllowedValues))
+		for i, v := range definition.AllowedValues {
+			allowedValues[i] = v
+		}
+		if err := s.ValidateEnumValues(ctx, attrValue.Value, allowedValues); err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, "Enum validation failed")
 			return err
@@ -181,12 +186,28 @@ func (s *attributeValidationService) ValidateAttributeCollection(ctx context.Con
 		attributeNames = append(attributeNames, name)
 	}
 
-	definitions, err := s.attrDefRepo.GetByNames(ctx, attributeNames)
+	// Use ListAttributeDefinitions to get all definitions, then filter by names
+	active := true
+	listReq := &repository.ListAttributeDefinitionsRequest{
+		IsActive: &active,
+	}
+	allDefinitions, err := s.attrDefRepo.ListAttributeDefinitions(ctx, listReq)
 	if err != nil {
 		span.RecordError(err)
-		span.SetStatus(codes.Error, "Failed to get attribute definitions")
-		return nil, errors.NewBusinessError("VALIDATION_DEFINITION_FETCH_FAILED", "Failed to fetch attribute definitions").
-			WithDetail("attribute_names", strings.Join(attributeNames, ", "))
+		span.SetStatus(codes.Error, "Failed to list attribute definitions")
+		return nil, err
+	}
+
+	// Filter by names
+	var definitions []*models.AttributeDefinition
+	nameSet := make(map[string]bool)
+	for _, name := range attributeNames {
+		nameSet[name] = true
+	}
+	for _, def := range allDefinitions {
+		if nameSet[def.Name] {
+			definitions = append(definitions, def)
+		}
 	}
 
 	// Create a map for quick definition lookup
@@ -491,36 +512,42 @@ func (s *attributeValidationService) GetValidationRules(ctx context.Context, att
 		tracing.WithAttributes(attribute.String("attribute.name", attributeName)))
 	defer span.End()
 
-	definition, err := s.attrDefRepo.GetByName(ctx, attributeName)
+	definition, err := s.attrDefRepo.GetAttributeDefinitionByName(ctx, attributeName)
 	if err != nil {
 		return nil, err
 	}
 
+	// Convert AllowedValues from []string to []interface{}
+	var allowedValues []interface{}
+	for _, v := range definition.AllowedValues {
+		allowedValues = append(allowedValues, v)
+	}
+
 	rules := &ValidationRules{
-		Required:      definition.Required,
+		Required:      definition.IsRequired,
 		DataType:      definition.DataType,
-		AllowedValues: definition.AllowedValues,
-		Constraints:   definition.Constraints,
+		AllowedValues: allowedValues,
+		Constraints:   definition.ValidationRules,
 	}
 
 	// Extract specific constraints
-	if definition.Constraints != nil {
-		if minLen, ok := definition.Constraints["min_length"].(int); ok {
+	if definition.ValidationRules != nil {
+		if minLen, ok := definition.ValidationRules["min_length"].(int); ok {
 			rules.MinLength = &minLen
 		}
-		if maxLen, ok := definition.Constraints["max_length"].(int); ok {
+		if maxLen, ok := definition.ValidationRules["max_length"].(int); ok {
 			rules.MaxLength = &maxLen
 		}
-		if minVal, ok := definition.Constraints["min_value"].(float64); ok {
+		if minVal, ok := definition.ValidationRules["min_value"].(float64); ok {
 			rules.MinValue = &minVal
 		}
-		if maxVal, ok := definition.Constraints["max_value"].(float64); ok {
+		if maxVal, ok := definition.ValidationRules["max_value"].(float64); ok {
 			rules.MaxValue = &maxVal
 		}
-		if pattern, ok := definition.Constraints["pattern"].(string); ok {
+		if pattern, ok := definition.ValidationRules["pattern"].(string); ok {
 			rules.Pattern = &pattern
 		}
-		if validator, ok := definition.Constraints["custom_validator"].(string); ok {
+		if validator, ok := definition.ValidationRules["custom_validator"].(string); ok {
 			rules.CustomValidator = &validator
 		}
 	}
@@ -742,7 +769,7 @@ func (s *attributeValidationService) recordValidationMetrics(ctx context.Context
 		"operation", "status",
 	)
 
-	counter.Inc(ctx, metrics.Fields{
+	counter.Inc(metrics.Fields{
 		"operation": operation,
 		"status":    status,
 	})
@@ -755,7 +782,7 @@ func (s *attributeValidationService) recordValidationMetrics(ctx context.Context
 		"operation", "status",
 	)
 
-	histogram.Observe(ctx, duration.Seconds(), metrics.Fields{
+	histogram.Observe(duration.Seconds(), metrics.Fields{
 		"operation": operation,
 		"status":    status,
 	})

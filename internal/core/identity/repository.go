@@ -208,18 +208,19 @@ func (r *repository) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employ
 }
 
 func (r *repository) AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
-	return r.store.AssignUserRole(ctx, db.AssignUserRoleParams{
-		UserID:   userID,
-		RoleID:   roleID,
-		EntityID: entityID,
+	_, err := r.store.AssignUserRole(ctx, db.AssignUserRoleParams{
+		PUserID:   userID,
+		PRoleID:   roleID,
+		PEntityID: entityID,
 	})
+	return err
 }
 
 func (r *repository) RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
 	return r.store.RevokeUserRole(ctx, db.RevokeUserRoleParams{
-		UserID:   userID,
-		RoleID:   roleID,
-		EntityID: entityID,
+		PUserID:   userID,
+		PRoleID:   roleID,
+		PEntityID: entityID,
 	})
 }
 

@@ -8,6 +8,8 @@ import (
 
 	"github.com/niiniyare/erp/internal/adapters"
 	"github.com/niiniyare/erp/internal/api/handlers"
+	"github.com/niiniyare/erp/internal/core/abac"
+	"github.com/niiniyare/erp/internal/core/abac/repository"
 	"github.com/niiniyare/erp/internal/core/access/approval"
 	"github.com/niiniyare/erp/internal/core/access/conditional"
 	"github.com/niiniyare/erp/internal/core/access/execution"
@@ -39,6 +41,8 @@ import (
 	organization "github.com/niiniyare/erp/gen/organization"
 	goaTenant "github.com/niiniyare/erp/gen/tenant"
 	goaUser "github.com/niiniyare/erp/gen/user"
+	abacGen "github.com/niiniyare/erp/internal/gen/gen/abac"
+	abacsvr "github.com/niiniyare/erp/internal/gen/gen/http/abac/server"
 	"goa.design/clue/debug"
 	clueLog "goa.design/clue/log"
 	goahttp "goa.design/goa/v3/http"
@@ -138,10 +142,27 @@ func main() {
 	auditRepo := audit.NewRepository(store)
 	notificationRepo := notification.NewRepository(store)
 
+	// Initialize ABAC repositories
+	policyRepo := repository.NewPolicyRepository(store, redisClient, logger.WithFields(logger.Fields{}), metricsService, tracingService)
+	attributeRepo := repository.NewAttributeRepository(store, redisClient, logger.WithFields(logger.Fields{}), metricsService, tracingService)
+	policyEvaluationRepo := repository.NewPolicyEvaluationRepository(store, redisClient, logger.WithFields(logger.Fields{}), metricsService, tracingService)
+
 	// Initialize core business services
 	tenantService := tenant.NewService(tenantRepo, redisClient, tracingService)
 	entityService := entity.NewService(entityRepo, tracingService, metricsService)
 	identityService := identity.NewService(identityRepo, redisClient, tracingService, metricsService)
+
+	// Initialize ABAC service
+	abacService := abac.NewService(
+		policyRepo,
+		attributeRepo,
+		policyEvaluationRepo,
+		identityService,
+		tenantService,
+		logger.WithFields(logger.Fields{}),
+		metricsService,
+		tracingService,
+	)
 
 	// Initialize domain services
 	auditService := audit.NewService(auditRepo)
@@ -171,6 +192,7 @@ func main() {
 		"tenant_service":         "ready",
 		"entity_service":         "ready",
 		"user_service":           "ready",
+		"abac_service":           "ready",
 		"access_request_service": "ready",
 		"conditional_access":     "ready",
 		"analytics_service":      "ready",
@@ -178,6 +200,7 @@ func main() {
 
 	// Initialize GOA services using handlers package following Clean Architecture
 	var (
+		abacSvc         abacGen.Service
 		authSvc         auth.Service
 		organizationSvc organization.Service
 		tenantSvc       goaTenant.Service
@@ -186,6 +209,7 @@ func main() {
 	)
 	{
 		// Use handlers package following the data flow pattern
+		abacSvc = handlers.NewABACGoaHandler(abacService, metricsService, tracingService, logger.WithFields(logger.Fields{}))
 		authSvc = handlers.NewAuthHandler(identityService, tracingService, metricsService)
 		organizationSvc = handlers.NewOrganizationGoaHandler(entityService, tracingService, metricsService)
 		tenantSvc = handlers.NewTenantGoaHandler(tenantService, tracingService, metricsService)
@@ -195,6 +219,7 @@ func main() {
 
 	// Create GOA endpoints
 	var (
+		abacEndpoints         *abacGen.Endpoints
 		authEndpoints         *auth.Endpoints
 		organizationEndpoints *organization.Endpoints
 		tenantEndpoints       *goaTenant.Endpoints
@@ -202,6 +227,9 @@ func main() {
 		openapiEndpoints      *openapi.Endpoints
 	)
 	{
+		abacEndpoints = abacGen.NewEndpoints(abacSvc)
+		abacEndpoints.Use(debug.LogPayloads())
+		abacEndpoints.Use(clueLog.Endpoint)
 		authEndpoints = auth.NewEndpoints(authSvc)
 		authEndpoints.Use(debug.LogPayloads())
 		authEndpoints.Use(clueLog.Endpoint)
@@ -235,6 +263,7 @@ func main() {
 
 	// Create GOA HTTP servers
 	var (
+		abacServer         *abacsvr.Server
 		authServer         *authsvr.Server
 		organizationServer *organizationsvr.Server
 		tenantServer       *tenantsvr.Server
@@ -245,6 +274,7 @@ func main() {
 		eh := func(ctx context.Context, w http.ResponseWriter, err error) {
 			logger.Error("HTTP Error", logger.Fields{"error": err.Error()})
 		}
+		abacServer = abacsvr.New(abacEndpoints, mux, dec, enc, eh, nil)
 		authServer = authsvr.New(authEndpoints, mux, dec, enc, eh, nil)
 		organizationServer = organizationsvr.New(organizationEndpoints, mux, dec, enc, eh, nil)
 		tenantServer = tenantsvr.New(tenantEndpoints, mux, dec, enc, eh, nil)
@@ -253,6 +283,7 @@ func main() {
 	}
 
 	// Mount GOA HTTP servers
+	abacsvr.Mount(mux, abacServer)
 	authsvr.Mount(mux, authServer)
 	organizationsvr.Mount(mux, organizationServer)
 	tenantsvr.Mount(mux, tenantServer)
@@ -272,6 +303,13 @@ func main() {
 	handler = debug.HTTP()(handler)
 
 	// Log mounted endpoints
+	for _, m := range abacServer.Mounts {
+		logger.Info("GOA HTTP endpoint mounted", logger.Fields{
+			"method":  m.Method,
+			"verb":    m.Verb,
+			"pattern": m.Pattern,
+		})
+	}
 	for _, m := range authServer.Mounts {
 		logger.Info("GOA HTTP endpoint mounted", logger.Fields{
 			"method":  m.Method,

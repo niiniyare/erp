@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac/repository"
 	"github.com/niiniyare/erp/internal/core/identity"
@@ -66,8 +67,8 @@ type CollectUserAttributesOutput struct {
 func (a *AttributeCollectionActivities) CollectUserAttributes(ctx context.Context, input *CollectUserAttributesInput) (*CollectUserAttributesOutput, error) {
 	ctx, span := a.tracer.StartSpan(ctx, "abac.activities.CollectUserAttributes",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", input.UserID.String()),
-			tracing.StringAttribute("request_id", input.RequestID),
+			attribute.String("user_id", input.UserID.String()),
+			attribute.String("request_id", input.RequestID),
 		))
 	defer span.End()
 
@@ -85,8 +86,8 @@ func (a *AttributeCollectionActivities) CollectUserAttributes(ctx context.Contex
 	userAttrs, err := a.collectBasicUserAttributes(ctx, input.UserID)
 	if err != nil {
 		a.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		a.metrics.IncrementErrorCount("user_attribute_collection", "basic_attributes_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "USER_ATTRIBUTE_COLLECTION_FAILED", "Failed to collect basic user attributes").WithErr(err)
+		a.metrics.IncrementCounter("user_attribute_collection_failed", metrics.Fields{"reason": "basic_attributes_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "USER_ATTRIBUTE_COLLECTION_FAILED", "Failed to collect basic user attributes").WithDetail("error", err.Error())
 	}
 
 	// Merge basic user attributes
@@ -141,11 +142,11 @@ func (a *AttributeCollectionActivities) CollectUserAttributes(ctx context.Contex
 	}
 
 	duration := time.Since(startTime)
-	span.SetAttributes(tracing.IntAttribute("attributes_count", len(attributes)))
+	span.SetAttributes(attribute.Int("attributes_count", len(attributes)))
 
 	a.metrics.ObserveHistogram("abac_user_attribute_collection_duration_seconds", duration.Seconds(),
 		metrics.Fields{"success": "true"})
-	a.metrics.RecordGauge("abac_user_attributes_collected", float64(len(attributes)),
+	a.metrics.SetGauge("abac_user_attributes_collected", float64(len(attributes)),
 		metrics.Fields{"user_id": input.UserID.String()})
 
 	a.logger.InfoContext(ctx, "User attribute collection completed",
@@ -173,22 +174,18 @@ func (a *AttributeCollectionActivities) collectBasicUserAttributes(ctx context.C
 	attributes := map[string]interface{}{
 		"id":         user.ID.String(),
 		"email":      user.Email,
-		"status":     user.Status,
-		"verified":   user.IsVerified,
+		"status":     user.AccountStatus,
+		"is_active":  user.IsActive,
 		"created_at": user.CreatedAt,
 		"updated_at": user.UpdatedAt,
 	}
 
 	// Add optional fields if present
-	if user.FirstName != nil {
-		attributes["first_name"] = *user.FirstName
-	}
-	if user.LastName != nil {
-		attributes["last_name"] = *user.LastName
-	}
-	if user.PhoneNumber != nil {
-		attributes["phone_number"] = *user.PhoneNumber
-	}
+	// Note: FirstName is not available in User model, it's in Person model
+	// We would need to fetch the Person record separately if needed
+	// For now, we'll skip this field
+	// Note: LastName and PhoneNumber are in Person model, not User model
+	// These would need to be fetched separately if needed
 	if user.LastLoginAt != nil {
 		attributes["last_login_at"] = *user.LastLoginAt
 		attributes["days_since_last_login"] = time.Since(*user.LastLoginAt).Hours() / 24
@@ -199,14 +196,10 @@ func (a *AttributeCollectionActivities) collectBasicUserAttributes(ctx context.C
 
 // collectPersonAttributes collects person-specific attributes
 func (a *AttributeCollectionActivities) collectPersonAttributes(ctx context.Context, userID uuid.UUID) (map[string]interface{}, error) {
-	// Note: This assumes there's a way to get person by user ID
-	// You may need to adjust based on your actual identity service interface
-	users, err := a.identityService.GetUsersByFilters(ctx, map[string]interface{}{
-		"user_id": userID,
-		"type":    "person",
-	})
-	if err != nil || len(users) == 0 {
-		return map[string]interface{}{}, nil // Not a person or no person data
+	// Get user by ID to check if it has person-related data
+	_, err := a.identityService.GetUserByID(ctx, userID)
+	if err != nil {
+		return map[string]interface{}{}, nil // Not found or error
 	}
 
 	// This is a placeholder - adjust based on actual person model
@@ -220,14 +213,10 @@ func (a *AttributeCollectionActivities) collectPersonAttributes(ctx context.Cont
 
 // collectEmployeeAttributes collects employee-specific attributes
 func (a *AttributeCollectionActivities) collectEmployeeAttributes(ctx context.Context, userID uuid.UUID) (map[string]interface{}, error) {
-	// Note: This assumes there's a way to get employee by user ID
-	// You may need to adjust based on your actual identity service interface
-	users, err := a.identityService.GetUsersByFilters(ctx, map[string]interface{}{
-		"user_id": userID,
-		"type":    "employee",
-	})
-	if err != nil || len(users) == 0 {
-		return map[string]interface{}{}, nil // Not an employee or no employee data
+	// Get user by ID to check if it has employee-related data
+	_, err := a.identityService.GetUserByID(ctx, userID)
+	if err != nil {
+		return map[string]interface{}{}, nil // Not found or error
 	}
 
 	// This is a placeholder - adjust based on actual employee model
@@ -285,8 +274,8 @@ type CollectResourceAttributesOutput struct {
 func (a *AttributeCollectionActivities) CollectResourceAttributes(ctx context.Context, input *CollectResourceAttributesInput) (*CollectResourceAttributesOutput, error) {
 	ctx, span := a.tracer.StartSpan(ctx, "abac.activities.CollectResourceAttributes",
 		tracing.WithAttributes(
-			tracing.StringAttribute("resource_type", input.ResourceType),
-			tracing.StringAttribute("request_id", input.RequestID),
+			attribute.String("resource_type", input.ResourceType),
+			attribute.String("request_id", input.RequestID),
 		))
 	defer span.End()
 
@@ -346,7 +335,7 @@ func (a *AttributeCollectionActivities) CollectResourceAttributes(ctx context.Co
 	}
 
 	duration := time.Since(startTime)
-	span.SetAttributes(tracing.IntAttribute("attributes_count", len(attributes)))
+	span.SetAttributes(attribute.Int("attributes_count", len(attributes)))
 
 	a.metrics.ObserveHistogram("abac_resource_attribute_collection_duration_seconds", duration.Seconds(),
 		metrics.Fields{"resource_type": input.ResourceType, "success": "true"})
@@ -415,7 +404,7 @@ type BuildEnvironmentContextOutput struct {
 func (a *AttributeCollectionActivities) BuildEnvironmentContext(ctx context.Context, input *BuildEnvironmentContextInput) (*BuildEnvironmentContextOutput, error) {
 	ctx, span := a.tracer.StartSpan(ctx, "abac.activities.BuildEnvironmentContext",
 		tracing.WithAttributes(
-			tracing.StringAttribute("request_id", input.RequestID),
+			attribute.String("request_id", input.RequestID),
 		))
 	defer span.End()
 
@@ -466,7 +455,7 @@ func (a *AttributeCollectionActivities) BuildEnvironmentContext(ctx context.Cont
 	}
 
 	duration := time.Since(startTime)
-	span.SetAttributes(tracing.IntAttribute("context_attributes_count", len(context)))
+	span.SetAttributes(attribute.Int("context_attributes_count", len(context)))
 
 	a.metrics.ObserveHistogram("abac_environment_context_building_duration_seconds", duration.Seconds(),
 		metrics.Fields{"success": "true"})

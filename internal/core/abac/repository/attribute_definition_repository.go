@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -96,7 +97,7 @@ func (r *attributeDefinitionRepository) CreateAttributeDefinition(ctx context.Co
 	}
 
 	// Convert back to domain model
-	attrDef, err := r.fromSQLCAttributeDefinition(sqlcAttrDef)
+	attrDef, err := r.fromSQLCAttributeDefinition(*sqlcAttrDef)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to convert attribute definition from database")
@@ -142,7 +143,7 @@ func (r *attributeDefinitionRepository) GetAttributeDefinitionByID(ctx context.C
 	startTime := time.Now()
 
 	// Get from database (tenant filtering handled by SQLC query using current_tenant_id())
-	sqlcAttrDef, err := r.store.GetAttributeDefinitionByID(ctx, id)
+	sqlcAttrDef, err := r.store.GetAttributeDefinition(ctx, id)
 	if err != nil {
 		span.RecordError(err)
 		if err == sql.ErrNoRows {
@@ -157,7 +158,7 @@ func (r *attributeDefinitionRepository) GetAttributeDefinitionByID(ctx context.C
 	}
 
 	// Convert to domain model
-	attrDef, err := r.fromSQLCAttributeDefinition(sqlcAttrDef)
+	attrDef, err := r.fromSQLCAttributeDefinition(*sqlcAttrDef)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -197,7 +198,7 @@ func (r *attributeDefinitionRepository) GetAttributeDefinitionByName(ctx context
 			WithDetail("error", err.Error())
 	}
 
-	attrDef, err := r.fromSQLCAttributeDefinition(sqlcAttrDef)
+	attrDef, err := r.fromSQLCAttributeDefinition(*sqlcAttrDef)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -246,7 +247,7 @@ func (r *attributeDefinitionRepository) UpdateAttributeDefinition(ctx context.Co
 	}
 
 	// Convert back to domain model
-	attrDef, err := r.fromSQLCAttributeDefinition(sqlcAttrDef)
+	attrDef, err := r.fromSQLCAttributeDefinition(*sqlcAttrDef)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -344,7 +345,7 @@ func (r *attributeDefinitionRepository) ListAttributeDefinitions(ctx context.Con
 	// Convert to domain models
 	attrDefs := make([]*models.AttributeDefinition, len(sqlcAttrDefs))
 	for i, sqlcAttrDef := range sqlcAttrDefs {
-		attrDef, err := r.fromSQLCAttributeDefinition(&sqlcAttrDef)
+		attrDef, err := r.fromSQLCAttributeDefinition(*sqlcAttrDef)
 		if err != nil {
 			span.RecordError(err)
 			return nil, err
@@ -387,7 +388,7 @@ func (r *attributeDefinitionRepository) GetAttributeDefinitionsByCategory(ctx co
 	startTime := time.Now()
 
 	// Get from database
-	sqlcAttrDefs, err := r.store.GetAttributeDefinitionsByCategory(ctx, string(category))
+	sqlcAttrDefs, err := r.store.ListAttributeDefinitionsByCategory(ctx, string(category))
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to get attribute definitions by category")
@@ -400,7 +401,7 @@ func (r *attributeDefinitionRepository) GetAttributeDefinitionsByCategory(ctx co
 	// Convert to domain models
 	attrDefs := make([]*models.AttributeDefinition, len(sqlcAttrDefs))
 	for i, sqlcAttrDef := range sqlcAttrDefs {
-		attrDef, err := r.fromSQLCAttributeDefinition(&sqlcAttrDef)
+		attrDef, err := r.fromSQLCAttributeDefinition(*sqlcAttrDef)
 		if err != nil {
 			span.RecordError(err)
 			return nil, err
@@ -447,7 +448,7 @@ func (r *attributeDefinitionRepository) GetRequiredAttributeDefinitions(ctx cont
 	// Convert to domain models
 	attrDefs := make([]*models.AttributeDefinition, len(sqlcAttrDefs))
 	for i, sqlcAttrDef := range sqlcAttrDefs {
-		attrDef, err := r.fromSQLCAttributeDefinition(&sqlcAttrDef)
+		attrDef, err := r.fromSQLCAttributeDefinition(*sqlcAttrDef)
 		if err != nil {
 			span.RecordError(err)
 			return nil, err
@@ -491,7 +492,7 @@ func (r *attributeDefinitionRepository) GetAttributeDefinitionsByIDs(ctx context
 	// Convert to domain models
 	attrDefs := make([]*models.AttributeDefinition, len(sqlcAttrDefs))
 	for i, sqlcAttrDef := range sqlcAttrDefs {
-		attrDef, err := r.fromSQLCAttributeDefinition(&sqlcAttrDef)
+		attrDef, err := r.fromSQLCAttributeDefinition(*sqlcAttrDef)
 		if err != nil {
 			span.RecordError(err)
 			return nil, err
@@ -525,34 +526,77 @@ func (req *CreateAttributeDefinitionRequest) Validate() error {
 
 // toAttributeDefCreateParams converts CreateAttributeDefinitionRequest to SQLC params
 func (r *attributeDefinitionRepository) toAttributeDefCreateParams(req *CreateAttributeDefinitionRequest) (*db.CreateAttributeDefinitionParams, error) {
+	// Handle JSON marshaling for complex types
+	allowedValuesJSON, err := json.Marshal(req.AllowedValues)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal allowed_values: %w", err)
+	}
+
+	validationRulesJSON, err := json.Marshal(req.ValidationRules)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal validation_rules: %w", err)
+	}
+
 	return &db.CreateAttributeDefinitionParams{
-		Name:            req.Name,
-		DisplayName:     req.DisplayName,
-		Description:     req.Description,
-		DataType:        string(req.DataType),
-		Category:        string(req.Category),
-		IsRequired:      req.IsRequired,
-		IsSensitive:     req.IsSensitive,
-		DefaultValue:    req.DefaultValue,
-		AllowedValues:   req.AllowedValues,
-		ValidationRules: req.ValidationRules,
+		Name:               req.Name,
+		DisplayName:        req.DisplayName,
+		Description:        derefString(req.Description),
+		DataType:           string(req.DataType),
+		Category:           string(req.Category),
+		IsRequired:         &req.IsRequired,
+		IsSensitive:        &req.IsSensitive,
+		DefaultValue:       derefString(req.DefaultValue),
+		AllowedValues:      allowedValuesJSON,
+		ValidationRules:    validationRulesJSON,
+		EncryptionRequired: &req.EncryptionRequired,
+		IsActive:           &req.IsActive,
 		// tenant_id is set automatically by current_tenant_id() in SQLC query
 	}, nil
 }
 
 // toAttributeDefUpdateParams converts UpdateAttributeDefinitionRequest to SQLC params
 func (r *attributeDefinitionRepository) toAttributeDefUpdateParams(id uuid.UUID, req *UpdateAttributeDefinitionRequest) (*db.UpdateAttributeDefinitionParams, error) {
-	return &db.UpdateAttributeDefinitionParams{
-		ID:              id,
-		DisplayName:     req.DisplayName,
-		Description:     req.Description,
-		IsRequired:      req.IsRequired,
-		IsSensitive:     req.IsSensitive,
-		DefaultValue:    req.DefaultValue,
-		AllowedValues:   req.AllowedValues,
-		ValidationRules: req.ValidationRules,
-		IsActive:        req.IsActive,
-	}, nil
+	params := db.UpdateAttributeDefinitionParams{
+		ID: id,
+	}
+
+	if req.DisplayName != nil {
+		params.DisplayName = req.DisplayName
+	}
+	if req.Description != nil {
+		params.Description = *req.Description
+	}
+	if req.IsRequired != nil {
+		params.IsRequired = req.IsRequired
+	}
+	if req.IsSensitive != nil {
+		params.IsSensitive = req.IsSensitive
+	}
+	if req.DefaultValue != nil {
+		params.DefaultValue = *req.DefaultValue
+	}
+	if req.AllowedValues != nil {
+		allowedValuesJSON, err := json.Marshal(req.AllowedValues)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal allowed_values: %w", err)
+		}
+		params.AllowedValues = allowedValuesJSON
+	}
+	if req.ValidationRules != nil {
+		validationRulesJSON, err := json.Marshal(req.ValidationRules)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal validation_rules: %w", err)
+		}
+		params.ValidationRules = validationRulesJSON
+	}
+	if req.EncryptionRequired != nil {
+		params.EncryptionRequired = req.EncryptionRequired
+	}
+	if req.IsActive != nil {
+		params.IsActive = req.IsActive
+	}
+
+	return &params, nil
 }
 
 // toListAttributeDefParams converts ListAttributeDefinitionsRequest to SQLC params
@@ -563,50 +607,47 @@ func (r *attributeDefinitionRepository) toListAttributeDefParams(req *ListAttrib
 	}
 
 	if req.Category != nil {
-		category := string(*req.Category)
-		params.Category = &category
-	}
-	if req.DataType != nil {
-		dataType := string(*req.DataType)
-		params.DataType = &dataType
-	}
-	if req.IsRequired != nil {
-		params.IsRequired = req.IsRequired
-	}
-	if req.IsSensitive != nil {
-		params.IsSensitive = req.IsSensitive
+		params.Category = string(*req.Category)
 	}
 	if req.IsActive != nil {
-		params.IsActive = req.IsActive
+		params.IsActive = *req.IsActive
 	}
 
 	return params
 }
 
 // fromSQLCAttributeDefinition converts SQLC attribute definition to domain model
-func (r *attributeDefinitionRepository) fromSQLCAttributeDefinition(sqlcAttrDef *db.AttributeDefinition) (*models.AttributeDefinition, error) {
-	var deletedAt *time.Time
-	if sqlcAttrDef.DeletedAt.Valid {
-		deletedAt = &sqlcAttrDef.DeletedAt.Time
+func (r *attributeDefinitionRepository) fromSQLCAttributeDefinition(sqlcAttrDef db.AttributeDefinition) (*models.AttributeDefinition, error) {
+	var allowedValues []string
+	if len(sqlcAttrDef.AllowedValues) > 0 {
+		if err := json.Unmarshal(sqlcAttrDef.AllowedValues, &allowedValues); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal allowed_values: %w", err)
+		}
+	}
+
+	var validationRules map[string]interface{}
+	if len(sqlcAttrDef.ValidationRules) > 0 {
+		if err := json.Unmarshal(sqlcAttrDef.ValidationRules, &validationRules); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal validation_rules: %w", err)
+		}
 	}
 
 	return &models.AttributeDefinition{
-		ID:              sqlcAttrDef.ID,
-		TenantID:        sqlcAttrDef.TenantID,
-		Name:            sqlcAttrDef.Name,
-		DisplayName:     sqlcAttrDef.DisplayName,
-		Description:     sqlcAttrDef.Description,
-		DataType:        types.AttributeDataType(sqlcAttrDef.DataType),
-		Category:        types.AttributeCategory(sqlcAttrDef.Category),
-		IsRequired:      sqlcAttrDef.IsRequired,
-		IsSensitive:     sqlcAttrDef.IsSensitive,
-		DefaultValue:    sqlcAttrDef.DefaultValue,
-		AllowedValues:   sqlcAttrDef.AllowedValues,
-		ValidationRules: sqlcAttrDef.ValidationRules,
-		IsActive:        sqlcAttrDef.IsActive,
-		CreatedAt:       sqlcAttrDef.CreatedAt,
-		UpdatedAt:       sqlcAttrDef.UpdatedAt,
-		DeletedAt:       deletedAt,
+		ID:                 sqlcAttrDef.ID,
+		TenantID:           sqlcAttrDef.TenantID,
+		Name:               sqlcAttrDef.Name,
+		DisplayName:        sqlcAttrDef.DisplayName,
+		Description:        &sqlcAttrDef.Description,
+		DataType:           types.AttributeDataType(sqlcAttrDef.DataType),
+		Category:           types.AttributeCategory(sqlcAttrDef.Category),
+		IsRequired:         *sqlcAttrDef.IsRequired,
+		IsSensitive:        *sqlcAttrDef.IsSensitive,
+		DefaultValue:       &sqlcAttrDef.DefaultValue,
+		AllowedValues:      allowedValues,
+		ValidationRules:    validationRules,
+		EncryptionRequired: *sqlcAttrDef.EncryptionRequired,
+		IsActive:           *sqlcAttrDef.IsActive,
+		CreatedAt:          sqlcAttrDef.CreatedAt.Time,
 	}, nil
 }
 
@@ -660,7 +701,7 @@ func (r *attributeDefinitionRepository) recordAttributeDefMetrics(ctx context.Co
 		"operation", "status",
 	)
 
-	counter.Inc(ctx, metrics.Fields{
+	counter.Inc(metrics.Fields{
 		"operation": operation,
 		"status":    status,
 	})
@@ -673,9 +714,38 @@ func (r *attributeDefinitionRepository) recordAttributeDefMetrics(ctx context.Co
 			"operation", "status",
 		)
 
-		histogram.Observe(ctx, duration.Seconds(), metrics.Fields{
+		histogram.Observe(duration.Seconds(), metrics.Fields{
 			"operation": operation,
 			"status":    status,
 		})
 	}
+}
+
+// derefString dereferences a *string, returning "" if nil
+func derefString(s *string) string {
+	if s != nil {
+		return *s
+	}
+	return ""
+}
+
+// ptrBool returns a pointer to a bool
+func ptrBool(b bool) *bool {
+	return &b
+}
+
+// nullString converts a *string to sql.NullString
+func nullString(s *string) sql.NullString {
+	if s != nil {
+		return sql.NullString{String: *s, Valid: true}
+	}
+	return sql.NullString{}
+}
+
+// nullBool converts a *bool to sql.NullBool
+func nullBool(b *bool) sql.NullBool {
+	if b != nil {
+		return sql.NullBool{Bool: *b, Valid: true}
+	}
+	return sql.NullBool{}
 }

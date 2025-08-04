@@ -902,7 +902,7 @@ func TestEvaluationAttributeContext(t *testing.T) {
 }
 
 // Benchmark tests
-func BenchmarkPolicyEvaluation(b *testing.B) {
+func BenchmarkPolicyEvaluationEngine(b *testing.B) {
 	// Setup
 	mockRepo := &MockPolicyRepository{}
 	mockResolver := &MockAttributeResolver{}

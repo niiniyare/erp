@@ -6,4 +6,4 @@ INSERT INTO employees (
 ) RETURNING *;
 
 -- name: GetEmployeeByID :one
-SELECT * FROM employees WHERE id = $1 AND deleted_at IS NULL;
+SELECT * FROM employees WHERE id = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id();

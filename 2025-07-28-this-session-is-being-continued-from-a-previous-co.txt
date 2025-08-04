@@ -1,0 +1,19 @@
+╭──────────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                            │
+│                                                      │
+│   /help for help, /status for your current setup     │
+│                                                      │
+│   cwd: /data/data/com.termux/files/home/project/erp  │
+╰──────────────────────────────────────────────────────╯
+
+● Compact summary (ctrl+r to expand)
+  ⎿  Read internal/core/abac/services/policy_evaluation_service.go (916 lines)
+  ⎿  Read internal/core/abac/services/policy_decision_service.go (719 lines)
+  ⎿  Read internal/core/abac/services/policy_combining_service.go (100+ lines)
+  ⎿  Read internal/core/abac/services/attribute_validation_service.go (790 lines)
+  ⎿  Read internal/core/abac/activities/policy_evaluation.go (584 lines)
+  ⎿  Todo list read (4 items)
+  ⎿  Claude usage limit reached. Your limit will reset at 7pm (Africa/Nairobi).
+
+      • /upgrade to increase your usage limit.
+

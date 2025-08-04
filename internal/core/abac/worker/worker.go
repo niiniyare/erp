@@ -12,7 +12,7 @@ import (
 	"github.com/niiniyare/erp/internal/core/abac/workflows"
 	"github.com/niiniyare/erp/internal/core/identity"
 	"github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	loggerPkg "github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
@@ -29,7 +29,7 @@ type ABACWorker struct {
 	client client.Client
 	worker worker.Worker
 	config ABACWorkerConfig
-	logger logger.Logger
+	logger loggerPkg.Logger
 }
 
 // NewABACWorker creates a new ABAC Temporal worker
@@ -41,7 +41,7 @@ func NewABACWorker(
 	policyEvaluationRepo repository.PolicyEvaluationRepository,
 	identityService identity.Service,
 	tenantService tenant.Service,
-	logger logger.Logger,
+	logger loggerPkg.Logger,
 	metrics metrics.MetricsProvider,
 	tracer tracing.TracingService,
 ) *ABACWorker {
@@ -60,8 +60,8 @@ func NewABACWorker(
 
 	// Create worker options
 	workerOptions := worker.Options{
-		MaxConcurrentActivityExecutions:  config.MaxConcurrentTasks,
-		MaxConcurrentWorkflowTaskPollers: config.MaxPollers,
+		MaxConcurrentActivityExecutionSize:     config.MaxConcurrentTasks,
+		MaxConcurrentWorkflowTaskExecutionSize: config.MaxPollers,
 	}
 
 	// Create the worker
@@ -90,7 +90,7 @@ func NewABACWorker(
 	w.RegisterActivity(cacheActivities)
 
 	logger.Info("ABAC Temporal worker created",
-		logger.Fields{
+		loggerPkg.Fields{
 			"task_queue":           config.TaskQueue,
 			"max_concurrent_tasks": config.MaxConcurrentTasks,
 			"max_pollers":          config.MaxPollers,
@@ -107,7 +107,7 @@ func NewABACWorker(
 // Start starts the ABAC worker
 func (w *ABACWorker) Start(ctx context.Context) error {
 	w.logger.Info("Starting ABAC Temporal worker",
-		logger.Fields{
+		loggerPkg.Fields{
 			"task_queue": w.config.TaskQueue,
 		})
 
@@ -139,23 +139,23 @@ func (w *ABACWorker) GetTaskQueue() string {
 
 // WorkflowClient provides access to the Temporal client for workflow operations
 type WorkflowClient struct {
-	client    client.Client
+	Client    client.Client
 	taskQueue string
-	logger    logger.Logger
+	logger    loggerPkg.Logger
 }
 
 // NewWorkflowClient creates a new workflow client for ABAC operations
 func NewWorkflowClient(
 	temporalClient client.Client,
 	taskQueue string,
-	logger logger.Logger,
+	logger loggerPkg.Logger,
 ) *WorkflowClient {
 	if taskQueue == "" {
 		taskQueue = "abac-task-queue"
 	}
 
 	return &WorkflowClient{
-		client:    temporalClient,
+		Client:    temporalClient,
 		taskQueue: taskQueue,
 		logger:    logger,
 	}
@@ -173,14 +173,14 @@ func (wc *WorkflowClient) StartPolicyEvaluationWorkflow(
 	}
 
 	wc.logger.InfoContext(ctx, "Starting policy evaluation workflow",
-		logger.Fields{
+		loggerPkg.Fields{
 			"workflow_id": workflowID,
 			"user_id":     input.EvaluationRequest.UserID,
 			"resource":    input.EvaluationRequest.ResourceType,
 			"action":      input.EvaluationRequest.Action,
 		})
 
-	return wc.client.ExecuteWorkflow(ctx, options, workflows.PolicyEvaluationWorkflowName, input)
+	return wc.Client.ExecuteWorkflow(ctx, options, workflows.PolicyEvaluationWorkflowName, input)
 }
 
 // StartBulkPolicyEvaluationWorkflow starts a bulk policy evaluation workflow
@@ -195,13 +195,13 @@ func (wc *WorkflowClient) StartBulkPolicyEvaluationWorkflow(
 	}
 
 	wc.logger.InfoContext(ctx, "Starting bulk policy evaluation workflow",
-		logger.Fields{
+		loggerPkg.Fields{
 			"workflow_id":     workflowID,
 			"request_count":   len(input.EvaluationRequests),
 			"max_concurrency": input.MaxConcurrency,
 		})
 
-	return wc.client.ExecuteWorkflow(ctx, options, workflows.BulkPolicyEvaluationWorkflowName, input)
+	return wc.Client.ExecuteWorkflow(ctx, options, workflows.BulkPolicyEvaluationWorkflowName, input)
 }
 
 // StartCacheCleanupWorkflow starts a cache cleanup workflow
@@ -218,13 +218,13 @@ func (wc *WorkflowClient) StartCacheCleanupWorkflow(
 	}
 
 	wc.logger.InfoContext(ctx, "Starting cache cleanup workflow",
-		logger.Fields{
+		loggerPkg.Fields{
 			"workflow_id":      workflowID,
 			"cleanup_interval": input.CleanupIntervalHours,
 			"max_age":          input.MaxAge,
 		})
 
-	return wc.client.ExecuteWorkflow(ctx, options, workflows.CacheCleanupWorkflowName, input)
+	return wc.Client.ExecuteWorkflow(ctx, options, workflows.CacheCleanupWorkflowName, input)
 }
 
 // StartCacheWarmupWorkflow starts a cache warmup workflow
@@ -239,12 +239,12 @@ func (wc *WorkflowClient) StartCacheWarmupWorkflow(
 	}
 
 	wc.logger.InfoContext(ctx, "Starting cache warmup workflow",
-		logger.Fields{
+		loggerPkg.Fields{
 			"workflow_id":  workflowID,
 			"config_count": len(input.WarmupConfigs),
 		})
 
-	return wc.client.ExecuteWorkflow(ctx, options, workflows.CacheWarmupWorkflowName, input)
+	return wc.Client.ExecuteWorkflow(ctx, options, workflows.CacheWarmupWorkflowName, input)
 }
 
 // StartCacheInvalidationWorkflow starts a cache invalidation workflow
@@ -259,15 +259,15 @@ func (wc *WorkflowClient) StartCacheInvalidationWorkflow(
 	}
 
 	wc.logger.InfoContext(ctx, "Starting cache invalidation workflow",
-		logger.Fields{
+		loggerPkg.Fields{
 			"workflow_id":   workflowID,
 			"request_count": len(input.InvalidationRequests),
 		})
 
-	return wc.client.ExecuteWorkflow(ctx, options, workflows.CacheInvalidationWorkflowName, input)
+	return wc.Client.ExecuteWorkflow(ctx, options, workflows.CacheInvalidationWorkflowName, input)
 }
 
 // GetWorkflow gets a workflow execution
 func (wc *WorkflowClient) GetWorkflow(ctx context.Context, workflowID, runID string) client.WorkflowRun {
-	return wc.client.GetWorkflow(ctx, workflowID, runID)
+	return wc.Client.GetWorkflow(ctx, workflowID, runID)
 }

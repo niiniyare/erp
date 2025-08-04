@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
@@ -54,6 +55,9 @@ type EvaluatePoliciesActivityInput struct {
 	RequestID    string                 `json:"request_id"`
 }
 
+// PolicyDecisionResult is an alias for models.PolicyDecision for workflow compatibility
+type PolicyDecisionResult = models.PolicyDecision
+
 // EvaluatePoliciesActivityOutput represents output of policy evaluation
 type EvaluatePoliciesActivityOutput struct {
 	Decision         types.PolicyDecisionType `json:"decision"`
@@ -67,10 +71,10 @@ type EvaluatePoliciesActivityOutput struct {
 func (a *PolicyEvaluationActivities) EvaluatePolicies(ctx context.Context, input *EvaluatePoliciesActivityInput) (*EvaluatePoliciesActivityOutput, error) {
 	ctx, span := a.tracer.StartSpan(ctx, "abac.activities.EvaluatePolicies",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", input.UserID.String()),
-			tracing.StringAttribute("resource_type", input.ResourceType),
-			tracing.StringAttribute("action", input.Action),
-			tracing.StringAttribute("request_id", input.RequestID),
+			attribute.String("user_id", input.UserID.String()),
+			attribute.String("resource_type", input.ResourceType),
+			attribute.String("action", input.Action),
+			attribute.String("request_id", input.RequestID),
 		))
 	defer span.End()
 
@@ -87,7 +91,7 @@ func (a *PolicyEvaluationActivities) EvaluatePolicies(ctx context.Context, input
 	// Check cache first
 	cacheResult, err := a.checkEvaluationCache(ctx, input)
 	if err == nil && cacheResult != nil {
-		a.metrics.IncrementSuccessCount("abac_evaluation_cache_hit")
+		a.metrics.IncrementCounter("abac_evaluation_cache_hit", metrics.Fields{})
 		a.logger.InfoContext(ctx, "Cache hit for policy evaluation", logger.Fields{"request_id": input.RequestID})
 
 		return &EvaluatePoliciesActivityOutput{
@@ -99,20 +103,20 @@ func (a *PolicyEvaluationActivities) EvaluatePolicies(ctx context.Context, input
 		}, nil
 	}
 
-	a.metrics.IncrementCounter("abac_evaluation_cache_miss")
+	a.metrics.IncrementCounter("abac_evaluation_cache_miss", metrics.Fields{})
 
 	// Get applicable policies
 	policies, err := a.getApplicablePolicies(ctx, input)
 	if err != nil {
 		a.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_RETRIEVAL_FAILED", "Failed to retrieve applicable policies").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_RETRIEVAL_FAILED", "Failed to retrieve applicable policies").WithDetail("error", err.Error())
 	}
 
 	// Evaluate policies
 	evaluation, err := a.evaluatePoliciesList(ctx, policies, input)
 	if err != nil {
 		a.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_EVALUATION_FAILED", "Failed to evaluate policies").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_EVALUATION_FAILED", "Failed to evaluate policies").WithDetail("error", err.Error())
 	}
 
 	evaluationTime := time.Since(startTime)
@@ -163,7 +167,7 @@ func (a *PolicyEvaluationActivities) checkEvaluationCache(ctx context.Context, i
 
 	return &EvaluatePoliciesActivityOutput{
 		Decision:        result.Decision,
-		PolicyDecisions: result.PolicyDecisions,
+		PolicyDecisions: ConvertPolicyDecisionInfoToDecision(result.PolicyDecisions),
 		CacheHit:        true,
 	}, nil
 }
@@ -185,7 +189,7 @@ func (a *PolicyEvaluationActivities) getApplicablePolicies(ctx context.Context, 
 		return nil, fmt.Errorf("failed to get applicable policies: %w", err)
 	}
 
-	span.SetAttributes(tracing.IntAttribute("policies_count", len(policies)))
+	span.SetAttributes(attribute.Int("policies_count", len(policies)))
 
 	return policies, nil
 }
@@ -211,7 +215,7 @@ func (a *PolicyEvaluationActivities) evaluatePoliciesList(ctx context.Context, p
 
 		policyDecisions = append(policyDecisions, decision)
 
-		switch decision.Effect {
+		switch policy.Effect {
 		case types.PolicyEffectAllow:
 			allowCount++
 		case types.PolicyEffectDeny:
@@ -223,9 +227,9 @@ func (a *PolicyEvaluationActivities) evaluatePoliciesList(ctx context.Context, p
 	finalDecision := a.applyCombiningAlgorithm(ctx, policyDecisions)
 
 	span.SetAttributes(
-		tracing.StringAttribute("final_decision", string(finalDecision)),
-		tracing.IntAttribute("allow_policies", allowCount),
-		tracing.IntAttribute("deny_policies", denyCount),
+		attribute.String("final_decision", string(finalDecision)),
+		attribute.Int("allow_policies", allowCount),
+		attribute.Int("deny_policies", denyCount),
 	)
 
 	return &EvaluatePoliciesActivityOutput{
@@ -238,13 +242,13 @@ func (a *PolicyEvaluationActivities) evaluatePoliciesList(ctx context.Context, p
 // evaluateSinglePolicy evaluates a single policy against the request
 func (a *PolicyEvaluationActivities) evaluateSinglePolicy(ctx context.Context, policy *models.Policy, input *EvaluatePoliciesActivityInput) (*models.PolicyDecision, error) {
 	ctx, span := a.tracer.StartSpan(ctx, "abac.activities.EvaluateSinglePolicy",
-		tracing.WithAttributes(tracing.StringAttribute("policy_id", policy.ID.String())))
+		tracing.WithAttributes(attribute.String("policy_id", policy.ID.String())))
 	defer span.End()
 
 	decision := &models.PolicyDecision{
-		PolicyID:   policy.ID,
-		PolicyName: policy.Name,
-		Effect:     types.PolicyEffectNotApplicable,
+		PolicyID:      policy.ID,
+		Decision:      types.PolicyDecisionNotApplicable,
+		TargetMatched: false,
 	}
 
 	// Check target matches
@@ -256,13 +260,20 @@ func (a *PolicyEvaluationActivities) evaluateSinglePolicy(ctx context.Context, p
 	// Evaluate rule
 	ruleResult, err := a.evaluateRule(ctx, policy.Rule, input)
 	if err != nil {
-		decision.Effect = types.PolicyEffectIndeterminate
+		decision.Decision = types.PolicyDecisionNotApplicable
 		decision.Reason = fmt.Sprintf("Rule evaluation error: %v", err)
 		return decision, nil
 	}
 
 	if ruleResult {
-		decision.Effect = policy.Effect
+		// Convert policy effect to decision type
+		if policy.Effect == types.PolicyEffectAllow {
+			decision.Decision = types.PolicyDecisionAllow
+		} else if policy.Effect == types.PolicyEffectDeny {
+			decision.Decision = types.PolicyDecisionDeny
+		} else {
+			decision.Decision = types.PolicyDecisionNotApplicable
+		}
 		decision.Reason = "Policy rule evaluated to true"
 	} else {
 		decision.Reason = "Policy rule evaluated to false"
@@ -491,13 +502,13 @@ func (a *PolicyEvaluationActivities) valueInList(value interface{}, list interfa
 func (a *PolicyEvaluationActivities) applyCombiningAlgorithm(ctx context.Context, decisions []*models.PolicyDecision) types.PolicyDecisionType {
 	// Simplified deny-overrides algorithm
 	for _, decision := range decisions {
-		if decision.Effect == types.PolicyEffectDeny {
+		if decision.Decision == types.PolicyDecisionDeny {
 			return types.PolicyDecisionDeny
 		}
 	}
 
 	for _, decision := range decisions {
-		if decision.Effect == types.PolicyEffectAllow {
+		if decision.Decision == types.PolicyDecisionAllow {
 			return types.PolicyDecisionAllow
 		}
 	}
@@ -534,7 +545,7 @@ func (a *PolicyEvaluationActivities) cacheEvaluationResult(ctx context.Context, 
 		ExpiresAt:          time.Now().Add(15 * time.Minute), // 15 minute cache
 		Result: &models.PolicyEvaluationResult{
 			Decision:        output.Decision,
-			PolicyDecisions: output.PolicyDecisions,
+			PolicyDecisions: ConvertPolicyDecisionsToInfo(output.PolicyDecisions),
 		},
 	}
 
@@ -552,7 +563,7 @@ func (a *PolicyEvaluationActivities) recordEvaluationMetrics(ctx context.Context
 
 	a.metrics.IncrementCounter("abac_policy_evaluations_total", labels)
 	a.metrics.ObserveHistogram("abac_evaluation_duration_seconds", duration.Seconds(), labels)
-	a.metrics.RecordGauge("abac_policies_evaluated", float64(len(output.PolicyDecisions)), labels)
+	a.metrics.SetGauge("abac_policies_evaluated", float64(len(output.PolicyDecisions)), labels)
 }
 
 // auditPolicyEvaluation creates an audit log entry for the evaluation
@@ -570,4 +581,44 @@ func (a *PolicyEvaluationActivities) auditPolicyEvaluation(ctx context.Context, 
 			"cache_hit":          output.CacheHit,
 			"request_id":         input.RequestID,
 		})
+}
+
+// ConvertPolicyDecisionInfoToDecision converts PolicyDecisionInfo to PolicyDecision
+func ConvertPolicyDecisionInfoToDecision(infos []models.PolicyDecisionInfo) []*models.PolicyDecision {
+	decisions := make([]*models.PolicyDecision, len(infos))
+	for i, info := range infos {
+		matchedRule := ""
+		if len(info.MatchedRules) > 0 {
+			matchedRule = info.MatchedRules[0]
+		}
+		decisions[i] = &models.PolicyDecision{
+			PolicyID:      info.PolicyID,
+			Decision:      info.Decision,
+			Reason:        info.Reason,
+			MatchedRule:   matchedRule,
+			EvaluationMS:  info.EvaluationTime,
+			TargetMatched: info.TargetMatched,
+		}
+	}
+	return decisions
+}
+
+// ConvertPolicyDecisionsToInfo converts PolicyDecision to PolicyDecisionInfo
+func ConvertPolicyDecisionsToInfo(decisions []*models.PolicyDecision) []models.PolicyDecisionInfo {
+	infos := make([]models.PolicyDecisionInfo, len(decisions))
+	for i, decision := range decisions {
+		matchedRules := []string{}
+		if decision.MatchedRule != "" {
+			matchedRules = []string{decision.MatchedRule}
+		}
+		infos[i] = models.PolicyDecisionInfo{
+			PolicyID:       decision.PolicyID,
+			Decision:       decision.Decision,
+			Reason:         decision.Reason,
+			MatchedRules:   matchedRules,
+			EvaluationTime: decision.EvaluationMS,
+			TargetMatched:  decision.TargetMatched,
+		}
+	}
+	return infos
 }

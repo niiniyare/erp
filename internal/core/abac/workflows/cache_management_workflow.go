@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
 	"github.com/niiniyare/erp/internal/core/abac/activities"
@@ -54,7 +55,7 @@ func CacheCleanupWorkflow(ctx workflow.Context, input CacheCleanupWorkflowInput)
 	// Set activity options for cleanup operations
 	cleanupActivityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: 5 * time.Minute,
-		RetryPolicy: &workflow.RetryPolicy{
+		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    10 * time.Second,
 			BackoffCoefficient: 2.0,
 			MaximumInterval:    2 * time.Minute,
@@ -142,7 +143,7 @@ func CacheWarmupWorkflow(ctx workflow.Context, input CacheWarmupWorkflowInput) (
 	// Set activity options for warmup operations
 	warmupActivityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Minute,
-		RetryPolicy: &workflow.RetryPolicy{
+		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    5 * time.Second,
 			BackoffCoefficient: 2.0,
 			MaximumInterval:    30 * time.Second,
@@ -237,7 +238,7 @@ func CacheInvalidationWorkflow(ctx workflow.Context, input CacheInvalidationWork
 	// Set activity options for invalidation operations
 	invalidationActivityOptions := workflow.ActivityOptions{
 		StartToCloseTimeout: 2 * time.Minute,
-		RetryPolicy: &workflow.RetryPolicy{
+		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    2 * time.Second,
 			BackoffCoefficient: 2.0,
 			MaximumInterval:    20 * time.Second,

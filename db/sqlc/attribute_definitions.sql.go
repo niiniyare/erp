@@ -190,15 +190,20 @@ func (q *Queries) DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) e
 
 const deleteAttributeValue = `-- name: DeleteAttributeValue :exec
 DELETE FROM attribute_values 
-WHERE id = $1 AND tenant_id = current_tenant_id()
+WHERE definition_id = $1 AND entity_id = $2 AND tenant_id = current_tenant_id()
 `
+
+type DeleteAttributeValueParams struct {
+	DefinitionID uuid.UUID `json:"definition_id"`
+	EntityID     uuid.UUID `json:"entity_id"`
+}
 
 // DeleteAttributeValue
 //
 //	DELETE FROM attribute_values
-//	WHERE id = $1 AND tenant_id = current_tenant_id()
-func (q *Queries) DeleteAttributeValue(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteAttributeValue, id)
+//	WHERE definition_id = $1 AND entity_id = $2 AND tenant_id = current_tenant_id()
+func (q *Queries) DeleteAttributeValue(ctx context.Context, arg DeleteAttributeValueParams) error {
+	_, err := q.db.Exec(ctx, deleteAttributeValue, arg.DefinitionID, arg.EntityID)
 	return err
 }
 
@@ -285,6 +290,51 @@ func (q *Queries) GetAttributeDefinitionByName(ctx context.Context, name string)
 		&i.CreatedAt,
 	)
 	return &i, err
+}
+
+const getAttributeDefinitionsByIDs = `-- name: GetAttributeDefinitionsByIDs :many
+SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
+WHERE id = ANY($1::UUID[]) AND tenant_id = current_tenant_id()
+`
+
+// GetAttributeDefinitionsByIDs
+//
+//	SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
+//	WHERE id = ANY($1::UUID[]) AND tenant_id = current_tenant_id()
+func (q *Queries) GetAttributeDefinitionsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]*AttributeDefinition, error) {
+	rows, err := q.db.Query(ctx, getAttributeDefinitionsByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*AttributeDefinition{}
+	for rows.Next() {
+		var i AttributeDefinition
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.DataType,
+			&i.Category,
+			&i.IsRequired,
+			&i.IsSensitive,
+			&i.DefaultValue,
+			&i.AllowedValues,
+			&i.ValidationRules,
+			&i.EncryptionRequired,
+			&i.IsActive,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getAttributeStats = `-- name: GetAttributeStats :one
@@ -402,6 +452,7 @@ func (q *Queries) GetAttributeValue(ctx context.Context, id uuid.UUID) (*GetAttr
 }
 
 const getAttributeValueByEntityAndName = `-- name: GetAttributeValueByEntityAndName :one
+
 SELECT av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by, ad.name as attribute_name, ad.data_type, ad.category
 FROM attribute_values av
 JOIN attribute_definitions ad ON av.definition_id = ad.id
@@ -438,7 +489,17 @@ type GetAttributeValueByEntityAndNameRow struct {
 	Category       string       `json:"category"`
 }
 
-// GetAttributeValueByEntityAndName
+// -- name: GetAttributeValuesByEntity :many
+// SELECT av.*, ad.name as attribute_name, ad.data_type, ad.category
+// FROM attribute_values av
+// JOIN attribute_definitions ad ON av.definition_id = ad.id
+// WHERE av.entity_id = $1
+//
+//	AND av.tenant_id = current_tenant_id()
+//	AND ($2::VARCHAR IS NULL OR ad.category = $2)
+//	AND (av.effective_to IS NULL OR av.effective_to > NOW())
+//
+// ORDER BY ad.name ASC;
 //
 //	SELECT av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by, ad.name as attribute_name, ad.data_type, ad.category
 //	FROM attribute_values av
@@ -475,53 +536,81 @@ func (q *Queries) GetAttributeValueByEntityAndName(ctx context.Context, arg GetA
 }
 
 const getAttributeValuesByEntity = `-- name: GetAttributeValuesByEntity :many
-SELECT av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by, ad.name as attribute_name, ad.data_type, ad.category
+SELECT
+  av.id,
+  av.tenant_id,
+  av.entity_id,
+  av.definition_id,
+  av.value,
+  av.effective_from,
+  av.effective_to,
+  av.created_at,
+  ad.name AS attribute_name,
+  ad.data_type,
+  ad.category
 FROM attribute_values av
 JOIN attribute_definitions ad ON av.definition_id = ad.id
-WHERE av.entity_id = $1 
+WHERE av.entity_id = $1
   AND av.tenant_id = current_tenant_id()
-  AND ($2::VARCHAR IS NULL OR ad.category = $2)
-  AND (av.effective_to IS NULL OR av.effective_to > NOW())
+  AND (
+    $2::VARCHAR IS NULL OR 
+    ad.category = $2
+  )
+  AND (
+    av.effective_to IS NULL OR 
+    av.effective_to > NOW()
+  )
 ORDER BY ad.name ASC
 `
 
 type GetAttributeValuesByEntityParams struct {
 	EntityID uuid.UUID `json:"entity_id"`
-	Column2  string    `json:"column_2"`
+	Category string    `json:"category"`
 }
 
 type GetAttributeValuesByEntityRow struct {
-	ID             uuid.UUID    `json:"id"`
-	TenantID       uuid.UUID    `json:"tenant_id"`
-	DefinitionID   uuid.UUID    `json:"definition_id"`
-	EntityID       uuid.UUID    `json:"entity_id"`
-	Value          string       `json:"value"`
-	EncryptedValue []byte       `json:"encrypted_value"`
-	IsEncrypted    *bool        `json:"is_encrypted"`
-	Version        *int32       `json:"version"`
-	EffectiveFrom  sql.NullTime `json:"effective_from"`
-	EffectiveTo    sql.NullTime `json:"effective_to"`
-	CreatedAt      sql.NullTime `json:"created_at"`
-	CreatedBy      *uuid.UUID   `json:"created_by"`
-	UpdatedAt      sql.NullTime `json:"updated_at"`
-	UpdatedBy      *uuid.UUID   `json:"updated_by"`
-	AttributeName  string       `json:"attribute_name"`
-	DataType       string       `json:"data_type"`
-	Category       string       `json:"category"`
+	ID            uuid.UUID    `json:"id"`
+	TenantID      uuid.UUID    `json:"tenant_id"`
+	EntityID      uuid.UUID    `json:"entity_id"`
+	DefinitionID  uuid.UUID    `json:"definition_id"`
+	Value         string       `json:"value"`
+	EffectiveFrom sql.NullTime `json:"effective_from"`
+	EffectiveTo   sql.NullTime `json:"effective_to"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+	AttributeName string       `json:"attribute_name"`
+	DataType      string       `json:"data_type"`
+	Category      string       `json:"category"`
 }
 
 // GetAttributeValuesByEntity
 //
-//	SELECT av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by, ad.name as attribute_name, ad.data_type, ad.category
+//	SELECT
+//	  av.id,
+//	  av.tenant_id,
+//	  av.entity_id,
+//	  av.definition_id,
+//	  av.value,
+//	  av.effective_from,
+//	  av.effective_to,
+//	  av.created_at,
+//	  ad.name AS attribute_name,
+//	  ad.data_type,
+//	  ad.category
 //	FROM attribute_values av
 //	JOIN attribute_definitions ad ON av.definition_id = ad.id
 //	WHERE av.entity_id = $1
 //	  AND av.tenant_id = current_tenant_id()
-//	  AND ($2::VARCHAR IS NULL OR ad.category = $2)
-//	  AND (av.effective_to IS NULL OR av.effective_to > NOW())
+//	  AND (
+//	    $2::VARCHAR IS NULL OR
+//	    ad.category = $2
+//	  )
+//	  AND (
+//	    av.effective_to IS NULL OR
+//	    av.effective_to > NOW()
+//	  )
 //	ORDER BY ad.name ASC
 func (q *Queries) GetAttributeValuesByEntity(ctx context.Context, arg GetAttributeValuesByEntityParams) ([]*GetAttributeValuesByEntityRow, error) {
-	rows, err := q.db.Query(ctx, getAttributeValuesByEntity, arg.EntityID, arg.Column2)
+	rows, err := q.db.Query(ctx, getAttributeValuesByEntity, arg.EntityID, arg.Category)
 	if err != nil {
 		return nil, err
 	}
@@ -532,18 +621,12 @@ func (q *Queries) GetAttributeValuesByEntity(ctx context.Context, arg GetAttribu
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
-			&i.DefinitionID,
 			&i.EntityID,
+			&i.DefinitionID,
 			&i.Value,
-			&i.EncryptedValue,
-			&i.IsEncrypted,
-			&i.Version,
 			&i.EffectiveFrom,
 			&i.EffectiveTo,
 			&i.CreatedAt,
-			&i.CreatedBy,
-			&i.UpdatedAt,
-			&i.UpdatedBy,
 			&i.AttributeName,
 			&i.DataType,
 			&i.Category,
@@ -558,41 +641,136 @@ func (q *Queries) GetAttributeValuesByEntity(ctx context.Context, arg GetAttribu
 	return items, nil
 }
 
+const getRequiredAttributeDefinitions = `-- name: GetRequiredAttributeDefinitions :many
+SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
+WHERE is_required = true AND tenant_id = current_tenant_id()
+`
+
+// GetRequiredAttributeDefinitions
+//
+//	SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
+//	WHERE is_required = true AND tenant_id = current_tenant_id()
+func (q *Queries) GetRequiredAttributeDefinitions(ctx context.Context) ([]*AttributeDefinition, error) {
+	rows, err := q.db.Query(ctx, getRequiredAttributeDefinitions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*AttributeDefinition{}
+	for rows.Next() {
+		var i AttributeDefinition
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.DataType,
+			&i.Category,
+			&i.IsRequired,
+			&i.IsSensitive,
+			&i.DefaultValue,
+			&i.AllowedValues,
+			&i.ValidationRules,
+			&i.EncryptionRequired,
+			&i.IsActive,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAttributeDefinitions = `-- name: ListAttributeDefinitions :many
 
-SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
+SELECT
+  id,
+  tenant_id,
+  name,
+  display_name,
+  description,
+  data_type,
+  category,
+  is_required,
+  is_sensitive,
+  default_value,
+  allowed_values,
+  validation_rules,
+  encryption_required,
+  is_active,
+  created_at
+FROM attribute_definitions
 WHERE tenant_id = current_tenant_id()
-  AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
-  AND ($2::VARCHAR IS NULL OR category = $2)
-  AND ($3::BOOLEAN IS NULL OR is_active = $3)
+  AND (
+    $1::VARCHAR IS NULL OR 
+    name ILIKE '%' || $1 || '%'
+  )
+  AND (
+    $2::VARCHAR IS NULL OR 
+    category = $2
+  )
+  AND (
+    $3::BOOLEAN IS NULL OR 
+    is_active = $3
+  )
 ORDER BY name ASC
-LIMIT $4 OFFSET $5
+LIMIT $5 OFFSET $4
 `
 
 type ListAttributeDefinitionsParams struct {
-	Column1 string `json:"column_1"`
-	Column2 string `json:"column_2"`
-	Column3 bool   `json:"column_3"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
+	Search   string `json:"search"`
+	Category string `json:"category"`
+	IsActive bool   `json:"is_active"`
+	Offset   int32  `json:"offset"`
+	Limit    int32  `json:"limit"`
 }
 
 // Attribute Definition Listing and Filtering
 //
-//	SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
+//	SELECT
+//	  id,
+//	  tenant_id,
+//	  name,
+//	  display_name,
+//	  description,
+//	  data_type,
+//	  category,
+//	  is_required,
+//	  is_sensitive,
+//	  default_value,
+//	  allowed_values,
+//	  validation_rules,
+//	  encryption_required,
+//	  is_active,
+//	  created_at
+//	FROM attribute_definitions
 //	WHERE tenant_id = current_tenant_id()
-//	  AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
-//	  AND ($2::VARCHAR IS NULL OR category = $2)
-//	  AND ($3::BOOLEAN IS NULL OR is_active = $3)
+//	  AND (
+//	    $1::VARCHAR IS NULL OR
+//	    name ILIKE '%' || $1 || '%'
+//	  )
+//	  AND (
+//	    $2::VARCHAR IS NULL OR
+//	    category = $2
+//	  )
+//	  AND (
+//	    $3::BOOLEAN IS NULL OR
+//	    is_active = $3
+//	  )
 //	ORDER BY name ASC
-//	LIMIT $4 OFFSET $5
+//	LIMIT $5 OFFSET $4
 func (q *Queries) ListAttributeDefinitions(ctx context.Context, arg ListAttributeDefinitionsParams) ([]*AttributeDefinition, error) {
 	rows, err := q.db.Query(ctx, listAttributeDefinitions,
-		arg.Column1,
-		arg.Column2,
-		arg.Column3,
-		arg.Limit,
+		arg.Search,
+		arg.Category,
+		arg.IsActive,
 		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -673,6 +851,22 @@ func (q *Queries) ListAttributeDefinitionsByCategory(ctx context.Context, catego
 		return nil, err
 	}
 	return items, nil
+}
+
+const softDeleteAttributeDefinition = `-- name: SoftDeleteAttributeDefinition :exec
+UPDATE attribute_definitions
+SET deleted_at = NOW()
+WHERE id = $1 AND tenant_id = current_tenant_id()
+`
+
+// SoftDeleteAttributeDefinition
+//
+//	UPDATE attribute_definitions
+//	SET deleted_at = NOW()
+//	WHERE id = $1 AND tenant_id = current_tenant_id()
+func (q *Queries) SoftDeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteAttributeDefinition, id)
+	return err
 }
 
 const updateAttributeDefinition = `-- name: UpdateAttributeDefinition :one

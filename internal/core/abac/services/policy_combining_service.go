@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
@@ -58,7 +57,7 @@ type CombiningRequest struct {
 type DecisionInput struct {
 	ID          string                     `json:"id"`
 	Name        string                     `json:"name"`
-	Decision    types.PolicyDecision       `json:"decision"`
+	Decision    types.PolicyDecisionType   `json:"decision"`
 	Applicable  bool                       `json:"applicable"`
 	Priority    int                        `json:"priority"`
 	Weight      float64                    `json:"weight"`
@@ -70,7 +69,7 @@ type DecisionInput struct {
 
 // CombiningResult represents the result of combining decisions
 type CombiningResult struct {
-	FinalDecision      types.PolicyDecision           `json:"final_decision"`
+	FinalDecision      types.PolicyDecisionType       `json:"final_decision"`
 	Algorithm          types.PolicyCombiningAlgorithm `json:"algorithm"`
 	ApplicableCount    int                            `json:"applicable_count"`
 	AllowCount         int                            `json:"allow_count"`
@@ -87,7 +86,7 @@ type CombiningResult struct {
 
 // RuleCombiningResult represents the result of combining rule decisions
 type RuleCombiningResult struct {
-	FinalDecision   types.PolicyDecision           `json:"final_decision"`
+	FinalDecision   types.PolicyDecisionType       `json:"final_decision"`
 	Algorithm       types.PolicyCombiningAlgorithm `json:"algorithm"`
 	RulesProcessed  int                            `json:"rules_processed"`
 	RulesApplicable int                            `json:"rules_applicable"`
@@ -109,32 +108,32 @@ type ConflictAnalysis struct {
 
 // ConflictResolution represents how a conflict was resolved
 type ConflictResolution struct {
-	ResolutionMethod    string                 `json:"resolution_method"`
-	WinningDecision     *DecisionInput         `json:"winning_decision"`
-	ResolvedDecision    types.PolicyDecision   `json:"resolved_decision"`
-	ResolutionReason    string                 `json:"resolution_reason"`
-	OverriddenDecisions []*DecisionInput       `json:"overridden_decisions,omitempty"`
-	ResolutionMetadata  map[string]interface{} `json:"resolution_metadata,omitempty"`
+	ResolutionMethod    string                   `json:"resolution_method"`
+	WinningDecision     *DecisionInput           `json:"winning_decision"`
+	ResolvedDecision    types.PolicyDecisionType `json:"resolved_decision"`
+	ResolutionReason    string                   `json:"resolution_reason"`
+	OverriddenDecisions []*DecisionInput         `json:"overridden_decisions,omitempty"`
+	ResolutionMetadata  map[string]interface{}   `json:"resolution_metadata,omitempty"`
 }
 
 // CombiningStep represents a step in the combining process
 type CombiningStep struct {
-	StepNumber  int                    `json:"step_number"`
-	Description string                 `json:"description"`
-	InputCount  int                    `json:"input_count"`
-	Result      types.PolicyDecision   `json:"result"`
-	Rationale   string                 `json:"rationale"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	StepNumber  int                      `json:"step_number"`
+	Description string                   `json:"description"`
+	InputCount  int                      `json:"input_count"`
+	Result      types.PolicyDecisionType `json:"result"`
+	Rationale   string                   `json:"rationale"`
+	Metadata    map[string]interface{}   `json:"metadata,omitempty"`
 }
 
 // RuleCombiningStep represents a step in rule combining
 type RuleCombiningStep struct {
-	RuleID     string               `json:"rule_id"`
-	RuleName   string               `json:"rule_name"`
-	Decision   types.PolicyDecision `json:"decision"`
-	Applicable bool                 `json:"applicable"`
-	Action     string               `json:"action"` // "evaluated", "skipped", "overridden"
-	Reason     string               `json:"reason"`
+	RuleID     string                   `json:"rule_id"`
+	RuleName   string                   `json:"rule_name"`
+	Decision   types.PolicyDecisionType `json:"decision"`
+	Applicable bool                     `json:"applicable"`
+	Action     string                   `json:"action"` // "evaluated", "skipped", "overridden"
+	Reason     string                   `json:"reason"`
 }
 
 // CombiningExplanationRequest represents a request for combining explanation
@@ -148,7 +147,7 @@ type CombiningExplanationRequest struct {
 type CombiningExplanation struct {
 	Algorithm            types.PolicyCombiningAlgorithm `json:"algorithm"`
 	AlgorithmDescription string                         `json:"algorithm_description"`
-	FinalDecision        types.PolicyDecision           `json:"final_decision"`
+	FinalDecision        types.PolicyDecisionType       `json:"final_decision"`
 	StepByStepProcess    []*ExplanationStep             `json:"step_by_step_process"`
 	ConflictExplanation  *ConflictExplanation           `json:"conflict_explanation,omitempty"`
 	DecisionRationale    string                         `json:"decision_rationale"`
@@ -157,11 +156,11 @@ type CombiningExplanation struct {
 
 // ExplanationStep represents a step in the explanation
 type ExplanationStep struct {
-	StepNumber          int                  `json:"step_number"`
-	Description         string               `json:"description"`
-	DecisionsConsidered []*DecisionInput     `json:"decisions_considered"`
-	Outcome             types.PolicyDecision `json:"outcome"`
-	Reasoning           string               `json:"reasoning"`
+	StepNumber          int                      `json:"step_number"`
+	Description         string                   `json:"description"`
+	DecisionsConsidered []*DecisionInput         `json:"decisions_considered"`
+	Outcome             types.PolicyDecisionType `json:"outcome"`
+	Reasoning           string                   `json:"reasoning"`
 }
 
 // ConflictExplanation explains how conflicts were detected and resolved
@@ -175,7 +174,7 @@ type ConflictExplanation struct {
 // AlternativeOutcome shows what would happen with different algorithms
 type AlternativeOutcome struct {
 	Algorithm types.PolicyCombiningAlgorithm `json:"algorithm"`
-	Outcome   types.PolicyDecision           `json:"outcome"`
+	Outcome   types.PolicyDecisionType       `json:"outcome"`
 	Reason    string                         `json:"reason"`
 }
 
@@ -203,14 +202,14 @@ const (
 // policyCombiningService implements PolicyCombiningService
 type policyCombiningService struct {
 	tracing tracing.TracingService
-	metrics metrics.Provider
+	metrics metrics.MetricsProvider
 	logger  logger.Logger
 }
 
 // NewPolicyCombiningService creates a new policy combining service
 func NewPolicyCombiningService(
 	tracing tracing.TracingService,
-	metrics metrics.Provider,
+	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) PolicyCombiningService {
 	return &policyCombiningService{
@@ -277,7 +276,7 @@ func (s *policyCombiningService) CombinePolicyDecisions(ctx context.Context, req
 
 	// Apply the specified combining algorithm
 	switch req.Algorithm {
-	case types.PolicyCombiningAlgorithmDenyOverrides:
+	case types.CombiningAlgorithmDenyOverrides:
 		combiningResult, err := s.ApplyDenyOverrides(ctx, decisions)
 		if err != nil {
 			return nil, err
@@ -285,7 +284,7 @@ func (s *policyCombiningService) CombinePolicyDecisions(ctx context.Context, req
 		result.FinalDecision = combiningResult.FinalDecision
 		result.CombiningTrace = combiningResult.CombiningTrace
 
-	case types.PolicyCombiningAlgorithmAllowOverrides:
+	case types.CombiningAlgorithmPermitOverrides:
 		combiningResult, err := s.ApplyAllowOverrides(ctx, decisions)
 		if err != nil {
 			return nil, err
@@ -293,7 +292,7 @@ func (s *policyCombiningService) CombinePolicyDecisions(ctx context.Context, req
 		result.FinalDecision = combiningResult.FinalDecision
 		result.CombiningTrace = combiningResult.CombiningTrace
 
-	case types.PolicyCombiningAlgorithmFirstApplicable:
+	case types.CombiningAlgorithmFirstApplicable:
 		combiningResult, err := s.ApplyFirstApplicable(ctx, decisions)
 		if err != nil {
 			return nil, err
@@ -301,7 +300,7 @@ func (s *policyCombiningService) CombinePolicyDecisions(ctx context.Context, req
 		result.FinalDecision = combiningResult.FinalDecision
 		result.CombiningTrace = combiningResult.CombiningTrace
 
-	case types.PolicyCombiningAlgorithmOnlyOneApplicable:
+	case types.CombiningAlgorithmOnlyOneApplicable:
 		combiningResult, err := s.ApplyOnlyOneApplicable(ctx, decisions)
 		if err != nil {
 			return nil, err
@@ -309,7 +308,7 @@ func (s *policyCombiningService) CombinePolicyDecisions(ctx context.Context, req
 		result.FinalDecision = combiningResult.FinalDecision
 		result.CombiningTrace = combiningResult.CombiningTrace
 
-	case types.PolicyCombiningAlgorithmOrderedDenyOverrides:
+	case types.CombiningAlgorithmOrderedDenyOverrides:
 		combiningResult, err := s.ApplyOrderedDenyOverrides(ctx, decisions)
 		if err != nil {
 			return nil, err
@@ -317,7 +316,7 @@ func (s *policyCombiningService) CombinePolicyDecisions(ctx context.Context, req
 		result.FinalDecision = combiningResult.FinalDecision
 		result.CombiningTrace = combiningResult.CombiningTrace
 
-	case types.PolicyCombiningAlgorithmOrderedAllowOverrides:
+	case types.CombiningAlgorithmOrderedPermitOverrides:
 		combiningResult, err := s.ApplyOrderedAllowOverrides(ctx, decisions)
 		if err != nil {
 			return nil, err
@@ -423,7 +422,7 @@ func (s *policyCombiningService) ApplyDenyOverrides(ctx context.Context, decisio
 	defer span.End()
 
 	result := &CombiningResult{
-		Algorithm:      types.PolicyCombiningAlgorithmDenyOverrides,
+		Algorithm:      types.CombiningAlgorithmDenyOverrides,
 		CombiningTrace: make([]*CombiningStep, 0),
 	}
 
@@ -470,7 +469,7 @@ func (s *policyCombiningService) ApplyAllowOverrides(ctx context.Context, decisi
 	defer span.End()
 
 	result := &CombiningResult{
-		Algorithm:      types.PolicyCombiningAlgorithmAllowOverrides,
+		Algorithm:      types.CombiningAlgorithmPermitOverrides,
 		CombiningTrace: make([]*CombiningStep, 0),
 	}
 
@@ -517,7 +516,7 @@ func (s *policyCombiningService) ApplyFirstApplicable(ctx context.Context, decis
 	defer span.End()
 
 	result := &CombiningResult{
-		Algorithm:      types.PolicyCombiningAlgorithmFirstApplicable,
+		Algorithm:      types.CombiningAlgorithmFirstApplicable,
 		CombiningTrace: make([]*CombiningStep, 0),
 	}
 
@@ -560,7 +559,7 @@ func (s *policyCombiningService) ApplyOnlyOneApplicable(ctx context.Context, dec
 	defer span.End()
 
 	result := &CombiningResult{
-		Algorithm:      types.PolicyCombiningAlgorithmOnlyOneApplicable,
+		Algorithm:      types.CombiningAlgorithmOnlyOneApplicable,
 		CombiningTrace: make([]*CombiningStep, 0),
 	}
 
@@ -710,7 +709,7 @@ func (s *policyCombiningService) ResolveConflicts(ctx context.Context, conflicts
 	}
 
 	switch algorithm {
-	case types.PolicyCombiningAlgorithmDenyOverrides, types.PolicyCombiningAlgorithmOrderedDenyOverrides:
+	case types.CombiningAlgorithmDenyOverrides, types.CombiningAlgorithmOrderedDenyOverrides:
 		if len(conflicts.DenyDecisions) > 0 {
 			resolution.WinningDecision = conflicts.DenyDecisions[0]
 			resolution.ResolvedDecision = types.PolicyDecisionDeny
@@ -722,7 +721,7 @@ func (s *policyCombiningService) ResolveConflicts(ctx context.Context, conflicts
 			resolution.ResolutionReason = "No deny decisions present, using allow decision"
 		}
 
-	case types.PolicyCombiningAlgorithmAllowOverrides, types.PolicyCombiningAlgorithmOrderedAllowOverrides:
+	case types.CombiningAlgorithmPermitOverrides, types.CombiningAlgorithmOrderedPermitOverrides:
 		if len(conflicts.AllowDecisions) > 0 {
 			resolution.WinningDecision = conflicts.AllowDecisions[0]
 			resolution.ResolvedDecision = types.PolicyDecisionAllow
@@ -734,7 +733,7 @@ func (s *policyCombiningService) ResolveConflicts(ctx context.Context, conflicts
 			resolution.ResolutionReason = "No allow decisions present, using deny decision"
 		}
 
-	case types.PolicyCombiningAlgorithmFirstApplicable:
+	case types.CombiningAlgorithmFirstApplicable:
 		// Find the first applicable decision by priority
 		allDecisions := append(conflicts.AllowDecisions, conflicts.DenyDecisions...)
 		sort.Slice(allDecisions, func(i, j int) bool {
@@ -757,12 +756,12 @@ func (s *policyCombiningService) ResolveConflicts(ctx context.Context, conflicts
 // ValidateCombiningAlgorithm validates a combining algorithm
 func (s *policyCombiningService) ValidateCombiningAlgorithm(ctx context.Context, algorithm types.PolicyCombiningAlgorithm) error {
 	supportedAlgorithms := []types.PolicyCombiningAlgorithm{
-		types.PolicyCombiningAlgorithmDenyOverrides,
-		types.PolicyCombiningAlgorithmAllowOverrides,
-		types.PolicyCombiningAlgorithmFirstApplicable,
-		types.PolicyCombiningAlgorithmOnlyOneApplicable,
-		types.PolicyCombiningAlgorithmOrderedDenyOverrides,
-		types.PolicyCombiningAlgorithmOrderedAllowOverrides,
+		types.CombiningAlgorithmDenyOverrides,
+		types.CombiningAlgorithmPermitOverrides,
+		types.CombiningAlgorithmFirstApplicable,
+		types.CombiningAlgorithmOnlyOneApplicable,
+		types.CombiningAlgorithmOrderedDenyOverrides,
+		types.CombiningAlgorithmOrderedPermitOverrides,
 	}
 
 	for _, supported := range supportedAlgorithms {
@@ -779,12 +778,12 @@ func (s *policyCombiningService) ValidateCombiningAlgorithm(ctx context.Context,
 // GetSupportedAlgorithms returns the list of supported combining algorithms
 func (s *policyCombiningService) GetSupportedAlgorithms(ctx context.Context) ([]types.PolicyCombiningAlgorithm, error) {
 	return []types.PolicyCombiningAlgorithm{
-		types.PolicyCombiningAlgorithmDenyOverrides,
-		types.PolicyCombiningAlgorithmAllowOverrides,
-		types.PolicyCombiningAlgorithmFirstApplicable,
-		types.PolicyCombiningAlgorithmOnlyOneApplicable,
-		types.PolicyCombiningAlgorithmOrderedDenyOverrides,
-		types.PolicyCombiningAlgorithmOrderedAllowOverrides,
+		types.CombiningAlgorithmDenyOverrides,
+		types.CombiningAlgorithmPermitOverrides,
+		types.CombiningAlgorithmFirstApplicable,
+		types.CombiningAlgorithmOnlyOneApplicable,
+		types.CombiningAlgorithmOrderedDenyOverrides,
+		types.CombiningAlgorithmOrderedPermitOverrides,
 	}, nil
 }
 
@@ -852,12 +851,12 @@ func (s *policyCombiningService) algorithmStrings(algorithms []types.PolicyCombi
 
 func (s *policyCombiningService) getAlgorithmDescription(algorithm types.PolicyCombiningAlgorithm) string {
 	descriptions := map[types.PolicyCombiningAlgorithm]string{
-		types.PolicyCombiningAlgorithmDenyOverrides:         "Any deny decision overrides all allow decisions",
-		types.PolicyCombiningAlgorithmAllowOverrides:        "Any allow decision overrides all deny decisions",
-		types.PolicyCombiningAlgorithmFirstApplicable:       "The first applicable decision is used",
-		types.PolicyCombiningAlgorithmOnlyOneApplicable:     "Exactly one decision must be applicable",
-		types.PolicyCombiningAlgorithmOrderedDenyOverrides:  "Deny overrides with priority ordering",
-		types.PolicyCombiningAlgorithmOrderedAllowOverrides: "Allow overrides with priority ordering",
+		types.CombiningAlgorithmDenyOverrides:          "Any deny decision overrides all allow decisions",
+		types.CombiningAlgorithmPermitOverrides:        "Any allow decision overrides all deny decisions",
+		types.CombiningAlgorithmFirstApplicable:        "The first applicable decision is used",
+		types.CombiningAlgorithmOnlyOneApplicable:      "Exactly one decision must be applicable",
+		types.CombiningAlgorithmOrderedDenyOverrides:   "Deny overrides with priority ordering",
+		types.CombiningAlgorithmOrderedPermitOverrides: "Allow overrides with priority ordering",
 	}
 
 	if desc, exists := descriptions[algorithm]; exists {
@@ -874,7 +873,7 @@ func (s *policyCombiningService) recordCombiningMetrics(ctx context.Context, ope
 		"operation", "algorithm",
 	)
 
-	counter.Inc(ctx, metrics.Fields{
+	counter.Inc(metrics.Fields{
 		"operation": operation,
 		"algorithm": algorithm,
 	})
@@ -887,7 +886,7 @@ func (s *policyCombiningService) recordCombiningMetrics(ctx context.Context, ope
 		"operation", "algorithm",
 	)
 
-	histogram.Observe(ctx, duration.Seconds(), metrics.Fields{
+	histogram.Observe(duration.Seconds(), metrics.Fields{
 		"operation": operation,
 		"algorithm": algorithm,
 	})

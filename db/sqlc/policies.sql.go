@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -246,12 +247,35 @@ func (q *Queries) GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID
 }
 
 const getPoliciesByIDs = `-- name: GetPoliciesByIDs :many
+
 SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies 
 WHERE id = ANY($1::UUID[]) 
   AND tenant_id = current_tenant_id()
 `
 
-// GetPoliciesByIDs
+// -- name: GetPoliciesForEvaluation :many
+// SELECT * FROM policies
+// WHERE tenant_id = current_tenant_id()
+//
+//	AND is_active = true
+//	AND deleted_at IS NULL
+//	AND (
+//	  $1::UUID IS NULL OR
+//	  entity_id IS NULL OR
+//	  entity_id = $1
+//	)
+//	AND (
+//	  target->>'resource_type' = $2 OR
+//	  target->>'resource_type' = '*' OR
+//	  target->>'resource_type' IS NULL
+//	)
+//	AND (
+//	  target->>'action' = $3 OR
+//	  target->>'action' = '*' OR
+//	  target->>'action' IS NULL
+//	)
+//
+// ORDER BY priority DESC, created_at ASC;
 //
 //	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
 //	WHERE id = ANY($1::UUID[])
@@ -297,8 +321,19 @@ func (q *Queries) GetPoliciesByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([
 }
 
 const getPoliciesForEvaluation = `-- name: GetPoliciesForEvaluation :many
-
-SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies 
+SELECT
+  id AS policy_id,
+  entity_id,
+  name,
+  effect,
+  priority,
+  category,
+  target,
+  rule,
+  obligations,
+  is_active,
+  created_at
+FROM policies
 WHERE tenant_id = current_tenant_id()
   AND is_active = true 
   AND deleted_at IS NULL
@@ -321,14 +356,40 @@ ORDER BY priority DESC, created_at ASC
 `
 
 type GetPoliciesForEvaluationParams struct {
-	Column1  uuid.UUID `json:"column_1"`
-	Target   []byte    `json:"target"`
-	Target_2 []byte    `json:"target_2"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	ResourceType []byte    `json:"resource_type"`
+	Action       []byte    `json:"action"`
+}
+
+type GetPoliciesForEvaluationRow struct {
+	PolicyID    uuid.UUID    `json:"policy_id"`
+	EntityID    *uuid.UUID   `json:"entity_id"`
+	Name        string       `json:"name"`
+	Effect      *string      `json:"effect"`
+	Priority    *int32       `json:"priority"`
+	Category    *string      `json:"category"`
+	Target      []byte       `json:"target"`
+	Rule        []byte       `json:"rule"`
+	Obligations []byte       `json:"obligations"`
+	IsActive    *bool        `json:"is_active"`
+	CreatedAt   sql.NullTime `json:"created_at"`
 }
 
 // ABAC-specific queries for policy evaluation
 //
-//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
+//	SELECT
+//	  id AS policy_id,
+//	  entity_id,
+//	  name,
+//	  effect,
+//	  priority,
+//	  category,
+//	  target,
+//	  rule,
+//	  obligations,
+//	  is_active,
+//	  created_at
+//	FROM policies
 //	WHERE tenant_id = current_tenant_id()
 //	  AND is_active = true
 //	  AND deleted_at IS NULL
@@ -348,35 +409,27 @@ type GetPoliciesForEvaluationParams struct {
 //	    target->>'action' IS NULL
 //	  )
 //	ORDER BY priority DESC, created_at ASC
-func (q *Queries) GetPoliciesForEvaluation(ctx context.Context, arg GetPoliciesForEvaluationParams) ([]*Policy, error) {
-	rows, err := q.db.Query(ctx, getPoliciesForEvaluation, arg.Column1, arg.Target, arg.Target_2)
+func (q *Queries) GetPoliciesForEvaluation(ctx context.Context, arg GetPoliciesForEvaluationParams) ([]*GetPoliciesForEvaluationRow, error) {
+	rows, err := q.db.Query(ctx, getPoliciesForEvaluation, arg.EntityID, arg.ResourceType, arg.Action)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*Policy{}
+	items := []*GetPoliciesForEvaluationRow{}
 	for rows.Next() {
-		var i Policy
+		var i GetPoliciesForEvaluationRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.TenantID,
+			&i.PolicyID,
 			&i.EntityID,
 			&i.Name,
-			&i.DisplayName,
-			&i.Description,
-			&i.PolicyType,
 			&i.Effect,
 			&i.Priority,
 			&i.Category,
 			&i.Target,
 			&i.Rule,
 			&i.Obligations,
-			&i.Advice,
 			&i.IsActive,
 			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.CreatedBy,
-			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}

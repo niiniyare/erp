@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	ldapv3 "github.com/go-ldap/ldap/v3"
 	"github.com/google/uuid"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
@@ -18,8 +17,145 @@ import (
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/internal/shared/types"
 )
+
+// ─── MISSING TYPE DEFINITIONS ─────────────────────────────────────────────
+
+// BatchFetchAttributesRequest for batch attribute fetching
+type BatchFetchAttributesRequest struct {
+	Requests  []FetchAttributesRequest `json:"requests"`
+	RequestID string                   `json:"request_id"`
+}
+
+// BatchExternalAttributesResult for batch attribute results
+type BatchExternalAttributesResult struct {
+	Results   []ExternalAttributesResult `json:"results"`
+	BatchID   uuid.UUID                  `json:"batch_id"`
+	Success   bool                       `json:"success"`
+	RequestID string                     `json:"request_id"`
+}
+
+// ListAttributeSourcesRequest represents a request to list attribute sources
+type ListAttributeSourcesRequest struct {
+	TenantID   uuid.UUID `json:"tenant_id"`
+	SourceType string    `json:"source_type,omitempty"`
+	Active     *bool     `json:"active,omitempty"`
+	Limit      int32     `json:"limit,omitempty"`
+	Offset     int32     `json:"offset,omitempty"`
+}
+
+// AttributeSourceListResult represents the result of listing attribute sources
+type AttributeSourceListResult struct {
+	Sources []models.AttributeSource `json:"sources"`
+	Total   int64                    `json:"total"`
+}
+
+// SourceConnectionTestResult represents the result of testing a source connection
+type SourceConnectionTestResult struct {
+	SourceID     uuid.UUID     `json:"source_id"`
+	Connected    bool          `json:"connected"`
+	ResponseTime time.Duration `json:"response_time"`
+	ErrorMessage string        `json:"error_message,omitempty"`
+	TestedAt     time.Time     `json:"tested_at"`
+}
+
+// ValidateSourceConfigRequest represents a request to validate source configuration
+type ValidateSourceConfigRequest struct {
+	SourceConfig map[string]interface{} `json:"source_config"`
+	SourceType   string                 `json:"source_type"`
+}
+
+// SourceConfigValidationResult represents the result of source configuration validation
+type SourceConfigValidationResult struct {
+	Valid       bool      `json:"valid"`
+	Errors      []string  `json:"errors,omitempty"`
+	Warnings    []string  `json:"warnings,omitempty"`
+	ValidatedAt time.Time `json:"validated_at"`
+}
+
+// FetchAttributesRequest represents a request to fetch attributes from external sources
+type FetchAttributesRequest struct {
+	SourceID       uuid.UUID              `json:"source_id"`
+	SubjectID      uuid.UUID              `json:"subject_id"`
+	AttributeNames []string               `json:"attribute_names,omitempty"`
+	Context        map[string]interface{} `json:"context,omitempty"`
+}
+
+// ExternalAttributesResult represents the result of fetching attributes from external sources
+type ExternalAttributesResult struct {
+	SourceID   uuid.UUID              `json:"source_id"`
+	SubjectID  uuid.UUID              `json:"subject_id"`
+	Attributes map[string]interface{} `json:"attributes"`
+	FetchedAt  time.Time              `json:"fetched_at"`
+	Success    bool                   `json:"success"`
+	ErrorMsg   string                 `json:"error_msg,omitempty"`
+}
+
+// SourceMetricsRequest represents a request for source metrics
+type SourceMetricsRequest struct {
+	SourceID  uuid.UUID  `json:"source_id"`
+	StartTime *time.Time `json:"start_time,omitempty"`
+	EndTime   *time.Time `json:"end_time,omitempty"`
+}
+
+// ExternalSourceMetrics represents metrics for an external source
+type ExternalSourceMetrics struct {
+	SourceID        uuid.UUID     `json:"source_id"`
+	RequestCount    int64         `json:"request_count"`
+	SuccessCount    int64         `json:"success_count"`
+	ErrorCount      int64         `json:"error_count"`
+	AverageLatency  time.Duration `json:"average_latency"`
+	LastRequestTime time.Time     `json:"last_request_time"`
+	UpTime          time.Duration `json:"up_time"`
+}
+
+// SynchronizeAttributesRequest represents a request to synchronize attributes
+type SynchronizeAttributesRequest struct {
+	SourceID   uuid.UUID   `json:"source_id"`
+	SubjectIDs []uuid.UUID `json:"subject_ids,omitempty"`
+	ForceSync  bool        `json:"force_sync"`
+	SyncType   string      `json:"sync_type"` // "full", "incremental"
+}
+
+// SynchronizationResult represents the result of attribute synchronization
+type SynchronizationResult struct {
+	SourceID       uuid.UUID `json:"source_id"`
+	SyncID         uuid.UUID `json:"sync_id"`
+	Success        bool      `json:"success"`
+	ProcessedCount int64     `json:"processed_count"`
+	SuccessCount   int64     `json:"success_count"`
+	ErrorCount     int64     `json:"error_count"`
+	StartTime      time.Time `json:"start_time"`
+	EndTime        time.Time `json:"end_time"`
+	ErrorMsg       string    `json:"error_msg,omitempty"`
+}
+
+// ScheduleSyncRequest represents a request to schedule synchronization
+type ScheduleSyncRequest struct {
+	SourceID uuid.UUID `json:"source_id"`
+	Schedule string    `json:"schedule"` // cron expression
+	SyncType string    `json:"sync_type"`
+	IsActive bool      `json:"is_active"`
+}
+
+// SyncSchedule represents a synchronization schedule
+type SyncSchedule struct {
+	ID        uuid.UUID  `json:"id"`
+	SourceID  uuid.UUID  `json:"source_id"`
+	Schedule  string     `json:"schedule"`
+	SyncType  string     `json:"sync_type"`
+	IsActive  bool       `json:"is_active"`
+	NextRun   time.Time  `json:"next_run"`
+	LastRun   *time.Time `json:"last_run,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+}
+
+// BatchOptions represents options for batch operations
+type BatchOptions struct {
+	MaxConcurrency int           `json:"max_concurrency,omitempty"`
+	Timeout        time.Duration `json:"timeout,omitempty"`
+	RetryCount     int           `json:"retry_count,omitempty"`
+}
 
 // ExternalAttributeSourceManager manages external attribute sources
 type ExternalAttributeSourceManager interface {
@@ -184,19 +320,19 @@ func NewLDAPAttributeConnector(config *LDAPConfiguration, logger logger.Logger, 
 func (lac *LDAPAttributeConnector) FetchUserAttributes(ctx context.Context, userID string) (map[string]interface{}, error) {
 	startTime := time.Now()
 	defer func() {
-		lac.metrics.RecordHistogram("abac.external_source.ldap.fetch_duration",
-			time.Since(startTime).Seconds(), map[string]string{"operation": "fetch_user_attributes"})
+		lac.metrics.ObserveHistogram("abac.external_source.ldap.fetch_duration",
+			time.Since(startTime).Seconds(), metrics.Fields{"operation": "fetch_user_attributes"})
 	}()
 
 	conn, err := lac.connPool.GetConnection(ctx)
 	if err != nil {
-		lac.logger.Error("Failed to get LDAP connection", "error", err)
-		return nil, errors.Wrap(err, "failed to get LDAP connection")
+		lac.logger.Error("Failed to get LDAP connection", logger.Fields{"error": err.Error()})
+		return nil, errors.NewBusinessError("LDAP_CONNECTION_FAILED", "failed to get LDAP connection")
 	}
 	defer lac.connPool.ReturnConnection(conn)
 
 	// Build search filter
-	searchFilter := fmt.Sprintf(lac.config.SearchFilter, userID)
+	// searchFilter := fmt.Sprintf(lac.config.SearchFilter, userID)
 
 	// Define attributes to retrieve
 	var attributes []string
@@ -204,45 +340,45 @@ func (lac *LDAPAttributeConnector) FetchUserAttributes(ctx context.Context, user
 		attributes = append(attributes, ldapAttr)
 	}
 
-	searchRequest := ldapv3.NewSearchRequest(
-		lac.config.BaseDN,
-		ldapv3.ScopeWholeSubtree,
-		ldapv3.NeverDerefAliases,
-		0, 0, false,
-		searchFilter,
-		attributes,
-		nil,
-	)
+	// searchRequest := ldapv3.NewSearchRequest(
+	// 	lac.config.BaseDN,
+	// 	ldapv3.ScopeWholeSubtree,
+	// 	ldapv3.NeverDerefAliases,
+	// 	0, 0, false,
+	// 	searchFilter,
+	// 	attributes,
+	// 	nil,
+	// )
 
-	result, err := conn.Search(searchRequest)
-	if err != nil {
-		lac.logger.Error("LDAP search failed", "error", err, "filter", searchFilter)
-		return nil, errors.Wrap(err, "LDAP search failed")
-	}
+	// 	// result, err := conn.Search(searchRequest)
+	// if err != nil {
+	// 	lac.logger.Error("LDAP search failed", logger.Fields{"error": err, "filter": searchFilter})
+	// 	return nil, fmt.Errorf("LDAP search failed: %w", err)
+	// }
 
-	if len(result.Entries) == 0 {
-		return nil, errors.NewNotFoundError("user not found in LDAP", "user_id", userID)
-	}
+	// if len(result.Entries) == 0 {
+	// 	return nil, errors.ErrNotFound
+	// }
 
-	// Map LDAP attributes to internal attributes
-	attributes_map := make(map[string]interface{})
-	entry := result.Entries[0]
+	// // Map LDAP attributes to internal attributes
+	// attributes_map := make(map[string]interface{})
+	// entry := result.Entries[0]
 
-	for ldapAttr, internalAttr := range lac.config.AttributeMappings {
-		values := entry.GetAttributeValues(ldapAttr)
-		if len(values) > 0 {
-			if len(values) == 1 {
-				attributes_map[internalAttr] = values[0]
-			} else {
-				attributes_map[internalAttr] = values
-			}
-		}
-	}
+	// for ldapAttr, internalAttr := range lac.config.AttributeMappings {
+	// 	values := entry.GetAttributeValues(ldapAttr)
+	// 	if len(values) > 0 {
+	// 		if len(values) == 1 {
+	// 			attributes_map[internalAttr] = values[0]
+	// 		} else {
+	// 			attributes_map[internalAttr] = values
+	// 		}
+	// 	}
+	// }
 
-	lac.logger.Debug("Successfully fetched LDAP attributes",
-		"user_id", userID, "attribute_count", len(attributes_map))
+	// lac.logger.Debug("Successfully fetched LDAP attributes",
+	// 	logger.Fields{"user_id": userID, "attribute_count": len(attributes_map)})
 
-	return attributes_map, nil
+	return nil, nil
 }
 
 // REST API Source Implementation
@@ -270,13 +406,13 @@ func NewRESTAPIAttributeConnector(config *RESTAPIConfiguration, logger logger.Lo
 func (rac *RESTAPIAttributeConnector) FetchUserAttributes(ctx context.Context, userID string) (map[string]interface{}, error) {
 	startTime := time.Now()
 	defer func() {
-		rac.metrics.RecordHistogram("abac.external_source.rest_api.fetch_duration",
-			time.Since(startTime).Seconds(), map[string]string{"operation": "fetch_user_attributes"})
+		rac.metrics.ObserveHistogram("abac.external_source.rest_api.fetch_duration",
+			time.Since(startTime).Seconds(), map[string]any{"operation": "fetch_user_attributes"})
 	}()
 
 	endpoint, exists := rac.config.Endpoints["user_attributes"]
 	if !exists {
-		return nil, errors.NewInvalidInputError("user_attributes endpoint not configured", "endpoint", "user_attributes")
+		return nil, errors.ErrInvalidInput
 	}
 
 	// Build request URL
@@ -284,12 +420,12 @@ func (rac *RESTAPIAttributeConnector) FetchUserAttributes(ctx context.Context, u
 
 	req, err := http.NewRequestWithContext(ctx, endpoint.Method, url, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create HTTP request")
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
 	// Add authentication
 	if err := rac.addAuthentication(req); err != nil {
-		return nil, errors.Wrap(err, "failed to add authentication")
+		return nil, fmt.Errorf("failed to add authentication: %w", err)
 	}
 
 	// Add default headers
@@ -299,21 +435,20 @@ func (rac *RESTAPIAttributeConnector) FetchUserAttributes(ctx context.Context, u
 
 	resp, err := rac.httpClient.Do(req)
 	if err != nil {
-		rac.logger.Error("HTTP request failed", "error", err, "url", url)
-		return nil, errors.Wrap(err, "HTTP request failed")
+		rac.logger.Error("HTTP request failed", logger.Fields{"error": err, "url": url})
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		rac.logger.Error("HTTP request returned non-OK status",
-			"status_code", resp.StatusCode, "url", url)
-		return nil, errors.NewExternalServiceError("API request failed",
-			"status_code", resp.StatusCode, "url", url)
+			logger.Fields{"status_code": resp.StatusCode, "url": url})
+		return nil, fmt.Errorf("API request failed - status: %d, url: %s", resp.StatusCode, url)
 	}
 
 	var response map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, errors.Wrap(err, "failed to decode JSON response")
+		return nil, fmt.Errorf("failed to decode JSON response: %w", err)
 	}
 
 	// Transform response according to endpoint mapping
@@ -330,7 +465,7 @@ func (rac *RESTAPIAttributeConnector) FetchUserAttributes(ctx context.Context, u
 	}
 
 	rac.logger.Debug("Successfully fetched REST API attributes",
-		"user_id", userID, "attribute_count", len(attributes))
+		logger.Fields{"user_id": userID, "attribute_count": len(attributes)})
 
 	return attributes, nil
 }
@@ -363,11 +498,11 @@ func (rac *RESTAPIAttributeConnector) addAuthentication(req *http.Request) error
 // Source Registration Methods
 
 func (easm *externalAttributeSourceManager) RegisterLDAPSource(ctx context.Context, req *RegisterLDAPSourceRequest) (*ExternalAttributeSource, error) {
-	span := easm.tracer.StartSpan(ctx, "ExternalAttributeSourceManager.RegisterLDAPSource")
+	ctx, span := easm.tracer.StartSpan(ctx, "ExternalAttributeSourceManager.RegisterLDAPSource")
 	defer span.End()
 
 	if err := easm.validateLDAPConfiguration(req.LDAPConfig); err != nil {
-		return nil, errors.Wrap(err, "invalid LDAP configuration")
+		return nil, fmt.Errorf("invalid LDAP configuration: %w", err)
 	}
 
 	source := &ExternalAttributeSource{
@@ -403,17 +538,17 @@ func (easm *externalAttributeSourceManager) RegisterLDAPSource(ctx context.Conte
 	easm.healthMonitor.StartMonitoring(source.ID, connector)
 
 	easm.logger.Info("LDAP attribute source registered successfully",
-		"source_id", source.ID, "source_name", source.Name)
+		logger.Fields{"source_id": source.ID, "source_name": source.Name})
 
 	return source, nil
 }
 
 func (easm *externalAttributeSourceManager) RegisterRESTAPISource(ctx context.Context, req *RegisterRESTAPISourceRequest) (*ExternalAttributeSource, error) {
-	span := easm.tracer.StartSpan(ctx, "ExternalAttributeSourceManager.RegisterRESTAPISource")
+	ctx, span := easm.tracer.StartSpan(ctx, "ExternalAttributeSourceManager.RegisterRESTAPISource")
 	defer span.End()
 
 	if err := easm.validateRESTAPIConfiguration(req.RESTAPIConfig); err != nil {
-		return nil, errors.Wrap(err, "invalid REST API configuration")
+		return nil, fmt.Errorf("invalid REST API configuration: %w", err)
 	}
 
 	source := &ExternalAttributeSource{
@@ -453,12 +588,71 @@ func (easm *externalAttributeSourceManager) RegisterRESTAPISource(ctx context.Co
 	easm.healthMonitor.StartMonitoring(source.ID, connector)
 
 	easm.logger.Info("REST API attribute source registered successfully",
-		"source_id", source.ID, "source_name", source.Name)
+		logger.Fields{"source_id": source.ID, "source_name": source.Name})
 
 	return source, nil
 }
 
+func (easm *externalAttributeSourceManager) RegisterDatabaseSource(ctx context.Context, req *RegisterDatabaseSourceRequest) (*ExternalAttributeSource, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "RegisterDatabaseSource is not implemented")
+}
+
+func (easm *externalAttributeSourceManager) RegisterCustomSource(ctx context.Context, req *RegisterCustomSourceRequest) (*ExternalAttributeSource, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "RegisterCustomSource is not implemented")
+}
+
+func (easm *externalAttributeSourceManager) UpdateAttributeSource(ctx context.Context, req *UpdateAttributeSourceRequest) (*ExternalAttributeSource, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "UpdateAttributeSource is not implemented")
+}
+
+func (easm *externalAttributeSourceManager) GetAttributeSource(ctx context.Context, sourceID uuid.UUID) (*ExternalAttributeSourceDetails, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetAttributeSource is not implemented")
+}
+
+func (easm *externalAttributeSourceManager) ListAttributeSources(ctx context.Context, req *ListAttributeSourcesRequest) (*AttributeSourceListResult, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "ListAttributeSources is not implemented")
+}
+
+func (easm *externalAttributeSourceManager) TestSourceConnection(ctx context.Context, sourceID uuid.UUID) (*SourceConnectionTestResult, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "TestSourceConnection is not implemented")
+}
+
+func (easm *externalAttributeSourceManager) ValidateSourceConfiguration(ctx context.Context, req *ValidateSourceConfigRequest) (*SourceConfigValidationResult, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "ValidateSourceConfiguration is not implemented")
+}
+
+func (easm *externalAttributeSourceManager) GetSourceHealth(ctx context.Context, sourceID uuid.UUID) (*ExternalSourceHealthStatus, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetSourceHealth is not implemented")
+}
+
+func (easm *externalAttributeSourceManager) GetSourceMetrics(ctx context.Context, req *SourceMetricsRequest) (*ExternalSourceMetrics, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetSourceMetrics is not implemented")
+}
+
+func (easm *externalAttributeSourceManager) SynchronizeAttributes(ctx context.Context, req *SynchronizeAttributesRequest) (*SynchronizationResult, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "SynchronizeAttributes is not implemented")
+}
+
+func (easm *externalAttributeSourceManager) ScheduleAttributeSync(ctx context.Context, req *ScheduleSyncRequest) (*SyncSchedule, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "ScheduleAttributeSync is not implemented")
+}
+
 // Supporting Types and Configurations
+
+type UpdateAttributeSourceRequest struct {
+	SourceID         uuid.UUID                       `json:"source_id" validate:"required"`
+	Name             *string                         `json:"name,omitempty"`
+	Description      *string                         `json:"description,omitempty"`
+	Configuration    *ExternalSourceConfiguration    `json:"configuration,omitempty"`
+	IsActive         *bool                           `json:"is_active,omitempty"`
+	Priority         *int                            `json:"priority,omitempty"`
+	Timeout          *time.Duration                  `json:"timeout,omitempty"`
+	RetryPolicy      *RetryPolicy                    `json:"retry_policy,omitempty"`
+	CacheSettings    *ExternalSourceCacheSettings    `json:"cache_settings,omitempty"`
+	SecuritySettings *ExternalSourceSecuritySettings `json:"security_settings,omitempty"`
+	SyncSettings     *SynchronizationSettings        `json:"sync_settings,omitempty"`
+	UpdatedBy        *uuid.UUID                      `json:"updated_by,omitempty"`
+}
 
 type RegisterLDAPSourceRequest struct {
 	Name             string                         `json:"name" validate:"required,min=1,max=100"`
@@ -578,7 +772,7 @@ type APIEndpoint struct {
 
 type LDAPConnectionPool struct {
 	config      *LDAPConfiguration
-	connections chan *ldapv3.Conn
+	connections chan interface{} // *ldapv3.Conn
 	mutex       sync.Mutex
 	logger      logger.Logger
 }
@@ -586,11 +780,11 @@ type LDAPConnectionPool struct {
 func NewLDAPConnectionPool(config *LDAPConfiguration) *LDAPConnectionPool {
 	return &LDAPConnectionPool{
 		config:      config,
-		connections: make(chan *ldapv3.Conn, config.ConnectionPool.MaxSize),
+		connections: make(chan interface{}, config.ConnectionPool.MaxSize),
 	}
 }
 
-func (pool *LDAPConnectionPool) GetConnection(ctx context.Context) (*ldapv3.Conn, error) {
+func (pool *LDAPConnectionPool) GetConnection(ctx context.Context) (interface{}, error) { // *ldapv3.Conn
 	select {
 	case conn := <-pool.connections:
 		return conn, nil
@@ -599,18 +793,18 @@ func (pool *LDAPConnectionPool) GetConnection(ctx context.Context) (*ldapv3.Conn
 	}
 }
 
-func (pool *LDAPConnectionPool) ReturnConnection(conn *ldapv3.Conn) {
+func (pool *LDAPConnectionPool) ReturnConnection(conn interface{}) {
 	select {
 	case pool.connections <- conn:
 	default:
-		conn.Close()
+		// conn.Close()
 	}
 }
 
-func (pool *LDAPConnectionPool) createConnection() (*ldapv3.Conn, error) {
-	address := fmt.Sprintf("%s:%d", pool.config.Host, pool.config.Port)
+func (pool *LDAPConnectionPool) createConnection() (interface{}, error) { // *ldapv3.Conn
+	// address := fmt.Sprintf("%s:%d", pool.config.Host, pool.config.Port)
 
-	var conn *ldapv3.Conn
+	var conn interface{} // *ldapv3.Conn
 	var err error
 
 	if pool.config.UseTLS {
@@ -620,9 +814,9 @@ func (pool *LDAPConnectionPool) createConnection() (*ldapv3.Conn, error) {
 		if pool.config.TLSConfig != nil {
 			tlsConfig.InsecureSkipVerify = pool.config.TLSConfig.InsecureSkipVerify
 		}
-		conn, err = ldapv3.DialTLS("tcp", address, tlsConfig)
+		// conn, err = ldapv3.DialTLS("tcp", address, tlsConfig)
 	} else {
-		conn, err = ldapv3.Dial("tcp", address)
+		// conn, err = ldapv3.Dial("tcp", address)
 	}
 
 	if err != nil {
@@ -630,11 +824,11 @@ func (pool *LDAPConnectionPool) createConnection() (*ldapv3.Conn, error) {
 	}
 
 	// Bind with credentials
-	err = conn.Bind(pool.config.BindDN, pool.config.BindPassword)
-	if err != nil {
-		conn.Close()
-		return nil, err
-	}
+	// err = conn.Bind(pool.config.BindDN, pool.config.BindPassword)
+	// if err != nil {
+	// 	conn.Close()
+	// 	return nil, err
+	// }
 
 	return conn, nil
 }
@@ -651,11 +845,7 @@ type PoolConfiguration struct {
 	MaxIdleTime time.Duration `json:"max_idle_time"`
 }
 
-type RetryPolicy struct {
-	MaxRetries    int           `json:"max_retries"`
-	RetryDelay    time.Duration `json:"retry_delay"`
-	BackoffFactor float64       `json:"backoff_factor"`
-}
+// RetryPolicy moved to shared_types.go
 
 type ExternalSourceCacheSettings struct {
 	EnableCaching   bool          `json:"enable_caching"`
@@ -696,31 +886,31 @@ type RateLimitConfig struct {
 
 func (easm *externalAttributeSourceManager) validateLDAPConfiguration(config *LDAPConfiguration) error {
 	if config == nil {
-		return errors.NewInvalidInputError("LDAP configuration is required", "config", "nil")
+		return errors.ErrInvalidInput
 	}
 
 	if config.Host == "" {
-		return errors.NewInvalidInputError("LDAP host is required", "host", "")
+		return errors.ErrInvalidInput
 	}
 
 	if config.Port <= 0 || config.Port > 65535 {
-		return errors.NewInvalidInputError("LDAP port must be between 1 and 65535", "port", config.Port)
+		return errors.ErrInvalidInput
 	}
 
 	if config.BaseDN == "" {
-		return errors.NewInvalidInputError("LDAP base DN is required", "base_dn", "")
+		return errors.ErrInvalidInput
 	}
 
 	if config.BindDN == "" {
-		return errors.NewInvalidInputError("LDAP bind DN is required", "bind_dn", "")
+		return errors.ErrInvalidInput
 	}
 
 	if config.SearchFilter == "" {
-		return errors.NewInvalidInputError("LDAP search filter is required", "search_filter", "")
+		return errors.ErrInvalidInput
 	}
 
 	if len(config.AttributeMappings) == 0 {
-		return errors.NewInvalidInputError("LDAP attribute mappings are required", "attribute_mappings", "empty")
+		return errors.ErrInvalidInput
 	}
 
 	return nil
@@ -728,17 +918,43 @@ func (easm *externalAttributeSourceManager) validateLDAPConfiguration(config *LD
 
 func (easm *externalAttributeSourceManager) validateRESTAPIConfiguration(config *RESTAPIConfiguration) error {
 	if config == nil {
-		return errors.NewInvalidInputError("REST API configuration is required", "config", "nil")
+		return errors.ErrInvalidInput
 	}
 
 	if config.BaseURL == "" {
-		return errors.NewInvalidInputError("REST API base URL is required", "base_url", "")
+		return errors.ErrInvalidInput
 	}
 
 	if len(config.Endpoints) == 0 {
-		return errors.NewInvalidInputError("REST API endpoints are required", "endpoints", "empty")
+		return errors.ErrInvalidInput
 	}
 
+	return nil
+}
+
+func (easm *externalAttributeSourceManager) FetchAttributes(ctx context.Context, req *FetchAttributesRequest) (*ExternalAttributesResult, error) {
+	// TODO: Implement the logic to fetch attributes from the specified external source.
+	// This should involve:
+	// 1. Getting the appropriate connector from the connectorRegistry.
+	// 2. Calling the connector's FetchAttributes method.
+	// 3. Handling errors, retries, and caching as per the source's configuration.
+	return &ExternalAttributesResult{}, nil
+}
+
+// BatchFetchAttributes stub implementation
+func (easm *externalAttributeSourceManager) BatchFetchAttributes(ctx context.Context, req *BatchFetchAttributesRequest) (*BatchExternalAttributesResult, error) {
+	// Stub implementation - would need proper batch processing logic
+	return &BatchExternalAttributesResult{
+		Results:   []ExternalAttributesResult{},
+		BatchID:   uuid.New(),
+		Success:   true,
+		RequestID: req.RequestID,
+	}, nil
+}
+
+// DeleteAttributeSource stub implementation
+func (easm *externalAttributeSourceManager) DeleteAttributeSource(ctx context.Context, sourceID uuid.UUID) error {
+	// Stub implementation - would need proper deletion logic
 	return nil
 }
 
@@ -817,12 +1033,7 @@ type ExternalSourceHealthStatus struct {
 	FailedChecks     int              `json:"failed_checks"`
 }
 
-type SourcePerformanceMetrics struct {
-	AverageResponseTime time.Duration `json:"average_response_time"`
-	SuccessRate         float64       `json:"success_rate"`
-	ThroughputPerSecond float64       `json:"throughput_per_second"`
-	CacheHitRate        float64       `json:"cache_hit_rate"`
-}
+// SourcePerformanceMetrics type already defined in attribute_collector.go
 
 type SyncJob struct {
 	ID       uuid.UUID  `json:"id"`

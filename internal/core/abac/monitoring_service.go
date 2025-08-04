@@ -2,17 +2,15 @@ package abac
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
-	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -244,10 +242,10 @@ type ResourceAccessStats struct {
 func (ms *monitoringService) RecordEvaluationMetrics(ctx context.Context, req *EvaluationMetricsRequest) error {
 	ctx, span := ms.tracer.StartSpan(ctx, "abac.monitoring_service.RecordEvaluationMetrics",
 		tracing.WithAttributes(
-			tracing.StringAttribute("evaluation_id", req.EvaluationID.String()),
-			tracing.StringAttribute("user_id", req.UserID.String()),
-			tracing.StringAttribute("decision", string(req.Decision)),
-			tracing.DurationAttribute("execution_time", req.ExecutionTime),
+			attribute.String("evaluation_id", req.EvaluationID.String()),
+			attribute.String("user_id", req.UserID.String()),
+			attribute.String("decision", string(req.Decision)),
+			attribute.Int64("execution_time_ms", req.ExecutionTime.Milliseconds()),
 		))
 	defer span.End()
 
@@ -470,10 +468,10 @@ type PatternAnalysisMetadata struct {
 func (ms *monitoringService) TrackPolicyDecision(ctx context.Context, req *PolicyDecisionEvent) error {
 	ctx, span := ms.tracer.StartSpan(ctx, "abac.monitoring_service.TrackPolicyDecision",
 		tracing.WithAttributes(
-			tracing.StringAttribute("event_id", req.EventID.String()),
-			tracing.StringAttribute("user_id", req.UserID.String()),
-			tracing.StringAttribute("decision", string(req.Decision)),
-			tracing.StringAttribute("severity", string(req.Severity)),
+			attribute.String("event_id", req.EventID.String()),
+			attribute.String("user_id", req.UserID.String()),
+			attribute.String("decision", string(req.Decision)),
+			attribute.String("severity", string(req.Severity)),
 		))
 	defer span.End()
 

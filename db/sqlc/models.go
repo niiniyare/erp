@@ -617,6 +617,19 @@ type Policy struct {
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
+// Stores individual policy decisions made during a policy evaluation.
+type PolicyDecision struct {
+	ID                 uuid.UUID `json:"id"`
+	PolicyEvaluationID uuid.UUID `json:"policy_evaluation_id"`
+	PolicyID           uuid.UUID `json:"policy_id"`
+	Decision           string    `json:"decision"`
+	Reason             string    `json:"reason"`
+	MatchedRule        string    `json:"matched_rule"`
+	EvaluationMs       *int64    `json:"evaluation_ms"`
+	TargetMatched      *bool     `json:"target_matched"`
+	CreatedAt          time.Time `json:"created_at"`
+}
+
 // Caches ABAC policy evaluation results with flexible resource types and detailed decision tracking for performance optimization.
 type PolicyEvaluation struct {
 	ID       uuid.UUID `json:"id"`

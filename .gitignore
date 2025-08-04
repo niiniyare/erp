@@ -1,1 +1,3 @@
 internal/api/gen/
+internal/gen/gen/http/openapi*.json
+internal/gen/gen/http/openapi*.yaml

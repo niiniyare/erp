@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"go.temporal.io/sdk/client"
+	"go.opentelemetry.io/otel/attribute"
+	workflowservice "go.temporal.io/api/workflowservice/v1"
 
 	"github.com/niiniyare/erp/internal/core/abac/activities"
 	"github.com/niiniyare/erp/internal/core/abac/worker"
@@ -15,7 +16,6 @@ import (
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/internal/shared/types"
 )
 
 // TemporalService extends the main ABAC service with Temporal workflow capabilities
@@ -29,7 +29,7 @@ type TemporalService interface {
 	// Cache management workflows
 	StartCacheCleanupWorkflow(ctx context.Context) (*WorkflowInfo, error)
 	StartCacheWarmupWorkflow(ctx context.Context, configs []*CacheWarmupConfig) (*WorkflowInfo, error)
-	InvalidateCacheAsync(ctx context.Context, req *CacheInvalidationRequest) (*WorkflowInfo, error)
+	InvalidateCacheAsync(ctx context.Context, req *TemporalCacheInvalidationRequest) (*WorkflowInfo, error)
 
 	// Workflow monitoring
 	GetWorkflowStatus(ctx context.Context, workflowID string) (*WorkflowStatus, error)
@@ -75,9 +75,9 @@ type AsyncEvaluationResult struct {
 func (s *temporalService) EvaluatePermissionAsync(ctx context.Context, req *PermissionEvaluationRequest) (*AsyncEvaluationResult, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.temporal_service.EvaluatePermissionAsync",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", req.UserID.String()),
-			tracing.StringAttribute("resource_type", req.ResourceType),
-			tracing.StringAttribute("action", req.Action),
+			attribute.String("user_id", req.UserID.String()),
+			attribute.String("resource_type", req.ResourceType),
+			attribute.String("action", req.Action),
 		))
 	defer span.End()
 
@@ -113,18 +113,19 @@ func (s *temporalService) EvaluatePermissionAsync(ctx context.Context, req *Perm
 	}
 
 	// Start the workflow
-	workflowRun, err := s.workflowClient.StartPolicyEvaluationWorkflow(ctx, workflowID, workflowInput)
+	// Start the workflow
+	_, err := s.workflowClient.StartPolicyEvaluationWorkflow(ctx, workflowID, workflowInput)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("async_policy_evaluation", "workflow_start_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "ASYNC_EVALUATION_FAILED", "Failed to start async policy evaluation").WithErr(err)
+		s.metrics.IncrementCounter("async_policy_evaluation_errors", metrics.Fields{"reason": "workflow_start_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "ASYNC_EVALUATION_FAILED", "Failed to start async policy evaluation")
 	}
 
-	s.metrics.IncrementSuccessCount("async_policy_evaluation_started")
+	s.metrics.IncrementCounter("async_policy_evaluation_started", nil)
 
 	return &AsyncEvaluationResult{
-		WorkflowID: workflowRun.GetID(),
-		RunID:      workflowRun.GetRunID(),
+		WorkflowID: s.workflowClient.GetWorkflow(ctx, workflowID, "").GetID(),
+		RunID:      s.workflowClient.GetWorkflow(ctx, workflowID, "").GetRunID(),
 		RequestID:  requestID,
 		Status:     "running",
 	}, nil
@@ -144,7 +145,7 @@ type AsyncBulkEvaluationResult struct {
 func (s *temporalService) BulkEvaluatePermissionsAsync(ctx context.Context, req *BulkPermissionEvaluationRequest) (*AsyncBulkEvaluationResult, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.temporal_service.BulkEvaluatePermissionsAsync",
 		tracing.WithAttributes(
-			tracing.IntAttribute("request_count", len(req.Requests)),
+			attribute.Int("request_count", len(req.Requests)),
 		))
 	defer span.End()
 
@@ -184,18 +185,19 @@ func (s *temporalService) BulkEvaluatePermissionsAsync(ctx context.Context, req 
 	}
 
 	// Start the workflow
-	workflowRun, err := s.workflowClient.StartBulkPolicyEvaluationWorkflow(ctx, workflowID, workflowInput)
+	// Start the workflow
+	_, err := s.workflowClient.StartBulkPolicyEvaluationWorkflow(ctx, workflowID, workflowInput)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("async_bulk_policy_evaluation", "workflow_start_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "ASYNC_BULK_EVALUATION_FAILED", "Failed to start async bulk policy evaluation").WithErr(err)
+		s.metrics.IncrementCounter("async_bulk_policy_evaluation_errors", metrics.Fields{"reason": "workflow_start_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "ASYNC_BULK_EVALUATION_FAILED", "Failed to start async bulk policy evaluation")
 	}
 
-	s.metrics.IncrementSuccessCount("async_bulk_policy_evaluation_started")
+	s.metrics.IncrementCounter("async_bulk_policy_evaluation_started", nil)
 
 	return &AsyncBulkEvaluationResult{
-		WorkflowID:   workflowRun.GetID(),
-		RunID:        workflowRun.GetRunID(),
+		WorkflowID:   s.workflowClient.GetWorkflow(ctx, workflowID, "").GetID(),
+		RunID:        s.workflowClient.GetWorkflow(ctx, workflowID, "").GetRunID(),
 		RequestID:    requestID,
 		Status:       "running",
 		RequestCount: len(req.Requests),
@@ -240,18 +242,19 @@ func (s *temporalService) StartCacheCleanupWorkflow(ctx context.Context) (*Workf
 		RequestID:            requestID,
 	}
 
-	workflowRun, err := s.workflowClient.StartCacheCleanupWorkflow(ctx, workflowID, workflowInput)
+	// Start the workflow
+	_, err := s.workflowClient.StartCacheCleanupWorkflow(ctx, workflowID, workflowInput)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("cache_cleanup_workflow", "start_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "CACHE_CLEANUP_WORKFLOW_FAILED", "Failed to start cache cleanup workflow").WithErr(err)
+		s.metrics.IncrementCounter("cache_cleanup_workflow_errors", metrics.Fields{"reason": "start_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "CACHE_CLEANUP_WORKFLOW_FAILED", "Failed to start cache cleanup workflow")
 	}
 
-	s.metrics.IncrementSuccessCount("cache_cleanup_workflow_started")
+	s.metrics.IncrementCounter("cache_cleanup_workflow_started", nil)
 
 	return &WorkflowInfo{
-		WorkflowID: workflowRun.GetID(),
-		RunID:      workflowRun.GetRunID(),
+		WorkflowID: s.workflowClient.GetWorkflow(ctx, workflowID, "").GetID(),
+		RunID:      s.workflowClient.GetWorkflow(ctx, workflowID, "").GetRunID(),
 		RequestID:  requestID,
 		Status:     "running",
 	}, nil
@@ -261,7 +264,7 @@ func (s *temporalService) StartCacheCleanupWorkflow(ctx context.Context) (*Workf
 func (s *temporalService) StartCacheWarmupWorkflow(ctx context.Context, configs []*CacheWarmupConfig) (*WorkflowInfo, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.temporal_service.StartCacheWarmupWorkflow",
 		tracing.WithAttributes(
-			tracing.IntAttribute("config_count", len(configs)),
+			attribute.Int("config_count", len(configs)),
 		))
 	defer span.End()
 
@@ -298,25 +301,25 @@ func (s *temporalService) StartCacheWarmupWorkflow(ctx context.Context, configs 
 		RequestID:     requestID,
 	}
 
-	workflowRun, err := s.workflowClient.StartCacheWarmupWorkflow(ctx, workflowID, workflowInput)
+	_, err := s.workflowClient.StartCacheWarmupWorkflow(ctx, workflowID, workflowInput)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("cache_warmup_workflow", "start_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "CACHE_WARMUP_WORKFLOW_FAILED", "Failed to start cache warmup workflow").WithErr(err)
+		s.metrics.IncrementCounter("cache_warmup_workflow_errors", metrics.Fields{"reason": "start_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "CACHE_WARMUP_WORKFLOW_FAILED", "Failed to start cache warmup workflow")
 	}
 
-	s.metrics.IncrementSuccessCount("cache_warmup_workflow_started")
+	s.metrics.IncrementCounter("cache_warmup_workflow_started", nil)
 
 	return &WorkflowInfo{
-		WorkflowID: workflowRun.GetID(),
-		RunID:      workflowRun.GetRunID(),
+		WorkflowID: s.workflowClient.GetWorkflow(ctx, workflowID, "").GetID(),
+		RunID:      s.workflowClient.GetWorkflow(ctx, workflowID, "").GetRunID(),
 		RequestID:  requestID,
 		Status:     "running",
 	}, nil
 }
 
 // CacheInvalidationRequest represents a cache invalidation request
-type CacheInvalidationRequest struct {
+type TemporalCacheInvalidationRequest struct {
 	UserID        *uuid.UUID  `json:"user_id,omitempty"`
 	ResourceType  *string     `json:"resource_type,omitempty"`
 	ResourceID    *uuid.UUID  `json:"resource_id,omitempty"`
@@ -326,7 +329,7 @@ type CacheInvalidationRequest struct {
 }
 
 // InvalidateCacheAsync invalidates cache entries asynchronously
-func (s *temporalService) InvalidateCacheAsync(ctx context.Context, req *CacheInvalidationRequest) (*WorkflowInfo, error) {
+func (s *temporalService) InvalidateCacheAsync(ctx context.Context, req *TemporalCacheInvalidationRequest) (*WorkflowInfo, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.temporal_service.InvalidateCacheAsync")
 	defer span.End()
 
@@ -342,9 +345,6 @@ func (s *temporalService) InvalidateCacheAsync(ctx context.Context, req *CacheIn
 
 	invalidationRequest := &activities.InvalidatePolicyCacheInput{
 		UserID:        req.UserID,
-		ResourceType:  req.ResourceType,
-		ResourceID:    req.ResourceID,
-		Action:        req.Action,
 		PolicyIDs:     req.PolicyIDs,
 		InvalidateAll: req.InvalidateAll,
 		RequestID:     requestID,
@@ -355,18 +355,18 @@ func (s *temporalService) InvalidateCacheAsync(ctx context.Context, req *CacheIn
 		RequestID:            requestID,
 	}
 
-	workflowRun, err := s.workflowClient.StartCacheInvalidationWorkflow(ctx, workflowID, workflowInput)
+	_, err := s.workflowClient.StartCacheInvalidationWorkflow(ctx, workflowID, workflowInput)
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("cache_invalidation_workflow", "start_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "CACHE_INVALIDATION_WORKFLOW_FAILED", "Failed to start cache invalidation workflow").WithErr(err)
+		s.metrics.IncrementCounter("cache_invalidation_workflow_errors", metrics.Fields{"reason": "start_failed"})
+		return nil, errors.NewBusinessErrorWithContext(ctx, "CACHE_INVALIDATION_WORKFLOW_FAILED", "Failed to start cache invalidation workflow")
 	}
 
-	s.metrics.IncrementSuccessCount("cache_invalidation_workflow_started")
+	s.metrics.IncrementCounter("cache_invalidation_workflow_started", nil)
 
 	return &WorkflowInfo{
-		WorkflowID: workflowRun.GetID(),
-		RunID:      workflowRun.GetRunID(),
+		WorkflowID: s.workflowClient.GetWorkflow(ctx, workflowID, "").GetID(),
+		RunID:      s.workflowClient.GetWorkflow(ctx, workflowID, "").GetRunID(),
 		RequestID:  requestID,
 		Status:     "running",
 	}, nil
@@ -387,34 +387,39 @@ type WorkflowStatus struct {
 func (s *temporalService) GetWorkflowStatus(ctx context.Context, workflowID string) (*WorkflowStatus, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.temporal_service.GetWorkflowStatus",
 		tracing.WithAttributes(
-			tracing.StringAttribute("workflow_id", workflowID),
+			attribute.String("workflow_id", workflowID),
 		))
 	defer span.End()
 
-	workflowRun := s.workflowClient.GetWorkflow(ctx, workflowID, "")
+	// workflowRun := s.workflowClient.GetWorkflow(ctx, workflowID, "")
 
 	// Get workflow description
-	desc, err := workflowRun.Describe(ctx)
+
+	var desc *workflowservice.DescribeWorkflowExecutionResponse
+	// var desc *client.DescribeWorkflowExecutionResponse
+	var err error
+	desc, err = s.workflowClient.Client.DescribeWorkflowExecution(ctx, workflowID, "")
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "WORKFLOW_STATUS_FAILED", "Failed to get workflow status").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "WORKFLOW_STATUS_FAILED", "Failed to get workflow status")
 	}
 
 	status := &WorkflowStatus{
-		WorkflowID: desc.WorkflowExecutionInfo.Execution.WorkflowID,
-		RunID:      desc.WorkflowExecutionInfo.Execution.RunID,
+		WorkflowID: desc.WorkflowExecutionInfo.Execution.GetWorkflowId(),
+		RunID:      desc.WorkflowExecutionInfo.Execution.GetRunId(),
 		Status:     desc.WorkflowExecutionInfo.Status.String(),
-		StartTime:  *desc.WorkflowExecutionInfo.StartTime,
+		StartTime:  desc.WorkflowExecutionInfo.GetStartTime().AsTime(),
 	}
 
 	if desc.WorkflowExecutionInfo.CloseTime != nil {
-		status.CloseTime = desc.WorkflowExecutionInfo.CloseTime
+		closeTime := desc.WorkflowExecutionInfo.GetCloseTime().AsTime()
+		status.CloseTime = &closeTime
 	}
 
 	// Try to get result if workflow is completed
 	if desc.WorkflowExecutionInfo.Status.String() == "Completed" {
 		var result interface{}
-		err := workflowRun.Get(ctx, &result)
+		err = s.workflowClient.GetWorkflow(ctx, workflowID, "").Get(ctx, &result)
 		if err != nil {
 			status.Error = err.Error()
 		} else {
@@ -429,7 +434,7 @@ func (s *temporalService) GetWorkflowStatus(ctx context.Context, workflowID stri
 func (s *temporalService) CancelWorkflow(ctx context.Context, workflowID string) error {
 	ctx, span := s.tracer.StartSpan(ctx, "abac.temporal_service.CancelWorkflow",
 		tracing.WithAttributes(
-			tracing.StringAttribute("workflow_id", workflowID),
+			attribute.String("workflow_id", workflowID),
 		))
 	defer span.End()
 
@@ -438,15 +443,15 @@ func (s *temporalService) CancelWorkflow(ctx context.Context, workflowID string)
 			"workflow_id": workflowID,
 		})
 
-	workflowRun := s.workflowClient.GetWorkflow(ctx, workflowID, "")
-	err := workflowRun.Cancel(ctx)
+	// workflowRun := s.workflowClient.GetWorkflow(ctx, workflowID, "")
+	err := s.workflowClient.Client.CancelWorkflow(ctx, workflowID, "")
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		s.metrics.IncrementErrorCount("workflow_cancellation", "failed")
-		return errors.NewBusinessErrorWithContext(ctx, "WORKFLOW_CANCELLATION_FAILED", "Failed to cancel workflow").WithErr(err)
+		s.metrics.IncrementCounter("workflow_status_errors", metrics.Fields{"reason": "get_status_failed"})
+		return errors.NewBusinessErrorWithContext(ctx, "WORKFLOW_CANCELLATION_FAILED", "Failed to cancel workflow")
 	}
 
-	s.metrics.IncrementSuccessCount("workflow_cancellation")
+	s.metrics.IncrementCounter("workflow_cancellation", nil)
 	s.logger.InfoContext(ctx, "Workflow cancelled successfully",
 		logger.Fields{
 			"workflow_id": workflowID,

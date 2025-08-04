@@ -13,6 +13,32 @@ import (
 	"github.com/google/uuid"
 )
 
+const assignUserRole = `-- name: AssignUserRole :one
+SELECT assign_user_role($1, $2, $3, $4)
+`
+
+type AssignUserRoleParams struct {
+	PUserID     uuid.UUID `json:"p_user_id"`
+	PRoleID     uuid.UUID `json:"p_role_id"`
+	PEntityID   uuid.UUID `json:"p_entity_id"`
+	PAssignedBy uuid.UUID `json:"p_assigned_by"`
+}
+
+// AssignUserRole
+//
+//	SELECT assign_user_role($1, $2, $3, $4)
+func (q *Queries) AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (interface{}, error) {
+	row := q.db.QueryRow(ctx, assignUserRole,
+		arg.PUserID,
+		arg.PRoleID,
+		arg.PEntityID,
+		arg.PAssignedBy,
+	)
+	var assign_user_role interface{}
+	err := row.Scan(&assign_user_role)
+	return assign_user_role, err
+}
+
 const checkEmailAvailability = `-- name: CheckEmailAvailability :one
 SELECT COUNT(*) = 0 FROM users WHERE email = $1 AND deleted_at IS NULL
 `
@@ -580,6 +606,24 @@ UPDATE users SET deleted_at = NULL WHERE id = $1
 //	UPDATE users SET deleted_at = NULL WHERE id = $1
 func (q *Queries) RestoreSoftDeletedUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, restoreSoftDeletedUser, id)
+	return err
+}
+
+const revokeUserRole = `-- name: RevokeUserRole :exec
+SELECT revoke_user_role($1, $2, $3)
+`
+
+type RevokeUserRoleParams struct {
+	PUserID   uuid.UUID `json:"p_user_id"`
+	PRoleID   uuid.UUID `json:"p_role_id"`
+	PEntityID uuid.UUID `json:"p_entity_id"`
+}
+
+// RevokeUserRole
+//
+//	SELECT revoke_user_role($1, $2, $3)
+func (q *Queries) RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) error {
+	_, err := q.db.Exec(ctx, revokeUserRole, arg.PUserID, arg.PRoleID, arg.PEntityID)
 	return err
 }
 

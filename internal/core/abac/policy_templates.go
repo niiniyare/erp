@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
+	"github.com/niiniyare/erp/internal/core/abac/repository"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -93,8 +95,8 @@ type CreatePolicyTemplateRequest struct {
 func (pm *policyManager) CreatePolicyTemplate(ctx context.Context, req *CreatePolicyTemplateRequest) (*PolicyTemplate, error) {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.CreatePolicyTemplate",
 		tracing.WithAttributes(
-			tracing.StringAttribute("template_name", req.Name),
-			tracing.StringAttribute("category", string(req.Category)),
+			attribute.String("template_name", req.Name),
+			attribute.String("category", string(req.Category)),
 		))
 	defer span.End()
 
@@ -109,7 +111,7 @@ func (pm *policyManager) CreatePolicyTemplate(ctx context.Context, req *CreatePo
 	// Validate template structure
 	if err := pm.validatePolicyTemplate(ctx, req); err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "TEMPLATE_VALIDATION_FAILED", "Policy template validation failed").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "TEMPLATE_VALIDATION_FAILED", "Policy template validation failed")
 	}
 
 	// Create template
@@ -137,7 +139,7 @@ func (pm *policyManager) CreatePolicyTemplate(ctx context.Context, req *CreatePo
 	// In a real implementation, you would save this to a template repository
 	// For now, we'll just return the template
 
-	pm.metrics.IncrementSuccessCount("policy_manager_template_created")
+	pm.metrics.IncrementCounter("policy_manager_template_created", nil)
 
 	pm.logger.InfoContext(ctx, "Policy template created successfully",
 		logger.Fields{
@@ -269,8 +271,8 @@ type ExportMetadata struct {
 func (pm *policyManager) ImportPolicies(ctx context.Context, req *ImportPoliciesRequest) (*ImportResult, error) {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.ImportPolicies",
 		tracing.WithAttributes(
-			tracing.StringAttribute("format", req.Format),
-			tracing.BoolAttribute("dry_run", req.DryRun),
+			attribute.String("format", req.Format),
+			attribute.Bool("dry_run", req.DryRun),
 		))
 	defer span.End()
 
@@ -287,7 +289,7 @@ func (pm *policyManager) ImportPolicies(ctx context.Context, req *ImportPolicies
 	parsedPolicies, err := pm.parseImportData(ctx, req.Format, req.Data)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "IMPORT_PARSE_FAILED", "Failed to parse import data").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "IMPORT_PARSE_FAILED", "Failed to parse import data")
 	}
 
 	var importedPolicies []ImportedPolicy
@@ -356,7 +358,7 @@ func (pm *policyManager) ImportPolicies(ctx context.Context, req *ImportPolicies
 		if existingPolicy != nil && req.Options.OverwriteExisting {
 			// Update existing policy
 			updateReq := pm.convertToUpdateRequest(transformedPolicy, existingPolicy.ID)
-			resultPolicy, err = pm.policyRepo.UpdatePolicy(ctx, updateReq)
+			resultPolicy, err = pm.policyRepo.UpdatePolicy(ctx, existingPolicy.ID, updateReq)
 		} else {
 			// Create new policy
 			createReq := pm.convertToCreateRequest(transformedPolicy, req.CreatedBy)
@@ -391,8 +393,8 @@ func (pm *policyManager) ImportPolicies(ctx context.Context, req *ImportPolicies
 	}
 
 	// Record metrics
-	pm.metrics.IncrementSuccessCount("policy_manager_import")
-	pm.metrics.RecordGauge("policy_import_success_rate",
+	pm.metrics.IncrementCounter("policy_manager_import", nil)
+	pm.metrics.SetGauge("policy_import_success_rate",
 		float64(summary.SuccessfulImports)/float64(summary.TotalPolicies)*100,
 		metrics.Fields{"format": req.Format})
 	pm.metrics.ObserveHistogram("policy_import_duration_seconds", executionTime.Seconds(),
@@ -423,8 +425,8 @@ func (pm *policyManager) ImportPolicies(ctx context.Context, req *ImportPolicies
 func (pm *policyManager) ExportPolicies(ctx context.Context, req *ExportPoliciesRequest) (*ExportResult, error) {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.ExportPolicies",
 		tracing.WithAttributes(
-			tracing.StringAttribute("format", req.Format),
-			tracing.IntAttribute("policy_ids", len(req.PolicyIDs)),
+			attribute.String("format", req.Format),
+			attribute.Int("policy_ids", len(req.PolicyIDs)),
 		))
 	defer span.End()
 
@@ -451,7 +453,7 @@ func (pm *policyManager) ExportPolicies(ctx context.Context, req *ExportPolicies
 
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "EXPORT_POLICIES_FAILED", "Failed to get policies for export").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "EXPORT_POLICIES_FAILED", "Failed to get policies for export")
 	}
 
 	// Transform policies for export
@@ -467,7 +469,7 @@ func (pm *policyManager) ExportPolicies(ctx context.Context, req *ExportPolicies
 		outputData, err = pm.generateExportData(ctx, exportData, req.Format, req.Options)
 		if err != nil {
 			pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-			return nil, errors.NewBusinessErrorWithContext(ctx, "EXPORT_GENERATION_FAILED", "Failed to generate export data").WithErr(err)
+			return nil, errors.NewBusinessErrorWithContext(ctx, "EXPORT_GENERATION_FAILED", "Failed to generate export data")
 		}
 	}
 
@@ -498,8 +500,8 @@ func (pm *policyManager) ExportPolicies(ctx context.Context, req *ExportPolicies
 	}
 
 	// Record metrics
-	pm.metrics.IncrementSuccessCount("policy_manager_export")
-	pm.metrics.RecordGauge("policy_export_size_bytes", float64(outputSize),
+	pm.metrics.IncrementCounter("policy_manager_export", nil)
+	pm.metrics.SetGauge("policy_export_size_bytes", float64(outputSize),
 		metrics.Fields{"format": req.Format})
 	pm.metrics.ObserveHistogram("policy_export_duration_seconds", executionTime.Seconds(),
 		metrics.Fields{"format": req.Format, "count": fmt.Sprintf("%d", summary.TotalPolicies)})
@@ -718,7 +720,6 @@ func (pm *policyManager) transformImportedPolicy(ctx context.Context, policyData
 
 func (pm *policyManager) convertToCreateRequest(policyData ImportPolicyData, createdBy *uuid.UUID) *repository.CreatePolicyRequest {
 	return &repository.CreatePolicyRequest{
-		EntityID:    nil, // Set based on options if needed
 		Name:        policyData.Name,
 		DisplayName: policyData.DisplayName,
 		Description: policyData.Description,
@@ -730,21 +731,15 @@ func (pm *policyManager) convertToCreateRequest(policyData ImportPolicyData, cre
 		Rule:        policyData.Rule,
 		Obligations: policyData.Obligations,
 		Advice:      policyData.Advice,
-		IsActive:    policyData.IsActive,
-		CreatedBy:   createdBy,
+		CreatedBy:   *createdBy,
 	}
 }
 
 func (pm *policyManager) convertToUpdateRequest(policyData ImportPolicyData, id uuid.UUID) *repository.UpdatePolicyRequest {
 	return &repository.UpdatePolicyRequest{
-		ID:          id,
-		Name:        &policyData.Name,
-		DisplayName: policyData.DisplayName,
+		DisplayName: &policyData.Name,
 		Description: policyData.Description,
-		PolicyType:  &policyData.PolicyType,
-		Effect:      &policyData.Effect,
 		Priority:    &policyData.Priority,
-		Category:    &policyData.Category,
 		Target:      policyData.Target,
 		Rule:        policyData.Rule,
 		Obligations: policyData.Obligations,
@@ -756,10 +751,13 @@ func (pm *policyManager) convertToUpdateRequest(policyData ImportPolicyData, id 
 func (pm *policyManager) getPoliciesByFilters(ctx context.Context, filters PolicyExportFilters) ([]*models.Policy, error) {
 	// This is a simplified implementation
 	// In a real scenario, you would build complex filter queries
+	var category *types.PolicyCategory
+	if len(filters.Categories) > 0 {
+		category = &filters.Categories[0]
+	}
 
 	listReq := &repository.ListPoliciesRequest{
-		Search:   nil, // Would build from search terms
-		Category: "",  // Would build from categories
+		Category: category,
 		IsActive: filters.IsActive,
 		Limit:    1000,
 		Offset:   0,

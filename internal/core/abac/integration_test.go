@@ -3,18 +3,16 @@ package abac
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/core/abac/repository"
-	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -55,8 +53,8 @@ func (suite *ABACIntegrationTestSuite) SetupSuite() {
 	suite.ctx = context.Background()
 
 	// Initialize test infrastructure
-	suite.logger = logger.NewMockLogger()
-	suite.metrics = metrics.NewMockMetricsProvider()
+	suite.logger = logger.WithFields(logger.Fields{})
+	suite.metrics = &metrics.MetricsService{}
 	suite.tracer = tracing.NewMockTracingService()
 
 	// Initialize ABAC components with mock implementations
@@ -766,9 +764,6 @@ func (suite *ABACIntegrationTestSuite) TestConcurrentOperations() {
 }
 
 // Helper functions
-func stringPtr(s string) *string {
-	return &s
-}
 
 func timePtr(t time.Time) *time.Time {
 	return &t
@@ -801,8 +796,8 @@ func testHealthcareDataAccessScenario(t *testing.T) {
 	// Emergency personnel can access any records during emergencies
 
 	ctx := context.Background()
-	logger := logger.NewMockLogger()
-	metrics := metrics.NewMockMetricsProvider()
+	logger := logger.WithFields(logger.Fields{})
+	metrics := &metrics.MetricsService{}
 	tracer := tracing.NewMockTracingService()
 
 	// Mock components
@@ -977,8 +972,8 @@ func testFinancialRecordsAccessScenario(t *testing.T) {
 	t.Log("Testing financial records access scenario with SOX compliance")
 
 	ctx := context.Background()
-	logger := logger.NewMockLogger()
-	metrics := metrics.NewMockMetricsProvider()
+	logger := logger.WithFields(logger.Fields{})
+	metrics := &metrics.MetricsService{}
 	tracer := tracing.NewMockTracingService()
 
 	auditRepo := &MockAuditLogRepository{}
@@ -1020,8 +1015,8 @@ func testMultiTenantAccessScenario(t *testing.T) {
 	t.Log("Testing multi-tenant access scenario")
 
 	ctx := context.Background()
-	logger := logger.NewMockLogger()
-	metrics := metrics.NewMockMetricsProvider()
+	logger := logger.WithFields(logger.Fields{})
+	metrics := &metrics.MetricsService{}
 	tracer := tracing.NewMockTracingService()
 
 	// Test data for different tenants

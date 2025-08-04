@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
@@ -210,9 +211,9 @@ func NewAttributeCache() *AttributeCache {
 func (po *performanceOptimizer) GetCachedEvaluation(ctx context.Context, req *CacheRequest) (*CachedEvaluationResult, error) {
 	ctx, span := po.tracer.StartSpan(ctx, "abac.performance_optimizer.GetCachedEvaluation",
 		tracing.WithAttributes(
-			tracing.StringAttribute("user_id", req.UserID.String()),
-			tracing.StringAttribute("resource_type", req.ResourceType),
-			tracing.StringAttribute("action", req.Action),
+			attribute.String("user_id", req.UserID.String()),
+			attribute.String("resource_type", req.ResourceType),
+			attribute.String("action", req.Action),
 		))
 	defer span.End()
 
@@ -290,8 +291,8 @@ func (po *performanceOptimizer) GetCachedEvaluation(ctx context.Context, req *Ca
 func (po *performanceOptimizer) CacheEvaluation(ctx context.Context, req *CacheEvaluationRequest) error {
 	ctx, span := po.tracer.StartSpan(ctx, "abac.performance_optimizer.CacheEvaluation",
 		tracing.WithAttributes(
-			tracing.StringAttribute("cache_key", req.CacheKey),
-			tracing.StringAttribute("decision", string(req.Decision)),
+			attribute.String("cache_key", req.CacheKey),
+			attribute.String("decision", string(req.Decision)),
 		))
 	defer span.End()
 
@@ -355,13 +356,9 @@ type SingleEvaluationRequest struct {
 	Priority     int32                  `json:"priority"`
 }
 
-type BatchFailureStrategy string
+// BatchFailureStrategy type already defined in attribute_collector.go
 
-const (
-	BatchFailureStrategyAbort    BatchFailureStrategy = "abort"
-	BatchFailureStrategyContinue BatchFailureStrategy = "continue"
-	BatchFailureStrategyPartial  BatchFailureStrategy = "partial"
-)
+// BatchFailureStrategy constants defined in attribute_collector.go
 
 type BatchCacheOptions struct {
 	EnableCaching bool          `json:"enable_caching"`
@@ -414,8 +411,8 @@ type BatchEvaluationPerformanceStats struct {
 func (po *performanceOptimizer) BatchEvaluate(ctx context.Context, req *BatchEvaluationRequest) (*BatchEvaluationResult, error) {
 	ctx, span := po.tracer.StartSpan(ctx, "abac.performance_optimizer.BatchEvaluate",
 		tracing.WithAttributes(
-			tracing.IntAttribute("batch_size", len(req.Evaluations)),
-			tracing.IntAttribute("concurrency_level", int(req.ConcurrencyLevel)),
+			attribute.Int("batch_size", len(req.Evaluations)),
+			attribute.Int("concurrency_level", int(req.ConcurrencyLevel)),
 		))
 	defer span.End()
 
@@ -498,10 +495,10 @@ func (po *performanceOptimizer) BatchEvaluate(ctx context.Context, req *BatchEva
 		Timestamp:        time.Now(),
 	}
 
-	po.metrics.IncrementSuccessCount("performance_optimizer_batch_evaluation")
-	po.metrics.RecordGauge("batch_evaluation_throughput", performanceStats.ThroughputPerSecond,
+	po.metrics.IncrementCounter("performance_optimizer_batch_evaluation", metrics.Fields{})
+	po.metrics.SetGauge("batch_evaluation_throughput", performanceStats.ThroughputPerSecond,
 		metrics.Fields{"batch_size": fmt.Sprintf("%d", len(req.Evaluations))})
-	po.metrics.RecordGauge("batch_evaluation_cache_hit_rate", performanceStats.CacheHitRate,
+	po.metrics.SetGauge("batch_evaluation_cache_hit_rate", performanceStats.CacheHitRate,
 		metrics.Fields{"batch_size": fmt.Sprintf("%d", len(req.Evaluations))})
 
 	po.logger.InfoContext(ctx, "Batch evaluation completed",
@@ -595,7 +592,8 @@ type IndexHint struct {
 	Priority      int32  `json:"priority"`
 }
 
-type CacheStrategy struct {
+// CacheStrategy type conflicts with attribute_resolver.go - using PerformanceCacheStrategy
+type PerformanceCacheStrategy struct {
 	StrategyType string        `json:"strategy_type"`
 	CacheKey     string        `json:"cache_key"`
 	TTL          time.Duration `json:"ttl"`
@@ -605,8 +603,8 @@ type CacheStrategy struct {
 func (po *performanceOptimizer) CompilePolicy(ctx context.Context, req *PolicyCompilationRequest) (*CompiledPolicy, error) {
 	ctx, span := po.tracer.StartSpan(ctx, "abac.performance_optimizer.CompilePolicy",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_id", req.PolicyID.String()),
-			tracing.StringAttribute("optimization_level", string(req.OptimizationLevel)),
+			attribute.String("policy_id", req.PolicyID.String()),
+			attribute.String("optimization_level", string(req.OptimizationLevel)),
 		))
 	defer span.End()
 
@@ -623,7 +621,7 @@ func (po *performanceOptimizer) CompilePolicy(ctx context.Context, req *PolicyCo
 	policy, err := po.policyRepo.GetPolicyByID(ctx, req.PolicyID)
 	if err != nil {
 		po.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_NOT_FOUND", "Policy not found for compilation").WithErr(err)
+		return nil, fmt.Errorf("policy not found for compilation: %w", err)
 	}
 
 	// Perform compilation based on optimization level
@@ -661,10 +659,10 @@ func (po *performanceOptimizer) CompilePolicy(ctx context.Context, req *PolicyCo
 	po.compiledPolicies[req.PolicyID] = compiled
 	po.compiledMutex.Unlock()
 
-	po.metrics.IncrementSuccessCount("performance_optimizer_policy_compilation")
+	po.metrics.IncrementCounter("performance_optimizer_policy_compilation", metrics.Fields{})
 	po.metrics.ObserveHistogram("policy_compilation_duration_seconds", compilationTime.Seconds(),
 		metrics.Fields{"optimization_level": string(req.OptimizationLevel)})
-	po.metrics.RecordGauge("policy_complexity_reduction", performanceMetrics.ComplexityReduction,
+	po.metrics.SetGauge("policy_complexity_reduction", performanceMetrics.ComplexityReduction,
 		metrics.Fields{"policy_id": req.PolicyID.String()})
 
 	po.logger.InfoContext(ctx, "Policy compilation completed",

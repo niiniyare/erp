@@ -3,7 +3,6 @@ package request
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -71,22 +70,12 @@ func (r *accessRequestRepository) CreateAccessRequest(ctx context.Context, req *
 	})
 
 	// Get current tenant ID from context - this should be set by middleware
-	tenantIDInterface, err := r.db.GetCurrentTenantID(ctx)
+	tenantID, err := r.db.GetCurrentTenantID(ctx)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to get tenant ID from context")
 		r.metrics.IncrementCounter("access_request_create_error", map[string]any{"error": "no_tenant_id"})
 		return nil, errors.NewRepositoryError("TENANT_REQUIRED", "Tenant ID is required", err)
-	}
-
-	// Convert tenant ID to UUID
-	tenantID, ok := tenantIDInterface.(uuid.UUID)
-	if !ok {
-		err = fmt.Errorf("invalid tenant ID type: %T", tenantIDInterface)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "Invalid tenant ID type")
-		r.metrics.IncrementCounter("access_request_create_error", map[string]any{"error": "invalid_tenant_id"})
-		return nil, errors.NewRepositoryError("TENANT_INVALID", "Invalid tenant ID", err)
 	}
 
 	params, err := req.ToSQLCCreateParams(tenantID, requesterID)

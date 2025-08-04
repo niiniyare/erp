@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
@@ -15,6 +16,56 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 	"github.com/niiniyare/erp/internal/shared/types"
 )
+
+// ─── MISSING TYPE DEFINITIONS ─────────────────────────────────────────────
+
+// ListPoliciesRequest represents a request to list policies
+type ListPoliciesRequest struct {
+	TenantID   uuid.UUID             `json:"tenant_id"`
+	PolicyType *types.PolicyType     `json:"policy_type,omitempty"`
+	Category   *types.PolicyCategory `json:"category,omitempty"`
+	IsActive   *bool                 `json:"is_active,omitempty"`
+	SearchTerm string                `json:"search_term,omitempty"`
+	Limit      int32                 `json:"limit,omitempty"`
+	Offset     int32                 `json:"offset,omitempty"`
+	SortBy     string                `json:"sort_by,omitempty"`
+	SortOrder  string                `json:"sort_order,omitempty"`
+}
+
+// PolicyListResult represents the result of listing policies
+type PolicyListResult struct {
+	Policies []models.Policy `json:"policies"`
+	Total    int64           `json:"total"`
+	Page     int32           `json:"page"`
+	PageSize int32           `json:"page_size"`
+}
+
+// PolicyMetricsRequest represents a request for policy metrics
+type PolicyMetricsRequest struct {
+	PolicyID  *uuid.UUID `json:"policy_id,omitempty"`
+	StartTime *time.Time `json:"start_time,omitempty"`
+	EndTime   *time.Time `json:"end_time,omitempty"`
+	TenantID  uuid.UUID  `json:"tenant_id"`
+}
+
+// PolicyMetrics represents policy usage and performance metrics
+type PolicyMetrics struct {
+	PolicyID        uuid.UUID     `json:"policy_id"`
+	EvaluationCount int64         `json:"evaluation_count"`
+	PermitCount     int64         `json:"permit_count"`
+	DenyCount       int64         `json:"deny_count"`
+	AverageLatency  time.Duration `json:"average_latency"`
+	ErrorCount      int64         `json:"error_count"`
+	LastEvaluated   time.Time     `json:"last_evaluated"`
+}
+
+// PolicyUsageRequest represents a request for policy usage information
+type PolicyUsageRequest struct {
+	PolicyID  uuid.UUID  `json:"policy_id"`
+	StartTime *time.Time `json:"start_time,omitempty"`
+	EndTime   *time.Time `json:"end_time,omitempty"`
+	GroupBy   string     `json:"group_by,omitempty"` // "day", "hour", "user", etc.
+}
 
 // PolicyManager provides comprehensive policy management capabilities
 type PolicyManager interface {
@@ -102,6 +153,7 @@ type PolicyManagementResult struct {
 	Recommendations  []string                `json:"recommendations,omitempty"`
 }
 
+// PolicyValidationResult defines the result of a policy validation
 type PolicyValidationResult struct {
 	IsValid  bool     `json:"is_valid"`
 	Errors   []string `json:"errors,omitempty"`
@@ -119,8 +171,8 @@ type PolicyConflictWarning struct {
 func (pm *policyManager) CreatePolicy(ctx context.Context, req *CreatePolicyRequest) (*PolicyManagementResult, error) {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.CreatePolicy",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_name", req.Name),
-			tracing.StringAttribute("policy_type", string(req.PolicyType)),
+			attribute.String("policy_name", req.Name),
+			attribute.String("policy_type", string(req.PolicyType)),
 		))
 	defer span.End()
 
@@ -134,7 +186,7 @@ func (pm *policyManager) CreatePolicy(ctx context.Context, req *CreatePolicyRequ
 	// Step 1: Validate policy syntax and semantics
 	validationResult := pm.validatePolicy(ctx, req)
 	if !validationResult.IsValid {
-		pm.metrics.IncrementErrorCount("policy_manager", "create_validation_failed")
+		pm.metrics.IncrementCounter("policy_manager_create_validation_failed", nil)
 		return &PolicyManagementResult{
 			ValidationResult: validationResult,
 		}, errors.NewBusinessErrorWithContext(ctx, "POLICY_VALIDATION_FAILED", "Policy validation failed")
@@ -148,7 +200,6 @@ func (pm *policyManager) CreatePolicy(ctx context.Context, req *CreatePolicyRequ
 
 	// Step 3: Create the policy
 	createReq := &repository.CreatePolicyRequest{
-		EntityID:    req.EntityID,
 		Name:        req.Name,
 		DisplayName: req.DisplayName,
 		Description: req.Description,
@@ -160,23 +211,22 @@ func (pm *policyManager) CreatePolicy(ctx context.Context, req *CreatePolicyRequ
 		Rule:        req.Rule,
 		Obligations: req.Obligations,
 		Advice:      req.Advice,
-		IsActive:    true, // New policies are active by default
-		CreatedBy:   req.CreatedBy,
+		CreatedBy:   *req.CreatedBy,
 	}
 
 	policy, err := pm.policyRepo.CreatePolicy(ctx, createReq)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		pm.metrics.IncrementErrorCount("policy_manager", "create_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_CREATE_FAILED", "Failed to create policy").WithErr(err)
+		pm.metrics.IncrementCounter("policy_manager_create_failed", nil)
+		return nil, fmt.Errorf("failed to create policy: %w", err)
 	}
 
 	// Step 4: Generate recommendations
 	recommendations := pm.generatePolicyRecommendations(ctx, policy, req)
 
 	// Step 5: Record metrics
-	pm.metrics.IncrementSuccessCount("policy_manager_create")
-	pm.metrics.RecordGauge("policy_manager_total_policies", 1,
+	pm.metrics.IncrementCounter("policy_manager_create", nil)
+	pm.metrics.SetGauge("policy_manager_total_policies", 1,
 		metrics.Fields{"category": string(req.Category)})
 
 	result := &PolicyManagementResult{
@@ -218,7 +268,7 @@ type UpdatePolicyRequest struct {
 func (pm *policyManager) UpdatePolicy(ctx context.Context, req *UpdatePolicyRequest) (*PolicyManagementResult, error) {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.UpdatePolicy",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_id", req.ID.String()),
+			attribute.String("policy_id", req.ID.String()),
 		))
 	defer span.End()
 
@@ -237,7 +287,7 @@ func (pm *policyManager) UpdatePolicy(ctx context.Context, req *UpdatePolicyRequ
 	// Step 2: Validate update request
 	validationResult := pm.validatePolicyUpdate(ctx, existingPolicy, req)
 	if !validationResult.IsValid {
-		pm.metrics.IncrementErrorCount("policy_manager", "update_validation_failed")
+		pm.metrics.IncrementCounter("policy_manager_update_validation_failed", nil)
 		return &PolicyManagementResult{
 			ValidationResult: validationResult,
 		}, errors.NewBusinessErrorWithContext(ctx, "POLICY_UPDATE_VALIDATION_FAILED", "Policy update validation failed")
@@ -251,15 +301,14 @@ func (pm *policyManager) UpdatePolicy(ctx context.Context, req *UpdatePolicyRequ
 
 	// Step 4: Perform the update
 	updateReq := &repository.UpdatePolicyRequest{
-		ID:          req.ID,
-		EntityID:    nil, // Not updating entity ID
-		Name:        req.Name,
+		// ID:          req.ID, // ID is passed separately to UpdatePolicy
+		// EntityID:    nil, // Not updating entity ID
 		DisplayName: req.DisplayName,
 		Description: req.Description,
-		PolicyType:  req.PolicyType,
-		Effect:      req.Effect,
-		Priority:    req.Priority,
-		Category:    req.Category,
+		// PolicyType:  req.PolicyType, // Not in UpdatePolicyRequest
+		// Effect:      req.Effect, // Not in UpdatePolicyRequest
+		Priority: req.Priority,
+		// Category:    req.Category, // Not in UpdatePolicyRequest
 		Target:      req.Target,
 		Rule:        req.Rule,
 		Obligations: req.Obligations,
@@ -267,11 +316,11 @@ func (pm *policyManager) UpdatePolicy(ctx context.Context, req *UpdatePolicyRequ
 		IsActive:    req.IsActive,
 	}
 
-	updatedPolicy, err := pm.policyRepo.UpdatePolicy(ctx, updateReq)
+	updatedPolicy, err := pm.policyRepo.UpdatePolicy(ctx, req.ID, updateReq)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		pm.metrics.IncrementErrorCount("policy_manager", "update_failed")
-		return nil, errors.NewBusinessErrorWithContext(ctx, "POLICY_UPDATE_FAILED", "Failed to update policy").WithErr(err)
+		pm.metrics.IncrementCounter("policy_manager_update_failed", nil)
+		return nil, fmt.Errorf("failed to update policy: %w", err)
 	}
 
 	// Step 5: Invalidate related cache entries
@@ -288,7 +337,7 @@ func (pm *policyManager) UpdatePolicy(ctx context.Context, req *UpdatePolicyRequ
 	// Step 6: Generate recommendations
 	recommendations := pm.generatePolicyUpdateRecommendations(ctx, existingPolicy, updatedPolicy)
 
-	pm.metrics.IncrementSuccessCount("policy_manager_update")
+	pm.metrics.IncrementCounter("policy_manager_update", nil)
 
 	result := &PolicyManagementResult{
 		Policy:           updatedPolicy,
@@ -318,8 +367,8 @@ type DeletePolicyRequest struct {
 func (pm *policyManager) DeletePolicy(ctx context.Context, req *DeletePolicyRequest) error {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.DeletePolicy",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_id", req.ID.String()),
-			tracing.BoolAttribute("force", req.Force),
+			attribute.String("policy_id", req.ID.String()),
+			attribute.Bool("force", req.Force),
 		))
 	defer span.End()
 
@@ -342,11 +391,11 @@ func (pm *policyManager) DeletePolicy(ctx context.Context, req *DeletePolicyRequ
 		dependencies, err := pm.checkPolicyDependencies(ctx, req.ID)
 		if err != nil {
 			pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-			return errors.NewBusinessErrorWithContext(ctx, "POLICY_DEPENDENCY_CHECK_FAILED", "Failed to check policy dependencies").WithErr(err)
+			return fmt.Errorf("failed to check policy dependencies: %w", err)
 		}
 
 		if len(dependencies) > 0 {
-			pm.metrics.IncrementErrorCount("policy_manager", "delete_blocked_by_dependencies")
+			pm.metrics.IncrementCounter("policy_manager_delete_blocked_by_dependencies", nil)
 			return errors.NewBusinessErrorWithContext(ctx, "POLICY_HAS_DEPENDENCIES",
 				fmt.Sprintf("Policy has %d dependencies. Use force=true to delete anyway", len(dependencies)))
 		}
@@ -356,8 +405,8 @@ func (pm *policyManager) DeletePolicy(ctx context.Context, req *DeletePolicyRequ
 	err = pm.policyRepo.DeletePolicy(ctx, req.ID)
 	if err != nil {
 		pm.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		pm.metrics.IncrementErrorCount("policy_manager", "delete_failed")
-		return errors.NewBusinessErrorWithContext(ctx, "POLICY_DELETE_FAILED", "Failed to delete policy").WithErr(err)
+		pm.metrics.IncrementCounter("policy_manager_delete_failed", nil)
+		return fmt.Errorf("failed to delete policy: %w", err)
 	}
 
 	// Step 4: Invalidate related cache entries
@@ -371,8 +420,8 @@ func (pm *policyManager) DeletePolicy(ctx context.Context, req *DeletePolicyRequ
 		}
 	}()
 
-	pm.metrics.IncrementSuccessCount("policy_manager_delete")
-	pm.metrics.RecordGauge("policy_manager_total_policies", -1,
+	pm.metrics.IncrementCounter("policy_manager_delete", nil)
+	pm.metrics.SetGauge("policy_manager_total_policies", -1,
 		metrics.Fields{"category": string(policy.Category)})
 
 	pm.logger.InfoContext(ctx, "Policy deleted successfully",
@@ -428,7 +477,7 @@ type PolicyConflictDetail struct {
 func (pm *policyManager) GetPolicy(ctx context.Context, id uuid.UUID) (*PolicyDetails, error) {
 	ctx, span := pm.tracer.StartSpan(ctx, "abac.policy_manager.GetPolicy",
 		tracing.WithAttributes(
-			tracing.StringAttribute("policy_id", id.String()),
+			attribute.String("policy_id", id.String()),
 		))
 	defer span.End()
 
@@ -441,7 +490,7 @@ func (pm *policyManager) GetPolicy(ctx context.Context, id uuid.UUID) (*PolicyDe
 
 	// Get policy metadata (placeholder implementation)
 	metadata := &PolicyMetadata{
-		CreatedBy:      policy.CreatedBy,
+		CreatedBy:      &policy.CreatedBy,
 		Version:        1, // Placeholder
 		ApprovalStatus: "approved",
 		EffectiveFrom:  policy.CreatedAt,
@@ -461,7 +510,7 @@ func (pm *policyManager) GetPolicy(ctx context.Context, id uuid.UUID) (*PolicyDe
 		HasConflicts: false,
 	}
 
-	pm.metrics.IncrementSuccessCount("policy_manager_get")
+	pm.metrics.IncrementCounter("policy_manager_get", nil)
 
 	return &PolicyDetails{
 		Policy:           policy,
@@ -469,6 +518,18 @@ func (pm *policyManager) GetPolicy(ctx context.Context, id uuid.UUID) (*PolicyDe
 		Usage:            usage,
 		ConflictAnalysis: conflictAnalysis,
 	}, nil
+}
+
+func (pm *policyManager) ListPolicies(ctx context.Context, req *ListPoliciesRequest) (*PolicyListResult, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "ListPolicies is not implemented")
+}
+
+func (pm *policyManager) GetPolicyMetrics(ctx context.Context, req *PolicyMetricsRequest) (*PolicyMetrics, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetPolicyMetrics is not implemented")
+}
+
+func (pm *policyManager) GetPolicyUsageStats(ctx context.Context, req *PolicyUsageRequest) (*PolicyUsageStats, error) {
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetPolicyUsageStats is not implemented")
 }
 
 // Helper methods for policy validation and conflict detection

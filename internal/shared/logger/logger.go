@@ -81,11 +81,11 @@ type Config struct {
 // DefaultConfig returns a default configuration
 func DefaultConfig() Config {
 	return Config{
-		Type:        SlogLogger,
+		Type:        ZerologLogger,
 		Level:       InfoLevel,
 		Output:      os.Stdout,
-		Format:      "json",
-		Development: false,
+		Format:      "console",
+		Development: true,
 		ServiceName: "app",
 		Version:     "1.0.0",
 	}

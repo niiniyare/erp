@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -19,6 +18,8 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 	"github.com/niiniyare/erp/internal/shared/types"
 )
+
+// // Missing type definitions
 
 // AttributeResolver provides intelligent attribute resolution with advanced caching
 type AttributeResolver interface {
@@ -596,14 +597,7 @@ type ResolutionPerformanceMetrics struct {
 }
 
 func (ar *attributeResolver) ResolveAttributes(ctx context.Context, req *AttributeResolutionRequest) (*AttributeResolutionResult, error) {
-	ctx, span := ar.tracer.StartSpan(ctx, "abac.attribute_resolver.ResolveAttributes",
-		tracing.WithAttributes(
-			tracing.StringAttribute("request_id", req.RequestID.String()),
-			tracing.StringAttribute("target_type", string(req.ResolutionContext.TargetType)),
-			tracing.StringAttribute("target_id", req.ResolutionContext.TargetID.String()),
-			tracing.IntAttribute("attributes_count", len(req.AttributeQueries)),
-			tracing.StringAttribute("priority", string(req.Priority)),
-		))
+	ctx, span := ar.tracer.StartSpan(ctx, "abac.attribute_resolver.ResolveAttributes")
 	defer span.End()
 
 	startTime := time.Now()
@@ -622,14 +616,14 @@ func (ar *attributeResolver) ResolveAttributes(ctx context.Context, req *Attribu
 	dependencyGraph, err := ar.buildDependencyGraph(ctx, req.AttributeQueries)
 	if err != nil {
 		ar.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "DEPENDENCY_GRAPH_FAILED", "Failed to build dependency graph").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "DEPENDENCY_GRAPH_FAILED", fmt.Sprintf("Failed to build dependency graph: %v", err))
 	}
 
 	// Step 2: Determine resolution order based on dependencies
 	resolutionOrder, err := ar.determineResolutionOrder(ctx, dependencyGraph)
 	if err != nil {
 		ar.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, errors.NewBusinessErrorWithContext(ctx, "RESOLUTION_ORDER_FAILED", "Failed to determine resolution order").WithErr(err)
+		return nil, errors.NewBusinessErrorWithContext(ctx, "RESOLUTION_ORDER_FAILED", fmt.Sprintf("Failed to determine resolution order: %v", err))
 	}
 
 	// Step 3: Initialize resolution result
@@ -675,7 +669,7 @@ func (ar *attributeResolver) ResolveAttributes(ctx context.Context, req *Attribu
 	result.ResolutionStatus = ar.determineResolutionStatus(result)
 
 	// Record metrics
-	ar.metrics.IncrementSuccessCount("attribute_resolver_resolution")
+	ar.metrics.IncrementCounter("attribute_resolver_resolution", metrics.Fields{})
 	ar.metrics.ObserveHistogram("attribute_resolution_duration_seconds", executionTime.Seconds(),
 		metrics.Fields{
 			"target_type":       string(req.ResolutionContext.TargetType),
@@ -683,9 +677,9 @@ func (ar *attributeResolver) ResolveAttributes(ctx context.Context, req *Attribu
 			"resolution_status": string(result.ResolutionStatus),
 			"parallel_enabled":  fmt.Sprintf("%t", req.ResolutionOptions.EnableParallelResolution),
 		})
-	ar.metrics.RecordGauge("attribute_resolution_cache_hit_rate", result.CacheStatistics.HitRate,
+	ar.metrics.SetGauge("attribute_resolution_cache_hit_rate", result.CacheStatistics.HitRate,
 		metrics.Fields{"target_type": string(req.ResolutionContext.TargetType)})
-	ar.metrics.RecordGauge("attribute_resolution_quality_score", result.QualityMetrics.OverallQualityScore,
+	ar.metrics.SetGauge("attribute_resolution_quality_score", result.QualityMetrics.OverallQualityScore,
 		metrics.Fields{"target_type": string(req.ResolutionContext.TargetType)})
 
 	ar.logger.InfoContext(ctx, "Attribute resolution completed",
@@ -741,12 +735,7 @@ type SingleResolutionPerformance struct {
 }
 
 func (ar *attributeResolver) ResolveAttribute(ctx context.Context, req *SingleAttributeResolutionRequest) (*SingleAttributeResolutionResult, error) {
-	ctx, span := ar.tracer.StartSpan(ctx, "abac.attribute_resolver.ResolveAttribute",
-		tracing.WithAttributes(
-			tracing.StringAttribute("attribute_name", req.AttributeName),
-			tracing.StringAttribute("target_type", string(req.ResolutionContext.TargetType)),
-			tracing.StringAttribute("target_id", req.ResolutionContext.TargetID.String()),
-		))
+	ctx, span := ar.tracer.StartSpan(ctx, "abac.attribute_resolver.ResolveAttribute")
 	defer span.End()
 
 	startTime := time.Now()
@@ -827,7 +816,7 @@ func (ar *attributeResolver) ResolveAttribute(ctx context.Context, req *SingleAt
 	result.ExecutionTime = executionTime
 	result.Timestamp = time.Now()
 
-	ar.metrics.IncrementSuccessCount("attribute_resolver_single_resolution")
+	ar.metrics.IncrementCounter("attribute_resolver_single_resolution", metrics.Fields{})
 	ar.metrics.ObserveHistogram("single_attribute_resolution_duration_seconds", executionTime.Seconds(),
 		metrics.Fields{
 			"attribute_name":    req.AttributeName,
@@ -1353,7 +1342,7 @@ func (ar *attributeResolver) calculateFinalMetrics(result *AttributeResolutionRe
 	result.DependencyInfo.TotalDependencies = int32(graph.EdgeCount())
 	result.DependencyInfo.ResolvedDependencies = int32(len(result.ResolvedAttributes))
 	result.DependencyInfo.FailedDependencies = int32(len(result.FailedAttributes))
-	result.DependencyInfo.HasCycles = graph.HasCycles()
+	result.DependencyInfo.DependencyGraph.HasCycles = graph.HasCycles()
 
 	// Calculate performance metrics
 	if result.ExecutionTime > 0 {
