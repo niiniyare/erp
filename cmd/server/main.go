@@ -38,20 +38,20 @@ func main() {
 		logger.Fatal("Failed to initialize GOA server", logger.Fields{"error": err})
 	}
 
-	// Initialize Gin router for additional routes (Swagger UI)
+	// Initialize Gin router for migration testing
 	ginRouter, err := InitializeGinRouter(services, infra.Metrics, infra.Tracing)
 	if err != nil {
 		logger.Fatal("Failed to initialize Gin router", logger.Fields{"error": err})
 	}
 
-	// Create combined handler that routes between GOA and Gin
+	// Create combined handler for migration phase
 	combinedHandler := &CombinedHandler{
 		goaHandler: goaServer.Handler,
 		ginHandler: ginRouter,
 	}
 
 	// Start HTTP server
-	logger.Info("Server starting with GOA+Gin integration", logger.Fields{
+	logger.Info("Server starting with GOA+Gin (migration mode)", logger.Fields{
 		"port":    infra.Config.Server.Port,
 		"address": ":" + infra.Config.Server.Port,
 	})
