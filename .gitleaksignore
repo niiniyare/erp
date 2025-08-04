@@ -1,0 +1,3 @@
+internal/api/swagger/openapi.json
+internal/api/swagger/openapi3.json
+gen/http/openapi3.json

@@ -2,8 +2,13 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/niiniyare/erp/gen/openapi"
+	"github.com/niiniyare/erp/internal/api/swagger"
 	"github.com/niiniyare/erp/internal/shared/logger"
 )
 
@@ -22,32 +27,57 @@ func (h *OpenapiHandler) Spec(ctx context.Context) (*openapi.SpecResult, error) 
 		"method":  "spec",
 	})
 
-	// TODO: Return actual OpenAPI specification
-	// This should be generated from the GOA design files
-	result := &openapi.SpecResult{
-		Spec: map[string]interface{}{
-			"openapi": "3.0.0",
-			"info": map[string]interface{}{
-				"title":   "AWO ERP System API",
-				"version": "1.0.0",
-			},
-			"paths": map[string]interface{}{},
-		},
+	// Read the generated OpenAPI specification file
+	specPath := filepath.Join("gen", "http", "openapi3.json")
+	specData, err := os.ReadFile(specPath)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to read OpenAPI spec file", logger.Fields{
+			"error": err.Error(),
+			"path":  specPath,
+		})
+		return nil, err
 	}
+
+	// Parse the OpenAPI specification
+	var spec map[string]interface{}
+	if err := json.Unmarshal(specData, &spec); err != nil {
+		logger.ErrorContext(ctx, "Failed to parse OpenAPI spec", logger.Fields{
+			"error": err.Error(),
+		})
+		return nil, err
+	}
+
+	result := &openapi.SpecResult{
+		Spec: spec,
+	}
+
+	logger.InfoContext(ctx, "OpenAPI spec served successfully", logger.Fields{
+		"endpoints_count": len(spec["paths"].(map[string]interface{})),
+	})
 
 	return result, nil
 }
 
-// UI redirects to the Swagger UI
+// UI redirects to the local Swagger UI
 func (h *OpenapiHandler) UI(ctx context.Context) (*openapi.UIResult, error) {
 	logger.InfoContext(ctx, "OpenAPI UI requested", logger.Fields{
 		"service": "openapi",
 		"method":  "ui",
 	})
 
+	// Redirect to the locally served Swagger UI
 	result := &openapi.UIResult{
 		Location: "/swagger-ui/",
 	}
 
+	logger.InfoContext(ctx, "Swagger UI redirect provided", logger.Fields{
+		"redirect_url": result.Location,
+	})
+
 	return result, nil
+}
+
+// ServeSwaggerUI creates an HTTP handler for serving the embedded Swagger UI files
+func ServeSwaggerUI() http.Handler {
+	return swagger.ServeHTTP()
 }

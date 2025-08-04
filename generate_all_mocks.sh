@@ -31,4 +31,43 @@ DB_STORE_PACKAGE="db"
 echo "Generating mock for $DB_STORE_SOURCE"
 go run go.uber.org/mock/mockgen -source="$DB_STORE_SOURCE" -destination="$DB_STORE_DESTINATION" -package="$DB_STORE_PACKAGE"
 
+# Generate mocks for shared infrastructure components
+SHARED_DIR="internal/shared"
+
+# Generate mock for logger
+LOGGER_SOURCE="$SHARED_DIR/logger/logger.go"
+LOGGER_DESTINATION="$SHARED_DIR/logger/mock_logger.go"
+LOGGER_PACKAGE="logger"
+
+if [ -f "$LOGGER_SOURCE" ]; then
+    echo "Generating mock for logger"
+    go run go.uber.org/mock/mockgen -source="$LOGGER_SOURCE" -destination="$LOGGER_DESTINATION" -package="$LOGGER_PACKAGE"
+else
+    echo "Logger source file not found: $LOGGER_SOURCE"
+fi
+
+# Generate mock for metrics
+METRICS_SOURCE="$SHARED_DIR/metrics/metrics.go"
+METRICS_DESTINATION="$SHARED_DIR/metrics/mock_metrics.go"
+METRICS_PACKAGE="metrics"
+
+if [ -f "$METRICS_SOURCE" ]; then
+    echo "Generating mock for metrics"
+    go run go.uber.org/mock/mockgen -source="$METRICS_SOURCE" -destination="$METRICS_DESTINATION" -package="$METRICS_PACKAGE"
+else
+    echo "Metrics source file not found: $METRICS_SOURCE"
+fi
+
+# Generate mock for tracing
+TRACING_SOURCE="$SHARED_DIR/tracing/tracing.go"
+TRACING_DESTINATION="$SHARED_DIR/tracing/mock_tracing.go"
+TRACING_PACKAGE="tracing"
+
+if [ -f "$TRACING_SOURCE" ]; then
+    echo "Generating mock for tracing"
+    go run go.uber.org/mock/mockgen -source="$TRACING_SOURCE" -destination="$TRACING_DESTINATION" -package="$TRACING_PACKAGE"
+else
+    echo "Tracing source file not found: $TRACING_SOURCE"
+fi
+
 echo "All mock generation complete."

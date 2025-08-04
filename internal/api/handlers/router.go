@@ -38,10 +38,14 @@ func NewRouter(
 	userHandler := NewUserHandler(userService, tracing, metrics)
 	accessRequestHandler := NewAccessRequestHandler(accessRequestService, conditionalAccessService, analyticsService, tracing, metrics)
 	healthHandler := NewHealthHandler()
+	swaggerHandler := NewSwaggerHandler()
 
 	// Health check routes
 	r.GET("/health", healthHandler.Health)
 	r.GET("/ready", healthHandler.Ready)
+
+	// Swagger UI routes
+	r.GET("/swagger-ui/*filepath", swaggerHandler.ServeSwaggerUI)
 
 	// API v1 routes
 	v1 := r.Group("/api/v1")

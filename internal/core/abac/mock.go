@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
+	activities "github.com/niiniyare/erp/internal/core/abac/activities"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -131,10 +132,10 @@ func (mr *MockTemporalServiceMockRecorder) EvaluatePermissionAsync(ctx, req any)
 }
 
 // GetCacheStatistics mocks base method.
-func (m *MockTemporalService) GetCacheStatistics(ctx context.Context) (*CacheStatistics, error) {
+func (m *MockTemporalService) GetCacheStatistics(ctx context.Context) (*activities.GetCacheStatsOutput, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCacheStatistics", ctx)
-	ret0, _ := ret[0].(*CacheStatistics)
+	ret0, _ := ret[0].(*activities.GetCacheStatsOutput)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -191,7 +192,7 @@ func (mr *MockTemporalServiceMockRecorder) GetWorkflowStatus(ctx, workflowID any
 }
 
 // InvalidateCacheAsync mocks base method.
-func (m *MockTemporalService) InvalidateCacheAsync(ctx context.Context, req *CacheInvalidationRequest) (*WorkflowInfo, error) {
+func (m *MockTemporalService) InvalidateCacheAsync(ctx context.Context, req *TemporalCacheInvalidationRequest) (*WorkflowInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InvalidateCacheAsync", ctx, req)
 	ret0, _ := ret[0].(*WorkflowInfo)

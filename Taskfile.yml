@@ -6,12 +6,12 @@ vars:
   DB_USER: '{{default "admin" .DB_USER}}'
   DB_PSSWD: '{{default "admin" .DB_PSSWD}}'
   DB_URL: 'postgresql://{{.DB_USER}}:{{.DB_PSSWD}}@localhost:5432/{{.DB_NAME}}?sslmode=disable'
-  
+
   MIGRATION_PATH: db/migration/
   SQLC_OUT: db/sqlc
   PROTO: api/proto/v1
   PB: api/pb/v1
-  
+
   REQUIRED_TOOLS: sqlc protoc mockgen migrate dbdocs psql buf
 
 # ============================================================================
@@ -98,7 +98,7 @@ tasks:
   mock:
     desc: Generate mocks for interfaces
     cmds:
-      - ./generate_all_mocks.sh
+      - bash ./generate_all_mocks.sh
 
   fmt:
     desc: Format Go code
@@ -108,8 +108,7 @@ tasks:
   goa:
     desc: Generate goa
     cmds:
-      - goa gen github.com/niiniyare/erp/internal/api/design -o internal/api
-
+      - goa gen github.com/niiniyare/erp/internal/api/design -o internal/api && rm -rf ./internal/api/swagger/openapi && cp -f ./internal/api/gen/http/openapi3.json ./internal/api/swagger
   lint:
     desc: Lint Go code
     cmds:
@@ -317,7 +316,7 @@ tasks:
     desc: "Create new migration file: task migrate-create name=init_users"
     cmds:
       - |
-        if [ -z "{{.name}}" ]; then 
+        if [ -z "{{.name}}" ]; then
           echo "Missing name param. Use: task migrate-create name=xyz"
           exit 1
         fi
