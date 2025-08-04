@@ -68,19 +68,20 @@ graph TD
 
 #### 1.1 HTTP Request Interception
 ```go
-// Middleware intercepts incoming requests
-func TenantMiddleware(tenantService tenant.Service) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        // Extract tenant identifier from various sources
-        tenantID := extractTenantContext(c)
-        
-        if tenantID == "" {
-            c.JSON(400, gin.H{"error": "Tenant context required"})
-            c.Abort()
-            return
+// GOA Middleware intercepts incoming requests
+func TenantMiddleware(tenantService tenant.Service) func(goa.Endpoint) goa.Endpoint {
+    return func(next goa.Endpoint) goa.Endpoint {
+        return func(ctx context.Context, req interface{}) (interface{}, error) {
+            // Extract tenant identifier from various sources
+            tenantID := extractTenantContextFromGOA(ctx)
+            
+            if tenantID == "" {
+                return nil, goa.NewErrorClass("tenant_required", 400)("Tenant context required")
+            }
+            
+            // Continue to next phase...
+            return next(ctx, req)
         }
-        
-        // Continue to next phase...
     }
 }
 ```
@@ -88,35 +89,33 @@ func TenantMiddleware(tenantService tenant.Service) gin.HandlerFunc {
 #### 1.2 Multiple Extraction Methods
 ```go
 // Priority order for tenant identification (returns UUID)
-func extractTenantContext(c *gin.Context) string {
+func extractTenantContextFromGOA(ctx context.Context) string {
+    // In GOA, tenant identification is typically handled by middleware that
+    // extracts the tenant identifier from the request (header, JWT, subdomain)
+    // and injects it into the context.
+
     // Method 1: HTTP Header with Tenant UUID (highest priority)
-    if tenantID := c.GetHeader("X-Tenant-ID"); tenantID != "" {
-        // Validate UUID format
-        if _, err := uuid.Parse(tenantID); err == nil {
-            return tenantID
+    if tenantID := ctx.Value(middleware.TenantIDKey); tenantID != nil {
+        if id, ok := tenantID.(string); ok {
+            return id
         }
     }
-    
+
     // Method 2: JWT Token Claims
-    if claims := getJWTClaims(c); claims != nil {
+    if claims := getJWTClaims(ctx); claims != nil {
         return claims.TenantID.String()
     }
-    
+
     // Method 3: Subdomain-based (resolve to UUID)
-    if subdomain := extractSubdomain(c.Request.Host); subdomain != "" {
-        // Resolve subdomain to tenant UUID via repository
-        if tenantID := resolveTenantFromSubdomain(c.Request.Context(), subdomain); tenantID != uuid.Nil {
-            return tenantID.String()
+    if host, ok := ctx.Value(goa.ContextKeyHost).(string); ok {
+        if subdomain := extractSubdomain(host); subdomain != "" {
+            // Resolve subdomain to tenant UUID via repository
+            if tenantID := resolveTenantFromSubdomain(ctx, subdomain); tenantID != uuid.Nil {
+                return tenantID.String()
+            }
         }
     }
-    
-    // Method 4: Query Parameter (for testing only)
-    if tenantID := c.Query("tenant_id"); tenantID != "" {
-        if _, err := uuid.Parse(tenantID); err == nil {
-            return tenantID
-        }
-    }
-    
+
     return ""
 }
 
@@ -229,9 +228,8 @@ func (middleware *TenantMiddleware) resolveTenantHierarchy(ctx context.Context, 
 
 #### 3.1 Request Context Enhancement
 ```go
-func (middleware *TenantMiddleware) injectTenantContext(c *gin.Context, tenant *Tenant) {
+func (middleware *TenantMiddleware) injectTenantContext(ctx context.Context, tenant *Tenant) context.Context {
     // Create enhanced context with tenant information
-    ctx := c.Request.Context()
     
     // Primary tenant context
     ctx = context.WithValue(ctx, "tenant_id", tenant.ID)
@@ -256,12 +254,7 @@ func (middleware *TenantMiddleware) injectTenantContext(c *gin.Context, tenant *
     ctx = context.WithValue(ctx, "tenant_security_level", tenant.SecurityLevel)
     ctx = context.WithValue(ctx, "tenant_compliance_flags", tenant.ComplianceFlags)
     
-    // Replace request context
-    c.Request = c.Request.WithContext(ctx)
-    
-    // Also set in Gin context for convenience
-    c.Set("tenant_id", tenant.ID)
-    c.Set("tenant", tenant)
+    return ctx
 }
 ```
 
@@ -437,30 +430,25 @@ func (s *SQLStore) SetTenantContext(ctx context.Context, tenantID uuid.UUID) err
 #### 6.1 Context Propagation Through Layers
 ```go
 // Handler Layer - Updated to use tenant service
-func (h *UserHandler) CreateUser(c *gin.Context) {
-    ctx := c.Request.Context()
-    
+func (h *UserHandler) CreateUser(ctx context.Context, payload *user.CreateUserPayload) (*user.User, error) {
     // Get current tenant from database session context via tenant service
     currentTenant, err := h.tenantService.GetCurrentTenant(ctx)
     if err != nil {
-        c.JSON(500, gin.H{"error": "Failed to get current tenant context"})
-        return
+        return nil, goa.NewErrorClass("internal_error", 500)("Failed to get current tenant context")
     }
     
     // Validate tenant permissions for operation
     if !currentTenant.HasPermission("user.create") {
-        c.JSON(403, gin.H{"error": "Operation not permitted for tenant"})
-        return
+        return nil, goa.NewErrorClass("forbidden", 403)("Operation not permitted for tenant")
     }
     
     // Pass context to service layer - tenant context flows automatically
-    user, err := h.userService.CreateUser(ctx, req)
+    user, err := h.userService.CreateUser(ctx, payload)
     if err != nil {
-        handleError(c, err)
-        return
+        return nil, err // Errors are handled by GOA
     }
     
-    c.JSON(201, user)
+    return user, nil
 }
 
 // Service Layer - Using tenant service for context access
@@ -699,25 +687,22 @@ func (s *userService) CreateUserWithProfileManual(ctx context.Context, req Creat
 #### 5.2 Cross-Tenant Operations (Administrative)
 ```go
 // Special handling for system-level operations using admin_role
-func (middleware *TenantMiddleware) handleCrossTenantOperation(c *gin.Context) {
+func (middleware *TenantMiddleware) handleCrossTenantOperation(ctx context.Context) (context.Context, error) {
     // Verify administrative privileges
-    user := GetUserFromContext(c.Request.Context())
+    user := GetUserFromContext(ctx)
     if !user.IsSuperAdmin() {
-        c.JSON(403, gin.H{"error": "Insufficient privileges for cross-tenant operation"})
-        c.Abort()
-        return
+        return nil, goa.NewErrorClass("forbidden", 403)("Insufficient privileges for cross-tenant operation")
     }
     
     // Create system-level context
-    ctx := context.WithValue(c.Request.Context(), "cross_tenant_mode", true)
+    ctx = context.WithValue(ctx, "cross_tenant_mode", true)
     ctx = context.WithValue(ctx, "system_operation", true)
     ctx = context.WithValue(ctx, "database_role", "admin_role")
     
     // Enhanced audit logging for cross-tenant operations
-    middleware.auditCrossTenantOperation(ctx, c.Request.URL.Path)
+    middleware.auditCrossTenantOperation(ctx, ctx.Value(goa.ContextKeyPath).(string))
     
-    c.Request = c.Request.WithContext(ctx)
-    c.Next()
+    return ctx, nil
 }
 
 // Repository method for admin operations that bypass RLS
@@ -764,9 +749,7 @@ func (s *tenantService) AdminBulkUpdateTenantStatus(ctx context.Context, tenantI
 
 #### 6.1 Request Completion Cleanup
 ```go
-func (middleware *TenantMiddleware) cleanupTenantContext(c *gin.Context) {
-    ctx := c.Request.Context()
-    
+func (middleware *TenantMiddleware) cleanupTenantContext(ctx context.Context) {
     // Get database connection for cleanup
     if db := database.GetConnection(ctx); db != nil {
         // Reset session variables
@@ -801,54 +784,38 @@ func (middleware *TenantMiddleware) cleanupTenantContext(c *gin.Context) {
 }
 
 // Defer cleanup to ensure it always runs
-func (middleware *TenantMiddleware) middlewareWithCleanup() gin.HandlerFunc {
-    return func(c *gin.Context) {
-        defer middleware.cleanupTenantContext(c)
-        
+func (middleware *TenantMiddleware) middlewareWithCleanup(next goa.Endpoint) goa.Endpoint {
+    return func(ctx context.Context, req interface{}) (interface{}, error) {
+        defer middleware.cleanupTenantContext(ctx)
+
         // Process request...
-        c.Next()
+        return next(ctx, req)
     }
 }
 ```
 
 #### 6.2 Error Handling and Recovery
 ```go
-func (middleware *TenantMiddleware) handleTenantContextError(c *gin.Context, err error) {
+func (middleware *TenantMiddleware) handleTenantContextError(ctx context.Context, err error) error {
     // Log error with context
     middleware.logger.Error("Tenant context error", 
         "error", err,
-        "host", c.Request.Host,
-        "path", c.Request.URL.Path,
-        "method", c.Request.Method,
+        "host", ctx.Value(goa.ContextKeyHost),
+        "path", ctx.Value(goa.ContextKeyPath),
+        "method", ctx.Value(goa.ContextKeyMethod),
     )
     
     // Determine error type and response
     switch {
     case errors.Is(err, ErrTenantNotFound):
-        c.JSON(404, gin.H{
-            "error": "Tenant not found",
-            "code":  "TENANT_NOT_FOUND",
-        })
+        return goa.NewErrorClass("tenant_not_found", 404)("Tenant not found")
     case errors.Is(err, ErrTenantSuspended):
-        c.JSON(403, gin.H{
-            "error": "Tenant account is suspended",
-            "code":  "TENANT_SUSPENDED",
-        })
+        return goa.NewErrorClass("tenant_suspended", 403)("Tenant account is suspended")
     case errors.Is(err, ErrTenantInactive):
-        c.JSON(403, gin.H{
-            "error": "Tenant account is inactive",
-            "code":  "TENANT_INACTIVE",
-        })
+        return goa.NewErrorClass("tenant_inactive", 403)("Tenant account is inactive")
     default:
-        c.JSON(500, gin.H{
-            "error": "Tenant context error",
-            "code":  "TENANT_CONTEXT_ERROR",
-        })
+        return goa.NewErrorClass("tenant_context_error", 500)("Tenant context error")
     }
-    
-    // Ensure cleanup even on error
-    middleware.cleanupTenantContext(c)
-    c.Abort()
 }
 ```
 
@@ -890,22 +857,23 @@ func (middleware *TenantMiddleware) verifyTenantIsolation(ctx context.Context) e
 ### 2. **Context Tampering Prevention**
 ```go
 // Prevent context tampering through request manipulation
-func (middleware *TenantMiddleware) validateContextIntegrity(c *gin.Context) error {
+func (middleware *TenantMiddleware) validateContextIntegrity(ctx context.Context) error {
     // Check for conflicting tenant identifiers
-    subdomainTenant := extractSubdomain(c.Request.Host)
-    headerTenant := c.GetHeader("X-Tenant-ID")
-    
+    host := ctx.Value(goa.ContextKeyHost).(string)
+    subdomainTenant := extractSubdomain(host)
+    headerTenant := ctx.Value(middleware.TenantIDKey).(string)
+
     if subdomainTenant != "" && headerTenant != "" && subdomainTenant != headerTenant {
         return errors.New("conflicting tenant identifiers detected")
     }
-    
+
     // Validate JWT claims match extracted tenant
-    if claims := getJWTClaims(c); claims != nil {
-        if claims.TenantID != subdomainTenant {
+    if claims := getJWTClaims(ctx); claims != nil {
+        if claims.TenantID.String() != headerTenant {
             return errors.New("JWT tenant claim does not match request context")
         }
     }
-    
+
     return nil
 }
 ```
@@ -1008,14 +976,20 @@ func TestWithMultipleTenants(t *testing.T, testFn func(t *testing.T, tenantID uu
 
 ### 2. **Local Development Configuration**
 ```go
-// Development-friendly tenant context for local testing
-func (middleware *TenantMiddleware) developmentMode(c *gin.Context) {
+// Development-friendly tenant context for local testing with GOA
+func (middleware *TenantMiddleware) developmentMode(ctx context.Context) context.Context {
     if !middleware.config.IsDevelopment() {
-        return
+        return ctx
+    }
+    
+    // Get host from GOA context
+    host, ok := ctx.Value(goa.ContextKeyHost).(string)
+    if !ok {
+        return ctx
     }
     
     // Allow default tenant for localhost
-    if c.Request.Host == "localhost" || strings.Contains(c.Request.Host, "127.0.0.1") {
+    if host == "localhost" || strings.Contains(host, "127.0.0.1") {
         defaultTenant := &Tenant{
             ID:     uuid.MustParse("00000000-0000-0000-0000-000000000001"),
             Name:   "Development Tenant",
@@ -1023,11 +997,13 @@ func (middleware *TenantMiddleware) developmentMode(c *gin.Context) {
             Status: "active",
         }
         
-        middleware.injectTenantContext(c, defaultTenant)
-        return
+        // Inject tenant context into GOA context
+        ctx = middleware.injectTenantContext(ctx, defaultTenant)
+        return ctx
     }
     
     // Continue with normal flow for other hosts
+    return ctx
 }
 ```
 

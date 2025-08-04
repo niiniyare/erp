@@ -34,7 +34,7 @@ func NewRouter(
 
 	// Initialize handlers
 	tenantHandler := NewTenantHandler(tenantService)
-	entityHandler := NewEntityHandler(entityService, tracing, metrics)
+	
 	userHandler := NewUserHandler(userService, tracing, metrics)
 	accessRequestHandler := NewAccessRequestHandler(accessRequestService, conditionalAccessService, analyticsService, tracing, metrics)
 	healthHandler := NewHealthHandler()
@@ -61,22 +61,7 @@ func NewRouter(
 			tenants.GET("/subdomain/:subdomain", tenantHandler.GetTenantBySubdomain)
 		}
 
-		// Entity routes
-		entities := v1.Group("/entities")
-		{
-			entities.POST("/", entityHandler.CreateEntity)
-			entities.GET("/", entityHandler.ListEntities)
-			entities.GET("/tree", entityHandler.GetEntityTree)
-			entities.POST("/sequence/next", entityHandler.GetNextSequence)
-			entities.POST("/sequence/reset", entityHandler.ResetSequence)
-			entities.GET("/:id", entityHandler.GetEntity)
-			entities.PUT("/:id", entityHandler.UpdateEntity)
-			entities.DELETE("/:id", entityHandler.DeleteEntity)
-			entities.POST("/:id/restore", entityHandler.RestoreEntity)
-			entities.GET("/:id/children", entityHandler.GetEntityChildren)
-			entities.GET("/:id/ancestors", entityHandler.GetEntityAncestors)
-			entities.GET("/:id/hierarchy", entityHandler.GetEntityWithHierarchy)
-		}
+		
 
 		// Person Management routes (temporarily disabled - implementation pending)
 		// persons := v1.Group("/persons")

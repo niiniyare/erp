@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/gen/organization"
+	"github.com/niiniyare/erp/internal/api/gen/organization"
 	"github.com/niiniyare/erp/internal/core/entity"
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"

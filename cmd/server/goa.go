@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"os"
 	"reflect"
 	"strings"
 
@@ -19,18 +20,22 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 
 	// GOA generated packages
-	auth "github.com/niiniyare/erp/gen/auth"
-	authsvr "github.com/niiniyare/erp/gen/http/auth/server"
-	openapisvr "github.com/niiniyare/erp/gen/http/openapi/server"
-	organizationsvr "github.com/niiniyare/erp/gen/http/organization/server"
-	tenantsvr "github.com/niiniyare/erp/gen/http/tenant/server"
-	usersvr "github.com/niiniyare/erp/gen/http/user/server"
-	openapi "github.com/niiniyare/erp/gen/openapi"
-	organization "github.com/niiniyare/erp/gen/organization"
-	goaTenant "github.com/niiniyare/erp/gen/tenant"
-	goaUser "github.com/niiniyare/erp/gen/user"
-	abacGen "github.com/niiniyare/erp/internal/gen/gen/abac"
-	abacsvr "github.com/niiniyare/erp/internal/gen/gen/http/abac/server"
+	accessrequest "github.com/niiniyare/erp/internal/api/gen/access_request"
+	accessrequestsvr "github.com/niiniyare/erp/internal/api/gen/http/access_request/server"
+	auth "github.com/niiniyare/erp/internal/api/gen/auth"
+	authsvr "github.com/niiniyare/erp/internal/api/gen/http/auth/server"
+	healthsvr "github.com/niiniyare/erp/internal/api/gen/http/health/server"
+	openapisvr "github.com/niiniyare/erp/internal/api/gen/http/openapi/server"
+	organizationsvr "github.com/niiniyare/erp/internal/api/gen/http/organization/server"
+	tenantsvr "github.com/niiniyare/erp/internal/api/gen/http/tenant/server"
+	usersvr "github.com/niiniyare/erp/internal/api/gen/http/user/server"
+	health "github.com/niiniyare/erp/internal/api/gen/health"
+	openapi "github.com/niiniyare/erp/internal/api/gen/openapi"
+	organization "github.com/niiniyare/erp/internal/api/gen/organization"
+	goaTenant "github.com/niiniyare/erp/internal/api/gen/tenant"
+	goaUser "github.com/niiniyare/erp/internal/api/gen/user"
+	abacGen "github.com/niiniyare/erp/internal/api/gen/abac"
+	abacsvr "github.com/niiniyare/erp/internal/api/gen/http/abac/server"
 	"goa.design/clue/debug"
 	clueLog "goa.design/clue/log"
 	goahttp "goa.design/goa/v3/http"
@@ -45,7 +50,9 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 	// Initialize GOA services
 	var (
 		abacSvc         abacGen.Service
+		accessRequestSvc accessrequest.Service
 		authSvc         auth.Service
+		healthSvc       health.Service
 		organizationSvc organization.Service
 		tenantSvc       goaTenant.Service
 		userSvc         goaUser.Service
@@ -53,7 +60,9 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 	)
 
 	abacSvc = handlers.NewABACGoaHandler(services.ABACService, metricsService, tracingService, logger.WithFields(logger.Fields{}))
+	accessRequestSvc = handlers.NewAccessRequestGoaHandler(services.AccessRequestService, services.ConditionalAccessService, services.AnalyticsService, tracingService, metricsService)
 	authSvc = handlers.NewAuthHandler(services.IdentityService, tracingService, metricsService)
+	healthSvc = handlers.NewHealthGoaHandler(tracingService, metricsService)
 	organizationSvc = handlers.NewOrganizationGoaHandler(services.EntityService, tracingService, metricsService)
 	tenantSvc = handlers.NewTenantGoaHandler(services.TenantService, tracingService, metricsService)
 	userSvc = handlers.NewUserGoaHandler(services.IdentityService, services.AccessRequestService, services.ConditionalAccessService, services.AnalyticsService, tracingService, metricsService)
@@ -62,7 +71,9 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 	// Create GOA endpoints
 	var (
 		abacEndpoints         *abacGen.Endpoints
+		accessRequestEndpoints *accessrequest.Endpoints
 		authEndpoints         *auth.Endpoints
+		healthEndpoints       *health.Endpoints
 		organizationEndpoints *organization.Endpoints
 		tenantEndpoints       *goaTenant.Endpoints
 		userEndpoints         *goaUser.Endpoints
@@ -73,9 +84,17 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 	abacEndpoints.Use(debug.LogPayloads())
 	abacEndpoints.Use(clueLog.Endpoint)
 
+	accessRequestEndpoints = accessrequest.NewEndpoints(accessRequestSvc)
+	accessRequestEndpoints.Use(debug.LogPayloads())
+	accessRequestEndpoints.Use(clueLog.Endpoint)
+
 	authEndpoints = auth.NewEndpoints(authSvc)
 	authEndpoints.Use(debug.LogPayloads())
 	authEndpoints.Use(clueLog.Endpoint)
+
+	healthEndpoints = health.NewEndpoints(healthSvc)
+	healthEndpoints.Use(debug.LogPayloads())
+	healthEndpoints.Use(clueLog.Endpoint)
 
 	organizationEndpoints = organization.NewEndpoints(organizationSvc)
 	organizationEndpoints.Use(debug.LogPayloads())
@@ -93,23 +112,28 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 	openapiEndpoints.Use(debug.LogPayloads())
 	openapiEndpoints.Use(clueLog.Endpoint)
 
-	// Create GOA HTTP mux
+	// Create GOA HTTP mux with production-ready configuration
 	var (
 		dec = goahttp.RequestDecoder
 		enc = goahttp.ResponseEncoder
 	)
 
 	mux := goahttp.NewMuxer()
-	debug.MountPprofHandlers(debug.Adapt(mux))
-	debug.MountDebugLogEnabler(debug.Adapt(mux))
-
-	// Create GOA HTTP servers
-	eh := func(ctx context.Context, w http.ResponseWriter, err error) {
-		logger.Error("HTTP Error", logger.Fields{"error": err.Error()})
+	
+	// Add debug handlers only in development
+	if isDevelopmentMode() {
+		debug.MountPprofHandlers(debug.Adapt(mux))
+		debug.MountDebugLogEnabler(debug.Adapt(mux))
+		logger.Info("Debug handlers enabled", logger.Fields{"mode": "development"})
 	}
 
+	// Create production-ready error handler
+	eh := createProductionErrorHandler()
+
 	abacServer := abacsvr.New(abacEndpoints, mux, dec, enc, eh, nil)
+	accessRequestServer := accessrequestsvr.New(accessRequestEndpoints, mux, dec, enc, eh, nil)
 	authServer := authsvr.New(authEndpoints, mux, dec, enc, eh, nil)
+	healthServer := healthsvr.New(healthEndpoints, mux, dec, enc, eh, nil)
 	organizationServer := organizationsvr.New(organizationEndpoints, mux, dec, enc, eh, nil)
 	tenantServer := tenantsvr.New(tenantEndpoints, mux, dec, enc, eh, nil)
 	userServer := usersvr.New(userEndpoints, mux, dec, enc, eh, nil)
@@ -117,7 +141,9 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 
 	// Mount GOA HTTP servers
 	abacsvr.Mount(mux, abacServer)
+	accessrequestsvr.Mount(mux, accessRequestServer)
 	authsvr.Mount(mux, authServer)
+	healthsvr.Mount(mux, healthServer)
 	organizationsvr.Mount(mux, organizationServer)
 	tenantsvr.Mount(mux, tenantServer)
 	usersvr.Mount(mux, userServer)
@@ -140,6 +166,7 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 
 	// Log mounted endpoints
 	logMountedEndpoints(abacServer.Mounts, "ABAC")
+	logMountedEndpoints(accessRequestServer.Mounts, "AccessRequest")
 	logMountedEndpoints(authServer.Mounts, "Auth")
 	logMountedEndpoints(organizationServer.Mounts, "Organization")
 	logMountedEndpoints(tenantServer.Mounts, "Tenant")
@@ -226,15 +253,76 @@ type CombinedHandler struct {
 
 // ServeHTTP implements the http.Handler interface
 func (c *CombinedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Route specific paths to Gin handler
+	// Route specific paths to Gin handler for migration testing
 	if strings.HasPrefix(r.URL.Path, "/swagger-ui/") ||
-		strings.HasPrefix(r.URL.Path, "/health") ||
-		strings.HasPrefix(r.URL.Path, "/ready") ||
 		strings.HasPrefix(r.URL.Path, "/api/v1/") {
 		c.ginHandler.ServeHTTP(w, r)
 		return
 	}
 
-	// Everything else goes to GOA handler
+	// GOA handles all other routes including /health, /ready, /openapi.json
+	// This allows testing GOA endpoints directly at their native paths
 	c.goaHandler.ServeHTTP(w, r)
+}
+
+// isDevelopmentMode checks if we're running in development mode
+func isDevelopmentMode() bool {
+	env := strings.ToLower(os.Getenv("ENVIRONMENT"))
+	if env == "" {
+		env = strings.ToLower(os.Getenv("GO_ENV"))
+	}
+	return env == "development" || env == "dev" || env == ""
+}
+
+// createProductionErrorHandler creates an error handler optimized for production
+func createProductionErrorHandler() func(context.Context, http.ResponseWriter, error) {
+	return func(ctx context.Context, w http.ResponseWriter, err error) {
+		// Extract request information for better error tracking
+		requestID := ctx.Value("request-id")
+		userAgent := ctx.Value("user-agent")
+		path := ctx.Value("path")
+
+		// Log error with context
+		fields := logger.Fields{
+			"error":      err.Error(),
+			"request_id": requestID,
+			"user_agent": userAgent,
+			"path":       path,
+		}
+
+		// Determine error severity and log level
+		statusCode := getErrorStatusCode(err)
+		if statusCode >= 500 {
+			logger.Error("Server error occurred", fields)
+		} else if statusCode >= 400 {
+			logger.Warn("Client error occurred", fields)
+		} else {
+			logger.Info("Request processed with error", fields)
+		}
+
+		// Don't expose internal errors in production
+		if !isDevelopmentMode() && statusCode >= 500 {
+			// Replace internal server errors with generic message
+			http.Error(w, `{"error":"Internal server error","code":"INTERNAL_ERROR"}`, statusCode)
+			return
+		}
+	}
+}
+
+// getErrorStatusCode extracts HTTP status code from error
+func getErrorStatusCode(err error) int {
+	// This is a simplified version - in production you'd have more sophisticated error type checking
+	if strings.Contains(strings.ToLower(err.Error()), "not found") {
+		return 404
+	}
+	if strings.Contains(strings.ToLower(err.Error()), "unauthorized") {
+		return 401
+	}
+	if strings.Contains(strings.ToLower(err.Error()), "forbidden") {
+		return 403
+	}
+	if strings.Contains(strings.ToLower(err.Error()), "bad request") {
+		return 400
+	}
+	return 500 // Default to internal server error
 }

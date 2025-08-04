@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 
-	"github.com/niiniyare/erp/gen/auth"
+	"github.com/niiniyare/erp/internal/api/gen/auth"
 	"github.com/niiniyare/erp/internal/core/identity"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"

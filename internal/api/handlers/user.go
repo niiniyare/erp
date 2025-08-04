@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/gen/user"
+	"github.com/niiniyare/erp/internal/api/gen/user"
 	"github.com/niiniyare/erp/internal/core/access/conditional"
 	"github.com/niiniyare/erp/internal/core/access/request"
 	"github.com/niiniyare/erp/internal/core/analytics"
@@ -1790,6 +1790,9 @@ func (h *UserGoaHandler) Create(ctx context.Context, p *user.CreateUserPayload) 
 
 	return userResult, "default", nil
 }
+func (h *UserGoaHandler) AuthorizeAction(context.Context, *user.AuthorizeActionPayload) (res *user.AuthorizationResult, err error) {
+	return nil, errors.New("NOT implemented")
+}
 
 // Get retrieves a user by ID following the data flow pattern
 func (h *UserGoaHandler) Get(ctx context.Context, p *user.GetPayload) (*user.User, string, error) {
@@ -1986,4 +1989,261 @@ func (h *UserGoaHandler) RemoveRole(ctx context.Context, p *user.RemoveRolePaylo
 	// TODO: Integrate with existing role removal logic using h.userService.RevokeUserRole
 	h.metrics.IncrementCounter("user_remove_role_total", metrics.Fields{})
 	return nil
+}
+
+// ABAC Methods Implementation
+
+// GetAttributes gets user attributes for ABAC evaluation
+func (h *UserGoaHandler) GetAttributes(ctx context.Context, p *user.GetAttributesPayload) (*user.UserAttributesResult, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "user.get_attributes",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.ID),
+		))
+	defer span.End()
+
+	timer := h.metrics.Timer("user_get_attributes_duration", metrics.Fields{
+		"operation": "get_attributes",
+	})
+	defer timer.Stop()
+
+	// TODO: Implement ABAC attribute retrieval
+	result := &user.UserAttributesResult{
+		UserID:      p.ID,
+		UserType:    "standard",
+		RetrievedAt: "2024-01-01T00:00:00Z",
+		Attributes: map[string]interface{}{
+			"department": "engineering",
+			"role":       "developer",
+			"level":      "senior",
+		},
+		DerivedAttributes: map[string]interface{}{
+			"access_level": "high",
+		},
+	}
+
+	h.metrics.IncrementCounter("user_get_attributes_total", metrics.Fields{})
+	return result, nil
+}
+
+// SetAttributes sets/updates user attributes for ABAC
+func (h *UserGoaHandler) SetAttributes(ctx context.Context, p *user.SetUserAttributesPayload) (*user.SetUserAttributesResult, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "user.set_attributes",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.ID),
+		))
+	defer span.End()
+
+	timer := h.metrics.Timer("user_set_attributes_duration", metrics.Fields{
+		"operation": "set_attributes",
+	})
+	defer timer.Stop()
+
+	// TODO: Implement ABAC attribute setting
+	result := &user.SetUserAttributesResult{
+		UserID:      p.ID,
+		Operation:   "set_attributes",
+		CompletedAt: "2024-01-01T00:00:00Z",
+	}
+
+	h.metrics.IncrementCounter("user_set_attributes_total", metrics.Fields{})
+	return result, nil
+}
+
+// BulkUpdateAttributes bulk updates user attributes for ABAC
+func (h *UserGoaHandler) BulkUpdateAttributes(ctx context.Context, p *user.BulkUpdateUserAttributesPayload) (*user.BulkUpdateUserAttributesResult, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "user.bulk_update_attributes",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.Int("users.count", len(p.Updates)),
+		))
+	defer span.End()
+
+	timer := h.metrics.Timer("user_bulk_update_attributes_duration", metrics.Fields{
+		"operation": "bulk_update_attributes",
+	})
+	defer timer.Stop()
+
+	// TODO: Implement bulk ABAC attribute updates
+	result := &user.BulkUpdateUserAttributesResult{
+		BulkUpdateID: "bulk-123",
+		StartedAt:    "2024-01-01T00:00:00Z",
+		CompletedAt:  "2024-01-01T00:00:01Z",
+	}
+
+	h.metrics.IncrementCounter("user_bulk_update_attributes_total", metrics.Fields{
+		"count": len(p.Updates),
+	})
+	return result, nil
+}
+
+// CheckPermission checks if user has permission using ABAC context
+func (h *UserGoaHandler) CheckPermission(ctx context.Context, p *user.CheckPermissionPayload) (*user.PermissionCheckResult, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "user.check_permission",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.UserID),
+			attribute.String("action", p.Action),
+		))
+	defer span.End()
+
+	timer := h.metrics.Timer("user_check_permission_duration", metrics.Fields{
+		"operation": "check_permission",
+	})
+	defer timer.Stop()
+
+	// TODO: Implement ABAC permission checking
+	result := &user.PermissionCheckResult{
+		Allowed:          true,
+		Decision:         "permit",
+		EvaluationTimeMs: 5,
+	}
+
+	h.metrics.IncrementCounter("user_check_permission_total", metrics.Fields{
+		"action": p.Action,
+	})
+	return result, nil
+}
+
+// GetSessionAttributes gets user session attributes for ABAC
+func (h *UserGoaHandler) GetSessionAttributes(ctx context.Context, p *user.GetSessionAttributesPayload) (*user.SessionAttributesResult, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "user.get_session_attributes",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.UserID),
+			attribute.String("session.id", p.SessionID),
+		))
+	defer span.End()
+
+	timer := h.metrics.Timer("user_get_session_attributes_duration", metrics.Fields{
+		"operation": "get_session_attributes",
+	})
+	defer timer.Stop()
+
+	// TODO: Implement session attribute retrieval
+	result := &user.SessionAttributesResult{
+		SessionID: p.SessionID,
+		UserID:    p.UserID,
+		Status:    "active",
+		CreatedAt: "2024-01-01T00:00:00Z",
+		Attributes: map[string]interface{}{
+			"ip_address":  "192.168.1.1",
+			"location":    "office",
+			"device_type": "laptop",
+		},
+	}
+
+	h.metrics.IncrementCounter("user_get_session_attributes_total", metrics.Fields{})
+	return result, nil
+}
+
+// SetSessionContext sets session context for user
+func (h *UserGoaHandler) SetSessionContext(ctx context.Context, p *user.SetSessionContextPayload) (*user.SetSessionContextResult, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "user.set_session_context",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.UserID),
+			attribute.String("session.id", p.SessionID),
+		))
+	defer span.End()
+
+	timer := h.metrics.Timer("user_set_session_context_duration", metrics.Fields{
+		"operation": "set_session_context",
+	})
+	defer timer.Stop()
+
+	// TODO: Implement session context setting
+	result := &user.SetSessionContextResult{
+		SessionID:      p.SessionID,
+		Operation:      "set_session_context",
+		CompletedAt:    "2024-01-01T00:00:00Z",
+		ContextUpdated: true,
+	}
+
+	h.metrics.IncrementCounter("user_set_session_context_total", metrics.Fields{})
+	return result, nil
+}
+
+// GetUserContext gets comprehensive user context for ABAC
+func (h *UserGoaHandler) GetUserContext(ctx context.Context, p *user.GetUserContextPayload) (*user.UserContextResult, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "user.get_user_context",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.ID),
+		))
+	defer span.End()
+
+	timer := h.metrics.Timer("user_get_user_context_duration", metrics.Fields{
+		"operation": "get_user_context",
+	})
+	defer timer.Stop()
+
+	// TODO: Implement comprehensive user context retrieval
+	result := &user.UserContextResult{
+		UserID:      p.ID,
+		RetrievedAt: "2024-01-01T00:00:00Z",
+		UserAttributes: map[string]interface{}{
+			"department": "engineering",
+			"role":       "developer",
+		},
+		DerivedAttributes: map[string]interface{}{
+			"access_level": "high",
+		},
+	}
+
+	h.metrics.IncrementCounter("user_get_user_context_total", metrics.Fields{})
+	return result, nil
+}
+
+// ValidateAttributes validates user attributes for ABAC compliance
+func (h *UserGoaHandler) ValidateAttributes(ctx context.Context, p *user.ValidateAttributesPayload) (*user.AttributeValidationResult, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "user.validate_attributes",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.ID),
+		))
+	defer span.End()
+
+	timer := h.metrics.Timer("user_validate_attributes_duration", metrics.Fields{
+		"operation": "validate_attributes",
+	})
+	defer timer.Stop()
+
+	// TODO: Implement attribute validation
+	result := &user.AttributeValidationResult{
+		UserID:        p.ID,
+		ValidationID:  "valid-123",
+		ValidatedAt:   "2024-01-01T00:00:00Z",
+		OverallStatus: "valid",
+	}
+
+	h.metrics.IncrementCounter("user_validate_attributes_total", metrics.Fields{})
+	return result, nil
+}
+
+// RefreshAttributes refreshes user attributes from authoritative sources
+func (h *UserGoaHandler) RefreshAttributes(ctx context.Context, p *user.RefreshAttributesPayload) (*user.RefreshAttributesResult, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "user.refresh_attributes",
+		tracing.WithSpanKind(tracing.SpanKindServer),
+		tracing.WithAttributes(
+			attribute.String("user.id", p.ID),
+		))
+	defer span.End()
+
+	timer := h.metrics.Timer("user_refresh_attributes_duration", metrics.Fields{
+		"operation": "refresh_attributes",
+	})
+	defer timer.Stop()
+
+	// TODO: Implement attribute refresh from external sources
+	result := &user.RefreshAttributesResult{
+		UserID:      p.ID,
+		RefreshID:   "refresh-123",
+		StartedAt:   "2024-01-01T00:00:00Z",
+		CompletedAt: "2024-01-01T00:00:01Z",
+	}
+
+	h.metrics.IncrementCounter("user_refresh_attributes_total", metrics.Fields{})
+	return result, nil
 }

@@ -39,7 +39,7 @@ All database tests use the `database` build tag to separate them from unit tests
 
 ### 2. PostgreSQLSessionTestSuite
 
-**Purpose**: Tests PostgreSQL's `set_config` and `current_setting` functions directly
+**Purpose**: Tests PostgreSQL's `set_tenant_context` and `current_tenant_id` functions directly
 
 **Key Test Cases**:
 - `TestPostgreSQLSetConfig` - Testing `set_config` with various data types
@@ -69,13 +69,10 @@ All database tests use the `database` build tag to separate them from unit tests
 ### SQLC Generated Functions
 ```sql
 -- Set tenant context in session
-SELECT set_config('app.current_tenant_id', $1, false);
-
+<!-- SELECT set_config('app.current_tenant_id', $1, false); -->
+SELECT set_tenant_context($1);
 -- Get current tenant ID  
-SELECT CASE 
-    WHEN current_setting('app.current_tenant_id', true) = '' THEN NULL
-    ELSE current_setting('app.current_tenant_id')::uuid
-END;
+SELECT current_tenant_id();
 
 -- Reset tenant context
 SELECT set_config('app.current_tenant_id', '', false);
@@ -101,7 +98,8 @@ type Repository interface {
 1. PostgreSQL database running
 2. `TEST_DATABASE_URL` environment variable set:
    ```bash
-   export TEST_DATABASE_URL="postgres://user:password@localhost:5432/test_db?sslmode=disable"
+   export TEST_DATABASE_URL="postgres://admin:admin@localhost:5432/ledger?sslmode=disable"
+
    ```
 
 ### Running Tests
@@ -176,10 +174,10 @@ CREATE TABLE tenants (
 ```
 
 ### Session Context Functions
-The system relies on PostgreSQL's `set_config()` and `current_setting()` functions:
+The system relies on PostgreSQL's `set_tenant_context()` and `current_tenant_id()` functions:
 
-- **`set_config(name, value, is_local)`** - Sets session variable
-- **`current_setting(name, missing_ok)`** - Gets session variable
+- **`set_tenant_context(tenant_id UUID) RETURNS VOID `** - Sets session variable
+- **`current_tenant_id() RETURNS UUID `** - Gets session variable
 - **Session key**: `app.current_tenant_id`
 
 ## Integration with Repository Pattern
@@ -221,7 +219,7 @@ func (s *service) SetTenant(ctx context.Context, tenantID uuid.UUID) error {
 - **Performance Tests**: Context operations average < 1ms per operation
 
 ### Key Validations ✅
-1. **Session Variables Work**: PostgreSQL `set_config`/`current_setting` functions work correctly
+1. **Session Variables Work**: PostgreSQL `set_tenant_context`/`current_tenant_id` functions work correctly
 2. **Context Persistence**: Session context persists across multiple queries in same connection
 3. **Context Isolation**: Different connections maintain separate tenant contexts
 4. **SQLC Integration**: Generated queries compile and execute correctly

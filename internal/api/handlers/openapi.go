@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/niiniyare/erp/gen/openapi"
+	"github.com/niiniyare/erp/internal/api/gen/openapi"
 	"github.com/niiniyare/erp/internal/api/swagger"
 	"github.com/niiniyare/erp/internal/shared/logger"
 )

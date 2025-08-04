@@ -305,7 +305,7 @@ SET
 RETURNING *;
 
 -- name: DeleteTenantConfiguration :exec
-DELETE FROM tenant_configurations;
+-- DELETE FROM tenant_configurations;
 
 -- =====================================================
 -- TENANT USAGE STATISTICS QUERIES (RLS-AWARE)
@@ -347,7 +347,9 @@ RETURNING *;
 
 -- name: DeleteTenantUsageStats :exec
 DELETE FROM tenant_usage_stats
-WHERE period_start = $1;
+
+WHERE period_start = $1,
+  AND tenant_id = current_tenant_id();
 
 -- name: GetLatestTenantUsageStats :one
 SELECT * FROM tenant_usage_stats

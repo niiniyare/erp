@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	"goa.design/goa/v3/security"
 
+	abacGen "github.com/niiniyare/erp/internal/api/gen/abac"
 	abac "github.com/niiniyare/erp/internal/core/abac"
-	abacGen "github.com/niiniyare/erp/internal/gen/gen/abac"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
