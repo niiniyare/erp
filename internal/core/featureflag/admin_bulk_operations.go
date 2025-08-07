@@ -82,11 +82,11 @@ func (s *adminServiceImpl) BulkEnableFlags(ctx context.Context, request *BulkEna
 	s.auditBulkOperation(ctx, "bulk_enable_flags", request.Reason, result)
 
 	s.logger.Info("Bulk enable flags completed", map[string]interface{}{
-		"total":         result.TotalRequested,
-		"successful":    result.Successful,
-		"failed":        result.Failed,
+		"total":          result.TotalRequested,
+		"successful":     result.Successful,
+		"failed":         result.Failed,
 		"execution_time": result.ExecutionTime,
-		"reason":        request.Reason,
+		"reason":         request.Reason,
 	})
 
 	return result, nil
@@ -418,15 +418,15 @@ func (s *adminServiceImpl) processBulkRolloutUpdate(ctx context.Context, update 
 // auditBulkOperation logs bulk operations for compliance and monitoring
 func (s *adminServiceImpl) auditBulkOperation(ctx context.Context, operation, reason string, result *BulkOperationResult) {
 	contextData, _ := json.Marshal(map[string]interface{}{
-		"operation":          operation,
-		"reason":             reason,
-		"total_requested":    result.TotalRequested,
-		"successful":         result.Successful,
-		"failed":             result.Failed,
-		"execution_time_ms":  result.ExecutionTime.Milliseconds(),
-		"success_rate":       result.Summary.SuccessRate,
-		"error_categories":   result.Summary.ErrorCategories,
-		"executed_at":        result.ExecutedAt,
+		"operation":         operation,
+		"reason":            reason,
+		"total_requested":   result.TotalRequested,
+		"successful":        result.Successful,
+		"failed":            result.Failed,
+		"execution_time_ms": result.ExecutionTime.Milliseconds(),
+		"success_rate":      result.Summary.SuccessRate,
+		"error_categories":  result.Summary.ErrorCategories,
+		"executed_at":       result.ExecutedAt,
 	})
 
 	severity := AuditSeverityWarn
@@ -451,7 +451,7 @@ func (s *adminServiceImpl) auditBulkOperation(ctx context.Context, operation, re
 		labels := metrics.Fields{
 			"operation": operation,
 		}
-		
+
 		s.metrics.IncrementCounter("admin_bulk_operations_total", labels)
 		s.metrics.ObserveHistogram("admin_bulk_operation_duration", float64(result.ExecutionTime.Milliseconds()), labels)
 		s.metrics.SetGauge("admin_bulk_operation_success_rate", result.Summary.SuccessRate, labels)

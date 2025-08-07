@@ -678,7 +678,7 @@ func (h *abacGoaHandler) InvalidateCache(ctx context.Context, p *abacGen.Invalid
 func (h *abacGoaHandler) Health(ctx context.Context, p *abacGen.HealthPayload) (res *abacGen.HealthResult, err error) {
 	// Get cache statistics to assess health
 	_, err = h.coreSvc.GetCacheStatistics(ctx)
-	components := make(map[string]*abacGen.ComponentHealth)
+	components := make(map[string]*abacGen.ABACComponentHealth)
 
 	status := "healthy"
 	cacheStatus := "healthy"
@@ -690,9 +690,9 @@ func (h *abacGoaHandler) Health(ctx context.Context, p *abacGen.HealthPayload) (
 		cacheStatus = "unhealthy"
 	}
 
-	components["cache"] = &abacGen.ComponentHealth{Status: &cacheStatus}
-	components["abac_service"] = &abacGen.ComponentHealth{Status: &abacServiceStatus}
-	components["policy_engine"] = &abacGen.ComponentHealth{Status: &policyEngineStatus}
+	components["cache"] = &abacGen.ABACComponentHealth{Status: &cacheStatus}
+	components["abac_service"] = &abacGen.ABACComponentHealth{Status: &abacServiceStatus}
+	components["policy_engine"] = &abacGen.ABACComponentHealth{Status: &policyEngineStatus}
 
 	timestamp := time.Now().Format(time.RFC3339)
 	version := "1.0.0"

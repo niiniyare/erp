@@ -122,11 +122,11 @@ func (s *adminServiceImpl) ListFlagTemplates(ctx context.Context, request *ListT
 	}
 
 	s.logger.Debug("Templates listed", map[string]interface{}{
-		"total":         total,
-		"returned":      len(filteredTemplates),
-		"page":          request.Page,
+		"total":           total,
+		"returned":        len(filteredTemplates),
+		"page":            request.Page,
 		"category_filter": request.Category,
-		"type_filter":   request.FlagType,
+		"type_filter":     request.FlagType,
 	})
 
 	return response, nil
@@ -179,7 +179,7 @@ func (s *adminServiceImpl) ApplyTemplate(ctx context.Context, request *ApplyTemp
 			metadata[k] = v
 		}
 	}
-	
+
 	// Add template source info
 	metadata["template_id"] = template.ID.String()
 	metadata["template_name"] = template.Name
@@ -227,9 +227,9 @@ func (s *adminServiceImpl) ApplyTemplate(ctx context.Context, request *ApplyTemp
 
 	// Audit template application
 	s.auditTemplateOperation(ctx, "apply_template", template, map[string]interface{}{
-		"flag_id":       flag.ID.String(),
-		"flag_name":     flag.Name,
-		"overrides":     request.Overrides,
+		"flag_id":   flag.ID.String(),
+		"flag_name": flag.Name,
+		"overrides": request.Overrides,
 	})
 
 	return flag, nil
@@ -341,9 +341,9 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 			FlagType:     FlagTypeBoolean,
 			DefaultValue: false,
 			Metadata: map[string]interface{}{
-				"use_case":    "feature_enablement",
-				"complexity":  "low",
-				"risk_level":  "low",
+				"use_case":   "feature_enablement",
+				"complexity": "low",
+				"risk_level": "low",
 			},
 		},
 		{
@@ -361,9 +361,9 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 				},
 			},
 			Metadata: map[string]interface{}{
-				"use_case":    "ab_testing",
-				"complexity":  "medium",
-				"risk_level":  "medium",
+				"use_case":   "ab_testing",
+				"complexity": "medium",
+				"risk_level": "medium",
 			},
 		},
 		{
@@ -383,9 +383,9 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 				},
 			},
 			Metadata: map[string]interface{}{
-				"use_case":    "safe_rollout",
-				"complexity":  "high",
-				"risk_level":  "medium",
+				"use_case":   "safe_rollout",
+				"complexity": "high",
+				"risk_level": "medium",
 			},
 		},
 		{
@@ -395,9 +395,9 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 			FlagType:     FlagTypeString,
 			DefaultValue: "default_config",
 			Metadata: map[string]interface{}{
-				"use_case":    "configuration",
-				"complexity":  "low",
-				"risk_level":  "low",
+				"use_case":   "configuration",
+				"complexity": "low",
+				"risk_level": "low",
 			},
 		},
 		{
@@ -407,9 +407,9 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 			FlagType:     FlagTypeNumber,
 			DefaultValue: 10.0,
 			Metadata: map[string]interface{}{
-				"use_case":    "parameter_tuning",
-				"complexity":  "low",
-				"risk_level":  "low",
+				"use_case":   "parameter_tuning",
+				"complexity": "low",
+				"risk_level": "low",
 			},
 		},
 	}
@@ -454,7 +454,7 @@ func (s *adminServiceImpl) GetTemplatesByCategory(ctx context.Context, category 
 // GetRecommendedTemplate suggests a template based on use case
 func (s *adminServiceImpl) GetRecommendedTemplate(ctx context.Context, useCase string) (*FlagTemplate, error) {
 	var recommendedCategory string
-	
+
 	switch useCase {
 	case "feature_release", "feature_enablement":
 		recommendedCategory = "feature_toggle"

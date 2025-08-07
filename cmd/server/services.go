@@ -27,12 +27,12 @@ import (
 
 type Services struct {
 	// Core services
-	TenantService      tenant.Service
-	EntityService      entity.Service
-	IdentityService    identity.Service
-	ABACService        abac.Service
-	AuditService       audit.Service
-	FeatureFlagService featureflag.SimpleService
+	TenantService           tenant.Service
+	EntityService           entity.Service
+	IdentityService         identity.Service
+	ABACService             abac.Service
+	AuditService            audit.Service
+	FeatureFlagService      featureflag.SimpleService
 	AdminFeatureFlagService featureflag.AdminService
 
 	// Access services
@@ -76,7 +76,7 @@ func InitializeServices(store db.Store, redisClient cache.Service, metricsServic
 
 	// Initialize domain services
 	auditService := audit.NewService(auditRepo)
-	
+
 	// Initialize feature flag service with audit logging
 	featureFlagRepo := featureflag.NewSimpleRepository(store)
 	baseFeatureFlagService := featureflag.NewSimpleService(featureFlagRepo, tenantService, store, auditService)

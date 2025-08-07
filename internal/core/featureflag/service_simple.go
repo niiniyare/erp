@@ -240,10 +240,10 @@ func (s *simpleServiceImpl) EvaluateFlag(ctx context.Context, name string, evalC
 
 	// Simple evaluation logic
 	result := s.evaluateSimpleFlag(flag, evalCtx)
-	
+
 	// Audit the evaluation
 	s.auditFlagEvaluated(ctx, flag, evalCtx, result)
-	
+
 	return result, nil
 }
 

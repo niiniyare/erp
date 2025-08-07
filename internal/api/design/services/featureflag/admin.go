@@ -4,7 +4,7 @@ import (
 	. "goa.design/goa/v3/dsl"
 )
 
-// AdminFeatureFlagService provides administrative operations for feature flags  
+// AdminFeatureFlagService provides administrative operations for feature flags
 var _ = Service("admin-featureflag", func() {
 	Description("Administrative interface for feature flag management")
 
@@ -26,7 +26,7 @@ var _ = Service("admin-featureflag", func() {
 		})
 		Result(func() {
 			Attribute("total_requested", Int, "Total number of flags requested")
-			Attribute("successful", Int, "Number of successfully processed flags") 
+			Attribute("successful", Int, "Number of successfully processed flags")
 			Attribute("failed", Int, "Number of failed operations")
 			Attribute("executed_at", String, "Execution timestamp")
 			Required("total_requested", "successful", "failed", "executed_at")
@@ -42,7 +42,7 @@ var _ = Service("admin-featureflag", func() {
 		})
 	})
 
-	// Bulk disable flags  
+	// Bulk disable flags
 	Method("bulk_disable", func() {
 		Description("Disable multiple feature flags in bulk")
 		Payload(func() {
@@ -55,7 +55,7 @@ var _ = Service("admin-featureflag", func() {
 		Result(func() {
 			Attribute("total_requested", Int, "Total number of flags requested")
 			Attribute("successful", Int, "Number of successfully processed flags")
-			Attribute("failed", Int, "Number of failed operations") 
+			Attribute("failed", Int, "Number of failed operations")
 			Attribute("executed_at", String, "Execution timestamp")
 			Required("total_requested", "successful", "failed", "executed_at")
 		})
@@ -80,7 +80,7 @@ var _ = Service("admin-featureflag", func() {
 		})
 		Result(func() {
 			Attribute("status", String, "Overall system status")
-			Attribute("timestamp", String, "Health check timestamp") 
+			Attribute("timestamp", String, "Health check timestamp")
 			Attribute("database_status", String, "Database status")
 			Attribute("cache_status", String, "Cache status")
 			Attribute("overall_score", Int, "Overall health score (0-100)")

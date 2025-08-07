@@ -334,12 +334,12 @@ func (s *adminServiceImpl) GetCacheStats(ctx context.Context) (*CacheStatsResult
 	result := &CacheStatsResult{
 		GeneratedAt: time.Now(),
 		OverallStats: CacheOverallStats{
-			TotalKeys:       int64(stats.Sets), // Use Sets as approximation of keys
-			TotalMemoryMB:   0.0,              // Memory info not available in this stats structure
-			HitRate:         stats.HitRatio * 100,
-			MissRate:        (1 - stats.HitRatio) * 100,
-			EvictionRate:    0.0,              // Eviction info not available
-			AverageKeySize:  0.0,              // Size info not available
+			TotalKeys:      int64(stats.Sets), // Use Sets as approximation of keys
+			TotalMemoryMB:  0.0,               // Memory info not available in this stats structure
+			HitRate:        stats.HitRatio * 100,
+			MissRate:       (1 - stats.HitRatio) * 100,
+			EvictionRate:   0.0, // Eviction info not available
+			AverageKeySize: 0.0, // Size info not available
 		},
 		CacheTypeStats: map[string]CacheTypeStats{
 			"flags": {
@@ -487,13 +487,13 @@ func (s *adminServiceImpl) generateCacheRecommendations(stats CacheOverallStats)
 
 func (s *adminServiceImpl) auditEmergencyAction(ctx context.Context, action, reason string, result *EmergencyActionResult, errors []string) {
 	contextData, _ := json.Marshal(map[string]interface{}{
-		"action":         action,
-		"reason":         reason,
-		"affected_flags": result.AffectedFlags,
-		"rollback_token": result.RollbackToken,
+		"action":           action,
+		"reason":           reason,
+		"affected_flags":   result.AffectedFlags,
+		"rollback_token":   result.RollbackToken,
 		"estimated_impact": result.EstimatedImpact,
-		"executed_at":    result.ExecutedAt,
-		"errors":         errors,
+		"executed_at":      result.ExecutedAt,
+		"errors":           errors,
 	})
 
 	s.auditService.Record(ctx, audit.AuditEvent{
@@ -529,13 +529,13 @@ func (s *adminServiceImpl) auditRolloutStrategyAction(ctx context.Context, actio
 
 func (s *adminServiceImpl) auditCacheOperation(ctx context.Context, operation string, request interface{}, result *CacheOperationResult) {
 	contextData, _ := json.Marshal(map[string]interface{}{
-		"operation":        operation,
-		"request":          request,
-		"items_processed":  result.ItemsProcessed,
-		"execution_time":   result.ExecutionTime,
-		"success":          result.Success,
-		"details":          result.Details,
-		"executed_at":      result.ExecutedAt,
+		"operation":       operation,
+		"request":         request,
+		"items_processed": result.ItemsProcessed,
+		"execution_time":  result.ExecutionTime,
+		"success":         result.Success,
+		"details":         result.Details,
+		"executed_at":     result.ExecutedAt,
 	})
 
 	severity := AuditSeverityInfo

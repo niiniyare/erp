@@ -138,11 +138,11 @@ func (s *adminServiceImpl) GetUsageAnalytics(ctx context.Context, request *Usage
 
 func (s *adminServiceImpl) checkDatabaseHealth(ctx context.Context) ComponentHealth {
 	start := time.Now()
-	
+
 	// Try to get flag stats as a database health check
 	_, err := s.baseService.GetFlagStats(ctx)
 	responseTime := time.Since(start)
-	
+
 	if err != nil {
 		return ComponentHealth{
 			Status:       "unhealthy",
@@ -152,12 +152,12 @@ func (s *adminServiceImpl) checkDatabaseHealth(ctx context.Context) ComponentHea
 			Details:      fmt.Sprintf("Database query failed: %s", err.Error()),
 		}
 	}
-	
+
 	status := "healthy"
 	if responseTime > 500*time.Millisecond {
 		status = "degraded"
 	}
-	
+
 	return ComponentHealth{
 		Status:       status,
 		ResponseTime: responseTime,
@@ -169,12 +169,12 @@ func (s *adminServiceImpl) checkDatabaseHealth(ctx context.Context) ComponentHea
 
 func (s *adminServiceImpl) checkCacheHealth(ctx context.Context) ComponentHealth {
 	start := time.Now()
-	
+
 	// Check cache if available
 	if s.cacheWarmup != nil {
 		stats := s.cacheWarmup.GetCacheStats()
 		responseTime := time.Since(start)
-		
+
 		if stats == nil {
 			return ComponentHealth{
 				Status:       "unavailable",
@@ -184,13 +184,13 @@ func (s *adminServiceImpl) checkCacheHealth(ctx context.Context) ComponentHealth
 				Details:      "Cache not configured",
 			}
 		}
-		
+
 		// Determine status based on cache performance
 		status := "healthy"
 		if stats.Sets == 0 {
 			status = "degraded"
 		}
-		
+
 		return ComponentHealth{
 			Status:       status,
 			ResponseTime: responseTime,
@@ -199,7 +199,7 @@ func (s *adminServiceImpl) checkCacheHealth(ctx context.Context) ComponentHealth
 			Details:      fmt.Sprintf("Cache active with %d sets", stats.Sets),
 		}
 	}
-	
+
 	return ComponentHealth{
 		Status:       "unavailable",
 		ResponseTime: 0,
@@ -211,16 +211,16 @@ func (s *adminServiceImpl) checkCacheHealth(ctx context.Context) ComponentHealth
 
 func (s *adminServiceImpl) checkServiceHealth(ctx context.Context) ComponentHealth {
 	start := time.Now()
-	
+
 	// Simple service health check - create a minimal request
 	request := &ListFeatureFlagsRequest{
 		Page:     1,
 		PageSize: 1,
 	}
-	
+
 	_, err := s.baseService.ListFeatureFlags(ctx, request)
 	responseTime := time.Since(start)
-	
+
 	if err != nil {
 		return ComponentHealth{
 			Status:       "unhealthy",
@@ -230,12 +230,12 @@ func (s *adminServiceImpl) checkServiceHealth(ctx context.Context) ComponentHeal
 			Details:      fmt.Sprintf("Service operation failed: %s", err.Error()),
 		}
 	}
-	
+
 	status := "healthy"
 	if responseTime > 200*time.Millisecond {
 		status = "degraded"
 	}
-	
+
 	return ComponentHealth{
 		Status:       status,
 		ResponseTime: responseTime,
@@ -262,7 +262,7 @@ func (s *adminServiceImpl) calculateOverallHealth(components map[string]Componen
 	healthyCount := 0
 	degradedCount := 0
 	unhealthyCount := 0
-	
+
 	for _, health := range components {
 		switch health.Status {
 		case "healthy":
@@ -278,13 +278,13 @@ func (s *adminServiceImpl) calculateOverallHealth(components map[string]Componen
 			totalScore += 80 // Unavailable but not broken
 		}
 	}
-	
+
 	if len(components) == 0 {
 		return 0, "unknown"
 	}
-	
+
 	averageScore := totalScore / len(components)
-	
+
 	// Determine overall status
 	status := "healthy"
 	if unhealthyCount > 0 {
@@ -294,50 +294,50 @@ func (s *adminServiceImpl) calculateOverallHealth(components map[string]Componen
 	} else if healthyCount < len(components) {
 		status = "partial"
 	}
-	
+
 	return averageScore, status
 }
 
 func (s *adminServiceImpl) generateHealthRecommendations(components map[string]ComponentHealth) []string {
 	recommendations := []string{}
-	
+
 	for name, health := range components {
 		switch health.Status {
 		case "unhealthy":
-			recommendations = append(recommendations, 
+			recommendations = append(recommendations,
 				fmt.Sprintf("Critical: %s component is unhealthy - %s", name, health.Details))
 		case "degraded":
-			recommendations = append(recommendations, 
-				fmt.Sprintf("Warning: %s component performance is degraded (%.2fms response time)", 
+			recommendations = append(recommendations,
+				fmt.Sprintf("Warning: %s component performance is degraded (%.2fms response time)",
 					name, float64(health.ResponseTime.Nanoseconds())/1e6))
 		case "unavailable":
 			if name == "cache" {
-				recommendations = append(recommendations, 
+				recommendations = append(recommendations,
 					"Info: Cache is not configured - consider enabling Redis for better performance")
 			}
 		}
-		
+
 		// Performance recommendations
 		if health.ResponseTime > 1*time.Second {
-			recommendations = append(recommendations, 
-				fmt.Sprintf("Performance: %s response time is slow (%.2fms) - investigate bottlenecks", 
+			recommendations = append(recommendations,
+				fmt.Sprintf("Performance: %s response time is slow (%.2fms) - investigate bottlenecks",
 					name, float64(health.ResponseTime.Nanoseconds())/1e6))
 		}
 	}
-	
+
 	// System-level recommendations
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	if m.Alloc > 100*1024*1024 { // 100MB
-		recommendations = append(recommendations, 
-			fmt.Sprintf("Memory: High memory usage (%.2f MB) - monitor for memory leaks", 
+		recommendations = append(recommendations,
+			fmt.Sprintf("Memory: High memory usage (%.2f MB) - monitor for memory leaks",
 				float64(m.Alloc)/1024/1024))
 	}
-	
+
 	if len(recommendations) == 0 {
 		recommendations = append(recommendations, "System is operating normally")
 	}
-	
+
 	return recommendations
 }
 
@@ -350,16 +350,16 @@ func (s *adminServiceImpl) getFlagSystemMetrics(ctx context.Context, timeRange T
 	if err != nil {
 		return FlagSystemMetrics{}, err
 	}
-	
+
 	return FlagSystemMetrics{
-		TotalFlags:          int(stats.TotalFlags),
-		ActiveFlags:         int(stats.EnabledFlags),
-		FlagsByType:         map[string]int{"boolean": int(stats.TotalFlags)},
-		FlagsByTenant:       map[string]int{},
-		AverageRollout:      50.0, // Would calculate from actual data
-		EvaluationVolume:    10000, // Would track actual evaluations
-		CreatedToday:        5,
-		ModifiedToday:       3,
+		TotalFlags:       int(stats.TotalFlags),
+		ActiveFlags:      int(stats.EnabledFlags),
+		FlagsByType:      map[string]int{"boolean": int(stats.TotalFlags)},
+		FlagsByTenant:    map[string]int{},
+		AverageRollout:   50.0,  // Would calculate from actual data
+		EvaluationVolume: 10000, // Would track actual evaluations
+		CreatedToday:     5,
+		ModifiedToday:    3,
 	}, nil
 }
 
@@ -388,10 +388,10 @@ func (s *adminServiceImpl) getUsageSystemMetrics(ctx context.Context, timeRange 
 
 func (s *adminServiceImpl) generateTrendAnalysis(ctx context.Context, timeRange TimeRange, flagMetrics FlagSystemMetrics, usageMetrics UsageSystemMetrics) (TrendAnalysis, error) {
 	return TrendAnalysis{
-		GrowthRate:   12.5, // 12.5% growth
-		Seasonality:  map[string]float64{"monday": 1.2, "friday": 0.8},
-		Anomalies:    []AnomalyDetection{},
-		Forecasting:  ForecastData{
+		GrowthRate:  12.5, // 12.5% growth
+		Seasonality: map[string]float64{"monday": 1.2, "friday": 0.8},
+		Anomalies:   []AnomalyDetection{},
+		Forecasting: ForecastData{
 			NextHourPrediction: 180,
 			NextDayPrediction:  4200,
 			NextWeekPrediction: 30000,
@@ -425,7 +425,7 @@ func (s *adminServiceImpl) getUsageSummary(ctx context.Context, request *UsageAn
 func (s *adminServiceImpl) getUsageTimeSeries(ctx context.Context, request *UsageAnalyticsRequest) ([]TimeSeriesPoint, error) {
 	// Would generate actual time series data
 	timeSeries := []TimeSeriesPoint{}
-	
+
 	// Generate sample data
 	start := request.TimeRange.Start
 	for start.Before(request.TimeRange.End) {
@@ -435,7 +435,7 @@ func (s *adminServiceImpl) getUsageTimeSeries(ctx context.Context, request *Usag
 			UniqueUsers: 10 + start.Hour(),
 			Errors:      int(start.Hour() % 3), // Simulate some errors
 		})
-		
+
 		switch request.Granularity {
 		case "hour":
 			start = start.Add(time.Hour)
@@ -445,7 +445,7 @@ func (s *adminServiceImpl) getUsageTimeSeries(ctx context.Context, request *Usag
 			start = start.Add(time.Hour)
 		}
 	}
-	
+
 	return timeSeries, nil
 }
 

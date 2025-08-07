@@ -43,12 +43,12 @@ type AdminService interface {
 
 // adminServiceImpl implements AdminService
 type adminServiceImpl struct {
-	baseService   SimpleService
-	auditService  audit.Service
-	logger        logger.Logger
-	metrics       *metrics.MetricsService
-	tracing       tracing.TracingService
-	cacheWarmup   *CacheWarmer
+	baseService  SimpleService
+	auditService audit.Service
+	logger       logger.Logger
+	metrics      *metrics.MetricsService
+	tracing      tracing.TracingService
+	cacheWarmup  *CacheWarmer
 }
 
 // NewAdminService creates a new admin service for feature flags
@@ -103,13 +103,13 @@ type RolloutUpdate struct {
 
 // BulkOperationResult contains results of bulk operations
 type BulkOperationResult struct {
-	TotalRequested int                        `json:"total_requested"`
-	Successful     int                        `json:"successful"`
-	Failed         int                        `json:"failed"`
-	Results        []BulkOperationItemResult  `json:"results"`
-	Summary        BulkOperationSummary       `json:"summary"`
-	ExecutedAt     time.Time                  `json:"executed_at"`
-	ExecutionTime  time.Duration              `json:"execution_time"`
+	TotalRequested int                       `json:"total_requested"`
+	Successful     int                       `json:"successful"`
+	Failed         int                       `json:"failed"`
+	Results        []BulkOperationItemResult `json:"results"`
+	Summary        BulkOperationSummary      `json:"summary"`
+	ExecutedAt     time.Time                 `json:"executed_at"`
+	ExecutionTime  time.Duration             `json:"execution_time"`
 }
 
 type BulkOperationItemResult struct {
@@ -119,9 +119,9 @@ type BulkOperationItemResult struct {
 }
 
 type BulkOperationSummary struct {
-	Operation       string  `json:"operation"`
-	SuccessRate     float64 `json:"success_rate"`
-	AverageTime     float64 `json:"average_time_ms"`
+	Operation       string         `json:"operation"`
+	SuccessRate     float64        `json:"success_rate"`
+	AverageTime     float64        `json:"average_time_ms"`
 	ErrorCategories map[string]int `json:"error_categories"`
 }
 
@@ -152,19 +152,19 @@ type CreateFlagTemplateRequest struct {
 }
 
 type ApplyTemplateRequest struct {
-	TemplateID uuid.UUID `json:"template_id" validate:"required"`
-	FlagName   string    `json:"flag_name" validate:"required"`
+	TemplateID uuid.UUID              `json:"template_id" validate:"required"`
+	FlagName   string                 `json:"flag_name" validate:"required"`
 	Overrides  map[string]interface{} `json:"overrides,omitempty"`
 }
 
 // Rollout Strategies
 type RolloutStrategy struct {
-	ID              uuid.UUID              `json:"id"`
-	Name            string                 `json:"name"`
-	Description     string                 `json:"description"`
-	Type            RolloutStrategyType    `json:"type"`
-	Configuration   map[string]interface{} `json:"configuration"`
-	CreatedAt       time.Time              `json:"created_at"`
+	ID            uuid.UUID              `json:"id"`
+	Name          string                 `json:"name"`
+	Description   string                 `json:"description"`
+	Type          RolloutStrategyType    `json:"type"`
+	Configuration map[string]interface{} `json:"configuration"`
+	CreatedAt     time.Time              `json:"created_at"`
 }
 
 type RolloutStrategyType string
@@ -185,22 +185,22 @@ type CreateRolloutStrategyRequest struct {
 
 // System Health and Metrics
 type SystemHealthResult struct {
-	Status               string                    `json:"status"`
-	Timestamp            time.Time                 `json:"timestamp"`
-	Version              string                    `json:"version"`
-	DatabaseStatus       string                    `json:"database_status"`
-	CacheStatus          string                    `json:"cache_status"`
-	ComponentHealth      map[string]ComponentHealth `json:"component_health"`
-	OverallScore         int                       `json:"overall_score"` // 0-100
-	RecommendedActions   []string                  `json:"recommended_actions,omitempty"`
+	Status             string                     `json:"status"`
+	Timestamp          time.Time                  `json:"timestamp"`
+	Version            string                     `json:"version"`
+	DatabaseStatus     string                     `json:"database_status"`
+	CacheStatus        string                     `json:"cache_status"`
+	ComponentHealth    map[string]ComponentHealth `json:"component_health"`
+	OverallScore       int                        `json:"overall_score"` // 0-100
+	RecommendedActions []string                   `json:"recommended_actions,omitempty"`
 }
 
 type ComponentHealth struct {
-	Status        string        `json:"status"`
-	ResponseTime  time.Duration `json:"response_time"`
-	ErrorRate     float64       `json:"error_rate"`
-	LastChecked   time.Time     `json:"last_checked"`
-	Details       string        `json:"details,omitempty"`
+	Status       string        `json:"status"`
+	ResponseTime time.Duration `json:"response_time"`
+	ErrorRate    float64       `json:"error_rate"`
+	LastChecked  time.Time     `json:"last_checked"`
+	Details      string        `json:"details,omitempty"`
 }
 
 type SystemMetricsRequest struct {
@@ -214,23 +214,23 @@ type TimeRange struct {
 }
 
 type SystemMetricsResult struct {
-	TimeRange         TimeRange                  `json:"time_range"`
-	GeneratedAt       time.Time                  `json:"generated_at"`
-	FlagMetrics       FlagSystemMetrics          `json:"flag_metrics"`
-	PerformanceMetrics PerformanceSystemMetrics  `json:"performance_metrics"`
-	UsageMetrics      UsageSystemMetrics         `json:"usage_metrics"`
-	TrendAnalysis     TrendAnalysis              `json:"trend_analysis"`
+	TimeRange          TimeRange                `json:"time_range"`
+	GeneratedAt        time.Time                `json:"generated_at"`
+	FlagMetrics        FlagSystemMetrics        `json:"flag_metrics"`
+	PerformanceMetrics PerformanceSystemMetrics `json:"performance_metrics"`
+	UsageMetrics       UsageSystemMetrics       `json:"usage_metrics"`
+	TrendAnalysis      TrendAnalysis            `json:"trend_analysis"`
 }
 
 type FlagSystemMetrics struct {
-	TotalFlags          int                `json:"total_flags"`
-	ActiveFlags         int                `json:"active_flags"`
-	FlagsByType         map[string]int     `json:"flags_by_type"`
-	FlagsByTenant       map[string]int     `json:"flags_by_tenant"`
-	AverageRollout      float64            `json:"average_rollout"`
-	EvaluationVolume    int64              `json:"evaluation_volume"`
-	CreatedToday        int                `json:"created_today"`
-	ModifiedToday       int                `json:"modified_today"`
+	TotalFlags       int            `json:"total_flags"`
+	ActiveFlags      int            `json:"active_flags"`
+	FlagsByType      map[string]int `json:"flags_by_type"`
+	FlagsByTenant    map[string]int `json:"flags_by_tenant"`
+	AverageRollout   float64        `json:"average_rollout"`
+	EvaluationVolume int64          `json:"evaluation_volume"`
+	CreatedToday     int            `json:"created_today"`
+	ModifiedToday    int            `json:"modified_today"`
 }
 
 type PerformanceSystemMetrics struct {
@@ -243,11 +243,11 @@ type PerformanceSystemMetrics struct {
 }
 
 type UsageSystemMetrics struct {
-	UniqueUsers      int             `json:"unique_users"`
-	UniqueTenants    int             `json:"unique_tenants"`
-	TopFlags         []FlagUsageStat `json:"top_flags"`
-	UsageByHour      []HourlyUsage   `json:"usage_by_hour"`
-	GeographicUsage  map[string]int  `json:"geographic_usage"`
+	UniqueUsers     int             `json:"unique_users"`
+	UniqueTenants   int             `json:"unique_tenants"`
+	TopFlags        []FlagUsageStat `json:"top_flags"`
+	UsageByHour     []HourlyUsage   `json:"usage_by_hour"`
+	GeographicUsage map[string]int  `json:"geographic_usage"`
 }
 
 type FlagUsageStat struct {
@@ -265,11 +265,11 @@ type HourlyUsage struct {
 }
 
 type TrendAnalysis struct {
-	GrowthRate       float64              `json:"growth_rate"`       // Percentage growth
-	Seasonality      map[string]float64   `json:"seasonality"`       // Day/hour patterns
-	Anomalies        []AnomalyDetection   `json:"anomalies"`
-	Forecasting      ForecastData         `json:"forecasting"`
-	Recommendations  []TrendRecommendation `json:"recommendations"`
+	GrowthRate      float64               `json:"growth_rate"` // Percentage growth
+	Seasonality     map[string]float64    `json:"seasonality"` // Day/hour patterns
+	Anomalies       []AnomalyDetection    `json:"anomalies"`
+	Forecasting     ForecastData          `json:"forecasting"`
+	Recommendations []TrendRecommendation `json:"recommendations"`
 }
 
 type AnomalyDetection struct {
@@ -283,11 +283,11 @@ type AnomalyDetection struct {
 }
 
 type ForecastData struct {
-	NextHourPrediction  int64   `json:"next_hour_prediction"`
-	NextDayPrediction   int64   `json:"next_day_prediction"`
-	NextWeekPrediction  int64   `json:"next_week_prediction"`
-	ConfidenceInterval  float64 `json:"confidence_interval"`
-	SeasonalityFactor   float64 `json:"seasonality_factor"`
+	NextHourPrediction int64   `json:"next_hour_prediction"`
+	NextDayPrediction  int64   `json:"next_day_prediction"`
+	NextWeekPrediction int64   `json:"next_week_prediction"`
+	ConfidenceInterval float64 `json:"confidence_interval"`
+	SeasonalityFactor  float64 `json:"seasonality_factor"`
 }
 
 type TrendRecommendation struct {
@@ -308,12 +308,12 @@ type UsageAnalyticsRequest struct {
 }
 
 type UsageAnalyticsResult struct {
-	TimeRange       TimeRange           `json:"time_range"`
-	GeneratedAt     time.Time           `json:"generated_at"`
-	Summary         UsageSummary        `json:"summary"`
-	TimeSeries      []TimeSeriesPoint   `json:"time_series"`
-	TopPerformers   []PerformerStat     `json:"top_performers"`
-	BehaviorAnalysis BehaviorAnalysis   `json:"behavior_analysis"`
+	TimeRange        TimeRange         `json:"time_range"`
+	GeneratedAt      time.Time         `json:"generated_at"`
+	Summary          UsageSummary      `json:"summary"`
+	TimeSeries       []TimeSeriesPoint `json:"time_series"`
+	TopPerformers    []PerformerStat   `json:"top_performers"`
+	BehaviorAnalysis BehaviorAnalysis  `json:"behavior_analysis"`
 }
 
 type UsageSummary struct {
@@ -338,18 +338,18 @@ type PerformerStat struct {
 }
 
 type BehaviorAnalysis struct {
-	PeakUsageHours    []int                      `json:"peak_usage_hours"`
-	UserSegments      map[string]UserSegment     `json:"user_segments"`
-	FlagCorrelations  []FlagCorrelation          `json:"flag_correlations"`
-	AdoptionMetrics   AdoptionMetrics            `json:"adoption_metrics"`
+	PeakUsageHours   []int                  `json:"peak_usage_hours"`
+	UserSegments     map[string]UserSegment `json:"user_segments"`
+	FlagCorrelations []FlagCorrelation      `json:"flag_correlations"`
+	AdoptionMetrics  AdoptionMetrics        `json:"adoption_metrics"`
 }
 
 type UserSegment struct {
-	Name            string  `json:"name"`
-	UserCount       int     `json:"user_count"`
-	AvgEvaluations  float64 `json:"avg_evaluations"`
+	Name            string   `json:"name"`
+	UserCount       int      `json:"user_count"`
+	AvgEvaluations  float64  `json:"avg_evaluations"`
 	PreferredFlags  []string `json:"preferred_flags"`
-	BehaviorPattern string  `json:"behavior_pattern"`
+	BehaviorPattern string   `json:"behavior_pattern"`
 }
 
 type FlagCorrelation struct {
@@ -368,20 +368,20 @@ type AdoptionMetrics struct {
 
 // Emergency Controls
 type EmergencyActionResult struct {
-	ActionType        string    `json:"action_type"`
-	AffectedFlags     int       `json:"affected_flags"`
-	ExecutedAt        time.Time `json:"executed_at"`
-	Reason            string    `json:"reason"`
-	RollbackToken     string    `json:"rollback_token"`
-	EstimatedImpact   string    `json:"estimated_impact"`
+	ActionType      string    `json:"action_type"`
+	AffectedFlags   int       `json:"affected_flags"`
+	ExecutedAt      time.Time `json:"executed_at"`
+	Reason          string    `json:"reason"`
+	RollbackToken   string    `json:"rollback_token"`
+	EstimatedImpact string    `json:"estimated_impact"`
 }
 
 // Cache Management
 type CacheWarmupRequest struct {
-	TenantIDs     []uuid.UUID `json:"tenant_ids,omitempty"`
-	FlagNames     []string    `json:"flag_names,omitempty"`
-	Priority      string      `json:"priority"` // high, normal, low
-	WarmupType    string      `json:"warmup_type"` // full, partial, smart
+	TenantIDs  []uuid.UUID `json:"tenant_ids,omitempty"`
+	FlagNames  []string    `json:"flag_names,omitempty"`
+	Priority   string      `json:"priority"`    // high, normal, low
+	WarmupType string      `json:"warmup_type"` // full, partial, smart
 }
 
 type CacheClearRequest struct {
@@ -391,43 +391,43 @@ type CacheClearRequest struct {
 }
 
 type CacheOperationResult struct {
-	OperationType   string        `json:"operation_type"`
-	ExecutedAt      time.Time     `json:"executed_at"`
-	ExecutionTime   time.Duration `json:"execution_time"`
-	ItemsProcessed  int           `json:"items_processed"`
-	Success         bool          `json:"success"`
-	Details         string        `json:"details,omitempty"`
+	OperationType  string        `json:"operation_type"`
+	ExecutedAt     time.Time     `json:"executed_at"`
+	ExecutionTime  time.Duration `json:"execution_time"`
+	ItemsProcessed int           `json:"items_processed"`
+	Success        bool          `json:"success"`
+	Details        string        `json:"details,omitempty"`
 }
 
 type CacheStatsResult struct {
-	GeneratedAt       time.Time                    `json:"generated_at"`
-	OverallStats      CacheOverallStats            `json:"overall_stats"`
-	CacheTypeStats    map[string]CacheTypeStats    `json:"cache_type_stats"`
-	TenantStats       map[string]CacheTenantStats  `json:"tenant_stats"`
-	Recommendations   []CacheRecommendation        `json:"recommendations"`
+	GeneratedAt     time.Time                   `json:"generated_at"`
+	OverallStats    CacheOverallStats           `json:"overall_stats"`
+	CacheTypeStats  map[string]CacheTypeStats   `json:"cache_type_stats"`
+	TenantStats     map[string]CacheTenantStats `json:"tenant_stats"`
+	Recommendations []CacheRecommendation       `json:"recommendations"`
 }
 
 type CacheOverallStats struct {
-	TotalKeys       int64   `json:"total_keys"`
-	TotalMemoryMB   float64 `json:"total_memory_mb"`
-	HitRate         float64 `json:"hit_rate"`
-	MissRate        float64 `json:"miss_rate"`
-	EvictionRate    float64 `json:"eviction_rate"`
-	AverageKeySize  float64 `json:"average_key_size_bytes"`
+	TotalKeys      int64   `json:"total_keys"`
+	TotalMemoryMB  float64 `json:"total_memory_mb"`
+	HitRate        float64 `json:"hit_rate"`
+	MissRate       float64 `json:"miss_rate"`
+	EvictionRate   float64 `json:"eviction_rate"`
+	AverageKeySize float64 `json:"average_key_size_bytes"`
 }
 
 type CacheTypeStats struct {
-	KeyCount     int64   `json:"key_count"`
-	MemoryMB     float64 `json:"memory_mb"`
-	HitRate      float64 `json:"hit_rate"`
-	AverageTTL   int     `json:"average_ttl_seconds"`
+	KeyCount   int64   `json:"key_count"`
+	MemoryMB   float64 `json:"memory_mb"`
+	HitRate    float64 `json:"hit_rate"`
+	AverageTTL int     `json:"average_ttl_seconds"`
 }
 
 type CacheTenantStats struct {
-	TenantID     string  `json:"tenant_id"`
-	KeyCount     int64   `json:"key_count"`
-	MemoryMB     float64 `json:"memory_mb"`
-	HitRate      float64 `json:"hit_rate"`
+	TenantID string  `json:"tenant_id"`
+	KeyCount int64   `json:"key_count"`
+	MemoryMB float64 `json:"memory_mb"`
+	HitRate  float64 `json:"hit_rate"`
 }
 
 type CacheRecommendation struct {
@@ -441,15 +441,15 @@ type CacheRecommendation struct {
 
 // List requests
 type ListTemplatesRequest struct {
-	Page       int    `json:"page" validate:"min=1"`
-	PageSize   int    `json:"page_size" validate:"min=1,max=100"`
-	Category   string `json:"category,omitempty"`
-	FlagType   string `json:"flag_type,omitempty"`
+	Page     int    `json:"page" validate:"min=1"`
+	PageSize int    `json:"page_size" validate:"min=1,max=100"`
+	Category string `json:"category,omitempty"`
+	FlagType string `json:"flag_type,omitempty"`
 }
 
 type ListTemplatesResponse struct {
-	Templates  []*FlagTemplate `json:"templates"`
-	Total      int64           `json:"total"`
-	Page       int             `json:"page"`
-	PageSize   int             `json:"page_size"`
+	Templates []*FlagTemplate `json:"templates"`
+	Total     int64           `json:"total"`
+	Page      int             `json:"page"`
+	PageSize  int             `json:"page_size"`
 }

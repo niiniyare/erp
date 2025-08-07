@@ -28,7 +28,7 @@ require (
 	go.uber.org/mock v0.5.2
 	go.uber.org/zap v1.18.1
 	goa.design/clue v1.2.1
-	goa.design/goa/v3 v3.21.1
+	goa.design/goa/v3 v3.21.5
 	golang.org/x/crypto v0.39.0
 	golang.org/x/sync v0.15.0
 )
@@ -48,7 +48,7 @@ require (
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/go-chi/chi/v5 v5.2.1 // indirect
+	github.com/go-chi/chi/v5 v5.2.2 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

@@ -53,21 +53,21 @@ type GOAServer struct {
 func InitializeGOAServer(services *Services, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*GOAServer, error) {
 	// Initialize GOA services
 	var (
-		abacSvc          abacGen.Service
-		accessRequestSvc accessrequest.Service
+		abacSvc             abacGen.Service
+		accessRequestSvc    accessrequest.Service
 		adminFeatureFlagSvc adminfeatureflag.Service
-		authSvc          auth.Service
-		featureFlagSvc   featureflag.Service
-		healthSvc        health.Service
-		organizationSvc  organization.Service
-		tenantSvc        goaTenant.Service
-		userSvc          goaUser.Service
-		openapiSvc       openapi.Service
+		authSvc             auth.Service
+		featureFlagSvc      featureflag.Service
+		healthSvc           health.Service
+		organizationSvc     organization.Service
+		tenantSvc           goaTenant.Service
+		userSvc             goaUser.Service
+		openapiSvc          openapi.Service
 	)
 
 	abacSvc = handlers.NewABACGoaHandler(services.ABACService, metricsService, tracingService, logger.WithFields(logger.Fields{}))
 	accessRequestSvc = handlers.NewAccessRequestGoaHandler(services.AccessRequestService, services.ConditionalAccessService, services.AnalyticsService, tracingService, metricsService)
-	adminFeatureFlagSvc = handlers.NewAdminFeatureFlagService(services.AdminFeatureFlagService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
+	adminFeatureFlagSvc = handlers.NewAdminFeatureFlagService(services.AdminFeatureFlagService, services.ABACService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
 	authSvc = handlers.NewAuthHandler(services.IdentityService, tracingService, metricsService)
 	featureFlagSvc = handlers.NewFeatureFlagService(services.FeatureFlagService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
 	healthSvc = handlers.NewHealthGoaHandler(tracingService, metricsService)
@@ -78,16 +78,16 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 
 	// Create GOA endpoints
 	var (
-		abacEndpoints          *abacGen.Endpoints
-		accessRequestEndpoints *accessrequest.Endpoints
+		abacEndpoints             *abacGen.Endpoints
+		accessRequestEndpoints    *accessrequest.Endpoints
 		adminFeatureFlagEndpoints *adminfeatureflag.Endpoints
-		authEndpoints          *auth.Endpoints
-		featureFlagEndpoints   *featureflag.Endpoints
-		healthEndpoints        *health.Endpoints
-		organizationEndpoints  *organization.Endpoints
-		tenantEndpoints        *goaTenant.Endpoints
-		userEndpoints          *goaUser.Endpoints
-		openapiEndpoints       *openapi.Endpoints
+		authEndpoints             *auth.Endpoints
+		featureFlagEndpoints      *featureflag.Endpoints
+		healthEndpoints           *health.Endpoints
+		organizationEndpoints     *organization.Endpoints
+		tenantEndpoints           *goaTenant.Endpoints
+		userEndpoints             *goaUser.Endpoints
+		openapiEndpoints          *openapi.Endpoints
 	)
 
 	abacEndpoints = abacGen.NewEndpoints(abacSvc)
