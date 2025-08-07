@@ -211,7 +211,7 @@ var SetUserAttributesResult = Type("SetUserAttributesResult", func() {
 		Example("2025-01-15T14:30:00Z")
 	})
 	Attribute("attributes_summary", AttributesSummary, "Summary of attribute changes")
-	Attribute("validation_results", ValidationResults, "Validation results")
+	Attribute("validation_results", UserValidationResults, "Validation results")
 	Attribute("cache_impact", CacheImpact, "Cache impact information")
 	Attribute("propagation", PropagationInfo, "Propagation information")
 	Attribute("performance", PerformanceInfo, "Performance metrics")
@@ -239,7 +239,7 @@ var AttributesSummary = Type("AttributesSummary", func() {
 	})
 })
 
-var ValidationResults = Type("ValidationResults", func() {
+var UserValidationResults = Type("UserValidationResults", func() {
 	Description("Attribute validation results")
 
 	Attribute("valid", Boolean, "Whether validation passed", func() {
@@ -737,13 +737,13 @@ var RiskAssessment = Type("RiskAssessment", func() {
 		Enum("low", "medium", "high", "critical")
 		Example("medium")
 	})
-	Attribute("risk_factors", ArrayOf(RiskFactor), "Risk factors")
+	Attribute("risk_factors", ArrayOf(UserRiskFactor), "Risk factors")
 	Attribute("additional_monitoring", Boolean, "Whether additional monitoring is recommended", func() {
 		Example(false)
 	})
 })
 
-var RiskFactor = Type("RiskFactor", func() {
+var UserRiskFactor = Type("UserRiskFactor", func() {
 	Description("Individual risk factor")
 
 	Attribute("factor", String, "Risk factor name", func() {
@@ -824,7 +824,7 @@ var SessionRiskAssessment = Type("SessionRiskAssessment", func() {
 	Attribute("overall_risk_score", UInt, "Overall risk score", func() {
 		Example(15)
 	})
-	Attribute("risk_factors", ArrayOf(RiskFactor), "Risk factors")
+	Attribute("risk_factors", ArrayOf(UserRiskFactor), "Risk factors")
 	Attribute("behavioral_analysis", BehavioralAnalysis, "Behavioral analysis")
 	Attribute("anomalies", ArrayOf(String), "Detected anomalies")
 	Attribute("recommendations", ArrayOf(String), "Security recommendations")
@@ -896,7 +896,7 @@ var SetSessionContextResult = Type("SetSessionContextResult", func() {
 	})
 	Attribute("security_assessment", SecurityAssessment, "Security assessment")
 	Attribute("recommendations", ArrayOf(String), "Recommendations")
-	Attribute("monitoring", MonitoringInfo, "Monitoring information")
+	Attribute("monitoring", UserMonitoringInfo, "Monitoring information")
 
 	Required("session_id", "operation", "completed_at", "context_updated")
 })
@@ -925,7 +925,7 @@ var SecurityAssessment = Type("SecurityAssessment", func() {
 	})
 })
 
-var MonitoringInfo = Type("MonitoringInfo", func() {
+var UserMonitoringInfo = Type("UserMonitoringInfo", func() {
 	Description("Monitoring configuration")
 
 	Attribute("enhanced_monitoring", Boolean, "Enhanced monitoring enabled", func() {
@@ -953,14 +953,14 @@ var UserContextResult = Type("UserContextResult", func() {
 	Attribute("user_attributes", MapOf(String, Any), "User attributes")
 	Attribute("derived_attributes", MapOf(String, Any), "Derived attributes")
 	Attribute("current_session", SessionContext, "Current session context")
-	Attribute("access_patterns", AccessPatterns, "Access patterns")
+	Attribute("access_patterns", UserAccessPatterns, "Access patterns")
 	Attribute("risk_profile", UserRiskProfile, "User risk profile")
 	Attribute("compliance_status", ComplianceStatus, "Compliance status")
 
 	Required("user_id", "retrieved_at", "user_attributes")
 })
 
-var AccessPatterns = Type("AccessPatterns", func() {
+var UserAccessPatterns = Type("UserAccessPatterns", func() {
 	Description("User access patterns")
 
 	Attribute("frequent_resources", ArrayOf(String), "Frequently accessed resources")

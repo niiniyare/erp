@@ -17,6 +17,7 @@ import (
 
 	uuid "github.com/google/uuid"
 	pgx "github.com/jackc/pgx/v5"
+	pgtype "github.com/jackc/pgx/v5/pgtype"
 	pgxpool "github.com/jackc/pgx/v5/pgxpool"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -57,6 +58,20 @@ func (m *MockStore) ArchiveOldDeletedEntities(ctx context.Context, deletedAt sql
 func (mr *MockStoreMockRecorder) ArchiveOldDeletedEntities(ctx, deletedAt any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveOldDeletedEntities", reflect.TypeOf((*MockStore)(nil).ArchiveOldDeletedEntities), ctx, deletedAt)
+}
+
+// ArchiveOldEntityStates mocks base method.
+func (m *MockStore) ArchiveOldEntityStates(ctx context.Context, fiscalYear *int16) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ArchiveOldEntityStates", ctx, fiscalYear)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ArchiveOldEntityStates indicates an expected call of ArchiveOldEntityStates.
+func (mr *MockStoreMockRecorder) ArchiveOldEntityStates(ctx, fiscalYear any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveOldEntityStates", reflect.TypeOf((*MockStore)(nil).ArchiveOldEntityStates), ctx, fiscalYear)
 }
 
 // AssignUserRole mocks base method.
@@ -132,6 +147,35 @@ func (mr *MockStoreMockRecorder) BulkCreateEntityStates(ctx, arg any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkCreateEntityStates", reflect.TypeOf((*MockStore)(nil).BulkCreateEntityStates), ctx, arg)
 }
 
+// BulkCreateEntityStatesFixed mocks base method.
+func (m *MockStore) BulkCreateEntityStatesFixed(ctx context.Context, arg BulkCreateEntityStatesFixedParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BulkCreateEntityStatesFixed", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BulkCreateEntityStatesFixed indicates an expected call of BulkCreateEntityStatesFixed.
+func (mr *MockStoreMockRecorder) BulkCreateEntityStatesFixed(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkCreateEntityStatesFixed", reflect.TypeOf((*MockStore)(nil).BulkCreateEntityStatesFixed), ctx, arg)
+}
+
+// BulkEvaluateFeatureFlags mocks base method.
+func (m *MockStore) BulkEvaluateFeatureFlags(ctx context.Context, arg BulkEvaluateFeatureFlagsParams) ([]*BulkEvaluateFeatureFlagsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BulkEvaluateFeatureFlags", ctx, arg)
+	ret0, _ := ret[0].([]*BulkEvaluateFeatureFlagsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BulkEvaluateFeatureFlags indicates an expected call of BulkEvaluateFeatureFlags.
+func (mr *MockStoreMockRecorder) BulkEvaluateFeatureFlags(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkEvaluateFeatureFlags", reflect.TypeOf((*MockStore)(nil).BulkEvaluateFeatureFlags), ctx, arg)
+}
+
 // BulkMoveEntities mocks base method.
 func (m *MockStore) BulkMoveEntities(ctx context.Context, arg BulkMoveEntitiesParams) error {
 	m.ctrl.T.Helper()
@@ -158,6 +202,20 @@ func (m *MockStore) BulkSoftDeleteTenants(ctx context.Context, tenantIds []uuid.
 func (mr *MockStoreMockRecorder) BulkSoftDeleteTenants(ctx, tenantIds any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkSoftDeleteTenants", reflect.TypeOf((*MockStore)(nil).BulkSoftDeleteTenants), ctx, tenantIds)
+}
+
+// BulkUpdateSequences mocks base method.
+func (m *MockStore) BulkUpdateSequences(ctx context.Context, arg BulkUpdateSequencesParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BulkUpdateSequences", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BulkUpdateSequences indicates an expected call of BulkUpdateSequences.
+func (mr *MockStoreMockRecorder) BulkUpdateSequences(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkUpdateSequences", reflect.TypeOf((*MockStore)(nil).BulkUpdateSequences), ctx, arg)
 }
 
 // BulkUpdateTenantStatus mocks base method.
@@ -337,6 +395,21 @@ func (mr *MockStoreMockRecorder) CleanupExpiredEvaluations(ctx any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupExpiredEvaluations", reflect.TypeOf((*MockStore)(nil).CleanupExpiredEvaluations), ctx)
 }
 
+// CleanupExpiredFeatureFlags mocks base method.
+func (m *MockStore) CleanupExpiredFeatureFlags(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CleanupExpiredFeatureFlags", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CleanupExpiredFeatureFlags indicates an expected call of CleanupExpiredFeatureFlags.
+func (mr *MockStoreMockRecorder) CleanupExpiredFeatureFlags(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupExpiredFeatureFlags", reflect.TypeOf((*MockStore)(nil).CleanupExpiredFeatureFlags), ctx)
+}
+
 // CleanupOrphanedHierarchyPaths mocks base method.
 func (m *MockStore) CleanupOrphanedHierarchyPaths(ctx context.Context) error {
 	m.ctrl.T.Helper()
@@ -483,6 +556,21 @@ func (mr *MockStoreMockRecorder) CreateAccessRequest(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccessRequest", reflect.TypeOf((*MockStore)(nil).CreateAccessRequest), ctx, arg)
 }
 
+// CreateAction mocks base method.
+func (m *MockStore) CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAction", ctx, arg)
+	ret0, _ := ret[0].(*Action)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateAction indicates an expected call of CreateAction.
+func (mr *MockStoreMockRecorder) CreateAction(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAction", reflect.TypeOf((*MockStore)(nil).CreateAction), ctx, arg)
+}
+
 // CreateAttributeDefinition mocks base method.
 func (m *MockStore) CreateAttributeDefinition(ctx context.Context, arg CreateAttributeDefinitionParams) (*AttributeDefinition, error) {
 	m.ctrl.T.Helper()
@@ -587,6 +675,21 @@ func (mr *MockStoreMockRecorder) CreateEntityState(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEntityState", reflect.TypeOf((*MockStore)(nil).CreateEntityState), ctx, arg)
 }
 
+// CreateFeatureFlag mocks base method.
+func (m *MockStore) CreateFeatureFlag(ctx context.Context, arg CreateFeatureFlagParams) (*FeatureFlag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFeatureFlag", ctx, arg)
+	ret0, _ := ret[0].(*FeatureFlag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateFeatureFlag indicates an expected call of CreateFeatureFlag.
+func (mr *MockStoreMockRecorder) CreateFeatureFlag(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFeatureFlag", reflect.TypeOf((*MockStore)(nil).CreateFeatureFlag), ctx, arg)
+}
+
 // CreateHierarchyPath mocks base method.
 func (m *MockStore) CreateHierarchyPath(ctx context.Context, arg CreateHierarchyPathParams) error {
 	m.ctrl.T.Helper()
@@ -599,6 +702,21 @@ func (m *MockStore) CreateHierarchyPath(ctx context.Context, arg CreateHierarchy
 func (mr *MockStoreMockRecorder) CreateHierarchyPath(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateHierarchyPath", reflect.TypeOf((*MockStore)(nil).CreateHierarchyPath), ctx, arg)
+}
+
+// CreateModule mocks base method.
+func (m *MockStore) CreateModule(ctx context.Context, arg CreateModuleParams) (*Module, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateModule", ctx, arg)
+	ret0, _ := ret[0].(*Module)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateModule indicates an expected call of CreateModule.
+func (mr *MockStoreMockRecorder) CreateModule(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateModule", reflect.TypeOf((*MockStore)(nil).CreateModule), ctx, arg)
 }
 
 // CreatePerson mocks base method.
@@ -629,6 +747,36 @@ func (m *MockStore) CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*
 func (mr *MockStoreMockRecorder) CreatePolicy(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePolicy", reflect.TypeOf((*MockStore)(nil).CreatePolicy), ctx, arg)
+}
+
+// CreatePolicyEvaluation mocks base method.
+func (m *MockStore) CreatePolicyEvaluation(ctx context.Context, arg CreatePolicyEvaluationParams) (*PolicyEvaluation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePolicyEvaluation", ctx, arg)
+	ret0, _ := ret[0].(*PolicyEvaluation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreatePolicyEvaluation indicates an expected call of CreatePolicyEvaluation.
+func (mr *MockStoreMockRecorder) CreatePolicyEvaluation(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePolicyEvaluation", reflect.TypeOf((*MockStore)(nil).CreatePolicyEvaluation), ctx, arg)
+}
+
+// CreateResource mocks base method.
+func (m *MockStore) CreateResource(ctx context.Context, arg CreateResourceParams) (*Resource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateResource", ctx, arg)
+	ret0, _ := ret[0].(*Resource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateResource indicates an expected call of CreateResource.
+func (mr *MockStoreMockRecorder) CreateResource(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateResource", reflect.TypeOf((*MockStore)(nil).CreateResource), ctx, arg)
 }
 
 // CreateTenant mocks base method.
@@ -674,21 +822,6 @@ func (m *MockStore) CreateTenantConfiguration(ctx context.Context, arg CreateTen
 func (mr *MockStoreMockRecorder) CreateTenantConfiguration(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTenantConfiguration", reflect.TypeOf((*MockStore)(nil).CreateTenantConfiguration), ctx, arg)
-}
-
-// CreateTenantUsageStats mocks base method.
-func (m *MockStore) CreateTenantUsageStats(ctx context.Context, arg CreateTenantUsageStatsParams) (*TenantUsageStat, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateTenantUsageStats", ctx, arg)
-	ret0, _ := ret[0].(*TenantUsageStat)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateTenantUsageStats indicates an expected call of CreateTenantUsageStats.
-func (mr *MockStoreMockRecorder) CreateTenantUsageStats(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTenantUsageStats", reflect.TypeOf((*MockStore)(nil).CreateTenantUsageStats), ctx, arg)
 }
 
 // CreateUser mocks base method.
@@ -763,6 +896,20 @@ func (mr *MockStoreMockRecorder) DeleteEntityState(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEntityState", reflect.TypeOf((*MockStore)(nil).DeleteEntityState), ctx, arg)
 }
 
+// DeleteFeatureFlag mocks base method.
+func (m *MockStore) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFeatureFlag", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFeatureFlag indicates an expected call of DeleteFeatureFlag.
+func (mr *MockStoreMockRecorder) DeleteFeatureFlag(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFeatureFlag", reflect.TypeOf((*MockStore)(nil).DeleteFeatureFlag), ctx, id)
+}
+
 // DeleteHierarchyPaths mocks base method.
 func (m *MockStore) DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -792,17 +939,17 @@ func (mr *MockStoreMockRecorder) DeleteTenant(ctx any) *gomock.Call {
 }
 
 // DeleteTenantConfiguration mocks base method.
-func (m *MockStore) DeleteTenantConfiguration(ctx context.Context) error {
+func (m *MockStore) DeleteTenantConfiguration(ctx context.Context, arg DeleteTenantConfigurationParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteTenantConfiguration", ctx)
+	ret := m.ctrl.Call(m, "DeleteTenantConfiguration", ctx, arg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteTenantConfiguration indicates an expected call of DeleteTenantConfiguration.
-func (mr *MockStoreMockRecorder) DeleteTenantConfiguration(ctx any) *gomock.Call {
+func (mr *MockStoreMockRecorder) DeleteTenantConfiguration(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTenantConfiguration", reflect.TypeOf((*MockStore)(nil).DeleteTenantConfiguration), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTenantConfiguration", reflect.TypeOf((*MockStore)(nil).DeleteTenantConfiguration), ctx, arg)
 }
 
 // DeleteTenantUsageStats mocks base method.
@@ -817,6 +964,20 @@ func (m *MockStore) DeleteTenantUsageStats(ctx context.Context, periodStart time
 func (mr *MockStoreMockRecorder) DeleteTenantUsageStats(ctx, periodStart any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTenantUsageStats", reflect.TypeOf((*MockStore)(nil).DeleteTenantUsageStats), ctx, periodStart)
+}
+
+// DeleteUnusedEntityStates mocks base method.
+func (m *MockStore) DeleteUnusedEntityStates(ctx context.Context, arg DeleteUnusedEntityStatesParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteUnusedEntityStates", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteUnusedEntityStates indicates an expected call of DeleteUnusedEntityStates.
+func (mr *MockStoreMockRecorder) DeleteUnusedEntityStates(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUnusedEntityStates", reflect.TypeOf((*MockStore)(nil).DeleteUnusedEntityStates), ctx, arg)
 }
 
 // ExpireAttributeValue mocks base method.
@@ -861,6 +1022,21 @@ func (m *MockStore) GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*Ac
 func (mr *MockStoreMockRecorder) GetAccessRequestByID(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccessRequestByID", reflect.TypeOf((*MockStore)(nil).GetAccessRequestByID), ctx, id)
+}
+
+// GetActiveFeatureFlags mocks base method.
+func (m *MockStore) GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActiveFeatureFlags", ctx)
+	ret0, _ := ret[0].([]*FeatureFlag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActiveFeatureFlags indicates an expected call of GetActiveFeatureFlags.
+func (mr *MockStoreMockRecorder) GetActiveFeatureFlags(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveFeatureFlags", reflect.TypeOf((*MockStore)(nil).GetActiveFeatureFlags), ctx)
 }
 
 // GetActiveTenants mocks base method.
@@ -1116,6 +1292,21 @@ func (m *MockStore) GetCurrentTenantStorageUsage(ctx context.Context) (*GetCurre
 func (mr *MockStoreMockRecorder) GetCurrentTenantStorageUsage(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentTenantStorageUsage", reflect.TypeOf((*MockStore)(nil).GetCurrentTenantStorageUsage), ctx)
+}
+
+// GetDuplicateSequenceCheck mocks base method.
+func (m *MockStore) GetDuplicateSequenceCheck(ctx context.Context) ([]*GetDuplicateSequenceCheckRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDuplicateSequenceCheck", ctx)
+	ret0, _ := ret[0].([]*GetDuplicateSequenceCheckRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDuplicateSequenceCheck indicates an expected call of GetDuplicateSequenceCheck.
+func (mr *MockStoreMockRecorder) GetDuplicateSequenceCheck(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDuplicateSequenceCheck", reflect.TypeOf((*MockStore)(nil).GetDuplicateSequenceCheck), ctx)
 }
 
 // GetEmployeeByID mocks base method.
@@ -1418,6 +1609,21 @@ func (mr *MockStoreMockRecorder) GetEntitySequenceStats(ctx, dollar_1 any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitySequenceStats", reflect.TypeOf((*MockStore)(nil).GetEntitySequenceStats), ctx, dollar_1)
 }
 
+// GetEntitySequenceSummary mocks base method.
+func (m *MockStore) GetEntitySequenceSummary(ctx context.Context, entityID uuid.UUID) ([]*GetEntitySequenceSummaryRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntitySequenceSummary", ctx, entityID)
+	ret0, _ := ret[0].([]*GetEntitySequenceSummaryRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntitySequenceSummary indicates an expected call of GetEntitySequenceSummary.
+func (mr *MockStoreMockRecorder) GetEntitySequenceSummary(ctx, entityID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitySequenceSummary", reflect.TypeOf((*MockStore)(nil).GetEntitySequenceSummary), ctx, entityID)
+}
+
 // GetEntitySiblings mocks base method.
 func (m *MockStore) GetEntitySiblings(ctx context.Context, descendantID uuid.UUID) ([]*Entity, error) {
 	m.ctrl.T.Helper()
@@ -1463,6 +1669,21 @@ func (mr *MockStoreMockRecorder) GetEntityStateByKey(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityStateByKey", reflect.TypeOf((*MockStore)(nil).GetEntityStateByKey), ctx, arg)
 }
 
+// GetEntityStateHealthCheck mocks base method.
+func (m *MockStore) GetEntityStateHealthCheck(ctx context.Context) ([]*GetEntityStateHealthCheckRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityStateHealthCheck", ctx)
+	ret0, _ := ret[0].([]*GetEntityStateHealthCheckRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityStateHealthCheck indicates an expected call of GetEntityStateHealthCheck.
+func (mr *MockStoreMockRecorder) GetEntityStateHealthCheck(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityStateHealthCheck", reflect.TypeOf((*MockStore)(nil).GetEntityStateHealthCheck), ctx)
+}
+
 // GetEntityStateHistory mocks base method.
 func (m *MockStore) GetEntityStateHistory(ctx context.Context, arg GetEntityStateHistoryParams) ([]*GetEntityStateHistoryRow, error) {
 	m.ctrl.T.Helper()
@@ -1478,34 +1699,49 @@ func (mr *MockStoreMockRecorder) GetEntityStateHistory(ctx, arg any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityStateHistory", reflect.TypeOf((*MockStore)(nil).GetEntityStateHistory), ctx, arg)
 }
 
-// GetEntityStateWithLocking mocks base method.
-func (m *MockStore) GetEntityStateWithLocking(ctx context.Context, arg GetEntityStateWithLockingParams) (*Entitystate, error) {
+// GetEntityStateStats mocks base method.
+func (m *MockStore) GetEntityStateStats(ctx context.Context, fiscalYear *int16) ([]*GetEntityStateStatsRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntityStateWithLocking", ctx, arg)
-	ret0, _ := ret[0].(*Entitystate)
+	ret := m.ctrl.Call(m, "GetEntityStateStats", ctx, fiscalYear)
+	ret0, _ := ret[0].([]*GetEntityStateStatsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityStateStats indicates an expected call of GetEntityStateStats.
+func (mr *MockStoreMockRecorder) GetEntityStateStats(ctx, fiscalYear any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityStateStats", reflect.TypeOf((*MockStore)(nil).GetEntityStateStats), ctx, fiscalYear)
+}
+
+// GetEntityStateWithLocking mocks base method.
+func (m *MockStore) GetEntityStateWithLocking(ctx context.Context) (*GetEntityStateWithLockingRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityStateWithLocking", ctx)
+	ret0, _ := ret[0].(*GetEntityStateWithLockingRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEntityStateWithLocking indicates an expected call of GetEntityStateWithLocking.
-func (mr *MockStoreMockRecorder) GetEntityStateWithLocking(ctx, arg any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetEntityStateWithLocking(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityStateWithLocking", reflect.TypeOf((*MockStore)(nil).GetEntityStateWithLocking), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityStateWithLocking", reflect.TypeOf((*MockStore)(nil).GetEntityStateWithLocking), ctx)
 }
 
 // GetEntityStatesByFiscalYear mocks base method.
-func (m *MockStore) GetEntityStatesByFiscalYear(ctx context.Context, fiscalYear *int16) ([]*GetEntityStatesByFiscalYearRow, error) {
+func (m *MockStore) GetEntityStatesByFiscalYear(ctx context.Context, arg GetEntityStatesByFiscalYearParams) ([]*GetEntityStatesByFiscalYearRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntityStatesByFiscalYear", ctx, fiscalYear)
+	ret := m.ctrl.Call(m, "GetEntityStatesByFiscalYear", ctx, arg)
 	ret0, _ := ret[0].([]*GetEntityStatesByFiscalYearRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEntityStatesByFiscalYear indicates an expected call of GetEntityStatesByFiscalYear.
-func (mr *MockStoreMockRecorder) GetEntityStatesByFiscalYear(ctx, fiscalYear any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetEntityStatesByFiscalYear(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityStatesByFiscalYear", reflect.TypeOf((*MockStore)(nil).GetEntityStatesByFiscalYear), ctx, fiscalYear)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityStatesByFiscalYear", reflect.TypeOf((*MockStore)(nil).GetEntityStatesByFiscalYear), ctx, arg)
 }
 
 // GetEntityStats mocks base method.
@@ -1553,6 +1789,36 @@ func (mr *MockStoreMockRecorder) GetEntityTreeStructure(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityTreeStructure", reflect.TypeOf((*MockStore)(nil).GetEntityTreeStructure), ctx)
 }
 
+// GetEntityUnitSequence mocks base method.
+func (m *MockStore) GetEntityUnitSequence(ctx context.Context, arg GetEntityUnitSequenceParams) (*Entitystate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityUnitSequence", ctx, arg)
+	ret0, _ := ret[0].(*Entitystate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityUnitSequence indicates an expected call of GetEntityUnitSequence.
+func (mr *MockStoreMockRecorder) GetEntityUnitSequence(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityUnitSequence", reflect.TypeOf((*MockStore)(nil).GetEntityUnitSequence), ctx, arg)
+}
+
+// GetEntityUnitStates mocks base method.
+func (m *MockStore) GetEntityUnitStates(ctx context.Context, entityUnitID *uuid.UUID) ([]*GetEntityUnitStatesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityUnitStates", ctx, entityUnitID)
+	ret0, _ := ret[0].([]*GetEntityUnitStatesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityUnitStates indicates an expected call of GetEntityUnitStates.
+func (mr *MockStoreMockRecorder) GetEntityUnitStates(ctx, entityUnitID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityUnitStates", reflect.TypeOf((*MockStore)(nil).GetEntityUnitStates), ctx, entityUnitID)
+}
+
 // GetEntityWithHierarchyInfo mocks base method.
 func (m *MockStore) GetEntityWithHierarchyInfo(ctx context.Context, argUuid uuid.UUID) (*GetEntityWithHierarchyInfoRow, error) {
 	m.ctrl.T.Helper()
@@ -1566,6 +1832,21 @@ func (m *MockStore) GetEntityWithHierarchyInfo(ctx context.Context, argUuid uuid
 func (mr *MockStoreMockRecorder) GetEntityWithHierarchyInfo(ctx, argUuid any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityWithHierarchyInfo", reflect.TypeOf((*MockStore)(nil).GetEntityWithHierarchyInfo), ctx, argUuid)
+}
+
+// GetEntityWithUnitStates mocks base method.
+func (m *MockStore) GetEntityWithUnitStates(ctx context.Context, entityID uuid.UUID) ([]*GetEntityWithUnitStatesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityWithUnitStates", ctx, entityID)
+	ret0, _ := ret[0].([]*GetEntityWithUnitStatesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityWithUnitStates indicates an expected call of GetEntityWithUnitStates.
+func (mr *MockStoreMockRecorder) GetEntityWithUnitStates(ctx, entityID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityWithUnitStates", reflect.TypeOf((*MockStore)(nil).GetEntityWithUnitStates), ctx, entityID)
 }
 
 // GetEvaluationCacheStats mocks base method.
@@ -1628,6 +1909,66 @@ func (mr *MockStoreMockRecorder) GetExpiredAccessRequests(ctx any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExpiredAccessRequests", reflect.TypeOf((*MockStore)(nil).GetExpiredAccessRequests), ctx)
 }
 
+// GetFeatureFlagByID mocks base method.
+func (m *MockStore) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFeatureFlagByID", ctx, id)
+	ret0, _ := ret[0].(*FeatureFlag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFeatureFlagByID indicates an expected call of GetFeatureFlagByID.
+func (mr *MockStoreMockRecorder) GetFeatureFlagByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagByID", reflect.TypeOf((*MockStore)(nil).GetFeatureFlagByID), ctx, id)
+}
+
+// GetFeatureFlagByName mocks base method.
+func (m *MockStore) GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFeatureFlagByName", ctx, name)
+	ret0, _ := ret[0].(*FeatureFlag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFeatureFlagByName indicates an expected call of GetFeatureFlagByName.
+func (mr *MockStoreMockRecorder) GetFeatureFlagByName(ctx, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagByName", reflect.TypeOf((*MockStore)(nil).GetFeatureFlagByName), ctx, name)
+}
+
+// GetFeatureFlagStats mocks base method.
+func (m *MockStore) GetFeatureFlagStats(ctx context.Context) (*GetFeatureFlagStatsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFeatureFlagStats", ctx)
+	ret0, _ := ret[0].(*GetFeatureFlagStatsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFeatureFlagStats indicates an expected call of GetFeatureFlagStats.
+func (mr *MockStoreMockRecorder) GetFeatureFlagStats(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagStats", reflect.TypeOf((*MockStore)(nil).GetFeatureFlagStats), ctx)
+}
+
+// GetFeatureFlagsByType mocks base method.
+func (m *MockStore) GetFeatureFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFeatureFlagsByType", ctx, flagType)
+	ret0, _ := ret[0].([]*FeatureFlag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFeatureFlagsByType indicates an expected call of GetFeatureFlagsByType.
+func (mr *MockStoreMockRecorder) GetFeatureFlagsByType(ctx, flagType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagsByType", reflect.TypeOf((*MockStore)(nil).GetFeatureFlagsByType), ctx, flagType)
+}
+
 // GetHighestSequenceNumber mocks base method.
 func (m *MockStore) GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (any, error) {
 	m.ctrl.T.Helper()
@@ -1673,6 +2014,21 @@ func (mr *MockStoreMockRecorder) GetLatestTenantUsageStats(ctx any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestTenantUsageStats", reflect.TypeOf((*MockStore)(nil).GetLatestTenantUsageStats), ctx)
 }
 
+// GetMultipleEntityStates mocks base method.
+func (m *MockStore) GetMultipleEntityStates(ctx context.Context, arg GetMultipleEntityStatesParams) ([]*Entitystate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMultipleEntityStates", ctx, arg)
+	ret0, _ := ret[0].([]*Entitystate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMultipleEntityStates indicates an expected call of GetMultipleEntityStates.
+func (mr *MockStoreMockRecorder) GetMultipleEntityStates(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMultipleEntityStates", reflect.TypeOf((*MockStore)(nil).GetMultipleEntityStates), ctx, arg)
+}
+
 // GetNextSequenceNumber mocks base method.
 func (m *MockStore) GetNextSequenceNumber(ctx context.Context, arg GetNextSequenceNumberParams) (int64, error) {
 	m.ctrl.T.Helper()
@@ -1686,6 +2042,21 @@ func (m *MockStore) GetNextSequenceNumber(ctx context.Context, arg GetNextSequen
 func (mr *MockStoreMockRecorder) GetNextSequenceNumber(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNextSequenceNumber", reflect.TypeOf((*MockStore)(nil).GetNextSequenceNumber), ctx, arg)
+}
+
+// GetOrCreateEntityState mocks base method.
+func (m *MockStore) GetOrCreateEntityState(ctx context.Context, arg GetOrCreateEntityStateParams) (*Entitystate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrCreateEntityState", ctx, arg)
+	ret0, _ := ret[0].(*Entitystate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrCreateEntityState indicates an expected call of GetOrCreateEntityState.
+func (mr *MockStoreMockRecorder) GetOrCreateEntityState(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreateEntityState", reflect.TypeOf((*MockStore)(nil).GetOrCreateEntityState), ctx, arg)
 }
 
 // GetOrphanedEntities mocks base method.
@@ -1880,6 +2251,36 @@ func (m *MockStore) GetResourceEvaluationHistory(ctx context.Context, arg GetRes
 func (mr *MockStoreMockRecorder) GetResourceEvaluationHistory(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceEvaluationHistory", reflect.TypeOf((*MockStore)(nil).GetResourceEvaluationHistory), ctx, arg)
+}
+
+// GetSequenceGaps mocks base method.
+func (m *MockStore) GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSequenceGaps", ctx, arg)
+	ret0, _ := ret[0].([]pgtype.Numeric)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSequenceGaps indicates an expected call of GetSequenceGaps.
+func (mr *MockStoreMockRecorder) GetSequenceGaps(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSequenceGaps", reflect.TypeOf((*MockStore)(nil).GetSequenceGaps), ctx, arg)
+}
+
+// GetStaleEntityStates mocks base method.
+func (m *MockStore) GetStaleEntityStates(ctx context.Context, updatedAt time.Time) ([]*GetStaleEntityStatesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStaleEntityStates", ctx, updatedAt)
+	ret0, _ := ret[0].([]*GetStaleEntityStatesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetStaleEntityStates indicates an expected call of GetStaleEntityStates.
+func (mr *MockStoreMockRecorder) GetStaleEntityStates(ctx, updatedAt any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStaleEntityStates", reflect.TypeOf((*MockStore)(nil).GetStaleEntityStates), ctx, updatedAt)
 }
 
 // GetTenantByEmail mocks base method.
@@ -2534,6 +2935,21 @@ func (mr *MockStoreMockRecorder) ListEntityStates(ctx, entityID any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEntityStates", reflect.TypeOf((*MockStore)(nil).ListEntityStates), ctx, entityID)
 }
 
+// ListFeatureFlags mocks base method.
+func (m *MockStore) ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsParams) ([]*FeatureFlag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListFeatureFlags", ctx, arg)
+	ret0, _ := ret[0].([]*FeatureFlag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListFeatureFlags indicates an expected call of ListFeatureFlags.
+func (mr *MockStoreMockRecorder) ListFeatureFlags(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeatureFlags", reflect.TypeOf((*MockStore)(nil).ListFeatureFlags), ctx, arg)
+}
+
 // ListPolicies mocks base method.
 func (m *MockStore) ListPolicies(ctx context.Context) ([]*Policy, error) {
 	m.ctrl.T.Helper()
@@ -2781,6 +3197,21 @@ func (mr *MockStoreMockRecorder) SearchEntitiesByName(ctx, arg any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchEntitiesByName", reflect.TypeOf((*MockStore)(nil).SearchEntitiesByName), ctx, arg)
 }
 
+// SearchFeatureFlags mocks base method.
+func (m *MockStore) SearchFeatureFlags(ctx context.Context, arg SearchFeatureFlagsParams) ([]*FeatureFlag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchFeatureFlags", ctx, arg)
+	ret0, _ := ret[0].([]*FeatureFlag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchFeatureFlags indicates an expected call of SearchFeatureFlags.
+func (mr *MockStoreMockRecorder) SearchFeatureFlags(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchFeatureFlags", reflect.TypeOf((*MockStore)(nil).SearchFeatureFlags), ctx, arg)
+}
+
 // SearchPolicies mocks base method.
 func (m *MockStore) SearchPolicies(ctx context.Context, arg SearchPoliciesParams) ([]*Policy, error) {
 	m.ctrl.T.Helper()
@@ -2824,6 +3255,20 @@ func (m *MockStore) SearchUsersAdvanced(ctx context.Context, arg SearchUsersAdva
 func (mr *MockStoreMockRecorder) SearchUsersAdvanced(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchUsersAdvanced", reflect.TypeOf((*MockStore)(nil).SearchUsersAdvanced), ctx, arg)
+}
+
+// SetEntitySequence mocks base method.
+func (m *MockStore) SetEntitySequence(ctx context.Context, arg SetEntitySequenceParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetEntitySequence", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetEntitySequence indicates an expected call of SetEntitySequence.
+func (mr *MockStoreMockRecorder) SetEntitySequence(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEntitySequence", reflect.TypeOf((*MockStore)(nil).SetEntitySequence), ctx, arg)
 }
 
 // SetTenantContext mocks base method.
@@ -2999,6 +3444,21 @@ func (mr *MockStoreMockRecorder) UpdateEntity(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEntity", reflect.TypeOf((*MockStore)(nil).UpdateEntity), ctx, arg)
 }
 
+// UpdateEntitySequence mocks base method.
+func (m *MockStore) UpdateEntitySequence(ctx context.Context, arg UpdateEntitySequenceParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEntitySequence", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateEntitySequence indicates an expected call of UpdateEntitySequence.
+func (mr *MockStoreMockRecorder) UpdateEntitySequence(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEntitySequence", reflect.TypeOf((*MockStore)(nil).UpdateEntitySequence), ctx, arg)
+}
+
 // UpdateEntityStateSequence mocks base method.
 func (m *MockStore) UpdateEntityStateSequence(ctx context.Context, arg UpdateEntityStateSequenceParams) (*Entitystate, error) {
 	m.ctrl.T.Helper()
@@ -3012,6 +3472,21 @@ func (m *MockStore) UpdateEntityStateSequence(ctx context.Context, arg UpdateEnt
 func (mr *MockStoreMockRecorder) UpdateEntityStateSequence(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEntityStateSequence", reflect.TypeOf((*MockStore)(nil).UpdateEntityStateSequence), ctx, arg)
+}
+
+// UpdateFeatureFlag mocks base method.
+func (m *MockStore) UpdateFeatureFlag(ctx context.Context, arg UpdateFeatureFlagParams) (*FeatureFlag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFeatureFlag", ctx, arg)
+	ret0, _ := ret[0].(*FeatureFlag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateFeatureFlag indicates an expected call of UpdateFeatureFlag.
+func (mr *MockStoreMockRecorder) UpdateFeatureFlag(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFeatureFlag", reflect.TypeOf((*MockStore)(nil).UpdateFeatureFlag), ctx, arg)
 }
 
 // UpdateHierarchyPaths mocks base method.
@@ -3340,18 +3815,18 @@ func (mr *MockStoreMockRecorder) ValidateEntityCode(ctx, arg any) *gomock.Call {
 }
 
 // ValidateEntityHierarchy mocks base method.
-func (m *MockStore) ValidateEntityHierarchy(ctx context.Context, tenantID uuid.UUID) (bool, error) {
+func (m *MockStore) ValidateEntityHierarchy(ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateEntityHierarchy", ctx, tenantID)
+	ret := m.ctrl.Call(m, "ValidateEntityHierarchy", ctx)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ValidateEntityHierarchy indicates an expected call of ValidateEntityHierarchy.
-func (mr *MockStoreMockRecorder) ValidateEntityHierarchy(ctx, tenantID any) *gomock.Call {
+func (mr *MockStoreMockRecorder) ValidateEntityHierarchy(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateEntityHierarchy", reflect.TypeOf((*MockStore)(nil).ValidateEntityHierarchy), ctx, tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateEntityHierarchy", reflect.TypeOf((*MockStore)(nil).ValidateEntityHierarchy), ctx)
 }
 
 // ValidateEntityName mocks base method.
@@ -3382,6 +3857,21 @@ func (m *MockStore) ValidateEntityParent(ctx context.Context, arg ValidateEntity
 func (mr *MockStoreMockRecorder) ValidateEntityParent(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateEntityParent", reflect.TypeOf((*MockStore)(nil).ValidateEntityParent), ctx, arg)
+}
+
+// ValidateSequenceIntegrity mocks base method.
+func (m *MockStore) ValidateSequenceIntegrity(ctx context.Context) ([]*ValidateSequenceIntegrityRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateSequenceIntegrity", ctx)
+	ret0, _ := ret[0].([]*ValidateSequenceIntegrityRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateSequenceIntegrity indicates an expected call of ValidateSequenceIntegrity.
+func (mr *MockStoreMockRecorder) ValidateSequenceIntegrity(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateSequenceIntegrity", reflect.TypeOf((*MockStore)(nil).ValidateSequenceIntegrity), ctx)
 }
 
 // WithTenant mocks base method.

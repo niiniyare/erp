@@ -63,16 +63,16 @@ func (h *AccessRequestGoaHandler) Create(ctx context.Context, p *accessrequest.C
 
 	// TODO: Integrate with existing access request creation logic
 	result := &accessrequest.AccessRequestResult{
-		ID:           "req-123",
-		RequesterID:  p.RequesterID,
-		EntityID:     p.EntityID,
-		ResourceType: p.ResourceType,
-		AccessLevel:  p.AccessLevel,
-		Status:       "pending",
-		Reason:       p.Reason,
-		DurationHours:24,
-		CreatedAt:    "2024-01-01T00:00:00Z",
-		UpdatedAt:    "2024-01-01T00:00:00Z",
+		ID:            "req-123",
+		RequesterID:   p.RequesterID,
+		EntityID:      p.EntityID,
+		ResourceType:  p.ResourceType,
+		AccessLevel:   p.AccessLevel,
+		Status:        "pending",
+		Reason:        p.Reason,
+		DurationHours: 24,
+		CreatedAt:     "2024-01-01T00:00:00Z",
+		UpdatedAt:     "2024-01-01T00:00:00Z",
 	}
 
 	h.metrics.IncrementCounter("access_request_create_total", metrics.Fields{
@@ -104,16 +104,16 @@ func (h *AccessRequestGoaHandler) Get(ctx context.Context, p *accessrequest.GetP
 
 	// TODO: Integrate with existing access request retrieval logic
 	result := &accessrequest.AccessRequestResult{
-		ID:           p.ID,
-		RequesterID:  "user-123",
-		EntityID:     "entity-456",
-		ResourceType: "document",
-		AccessLevel:  "read",
-		Status:       "pending",
-		Reason:       "Need access for review",
-		DurationHours:24,
-		CreatedAt:    "2024-01-01T00:00:00Z",
-		UpdatedAt:    "2024-01-01T00:00:00Z",
+		ID:            p.ID,
+		RequesterID:   "user-123",
+		EntityID:      "entity-456",
+		ResourceType:  "document",
+		AccessLevel:   "read",
+		Status:        "pending",
+		Reason:        "Need access for review",
+		DurationHours: 24,
+		CreatedAt:     "2024-01-01T00:00:00Z",
+		UpdatedAt:     "2024-01-01T00:00:00Z",
 	}
 
 	h.metrics.IncrementCounter("access_request_get_total", metrics.Fields{})
@@ -137,17 +137,17 @@ func (h *AccessRequestGoaHandler) Process(ctx context.Context, p *accessrequest.
 
 	// TODO: Integrate with existing access request processing logic
 	result := &accessrequest.AccessRequestResult{
-		ID:           p.ID,
-		RequesterID:  "user-123",
-		EntityID:     "entity-456",
-		ResourceType: "document",
-		AccessLevel:  "read",
-		Status:       p.Action,
-		Reason:       "Need access for review",
-		DurationHours:24,
-		ReviewerID:   &p.ReviewerID,
-		CreatedAt:    "2024-01-01T00:00:00Z",
-		UpdatedAt:    "2024-01-01T00:00:01Z",
+		ID:            p.ID,
+		RequesterID:   "user-123",
+		EntityID:      "entity-456",
+		ResourceType:  "document",
+		AccessLevel:   "read",
+		Status:        p.Action,
+		Reason:        "Need access for review",
+		DurationHours: 24,
+		ReviewerID:    &p.ReviewerID,
+		CreatedAt:     "2024-01-01T00:00:00Z",
+		UpdatedAt:     "2024-01-01T00:00:01Z",
 	}
 
 	h.metrics.IncrementCounter("access_request_process_total", metrics.Fields{
@@ -195,16 +195,16 @@ func (h *AccessRequestGoaHandler) List(ctx context.Context, p *accessrequest.Lis
 	result := &accessrequest.AccessRequestListResult{
 		Requests: []*accessrequest.AccessRequestResult{
 			{
-				ID:           "req-123",
-				RequesterID:  "user-123",
-				EntityID:     "entity-456",
-				ResourceType: "document",
-				AccessLevel:  "read",
-				Status:       "pending",
-				Reason:       "Need access for review",
-				DurationHours:24,
-				CreatedAt:    "2024-01-01T00:00:00Z",
-				UpdatedAt:    "2024-01-01T00:00:00Z",
+				ID:            "req-123",
+				RequesterID:   "user-123",
+				EntityID:      "entity-456",
+				ResourceType:  "document",
+				AccessLevel:   "read",
+				Status:        "pending",
+				Reason:        "Need access for review",
+				DurationHours: 24,
+				CreatedAt:     "2024-01-01T00:00:00Z",
+				UpdatedAt:     "2024-01-01T00:00:00Z",
 			},
 		},
 		Total:  1,
@@ -347,12 +347,12 @@ func (h *AccessRequestGoaHandler) UserRiskAssessment(ctx context.Context, p *acc
 
 	// TODO: Integrate with existing user risk assessment logic
 	result := &accessrequest.UserRiskResult{
-		UserID:         p.UserID,
-		RiskScore:      0.25,
-		RiskLevel:      "low",
-		RiskFactors:    []string{"consistent_access_pattern"},
+		UserID:          p.UserID,
+		RiskScore:       0.25,
+		RiskLevel:       "low",
+		RiskFactors:     []string{"consistent_access_pattern"},
 		Recommendations: []string{"maintain_current_security_level"},
-		LastAssessment: "2024-01-01T00:00:00Z",
+		LastAssessment:  "2024-01-01T00:00:00Z",
 	}
 
 	h.metrics.IncrementCounter("user_risk_assessment_total", metrics.Fields{})
@@ -377,9 +377,9 @@ func (h *AccessRequestGoaHandler) UserInsights(ctx context.Context, p *accessreq
 	result := &accessrequest.UserInsightsResult{
 		UserID:                  p.UserID,
 		ProductivityScore:       0.85,
-		UsageTrends:            []string{"increased_weekend_usage", "consistent_morning_pattern"},
+		UsageTrends:             []string{"increased_weekend_usage", "consistent_morning_pattern"},
 		OptimizationSuggestions: []string{"consolidate_morning_tasks", "use_mobile_app_more"},
-		SecurityAlerts:         []string{"new_device_detected"},
+		SecurityAlerts:          []string{"new_device_detected"},
 	}
 
 	h.metrics.IncrementCounter("user_insights_total", metrics.Fields{})

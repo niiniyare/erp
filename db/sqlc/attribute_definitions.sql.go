@@ -395,8 +395,7 @@ const getAttributeValue = `-- name: GetAttributeValue :one
 SELECT av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by, ad.name as attribute_name, ad.data_type, ad.category
 FROM attribute_values av
 JOIN attribute_definitions ad ON av.definition_id = ad.id
-WHERE av.id = $1 
-  AND av.tenant_id = current_tenant_id()
+WHERE av.id = $1
 `
 
 type GetAttributeValueRow struct {
@@ -425,7 +424,6 @@ type GetAttributeValueRow struct {
 //	FROM attribute_values av
 //	JOIN attribute_definitions ad ON av.definition_id = ad.id
 //	WHERE av.id = $1
-//	  AND av.tenant_id = current_tenant_id()
 func (q *Queries) GetAttributeValue(ctx context.Context, id uuid.UUID) (*GetAttributeValueRow, error) {
 	row := q.db.QueryRow(ctx, getAttributeValue, id)
 	var i GetAttributeValueRow
@@ -551,7 +549,6 @@ SELECT
 FROM attribute_values av
 JOIN attribute_definitions ad ON av.definition_id = ad.id
 WHERE av.entity_id = $1
-  AND av.tenant_id = current_tenant_id()
   AND (
     $2::VARCHAR IS NULL OR 
     ad.category = $2
@@ -599,7 +596,6 @@ type GetAttributeValuesByEntityRow struct {
 //	FROM attribute_values av
 //	JOIN attribute_definitions ad ON av.definition_id = ad.id
 //	WHERE av.entity_id = $1
-//	  AND av.tenant_id = current_tenant_id()
 //	  AND (
 //	    $2::VARCHAR IS NULL OR
 //	    ad.category = $2

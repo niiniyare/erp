@@ -89,12 +89,12 @@ func (q *Queries) CreatePerson(ctx context.Context, arg CreatePersonParams) (*Pe
 }
 
 const getPersonByID = `-- name: GetPersonByID :one
-SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM persons WHERE id = $1 AND deleted_at IS NULL
+SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM persons WHERE id = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id()
 `
 
 // GetPersonByID
 //
-//	SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM persons WHERE id = $1 AND deleted_at IS NULL
+//	SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM persons WHERE id = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id()
 func (q *Queries) GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error) {
 	row := q.db.QueryRow(ctx, getPersonByID, id)
 	var i Person

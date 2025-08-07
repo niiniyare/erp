@@ -15,6 +15,7 @@ import (
 	"github.com/niiniyare/erp/internal/core/analytics"
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/entity"
+	"github.com/niiniyare/erp/internal/core/featureflag"
 	"github.com/niiniyare/erp/internal/core/identity"
 	"github.com/niiniyare/erp/internal/core/notification"
 	"github.com/niiniyare/erp/internal/core/tenant"
@@ -26,11 +27,13 @@ import (
 
 type Services struct {
 	// Core services
-	TenantService   tenant.Service
-	EntityService   entity.Service
-	IdentityService identity.Service
-	ABACService     abac.Service
-	AuditService    audit.Service
+	TenantService      tenant.Service
+	EntityService      entity.Service
+	IdentityService    identity.Service
+	ABACService        abac.Service
+	AuditService       audit.Service
+	FeatureFlagService featureflag.SimpleService
+	AdminFeatureFlagService featureflag.AdminService
 
 	// Access services
 	AccessRequestService     request.AccessRequestService
@@ -73,6 +76,47 @@ func InitializeServices(store db.Store, redisClient cache.Service, metricsServic
 
 	// Initialize domain services
 	auditService := audit.NewService(auditRepo)
+	
+	// Initialize feature flag service with audit logging
+	featureFlagRepo := featureflag.NewSimpleRepository(store)
+	baseFeatureFlagService := featureflag.NewSimpleService(featureFlagRepo, tenantService, store, auditService)
+
+	// Wrap with caching if Redis is available
+	var featureFlagService featureflag.SimpleService
+	if redisClient != nil {
+		featureFlagService = featureflag.NewCachedFeatureFlagService(
+			baseFeatureFlagService,
+			redisClient,
+			logger.WithFields(logger.Fields{"service": "featureflag_cached"}),
+			metricsService,
+			tracingService,
+		)
+		logger.Info("Feature flag service initialized with Redis caching", logger.Fields{
+			"service": "featureflag",
+			"caching": "enabled",
+		})
+	} else {
+		featureFlagService = baseFeatureFlagService
+		logger.Info("Feature flag service initialized without caching", logger.Fields{
+			"service": "featureflag",
+			"caching": "disabled",
+		})
+	}
+
+	// Initialize admin feature flag service
+	adminFeatureFlagService := featureflag.NewAdminService(
+		featureFlagService,
+		auditService,
+		logger.WithFields(logger.Fields{"service": "admin_featureflag"}),
+		metricsService,
+		tracingService,
+		nil, // CacheWarmer can be nil for now
+	)
+	logger.Info("Admin feature flag service initialized", logger.Fields{
+		"service": "admin_featureflag",
+		"status":  "ready",
+	})
+
 	approverService := approval.NewApproverService(identityService, tracingService, metricsService)
 	notificationService := notification.NewNotificationService(tracingService, metricsService, nil, nil, notificationRepo)
 	executionService := execution.NewAccessExecutionService(identityRepo, identityService, tracingService, metricsService)
@@ -102,6 +146,8 @@ func InitializeServices(store db.Store, redisClient cache.Service, metricsServic
 		IdentityService:          identityService,
 		ABACService:              abacService,
 		AuditService:             auditService,
+		FeatureFlagService:       featureFlagService,
+		AdminFeatureFlagService:  adminFeatureFlagService,
 		AccessRequestService:     accessRequestService,
 		ConditionalAccessService: conditionalAccessService,
 		AnalyticsService:         analyticsService,

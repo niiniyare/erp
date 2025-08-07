@@ -29,6 +29,13 @@ BEGIN
     END IF;
 END
 $$;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'readonly_role') THEN
+        CREATE ROLE readonly_role;
+    END IF;
+END
+$$;
 
 -- =====================================================
 -- CORE TENANT MANAGEMENT
@@ -212,7 +219,8 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER tenant_slug_trigger
     BEFORE INSERT ON tenants FOR EACH ROW
-    EXECUTE FUNCTION generate_slug_from_name();-- =====================================================
+    EXECUTE FUNCTION generate_slug_from_name();
+-- =====================================================
 -- TENANT CONFIGURATIONS TABLE
 -- =====================================================
 -- Stores tenant-specific configuration, limits, and feature flags
@@ -827,14 +835,6 @@ CREATE TABLE entitystate (
     sequence BIGINT NOT NULL,                             -- Next sequence number
     entity_id UUID NOT NULL REFERENCES entities(uuid) DEFERRABLE INITIALLY DEFERRED,
     entity_unit_id UUID REFERENCES entities(uuid) DEFERRABLE INITIALLY DEFERRED,
-    
-    -- Standard validation columns
-    version INTEGER NOT NULL DEFAULT 1,
-    last_validation_run TIMESTAMPTZ,
-    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
-        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
-    ),
-    validation_errors JSONB DEFAULT '[]'::jsonb,
     
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -3992,6 +3992,92 @@ CREATE POLICY attribute_definitions_tenant_isolation ON attribute_definitions
 
 
 -- ------------------------------------------------------------------------------------------------
+-- ATTRIBUTE VALUES
+-- ------------------------------------------------------------------------------------------------
+-- Stores actual attribute values for ABAC policy evaluation.
+-- ------------------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS attribute_values (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    definition_id UUID NOT NULL REFERENCES attribute_definitions(id) ON DELETE CASCADE,
+    entity_id UUID NOT NULL,                       -- The entity this attribute belongs to (user, resource, etc.)
+    value TEXT NOT NULL,                           -- The actual attribute value (may be encrypted)
+    encrypted_value BYTEA,                         -- Encrypted version if encryption is enabled
+    is_encrypted BOOLEAN DEFAULT false,
+    version INTEGER DEFAULT 1,                     -- For versioning/auditing changes
+    effective_from TIMESTAMPTZ DEFAULT NOW(),      -- When this value becomes effective
+    effective_to TIMESTAMPTZ,                      -- When this value expires (nullable for current values)
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by UUID REFERENCES users(id),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_by UUID REFERENCES users(id),
+    
+    CONSTRAINT attribute_values_unique_current UNIQUE (tenant_id, definition_id, entity_id, effective_from)
+);
+
+COMMENT ON TABLE attribute_values IS 
+'Stores actual attribute values for entities with versioning, encryption, and temporal support for ABAC policy evaluation.';
+
+COMMENT ON COLUMN attribute_values.entity_id IS 'The UUID of the entity this attribute belongs to (user, resource, document, etc.)';
+COMMENT ON COLUMN attribute_values.value IS 'The actual attribute value in string format';
+COMMENT ON COLUMN attribute_values.encrypted_value IS 'Encrypted version of the value when encryption is required';
+COMMENT ON COLUMN attribute_values.effective_from IS 'When this attribute value becomes effective (for temporal policies)';
+COMMENT ON COLUMN attribute_values.effective_to IS 'When this attribute value expires (null for current values)';
+
+-- Enable RLS and create policies
+ALTER TABLE attribute_values ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY attribute_values_tenant_isolation ON attribute_values
+    FOR ALL TO public
+    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+
+-- Create indexes for performance
+CREATE INDEX idx_attribute_values_entity_definition ON attribute_values(tenant_id, entity_id, definition_id) 
+    WHERE effective_to IS NULL;
+
+CREATE INDEX idx_attribute_values_definition_value ON attribute_values(tenant_id, definition_id, value) 
+    WHERE effective_to IS NULL;
+
+CREATE INDEX idx_attribute_values_effective_period ON attribute_values(effective_from, effective_to);
+
+-- ------------------------------------------------------------------------------------------------
+-- ATTRIBUTE SOURCES
+-- ------------------------------------------------------------------------------------------------
+-- Defines external sources for attribute collection.
+-- ------------------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS attribute_sources (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    display_name VARCHAR(150),
+    description TEXT,
+    source_type VARCHAR(50) NOT NULL 
+        CHECK (source_type IN ('LDAP', 'DATABASE', 'REST_API', 'GRAPHQL', 'FILE', 'MANUAL')),
+    configuration JSONB NOT NULL DEFAULT '{}'::jsonb,  -- Source-specific configuration
+    authentication JSONB DEFAULT '{}'::jsonb,          -- Authentication details (encrypted)
+    cache_ttl_minutes INTEGER DEFAULT 60,              -- How long to cache attributes from this source
+    is_active BOOLEAN DEFAULT true,
+    priority INTEGER DEFAULT 100,                      -- Source priority for attribute resolution
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    CONSTRAINT attribute_sources_name_unique_per_tenant UNIQUE (tenant_id, name)
+);
+
+COMMENT ON TABLE attribute_sources IS 
+'Defines external sources for attribute collection with configuration, authentication, and caching controls.';
+
+COMMENT ON COLUMN attribute_sources.source_type IS 'Type of attribute source: LDAP, DATABASE, REST_API, GRAPHQL, FILE, MANUAL';
+COMMENT ON COLUMN attribute_sources.configuration IS 'JSONB containing source-specific configuration (URLs, queries, etc.)';
+COMMENT ON COLUMN attribute_sources.authentication IS 'JSONB containing authentication details (should be encrypted)';
+COMMENT ON COLUMN attribute_sources.priority IS 'Source priority for attribute resolution (higher numbers processed first)';
+
+-- Enable RLS and create policies
+ALTER TABLE attribute_sources ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY attribute_sources_tenant_isolation ON attribute_sources
+    FOR ALL TO public
+    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);-- ------------------------------------------------------------------------------------------------
 -- POLICY EVALUATIONS CACHE
 -- ------------------------------------------------------------------------------------------------
 -- Caches policy evaluation results for performance optimization.
@@ -4025,3 +4111,2374 @@ CREATE POLICY policy_evaluations_tenant_isolation ON policy_evaluations
     USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
 
 
+-- ------------------------------------------------------------------------------------------------
+-- UPDATE POLICY EVALUATIONS FOR ABAC
+-- ------------------------------------------------------------------------------------------------
+-- Updates policy evaluations table to support flexible resource types for ABAC.
+-- ------------------------------------------------------------------------------------------------
+
+-- Drop existing table and recreate with flexible schema
+DROP TABLE IF EXISTS policy_evaluations CASCADE;
+
+CREATE TABLE IF NOT EXISTS policy_evaluations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id),
+    resource_type VARCHAR(100) NOT NULL,           -- Flexible resource type (user, document, etc.)
+    resource_id UUID,                              -- Optional specific resource ID
+    action VARCHAR(100) NOT NULL,                  -- Action being performed (read, write, etc.)
+    entity_id UUID REFERENCES entities(uuid),      -- Optional entity context
+    context_hash VARCHAR(64) NOT NULL,             -- Hash of evaluation context
+    decision VARCHAR(20) NOT NULL CHECK (decision IN ('ALLOW', 'DENY', 'NOT_APPLICABLE')),
+    applicable_policies UUID[] DEFAULT '{}',       -- Array of policy IDs that fired
+    policy_decisions JSONB DEFAULT '[]'::jsonb,    -- Detailed policy decisions
+    evaluation_time_ms INTEGER,                    -- Performance metric
+    cache_key VARCHAR(255),                        -- Optional cache key for faster lookup
+    evaluated_at TIMESTAMPTZ DEFAULT NOW(),
+    expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '1 hour'),
+    
+    -- Unique constraint for cache lookups
+    CONSTRAINT policy_evaluations_unique_cache 
+        UNIQUE (tenant_id, user_id, resource_type, resource_id, action, context_hash)
+);
+
+COMMENT ON TABLE policy_evaluations IS 
+'Caches ABAC policy evaluation results with flexible resource types and detailed decision tracking for performance optimization.';
+
+COMMENT ON COLUMN policy_evaluations.resource_type IS 'Type of resource being accessed (user, document, report, system, etc.)';
+COMMENT ON COLUMN policy_evaluations.resource_id IS 'Optional specific resource identifier';
+COMMENT ON COLUMN policy_evaluations.action IS 'Action being performed (read, write, delete, execute, etc.)';
+COMMENT ON COLUMN policy_evaluations.context_hash IS 'SHA-256 hash of evaluation context for cache key uniqueness';
+COMMENT ON COLUMN policy_evaluations.applicable_policies IS 'Array of policy UUIDs that were evaluated and contributed to the decision';
+COMMENT ON COLUMN policy_evaluations.policy_decisions IS 'JSONB array containing detailed policy decision information';
+COMMENT ON COLUMN policy_evaluations.evaluation_time_ms IS 'Policy evaluation time in milliseconds for performance monitoring';
+
+-- Enable RLS and create policies
+ALTER TABLE policy_evaluations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY policy_evaluations_tenant_isolation ON policy_evaluations
+    FOR ALL TO public
+    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+
+-- Create indexes for performance
+CREATE INDEX idx_policy_evaluations_cache_lookup ON policy_evaluations(
+    tenant_id, user_id, resource_type, resource_id, action, context_hash
+);
+
+CREATE INDEX idx_policy_evaluations_user_resource ON policy_evaluations(
+    tenant_id, user_id, resource_type
+);
+
+CREATE INDEX idx_policy_evaluations_expires_at ON policy_evaluations(expires_at);
+
+CREATE INDEX idx_policy_evaluations_resource_action ON policy_evaluations(
+    tenant_id, resource_type, action
+);CREATE TABLE policy_decisions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    policy_evaluation_id UUID NOT NULL REFERENCES policy_evaluations(id) ON DELETE CASCADE,
+    policy_id UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
+    decision VARCHAR(20) NOT NULL,
+    reason TEXT,
+    matched_rule TEXT,
+    evaluation_ms BIGINT,
+    target_matched BOOLEAN,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_policy_evaluation FOREIGN KEY (policy_evaluation_id) REFERENCES policy_evaluations(id),
+    CONSTRAINT fk_policy FOREIGN KEY (policy_id) REFERENCES policies(id)
+);
+
+CREATE INDEX idx_policy_decisions_evaluation_id ON policy_decisions(policy_evaluation_id);
+CREATE INDEX idx_policy_decisions_policy_id ON policy_decisions(policy_id);
+
+COMMENT ON TABLE policy_decisions IS 'Stores individual policy decisions made during a policy evaluation.';
+CREATE OR REPLACE FUNCTION assign_user_role(
+    p_user_id UUID,
+    p_role_id UUID,
+    p_entity_id UUID,
+    p_assigned_by UUID
+) RETURNS VOID AS $$
+BEGIN
+    INSERT INTO user_roles (user_id, role_id, entity_id, assigned_by)
+    VALUES (p_user_id, p_role_id, p_entity_id, p_assigned_by);
+END;
+$$ LANGUAGE plpgsql SECURITY INVOKER;
+
+CREATE OR REPLACE FUNCTION revoke_user_role(
+    p_user_id UUID,
+    p_role_id UUID,
+    p_entity_id UUID
+) RETURNS VOID AS $$
+BEGIN
+    DELETE FROM user_roles
+    WHERE user_id = p_user_id
+      AND role_id = p_role_id
+      AND entity_id = p_entity_id;
+END;
+$$ LANGUAGE plpgsql SECURITY INVOKER;-- =====================================================
+-- USER ACTIVITIES TABLE FOR ABAC BEHAVIORAL ANALYTICS
+-- =====================================================
+-- Advanced user activity tracking for behavioral analytics
+-- Supports ABAC evaluation with rich security context
+-- Partitioned by timestamp for performance at scale
+
+-- Main partitioned table for user activity tracking
+CREATE TABLE user_activities (
+    id UUID DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    session_id UUID REFERENCES user_sessions(id) ON DELETE SET NULL,
+    
+    -- Activity classification
+    activity_type VARCHAR(50) NOT NULL,
+    module VARCHAR(50),
+    resource_type VARCHAR(50),
+    resource_id UUID,
+    action_performed VARCHAR(50),
+    
+    -- Security context for ABAC evaluation
+    ip_address INET,
+    user_agent TEXT,
+    device_fingerprint VARCHAR(255),
+    location_data JSONB DEFAULT '{}'::jsonb,
+    
+    -- Performance and request metrics
+    request_method VARCHAR(10),
+    request_path TEXT,
+    request_params JSONB DEFAULT '{}'::jsonb,
+    response_status INTEGER,
+    response_time_ms INTEGER,
+    
+    -- Risk assessment data
+    risk_indicators JSONB DEFAULT '{}'::jsonb,
+    anomaly_score DECIMAL(5,2) DEFAULT 0.00,
+    
+    -- Activity metadata and context
+    timestamp TIMESTAMPTZ DEFAULT NOW(),
+    additional_data JSONB DEFAULT '{}'::jsonb,
+    
+    -- Constraints
+    CONSTRAINT user_activities_anomaly_score_range 
+        CHECK (anomaly_score >= 0.00 AND anomaly_score <= 100.00),
+    -- Composite primary key including partition column
+    PRIMARY KEY (id, timestamp)
+) PARTITION BY RANGE (timestamp);
+
+-- Create initial partitions (last 3 months + next 3 months)
+-- Current month partition
+CREATE TABLE user_activities_current PARTITION OF user_activities
+    FOR VALUES FROM (date_trunc('month', CURRENT_DATE)) 
+    TO (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month');
+
+-- Previous 2 months partitions
+CREATE TABLE user_activities_prev1 PARTITION OF user_activities
+    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) - INTERVAL '1 month') 
+    TO (date_trunc('month', CURRENT_DATE));
+
+CREATE TABLE user_activities_prev2 PARTITION OF user_activities
+    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) - INTERVAL '2 months') 
+    TO (date_trunc('month', CURRENT_DATE) - INTERVAL '1 month');
+
+-- Next 2 months partitions
+CREATE TABLE user_activities_next1 PARTITION OF user_activities
+    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month') 
+    TO (date_trunc('month', CURRENT_DATE) + INTERVAL '2 months');
+
+CREATE TABLE user_activities_next2 PARTITION OF user_activities
+    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) + INTERVAL '2 months') 
+    TO (date_trunc('month', CURRENT_DATE) + INTERVAL '3 months');
+
+-- Performance indexes
+CREATE INDEX idx_user_activities_user_timestamp ON user_activities (user_id, timestamp DESC);
+CREATE INDEX idx_user_activities_tenant_timestamp ON user_activities (tenant_id, timestamp DESC);
+CREATE INDEX idx_user_activities_activity_type ON user_activities (activity_type, timestamp DESC);
+CREATE INDEX idx_user_activities_session ON user_activities (session_id) WHERE session_id IS NOT NULL;
+CREATE INDEX idx_user_activities_resource ON user_activities (resource_type, resource_id) WHERE resource_id IS NOT NULL;
+
+-- JSONB indexes for ABAC attribute queries
+CREATE INDEX idx_user_activities_location_data ON user_activities USING GIN (location_data);
+CREATE INDEX idx_user_activities_risk_indicators ON user_activities USING GIN (risk_indicators);
+CREATE INDEX idx_user_activities_additional_data ON user_activities USING GIN (additional_data);
+
+-- Risk and anomaly detection indexes
+CREATE INDEX idx_user_activities_anomaly_score ON user_activities (anomaly_score DESC) WHERE anomaly_score > 0;
+CREATE INDEX idx_user_activities_high_risk ON user_activities (user_id, timestamp DESC) 
+    WHERE anomaly_score > 50.0;
+
+-- Enable Row Level Security
+ALTER TABLE user_activities ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policy: Users can only access activities within their tenant
+CREATE POLICY user_activities_tenant_isolation ON user_activities
+    FOR ALL 
+    TO application_role
+    USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
+
+-- RLS Policy: Users can view their own activities (for self-service features)
+CREATE POLICY user_activities_self_access ON user_activities
+    FOR SELECT
+    TO application_role
+    USING (
+        user_id = current_setting('app.current_user_id')::uuid AND
+        tenant_id = current_setting('app.current_tenant_id')::uuid
+    );
+
+-- RLS Policy: Admin bypass - system administrators can access all activities within tenant
+CREATE POLICY user_activities_admin_bypass ON user_activities
+    FOR ALL
+    TO admin_role
+    USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
+
+-- Grant permissions
+GRANT SELECT, INSERT, UPDATE ON user_activities TO application_role;
+GRANT ALL PRIVILEGES ON user_activities TO admin_role;
+
+-- Table and column comments for documentation
+COMMENT ON TABLE user_activities IS 'Partitioned table for user activity tracking and behavioral analytics supporting ABAC evaluation';
+COMMENT ON COLUMN user_activities.id IS 'Unique identifier for the activity record';
+COMMENT ON COLUMN user_activities.user_id IS 'Reference to the user who performed the activity';
+COMMENT ON COLUMN user_activities.tenant_id IS 'Tenant isolation for multi-tenant architecture';
+COMMENT ON COLUMN user_activities.session_id IS 'Reference to the user session when activity occurred';
+COMMENT ON COLUMN user_activities.activity_type IS 'Classification of the activity (login, access, modification, etc.)';
+COMMENT ON COLUMN user_activities.location_data IS 'JSONB containing geographic and network location information';
+COMMENT ON COLUMN user_activities.risk_indicators IS 'JSONB containing calculated risk factors for the activity';
+COMMENT ON COLUMN user_activities.anomaly_score IS 'Calculated anomaly score from 0.00 to 100.00 for behavioral analysis';
+COMMENT ON COLUMN user_activities.additional_data IS 'Flexible JSONB storage for activity-specific metadata';
+
+-- Function to automatically create monthly partitions
+CREATE OR REPLACE FUNCTION create_monthly_user_activities_partition(partition_date DATE)
+RETURNS TEXT AS $$
+DECLARE
+    partition_name TEXT;
+    start_date DATE;
+    end_date DATE;
+BEGIN
+    -- Generate partition name
+    partition_name := 'user_activities_' || to_char(partition_date, 'YYYY_MM');
+    
+    -- Calculate partition boundaries
+    start_date := date_trunc('month', partition_date)::DATE;
+    end_date := (date_trunc('month', partition_date) + INTERVAL '1 month')::DATE;
+    
+    -- Create partition
+    EXECUTE format('CREATE TABLE %I PARTITION OF user_activities 
+                    FOR VALUES FROM (%L) TO (%L)', 
+                   partition_name, start_date, end_date);
+    
+    RETURN 'Created partition: ' || partition_name;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to drop old partitions (data retention)
+CREATE OR REPLACE FUNCTION drop_old_user_activities_partitions(retention_months INTEGER DEFAULT 12)
+RETURNS TEXT AS $$
+DECLARE
+    partition_name TEXT;
+    cutoff_date DATE;
+    dropped_partitions TEXT[] := '{}';
+    partition_record RECORD;
+BEGIN
+    cutoff_date := (date_trunc('month', CURRENT_DATE) - (retention_months || ' months')::INTERVAL)::DATE;
+    
+    -- Find partitions older than retention period
+    FOR partition_record IN
+        SELECT schemaname, tablename 
+        FROM pg_tables 
+        WHERE schemaname = 'public' 
+        AND tablename LIKE 'user_activities_%'
+        AND tablename ~ '^user_activities_[0-9]{4}_[0-9]{2}$'
+    LOOP
+        -- Extract date from partition name and check if it's old enough
+        BEGIN
+            DECLARE
+                partition_date DATE;
+            BEGIN
+                partition_date := to_date(
+                    substring(partition_record.tablename from 'user_activities_([0-9]{4}_[0-9]{2})$'), 
+                    'YYYY_MM'
+                );
+                
+                IF partition_date < cutoff_date THEN
+                    EXECUTE format('DROP TABLE IF EXISTS %I', partition_record.tablename);
+                    dropped_partitions := array_append(dropped_partitions, partition_record.tablename);
+                END IF;
+            END;
+        EXCEPTION
+            WHEN OTHERS THEN
+                -- Skip invalid partition names
+                CONTINUE;
+        END;
+    END LOOP;
+    
+    IF array_length(dropped_partitions, 1) > 0 THEN
+        RETURN 'Dropped partitions: ' || array_to_string(dropped_partitions, ', ');
+    ELSE
+        RETURN 'No old partitions found to drop';
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Grant execute permissions on utility functions
+GRANT EXECUTE ON FUNCTION create_monthly_user_activities_partition(DATE) TO application_role;
+GRANT EXECUTE ON FUNCTION drop_old_user_activities_partitions(INTEGER) TO application_role;
+GRANT EXECUTE ON FUNCTION create_monthly_user_activities_partition(DATE) TO admin_role;
+GRANT EXECUTE ON FUNCTION drop_old_user_activities_partitions(INTEGER) TO admin_role;-- Creates the core feature_flags table with proper indexing and RLS
+
+-- =====================================================
+-- FEATURE FLAGS TABLE
+-- =====================================================
+CREATE TABLE feature_flags (
+    -- Primary identifier
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    
+    -- Descriptive information
+    description TEXT,
+    
+    -- Flag configuration
+    flag_type VARCHAR(20) NOT NULL DEFAULT 'boolean'
+        CHECK (flag_type IN ('boolean', 'string', 'number', 'json')),
+    default_value BOOLEAN NOT NULL DEFAULT false,
+    
+    -- Rollout settings
+    rollout_percentage INTEGER
+        CHECK (rollout_percentage >= 0 AND rollout_percentage <= 100),
+    target_audience JSONB DEFAULT '{}', -- For advanced targeting rules
+    
+    -- Flexible metadata storage
+    metadata JSONB DEFAULT '{}',
+    
+    -- Audit timestamps
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ, -- Soft delete support
+    
+    -- Unique constraint per tenant
+    UNIQUE (tenant_id, name)
+);
+
+-- =====================================================
+-- PERFORMANCE INDEXES
+-- =====================================================
+CREATE INDEX idx_feature_flags_tenant ON feature_flags(tenant_id);
+CREATE INDEX idx_feature_flags_tenant_name ON feature_flags(tenant_id, name) WHERE deleted_at IS NULL;
+CREATE INDEX idx_feature_flags_type ON feature_flags(flag_type);
+CREATE INDEX idx_feature_flags_rollout ON feature_flags(rollout_percentage) WHERE rollout_percentage IS NOT NULL;
+CREATE INDEX idx_feature_flags_deleted_at ON feature_flags(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX idx_feature_flags_created_at ON feature_flags(created_at);
+CREATE INDEX idx_feature_flags_updated_at ON feature_flags(updated_at);
+CREATE INDEX idx_feature_flags_target_audience ON feature_flags USING GIN (target_audience) WHERE target_audience != '{}';
+CREATE INDEX idx_feature_flags_metadata ON feature_flags USING GIN (metadata) WHERE metadata != '{}';
+
+-- =====================================================
+-- TABLE COMMENTS
+-- =====================================================
+COMMENT ON TABLE feature_flags IS 'Master feature flags configuration table with tenant isolation';
+COMMENT ON COLUMN feature_flags.rollout_percentage IS 'Percentage of tenants that should have this feature enabled (0-100)';
+COMMENT ON COLUMN feature_flags.target_audience IS 'Advanced targeting rules (company_size, industry, etc.)';
+COMMENT ON COLUMN feature_flags.metadata IS 'Additional metadata like expiration dates, dependencies, etc.';
+COMMENT ON COLUMN feature_flags.deleted_at IS 'Soft delete timestamp - NULL means active';
+
+-- =====================================================
+-- ROW LEVEL SECURITY (RLS)
+-- =====================================================
+ALTER TABLE feature_flags ENABLE ROW LEVEL SECURITY;
+
+-- Tenant isolation policy for application role
+CREATE POLICY feature_flags_tenant_isolation ON feature_flags
+    FOR ALL TO application_role
+    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+
+-- Admin role can access all tenants
+CREATE POLICY feature_flags_admin_access ON feature_flags
+    FOR ALL TO admin_role
+    USING (true);
+
+-- Read-only role for monitoring/analytics
+CREATE POLICY feature_flags_readonly_access ON feature_flags
+    FOR SELECT TO readonly_role
+    USING (true);
+
+-- Policy comments
+COMMENT ON POLICY feature_flags_tenant_isolation ON feature_flags IS 'Ensures tenant data isolation for application users';
+COMMENT ON POLICY feature_flags_admin_access ON feature_flags IS 'Allows admin role full access across all tenants';
+COMMENT ON POLICY feature_flags_readonly_access ON feature_flags IS 'Allows readonly role to view all feature flags for monitoring';
+
+-- =====================================================
+-- PERMISSIONS
+-- =====================================================
+GRANT SELECT, INSERT, UPDATE, DELETE ON feature_flags TO application_role;
+GRANT ALL ON feature_flags TO admin_role;
+GRANT SELECT ON feature_flags TO readonly_role;
+
+-- =====================================================
+-- TRIGGERS
+-- =====================================================
+-- Auto-update updated_at timestamp
+CREATE TRIGGER update_feature_flags_updated_at
+    BEFORE UPDATE ON feature_flags
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+-- Creates the tenant_feature_overrides table with proper indexing and RLS
+
+-- =====================================================
+-- TENANT FEATURE OVERRIDES TABLE
+-- =====================================================
+CREATE TABLE tenant_feature_overrides (
+    -- Primary identifier
+    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    
+    -- References
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    feature_flag_id UUID NOT NULL REFERENCES feature_flags(id) ON DELETE CASCADE,
+    feature_flag_name VARCHAR(100) NOT NULL,
+    
+    -- Override settings
+    enabled BOOLEAN NOT NULL,
+    value JSONB DEFAULT '{}', -- For complex feature values
+    reason TEXT, -- Why this override was set
+    
+    -- Audit timestamps
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    
+    -- Unique constraint - one override per tenant per feature
+    UNIQUE (tenant_id, feature_flag_id)
+);
+
+-- =====================================================
+-- PERFORMANCE INDEXES
+-- =====================================================
+CREATE INDEX idx_tenant_overrides_tenant ON tenant_feature_overrides(tenant_id);
+CREATE INDEX idx_tenant_overrides_feature_id ON tenant_feature_overrides(feature_flag_id);
+CREATE INDEX idx_tenant_overrides_feature_name ON tenant_feature_overrides(feature_flag_name);
+CREATE INDEX idx_tenant_overrides_enabled ON tenant_feature_overrides(enabled);
+CREATE INDEX idx_tenant_overrides_tenant_enabled ON tenant_feature_overrides(tenant_id, enabled);
+CREATE INDEX idx_tenant_overrides_created_at ON tenant_feature_overrides(created_at);
+CREATE INDEX idx_tenant_overrides_updated_at ON tenant_feature_overrides(updated_at);
+CREATE INDEX idx_tenant_overrides_value ON tenant_feature_overrides USING GIN (value) WHERE value != '{}';
+CREATE INDEX idx_tenant_overrides_lookup ON tenant_feature_overrides(tenant_id, feature_flag_name, enabled);
+
+-- =====================================================
+-- TABLE COMMENTS
+-- =====================================================
+COMMENT ON TABLE tenant_feature_overrides IS 'Tenant-specific feature flag overrides with audit trail';
+COMMENT ON COLUMN tenant_feature_overrides.value IS 'Complex feature values for non-boolean flags (JSON format)';
+COMMENT ON COLUMN tenant_feature_overrides.reason IS 'Business justification for the override';
+COMMENT ON COLUMN tenant_feature_overrides.feature_flag_name IS 'Denormalized feature flag name for faster lookups';
+
+-- =====================================================
+-- ROW LEVEL SECURITY (RLS)
+-- =====================================================
+ALTER TABLE tenant_feature_overrides ENABLE ROW LEVEL SECURITY;
+
+-- Tenant isolation policy for application role
+CREATE POLICY tenant_overrides_tenant_isolation ON tenant_feature_overrides
+    FOR ALL TO application_role
+    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+
+-- Admin role can access all tenants
+CREATE POLICY tenant_overrides_admin_access ON tenant_feature_overrides
+    FOR ALL TO admin_role
+    USING (true);
+
+-- Read-only role for monitoring/analytics
+CREATE POLICY tenant_overrides_readonly_access ON tenant_feature_overrides
+    FOR SELECT TO readonly_role
+    USING (true);
+
+-- Policy comments
+COMMENT ON POLICY tenant_overrides_tenant_isolation ON tenant_feature_overrides IS 'Ensures tenant data isolation for application users';
+COMMENT ON POLICY tenant_overrides_admin_access ON tenant_feature_overrides IS 'Allows admin role full access across all tenants';
+COMMENT ON POLICY tenant_overrides_readonly_access ON tenant_feature_overrides IS 'Allows readonly role to view all overrides for monitoring';
+
+-- =====================================================
+-- PERMISSIONS
+-- =====================================================
+GRANT SELECT, INSERT, UPDATE, DELETE ON tenant_feature_overrides TO application_role;
+GRANT ALL ON tenant_feature_overrides TO admin_role;
+GRANT SELECT ON tenant_feature_overrides TO readonly_role;
+
+-- =====================================================
+-- TRIGGERS
+-- =====================================================
+-- Auto-update updated_at timestamp
+CREATE TRIGGER update_tenant_overrides_updated_at
+    BEFORE UPDATE ON tenant_feature_overrides
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Sync feature_flag_name on insert/update
+CREATE OR REPLACE FUNCTION sync_feature_flag_name()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Update the denormalized feature_flag_name from the feature_flags table
+    SELECT name INTO NEW.feature_flag_name 
+    FROM feature_flags 
+    WHERE id = NEW.feature_flag_id;
+    
+    IF NEW.feature_flag_name IS NULL THEN
+        RAISE EXCEPTION 'Feature flag not found for ID: %', NEW.feature_flag_id;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER sync_tenant_overrides_feature_name
+    BEFORE INSERT OR UPDATE ON tenant_feature_overrides
+    FOR EACH ROW
+    EXECUTE FUNCTION sync_feature_flag_name();
+
+-- Add trigger comments
+COMMENT ON TRIGGER sync_tenant_overrides_feature_name ON tenant_feature_overrides IS 'Maintains denormalized feature_flag_name for performance';
+COMMENT ON FUNCTION sync_feature_flag_name() IS 'Syncs feature flag name in overrides table';
+-- Creates audit logging functions and triggers for feature flag changes
+
+-- =====================================================
+-- AUDIT TRIGGER FUNCTIONS
+-- =====================================================
+
+-- Function to create audit log entries for feature flag changes
+CREATE OR REPLACE FUNCTION audit_feature_flag_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO audit_log (
+            tenant_id, 
+            event_type, 
+            event_category, 
+            severity,
+            user_id,
+            decision,
+            reason,
+            context,
+            session_id
+        ) VALUES (
+            NEW.tenant_id,
+            'FEATURE_FLAG_CREATED',
+            'ADMIN',
+            'INFO',
+            NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+            'ALLOW',
+            'Feature flag created: ' || NEW.name,
+            jsonb_build_object(
+                'feature_flag_id', NEW.id,
+                'feature_flag_name', NEW.name,
+                'flag_type', NEW.flag_type,
+                'default_value', NEW.default_value,
+                'rollout_percentage', NEW.rollout_percentage,
+                'metadata', NEW.metadata,
+                'operation', 'CREATE'
+            ),
+            NULLIF(current_setting('app.current_session_id', true), '')::UUID
+        );
+        RETURN NEW;
+        
+    ELSIF TG_OP = 'UPDATE' THEN
+        INSERT INTO audit_log (
+            tenant_id,
+            event_type,
+            event_category,
+            severity,
+            user_id,
+            decision,
+            reason,
+            context,
+            session_id
+        ) VALUES (
+            NEW.tenant_id,
+            'FEATURE_FLAG_UPDATED',
+            'ADMIN',
+            CASE 
+                WHEN OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN 'WARN'
+                ELSE 'INFO'
+            END,
+            NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+            'ALLOW',
+            'Feature flag updated: ' || NEW.name,
+            jsonb_build_object(
+                'feature_flag_id', NEW.id,
+                'feature_flag_name', NEW.name,
+                'old_values', jsonb_build_object(
+                    'flag_type', OLD.flag_type,
+                    'default_value', OLD.default_value,
+                    'rollout_percentage', OLD.rollout_percentage,
+                    'deleted_at', OLD.deleted_at,
+                    'metadata', OLD.metadata
+                ),
+                'new_values', jsonb_build_object(
+                    'flag_type', NEW.flag_type,
+                    'default_value', NEW.default_value,
+                    'rollout_percentage', NEW.rollout_percentage,
+                    'deleted_at', NEW.deleted_at,
+                    'metadata', NEW.metadata
+                ),
+                'operation', CASE 
+                    WHEN OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN 'SOFT_DELETE'
+                    ELSE 'UPDATE'
+                END
+            ),
+            NULLIF(current_setting('app.current_session_id', true), '')::UUID
+        );
+        RETURN NEW;
+        
+    ELSIF TG_OP = 'DELETE' THEN
+        INSERT INTO audit_log (
+            tenant_id,
+            event_type,
+            event_category,
+            severity,
+            user_id,
+            decision,
+            reason,
+            context,
+            session_id
+        ) VALUES (
+            OLD.tenant_id,
+            'FEATURE_FLAG_DELETED',
+            'ADMIN',
+            'WARN',
+            NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+            'ALLOW',
+            'Feature flag permanently deleted: ' || OLD.name,
+            jsonb_build_object(
+                'feature_flag_id', OLD.id,
+                'feature_flag_name', OLD.name,
+                'deleted_values', to_jsonb(OLD),
+                'operation', 'HARD_DELETE'
+            ),
+            NULLIF(current_setting('app.current_session_id', true), '')::UUID
+        );
+        RETURN OLD;
+    END IF;
+    
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to create audit entries for tenant feature override changes
+CREATE OR REPLACE FUNCTION audit_tenant_feature_override_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO audit_log (
+            tenant_id,
+            event_type,
+            event_category,
+            severity,
+            user_id,
+            decision,
+            reason,
+            risk_score,
+            context,
+            session_id,
+            compliance_flags
+        ) VALUES (
+            NEW.tenant_id,
+            'FEATURE_OVERRIDE_CREATED',
+            'ADMIN',
+            'INFO',
+            NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+            'ALLOW',
+            COALESCE(NEW.reason, 'Feature override created for ' || NEW.feature_flag_name),
+            CASE WHEN NEW.enabled THEN 10 ELSE 5 END, -- Higher risk when enabling features
+            jsonb_build_object(
+                'feature_flag_id', NEW.feature_flag_id,
+                'feature_flag_name', NEW.feature_flag_name,
+                'enabled', NEW.enabled,
+                'value', NEW.value,
+                'operation', 'CREATE_OVERRIDE'
+            ),
+            NULLIF(current_setting('app.current_session_id', true), '')::UUID,
+            jsonb_build_object('feature_management', true)
+        );
+        RETURN NEW;
+        
+    ELSIF TG_OP = 'UPDATE' THEN
+        INSERT INTO audit_log (
+            tenant_id,
+            event_type,
+            event_category,
+            severity,
+            user_id,
+            decision,
+            reason,
+            risk_score,
+            context,
+            session_id,
+            compliance_flags
+        ) VALUES (
+            NEW.tenant_id,
+            'FEATURE_OVERRIDE_UPDATED',
+            'ADMIN',
+            CASE 
+                WHEN OLD.enabled != NEW.enabled THEN 'WARN'
+                ELSE 'INFO'
+            END,
+            NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+            'ALLOW',
+            COALESCE(NEW.reason, 'Feature override updated for ' || NEW.feature_flag_name),
+            CASE 
+                WHEN OLD.enabled != NEW.enabled THEN 15
+                ELSE 8
+            END,
+            jsonb_build_object(
+                'feature_flag_id', NEW.feature_flag_id,
+                'feature_flag_name', NEW.feature_flag_name,
+                'old_values', jsonb_build_object(
+                    'enabled', OLD.enabled,
+                    'value', OLD.value
+                ),
+                'new_values', jsonb_build_object(
+                    'enabled', NEW.enabled,
+                    'value', NEW.value
+                ),
+                'operation', 'UPDATE_OVERRIDE'
+            ),
+            NULLIF(current_setting('app.current_session_id', true), '')::UUID,
+            jsonb_build_object('feature_management', true)
+        );
+        RETURN NEW;
+        
+    ELSIF TG_OP = 'DELETE' THEN
+        INSERT INTO audit_log (
+            tenant_id,
+            event_type,
+            event_category,
+            severity,
+            user_id,
+            decision,
+            reason,
+            risk_score,
+            context,
+            session_id,
+            compliance_flags
+        ) VALUES (
+            OLD.tenant_id,
+            'FEATURE_OVERRIDE_DELETED',
+            'ADMIN',
+            'INFO',
+            NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+            'ALLOW',
+            'Feature override deleted for ' || OLD.feature_flag_name,
+            5,
+            jsonb_build_object(
+                'feature_flag_id', OLD.feature_flag_id,
+                'feature_flag_name', OLD.feature_flag_name,
+                'deleted_values', jsonb_build_object(
+                    'enabled', OLD.enabled,
+                    'value', OLD.value
+                ),
+                'operation', 'DELETE_OVERRIDE'
+            ),
+            NULLIF(current_setting('app.current_session_id', true), '')::UUID,
+            jsonb_build_object('feature_management', true)
+        );
+        RETURN OLD;
+    END IF;
+    
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =====================================================
+-- CREATE AUDIT TRIGGERS
+-- =====================================================
+
+-- Audit trigger for feature_flags table
+CREATE TRIGGER feature_flags_audit_trigger
+    AFTER INSERT OR UPDATE OR DELETE ON feature_flags
+    FOR EACH ROW
+    EXECUTE FUNCTION audit_feature_flag_changes();
+
+-- Audit trigger for tenant_feature_overrides table
+CREATE TRIGGER tenant_feature_overrides_audit_trigger
+    AFTER INSERT OR UPDATE OR DELETE ON tenant_feature_overrides
+    FOR EACH ROW
+    EXECUTE FUNCTION audit_tenant_feature_override_changes();
+
+-- =====================================================
+-- FUNCTION COMMENTS
+-- =====================================================
+COMMENT ON FUNCTION audit_feature_flag_changes() IS 'Creates audit log entries for feature flag changes using existing audit_log table';
+COMMENT ON FUNCTION audit_tenant_feature_override_changes() IS 'Creates audit entries for tenant feature override changes using existing audit_log table';
+COMMENT ON TRIGGER feature_flags_audit_trigger ON feature_flags IS 'Logs all feature flag changes to audit_log table';
+COMMENT ON TRIGGER tenant_feature_overrides_audit_trigger ON tenant_feature_overrides IS 'Logs all tenant override changes to audit_log table';
+-- =====================================================
+-- PERMISSIONS AND GRANTS
+-- =====================================================
+
+-- Grant execute permissions on functions to application role
+-- -- GRANT EXECUTE ON FUNCTION set_audit_context(UUID, UUID) TO application_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_feature_flag(VARCHAR) TO application_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_all_feature_flags() TO application_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_feature_flag_fast(VARCHAR) TO application_role;
+--
+-- -- Grant execute permissions to admin role
+-- -- GRANT EXECUTE ON FUNCTION set_audit_context(UUID, UUID) TO admin_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_feature_flag(VARCHAR) TO admin_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_all_feature_flags() TO admin_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_feature_flag_fast(VARCHAR) TO admin_role;
+--
+-- -- Grant execute permissions to readonly role (for monitoring)
+-- GRANT EXECUTE ON FUNCTION evaluate_feature_flag_fast(VARCHAR) TO readonly_role;
+--
+-- -- =====================================================
+-- -- FUNCTION COMMENTS
+-- -- =====================================================
+-- -- COMMENT ON FUNCTION set_audit_context(UUID, UUID) IS 'Sets the current user and session context for audit logging';
+-- COMMENT ON FUNCTION evaluate_feature_flag(VARCHAR) IS 'Evaluates feature flag for current tenant with override and rollout logic, logs evaluation to audit_log';
+-- COMMENT ON FUNCTION evaluate_all_feature_flags() IS 'Evaluates all feature flags for current tenant, logs bulk evaluation to audit_log';
+-- COMMENT ON FUNCTION evaluate_feature_flag_fast(VARCHAR) IS 'Lightweight feature flag evaluation without audit logging for high-frequency calls';
+-- -- =====================================================
+-- -- Creates the core functions for evaluating feature flags with audit logging
+--
+-- -- =====================================================
+-- -- UTILITY FUNCTIONS
+-- -- =====================================================
+--
+-- -- Function to set user context for audit logging
+-- -- CREATE OR REPLACE FUNCTION set_audit_context(user_id UUID DEFAULT NULL, session_id UUID DEFAULT NULL)
+-- -- RETURNS VOID AS $$
+-- -- BEGIN
+-- --     IF user_id IS NOT NULL THEN
+-- --         PERFORM set_config('app.current_user_id', user_id::text, true);
+-- --     END IF;
+-- --
+-- --     IF session_id IS NOT NULL THEN
+-- --         PERFORM set_config('app.current_session_id', session_id::text, true);
+-- --     END IF;
+-- -- END;
+-- -- $$ LANGUAGE plpgsql SECURITY DEFINER;
+-- --
+-- -- =====================================================
+-- -- SINGLE FEATURE FLAG EVALUATION
+-- -- =====================================================
+--
+-- -- Function to evaluate a single feature flag for current tenant
+-- CREATE OR REPLACE FUNCTION evaluate_feature_flag(flag_name VARCHAR)
+-- RETURNS TABLE(enabled BOOLEAN, value JSONB) AS $$
+-- DECLARE
+--     v_tenant_id UUID;
+--     v_feature_flag feature_flags%ROWTYPE;
+--     v_override tenant_feature_overrides%ROWTYPE;
+--     v_result_enabled BOOLEAN;
+--     v_result_value JSONB;
+--     v_evaluation_source TEXT;
+-- BEGIN
+--     -- Get current tenant ID
+--     v_tenant_id := NULLIF(current_setting('app.current_tenant_id', true), '')::UUID;
+--
+--     IF v_tenant_id IS NULL THEN
+--         RAISE EXCEPTION 'No tenant context set. Use SET app.current_tenant_id = ''<tenant_id>''';
+--     END IF;
+--
+--     -- Get feature flag configuration for current tenant
+--     SELECT * INTO v_feature_flag
+--     FROM feature_flags ff
+--     WHERE ff.name = flag_name 
+--       AND ff.tenant_id = v_tenant_id 
+--       AND ff.deleted_at IS NULL;
+--
+--     IF v_feature_flag.id IS NULL THEN
+--         RAISE EXCEPTION 'Feature flag not found: % for tenant: %', flag_name, v_tenant_id;
+--     END IF;
+--
+--     -- Check for tenant-specific override
+--     SELECT * INTO v_override
+--     FROM tenant_feature_overrides tfo
+--     WHERE tfo.tenant_id = v_tenant_id 
+--       AND tfo.feature_flag_id = v_feature_flag.id;
+--
+--     -- Determine effective value
+--     IF v_override.id IS NOT NULL THEN
+--         -- Override exists, use it
+--         v_result_enabled := v_override.enabled;
+--         v_result_value := COALESCE(v_override.value, '{}');
+--         v_evaluation_source := 'override';
+--     ELSIF v_feature_flag.rollout_percentage IS NOT NULL AND v_feature_flag.rollout_percentage > 0 THEN
+--         -- Use percentage rollout (deterministic based on tenant ID)
+--         v_result_enabled := (hashtext(v_tenant_id::text || flag_name) % 100) < v_feature_flag.rollout_percentage;
+--         v_result_value := '{}';
+--         v_evaluation_source := 'rollout';
+--     ELSE
+--         -- Use default value
+--         v_result_enabled := v_feature_flag.default_value;
+--         v_result_value := '{}';
+--         v_evaluation_source := 'default';
+--     END IF;
+--
+--     -- Log feature flag evaluation for audit purposes
+--     INSERT INTO audit_log (
+--         tenant_id,
+--         event_type,
+--         event_category,
+--         severity,
+--         user_id,
+--         decision,
+--         reason,
+--         context,
+--         session_id
+--     ) VALUES (
+--         v_tenant_id,
+--         'FEATURE_FLAG_EVALUATED',
+--         'ACCESS',
+--         'LOW',
+--         NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+--         CASE WHEN v_result_enabled THEN 'ALLOW' ELSE 'DENY' END,
+--         'Feature flag evaluated: ' || flag_name,
+--         jsonb_build_object(
+--             'feature_flag_id', v_feature_flag.id,
+--             'feature_flag_name', flag_name,
+--             'enabled', v_result_enabled,
+--             'value', v_result_value,
+--             'source', v_evaluation_source,
+--             'rollout_percentage', v_feature_flag.rollout_percentage,
+--             'has_override', (v_override.id IS NOT NULL)
+--         ),
+--         NULLIF(current_setting('app.current_session_id', true), '')::UUID
+--     );
+--
+--     RETURN QUERY SELECT v_result_enabled, v_result_value;
+-- END;
+-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+--
+-- -- =====================================================
+-- -- BULK FEATURE FLAG EVALUATION
+-- -- =====================================================
+--
+-- -- Function to bulk evaluate all feature flags for current tenant
+-- CREATE OR REPLACE FUNCTION evaluate_all_feature_flags()
+-- RETURNS TABLE(flag_name VARCHAR, enabled BOOLEAN, value JSONB, flag_type VARCHAR, source TEXT) AS $$
+-- DECLARE
+--     v_tenant_id UUID;
+--     v_flag_count INTEGER;
+-- BEGIN
+--     -- Get current tenant ID
+--     v_tenant_id := NULLIF(current_setting('app.current_tenant_id', true), '')::UUID;
+--
+--     IF v_tenant_id IS NULL THEN
+--         RAISE EXCEPTION 'No tenant context set. Use SET app.current_tenant_id = ''<tenant_id>''';
+--     END IF;
+--
+--     -- Count flags for audit logging
+--     SELECT COUNT(*) INTO v_flag_count
+--     FROM feature_flags ff
+--     WHERE ff.tenant_id = v_tenant_id 
+--       AND ff.deleted_at IS NULL;
+--
+--     -- Log bulk evaluation
+--     INSERT INTO audit_log (
+--         tenant_id,
+--         event_type,
+--         event_category,
+--         severity,
+--         user_id,
+--         decision,
+--         reason,
+--         context,
+--         session_id
+--     ) VALUES (
+--         v_tenant_id,
+--         'FEATURE_FLAGS_BULK_EVALUATED',
+--         'ACCESS',
+--         'LOW',
+--         NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+--         'ALLOW',
+--         'All feature flags evaluated for tenant',
+--         jsonb_build_object(
+--             'operation', 'bulk_evaluation',
+--             'flags_count', v_flag_count,
+--             'tenant_id', v_tenant_id
+--         ),
+--         NULLIF(current_setting('app.current_session_id', true), '')::UUID
+--     );
+--
+--     -- Return evaluated flags
+--     RETURN QUERY
+--     WITH feature_evaluation AS (
+--         SELECT 
+--             ff.name,
+--             ff.flag_type,
+--             ff.default_value,
+--             ff.rollout_percentage,
+--             tfo.enabled as override_enabled,
+--             tfo.value as override_value,
+--             CASE 
+--                 -- Override exists, use it
+--                 WHEN tfo.enabled IS NOT NULL THEN tfo.enabled
+--                 -- Percentage rollout check
+--                 WHEN ff.rollout_percentage IS NOT NULL AND ff.rollout_percentage > 0 THEN
+--                     (hashtext(v_tenant_id::text || ff.name) % 100) < ff.rollout_percentage
+--                 -- Default value
+--                 ELSE ff.default_value
+--             END as effective_enabled,
+--             COALESCE(tfo.value, '{}') as effective_value,
+--             CASE 
+--                 WHEN tfo.enabled IS NOT NULL THEN 'override'
+--                 WHEN ff.rollout_percentage IS NOT NULL AND ff.rollout_percentage > 0 THEN 'rollout'
+--                 ELSE 'default'
+--             END as evaluation_source
+--         FROM feature_flags ff
+--         LEFT JOIN tenant_feature_overrides tfo ON ff.id = tfo.feature_flag_id 
+--             AND tfo.tenant_id = v_tenant_id
+--         WHERE ff.tenant_id = v_tenant_id 
+--           AND ff.deleted_at IS NULL
+--     )
+--     SELECT 
+--         fe.name::VARCHAR,
+--         fe.effective_enabled,
+--         fe.effective_value,
+--         fe.flag_type::VARCHAR,
+--         fe.evaluation_source::TEXT
+--     FROM feature_evaluation fe
+--     ORDER BY fe.name;
+-- END;
+-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+--
+-- -- =====================================================
+-- -- FAST EVALUATION FUNCTION (NO AUDIT LOGGING)
+-- -- =====================================================
+--
+-- -- Lightweight evaluation function for high-frequency calls
+-- CREATE OR REPLACE FUNCTION evaluate_feature_flag_fast(flag_name VARCHAR)
+-- RETURNS TABLE(enabled BOOLEAN, value JSONB) AS $$
+-- DECLARE
+--     v_tenant_id UUID;
+--     v_result RECORD;
+-- BEGIN
+--     -- Get current tenant ID
+--     v_tenant_id := NULLIF(current_setting('app.current_tenant_id', true), '')::UUID;
+--
+--     IF v_tenant_id IS NULL THEN
+--         RAISE EXCEPTION 'No tenant context set';
+--     END IF;
+--
+--     -- Single query to get evaluation result
+--     SELECT 
+--         CASE 
+--             -- Override exists, use it
+--             WHEN tfo.enabled IS NOT NULL THEN tfo.enabled
+--             -- Percentage rollout check
+--             WHEN ff.rollout_percentage IS NOT NULL AND ff.rollout_percentage > 0 THEN
+--                 (hashtext(v_tenant_id::text || ff.name) % 100) < ff.rollout_percentage
+--             -- Default value
+--             ELSE ff.default_value
+--         END as flag_enabled,
+--         COALESCE(tfo.value, '{}') as flag_value
+--     INTO v_result
+--     FROM feature_flags ff
+--     LEFT JOIN tenant_feature_overrides tfo ON ff.id = tfo.feature_flag_id 
+--         AND tfo.tenant_id = v_tenant_id
+--     WHERE ff.name = flag_name 
+--       AND ff.tenant_id = v_tenant_id 
+--       AND ff.deleted_at IS NULL;
+--     
+--     IF v_result IS NULL THEN
+--         RAISE EXCEPTION 'Feature flag not found: %', flag_name;
+--     END IF;
+--     
+--     RETURN QUERY SELECT v_result.flag_enabled, v_result.flag_value;
+-- END;
+-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+--
+-- Creates materialized view for fast feature flag lookups and cache management
+
+-- =====================================================
+-- MATERIALIZED VIEW FOR FEATURE FLAG CACHE
+-- =====================================================
+
+-- Materialized view for feature flag evaluation cache
+CREATE MATERIALIZED VIEW tenant_feature_flags_cache AS
+WITH feature_evaluation AS (
+    SELECT 
+        ff.tenant_id,
+        ff.id as feature_flag_id,
+        ff.name as feature_flag_name,
+        ff.flag_type,
+        ff.default_value,
+        ff.rollout_percentage,
+        ff.target_audience,
+        ff.metadata,
+        tfo.enabled as override_enabled,
+        tfo.value as override_value,
+        tfo.reason as override_reason,
+        CASE 
+            -- Override exists, use it
+            WHEN tfo.enabled IS NOT NULL THEN tfo.enabled
+            -- Percentage rollout check
+            WHEN ff.rollout_percentage IS NOT NULL AND ff.rollout_percentage > 0 THEN
+                (hashtext(ff.tenant_id::text || ff.name) % 100) < ff.rollout_percentage
+            -- Default value
+            ELSE ff.default_value
+        END as effective_enabled,
+        COALESCE(tfo.value, '{}') as effective_value,
+        CASE 
+            WHEN tfo.enabled IS NOT NULL THEN 'override'
+            WHEN ff.rollout_percentage IS NOT NULL AND ff.rollout_percentage > 0 THEN 'rollout'
+            ELSE 'default'
+        END as evaluation_source,
+        GREATEST(ff.updated_at, COALESCE(tfo.updated_at, ff.updated_at)) as cache_timestamp
+    FROM feature_flags ff
+    LEFT JOIN tenant_feature_overrides tfo ON ff.id = tfo.feature_flag_id 
+        AND tfo.tenant_id = ff.tenant_id
+    WHERE ff.deleted_at IS NULL
+)
+SELECT 
+    tenant_id,
+    feature_flag_id,
+    feature_flag_name,
+    flag_type,
+    effective_enabled as enabled,
+    effective_value as value,
+    evaluation_source,
+    default_value,
+    rollout_percentage,
+    target_audience,
+    metadata,
+    override_enabled,
+    override_value,
+    override_reason,
+    cache_timestamp,
+    NOW() as cache_created_at
+FROM feature_evaluation;
+
+-- =====================================================
+-- PERFORMANCE INDEXES ON MATERIALIZED VIEW
+-- =====================================================
+
+-- Primary lookup indexes
+CREATE UNIQUE INDEX idx_tenant_feature_cache_pk 
+    ON tenant_feature_flags_cache(tenant_id, feature_flag_id);
+
+CREATE UNIQUE INDEX idx_tenant_feature_cache_name_lookup 
+    ON tenant_feature_flags_cache(tenant_id, feature_flag_name);
+
+-- Query optimization indexes
+CREATE INDEX idx_tenant_feature_cache_tenant 
+    ON tenant_feature_flags_cache(tenant_id);
+
+CREATE INDEX idx_tenant_feature_cache_enabled 
+    ON tenant_feature_flags_cache(enabled) WHERE enabled = true;
+
+CREATE INDEX idx_tenant_feature_cache_source 
+    ON tenant_feature_flags_cache(evaluation_source);
+
+CREATE INDEX idx_tenant_feature_cache_flag_type 
+    ON tenant_feature_flags_cache(flag_type);
+
+CREATE INDEX idx_tenant_feature_cache_timestamp 
+    ON tenant_feature_flags_cache(cache_timestamp);
+
+CREATE INDEX idx_tenant_feature_cache_rollout 
+    ON tenant_feature_flags_cache(rollout_percentage) 
+    WHERE rollout_percentage IS NOT NULL;
+
+-- JSON indexes for complex queries
+CREATE INDEX idx_tenant_feature_cache_target_audience 
+    ON tenant_feature_flags_cache USING GIN (target_audience) 
+    WHERE target_audience != '{}';
+
+CREATE INDEX idx_tenant_feature_cache_metadata 
+    ON tenant_feature_flags_cache USING GIN (metadata) 
+    WHERE metadata != '{}';
+
+CREATE INDEX idx_tenant_feature_cache_value 
+    ON tenant_feature_flags_cache USING GIN (value) 
+    WHERE value != '{}';
+
+-- =====================================================
+-- CACHE MANAGEMENT FUNCTIONS
+-- =====================================================
+
+-- Function to refresh the cache
+CREATE OR REPLACE FUNCTION refresh_feature_flags_cache()
+RETURNS VOID AS $$
+BEGIN
+    REFRESH MATERIALIZED VIEW CONCURRENTLY tenant_feature_flags_cache;
+    
+    -- Log cache refresh
+    INSERT INTO audit_log (
+        tenant_id,
+        event_type,
+        event_category,
+        severity,
+        user_id,
+        decision,
+        reason,
+        context,
+        session_id
+    ) VALUES (
+        NULL, -- System operation
+        'FEATURE_FLAGS_CACHE_REFRESHED',
+        'SYSTEM',
+        'INFO',
+        NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+        'ALLOW',
+        'Feature flags cache materialized view refreshed',
+        jsonb_build_object(
+            'operation', 'cache_refresh',
+            'timestamp', NOW()
+        ),
+        NULLIF(current_setting('app.current_session_id', true), '')::UUID
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to get cache statistics
+CREATE OR REPLACE FUNCTION get_feature_flags_cache_stats()
+RETURNS TABLE(
+    total_entries BIGINT,
+    tenants_count BIGINT,
+    flags_per_tenant_avg NUMERIC,
+    enabled_flags_count BIGINT,
+    override_count BIGINT,
+    rollout_count BIGINT,
+    default_count BIGINT,
+    cache_age INTERVAL
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        COUNT(*) as total_entries,
+        COUNT(DISTINCT tffc.tenant_id) as tenants_count,
+        ROUND(COUNT(*)::NUMERIC / COUNT(DISTINCT tffc.tenant_id), 2) as flags_per_tenant_avg,
+        COUNT(*) FILTER (WHERE tffc.enabled = true) as enabled_flags_count,
+        COUNT(*) FILTER (WHERE tffc.evaluation_source = 'override') as override_count,
+        COUNT(*) FILTER (WHERE tffc.evaluation_source = 'rollout') as rollout_count,
+        COUNT(*) FILTER (WHERE tffc.evaluation_source = 'default') as default_count,
+        NOW() - MIN(tffc.cache_created_at) as cache_age
+    FROM tenant_feature_flags_cache tffc;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to check cache freshness for a tenant
+CREATE OR REPLACE FUNCTION check_cache_freshness(p_tenant_id UUID)
+RETURNS TABLE(
+    is_stale BOOLEAN,
+    cache_age INTERVAL,
+    last_flag_update TIMESTAMPTZ,
+    last_override_update TIMESTAMPTZ
+) AS $$
+BEGIN
+    RETURN QUERY
+    WITH cache_info AS (
+        SELECT MAX(cache_timestamp) as max_cache_ts
+        FROM tenant_feature_flags_cache
+        WHERE tenant_id = p_tenant_id
+    ),
+    source_info AS (
+        SELECT 
+            MAX(ff.updated_at) as last_flag_update,
+            MAX(tfo.updated_at) as last_override_update
+        FROM feature_flags ff
+        LEFT JOIN tenant_feature_overrides tfo ON ff.id = tfo.feature_flag_id
+        WHERE ff.tenant_id = p_tenant_id AND ff.deleted_at IS NULL
+    )
+    SELECT 
+        COALESCE(si.last_flag_update > ci.max_cache_ts OR si.last_override_update > ci.max_cache_ts, true) as is_stale,
+        NOW() - ci.max_cache_ts as cache_age,
+        si.last_flag_update,
+        si.last_override_update
+    FROM cache_info ci
+    CROSS JOIN source_info si;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- CACHED EVALUATION FUNCTIONS
+-- =====================================================
+
+-- Fast evaluation using cache
+CREATE OR REPLACE FUNCTION evaluate_feature_flag_cached(flag_name VARCHAR)
+RETURNS TABLE(enabled BOOLEAN, value JSONB) AS $$
+DECLARE
+    v_tenant_id UUID;
+    v_result RECORD;
+    v_cache_stale BOOLEAN;
+BEGIN
+    -- Get current tenant ID
+    v_tenant_id := NULLIF(current_setting('app.current_tenant_id', true), '')::UUID;
+    
+    IF v_tenant_id IS NULL THEN
+        RAISE EXCEPTION 'No tenant context set';
+    END IF;
+    
+    -- Check if cache is stale (optional check)
+    SELECT is_stale INTO v_cache_stale
+    FROM check_cache_freshness(v_tenant_id)
+    LIMIT 1;
+    
+    -- If cache is stale, optionally refresh (comment out for performance)
+    -- IF v_cache_stale THEN
+    --     PERFORM refresh_feature_flags_cache();
+    -- END IF;
+    
+    -- Get result from cache
+    SELECT tffc.enabled, tffc.value
+    INTO v_result
+    FROM tenant_feature_flags_cache tffc
+    WHERE tffc.tenant_id = v_tenant_id 
+      AND tffc.feature_flag_name = flag_name;
+    
+    IF v_result IS NULL THEN
+        RAISE EXCEPTION 'Feature flag not found in cache: % for tenant: %', flag_name, v_tenant_id;
+    END IF;
+    
+    RETURN QUERY SELECT v_result.enabled, v_result.value;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Bulk evaluation using cache
+CREATE OR REPLACE FUNCTION evaluate_all_feature_flags_cached()
+RETURNS TABLE(flag_name VARCHAR, enabled BOOLEAN, value JSONB, flag_type VARCHAR, source TEXT) AS $$
+DECLARE
+    v_tenant_id UUID;
+BEGIN
+    -- Get current tenant ID
+    v_tenant_id := NULLIF(current_setting('app.current_tenant_id', true), '')::UUID;
+    
+    IF v_tenant_id IS NULL THEN
+        RAISE EXCEPTION 'No tenant context set';
+    END IF;
+    
+    RETURN QUERY
+    SELECT 
+        tffc.feature_flag_name::VARCHAR,
+        tffc.enabled,
+        tffc.value,
+        tffc.flag_type::VARCHAR,
+        tffc.evaluation_source::TEXT
+    FROM tenant_feature_flags_cache tffc
+    WHERE tffc.tenant_id = v_tenant_id
+    ORDER BY tffc.feature_flag_name;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- AUTOMATIC CACHE REFRESH TRIGGERS
+-- =====================================================
+
+-- Function to trigger cache refresh on data changes
+CREATE OR REPLACE FUNCTION trigger_cache_refresh()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Async refresh (use pg_notify for external refresh or schedule)
+    PERFORM pg_notify('feature_flags_cache_refresh', 
+        jsonb_build_object(
+            'operation', TG_OP,
+            'table', TG_TABLE_NAME,
+            'tenant_id', COALESCE(NEW.tenant_id, OLD.tenant_id)
+        )::text
+    );
+    
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Add triggers to automatically notify when refresh is needed
+CREATE TRIGGER feature_flags_cache_refresh_trigger
+    AFTER INSERT OR UPDATE OR DELETE ON feature_flags
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_cache_refresh();
+
+CREATE TRIGGER tenant_overrides_cache_refresh_trigger
+    AFTER INSERT OR UPDATE OR DELETE ON tenant_feature_overrides
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_cache_refresh();
+
+-- =====================================================
+-- PERMISSIONS
+-- =====================================================
+
+-- Grant access to cache functions
+GRANT EXECUTE ON FUNCTION refresh_feature_flags_cache() TO admin_role;
+GRANT EXECUTE ON FUNCTION get_feature_flags_cache_stats() TO admin_role, readonly_role;
+GRANT EXECUTE ON FUNCTION check_cache_freshness(UUID) TO application_role, admin_role;
+GRANT EXECUTE ON FUNCTION evaluate_feature_flag_cached(VARCHAR) TO application_role;
+GRANT EXECUTE ON FUNCTION evaluate_all_feature_flags_cached() TO application_role;
+
+-- Grant access to materialized view
+GRANT SELECT ON tenant_feature_flags_cache TO application_role, admin_role, readonly_role;
+
+-- =====================================================
+-- COMMENTS
+-- =====================================================
+COMMENT ON MATERIALIZED VIEW tenant_feature_flags_cache IS 'Materialized view for fast feature flag lookups with pre-computed evaluations';
+COMMENT ON FUNCTION refresh_feature_flags_cache() IS 'Refreshes the feature flags cache materialized view';
+COMMENT ON FUNCTION get_feature_flags_cache_stats() IS 'Returns statistics about the feature flags cache';
+COMMENT ON FUNCTION check_cache_freshness(UUID) IS 'Checks if the cache is stale for a specific tenant';
+COMMENT ON FUNCTION evaluate_feature_flag_cached(VARCHAR) IS 'Fast feature flag evaluation using materialized view cache';
+COMMENT ON FUNCTION evaluate_all_feature_flags_cached() IS 'Fast bulk feature flag evaluation using materialized view cache';
+COMMENT ON FUNCTION trigger_cache_refresh() IS 'Triggers cache refresh notification when data changes';
+-- Creates maintenance functions for cleanup and system health
+
+-- =====================================================
+-- AUDIT LOG CLEANUP FUNCTIONS
+-- =====================================================
+
+-- Function to clean up old feature flag audit logs
+CREATE OR REPLACE FUNCTION cleanup_old_feature_flag_audit_logs(retention_days INTEGER DEFAULT 90)
+RETURNS INTEGER AS $$
+DECLARE
+    deleted_count INTEGER;
+    cutoff_date TIMESTAMPTZ;
+BEGIN
+    cutoff_date := NOW() - (retention_days || ' days')::INTERVAL;
+    
+    DELETE FROM audit_log
+    WHERE event_type IN (
+        'FEATURE_FLAG_CREATED', 
+        'FEATURE_FLAG_UPDATED', 
+        'FEATURE_FLAG_DELETED',
+        'FEATURE_OVERRIDE_CREATED', 
+        'FEATURE_OVERRIDE_UPDATED', 
+        'FEATURE_OVERRIDE_DELETED',
+        'FEATURE_FLAG_EVALUATED', 
+        'FEATURE_FLAGS_BULK_EVALUATED',
+        'FEATURE_FLAGS_CACHE_REFRESHED'
+    )
+    AND created_at < cutoff_date;
+    
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    
+    -- Log the cleanup operation
+    INSERT INTO audit_log (
+        tenant_id,
+        event_type,
+        event_category,
+        severity,
+        user_id,
+        decision,
+        reason,
+        context,
+        session_id
+    ) VALUES (
+        NULL, -- System operation
+        'FEATURE_FLAGS_AUDIT_CLEANUP',
+        'SYSTEM',
+        'INFO',
+        NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+        'ALLOW',
+        'Feature flag audit logs cleaned up',
+        jsonb_build_object(
+            'deleted_count', deleted_count,
+            'retention_days', retention_days,
+            'cutoff_date', cutoff_date,
+            'operation', 'cleanup'
+        ),
+        NULLIF(current_setting('app.current_session_id', true), '')::UUID
+    );
+    
+    RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to clean up soft-deleted feature flags
+CREATE OR REPLACE FUNCTION cleanup_soft_deleted_feature_flags(retention_days INTEGER DEFAULT 30)
+RETURNS INTEGER AS $$
+DECLARE
+    deleted_count INTEGER;
+    cutoff_date TIMESTAMPTZ;
+BEGIN
+    cutoff_date := NOW() - (retention_days || ' days')::INTERVAL;
+    
+    -- Hard delete feature flags that have been soft-deleted for the retention period
+    DELETE FROM feature_flags
+    WHERE deleted_at IS NOT NULL 
+      AND deleted_at < cutoff_date;
+    
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    
+    -- Log the cleanup operation
+    INSERT INTO audit_log (
+        tenant_id,
+        event_type,
+        event_category,
+        severity,
+        user_id,
+        decision,
+        reason,
+        context,
+        session_id
+    ) VALUES (
+        NULL, -- System operation
+        'FEATURE_FLAGS_HARD_DELETE_CLEANUP',
+        'SYSTEM',
+        'INFO',
+        NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+        'ALLOW',
+        'Soft-deleted feature flags permanently removed',
+        jsonb_build_object(
+            'deleted_count', deleted_count,
+            'retention_days', retention_days,
+            'cutoff_date', cutoff_date,
+            'operation', 'hard_delete_cleanup'
+        ),
+        NULLIF(current_setting('app.current_session_id', true), '')::UUID
+    );
+    
+    RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =====================================================
+-- SYSTEM HEALTH AND MONITORING FUNCTIONS
+-- =====================================================
+
+-- Function to get feature flag system health metrics
+CREATE OR REPLACE FUNCTION get_feature_flags_health_metrics()
+RETURNS TABLE(
+    metric_name TEXT,
+    metric_value NUMERIC,
+    metric_unit TEXT,
+    metric_status TEXT,
+    details JSONB
+) AS $$
+BEGIN
+    RETURN QUERY
+    WITH metrics AS (
+        -- Total feature flags
+        SELECT 
+            'total_feature_flags' as name,
+            COUNT(*)::NUMERIC as value,
+            'count' as unit,
+            CASE WHEN COUNT(*) > 0 THEN 'healthy' ELSE 'warning' END as status,
+            jsonb_build_object('active_only', COUNT(*) FILTER (WHERE deleted_at IS NULL)) as details
+        FROM feature_flags
+        
+        UNION ALL
+        
+        -- Total tenant overrides
+        SELECT 
+            'total_tenant_overrides' as name,
+            COUNT(*)::NUMERIC as value,
+            'count' as unit,
+            'healthy' as status,
+            jsonb_build_object('enabled_overrides', COUNT(*) FILTER (WHERE enabled = true)) as details
+        FROM tenant_feature_overrides
+        
+        UNION ALL
+        
+        -- Average flags per tenant
+        SELECT 
+            'avg_flags_per_tenant' as name,
+            COALESCE(ROUND(COUNT(*)::NUMERIC / NULLIF(COUNT(DISTINCT tenant_id), 0), 2), 0) as value,
+            'count' as unit,
+            CASE 
+                WHEN COUNT(DISTINCT tenant_id) = 0 THEN 'error'
+                WHEN COUNT(*)::NUMERIC / COUNT(DISTINCT tenant_id) > 100 THEN 'warning'
+                ELSE 'healthy' 
+            END as status,
+            jsonb_build_object(
+                'total_flags', COUNT(*),
+                'total_tenants', COUNT(DISTINCT tenant_id)
+            ) as details
+        FROM feature_flags
+        WHERE deleted_at IS NULL
+        
+        UNION ALL
+        
+        -- Cache age
+        SELECT 
+            'cache_age_minutes' as name,
+            COALESCE(EXTRACT(EPOCH FROM (NOW() - MIN(cache_created_at)))/60, 0) as value,
+            'minutes' as unit,
+            CASE 
+                WHEN MIN(cache_created_at) IS NULL THEN 'error'
+                WHEN EXTRACT(EPOCH FROM (NOW() - MIN(cache_created_at)))/60 > 60 THEN 'warning'
+                ELSE 'healthy' 
+            END as status,
+            jsonb_build_object(
+                'cache_entries', COUNT(*),
+                'last_refresh', MIN(cache_created_at)
+            ) as details
+        FROM tenant_feature_flags_cache
+        
+        UNION ALL
+        
+        -- Rollout percentage distribution
+        SELECT 
+            'flags_with_rollout' as name,
+            COUNT(*) FILTER (WHERE rollout_percentage IS NOT NULL)::NUMERIC as value,
+            'count' as unit,
+            'healthy' as status,
+            jsonb_build_object(
+                'avg_rollout_percentage', ROUND(AVG(rollout_percentage) FILTER (WHERE rollout_percentage IS NOT NULL), 2),
+                'max_rollout_percentage', MAX(rollout_percentage),
+                'min_rollout_percentage', MIN(rollout_percentage) FILTER (WHERE rollout_percentage IS NOT NULL)
+            ) as details
+        FROM feature_flags
+        WHERE deleted_at IS NULL
+    )
+    SELECT m.name, m.value, m.unit, m.status, m.details FROM metrics m;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get tenant-specific feature flag statistics
+CREATE OR REPLACE FUNCTION get_tenant_feature_flag_stats(p_tenant_id UUID)
+RETURNS TABLE(
+    total_flags INTEGER,
+    enabled_flags INTEGER,
+    overridden_flags INTEGER,
+    rollout_flags INTEGER,
+    flag_types JSONB,
+    last_evaluation TIMESTAMPTZ,
+    evaluation_count_today INTEGER
+) AS $$
+BEGIN
+    RETURN QUERY
+    WITH tenant_stats AS (
+        SELECT 
+            COUNT(*)::INTEGER as total_flags,
+            COUNT(*) FILTER (WHERE tffc.enabled = true)::INTEGER as enabled_flags,
+            COUNT(*) FILTER (WHERE tffc.evaluation_source = 'override')::INTEGER as overridden_flags,
+            COUNT(*) FILTER (WHERE tffc.evaluation_source = 'rollout')::INTEGER as rollout_flags,
+            jsonb_object_agg(tffc.flag_type, COUNT(*)) as flag_types
+        FROM tenant_feature_flags_cache tffc
+        WHERE tffc.tenant_id = p_tenant_id
+    ),
+    audit_stats AS (
+        SELECT 
+            MAX(al.created_at) as last_evaluation,
+            COUNT(*) FILTER (WHERE al.created_at >= CURRENT_DATE)::INTEGER as evaluation_count_today
+        FROM audit_log al
+        WHERE al.tenant_id = p_tenant_id
+          AND al.event_type IN ('FEATURE_FLAG_EVALUATED', 'FEATURE_FLAGS_BULK_EVALUATED')
+    )
+    SELECT 
+        ts.total_flags,
+        ts.enabled_flags,
+        ts.overridden_flags,
+        ts.rollout_flags,
+        ts.flag_types,
+        aus.last_evaluation,
+        aus.evaluation_count_today
+    FROM tenant_stats ts
+    CROSS JOIN audit_stats aus;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- DATA INTEGRITY FUNCTIONS
+-- =====================================================
+
+-- Function to check data integrity
+CREATE OR REPLACE FUNCTION check_feature_flags_integrity()
+RETURNS TABLE(
+    check_name TEXT,
+    status TEXT,
+    issue_count INTEGER,
+    details JSONB
+) AS $$
+BEGIN
+    RETURN QUERY
+    WITH integrity_checks AS (
+        -- Check for orphaned overrides
+        SELECT 
+            'orphaned_overrides' as check_name,
+            CASE WHEN COUNT(*) = 0 THEN 'pass' ELSE 'fail' END as status,
+            COUNT(*)::INTEGER as issue_count,
+            jsonb_agg(
+                jsonb_build_object(
+                    'override_id', tfo.id,
+                    'tenant_id', tfo.tenant_id,
+                    'feature_flag_id', tfo.feature_flag_id
+                )
+            ) as details
+        FROM tenant_feature_overrides tfo
+        LEFT JOIN feature_flags ff ON tfo.feature_flag_id = ff.id
+        WHERE ff.id IS NULL
+        
+        UNION ALL
+        
+        -- Check for mismatched tenant IDs
+        SELECT 
+            'mismatched_tenant_ids' as check_name,
+            CASE WHEN COUNT(*) = 0 THEN 'pass' ELSE 'fail' END as status,
+            COUNT(*)::INTEGER as issue_count,
+            jsonb_agg(
+                jsonb_build_object(
+                    'override_id', tfo.id,
+                    'override_tenant_id', tfo.tenant_id,
+                    'flag_tenant_id', ff.tenant_id
+                )
+            ) as details
+        FROM tenant_feature_overrides tfo
+        JOIN feature_flags ff ON tfo.feature_flag_id = ff.id
+        WHERE tfo.tenant_id != ff.tenant_id
+        
+        UNION ALL
+        
+        -- Check for invalid rollout percentages
+        SELECT 
+            'invalid_rollout_percentages' as check_name,
+            CASE WHEN COUNT(*) = 0 THEN 'pass' ELSE 'fail' END as status,
+            COUNT(*)::INTEGER as issue_count,
+            jsonb_agg(
+                jsonb_build_object(
+                    'flag_id', ff.id,
+                    'flag_name', ff.name,
+                    'rollout_percentage', ff.rollout_percentage
+                )
+            ) as details
+        FROM feature_flags ff
+        WHERE ff.rollout_percentage IS NOT NULL 
+          AND (ff.rollout_percentage < 0 OR ff.rollout_percentage > 100)
+        
+        UNION ALL
+        
+        -- Check for duplicate flag names per tenant
+        SELECT 
+            'duplicate_flag_names' as check_name,
+            CASE WHEN COUNT(*) = 0 THEN 'pass' ELSE 'fail' END as status,
+            COUNT(*)::INTEGER as issue_count,
+            jsonb_agg(
+                jsonb_build_object(
+                    'tenant_id', tenant_id,
+                    'flag_name', name,
+                    'count', flag_count
+                )
+            ) as details
+        FROM (
+            SELECT tenant_id, name, COUNT(*) as flag_count
+            FROM feature_flags
+            WHERE deleted_at IS NULL
+            GROUP BY tenant_id, name
+            HAVING COUNT(*) > 1
+        ) duplicates
+    )
+    SELECT ic.check_name, ic.status, ic.issue_count, ic.details FROM integrity_checks ic;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to fix orphaned overrides
+CREATE OR REPLACE FUNCTION fix_orphaned_overrides()
+RETURNS INTEGER AS $$
+DECLARE
+    deleted_count INTEGER;
+BEGIN
+    -- Delete orphaned overrides
+    DELETE FROM tenant_feature_overrides tfo
+    WHERE NOT EXISTS (
+        SELECT 1 FROM feature_flags ff 
+        WHERE ff.id = tfo.feature_flag_id
+    );
+    
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    
+    -- Log the fix operation
+    INSERT INTO audit_log (
+        tenant_id,
+        event_type,
+        event_category,
+        severity,
+        user_id,
+        decision,
+        reason,
+        context,
+        session_id
+    ) VALUES (
+        NULL, -- System operation
+        'FEATURE_FLAGS_ORPHANED_OVERRIDES_FIXED',
+        'SYSTEM',
+        'WARN',
+        NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+        'ALLOW',
+        'Orphaned feature flag overrides removed',
+        jsonb_build_object(
+            'deleted_count', deleted_count,
+            'operation', 'fix_orphaned_overrides'
+        ),
+        NULLIF(current_setting('app.current_session_id', true), '')::UUID
+    );
+    
+    RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =====================================================
+-- BATCH OPERATIONS
+-- =====================================================
+
+-- Function to bulk update rollout percentages
+CREATE OR REPLACE FUNCTION bulk_update_rollout_percentage(
+    flag_names TEXT[],
+    new_percentage INTEGER,
+    p_tenant_id UUID DEFAULT NULL
+)
+RETURNS INTEGER AS $$
+DECLARE
+    updated_count INTEGER;
+    target_tenant_id UUID;
+BEGIN
+    -- Use provided tenant_id or current context
+    target_tenant_id := COALESCE(p_tenant_id, NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
+    
+    IF target_tenant_id IS NULL THEN
+        RAISE EXCEPTION 'No tenant context provided';
+    END IF;
+    
+    -- Validate percentage
+    IF new_percentage < 0 OR new_percentage > 100 THEN
+        RAISE EXCEPTION 'Rollout percentage must be between 0 and 100';
+    END IF;
+    
+    -- Update rollout percentages
+    UPDATE feature_flags 
+    SET 
+        rollout_percentage = new_percentage,
+        updated_at = NOW()
+    WHERE tenant_id = target_tenant_id
+      AND name = ANY(flag_names)
+      AND deleted_at IS NULL;
+    
+    GET DIAGNOSTICS updated_count = ROW_COUNT;
+    
+    -- Log the bulk update
+    INSERT INTO audit_log (
+        tenant_id,
+        event_type,
+        event_category,
+        severity,
+        user_id,
+        decision,
+        reason,
+        context,
+        session_id
+    ) VALUES (
+        target_tenant_id,
+        'FEATURE_FLAGS_BULK_ROLLOUT_UPDATE',
+        'ADMIN',
+        'INFO',
+        NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+        'ALLOW',
+        'Bulk rollout percentage update',
+        jsonb_build_object(
+            'flag_names', flag_names,
+            'new_percentage', new_percentage,
+            'updated_count', updated_count,
+            'operation', 'bulk_rollout_update'
+        ),
+        NULLIF(current_setting('app.current_session_id', true), '')::UUID
+    );
+    
+    RETURN updated_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to bulk create feature flags
+CREATE OR REPLACE FUNCTION bulk_create_feature_flags(
+    flag_definitions JSONB,
+    p_tenant_id UUID DEFAULT NULL
+)
+RETURNS INTEGER AS $$
+DECLARE
+    created_count INTEGER := 0;
+    flag_def JSONB;
+    target_tenant_id UUID;
+BEGIN
+    -- Use provided tenant_id or current context
+    target_tenant_id := COALESCE(p_tenant_id, NULLIF(current_setting('app.current_tenant_id', true), '')::UUID);
+    
+    IF target_tenant_id IS NULL THEN
+        RAISE EXCEPTION 'No tenant context provided';
+    END IF;
+    
+    -- Process each flag definition
+    FOR flag_def IN SELECT jsonb_array_elements(flag_definitions)
+    LOOP
+        INSERT INTO feature_flags (
+            tenant_id,
+            name,
+            description,
+            flag_type,
+            default_value,
+            rollout_percentage,
+            target_audience,
+            metadata
+        ) VALUES (
+            target_tenant_id,
+            flag_def->>'name',
+            flag_def->>'description',
+            COALESCE(flag_def->>'flag_type', 'boolean'),
+            COALESCE((flag_def->>'default_value')::BOOLEAN, false),
+            (flag_def->>'rollout_percentage')::INTEGER,
+            COALESCE(flag_def->'target_audience', '{}'),
+            COALESCE(flag_def->'metadata', '{}')
+        )
+        ON CONFLICT (tenant_id, name) DO NOTHING;
+        
+        IF FOUND THEN
+            created_count := created_count + 1;
+        END IF;
+    END LOOP;
+    
+    -- Log the bulk creation
+    INSERT INTO audit_log (
+        tenant_id,
+        event_type,
+        event_category,
+        severity,
+        user_id,
+        decision,
+        reason,
+        context,
+        session_id
+    ) VALUES (
+        target_tenant_id,
+        'FEATURE_FLAGS_BULK_CREATED',
+        'ADMIN',
+        'INFO',
+        NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+        'ALLOW',
+        'Bulk feature flags creation',
+        jsonb_build_object(
+            'definitions', flag_definitions,
+            'created_count', created_count,
+            'operation', 'bulk_create'
+        ),
+        NULLIF(current_setting('app.current_session_id', true), '')::UUID
+    );
+    
+    RETURN created_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =====================================================
+-- EXPORT AND IMPORT FUNCTIONS
+-- =====================================================
+
+-- Function to export tenant feature flags configuration
+CREATE OR REPLACE FUNCTION export_tenant_feature_flags(p_tenant_id UUID)
+RETURNS JSONB AS $$
+DECLARE
+    result JSONB;
+BEGIN
+    SELECT jsonb_build_object(
+        'tenant_id', p_tenant_id,
+        'export_timestamp', NOW(),
+        'feature_flags', jsonb_agg(
+            jsonb_build_object(
+                'name', ff.name,
+                'description', ff.description,
+                'flag_type', ff.flag_type,
+                'default_value', ff.default_value,
+                'rollout_percentage', ff.rollout_percentage,
+                'target_audience', ff.target_audience,
+                'metadata', ff.metadata,
+                'created_at', ff.created_at,
+                'updated_at', ff.updated_at
+            )
+        ),
+        'overrides', (
+            SELECT jsonb_agg(
+                jsonb_build_object(
+                    'feature_flag_name', tfo.feature_flag_name,
+                    'enabled', tfo.enabled,
+                    'value', tfo.value,
+                    'reason', tfo.reason,
+                    'created_at', tfo.created_at,
+                    'updated_at', tfo.updated_at
+                )
+            )
+            FROM tenant_feature_overrides tfo
+            WHERE tfo.tenant_id = p_tenant_id
+        )
+    ) INTO result
+    FROM feature_flags ff
+    WHERE ff.tenant_id = p_tenant_id
+      AND ff.deleted_at IS NULL;
+    
+    -- Log the export
+    INSERT INTO audit_log (
+        tenant_id,
+        event_type,
+        event_category,
+        severity,
+        user_id,
+        decision,
+        reason,
+        context,
+        session_id
+    ) VALUES (
+        p_tenant_id,
+        'FEATURE_FLAGS_EXPORTED',
+        'ADMIN',
+        'INFO',
+        NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+        'ALLOW',
+        'Feature flags configuration exported',
+        jsonb_build_object(
+            'export_size_bytes', octet_length(result::text),
+            'operation', 'export'
+        ),
+        NULLIF(current_setting('app.current_session_id', true), '')::UUID
+    );
+    
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================================================
+-- PERMISSIONS
+-- =====================================================
+
+-- Grant execute permissions to admin role
+GRANT EXECUTE ON FUNCTION cleanup_old_feature_flag_audit_logs(INTEGER) TO admin_role;
+GRANT EXECUTE ON FUNCTION cleanup_soft_deleted_feature_flags(INTEGER) TO admin_role;
+GRANT EXECUTE ON FUNCTION get_feature_flags_health_metrics() TO admin_role, readonly_role;
+GRANT EXECUTE ON FUNCTION get_tenant_feature_flag_stats(UUID) TO application_role, admin_role;
+GRANT EXECUTE ON FUNCTION check_feature_flags_integrity() TO admin_role;
+GRANT EXECUTE ON FUNCTION fix_orphaned_overrides() TO admin_role;
+GRANT EXECUTE ON FUNCTION bulk_update_rollout_percentage(TEXT[], INTEGER, UUID) TO admin_role;
+GRANT EXECUTE ON FUNCTION bulk_create_feature_flags(JSONB, UUID) TO admin_role;
+GRANT EXECUTE ON FUNCTION export_tenant_feature_flags(UUID) TO admin_role;
+
+-- Grant limited permissions to application role
+GRANT EXECUTE ON FUNCTION get_tenant_feature_flag_stats(UUID) TO application_role;
+
+-- =====================================================
+-- FUNCTION COMMENTS
+-- =====================================================
+COMMENT ON FUNCTION cleanup_old_feature_flag_audit_logs(INTEGER) IS 'Cleans up feature flag related audit logs older than specified days';
+COMMENT ON FUNCTION cleanup_soft_deleted_feature_flags(INTEGER) IS 'Permanently removes feature flags that have been soft-deleted for specified days';
+COMMENT ON FUNCTION get_feature_flags_health_metrics() IS 'Returns comprehensive health metrics for the feature flag system';
+COMMENT ON FUNCTION get_tenant_feature_flag_stats(UUID) IS 'Returns detailed statistics for a specific tenant''s feature flags';
+COMMENT ON FUNCTION check_feature_flags_integrity() IS 'Performs data integrity checks on feature flag tables';
+COMMENT ON FUNCTION fix_orphaned_overrides() IS 'Removes orphaned tenant feature overrides that reference non-existent feature flags';
+COMMENT ON FUNCTION bulk_update_rollout_percentage(TEXT[], INTEGER, UUID) IS 'Updates rollout percentage for multiple feature flags in bulk';
+COMMENT ON FUNCTION bulk_create_feature_flags(JSONB, UUID) IS 'Creates multiple feature flags from JSON definitions';
+COMMENT ON FUNCTION export_tenant_feature_flags(UUID) IS 'Exports complete feature flag configuration for a tenant in JSON format';
+-- Provides examples and documentation for using the feature flag system
+
+-- =====================================================
+-- EXAMPLE: BASIC FEATURE FLAG SETUP
+-- =====================================================
+
+-- Example: Set up context and create feature flags for a tenant
+-- Replace 'your-tenant-uuid' with actual tenant ID
+
+/*
+-- Set tenant context
+SET app.current_tenant_id = 'your-tenant-uuid';
+SET app.current_user_id = 'your-user-uuid';
+SET app.current_session_id = 'your-session-uuid';
+
+-- Create basic feature flags
+INSERT INTO feature_flags (tenant_id, name, description, flag_type, default_value, metadata) VALUES
+    ('your-tenant-uuid', 'advanced_reporting', 'Enable advanced reporting features', 'boolean', false, '{"category": "reporting", "priority": "high"}'),
+    ('your-tenant-uuid', 'new_dashboard', 'Enable new dashboard UI', 'boolean', false, '{"category": "ui", "priority": "medium"}'),
+    ('your-tenant-uuid', 'api_rate_limit', 'API rate limit configuration', 'number', true, '{"category": "performance", "default_limit": 1000}'),
+    ('your-tenant-uuid', 'feature_rollout_test', 'Test gradual rollout', 'boolean', false, '{"category": "testing"}');
+
+-- Set rollout percentage for gradual rollout
+UPDATE feature_flags 
+SET rollout_percentage = 25 
+WHERE name = 'feature_rollout_test' 
+  AND tenant_id = 'your-tenant-uuid';
+
+-- Create tenant-specific overrides
+INSERT INTO tenant_feature_overrides (tenant_id, feature_flag_id, feature_flag_name, enabled, reason) 
+SELECT 
+    'your-tenant-uuid',
+    ff.id,
+    ff.name,
+    true,
+    'Enable advanced reporting for premium tenant'
+FROM feature_flags ff 
+WHERE ff.name = 'advanced_reporting' 
+  AND ff.tenant_id = 'your-tenant-uuid';
+*/
+
+-- =====================================================
+-- EXAMPLE: FEATURE FLAG EVALUATION
+-- =====================================================
+
+-- Example usage queries (run after setting up feature flags above)
+
+/*
+-- Evaluate a single feature flag
+SELECT * FROM evaluate_feature_flag('advanced_reporting');
+
+-- Fast evaluation without audit logging
+SELECT * FROM evaluate_feature_flag_fast('new_dashboard');
+
+-- Evaluate all feature flags for current tenant
+SELECT * FROM evaluate_all_feature_flags();
+
+-- Use cached evaluation (faster for frequent calls)
+SELECT * FROM evaluate_feature_flag_cached('advanced_reporting');
+SELECT * FROM evaluate_all_feature_flags_cached();
+*/
+
+-- =====================================================
+-- EXAMPLE: MONITORING AND MAINTENANCE
+-- =====================================================
+
+-- Example monitoring queries
+
+/*
+-- Check system health
+SELECT * FROM get_feature_flags_health_metrics();
+
+-- Get tenant-specific statistics
+SELECT * FROM get_tenant_feature_flag_stats('your-tenant-uuid');
+
+-- Check cache statistics
+SELECT * FROM get_feature_flags_cache_stats();
+
+-- Check cache freshness for a tenant
+SELECT * FROM check_cache_freshness('your-tenant-uuid');
+
+-- Check data integrity
+SELECT * FROM check_feature_flags_integrity();
+*/
+
+-- =====================================================
+-- EXAMPLE: BULK OPERATIONS
+-- =====================================================
+
+-- Example bulk operations
+
+/*
+-- Bulk update rollout percentages
+SELECT bulk_update_rollout_percentage(
+    ARRAY['new_dashboard', 'feature_rollout_test'], 
+    50, 
+    'your-tenant-uuid'
+);
+
+-- Bulk create feature flags
+SELECT bulk_create_feature_flags('[
+    {
+        "name": "experimental_feature_a",
+        "description": "Experimental feature A",
+        "flag_type": "boolean",
+        "default_value": false,
+        "rollout_percentage": 10,
+        "metadata": {"category": "experimental"}
+    },
+    {
+        "name": "experimental_feature_b",
+        "description": "Experimental feature B",
+        "flag_type": "boolean",  
+        "default_value": false,
+        "metadata": {"category": "experimental"}
+    }
+]'::jsonb, 'your-tenant-uuid');
+
+-- Export tenant configuration
+SELECT export_tenant_feature_flags('your-tenant-uuid');
+*/
+
+-- =====================================================
+-- EXAMPLE: MAINTENANCE OPERATIONS
+-- =====================================================
+
+-- Example maintenance operations (admin only)
+
+/*
+-- Refresh the materialized view cache
+SELECT refresh_feature_flags_cache();
+
+-- Clean up old audit logs (keep last 90 days)
+SELECT cleanup_old_feature_flag_audit_logs(90);
+
+-- Clean up soft-deleted flags (after 30 days)
+SELECT cleanup_soft_deleted_feature_flags(30);
+
+-- Fix any orphaned overrides
+SELECT fix_orphaned_overrides();
+*/
+
+-- =====================================================
+-- EXAMPLE: ADVANCED QUERIES
+-- =====================================================
+
+-- Example advanced analytics queries
+
+/*
+-- Feature flags by type and status
+SELECT 
+    flag_type,
+    evaluation_source,
+    COUNT(*) as count,
+    ROUND(AVG(CASE WHEN enabled THEN 1 ELSE 0 END) * 100, 2) as enabled_percentage
+FROM tenant_feature_flags_cache
+WHERE tenant_id = 'your-tenant-uuid'
+GROUP BY flag_type, evaluation_source
+ORDER BY flag_type, evaluation_source;
+
+-- Most evaluated features (from audit logs)
+SELECT 
+    context->>'feature_flag_name' as feature_name,
+    COUNT(*) as evaluation_count,
+    COUNT(*) FILTER (WHERE decision = 'ALLOW') as enabled_count,
+    ROUND(COUNT(*) FILTER (WHERE decision = 'ALLOW')::NUMERIC / COUNT(*) * 100, 2) as enabled_percentage
+FROM audit_log
+WHERE tenant_id = 'your-tenant-uuid'
+  AND event_type = 'FEATURE_FLAG_EVALUATED'
+  AND created_at >= NOW() - INTERVAL '7 days'
+GROUP BY context->>'feature_flag_name'
+ORDER BY evaluation_count DESC
+LIMIT 10;
+
+-- Rollout effectiveness analysis
+SELECT 
+    ff.name,
+    ff.rollout_percentage,
+    COUNT(DISTINCT al.session_id) as unique_evaluations,
+    COUNT(*) FILTER (WHERE al.decision = 'ALLOW') as enabled_evaluations,
+    ROUND(COUNT(*) FILTER (WHERE al.decision = 'ALLOW')::NUMERIC / COUNT(*) * 100, 2) as actual_enabled_percentage
+FROM feature_flags ff
+JOIN audit_log al ON al.context->>'feature_flag_name' = ff.name
+WHERE ff.tenant_id = 'your-tenant-uuid'
+  AND ff.rollout_percentage IS NOT NULL
+  AND al.event_type = 'FEATURE_FLAG_EVALUATED'
+  AND al.created_at >= NOW() - INTERVAL '24 hours'
+GROUP BY ff.name, ff.rollout_percentage
+ORDER BY ff.rollout_percentage DESC;
+*/
+
+-- =====================================================
+-- PERFORMANCE MONITORING QUERIES
+-- =====================================================
+
+-- Queries to monitor performance
+
+/*
+-- Index usage statistics
+SELECT 
+    schemaname,
+    tablename,
+    indexname,
+    idx_scan as index_scans,
+    idx_tup_read as tuples_read,
+    idx_tup_fetch as tuples_fetched
+FROM pg_stat_user_indexes 
+WHERE tablename IN ('feature_flags', 'tenant_feature_overrides', 'tenant_feature_flags_cache')
+ORDER BY idx_scan DESC;
+
+-- Table size statistics
+SELECT 
+    schemaname,
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
+    n_tup_ins as inserts,
+    n_tup_upd as updates,
+    n_tup_del as deletes,
+    n_live_tup as live_tuples,
+    n_dead_tup as dead_tuples
+FROM pg_stat_user_tables 
+WHERE tablename IN ('feature_flags', 'tenant_feature_overrides', 'audit_log')
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+
+-- Slow query analysis for feature flag operations
+SELECT 
+    query,
+    calls,
+    total_time,
+    mean_time,
+    rows,
+    100.0 * shared_blks_hit / nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
+FROM pg_stat_statements 
+WHERE query ILIKE '%feature_flag%' 
+   OR query ILIKE '%tenant_feature_overrides%'
+ORDER BY mean_time DESC
+LIMIT 10;
+*/
+
+-- =====================================================
+-- TROUBLESHOOTING GUIDE
+-- =====================================================
+
+/*
+TROUBLESHOOTING COMMON ISSUES:
+
+1. "No tenant context set" error:
+   - Ensure you set the tenant context before calling functions
+   - SET app.current_tenant_id = 'your-tenant-uuid';
+
+2. Feature flag not found:
+   - Check if the flag exists and is not soft-deleted
+   - Verify tenant_id matches your context
+   - SELECT * FROM feature_flags WHERE name = 'flag_name' AND deleted_at IS NULL;
+
+3. Cache is stale:
+   - Refresh the materialized view cache
+   - SELECT refresh_feature_flags_cache();
+   - Check for notifications: LISTEN feature_flags_cache_refresh;
+
+4. Performance issues:
+   - Use cached evaluation functions for high-frequency calls
+   - Monitor index usage and table statistics
+   - Consider partitioning audit_log table for large datasets
+
+5. Data integrity issues:
+   - Run integrity checks regularly
+   - SELECT * FROM check_feature_flags_integrity();
+   - Fix issues: SELECT fix_orphaned_overrides();
+
+6. Audit log growing too large:
+   - Regular cleanup of old logs
+   - SELECT cleanup_old_feature_flag_audit_logs(90);
+   - Consider partitioning by date
+
+7. RLS (Row Level Security) issues:
+   - Verify policies are correctly applied
+   - Check role permissions
+   - Ensure tenant context is properly set
+*/
+
+-- =====================================================
+-- BEST PRACTICES
+-- =====================================================
+
+/*
+FEATURE FLAG BEST PRACTICES:
+
+1. Naming Conventions:
+   - Use descriptive, hierarchical names: 'ui.new_dashboard', 'api.v2_endpoints'
+   - Avoid spaces, use underscores or dots
+   - Include the feature area as prefix
+
+2. Rollout Strategy:
+   - Start with low percentages (5-10%) for new features
+   - Monitor metrics before increasing rollout
+   - Use overrides for specific tenants during testing
+
+3. Cleanup:
+   - Regularly review and remove unused flags
+   - Set expiration dates in metadata
+   - Use soft deletes initially, then hard delete after grace period
+
+4. Monitoring:
+   - Set up alerts for integrity check failures
+   - Monitor evaluation patterns and performance
+   - Track feature adoption rates
+
+5. Documentation:
+   - Document flag purpose and expected lifespan in description
+   - Use metadata to store additional context
+   - Maintain changelog of flag modifications
+
+6. Security:
+   - Audit all flag modifications
+   - Use reason field for overrides
+   - Regular review of admin actions
+
+7. Performance:
+   - Use cached evaluation for high-frequency checks
+   - Refresh cache after bulk operations
+   - Monitor query performance and optimize indexes
+
+8. Testing:
+   - Test both enabled and disabled states
+   - Verify rollout percentages work as expected
+   - Test override functionality
+*/

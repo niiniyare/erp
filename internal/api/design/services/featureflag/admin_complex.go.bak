@@ -1,0 +1,761 @@
+package featureflag
+
+import (
+	admin "github.com/niiniyare/erp/internal/api/design/services/admin"
+	. "goa.design/goa/v3/dsl"
+)
+
+// AdminFeatureFlagService provides administrative operations for feature flags
+var _ = Service("admin-featureflag", func() {
+	Description("Administrative interface for feature flag management")
+
+	HTTP(func() {
+		Path("/api/v1/admin/feature-flags")
+		Headers(func() {
+			Header("X-Tenant-ID:tenant_id", String, "Tenant ID for multi-tenant operations")
+		})
+	})
+
+	Security("jwt")
+
+	// Bulk Operations
+	Method("bulk_enable", func() {
+		Description("Enable multiple feature flags in bulk")
+		Payload(func() {
+			Reference(BulkEnableFlagsPayload)
+			Required("flag_names", "reason")
+		})
+		Result(BulkOperationResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/bulk/enable")
+			Response(StatusOK)
+		})
+	})
+
+	Method("bulk_disable", func() {
+		Description("Disable multiple feature flags in bulk")
+		Payload(func() {
+			Reference(BulkDisableFlagsPayload)
+			Required("flag_names", "reason")
+		})
+		Result(BulkOperationResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/bulk/disable")
+			Response(StatusOK)
+		})
+	})
+
+	Method("bulk_delete", func() {
+		Description("Delete multiple feature flags in bulk")
+		Payload(func() {
+			Reference(BulkDeleteFlagsPayload)
+			Required("flag_ids", "reason")
+		})
+		Result(BulkOperationResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/bulk/delete")
+			Response(StatusOK)
+		})
+	})
+
+	Method("bulk_update_rollout", func() {
+		Description("Update rollout percentages for multiple flags")
+		Payload(func() {
+			Reference(BulkUpdateRolloutPayload)
+			Required("updates", "reason")
+		})
+		Result(BulkOperationResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/bulk/rollout")
+			Response(StatusOK)
+		})
+	})
+
+	// Flag Templates
+	Method("create_template", func() {
+		Description("Create a new feature flag template")
+		Payload(func() {
+			Reference(CreateFlagTemplatePayload)
+			Required("name", "description", "category", "flag_type", "default_value")
+		})
+		Result(FlagTemplate)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("conflict")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/templates")
+			Response(StatusCreated)
+		})
+	})
+
+	Method("get_template", func() {
+		Description("Get a specific flag template")
+		Payload(func() {
+			Attribute("template_id", String, "Template ID")
+			Required("template_id")
+		})
+		Result(FlagTemplate)
+		Error("bad_request")
+		Error("not_found")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			GET("/templates/{template_id}")
+			Response(StatusOK)
+		})
+	})
+
+	Method("list_templates", func() {
+		Description("List flag templates with pagination and filtering")
+		Payload(func() {
+			Reference(ListTemplatesPayload)
+		})
+		Result(ListTemplatesResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			GET("/templates")
+			Param("page")
+			Param("page_size")
+			Param("category")
+			Param("flag_type")
+			Response(StatusOK)
+		})
+	})
+
+	Method("apply_template", func() {
+		Description("Create a new flag from a template")
+		Payload(func() {
+			Reference(ApplyTemplatePayload)
+			Required("template_id", "flag_name")
+		})
+		Result(FeatureFlagResult)
+		Error("bad_request")
+		Error("not_found")
+		Error("conflict")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/templates/{template_id}/apply")
+			Response(StatusCreated)
+		})
+	})
+
+	// System Management
+	Method("get_system_health", func() {
+		Description("Get comprehensive system health information")
+		Result(SystemHealthResult)
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			GET("/system/health")
+			Response(StatusOK)
+		})
+	})
+
+	Method("get_system_metrics", func() {
+		Description("Get detailed system metrics")
+		Payload(func() {
+			Reference(SystemMetricsPayload)
+		})
+		Result(SystemMetricsResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/system/metrics")
+			Response(StatusOK)
+		})
+	})
+
+	Method("get_usage_analytics", func() {
+		Description("Get detailed usage analytics")
+		Payload(func() {
+			Reference(UsageAnalyticsPayload)
+			Required("time_range")
+		})
+		Result(UsageAnalyticsResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/analytics/usage")
+			Response(StatusOK)
+		})
+	})
+
+	// Emergency Controls
+	Method("emergency_disable_all", func() {
+		Description("Emergency disable all feature flags")
+		Payload(func() {
+			Reference(EmergencyActionPayload)
+			Required("reason")
+		})
+		Result(EmergencyActionResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/emergency/disable-all")
+			Response(StatusOK)
+		})
+	})
+
+	Method("emergency_enable_all", func() {
+		Description("Emergency enable all feature flags")
+		Payload(func() {
+			Reference(EmergencyActionPayload)
+			Required("reason")
+		})
+		Result(EmergencyActionResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/emergency/enable-all")
+			Response(StatusOK)
+		})
+	})
+
+	Method("create_rollout_strategy", func() {
+		Description("Create a new rollout strategy")
+		Payload(func() {
+			Reference(CreateRolloutStrategyPayload)
+			Required("name", "description", "type", "configuration")
+		})
+		Result(RolloutStrategy)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/rollout-strategies")
+			Response(StatusCreated)
+		})
+	})
+
+	// Cache Management
+	Method("warmup_cache", func() {
+		Description("Warm up feature flag cache")
+		Payload(func() {
+			Reference(CacheWarmupPayload)
+		})
+		Result(CacheOperationResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/cache/warmup")
+			Response(StatusOK)
+		})
+	})
+
+	Method("clear_cache", func() {
+		Description("Clear feature flag cache")
+		Payload(func() {
+			Reference(CacheClearPayload)
+		})
+		Result(CacheOperationResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			POST("/cache/clear")
+			Response(StatusOK)
+		})
+	})
+
+	Method("get_cache_stats", func() {
+		Description("Get cache statistics and recommendations")
+		Result(CacheStatsResult)
+		Error("unauthorized")
+		Error("internal_error")
+
+		HTTP(func() {
+			GET("/cache/stats")
+			Response(StatusOK)
+		})
+	})
+})
+
+// Payload Types
+
+var BulkEnableFlagsPayload = Type("BulkEnableFlagsPayload", func() {
+	Description("Payload for bulk enabling flags")
+	Attribute("flag_names", ArrayOf(String), "Names of flags to enable")
+	Attribute("reason", String, "Reason for the bulk operation")
+	Required("flag_names", "reason")
+})
+
+var BulkDisableFlagsPayload = Type("BulkDisableFlagsPayload", func() {
+	Description("Payload for bulk disabling flags")
+	Attribute("flag_names", ArrayOf(String), "Names of flags to disable")
+	Attribute("reason", String, "Reason for the bulk operation")
+	Required("flag_names", "reason")
+})
+
+var BulkDeleteFlagsPayload = Type("BulkDeleteFlagsPayload", func() {
+	Description("Payload for bulk deleting flags")
+	Attribute("flag_ids", ArrayOf(String), "IDs of flags to delete")
+	Attribute("reason", String, "Reason for the bulk operation")
+	Required("flag_ids", "reason")
+})
+
+var BulkUpdateRolloutPayload = Type("BulkUpdateRolloutPayload", func() {
+	Description("Payload for bulk rollout updates")
+	Attribute("updates", ArrayOf(RolloutUpdate), "Rollout updates")
+	Attribute("reason", String, "Reason for the bulk operation")
+	Required("updates", "reason")
+})
+
+var RolloutUpdate = Type("RolloutUpdate", func() {
+	Description("Individual rollout update")
+	Attribute("flag_name", String, "Name of the flag to update")
+	Attribute("percentage", Int32, "New rollout percentage (0-100)")
+	Required("flag_name", "percentage")
+})
+
+var CreateFlagTemplatePayload = Type("CreateFlagTemplatePayload", func() {
+	Description("Payload for creating a flag template")
+	Attribute("name", String, "Template name")
+	Attribute("description", String, "Template description")
+	Attribute("category", String, "Template category")
+	Attribute("flag_type", String, "Type of flags this template creates")
+	Attribute("default_value", Any, "Default value for flags created from this template")
+	Attribute("rollout_strategy", RolloutStrategy, "Default rollout strategy")
+	Attribute("target_audience", MapOf(String, Any), "Default target audience")
+	Attribute("metadata", MapOf(String, Any), "Template metadata")
+	Required("name", "description", "category", "flag_type", "default_value")
+})
+
+var ApplyTemplatePayload = Type("ApplyTemplatePayload", func() {
+	Description("Payload for applying a template")
+	Attribute("template_id", String, "ID of the template to apply")
+	Attribute("flag_name", String, "Name for the new flag")
+	Attribute("overrides", MapOf(String, Any), "Values to override from template")
+	Required("template_id", "flag_name")
+})
+
+var ListTemplatesPayload = Type("ListTemplatesPayload", func() {
+	Description("Payload for listing templates")
+	Attribute("page", Int, "Page number (default: 1)")
+	Attribute("page_size", Int, "Page size (default: 20, max: 100)")
+	Attribute("category", String, "Filter by category")
+	Attribute("flag_type", String, "Filter by flag type")
+})
+
+var SystemMetricsPayload = Type("SystemMetricsPayload", func() {
+	Description("Payload for system metrics request")
+	Attribute("time_range", TimeRange, "Time range for metrics")
+	Attribute("metrics", ArrayOf(String), "Specific metrics to retrieve (optional)")
+	Required("time_range")
+})
+
+var UsageAnalyticsPayload = Type("UsageAnalyticsPayload", func() {
+	Description("Payload for usage analytics request")
+	Attribute("time_range", TimeRange, "Time range for analytics")
+	Attribute("tenant_filter", ArrayOf(String), "Filter by tenant IDs")
+	Attribute("flag_filter", ArrayOf(String), "Filter by flag names")
+	Attribute("granularity", String, "Data granularity (hour, day, week, month)")
+	Required("time_range")
+})
+
+var EmergencyActionPayload = Type("EmergencyActionPayload", func() {
+	Description("Payload for emergency actions")
+	Attribute("reason", String, "Reason for the emergency action")
+	Required("reason")
+})
+
+var CreateRolloutStrategyPayload = Type("CreateRolloutStrategyPayload", func() {
+	Description("Payload for creating a rollout strategy")
+	Attribute("name", String, "Strategy name")
+	Attribute("description", String, "Strategy description")
+	Attribute("type", String, "Strategy type")
+	Attribute("configuration", MapOf(String, Any), "Strategy configuration")
+	Required("name", "description", "type", "configuration")
+})
+
+var CacheWarmupPayload = Type("CacheWarmupPayload", func() {
+	Description("Payload for cache warmup")
+	Attribute("tenant_ids", ArrayOf(String), "Specific tenant IDs to warm up")
+	Attribute("flag_names", ArrayOf(String), "Specific flag names to warm up")
+	Attribute("priority", String, "Warmup priority (high, normal, low)")
+	Attribute("warmup_type", String, "Warmup type (full, partial, smart)")
+})
+
+var CacheClearPayload = Type("CacheClearPayload", func() {
+	Description("Payload for cache clear")
+	Attribute("tenant_ids", ArrayOf(String), "Specific tenant IDs to clear")
+	Attribute("flag_names", ArrayOf(String), "Specific flag names to clear")
+	Attribute("cache_type", String, "Cache type to clear (flags, evaluations, stats, all)")
+})
+
+// Result Types
+
+var BulkOperationResult = Type("BulkOperationResult", func() {
+	Description("Result of a bulk operation")
+	Attribute("total_requested", Int, "Total number of items requested")
+	Attribute("successful", Int, "Number of successful operations")
+	Attribute("failed", Int, "Number of failed operations")
+	Attribute("results", ArrayOf(BulkOperationItemResult), "Individual operation results")
+	Attribute("summary", BulkOperationSummary, "Operation summary")
+	Attribute("executed_at", String, "Execution timestamp")
+	Attribute("execution_time", String, "Total execution time")
+	Required("total_requested", "successful", "failed", "results", "summary", "executed_at", "execution_time")
+})
+
+var BulkOperationItemResult = Type("BulkOperationItemResult", func() {
+	Description("Result of an individual bulk operation item")
+	Attribute("identifier", String, "Flag name or ID")
+	Attribute("success", Boolean, "Whether the operation succeeded")
+	Attribute("error", String, "Error message if failed")
+	Required("identifier", "success")
+})
+
+var BulkOperationSummary = Type("BulkOperationSummary", func() {
+	Description("Summary of bulk operation")
+	Attribute("operation", String, "Type of operation")
+	Attribute("success_rate", Float64, "Success rate percentage")
+	Attribute("average_time", Float64, "Average execution time per item (ms)")
+	Attribute("error_categories", MapOf(String, Int), "Error categorization")
+	Required("operation", "success_rate", "average_time", "error_categories")
+})
+
+var FlagTemplate = Type("FlagTemplate", func() {
+	Description("Feature flag template")
+	Attribute("id", String, "Template ID")
+	Attribute("name", String, "Template name")
+	Attribute("description", String, "Template description")
+	Attribute("category", String, "Template category")
+	Attribute("flag_type", String, "Flag type")
+	Attribute("default_value", Any, "Default value")
+	Attribute("rollout_strategy", RolloutStrategy, "Default rollout strategy")
+	Attribute("target_audience", MapOf(String, Any), "Default target audience")
+	Attribute("metadata", MapOf(String, Any), "Template metadata")
+	Attribute("created_at", String, "Creation timestamp")
+	Attribute("updated_at", String, "Update timestamp")
+	Required("id", "name", "description", "category", "flag_type", "default_value", "created_at", "updated_at")
+})
+
+var RolloutStrategy = Type("RolloutStrategy", func() {
+	Description("Rollout strategy")
+	Attribute("id", String, "Strategy ID")
+	Attribute("name", String, "Strategy name")
+	Attribute("description", String, "Strategy description")
+	Attribute("type", String, "Strategy type")
+	Attribute("configuration", MapOf(String, Any), "Strategy configuration")
+	Attribute("created_at", String, "Creation timestamp")
+	Required("id", "name", "description", "type", "configuration", "created_at")
+})
+
+var ListTemplatesResult = Type("ListTemplatesResult", func() {
+	Description("Paginated list of templates")
+	Attribute("templates", ArrayOf(FlagTemplate), "Templates")
+	Attribute("total", Int, "Total number of templates")
+	Attribute("page", Int, "Current page")
+	Attribute("page_size", Int, "Page size")
+	Required("templates", "total", "page", "page_size")
+})
+
+var SystemHealthResult = Type("SystemHealthResult", func() {
+	Description("System health information")
+	Attribute("status", String, "Overall system status")
+	Attribute("timestamp", String, "Health check timestamp")
+	Attribute("version", String, "System version")
+	Attribute("database_status", String, "Database status")
+	Attribute("cache_status", String, "Cache status")
+	Attribute("component_health", MapOf(String, admin.ComponentHealth), "Individual component health")
+	Attribute("overall_score", Int, "Overall health score (0-100)")
+	Attribute("recommended_actions", ArrayOf(String), "Recommended actions")
+	Required("status", "timestamp", "version", "database_status", "cache_status", "component_health", "overall_score")
+})
+
+
+var TimeRange = Type("TimeRange", func() {
+	Description("Time range for queries")
+	Attribute("start", String, "Start time (RFC3339)")
+	Attribute("end", String, "End time (RFC3339)")
+	Required("start", "end")
+})
+
+var SystemMetricsResult = Type("SystemMetricsResult", func() {
+	Description("System metrics")
+	Attribute("time_range", TimeRange, "Time range")
+	Attribute("generated_at", String, "Generation timestamp")
+	Attribute("flag_metrics", FlagSystemMetrics, "Flag-specific metrics")
+	Attribute("performance_metrics", PerformanceSystemMetrics, "Performance metrics")
+	Attribute("usage_metrics", UsageSystemMetrics, "Usage metrics")
+	Attribute("trend_analysis", TrendAnalysis, "Trend analysis")
+	Required("time_range", "generated_at", "flag_metrics", "performance_metrics", "usage_metrics", "trend_analysis")
+})
+
+var FlagSystemMetrics = Type("FlagSystemMetrics", func() {
+	Description("Flag system metrics")
+	Attribute("total_flags", Int, "Total number of flags")
+	Attribute("active_flags", Int, "Number of active flags")
+	Attribute("flags_by_type", MapOf(String, Int), "Flags grouped by type")
+	Attribute("flags_by_tenant", MapOf(String, Int), "Flags grouped by tenant")
+	Attribute("average_rollout", Float64, "Average rollout percentage")
+	Attribute("evaluation_volume", Int, "Total evaluations")
+	Attribute("created_today", Int, "Flags created today")
+	Attribute("modified_today", Int, "Flags modified today")
+	Required("total_flags", "active_flags", "flags_by_type", "flags_by_tenant", "average_rollout", "evaluation_volume", "created_today", "modified_today")
+})
+
+var PerformanceSystemMetrics = Type("PerformanceSystemMetrics", func() {
+	Description("Performance metrics")
+	Attribute("average_evaluation_time", String, "Average evaluation time")
+	Attribute("cache_hit_rate", Float64, "Cache hit rate")
+	Attribute("error_rate", Float64, "Error rate")
+	Attribute("throughput_qps", Float64, "Throughput in QPS")
+	Attribute("p95_response_time", String, "95th percentile response time")
+	Attribute("p99_response_time", String, "99th percentile response time")
+	Required("average_evaluation_time", "cache_hit_rate", "error_rate", "throughput_qps", "p95_response_time", "p99_response_time")
+})
+
+var UsageSystemMetrics = Type("UsageSystemMetrics", func() {
+	Description("Usage metrics")
+	Attribute("unique_users", Int, "Number of unique users")
+	Attribute("unique_tenants", Int, "Number of unique tenants")
+	Attribute("top_flags", ArrayOf(FlagUsageStat), "Most used flags")
+	Attribute("usage_by_hour", ArrayOf(HourlyUsage), "Hourly usage breakdown")
+	Attribute("geographic_usage", MapOf(String, Int), "Usage by geography")
+	Required("unique_users", "unique_tenants", "top_flags", "usage_by_hour", "geographic_usage")
+})
+
+var FlagUsageStat = Type("FlagUsageStat", func() {
+	Description("Flag usage statistics")
+	Attribute("flag_name", String, "Flag name")
+	Attribute("evaluation_count", Int, "Number of evaluations")
+	Attribute("unique_users", Int, "Number of unique users")
+	Attribute("success_rate", Float64, "Success rate")
+	Required("flag_name", "evaluation_count", "unique_users", "success_rate")
+})
+
+var HourlyUsage = Type("HourlyUsage", func() {
+	Description("Hourly usage data")
+	Attribute("hour", String, "Hour timestamp")
+	Attribute("evaluation_count", Int, "Number of evaluations")
+	Attribute("unique_users", Int, "Number of unique users")
+	Attribute("error_count", Int, "Number of errors")
+	Required("hour", "evaluation_count", "unique_users", "error_count")
+})
+
+var TrendAnalysis = Type("TrendAnalysis", func() {
+	Description("Trend analysis")
+	Attribute("growth_rate", Float64, "Growth rate percentage")
+	Attribute("seasonality", MapOf(String, Float64), "Seasonal patterns")
+	Attribute("anomalies", ArrayOf(AnomalyDetection), "Detected anomalies")
+	Attribute("forecasting", ForecastData, "Forecasting data")
+	Attribute("recommendations", ArrayOf(TrendRecommendation), "Trend recommendations")
+	Required("growth_rate", "seasonality", "anomalies", "forecasting", "recommendations")
+})
+
+var AnomalyDetection = Type("AnomalyDetection", func() {
+	Description("Anomaly detection result")
+	Attribute("type", String, "Anomaly type")
+	Attribute("timestamp", String, "Anomaly timestamp")
+	Attribute("severity", String, "Anomaly severity")
+	Attribute("description", String, "Anomaly description")
+	Attribute("value", Float64, "Observed value")
+	Attribute("expected", Float64, "Expected value")
+	Attribute("confidence", Float64, "Detection confidence")
+	Required("type", "timestamp", "severity", "description", "value", "expected", "confidence")
+})
+
+var ForecastData = Type("ForecastData", func() {
+	Description("Forecasting data")
+	Attribute("next_hour_prediction", Int, "Next hour prediction")
+	Attribute("next_day_prediction", Int, "Next day prediction")
+	Attribute("next_week_prediction", Int, "Next week prediction")
+	Attribute("confidence_interval", Float64, "Confidence interval")
+	Attribute("seasonality_factor", Float64, "Seasonality factor")
+	Required("next_hour_prediction", "next_day_prediction", "next_week_prediction", "confidence_interval", "seasonality_factor")
+})
+
+var TrendRecommendation = Type("TrendRecommendation", func() {
+	Description("Trend recommendation")
+	Attribute("type", String, "Recommendation type")
+	Attribute("priority", String, "Priority level")
+	Attribute("title", String, "Recommendation title")
+	Attribute("description", String, "Recommendation description")
+	Attribute("impact", String, "Expected impact")
+	Attribute("effort", String, "Required effort")
+	Required("type", "priority", "title", "description", "impact", "effort")
+})
+
+var UsageAnalyticsResult = Type("UsageAnalyticsResult", func() {
+	Description("Usage analytics result")
+	Attribute("time_range", TimeRange, "Time range")
+	Attribute("generated_at", String, "Generation timestamp")
+	Attribute("summary", UsageSummary, "Usage summary")
+	Attribute("time_series", ArrayOf(TimeSeriesPoint), "Time series data")
+	Attribute("top_performers", ArrayOf(PerformerStat), "Top performing flags")
+	Attribute("behavior_analysis", BehaviorAnalysis, "Behavior analysis")
+	Required("time_range", "generated_at", "summary", "time_series", "top_performers", "behavior_analysis")
+})
+
+var UsageSummary = Type("UsageSummary", func() {
+	Description("Usage summary")
+	Attribute("total_evaluations", Int, "Total evaluations")
+	Attribute("unique_flags", Int, "Number of unique flags")
+	Attribute("unique_users", Int, "Number of unique users")
+	Attribute("success_rate", Float64, "Success rate")
+	Attribute("average_response_time", Float64, "Average response time (ms)")
+	Required("total_evaluations", "unique_flags", "unique_users", "success_rate", "average_response_time")
+})
+
+var TimeSeriesPoint = Type("TimeSeriesPoint", func() {
+	Description("Time series data point")
+	Attribute("timestamp", String, "Timestamp")
+	Attribute("evaluations", Int, "Number of evaluations")
+	Attribute("unique_users", Int, "Number of unique users")
+	Attribute("errors", Int, "Number of errors")
+	Required("timestamp", "evaluations", "unique_users", "errors")
+})
+
+var PerformerStat = Type("PerformerStat", func() {
+	Description("Performer statistics")
+	Attribute("name", String, "Item name")
+	Attribute("value", Int, "Value")
+	Attribute("change", Float64, "Change percentage")
+	Required("name", "value", "change")
+})
+
+var BehaviorAnalysis = Type("BehaviorAnalysis", func() {
+	Description("Behavior analysis")
+	Attribute("peak_usage_hours", ArrayOf(Int), "Peak usage hours")
+	Attribute("user_segments", MapOf(String, UserSegment), "User segments")
+	Attribute("flag_correlations", ArrayOf(FlagCorrelation), "Flag correlations")
+	Attribute("adoption_metrics", AdoptionMetrics, "Adoption metrics")
+	Required("peak_usage_hours", "user_segments", "flag_correlations", "adoption_metrics")
+})
+
+var UserSegment = Type("UserSegment", func() {
+	Description("User segment")
+	Attribute("name", String, "Segment name")
+	Attribute("user_count", Int, "Number of users")
+	Attribute("avg_evaluations", Float64, "Average evaluations per user")
+	Attribute("preferred_flags", ArrayOf(String), "Preferred flags")
+	Attribute("behavior_pattern", String, "Behavior pattern")
+	Required("name", "user_count", "avg_evaluations", "preferred_flags", "behavior_pattern")
+})
+
+var FlagCorrelation = Type("FlagCorrelation", func() {
+	Description("Flag correlation")
+	Attribute("flag1", String, "First flag")
+	Attribute("flag2", String, "Second flag")
+	Attribute("correlation", Float64, "Correlation coefficient")
+	Attribute("confidence", Float64, "Confidence level")
+	Required("flag1", "flag2", "correlation", "confidence")
+})
+
+var AdoptionMetrics = Type("AdoptionMetrics", func() {
+	Description("Adoption metrics")
+	Attribute("new_flags_this_period", Int, "New flags in this period")
+	Attribute("adoption_rate", Float64, "Adoption rate")
+	Attribute("time_to_first_evaluation", Float64, "Time to first evaluation (hours)")
+	Attribute("stickiness_rate", Float64, "Stickiness rate")
+	Required("new_flags_this_period", "adoption_rate", "time_to_first_evaluation", "stickiness_rate")
+})
+
+var EmergencyActionResult = Type("EmergencyActionResult", func() {
+	Description("Emergency action result")
+	Attribute("action_type", String, "Type of emergency action")
+	Attribute("affected_flags", Int, "Number of affected flags")
+	Attribute("executed_at", String, "Execution timestamp")
+	Attribute("reason", String, "Reason for the action")
+	Attribute("rollback_token", String, "Token for rollback operations")
+	Attribute("estimated_impact", String, "Estimated impact description")
+	Required("action_type", "affected_flags", "executed_at", "reason", "rollback_token", "estimated_impact")
+})
+
+var CacheOperationResult = Type("CacheOperationResult", func() {
+	Description("Cache operation result")
+	Attribute("operation_type", String, "Type of cache operation")
+	Attribute("executed_at", String, "Execution timestamp")
+	Attribute("execution_time", String, "Execution time")
+	Attribute("items_processed", Int, "Number of items processed")
+	Attribute("success", Boolean, "Whether the operation succeeded")
+	Attribute("details", String, "Operation details")
+	Required("operation_type", "executed_at", "execution_time", "items_processed", "success")
+})
+
+var CacheStatsResult = Type("CacheStatsResult", func() {
+	Description("Cache statistics result")
+	Attribute("generated_at", String, "Generation timestamp")
+	Attribute("overall_stats", CacheOverallStats, "Overall cache statistics")
+	Attribute("cache_type_stats", MapOf(String, CacheTypeStats), "Statistics by cache type")
+	Attribute("tenant_stats", MapOf(String, CacheTenantStats), "Statistics by tenant")
+	Attribute("recommendations", ArrayOf(CacheRecommendation), "Cache recommendations")
+	Required("generated_at", "overall_stats", "cache_type_stats", "tenant_stats", "recommendations")
+})
+
+var CacheOverallStats = Type("CacheOverallStats", func() {
+	Description("Overall cache statistics")
+	Attribute("total_keys", Int, "Total number of keys")
+	Attribute("total_memory_mb", Float64, "Total memory usage in MB")
+	Attribute("hit_rate", Float64, "Cache hit rate")
+	Attribute("miss_rate", Float64, "Cache miss rate")
+	Attribute("eviction_rate", Float64, "Cache eviction rate")
+	Attribute("average_key_size", Float64, "Average key size in bytes")
+	Required("total_keys", "total_memory_mb", "hit_rate", "miss_rate", "eviction_rate", "average_key_size")
+})
+
+var CacheTypeStats = Type("CacheTypeStats", func() {
+	Description("Cache statistics by type")
+	Attribute("key_count", Int, "Number of keys")
+	Attribute("memory_mb", Float64, "Memory usage in MB")
+	Attribute("hit_rate", Float64, "Hit rate")
+	Attribute("average_ttl", Int, "Average TTL in seconds")
+	Required("key_count", "memory_mb", "hit_rate", "average_ttl")
+})
+
+var CacheTenantStats = Type("CacheTenantStats", func() {
+	Description("Cache statistics by tenant")
+	Attribute("tenant_id", String, "Tenant ID")
+	Attribute("key_count", Int, "Number of keys")
+	Attribute("memory_mb", Float64, "Memory usage in MB")
+	Attribute("hit_rate", Float64, "Hit rate")
+	Required("tenant_id", "key_count", "memory_mb", "hit_rate")
+})
+
+var CacheRecommendation = Type("CacheRecommendation", func() {
+	Description("Cache recommendation")
+	Attribute("type", String, "Recommendation type")
+	Attribute("priority", String, "Priority level")
+	Attribute("title", String, "Recommendation title")
+	Attribute("description", String, "Recommendation description")
+	Attribute("impact", String, "Expected impact")
+	Attribute("action", String, "Recommended action")
+	Required("type", "priority", "title", "description", "impact", "action")
+})

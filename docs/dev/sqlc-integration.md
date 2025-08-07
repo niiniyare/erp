@@ -186,6 +186,110 @@ SET deleted_at = $2, updated_at = $2
 WHERE id = $1 AND deleted_at IS NULL;
 ```
 
+## 🔒 Multi-Tenant Query Requirements
+
+### **CRITICAL**: Every Query Must Include Tenant Context
+
+All queries that operate on tenant-scoped data **MUST** include `tenant_id = current_tenant_id()` in the WHERE clause to ensure proper Row-Level Security (RLS) enforcement.
+
+#### ✅ Correct Multi-Tenant Query Pattern:
+```sql
+-- name: GetUserByID :one
+SELECT * FROM users 
+WHERE id = $1 
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;
+
+-- name: ListUsersByDepartment :many  
+SELECT * FROM users
+WHERE department_id = $1
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+ORDER BY created_at DESC;
+
+-- name: UpdateUserStatus :exec
+UPDATE users
+SET status = $2, updated_at = $3
+WHERE id = $1 
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;
+```
+
+#### ❌ Wrong - Missing Tenant Context:
+```sql
+-- NEVER DO THIS - Security vulnerability!
+-- name: GetUserByID :one
+SELECT * FROM users WHERE id = $1;  -- Missing tenant_id check!
+```
+
+### **CRITICAL**: Always Use Soft Delete Pattern
+
+**NEVER perform hard deletes** in the application. Always use soft deletes by setting `deleted_at` timestamp.
+
+#### ✅ Correct Soft Delete Pattern:
+```sql  
+-- name: SoftDeleteUser :exec
+UPDATE users 
+SET deleted_at = $2, updated_at = $2
+WHERE id = $1 
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;
+
+-- name: RestoreUser :exec  
+UPDATE users
+SET deleted_at = NULL, updated_at = $2
+WHERE id = $1
+  AND tenant_id = current_tenant_id();
+```
+
+#### ❌ Wrong - Hard Delete (Forbidden):
+```sql
+-- NEVER DO THIS - Data loss risk!
+-- name: DeleteUser :exec  
+DELETE FROM users WHERE id = $1;  -- FORBIDDEN!
+```
+
+### Multi-Tenant Query Examples:
+
+#### User Management:
+```sql
+-- name: CreateUser :one
+INSERT INTO users (
+    id, tenant_id, email, name, department_id, 
+    status, created_at, updated_at
+) VALUES (
+    $1, current_tenant_id(), $2, $3, $4, $5, $6, $7
+) RETURNING *;
+
+-- name: GetActiveUsers :many
+SELECT * FROM users
+WHERE tenant_id = current_tenant_id()
+  AND status = 'active'
+  AND deleted_at IS NULL
+ORDER BY name ASC;
+
+-- name: CountUsersByStatus :one
+SELECT COUNT(*) FROM users  
+WHERE tenant_id = current_tenant_id()
+  AND status = $1
+  AND deleted_at IS NULL;
+```
+
+#### Entity Relationships:
+```sql
+-- name: GetUserWithDepartment :one
+SELECT 
+    u.*, 
+    d.name as department_name
+FROM users u
+JOIN departments d ON u.department_id = d.id
+WHERE u.id = $1
+  AND u.tenant_id = current_tenant_id()
+  AND d.tenant_id = current_tenant_id()  -- Join tables also need tenant check
+  AND u.deleted_at IS NULL
+  AND d.deleted_at IS NULL;
+```
+
 ### Query Annotations Explained:
 - `:one` - Returns single row
 - `:many` - Returns multiple rows  
@@ -625,30 +729,47 @@ func (r *repository) CreateBatch(ctx context.Context, tenants []*Tenant) error {
 
 ## ✅ Best Practices
 
-### 1. **Query Organization**
+### 1. **🔒 Security Requirements (CRITICAL)**
+- **ALWAYS** include `tenant_id = current_tenant_id()` in WHERE clauses for tenant-scoped data
+- **NEVER** use hard deletes - always soft delete with `deleted_at` timestamp
+- **ALWAYS** include `deleted_at IS NULL` in SELECT queries to exclude soft-deleted records
+- **VALIDATE** tenant context is properly set before executing queries
+
+### 2. **Query Organization**
 - Group related queries in same file
 - Use descriptive query names
 - Include comments for complex queries
+- Document multi-tenant requirements clearly
 
-### 2. **Parameter Handling**
+### 3. **Parameter Handling**
 - Use proper PostgreSQL parameter syntax (`$1`, `$2`)
 - Handle nullable parameters with `::type IS NULL OR`
 - Validate parameters at service layer
+- Always validate tenant_id parameter when required
 
-### 3. **Error Handling**
+### 4. **Error Handling**
 - Convert "no rows" errors to domain errors
 - Wrap database errors with context
 - Use proper error types
+- Handle tenant context errors appropriately
 
-### 4. **Model Conversion**
+### 5. **Model Conversion**
 - Always convert at repository boundaries
 - Handle JSONB fields properly
 - Validate data during conversion
+- Ensure tenant_id is preserved in conversions
 
-### 5. **Performance**
+### 6. **Performance**
 - Use appropriate query annotations (`:one`, `:many`, `:exec`)
 - Create indexes for common query patterns
 - Use batch operations for multiple records
+- Index on `(tenant_id, other_columns)` for multi-tenant queries
+
+### 7. **Multi-Tenant Data Integrity**
+- Use foreign key constraints that include tenant_id
+- Implement check constraints to prevent cross-tenant data access
+- Test tenant isolation thoroughly
+- Use database functions like `current_tenant_id()` consistently
 
 ---
 

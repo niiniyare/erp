@@ -4,6 +4,7 @@
 
 This document outlines the migration plan to consolidate our API framework architecture. Currently, the system uses both GOA and Gin frameworks simultaneously, creating confusion and maintenance overhead.
 
+also read [# Gin Handlers Inventory](./GIN_HANDLERS_INVENTORY.md) 
 ## Current State Analysis
 
 ### Existing GOA Implementation

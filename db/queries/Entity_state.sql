@@ -33,7 +33,8 @@ END $$;
 -- Usage: Creates multiple entity states in batch for different document types
 -- Use case: Initial setup of document sequences for a new entity
 -- NOTE: Missing tenant_id assignment and UUID generation - should be addressed
-SELECT $2, unnest($3::VARCHAR[]), 1, $1, $4
+INSERT INTO entitystate (entity_id, key, sequence_number, fiscal_year, tenant_id)
+SELECT $1, unnest($2::VARCHAR[]), 1, $3, current_tenant_id()
 ON CONFLICT (entity_id, key, fiscal_year) DO NOTHING;
 
 -- name: GetEntityStateHistory :many
@@ -173,15 +174,15 @@ ORDER BY total_sequences_used DESC;
 -- Use case: Audit compliance, finding deleted/voided documents, sequence integrity checks
 WITH sequence_range AS (
     SELECT generate_series(1, (
-        SELECT MAX(sequence) FROM entitystate 
-        WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
+        SELECT MAX(es1.sequence) FROM entitystate es1
+        WHERE es1.entity_id = $1 AND es1.key = $2 AND es1.fiscal_year = $3 AND es1.tenant_id = current_tenant_id()
     )) as seq_num
 )
 SELECT seq_num as missing_sequence
 FROM sequence_range
 WHERE seq_num NOT IN (
-    SELECT sequence FROM entitystate 
-    WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
+    SELECT es2.sequence FROM entitystate es2
+    WHERE es2.entity_id = $1 AND es2.key = $2 AND es2.fiscal_year = $3 AND es2.tenant_id = current_tenant_id()
 );
 
 -- name: GetEntitySequenceSummary :many

@@ -20,22 +20,26 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 
 	// GOA generated packages
+	abacGen "github.com/niiniyare/erp/internal/api/gen/abac"
 	accessrequest "github.com/niiniyare/erp/internal/api/gen/access_request"
-	accessrequestsvr "github.com/niiniyare/erp/internal/api/gen/http/access_request/server"
+	adminfeatureflag "github.com/niiniyare/erp/internal/api/gen/admin_featureflag"
 	auth "github.com/niiniyare/erp/internal/api/gen/auth"
+	featureflag "github.com/niiniyare/erp/internal/api/gen/featureflag"
+	health "github.com/niiniyare/erp/internal/api/gen/health"
+	abacsvr "github.com/niiniyare/erp/internal/api/gen/http/abac/server"
+	accessrequestsvr "github.com/niiniyare/erp/internal/api/gen/http/access_request/server"
+	adminfeatureflagsvr "github.com/niiniyare/erp/internal/api/gen/http/admin_featureflag/server"
 	authsvr "github.com/niiniyare/erp/internal/api/gen/http/auth/server"
+	featureflagsvr "github.com/niiniyare/erp/internal/api/gen/http/featureflag/server"
 	healthsvr "github.com/niiniyare/erp/internal/api/gen/http/health/server"
 	openapisvr "github.com/niiniyare/erp/internal/api/gen/http/openapi/server"
 	organizationsvr "github.com/niiniyare/erp/internal/api/gen/http/organization/server"
 	tenantsvr "github.com/niiniyare/erp/internal/api/gen/http/tenant/server"
 	usersvr "github.com/niiniyare/erp/internal/api/gen/http/user/server"
-	health "github.com/niiniyare/erp/internal/api/gen/health"
 	openapi "github.com/niiniyare/erp/internal/api/gen/openapi"
 	organization "github.com/niiniyare/erp/internal/api/gen/organization"
 	goaTenant "github.com/niiniyare/erp/internal/api/gen/tenant"
 	goaUser "github.com/niiniyare/erp/internal/api/gen/user"
-	abacGen "github.com/niiniyare/erp/internal/api/gen/abac"
-	abacsvr "github.com/niiniyare/erp/internal/api/gen/http/abac/server"
 	"goa.design/clue/debug"
 	clueLog "goa.design/clue/log"
 	goahttp "goa.design/goa/v3/http"
@@ -49,19 +53,23 @@ type GOAServer struct {
 func InitializeGOAServer(services *Services, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*GOAServer, error) {
 	// Initialize GOA services
 	var (
-		abacSvc         abacGen.Service
+		abacSvc          abacGen.Service
 		accessRequestSvc accessrequest.Service
-		authSvc         auth.Service
-		healthSvc       health.Service
-		organizationSvc organization.Service
-		tenantSvc       goaTenant.Service
-		userSvc         goaUser.Service
-		openapiSvc      openapi.Service
+		adminFeatureFlagSvc adminfeatureflag.Service
+		authSvc          auth.Service
+		featureFlagSvc   featureflag.Service
+		healthSvc        health.Service
+		organizationSvc  organization.Service
+		tenantSvc        goaTenant.Service
+		userSvc          goaUser.Service
+		openapiSvc       openapi.Service
 	)
 
 	abacSvc = handlers.NewABACGoaHandler(services.ABACService, metricsService, tracingService, logger.WithFields(logger.Fields{}))
 	accessRequestSvc = handlers.NewAccessRequestGoaHandler(services.AccessRequestService, services.ConditionalAccessService, services.AnalyticsService, tracingService, metricsService)
+	adminFeatureFlagSvc = handlers.NewAdminFeatureFlagService(services.AdminFeatureFlagService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
 	authSvc = handlers.NewAuthHandler(services.IdentityService, tracingService, metricsService)
+	featureFlagSvc = handlers.NewFeatureFlagService(services.FeatureFlagService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
 	healthSvc = handlers.NewHealthGoaHandler(tracingService, metricsService)
 	organizationSvc = handlers.NewOrganizationGoaHandler(services.EntityService, tracingService, metricsService)
 	tenantSvc = handlers.NewTenantGoaHandler(services.TenantService, tracingService, metricsService)
@@ -70,14 +78,16 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 
 	// Create GOA endpoints
 	var (
-		abacEndpoints         *abacGen.Endpoints
+		abacEndpoints          *abacGen.Endpoints
 		accessRequestEndpoints *accessrequest.Endpoints
-		authEndpoints         *auth.Endpoints
-		healthEndpoints       *health.Endpoints
-		organizationEndpoints *organization.Endpoints
-		tenantEndpoints       *goaTenant.Endpoints
-		userEndpoints         *goaUser.Endpoints
-		openapiEndpoints      *openapi.Endpoints
+		adminFeatureFlagEndpoints *adminfeatureflag.Endpoints
+		authEndpoints          *auth.Endpoints
+		featureFlagEndpoints   *featureflag.Endpoints
+		healthEndpoints        *health.Endpoints
+		organizationEndpoints  *organization.Endpoints
+		tenantEndpoints        *goaTenant.Endpoints
+		userEndpoints          *goaUser.Endpoints
+		openapiEndpoints       *openapi.Endpoints
 	)
 
 	abacEndpoints = abacGen.NewEndpoints(abacSvc)
@@ -88,9 +98,17 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 	accessRequestEndpoints.Use(debug.LogPayloads())
 	accessRequestEndpoints.Use(clueLog.Endpoint)
 
+	adminFeatureFlagEndpoints = adminfeatureflag.NewEndpoints(adminFeatureFlagSvc)
+	adminFeatureFlagEndpoints.Use(debug.LogPayloads())
+	adminFeatureFlagEndpoints.Use(clueLog.Endpoint)
+
 	authEndpoints = auth.NewEndpoints(authSvc)
 	authEndpoints.Use(debug.LogPayloads())
 	authEndpoints.Use(clueLog.Endpoint)
+
+	featureFlagEndpoints = featureflag.NewEndpoints(featureFlagSvc)
+	featureFlagEndpoints.Use(debug.LogPayloads())
+	featureFlagEndpoints.Use(clueLog.Endpoint)
 
 	healthEndpoints = health.NewEndpoints(healthSvc)
 	healthEndpoints.Use(debug.LogPayloads())
@@ -119,7 +137,7 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 	)
 
 	mux := goahttp.NewMuxer()
-	
+
 	// Add debug handlers only in development
 	if isDevelopmentMode() {
 		debug.MountPprofHandlers(debug.Adapt(mux))
@@ -132,7 +150,9 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 
 	abacServer := abacsvr.New(abacEndpoints, mux, dec, enc, eh, nil)
 	accessRequestServer := accessrequestsvr.New(accessRequestEndpoints, mux, dec, enc, eh, nil)
+	adminFeatureFlagServer := adminfeatureflagsvr.New(adminFeatureFlagEndpoints, mux, dec, enc, eh, nil)
 	authServer := authsvr.New(authEndpoints, mux, dec, enc, eh, nil)
+	featureFlagServer := featureflagsvr.New(featureFlagEndpoints, mux, dec, enc, eh, nil)
 	healthServer := healthsvr.New(healthEndpoints, mux, dec, enc, eh, nil)
 	organizationServer := organizationsvr.New(organizationEndpoints, mux, dec, enc, eh, nil)
 	tenantServer := tenantsvr.New(tenantEndpoints, mux, dec, enc, eh, nil)
@@ -142,7 +162,9 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 	// Mount GOA HTTP servers
 	abacsvr.Mount(mux, abacServer)
 	accessrequestsvr.Mount(mux, accessRequestServer)
+	adminfeatureflagsvr.Mount(mux, adminFeatureFlagServer)
 	authsvr.Mount(mux, authServer)
+	featureflagsvr.Mount(mux, featureFlagServer)
 	healthsvr.Mount(mux, healthServer)
 	organizationsvr.Mount(mux, organizationServer)
 	tenantsvr.Mount(mux, tenantServer)
@@ -167,7 +189,9 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 	// Log mounted endpoints
 	logMountedEndpoints(abacServer.Mounts, "ABAC")
 	logMountedEndpoints(accessRequestServer.Mounts, "AccessRequest")
+	logMountedEndpoints(adminFeatureFlagServer.Mounts, "AdminFeatureFlag")
 	logMountedEndpoints(authServer.Mounts, "Auth")
+	logMountedEndpoints(featureFlagServer.Mounts, "FeatureFlag")
 	logMountedEndpoints(organizationServer.Mounts, "Organization")
 	logMountedEndpoints(tenantServer.Mounts, "Tenant")
 	logMountedEndpoints(userServer.Mounts, "User")

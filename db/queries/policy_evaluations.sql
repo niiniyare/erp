@@ -127,3 +127,14 @@ FROM policy_evaluations
 WHERE tenant_id = current_tenant_id()
   AND evaluated_at >= $1
   AND evaluated_at <= $2;
+
+-- name: CreatePolicyEvaluation :one
+INSERT INTO policy_evaluations (
+    user_id,
+    resource_id,
+    action,
+    context_hash,
+    decision
+) VALUES (
+    $1, $2, $3, $4, $5
+) RETURNING *;

@@ -84,13 +84,13 @@ func (q *Queries) CacheEvaluationResult(ctx context.Context, arg CacheEvaluation
 
 const cleanupExpiredEvaluations = `-- name: CleanupExpiredEvaluations :exec
 DELETE FROM policy_evaluations 
-WHERE expires_at < NOW()
+WHERE expires_at < NOW() AND tenant_id = current_tenant_id()
 `
 
 // CleanupExpiredEvaluations
 //
 //	DELETE FROM policy_evaluations
-//	WHERE expires_at < NOW()
+//	WHERE expires_at < NOW() AND tenant_id = current_tenant_id()
 func (q *Queries) CleanupExpiredEvaluations(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, cleanupExpiredEvaluations)
 	return err
@@ -139,6 +139,66 @@ func (q *Queries) CountEvaluationsByDecision(ctx context.Context, arg CountEvalu
 		&i.DenyCount,
 		&i.NotApplicableCount,
 		&i.TotalCount,
+	)
+	return &i, err
+}
+
+const createPolicyEvaluation = `-- name: CreatePolicyEvaluation :one
+INSERT INTO policy_evaluations (
+    user_id,
+    resource_id,
+    action,
+    context_hash,
+    decision
+) VALUES (
+    $1, $2, $3, $4, $5
+) RETURNING id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+`
+
+type CreatePolicyEvaluationParams struct {
+	UserID      uuid.UUID  `json:"user_id"`
+	ResourceID  *uuid.UUID `json:"resource_id"`
+	Action      string     `json:"action"`
+	ContextHash string     `json:"context_hash"`
+	Decision    string     `json:"decision"`
+}
+
+// CreatePolicyEvaluation
+//
+//	INSERT INTO policy_evaluations (
+//	    user_id,
+//	    resource_id,
+//	    action,
+//	    context_hash,
+//	    decision
+//	) VALUES (
+//	    $1, $2, $3, $4, $5
+//	) RETURNING id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+func (q *Queries) CreatePolicyEvaluation(ctx context.Context, arg CreatePolicyEvaluationParams) (*PolicyEvaluation, error) {
+	row := q.db.QueryRow(ctx, createPolicyEvaluation,
+		arg.UserID,
+		arg.ResourceID,
+		arg.Action,
+		arg.ContextHash,
+		arg.Decision,
+	)
+	var i PolicyEvaluation
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.UserID,
+		&i.ResourceType,
+		&i.ResourceID,
+		&i.Action,
+		&i.EntityID,
+		&i.ContextHash,
+		&i.Decision,
+		&i.ApplicablePolicies,
+		&i.PolicyDecisions,
+		&i.EvaluationTimeMs,
+		&i.CacheKey,
+		&i.EvaluatedAt,
+		&i.ExpiresAt,
 	)
 	return &i, err
 }

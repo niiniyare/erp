@@ -14,18 +14,18 @@ import (
 )
 
 const archiveOldDeletedEntities = `-- name: ArchiveOldDeletedEntities :exec
-DELETE FROM entities 
-WHERE tenant_id = current_tenant_id() 
-    AND deleted_at < $1
-    AND deleted_at IS NOT NULL
+DELETE FROM entities
+WHERE tenant_id = current_tenant_id()
+AND deleted_at < $1
+AND deleted_at IS NOT NULL
 `
 
 // ArchiveOldDeletedEntities
 //
 //	DELETE FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND deleted_at < $1
-//	    AND deleted_at IS NOT NULL
+//	AND deleted_at < $1
+//	AND deleted_at IS NOT NULL
 func (q *Queries) ArchiveOldDeletedEntities(ctx context.Context, deletedAt sql.NullTime) error {
 	_, err := q.db.Exec(ctx, archiveOldDeletedEntities, deletedAt)
 	return err
@@ -35,7 +35,7 @@ const batchSoftDeleteEntities = `-- name: BatchSoftDeleteEntities :exec
 UPDATE entities
 SET deleted_at = NOW(), updated_at = NOW()
 WHERE tenant_id = current_tenant_id()
-  AND uuid = ANY($1::UUID[])
+AND uuid = ANY($1::UUID[])
 `
 
 // BatchSoftDeleteEntities
@@ -43,7 +43,7 @@ WHERE tenant_id = current_tenant_id()
 //	UPDATE entities
 //	SET deleted_at = NOW(), updated_at = NOW()
 //	WHERE tenant_id = current_tenant_id()
-//	  AND uuid = ANY($1::UUID[])
+//	AND uuid = ANY($1::UUID[])
 func (q *Queries) BatchSoftDeleteEntities(ctx context.Context, uuids []uuid.UUID) error {
 	_, err := q.db.Exec(ctx, batchSoftDeleteEntities, uuids)
 	return err
@@ -55,7 +55,7 @@ UPDATE entities
 SET is_active = $1, updated_at = NOW()
 WHERE tenant_id = current_tenant_id()
 AND uuid = ANY($2::UUID[])
-  AND deleted_at IS NULL
+AND deleted_at IS NULL
 `
 
 type BatchUpdateEntityStatusParams struct {
@@ -71,46 +71,18 @@ type BatchUpdateEntityStatusParams struct {
 //	SET is_active = $1, updated_at = NOW()
 //	WHERE tenant_id = current_tenant_id()
 //	AND uuid = ANY($2::UUID[])
-//	  AND deleted_at IS NULL
+//	AND deleted_at IS NULL
 func (q *Queries) BatchUpdateEntityStatus(ctx context.Context, arg BatchUpdateEntityStatusParams) error {
 	_, err := q.db.Exec(ctx, batchUpdateEntityStatus, arg.IsActive, arg.Uuids)
 	return err
 }
 
-const bulkCreateEntityStates = `-- name: BulkCreateEntityStates :exec
-INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
-SELECT gen_random_uuid(), $2, unnest($3::VARCHAR[]), 1, $1, $4
-ON CONFLICT (entity_id, key, fiscal_year) DO NOTHING
-`
-
-type BulkCreateEntityStatesParams struct {
-	EntityID     uuid.UUID  `json:"entity_id"`
-	FiscalYear   *int16     `json:"fiscal_year"`
-	Column3      []string   `json:"column_3"`
-	EntityUnitID *uuid.UUID `json:"entity_unit_id"`
-}
-
-// BulkCreateEntityStates
-//
-//	INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
-//	SELECT gen_random_uuid(), $2, unnest($3::VARCHAR[]), 1, $1, $4
-//	ON CONFLICT (entity_id, key, fiscal_year) DO NOTHING
-func (q *Queries) BulkCreateEntityStates(ctx context.Context, arg BulkCreateEntityStatesParams) error {
-	_, err := q.db.Exec(ctx, bulkCreateEntityStates,
-		arg.EntityID,
-		arg.FiscalYear,
-		arg.Column3,
-		arg.EntityUnitID,
-	)
-	return err
-}
-
 const bulkMoveEntities = `-- name: BulkMoveEntities :exec
-UPDATE entities 
+UPDATE entities
 SET parent_id = $2, updated_at = NOW()
-WHERE tenant_id = current_tenant_id() 
-    AND uuid = ANY($1::UUID[])
-    AND deleted_at IS NULL
+WHERE tenant_id = current_tenant_id()
+AND uuid = ANY($1::UUID[])
+AND deleted_at IS NULL
 `
 
 type BulkMoveEntitiesParams struct {
@@ -123,8 +95,8 @@ type BulkMoveEntitiesParams struct {
 //	UPDATE entities
 //	SET parent_id = $2, updated_at = NOW()
 //	WHERE tenant_id = current_tenant_id()
-//	    AND uuid = ANY($1::UUID[])
-//	    AND deleted_at IS NULL
+//	AND uuid = ANY($1::UUID[])
+//	AND deleted_at IS NULL
 func (q *Queries) BulkMoveEntities(ctx context.Context, arg BulkMoveEntitiesParams) error {
 	_, err := q.db.Exec(ctx, bulkMoveEntities, arg.Column1, arg.ParentID)
 	return err
@@ -132,10 +104,10 @@ func (q *Queries) BulkMoveEntities(ctx context.Context, arg BulkMoveEntitiesPara
 
 const checkCircularReference = `-- name: CheckCircularReference :one
 SELECT EXISTS(
-    SELECT 1 FROM hierarchy_paths 
-    WHERE tenant_id = current_tenant_id() 
-        AND ancestor_id = $2 
-        AND descendant_id = $1
+  SELECT 1 FROM hierarchy_paths
+  WHERE tenant_id = current_tenant_id()
+  AND ancestor_id = $2
+  AND descendant_id = $1
 )::BOOLEAN AS exists
 `
 
@@ -147,10 +119,10 @@ type CheckCircularReferenceParams struct {
 // CheckCircularReference
 //
 //	SELECT EXISTS(
-//	    SELECT 1 FROM hierarchy_paths
-//	    WHERE tenant_id = current_tenant_id()
-//	        AND ancestor_id = $2
-//	        AND descendant_id = $1
+//	  SELECT 1 FROM hierarchy_paths
+//	  WHERE tenant_id = current_tenant_id()
+//	  AND ancestor_id = $2
+//	  AND descendant_id = $1
 //	)::BOOLEAN AS exists
 func (q *Queries) CheckCircularReference(ctx context.Context, arg CheckCircularReferenceParams) (bool, error) {
 	row := q.db.QueryRow(ctx, checkCircularReference, arg.DescendantID, arg.AncestorID)
@@ -161,12 +133,12 @@ func (q *Queries) CheckCircularReference(ctx context.Context, arg CheckCircularR
 
 const cleanupOrphanedHierarchyPaths = `-- name: CleanupOrphanedHierarchyPaths :exec
 
-DELETE FROM hierarchy_paths 
+DELETE FROM hierarchy_paths
 WHERE tenant_id = current_tenant_id()
-    AND (
-        NOT EXISTS(SELECT 1 FROM entities WHERE uuid = ancestor_id AND tenant_id = current_tenant_id())
-        OR NOT EXISTS(SELECT 1 FROM entities WHERE uuid = descendant_id AND tenant_id = current_tenant_id())
-    )
+AND (
+  NOT EXISTS(SELECT 1 FROM entities WHERE uuid = ancestor_id AND tenant_id = current_tenant_id())
+  OR NOT EXISTS(SELECT 1 FROM entities WHERE uuid = descendant_id AND tenant_id = current_tenant_id())
+)
 `
 
 // =====================================================================
@@ -175,10 +147,10 @@ WHERE tenant_id = current_tenant_id()
 //
 //	DELETE FROM hierarchy_paths
 //	WHERE tenant_id = current_tenant_id()
-//	    AND (
-//	        NOT EXISTS(SELECT 1 FROM entities WHERE uuid = ancestor_id AND tenant_id = current_tenant_id())
-//	        OR NOT EXISTS(SELECT 1 FROM entities WHERE uuid = descendant_id AND tenant_id = current_tenant_id())
-//	    )
+//	AND (
+//	  NOT EXISTS(SELECT 1 FROM entities WHERE uuid = ancestor_id AND tenant_id = current_tenant_id())
+//	  OR NOT EXISTS(SELECT 1 FROM entities WHERE uuid = descendant_id AND tenant_id = current_tenant_id())
+//	)
 func (q *Queries) CleanupOrphanedHierarchyPaths(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, cleanupOrphanedHierarchyPaths)
 	return err
@@ -186,18 +158,18 @@ func (q *Queries) CleanupOrphanedHierarchyPaths(ctx context.Context) error {
 
 const countEntitiesWithFilters = `-- name: CountEntitiesWithFilters :one
 SELECT COUNT(*) AS count
-FROM entities 
-WHERE tenant_id = current_tenant_id() 
-    AND deleted_at IS NULL
-    AND ($1::VARCHAR IS NULL OR type = $1)
-    AND ($2::BOOLEAN IS NULL OR is_active = $2)
-    AND ($3::BOOLEAN IS NULL OR hidden = $3)
+FROM entities
+WHERE tenant_id = current_tenant_id()
+AND deleted_at IS NULL
+AND ($1 IS NULL OR type = $1)
+AND ($2 IS NULL OR is_active = $2)
+AND ($3 IS NULL OR hidden = $3)
 `
 
 type CountEntitiesWithFiltersParams struct {
-	Column1 string `json:"column_1"`
-	Column2 bool   `json:"column_2"`
-	Column3 bool   `json:"column_3"`
+	Type     interface{} `json:"type"`
+	IsActive interface{} `json:"is_active"`
+	Hidden   interface{} `json:"hidden"`
 }
 
 // CountEntitiesWithFilters
@@ -205,12 +177,12 @@ type CountEntitiesWithFiltersParams struct {
 //	SELECT COUNT(*) AS count
 //	FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND deleted_at IS NULL
-//	    AND ($1::VARCHAR IS NULL OR type = $1)
-//	    AND ($2::BOOLEAN IS NULL OR is_active = $2)
-//	    AND ($3::BOOLEAN IS NULL OR hidden = $3)
+//	AND deleted_at IS NULL
+//	AND ($1 IS NULL OR type = $1)
+//	AND ($2 IS NULL OR is_active = $2)
+//	AND ($3 IS NULL OR hidden = $3)
 func (q *Queries) CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countEntitiesWithFilters, arg.Column1, arg.Column2, arg.Column3)
+	row := q.db.QueryRow(ctx, countEntitiesWithFilters, arg.Type, arg.IsActive, arg.Hidden)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -218,10 +190,10 @@ func (q *Queries) CountEntitiesWithFilters(ctx context.Context, arg CountEntitie
 
 const createEntity = `-- name: CreateEntity :one
 INSERT INTO entities (
-    uuid, tenant_id, parent_id, name, code, type, is_active, 
-    hidden, accrual_method, fy_start_month, address, picture, metadata, settings
+  uuid, tenant_id, parent_id, name, code, type, is_active,
+  hidden, accrual_method, fy_start_month, address, picture, metadata, settings
 ) VALUES (
-    $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13
+  $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13
 ) RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 `
 
@@ -244,10 +216,10 @@ type CreateEntityParams struct {
 // Entity CRUD Operations
 //
 //	INSERT INTO entities (
-//	    uuid, tenant_id, parent_id, name, code, type, is_active,
-//	    hidden, accrual_method, fy_start_month, address, picture, metadata, settings
+//	  uuid, tenant_id, parent_id, name, code, type, is_active,
+//	  hidden, accrual_method, fy_start_month, address, picture, metadata, settings
 //	) VALUES (
-//	    $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13
+//	  $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13
 //	) RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 func (q *Queries) CreateEntity(ctx context.Context, arg CreateEntityParams) (*Entity, error) {
 	row := q.db.QueryRow(ctx, createEntity,
@@ -298,7 +270,7 @@ const createEntityState = `-- name: CreateEntityState :one
 
 INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at
+RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
 `
 
 type CreateEntityStateParams struct {
@@ -316,7 +288,7 @@ type CreateEntityStateParams struct {
 //
 //	INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
 //	VALUES ($1, $2, $3, $4, $5, $6)
-//	RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at
+//	RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
 func (q *Queries) CreateEntityState(ctx context.Context, arg CreateEntityStateParams) (*Entitystate, error) {
 	row := q.db.QueryRow(ctx, createEntityState,
 		arg.Uuid,
@@ -335,10 +307,6 @@ func (q *Queries) CreateEntityState(ctx context.Context, arg CreateEntityStatePa
 		&i.Sequence,
 		&i.EntityID,
 		&i.EntityUnitID,
-		&i.Version,
-		&i.LastValidationRun,
-		&i.ValidationStatus,
-		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -367,9 +335,9 @@ func (q *Queries) CreateHierarchyPath(ctx context.Context, arg CreateHierarchyPa
 
 const deleteEntityState = `-- name: DeleteEntityState :exec
 DELETE FROM entitystate
-WHERE  tenant_id = current_tenant_id() 
-AND entity_id = $1 
-AND key = $2 
+WHERE tenant_id = current_tenant_id()
+AND entity_id = $1
+AND key = $2
 AND fiscal_year = $3
 `
 
@@ -382,7 +350,7 @@ type DeleteEntityStateParams struct {
 // DeleteEntityState
 //
 //	DELETE FROM entitystate
-//	WHERE  tenant_id = current_tenant_id()
+//	WHERE tenant_id = current_tenant_id()
 //	AND entity_id = $1
 //	AND key = $2
 //	AND fiscal_year = $3
@@ -392,16 +360,16 @@ func (q *Queries) DeleteEntityState(ctx context.Context, arg DeleteEntityStatePa
 }
 
 const deleteHierarchyPaths = `-- name: DeleteHierarchyPaths :exec
-DELETE FROM hierarchy_paths 
-WHERE tenant_id = current_tenant_id() 
-    AND (ancestor_id = $1 OR descendant_id = $1)
+DELETE FROM hierarchy_paths
+WHERE tenant_id = current_tenant_id()
+AND (ancestor_id = $1 OR descendant_id = $1)
 `
 
 // DeleteHierarchyPaths
 //
 //	DELETE FROM hierarchy_paths
 //	WHERE tenant_id = current_tenant_id()
-//	    AND (ancestor_id = $1 OR descendant_id = $1)
+//	AND (ancestor_id = $1 OR descendant_id = $1)
 func (q *Queries) DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteHierarchyPaths, ancestorID)
 	return err
@@ -412,8 +380,8 @@ SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_a
 FROM entities e
 JOIN entitystate es ON e.uuid = es.entity_id
 WHERE e.tenant_id = current_tenant_id()
-    AND es.fiscal_year = $1
-    AND e.deleted_at IS NULL
+AND es.fiscal_year = $1
+AND e.deleted_at IS NULL
 ORDER BY e.name
 `
 
@@ -423,8 +391,8 @@ ORDER BY e.name
 //	FROM entities e
 //	JOIN entitystate es ON e.uuid = es.entity_id
 //	WHERE e.tenant_id = current_tenant_id()
-//	    AND es.fiscal_year = $1
-//	    AND e.deleted_at IS NULL
+//	AND es.fiscal_year = $1
+//	AND e.deleted_at IS NULL
 //	ORDER BY e.name
 func (q *Queries) GetEntitiesByFiscalYear(ctx context.Context, fiscalYear *int16) ([]*Entity, error) {
 	rows, err := q.db.Query(ctx, getEntitiesByFiscalYear, fiscalYear)
@@ -469,10 +437,10 @@ func (q *Queries) GetEntitiesByFiscalYear(ctx context.Context, fiscalYear *int16
 }
 
 const getEntitiesByFiscalYearStart = `-- name: GetEntitiesByFiscalYearStart :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
-WHERE tenant_id = current_tenant_id() 
-    AND fy_start_month = $1
-    AND deleted_at IS NULL
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
+WHERE tenant_id = current_tenant_id()
+AND fy_start_month = $1
+AND deleted_at IS NULL
 ORDER BY name
 `
 
@@ -480,8 +448,8 @@ ORDER BY name
 //
 //	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND fy_start_month = $1
-//	    AND deleted_at IS NULL
+//	AND fy_start_month = $1
+//	AND deleted_at IS NULL
 //	ORDER BY name
 func (q *Queries) GetEntitiesByFiscalYearStart(ctx context.Context, fyStartMonth int32) ([]*Entity, error) {
 	rows, err := q.db.Query(ctx, getEntitiesByFiscalYearStart, fyStartMonth)
@@ -529,8 +497,8 @@ const getEntitiesByUUIDs = `-- name: GetEntitiesByUUIDs :many
 SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 FROM entities
 WHERE tenant_id = current_tenant_id()
-  AND uuid = ANY($1::UUID[])
-  AND deleted_at IS NULL
+AND uuid = ANY($1::UUID[])
+AND deleted_at IS NULL
 ORDER BY name
 `
 
@@ -539,8 +507,8 @@ ORDER BY name
 //	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 //	FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	  AND uuid = ANY($1::UUID[])
-//	  AND deleted_at IS NULL
+//	AND uuid = ANY($1::UUID[])
+//	AND deleted_at IS NULL
 //	ORDER BY name
 func (q *Queries) GetEntitiesByUUIDs(ctx context.Context, uuids []uuid.UUID) ([]*Entity, error) {
 	rows, err := q.db.Query(ctx, getEntitiesByUUIDs, uuids)
@@ -585,18 +553,16 @@ func (q *Queries) GetEntitiesByUUIDs(ctx context.Context, uuids []uuid.UUID) ([]
 }
 
 const getEntity = `-- name: GetEntity :one
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
-  WHERE uuid = $1 
-  AND tenant_id = current_tenant_id() 
-  AND deleted_at IS NULL
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
+WHERE uuid = $1
+AND deleted_at IS NULL
 `
 
 // GetEntity
 //
 //	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-//	  WHERE uuid = $1
-//	  AND tenant_id = current_tenant_id()
-//	  AND deleted_at IS NULL
+//	WHERE uuid = $1
+//	AND deleted_at IS NULL
 func (q *Queries) GetEntity(ctx context.Context, argUuid uuid.UUID) (*Entity, error) {
 	row := q.db.QueryRow(ctx, getEntity, argUuid)
 	var i Entity
@@ -629,10 +595,10 @@ func (q *Queries) GetEntity(ctx context.Context, argUuid uuid.UUID) (*Entity, er
 const getEntityAncestors = `-- name: GetEntityAncestors :many
 SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
-WHERE hp.tenant_id = current_tenant_id() 
-    AND hp.descendant_id = $1 
-    AND hp.depth > 0
-    AND e.deleted_at IS NULL
+WHERE hp.tenant_id = current_tenant_id()
+AND hp.descendant_id = $1
+AND hp.depth > 0
+AND e.deleted_at IS NULL
 ORDER BY hp.depth DESC
 `
 
@@ -666,9 +632,9 @@ type GetEntityAncestorsRow struct {
 //	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
 //	WHERE hp.tenant_id = current_tenant_id()
-//	    AND hp.descendant_id = $1
-//	    AND hp.depth > 0
-//	    AND e.deleted_at IS NULL
+//	AND hp.descendant_id = $1
+//	AND hp.depth > 0
+//	AND e.deleted_at IS NULL
 //	ORDER BY hp.depth DESC
 func (q *Queries) GetEntityAncestors(ctx context.Context, descendantID uuid.UUID) ([]*GetEntityAncestorsRow, error) {
 	rows, err := q.db.Query(ctx, getEntityAncestors, descendantID)
@@ -714,23 +680,23 @@ func (q *Queries) GetEntityAncestors(ctx context.Context, descendantID uuid.UUID
 }
 
 const getEntityAuditLog = `-- name: GetEntityAuditLog :many
-SELECT 
-    uuid,
-    name,
-    type,
-    is_active,
-    hidden,
-    created_at,
-    updated_at,
-    deleted_at,
-    CASE 
-        WHEN deleted_at IS NOT NULL THEN 'DELETED'
-        WHEN updated_at > created_at THEN 'UPDATED'
-        ELSE 'CREATED'
-    END as action
-FROM entities 
+SELECT
+uuid,
+name,
+type,
+is_active,
+hidden,
+created_at,
+updated_at,
+deleted_at,
+CASE
+WHEN deleted_at IS NOT NULL THEN 'DELETED'
+WHEN updated_at > created_at THEN 'UPDATED'
+ELSE 'CREATED'
+END as action
+FROM entities
 WHERE tenant_id = current_tenant_id()
-    AND (created_at >= $1 OR updated_at >= $1 OR deleted_at >= $1)
+AND (created_at >= $1 OR updated_at >= $1 OR deleted_at >= $1)
 ORDER BY GREATEST(created_at, updated_at, COALESCE(deleted_at, created_at)) DESC
 `
 
@@ -749,22 +715,22 @@ type GetEntityAuditLogRow struct {
 // GetEntityAuditLog
 //
 //	SELECT
-//	    uuid,
-//	    name,
-//	    type,
-//	    is_active,
-//	    hidden,
-//	    created_at,
-//	    updated_at,
-//	    deleted_at,
-//	    CASE
-//	        WHEN deleted_at IS NOT NULL THEN 'DELETED'
-//	        WHEN updated_at > created_at THEN 'UPDATED'
-//	        ELSE 'CREATED'
-//	    END as action
+//	uuid,
+//	name,
+//	type,
+//	is_active,
+//	hidden,
+//	created_at,
+//	updated_at,
+//	deleted_at,
+//	CASE
+//	WHEN deleted_at IS NOT NULL THEN 'DELETED'
+//	WHEN updated_at > created_at THEN 'UPDATED'
+//	ELSE 'CREATED'
+//	END as action
 //	FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND (created_at >= $1 OR updated_at >= $1 OR deleted_at >= $1)
+//	AND (created_at >= $1 OR updated_at >= $1 OR deleted_at >= $1)
 //	ORDER BY GREATEST(created_at, updated_at, COALESCE(deleted_at, created_at)) DESC
 func (q *Queries) GetEntityAuditLog(ctx context.Context, createdAt time.Time) ([]*GetEntityAuditLogRow, error) {
 	rows, err := q.db.Query(ctx, getEntityAuditLog, createdAt)
@@ -797,7 +763,7 @@ func (q *Queries) GetEntityAuditLog(ctx context.Context, createdAt time.Time) ([
 }
 
 const getEntityByCode = `-- name: GetEntityByCode :one
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 WHERE code = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
@@ -835,7 +801,7 @@ func (q *Queries) GetEntityByCode(ctx context.Context, code *string) (*Entity, e
 }
 
 const getEntityByName = `-- name: GetEntityByName :one
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
@@ -875,10 +841,10 @@ func (q *Queries) GetEntityByName(ctx context.Context, name string) (*Entity, er
 const getEntityChildren = `-- name: GetEntityChildren :many
 SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
-WHERE hp.tenant_id = current_tenant_id() 
-    AND hp.ancestor_id = $1 
-    AND hp.depth = 1
-    AND e.deleted_at IS NULL
+WHERE hp.tenant_id = current_tenant_id()
+AND hp.ancestor_id = $1
+AND hp.depth = 1
+AND e.deleted_at IS NULL
 ORDER BY e.name
 `
 
@@ -887,9 +853,9 @@ ORDER BY e.name
 //	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
 //	WHERE hp.tenant_id = current_tenant_id()
-//	    AND hp.ancestor_id = $1
-//	    AND hp.depth = 1
-//	    AND e.deleted_at IS NULL
+//	AND hp.ancestor_id = $1
+//	AND hp.depth = 1
+//	AND e.deleted_at IS NULL
 //	ORDER BY e.name
 func (q *Queries) GetEntityChildren(ctx context.Context, ancestorID uuid.UUID) ([]*Entity, error) {
 	rows, err := q.db.Query(ctx, getEntityChildren, ancestorID)
@@ -936,9 +902,9 @@ func (q *Queries) GetEntityChildren(ctx context.Context, ancestorID uuid.UUID) (
 const getEntityCountByType = `-- name: GetEntityCountByType :many
 
 SELECT type, COUNT(*) as count
-FROM entities 
-WHERE tenant_id = current_tenant_id() 
-    AND deleted_at IS NULL
+FROM entities
+WHERE tenant_id = current_tenant_id()
+AND deleted_at IS NULL
 GROUP BY type
 ORDER BY count DESC
 `
@@ -955,7 +921,7 @@ type GetEntityCountByTypeRow struct {
 //	SELECT type, COUNT(*) as count
 //	FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND deleted_at IS NULL
+//	AND deleted_at IS NULL
 //	GROUP BY type
 //	ORDER BY count DESC
 func (q *Queries) GetEntityCountByType(ctx context.Context) ([]*GetEntityCountByTypeRow, error) {
@@ -980,7 +946,7 @@ func (q *Queries) GetEntityCountByType(ctx context.Context) ([]*GetEntityCountBy
 
 const getEntityDepth = `-- name: GetEntityDepth :one
 SELECT COALESCE(MAX(depth), 0) AS depth
-FROM hierarchy_paths 
+FROM hierarchy_paths
 WHERE tenant_id = current_tenant_id() AND ancestor_id = $1
 `
 
@@ -999,10 +965,10 @@ func (q *Queries) GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (int
 const getEntityDescendants = `-- name: GetEntityDescendants :many
 SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
-WHERE hp.tenant_id = current_tenant_id() 
-    AND hp.ancestor_id = $1 
-    AND hp.depth > 0
-    AND e.deleted_at IS NULL
+WHERE hp.tenant_id = current_tenant_id()
+AND hp.ancestor_id = $1
+AND hp.depth > 0
+AND e.deleted_at IS NULL
 ORDER BY hp.depth, e.name
 `
 
@@ -1036,9 +1002,9 @@ type GetEntityDescendantsRow struct {
 //	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
 //	WHERE hp.tenant_id = current_tenant_id()
-//	    AND hp.ancestor_id = $1
-//	    AND hp.depth > 0
-//	    AND e.deleted_at IS NULL
+//	AND hp.ancestor_id = $1
+//	AND hp.depth > 0
+//	AND e.deleted_at IS NULL
 //	ORDER BY hp.depth, e.name
 func (q *Queries) GetEntityDescendants(ctx context.Context, ancestorID uuid.UUID) ([]*GetEntityDescendantsRow, error) {
 	rows, err := q.db.Query(ctx, getEntityDescendants, ancestorID)
@@ -1084,12 +1050,12 @@ func (q *Queries) GetEntityDescendants(ctx context.Context, ancestorID uuid.UUID
 }
 
 const getEntityHealthCheck = `-- name: GetEntityHealthCheck :one
-SELECT 
-    (SELECT COUNT(*) FROM entities WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL) as active_entities,
-    (SELECT COUNT(*) FROM hierarchy_paths WHERE tenant_id = current_tenant_id()) as hierarchy_paths,
-    (SELECT COUNT(*) FROM entitystate es JOIN entities e ON es.entity_id = e.uuid WHERE e.tenant_id = current_tenant_id()) as entity_states,
-    (SELECT COUNT(*) FROM entities e LEFT JOIN entities p ON e.parent_id = p.uuid WHERE e.tenant_id = current_tenant_id() AND e.parent_id IS NOT NULL AND p.uuid IS NULL) as orphaned_entities,
-    (SELECT COUNT(*) FROM hierarchy_paths hp LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid WHERE hp.tenant_id = current_tenant_id() AND (e1.uuid IS NULL OR e2.uuid IS NULL)) as orphaned_paths
+SELECT
+(SELECT COUNT(*) FROM entities WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL) as active_entities,
+(SELECT COUNT(*) FROM hierarchy_paths WHERE tenant_id = current_tenant_id()) as hierarchy_paths,
+(SELECT COUNT(*) FROM entitystate es JOIN entities e ON es.entity_id = e.uuid WHERE e.tenant_id = current_tenant_id()) as entity_states,
+(SELECT COUNT(*) FROM entities e LEFT JOIN entities p ON e.parent_id = p.uuid WHERE e.tenant_id = current_tenant_id() AND e.parent_id IS NOT NULL AND p.uuid IS NULL) as orphaned_entities,
+(SELECT COUNT(*) FROM hierarchy_paths hp LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid WHERE hp.tenant_id = current_tenant_id() AND (e1.uuid IS NULL OR e2.uuid IS NULL)) as orphaned_paths
 `
 
 type GetEntityHealthCheckRow struct {
@@ -1103,11 +1069,11 @@ type GetEntityHealthCheckRow struct {
 // GetEntityHealthCheck
 //
 //	SELECT
-//	    (SELECT COUNT(*) FROM entities WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL) as active_entities,
-//	    (SELECT COUNT(*) FROM hierarchy_paths WHERE tenant_id = current_tenant_id()) as hierarchy_paths,
-//	    (SELECT COUNT(*) FROM entitystate es JOIN entities e ON es.entity_id = e.uuid WHERE e.tenant_id = current_tenant_id()) as entity_states,
-//	    (SELECT COUNT(*) FROM entities e LEFT JOIN entities p ON e.parent_id = p.uuid WHERE e.tenant_id = current_tenant_id() AND e.parent_id IS NOT NULL AND p.uuid IS NULL) as orphaned_entities,
-//	    (SELECT COUNT(*) FROM hierarchy_paths hp LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid WHERE hp.tenant_id = current_tenant_id() AND (e1.uuid IS NULL OR e2.uuid IS NULL)) as orphaned_paths
+//	(SELECT COUNT(*) FROM entities WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL) as active_entities,
+//	(SELECT COUNT(*) FROM hierarchy_paths WHERE tenant_id = current_tenant_id()) as hierarchy_paths,
+//	(SELECT COUNT(*) FROM entitystate es JOIN entities e ON es.entity_id = e.uuid WHERE e.tenant_id = current_tenant_id()) as entity_states,
+//	(SELECT COUNT(*) FROM entities e LEFT JOIN entities p ON e.parent_id = p.uuid WHERE e.tenant_id = current_tenant_id() AND e.parent_id IS NOT NULL AND p.uuid IS NULL) as orphaned_entities,
+//	(SELECT COUNT(*) FROM hierarchy_paths hp LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid WHERE hp.tenant_id = current_tenant_id() AND (e1.uuid IS NULL OR e2.uuid IS NULL)) as orphaned_paths
 func (q *Queries) GetEntityHealthCheck(ctx context.Context) (*GetEntityHealthCheckRow, error) {
 	row := q.db.QueryRow(ctx, getEntityHealthCheck)
 	var i GetEntityHealthCheckRow
@@ -1122,12 +1088,12 @@ func (q *Queries) GetEntityHealthCheck(ctx context.Context) (*GetEntityHealthChe
 }
 
 const getEntityHierarchyStats = `-- name: GetEntityHierarchyStats :one
-SELECT 
-    COUNT(*) as total_entities,
-    COUNT(*) FILTER (WHERE parent_id IS NULL) as root_entities,
-    MAX(depth) as max_depth,
-    AVG(depth) as avg_depth,
-    COUNT(DISTINCT ancestor_id) as entities_with_children
+SELECT
+COUNT(*) as total_entities,
+COUNT(*) FILTER (WHERE e.parent_id IS NULL) as root_entities,
+MAX(hp.depth) as max_depth,
+AVG(hp.depth) as avg_depth,
+COUNT(DISTINCT hp.ancestor_id) as entities_with_children
 FROM entities e
 LEFT JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id AND hp.tenant_id = e.tenant_id
 WHERE e.tenant_id = current_tenant_id() AND e.deleted_at IS NULL
@@ -1144,11 +1110,11 @@ type GetEntityHierarchyStatsRow struct {
 // GetEntityHierarchyStats
 //
 //	SELECT
-//	    COUNT(*) as total_entities,
-//	    COUNT(*) FILTER (WHERE parent_id IS NULL) as root_entities,
-//	    MAX(depth) as max_depth,
-//	    AVG(depth) as avg_depth,
-//	    COUNT(DISTINCT ancestor_id) as entities_with_children
+//	COUNT(*) as total_entities,
+//	COUNT(*) FILTER (WHERE e.parent_id IS NULL) as root_entities,
+//	MAX(hp.depth) as max_depth,
+//	AVG(hp.depth) as avg_depth,
+//	COUNT(DISTINCT hp.ancestor_id) as entities_with_children
 //	FROM entities e
 //	LEFT JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id AND hp.tenant_id = e.tenant_id
 //	WHERE e.tenant_id = current_tenant_id() AND e.deleted_at IS NULL
@@ -1186,10 +1152,10 @@ func (q *Queries) GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (i
 const getEntityParent = `-- name: GetEntityParent :one
 SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
-WHERE hp.tenant_id = current_tenant_id() 
-    AND hp.descendant_id = $1 
-    AND hp.depth = 1
-    AND e.deleted_at IS NULL
+WHERE hp.tenant_id = current_tenant_id()
+AND hp.descendant_id = $1
+AND hp.depth = 1
+AND e.deleted_at IS NULL
 `
 
 // GetEntityParent
@@ -1197,9 +1163,9 @@ WHERE hp.tenant_id = current_tenant_id()
 //	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
 //	WHERE hp.tenant_id = current_tenant_id()
-//	    AND hp.descendant_id = $1
-//	    AND hp.depth = 1
-//	    AND e.deleted_at IS NULL
+//	AND hp.descendant_id = $1
+//	AND hp.depth = 1
+//	AND e.deleted_at IS NULL
 func (q *Queries) GetEntityParent(ctx context.Context, descendantID uuid.UUID) (*Entity, error) {
 	row := q.db.QueryRow(ctx, getEntityParent, descendantID)
 	var i Entity
@@ -1233,9 +1199,9 @@ const getEntityPath = `-- name: GetEntityPath :many
 SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at, hp.depth
 FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
-WHERE hp.tenant_id = current_tenant_id() 
-    AND hp.descendant_id = $1
-    AND e.deleted_at IS NULL
+WHERE hp.tenant_id = current_tenant_id()
+AND hp.descendant_id = $1
+AND e.deleted_at IS NULL
 ORDER BY hp.depth DESC
 `
 
@@ -1270,8 +1236,8 @@ type GetEntityPathRow struct {
 //	FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
 //	WHERE hp.tenant_id = current_tenant_id()
-//	    AND hp.descendant_id = $1
-//	    AND e.deleted_at IS NULL
+//	AND hp.descendant_id = $1
+//	AND e.deleted_at IS NULL
 //	ORDER BY hp.depth DESC
 func (q *Queries) GetEntityPath(ctx context.Context, descendantID uuid.UUID) ([]*GetEntityPathRow, error) {
 	rows, err := q.db.Query(ctx, getEntityPath, descendantID)
@@ -1318,9 +1284,9 @@ func (q *Queries) GetEntityPath(ctx context.Context, descendantID uuid.UUID) ([]
 
 const getEntityRoots = `-- name: GetEntityRoots :many
 SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
-WHERE e.tenant_id = current_tenant_id() 
-    AND e.parent_id IS NULL
-    AND e.deleted_at IS NULL
+WHERE e.tenant_id = current_tenant_id()
+AND e.parent_id IS NULL
+AND e.deleted_at IS NULL
 ORDER BY e.name
 `
 
@@ -1328,8 +1294,8 @@ ORDER BY e.name
 //
 //	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
 //	WHERE e.tenant_id = current_tenant_id()
-//	    AND e.parent_id IS NULL
-//	    AND e.deleted_at IS NULL
+//	AND e.parent_id IS NULL
+//	AND e.deleted_at IS NULL
 //	ORDER BY e.name
 func (q *Queries) GetEntityRoots(ctx context.Context) ([]*Entity, error) {
 	rows, err := q.db.Query(ctx, getEntityRoots)
@@ -1374,16 +1340,16 @@ func (q *Queries) GetEntityRoots(ctx context.Context) ([]*Entity, error) {
 }
 
 const getEntitySequenceStats = `-- name: GetEntitySequenceStats :many
-SELECT 
-    e.name as entity_name,
-    es.key,
-    es.fiscal_year,
-    es.sequence,
-    es.sequence - 1 as documents_created
+SELECT
+e.name as entity_name,
+es.key,
+es.fiscal_year,
+es.sequence,
+es.sequence - 1 as documents_created
 FROM entitystate es
 JOIN entities e ON es.entity_id = e.uuid
 WHERE e.tenant_id = current_tenant_id()
-    AND ($1::UUID IS NULL OR es.entity_id = $1)
+AND ($1::UUID IS NULL OR es.entity_id = $1)
 ORDER BY e.name, es.key, es.fiscal_year
 `
 
@@ -1398,15 +1364,15 @@ type GetEntitySequenceStatsRow struct {
 // GetEntitySequenceStats
 //
 //	SELECT
-//	    e.name as entity_name,
-//	    es.key,
-//	    es.fiscal_year,
-//	    es.sequence,
-//	    es.sequence - 1 as documents_created
+//	e.name as entity_name,
+//	es.key,
+//	es.fiscal_year,
+//	es.sequence,
+//	es.sequence - 1 as documents_created
 //	FROM entitystate es
 //	JOIN entities e ON es.entity_id = e.uuid
 //	WHERE e.tenant_id = current_tenant_id()
-//	    AND ($1::UUID IS NULL OR es.entity_id = $1)
+//	AND ($1::UUID IS NULL OR es.entity_id = $1)
 //	ORDER BY e.name, es.key, es.fiscal_year
 func (q *Queries) GetEntitySequenceStats(ctx context.Context, dollar_1 uuid.UUID) ([]*GetEntitySequenceStatsRow, error) {
 	rows, err := q.db.Query(ctx, getEntitySequenceStats, dollar_1)
@@ -1438,12 +1404,12 @@ const getEntitySiblings = `-- name: GetEntitySiblings :many
 SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
 JOIN hierarchy_paths hp1 ON e.uuid = hp1.descendant_id
 JOIN hierarchy_paths hp2 ON hp1.ancestor_id = hp2.ancestor_id
-WHERE hp2.tenant_id = current_tenant_id() 
-    AND hp2.descendant_id = $1 
-    AND hp1.depth = 1 
-    AND hp2.depth = 1
-    AND e.uuid != $1
-    AND e.deleted_at IS NULL
+WHERE hp2.tenant_id = current_tenant_id()
+AND hp2.descendant_id = $1
+AND hp1.depth = 1
+AND hp2.depth = 1
+AND e.uuid != $1
+AND e.deleted_at IS NULL
 ORDER BY e.name
 `
 
@@ -1453,11 +1419,11 @@ ORDER BY e.name
 //	JOIN hierarchy_paths hp1 ON e.uuid = hp1.descendant_id
 //	JOIN hierarchy_paths hp2 ON hp1.ancestor_id = hp2.ancestor_id
 //	WHERE hp2.tenant_id = current_tenant_id()
-//	    AND hp2.descendant_id = $1
-//	    AND hp1.depth = 1
-//	    AND hp2.depth = 1
-//	    AND e.uuid != $1
-//	    AND e.deleted_at IS NULL
+//	AND hp2.descendant_id = $1
+//	AND hp1.depth = 1
+//	AND hp2.depth = 1
+//	AND e.uuid != $1
+//	AND e.deleted_at IS NULL
 //	ORDER BY e.name
 func (q *Queries) GetEntitySiblings(ctx context.Context, descendantID uuid.UUID) ([]*Entity, error) {
 	rows, err := q.db.Query(ctx, getEntitySiblings, descendantID)
@@ -1502,7 +1468,7 @@ func (q *Queries) GetEntitySiblings(ctx context.Context, descendantID uuid.UUID)
 }
 
 const getEntityState = `-- name: GetEntityState :one
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at FROM entitystate
+SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at FROM entitystate
 WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
 `
 
@@ -1514,7 +1480,7 @@ type GetEntityStateParams struct {
 
 // GetEntityState
 //
-//	SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at FROM entitystate
+//	SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at FROM entitystate
 //	WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
 func (q *Queries) GetEntityState(ctx context.Context, arg GetEntityStateParams) (*Entitystate, error) {
 	row := q.db.QueryRow(ctx, getEntityState, arg.EntityID, arg.Key, arg.FiscalYear)
@@ -1527,10 +1493,6 @@ func (q *Queries) GetEntityState(ctx context.Context, arg GetEntityStateParams) 
 		&i.Sequence,
 		&i.EntityID,
 		&i.EntityUnitID,
-		&i.Version,
-		&i.LastValidationRun,
-		&i.ValidationStatus,
-		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -1538,7 +1500,7 @@ func (q *Queries) GetEntityState(ctx context.Context, arg GetEntityStateParams) 
 }
 
 const getEntityStateByKey = `-- name: GetEntityStateByKey :one
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at FROM entitystate
+SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at FROM entitystate
 WHERE entity_id = $1 AND key = $2 AND tenant_id = current_tenant_id()
 `
 
@@ -1549,7 +1511,7 @@ type GetEntityStateByKeyParams struct {
 
 // GetEntityStateByKey
 //
-//	SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at FROM entitystate
+//	SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at FROM entitystate
 //	WHERE entity_id = $1 AND key = $2 AND tenant_id = current_tenant_id()
 func (q *Queries) GetEntityStateByKey(ctx context.Context, arg GetEntityStateByKeyParams) (*Entitystate, error) {
 	row := q.db.QueryRow(ctx, getEntityStateByKey, arg.EntityID, arg.Key)
@@ -1562,214 +1524,22 @@ func (q *Queries) GetEntityStateByKey(ctx context.Context, arg GetEntityStateByK
 		&i.Sequence,
 		&i.EntityID,
 		&i.EntityUnitID,
-		&i.Version,
-		&i.LastValidationRun,
-		&i.ValidationStatus,
-		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return &i, err
-}
-
-const getEntityStateHistory = `-- name: GetEntityStateHistory :many
-SELECT es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.version, es.last_validation_run, es.validation_status, es.validation_errors, es.created_at, es.updated_at, e.name as entity_name
-FROM entitystate es
-JOIN entities e ON es.entity_id = e.uuid
-WHERE es.entity_id = $1
-    AND ($2::VARCHAR IS NULL OR es.key = $2)
-    AND ($3::SMALLINT IS NULL OR es.fiscal_year = $3)
-ORDER BY es.fiscal_year DESC, es.key
-`
-
-type GetEntityStateHistoryParams struct {
-	EntityID uuid.UUID `json:"entity_id"`
-	Column2  string    `json:"column_2"`
-	Column3  int16     `json:"column_3"`
-}
-
-type GetEntityStateHistoryRow struct {
-	Uuid              uuid.UUID    `json:"uuid"`
-	TenantID          uuid.UUID    `json:"tenant_id"`
-	FiscalYear        *int16       `json:"fiscal_year"`
-	Key               string       `json:"key"`
-	Sequence          int64        `json:"sequence"`
-	EntityID          uuid.UUID    `json:"entity_id"`
-	EntityUnitID      *uuid.UUID   `json:"entity_unit_id"`
-	Version           int32        `json:"version"`
-	LastValidationRun sql.NullTime `json:"last_validation_run"`
-	ValidationStatus  *string      `json:"validation_status"`
-	ValidationErrors  []byte       `json:"validation_errors"`
-	CreatedAt         time.Time    `json:"created_at"`
-	UpdatedAt         time.Time    `json:"updated_at"`
-	EntityName        string       `json:"entity_name"`
-}
-
-// GetEntityStateHistory
-//
-//	SELECT es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.version, es.last_validation_run, es.validation_status, es.validation_errors, es.created_at, es.updated_at, e.name as entity_name
-//	FROM entitystate es
-//	JOIN entities e ON es.entity_id = e.uuid
-//	WHERE es.entity_id = $1
-//	    AND ($2::VARCHAR IS NULL OR es.key = $2)
-//	    AND ($3::SMALLINT IS NULL OR es.fiscal_year = $3)
-//	ORDER BY es.fiscal_year DESC, es.key
-func (q *Queries) GetEntityStateHistory(ctx context.Context, arg GetEntityStateHistoryParams) ([]*GetEntityStateHistoryRow, error) {
-	rows, err := q.db.Query(ctx, getEntityStateHistory, arg.EntityID, arg.Column2, arg.Column3)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*GetEntityStateHistoryRow{}
-	for rows.Next() {
-		var i GetEntityStateHistoryRow
-		if err := rows.Scan(
-			&i.Uuid,
-			&i.TenantID,
-			&i.FiscalYear,
-			&i.Key,
-			&i.Sequence,
-			&i.EntityID,
-			&i.EntityUnitID,
-			&i.Version,
-			&i.LastValidationRun,
-			&i.ValidationStatus,
-			&i.ValidationErrors,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.EntityName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getEntityStateWithLocking = `-- name: GetEntityStateWithLocking :one
-
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at FROM entitystate
-WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
-FOR UPDATE
-`
-
-type GetEntityStateWithLockingParams struct {
-	EntityID   uuid.UUID `json:"entity_id"`
-	Key        string    `json:"key"`
-	FiscalYear *int16    `json:"fiscal_year"`
-}
-
-// =====================================================================
-// 4. ENTITY STATE
-// =====================================================================
-//
-//	SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at FROM entitystate
-//	WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
-//	FOR UPDATE
-func (q *Queries) GetEntityStateWithLocking(ctx context.Context, arg GetEntityStateWithLockingParams) (*Entitystate, error) {
-	row := q.db.QueryRow(ctx, getEntityStateWithLocking, arg.EntityID, arg.Key, arg.FiscalYear)
-	var i Entitystate
-	err := row.Scan(
-		&i.Uuid,
-		&i.TenantID,
-		&i.FiscalYear,
-		&i.Key,
-		&i.Sequence,
-		&i.EntityID,
-		&i.EntityUnitID,
-		&i.Version,
-		&i.LastValidationRun,
-		&i.ValidationStatus,
-		&i.ValidationErrors,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
-}
-
-const getEntityStatesByFiscalYear = `-- name: GetEntityStatesByFiscalYear :many
-SELECT es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.version, es.last_validation_run, es.validation_status, es.validation_errors, es.created_at, es.updated_at, e.name as entity_name
-FROM entitystate es
-JOIN entities e ON es.entity_id = e.uuid
-WHERE es.fiscal_year = $1
-    AND e.tenant_id = current_tenant_id()
-ORDER BY e.name, es.key
-`
-
-type GetEntityStatesByFiscalYearRow struct {
-	Uuid              uuid.UUID    `json:"uuid"`
-	TenantID          uuid.UUID    `json:"tenant_id"`
-	FiscalYear        *int16       `json:"fiscal_year"`
-	Key               string       `json:"key"`
-	Sequence          int64        `json:"sequence"`
-	EntityID          uuid.UUID    `json:"entity_id"`
-	EntityUnitID      *uuid.UUID   `json:"entity_unit_id"`
-	Version           int32        `json:"version"`
-	LastValidationRun sql.NullTime `json:"last_validation_run"`
-	ValidationStatus  *string      `json:"validation_status"`
-	ValidationErrors  []byte       `json:"validation_errors"`
-	CreatedAt         time.Time    `json:"created_at"`
-	UpdatedAt         time.Time    `json:"updated_at"`
-	EntityName        string       `json:"entity_name"`
-}
-
-// GetEntityStatesByFiscalYear
-//
-//	SELECT es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.version, es.last_validation_run, es.validation_status, es.validation_errors, es.created_at, es.updated_at, e.name as entity_name
-//	FROM entitystate es
-//	JOIN entities e ON es.entity_id = e.uuid
-//	WHERE es.fiscal_year = $1
-//	    AND e.tenant_id = current_tenant_id()
-//	ORDER BY e.name, es.key
-func (q *Queries) GetEntityStatesByFiscalYear(ctx context.Context, fiscalYear *int16) ([]*GetEntityStatesByFiscalYearRow, error) {
-	rows, err := q.db.Query(ctx, getEntityStatesByFiscalYear, fiscalYear)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*GetEntityStatesByFiscalYearRow{}
-	for rows.Next() {
-		var i GetEntityStatesByFiscalYearRow
-		if err := rows.Scan(
-			&i.Uuid,
-			&i.TenantID,
-			&i.FiscalYear,
-			&i.Key,
-			&i.Sequence,
-			&i.EntityID,
-			&i.EntityUnitID,
-			&i.Version,
-			&i.LastValidationRun,
-			&i.ValidationStatus,
-			&i.ValidationErrors,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.EntityName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getEntityStats = `-- name: GetEntityStats :one
-SELECT 
-    COUNT(*) as total_entities,
-    COUNT(*) FILTER (WHERE is_active = true) as active_entities,
-    COUNT(*) FILTER (WHERE hidden = false) as visible_entities,
-    COUNT(DISTINCT type) as entity_types,
-    COUNT(*) FILTER (WHERE parent_id IS NULL) as root_entities,
-    COUNT(*) FILTER (WHERE accrual_method = true) as accrual_entities,
-    COUNT(*) FILTER (WHERE accrual_method = false) as cash_entities
+SELECT
+COUNT(*) as total_entities,
+SUM(CASE WHEN is_active = true THEN 1 ELSE 0 END) as active_entities,
+SUM(CASE WHEN hidden = false THEN 1 ELSE 0 END) as visible_entities,
+COUNT(DISTINCT type) as entity_types,
+SUM(CASE WHEN parent_id IS NULL THEN 1 ELSE 0 END) as root_entities,
+SUM(CASE WHEN accrual_method = true THEN 1 ELSE 0 END) as accrual_entities,
+SUM(CASE WHEN accrual_method = false THEN 1 ELSE 0 END) as cash_entities
 FROM entities
-WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
 `
 
 type GetEntityStatsRow struct {
@@ -1785,15 +1555,14 @@ type GetEntityStatsRow struct {
 // GetEntityStats
 //
 //	SELECT
-//	    COUNT(*) as total_entities,
-//	    COUNT(*) FILTER (WHERE is_active = true) as active_entities,
-//	    COUNT(*) FILTER (WHERE hidden = false) as visible_entities,
-//	    COUNT(DISTINCT type) as entity_types,
-//	    COUNT(*) FILTER (WHERE parent_id IS NULL) as root_entities,
-//	    COUNT(*) FILTER (WHERE accrual_method = true) as accrual_entities,
-//	    COUNT(*) FILTER (WHERE accrual_method = false) as cash_entities
+//	COUNT(*) as total_entities,
+//	SUM(CASE WHEN is_active = true THEN 1 ELSE 0 END) as active_entities,
+//	SUM(CASE WHEN hidden = false THEN 1 ELSE 0 END) as visible_entities,
+//	COUNT(DISTINCT type) as entity_types,
+//	SUM(CASE WHEN parent_id IS NULL THEN 1 ELSE 0 END) as root_entities,
+//	SUM(CASE WHEN accrual_method = true THEN 1 ELSE 0 END) as accrual_entities,
+//	SUM(CASE WHEN accrual_method = false THEN 1 ELSE 0 END) as cash_entities
 //	FROM entities
-//	WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
 func (q *Queries) GetEntityStats(ctx context.Context) (*GetEntityStatsRow, error) {
 	row := q.db.QueryRow(ctx, getEntityStats)
 	var i GetEntityStatsRow
@@ -1813,10 +1582,10 @@ const getEntitySubtree = `-- name: GetEntitySubtree :many
 SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at, hp.depth
 FROM entities e
 JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
-WHERE hp.tenant_id = current_tenant_id() 
-    AND hp.ancestor_id = $1
-    AND e.deleted_at IS NULL
-    AND ($2::INTEGER IS NULL OR hp.depth <= $2)
+WHERE hp.tenant_id = current_tenant_id()
+AND hp.ancestor_id = $1
+AND e.deleted_at IS NULL
+AND ($2::INTEGER IS NULL OR hp.depth <= $2)
 ORDER BY hp.depth, e.name
 `
 
@@ -1856,9 +1625,9 @@ type GetEntitySubtreeRow struct {
 //	FROM entities e
 //	JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
 //	WHERE hp.tenant_id = current_tenant_id()
-//	    AND hp.ancestor_id = $1
-//	    AND e.deleted_at IS NULL
-//	    AND ($2::INTEGER IS NULL OR hp.depth <= $2)
+//	AND hp.ancestor_id = $1
+//	AND e.deleted_at IS NULL
+//	AND ($2::INTEGER IS NULL OR hp.depth <= $2)
 //	ORDER BY hp.depth, e.name
 func (q *Queries) GetEntitySubtree(ctx context.Context, arg GetEntitySubtreeParams) ([]*GetEntitySubtreeRow, error) {
 	rows, err := q.db.Query(ctx, getEntitySubtree, arg.AncestorID, arg.Column2)
@@ -1905,28 +1674,28 @@ func (q *Queries) GetEntitySubtree(ctx context.Context, arg GetEntitySubtreePara
 
 const getEntityTreeStructure = `-- name: GetEntityTreeStructure :many
 WITH RECURSIVE entity_tree AS (
-    SELECT 
-        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
-        0 as level,
-        ARRAY[e.name] as path,
-        e.name as sort_path
-    FROM entities e
-    WHERE e.tenant_id = current_tenant_id() 
-        AND e.parent_id IS NULL 
-        AND e.deleted_at IS NULL
-    
-    UNION ALL
-    
-    SELECT 
-        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
-        et.level + 1,
-        et.path || e.name,
-        et.sort_path || '/' || e.name
-    FROM entities e
-    JOIN entity_tree et ON e.parent_id = et.uuid
-    WHERE e.tenant_id = current_tenant_id() 
-        AND e.deleted_at IS NULL
-        AND et.level < 10
+  SELECT
+  e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+  0 as level,
+  ARRAY[e.name] as path,
+  e.name as sort_path
+  FROM entities e
+  WHERE e.tenant_id = current_tenant_id()
+  AND e.parent_id IS NULL
+  AND e.deleted_at IS NULL
+
+  UNION ALL
+
+  SELECT
+  e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+  et.level + 1,
+  et.path || e.name,
+  et.sort_path || '/' || e.name
+  FROM entities e
+  JOIN entity_tree et ON e.parent_id = et.uuid
+  WHERE e.tenant_id = current_tenant_id()
+  AND e.deleted_at IS NULL
+  AND et.level < 10
 )
 SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
 ORDER BY sort_path
@@ -1962,28 +1731,28 @@ type GetEntityTreeStructureRow struct {
 // GetEntityTreeStructure
 //
 //	WITH RECURSIVE entity_tree AS (
-//	    SELECT
-//	        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
-//	        0 as level,
-//	        ARRAY[e.name] as path,
-//	        e.name as sort_path
-//	    FROM entities e
-//	    WHERE e.tenant_id = current_tenant_id()
-//	        AND e.parent_id IS NULL
-//	        AND e.deleted_at IS NULL
+//	  SELECT
+//	  e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+//	  0 as level,
+//	  ARRAY[e.name] as path,
+//	  e.name as sort_path
+//	  FROM entities e
+//	  WHERE e.tenant_id = current_tenant_id()
+//	  AND e.parent_id IS NULL
+//	  AND e.deleted_at IS NULL
 //
-//	    UNION ALL
+//	  UNION ALL
 //
-//	    SELECT
-//	        e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
-//	        et.level + 1,
-//	        et.path || e.name,
-//	        et.sort_path || '/' || e.name
-//	    FROM entities e
-//	    JOIN entity_tree et ON e.parent_id = et.uuid
-//	    WHERE e.tenant_id = current_tenant_id()
-//	        AND e.deleted_at IS NULL
-//	        AND et.level < 10
+//	  SELECT
+//	  e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+//	  et.level + 1,
+//	  et.path || e.name,
+//	  et.sort_path || '/' || e.name
+//	  FROM entities e
+//	  JOIN entity_tree et ON e.parent_id = et.uuid
+//	  WHERE e.tenant_id = current_tenant_id()
+//	  AND e.deleted_at IS NULL
+//	  AND et.level < 10
 //	)
 //	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
 //	ORDER BY sort_path
@@ -2035,11 +1804,11 @@ func (q *Queries) GetEntityTreeStructure(ctx context.Context) ([]*GetEntityTreeS
 const getEntityWithHierarchyInfo = `-- name: GetEntityWithHierarchyInfo :one
 
 
-SELECT 
-    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
-    COALESCE(MIN(hp.depth), 0) as level,
-    COUNT(children.uuid) as child_count,
-    parent_e.name as parent_name
+SELECT
+e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+COALESCE(MIN(hp.depth), 0) as level,
+COUNT(children.uuid) as child_count,
+parent_e.name as parent_name
 FROM entities e
 LEFT JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id AND hp.tenant_id = e.tenant_id
 LEFT JOIN entities children ON children.parent_id = e.uuid AND children.tenant_id = e.tenant_id AND children.deleted_at IS NULL
@@ -2080,10 +1849,10 @@ type GetEntityWithHierarchyInfoRow struct {
 // ===============================================
 //
 //	SELECT
-//	    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
-//	    COALESCE(MIN(hp.depth), 0) as level,
-//	    COUNT(children.uuid) as child_count,
-//	    parent_e.name as parent_name
+//	e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+//	COALESCE(MIN(hp.depth), 0) as level,
+//	COUNT(children.uuid) as child_count,
+//	parent_e.name as parent_name
 //	FROM entities e
 //	LEFT JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id AND hp.tenant_id = e.tenant_id
 //	LEFT JOIN entities children ON children.parent_id = e.uuid AND children.tenant_id = e.tenant_id AND children.deleted_at IS NULL
@@ -2122,37 +1891,13 @@ func (q *Queries) GetEntityWithHierarchyInfo(ctx context.Context, argUuid uuid.U
 	return &i, err
 }
 
-const getHighestSequenceNumber = `-- name: GetHighestSequenceNumber :one
-SELECT COALESCE(MAX(sequence), 0) AS sequence
-FROM entitystate
-WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
-`
-
-type GetHighestSequenceNumberParams struct {
-	EntityID   uuid.UUID `json:"entity_id"`
-	Key        string    `json:"key"`
-	FiscalYear *int16    `json:"fiscal_year"`
-}
-
-// GetHighestSequenceNumber
-//
-//	SELECT COALESCE(MAX(sequence), 0) AS sequence
-//	FROM entitystate
-//	WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3
-func (q *Queries) GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (interface{}, error) {
-	row := q.db.QueryRow(ctx, getHighestSequenceNumber, arg.EntityID, arg.Key, arg.FiscalYear)
-	var sequence interface{}
-	err := row.Scan(&sequence)
-	return sequence, err
-}
-
 const getInconsistentHierarchyPaths = `-- name: GetInconsistentHierarchyPaths :many
 SELECT DISTINCT hp.ancestor_id, hp.descendant_id, hp.depth
 FROM hierarchy_paths hp
 LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid AND e1.tenant_id = hp.tenant_id
 LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid AND e2.tenant_id = hp.tenant_id
 WHERE hp.tenant_id = current_tenant_id()
-    AND (e1.uuid IS NULL OR e2.uuid IS NULL OR e1.deleted_at IS NOT NULL OR e2.deleted_at IS NOT NULL)
+AND (e1.uuid IS NULL OR e2.uuid IS NULL OR e1.deleted_at IS NOT NULL OR e2.deleted_at IS NOT NULL)
 `
 
 type GetInconsistentHierarchyPathsRow struct {
@@ -2168,7 +1913,7 @@ type GetInconsistentHierarchyPathsRow struct {
 //	LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid AND e1.tenant_id = hp.tenant_id
 //	LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid AND e2.tenant_id = hp.tenant_id
 //	WHERE hp.tenant_id = current_tenant_id()
-//	    AND (e1.uuid IS NULL OR e2.uuid IS NULL OR e1.deleted_at IS NOT NULL OR e2.deleted_at IS NOT NULL)
+//	AND (e1.uuid IS NULL OR e2.uuid IS NULL OR e1.deleted_at IS NOT NULL OR e2.deleted_at IS NOT NULL)
 func (q *Queries) GetInconsistentHierarchyPaths(ctx context.Context) ([]*GetInconsistentHierarchyPathsRow, error) {
 	rows, err := q.db.Query(ctx, getInconsistentHierarchyPaths)
 	if err != nil {
@@ -2192,7 +1937,7 @@ func (q *Queries) GetInconsistentHierarchyPaths(ctx context.Context) ([]*GetInco
 const getNextSequenceNumber = `-- name: GetNextSequenceNumber :one
 INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
 VALUES (gen_random_uuid(), $3, $2, 1, $1, $4)
-ON CONFLICT (entity_id, key, fiscal_year) DO UPDATE 
+ON CONFLICT (entity_id, key, fiscal_year) DO UPDATE
 SET sequence = entitystate.sequence + 1
 RETURNING sequence
 `
@@ -2227,9 +1972,9 @@ const getOrphanedEntities = `-- name: GetOrphanedEntities :many
 SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
 LEFT JOIN entities parent ON parent.uuid = e.parent_id AND parent.tenant_id = e.tenant_id
 WHERE e.tenant_id = current_tenant_id()
-    AND e.parent_id IS NOT NULL
-    AND parent.uuid IS NULL
-    AND e.deleted_at IS NULL
+AND e.parent_id IS NOT NULL
+AND parent.uuid IS NULL
+AND e.deleted_at IS NULL
 `
 
 // GetOrphanedEntities
@@ -2237,9 +1982,9 @@ WHERE e.tenant_id = current_tenant_id()
 //	SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
 //	LEFT JOIN entities parent ON parent.uuid = e.parent_id AND parent.tenant_id = e.tenant_id
 //	WHERE e.tenant_id = current_tenant_id()
-//	    AND e.parent_id IS NOT NULL
-//	    AND parent.uuid IS NULL
-//	    AND e.deleted_at IS NULL
+//	AND e.parent_id IS NOT NULL
+//	AND parent.uuid IS NULL
+//	AND e.deleted_at IS NULL
 func (q *Queries) GetOrphanedEntities(ctx context.Context) ([]*Entity, error) {
 	rows, err := q.db.Query(ctx, getOrphanedEntities)
 	if err != nil {
@@ -2283,10 +2028,10 @@ func (q *Queries) GetOrphanedEntities(ctx context.Context) ([]*Entity, error) {
 }
 
 const getRecentlyDeletedEntities = `-- name: GetRecentlyDeletedEntities :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
-WHERE tenant_id = current_tenant_id() 
-    AND deleted_at >= $1
-    AND deleted_at IS NOT NULL
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
+WHERE tenant_id = current_tenant_id()
+AND deleted_at >= $1
+AND deleted_at IS NOT NULL
 ORDER BY deleted_at DESC
 LIMIT $2
 `
@@ -2300,8 +2045,8 @@ type GetRecentlyDeletedEntitiesParams struct {
 //
 //	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND deleted_at >= $1
-//	    AND deleted_at IS NOT NULL
+//	AND deleted_at >= $1
+//	AND deleted_at IS NOT NULL
 //	ORDER BY deleted_at DESC
 //	LIMIT $2
 func (q *Queries) GetRecentlyDeletedEntities(ctx context.Context, arg GetRecentlyDeletedEntitiesParams) ([]*Entity, error) {
@@ -2348,10 +2093,10 @@ func (q *Queries) GetRecentlyDeletedEntities(ctx context.Context, arg GetRecentl
 
 const getRecentlyModifiedEntities = `-- name: GetRecentlyModifiedEntities :many
 
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
-WHERE tenant_id = current_tenant_id() 
-    AND updated_at >= $1
-    AND deleted_at IS NULL
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
+WHERE tenant_id = current_tenant_id()
+AND updated_at >= $1
+AND deleted_at IS NULL
 ORDER BY updated_at DESC
 LIMIT $2
 `
@@ -2362,13 +2107,13 @@ type GetRecentlyModifiedEntitiesParams struct {
 }
 
 // =====================================================================
-// 5. AUDIT AND MONITORING QUERIES
+// 4. AUDIT AND MONITORING QUERIES
 // =====================================================================
 //
 //	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND updated_at >= $1
-//	    AND deleted_at IS NULL
+//	AND updated_at >= $1
+//	AND deleted_at IS NULL
 //	ORDER BY updated_at DESC
 //	LIMIT $2
 func (q *Queries) GetRecentlyModifiedEntities(ctx context.Context, arg GetRecentlyModifiedEntitiesParams) ([]*Entity, error) {
@@ -2415,10 +2160,10 @@ func (q *Queries) GetRecentlyModifiedEntities(ctx context.Context, arg GetRecent
 
 const getUnusedEntityCodes = `-- name: GetUnusedEntityCodes :many
 SELECT DISTINCT code
-FROM entities 
-WHERE tenant_id = current_tenant_id() 
-    AND code IS NOT NULL
-    AND deleted_at IS NOT NULL
+FROM entities
+WHERE tenant_id = current_tenant_id()
+AND code IS NOT NULL
+AND deleted_at IS NOT NULL
 ORDER BY code
 `
 
@@ -2427,8 +2172,8 @@ ORDER BY code
 //	SELECT DISTINCT code
 //	FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND code IS NOT NULL
-//	    AND deleted_at IS NOT NULL
+//	AND code IS NOT NULL
+//	AND deleted_at IS NOT NULL
 //	ORDER BY code
 func (q *Queries) GetUnusedEntityCodes(ctx context.Context) ([]*string, error) {
 	rows, err := q.db.Query(ctx, getUnusedEntityCodes)
@@ -2451,7 +2196,7 @@ func (q *Queries) GetUnusedEntityCodes(ctx context.Context) ([]*string, error) {
 }
 
 const hardDeleteEntity = `-- name: HardDeleteEntity :exec
-DELETE FROM entities 
+DELETE FROM entities
 WHERE uuid = $1 AND tenant_id = current_tenant_id()
 `
 
@@ -2465,7 +2210,7 @@ func (q *Queries) HardDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 }
 
 const incrementEntityStateSequence = `-- name: IncrementEntityStateSequence :one
-UPDATE entitystate 
+UPDATE entitystate
 SET sequence = sequence + 1
 WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
 RETURNING sequence
@@ -2492,11 +2237,11 @@ func (q *Queries) IncrementEntityStateSequence(ctx context.Context, arg Incremen
 
 const isEntityAncestor = `-- name: IsEntityAncestor :one
 SELECT EXISTS(
-    SELECT 1 FROM hierarchy_paths 
-    WHERE tenant_id = current_tenant_id() 
-        AND ancestor_id = $1 
-        AND descendant_id = $2 
-        AND depth > 0
+  SELECT 1 FROM hierarchy_paths
+  WHERE tenant_id = current_tenant_id()
+  AND ancestor_id = $1
+  AND descendant_id = $2
+  AND depth > 0
 ) as is_ancestor
 `
 
@@ -2508,11 +2253,11 @@ type IsEntityAncestorParams struct {
 // IsEntityAncestor
 //
 //	SELECT EXISTS(
-//	    SELECT 1 FROM hierarchy_paths
-//	    WHERE tenant_id = current_tenant_id()
-//	        AND ancestor_id = $1
-//	        AND descendant_id = $2
-//	        AND depth > 0
+//	  SELECT 1 FROM hierarchy_paths
+//	  WHERE tenant_id = current_tenant_id()
+//	  AND ancestor_id = $1
+//	  AND descendant_id = $2
+//	  AND depth > 0
 //	) as is_ancestor
 func (q *Queries) IsEntityAncestor(ctx context.Context, arg IsEntityAncestorParams) (bool, error) {
 	row := q.db.QueryRow(ctx, isEntityAncestor, arg.AncestorID, arg.DescendantID)
@@ -2522,7 +2267,7 @@ func (q *Queries) IsEntityAncestor(ctx context.Context, arg IsEntityAncestorPara
 }
 
 const listActiveEntities = `-- name: ListActiveEntities :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 WHERE tenant_id = current_tenant_id() AND is_active = true AND deleted_at IS NULL
 ORDER BY name
 `
@@ -2575,7 +2320,7 @@ func (q *Queries) ListActiveEntities(ctx context.Context) ([]*Entity, error) {
 }
 
 const listEntities = `-- name: ListEntities :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
 ORDER BY name
 `
@@ -2628,7 +2373,7 @@ func (q *Queries) ListEntities(ctx context.Context) ([]*Entity, error) {
 }
 
 const listEntitiesByType = `-- name: ListEntitiesByType :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 WHERE tenant_id = current_tenant_id() AND type = $1 AND deleted_at IS NULL
 ORDER BY name
 `
@@ -2681,10 +2426,10 @@ func (q *Queries) ListEntitiesByType(ctx context.Context, type_ string) ([]*Enti
 }
 
 const listEntitiesByTypes = `-- name: ListEntitiesByTypes :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
-WHERE tenant_id = current_tenant_id() 
-    AND type = ANY($1::VARCHAR[])
-    AND deleted_at IS NULL
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
+WHERE tenant_id = current_tenant_id()
+AND type = ANY($1::VARCHAR[])
+AND deleted_at IS NULL
 ORDER BY type, name
 `
 
@@ -2692,8 +2437,8 @@ ORDER BY type, name
 //
 //	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND type = ANY($1::VARCHAR[])
-//	    AND deleted_at IS NULL
+//	AND type = ANY($1::VARCHAR[])
+//	AND deleted_at IS NULL
 //	ORDER BY type, name
 func (q *Queries) ListEntitiesByTypes(ctx context.Context, dollar_1 []string) ([]*Entity, error) {
 	rows, err := q.db.Query(ctx, listEntitiesByTypes, dollar_1)
@@ -2741,9 +2486,8 @@ const listEntitiesWithNochildren = `-- name: ListEntitiesWithNochildren :many
 SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
 FROM entities e
 LEFT JOIN entities children ON children.parent_id = e.uuid AND children.tenant_id = e.tenant_id
-WHERE children.uuid IS NULL 
-  AND e.tenant_id = current_tenant_id()
-  AND e.is_active = true
+WHERE children.uuid IS NULL
+AND e.is_active = true
 `
 
 // Find all leaf nodes (entities with no children)
@@ -2752,8 +2496,7 @@ WHERE children.uuid IS NULL
 //	FROM entities e
 //	LEFT JOIN entities children ON children.parent_id = e.uuid AND children.tenant_id = e.tenant_id
 //	WHERE children.uuid IS NULL
-//	  AND e.tenant_id = current_tenant_id()
-//	  AND e.is_active = true
+//	AND e.is_active = true
 func (q *Queries) ListEntitiesWithNochildren(ctx context.Context) ([]*Entity, error) {
 	rows, err := q.db.Query(ctx, listEntitiesWithNochildren)
 	if err != nil {
@@ -2797,41 +2540,43 @@ func (q *Queries) ListEntitiesWithNochildren(ctx context.Context) ([]*Entity, er
 }
 
 const listEntitiesWithPagination = `-- name: ListEntitiesWithPagination :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
-WHERE tenant_id = current_tenant_id() 
-    AND deleted_at IS NULL
-    AND ($1::VARCHAR IS NULL OR type = $1)
-    AND ($2::BOOLEAN IS NULL OR is_active = $2)
-    AND ($3::BOOLEAN IS NULL OR hidden = $3)
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+FROM entities
+WHERE tenant_id = current_tenant_id()
+AND deleted_at IS NULL
+AND ($1 IS NULL OR type = $1)
+AND ($2 IS NULL OR is_active = $2)
+AND ($3 IS NULL OR hidden = $3)
 ORDER BY name
-LIMIT $4 OFFSET $5
+LIMIT $5 OFFSET $4
 `
 
 type ListEntitiesWithPaginationParams struct {
-	Column1 string `json:"column_1"`
-	Column2 bool   `json:"column_2"`
-	Column3 bool   `json:"column_3"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
+	Type     interface{} `json:"type"`
+	IsActive interface{} `json:"is_active"`
+	Hidden   interface{} `json:"hidden"`
+	Offset   int32       `json:"offset"`
+	Limit    int32       `json:"limit"`
 }
 
 // ListEntitiesWithPagination
 //
-//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
+//	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+//	FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND deleted_at IS NULL
-//	    AND ($1::VARCHAR IS NULL OR type = $1)
-//	    AND ($2::BOOLEAN IS NULL OR is_active = $2)
-//	    AND ($3::BOOLEAN IS NULL OR hidden = $3)
+//	AND deleted_at IS NULL
+//	AND ($1 IS NULL OR type = $1)
+//	AND ($2 IS NULL OR is_active = $2)
+//	AND ($3 IS NULL OR hidden = $3)
 //	ORDER BY name
-//	LIMIT $4 OFFSET $5
+//	LIMIT $5 OFFSET $4
 func (q *Queries) ListEntitiesWithPagination(ctx context.Context, arg ListEntitiesWithPaginationParams) ([]*Entity, error) {
 	rows, err := q.db.Query(ctx, listEntitiesWithPagination,
-		arg.Column1,
-		arg.Column2,
-		arg.Column3,
-		arg.Limit,
+		arg.Type,
+		arg.IsActive,
+		arg.Hidden,
 		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -2874,15 +2619,15 @@ func (q *Queries) ListEntitiesWithPagination(ctx context.Context, arg ListEntiti
 }
 
 const listEntityStates = `-- name: ListEntityStates :many
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at FROM entitystate
-WHERE entity_id = $1 AND tenant_id = current_tenant_id()
+SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at FROM entitystate
+WHERE entity_id = $1
 ORDER BY key, fiscal_year
 `
 
 // ListEntityStates
 //
-//	SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at FROM entitystate
-//	WHERE entity_id = $1 AND tenant_id = current_tenant_id()
+//	SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at FROM entitystate
+//	WHERE entity_id = $1
 //	ORDER BY key, fiscal_year
 func (q *Queries) ListEntityStates(ctx context.Context, entityID uuid.UUID) ([]*Entitystate, error) {
 	rows, err := q.db.Query(ctx, listEntityStates, entityID)
@@ -2901,10 +2646,6 @@ func (q *Queries) ListEntityStates(ctx context.Context, entityID uuid.UUID) ([]*
 			&i.Sequence,
 			&i.EntityID,
 			&i.EntityUnitID,
-			&i.Version,
-			&i.LastValidationRun,
-			&i.ValidationStatus,
-			&i.ValidationErrors,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -2919,7 +2660,7 @@ func (q *Queries) ListEntityStates(ctx context.Context, entityID uuid.UUID) ([]*
 }
 
 const listVisibleEntities = `-- name: ListVisibleEntities :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 WHERE tenant_id = current_tenant_id() AND hidden = false AND deleted_at IS NULL
 ORDER BY name
 `
@@ -2974,39 +2715,38 @@ func (q *Queries) ListVisibleEntities(ctx context.Context) ([]*Entity, error) {
 const moveEntityToNewParent = `-- name: MoveEntityToNewParent :exec
 
 WITH RECURSIVE affected_entities AS (
-    SELECT $1::UUID as entity_id, 0 as depth
-    UNION ALL
-    SELECT hp.descendant_id, ae.depth + 1
-    FROM affected_entities ae
-    JOIN hierarchy_paths hp ON hp.ancestor_id = ae.entity_id
-    WHERE hp.tenant_id = current_tenant_id() AND ae.depth < 10
+  SELECT $1::UUID as entity_id, 0 as depth
+  UNION ALL
+  SELECT hp.descendant_id, ae.depth + 1
+  FROM affected_entities ae
+  JOIN hierarchy_paths hp ON hp.ancestor_id = ae.entity_id
+  WHERE ae.depth < 10
 ),
 delete_paths AS (
-    DELETE FROM hierarchy_paths 
-    WHERE tenant_id = current_tenant_id() 
-        AND descendant_id IN (SELECT entity_id FROM affected_entities)
+  DELETE FROM hierarchy_paths
+  WHERE descendant_id IN (SELECT entity_id FROM affected_entities)
 ),
 insert_new_paths AS (
-    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
-    SELECT 
-        current_tenant_id(),
-        ancestor_paths.ancestor_id,
-        ae.entity_id,
-        ancestor_paths.depth + descendant_paths.depth + 1
-    FROM affected_entities ae
-    CROSS JOIN (
-        SELECT ancestor_id, depth FROM hierarchy_paths 
-        WHERE tenant_id = current_tenant_id() AND descendant_id = $2
-        UNION ALL
-        SELECT $2::UUID, 0
-    ) ancestor_paths
-    CROSS JOIN (
-        SELECT descendant_id, depth FROM hierarchy_paths 
-        WHERE tenant_id = current_tenant_id() AND ancestor_id = $1
-        UNION ALL
-        SELECT $1::UUID, 0
-    ) descendant_paths
-    WHERE ae.entity_id = descendant_paths.descendant_id
+  INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+  SELECT
+  current_tenant_id(),
+  ancestor_paths.ancestor_id,
+  ae.entity_id,
+  ancestor_paths.depth + descendant_paths.depth + 1
+  FROM affected_entities ae
+  CROSS JOIN (
+    SELECT ancestor_id, depth FROM hierarchy_paths
+    WHERE descendant_id = $2
+    UNION ALL
+    SELECT $2::UUID, 0
+  ) ancestor_paths
+  CROSS JOIN (
+    SELECT descendant_id, depth FROM hierarchy_paths
+    WHERE ancestor_id = $1
+    UNION ALL
+    SELECT $1::UUID, 0
+  ) descendant_paths
+  WHERE ae.entity_id = descendant_paths.descendant_id
 )
 UPDATE entities SET parent_id = $2, updated_at = NOW() WHERE uuid = $1
 `
@@ -3021,39 +2761,38 @@ type MoveEntityToNewParentParams struct {
 // =====================================================================
 //
 //	WITH RECURSIVE affected_entities AS (
-//	    SELECT $1::UUID as entity_id, 0 as depth
-//	    UNION ALL
-//	    SELECT hp.descendant_id, ae.depth + 1
-//	    FROM affected_entities ae
-//	    JOIN hierarchy_paths hp ON hp.ancestor_id = ae.entity_id
-//	    WHERE hp.tenant_id = current_tenant_id() AND ae.depth < 10
+//	  SELECT $1::UUID as entity_id, 0 as depth
+//	  UNION ALL
+//	  SELECT hp.descendant_id, ae.depth + 1
+//	  FROM affected_entities ae
+//	  JOIN hierarchy_paths hp ON hp.ancestor_id = ae.entity_id
+//	  WHERE ae.depth < 10
 //	),
 //	delete_paths AS (
-//	    DELETE FROM hierarchy_paths
-//	    WHERE tenant_id = current_tenant_id()
-//	        AND descendant_id IN (SELECT entity_id FROM affected_entities)
+//	  DELETE FROM hierarchy_paths
+//	  WHERE descendant_id IN (SELECT entity_id FROM affected_entities)
 //	),
 //	insert_new_paths AS (
-//	    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
-//	    SELECT
-//	        current_tenant_id(),
-//	        ancestor_paths.ancestor_id,
-//	        ae.entity_id,
-//	        ancestor_paths.depth + descendant_paths.depth + 1
-//	    FROM affected_entities ae
-//	    CROSS JOIN (
-//	        SELECT ancestor_id, depth FROM hierarchy_paths
-//	        WHERE tenant_id = current_tenant_id() AND descendant_id = $2
-//	        UNION ALL
-//	        SELECT $2::UUID, 0
-//	    ) ancestor_paths
-//	    CROSS JOIN (
-//	        SELECT descendant_id, depth FROM hierarchy_paths
-//	        WHERE tenant_id = current_tenant_id() AND ancestor_id = $1
-//	        UNION ALL
-//	        SELECT $1::UUID, 0
-//	    ) descendant_paths
-//	    WHERE ae.entity_id = descendant_paths.descendant_id
+//	  INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+//	  SELECT
+//	  current_tenant_id(),
+//	  ancestor_paths.ancestor_id,
+//	  ae.entity_id,
+//	  ancestor_paths.depth + descendant_paths.depth + 1
+//	  FROM affected_entities ae
+//	  CROSS JOIN (
+//	    SELECT ancestor_id, depth FROM hierarchy_paths
+//	    WHERE descendant_id = $2
+//	    UNION ALL
+//	    SELECT $2::UUID, 0
+//	  ) ancestor_paths
+//	  CROSS JOIN (
+//	    SELECT descendant_id, depth FROM hierarchy_paths
+//	    WHERE ancestor_id = $1
+//	    UNION ALL
+//	    SELECT $1::UUID, 0
+//	  ) descendant_paths
+//	  WHERE ae.entity_id = descendant_paths.descendant_id
 //	)
 //	UPDATE entities SET parent_id = $2, updated_at = NOW() WHERE uuid = $1
 func (q *Queries) MoveEntityToNewParent(ctx context.Context, arg MoveEntityToNewParentParams) error {
@@ -3063,29 +2802,29 @@ func (q *Queries) MoveEntityToNewParent(ctx context.Context, arg MoveEntityToNew
 
 const rebuildHierarchyPaths = `-- name: RebuildHierarchyPaths :exec
 WITH RECURSIVE entity_hierarchy AS (
-    SELECT 
-        uuid as ancestor_id,
-        uuid as descendant_id,
-        0 as depth,
-        tenant_id
-    FROM entities
-    WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
-    
-    UNION ALL
-    
-    SELECT 
-        eh.ancestor_id,
-        e.uuid,
-        eh.depth + 1,
-        e.tenant_id
-    FROM entity_hierarchy eh
-    JOIN entities e ON e.parent_id = eh.descendant_id
-    WHERE e.tenant_id = current_tenant_id() 
-        AND e.deleted_at IS NULL 
-        AND eh.depth < 10
+  SELECT
+  uuid as ancestor_id,
+  uuid as descendant_id,
+  0 as depth,
+  tenant_id
+  FROM entities
+  WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
+
+  UNION ALL
+
+  SELECT
+  eh.ancestor_id,
+  e.uuid,
+  eh.depth + 1,
+  e.tenant_id
+  FROM entity_hierarchy eh
+  JOIN entities e ON e.parent_id = eh.descendant_id
+  WHERE e.tenant_id = current_tenant_id()
+  AND e.deleted_at IS NULL
+  AND eh.depth < 10
 ),
 cleanup AS (
-    DELETE FROM hierarchy_paths WHERE tenant_id = current_tenant_id()
+  DELETE FROM hierarchy_paths WHERE tenant_id = current_tenant_id()
 )
 INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
 SELECT tenant_id, ancestor_id, descendant_id, depth
@@ -3095,29 +2834,29 @@ FROM entity_hierarchy
 // RebuildHierarchyPaths
 //
 //	WITH RECURSIVE entity_hierarchy AS (
-//	    SELECT
-//	        uuid as ancestor_id,
-//	        uuid as descendant_id,
-//	        0 as depth,
-//	        tenant_id
-//	    FROM entities
-//	    WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
+//	  SELECT
+//	  uuid as ancestor_id,
+//	  uuid as descendant_id,
+//	  0 as depth,
+//	  tenant_id
+//	  FROM entities
+//	  WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
 //
-//	    UNION ALL
+//	  UNION ALL
 //
-//	    SELECT
-//	        eh.ancestor_id,
-//	        e.uuid,
-//	        eh.depth + 1,
-//	        e.tenant_id
-//	    FROM entity_hierarchy eh
-//	    JOIN entities e ON e.parent_id = eh.descendant_id
-//	    WHERE e.tenant_id = current_tenant_id()
-//	        AND e.deleted_at IS NULL
-//	        AND eh.depth < 10
+//	  SELECT
+//	  eh.ancestor_id,
+//	  e.uuid,
+//	  eh.depth + 1,
+//	  e.tenant_id
+//	  FROM entity_hierarchy eh
+//	  JOIN entities e ON e.parent_id = eh.descendant_id
+//	  WHERE e.tenant_id = current_tenant_id()
+//	  AND e.deleted_at IS NULL
+//	  AND eh.depth < 10
 //	),
 //	cleanup AS (
-//	    DELETE FROM hierarchy_paths WHERE tenant_id = current_tenant_id()
+//	  DELETE FROM hierarchy_paths WHERE tenant_id = current_tenant_id()
 //	)
 //	INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
 //	SELECT tenant_id, ancestor_id, descendant_id, depth
@@ -3127,32 +2866,11 @@ func (q *Queries) RebuildHierarchyPaths(ctx context.Context) error {
 	return err
 }
 
-const resetAllEntitySequences = `-- name: ResetAllEntitySequences :exec
-UPDATE entitystate 
-SET sequence = 1
-WHERE entity_id = $1 AND fiscal_year = $2
-`
-
-type ResetAllEntitySequencesParams struct {
-	EntityID   uuid.UUID `json:"entity_id"`
-	FiscalYear *int16    `json:"fiscal_year"`
-}
-
-// ResetAllEntitySequences
-//
-//	UPDATE entitystate
-//	SET sequence = 1
-//	WHERE entity_id = $1 AND fiscal_year = $2
-func (q *Queries) ResetAllEntitySequences(ctx context.Context, arg ResetAllEntitySequencesParams) error {
-	_, err := q.db.Exec(ctx, resetAllEntitySequences, arg.EntityID, arg.FiscalYear)
-	return err
-}
-
 const resetEntityStateSequence = `-- name: ResetEntityStateSequence :exec
-UPDATE entitystate 
+UPDATE entitystate
 SET sequence = $3
-WHERE entity_id = $1 
-AND key = $2 
+WHERE entity_id = $1
+AND key = $2
 AND fiscal_year = $4
 AND tenant_id = current_tenant_id()
 `
@@ -3183,7 +2901,7 @@ func (q *Queries) ResetEntityStateSequence(ctx context.Context, arg ResetEntityS
 }
 
 const restoreEntity = `-- name: RestoreEntity :exec
-UPDATE entities 
+UPDATE entities
 SET deleted_at = NULL, updated_at = NOW()
 WHERE uuid = $1 AND tenant_id = current_tenant_id()
 `
@@ -3200,15 +2918,15 @@ func (q *Queries) RestoreEntity(ctx context.Context, argUuid uuid.UUID) error {
 
 const searchEntitiesByCodeAndName = `-- name: SearchEntitiesByCodeAndName :many
 
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
-WHERE tenant_id = current_tenant_id() 
-    AND (code ILIKE '%' || $1 || '%' OR name ILIKE '%' || $1 || '%')
-    AND deleted_at IS NULL
-ORDER BY 
-    CASE WHEN code ILIKE $1 || '%' THEN 1 
-         WHEN name ILIKE $1 || '%' THEN 2 
-         ELSE 3 END,
-    name
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
+WHERE tenant_id = current_tenant_id()
+AND (code ILIKE '%' || $1 || '%' OR name ILIKE '%' || $1 || '%')
+AND deleted_at IS NULL
+ORDER BY
+CASE WHEN code ILIKE $1 || '%' THEN 1
+WHEN name ILIKE $1 || '%' THEN 2
+ELSE 3 END,
+name
 LIMIT $2
 `
 
@@ -3223,13 +2941,13 @@ type SearchEntitiesByCodeAndNameParams struct {
 //
 //	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND (code ILIKE '%' || $1 || '%' OR name ILIKE '%' || $1 || '%')
-//	    AND deleted_at IS NULL
+//	AND (code ILIKE '%' || $1 || '%' OR name ILIKE '%' || $1 || '%')
+//	AND deleted_at IS NULL
 //	ORDER BY
-//	    CASE WHEN code ILIKE $1 || '%' THEN 1
-//	         WHEN name ILIKE $1 || '%' THEN 2
-//	         ELSE 3 END,
-//	    name
+//	CASE WHEN code ILIKE $1 || '%' THEN 1
+//	WHEN name ILIKE $1 || '%' THEN 2
+//	ELSE 3 END,
+//	name
 //	LIMIT $2
 func (q *Queries) SearchEntitiesByCodeAndName(ctx context.Context, arg SearchEntitiesByCodeAndNameParams) ([]*Entity, error) {
 	rows, err := q.db.Query(ctx, searchEntitiesByCodeAndName, arg.Column1, arg.Limit)
@@ -3274,10 +2992,10 @@ func (q *Queries) SearchEntitiesByCodeAndName(ctx context.Context, arg SearchEnt
 }
 
 const searchEntitiesByName = `-- name: SearchEntitiesByName :many
-SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities 
-WHERE tenant_id = current_tenant_id() 
-    AND name ILIKE '%' || $1 || '%' 
-    AND deleted_at IS NULL
+SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
+WHERE tenant_id = current_tenant_id()
+AND name ILIKE '%' || $1 || '%'
+AND deleted_at IS NULL
 ORDER BY name
 LIMIT $2
 `
@@ -3291,8 +3009,8 @@ type SearchEntitiesByNameParams struct {
 //
 //	SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
 //	WHERE tenant_id = current_tenant_id()
-//	    AND name ILIKE '%' || $1 || '%'
-//	    AND deleted_at IS NULL
+//	AND name ILIKE '%' || $1 || '%'
+//	AND deleted_at IS NULL
 //	ORDER BY name
 //	LIMIT $2
 func (q *Queries) SearchEntitiesByName(ctx context.Context, arg SearchEntitiesByNameParams) ([]*Entity, error) {
@@ -3338,7 +3056,7 @@ func (q *Queries) SearchEntitiesByName(ctx context.Context, arg SearchEntitiesBy
 }
 
 const softDeleteEntity = `-- name: SoftDeleteEntity :exec
-UPDATE entities 
+UPDATE entities
 SET deleted_at = NOW(), updated_at = NOW()
 WHERE uuid = $1 AND tenant_id = current_tenant_id()
 `
@@ -3354,19 +3072,19 @@ func (q *Queries) SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 }
 
 const updateEntity = `-- name: UpdateEntity :one
-UPDATE entities 
-SET 
-    name = COALESCE($2, name),
-    code = COALESCE($3, code),
-    type = COALESCE($4, type),
-    is_active = COALESCE($5, is_active),
-    hidden = COALESCE($6, hidden),
-    accrual_method = COALESCE($7, accrual_method),
-    fy_start_month = COALESCE($8, fy_start_month),
-    address = COALESCE($9, address),
-    picture = COALESCE($10, picture),
-    settings = COALESCE($11, settings),
-    updated_at = NOW()
+UPDATE entities
+SET
+name = COALESCE($2, name),
+code = COALESCE($3, code),
+type = COALESCE($4, type),
+is_active = COALESCE($5, is_active),
+hidden = COALESCE($6, hidden),
+accrual_method = COALESCE($7, accrual_method),
+fy_start_month = COALESCE($8, fy_start_month),
+address = COALESCE($9, address),
+picture = COALESCE($10, picture),
+settings = COALESCE($11, settings),
+updated_at = NOW()
 WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 `
@@ -3389,17 +3107,17 @@ type UpdateEntityParams struct {
 //
 //	UPDATE entities
 //	SET
-//	    name = COALESCE($2, name),
-//	    code = COALESCE($3, code),
-//	    type = COALESCE($4, type),
-//	    is_active = COALESCE($5, is_active),
-//	    hidden = COALESCE($6, hidden),
-//	    accrual_method = COALESCE($7, accrual_method),
-//	    fy_start_month = COALESCE($8, fy_start_month),
-//	    address = COALESCE($9, address),
-//	    picture = COALESCE($10, picture),
-//	    settings = COALESCE($11, settings),
-//	    updated_at = NOW()
+//	name = COALESCE($2, name),
+//	code = COALESCE($3, code),
+//	type = COALESCE($4, type),
+//	is_active = COALESCE($5, is_active),
+//	hidden = COALESCE($6, hidden),
+//	accrual_method = COALESCE($7, accrual_method),
+//	fy_start_month = COALESCE($8, fy_start_month),
+//	address = COALESCE($9, address),
+//	picture = COALESCE($10, picture),
+//	settings = COALESCE($11, settings),
+//	updated_at = NOW()
 //	WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
 //	RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 func (q *Queries) UpdateEntity(ctx context.Context, arg UpdateEntityParams) (*Entity, error) {
@@ -3444,10 +3162,10 @@ func (q *Queries) UpdateEntity(ctx context.Context, arg UpdateEntityParams) (*En
 }
 
 const updateEntityStateSequence = `-- name: UpdateEntityStateSequence :one
-UPDATE entitystate 
+UPDATE entitystate
 SET sequence = $3, updated_at = NOW()
 WHERE entity_id = $1 AND key = $2 AND tenant_id = current_tenant_id()
-RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at
+RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
 `
 
 type UpdateEntityStateSequenceParams struct {
@@ -3461,7 +3179,7 @@ type UpdateEntityStateSequenceParams struct {
 //	UPDATE entitystate
 //	SET sequence = $3, updated_at = NOW()
 //	WHERE entity_id = $1 AND key = $2 AND tenant_id = current_tenant_id()
-//	RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, version, last_validation_run, validation_status, validation_errors, created_at, updated_at
+//	RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
 func (q *Queries) UpdateEntityStateSequence(ctx context.Context, arg UpdateEntityStateSequenceParams) (*Entitystate, error) {
 	row := q.db.QueryRow(ctx, updateEntityStateSequence, arg.EntityID, arg.Key, arg.Sequence)
 	var i Entitystate
@@ -3473,10 +3191,6 @@ func (q *Queries) UpdateEntityStateSequence(ctx context.Context, arg UpdateEntit
 		&i.Sequence,
 		&i.EntityID,
 		&i.EntityUnitID,
-		&i.Version,
-		&i.LastValidationRun,
-		&i.ValidationStatus,
-		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -3485,14 +3199,12 @@ func (q *Queries) UpdateEntityStateSequence(ctx context.Context, arg UpdateEntit
 
 const updateHierarchyPaths = `-- name: UpdateHierarchyPaths :exec
 WITH RECURSIVE hierarchy_cte AS (
-    -- Base case: self-reference
-    SELECT current_tenant_id() as tenant_id, $1::UUID as ancestor_id, $1::UUID as descendant_id, 0 as depth
-    UNION ALL
-    -- Recursive case: add ancestors
-    SELECT h.tenant_id, hp.ancestor_id, h.descendant_id, h.depth + 1
-    FROM hierarchy_cte h
-    JOIN hierarchy_paths hp ON hp.descendant_id = h.ancestor_id AND hp.tenant_id = h.tenant_id
-    WHERE h.depth < 5 -- Prevent infinite recursion
+  SELECT current_tenant_id() as tenant_id, $1::UUID as ancestor_id, $1::UUID as descendant_id, 0 as depth
+  UNION ALL
+  SELECT h.tenant_id, hp.ancestor_id, h.descendant_id, h.depth + 1
+  FROM hierarchy_cte h
+  JOIN hierarchy_paths hp ON hp.descendant_id = h.ancestor_id AND hp.tenant_id = h.tenant_id
+  WHERE h.depth < 5 -- Prevent infinite recursion
 )
 INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
 SELECT DISTINCT tenant_id, ancestor_id, descendant_id, depth
@@ -3500,17 +3212,16 @@ FROM hierarchy_cte
 ON CONFLICT (tenant_id, ancestor_id, descendant_id) DO NOTHING
 `
 
-// UpdateHierarchyPaths
+// Base case: self-reference
+// Recursive case: add ancestors
 //
 //	WITH RECURSIVE hierarchy_cte AS (
-//	    -- Base case: self-reference
-//	    SELECT current_tenant_id() as tenant_id, $1::UUID as ancestor_id, $1::UUID as descendant_id, 0 as depth
-//	    UNION ALL
-//	    -- Recursive case: add ancestors
-//	    SELECT h.tenant_id, hp.ancestor_id, h.descendant_id, h.depth + 1
-//	    FROM hierarchy_cte h
-//	    JOIN hierarchy_paths hp ON hp.descendant_id = h.ancestor_id AND hp.tenant_id = h.tenant_id
-//	    WHERE h.depth < 5 -- Prevent infinite recursion
+//	  SELECT current_tenant_id() as tenant_id, $1::UUID as ancestor_id, $1::UUID as descendant_id, 0 as depth
+//	  UNION ALL
+//	  SELECT h.tenant_id, hp.ancestor_id, h.descendant_id, h.depth + 1
+//	  FROM hierarchy_cte h
+//	  JOIN hierarchy_paths hp ON hp.descendant_id = h.ancestor_id AND hp.tenant_id = h.tenant_id
+//	  WHERE h.depth < 5 -- Prevent infinite recursion
 //	)
 //	INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
 //	SELECT DISTINCT tenant_id, ancestor_id, descendant_id, depth
@@ -3524,8 +3235,8 @@ func (q *Queries) UpdateHierarchyPaths(ctx context.Context, dollar_1 uuid.UUID) 
 const validateEntityCode = `-- name: ValidateEntityCode :one
 
 SELECT EXISTS(
-    SELECT 1 FROM entities 
-    WHERE code = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
+  SELECT 1 FROM entities
+  WHERE code = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
 )::BOOLEAN AS exists
 `
 
@@ -3539,8 +3250,8 @@ type ValidateEntityCodeParams struct {
 // =====================================================================
 //
 //	SELECT EXISTS(
-//	    SELECT 1 FROM entities
-//	    WHERE code = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
+//	  SELECT 1 FROM entities
+//	  WHERE code = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
 //	)::BOOLEAN AS exists
 func (q *Queries) ValidateEntityCode(ctx context.Context, arg ValidateEntityCodeParams) (bool, error) {
 	row := q.db.QueryRow(ctx, validateEntityCode, arg.Code, arg.Uuid)
@@ -3550,36 +3261,32 @@ func (q *Queries) ValidateEntityCode(ctx context.Context, arg ValidateEntityCode
 }
 
 const validateEntityHierarchy = `-- name: ValidateEntityHierarchy :one
-SELECT 
-    CASE 
-        WHEN COUNT(*) = 0 THEN true
-        ELSE false
-    END as is_valid
+SELECT
+CASE
+WHEN COUNT(*) = 0 THEN true
+ELSE false
+END as is_valid
 FROM hierarchy_paths hp1
 JOIN hierarchy_paths hp2 ON hp1.descendant_id = hp2.ancestor_id
-WHERE hp1.tenant_id = $1 
-    AND hp2.tenant_id = $1
-    AND hp1.ancestor_id = hp2.descendant_id
-    AND hp1.depth > 0 
-    AND hp2.depth > 0
+WHERE hp1.ancestor_id = hp2.descendant_id
+AND hp1.depth > 0
+AND hp2.depth > 0
 `
 
 // ValidateEntityHierarchy
 //
 //	SELECT
-//	    CASE
-//	        WHEN COUNT(*) = 0 THEN true
-//	        ELSE false
-//	    END as is_valid
+//	CASE
+//	WHEN COUNT(*) = 0 THEN true
+//	ELSE false
+//	END as is_valid
 //	FROM hierarchy_paths hp1
 //	JOIN hierarchy_paths hp2 ON hp1.descendant_id = hp2.ancestor_id
-//	WHERE hp1.tenant_id = $1
-//	    AND hp2.tenant_id = $1
-//	    AND hp1.ancestor_id = hp2.descendant_id
-//	    AND hp1.depth > 0
-//	    AND hp2.depth > 0
-func (q *Queries) ValidateEntityHierarchy(ctx context.Context, tenantID uuid.UUID) (bool, error) {
-	row := q.db.QueryRow(ctx, validateEntityHierarchy, tenantID)
+//	WHERE hp1.ancestor_id = hp2.descendant_id
+//	AND hp1.depth > 0
+//	AND hp2.depth > 0
+func (q *Queries) ValidateEntityHierarchy(ctx context.Context) (bool, error) {
+	row := q.db.QueryRow(ctx, validateEntityHierarchy)
 	var is_valid bool
 	err := row.Scan(&is_valid)
 	return is_valid, err
@@ -3587,8 +3294,8 @@ func (q *Queries) ValidateEntityHierarchy(ctx context.Context, tenantID uuid.UUI
 
 const validateEntityName = `-- name: ValidateEntityName :one
 SELECT EXISTS(
-    SELECT 1 FROM entities 
-    WHERE name = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
+  SELECT 1 FROM entities
+  WHERE name = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
 ) AS exists
 `
 
@@ -3600,8 +3307,8 @@ type ValidateEntityNameParams struct {
 // ValidateEntityName
 //
 //	SELECT EXISTS(
-//	    SELECT 1 FROM entities
-//	    WHERE name = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
+//	  SELECT 1 FROM entities
+//	  WHERE name = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
 //	) AS exists
 func (q *Queries) ValidateEntityName(ctx context.Context, arg ValidateEntityNameParams) (bool, error) {
 	row := q.db.QueryRow(ctx, validateEntityName, arg.Name, arg.Uuid)
@@ -3611,15 +3318,15 @@ func (q *Queries) ValidateEntityName(ctx context.Context, arg ValidateEntityName
 }
 
 const validateEntityParent = `-- name: ValidateEntityParent :one
-SELECT 
-    (
-        CASE 
-            WHEN $1 IS NULL THEN true
-            WHEN NOT EXISTS(SELECT 1 FROM entities WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL) THEN false
-            WHEN EXISTS(SELECT 1 FROM hierarchy_paths WHERE tenant_id = current_tenant_id() AND ancestor_id = $2 AND descendant_id = $1) THEN false
-            ELSE true
-        END
-    )::BOOLEAN AS valid
+SELECT
+(
+  CASE
+  WHEN $1 IS NULL THEN true
+  WHEN NOT EXISTS(SELECT 1 FROM entities WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL) THEN false
+  WHEN EXISTS(SELECT 1 FROM hierarchy_paths WHERE tenant_id = current_tenant_id() AND ancestor_id = $2 AND descendant_id = $1) THEN false
+  ELSE true
+  END
+)::BOOLEAN AS valid
 `
 
 type ValidateEntityParentParams struct {
@@ -3630,14 +3337,14 @@ type ValidateEntityParentParams struct {
 // ValidateEntityParent
 //
 //	SELECT
-//	    (
-//	        CASE
-//	            WHEN $1 IS NULL THEN true
-//	            WHEN NOT EXISTS(SELECT 1 FROM entities WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL) THEN false
-//	            WHEN EXISTS(SELECT 1 FROM hierarchy_paths WHERE tenant_id = current_tenant_id() AND ancestor_id = $2 AND descendant_id = $1) THEN false
-//	            ELSE true
-//	        END
-//	    )::BOOLEAN AS valid
+//	(
+//	  CASE
+//	  WHEN $1 IS NULL THEN true
+//	  WHEN NOT EXISTS(SELECT 1 FROM entities WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL) THEN false
+//	  WHEN EXISTS(SELECT 1 FROM hierarchy_paths WHERE tenant_id = current_tenant_id() AND ancestor_id = $2 AND descendant_id = $1) THEN false
+//	  ELSE true
+//	  END
+//	)::BOOLEAN AS valid
 func (q *Queries) ValidateEntityParent(ctx context.Context, arg ValidateEntityParentParams) (bool, error) {
 	row := q.db.QueryRow(ctx, validateEntityParent, arg.Column1, arg.AncestorID)
 	var valid bool

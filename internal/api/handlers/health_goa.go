@@ -108,9 +108,9 @@ func (h *HealthGoaHandler) Ready(ctx context.Context) (*health.ReadinessStatus, 
 	// Log success
 	logger.DebugContext(ctx, "Readiness check completed successfully",
 		logger.Fields{
-			"status":           readinessStatus.Status,
-			"database_status":  checks.Database,
-			"cache_status":     checks.Cache,
+			"status":          readinessStatus.Status,
+			"database_status": checks.Database,
+			"cache_status":    checks.Cache,
 		})
 
 	return readinessStatus, nil

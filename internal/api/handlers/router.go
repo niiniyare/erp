@@ -34,7 +34,7 @@ func NewRouter(
 
 	// Initialize handlers
 	tenantHandler := NewTenantHandler(tenantService)
-	
+
 	userHandler := NewUserHandler(userService, tracing, metrics)
 	accessRequestHandler := NewAccessRequestHandler(accessRequestService, conditionalAccessService, analyticsService, tracing, metrics)
 	healthHandler := NewHealthHandler()
@@ -60,8 +60,6 @@ func NewRouter(
 			tenants.GET("/", tenantHandler.ListTenants)
 			tenants.GET("/subdomain/:subdomain", tenantHandler.GetTenantBySubdomain)
 		}
-
-		
 
 		// Person Management routes (temporarily disabled - implementation pending)
 		// persons := v1.Group("/persons")

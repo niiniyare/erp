@@ -698,72 +698,6 @@ func (q *Queries) CreateTenantConfiguration(ctx context.Context, arg CreateTenan
 	return &i, err
 }
 
-const createTenantUsageStats = `-- name: CreateTenantUsageStats :one
-
-INSERT INTO tenant_usage_stats (
-    tenant_id, period_start, period_end, active_users, total_entities,
-    total_transactions, storage_used, api_calls, avg_response_time,
-    error_rate, monthly_revenue
-) VALUES (
-    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-) RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
-`
-
-type CreateTenantUsageStatsParams struct {
-	PeriodStart       time.Time      `json:"period_start"`
-	PeriodEnd         time.Time      `json:"period_end"`
-	ActiveUsers       int32          `json:"active_users"`
-	TotalEntities     int32          `json:"total_entities"`
-	TotalTransactions int32          `json:"total_transactions"`
-	StorageUsed       int64          `json:"storage_used"`
-	ApiCalls          int32          `json:"api_calls"`
-	AvgResponseTime   pgtype.Numeric `json:"avg_response_time"`
-	ErrorRate         pgtype.Numeric `json:"error_rate"`
-	MonthlyRevenue    pgtype.Numeric `json:"monthly_revenue"`
-}
-
-// =====================================================
-// TENANT USAGE STATISTICS QUERIES (RLS-AWARE)
-// =====================================================
-//
-//	INSERT INTO tenant_usage_stats (
-//	    tenant_id, period_start, period_end, active_users, total_entities,
-//	    total_transactions, storage_used, api_calls, avg_response_time,
-//	    error_rate, monthly_revenue
-//	) VALUES (
-//	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-//	) RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
-func (q *Queries) CreateTenantUsageStats(ctx context.Context, arg CreateTenantUsageStatsParams) (*TenantUsageStat, error) {
-	row := q.db.QueryRow(ctx, createTenantUsageStats,
-		arg.PeriodStart,
-		arg.PeriodEnd,
-		arg.ActiveUsers,
-		arg.TotalEntities,
-		arg.TotalTransactions,
-		arg.StorageUsed,
-		arg.ApiCalls,
-		arg.AvgResponseTime,
-		arg.ErrorRate,
-		arg.MonthlyRevenue,
-	)
-	var i TenantUsageStat
-	err := row.Scan(
-		&i.TenantID,
-		&i.PeriodStart,
-		&i.PeriodEnd,
-		&i.ActiveUsers,
-		&i.TotalEntities,
-		&i.TotalTransactions,
-		&i.StorageUsed,
-		&i.ApiCalls,
-		&i.AvgResponseTime,
-		&i.ErrorRate,
-		&i.MonthlyRevenue,
-		&i.CreatedAt,
-	)
-	return &i, err
-}
-
 const deleteTenant = `-- name: DeleteTenant :exec
 DELETE FROM tenants
 `
@@ -777,26 +711,71 @@ func (q *Queries) DeleteTenant(ctx context.Context) error {
 }
 
 const deleteTenantConfiguration = `-- name: DeleteTenantConfiguration :exec
-DELETE FROM tenant_configurations
+
+
+INSERT INTO tenant_usage_stats (
+    tenant_id, period_start, period_end, active_users, total_entities,
+    total_transactions, storage_used, api_calls, avg_response_time,
+    error_rate, monthly_revenue
+) VALUES (
+    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+) RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
 `
 
-// DeleteTenantConfiguration
+type DeleteTenantConfigurationParams struct {
+	PeriodStart       time.Time      `json:"period_start"`
+	PeriodEnd         time.Time      `json:"period_end"`
+	ActiveUsers       int32          `json:"active_users"`
+	TotalEntities     int32          `json:"total_entities"`
+	TotalTransactions int32          `json:"total_transactions"`
+	StorageUsed       int64          `json:"storage_used"`
+	ApiCalls          int32          `json:"api_calls"`
+	AvgResponseTime   pgtype.Numeric `json:"avg_response_time"`
+	ErrorRate         pgtype.Numeric `json:"error_rate"`
+	MonthlyRevenue    pgtype.Numeric `json:"monthly_revenue"`
+}
+
+// DELETE FROM tenant_configurations;
+// =====================================================
+// TENANT USAGE STATISTICS QUERIES (RLS-AWARE)
+// =====================================================
 //
-//	DELETE FROM tenant_configurations
-func (q *Queries) DeleteTenantConfiguration(ctx context.Context) error {
-	_, err := q.db.Exec(ctx, deleteTenantConfiguration)
+//	INSERT INTO tenant_usage_stats (
+//	    tenant_id, period_start, period_end, active_users, total_entities,
+//	    total_transactions, storage_used, api_calls, avg_response_time,
+//	    error_rate, monthly_revenue
+//	) VALUES (
+//	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+//	) RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+func (q *Queries) DeleteTenantConfiguration(ctx context.Context, arg DeleteTenantConfigurationParams) error {
+	_, err := q.db.Exec(ctx, deleteTenantConfiguration,
+		arg.PeriodStart,
+		arg.PeriodEnd,
+		arg.ActiveUsers,
+		arg.TotalEntities,
+		arg.TotalTransactions,
+		arg.StorageUsed,
+		arg.ApiCalls,
+		arg.AvgResponseTime,
+		arg.ErrorRate,
+		arg.MonthlyRevenue,
+	)
 	return err
 }
 
 const deleteTenantUsageStats = `-- name: DeleteTenantUsageStats :exec
 DELETE FROM tenant_usage_stats
+
 WHERE period_start = $1
+  AND tenant_id = current_tenant_id()
 `
 
 // DeleteTenantUsageStats
 //
 //	DELETE FROM tenant_usage_stats
+//
 //	WHERE period_start = $1
+//	  AND tenant_id = current_tenant_id()
 func (q *Queries) DeleteTenantUsageStats(ctx context.Context, periodStart time.Time) error {
 	_, err := q.db.Exec(ctx, deleteTenantUsageStats, periodStart)
 	return err
@@ -1609,13 +1588,13 @@ func (q *Queries) GetTenantStatusDistribution(ctx context.Context) (*GetTenantSt
 
 const getTenantUsageStats = `-- name: GetTenantUsageStats :one
 SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
-WHERE period_start = $1
+WHERE period_start = $1 AND tenant_id = current_tenant_id()
 `
 
 // GetTenantUsageStats
 //
 //	SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
-//	WHERE period_start = $1
+//	WHERE period_start = $1 AND tenant_id = current_tenant_id()
 func (q *Queries) GetTenantUsageStats(ctx context.Context, periodStart time.Time) (*TenantUsageStat, error) {
 	row := q.db.QueryRow(ctx, getTenantUsageStats, periodStart)
 	var i TenantUsageStat
@@ -1640,6 +1619,7 @@ const getTenantUsageStatsRange = `-- name: GetTenantUsageStatsRange :many
 SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
 WHERE period_start >= $1 
   AND period_end <= $2
+  AND tenant_id = current_tenant_id()
 ORDER BY period_start DESC
 `
 
@@ -1653,6 +1633,7 @@ type GetTenantUsageStatsRangeParams struct {
 //	SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
 //	WHERE period_start >= $1
 //	  AND period_end <= $2
+//	  AND tenant_id = current_tenant_id()
 //	ORDER BY period_start DESC
 func (q *Queries) GetTenantUsageStatsRange(ctx context.Context, arg GetTenantUsageStatsRangeParams) ([]*TenantUsageStat, error) {
 	rows, err := q.db.Query(ctx, getTenantUsageStatsRange, arg.PeriodStart, arg.PeriodEnd)
@@ -2803,7 +2784,7 @@ SET
     avg_response_time = COALESCE($6, avg_response_time),
     error_rate = COALESCE($7, error_rate),
     monthly_revenue = COALESCE($8, monthly_revenue)
-WHERE period_start = $9
+WHERE period_start = $9 AND tenant_id = current_tenant_id()
 RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
 `
 
@@ -2831,7 +2812,7 @@ type UpdateTenantUsageStatsParams struct {
 //	    avg_response_time = COALESCE($6, avg_response_time),
 //	    error_rate = COALESCE($7, error_rate),
 //	    monthly_revenue = COALESCE($8, monthly_revenue)
-//	WHERE period_start = $9
+//	WHERE period_start = $9 AND tenant_id = current_tenant_id()
 //	RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
 func (q *Queries) UpdateTenantUsageStats(ctx context.Context, arg UpdateTenantUsageStatsParams) (*TenantUsageStat, error) {
 	row := q.db.QueryRow(ctx, updateTenantUsageStats,

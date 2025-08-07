@@ -233,7 +233,8 @@ sql2dbml: ## Convert SQL migration to DBML
 # ============================================================================
 # 🚀 App Entry (main.go / wiring)
 # ============================================================================
-
+url:
+	echo "$(DB_URL)"
 run: ## Run the app server
 	@go run ./cmd/server/*.go
 

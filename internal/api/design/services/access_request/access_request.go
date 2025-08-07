@@ -20,10 +20,10 @@ var _ = Service("access_request", func() {
 	// Core Access Request operations
 	Method("create", func() {
 		Description("Create a new access request")
-		
+
 		Payload(CreateAccessRequestPayload)
 		Result(AccessRequestResult)
-		
+
 		HTTP(func() {
 			POST("/api/v1/access-requests")
 			Response(StatusCreated)
@@ -34,7 +34,7 @@ var _ = Service("access_request", func() {
 
 	Method("get", func() {
 		Description("Get access request by ID")
-		
+
 		Payload(func() {
 			Attribute("id", String, "Access request ID", func() {
 				Format(FormatUUID)
@@ -43,7 +43,7 @@ var _ = Service("access_request", func() {
 			Required("id")
 		})
 		Result(AccessRequestResult)
-		
+
 		HTTP(func() {
 			GET("/api/v1/access-requests/{id}")
 			Response(StatusOK)
@@ -53,10 +53,10 @@ var _ = Service("access_request", func() {
 
 	Method("process", func() {
 		Description("Process an access request (approve/deny)")
-		
+
 		Payload(ProcessAccessRequestPayload)
 		Result(AccessRequestResult)
-		
+
 		HTTP(func() {
 			POST("/api/v1/access-requests/{id}/process")
 			Response(StatusOK)
@@ -68,7 +68,7 @@ var _ = Service("access_request", func() {
 
 	Method("revoke", func() {
 		Description("Revoke an access request")
-		
+
 		Payload(func() {
 			Attribute("id", String, "Access request ID", func() {
 				Format(FormatUUID)
@@ -76,7 +76,7 @@ var _ = Service("access_request", func() {
 			})
 			Required("id")
 		})
-		
+
 		HTTP(func() {
 			DELETE("/api/v1/access-requests/{id}")
 			Response(StatusNoContent)
@@ -86,10 +86,10 @@ var _ = Service("access_request", func() {
 
 	Method("list", func() {
 		Description("List access requests with filtering")
-		
+
 		Payload(ListAccessRequestsPayload)
 		Result(AccessRequestListResult)
-		
+
 		HTTP(func() {
 			GET("/api/v1/access-requests")
 			Param("status:status")
@@ -103,9 +103,9 @@ var _ = Service("access_request", func() {
 
 	Method("stats", func() {
 		Description("Get access request statistics")
-		
+
 		Result(AccessRequestStatsResult)
-		
+
 		HTTP(func() {
 			GET("/api/v1/access-requests/stats")
 			Response(StatusOK)
@@ -115,10 +115,10 @@ var _ = Service("access_request", func() {
 	// Conditional Access operations
 	Method("evaluate_conditional_access", func() {
 		Description("Evaluate conditional access rules")
-		
+
 		Payload(ConditionalAccessPayload)
 		Result(ConditionalAccessResult)
-		
+
 		HTTP(func() {
 			POST("/api/v1/conditional-access/evaluate")
 			Response(StatusOK)
@@ -128,10 +128,10 @@ var _ = Service("access_request", func() {
 
 	Method("create_conditional_rule", func() {
 		Description("Create a conditional access rule")
-		
+
 		Payload(CreateConditionalRulePayload)
 		Result(ConditionalRuleResult)
-		
+
 		HTTP(func() {
 			POST("/api/v1/conditional-access/rules")
 			Response(StatusCreated)
@@ -142,7 +142,7 @@ var _ = Service("access_request", func() {
 	// Analytics operations
 	Method("user_behavior_analytics", func() {
 		Description("Get user behavior analytics")
-		
+
 		Payload(func() {
 			Attribute("user_id", String, "User ID", func() {
 				Format(FormatUUID)
@@ -151,7 +151,7 @@ var _ = Service("access_request", func() {
 			Required("user_id")
 		})
 		Result(UserBehaviorResult)
-		
+
 		HTTP(func() {
 			GET("/api/v1/analytics/users/{user_id}/behavior")
 			Response(StatusOK)
@@ -161,7 +161,7 @@ var _ = Service("access_request", func() {
 
 	Method("user_risk_assessment", func() {
 		Description("Get user risk assessment")
-		
+
 		Payload(func() {
 			Attribute("user_id", String, "User ID", func() {
 				Format(FormatUUID)
@@ -170,7 +170,7 @@ var _ = Service("access_request", func() {
 			Required("user_id")
 		})
 		Result(UserRiskResult)
-		
+
 		HTTP(func() {
 			GET("/api/v1/analytics/users/{user_id}/risk")
 			Response(StatusOK)
@@ -180,7 +180,7 @@ var _ = Service("access_request", func() {
 
 	Method("user_insights", func() {
 		Description("Get personalized user insights")
-		
+
 		Payload(func() {
 			Attribute("user_id", String, "User ID", func() {
 				Format(FormatUUID)
@@ -189,7 +189,7 @@ var _ = Service("access_request", func() {
 			Required("user_id")
 		})
 		Result(UserInsightsResult)
-		
+
 		HTTP(func() {
 			GET("/api/v1/analytics/users/{user_id}/insights")
 			Response(StatusOK)
@@ -199,7 +199,7 @@ var _ = Service("access_request", func() {
 
 	Method("detect_anomalies", func() {
 		Description("Detect user behavior anomalies")
-		
+
 		Payload(func() {
 			Attribute("user_id", String, "User ID", func() {
 				Format(FormatUUID)
@@ -208,7 +208,7 @@ var _ = Service("access_request", func() {
 			Required("user_id")
 		})
 		Result(AnomalyDetectionResult)
-		
+
 		HTTP(func() {
 			POST("/api/v1/analytics/users/{user_id}/detect-anomalies")
 			Response(StatusOK)
@@ -220,7 +220,7 @@ var _ = Service("access_request", func() {
 // Payload types
 var CreateAccessRequestPayload = Type("CreateAccessRequestPayload", func() {
 	Description("Payload for creating access request")
-	
+
 	Attribute("requester_id", String, "ID of the user requesting access", func() {
 		Format(FormatUUID)
 		Example("123e4567-e89b-12d3-a456-426614174000")
@@ -247,13 +247,13 @@ var CreateAccessRequestPayload = Type("CreateAccessRequestPayload", func() {
 		Example(24)
 	})
 	Attribute("metadata", MapOf(String, Any), "Additional request metadata")
-	
+
 	Required("requester_id", "entity_id", "resource_type", "access_level", "reason")
 })
 
 var ProcessAccessRequestPayload = Type("ProcessAccessRequestPayload", func() {
 	Description("Payload for processing access request")
-	
+
 	Attribute("id", String, "Access request ID", func() {
 		Format(FormatUUID)
 		Example("123e4567-e89b-12d3-a456-426614174000")
@@ -270,13 +270,13 @@ var ProcessAccessRequestPayload = Type("ProcessAccessRequestPayload", func() {
 		MaxLength(1000)
 		Example("Approved for project work")
 	})
-	
+
 	Required("id", "action", "reviewer_id")
 })
 
 var ListAccessRequestsPayload = Type("ListAccessRequestsPayload", func() {
 	Description("Payload for listing access requests")
-	
+
 	Attribute("status", String, "Filter by status", func() {
 		Enum("pending", "approved", "denied", "expired", "revoked")
 		Example("pending")
@@ -304,7 +304,7 @@ var ListAccessRequestsPayload = Type("ListAccessRequestsPayload", func() {
 
 var ConditionalAccessPayload = Type("ConditionalAccessPayload", func() {
 	Description("Payload for conditional access evaluation")
-	
+
 	Attribute("user_id", String, "User ID", func() {
 		Format(FormatUUID)
 		Example("123e4567-e89b-12d3-a456-426614174000")
@@ -318,13 +318,13 @@ var ConditionalAccessPayload = Type("ConditionalAccessPayload", func() {
 		Example("read")
 	})
 	Attribute("context", ConditionalAccessContext, "Access context")
-	
+
 	Required("user_id", "resource_id", "action", "context")
 })
 
 var CreateConditionalRulePayload = Type("CreateConditionalRulePayload", func() {
 	Description("Payload for creating conditional access rule")
-	
+
 	Attribute("name", String, "Rule name", func() {
 		MinLength(1)
 		MaxLength(255)
@@ -350,14 +350,14 @@ var CreateConditionalRulePayload = Type("CreateConditionalRulePayload", func() {
 		Default(true)
 		Example(true)
 	})
-	
+
 	Required("name", "conditions", "actions")
 })
 
 // Result types
 var AccessRequestResult = Type("AccessRequestResult", func() {
 	Description("Access request information")
-	
+
 	Attribute("id", String, "Access request ID", func() {
 		Format(FormatUUID)
 		Example("123e4567-e89b-12d3-a456-426614174000")
@@ -408,13 +408,13 @@ var AccessRequestResult = Type("AccessRequestResult", func() {
 		Format(FormatDateTime)
 		Example("2023-12-07T10:30:00Z")
 	})
-	
+
 	Required("id", "requester_id", "entity_id", "resource_type", "access_level", "status", "reason", "duration_hours", "created_at", "updated_at")
 })
 
 var AccessRequestListResult = Type("AccessRequestListResult", func() {
 	Description("List of access requests")
-	
+
 	Attribute("requests", ArrayOf(AccessRequestResult), "List of access requests")
 	Attribute("total", Int, "Total number of requests", func() {
 		Example(150)
@@ -425,13 +425,13 @@ var AccessRequestListResult = Type("AccessRequestListResult", func() {
 	Attribute("offset", Int, "Requested offset", func() {
 		Example(0)
 	})
-	
+
 	Required("requests", "total", "limit", "offset")
 })
 
 var AccessRequestStatsResult = Type("AccessRequestStatsResult", func() {
 	Description("Access request statistics")
-	
+
 	Attribute("total_requests", Int, "Total number of requests", func() {
 		Example(1250)
 	})
@@ -453,13 +453,13 @@ var AccessRequestStatsResult = Type("AccessRequestStatsResult", func() {
 	Attribute("approval_rate", Float64, "Approval rate (0-1)", func() {
 		Example(0.82)
 	})
-	
+
 	Required("total_requests", "pending_requests", "approved_requests", "denied_requests", "expired_requests", "average_approval_time_hours", "approval_rate")
 })
 
 var ConditionalAccessContext = Type("ConditionalAccessContext", func() {
 	Description("Context for conditional access evaluation")
-	
+
 	Attribute("ip_address", String, "Client IP address", func() {
 		Example("192.168.1.100")
 	})
@@ -484,13 +484,13 @@ var ConditionalAccessContext = Type("ConditionalAccessContext", func() {
 		Maximum(1.0)
 		Example(0.25)
 	})
-	
+
 	Required("ip_address", "time_of_day", "day_of_week")
 })
 
 var ConditionalAccessResult = Type("ConditionalAccessResult", func() {
 	Description("Result of conditional access evaluation")
-	
+
 	Attribute("decision", String, "Access decision", func() {
 		Enum("allow", "deny", "challenge")
 		Example("allow")
@@ -510,13 +510,13 @@ var ConditionalAccessResult = Type("ConditionalAccessResult", func() {
 		Format(FormatDateTime)
 		Example("2023-12-07T18:00:00Z")
 	})
-	
+
 	Required("decision", "reason", "confidence_score")
 })
 
 var ConditionalRuleResult = Type("ConditionalRuleResult", func() {
 	Description("Conditional access rule")
-	
+
 	Attribute("id", String, "Rule ID", func() {
 		Format(FormatUUID)
 		Example("123e4567-e89b-12d3-a456-426614174000")
@@ -547,14 +547,14 @@ var ConditionalRuleResult = Type("ConditionalRuleResult", func() {
 		Format(FormatDateTime)
 		Example("2023-12-07T10:30:00Z")
 	})
-	
+
 	Required("id", "name", "conditions", "actions", "priority", "enabled", "created_at", "updated_at")
 })
 
 // Analytics result types
 var UserBehaviorResult = Type("UserBehaviorResult", func() {
 	Description("User behavior analytics")
-	
+
 	Attribute("user_id", String, "User ID", func() {
 		Format(FormatUUID)
 		Example("123e4567-e89b-12d3-a456-426614174000")
@@ -574,13 +574,13 @@ var UserBehaviorResult = Type("UserBehaviorResult", func() {
 	Attribute("access_patterns", ArrayOf(String), "Common access patterns", func() {
 		Example([]string{"morning_reports", "afternoon_updates"})
 	})
-	
+
 	Required("user_id", "login_frequency", "peak_hours", "common_locations")
 })
 
 var UserRiskResult = Type("UserRiskResult", func() {
 	Description("User risk assessment")
-	
+
 	Attribute("user_id", String, "User ID", func() {
 		Format(FormatUUID)
 		Example("123e4567-e89b-12d3-a456-426614174000")
@@ -604,13 +604,13 @@ var UserRiskResult = Type("UserRiskResult", func() {
 		Format(FormatDateTime)
 		Example("2023-12-07T10:30:00Z")
 	})
-	
+
 	Required("user_id", "risk_score", "risk_level", "last_assessment")
 })
 
 var UserInsightsResult = Type("UserInsightsResult", func() {
 	Description("Personalized user insights")
-	
+
 	Attribute("user_id", String, "User ID", func() {
 		Format(FormatUUID)
 		Example("123e4567-e89b-12d3-a456-426614174000")
@@ -629,13 +629,13 @@ var UserInsightsResult = Type("UserInsightsResult", func() {
 	Attribute("security_alerts", ArrayOf(String), "Security-related alerts", func() {
 		Example([]string{"new_device_detected", "unusual_data_access"})
 	})
-	
+
 	Required("user_id", "productivity_score", "usage_trends")
 })
 
 var AnomalyDetectionResult = Type("AnomalyDetectionResult", func() {
 	Description("Anomaly detection results")
-	
+
 	Attribute("user_id", String, "User ID", func() {
 		Format(FormatUUID)
 		Example("123e4567-e89b-12d3-a456-426614174000")
@@ -652,13 +652,13 @@ var AnomalyDetectionResult = Type("AnomalyDetectionResult", func() {
 		Format(FormatDateTime)
 		Example("2023-12-07T10:30:00Z")
 	})
-	
+
 	Required("user_id", "anomalies_detected", "anomalies", "overall_risk", "detection_timestamp")
 })
 
 var AnomalyResult = Type("AnomalyResult", func() {
 	Description("Individual anomaly detection result")
-	
+
 	Attribute("type", String, "Type of anomaly", func() {
 		Enum("unusual_location", "off_hours_access", "unusual_data_volume", "new_device", "permission_escalation")
 		Example("unusual_location")
@@ -680,14 +680,14 @@ var AnomalyResult = Type("AnomalyResult", func() {
 		Example("2023-12-07T10:30:00Z")
 	})
 	Attribute("metadata", MapOf(String, Any), "Additional anomaly metadata")
-	
+
 	Required("type", "severity", "description", "confidence", "timestamp")
 })
 
 // Common error type
 var ErpError = Type("ErpError", func() {
 	Description("Common error response")
-	
+
 	Attribute("message", String, "Error message", func() {
 		Example("Invalid request format")
 	})
@@ -697,6 +697,6 @@ var ErpError = Type("ErpError", func() {
 	Attribute("details", String, "Additional error details", func() {
 		Example("Field 'user_id' is required")
 	})
-	
+
 	Required("message", "code")
 })

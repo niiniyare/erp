@@ -72,10 +72,10 @@ func main() {
 
 	default:
 		logger.Fatal("Invalid server mode", logger.Fields{
-			"mode":           serverMode,
-			"supported":      "goa-only, migration",
-			"default_mode":   "goa-only",
-			"env_variable":   "SERVER_MODE",
+			"mode":         serverMode,
+			"supported":    "goa-only, migration",
+			"default_mode": "goa-only",
+			"env_variable": "SERVER_MODE",
 		})
 	}
 

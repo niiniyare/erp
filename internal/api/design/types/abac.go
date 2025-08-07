@@ -142,7 +142,7 @@ var HealthResult = Type("HealthResult", func() {
 	Attribute("status", String, "Status")
 	Attribute("timestamp", String, "Timestamp", func() { Format(FormatDateTime) })
 	Attribute("version", String, "Version")
-	Attribute("components", MapOf(String, ComponentHealth), "Components")
+	Attribute("components", MapOf(String, ABACComponentHealth), "Components")
 })
 
 var MetricsResult = Type("MetricsResult", func() {
@@ -239,7 +239,7 @@ var DecisionAuditEntry = Type("DecisionAuditEntry", func() {
 	Attribute("updated_by", String, "Updated by")
 })
 
-var ComponentHealth = Type("ComponentHealth", func() {
+var ABACComponentHealth = Type("ABACComponentHealth", func() {
 	Attribute("status", String, "Status")
 })
 

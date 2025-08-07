@@ -344,13 +344,29 @@ type Entitystate struct {
 	// Primary entity reference - The main entity that owns this sequence numbering
 	EntityID uuid.UUID `json:"entity_id"`
 	// Sub-entity reference - Optional reference to a subsidiary or department within the main entity for more granular numbering
-	EntityUnitID      *uuid.UUID   `json:"entity_unit_id"`
-	Version           int32        `json:"version"`
-	LastValidationRun sql.NullTime `json:"last_validation_run"`
-	ValidationStatus  *string      `json:"validation_status"`
-	ValidationErrors  []byte       `json:"validation_errors"`
-	CreatedAt         time.Time    `json:"created_at"`
-	UpdatedAt         time.Time    `json:"updated_at"`
+	EntityUnitID *uuid.UUID `json:"entity_unit_id"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+}
+
+// Master feature flags configuration table with tenant isolation
+type FeatureFlag struct {
+	ID           uuid.UUID `json:"id"`
+	TenantID     uuid.UUID `json:"tenant_id"`
+	Name         string    `json:"name"`
+	Description  string    `json:"description"`
+	FlagType     string    `json:"flag_type"`
+	DefaultValue bool      `json:"default_value"`
+	// Percentage of tenants that should have this feature enabled (0-100)
+	RolloutPercentage *int32 `json:"rollout_percentage"`
+	// Advanced targeting rules (company_size, industry, etc.)
+	TargetAudience []byte `json:"target_audience"`
+	// Additional metadata like expiration dates, dependencies, etc.
+	Metadata  []byte    `json:"metadata"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	// Soft delete timestamp - NULL means active
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
 // Closure table for efficient entity hierarchy queries. Stores all ancestor-descendant relationships with depth information. Enables fast retrieval of entity trees, subtrees, and hierarchy levels without recursive queries.
@@ -835,6 +851,41 @@ type TenantConfiguration struct {
 	ApiRateLimits []byte    `json:"api_rate_limits"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type TenantFeatureFlagsCache struct {
+	TenantID          uuid.UUID   `json:"tenant_id"`
+	FeatureFlagID     uuid.UUID   `json:"feature_flag_id"`
+	FeatureFlagName   string      `json:"feature_flag_name"`
+	FlagType          string      `json:"flag_type"`
+	Enabled           interface{} `json:"enabled"`
+	Value             []byte      `json:"value"`
+	EvaluationSource  string      `json:"evaluation_source"`
+	DefaultValue      bool        `json:"default_value"`
+	RolloutPercentage *int32      `json:"rollout_percentage"`
+	TargetAudience    []byte      `json:"target_audience"`
+	Metadata          []byte      `json:"metadata"`
+	OverrideEnabled   *bool       `json:"override_enabled"`
+	OverrideValue     []byte      `json:"override_value"`
+	OverrideReason    string      `json:"override_reason"`
+	CacheTimestamp    interface{} `json:"cache_timestamp"`
+	CacheCreatedAt    interface{} `json:"cache_created_at"`
+}
+
+// Tenant-specific feature flag overrides with audit trail
+type TenantFeatureOverride struct {
+	ID            uuid.UUID `json:"id"`
+	TenantID      uuid.UUID `json:"tenant_id"`
+	FeatureFlagID uuid.UUID `json:"feature_flag_id"`
+	// Denormalized feature flag name for faster lookups
+	FeatureFlagName string `json:"feature_flag_name"`
+	Enabled         bool   `json:"enabled"`
+	// Complex feature values for non-boolean flags (JSON format)
+	Value []byte `json:"value"`
+	// Business justification for the override
+	Reason    string    `json:"reason"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // Tracks tenant resource usage and performance metrics over time

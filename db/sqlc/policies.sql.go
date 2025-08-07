@@ -249,8 +249,7 @@ func (q *Queries) GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID
 const getPoliciesByIDs = `-- name: GetPoliciesByIDs :many
 
 SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies 
-WHERE id = ANY($1::UUID[]) 
-  AND tenant_id = current_tenant_id()
+WHERE id = ANY($1::UUID[])
 `
 
 // -- name: GetPoliciesForEvaluation :many
@@ -279,7 +278,6 @@ WHERE id = ANY($1::UUID[])
 //
 //	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
 //	WHERE id = ANY($1::UUID[])
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) GetPoliciesByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]*Policy, error) {
 	rows, err := q.db.Query(ctx, getPoliciesByIDs, dollar_1)
 	if err != nil {

@@ -1,0 +1,141 @@
+# See the dedicated "version" documentation section.
+version: "2"
+
+linters:
+  # Disable all linters as default is true.
+  default: none
+  
+  # Enable specific linters
+  enable:
+    - errcheck
+  # - gosimple          ❌ REMOVE
+    - govet
+    - ineffassign
+    - staticcheck         # ✅ staticcheck includes gosimple and stylecheck
+    - unused
+    # - goimports
+    - gosec
+    - goconst
+    - misspell
+    - unconvert
+    - dupl
+    - bodyclose
+    - nolintlint
+    #- exportloopref     ❌ REMOVE
+    - gocritic
+    - revive
+    #- stylecheck        ❌ REMOVE
+    - unparam
+
+  # All available settings of specific linters.
+  settings:
+    # Tool for detection of leading and trailing whitespace
+    lll:
+      line-length: 120
+    
+    # Check import statements are formatted according to the 'goimport' command
+    goimports:
+      local-prefixes: github.com/niiniyare/erp
+    
+    # Checks that package imports are in a list of acceptable packages
+    depguard:
+      rules:
+        main:
+          files:
+            - $all
+          allow:
+            - $gostd
+            - github.com/niiniyare/erp
+          deny:
+            - pkg: "github.com/sirupsen/logrus"
+              desc: not allowed
+            - pkg: "github.com/pkg/errors" 
+              desc: Should be replaced by standard lib errors package
+    
+    # Finds naked returns in functions greater than a specified function length
+    nakedret:
+      max-func-lines: 30
+    
+    # Tool for detection of long functions
+    funlen:
+      lines: 100
+      statements: 50
+    
+    # Computes and checks the cyclomatic complexity of functions
+    gocyclo:
+      min-complexity: 15
+    
+    # Reports long lines
+    misspell:
+      locale: US
+    
+    # Tool for detection of FIXME, TODO and other comment keywords
+    godox:
+      keywords:
+        - NOTE
+        - OPTIMIZE
+        - HACK
+        - TODO
+        - BUG
+        - FIXME
+    
+    # Fast, configurable, extensible, flexible, and beautiful linter for Go
+    revive:
+      min-confidence: 0
+      rules:
+        - name: atomic
+        - name: line-length-limit
+          arguments: [120]
+        - name: argument-limit
+          arguments: [4]
+        - name: cognitive-complexity
+          arguments: [7]
+        - name: cyclomatic
+          arguments: [3]
+
+# Output configuration options.
+output:
+  formats:
+    text:
+      print-linter-name: true
+      print-issued-lines: true
+      colors: true
+
+# Options for analysis running.
+run:
+  # Timeout for total work, e.g. 30s, 5m, 5m30s.
+  timeout: 5m
+  
+  # Include test files or not.
+  tests: true
+  
+  # List of build tags, all linters use it.
+  build-tags:
+    - integration
+  
+  # Allow multiple parallel golangci-lint instances running.
+  allow-parallel-runners: false
+
+issues:
+  # Maximum issues count per one linter. Set to 0 to disable.
+  max-issues-per-linter: 0
+  
+  # Maximum count of issues with the same text. Set to 0 to disable.
+  max-same-issues: 0
+  
+  # Show only new issues: if there are unstaged changes or untracked files,
+  # only those changes are analyzed, else only changes in HEAD~ are analyzed.
+  new: false
+  
+  # Fix found issues (if it's supported by the linter).
+  fix: false
+
+severity:
+  # Set the default severity for issues.
+  default: error
+  
+  # When a list of severity rules are provided, severity information will be added to lint issues.
+  rules:
+    - linters:
+        - dupl
+      severity: info
