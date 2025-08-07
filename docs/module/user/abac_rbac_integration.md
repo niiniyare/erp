@@ -1122,7 +1122,7 @@ func (zts *ZeroTrustSecurityService) StartContinuousMonitoring(ctx context.Conte
 ### Audit and Compliance System
 
 ```go
-type ComprehensiveAuditService struct {
+type AuditService struct {
     auditRepository    AuditRepository
     complianceChecker  ComplianceChecker
     reportGenerator    ReportGenerator
@@ -1142,7 +1142,7 @@ type AuditConfig struct {
     ExportFormats         []string      `yaml:"export_formats"`
 }
 
-func (as *ComprehensiveAuditService) LogPermissionEvaluation(ctx context.Context, req *PermissionEvaluationRequest, response *PermissionEvaluationResponse) {
+func (as *AuditService) LogPermissionEvaluation(ctx context.Context, req *PermissionEvaluationRequest, response *PermissionEvaluationResponse) {
     auditEvent := &AuditEvent{
         ID:          uuid.New().String(),
         Timestamp:   time.Now(),
@@ -1203,7 +1203,7 @@ func (as *ComprehensiveAuditService) LogPermissionEvaluation(ctx context.Context
     as.detectSuspiciousPatterns(ctx, auditEvent)
 }
 
-func (as *ComprehensiveAuditService) GenerateComplianceReport(ctx context.Context, req *ComplianceReportRequest) (*ComplianceReport, error) {
+func (as *AuditService) GenerateComplianceReport(ctx context.Context, req *ComplianceReportRequest) (*ComplianceReport, error) {
     report := &ComplianceReport{
         ID:           uuid.New().String(),
         Framework:    req.Framework,
@@ -1239,7 +1239,7 @@ func (as *ComprehensiveAuditService) GenerateComplianceReport(ctx context.Contex
     return report, nil
 }
 
-func (as *ComprehensiveAuditService) detectSuspiciousPatterns(ctx context.Context, event *AuditEvent) {
+func (as *AuditService) detectSuspiciousPatterns(ctx context.Context, event *AuditEvent) {
     // Pattern 1: Unusual access patterns
     recentEvents := as.getUserRecentEvents(event.UserID, 1*time.Hour)
     
