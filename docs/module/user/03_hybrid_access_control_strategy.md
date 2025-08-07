@@ -189,7 +189,7 @@ type RBACService interface {
     // Core role operations
     GetUserRoles(ctx context.Context, userID string, timestamp ...time.Time) ([]Role, error)
     GetRolePermissions(ctx context.Context, roleIDs []string) ([]Permission, error)
-    GetEffectivePermissions(ctx context.Context, userID string, context map[string]interface{}) ([]Permission, error)
+    GetEffectivePermissions(ctx context.Context, userID string, context map[string]any{}) ([]Permission, error)
     
     // NEW: Advanced role operations
     GetRoleHierarchy(ctx context.Context, roleID string) (*RoleHierarchy, error)
@@ -197,7 +197,7 @@ type RBACService interface {
     ValidateRoleConstraints(ctx context.Context, userID string, roleID string) error
     
     // NEW: Temporal and conditional operations
-    EvaluateRoleActivation(ctx context.Context, userID string, role Role, context map[string]interface{}) (*RoleActivationResult, error)
+    EvaluateRoleActivation(ctx context.Context, userID string, role Role, context map[string]any{}) (*RoleActivationResult, error)
     GetTemporalRoleAssignments(ctx context.Context, userID string, timeRange TimeRange) ([]TemporalRoleAssignment, error)
     
     // NEW: Emergency and delegation
@@ -216,7 +216,7 @@ type Role struct {
     RoleType           string                 `json:"role_type"`
     Category           string                 `json:"category"`
     SecurityLevel      int                    `json:"security_level"`
-    RoleAttributes     map[string]interface{} `json:"role_attributes"`
+    RoleAttributes     map[string]any{} `json:"role_attributes"`
     ParentRoleID       *string                `json:"parent_role_id"`
     ActivationRules    []ABACRule             `json:"activation_rules"`
     
@@ -261,7 +261,7 @@ type RoleActivationResult struct {
     ActivatedAt        time.Time              `json:"activated_at"`
     ExpiresAt          *time.Time             `json:"expires_at,omitempty"`
     Conditions         []string               `json:"conditions"`
-    Constraints        map[string]interface{} `json:"constraints"`
+    Constraints        map[string]any{} `json:"constraints"`
     RequiresApproval   bool                   `json:"requires_approval"`
     ApprovalStatus     string                 `json:"approval_status,omitempty"`
 }
@@ -398,7 +398,7 @@ func (s *ABACService) EvaluatePermission(ctx context.Context, req *PermissionEva
     return response, nil
 }
 
-func (s *ABACService) evaluateParallel(ctx context.Context, req *PermissionEvaluationRequest, attributes map[string]interface{}) (*RBACDecision, *ABACDecision, error) {
+func (s *ABACService) evaluateParallel(ctx context.Context, req *PermissionEvaluationRequest, attributes map[string]any{}) (*RBACDecision, *ABACDecision, error) {
     type rbacResult struct {
         decision *RBACDecision
         err      error
@@ -493,7 +493,7 @@ func (s *RoleManagementService) AssignRoleToUser(ctx context.Context, req *RoleA
         UserID:       auth.GetUserIDFromContext(ctx),
         ResourceType: "user_role_assignment",
         Action:       "create",
-        Context: map[string]interface{}{
+        Context: map[string]any{}{
             "target_user_id":     req.UserID,
             "role_id":           req.RoleID,
             "assignment_type":    req.AssignmentType,
@@ -607,7 +607,7 @@ func (s *RoleManagementService) DelegateRole(ctx context.Context, req *RoleDeleg
         UserID:       delegatorID,
         ResourceType: "role_delegation",
         Action:       "create",
-        Context: map[string]interface{}{
+        Context: map[string]any{}{
             "role_id":       req.RoleID,
             "delegate_id":   req.DelegateID,
             "duration":      req.Duration.String(),
@@ -694,7 +694,7 @@ func (s *RoleManagementService) RequestEmergencyAccess(ctx context.Context, req 
         UserID:       userID,
         ResourceType: "emergency_access",
         Action:       "request",
-        Context: map[string]interface{}{
+        Context: map[string]any{}{
             "requested_role_id": req.RoleID,
             "justification":     req.Justification,
             "severity":          req.Severity,
@@ -1045,7 +1045,7 @@ func (zts *ZeroTrustSecurityService) ValidateSecurityContext(ctx context.Context
     }
     
     // Geographic risk assessment
-    location := req.Context["environment.location"].(map[string]interface{})
+    location := req.Context["environment.location"].(map[string]any{})
     geoRisk := zts.riskScorer.AssessGeographicRisk(location)
     result.RiskScore += geoRisk
     
@@ -1604,7 +1604,7 @@ type RoleNode struct {
     Size            int                    `json:"size"` // Based on number of users
     RiskLevel       int                    `json:"risk_level"`
     Permissions     int                    `json:"permissions"`
-    Attributes      map[string]interface{} `json:"attributes"`
+    Attributes      map[string]any{} `json:"attributes"`
     
     // Visual properties
     Color           string                 `json:"color"`
@@ -1784,7 +1784,7 @@ func (mo *MigrationOrchestrator) executeRoleToAttributeMapping(ctx context.Conte
         
         for _, user := range users {
             // Apply attribute mapping
-            attributes := make(map[string]interface{})
+            attributes := make(map[string]any{})
             
             // Map role attributes to user attributes
             for sourceAttr, targetAttr := range rule.AttributeMapping {
@@ -1817,13 +1817,13 @@ func (mo *MigrationOrchestrator) executeRoleToAttributeMapping(ctx context.Conte
 type AttributeMappingRule struct {
     SourceRoleID        string                        `json:"source_role_id"`
     AttributeMapping    map[string]string             `json:"attribute_mapping"`
-    DefaultValues       map[string]interface{}        `json:"default_values"`
+    DefaultValues       map[string]any{}        `json:"default_values"`
     ConditionalMappings []ConditionalAttributeMapping `json:"conditional_mappings"`
 }
 
 type ConditionalAttributeMapping struct {
-    Condition  map[string]interface{} `json:"condition"`
-    Attributes map[string]interface{} `json:"attributes"`
+    Condition  map[string]any{} `json:"condition"`
+    Attributes map[string]any{} `json:"attributes"`
 }
 ```
 

@@ -453,14 +453,14 @@ type TimeBasedPolicy struct {
 }
 
 type PolicyTarget struct {
-    Users     map[string]interface{} `json:"users"`
-    Resources map[string]interface{} `json:"resources"`
+    Users     map[string]any{} `json:"users"`
+    Resources map[string]any{} `json:"resources"`
     Actions   []string               `json:"actions"`
 }
 
 type PolicyRule struct {
-    And []map[string]interface{} `json:"and,omitempty"`
-    Or  []map[string]interface{} `json:"or,omitempty"`
+    And []map[string]any{} `json:"and,omitempty"`
+    Or  []map[string]any{} `json:"or,omitempty"`
 }
 
 // Example: Business hours access policy
@@ -469,12 +469,12 @@ businessHoursPolicy := TimeBasedPolicy{
     PolicyType: "TIME_BASED",
     Effect:     "ALLOW",
     Target: PolicyTarget{
-        Users:     map[string]interface{}{"department": "finance"},
-        Resources: map[string]interface{}{"type": "financial_reports"},
+        Users:     map[string]any{}{"department": "finance"},
+        Resources: map[string]any{}{"type": "financial_reports"},
         Actions:   []string{"read", "export"},
     },
     Rule: PolicyRule{
-        And: []map[string]interface{}{
+        And: []map[string]any{}{
             {"time_of_day": map[string][]string{"between": {"09:00", "17:00"}}},
             {"day_of_week": map[string][]int{"in": {1, 2, 3, 4, 5}}},
         },
@@ -498,10 +498,10 @@ secureAccessPolicy := LocationBasedPolicy{
     PolicyType: "LOCATION_BASED",
     Effect:     "ALLOW",
     Target: PolicyTarget{
-        Resources: map[string]interface{}{"classification": "confidential"},
+        Resources: map[string]any{}{"classification": "confidential"},
     },
     Rule: PolicyRule{
-        Or: []map[string]interface{}{
+        Or: []map[string]any{}{
             {"location": map[string]string{"within": "secure_facility"}},
             {"vpn_connection": true},
         },
@@ -525,11 +525,11 @@ managerAccessPolicy := HierarchicalPolicy{
     PolicyType: "ABAC",
     Effect:     "ALLOW",
     Target: PolicyTarget{
-        Resources: map[string]interface{}{"type": "employee_record"},
+        Resources: map[string]any{}{"type": "employee_record"},
         Actions:   []string{"read", "update"},
     },
     Rule: PolicyRule{
-        Or: []map[string]interface{}{
+        Or: []map[string]any{}{
             {"user.id": "resource.employee_id"},
             {"user.manager_id": "resource.manager_id"},
             {"user.security_level": map[string]int{"gte": 8}},
@@ -624,7 +624,7 @@ type MFAConfiguration struct {
 type MFAMethod struct {
     Type          string                 `json:"type"` // totp, sms, email, hardware_token
     Enabled       bool                   `json:"enabled"`
-    Configuration map[string]interface{} `json:"configuration"`
+    Configuration map[string]any{} `json:"configuration"`
 }
 
 type RiskTrigger struct {
@@ -782,7 +782,7 @@ type OffboardingStep struct {
 
 type OffboardingAction struct {
 	ActionType       string                 `json:"action_type"`
-	Parameters       map[string]interface{} `json:"parameters"`
+	Parameters       map[string]any{} `json:"parameters"`
 	AuditTrail       bool                   `json:"audit_trail"`
 	RollbackPossible bool                   `json:"rollback_possible"`
 }
@@ -833,7 +833,7 @@ func GetComprehensiveOffboarding() OffboardingProcess {
 				Actions: []OffboardingAction{
 					{
 						ActionType: ActionTypeRevokeAllAccess,
-						Parameters: map[string]interface{}{
+						Parameters: map[string]any{}{
 							"disable_login":               true,
 							"revoke_all_tokens":          true,
 							"disable_api_access":         true,
@@ -855,7 +855,7 @@ func GetComprehensiveOffboarding() OffboardingProcess {
 				Actions: []OffboardingAction{
 					{
 						ActionType: ActionTypeTransferOwnership,
-						Parameters: map[string]interface{}{
+						Parameters: map[string]any{}{
 							"transfer_to":         "manager",
 							"include_documents":   true,
 							"include_projects":    true,
@@ -877,7 +877,7 @@ func GetComprehensiveOffboarding() OffboardingProcess {
 				Actions: []OffboardingAction{
 					{
 						ActionType: ActionTypeArchivePersonalData,
-						Parameters: map[string]interface{}{
+						Parameters: map[string]any{}{
 							"retention_policy":     "employee_data_retention",
 							"anonymize_analytics":  true,
 							"preserve_audit_trail": true,
@@ -1119,8 +1119,8 @@ type PersonRequest struct {
     Email              *string                `json:"email,omitempty"`
     Phone              *string                `json:"phone,omitempty"`
     PersonType         string                 `json:"person_type" validate:"required"`
-    SecurityAttributes map[string]interface{} `json:"security_attributes,omitempty"`
-    Metadata           map[string]interface{} `json:"metadata,omitempty"`
+    SecurityAttributes map[string]any{} `json:"security_attributes,omitempty"`
+    Metadata           map[string]any{} `json:"metadata,omitempty"`
 }
 
 type EmployeeRequest struct {
@@ -1131,7 +1131,7 @@ type EmployeeRequest struct {
     ManagerID        *uuid.UUID             `json:"manager_id,omitempty"`
     HireDate         time.Time              `json:"hire_date" validate:"required"`
     SecurityLevel    int                    `json:"security_level"`
-    AccessAttributes map[string]interface{} `json:"access_attributes,omitempty"`
+    AccessAttributes map[string]any{} `json:"access_attributes,omitempty"`
 }
 
 type UserRequest struct {
@@ -1140,8 +1140,8 @@ type UserRequest struct {
     UserType       string                 `json:"user_type" validate:"required"`
     PersonID       *uuid.UUID             `json:"person_id,omitempty"`
     EmployeeID     *uuid.UUID             `json:"employee_id,omitempty"`
-    UserAttributes map[string]interface{} `json:"user_attributes,omitempty"`
-    Settings       map[string]interface{} `json:"settings,omitempty"`
+    UserAttributes map[string]any{} `json:"user_attributes,omitempty"`
+    Settings       map[string]any{} `json:"settings,omitempty"`
 }
 
 type RoleRequest struct {
@@ -1151,8 +1151,8 @@ type RoleRequest struct {
     RoleType     string                 `json:"role_type"`
     ModuleID     *uuid.UUID             `json:"module_id,omitempty"`
     ParentRoleID *uuid.UUID             `json:"parent_role_id,omitempty"`
-    EntityScope  map[string]interface{} `json:"entity_scope,omitempty"`
-    Conditions   map[string]interface{} `json:"conditions,omitempty"`
+    EntityScope  map[string]any{} `json:"entity_scope,omitempty"`
+    Conditions   map[string]any{} `json:"conditions,omitempty"`
 }
 
 type PermissionEvaluationRequest struct {
@@ -1160,7 +1160,7 @@ type PermissionEvaluationRequest struct {
     ResourceName string                 `json:"resource_name" validate:"required"`
     ActionName   string                 `json:"action_name" validate:"required"`
     EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-    Context      map[string]interface{} `json:"context,omitempty"`
+    Context      map[string]any{} `json:"context,omitempty"`
 }
 
 type PermissionEvaluationResponse struct {
