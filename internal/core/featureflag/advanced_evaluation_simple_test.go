@@ -16,10 +16,10 @@ func TestAdvancedEvaluationEngine_StructCreation(t *testing.T) {
 	// Test basic struct creation
 	engine := &advancedEvaluationEngine{
 		conditionalAccessService: nil, // Would be injected in real usage
-		simpleService:           nil, // Would be injected in real usage
-		logger:                  nil, // Would be injected in real usage
-		metrics:                 nil, // Would be injected in real usage
-		tracing:                 nil, // Would be injected in real usage
+		simpleService:            nil, // Would be injected in real usage
+		logger:                   nil, // Would be injected in real usage
+		metrics:                  nil, // Would be injected in real usage
+		tracing:                  nil, // Would be injected in real usage
 	}
 
 	// Verify it implements the interface
@@ -43,7 +43,7 @@ func TestComplexRuleEvaluationLogic(t *testing.T) {
 		CacheHit:    false,
 		EvaluatedAt: time.Now(),
 	}
-	
+
 	assert.NotNil(t, result)
 	assert.False(t, result.Enabled)
 	assert.Equal(t, "No evaluation rules provided", result.Reason)
@@ -160,13 +160,13 @@ func TestConditionOperatorEvaluation(t *testing.T) {
 	engine := &advancedEvaluationEngine{}
 
 	tests := []struct {
-		name         string
-		operator     ConditionOperator
-		actual       any
-		expected     any
-		values       []any
+		name          string
+		operator      ConditionOperator
+		actual        any
+		expected      any
+		values        []any
 		caseSensitive bool
-		result       bool
+		result        bool
 	}{
 		{"equals match", OpEquals, "admin", "admin", nil, true, true},
 		{"equals no match", OpEquals, "user", "admin", nil, true, false},
@@ -253,19 +253,19 @@ func TestContextFieldValueExtraction(t *testing.T) {
 // TestUserIDHashingConsistency tests the user ID hashing function for consistent percentage calculations
 func TestUserIDHashingConsistency(t *testing.T) {
 	engine := &advancedEvaluationEngine{}
-	
+
 	userID1 := uuid.New()
 	userID2 := uuid.New()
-	
+
 	// Same user ID should always produce the same hash
 	hash1a := engine.hashUserID(userID1)
 	hash1b := engine.hashUserID(userID1)
 	assert.Equal(t, hash1a, hash1b)
-	
+
 	// Different user IDs should (very likely) produce different hashes
 	hash2 := engine.hashUserID(userID2)
 	assert.NotEqual(t, hash1a, hash2)
-	
+
 	// Hash should be within expected range for percentage calculations
 	assert.True(t, hash1a >= 0)
 	assert.True(t, hash2 >= 0)

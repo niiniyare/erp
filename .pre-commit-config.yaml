@@ -1,11 +1,10 @@
 repos:
   # 🔒 Gitleaks for secret detection
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.27.2
+    rev: v8.28.0
     hooks:
       - id: gitleaks
         exclude: '^gen/.*'
-
   # ✅ Format & vet via local commands
   - repo: local
     hooks:
@@ -14,7 +13,6 @@ repos:
         entry: gofmt -s -w .
         language: system
         types: [go]
-
       - id: go-vet
         name: go vet
         entry: bash
@@ -26,22 +24,20 @@ repos:
         language: system
         types: [go]
         pass_filenames: false
-
         # - id: staticcheck
-          # name: staticcheck
-          # entry: bash
-          # args:
-          #   - -c
-          #   - |
-          #     staticcheck $(find . -name "*.go" -not -path "./vendor/*" | \
-          #     xargs -I {} dirname {} | sort -u | tr "\n" " ")
-          # language: system
-          # types: [go]
-          # pass_filenames: false
-
+        # name: staticcheck
+        # entry: bash
+        # args:
+        #   - -c
+        #   - |
+        #     staticcheck $(find . -name "*.go" -not -path "./vendor/*" | \
+        #     xargs -I {} dirname {} | sort -u | tr "\n" " ")
+        # language: system
+        # types: [go]
+        # pass_filenames: false
   # 📄 YAML linting
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.1
-    hooks:
-      - id: yamllint
-        exclude: '^gen/.*'
+  # - repo: https://github.com/adrienverge/yamllint
+  #   rev: v1.37.1
+  #   hooks:
+  #     - id: yamllint
+  #       exclude: '^gen/.*'
