@@ -2409,7 +2409,7 @@ type Querier interface {
 	//
 	//  UPDATE entities
 	//  SET deleted_at = NOW(), updated_at = NOW()
-	//  WHERE uuid = $1 AND tenant_id = current_tenant_id()
+	//  WHERE uuid = $1
 	SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	//SoftDeletePolicy
 	//

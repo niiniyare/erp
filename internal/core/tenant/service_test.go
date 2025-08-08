@@ -69,9 +69,11 @@ func (s *ServiceTestSuite) TestCreateTenant() {
 		{
 			name: "MT-CORE-001: Valid Tenant Creation",
 			request: CreateTenantRequest{
-				Name:      "ACME Corporation",
-				Email:     "admin@acme.com",
-				Subdomain: &subdomain,
+				Name:         "ACME Corporation",
+				Email:        "admin@acme.com",
+				Subdomain:    &subdomain,
+				CountryCode:  "US",
+				CurrencyCode: "USD",
 			},
 			mockSetup: func() {
 				s.repo.EXPECT().GetBySubdomain(s.ctx, subdomain).Return(nil, sharedErrors.ErrTenantNotFound).Times(1)
@@ -90,8 +92,10 @@ func (s *ServiceTestSuite) TestCreateTenant() {
 		{
 			name: "MT-CORE-002: Tenant Slug Generation",
 			request: CreateTenantRequest{
-				Name:  "ACME Corporation & Co.",
-				Email: "admin@acme-co.com",
+				Name:         "ACME Corporation & Co.",
+				Email:        "admin@acme-co.com",
+				CountryCode:  "US",
+				CurrencyCode: "USD",
 			},
 			mockSetup: func() {
 				s.repo.EXPECT().Create(s.ctx, gomock.Any()).Return(nil).Times(1)
@@ -106,9 +110,11 @@ func (s *ServiceTestSuite) TestCreateTenant() {
 		{
 			name: "Subdomain Already Exists",
 			request: CreateTenantRequest{
-				Name:      "Another ACME",
-				Email:     "admin@another-acme.com",
-				Subdomain: &subdomain,
+				Name:         "Another ACME",
+				Email:        "admin@another-acme.com",
+				Subdomain:    &subdomain,
+				CountryCode:  "US",
+				CurrencyCode: "USD",
 			},
 			mockSetup: func() {
 				s.repo.EXPECT().GetBySubdomain(s.ctx, subdomain).Return(&Tenant{ID: uuid.New(), Name: "Original ACME"}, nil).Times(1)
@@ -143,6 +149,29 @@ func (s *ServiceTestSuite) TestCreateTenant() {
 			mockSetup:     func() {},
 			expectError:   true,
 			expectedError: sharedErrors.NewBusinessError("INVALID_EMAIL", "Email is required"),
+		},
+		{
+			name: "Country Code Validation (Invalid)",
+			request: CreateTenantRequest{
+				Name:        "Valid Name",
+				Email:       "valid@email.com",
+				CountryCode: "USA",
+			},
+			mockSetup:     func() {},
+			expectError:   true,
+			expectedError: sharedErrors.NewBusinessError("INVALID_COUNTRY_CODE", "Invalid country code format"),
+		},
+		{
+			name: "Currency Code Validation (Invalid)",
+			request: CreateTenantRequest{
+				Name:         "Valid Name",
+				Email:        "valid@email.com",
+				CountryCode:  "US",
+				CurrencyCode: "USAD",
+			},
+			mockSetup:     func() {},
+			expectError:   true,
+			expectedError: sharedErrors.NewBusinessError("INVALID_CURRENCY_CODE", "Invalid currency code format"),
 		},
 	}
 

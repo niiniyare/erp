@@ -116,6 +116,8 @@ type CreateTenantRequest struct {
 	RegistrationNumber *string        `json:"registration_number,omitempty"`
 	LegalEntityType    *string        `json:"legal_entity_type,omitempty"`
 	Settings           map[string]any `json:"settings,omitempty"`
+	CountryCode        string         `json:"country_code" validate:"iso3166_1_alpha2"`
+	CurrencyCode       string         `json:"currency_code" validate:"iso4217"`
 }
 
 // UpdateTenantRequest represents tenant update request

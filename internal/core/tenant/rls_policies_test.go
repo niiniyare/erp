@@ -5,6 +5,7 @@ package tenant
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -26,6 +27,11 @@ type RLSPoliciesTestSuite struct {
 	tenant2   *Tenant
 	tenant1ID uuid.UUID
 	tenant2ID uuid.UUID
+
+	testTenant    *Tenant
+	testTenantID  uuid.UUID
+	testTenant2   *Tenant
+	testTenantID2 uuid.UUID
 }
 
 func (suite *RLSPoliciesTestSuite) SetupSuite() {
@@ -56,35 +62,32 @@ func (suite *RLSPoliciesTestSuite) SetupSuite() {
 	suite.store = db.NewStore(suite.pool)
 
 	// Create two test tenants for isolation testing
-	suite.createTestTenants()
-}
-
-func (suite *RLSPoliciesTestSuite) createTestTenants() {
-	// Create first tenant
-	params1 := db.CreateTenantParams{
-		Name:      "RLS Test Tenant 1",
-		Slug:      "rls-test-tenant-1",
-		Email:     "rls1@test-tenant.com",
-		Subdomain: stringPtr("rls-test-1"),
+	uniqueID := uuid.New().String()
+	params := db.CreateTenantParams{
+		Name:      fmt.Sprintf("RLS Test Tenant %s", uniqueID),
+		Slug:      fmt.Sprintf("rls-test-tenant-%s", uniqueID[0:8]),
+		Email:     fmt.Sprintf("rls-%s@test.com", uniqueID),
+		Subdomain: stringPtr(fmt.Sprintf("rls-test-%s", uniqueID[0:8])),
 		Status:    "active",
-		Industry:  stringPtr("technology"),
+		Industry:  stringPtr("security"),
 	}
 
-	sqlcTenant1, err := suite.store.CreateTenant(suite.ctx, params1)
+	sqlcTenant, err := suite.store.CreateTenant(suite.ctx, params)
 	require.NoError(suite.T(), err)
 
-	suite.tenant1, err = FromSQLCTenant(sqlcTenant1)
+	suite.tenant1, err = FromSQLCTenant(sqlcTenant)
 	require.NoError(suite.T(), err)
 	suite.tenant1ID = suite.tenant1.ID
 
-	// Create second tenant
+	// Create a second tenant for cross-tenant tests
+	uniqueID2 := uuid.New().String()
 	params2 := db.CreateTenantParams{
-		Name:      "RLS Test Tenant 2",
-		Slug:      "rls-test-tenant-2",
-		Email:     "rls2@test-tenant.com",
-		Subdomain: stringPtr("rls-test-2"),
+		Name:      fmt.Sprintf("RLS Test Tenant 2 %s", uniqueID2),
+		Slug:      fmt.Sprintf("rls-test-tenant-2-%s", uniqueID2[0:8]),
+		Email:     fmt.Sprintf("rls2-%s@test.com", uniqueID2),
+		Subdomain: stringPtr(fmt.Sprintf("rls-test-2-%s", uniqueID2[0:8])),
 		Status:    "active",
-		Industry:  stringPtr("finance"),
+		Industry:  stringPtr("security"),
 	}
 
 	sqlcTenant2, err := suite.store.CreateTenant(suite.ctx, params2)
@@ -93,6 +96,44 @@ func (suite *RLSPoliciesTestSuite) createTestTenants() {
 	suite.tenant2, err = FromSQLCTenant(sqlcTenant2)
 	require.NoError(suite.T(), err)
 	suite.tenant2ID = suite.tenant2.ID
+}
+
+func (suite *RLSPoliciesTestSuite) SetupTest() {
+	// Create a test tenant for each test
+	uniqueID := uuid.New().String()
+	params := db.CreateTenantParams{
+		Name:      fmt.Sprintf("RLS Test Tenant %s", uniqueID),
+		Slug:      fmt.Sprintf("rls-test-tenant-%s", uniqueID[0:8]),
+		Email:     fmt.Sprintf("rls-%s@test.com", uniqueID),
+		Subdomain: stringPtr(fmt.Sprintf("rls-test-%s", uniqueID[0:8])),
+		Status:    "active",
+		Industry:  stringPtr("security"),
+	}
+
+	sqlcTenant, err := suite.store.CreateTenant(suite.ctx, params)
+	require.NoError(suite.T(), err)
+
+	suite.testTenant, err = FromSQLCTenant(sqlcTenant)
+	require.NoError(suite.T(), err)
+	suite.testTenantID = suite.testTenant.ID
+
+	// Create a second tenant for cross-tenant tests
+	uniqueID2 := uuid.New().String()
+	params2 := db.CreateTenantParams{
+		Name:      fmt.Sprintf("RLS Test Tenant 2 %s", uniqueID2),
+		Slug:      fmt.Sprintf("rls-test-tenant-2-%s", uniqueID2[0:8]),
+		Email:     fmt.Sprintf("rls2-%s@test.com", uniqueID2),
+		Subdomain: stringPtr(fmt.Sprintf("rls-test-2-%s", uniqueID2[0:8])),
+		Status:    "active",
+		Industry:  stringPtr("security"),
+	}
+
+	sqlcTenant2, err := suite.store.CreateTenant(suite.ctx, params2)
+	require.NoError(suite.T(), err)
+
+	suite.testTenant2, err = FromSQLCTenant(sqlcTenant2)
+	require.NoError(suite.T(), err)
+	suite.testTenantID2 = suite.testTenant2.ID
 }
 
 func (suite *RLSPoliciesTestSuite) TearDownSuite() {
@@ -345,12 +386,12 @@ func (suite *RLSPoliciesTestSuite) TestTenantBasedFiltering() {
 func (suite *RLSPoliciesTestSuite) TestRLSWithSubdomainResolution() {
 	suite.Run("SubdomainResolution", func() {
 		// Test ResolveSubdomainToID function
-		resolvedID, err := suite.store.ResolveSubdomainToID(suite.ctx, stringPtr("rls-test-1"))
+		resolvedID, err := suite.store.ResolveSubdomainToID(suite.ctx, suite.tenant1.Subdomain)
 		assert.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.tenant1ID, resolvedID)
 
 		// Test second tenant's subdomain
-		resolvedID2, err := suite.store.ResolveSubdomainToID(suite.ctx, stringPtr("rls-test-2"))
+		resolvedID2, err := suite.store.ResolveSubdomainToID(suite.ctx, suite.tenant2.Subdomain)
 		assert.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.tenant2ID, resolvedID2)
 
@@ -359,7 +400,7 @@ func (suite *RLSPoliciesTestSuite) TestRLSWithSubdomainResolution() {
 		assert.Error(suite.T(), err, "Should get error for non-existent subdomain")
 
 		// Test GetTenantByUUID function (which takes subdomain parameter)
-		tenant, err := suite.store.GetTenantByUUID(suite.ctx, stringPtr("rls-test-1"))
+		tenant, err := suite.store.GetTenantByUUID(suite.ctx, suite.tenant1.Subdomain)
 		assert.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.tenant1ID, tenant.ID)
 
@@ -368,12 +409,12 @@ func (suite *RLSPoliciesTestSuite) TestRLSWithSubdomainResolution() {
 		require.NoError(suite.T(), err)
 
 		// Should still be able to resolve our own subdomain
-		tenant, err = suite.store.GetTenantByUUID(suite.ctx, stringPtr("rls-test-1"))
+		tenant, err = suite.store.GetTenantByUUID(suite.ctx, suite.tenant1.Subdomain)
 		assert.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.tenant1ID, tenant.ID)
 
 		// Test accessing other tenant's subdomain with context set
-		tenant2, err := suite.store.GetTenantByUUID(suite.ctx, stringPtr("rls-test-2"))
+		tenant2, err := suite.store.GetTenantByUUID(suite.ctx, suite.tenant2.Subdomain)
 		if err != nil {
 			suite.T().Logf("RLS blocks cross-tenant subdomain access: %v", err)
 		} else {

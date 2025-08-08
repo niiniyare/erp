@@ -146,27 +146,6 @@ COMMENT ON CONSTRAINT valid_fy_start_month ON entities IS
 'Validates fiscal year start month is between 1 (January) and 12 (December)';
 
 -- =====================================================================
--- VALIDATION TRIGGER
--- =====================================================================
-
--- Validation trigger to maintain entity_id consistency
-CREATE OR REPLACE FUNCTION maintain_entity_id()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Set entity_id to uuid if not provided (for entities table)
-    IF TG_TABLE_NAME = 'entities' AND NEW.entity_id IS NULL THEN
-        NEW.entity_id := NEW.uuid;
-    END IF;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER entities_maintain_entity_id
-    BEFORE INSERT OR UPDATE ON entities
-    FOR EACH ROW EXECUTE FUNCTION maintain_entity_id();
-
--- =====================================================================
 -- ROW LEVEL SECURITY (RLS)
 -- =====================================================================
 

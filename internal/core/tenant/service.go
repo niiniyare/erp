@@ -869,6 +869,10 @@ func (s *service) validateCreateTenantRequest(req CreateTenantRequest) error {
 				}
 			case "email":
 				return sharedErrors.NewBusinessError("INVALID_EMAIL", "Invalid email format")
+			case "iso3166_1_alpha2":
+				return sharedErrors.NewBusinessError("INVALID_COUNTRY_CODE", "Invalid country code format")
+			case "iso4217":
+				return sharedErrors.NewBusinessError("INVALID_CURRENCY_CODE", "Invalid currency code format")
 			}
 		}
 		return err // Fallback for other validation errors

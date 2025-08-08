@@ -5,6 +5,7 @@ package tenant
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"testing"
@@ -156,12 +157,12 @@ func (suite *TenantDatabaseContextTestSuite) SetupSuite() {
 	mockSpan := &MockSpan{}
 
 	// Setup basic mock expectations - we don't care about tracing in database tests
-	mockTracer.On("StartSpan", suite.ctx, "", []tracing.SpanOption(nil)).Return(
+	mockTracer.On("StartSpan", mock.Anything, mock.Anything, mock.Anything).Return(
 		suite.ctx, mockSpan).Maybe()
-	mockSpan.On("End", []tracing.SpanEndOption(nil)).Return().Maybe()
-	mockSpan.On("SetAttributes", []interface{}{}).Return().Maybe()
-	mockSpan.On("RecordError", nil, []tracing.ErrorOption(nil)).Return().Maybe()
-	mockSpan.On("SetStatus", nil, "").Return().Maybe()
+	mockSpan.On("End", mock.Anything).Return().Maybe()
+	mockSpan.On("SetAttributes", mock.Anything).Return().Maybe()
+	mockSpan.On("RecordError", mock.Anything, mock.Anything).Return().Maybe()
+	mockSpan.On("SetStatus", mock.Anything, mock.Anything).Return().Maybe()
 
 	suite.repository = NewRepository(suite.store, mockTracer)
 }
@@ -175,10 +176,10 @@ func (suite *TenantDatabaseContextTestSuite) TearDownSuite() {
 func (suite *TenantDatabaseContextTestSuite) SetupTest() {
 	// Create a test tenant for each test
 	params := db.CreateTenantParams{
-		Name:      "Database Test Tenant",
-		Slug:      "db-test-tenant",
-		Email:     "test@database-tenant.com",
-		Subdomain: stringPtr("db-test"),
+		Name:      fmt.Sprintf("DB Test Tenant %s", uuid.New().String()),
+		Slug:      fmt.Sprintf("db-test-%s", uuid.New().String()[0:8]),
+		Email:     fmt.Sprintf("test-%s@db-tenant.com", uuid.New().String()),
+		Subdomain: stringPtr(fmt.Sprintf("db-test-%s", uuid.New().String()[0:8])),
 		Status:    "active",
 		Industry:  stringPtr("technology"),
 	}
@@ -468,10 +469,10 @@ func (suite *TenantDatabaseContextTestSuite) TestEndToEndTenantWorkflow() {
 		tenant, err := suite.repository.GetByID(suite.ctx, suite.testTenantID)
 		require.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.testTenantID, tenant.ID)
-		assert.Equal(suite.T(), "Database Test Tenant", tenant.Name)
+		assert.Equal(suite.T(), suite.testTenant.Name, tenant.Name)
 
 		// 6. Test subdomain resolution
-		resolvedID, err := suite.repository.ResolveSubdomainToID(suite.ctx, "db-test")
+		resolvedID, err := suite.repository.ResolveSubdomainToID(suite.ctx, *suite.testTenant.Subdomain)
 		require.NoError(suite.T(), err)
 		assert.Equal(suite.T(), suite.testTenantID, resolvedID)
 
@@ -518,11 +519,6 @@ func (suite *TenantDatabaseContextTestSuite) TestPerformanceWithTenantContext() 
 		assert.Less(suite.T(), avgTime, 10*time.Millisecond,
 			"Tenant context operations should be fast")
 	})
-}
-
-// Helper function for string pointers
-func stringPtr(s string) *string {
-	return &s
 }
 
 // TestTenantDatabaseContext runs the test suite

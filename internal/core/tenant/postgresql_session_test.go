@@ -126,11 +126,11 @@ func (suite *PostgreSQLSessionTestSuite) TestPostgreSQLSetConfig() {
 			name: "CurrentSetting_NonExistent",
 			test: func() {
 				// Test current_setting with missing_ok=true for non-existent key
-				var retrievedValue string
+				var retrievedValue *string
 				err := suite.pool.QueryRow(suite.ctx,
 					"SELECT current_setting('app.nonexistent_key', true)").Scan(&retrievedValue)
 				assert.NoError(suite.T(), err)
-				assert.Equal(suite.T(), "", retrievedValue) // Should return empty string
+				assert.Nil(suite.T(), retrievedValue) // Should return NULL
 			},
 		},
 		{

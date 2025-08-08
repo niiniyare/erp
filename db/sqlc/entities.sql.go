@@ -3058,14 +3058,14 @@ func (q *Queries) SearchEntitiesByName(ctx context.Context, arg SearchEntitiesBy
 const softDeleteEntity = `-- name: SoftDeleteEntity :exec
 UPDATE entities
 SET deleted_at = NOW(), updated_at = NOW()
-WHERE uuid = $1 AND tenant_id = current_tenant_id()
+WHERE uuid = $1
 `
 
 // SoftDeleteEntity
 //
 //	UPDATE entities
 //	SET deleted_at = NOW(), updated_at = NOW()
-//	WHERE uuid = $1 AND tenant_id = current_tenant_id()
+//	WHERE uuid = $1
 func (q *Queries) SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error {
 	_, err := q.db.Exec(ctx, softDeleteEntity, argUuid)
 	return err

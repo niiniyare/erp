@@ -84,7 +84,8 @@ Then:
   - Currency affects decimal formatting
   - Country affects compliance requirements
 ```
-- [ ] **Status:** Not Implemented
+- [x] **Status:** Implemented
+- **Comments:** The `CreateTenantRequest` struct now includes `iso3166_1_alpha2` and `iso4217` validation tags for the `CountryCode` and `CurrencyCode` fields, respectively. The `validateCreateTenantRequest` function uses the `go-playground/validator` library to enforce these rules. Test cases for invalid codes have been added to `TestCreateTenant` and are passing.
 
 ### Tenant Status Management Tests
 

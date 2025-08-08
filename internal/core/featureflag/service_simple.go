@@ -35,19 +35,21 @@ type SimpleService interface {
 
 // simpleServiceImpl implements the SimpleService interface
 type simpleServiceImpl struct {
-	repository    SimpleRepository
-	tenantService tenant.Service
-	store         db.Store
-	auditService  audit.Service
+	repository      SimpleRepository
+	tenantService   tenant.Service
+	store           db.Store
+	auditService    audit.Service
+	webSocketService WebSocketService // Add WebSocket service for real-time updates
 }
 
 // NewSimpleService creates a new simple feature flag service
-func NewSimpleService(repository SimpleRepository, tenantService tenant.Service, store db.Store, auditService audit.Service) SimpleService {
+func NewSimpleService(repository SimpleRepository, tenantService tenant.Service, store db.Store, auditService audit.Service, webSocketService WebSocketService) SimpleService {
 	return &simpleServiceImpl{
-		repository:    repository,
-		tenantService: tenantService,
-		store:         store,
-		auditService:  auditService,
+		repository:      repository,
+		tenantService:   tenantService,
+		store:           store,
+		auditService:    auditService,
+		webSocketService: webSocketService,
 	}
 }
 
@@ -98,6 +100,16 @@ func (s *simpleServiceImpl) CreateFeatureFlag(ctx context.Context, request *Crea
 	// Audit the creation
 	s.auditFlagCreated(ctx, flag, request)
 
+	// Send WebSocket notification for flag creation
+	if s.webSocketService != nil {
+		tenant, _ := s.tenantService.GetCurrentTenant(ctx)
+		if tenant != nil {
+			go func() {
+				s.webSocketService.NotifyFlagCreated(context.Background(), tenant.ID, flag)
+			}()
+		}
+	}
+
 	return flag, nil
 }
 
@@ -125,8 +137,8 @@ func (s *simpleServiceImpl) UpdateFeatureFlag(ctx context.Context, id uuid.UUID,
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
 
-	// Check if flag exists
-	_, err := s.repository.GetFeatureFlagByID(ctx, id)
+	// Get existing flag for comparison
+	oldFlag, err := s.repository.GetFeatureFlagByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +150,49 @@ func (s *simpleServiceImpl) UpdateFeatureFlag(ctx context.Context, id uuid.UUID,
 
 	// Audit the update
 	s.auditFlagUpdated(ctx, flag, request)
+
+	// Send WebSocket notification for flag change
+	if s.webSocketService != nil {
+		tenant, _ := s.tenantService.GetCurrentTenant(ctx)
+		if tenant != nil {
+			go func() {
+				// Determine change type based on what was updated
+				changeType := "update_config"
+				oldValue := oldFlag.DefaultValue
+				newValue := flag.DefaultValue
+
+				if request.DefaultValue != nil {
+					if *request.DefaultValue != oldFlag.DefaultValue {
+						if *request.DefaultValue {
+							changeType = "enable"
+						} else {
+							changeType = "disable"
+						}
+					}
+				}
+
+				if request.RolloutPercentage != nil {
+					if *request.RolloutPercentage != *oldFlag.RolloutPercentage {
+						changeType = "update_rollout"
+						oldValue = oldFlag.RolloutPercentage
+						newValue = flag.RolloutPercentage
+					}
+				}
+
+				event := &FeatureFlagChangeEvent{
+					FlagID:     flag.ID,
+					FlagName:   flag.Name,
+					ChangeType: changeType,
+					OldValue:   oldValue,
+					NewValue:   newValue,
+					ChangedBy:  uuid.Nil, // Could extract from context
+					AppliedAt:  time.Now(),
+				}
+
+				s.webSocketService.NotifyFlagChange(context.Background(), tenant.ID, event)
+			}()
+		}
+	}
 
 	return flag, nil
 }
@@ -162,6 +217,16 @@ func (s *simpleServiceImpl) DeleteFeatureFlag(ctx context.Context, id uuid.UUID)
 
 	// Audit the deletion
 	s.auditFlagDeleted(ctx, flag)
+
+	// Send WebSocket notification for flag deletion
+	if s.webSocketService != nil {
+		tenant, _ := s.tenantService.GetCurrentTenant(ctx)
+		if tenant != nil {
+			go func() {
+				s.webSocketService.NotifyFlagDeleted(context.Background(), tenant.ID, flag.Name)
+			}()
+		}
+	}
 
 	return nil
 }
