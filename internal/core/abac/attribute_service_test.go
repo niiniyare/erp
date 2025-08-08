@@ -119,9 +119,9 @@ func TestAttributeService(t *testing.T) {
 		// Setup
 		mockRepo := &MockAttributeRepository{}
 		mockLogger := logger.WithFields(logger.Fields{})
-		crtl := *gomock.NewController(t, nil)
+		ctrl := gomock.NewController(t)
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService(&crtl)
+		mockTracer := tracing.NewMockTracingService(ctrl)
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)
@@ -196,10 +196,10 @@ func TestAttributeService(t *testing.T) {
 		// Setup
 		mockRepo := &MockAttributeRepository{}
 		mockLogger := logger.WithFields(logger.Fields{})
-		crtl := *gomock.NewController(t, nil)
+		ctrl := gomock.NewController(t)
 
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService(&crtl)
+		mockTracer := tracing.NewMockTracingService(ctrl)
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)
@@ -226,11 +226,11 @@ func TestAttributeService(t *testing.T) {
 	t.Run("TestValidateAttributeValue_Success", func(t *testing.T) {
 		// Setup
 		mockRepo := &MockAttributeRepository{}
-		crtl := *gomock.NewController(t, nil)
+		ctrl := gomock.NewController(t)
 
 		mockLogger := logger.WithFields(logger.Fields{})
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService(&crtl)
+		mockTracer := tracing.NewMockTracingService(ctrl)
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)
@@ -256,10 +256,10 @@ func TestAttributeService(t *testing.T) {
 		// Setup
 		mockRepo := &MockAttributeRepository{}
 		mockLogger := logger.WithFields(logger.Fields{})
-		crtl := *gomock.NewController(t, nil)
+		ctrl := gomock.NewController(t)
 
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService(&crtl)
+		mockTracer := tracing.NewMockTracingService(ctrl)
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)

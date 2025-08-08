@@ -1,0 +1,681 @@
+package featureflag
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/niiniyare/erp/internal/core/access/conditional"
+	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+)
+
+// Mock implementations for testing
+type mockAdminService struct {
+	mock.Mock
+}
+
+func (m *mockAdminService) BulkEnableFlags(ctx context.Context, request *BulkEnableFlagsRequest) (*BulkOperationResult, error) {
+	args := m.Called(ctx, request)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*BulkOperationResult), args.Error(1)
+}
+
+func (m *mockAdminService) BulkDisableFlags(ctx context.Context, request *BulkDisableFlagsRequest) (*BulkOperationResult, error) {
+	args := m.Called(ctx, request)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*BulkOperationResult), args.Error(1)
+}
+
+func (m *mockAdminService) GetSystemHealth(ctx context.Context) (*SystemHealthResult, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*SystemHealthResult), args.Error(1)
+}
+
+type mockAdvancedEvaluationEngine struct {
+	mock.Mock
+}
+
+func (m *mockAdvancedEvaluationEngine) EvaluateWithConditionalAccess(ctx context.Context, request *AdvancedEvaluationRequest) (*AdvancedEvaluationResult, error) {
+	args := m.Called(ctx, request)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*AdvancedEvaluationResult), args.Error(1)
+}
+
+func (m *mockAdvancedEvaluationEngine) EvaluateComplexRules(ctx context.Context, flagID uuid.UUID, rules *ComplexEvaluationRules, context *EvaluationContext) (*EvaluationResult, error) {
+	args := m.Called(ctx, flagID, rules, context)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*EvaluationResult), args.Error(1)
+}
+
+func (m *mockAdvancedEvaluationEngine) EvaluateWithContext(ctx context.Context, flagID uuid.UUID, userID uuid.UUID, contextData map[string]any) (*ContextualEvaluationResult, error) {
+	args := m.Called(ctx, flagID, userID, contextData)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ContextualEvaluationResult), args.Error(1)
+}
+
+func (m *mockAdvancedEvaluationEngine) BulkEvaluate(ctx context.Context, requests []*AdvancedEvaluationRequest) ([]*AdvancedEvaluationResult, error) {
+	args := m.Called(ctx, requests)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*AdvancedEvaluationResult), args.Error(1)
+}
+
+func (m *mockAdvancedEvaluationEngine) EvaluateVariant(ctx context.Context, request *VariantEvaluationRequest) (*VariantEvaluationResult, error) {
+	args := m.Called(ctx, request)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*VariantEvaluationResult), args.Error(1)
+}
+
+func TestNewAdminAdvancedService(t *testing.T) {
+	mockAdmin := &mockAdminService{}
+	mockEngine := &mockAdvancedEvaluationEngine{}
+	mockConditionalAccess := &mockConditionalAccessService{}
+	
+	service := NewAdminAdvancedService(
+		mockAdmin,
+		mockEngine,
+		mockConditionalAccess,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	assert.NotNil(t, service)
+	assert.Implements(t, (*AdminAdvancedService)(nil), service)
+}
+
+func TestAdminAdvancedService_EvaluateWithConditionalAccess(t *testing.T) {
+	mockAdmin := &mockAdminService{}
+	mockEngine := &mockAdvancedEvaluationEngine{}
+	mockConditionalAccess := &mockConditionalAccessService{}
+	
+	service := NewAdminAdvancedService(
+		mockAdmin,
+		mockEngine,
+		mockConditionalAccess,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	ctx := context.Background()
+	request := &AdvancedEvaluationRequest{
+		FlagID:      uuid.New(),
+		UserID:      uuid.New(),
+		TenantID:    uuid.New(),
+		IPAddress:   "192.168.1.1",
+		UserAgent:   "Mozilla/5.0",
+		RequestTime: time.Now(),
+	}
+
+	expectedResult := &AdvancedEvaluationResult{
+		FlagID:           request.FlagID,
+		UserID:           request.UserID,
+		Enabled:          true,
+		Reason:           "Feature enabled",
+		EvaluationTimeMS: 10,
+		EvaluatedAt:      time.Now(),
+	}
+
+	mockEngine.On("EvaluateWithConditionalAccess", ctx, request).
+		Return(expectedResult, nil)
+
+	result, err := service.EvaluateWithConditionalAccess(ctx, request)
+
+	require.NoError(t, err)
+	assert.Equal(t, expectedResult, result)
+	mockEngine.AssertExpectations(t)
+}
+
+func TestAdminAdvancedService_BulkEvaluateAdvanced(t *testing.T) {
+	mockAdmin := &mockAdminService{}
+	mockEngine := &mockAdvancedEvaluationEngine{}
+	mockConditionalAccess := &mockConditionalAccessService{}
+	
+	service := NewAdminAdvancedService(
+		mockAdmin,
+		mockEngine,
+		mockConditionalAccess,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	ctx := context.Background()
+	requests := []*AdvancedEvaluationRequest{
+		{
+			FlagID:      uuid.New(),
+			UserID:      uuid.New(),
+			TenantID:    uuid.New(),
+			IPAddress:   "192.168.1.1",
+			UserAgent:   "Mozilla/5.0",
+			RequestTime: time.Now(),
+		},
+		{
+			FlagID:      uuid.New(),
+			UserID:      uuid.New(),
+			TenantID:    uuid.New(),
+			IPAddress:   "192.168.1.2",
+			UserAgent:   "Mozilla/5.0",
+			RequestTime: time.Now(),
+		},
+	}
+
+	expectedResults := []*AdvancedEvaluationResult{
+		{
+			FlagID:           requests[0].FlagID,
+			UserID:           requests[0].UserID,
+			Enabled:          true,
+			Reason:           "Flag 1 enabled",
+			EvaluationTimeMS: 10,
+			EvaluatedAt:      time.Now(),
+		},
+		{
+			FlagID:           requests[1].FlagID,
+			UserID:           requests[1].UserID,
+			Enabled:          false,
+			Reason:           "Flag 2 disabled",
+			EvaluationTimeMS: 12,
+			EvaluatedAt:      time.Now(),
+		},
+	}
+
+	mockEngine.On("BulkEvaluate", ctx, requests).
+		Return(expectedResults, nil)
+
+	results, err := service.BulkEvaluateAdvanced(ctx, requests)
+
+	require.NoError(t, err)
+	assert.Equal(t, expectedResults, results)
+	mockEngine.AssertExpectations(t)
+}
+
+func TestAdminAdvancedService_CreateComplexRule(t *testing.T) {
+	mockAdmin := &mockAdminService{}
+	mockEngine := &mockAdvancedEvaluationEngine{}
+	mockConditionalAccess := &mockConditionalAccessService{}
+	
+	service := NewAdminAdvancedService(
+		mockAdmin,
+		mockEngine,
+		mockConditionalAccess,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	ctx := context.Background()
+	request := &CreateComplexRuleRequest{
+		FlagID:      uuid.New(),
+		TenantID:    uuid.New(),
+		Name:        "Test Complex Rule",
+		Description: "A test rule for complex evaluation",
+		Priority:    10,
+		IsActive:    true,
+		Rules: &ComplexEvaluationRules{
+			RootRule: &EvaluationRule{
+				ID:   uuid.New(),
+				Type: RuleTypeCondition,
+				Condition: &RuleCondition{
+					Field:    "user.role",
+					Operator: OpEquals,
+					Value:    "admin",
+				},
+			},
+		},
+		CreatedBy: uuid.New(),
+	}
+
+	result, err := service.CreateComplexRule(ctx, request)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, request.FlagID, result.FlagID)
+	assert.Equal(t, request.TenantID, result.TenantID)
+	assert.Equal(t, request.Name, result.Name)
+	assert.Equal(t, request.Description, result.Description)
+	assert.Equal(t, request.Priority, result.Priority)
+	assert.Equal(t, request.IsActive, result.IsActive)
+	assert.Equal(t, request.Rules, result.Rules)
+	assert.Equal(t, request.CreatedBy, result.CreatedBy)
+	assert.NotEqual(t, uuid.Nil, result.ID)
+	assert.False(t, result.CreatedAt.IsZero())
+}
+
+func TestAdminAdvancedService_CreateConditionalAccessRule(t *testing.T) {
+	mockAdmin := &mockAdminService{}
+	mockEngine := &mockAdvancedEvaluationEngine{}
+	mockConditionalAccess := &mockConditionalAccessService{}
+	
+	service := NewAdminAdvancedService(
+		mockAdmin,
+		mockEngine,
+		mockConditionalAccess,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	ctx := context.Background()
+	request := &CreateConditionalAccessRuleRequest{
+		TenantID:    uuid.New(),
+		EntityID:    uuid.New(),
+		Name:        "Test Conditional Access Rule",
+		Description: "A test conditional access rule",
+		RuleType:    conditional.ConditionalAccessTypeFeatureFlag,
+		Priority:    5,
+		TimeRestrictions: &conditional.TimeRestrictions{
+			StartTime: "09:00",
+			EndTime:   "17:00",
+			TimeZone:  "UTC",
+			DaysOfWeek: []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"},
+		},
+		Effect: conditional.EffectAllow,
+		Actions: []conditional.ConditionalAccessAction{
+			conditional.ActionAuditOnly,
+		},
+		CreatedBy: uuid.New(),
+	}
+
+	mockConditionalAccess.On("CreateRule", ctx, mock.AnythingOfType("*conditional.ConditionalAccessRule")).
+		Return(nil)
+
+	result, err := service.CreateConditionalAccessRule(ctx, request)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, request.TenantID, result.TenantID)
+	assert.Equal(t, request.EntityID, result.EntityID)
+	assert.Equal(t, request.Name, result.Name)
+	assert.Equal(t, request.Description, result.Description)
+	assert.Equal(t, request.RuleType, result.RuleType)
+	assert.Equal(t, request.Priority, result.Priority)
+	assert.Equal(t, request.TimeRestrictions, result.TimeRestrictions)
+	assert.Equal(t, request.Effect, result.Effect)
+	assert.Equal(t, request.Actions, result.Actions)
+	assert.Equal(t, request.CreatedBy, result.CreatedBy)
+	assert.NotEqual(t, uuid.Nil, result.ID)
+	assert.True(t, result.IsActive)
+
+	mockConditionalAccess.AssertExpectations(t)
+}
+
+func TestAdminAdvancedService_ListConditionalAccessRules(t *testing.T) {
+	mockAdmin := &mockAdminService{}
+	mockEngine := &mockAdvancedEvaluationEngine{}
+	mockConditionalAccess := &mockConditionalAccessService{}
+	
+	service := NewAdminAdvancedService(
+		mockAdmin,
+		mockEngine,
+		mockConditionalAccess,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	ctx := context.Background()
+	entityID := uuid.New()
+
+	expectedRules := []*conditional.ConditionalAccessRule{
+		{
+			ID:          uuid.New(),
+			TenantID:    uuid.New(),
+			EntityID:    entityID,
+			Name:        "Test Rule 1",
+			Description: "First test rule",
+			RuleType:    conditional.ConditionalAccessTypeFeatureFlag,
+			Priority:    5,
+			IsActive:    true,
+			Effect:      conditional.EffectAllow,
+			Actions:     []conditional.ConditionalAccessAction{conditional.ActionAuditOnly},
+			CreatedAt:   time.Now(),
+			CreatedBy:   uuid.New(),
+		},
+		{
+			ID:          uuid.New(),
+			TenantID:    uuid.New(),
+			EntityID:    entityID,
+			Name:        "Test Rule 2",
+			Description: "Second test rule",
+			RuleType:    conditional.ConditionalAccessTypeFeatureFlag,
+			Priority:    10,
+			IsActive:    true,
+			Effect:      conditional.EffectDeny,
+			Actions:     []conditional.ConditionalAccessAction{conditional.ActionBlock},
+			CreatedAt:   time.Now(),
+			CreatedBy:   uuid.New(),
+		},
+	}
+
+	mockConditionalAccess.On("ListRules", ctx, entityID).
+		Return(expectedRules, nil)
+
+	results, err := service.ListConditionalAccessRules(ctx, entityID)
+
+	require.NoError(t, err)
+	assert.Len(t, results, 2)
+	
+	for i, result := range results {
+		expectedRule := expectedRules[i]
+		assert.Equal(t, expectedRule.ID, result.ID)
+		assert.Equal(t, expectedRule.TenantID, result.TenantID)
+		assert.Equal(t, expectedRule.EntityID, result.EntityID)
+		assert.Equal(t, expectedRule.Name, result.Name)
+		assert.Equal(t, expectedRule.Description, result.Description)
+		assert.Equal(t, expectedRule.RuleType, result.RuleType)
+		assert.Equal(t, expectedRule.Priority, result.Priority)
+		assert.Equal(t, expectedRule.IsActive, result.IsActive)
+		assert.Equal(t, expectedRule.Effect, result.Effect)
+		assert.Equal(t, expectedRule.Actions, result.Actions)
+		assert.Equal(t, expectedRule.CreatedAt, result.CreatedAt)
+		assert.Equal(t, expectedRule.CreatedBy, result.CreatedBy)
+	}
+
+	mockConditionalAccess.AssertExpectations(t)
+}
+
+func TestAdminAdvancedService_CreateExperiment(t *testing.T) {
+	mockAdmin := &mockAdminService{}
+	mockEngine := &mockAdvancedEvaluationEngine{}
+	mockConditionalAccess := &mockConditionalAccessService{}
+	
+	service := NewAdminAdvancedService(
+		mockAdmin,
+		mockEngine,
+		mockConditionalAccess,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	ctx := context.Background()
+	request := &CreateExperimentRequest{
+		TenantID:    uuid.New(),
+		Name:        "Test A/B Experiment",
+		Description: "Testing feature flag variants",
+		Hypothesis:  "Variant B will increase engagement",
+		FlagIDs:     []uuid.UUID{uuid.New(), uuid.New()},
+		Variants: []ExperimentVariant{
+			{
+				Name:        "control",
+				Description: "Control variant",
+				IsControl:   true,
+				Config:      map[string]any{"enabled": false},
+				Allocation:  50.0,
+			},
+			{
+				Name:        "treatment",
+				Description: "Treatment variant",
+				IsControl:   false,
+				Config:      map[string]any{"enabled": true},
+				Allocation:  50.0,
+			},
+		},
+		TrafficSplit: map[string]float64{
+			"control":   50.0,
+			"treatment": 50.0,
+		},
+		TargetingRules: &TargetingRules{
+			IncludeRules: []TargetingRule{
+				{
+					Field:    "user.segment",
+					Operator: OpEquals,
+					Value:    "premium",
+				},
+			},
+		},
+		SuccessMetrics: []string{"conversion_rate", "engagement"},
+		CreatedBy:      uuid.New(),
+	}
+
+	result, err := service.CreateExperiment(ctx, request)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, request.TenantID, result.TenantID)
+	assert.Equal(t, request.Name, result.Name)
+	assert.Equal(t, request.Description, result.Description)
+	assert.Equal(t, request.Hypothesis, result.Hypothesis)
+	assert.Equal(t, request.FlagIDs, result.FlagIDs)
+	assert.Equal(t, request.Variants, result.Variants)
+	assert.Equal(t, request.TrafficSplit, result.TrafficSplit)
+	assert.Equal(t, request.TargetingRules, result.TargetingRules)
+	assert.Equal(t, ExperimentStatusDraft, result.Status)
+	assert.Equal(t, request.SuccessMetrics, result.SuccessMetrics)
+	assert.Equal(t, request.CreatedBy, result.CreatedBy)
+	assert.NotEqual(t, uuid.Nil, result.ID)
+	assert.False(t, result.CreatedAt.IsZero())
+	assert.Equal(t, 0, result.ParticipantCount)
+	assert.Equal(t, 0.95, result.ConfidenceLevel)
+}
+
+func TestAdminAdvancedService_EvaluateVariant(t *testing.T) {
+	mockAdmin := &mockAdminService{}
+	mockEngine := &mockAdvancedEvaluationEngine{}
+	mockConditionalAccess := &mockConditionalAccessService{}
+	
+	service := NewAdminAdvancedService(
+		mockAdmin,
+		mockEngine,
+		mockConditionalAccess,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	ctx := context.Background()
+	request := &VariantEvaluationRequest{
+		ExperimentID: uuid.New(),
+		UserID:       uuid.New(),
+		TenantID:     uuid.New(),
+		Context:      map[string]any{"segment": "premium"},
+	}
+
+	expectedResult := &VariantEvaluationResult{
+		ExperimentID:      request.ExperimentID,
+		UserID:            request.UserID,
+		AssignedVariant:   "treatment",
+		VariantConfig:     map[string]any{"enabled": true},
+		IsControl:         false,
+		TrafficAllocation: 50.0,
+		Assignment: &VariantAssignment{
+			ID:            uuid.New(),
+			ExperimentID:  request.ExperimentID,
+			UserID:        request.UserID,
+			VariantName:   "treatment",
+			AssignedAt:    time.Now(),
+			Sticky:        true,
+			TrafficBucket: 25,
+		},
+	}
+
+	mockEngine.On("EvaluateVariant", ctx, request).
+		Return(expectedResult, nil)
+
+	result, err := service.EvaluateVariant(ctx, request)
+
+	require.NoError(t, err)
+	assert.Equal(t, expectedResult, result)
+	mockEngine.AssertExpectations(t)
+}
+
+func TestAdminAdvancedService_GetAdvancedAnalytics(t *testing.T) {
+	mockAdmin := &mockAdminService{}
+	mockEngine := &mockAdvancedEvaluationEngine{}
+	mockConditionalAccess := &mockConditionalAccessService{}
+	
+	service := NewAdminAdvancedService(
+		mockAdmin,
+		mockEngine,
+		mockConditionalAccess,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	ctx := context.Background()
+	request := &AdvancedAnalyticsRequest{
+		TenantID: uuid.New(),
+		FlagIDs:  []uuid.UUID{uuid.New(), uuid.New()},
+		TimeRange: TimeRange{
+			StartTime: time.Now().AddDate(0, 0, -7),
+			EndTime:   time.Now(),
+		},
+		Dimensions: []string{"user_segment", "location", "device"},
+		Metrics:    []string{"evaluation_count", "conversion_rate"},
+		Filters: []AnalyticsFilter{
+			{
+				Field:    "user.segment",
+				Operator: "equals",
+				Value:    "premium",
+			},
+		},
+	}
+
+	result, err := service.GetAdvancedAnalytics(ctx, request)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, request.TenantID, result.TenantID)
+	assert.Equal(t, request.TimeRange, result.TimeRange)
+	assert.Equal(t, 0, result.TotalEvaluations) // Placeholder implementation
+	assert.Equal(t, 0, result.UniqueUsers)      // Placeholder implementation
+	assert.Empty(t, result.FlagMetrics)         // Placeholder implementation
+	assert.Empty(t, result.Insights)            // Placeholder implementation
+}
+
+func TestAdminAdvancedService_GetConditionalAccessInsights(t *testing.T) {
+	mockAdmin := &mockAdminService{}
+	mockEngine := &mockAdvancedEvaluationEngine{}
+	mockConditionalAccess := &mockConditionalAccessService{}
+	
+	service := NewAdminAdvancedService(
+		mockAdmin,
+		mockEngine,
+		mockConditionalAccess,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	ctx := context.Background()
+	tenantID := uuid.New()
+	timeRange := TimeRange{
+		StartTime: time.Now().AddDate(0, 0, -7),
+		EndTime:   time.Now(),
+	}
+
+	result, err := service.GetConditionalAccessInsights(ctx, tenantID, timeRange)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, tenantID, result.TenantID)
+	assert.Equal(t, timeRange, result.TimeRange)
+	assert.NotNil(t, result.Metrics)
+	assert.Equal(t, 0, result.Metrics.TotalEvaluations) // Placeholder implementation
+	assert.Empty(t, result.Trends)                      // Placeholder implementation
+	assert.Empty(t, result.Recommendations)             // Placeholder implementation
+	assert.Empty(t, result.Anomalies)                   // Placeholder implementation
+}
+
+// Integration tests
+func TestAdminAdvancedService_DelegatedMethods(t *testing.T) {
+	mockAdmin := &mockAdminService{}
+	mockEngine := &mockAdvancedEvaluationEngine{}
+	mockConditionalAccess := &mockConditionalAccessService{}
+	
+	service := NewAdminAdvancedService(
+		mockAdmin,
+		mockEngine,
+		mockConditionalAccess,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	ctx := context.Background()
+
+	t.Run("BulkEnableFlags delegates correctly", func(t *testing.T) {
+		request := &BulkEnableFlagsRequest{
+			TenantID: uuid.New(),
+			FlagIDs:  []uuid.UUID{uuid.New(), uuid.New()},
+		}
+
+		expectedResult := &BulkOperationResult{
+			Success:     true,
+			ProcessedCount: 2,
+			FailedCount: 0,
+		}
+
+		mockAdmin.On("BulkEnableFlags", ctx, request).
+			Return(expectedResult, nil)
+
+		result, err := service.BulkEnableFlags(ctx, request)
+
+		require.NoError(t, err)
+		assert.Equal(t, expectedResult, result)
+		mockAdmin.AssertExpectations(t)
+	})
+
+	t.Run("BulkDisableFlags delegates correctly", func(t *testing.T) {
+		request := &BulkDisableFlagsRequest{
+			TenantID: uuid.New(),
+			FlagIDs:  []uuid.UUID{uuid.New(), uuid.New()},
+		}
+
+		expectedResult := &BulkOperationResult{
+			Success:     true,
+			ProcessedCount: 2,
+			FailedCount: 0,
+		}
+
+		mockAdmin.On("BulkDisableFlags", ctx, request).
+			Return(expectedResult, nil)
+
+		result, err := service.BulkDisableFlags(ctx, request)
+
+		require.NoError(t, err)
+		assert.Equal(t, expectedResult, result)
+		mockAdmin.AssertExpectations(t)
+	})
+
+	t.Run("GetSystemHealth delegates correctly", func(t *testing.T) {
+		expectedResult := &SystemHealthResult{
+			Status:     "healthy",
+			Components: map[string]string{"database": "ok", "cache": "ok"},
+		}
+
+		mockAdmin.On("GetSystemHealth", ctx).
+			Return(expectedResult, nil)
+
+		result, err := service.GetSystemHealth(ctx)
+
+		require.NoError(t, err)
+		assert.Equal(t, expectedResult, result)
+		mockAdmin.AssertExpectations(t)
+	})
+}

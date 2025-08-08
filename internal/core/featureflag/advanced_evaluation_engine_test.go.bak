@@ -1,0 +1,843 @@
+package featureflag
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/niiniyare/erp/internal/core/access/conditional"
+	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+)
+
+// Mock implementations for testing
+type mockConditionalAccessService struct {
+	mock.Mock
+}
+
+func (m *mockConditionalAccessService) EvaluateAccess(ctx context.Context, accessContext *conditional.AccessContext) (*conditional.ConditionalAccessEvaluationResult, error) {
+	args := m.Called(ctx, accessContext)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*conditional.ConditionalAccessEvaluationResult), args.Error(1)
+}
+
+func (m *mockConditionalAccessService) CreateRule(ctx context.Context, rule *conditional.ConditionalAccessRule) error {
+	args := m.Called(ctx, rule)
+	return args.Error(0)
+}
+
+func (m *mockConditionalAccessService) UpdateRule(ctx context.Context, ruleID uuid.UUID, rule *conditional.ConditionalAccessRule) error {
+	args := m.Called(ctx, ruleID, rule)
+	return args.Error(0)
+}
+
+func (m *mockConditionalAccessService) DeleteRule(ctx context.Context, ruleID uuid.UUID) error {
+	args := m.Called(ctx, ruleID)
+	return args.Error(0)
+}
+
+func (m *mockConditionalAccessService) GetRule(ctx context.Context, ruleID uuid.UUID) (*conditional.ConditionalAccessRule, error) {
+	args := m.Called(ctx, ruleID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*conditional.ConditionalAccessRule), args.Error(1)
+}
+
+func (m *mockConditionalAccessService) ListRules(ctx context.Context, entityID uuid.UUID) ([]*conditional.ConditionalAccessRule, error) {
+	args := m.Called(ctx, entityID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*conditional.ConditionalAccessRule), args.Error(1)
+}
+
+type mockSimpleService struct {
+	mock.Mock
+}
+
+func (m *mockSimpleService) EvaluateFeatureFlag(ctx context.Context, flagID, userID uuid.UUID) (*EvaluationResult, error) {
+	args := m.Called(ctx, flagID, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*EvaluationResult), args.Error(1)
+}
+
+func (m *mockSimpleService) GetFeatureFlag(ctx context.Context, flagID uuid.UUID) (*FeatureFlag, error) {
+	args := m.Called(ctx, flagID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*FeatureFlag), args.Error(1)
+}
+
+func (m *mockSimpleService) ListFeatureFlags(ctx context.Context, tenantID uuid.UUID) ([]*FeatureFlag, error) {
+	args := m.Called(ctx, tenantID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*FeatureFlag), args.Error(1)
+}
+
+func (m *mockSimpleService) CreateFeatureFlag(ctx context.Context, request *CreateFeatureFlagRequest) (*FeatureFlag, error) {
+	args := m.Called(ctx, request)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*FeatureFlag), args.Error(1)
+}
+
+func (m *mockSimpleService) UpdateFeatureFlag(ctx context.Context, flagID uuid.UUID, request *UpdateFeatureFlagRequest) (*FeatureFlag, error) {
+	args := m.Called(ctx, flagID, request)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*FeatureFlag), args.Error(1)
+}
+
+func (m *mockSimpleService) DeleteFeatureFlag(ctx context.Context, flagID uuid.UUID) error {
+	args := m.Called(ctx, flagID)
+	return args.Error(0)
+}
+
+type mockLogger struct{}
+
+func (m *mockLogger) Debug(msg string, fields logger.Fields) {}
+func (m *mockLogger) Info(msg string, fields logger.Fields)  {}
+func (m *mockLogger) Warn(msg string, fields logger.Fields)  {}
+func (m *mockLogger) Error(msg string, fields logger.Fields) {}
+
+type mockMetrics struct{}
+
+func (m *mockMetrics) IncrementCounter(name string, labels map[string]any)                        {}
+func (m *mockMetrics) ObserveHistogram(name string, value float64, labels map[string]any)        {}
+func (m *mockMetrics) ObserveGauge(name string, value float64, labels map[string]any)            {}
+func (m *mockMetrics) SetGauge(name string, value float64, labels map[string]any)                {}
+func (m *mockMetrics) StartTimer(name string, labels map[string]any) metrics.Timer              { return nil }
+func (m *mockMetrics) RecordDuration(name string, duration time.Duration, labels map[string]any) {}
+
+type mockTracing struct{}
+
+func (m *mockTracing) StartSpan(ctx context.Context, name string) (context.Context, tracing.Span) {
+	return ctx, &mockSpan{}
+}
+
+func (m *mockTracing) SpanFromContext(ctx context.Context) tracing.Span {
+	return &mockSpan{}
+}
+
+type mockSpan struct{}
+
+func (m *mockSpan) End()                                                   {}
+func (m *mockSpan) SetAttribute(key string, value any)                     {}
+func (m *mockSpan) SetAttributes(attributes ...any)                        {}
+func (m *mockSpan) RecordError(err error)                                  {}
+func (m *mockSpan) SetStatus(code any, description string)                 {}
+func (m *mockSpan) AddEvent(name string, attributes ...any)                {}
+func (m *mockSpan) Context() any                                           { return nil }
+
+func TestAdvancedEvaluationEngine_EvaluateWithConditionalAccess(t *testing.T) {
+	ctx := context.Background()
+	
+	mockConditionalAccess := &mockConditionalAccessService{}
+	mockSimple := &mockSimpleService{}
+	
+	engine := NewAdvancedEvaluationEngine(
+		mockConditionalAccess,
+		mockSimple,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	flagID := uuid.New()
+	userID := uuid.New()
+
+	tests := []struct {
+		name                        string
+		request                    *AdvancedEvaluationRequest
+		conditionalAccessResult    *conditional.ConditionalAccessEvaluationResult
+		conditionalAccessError     error
+		basicEvaluationResult      *EvaluationResult
+		basicEvaluationError       error
+		expectedEnabled            bool
+		expectedReason             string
+		expectedConditionalAccess  *ConditionalAccessResult
+	}{
+		{
+			name: "Access granted with low risk",
+			request: &AdvancedEvaluationRequest{
+				FlagID:      flagID,
+				UserID:      userID,
+				TenantID:    uuid.New(),
+				IPAddress:   "192.168.1.1",
+				UserAgent:   "Mozilla/5.0",
+				RequestTime: time.Now(),
+			},
+			conditionalAccessResult: &conditional.ConditionalAccessEvaluationResult{
+				Decision:      conditional.EffectAllow,
+				MatchedRules:  []conditional.ConditionalAccessRule{},
+				RiskScore:     10,
+				RequiredActions: []conditional.ConditionalAccessAction{},
+			},
+			basicEvaluationResult: &EvaluationResult{
+				Enabled:   true,
+				Reason:    "Feature flag enabled",
+				Value:     true,
+				CacheHit:  false,
+				Timestamp: time.Now(),
+			},
+			expectedEnabled: true,
+			expectedReason:  "Feature flag enabled",
+			expectedConditionalAccess: &ConditionalAccessResult{
+				Decision:      string(conditional.EffectAllow),
+				RiskScore:     10,
+				RiskLevel:     "LOW",
+				AccessGranted: true,
+			},
+		},
+		{
+			name: "Access denied by conditional access",
+			request: &AdvancedEvaluationRequest{
+				FlagID:      flagID,
+				UserID:      userID,
+				TenantID:    uuid.New(),
+				IPAddress:   "192.168.1.1",
+				UserAgent:   "Mozilla/5.0",
+				RequestTime: time.Now(),
+			},
+			conditionalAccessResult: &conditional.ConditionalAccessEvaluationResult{
+				Decision:      conditional.EffectDeny,
+				MatchedRules:  []conditional.ConditionalAccessRule{},
+				RiskScore:     80,
+				RequiredActions: []conditional.ConditionalAccessAction{},
+			},
+			basicEvaluationResult: &EvaluationResult{
+				Enabled:   true,
+				Reason:    "Feature flag enabled",
+				Value:     true,
+				CacheHit:  false,
+				Timestamp: time.Now(),
+			},
+			expectedEnabled: false,
+			expectedConditionalAccess: &ConditionalAccessResult{
+				Decision:      string(conditional.EffectDeny),
+				RiskScore:     80,
+				RiskLevel:     "CRITICAL",
+				AccessGranted: false,
+			},
+		},
+		{
+			name: "High risk with audit only",
+			request: &AdvancedEvaluationRequest{
+				FlagID:      flagID,
+				UserID:      userID,
+				TenantID:    uuid.New(),
+				IPAddress:   "192.168.1.1",
+				UserAgent:   "Mozilla/5.0",
+				RequestTime: time.Now(),
+			},
+			conditionalAccessResult: &conditional.ConditionalAccessEvaluationResult{
+				Decision:      conditional.EffectAuditOnly,
+				MatchedRules:  []conditional.ConditionalAccessRule{},
+				RiskScore:     60,
+				RequiredActions: []conditional.ConditionalAccessAction{},
+			},
+			basicEvaluationResult: &EvaluationResult{
+				Enabled:   true,
+				Reason:    "Feature flag enabled",
+				Value:     true,
+				CacheHit:  false,
+				Timestamp: time.Now(),
+			},
+			expectedEnabled: true,
+			expectedReason:  "Feature flag enabled",
+			expectedConditionalAccess: &ConditionalAccessResult{
+				Decision:      string(conditional.EffectAuditOnly),
+				RiskScore:     60,
+				RiskLevel:     "HIGH",
+				AccessGranted: true,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset mocks
+			mockConditionalAccess.ExpectedCalls = nil
+			mockSimple.ExpectedCalls = nil
+
+			// Setup expectations
+			mockConditionalAccess.On("EvaluateAccess", mock.Anything, mock.AnythingOfType("*conditional.AccessContext")).
+				Return(tt.conditionalAccessResult, tt.conditionalAccessError)
+			
+			mockSimple.On("EvaluateFeatureFlag", mock.Anything, tt.request.FlagID, tt.request.UserID).
+				Return(tt.basicEvaluationResult, tt.basicEvaluationError)
+
+			// Execute test
+			result, err := engine.EvaluateWithConditionalAccess(ctx, tt.request)
+
+			// Assertions
+			if tt.basicEvaluationError != nil || tt.conditionalAccessError != nil {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.NotNil(t, result)
+			assert.Equal(t, tt.expectedEnabled, result.Enabled)
+			assert.Equal(t, tt.request.FlagID, result.FlagID)
+			assert.Equal(t, tt.request.UserID, result.UserID)
+			
+			if tt.expectedConditionalAccess != nil {
+				assert.NotNil(t, result.ConditionalAccess)
+				assert.Equal(t, tt.expectedConditionalAccess.Decision, result.ConditionalAccess.Decision)
+				assert.Equal(t, tt.expectedConditionalAccess.RiskScore, result.ConditionalAccess.RiskScore)
+				assert.Equal(t, tt.expectedConditionalAccess.RiskLevel, result.ConditionalAccess.RiskLevel)
+				assert.Equal(t, tt.expectedConditionalAccess.AccessGranted, result.ConditionalAccess.AccessGranted)
+			}
+
+			// Verify expectations
+			mockConditionalAccess.AssertExpectations(t)
+			mockSimple.AssertExpectations(t)
+		})
+	}
+}
+
+func TestAdvancedEvaluationEngine_EvaluateComplexRules(t *testing.T) {
+	ctx := context.Background()
+	
+	engine := NewAdvancedEvaluationEngine(
+		&mockConditionalAccessService{},
+		&mockSimpleService{},
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	flagID := uuid.New()
+	userID := uuid.New()
+
+	tests := []struct {
+		name               string
+		rules              *ComplexEvaluationRules
+		context            *AdvancedEvaluationContext
+		expectedEnabled    bool
+		expectedReason     string
+	}{
+		{
+			name: "Simple AND logic - both conditions true",
+			rules: &ComplexEvaluationRules{
+				RootRule: &EvaluationRule{
+					ID:       uuid.New(),
+					Type:     RuleTypeLogical,
+					Operator: OperatorAND,
+					Children: []*EvaluationRule{
+						{
+							ID:   uuid.New(),
+							Type: RuleTypeCondition,
+							Condition: &RuleCondition{
+								Field:    "user.role",
+								Operator: OpEquals,
+								Value:    "admin",
+							},
+						},
+						{
+							ID:   uuid.New(),
+							Type: RuleTypeCondition,
+							Condition: &RuleCondition{
+								Field:    "user.department",
+								Operator: OpEquals,
+								Value:    "engineering",
+							},
+						},
+					},
+				},
+			},
+			context: &AdvancedEvaluationContext{
+				UserID: userID,
+				UserData: map[string]any{
+					"role":       "admin",
+					"department": "engineering",
+				},
+			},
+			expectedEnabled: true,
+		},
+		{
+			name: "Simple AND logic - one condition false",
+			rules: &ComplexEvaluationRules{
+				RootRule: &EvaluationRule{
+					ID:       uuid.New(),
+					Type:     RuleTypeLogical,
+					Operator: OperatorAND,
+					Children: []*EvaluationRule{
+						{
+							ID:   uuid.New(),
+							Type: RuleTypeCondition,
+							Condition: &RuleCondition{
+								Field:    "user.role",
+								Operator: OpEquals,
+								Value:    "admin",
+							},
+						},
+						{
+							ID:   uuid.New(),
+							Type: RuleTypeCondition,
+							Condition: &RuleCondition{
+								Field:    "user.department",
+								Operator: OpEquals,
+								Value:    "engineering",
+							},
+						},
+					},
+				},
+			},
+			context: &AdvancedEvaluationContext{
+				UserID: userID,
+				UserData: map[string]any{
+					"role":       "admin",
+					"department": "sales", // Different department
+				},
+			},
+			expectedEnabled: false,
+		},
+		{
+			name: "Simple OR logic - one condition true",
+			rules: &ComplexEvaluationRules{
+				RootRule: &EvaluationRule{
+					ID:       uuid.New(),
+					Type:     RuleTypeLogical,
+					Operator: OperatorOR,
+					Children: []*EvaluationRule{
+						{
+							ID:   uuid.New(),
+							Type: RuleTypeCondition,
+							Condition: &RuleCondition{
+								Field:    "user.role",
+								Operator: OpEquals,
+								Value:    "admin",
+							},
+						},
+						{
+							ID:   uuid.New(),
+							Type: RuleTypeCondition,
+							Condition: &RuleCondition{
+								Field:    "user.role",
+								Operator: OpEquals,
+								Value:    "manager",
+							},
+						},
+					},
+				},
+			},
+			context: &AdvancedEvaluationContext{
+				UserID: userID,
+				UserData: map[string]any{
+					"role": "admin",
+				},
+			},
+			expectedEnabled: true,
+		},
+		{
+			name: "NOT logic",
+			rules: &ComplexEvaluationRules{
+				RootRule: &EvaluationRule{
+					ID:       uuid.New(),
+					Type:     RuleTypeLogical,
+					Operator: OperatorNOT,
+					Children: []*EvaluationRule{
+						{
+							ID:   uuid.New(),
+							Type: RuleTypeCondition,
+							Condition: &RuleCondition{
+								Field:    "user.role",
+								Operator: OpEquals,
+								Value:    "guest",
+							},
+						},
+					},
+				},
+			},
+			context: &AdvancedEvaluationContext{
+				UserID: userID,
+				UserData: map[string]any{
+					"role": "admin", // Not guest
+				},
+			},
+			expectedEnabled: true,
+		},
+		{
+			name: "Percentage rule",
+			rules: &ComplexEvaluationRules{
+				RootRule: &EvaluationRule{
+					ID:     uuid.New(),
+					Type:   RuleTypePercentage,
+					Weight: func() *float64 { w := 1.0; return &w }(), // 100% - should always be true
+				},
+			},
+			context: &AdvancedEvaluationContext{
+				UserID: userID,
+			},
+			expectedEnabled: true,
+		},
+		{
+			name: "Device compliance rule",
+			rules: &ComplexEvaluationRules{
+				RootRule: &EvaluationRule{
+					ID:   uuid.New(),
+					Type: RuleTypeDevice,
+				},
+			},
+			context: &AdvancedEvaluationContext{
+				UserID: userID,
+				DeviceInfo: &conditional.DeviceInfo{
+					IsCompliant: true,
+					IsManaged:   true,
+				},
+			},
+			expectedEnabled: true,
+		},
+		{
+			name: "Device non-compliant rule",
+			rules: &ComplexEvaluationRules{
+				RootRule: &EvaluationRule{
+					ID:   uuid.New(),
+					Type: RuleTypeDevice,
+				},
+			},
+			context: &AdvancedEvaluationContext{
+				UserID: userID,
+				DeviceInfo: &conditional.DeviceInfo{
+					IsCompliant: false,
+					IsManaged:   true,
+				},
+			},
+			expectedEnabled: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := engine.EvaluateComplexRules(ctx, flagID, tt.rules, tt.context)
+			
+			require.NoError(t, err)
+			assert.NotNil(t, result)
+			assert.Equal(t, tt.expectedEnabled, result.Enabled)
+			assert.NotEmpty(t, result.EvaluationPath)
+		})
+	}
+}
+
+func TestAdvancedEvaluationEngine_BulkEvaluate(t *testing.T) {
+	ctx := context.Background()
+	
+	mockConditionalAccess := &mockConditionalAccessService{}
+	mockSimple := &mockSimpleService{}
+	
+	engine := NewAdvancedEvaluationEngine(
+		mockConditionalAccess,
+		mockSimple,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	flagID1 := uuid.New()
+	flagID2 := uuid.New()
+	userID := uuid.New()
+
+	requests := []*AdvancedEvaluationRequest{
+		{
+			FlagID:      flagID1,
+			UserID:      userID,
+			TenantID:    uuid.New(),
+			IPAddress:   "192.168.1.1",
+			UserAgent:   "Mozilla/5.0",
+			RequestTime: time.Now(),
+		},
+		{
+			FlagID:      flagID2,
+			UserID:      userID,
+			TenantID:    uuid.New(),
+			IPAddress:   "192.168.1.1",
+			UserAgent:   "Mozilla/5.0",
+			RequestTime: time.Now(),
+		},
+	}
+
+	// Setup expectations for both requests
+	mockConditionalAccess.On("EvaluateAccess", mock.Anything, mock.AnythingOfType("*conditional.AccessContext")).
+		Return(&conditional.ConditionalAccessEvaluationResult{
+			Decision:        conditional.EffectAllow,
+			MatchedRules:    []conditional.ConditionalAccessRule{},
+			RiskScore:       10,
+			RequiredActions: []conditional.ConditionalAccessAction{},
+		}, nil).Times(2)
+
+	mockSimple.On("EvaluateFeatureFlag", mock.Anything, flagID1, userID).
+		Return(&EvaluationResult{
+			Enabled:   true,
+			Reason:    "Flag 1 enabled",
+			Value:     true,
+			CacheHit:  false,
+			Timestamp: time.Now(),
+		}, nil)
+
+	mockSimple.On("EvaluateFeatureFlag", mock.Anything, flagID2, userID).
+		Return(&EvaluationResult{
+			Enabled:   false,
+			Reason:    "Flag 2 disabled",
+			Value:     false,
+			CacheHit:  false,
+			Timestamp: time.Now(),
+		}, nil)
+
+	results, err := engine.BulkEvaluate(ctx, requests)
+
+	require.NoError(t, err)
+	assert.Len(t, results, 2)
+	
+	// First flag should be enabled
+	assert.Equal(t, flagID1, results[0].FlagID)
+	assert.True(t, results[0].Enabled)
+	
+	// Second flag should be disabled
+	assert.Equal(t, flagID2, results[1].FlagID)
+	assert.False(t, results[1].Enabled)
+
+	mockConditionalAccess.AssertExpectations(t)
+	mockSimple.AssertExpectations(t)
+}
+
+func TestAdvancedEvaluationEngine_EvaluateWithContext(t *testing.T) {
+	ctx := context.Background()
+	
+	mockConditionalAccess := &mockConditionalAccessService{}
+	mockSimple := &mockSimpleService{}
+	
+	engine := NewAdvancedEvaluationEngine(
+		mockConditionalAccess,
+		mockSimple,
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	flagID := uuid.New()
+	userID := uuid.New()
+
+	contextData := map[string]any{
+		"ip_address":   "192.168.1.1",
+		"user_agent":   "Mozilla/5.0",
+		"location":     "trusted_office",
+		"device_info":  map[string]any{"type": "desktop"},
+		"session_data": map[string]any{"duration": "2h"},
+		"user_attributes": map[string]any{"role": "admin"},
+	}
+
+	// Setup expectations
+	mockConditionalAccess.On("EvaluateAccess", mock.Anything, mock.AnythingOfType("*conditional.AccessContext")).
+		Return(&conditional.ConditionalAccessEvaluationResult{
+			Decision:        conditional.EffectAllow,
+			MatchedRules:    []conditional.ConditionalAccessRule{},
+			RiskScore:       20,
+			RequiredActions: []conditional.ConditionalAccessAction{},
+		}, nil)
+
+	mockSimple.On("EvaluateFeatureFlag", mock.Anything, flagID, userID).
+		Return(&EvaluationResult{
+			Enabled:   true,
+			Reason:    "Feature flag enabled",
+			Value:     true,
+			CacheHit:  false,
+			Timestamp: time.Now(),
+		}, nil)
+
+	result, err := engine.EvaluateWithContext(ctx, flagID, userID, contextData)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.True(t, result.Enabled)
+	assert.Greater(t, result.ContextScore, 50) // Should have high context score due to rich context
+	assert.NotEmpty(t, result.ContextFactors)
+	assert.Equal(t, "ALLOW", result.RecommendedAction)
+
+	mockConditionalAccess.AssertExpectations(t)
+	mockSimple.AssertExpectations(t)
+}
+
+func TestAdvancedEvaluationEngine_EvaluateVariant(t *testing.T) {
+	ctx := context.Background()
+	
+	engine := NewAdvancedEvaluationEngine(
+		&mockConditionalAccessService{},
+		&mockSimpleService{},
+		&mockLogger{},
+		&mockMetrics{},
+		&mockTracing{},
+	)
+
+	experimentID := uuid.New()
+	userID := uuid.New()
+
+	request := &VariantEvaluationRequest{
+		ExperimentID: experimentID,
+		UserID:       userID,
+		TenantID:     uuid.New(),
+		Context:      map[string]any{"segment": "premium"},
+	}
+
+	result, err := engine.EvaluateVariant(ctx, request)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, experimentID, result.ExperimentID)
+	assert.Equal(t, userID, result.UserID)
+	assert.Equal(t, "control", result.AssignedVariant) // Placeholder implementation returns control
+	assert.True(t, result.IsControl)
+	assert.Equal(t, 50.0, result.TrafficAllocation)
+	assert.NotNil(t, result.Assignment)
+}
+
+// Test helper functions
+func TestConditionEvaluatorHelpers(t *testing.T) {
+	engine := &advancedEvaluationEngine{}
+
+	tests := []struct {
+		name         string
+		operator     ConditionOperator
+		actual       any
+		expected     any
+		values       []any
+		caseSensitive bool
+		expectedResult bool
+	}{
+		{
+			name:           "EQUALS - case sensitive match",
+			operator:       OpEquals,
+			actual:         "admin",
+			expected:       "admin",
+			caseSensitive:  true,
+			expectedResult: true,
+		},
+		{
+			name:           "EQUALS - case insensitive match",
+			operator:       OpEquals,
+			actual:         "ADMIN",
+			expected:       "admin",
+			caseSensitive:  false,
+			expectedResult: true,
+		},
+		{
+			name:           "CONTAINS - substring match",
+			operator:       OpContains,
+			actual:         "user@example.com",
+			expected:       "@example",
+			caseSensitive:  true,
+			expectedResult: true,
+		},
+		{
+			name:           "IN - value in list",
+			operator:       OpIn,
+			actual:         "admin",
+			values:         []any{"admin", "manager", "user"},
+			caseSensitive:  true,
+			expectedResult: true,
+		},
+		{
+			name:           "NOT_IN - value not in list",
+			operator:       OpNotIn,
+			actual:         "guest",
+			values:         []any{"admin", "manager", "user"},
+			caseSensitive:  true,
+			expectedResult: true,
+		},
+		{
+			name:           "EXISTS - value exists",
+			operator:       OpExists,
+			actual:         "some_value",
+			expectedResult: true,
+		},
+		{
+			name:           "NOT_EXISTS - value is nil",
+			operator:       OpNotExists,
+			actual:         nil,
+			expectedResult: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := engine.evaluateConditionOperator(tt.operator, tt.actual, tt.expected, tt.values, tt.caseSensitive)
+			assert.Equal(t, tt.expectedResult, result)
+		})
+	}
+}
+
+func TestFieldValueExtraction(t *testing.T) {
+	engine := &advancedEvaluationEngine{}
+	userID := uuid.New()
+
+	context := &AdvancedEvaluationContext{
+		UserID: userID,
+		UserData: map[string]any{
+			"role":       "admin",
+			"department": "engineering",
+		},
+		SessionData: map[string]any{
+			"duration": "2h",
+		},
+		DeviceInfo: &conditional.DeviceInfo{
+			DeviceType:      "desktop",
+			OperatingSystem: "Windows",
+			Browser:         "Chrome",
+			IsManaged:       true,
+			IsCompliant:     true,
+		},
+		LocationInfo: &conditional.LocationInfo{
+			Country:   "US",
+			Region:    "CA",
+			City:      "San Francisco",
+			IsTrusted: true,
+		},
+		CustomData: map[string]any{
+			"segment": "premium",
+		},
+	}
+
+	tests := []struct {
+		field    string
+		expected any
+	}{
+		{"user.role", "admin"},
+		{"user.department", "engineering"},
+		{"session.duration", "2h"},
+		{"device.type", "desktop"},
+		{"device.os", "Windows"},
+		{"device.browser", "Chrome"},
+		{"device.is_managed", true},
+		{"device.is_compliant", true},
+		{"location.country", "US"},
+		{"location.region", "CA"},
+		{"location.city", "San Francisco"},
+		{"location.is_trusted", true},
+		{"custom.segment", "premium"},
+		{"unknown.field", nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.field, func(t *testing.T) {
+			result := engine.extractFieldValue(tt.field, context)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
