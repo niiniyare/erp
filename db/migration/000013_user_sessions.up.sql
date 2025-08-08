@@ -22,7 +22,6 @@ CREATE TABLE user_sessions (
     device_info JSONB DEFAULT '{}'::jsonb,         -- Device fingerprinting data
     location_info JSONB DEFAULT '{}'::jsonb,       -- Geographic/network location for ABAC
     expires_at TIMESTAMPTZ NOT NULL,
-    risk_score INTEGER DEFAULT 0,                 -- Calculated risk score (0-100)
     
     -- Standard validation columns
     version INTEGER NOT NULL DEFAULT 1,
@@ -47,7 +46,6 @@ COMMENT ON COLUMN user_sessions.user_id IS 'Foreign key to users table identifyi
 COMMENT ON COLUMN user_sessions.session_token IS 'Unique session token for authentication';
 COMMENT ON COLUMN user_sessions.refresh_token IS 'Token used for session renewal';
 COMMENT ON COLUMN user_sessions.ip_address IS 'IP address of the client';
-COMMENT ON COLUMN user_sessions.risk_score IS 'Calculated risk score from 0-100 based on action, context, and user behavior';
 COMMENT ON COLUMN user_sessions.user_agent IS 'Browser/client user agent string';
 COMMENT ON COLUMN user_sessions.device_info IS 'JSONB containing device fingerprinting data for security analysis';
 COMMENT ON COLUMN user_sessions.location_info IS 'JSONB containing geographic and network location data for location-based access control';

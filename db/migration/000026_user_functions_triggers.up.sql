@@ -21,20 +21,36 @@ COMMENT ON FUNCTION update_updated_at_column() IS
 -- ------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION enforce_tenant_isolation()
 RETURNS TRIGGER AS $$
+DECLARE
+    entity_tenant_id UUID;
 BEGIN
-    -- Ensure all foreign key references belong to the same tenant
-    IF TG_TABLE_NAME = 'persons' THEN
-        -- Validate entity belongs to same tenant
-        IF NOT EXISTS (
-            SELECT 1 FROM entities e
-            JOIN tenants t ON e.tenant_id = t.id
-            WHERE e.uuid = NEW.entity_id AND t.id = NEW.tenant_id
-        ) THEN
-            RAISE EXCEPTION 'Entity % does not belong to tenant %', NEW.entity_id, NEW.tenant_id;
-        END IF;
+    -- This trigger is intended to be generic. It checks if a referenced
+    -- entity (via entity_id) belongs to the same tenant as the new row.
+    -- It dynamically checks for the existence of an 'entity_id' column.
+
+    -- Check if the table has an 'entity_id' column
+    IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+        BEGIN
+            -- This block will fail if entity_id does not exist, and the exception will be caught.
+            IF NEW.entity_id IS NOT NULL THEN
+                -- Get the tenant_id from the referenced entity
+                SELECT tenant_id INTO entity_tenant_id
+                FROM entities
+                WHERE uuid = NEW.entity_id;
+
+                -- If the referenced entity doesn't exist or tenant_ids don't match, raise an exception.
+                IF NOT FOUND OR entity_tenant_id != NEW.tenant_id THEN
+                    RAISE EXCEPTION 'Tenant mismatch: Referenced entity (%) does not belong to tenant %', NEW.entity_id, NEW.tenant_id;
+                END IF;
+            END IF;
+        EXCEPTION
+            WHEN undefined_column THEN
+                -- The table does not have an entity_id column, so we can ignore it.
+                -- You could log this notice for debugging purposes if you want.
+                -- RAISE NOTICE 'Table % does not have an entity_id column, skipping tenant isolation check.', TG_TABLE_NAME;
+        END;
     END IF;
 
-    -- Add similar validations for other tables as needed
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

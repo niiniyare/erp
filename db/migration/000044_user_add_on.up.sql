@@ -1,5 +1,9 @@
 --- 1. Security Hardening Enhancements:
 
+-- Add risk_score to user_sessions
+ALTER TABLE user_sessions
+    ADD COLUMN risk_score INT DEFAULT 0;
+COMMENT ON COLUMN user_sessions.risk_score IS 'Calculated risk score (0-100) based on action, context, and user behavior';
 
 -- Password security enhancements
 ALTER TABLE users

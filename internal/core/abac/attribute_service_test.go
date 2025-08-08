@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
@@ -118,8 +119,9 @@ func TestAttributeService(t *testing.T) {
 		// Setup
 		mockRepo := &MockAttributeRepository{}
 		mockLogger := logger.WithFields(logger.Fields{})
+		crtl := *gomock.NewController(t, nil)
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService()
+		mockTracer := tracing.NewMockTracingService(&crtl)
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)
@@ -194,8 +196,10 @@ func TestAttributeService(t *testing.T) {
 		// Setup
 		mockRepo := &MockAttributeRepository{}
 		mockLogger := logger.WithFields(logger.Fields{})
+		crtl := *gomock.NewController(t, nil)
+
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService()
+		mockTracer := tracing.NewMockTracingService(&crtl)
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)
@@ -222,9 +226,11 @@ func TestAttributeService(t *testing.T) {
 	t.Run("TestValidateAttributeValue_Success", func(t *testing.T) {
 		// Setup
 		mockRepo := &MockAttributeRepository{}
+		crtl := *gomock.NewController(t, nil)
+
 		mockLogger := logger.WithFields(logger.Fields{})
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService()
+		mockTracer := tracing.NewMockTracingService(&crtl)
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)
@@ -250,8 +256,10 @@ func TestAttributeService(t *testing.T) {
 		// Setup
 		mockRepo := &MockAttributeRepository{}
 		mockLogger := logger.WithFields(logger.Fields{})
+		crtl := *gomock.NewController(t, nil)
+
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService()
+		mockTracer := tracing.NewMockTracingService(&crtl)
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)

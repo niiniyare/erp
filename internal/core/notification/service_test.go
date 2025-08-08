@@ -92,6 +92,7 @@ func (suite *NotificationServiceTestSuite) TestSend() {
 		mockPrefsError  error
 		expectedError   string
 		expectRepoCall  bool
+		setupMocks      func()
 	}{
 		{
 			name: "successful email notification",
@@ -113,10 +114,101 @@ func (suite *NotificationServiceTestSuite) TestSend() {
 				SlackNotifications: true,
 				PreferredChannels:  []NotificationChannel{NotificationChannelEmail, NotificationChannelSlack},
 				NotificationTypes:  map[NotificationType]bool{NotificationTypeGeneric: true},
-				QuietHours:         nil,
 			},
-			mockPrefsError: nil,
-			expectedError:  "",
+			expectRepoCall: true,
+		},
+		{
+			name: "successful slack notification",
+			notification: &Notification{
+				TenantID: tenantID,
+				Recipients: []Recipient{{
+					UserID:  userID,
+					Email:   "test@example.com",
+					SlackID: "U123456789",
+				}},
+				Subject:  "Test Subject",
+				Message:  "Test Message",
+				Type:     NotificationTypeGeneric,
+				Channels: []NotificationChannel{NotificationChannelSlack},
+			},
+			mockPreferences: &NotificationPreferences{
+				UserID:             userID,
+				EmailNotifications: true,
+				SlackNotifications: true,
+				PreferredChannels:  []NotificationChannel{NotificationChannelEmail, NotificationChannelSlack},
+				NotificationTypes:  map[NotificationType]bool{NotificationTypeGeneric: true},
+			},
+			expectRepoCall: true,
+		},
+		{
+			name: "fallback to user preferred channels",
+			notification: &Notification{
+				TenantID: tenantID,
+				Recipients: []Recipient{{
+					UserID: userID,
+					Email:  "test@example.com",
+				}},
+				Subject:  "Test Subject",
+				Message:  "Test Message",
+				Type:     NotificationTypeGeneric,
+				Channels: []NotificationChannel{}, // Empty channels
+			},
+			mockPreferences: &NotificationPreferences{
+				UserID:             userID,
+				EmailNotifications: true,
+				PreferredChannels:  []NotificationChannel{NotificationChannelEmail},
+				NotificationTypes:  map[NotificationType]bool{NotificationTypeGeneric: true},
+			},
+			expectRepoCall: true,
+		},
+		{
+			name: "email service returns error",
+			notification: &Notification{
+				TenantID: tenantID,
+				Recipients: []Recipient{{
+					UserID: userID,
+					Email:  "test@example.com",
+				}},
+				Subject:  "Test Subject",
+				Message:  "Test Message",
+				Type:     NotificationTypeGeneric,
+				Channels: []NotificationChannel{NotificationChannelEmail},
+			},
+			mockPreferences: &NotificationPreferences{
+				UserID:             userID,
+				EmailNotifications: true,
+				NotificationTypes:  map[NotificationType]bool{NotificationTypeGeneric: true},
+			},
+			setupMocks: func() {
+				suite.mockEmail.shouldError = true
+				suite.mockEmail.errorMsg = "email failed"
+			},
+			expectedError:  "email notification failed: email failed",
+			expectRepoCall: true,
+		},
+		{
+			name: "slack service returns error",
+			notification: &Notification{
+				TenantID: tenantID,
+				Recipients: []Recipient{{
+					UserID:  userID,
+					SlackID: "U123456789",
+				}},
+				Subject:  "Test Subject",
+				Message:  "Test Message",
+				Type:     NotificationTypeGeneric,
+				Channels: []NotificationChannel{NotificationChannelSlack},
+			},
+			mockPreferences: &NotificationPreferences{
+				UserID:             userID,
+				SlackNotifications: true,
+				NotificationTypes:  map[NotificationType]bool{NotificationTypeGeneric: true},
+			},
+			setupMocks: func() {
+				suite.mockSlack.shouldError = true
+				suite.mockSlack.errorMsg = "slack failed"
+			},
+			expectedError:  "slack notification failed: slack failed",
 			expectRepoCall: true,
 		},
 		{
@@ -135,17 +227,13 @@ func (suite *NotificationServiceTestSuite) TestSend() {
 			mockPreferences: &NotificationPreferences{
 				UserID:             userID,
 				EmailNotifications: true,
-				SlackNotifications: true,
-				PreferredChannels:  []NotificationChannel{NotificationChannelEmail},
 				NotificationTypes:  map[NotificationType]bool{NotificationTypeGeneric: true},
 				QuietHours: &QuietHours{
 					Enabled:   true,
-					StartTime: "22:00",
-					EndTime:   "08:00",
+					StartTime: "00:00", // Covers all day for deterministic test
+					EndTime:   "23:59",
 				},
 			},
-			mockPrefsError: nil,
-			expectedError:  "",
 			expectRepoCall: true,
 		},
 		{
@@ -164,13 +252,8 @@ func (suite *NotificationServiceTestSuite) TestSend() {
 			mockPreferences: &NotificationPreferences{
 				UserID:             userID,
 				EmailNotifications: true,
-				SlackNotifications: true,
-				PreferredChannels:  []NotificationChannel{NotificationChannelEmail},
 				NotificationTypes:  map[NotificationType]bool{NotificationTypeGeneric: false},
-				QuietHours:         nil,
 			},
-			mockPrefsError: nil,
-			expectedError:  "",
 			expectRepoCall: true,
 		},
 		{
@@ -179,14 +262,8 @@ func (suite *NotificationServiceTestSuite) TestSend() {
 				TenantID:   tenantID,
 				Recipients: []Recipient{},
 				Subject:    "Test Subject",
-				Message:    "Test Message",
-				Type:       NotificationTypeGeneric,
-				Channels:   []NotificationChannel{NotificationChannelEmail},
 			},
-			mockPreferences: nil,
-			mockPrefsError:  nil,
-			expectedError:   "",
-			expectRepoCall:  false,
+			expectRepoCall: false,
 		},
 		{
 			name: "repository error when getting preferences",
@@ -196,24 +273,27 @@ func (suite *NotificationServiceTestSuite) TestSend() {
 					UserID: userID,
 					Email:  "test@example.com",
 				}},
-				Subject:  "Test Subject",
-				Message:  "Test Message",
-				Type:     NotificationTypeGeneric,
-				Channels: []NotificationChannel{NotificationChannelEmail},
+				Subject: "Test Subject",
 			},
-			mockPreferences: nil,
-			mockPrefsError:  errors.New("database error"),
-			expectedError:   "",
-			expectRepoCall:  true,
+			mockPrefsError: errors.New("database error"),
+			expectRepoCall: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
+			// Reset mocks
+			suite.mockEmail.shouldError = false
+			suite.mockSlack.shouldError = false
+			if tc.setupMocks != nil {
+				tc.setupMocks()
+			}
+
 			mockSpan := tracing.NewMockSpan(suite.ctrl)
 			suite.mockTracing.EXPECT().StartSpan(gomock.Any(), "notificationService.Send").Return(context.Background(), mockSpan)
 			mockSpan.EXPECT().SetAttributes(gomock.Any()).AnyTimes()
 			mockSpan.EXPECT().End().Times(1)
+
 			if tc.expectRepoCall {
 				suite.mockRepo.EXPECT().
 					GetUserNotificationPreferences(gomock.Any(), userID).
