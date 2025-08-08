@@ -36,6 +36,8 @@ Then:
   - Unique constraints are enforced
   - Default tenant configuration is created
 ```
+- [x] **Status:** Implemented
+- **Comments:** Covered in `TestCreateTenant` in `internal/core/tenant/service_test.go`. The test case `MT-CORE-001: Valid Tenant Creation` mocks the repository, calls the `CreateTenant` service method with valid data, and asserts that no error is returned and the resulting tenant object has the expected default values (e.g., `StatusActive`, non-nil UUID).
 
 #### Test Case: Tenant Slug Generation
 ```
@@ -50,6 +52,8 @@ Then:
   - Slug conforms to URL standards (lowercase, hyphens)
   - Maximum length is enforced (50 chars)
 ```
+- [x] **Status:** Implemented
+- **Comments:** The `CreateTenant` service method now uses `github.com/gosimple/slug` to automatically generate a URL-safe slug from the tenant name. The test case `MT-CORE-002: Tenant Slug Generation` in `TestCreateTenant` verifies this by checking that "ACME Corporation & Co." is correctly converted to "acme-corporation-and-co".
 
 #### Test Case: Email Validation
 ```
@@ -65,6 +69,8 @@ Then:
   - Email uniqueness is enforced across active tenants
   - Soft-deleted tenants can reuse emails
 ```
+- [x] **Status:** Implemented
+- **Comments:** The `validateCreateTenantRequest` function now uses the `go-playground/validator` library to enforce email format rules. Test cases for missing and invalidly formatted emails were added to `TestCreateTenant` and are passing.
 
 #### Test Case: Currency and Country Validation
 ```
@@ -78,6 +84,7 @@ Then:
   - Currency affects decimal formatting
   - Country affects compliance requirements
 ```
+- [ ] **Status:** Not Implemented
 
 ### Tenant Status Management Tests
 
@@ -95,6 +102,8 @@ Then:
   - Status change triggers audit log
   - Dependent services are notified
 ```
+- [x] **Status:** Implemented
+- **Comments:** Covered in `TestUpdateTenantStatus` in `internal/core/tenant/service_test.go`. Tests for deactivating an active tenant and activating a suspended one are included. The tests mock the repository calls and verify that the correct status update request is made.
 
 #### Test Case: Soft Delete Functionality
 ```
@@ -109,6 +118,8 @@ Then:
   - Data remains intact for recovery
   - Can be queried with include_deleted flag
 ```
+- [x] **Status:** Implemented
+- **Comments:** Covered in `TestSoftDeleteTenant` in `internal/core/tenant/service_test.go`. This test verifies that the `DeleteTenant` service method calls the underlying `repo.Delete` and clears the appropriate caches.
 
 ## Row-Level Security Tests
 

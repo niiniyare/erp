@@ -106,7 +106,7 @@ const (
 // CreateTenantRequest represents tenant creation request
 type CreateTenantRequest struct {
 	Name               string         `json:"name" validate:"required,min=2,max=100"`
-	Slug               string         `json:"slug" validate:"required,min=3,max=50,alphanum"`
+	Slug               string         `json:"slug,omitempty"`
 	Email              string         `json:"email" validate:"required,email"`
 	Subdomain          *string        `json:"subdomain,omitempty"`
 	Status             Status         `json:"status,omitempty"`

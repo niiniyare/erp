@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/gosimple/slug"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -122,7 +124,7 @@ func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*T
 	// Create tenant entity
 	tenant := &Tenant{
 		ID:                 uuid.New(),
-		Slug:               req.Slug,
+		Slug:               slug.Make(req.Name),
 		Name:               req.Name,
 		Email:              req.Email,
 		Subdomain:          req.Subdomain,
@@ -854,15 +856,24 @@ func (s *service) getSubdomainIDCacheKey(subdomain string) string {
 
 // validateCreateTenantRequest validates the create tenant request
 func (s *service) validateCreateTenantRequest(req CreateTenantRequest) error {
-	if req.Name == "" {
-		return sharedErrors.NewBusinessError("INVALID_TENANT_NAME", "Tenant name is required")
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		validationErrors := err.(validator.ValidationErrors)
+		for _, e := range validationErrors {
+			switch e.Tag() {
+			case "required":
+				if e.Field() == "Name" {
+					return sharedErrors.NewBusinessError("INVALID_TENANT_NAME", "Tenant name is required")
+				} else if e.Field() == "Email" {
+					return sharedErrors.NewBusinessError("INVALID_EMAIL", "Email is required")
+				}
+			case "email":
+				return sharedErrors.NewBusinessError("INVALID_EMAIL", "Invalid email format")
+			}
+		}
+		return err // Fallback for other validation errors
 	}
-	if len(req.Name) > 255 {
-		return sharedErrors.NewBusinessError("INVALID_TENANT_NAME", "Tenant name must be 255 characters or less")
-	}
-	if req.Email == "" {
-		return sharedErrors.NewBusinessError("INVALID_EMAIL", "Email is required")
-	}
+
 	if req.Subdomain != nil && *req.Subdomain != "" {
 		if len(*req.Subdomain) > 63 {
 			return sharedErrors.NewBusinessError("INVALID_SUBDOMAIN", "Subdomain must be 63 characters or less")
