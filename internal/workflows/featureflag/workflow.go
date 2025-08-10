@@ -4,15 +4,16 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/featureflag/workflow"
 	"go.temporal.io/sdk/workflow"
 )
 
 // FeatureFlagWorkflow manages the workflow for feature flag changes requiring approval
-func FeatureFlagWorkflow(ctx workflow.Context, req *FeatureFlagChangeRequest) (*FeatureFlagChangeResult, error) {
+func FeatureFlagWorkflow(ctx workflow.Context, req *workflow.FeatureFlagChangeRequest) (*workflow.FeatureFlagChangeResult, error) {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("Starting feature flag workflow", "flag_name", req.FlagName, "change_type", req.ChangeType)
 
-	var result FeatureFlagChangeResult
+	var result workflow.FeatureFlagChangeResult
 
 	// Set workflow options
 	ao := workflow.ActivityOptions{
@@ -24,7 +25,7 @@ func FeatureFlagWorkflow(ctx workflow.Context, req *FeatureFlagChangeRequest) (*
 	ctx = workflow.WithActivityOptions(ctx, ao)
 
 	// Step 1: Validate flag change request
-	var validationResult ValidationResult
+	var validationResult workflow.ValidationResult
 	err := workflow.ExecuteActivity(ctx, ValidateFeatureFlagChangeActivity, req).Get(ctx, &validationResult)
 	if err != nil {
 		logger.Error("Flag validation failed", "error", err)
@@ -50,7 +51,7 @@ func FeatureFlagWorkflow(ctx workflow.Context, req *FeatureFlagChangeRequest) (*
 	var accessRequestID *uuid.UUID
 	if requiresApproval {
 		// Step 3: Create access request for flag change
-		var createAccessRequestResult CreateAccessRequestResult
+		var createAccessRequestResult workflow.CreateAccessRequestResult
 		err = workflow.ExecuteActivity(ctx, CreateAccessRequestActivity, req).Get(ctx, &createAccessRequestResult)
 		if err != nil {
 			logger.Error("Failed to create access request", "error", err)
@@ -71,7 +72,7 @@ func FeatureFlagWorkflow(ctx workflow.Context, req *FeatureFlagChangeRequest) (*
 		selector := workflow.NewSelector(ctx)
 		
 		// Wait for approval signal
-		var approvalResult ApprovalResult
+		var approvalResult workflow.ApprovalResult
 		approvalFuture := workflow.NewFuture(ctx)
 		selector.AddFuture(approvalFuture, func(f workflow.Future) {
 			// This will be completed by signal
@@ -80,9 +81,9 @@ func FeatureFlagWorkflow(ctx workflow.Context, req *FeatureFlagChangeRequest) (*
 		// Set up approval signal handler
 		var signalChan workflow.ReceiveChannel = workflow.GetSignalChannel(ctx, "approval-signal")
 		selector.AddReceive(signalChan, func(c workflow.ReceiveChannel, more bool) {
-			var signal ApprovalSignal
+			var signal workflow.ApprovalSignal
 			c.Receive(ctx, &signal)
-			approvalResult = ApprovalResult{
+			approvalResult = workflow.ApprovalResult{
 				Approved:    signal.Approved,
 				ApproverID:  signal.ApproverID,
 				Comments:    signal.Comments,
@@ -120,7 +121,7 @@ func FeatureFlagWorkflow(ctx workflow.Context, req *FeatureFlagChangeRequest) (*
 	}
 
 	// Step 5: Apply the feature flag change
-	var applyResult ApplyChangeResult
+	var applyResult workflow.ApplyChangeResult
 	err = workflow.ExecuteActivity(ctx, ApplyFeatureFlagChangeActivity, req).Get(ctx, &applyResult)
 	if err != nil {
 		logger.Error("Failed to apply flag change", "error", err)
@@ -130,7 +131,7 @@ func FeatureFlagWorkflow(ctx workflow.Context, req *FeatureFlagChangeRequest) (*
 	}
 
 	// Step 6: Send real-time notifications via WebSocket
-	notificationReq := NotificationRequest{
+	notificationReq := workflow.NotificationRequest{
 		TenantID:        req.TenantID,
 		FlagName:        req.FlagName,
 		ChangeType:      req.ChangeType,
@@ -147,7 +148,7 @@ func FeatureFlagWorkflow(ctx workflow.Context, req *FeatureFlagChangeRequest) (*
 	}
 
 	// Step 8: Log audit event
-	auditReq := AuditEventRequest{
+	auditReq := workflow.AuditEventRequest{
 		TenantID:        req.TenantID,
 		FlagName:        req.FlagName,
 		ChangeType:      req.ChangeType,
@@ -171,12 +172,12 @@ func FeatureFlagWorkflow(ctx workflow.Context, req *FeatureFlagChangeRequest) (*
 }
 
 // BulkFeatureFlagWorkflow handles bulk changes to multiple flags with approval
-func BulkFeatureFlagWorkflow(ctx workflow.Context, req *BulkFeatureFlagChangeRequest) (*BulkFeatureFlagChangeResult, error) {
+func BulkFeatureFlagWorkflow(ctx workflow.Context, req *workflow.BulkFeatureFlagChangeRequest) (*workflow.BulkFeatureFlagChangeResult, error) {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("Starting bulk feature flag workflow", "flag_count", len(req.Changes))
 
-	var result BulkFeatureFlagChangeResult
-	result.Results = make(map[string]*FeatureFlagChangeResult)
+	var result workflow.BulkFeatureFlagChangeResult
+	result.Results = make(map[string]*workflow.FeatureFlagChangeResult)
 
 	// Set workflow options for child workflows
 	cwo := workflow.ChildWorkflowOptions{
@@ -189,7 +190,7 @@ func BulkFeatureFlagWorkflow(ctx workflow.Context, req *BulkFeatureFlagChangeReq
 	
 	for _, change := range req.Changes {
 		// Create individual change request
-		individualReq := &FeatureFlagChangeRequest{
+		individualReq := &workflow.FeatureFlagChangeRequest{
 			TenantID:             req.TenantID,
 			RequestedBy:          req.RequestedBy,
 			FlagName:             change.FlagName,
@@ -207,7 +208,7 @@ func BulkFeatureFlagWorkflow(ctx workflow.Context, req *BulkFeatureFlagChangeReq
 
 	// Wait for all child workflows to complete
 	for i, future := range futures {
-		var childResult FeatureFlagChangeResult
+		var childResult workflow.FeatureFlagChangeResult
 		err := future.Get(ctx, &childResult)
 		flagName := req.Changes[i].FlagName
 		
@@ -237,7 +238,7 @@ func BulkFeatureFlagWorkflow(ctx workflow.Context, req *BulkFeatureFlagChangeReq
 }
 
 // AutoRollbackWorkflow handles automatic rollback of feature flags after expiration
-func AutoRollbackWorkflow(ctx workflow.Context, req *AutoRollbackRequest) (*AutoRollbackResult, error) {
+func AutoRollbackWorkflow(ctx workflow.Context, req *workflow.AutoRollbackRequest) (*workflow.AutoRollbackResult, error) {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("Starting auto-rollback workflow", "flag_name", req.FlagName, "rollback_at", req.RollbackAt)
 
@@ -263,7 +264,7 @@ func AutoRollbackWorkflow(ctx workflow.Context, req *AutoRollbackRequest) (*Auto
 		return nil, err
 	}
 
-	var result AutoRollbackResult
+	var result workflow.AutoRollbackResult
 	result.FlagID = req.FlagID
 	result.FlagName = req.FlagName
 	result.ScheduledAt = req.RollbackAt
@@ -275,7 +276,7 @@ func AutoRollbackWorkflow(ctx workflow.Context, req *AutoRollbackRequest) (*Auto
 	}
 
 	// Perform rollback
-	rollbackReq := &FeatureFlagChangeRequest{
+	rollbackReq := &workflow.FeatureFlagChangeRequest{
 		TenantID:       req.TenantID,
 		RequestedBy:    uuid.Nil, // System-initiated
 		FlagName:       req.FlagName,
@@ -289,7 +290,7 @@ func AutoRollbackWorkflow(ctx workflow.Context, req *AutoRollbackRequest) (*Auto
 		},
 	}
 
-	var changeResult ApplyChangeResult
+	var changeResult workflow.ApplyChangeResult
 	err = workflow.ExecuteActivity(ctx, ApplyFeatureFlagChangeActivity, rollbackReq).Get(ctx, &changeResult)
 	if err != nil {
 		result.Status = "failed"
@@ -298,7 +299,7 @@ func AutoRollbackWorkflow(ctx workflow.Context, req *AutoRollbackRequest) (*Auto
 	}
 
 	// Send notification
-	notificationReq := NotificationRequest{
+	notificationReq := workflow.NotificationRequest{
 		TenantID:   req.TenantID,
 		FlagName:   req.FlagName,
 		ChangeType: "auto_rollback",
@@ -309,7 +310,7 @@ func AutoRollbackWorkflow(ctx workflow.Context, req *AutoRollbackRequest) (*Auto
 	workflow.ExecuteActivity(ctx, SendWebSocketNotificationActivity, notificationReq)
 
 	// Create audit event
-	auditReq := AuditEventRequest{
+	auditReq := workflow.AuditEventRequest{
 		TenantID:   req.TenantID,
 		FlagName:   req.FlagName,
 		ChangeType: "auto_rollback",

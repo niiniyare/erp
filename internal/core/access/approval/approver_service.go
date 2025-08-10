@@ -1,5 +1,8 @@
 package approval
 
+//go:generate go run go.uber.org/mock/mockgen -source=approver_service.go -destination=mock.go -package=approval
+
+
 import (
 	"context"
 

@@ -1,11 +1,18 @@
 package audit
 
+//go:generate mockgen -package $GOPACKAGE -source $GOFILE -destination repository_mock.go
+
 import (
 	"context"
 
 	"github.com/google/uuid"
 	db "github.com/niiniyare/erp/db/sqlc"
 )
+
+// Repository defines the interface for the audit repository.
+type Repository interface {
+	CreateAuditEvent(ctx context.Context, arg AuditEvent) error
+}
 
 type repository struct {
 	store db.Store

@@ -12,14 +12,17 @@ import (
 )
 
 const createResource = `-- name: CreateResource :one
-INSERT INTO resources (
+INSERT INTO
+  resources (
     tenant_id,
     module_id,
     name,
     resource_type
-) VALUES (
-    current_tenant_id(), $1, $2, $3
-) RETURNING id, tenant_id, module_id, entity_id, name, display_name, description, resource_type, parent_resource_id, path, resource_attributes, is_active, created_at, deleted_at
+  )
+VALUES
+  (current_tenant_id(), $1, $2, $3)
+RETURNING
+  id, tenant_id, module_id, entity_id, name, display_name, description, resource_type, parent_resource_id, path, resource_attributes, is_active, created_at, deleted_at
 `
 
 type CreateResourceParams struct {
@@ -30,14 +33,17 @@ type CreateResourceParams struct {
 
 // CreateResource
 //
-//	INSERT INTO resources (
+//	INSERT INTO
+//	  resources (
 //	    tenant_id,
 //	    module_id,
 //	    name,
 //	    resource_type
-//	) VALUES (
-//	    current_tenant_id(), $1, $2, $3
-//	) RETURNING id, tenant_id, module_id, entity_id, name, display_name, description, resource_type, parent_resource_id, path, resource_attributes, is_active, created_at, deleted_at
+//	  )
+//	VALUES
+//	  (current_tenant_id(), $1, $2, $3)
+//	RETURNING
+//	  id, tenant_id, module_id, entity_id, name, display_name, description, resource_type, parent_resource_id, path, resource_attributes, is_active, created_at, deleted_at
 func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) (*Resource, error) {
 	row := q.db.QueryRow(ctx, createResource, arg.ModuleID, arg.Name, arg.ResourceType)
 	var i Resource

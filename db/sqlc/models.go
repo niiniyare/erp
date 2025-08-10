@@ -179,20 +179,6 @@ type AuditLog struct {
 	CreatedAt       sql.NullTime `json:"created_at"`
 }
 
-// Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.
-type AuditSummaryView struct {
-	TenantID        uuid.UUID       `json:"tenant_id"`
-	EventCategory   *string         `json:"event_category"`
-	Severity        *string         `json:"severity"`
-	HourBucket      pgtype.Interval `json:"hour_bucket"`
-	EventCount      int64           `json:"event_count"`
-	UniqueUsers     int64           `json:"unique_users"`
-	AvgRiskScore    float64         `json:"avg_risk_score"`
-	MaxRiskScore    interface{}     `json:"max_risk_score"`
-	DeniedAttempts  int64           `json:"denied_attempts"`
-	AllowedAttempts int64           `json:"allowed_attempts"`
-}
-
 type Budget struct {
 	ID              uuid.UUID      `json:"id"`
 	TenantID        uuid.UUID      `json:"tenant_id"`
@@ -520,6 +506,35 @@ type Module struct {
 	CreatedAt         sql.NullTime `json:"created_at"`
 }
 
+type MvTenantFeatureFlagsCache struct {
+	TenantID          uuid.UUID   `json:"tenant_id"`
+	FeatureFlagID     uuid.UUID   `json:"feature_flag_id"`
+	FeatureFlagName   string      `json:"feature_flag_name"`
+	FlagType          string      `json:"flag_type"`
+	Enabled           interface{} `json:"enabled"`
+	Value             []byte      `json:"value"`
+	EvaluationSource  string      `json:"evaluation_source"`
+	DefaultValue      bool        `json:"default_value"`
+	RolloutPercentage *int32      `json:"rollout_percentage"`
+	TargetAudience    []byte      `json:"target_audience"`
+	Metadata          []byte      `json:"metadata"`
+	OverrideEnabled   *bool       `json:"override_enabled"`
+	OverrideValue     []byte      `json:"override_value"`
+	OverrideReason    string      `json:"override_reason"`
+	CacheTimestamp    interface{} `json:"cache_timestamp"`
+	CacheCreatedAt    interface{} `json:"cache_created_at"`
+}
+
+type MvUserEffectivePermission struct {
+	UserID              uuid.UUID   `json:"user_id"`
+	TenantID            uuid.UUID   `json:"tenant_id"`
+	ResourceID          uuid.UUID   `json:"resource_id"`
+	ActionID            uuid.UUID   `json:"action_id"`
+	AllowFlag           interface{} `json:"allow_flag"`
+	RolePermissionIds   interface{} `json:"role_permission_ids"`
+	DirectPermissionIds interface{} `json:"direct_permission_ids"`
+}
+
 // Stores user notification preferences.
 type NotificationPreference struct {
 	ID                 uuid.UUID `json:"id"`
@@ -760,22 +775,6 @@ type RolePermission struct {
 	IsActive   *bool  `json:"is_active"`
 }
 
-// Summary view of roles with their permissions, resources, actions, and user assignment counts for role management and analysis.
-type RolePermissionsSummary struct {
-	TenantID          uuid.UUID   `json:"tenant_id"`
-	RoleID            uuid.UUID   `json:"role_id"`
-	RoleName          string      `json:"role_name"`
-	RoleDisplayName   *string     `json:"role_display_name"`
-	RoleType          *string     `json:"role_type"`
-	HierarchyLevel    *int32      `json:"hierarchy_level"`
-	ModuleID          *uuid.UUID  `json:"module_id"`
-	ModuleName        *string     `json:"module_name"`
-	ResourceNames     interface{} `json:"resource_names"`
-	ActionNames       interface{} `json:"action_names"`
-	PermissionCount   int64       `json:"permission_count"`
-	AssignedUserCount int64       `json:"assigned_user_count"`
-}
-
 type SecurityNotification struct {
 	ID               uuid.UUID    `json:"id"`
 	TenantID         uuid.UUID    `json:"tenant_id"`
@@ -787,17 +786,6 @@ type SecurityNotification struct {
 	Acknowledged     *bool        `json:"acknowledged"`
 	CreatedAt        sql.NullTime `json:"created_at"`
 	ExpiresAt        sql.NullTime `json:"expires_at"`
-}
-
-// Identifies potential security threats through session anomalies and audit patterns
-type SecurityThreatDashboard struct {
-	UserID                 uuid.UUID   `json:"user_id"`
-	Username               *string     `json:"username"`
-	Email                  string      `json:"email"`
-	HighRiskSessions       int64       `json:"high_risk_sessions"`
-	MaxRiskScore           interface{} `json:"max_risk_score"`
-	CriticalEvents         int64       `json:"critical_events"`
-	LastSuspiciousActivity interface{} `json:"last_suspicious_activity"`
 }
 
 // Core tenant management table for multi-tenant SaaS architecture
@@ -851,25 +839,6 @@ type TenantConfiguration struct {
 	ApiRateLimits []byte    `json:"api_rate_limits"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
-}
-
-type TenantFeatureFlagsCache struct {
-	TenantID          uuid.UUID   `json:"tenant_id"`
-	FeatureFlagID     uuid.UUID   `json:"feature_flag_id"`
-	FeatureFlagName   string      `json:"feature_flag_name"`
-	FlagType          string      `json:"flag_type"`
-	Enabled           interface{} `json:"enabled"`
-	Value             []byte      `json:"value"`
-	EvaluationSource  string      `json:"evaluation_source"`
-	DefaultValue      bool        `json:"default_value"`
-	RolloutPercentage *int32      `json:"rollout_percentage"`
-	TargetAudience    []byte      `json:"target_audience"`
-	Metadata          []byte      `json:"metadata"`
-	OverrideEnabled   *bool       `json:"override_enabled"`
-	OverrideValue     []byte      `json:"override_value"`
-	OverrideReason    string      `json:"override_reason"`
-	CacheTimestamp    interface{} `json:"cache_timestamp"`
-	CacheCreatedAt    interface{} `json:"cache_created_at"`
 }
 
 // Tenant-specific feature flag overrides with audit trail
@@ -992,176 +961,6 @@ type User struct {
 	RotationRequired *bool `json:"rotation_required"`
 }
 
-type UserActivitiesCurrent struct {
-	// Unique identifier for the activity record
-	ID uuid.UUID `json:"id"`
-	// Reference to the user who performed the activity
-	UserID uuid.UUID `json:"user_id"`
-	// Tenant isolation for multi-tenant architecture
-	TenantID uuid.UUID `json:"tenant_id"`
-	// Reference to the user session when activity occurred
-	SessionID *uuid.UUID `json:"session_id"`
-	// Classification of the activity (login, access, modification, etc.)
-	ActivityType      string      `json:"activity_type"`
-	Module            *string     `json:"module"`
-	ResourceType      *string     `json:"resource_type"`
-	ResourceID        *uuid.UUID  `json:"resource_id"`
-	ActionPerformed   *string     `json:"action_performed"`
-	IpAddress         *netip.Addr `json:"ip_address"`
-	UserAgent         string      `json:"user_agent"`
-	DeviceFingerprint *string     `json:"device_fingerprint"`
-	// JSONB containing geographic and network location information
-	LocationData   []byte  `json:"location_data"`
-	RequestMethod  *string `json:"request_method"`
-	RequestPath    string  `json:"request_path"`
-	RequestParams  []byte  `json:"request_params"`
-	ResponseStatus *int32  `json:"response_status"`
-	ResponseTimeMs *int32  `json:"response_time_ms"`
-	// JSONB containing calculated risk factors for the activity
-	RiskIndicators []byte `json:"risk_indicators"`
-	// Calculated anomaly score from 0.00 to 100.00 for behavioral analysis
-	AnomalyScore pgtype.Numeric `json:"anomaly_score"`
-	Timestamp    time.Time      `json:"timestamp"`
-	// Flexible JSONB storage for activity-specific metadata
-	AdditionalData []byte `json:"additional_data"`
-}
-
-type UserActivitiesNext1 struct {
-	// Unique identifier for the activity record
-	ID uuid.UUID `json:"id"`
-	// Reference to the user who performed the activity
-	UserID uuid.UUID `json:"user_id"`
-	// Tenant isolation for multi-tenant architecture
-	TenantID uuid.UUID `json:"tenant_id"`
-	// Reference to the user session when activity occurred
-	SessionID *uuid.UUID `json:"session_id"`
-	// Classification of the activity (login, access, modification, etc.)
-	ActivityType      string      `json:"activity_type"`
-	Module            *string     `json:"module"`
-	ResourceType      *string     `json:"resource_type"`
-	ResourceID        *uuid.UUID  `json:"resource_id"`
-	ActionPerformed   *string     `json:"action_performed"`
-	IpAddress         *netip.Addr `json:"ip_address"`
-	UserAgent         string      `json:"user_agent"`
-	DeviceFingerprint *string     `json:"device_fingerprint"`
-	// JSONB containing geographic and network location information
-	LocationData   []byte  `json:"location_data"`
-	RequestMethod  *string `json:"request_method"`
-	RequestPath    string  `json:"request_path"`
-	RequestParams  []byte  `json:"request_params"`
-	ResponseStatus *int32  `json:"response_status"`
-	ResponseTimeMs *int32  `json:"response_time_ms"`
-	// JSONB containing calculated risk factors for the activity
-	RiskIndicators []byte `json:"risk_indicators"`
-	// Calculated anomaly score from 0.00 to 100.00 for behavioral analysis
-	AnomalyScore pgtype.Numeric `json:"anomaly_score"`
-	Timestamp    time.Time      `json:"timestamp"`
-	// Flexible JSONB storage for activity-specific metadata
-	AdditionalData []byte `json:"additional_data"`
-}
-
-type UserActivitiesNext2 struct {
-	// Unique identifier for the activity record
-	ID uuid.UUID `json:"id"`
-	// Reference to the user who performed the activity
-	UserID uuid.UUID `json:"user_id"`
-	// Tenant isolation for multi-tenant architecture
-	TenantID uuid.UUID `json:"tenant_id"`
-	// Reference to the user session when activity occurred
-	SessionID *uuid.UUID `json:"session_id"`
-	// Classification of the activity (login, access, modification, etc.)
-	ActivityType      string      `json:"activity_type"`
-	Module            *string     `json:"module"`
-	ResourceType      *string     `json:"resource_type"`
-	ResourceID        *uuid.UUID  `json:"resource_id"`
-	ActionPerformed   *string     `json:"action_performed"`
-	IpAddress         *netip.Addr `json:"ip_address"`
-	UserAgent         string      `json:"user_agent"`
-	DeviceFingerprint *string     `json:"device_fingerprint"`
-	// JSONB containing geographic and network location information
-	LocationData   []byte  `json:"location_data"`
-	RequestMethod  *string `json:"request_method"`
-	RequestPath    string  `json:"request_path"`
-	RequestParams  []byte  `json:"request_params"`
-	ResponseStatus *int32  `json:"response_status"`
-	ResponseTimeMs *int32  `json:"response_time_ms"`
-	// JSONB containing calculated risk factors for the activity
-	RiskIndicators []byte `json:"risk_indicators"`
-	// Calculated anomaly score from 0.00 to 100.00 for behavioral analysis
-	AnomalyScore pgtype.Numeric `json:"anomaly_score"`
-	Timestamp    time.Time      `json:"timestamp"`
-	// Flexible JSONB storage for activity-specific metadata
-	AdditionalData []byte `json:"additional_data"`
-}
-
-type UserActivitiesPrev1 struct {
-	// Unique identifier for the activity record
-	ID uuid.UUID `json:"id"`
-	// Reference to the user who performed the activity
-	UserID uuid.UUID `json:"user_id"`
-	// Tenant isolation for multi-tenant architecture
-	TenantID uuid.UUID `json:"tenant_id"`
-	// Reference to the user session when activity occurred
-	SessionID *uuid.UUID `json:"session_id"`
-	// Classification of the activity (login, access, modification, etc.)
-	ActivityType      string      `json:"activity_type"`
-	Module            *string     `json:"module"`
-	ResourceType      *string     `json:"resource_type"`
-	ResourceID        *uuid.UUID  `json:"resource_id"`
-	ActionPerformed   *string     `json:"action_performed"`
-	IpAddress         *netip.Addr `json:"ip_address"`
-	UserAgent         string      `json:"user_agent"`
-	DeviceFingerprint *string     `json:"device_fingerprint"`
-	// JSONB containing geographic and network location information
-	LocationData   []byte  `json:"location_data"`
-	RequestMethod  *string `json:"request_method"`
-	RequestPath    string  `json:"request_path"`
-	RequestParams  []byte  `json:"request_params"`
-	ResponseStatus *int32  `json:"response_status"`
-	ResponseTimeMs *int32  `json:"response_time_ms"`
-	// JSONB containing calculated risk factors for the activity
-	RiskIndicators []byte `json:"risk_indicators"`
-	// Calculated anomaly score from 0.00 to 100.00 for behavioral analysis
-	AnomalyScore pgtype.Numeric `json:"anomaly_score"`
-	Timestamp    time.Time      `json:"timestamp"`
-	// Flexible JSONB storage for activity-specific metadata
-	AdditionalData []byte `json:"additional_data"`
-}
-
-type UserActivitiesPrev2 struct {
-	// Unique identifier for the activity record
-	ID uuid.UUID `json:"id"`
-	// Reference to the user who performed the activity
-	UserID uuid.UUID `json:"user_id"`
-	// Tenant isolation for multi-tenant architecture
-	TenantID uuid.UUID `json:"tenant_id"`
-	// Reference to the user session when activity occurred
-	SessionID *uuid.UUID `json:"session_id"`
-	// Classification of the activity (login, access, modification, etc.)
-	ActivityType      string      `json:"activity_type"`
-	Module            *string     `json:"module"`
-	ResourceType      *string     `json:"resource_type"`
-	ResourceID        *uuid.UUID  `json:"resource_id"`
-	ActionPerformed   *string     `json:"action_performed"`
-	IpAddress         *netip.Addr `json:"ip_address"`
-	UserAgent         string      `json:"user_agent"`
-	DeviceFingerprint *string     `json:"device_fingerprint"`
-	// JSONB containing geographic and network location information
-	LocationData   []byte  `json:"location_data"`
-	RequestMethod  *string `json:"request_method"`
-	RequestPath    string  `json:"request_path"`
-	RequestParams  []byte  `json:"request_params"`
-	ResponseStatus *int32  `json:"response_status"`
-	ResponseTimeMs *int32  `json:"response_time_ms"`
-	// JSONB containing calculated risk factors for the activity
-	RiskIndicators []byte `json:"risk_indicators"`
-	// Calculated anomaly score from 0.00 to 100.00 for behavioral analysis
-	AnomalyScore pgtype.Numeric `json:"anomaly_score"`
-	Timestamp    time.Time      `json:"timestamp"`
-	// Flexible JSONB storage for activity-specific metadata
-	AdditionalData []byte `json:"additional_data"`
-}
-
 // Partitioned table for user activity tracking and behavioral analytics supporting ABAC evaluation
 type UserActivity struct {
 	// Unique identifier for the activity record
@@ -1195,45 +994,6 @@ type UserActivity struct {
 	Timestamp    time.Time      `json:"timestamp"`
 	// Flexible JSONB storage for activity-specific metadata
 	AdditionalData []byte `json:"additional_data"`
-}
-
-// Comprehensive view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.
-type UserCompleteView struct {
-	UserID             uuid.UUID    `json:"user_id"`
-	TenantID           uuid.UUID    `json:"tenant_id"`
-	EntityID           uuid.UUID    `json:"entity_id"`
-	Username           *string      `json:"username"`
-	Email              string       `json:"email"`
-	UserType           string       `json:"user_type"`
-	AccountStatus      *string      `json:"account_status"`
-	UserActive         bool         `json:"user_active"`
-	LastLoginAt        sql.NullTime `json:"last_login_at"`
-	MfaEnabled         *bool        `json:"mfa_enabled"`
-	PersonID           *uuid.UUID   `json:"person_id"`
-	FirstName          *string      `json:"first_name"`
-	LastName           *string      `json:"last_name"`
-	MiddleName         *string      `json:"middle_name"`
-	PersonType         *string      `json:"person_type"`
-	EmployeeID         *uuid.UUID   `json:"employee_id"`
-	EmployeeNumber     *string      `json:"employee_number"`
-	PositionTitle      *string      `json:"position_title"`
-	DepartmentID       *uuid.UUID   `json:"department_id"`
-	EmploymentStatus   *string      `json:"employment_status"`
-	SecurityLevel      *int32       `json:"security_level"`
-	CombinedAttributes interface{}  `json:"combined_attributes"`
-	RoleNames          interface{}  `json:"role_names"`
-	RoleIds            interface{}  `json:"role_ids"`
-	ActiveRoleCount    int64        `json:"active_role_count"`
-}
-
-type UserEffectivePermission struct {
-	UserID              uuid.UUID   `json:"user_id"`
-	TenantID            uuid.UUID   `json:"tenant_id"`
-	ResourceID          uuid.UUID   `json:"resource_id"`
-	ActionID            uuid.UUID   `json:"action_id"`
-	AllowFlag           interface{} `json:"allow_flag"`
-	RolePermissionIds   interface{} `json:"role_permission_ids"`
-	DirectPermissionIds interface{} `json:"direct_permission_ids"`
 }
 
 // Direct permission grants to users bypassing roles. Used for exceptional access, denials, and temporary permissions.
@@ -1324,6 +1084,20 @@ type VActiveEntity struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
+// Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.
+type VAuditSummaryView struct {
+	TenantID        uuid.UUID       `json:"tenant_id"`
+	EventCategory   *string         `json:"event_category"`
+	Severity        *string         `json:"severity"`
+	HourBucket      pgtype.Interval `json:"hour_bucket"`
+	EventCount      int64           `json:"event_count"`
+	UniqueUsers     int64           `json:"unique_users"`
+	AvgRiskScore    float64         `json:"avg_risk_score"`
+	MaxRiskScore    interface{}     `json:"max_risk_score"`
+	DeniedAttempts  int64           `json:"denied_attempts"`
+	AllowedAttempts int64           `json:"allowed_attempts"`
+}
+
 type VCompanyStructure struct {
 	TenantName        string    `json:"tenant_name"`
 	CompanyID         uuid.UUID `json:"company_id"`
@@ -1400,6 +1174,33 @@ type VEntityStructure struct {
 	Company      string    `json:"company"`
 }
 
+// Summary view of roles with their permissions, resources, actions, and user assignment counts for role management and analysis.
+type VRolePermissionsSummary struct {
+	TenantID          uuid.UUID   `json:"tenant_id"`
+	RoleID            uuid.UUID   `json:"role_id"`
+	RoleName          string      `json:"role_name"`
+	RoleDisplayName   *string     `json:"role_display_name"`
+	RoleType          *string     `json:"role_type"`
+	HierarchyLevel    *int32      `json:"hierarchy_level"`
+	ModuleID          *uuid.UUID  `json:"module_id"`
+	ModuleName        *string     `json:"module_name"`
+	ResourceNames     interface{} `json:"resource_names"`
+	ActionNames       interface{} `json:"action_names"`
+	PermissionCount   int64       `json:"permission_count"`
+	AssignedUserCount int64       `json:"assigned_user_count"`
+}
+
+// Identifies potential security threats through session anomalies and audit patterns
+type VSecurityThreatDashboard struct {
+	UserID                 uuid.UUID   `json:"user_id"`
+	Username               *string     `json:"username"`
+	Email                  string      `json:"email"`
+	HighRiskSessions       int64       `json:"high_risk_sessions"`
+	MaxRiskScore           interface{} `json:"max_risk_score"`
+	CriticalEvents         int64       `json:"critical_events"`
+	LastSuspiciousActivity interface{} `json:"last_suspicious_activity"`
+}
+
 type VTenantEntitySummary struct {
 	TenantID           uuid.UUID `json:"tenant_id"`
 	TenantName         string    `json:"tenant_name"`
@@ -1434,6 +1235,35 @@ type VTenantResourceUtilization struct {
 	DocumentTypes      int64       `json:"document_types"`
 	LastEntityCreated  interface{} `json:"last_entity_created"`
 	LastEntityUpdated  interface{} `json:"last_entity_updated"`
+}
+
+// Comprehensive view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.
+type VUserCompleteView struct {
+	UserID             uuid.UUID    `json:"user_id"`
+	TenantID           uuid.UUID    `json:"tenant_id"`
+	EntityID           uuid.UUID    `json:"entity_id"`
+	Username           *string      `json:"username"`
+	Email              string       `json:"email"`
+	UserType           string       `json:"user_type"`
+	AccountStatus      *string      `json:"account_status"`
+	UserActive         bool         `json:"user_active"`
+	LastLoginAt        sql.NullTime `json:"last_login_at"`
+	MfaEnabled         *bool        `json:"mfa_enabled"`
+	PersonID           *uuid.UUID   `json:"person_id"`
+	FirstName          *string      `json:"first_name"`
+	LastName           *string      `json:"last_name"`
+	MiddleName         *string      `json:"middle_name"`
+	PersonType         *string      `json:"person_type"`
+	EmployeeID         *uuid.UUID   `json:"employee_id"`
+	EmployeeNumber     *string      `json:"employee_number"`
+	PositionTitle      *string      `json:"position_title"`
+	DepartmentID       *uuid.UUID   `json:"department_id"`
+	EmploymentStatus   *string      `json:"employment_status"`
+	SecurityLevel      *int32       `json:"security_level"`
+	CombinedAttributes interface{}  `json:"combined_attributes"`
+	RoleNames          interface{}  `json:"role_names"`
+	RoleIds            interface{}  `json:"role_ids"`
+	ActiveRoleCount    int64        `json:"active_role_count"`
 }
 
 type Vendor struct {

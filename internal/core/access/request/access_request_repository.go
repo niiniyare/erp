@@ -1,5 +1,8 @@
 package request
 
+//go:generate go run go.uber.org/mock/mockgen -source=access_request_repository.go -destination=mock.go -package=request
+
+
 import (
 	"context"
 	"database/sql"

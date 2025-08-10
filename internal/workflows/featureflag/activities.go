@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/core/access/request"
 	"github.com/niiniyare/erp/internal/core/featureflag"
+	"github.com/niiniyare/erp/internal/featureflag/workflow"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"go.temporal.io/sdk/activity"
 )
@@ -24,18 +25,18 @@ type FeatureFlagActivities struct {
 
 // WebSocketService interface for real-time notifications
 type WebSocketService interface {
-	BroadcastToTenant(ctx context.Context, tenantID uuid.UUID, message *WebSocketMessage) error
-	NotifyFlagChange(ctx context.Context, tenantID uuid.UUID, event *FeatureFlagChangeEvent) error
+	BroadcastToTenant(ctx context.Context, tenantID uuid.UUID, message *workflow.WebSocketMessage) error
+	NotifyFlagChange(ctx context.Context, tenantID uuid.UUID, event *workflow.FeatureFlagChangeEvent) error
 }
 
 // AuditService interface for audit logging
 type AuditService interface {
-	CreateAuditEvent(ctx context.Context, req *AuditEventRequest) error
+	CreateAuditEvent(ctx context.Context, req *workflow.AuditEventRequest) error
 }
 
 // PolicyService interface for approval policies
 type PolicyService interface {
-	GetApprovalPolicy(ctx context.Context, tenantID uuid.UUID, flagName string, changeType string) (*FeatureFlagApprovalPolicy, error)
+	GetApprovalPolicy(ctx context.Context, tenantID uuid.UUID, flagName string, changeType string) (*workflow.FeatureFlagApprovalPolicy, error)
 	CheckApprovalRequired(ctx context.Context, tenantID uuid.UUID, flagName string, changeType string) (bool, error)
 }
 
@@ -57,11 +58,11 @@ func NewFeatureFlagActivities(
 }
 
 // ValidateFeatureFlagChangeActivity validates a feature flag change request
-func (a *FeatureFlagActivities) ValidateFeatureFlagChangeActivity(ctx context.Context, req *FeatureFlagChangeRequest) (*ValidationResult, error) {
+func (a *FeatureFlagActivities) ValidateFeatureFlagChangeActivity(ctx context.Context, req *workflow.FeatureFlagChangeRequest) (*workflow.ValidationResult, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Validating feature flag change", "flag_name", req.FlagName, "change_type", req.ChangeType)
 
-	result := &ValidationResult{IsValid: true}
+	result := &workflow.ValidationResult{IsValid: true}
 
 	// Validate flag name
 	if req.FlagName == "" {
@@ -140,7 +141,7 @@ func (a *FeatureFlagActivities) ValidateFeatureFlagChangeActivity(ctx context.Co
 }
 
 // CheckApprovalRequiredActivity checks if approval is required for the change
-func (a *FeatureFlagActivities) CheckApprovalRequiredActivity(ctx context.Context, req *FeatureFlagChangeRequest) (bool, error) {
+func (a *FeatureFlagActivities) CheckApprovalRequiredActivity(ctx context.Context, req *workflow.FeatureFlagChangeRequest) (bool, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Checking if approval is required", "flag_name", req.FlagName, "change_type", req.ChangeType)
 
@@ -156,7 +157,7 @@ func (a *FeatureFlagActivities) CheckApprovalRequiredActivity(ctx context.Contex
 }
 
 // CreateAccessRequestActivity creates an access request for the flag change
-func (a *FeatureFlagActivities) CreateAccessRequestActivity(ctx context.Context, req *FeatureFlagChangeRequest) (*CreateAccessRequestResult, error) {
+func (a *FeatureFlagActivities) CreateAccessRequestActivity(ctx context.Context, req *workflow.FeatureFlagChangeRequest) (*workflow.CreateAccessRequestResult, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Creating access request", "flag_name", req.FlagName, "requested_by", req.RequestedBy)
 
@@ -175,7 +176,7 @@ func (a *FeatureFlagActivities) CreateAccessRequestActivity(ctx context.Context,
 		return nil, fmt.Errorf("failed to create access request: %w", err)
 	}
 
-	result := &CreateAccessRequestResult{
+	result := &workflow.CreateAccessRequestResult{
 		RequestID: accessRequestResult.ID,
 	}
 
@@ -184,7 +185,7 @@ func (a *FeatureFlagActivities) CreateAccessRequestActivity(ctx context.Context,
 }
 
 // ApplyFeatureFlagChangeActivity applies the actual flag change
-func (a *FeatureFlagActivities) ApplyFeatureFlagChangeActivity(ctx context.Context, req *FeatureFlagChangeRequest) (*ApplyChangeResult, error) {
+func (a *FeatureFlagActivities) ApplyFeatureFlagChangeActivity(ctx context.Context, req *workflow.FeatureFlagChangeRequest) (*workflow.ApplyChangeResult, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Applying feature flag change", "flag_name", req.FlagName, "change_type", req.ChangeType)
 
@@ -235,7 +236,7 @@ func (a *FeatureFlagActivities) ApplyFeatureFlagChangeActivity(ctx context.Conte
 		return nil, fmt.Errorf("failed to apply flag change: %w", err)
 	}
 
-	result := &ApplyChangeResult{
+	result := &workflow.ApplyChangeResult{
 		FlagID:    updatedFlag.ID,
 		OldValue:  oldValue,
 		AppliedAt: time.Now(),
@@ -251,7 +252,7 @@ func (a *FeatureFlagActivities) ApplyFeatureFlagChangeActivity(ctx context.Conte
 }
 
 // SendWebSocketNotificationActivity sends real-time notifications
-func (a *FeatureFlagActivities) SendWebSocketNotificationActivity(ctx context.Context, req *NotificationRequest) error {
+func (a *FeatureFlagActivities) SendWebSocketNotificationActivity(ctx context.Context, req *workflow.NotificationRequest) error {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Sending WebSocket notification", "flag_name", req.FlagName, "change_type", req.ChangeType)
 
@@ -311,7 +312,7 @@ func (a *FeatureFlagActivities) ExpireAccessRequestActivity(ctx context.Context,
 }
 
 // CreateAuditEventActivity creates an audit event for the flag change
-func (a *FeatureFlagActivities) CreateAuditEventActivity(ctx context.Context, req *AuditEventRequest) error {
+func (a *FeatureFlagActivities) CreateAuditEventActivity(ctx context.Context, req *workflow.AuditEventRequest) error {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Creating audit event", "flag_name", req.FlagName, "change_type", req.ChangeType)
 
@@ -353,11 +354,11 @@ func NewDefaultPolicyService() PolicyService {
 }
 
 // GetApprovalPolicy retrieves approval policy for a flag
-func (s *DefaultPolicyService) GetApprovalPolicy(ctx context.Context, tenantID uuid.UUID, flagName string, changeType string) (*FeatureFlagApprovalPolicy, error) {
+func (s *DefaultPolicyService) GetApprovalPolicy(ctx context.Context, tenantID uuid.UUID, flagName string, changeType string) (*workflow.FeatureFlagApprovalPolicy, error) {
 	// Default policy - require approval for production-like flags
 	productionPattern := regexp.MustCompile(`(?i)prod|production|live|critical`)
 	
-	policy := &FeatureFlagApprovalPolicy{
+	policy := &workflow.FeatureFlagApprovalPolicy{
 		TenantID:             tenantID,
 		FlagNamePattern:      ".*", // Match all flags by default
 		ChangeTypes:          []string{"enable", "disable", "update_rollout"},

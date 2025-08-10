@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/api/middleware"
 	"github.com/niiniyare/erp/internal/core/featureflag"
 	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/middleware"
 )
 
 // FeatureFlagWorkflowHandler handles feature flag workflow API endpoints
@@ -26,14 +26,14 @@ func NewFeatureFlagWorkflowHandler(workflowService featureflag.WorkflowService) 
 
 // RequestFeatureFlagChange handles POST /api/v1/feature-flags/workflows/change
 func (h *FeatureFlagWorkflowHandler) RequestFeatureFlagChange(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWorkflowHandler",
 		"method":  "RequestFeatureFlagChange",
 	})
 
 	var req featureflag.FeatureFlagChangeRequestInput
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Error("Invalid request body", logger.Fields{"error": err})
+		log.Error("Invalid request body", logger.Fields{"error": err})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
 		return
 	}
@@ -56,12 +56,12 @@ func (h *FeatureFlagWorkflowHandler) RequestFeatureFlagChange(c *gin.Context) {
 
 	result, err := h.workflowService.RequestFeatureFlagChange(c.Request.Context(), &req)
 	if err != nil {
-		logger.Error("Failed to request feature flag change", logger.Fields{"error": err})
+		log.Error("Failed to request feature flag change", logger.Fields{"error": err})
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate workflow", "details": err.Error()})
 		return
 	}
 
-	logger.Info("Feature flag change workflow requested", logger.Fields{
+	log.Info("Feature flag change workflow requested", logger.Fields{
 		"workflow_id": result.WorkflowID,
 		"flag_name":   req.FlagName,
 		"change_type": req.ChangeType,
@@ -72,14 +72,14 @@ func (h *FeatureFlagWorkflowHandler) RequestFeatureFlagChange(c *gin.Context) {
 
 // RequestBulkFeatureFlagChange handles POST /api/v1/feature-flags/workflows/bulk-change
 func (h *FeatureFlagWorkflowHandler) RequestBulkFeatureFlagChange(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWorkflowHandler",
 		"method":  "RequestBulkFeatureFlagChange",
 	})
 
 	var req featureflag.BulkFeatureFlagChangeRequestInput
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Error("Invalid request body", logger.Fields{"error": err})
+		log.Error("Invalid request body", logger.Fields{"error": err})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
 		return
 	}
@@ -115,12 +115,12 @@ func (h *FeatureFlagWorkflowHandler) RequestBulkFeatureFlagChange(c *gin.Context
 
 	result, err := h.workflowService.RequestBulkFeatureFlagChange(c.Request.Context(), &req)
 	if err != nil {
-		logger.Error("Failed to request bulk feature flag change", logger.Fields{"error": err})
+		log.Error("Failed to request bulk feature flag change", logger.Fields{"error": err})
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate bulk workflow", "details": err.Error()})
 		return
 	}
 
-	logger.Info("Bulk feature flag change workflow requested", logger.Fields{
+	log.Info("Bulk feature flag change workflow requested", logger.Fields{
 		"workflow_id":  result.WorkflowID,
 		"change_count": len(req.Changes),
 	})
@@ -130,7 +130,7 @@ func (h *FeatureFlagWorkflowHandler) RequestBulkFeatureFlagChange(c *gin.Context
 
 // ApproveFeatureFlagChange handles POST /api/v1/feature-flags/workflows/:workflow_id/approve
 func (h *FeatureFlagWorkflowHandler) ApproveFeatureFlagChange(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWorkflowHandler",
 		"method":  "ApproveFeatureFlagChange",
 	})
@@ -143,13 +143,13 @@ func (h *FeatureFlagWorkflowHandler) ApproveFeatureFlagChange(c *gin.Context) {
 
 	var req featureflag.ApprovalRequestInput
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Error("Invalid request body", logger.Fields{"error": err})
+		log.Error("Invalid request body", logger.Fields{"error": err})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
 		return
 	}
 
 	// Get approver ID from context (should be set by auth middleware)
-	userID, exists := c.Get(middleware.UserIDKey)
+	userID, exists := c.Get("authorized_user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User authentication required"})
 		return
@@ -165,7 +165,7 @@ func (h *FeatureFlagWorkflowHandler) ApproveFeatureFlagChange(c *gin.Context) {
 
 	err := h.workflowService.ApproveFeatureFlagChange(c.Request.Context(), workflowID, &req)
 	if err != nil {
-		logger.Error("Failed to approve feature flag change", logger.Fields{
+		log.Error("Failed to approve feature flag change", logger.Fields{
 			"error":       err,
 			"workflow_id": workflowID,
 			"approver_id": approverUUID,
@@ -174,7 +174,7 @@ func (h *FeatureFlagWorkflowHandler) ApproveFeatureFlagChange(c *gin.Context) {
 		return
 	}
 
-	logger.Info("Feature flag change approved", logger.Fields{
+	log.Info("Feature flag change approved", logger.Fields{
 		"workflow_id": workflowID,
 		"approver_id": approverUUID,
 	})

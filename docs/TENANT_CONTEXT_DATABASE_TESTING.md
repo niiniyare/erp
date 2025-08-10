@@ -75,7 +75,7 @@ SELECT set_tenant_context($1);
 SELECT current_tenant_id();
 
 -- Reset tenant context
-SELECT set_config('app.current_tenant_id', '', false);
+SELECT set_tenant_context('tenant_id');
 
 -- Resolve subdomain to tenant ID
 SELECT id FROM tenants WHERE subdomain = $1 AND deleted_at IS NULL;

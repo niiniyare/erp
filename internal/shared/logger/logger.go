@@ -1,5 +1,8 @@
 package logger
 
+//go:generate go run go.uber.org/mock/mockgen -source=logger.go -destination=mock_logger.go -package=logger
+
+
 import (
 	"context"
 	"fmt"

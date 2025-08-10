@@ -10,14 +10,17 @@ import (
 )
 
 const createModule = `-- name: CreateModule :one
-INSERT INTO modules (
+INSERT INTO
+  modules (
     tenant_id,
     name,
     display_name,
     category
-) VALUES (
-    current_tenant_id(), $1, $2, $3
-) RETURNING id, tenant_id, name, display_name, description, category, version, is_active, validation_version, last_validation_run, validation_status, validation_errors, created_at
+  )
+VALUES
+  (current_tenant_id(), $1, $2, $3)
+RETURNING
+  id, tenant_id, name, display_name, description, category, version, is_active, validation_version, last_validation_run, validation_status, validation_errors, created_at
 `
 
 type CreateModuleParams struct {
@@ -28,14 +31,17 @@ type CreateModuleParams struct {
 
 // CreateModule
 //
-//	INSERT INTO modules (
+//	INSERT INTO
+//	  modules (
 //	    tenant_id,
 //	    name,
 //	    display_name,
 //	    category
-//	) VALUES (
-//	    current_tenant_id(), $1, $2, $3
-//	) RETURNING id, tenant_id, name, display_name, description, category, version, is_active, validation_version, last_validation_run, validation_status, validation_errors, created_at
+//	  )
+//	VALUES
+//	  (current_tenant_id(), $1, $2, $3)
+//	RETURNING
+//	  id, tenant_id, name, display_name, description, category, version, is_active, validation_version, last_validation_run, validation_status, validation_errors, created_at
 func (q *Queries) CreateModule(ctx context.Context, arg CreateModuleParams) (*Module, error) {
 	row := q.db.QueryRow(ctx, createModule, arg.Name, arg.DisplayName, arg.Category)
 	var i Module

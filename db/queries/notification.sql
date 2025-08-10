@@ -1,24 +1,41 @@
 -- name: GetUserNotificationPreferences :one
-SELECT * FROM notification_preferences
-WHERE user_id = $1 AND tenant_id = current_tenant_id();
+SELECT
+  *
+FROM
+  notification_preferences
+WHERE
+  user_id = $1
+  AND tenant_id = current_tenant_id();
 
 -- name: CreateUserNotificationPreferences :one
-INSERT INTO notification_preferences (
-  tenant_id,
-  user_id,
-  email_notifications,
-  in_app_notifications,
-  slack_notifications,
-  notification_types,
-  preferred_channels,
-  quiet_hours
-) VALUES (
-  current_tenant_id(), $1, $2, $3, $4, $5, $6, $7
-)
-RETURNING *;
+INSERT INTO
+  notification_preferences (
+    tenant_id,
+    user_id,
+    email_notifications,
+    in_app_notifications,
+    slack_notifications,
+    notification_types,
+    preferred_channels,
+    quiet_hours
+  )
+VALUES
+  (
+    current_tenant_id(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7
+  )
+RETURNING
+  *;
 
 -- name: UpdateUserNotificationPreferences :one
-UPDATE notification_preferences
+UPDATE
+  notification_preferences
 SET
   email_notifications = $2,
   in_app_notifications = $3,
@@ -27,5 +44,8 @@ SET
   preferred_channels = $6,
   quiet_hours = $7,
   updated_at = NOW()
-WHERE user_id = $1 AND tenant_id = current_tenant_id()
-RETURNING *;
+WHERE
+  user_id = $1
+  AND tenant_id = current_tenant_id()
+RETURNING
+  *;

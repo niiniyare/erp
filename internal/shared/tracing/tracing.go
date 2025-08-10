@@ -1,5 +1,8 @@
 package tracing
 
+//go:generate go run go.uber.org/mock/mockgen -source=tracing.go -destination=mock_tracing.go -package=tracing
+
+
 import (
 	"context"
 	"fmt"

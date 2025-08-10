@@ -14,44 +14,96 @@ import (
 )
 
 type Querier interface {
+	// Archive old audit events before deletion (returns what will be deleted)
+	//
+	//  SELECT
+	//    id,
+	//    event_type,
+	//    event_category,
+	//    user_id,
+	//    risk_score,
+	//    created_at
+	//  FROM
+	//    audit_log
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND created_at < $1
+	//    AND (
+	//      $2::VARCHAR IS NULL
+	//      OR event_category = $2
+	//    )
+	//  ORDER BY
+	//    created_at DESC
+	//  LIMIT
+	//    $3
+	ArchiveOldAuditEvents(ctx context.Context, arg ArchiveOldAuditEventsParams) ([]*ArchiveOldAuditEventsRow, error)
 	//ArchiveOldDeletedEntities
 	//
-	//  DELETE FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND deleted_at < $1
-	//  AND deleted_at IS NOT NULL
+	//  DELETE FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND deleted_at < $1
+	//    AND deleted_at IS NOT NULL
 	ArchiveOldDeletedEntities(ctx context.Context, deletedAt sql.NullTime) error
 	// Usage: Soft delete or archive old entity states
 	// Use case: Long-term data archival while maintaining referential integrity
 	//
-	//  UPDATE entitystate
-	//  SET updated_at = NOW()
-	//  WHERE fiscal_year < $1
-	//  AND tenant_id = current_tenant_id()
-	//  AND updated_at < (NOW() - INTERVAL '$2 months')
+	//  UPDATE
+	//    entitystate
+	//  SET
+	//    updated_at = NOW()
+	//  WHERE
+	//    fiscal_year < $1
+	//    AND tenant_id = current_tenant_id()
+	//    AND updated_at < (NOW() - INTERVAL '$2 months')
 	ArchiveOldEntityStates(ctx context.Context, fiscalYear *int16) error
 	//AssignUserRole
 	//
-	//  SELECT assign_user_role($1, $2, $3, $4)
+	//  SELECT
+	//    assign_user_role($1, $2, $3, $4)
 	AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (interface{}, error)
 	//BatchSoftDeleteEntities
 	//
-	//  UPDATE entities
-	//  SET deleted_at = NOW(), updated_at = NOW()
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND uuid = ANY($1::UUID[])
+	//  UPDATE
+	//    entities
+	//  SET
+	//    deleted_at = NOW(),
+	//    updated_at = NOW()
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND uuid = ANY($1::UUID [])
 	BatchSoftDeleteEntities(ctx context.Context, uuids []uuid.UUID) error
 	// ===============================================
 	// Batch Operations
 	// -- ===============================================
 	//
-	//
-	//  UPDATE entities
-	//  SET is_active = $1, updated_at = NOW()
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND uuid = ANY($2::UUID[])
-	//  AND deleted_at IS NULL
+	//  UPDATE
+	//    entities
+	//  SET
+	//    is_active = $1,
+	//    updated_at = NOW()
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND uuid = ANY($2::UUID [])
+	//    AND deleted_at IS NULL
 	BatchUpdateEntityStatus(ctx context.Context, arg BatchUpdateEntityStatusParams) error
+	// Bulk add compliance flags to events matching criteria
+	//
+	//  UPDATE
+	//    audit_log
+	//  SET
+	//    compliance_flags = compliance_flags || $1::jsonb
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND event_type = $2
+	//    AND created_at >= $3
+	//    AND created_at <= $4
+	//    AND (
+	//      $5::VARCHAR IS NULL
+	//      OR event_category = $5
+	//    )
+	BulkAddComplianceFlags(ctx context.Context, arg BulkAddComplianceFlagsParams) error
 	// -- name: GetEntityStateWithLocking :one
 	// -- Usage: Retrieves entity state with row-level locking for atomic sequence operations
 	// -- Use case: When you need to get and immediately update a sequence number safely
@@ -63,430 +115,988 @@ type Querier interface {
 	// Use case: Initial setup of document sequences for a new entity
 	// NOTE: Missing tenant_id assignment and UUID generation - should be addressed
 	//
-	//
-	//  INSERT INTO entitystate (entity_id, key, sequence_number, fiscal_year, tenant_id)
-	//  SELECT $1, unnest($2::VARCHAR[]), 1, $3, current_tenant_id()
-	//  ON CONFLICT (entity_id, key, fiscal_year) DO NOTHING
+	//  INSERT INTO
+	//    entitystate (
+	//      entity_id,
+	//      KEY,
+	//      sequence_number,
+	//      fiscal_year,
+	//      tenant_id
+	//    )
+	//  SELECT
+	//    $1,
+	//    unnest($2::VARCHAR []),
+	//    1,
+	//    $3,
+	//    current_tenant_id() ON CONFLICT (entity_id, KEY, fiscal_year) DO NOTHING
 	BulkCreateEntityStates(ctx context.Context, arg BulkCreateEntityStatesParams) error
 	// Usage: Improved bulk creation with proper tenant_id and UUID handling
 	// Use case: Initial entity setup, adding new document types to existing entities
 	//
-	//  INSERT INTO entitystate (uuid, tenant_id, entity_id, key, fiscal_year, sequence, entity_unit_id)
+	//  INSERT INTO
+	//    entitystate (
+	//      uuid,
+	//      tenant_id,
+	//      entity_id,
+	//      KEY,
+	//      fiscal_year,
+	//      sequence,
+	//      entity_unit_id
+	//    )
 	//  SELECT
-	//      gen_random_uuid(),
-	//      current_tenant_id(),
-	//      $1,
-	//      unnest($2::VARCHAR[]),
-	//      $3,
-	//      1,
-	//      $4
-	//  ON CONFLICT (tenant_id, entity_id, key, fiscal_year) DO NOTHING
+	//    gen_random_uuid(),
+	//    current_tenant_id(),
+	//    $1,
+	//    unnest($2::VARCHAR []),
+	//    $3,
+	//    1,
+	//    $4 ON CONFLICT (tenant_id, entity_id, KEY, fiscal_year) DO NOTHING
 	BulkCreateEntityStatesFixed(ctx context.Context, arg BulkCreateEntityStatesFixedParams) error
 	// Simplified bulk evaluation based on current schema
 	//
 	//  SELECT
-	//      name as flag_key,
-	//      CASE
-	//          WHEN rollout_percentage IS NOT NULL THEN
-	//              CASE WHEN (ABS(HASHTEXT($1::text || name)) % 100) < rollout_percentage THEN default_value ELSE false END
-	//          ELSE default_value
-	//      END as evaluated_value,
-	//      default_value as is_enabled,
-	//      'default' as source,
-	//      'Basic evaluation' as reason,
-	//      '' as variation,
-	//      NOW() as evaluated_at
-	//  FROM feature_flags
-	//  WHERE tenant_id = current_tenant_id()
-	//    AND name = ANY($2::text[])
+	//    name AS flag_key,
+	//    CASE
+	//      WHEN rollout_percentage IS NOT NULL THEN CASE
+	//        WHEN (ABS(HASHTEXT($1::text || name)) % 100) < rollout_percentage THEN default_value
+	//        ELSE false
+	//      END
+	//      ELSE default_value
+	//    END AS evaluated_value,
+	//    default_value AS is_enabled,
+	//    'default' AS source,
+	//    'Basic evaluation' AS reason,
+	//    '' AS variation,
+	//    NOW() AS evaluated_at
+	//  FROM
+	//    feature_flags
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND name = ANY($2::text [])
 	//    AND deleted_at IS NULL
 	BulkEvaluateFeatureFlags(ctx context.Context, arg BulkEvaluateFeatureFlagsParams) ([]*BulkEvaluateFeatureFlagsRow, error)
 	//BulkMoveEntities
 	//
-	//  UPDATE entities
-	//  SET parent_id = $2, updated_at = NOW()
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND uuid = ANY($1::UUID[])
-	//  AND deleted_at IS NULL
+	//  UPDATE
+	//    entities
+	//  SET
+	//    parent_id = $2,
+	//    updated_at = NOW()
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND uuid = ANY($1::UUID [])
+	//    AND deleted_at IS NULL
 	BulkMoveEntities(ctx context.Context, arg BulkMoveEntitiesParams) error
 	//BulkSoftDeleteTenants
 	//
-	//  UPDATE tenants
-	//  SET deleted_at = NOW(), updated_at = NOW()
-	//  WHERE id = ANY($1::UUID[])
+	//  UPDATE
+	//    tenants
+	//  SET
+	//    deleted_at = NOW(),
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = ANY($1::UUID [])
 	BulkSoftDeleteTenants(ctx context.Context, tenantIds []uuid.UUID) error
+	// Bulk update risk scores based on criteria
+	//
+	//  UPDATE
+	//    audit_log
+	//  SET
+	//    risk_score = $1
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND event_type = $2
+	//    AND created_at >= $3
+	//    AND created_at <= $4
+	//    AND (
+	//      $5::INTEGER IS NULL
+	//      OR risk_score = $5
+	//    )
+	//    AND (
+	//      $6::VARCHAR IS NULL
+	//      OR event_category = $6
+	//    )
+	BulkUpdateEventRiskScores(ctx context.Context, arg BulkUpdateEventRiskScoresParams) error
 	// Usage: Updates multiple sequences in a single transaction
 	// Use case: Batch sequence adjustments, data synchronization, bulk imports
 	//
-	//  UPDATE entitystate
-	//  SET sequence = data.new_sequence, updated_at = NOW()
-	//  FROM (
+	//  UPDATE
+	//    entitystate
+	//  SET
+	//    sequence = data.new_sequence,
+	//    updated_at = NOW()
+	//  FROM
+	//    (
 	//      SELECT
-	//          unnest($1::UUID[]) as entity_id,
-	//          unnest($2::VARCHAR[]) as key,
-	//          unnest($3::BIGINT[]) as new_sequence
-	//  ) as data
-	//  WHERE entitystate.entity_id = data.entity_id
-	//  AND entitystate.key = data.key
-	//  AND entitystate.fiscal_year = $4
-	//  AND entitystate.tenant_id = current_tenant_id()
+	//        unnest($1::UUID []) AS entity_id,
+	//        unnest($2::VARCHAR []) AS KEY,
+	//        unnest($3::BIGINT []) AS new_sequence
+	//    ) AS data
+	//  WHERE
+	//    entitystate.entity_id = data.entity_id
+	//    AND entitystate.key = data.key
+	//    AND entitystate.fiscal_year = $4
+	//    AND entitystate.tenant_id = current_tenant_id()
 	BulkUpdateSequences(ctx context.Context, arg BulkUpdateSequencesParams) error
 	// =====================================================
 	// BULK OPERATIONS
 	// =====================================================
 	//
-	//  UPDATE tenants
-	//  SET status = $1, updated_at = NOW()
-	//  WHERE id = ANY($2::UUID[]) AND deleted_at IS NULL
+	//  UPDATE
+	//    tenants
+	//  SET
+	//    STATUS = $1,
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = ANY($2::UUID [])
+	//    AND deleted_at IS NULL
 	BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error
 	// Policy Evaluations CRUD Operations and Cache Management for ABAC
 	//
-	//
-	//  INSERT INTO policy_evaluations (
-	//      tenant_id, user_id, resource_type, resource_id, action, entity_id,
-	//      context_hash, decision, applicable_policies, policy_decisions,
-	//      evaluation_time_ms, cache_key, expires_at
-	//  ) VALUES (
-	//      current_tenant_id(), $1, $2, $3, $4, $5,
-	//      $6, $7, $8, $9, $10, $11, $12
-	//  ) ON CONFLICT (tenant_id, user_id, resource_type, resource_id, action, context_hash)
-	//  DO UPDATE SET
-	//      decision = EXCLUDED.decision,
-	//      applicable_policies = EXCLUDED.applicable_policies,
-	//      policy_decisions = EXCLUDED.policy_decisions,
-	//      evaluation_time_ms = EXCLUDED.evaluation_time_ms,
-	//      evaluated_at = NOW(),
-	//      expires_at = EXCLUDED.expires_at
+	//  INSERT INTO
+	//    policy_evaluations (
+	//      tenant_id,
+	//      user_id,
+	//      resource_type,
+	//      resource_id,
+	//      ACTION,
+	//      entity_id,
+	//      context_hash,
+	//      decision,
+	//      applicable_policies,
+	//      policy_decisions,
+	//      evaluation_time_ms,
+	//      cache_key,
+	//      expires_at
+	//    )
+	//  VALUES
+	//    (
+	//      current_tenant_id(),
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9,
+	//      $10,
+	//      $11,
+	//      $12
+	//    ) ON CONFLICT (
+	//      tenant_id,
+	//      user_id,
+	//      resource_type,
+	//      resource_id,
+	//      ACTION,
+	//      context_hash
+	//    ) DO
+	//  UPDATE
+	//  SET
+	//    decision = EXCLUDED.decision,
+	//    applicable_policies = EXCLUDED.applicable_policies,
+	//    policy_decisions = EXCLUDED.policy_decisions,
+	//    evaluation_time_ms = EXCLUDED.evaluation_time_ms,
+	//    evaluated_at = NOW(),
+	//    expires_at = EXCLUDED.expires_at
 	CacheEvaluationResult(ctx context.Context, arg CacheEvaluationResultParams) error
 	//CheckCircularReference
 	//
-	//  SELECT EXISTS(
-	//    SELECT 1 FROM hierarchy_paths
-	//    WHERE tenant_id = current_tenant_id()
-	//    AND ancestor_id = $2
-	//    AND descendant_id = $1
-	//  )::BOOLEAN AS exists
+	//  SELECT
+	//    EXISTS(
+	//      SELECT
+	//        1
+	//      FROM
+	//        hierarchy_paths
+	//      WHERE
+	//        tenant_id = current_tenant_id()
+	//        AND ancestor_id = $2
+	//        AND descendant_id = $1
+	//    )::BOOLEAN AS EXISTS
 	CheckCircularReference(ctx context.Context, arg CheckCircularReferenceParams) (bool, error)
 	// =====================================================
 	// UTILITY QUERIES
 	// =====================================================
 	// Current tenant utilities
 	//
-	//
-	//
-	//  SELECT EXISTS(
-	//      SELECT 1 FROM tenants
-	//      WHERE id = current_tenant_id() AND deleted_at IS NULL
-	//  )
+	//  SELECT
+	//    EXISTS(
+	//      SELECT
+	//        1
+	//      FROM
+	//        tenants
+	//      WHERE
+	//        id = current_tenant_id()
+	//        AND deleted_at IS NULL
+	//    )
 	CheckCurrentTenantExists(ctx context.Context) (bool, error)
 	//CheckEmailAvailability
 	//
-	//  SELECT COUNT(*) = 0 FROM users WHERE email = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    COUNT(*) = 0
+	//  FROM
+	//    users
+	//  WHERE
+	//    email = $1
+	//    AND deleted_at IS NULL
+	//    AND tenant_id = current_tenant_id()
 	CheckEmailAvailability(ctx context.Context, email string) (bool, error)
 	//CheckEmployeeNumberAvailability
 	//
-	//  SELECT COUNT(*) = 0 FROM employees WHERE employee_number = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    COUNT(*) = 0
+	//  FROM
+	//    employees
+	//  WHERE
+	//    employee_number = $1
+	//    AND deleted_at IS NULL
+	//    AND tenant_id = current_tenant_id()
 	CheckEmployeeNumberAvailability(ctx context.Context, employeeNumber string) (bool, error)
 	//CheckSubdomainExists
 	//
-	//  SELECT EXISTS(
-	//      SELECT 1 FROM tenants
-	//      WHERE subdomain = $1 AND deleted_at IS NULL
-	//  )
+	//  SELECT
+	//    EXISTS(
+	//      SELECT
+	//        1
+	//      FROM
+	//        tenants
+	//      WHERE
+	//        subdomain = $1
+	//        AND deleted_at IS NULL
+	//    )
 	CheckSubdomainExists(ctx context.Context, subdomain *string) (bool, error)
 	//CheckTenantExists
 	//
-	//  SELECT EXISTS(
-	//      SELECT 1 FROM tenants
-	//      WHERE id = $1 AND deleted_at IS NULL
-	//  )
+	//  SELECT
+	//    EXISTS(
+	//      SELECT
+	//        1
+	//      FROM
+	//        tenants
+	//      WHERE
+	//        id = $1
+	//        AND deleted_at IS NULL
+	//    )
 	CheckTenantExists(ctx context.Context, id uuid.UUID) (bool, error)
 	//CheckTenantLimits
 	//
-	//  SELECT check_tenant_limits(current_tenant_id(), $1, $2)
+	//  SELECT
+	//    check_tenant_limits(current_tenant_id(), $1, $2)
 	CheckTenantLimits(ctx context.Context, arg CheckTenantLimitsParams) (bool, error)
 	//CheckTenantNameExists
 	//
-	//  SELECT EXISTS(
-	//      SELECT 1 FROM tenants
-	//      WHERE name = $1 AND deleted_at IS NULL
-	//  )
+	//  SELECT
+	//    EXISTS(
+	//      SELECT
+	//        1
+	//      FROM
+	//        tenants
+	//      WHERE
+	//        name = $1
+	//        AND deleted_at IS NULL
+	//    )
 	CheckTenantNameExists(ctx context.Context, name string) (bool, error)
 	//CheckUsernameAvailability
 	//
-	//  SELECT COUNT(*) = 0 FROM users WHERE username = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    COUNT(*) = 0
+	//  FROM
+	//    users
+	//  WHERE
+	//    username = $1
+	//    AND deleted_at IS NULL
+	//    AND tenant_id = current_tenant_id()
 	CheckUsernameAvailability(ctx context.Context, username *string) (bool, error)
+	// Remove duplicate events keeping only the first occurrence
+	//
+	//  WITH duplicates AS (
+	//    SELECT
+	//      id,
+	//      ROW_NUMBER() OVER (
+	//        PARTITION BY user_id,
+	//        event_type,
+	//        event_category,
+	//        ip_address,
+	//        DATE_TRUNC('minute', created_at)
+	//        ORDER BY
+	//          created_at ASC
+	//      ) AS rn
+	//    FROM
+	//      audit_log
+	//    WHERE
+	//      tenant_id = current_tenant_id()
+	//      AND audit_log.created_at >= $1
+	//      AND audit_log.created_at <= $2
+	//  )
+	//  DELETE FROM
+	//    audit_log
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND id IN (
+	//      SELECT
+	//        id
+	//      FROM
+	//        duplicates
+	//      WHERE
+	//        rn > 1
+	//    )
+	CleanupDuplicateEvents(ctx context.Context, arg CleanupDuplicateEventsParams) error
 	//CleanupExpiredEvaluations
 	//
-	//  DELETE FROM policy_evaluations
-	//  WHERE expires_at < NOW() AND tenant_id = current_tenant_id()
+	//  DELETE FROM
+	//    policy_evaluations
+	//  WHERE
+	//    expires_at < NOW()
+	//    AND tenant_id = current_tenant_id()
 	CleanupExpiredEvaluations(ctx context.Context) error
 	// For future use when we add expires_at to metadata
 	//
-	//  SELECT COUNT(*) FROM feature_flags
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    COUNT(*)
+	//  FROM
+	//    feature_flags
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND deleted_at IS NULL
 	CleanupExpiredFeatureFlags(ctx context.Context) (int64, error)
 	// =====================================================================
 	// 7. MAINTENANCE AND CLEANUP QUERIES
 	// =====================================================================
 	//
-	//
-	//  DELETE FROM hierarchy_paths
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND (
-	//    NOT EXISTS(SELECT 1 FROM entities WHERE uuid = ancestor_id AND tenant_id = current_tenant_id())
-	//    OR NOT EXISTS(SELECT 1 FROM entities WHERE uuid = descendant_id AND tenant_id = current_tenant_id())
-	//  )
+	//  DELETE FROM
+	//    hierarchy_paths
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND (
+	//      NOT EXISTS(
+	//        SELECT
+	//          1
+	//        FROM
+	//          entities
+	//        WHERE
+	//          uuid = ancestor_id
+	//          AND tenant_id = current_tenant_id()
+	//      )
+	//      OR NOT EXISTS(
+	//        SELECT
+	//          1
+	//        FROM
+	//          entities
+	//        WHERE
+	//          uuid = descendant_id
+	//          AND tenant_id = current_tenant_id()
+	//      )
+	//    )
 	CleanupOrphanedHierarchyPaths(ctx context.Context) error
 	//CountAccessRequestsByStatus
 	//
 	//  SELECT
-	//      COUNT(*) as total_requests,
-	//      SUM(CASE WHEN approval_status = 'PENDING' THEN 1 ELSE 0 END) as pending_requests,
-	//      SUM(CASE WHEN approval_status = 'APPROVED' THEN 1 ELSE 0 END) as approved_requests,
-	//      SUM(CASE WHEN approval_status = 'REJECTED' THEN 1 ELSE 0 END) as rejected_requests,
-	//      SUM(CASE WHEN approval_status = 'EXPIRED' THEN 1 ELSE 0 END) as expired_requests
-	//  FROM access_requests
-	//  WHERE tenant_id = current_tenant_id()
+	//    COUNT(*) AS total_requests,
+	//    SUM(
+	//      CASE
+	//        WHEN approval_status = 'PENDING' THEN 1
+	//        ELSE 0
+	//      END
+	//    ) AS pending_requests,
+	//    SUM(
+	//      CASE
+	//        WHEN approval_status = 'APPROVED' THEN 1
+	//        ELSE 0
+	//      END
+	//    ) AS approved_requests,
+	//    SUM(
+	//      CASE
+	//        WHEN approval_status = 'REJECTED' THEN 1
+	//        ELSE 0
+	//      END
+	//    ) AS rejected_requests,
+	//    SUM(
+	//      CASE
+	//        WHEN approval_status = 'EXPIRED' THEN 1
+	//        ELSE 0
+	//      END
+	//    ) AS expired_requests
+	//  FROM
+	//    access_requests
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND created_at >= $1
 	//    AND created_at <= $2
 	CountAccessRequestsByStatus(ctx context.Context, arg CountAccessRequestsByStatusParams) (*CountAccessRequestsByStatusRow, error)
 	//CountAttributeDefinitions
 	//
-	//  SELECT COUNT(*) FROM attribute_definitions
-	//  WHERE tenant_id = current_tenant_id()
-	//    AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
-	//    AND ($2::VARCHAR IS NULL OR category = $2)
-	//    AND ($3::BOOLEAN IS NULL OR is_active = $3)
+	//  SELECT
+	//    COUNT(*)
+	//  FROM
+	//    attribute_definitions
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND (
+	//      $1::VARCHAR IS NULL
+	//      OR name ILIKE '%' || $1 || '%'
+	//    )
+	//    AND (
+	//      $2::VARCHAR IS NULL
+	//      OR category = $2
+	//    )
+	//    AND (
+	//      $3::BOOLEAN IS NULL
+	//      OR is_active = $3
+	//    )
 	CountAttributeDefinitions(ctx context.Context, arg CountAttributeDefinitionsParams) (int64, error)
 	//CountEntitiesWithFilters
 	//
-	//  SELECT COUNT(*) AS count
-	//  FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND deleted_at IS NULL
-	//  AND ($1 IS NULL OR type = $1)
-	//  AND ($2 IS NULL OR is_active = $2)
-	//  AND ($3 IS NULL OR hidden = $3)
+	//  SELECT
+	//    COUNT(*) AS count
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	//    AND (
+	//      $1 IS NULL
+	//      OR TYPE = $1
+	//    )
+	//    AND (
+	//      $2 IS NULL
+	//      OR is_active = $2
+	//    )
+	//    AND (
+	//      $3 IS NULL
+	//      OR hidden = $3
+	//    )
 	CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error)
 	//CountEvaluationsByDecision
 	//
 	//  SELECT
-	//      COUNT(CASE WHEN decision = 'ALLOW' THEN 1 END) as allow_count,
-	//      COUNT(CASE WHEN decision = 'DENY' THEN 1 END) as deny_count,
-	//      COUNT(CASE WHEN decision = 'NOT_APPLICABLE' THEN 1 END) as not_applicable_count,
-	//      COUNT(*) as total_count
-	//  FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
+	//    COUNT(
+	//      CASE
+	//        WHEN decision = 'ALLOW' THEN 1
+	//      END
+	//    ) AS allow_count,
+	//    COUNT(
+	//      CASE
+	//        WHEN decision = 'DENY' THEN 1
+	//      END
+	//    ) AS deny_count,
+	//    COUNT(
+	//      CASE
+	//        WHEN decision = 'NOT_APPLICABLE' THEN 1
+	//      END
+	//    ) AS not_applicable_count,
+	//    COUNT(*) AS total_count
+	//  FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND evaluated_at >= $1
 	//    AND evaluated_at <= $2
 	CountEvaluationsByDecision(ctx context.Context, arg CountEvaluationsByDecisionParams) (*CountEvaluationsByDecisionRow, error)
 	//CountFilteredTenants
 	//
-	//  SELECT COUNT(*) FROM tenants
-	//  WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
-	//    AND ($2::varchar IS NULL OR status = $2)
-	//    AND ($3::varchar IS NULL OR industry = $3)
+	//  SELECT
+	//    COUNT(*)
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    (
+	//      $1::varchar IS NULL
+	//      OR name ILIKE '%' || $1 || '%'
+	//    )
+	//    AND (
+	//      $2::varchar IS NULL
+	//      OR STATUS = $2
+	//    )
+	//    AND (
+	//      $3::varchar IS NULL
+	//      OR industry = $3
+	//    )
 	//    AND deleted_at IS NULL
 	CountFilteredTenants(ctx context.Context, arg CountFilteredTenantsParams) (int64, error)
 	//CountPolicies
 	//
-	//  SELECT COUNT(*) FROM policies
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    COUNT(*)
+	//  FROM
+	//    policies
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND deleted_at IS NULL
-	//    AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
-	//    AND ($2::VARCHAR IS NULL OR category = $2)
-	//    AND ($3::BOOLEAN IS NULL OR is_active = $3)
+	//    AND (
+	//      $1::VARCHAR IS NULL
+	//      OR name ILIKE '%' || $1 || '%'
+	//    )
+	//    AND (
+	//      $2::VARCHAR IS NULL
+	//      OR category = $2
+	//    )
+	//    AND (
+	//      $3::BOOLEAN IS NULL
+	//      OR is_active = $3
+	//    )
 	CountPolicies(ctx context.Context, arg CountPoliciesParams) (int64, error)
 	//CountTenants
 	//
-	//  SELECT COUNT(*) FROM tenants
-	//  WHERE deleted_at IS NULL
+	//  SELECT
+	//    COUNT(*)
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    deleted_at IS NULL
 	CountTenants(ctx context.Context) (int64, error)
 	//CreateAccessRequest
 	//
-	//  INSERT INTO access_requests (
-	//      tenant_id, requester_id, target_user_id, entity_id, request_type,
-	//      role_id, permission_id, resource_id, justification, business_reason,
-	//      duration_hours, expires_at, auto_revoke
-	//  ) VALUES (
-	//      current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-	//  ) RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+	//  INSERT INTO
+	//    access_requests (
+	//      tenant_id,
+	//      requester_id,
+	//      target_user_id,
+	//      entity_id,
+	//      request_type,
+	//      role_id,
+	//      permission_id,
+	//      resource_id,
+	//      justification,
+	//      business_reason,
+	//      duration_hours,
+	//      expires_at,
+	//      auto_revoke
+	//    )
+	//  VALUES
+	//    (
+	//      current_tenant_id(),
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9,
+	//      $10,
+	//      $11,
+	//      $12
+	//    )
+	//  RETURNING
+	//    id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
 	CreateAccessRequest(ctx context.Context, arg CreateAccessRequestParams) (*AccessRequest, error)
 	//CreateAction
 	//
-	//  INSERT INTO actions (
-	//      tenant_id,
-	//      name,
-	//      action_type
-	//  ) VALUES (
-	//      current_tenant_id(), $1, $2
-	//  ) RETURNING id, tenant_id, name, display_name, description, action_type, action_category, risk_level, requires_approval, is_active, created_at
+	//  INSERT INTO
+	//    actions (tenant_id, name, action_type)
+	//  VALUES
+	//    (current_tenant_id(), $1, $2)
+	//  RETURNING
+	//    id, tenant_id, name, display_name, description, action_type, action_category, risk_level, requires_approval, is_active, created_at
 	CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error)
 	// Attribute Definitions CRUD Operations
 	//
-	//
-	//  INSERT INTO attribute_definitions (
-	//      tenant_id, name, display_name, description, data_type, category,
-	//      is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active
-	//  ) VALUES (
-	//      current_tenant_id(), $1, $2, $3, $4, $5,
-	//      $6, $7, $8, $9, $10, $11, $12
-	//  ) RETURNING id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at
+	//  INSERT INTO
+	//    attribute_definitions (
+	//      tenant_id,
+	//      name,
+	//      display_name,
+	//      description,
+	//      data_type,
+	//      category,
+	//      is_required,
+	//      is_sensitive,
+	//      default_value,
+	//      allowed_values,
+	//      validation_rules,
+	//      encryption_required,
+	//      is_active
+	//    )
+	//  VALUES
+	//    (
+	//      current_tenant_id(),
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9,
+	//      $10,
+	//      $11,
+	//      $12
+	//    )
+	//  RETURNING
+	//    id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at
 	CreateAttributeDefinition(ctx context.Context, arg CreateAttributeDefinitionParams) (*AttributeDefinition, error)
 	// Attribute Values Operations
 	//
-	//  INSERT INTO attribute_values (
-	//      tenant_id, definition_id, entity_id, value, encrypted_value, is_encrypted,
-	//      version, effective_from, effective_to, created_by
-	//  ) VALUES (
-	//      current_tenant_id(), $1, $2, $3, $4, $5,
-	//      $6, $7, $8, $9
-	//  ) RETURNING id, tenant_id, definition_id, entity_id, value, encrypted_value, is_encrypted, version, effective_from, effective_to, created_at, created_by, updated_at, updated_by
+	//  INSERT INTO
+	//    attribute_values (
+	//      tenant_id,
+	//      definition_id,
+	//      entity_id,
+	//      value,
+	//      encrypted_value,
+	//      is_encrypted,
+	//      version,
+	//      effective_from,
+	//      effective_to,
+	//      created_by
+	//    )
+	//  VALUES
+	//    (
+	//      current_tenant_id(),
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9
+	//    )
+	//  RETURNING
+	//    id, tenant_id, definition_id, entity_id, value, encrypted_value, is_encrypted, version, effective_from, effective_to, created_at, created_by, updated_at, updated_by
 	CreateAttributeValue(ctx context.Context, arg CreateAttributeValueParams) (*AttributeValue, error)
-	//CreateAuditEvent
+	// ================================================================================================
+	// AUDIT LOG QUERIES - ADVANCED WITH SQLC.NARG/SQLC.ARG AND TENANT ISOLATION
+	// ================================================================================================
 	//
-	//  INSERT INTO audit_log (
-	//    tenant_id,
-	//    user_id,
-	//    event_type,
-	//    event_category,
-	//    severity,
-	//    entity_id,
-	//    decision,
-	//    reason,
-	//    context
-	//  ) VALUES (
-	//    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8
-	//  )
-	//  RETURNING id, tenant_id, event_type, event_category, severity, user_id, target_user_id, entity_id, resource_id, action_id, role_id, permission_id, decision, reason, risk_score, context, ip_address, user_agent, session_id, compliance_flags, created_at
+	//  INSERT INTO
+	//    audit_log (
+	//      tenant_id,
+	//      user_id,
+	//      event_type,
+	//      event_category,
+	//      severity,
+	//      entity_id,
+	//      decision,
+	//      reason,
+	//      context
+	//    )
+	//  VALUES
+	//    (
+	//      current_tenant_id(),
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8
+	//    )
+	//  RETURNING
+	//    id, tenant_id, event_type, event_category, severity, user_id, target_user_id, entity_id, resource_id, action_id, role_id, permission_id, decision, reason, risk_score, context, ip_address, user_agent, session_id, compliance_flags, created_at
 	CreateAuditEvent(ctx context.Context, arg CreateAuditEventParams) (*AuditLog, error)
 	//CreateDefaultTenantConfiguration
 	//
-	//  SELECT create_default_tenant_configuration(current_tenant_id())
+	//  SELECT
+	//    create_default_tenant_configuration(current_tenant_id())
 	CreateDefaultTenantConfiguration(ctx context.Context) error
 	//CreateEmployee
 	//
-	//  INSERT INTO employees (
-	//      person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, salary_info, employment_status, work_schedule, security_level, access_attributes
-	//  ) VALUES (
-	//      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-	//  ) RETURNING id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  INSERT INTO
+	//    employees (
+	//      person_id,
+	//      employee_number,
+	//      entity_id,
+	//      position_title,
+	//      department_id,
+	//      manager_id,
+	//      hire_date,
+	//      salary_info,
+	//      employment_status,
+	//      work_schedule,
+	//      security_level,
+	//      access_attributes
+	//    )
+	//  VALUES
+	//    (
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9,
+	//      $10,
+	//      $11,
+	//      $12
+	//    )
+	//  RETURNING
+	//    id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 	CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (*Employee, error)
 	// Entity CRUD Operations
 	//
-	//  INSERT INTO entities (
-	//    uuid, tenant_id, parent_id, name, code, type, is_active,
-	//    hidden, accrual_method, fy_start_month, address, picture, metadata, settings
-	//  ) VALUES (
-	//    $1, current_tenant_id(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13
-	//  ) RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  INSERT INTO
+	//    entities (
+	//      uuid,
+	//      tenant_id,
+	//      parent_id,
+	//      name,
+	//      code,
+	//      TYPE,
+	//      is_active,
+	//      hidden,
+	//      accrual_method,
+	//      fy_start_month,
+	//      address,
+	//      picture,
+	//      metadata,
+	//      settings
+	//    )
+	//  VALUES
+	//    (
+	//      $1,
+	//      current_tenant_id(),
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9,
+	//      $10,
+	//      $11,
+	//      $12,
+	//      $13
+	//    )
+	//  RETURNING
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (*Entity, error)
 	// ===============================================
 	// Entity State Management
 	// ===============================================
 	//
-	//
-	//
-	//
-	//  INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
-	//  VALUES ($1, $2, $3, $4, $5, $6)
-	//  RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
+	//  INSERT INTO
+	//    entitystate (
+	//      uuid,
+	//      fiscal_year,
+	//      KEY,
+	//      sequence,
+	//      entity_id,
+	//      entity_unit_id
+	//    )
+	//  VALUES
+	//    ($1, $2, $3, $4, $5, $6)
+	//  RETURNING
+	//    uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
 	CreateEntityState(ctx context.Context, arg CreateEntityStateParams) (*Entitystate, error)
 	// =====================================================================
 	//  SIMPLIFIED FEATURE FLAG QUERIES
 	//  Matching the actual table schema from migrations
 	// =====================================================================
 	//
-	//
-	//  INSERT INTO feature_flags (
-	//      tenant_id, name, description, flag_type, default_value,
-	//      rollout_percentage, target_audience, metadata
-	//  ) VALUES (
-	//      current_tenant_id(), $1, $2, $3, $4, $5, $6, $7
-	//  ) RETURNING id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+	//  INSERT INTO
+	//    feature_flags (
+	//      tenant_id,
+	//      name,
+	//      description,
+	//      flag_type,
+	//      default_value,
+	//      rollout_percentage,
+	//      target_audience,
+	//      metadata
+	//    )
+	//  VALUES
+	//    (
+	//      current_tenant_id(),
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7
+	//    )
+	//  RETURNING
+	//    id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 	CreateFeatureFlag(ctx context.Context, arg CreateFeatureFlagParams) (*FeatureFlag, error)
 	// Entity Hierarchy Operations
 	//
-	//  INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
-	//  VALUES (current_tenant_id(), $1, $2, $3)
+	//  INSERT INTO
+	//    hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	//  VALUES
+	//    (current_tenant_id(), $1, $2, $3)
 	CreateHierarchyPath(ctx context.Context, arg CreateHierarchyPathParams) error
 	//CreateModule
 	//
-	//  INSERT INTO modules (
+	//  INSERT INTO
+	//    modules (
 	//      tenant_id,
 	//      name,
 	//      display_name,
 	//      category
-	//  ) VALUES (
-	//      current_tenant_id(), $1, $2, $3
-	//  ) RETURNING id, tenant_id, name, display_name, description, category, version, is_active, validation_version, last_validation_run, validation_status, validation_errors, created_at
+	//    )
+	//  VALUES
+	//    (current_tenant_id(), $1, $2, $3)
+	//  RETURNING
+	//    id, tenant_id, name, display_name, description, category, version, is_active, validation_version, last_validation_run, validation_status, validation_errors, created_at
 	CreateModule(ctx context.Context, arg CreateModuleParams) (*Module, error)
 	//CreatePerson
 	//
-	//  INSERT INTO persons (
-	//      entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata
-	//  ) VALUES (
-	//      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
-	//  ) RETURNING id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  INSERT INTO
+	//    persons (
+	//      entity_id,
+	//      person_type,
+	//      first_name,
+	//      last_name,
+	//      middle_name,
+	//      email,
+	//      phone,
+	//      birth_date,
+	//      national_id,
+	//      tax_id,
+	//      address,
+	//      security_attributes,
+	//      metadata
+	//    )
+	//  VALUES
+	//    (
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9,
+	//      $10,
+	//      $11,
+	//      $12,
+	//      $13
+	//    )
+	//  RETURNING
+	//    id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 	CreatePerson(ctx context.Context, arg CreatePersonParams) (*Person, error)
 	// Policies CRUD Operations
 	//
-	//
-	//  INSERT INTO policies (
-	//      tenant_id, entity_id, name, display_name, description, policy_type,
-	//      effect, priority, category, target, rule, obligations, advice, is_active, created_by
-	//  ) VALUES (
-	//      current_tenant_id(), $1, $2, $3, $4, $5,
-	//      $6, $7, $8, $9, $10, $11, $12, $13, $14
-	//  ) RETURNING id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+	//  INSERT INTO
+	//    policies (
+	//      tenant_id,
+	//      entity_id,
+	//      name,
+	//      display_name,
+	//      description,
+	//      policy_type,
+	//      effect,
+	//      priority,
+	//      category,
+	//      target,
+	//      rule,
+	//      obligations,
+	//      advice,
+	//      is_active,
+	//      created_by
+	//    )
+	//  VALUES
+	//    (
+	//      current_tenant_id(),
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9,
+	//      $10,
+	//      $11,
+	//      $12,
+	//      $13,
+	//      $14
+	//    )
+	//  RETURNING
+	//    id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
 	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*Policy, error)
 	//CreatePolicyEvaluation
 	//
-	//  INSERT INTO policy_evaluations (
+	//  INSERT INTO
+	//    policy_evaluations (
 	//      user_id,
 	//      resource_id,
-	//      action,
+	//      ACTION,
 	//      context_hash,
 	//      decision
-	//  ) VALUES (
-	//      $1, $2, $3, $4, $5
-	//  ) RETURNING id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+	//    )
+	//  VALUES
+	//    ($1, $2, $3, $4, $5)
+	//  RETURNING
+	//    id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
 	CreatePolicyEvaluation(ctx context.Context, arg CreatePolicyEvaluationParams) (*PolicyEvaluation, error)
 	//CreateResource
 	//
-	//  INSERT INTO resources (
+	//  INSERT INTO
+	//    resources (
 	//      tenant_id,
 	//      module_id,
 	//      name,
 	//      resource_type
-	//  ) VALUES (
-	//      current_tenant_id(), $1, $2, $3
-	//  ) RETURNING id, tenant_id, module_id, entity_id, name, display_name, description, resource_type, parent_resource_id, path, resource_attributes, is_active, created_at, deleted_at
+	//    )
+	//  VALUES
+	//    (current_tenant_id(), $1, $2, $3)
+	//  RETURNING
+	//    id, tenant_id, module_id, entity_id, name, display_name, description, resource_type, parent_resource_id, path, resource_attributes, is_active, created_at, deleted_at
 	CreateResource(ctx context.Context, arg CreateResourceParams) (*Resource, error)
 	// =====================================================
 	// TENANT MANAGEMENT QUERIES (Admin/System Level)
 	// Note: These queries are for system administrators managing tenants
 	// =====================================================
 	//
-	//
-	//  INSERT INTO tenants (name, slug, email, subdomain, status, industry)
-	//  VALUES ($1, $2, $3, $4, $5, $6)
-	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  INSERT INTO
+	//    tenants (name, slug, email, subdomain, STATUS, industry)
+	//  VALUES
+	//    ($1, $2, $3, $4, $5, $6)
+	//  RETURNING
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	CreateTenant(ctx context.Context, arg CreateTenantParams) (*Tenant, error)
 	// =====================================================
 	// ENHANCED TENANT QUERIES WITH NEW FIELDS
 	// =====================================================
 	//
-	//
-	//  INSERT INTO tenants (
-	//      name, slug, email, subdomain, status, timezone, currency_code,
-	//      metadata, industry, company_size, tax_id, registration_number,
-	//      legal_entity_type, settings
-	//  ) VALUES (
-	//      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-	//  ) RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  INSERT INTO
+	//    tenants (
+	//      name,
+	//      slug,
+	//      email,
+	//      subdomain,
+	//      STATUS,
+	//      timezone,
+	//      currency_code,
+	//      metadata,
+	//      industry,
+	//      company_size,
+	//      tax_id,
+	//      registration_number,
+	//      legal_entity_type,
+	//      settings
+	//    )
+	//  VALUES
+	//    (
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9,
+	//      $10,
+	//      $11,
+	//      $12,
+	//      $13,
+	//      $14
+	//    )
+	//  RETURNING
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	CreateTenantComplete(ctx context.Context, arg CreateTenantCompleteParams) (*Tenant, error)
 	// -- =====================================================
 	// -- SQLC QUERIES FOR ERP/ACCOUNTING SYSTEM
@@ -737,98 +1347,214 @@ type Querier interface {
 	// TENANT CONFIGURATIONS QUERIES (RLS-AWARE)
 	// =====================================================
 	//
-	//
-	//
-	//
-	//  INSERT INTO tenant_configurations (
-	//      tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota,
-	//      features, modules_enabled, accounting_method, fiscal_year_start_month,
-	//      default_currency, date_format, number_format, language_code,
-	//      password_policy, webhook_endpoints, api_rate_limits
-	//  ) VALUES (
-	//      current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
-	//  ) RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+	//  INSERT INTO
+	//    tenant_configurations (
+	//      tenant_id,
+	//      max_users,
+	//      max_entities,
+	//      max_transactions_per_month,
+	//      storage_quota,
+	//      features,
+	//      modules_enabled,
+	//      accounting_method,
+	//      fiscal_year_start_month,
+	//      default_currency,
+	//      date_format,
+	//      number_format,
+	//      language_code,
+	//      password_policy,
+	//      webhook_endpoints,
+	//      api_rate_limits
+	//    )
+	//  VALUES
+	//    (
+	//      current_tenant_id(),
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9,
+	//      $10,
+	//      $11,
+	//      $12,
+	//      $13,
+	//      $14,
+	//      $15
+	//    )
+	//  RETURNING
+	//    tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 	CreateTenantConfiguration(ctx context.Context, arg CreateTenantConfigurationParams) (*TenantConfiguration, error)
 	//CreateUser
 	//
-	//  INSERT INTO users (
-	//      entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, session_timeout_minutes, mfa_enabled, user_attributes, settings
-	//  ) VALUES (
-	//      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-	//  ) RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
+	//  INSERT INTO
+	//    users (
+	//      entity_id,
+	//      person_id,
+	//      employee_id,
+	//      username,
+	//      email,
+	//      password_hash,
+	//      user_type,
+	//      account_status,
+	//      session_timeout_minutes,
+	//      mfa_enabled,
+	//      user_attributes,
+	//      settings
+	//    )
+	//  VALUES
+	//    (
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9,
+	//      $10,
+	//      $11,
+	//      $12
+	//    )
+	//  RETURNING
+	//    id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	//CreateUserNotificationPreferences
 	//
-	//  INSERT INTO notification_preferences (
-	//    tenant_id,
-	//    user_id,
-	//    email_notifications,
-	//    in_app_notifications,
-	//    slack_notifications,
-	//    notification_types,
-	//    preferred_channels,
-	//    quiet_hours
-	//  ) VALUES (
-	//    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7
-	//  )
-	//  RETURNING id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
+	//  INSERT INTO
+	//    notification_preferences (
+	//      tenant_id,
+	//      user_id,
+	//      email_notifications,
+	//      in_app_notifications,
+	//      slack_notifications,
+	//      notification_types,
+	//      preferred_channels,
+	//      quiet_hours
+	//    )
+	//  VALUES
+	//    (
+	//      current_tenant_id(),
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7
+	//    )
+	//  RETURNING
+	//    id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
 	CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	//DeleteAttributeDefinition
 	//
-	//  DELETE FROM attribute_definitions
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  DELETE FROM
+	//    attribute_definitions
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	//DeleteAttributeValue
 	//
-	//  DELETE FROM attribute_values
-	//  WHERE definition_id = $1 AND entity_id = $2 AND tenant_id = current_tenant_id()
+	//  DELETE FROM
+	//    attribute_values
+	//  WHERE
+	//    definition_id = $1
+	//    AND entity_id = $2
+	//    AND tenant_id = current_tenant_id()
 	DeleteAttributeValue(ctx context.Context, arg DeleteAttributeValueParams) error
 	//DeleteEntityState
 	//
-	//  DELETE FROM entitystate
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND entity_id = $1
-	//  AND key = $2
-	//  AND fiscal_year = $3
+	//  DELETE FROM
+	//    entitystate
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND entity_id = $1
+	//    AND KEY = $2
+	//    AND fiscal_year = $3
 	DeleteEntityState(ctx context.Context, arg DeleteEntityStateParams) error
 	//DeleteFeatureFlag
 	//
-	//  UPDATE feature_flags
-	//  SET deleted_at = NOW(), updated_at = NOW()
-	//  WHERE tenant_id = current_tenant_id()
+	//  UPDATE
+	//    feature_flags
+	//  SET
+	//    deleted_at = NOW(),
+	//    updated_at = NOW()
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND id = $1
 	//    AND deleted_at IS NULL
 	DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error
 	//DeleteHierarchyPaths
 	//
-	//  DELETE FROM hierarchy_paths
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND (ancestor_id = $1 OR descendant_id = $1)
+	//  DELETE FROM
+	//    hierarchy_paths
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND (
+	//      ancestor_id = $1
+	//      OR descendant_id = $1
+	//    )
 	DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID) error
+	// Delete audit events older than specified date (for retention policies)
+	//
+	//  DELETE FROM
+	//    audit_log
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND created_at < $1
+	DeleteOldAuditEvents(ctx context.Context, cutoffDate sql.NullTime) error
 	//DeleteTenant
 	//
-	//  DELETE FROM tenants
+	//  DELETE FROM
+	//    tenants
 	DeleteTenant(ctx context.Context) error
 	// DELETE FROM tenant_configurations;
 	// =====================================================
 	// TENANT USAGE STATISTICS QUERIES (RLS-AWARE)
 	// =====================================================
 	//
-	//
-	//
-	//  INSERT INTO tenant_usage_stats (
-	//      tenant_id, period_start, period_end, active_users, total_entities,
-	//      total_transactions, storage_used, api_calls, avg_response_time,
-	//      error_rate, monthly_revenue
-	//  ) VALUES (
-	//      current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-	//  ) RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+	//  INSERT INTO
+	//    tenant_usage_stats (
+	//      tenant_id,
+	//      period_start,
+	//      period_end,
+	//      active_users,
+	//      total_entities,
+	//      total_transactions,
+	//      storage_used,
+	//      api_calls,
+	//      avg_response_time,
+	//      error_rate,
+	//      monthly_revenue
+	//    )
+	//  VALUES
+	//    (
+	//      current_tenant_id(),
+	//      $1,
+	//      $2,
+	//      $3,
+	//      $4,
+	//      $5,
+	//      $6,
+	//      $7,
+	//      $8,
+	//      $9,
+	//      $10
+	//    )
+	//  RETURNING
+	//    tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
 	DeleteTenantConfiguration(ctx context.Context, arg DeleteTenantConfigurationParams) error
 	//DeleteTenantUsageStats
 	//
-	//  DELETE FROM tenant_usage_stats
-	//
-	//  WHERE period_start = $1
+	//  DELETE FROM
+	//    tenant_usage_stats
+	//  WHERE
+	//    period_start = $1
 	//    AND tenant_id = current_tenant_id()
 	DeleteTenantUsageStats(ctx context.Context, periodStart time.Time) error
 	// =====================================================================
@@ -837,137 +1563,350 @@ type Querier interface {
 	// Usage: Removes entity states for old fiscal years or inactive entities
 	// Use case: Data retention policy enforcement, database cleanup
 	//
-	//
-	//  DELETE FROM entitystate
-	//  WHERE entity_id = $1
-	//  AND fiscal_year < $2
-	//  AND tenant_id = current_tenant_id()
+	//  DELETE FROM
+	//    entitystate
+	//  WHERE
+	//    entity_id = $1
+	//    AND fiscal_year < $2
+	//    AND tenant_id = current_tenant_id()
 	DeleteUnusedEntityStates(ctx context.Context, arg DeleteUnusedEntityStatesParams) error
 	//ExpireAttributeValue
 	//
-	//  UPDATE attribute_values
-	//  SET effective_to = NOW(), updated_at = NOW(), updated_by = $2
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    attribute_values
+	//  SET
+	//    effective_to = NOW(),
+	//    updated_at = NOW(),
+	//    updated_by = $2
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	ExpireAttributeValue(ctx context.Context, arg ExpireAttributeValueParams) error
 	// =====================================================
 	// ADVANCED QUERIES WITH FILTERS
 	// =====================================================
 	//
-	//
-	//  SELECT id, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
-	//  WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
-	//    AND ($2::varchar IS NULL OR status = $2)
-	//    AND ($3::varchar IS NULL OR industry = $3)
+	//  SELECT
+	//    id,
+	//    name,
+	//    subdomain,
+	//    STATUS,
+	//    industry,
+	//    created_at,
+	//    updated_at,
+	//    deleted_at
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    (
+	//      $1::varchar IS NULL
+	//      OR name ILIKE '%' || $1 || '%'
+	//    )
+	//    AND (
+	//      $2::varchar IS NULL
+	//      OR STATUS = $2
+	//    )
+	//    AND (
+	//      $3::varchar IS NULL
+	//      OR industry = $3
+	//    )
 	//    AND deleted_at IS NULL
 	//  ORDER BY
-	//    CASE WHEN $4::varchar = 'name' THEN name END ASC,
-	//    CASE WHEN $4::varchar = 'created_at' THEN created_at END DESC,
-	//    CASE WHEN $4::varchar = 'updated_at' THEN updated_at END DESC,
+	//    CASE
+	//      WHEN $4::varchar = 'name' THEN name
+	//    END ASC,
+	//    CASE
+	//      WHEN $4::varchar = 'created_at' THEN created_at
+	//    END DESC,
+	//    CASE
+	//      WHEN $4::varchar = 'updated_at' THEN updated_at
+	//    END DESC,
 	//    id DESC
-	//  LIMIT $6 OFFSET $5
+	//  LIMIT
+	//    $6 OFFSET $5
 	FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]*FilterTenantsRow, error)
 	//GetAccessRequestByID
 	//
-	//  SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+	//  FROM
+	//    access_requests
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*AccessRequest, error)
 	//GetActiveFeatureFlags
 	//
-	//  SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+	//  FROM
+	//    feature_flags
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND deleted_at IS NULL
-	//    AND default_value = true
-	//  ORDER BY name
+	//    AND default_value = TRUE
+	//  ORDER BY
+	//    name
 	GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, error)
 	//GetActiveTenants
 	//
-	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-	//  WHERE status = 'active' AND deleted_at IS NULL
-	//  ORDER BY name
+	//  SELECT
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    STATUS = 'active'
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
 	GetActiveTenants(ctx context.Context) ([]*Tenant, error)
+	// Get administrative actions (events with target_user_id)
+	//
+	//  SELECT
+	//    al.id,
+	//    al.user_id,
+	//    al.target_user_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.decision,
+	//    al.reason,
+	//    al.context,
+	//    al.created_at
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.target_user_id IS NOT NULL
+	//    AND al.event_category = 'ADMIN'
+	//    AND (
+	//      $1::UUID IS NULL
+	//      OR al.user_id = $1
+	//    )
+	//    AND (
+	//      $2::UUID IS NULL
+	//      OR al.target_user_id = $2
+	//    )
+	//    AND (
+	//      $3::TIMESTAMPTZ IS NULL
+	//      OR al.created_at >= $3
+	//    )
+	//    AND (
+	//      $4::TIMESTAMPTZ IS NULL
+	//      OR al.created_at <= $4
+	//    )
+	//  ORDER BY
+	//    al.created_at DESC
+	//  LIMIT
+	//    $6 OFFSET $5
+	GetAdminActions(ctx context.Context, arg GetAdminActionsParams) ([]*GetAdminActionsRow, error)
 	// Admin-level revenue analytics (cross-tenant view)
 	//
 	//  SELECT
-	//      t.id,
-	//      t.name,
-	//      t.industry,
-	//      SUM(tus.monthly_revenue) as total_revenue,
-	//      AVG(tus.monthly_revenue) as avg_monthly_revenue,
-	//      COUNT(tus.period_start) as months_tracked
-	//  FROM tenants t
-	//  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
-	//  WHERE t.deleted_at IS NULL
-	//    AND (tus.period_start IS NULL OR tus.period_start >= $1)
-	//    AND (tus.period_end IS NULL OR tus.period_end <= $2)
-	//  GROUP BY t.id, t.name, t.industry
-	//  ORDER BY total_revenue DESC NULLS LAST
+	//    t.id,
+	//    t.name,
+	//    t.industry,
+	//    SUM(tus.monthly_revenue) AS total_revenue,
+	//    AVG(tus.monthly_revenue) AS avg_monthly_revenue,
+	//    COUNT(tus.period_start) AS months_tracked
+	//  FROM
+	//    tenants t
+	//    LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+	//  WHERE
+	//    t.deleted_at IS NULL
+	//    AND (
+	//      tus.period_start IS NULL
+	//      OR tus.period_start >= $1
+	//    )
+	//    AND (
+	//      tus.period_end IS NULL
+	//      OR tus.period_end <= $2
+	//    )
+	//  GROUP BY
+	//    t.id,
+	//    t.name,
+	//    t.industry
+	//  ORDER BY
+	//    total_revenue DESC NULLS LAST
 	GetAllTenantsRevenueAnalytics(ctx context.Context, arg GetAllTenantsRevenueAnalyticsParams) ([]*GetAllTenantsRevenueAnalyticsRow, error)
 	// Admin-level storage analytics (cross-tenant view)
 	//
 	//  SELECT
-	//      t.id,
-	//      t.name,
-	//      t.status,
-	//      tc.storage_quota,
-	//      COALESCE(tus.storage_used, 0) as current_storage_used,
-	//      ROUND(COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota, 2) as storage_usage_percentage
-	//  FROM tenants t
-	//  JOIN tenant_configurations tc ON t.id = tc.tenant_id
-	//  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
-	//      AND tus.period_start <= CURRENT_DATE
-	//      AND tus.period_end >= CURRENT_DATE
-	//  WHERE t.deleted_at IS NULL
-	//  ORDER BY storage_usage_percentage DESC NULLS LAST
+	//    t.id,
+	//    t.name,
+	//    t.status,
+	//    tc.storage_quota,
+	//    COALESCE(tus.storage_used, 0) AS current_storage_used,
+	//    ROUND(
+	//      COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota,
+	//      2
+	//    ) AS storage_usage_percentage
+	//  FROM
+	//    tenants t
+	//    JOIN tenant_configurations tc ON t.id = tc.tenant_id
+	//    LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+	//    AND tus.period_start <= CURRENT_DATE
+	//    AND tus.period_end >= CURRENT_DATE
+	//  WHERE
+	//    t.deleted_at IS NULL
+	//  ORDER BY
+	//    storage_usage_percentage DESC NULLS LAST
 	GetAllTenantsStorageAnalytics(ctx context.Context) ([]*GetAllTenantsStorageAnalyticsRow, error)
+	// Detect anomalous user behavior patterns
+	//
+	//  WITH user_stats AS (
+	//    SELECT
+	//      user_id,
+	//      AVG(risk_score) AS avg_risk_score,
+	//      STDDEV(risk_score) AS stddev_risk_score,
+	//      COUNT(*) AS event_count
+	//    FROM
+	//      audit_log
+	//    WHERE
+	//      tenant_id = current_tenant_id()
+	//      AND audit_log.created_at >= $5
+	//      AND audit_log.created_at <= $6
+	//    GROUP BY
+	//      user_id
+	//    HAVING
+	//      COUNT(*) >= $7
+	//  )
+	//  SELECT
+	//    al.user_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.risk_score,
+	//    al.created_at,
+	//    u.email AS user_email,
+	//    e.name AS entity_name,
+	//    r.name AS resource_name,
+	//    CASE
+	//      WHEN al.context ? 'personal_data' THEN 'PERSONAL_DATA'
+	//      WHEN al.context ? 'sensitive_data' THEN 'SENSITIVE_DATA'
+	//      WHEN al.context ? 'financial_data' THEN 'FINANCIAL_DATA'
+	//      WHEN al.context ? 'health_data' THEN 'HEALTH_DATA'
+	//      ELSE 'GENERAL_DATA'
+	//    END AS data_classification
+	//  FROM
+	//    audit_log al
+	//    LEFT JOIN users u ON al.user_id = u.id
+	//    LEFT JOIN entities e ON al.entity_id = e.uuid
+	//    AND u.tenant_id = current_tenant_id()
+	//    AND e.tenant_id = current_tenant_id()
+	//    LEFT JOIN resources r ON al.resource_id = r.id
+	//    AND r.tenant_id = current_tenant_id()
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.event_category = 'DATA'
+	//    AND al.created_at >= $1
+	//    AND al.created_at <= $2
+	//    AND (
+	//      $3::VARCHAR IS NULL
+	//      OR CASE
+	//        WHEN al.context ? 'personal_data' THEN 'PERSONAL_DATA'
+	//        WHEN al.context ? 'sensitive_data' THEN 'SENSITIVE_DATA'
+	//        WHEN al.context ? 'financial_data' THEN 'FINANCIAL_DATA'
+	//        WHEN al.context ? 'health_data' THEN 'HEALTH_DATA'
+	//        ELSE 'GENERAL_DATA'
+	//      END = $3
+	//    )
+	//  ORDER BY
+	//    al.created_at DESC
+	//  LIMIT
+	//    $4
+	GetAnomalousUserBehavior(ctx context.Context, arg GetAnomalousUserBehaviorParams) ([]*GetAnomalousUserBehaviorRow, error)
 	//GetApplicablePolicies
 	//
-	//  SELECT p.id, p.tenant_id, p.entity_id, p.name, p.display_name, p.description, p.policy_type, p.effect, p.priority, p.category, p.target, p.rule, p.obligations, p.advice, p.is_active, p.created_at, p.updated_at, p.created_by, p.deleted_at
-	//  FROM policies p
-	//  WHERE p.tenant_id = current_tenant_id()
+	//  SELECT
+	//    p.id, p.tenant_id, p.entity_id, p.name, p.display_name, p.description, p.policy_type, p.effect, p.priority, p.category, p.target, p.rule, p.obligations, p.advice, p.is_active, p.created_at, p.updated_at, p.created_by, p.deleted_at
+	//  FROM
+	//    policies p
+	//  WHERE
+	//    p.tenant_id = current_tenant_id()
 	//    AND p.is_active = TRUE
 	//    AND p.deleted_at IS NULL
 	//    AND (
-	//      p.target->'resources' ? $1::text OR p.target->'actions' ? $2::text
+	//      p.target -> 'resources' ? $1::text
+	//      OR p.target -> 'actions' ? $2::text
 	//    )
-	//  ORDER BY p.priority DESC, p.created_at ASC
+	//  ORDER BY
+	//    p.priority DESC,
+	//    p.created_at ASC
 	GetApplicablePolicies(ctx context.Context, arg GetApplicablePoliciesParams) ([]*Policy, error)
 	//GetAttributeDefinition
 	//
-	//  SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at
+	//  FROM
+	//    attribute_definitions
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	GetAttributeDefinition(ctx context.Context, id uuid.UUID) (*AttributeDefinition, error)
 	//GetAttributeDefinitionByName
 	//
-	//  SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
-	//  WHERE name = $1 AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at
+	//  FROM
+	//    attribute_definitions
+	//  WHERE
+	//    name = $1
+	//    AND tenant_id = current_tenant_id()
 	GetAttributeDefinitionByName(ctx context.Context, name string) (*AttributeDefinition, error)
 	//GetAttributeDefinitionsByIDs
 	//
-	//  SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
-	//  WHERE id = ANY($1::UUID[]) AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at
+	//  FROM
+	//    attribute_definitions
+	//  WHERE
+	//    id = ANY($1::UUID [])
+	//    AND tenant_id = current_tenant_id()
 	GetAttributeDefinitionsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]*AttributeDefinition, error)
 	//GetAttributeStats
 	//
 	//  SELECT
-	//      COUNT(DISTINCT ad.id) as total_definitions,
-	//      COUNT(DISTINCT av.id) as total_values,
-	//      COUNT(DISTINCT av.entity_id) as entities_with_attributes,
-	//      COUNT(DISTINCT CASE WHEN ad.category = 'USER' THEN av.id END) as user_attributes,
-	//      COUNT(DISTINCT CASE WHEN ad.category = 'RESOURCE' THEN av.id END) as resource_attributes,
-	//      COUNT(DISTINCT CASE WHEN ad.category = 'ENVIRONMENT' THEN av.id END) as environment_attributes
-	//  FROM attribute_definitions ad
-	//  LEFT JOIN attribute_values av ON ad.id = av.definition_id
-	//      AND av.tenant_id = current_tenant_id()
-	//      AND (av.effective_to IS NULL OR av.effective_to > NOW())
-	//  WHERE ad.tenant_id = current_tenant_id()
-	//    AND ad.is_active = true
+	//    COUNT(DISTINCT ad.id) AS total_definitions,
+	//    COUNT(DISTINCT av.id) AS total_values,
+	//    COUNT(DISTINCT av.entity_id) AS entities_with_attributes,
+	//    COUNT(
+	//      DISTINCT CASE
+	//        WHEN ad.category = 'USER' THEN av.id
+	//      END
+	//    ) AS user_attributes,
+	//    COUNT(
+	//      DISTINCT CASE
+	//        WHEN ad.category = 'RESOURCE' THEN av.id
+	//      END
+	//    ) AS resource_attributes,
+	//    COUNT(
+	//      DISTINCT CASE
+	//        WHEN ad.category = 'ENVIRONMENT' THEN av.id
+	//      END
+	//    ) AS environment_attributes
+	//  FROM
+	//    attribute_definitions ad
+	//    LEFT JOIN attribute_values av ON ad.id = av.definition_id
+	//    AND av.tenant_id = current_tenant_id()
+	//    AND (
+	//      av.effective_to IS NULL
+	//      OR av.effective_to > NOW()
+	//    )
+	//  WHERE
+	//    ad.tenant_id = current_tenant_id()
+	//    AND ad.is_active = TRUE
 	GetAttributeStats(ctx context.Context) (*GetAttributeStatsRow, error)
 	//GetAttributeValue
 	//
-	//  SELECT av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by, ad.name as attribute_name, ad.data_type, ad.category
-	//  FROM attribute_values av
-	//  JOIN attribute_definitions ad ON av.definition_id = ad.id
-	//  WHERE av.id = $1
+	//  SELECT
+	//    av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by,
+	//    ad.name AS attribute_name,
+	//    ad.data_type,
+	//    ad.category
+	//  FROM
+	//    attribute_values av
+	//    JOIN attribute_definitions ad ON av.definition_id = ad.id
+	//  WHERE
+	//    av.id = $1
 	GetAttributeValue(ctx context.Context, id uuid.UUID) (*GetAttributeValueRow, error)
 	// -- name: GetAttributeValuesByEntity :many
 	// SELECT av.*, ad.name as attribute_name, ad.data_type, ad.category
@@ -979,16 +1918,26 @@ type Querier interface {
 	//   AND (av.effective_to IS NULL OR av.effective_to > NOW())
 	// ORDER BY ad.name ASC;
 	//
-	//
-	//  SELECT av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by, ad.name as attribute_name, ad.data_type, ad.category
-	//  FROM attribute_values av
-	//  JOIN attribute_definitions ad ON av.definition_id = ad.id
-	//  WHERE av.entity_id = $1
+	//  SELECT
+	//    av.id, av.tenant_id, av.definition_id, av.entity_id, av.value, av.encrypted_value, av.is_encrypted, av.version, av.effective_from, av.effective_to, av.created_at, av.created_by, av.updated_at, av.updated_by,
+	//    ad.name AS attribute_name,
+	//    ad.data_type,
+	//    ad.category
+	//  FROM
+	//    attribute_values av
+	//    JOIN attribute_definitions ad ON av.definition_id = ad.id
+	//  WHERE
+	//    av.entity_id = $1
 	//    AND ad.name = $2
 	//    AND av.tenant_id = current_tenant_id()
-	//    AND (av.effective_to IS NULL OR av.effective_to > NOW())
-	//  ORDER BY av.effective_from DESC
-	//  LIMIT 1
+	//    AND (
+	//      av.effective_to IS NULL
+	//      OR av.effective_to > NOW()
+	//    )
+	//  ORDER BY
+	//    av.effective_from DESC
+	//  LIMIT
+	//    1
 	GetAttributeValueByEntityAndName(ctx context.Context, arg GetAttributeValueByEntityAndNameParams) (*GetAttributeValueByEntityAndNameRow, error)
 	//GetAttributeValuesByEntity
 	//
@@ -1004,353 +1953,957 @@ type Querier interface {
 	//    ad.name AS attribute_name,
 	//    ad.data_type,
 	//    ad.category
-	//  FROM attribute_values av
-	//  JOIN attribute_definitions ad ON av.definition_id = ad.id
-	//  WHERE av.entity_id = $1
+	//  FROM
+	//    attribute_values av
+	//    JOIN attribute_definitions ad ON av.definition_id = ad.id
+	//  WHERE
+	//    av.entity_id = $1
 	//    AND (
-	//      $2::VARCHAR IS NULL OR
-	//      ad.category = $2
+	//      $2::VARCHAR IS NULL
+	//      OR ad.category = $2
 	//    )
 	//    AND (
-	//      av.effective_to IS NULL OR
-	//      av.effective_to > NOW()
+	//      av.effective_to IS NULL
+	//      OR av.effective_to > NOW()
 	//    )
-	//  ORDER BY ad.name ASC
+	//  ORDER BY
+	//    ad.name ASC
 	GetAttributeValuesByEntity(ctx context.Context, arg GetAttributeValuesByEntityParams) ([]*GetAttributeValuesByEntityRow, error)
+	// Get a specific audit event by ID
+	//
+	//  SELECT
+	//    id, tenant_id, event_type, event_category, severity, user_id, target_user_id, entity_id, resource_id, action_id, role_id, permission_id, decision, reason, risk_score, context, ip_address, user_agent, session_id, compliance_flags, created_at
+	//  FROM
+	//    audit_log
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND id = $1
+	GetAuditEventByID(ctx context.Context, id uuid.UUID) (*AuditLog, error)
+	// Get audit events with optional filters and pagination
+	//
+	//  SELECT
+	//    al.id,
+	//    al.tenant_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.severity,
+	//    al.user_id,
+	//    al.target_user_id,
+	//    al.entity_id,
+	//    al.resource_id,
+	//    al.action_id,
+	//    al.role_id,
+	//    al.permission_id,
+	//    al.decision,
+	//    al.reason,
+	//    al.risk_score,
+	//    al.context,
+	//    al.ip_address,
+	//    al.user_agent,
+	//    al.session_id,
+	//    al.compliance_flags,
+	//    al.created_at
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND (
+	//      $1::UUID IS NULL
+	//      OR al.user_id = $1
+	//    )
+	//    AND (
+	//      $2::VARCHAR IS NULL
+	//      OR al.event_category = $2
+	//    )
+	//    AND (
+	//      $3::VARCHAR IS NULL
+	//      OR al.severity = $3
+	//    )
+	//    AND (
+	//      $4::TIMESTAMPTZ IS NULL
+	//      OR al.created_at >= $4
+	//    )
+	//    AND (
+	//      $5::TIMESTAMPTZ IS NULL
+	//      OR al.created_at <= $5
+	//    )
+	//  ORDER BY
+	//    al.created_at DESC
+	//  LIMIT
+	//    $7 OFFSET $6
+	GetAuditEvents(ctx context.Context, arg GetAuditEventsParams) ([]*AuditLog, error)
+	// Get audit events for a specific entity
+	//
+	//  SELECT
+	//    al.id,
+	//    al.user_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.severity,
+	//    al.decision,
+	//    al.reason,
+	//    al.risk_score,
+	//    al.context,
+	//    al.created_at
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.entity_id = $1
+	//    AND (
+	//      $2::VARCHAR IS NULL
+	//      OR al.event_category = $2
+	//    )
+	//    AND (
+	//      $3::TIMESTAMPTZ IS NULL
+	//      OR al.created_at >= $3
+	//    )
+	//    AND (
+	//      $4::TIMESTAMPTZ IS NULL
+	//      OR al.created_at <= $4
+	//    )
+	//  ORDER BY
+	//    al.created_at DESC
+	//  LIMIT
+	//    $6 OFFSET $5
+	GetAuditEventsByEntity(ctx context.Context, arg GetAuditEventsByEntityParams) ([]*GetAuditEventsByEntityRow, error)
+	// Get audit events for a specific resource
+	//
+	//  SELECT
+	//    al.id,
+	//    al.user_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.severity,
+	//    al.decision,
+	//    al.reason,
+	//    al.context,
+	//    al.created_at
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.resource_id = $1
+	//    AND (
+	//      $2::VARCHAR IS NULL
+	//      OR al.event_category = $2
+	//    )
+	//    AND (
+	//      $3::TIMESTAMPTZ IS NULL
+	//      OR al.created_at >= $3
+	//    )
+	//    AND (
+	//      $4::TIMESTAMPTZ IS NULL
+	//      OR al.created_at <= $4
+	//    )
+	//  ORDER BY
+	//    al.created_at DESC
+	//  LIMIT
+	//    $6 OFFSET $5
+	GetAuditEventsByResource(ctx context.Context, arg GetAuditEventsByResourceParams) ([]*GetAuditEventsByResourceRow, error)
+	// ================================================================================================
+	// PERFORMANCE AND MONITORING QUERIES
+	// ================================================================================================
+	// Get audit log health metrics and performance indicators
+	//
+	//  WITH event_volume AS (
+	//    SELECT
+	//      COUNT(*) AS total_events,
+	//      COUNT(*) FILTER (
+	//        WHERE
+	//          created_at >= NOW() - INTERVAL '1 hour'
+	//      ) AS events_last_hour,
+	//      COUNT(*) FILTER (
+	//        WHERE
+	//          created_at >= NOW() - INTERVAL '24 hours'
+	//      ) AS events_last_24h,
+	//      COUNT(*) FILTER (
+	//        WHERE
+	//          created_at >= NOW() - INTERVAL '7 days'
+	//      ) AS events_last_7d
+	//    FROM
+	//      audit_log
+	//    WHERE
+	//      tenant_id = current_tenant_id()
+	//  ),
+	//  risk_metrics AS (
+	//    SELECT
+	//      AVG(risk_score) AS avg_risk_score,
+	//      STDDEV(risk_score) AS stddev_risk_score,
+	//      PERCENTILE_CONT(0.95) WITHIN GROUP (
+	//        ORDER BY
+	//          risk_score
+	//      ) AS p95_risk_score,
+	//      COUNT(*) FILTER (
+	//        WHERE
+	//          risk_score >= 80
+	//      ) AS high_risk_events
+	//    FROM
+	//      audit_log
+	//    WHERE
+	//      tenant_id = current_tenant_id()
+	//      AND created_at >= NOW() - INTERVAL '24 hours'
+	//  ),
+	//  decision_metrics AS (
+	//    SELECT
+	//      COUNT(*) FILTER (
+	//        WHERE
+	//          decision = 'ALLOW'
+	//      ) AS allowed_events,
+	//      COUNT(*) FILTER (
+	//        WHERE
+	//          decision = 'DENY'
+	//      ) AS denied_events,
+	//      ROUND(
+	//        COUNT(*) FILTER (
+	//          WHERE
+	//            decision = 'DENY'
+	//        )::NUMERIC / COUNT(*) * 100,
+	//        2
+	//      ) AS denial_rate_pct
+	//    FROM
+	//      audit_log
+	//    WHERE
+	//      tenant_id = current_tenant_id()
+	//      AND decision IS NOT NULL
+	//      AND created_at >= NOW() - INTERVAL '24 hours'
+	//  )
+	//  SELECT
+	//    ev.total_events, ev.events_last_hour, ev.events_last_24h, ev.events_last_7d,
+	//    rm.avg_risk_score,
+	//    rm.stddev_risk_score,
+	//    rm.p95_risk_score,
+	//    rm.high_risk_events,
+	//    dm.allowed_events,
+	//    dm.denied_events,
+	//    dm.denial_rate_pct
+	//  FROM
+	//    event_volume ev
+	//    CROSS JOIN risk_metrics rm
+	//    CROSS JOIN decision_metrics dm
+	GetAuditLogHealth(ctx context.Context) (*GetAuditLogHealthRow, error)
+	// ================================================================================================
+	// ADVANCED ANALYTICS QUERIES
+	// ================================================================================================
+	// Count events by category within a time range with optional filters
+	//
+	//  SELECT
+	//    event_category,
+	//    COUNT(*) AS event_count,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        decision = 'DENY'
+	//    ) AS denied_count,
+	//    AVG(risk_score) AS avg_risk_score,
+	//    MAX(risk_score) AS max_risk_score,
+	//    COUNT(DISTINCT user_id) AS unique_users
+	//  FROM
+	//    audit_log
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND created_at >= $1
+	//    AND created_at <= $2
+	//    AND (
+	//      $3::VARCHAR IS NULL
+	//      OR severity = $3
+	//    )
+	//  GROUP BY
+	//    event_category
+	//  ORDER BY
+	//    event_count DESC
+	GetAuditStatsByCategory(ctx context.Context, arg GetAuditStatsByCategoryParams) ([]*GetAuditStatsByCategoryRow, error)
+	// Count events by severity within a time range
+	//
+	//  SELECT
+	//    severity,
+	//    COUNT(*) AS event_count,
+	//    COUNT(DISTINCT user_id) AS unique_users,
+	//    AVG(risk_score) AS avg_risk_score
+	//  FROM
+	//    audit_log
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND created_at >= $1
+	//    AND created_at <= $2
+	//    AND (
+	//      $3::VARCHAR IS NULL
+	//      OR event_category = $3
+	//    )
+	//  GROUP BY
+	//    severity
+	//  ORDER BY
+	//    CASE
+	//      severity
+	//      WHEN 'CRITICAL' THEN 5
+	//      WHEN 'HIGH' THEN 4
+	//      WHEN 'WARN' THEN 3
+	//      WHEN 'INFO' THEN 2
+	//      WHEN 'LOW' THEN 1
+	//    END DESC
+	GetAuditStatsBySeverity(ctx context.Context, arg GetAuditStatsBySeverityParams) ([]*GetAuditStatsBySeverityRow, error)
+	// Get audit log storage statistics and metrics
+	//
+	//  SELECT
+	//    COUNT(*) AS total_events,
+	//    COUNT(DISTINCT user_id) AS unique_users,
+	//    COUNT(DISTINCT ip_address) AS unique_ips,
+	//    COUNT(DISTINCT event_type) AS unique_event_types,
+	//    pg_size_pretty(pg_total_relation_size('audit_log')) AS table_size,
+	//    MIN(created_at) AS oldest_event,
+	//    MAX(created_at) AS newest_event,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        created_at >= NOW() - INTERVAL '24 hours'
+	//    ) AS events_last_24h,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        created_at >= NOW() - INTERVAL '7 days'
+	//    ) AS events_last_7d,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        created_at >= NOW() - INTERVAL '30 days'
+	//    ) AS events_last_30d
+	//  FROM
+	//    audit_log
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	GetAuditStorageStats(ctx context.Context) (*GetAuditStorageStatsRow, error)
 	//GetCachedEvaluationResult
 	//
-	//  SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+	//  FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND user_id = $1
 	//    AND resource_type = $2
-	//    AND ($3::UUID IS NULL AND resource_id IS NULL OR resource_id = $3)
-	//    AND action = $4
+	//    AND (
+	//      $3::UUID IS NULL
+	//      AND resource_id IS NULL
+	//      OR resource_id = $3
+	//    )
+	//    AND ACTION = $4
 	//    AND context_hash = $5
 	//    AND expires_at > NOW()
-	//  ORDER BY evaluated_at DESC
-	//  LIMIT 1
+	//  ORDER BY
+	//    evaluated_at DESC
+	//  LIMIT
+	//    1
 	GetCachedEvaluationResult(ctx context.Context, arg GetCachedEvaluationResultParams) (*PolicyEvaluation, error)
 	//GetCompleteUserProfile
 	//
 	//  SELECT
-	//      u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.version, u.last_validation_run, u.validation_status, u.validation_errors, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required,
-	//      p.id, p.tenant_id, p.entity_id, p.person_type, p.first_name, p.last_name, p.middle_name, p.email, p.phone, p.birth_date, p.national_id, p.tax_id, p.address, p.security_attributes, p.metadata, p.is_active, p.version, p.last_validation_run, p.validation_status, p.validation_errors, p.created_at, p.updated_at, p.deleted_at,
-	//      e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.security_level, e.access_attributes, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
+	//    u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.version, u.last_validation_run, u.validation_status, u.validation_errors, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required,
+	//    p.id, p.tenant_id, p.entity_id, p.person_type, p.first_name, p.last_name, p.middle_name, p.email, p.phone, p.birth_date, p.national_id, p.tax_id, p.address, p.security_attributes, p.metadata, p.is_active, p.version, p.last_validation_run, p.validation_status, p.validation_errors, p.created_at, p.updated_at, p.deleted_at,
+	//    e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.security_level, e.access_attributes, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
 	//  FROM
-	//      users u
-	//  LEFT JOIN
-	//      persons p ON u.person_id = p.id AND p.tenant_id = u.tenant_id
-	//  LEFT JOIN
-	//      employees e ON u.employee_id = e.id AND e.tenant_id = u.tenant_id
+	//    users u
+	//    LEFT JOIN persons p ON u.person_id = p.id
+	//    AND p.tenant_id = u.tenant_id
+	//    LEFT JOIN employees e ON u.employee_id = e.id
+	//    AND e.tenant_id = u.tenant_id
 	//  WHERE
-	//      u.id = $1 AND u.deleted_at IS NULL
+	//    u.id = $1
+	//    AND u.deleted_at IS NULL
 	GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*GetCompleteUserProfileRow, error)
+	// Get events with specific compliance flags
+	//
+	//  SELECT
+	//    al.id,
+	//    al.user_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.severity,
+	//    al.context,
+	//    al.compliance_flags,
+	//    al.created_at
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.compliance_flags ? $1
+	//    AND (
+	//      $2::TIMESTAMPTZ IS NULL
+	//      OR al.created_at >= $2
+	//    )
+	//    AND (
+	//      $3::TIMESTAMPTZ IS NULL
+	//      OR al.created_at <= $3
+	//    )
+	//  ORDER BY
+	//    al.created_at DESC
+	//  LIMIT
+	//    $5 OFFSET $4
+	GetComplianceEvents(ctx context.Context, arg GetComplianceEventsParams) ([]*GetComplianceEventsRow, error)
 	//=====================================================
 	// CURRENT TENANT QUERIES (RLS-Aware)
 	// These queries work within the current tenant context
 	// =====================================================
 	//
-	//
-	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-	//  WHERE id = current_tenant_id() AND deleted_at IS NULL
+	//  SELECT
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    id = current_tenant_id()
+	//    AND deleted_at IS NULL
 	GetCurrentTenant(ctx context.Context) (*Tenant, error)
 	//GetCurrentTenantID
 	//
-	//  SELECT CASE
-	//      WHEN current_setting('app.current_tenant_id', true) = '' THEN NULL
+	//  SELECT
+	//    CASE
+	//      WHEN current_setting('app.current_tenant_id', TRUE) = '' THEN NULL
 	//      ELSE current_setting('app.current_tenant_id')::uuid
-	//  END
+	//    END
 	GetCurrentTenantID(ctx context.Context) (uuid.UUID, error)
 	// Current tenant revenue analytics (RLS-aware)
 	//
 	//  SELECT
-	//      t.id,
-	//      t.name,
-	//      t.industry,
-	//      SUM(tus.monthly_revenue) as total_revenue,
-	//      AVG(tus.monthly_revenue) as avg_monthly_revenue,
-	//      COUNT(tus.period_start) as months_tracked
-	//  FROM tenants t
-	//  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
-	//  WHERE t.deleted_at IS NULL
-	//    AND (tus.period_start IS NULL OR tus.period_start >= $1)
-	//    AND (tus.period_end IS NULL OR tus.period_end <= $2)
-	//  GROUP BY t.id, t.name, t.industry
+	//    t.id,
+	//    t.name,
+	//    t.industry,
+	//    SUM(tus.monthly_revenue) AS total_revenue,
+	//    AVG(tus.monthly_revenue) AS avg_monthly_revenue,
+	//    COUNT(tus.period_start) AS months_tracked
+	//  FROM
+	//    tenants t
+	//    LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+	//  WHERE
+	//    t.deleted_at IS NULL
+	//    AND (
+	//      tus.period_start IS NULL
+	//      OR tus.period_start >= $1
+	//    )
+	//    AND (
+	//      tus.period_end IS NULL
+	//      OR tus.period_end <= $2
+	//    )
+	//  GROUP BY
+	//    t.id,
+	//    t.name,
+	//    t.industry
 	GetCurrentTenantRevenueAnalytics(ctx context.Context, arg GetCurrentTenantRevenueAnalyticsParams) (*GetCurrentTenantRevenueAnalyticsRow, error)
 	// Current tenant storage analytics (RLS-aware)
 	//
 	//  SELECT
-	//      t.id,
-	//      t.name,
-	//      t.status,
-	//      tc.storage_quota,
-	//      COALESCE(tus.storage_used, 0) as current_storage_used,
-	//      ROUND(COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota, 2) as storage_usage_percentage
-	//  FROM tenants t
-	//  JOIN tenant_configurations tc ON t.id = tc.tenant_id
-	//  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
-	//      AND tus.period_start <= CURRENT_DATE
-	//      AND tus.period_end >= CURRENT_DATE
-	//  WHERE t.deleted_at IS NULL
+	//    t.id,
+	//    t.name,
+	//    t.status,
+	//    tc.storage_quota,
+	//    COALESCE(tus.storage_used, 0) AS current_storage_used,
+	//    ROUND(
+	//      COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota,
+	//      2
+	//    ) AS storage_usage_percentage
+	//  FROM
+	//    tenants t
+	//    JOIN tenant_configurations tc ON t.id = tc.tenant_id
+	//    LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+	//    AND tus.period_start <= CURRENT_DATE
+	//    AND tus.period_end >= CURRENT_DATE
+	//  WHERE
+	//    t.deleted_at IS NULL
 	GetCurrentTenantStorageUsage(ctx context.Context) (*GetCurrentTenantStorageUsageRow, error)
+	// Identify potential duplicate events for cleanup
+	//
+	//  SELECT
+	//    al.user_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.ip_address,
+	//    DATE_TRUNC('minute', al.created_at) AS time_bucket,
+	//    COUNT(*) AS duplicate_count,
+	//    array_agg(
+	//      al.id
+	//      ORDER BY
+	//        al.created_at
+	//    ) AS event_ids,
+	//    MIN(al.created_at) AS first_occurrence,
+	//    MAX(al.created_at) AS last_occurrence
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.created_at >= $1
+	//    AND al.created_at <= $2
+	//  GROUP BY
+	//    al.user_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.ip_address,
+	//    DATE_TRUNC('minute', al.created_at)
+	//  HAVING
+	//    COUNT(*) >= $3
+	//  ORDER BY
+	//    duplicate_count DESC,
+	//    first_occurrence DESC
+	//  LIMIT
+	//    $4
+	GetDuplicateEventAnalysis(ctx context.Context, arg GetDuplicateEventAnalysisParams) ([]*GetDuplicateEventAnalysisRow, error)
 	// Usage: Identifies potential duplicate sequence configurations
 	// Use case: Data integrity verification, migration validation
 	//
 	//  SELECT
-	//      tenant_id, entity_id, key, fiscal_year, COUNT(*)
-	//  FROM entitystate
-	//  WHERE tenant_id = current_tenant_id()
-	//  GROUP BY tenant_id, entity_id, key, fiscal_year
-	//  HAVING COUNT(*) > 1
+	//    tenant_id,
+	//    entity_id,
+	//    KEY,
+	//    fiscal_year,
+	//    COUNT(*)
+	//  FROM
+	//    entitystate
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//  GROUP BY
+	//    tenant_id,
+	//    entity_id,
+	//    KEY,
+	//    fiscal_year
+	//  HAVING
+	//    COUNT(*) > 1
 	GetDuplicateSequenceCheck(ctx context.Context) ([]*GetDuplicateSequenceCheckRow, error)
 	//GetEmployeeByID
 	//
-	//  SELECT id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM employees WHERE id = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    employees
+	//  WHERE
+	//    id = $1
+	//    AND deleted_at IS NULL
+	//    AND tenant_id = current_tenant_id()
 	GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error)
 	//GetEntitiesByFiscalYear
 	//
-	//  SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
-	//  FROM entities e
-	//  JOIN entitystate es ON e.uuid = es.entity_id
-	//  WHERE e.tenant_id = current_tenant_id()
-	//  AND es.fiscal_year = $1
-	//  AND e.deleted_at IS NULL
-	//  ORDER BY e.name
+	//  SELECT
+	//    DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
+	//  FROM
+	//    entities e
+	//    JOIN entitystate es ON e.uuid = es.entity_id
+	//  WHERE
+	//    e.tenant_id = current_tenant_id()
+	//    AND es.fiscal_year = $1
+	//    AND e.deleted_at IS NULL
+	//  ORDER BY
+	//    e.name
 	GetEntitiesByFiscalYear(ctx context.Context, fiscalYear *int16) ([]*Entity, error)
 	//GetEntitiesByFiscalYearStart
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND fy_start_month = $1
-	//  AND deleted_at IS NULL
-	//  ORDER BY name
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND fy_start_month = $1
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
 	GetEntitiesByFiscalYearStart(ctx context.Context, fyStartMonth int32) ([]*Entity, error)
 	//GetEntitiesByUUIDs
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
-	//  FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND uuid = ANY($1::UUID[])
-	//  AND deleted_at IS NULL
-	//  ORDER BY name
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND uuid = ANY($1::UUID [])
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
 	GetEntitiesByUUIDs(ctx context.Context, uuids []uuid.UUID) ([]*Entity, error)
 	//GetEntity
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE uuid = $1
-	//  AND deleted_at IS NULL
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    uuid = $1
+	//    AND deleted_at IS NULL
 	GetEntity(ctx context.Context, argUuid uuid.UUID) (*Entity, error)
 	//GetEntityAncestors
 	//
-	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
-	//  JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
-	//  WHERE hp.tenant_id = current_tenant_id()
-	//  AND hp.descendant_id = $1
-	//  AND hp.depth > 0
-	//  AND e.deleted_at IS NULL
-	//  ORDER BY hp.depth DESC
+	//  SELECT
+	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+	//    hp.depth
+	//  FROM
+	//    entities e
+	//    JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
+	//  WHERE
+	//    hp.tenant_id = current_tenant_id()
+	//    AND hp.descendant_id = $1
+	//    AND hp.depth > 0
+	//    AND e.deleted_at IS NULL
+	//  ORDER BY
+	//    hp.depth DESC
 	GetEntityAncestors(ctx context.Context, descendantID uuid.UUID) ([]*GetEntityAncestorsRow, error)
 	//GetEntityAuditLog
 	//
 	//  SELECT
-	//  uuid,
-	//  name,
-	//  type,
-	//  is_active,
-	//  hidden,
-	//  created_at,
-	//  updated_at,
-	//  deleted_at,
-	//  CASE
-	//  WHEN deleted_at IS NOT NULL THEN 'DELETED'
-	//  WHEN updated_at > created_at THEN 'UPDATED'
-	//  ELSE 'CREATED'
-	//  END as action
-	//  FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND (created_at >= $1 OR updated_at >= $1 OR deleted_at >= $1)
-	//  ORDER BY GREATEST(created_at, updated_at, COALESCE(deleted_at, created_at)) DESC
+	//    uuid,
+	//    name,
+	//    TYPE,
+	//    is_active,
+	//    hidden,
+	//    created_at,
+	//    updated_at,
+	//    deleted_at,
+	//    CASE
+	//      WHEN deleted_at IS NOT NULL THEN 'DELETED'
+	//      WHEN updated_at > created_at THEN 'UPDATED'
+	//      ELSE 'CREATED'
+	//    END AS ACTION
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND (
+	//      created_at >= $1
+	//      OR updated_at >= $1
+	//      OR deleted_at >= $1
+	//    )
+	//  ORDER BY
+	//    GREATEST(
+	//      created_at,
+	//      updated_at,
+	//      COALESCE(deleted_at, created_at)
+	//    ) DESC
 	GetEntityAuditLog(ctx context.Context, createdAt time.Time) ([]*GetEntityAuditLogRow, error)
 	//GetEntityByCode
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE code = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    code = $1
+	//    AND tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
 	GetEntityByCode(ctx context.Context, code *string) (*Entity, error)
 	//GetEntityByName
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    name = $1
+	//    AND tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
 	GetEntityByName(ctx context.Context, name string) (*Entity, error)
 	//GetEntityChildren
 	//
-	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
-	//  JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
-	//  WHERE hp.tenant_id = current_tenant_id()
-	//  AND hp.ancestor_id = $1
-	//  AND hp.depth = 1
-	//  AND e.deleted_at IS NULL
-	//  ORDER BY e.name
+	//  SELECT
+	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
+	//  FROM
+	//    entities e
+	//    JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
+	//  WHERE
+	//    hp.tenant_id = current_tenant_id()
+	//    AND hp.ancestor_id = $1
+	//    AND hp.depth = 1
+	//    AND e.deleted_at IS NULL
+	//  ORDER BY
+	//    e.name
 	GetEntityChildren(ctx context.Context, ancestorID uuid.UUID) ([]*Entity, error)
 	// =====================================================================
 	// 6. PERFORMANCE AND ANALYTICS QUERIES
 	// =====================================================================
 	//
-	//
-	//  SELECT type, COUNT(*) as count
-	//  FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND deleted_at IS NULL
-	//  GROUP BY type
-	//  ORDER BY count DESC
+	//  SELECT
+	//    TYPE,
+	//    COUNT(*) AS count
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	//  GROUP BY
+	//    TYPE
+	//  ORDER BY
+	//    count DESC
 	GetEntityCountByType(ctx context.Context) ([]*GetEntityCountByTypeRow, error)
 	//GetEntityDepth
 	//
-	//  SELECT COALESCE(MAX(depth), 0) AS depth
-	//  FROM hierarchy_paths
-	//  WHERE tenant_id = current_tenant_id() AND ancestor_id = $1
+	//  SELECT
+	//    COALESCE(MAX(depth), 0) AS depth
+	//  FROM
+	//    hierarchy_paths
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND ancestor_id = $1
 	GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (interface{}, error)
 	//GetEntityDescendants
 	//
-	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at, hp.depth FROM entities e
-	//  JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
-	//  WHERE hp.tenant_id = current_tenant_id()
-	//  AND hp.ancestor_id = $1
-	//  AND hp.depth > 0
-	//  AND e.deleted_at IS NULL
-	//  ORDER BY hp.depth, e.name
+	//  SELECT
+	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+	//    hp.depth
+	//  FROM
+	//    entities e
+	//    JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
+	//  WHERE
+	//    hp.tenant_id = current_tenant_id()
+	//    AND hp.ancestor_id = $1
+	//    AND hp.depth > 0
+	//    AND e.deleted_at IS NULL
+	//  ORDER BY
+	//    hp.depth,
+	//    e.name
 	GetEntityDescendants(ctx context.Context, ancestorID uuid.UUID) ([]*GetEntityDescendantsRow, error)
 	//GetEntityHealthCheck
 	//
 	//  SELECT
-	//  (SELECT COUNT(*) FROM entities WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL) as active_entities,
-	//  (SELECT COUNT(*) FROM hierarchy_paths WHERE tenant_id = current_tenant_id()) as hierarchy_paths,
-	//  (SELECT COUNT(*) FROM entitystate es JOIN entities e ON es.entity_id = e.uuid WHERE e.tenant_id = current_tenant_id()) as entity_states,
-	//  (SELECT COUNT(*) FROM entities e LEFT JOIN entities p ON e.parent_id = p.uuid WHERE e.tenant_id = current_tenant_id() AND e.parent_id IS NOT NULL AND p.uuid IS NULL) as orphaned_entities,
-	//  (SELECT COUNT(*) FROM hierarchy_paths hp LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid WHERE hp.tenant_id = current_tenant_id() AND (e1.uuid IS NULL OR e2.uuid IS NULL)) as orphaned_paths
+	//    (
+	//      SELECT
+	//        COUNT(*)
+	//      FROM
+	//        entities
+	//      WHERE
+	//        tenant_id = current_tenant_id()
+	//        AND deleted_at IS NULL
+	//    ) AS active_entities,
+	//    (
+	//      SELECT
+	//        COUNT(*)
+	//      FROM
+	//        hierarchy_paths
+	//      WHERE
+	//        tenant_id = current_tenant_id()
+	//    ) AS hierarchy_paths,
+	//    (
+	//      SELECT
+	//        COUNT(*)
+	//      FROM
+	//        entitystate es
+	//        JOIN entities e ON es.entity_id = e.uuid
+	//      WHERE
+	//        e.tenant_id = current_tenant_id()
+	//    ) AS entity_states,
+	//    (
+	//      SELECT
+	//        COUNT(*)
+	//      FROM
+	//        entities e
+	//        LEFT JOIN entities p ON e.parent_id = p.uuid
+	//      WHERE
+	//        e.tenant_id = current_tenant_id()
+	//        AND e.parent_id IS NOT NULL
+	//        AND p.uuid IS NULL
+	//    ) AS orphaned_entities,
+	//    (
+	//      SELECT
+	//        COUNT(*)
+	//      FROM
+	//        hierarchy_paths hp
+	//        LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid
+	//        LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid
+	//      WHERE
+	//        hp.tenant_id = current_tenant_id()
+	//        AND (
+	//          e1.uuid IS NULL
+	//          OR e2.uuid IS NULL
+	//        )
+	//    ) AS orphaned_paths
 	GetEntityHealthCheck(ctx context.Context) (*GetEntityHealthCheckRow, error)
 	//GetEntityHierarchyStats
 	//
 	//  SELECT
-	//  COUNT(*) as total_entities,
-	//  COUNT(*) FILTER (WHERE e.parent_id IS NULL) as root_entities,
-	//  MAX(hp.depth) as max_depth,
-	//  AVG(hp.depth) as avg_depth,
-	//  COUNT(DISTINCT hp.ancestor_id) as entities_with_children
-	//  FROM entities e
-	//  LEFT JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id AND hp.tenant_id = e.tenant_id
-	//  WHERE e.tenant_id = current_tenant_id() AND e.deleted_at IS NULL
+	//    COUNT(*) AS total_entities,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        e.parent_id IS NULL
+	//    ) AS root_entities,
+	//    MAX(hp.depth) AS max_depth,
+	//    AVG(hp.depth) AS avg_depth,
+	//    COUNT(DISTINCT hp.ancestor_id) AS entities_with_children
+	//  FROM
+	//    entities e
+	//    LEFT JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
+	//    AND hp.tenant_id = e.tenant_id
+	//  WHERE
+	//    e.tenant_id = current_tenant_id()
+	//    AND e.deleted_at IS NULL
 	GetEntityHierarchyStats(ctx context.Context) (*GetEntityHierarchyStatsRow, error)
 	//GetEntityLevel
 	//
-	//  SELECT COALESCE(MIN(hp.depth), 0) as level
-	//  FROM hierarchy_paths hp
-	//  WHERE hp.tenant_id = current_tenant_id() AND hp.descendant_id = $1
+	//  SELECT
+	//    COALESCE(MIN(hp.depth), 0) AS LEVEL
+	//  FROM
+	//    hierarchy_paths hp
+	//  WHERE
+	//    hp.tenant_id = current_tenant_id()
+	//    AND hp.descendant_id = $1
 	GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (interface{}, error)
 	//GetEntityParent
 	//
-	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
-	//  JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
-	//  WHERE hp.tenant_id = current_tenant_id()
-	//  AND hp.descendant_id = $1
-	//  AND hp.depth = 1
-	//  AND e.deleted_at IS NULL
+	//  SELECT
+	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
+	//  FROM
+	//    entities e
+	//    JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
+	//  WHERE
+	//    hp.tenant_id = current_tenant_id()
+	//    AND hp.descendant_id = $1
+	//    AND hp.depth = 1
+	//    AND e.deleted_at IS NULL
 	GetEntityParent(ctx context.Context, descendantID uuid.UUID) (*Entity, error)
 	//GetEntityPath
 	//
-	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at, hp.depth
-	//  FROM entities e
-	//  JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
-	//  WHERE hp.tenant_id = current_tenant_id()
-	//  AND hp.descendant_id = $1
-	//  AND e.deleted_at IS NULL
-	//  ORDER BY hp.depth DESC
+	//  SELECT
+	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+	//    hp.depth
+	//  FROM
+	//    entities e
+	//    JOIN hierarchy_paths hp ON e.uuid = hp.ancestor_id
+	//  WHERE
+	//    hp.tenant_id = current_tenant_id()
+	//    AND hp.descendant_id = $1
+	//    AND e.deleted_at IS NULL
+	//  ORDER BY
+	//    hp.depth DESC
 	GetEntityPath(ctx context.Context, descendantID uuid.UUID) ([]*GetEntityPathRow, error)
 	//GetEntityRoots
 	//
-	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
-	//  WHERE e.tenant_id = current_tenant_id()
-	//  AND e.parent_id IS NULL
-	//  AND e.deleted_at IS NULL
-	//  ORDER BY e.name
+	//  SELECT
+	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
+	//  FROM
+	//    entities e
+	//  WHERE
+	//    e.tenant_id = current_tenant_id()
+	//    AND e.parent_id IS NULL
+	//    AND e.deleted_at IS NULL
+	//  ORDER BY
+	//    e.name
 	GetEntityRoots(ctx context.Context) ([]*Entity, error)
 	//GetEntitySequenceStats
 	//
 	//  SELECT
-	//  e.name as entity_name,
-	//  es.key,
-	//  es.fiscal_year,
-	//  es.sequence,
-	//  es.sequence - 1 as documents_created
-	//  FROM entitystate es
-	//  JOIN entities e ON es.entity_id = e.uuid
-	//  WHERE e.tenant_id = current_tenant_id()
-	//  AND ($1::UUID IS NULL OR es.entity_id = $1)
-	//  ORDER BY e.name, es.key, es.fiscal_year
+	//    e.name AS entity_name,
+	//    es.key,
+	//    es.fiscal_year,
+	//    es.sequence,
+	//    es.sequence - 1 AS documents_created
+	//  FROM
+	//    entitystate es
+	//    JOIN entities e ON es.entity_id = e.uuid
+	//  WHERE
+	//    e.tenant_id = current_tenant_id()
+	//    AND (
+	//      $1::UUID IS NULL
+	//      OR es.entity_id = $1
+	//    )
+	//  ORDER BY
+	//    e.name,
+	//    es.key,
+	//    es.fiscal_year
 	GetEntitySequenceStats(ctx context.Context, dollar_1 uuid.UUID) ([]*GetEntitySequenceStatsRow, error)
 	// Usage: Summary view of all sequences for an entity across fiscal years
 	// Use case: Entity overview dashboards, year-over-year comparisons
 	//
 	//  SELECT
-	//      fiscal_year,
-	//      key,
-	//      sequence,
-	//      updated_at,
-	//      (sequence - 1) as documents_created
-	//  FROM entitystate
-	//  WHERE entity_id = $1 AND tenant_id = current_tenant_id()
-	//  ORDER BY fiscal_year DESC, key
+	//    fiscal_year,
+	//    KEY,
+	//    sequence,
+	//    updated_at,
+	//    (sequence - 1) AS documents_created
+	//  FROM
+	//    entitystate
+	//  WHERE
+	//    entity_id = $1
+	//    AND tenant_id = current_tenant_id()
+	//  ORDER BY
+	//    fiscal_year DESC,
+	//    KEY
 	GetEntitySequenceSummary(ctx context.Context, entityID uuid.UUID) ([]*GetEntitySequenceSummaryRow, error)
 	//GetEntitySiblings
 	//
-	//  SELECT DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
-	//  JOIN hierarchy_paths hp1 ON e.uuid = hp1.descendant_id
-	//  JOIN hierarchy_paths hp2 ON hp1.ancestor_id = hp2.ancestor_id
-	//  WHERE hp2.tenant_id = current_tenant_id()
-	//  AND hp2.descendant_id = $1
-	//  AND hp1.depth = 1
-	//  AND hp2.depth = 1
-	//  AND e.uuid != $1
-	//  AND e.deleted_at IS NULL
-	//  ORDER BY e.name
+	//  SELECT
+	//    DISTINCT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
+	//  FROM
+	//    entities e
+	//    JOIN hierarchy_paths hp1 ON e.uuid = hp1.descendant_id
+	//    JOIN hierarchy_paths hp2 ON hp1.ancestor_id = hp2.ancestor_id
+	//  WHERE
+	//    hp2.tenant_id = current_tenant_id()
+	//    AND hp2.descendant_id = $1
+	//    AND hp1.depth = 1
+	//    AND hp2.depth = 1
+	//    AND e.uuid != $1
+	//    AND e.deleted_at IS NULL
+	//  ORDER BY
+	//    e.name
 	GetEntitySiblings(ctx context.Context, descendantID uuid.UUID) ([]*Entity, error)
 	//GetEntityState
 	//
-	//  SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at FROM entitystate
-	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
+	//  FROM
+	//    entitystate
+	//  WHERE
+	//    entity_id = $1
+	//    AND KEY = $2
+	//    AND fiscal_year = $3
+	//    AND tenant_id = current_tenant_id()
 	GetEntityState(ctx context.Context, arg GetEntityStateParams) (*Entitystate, error)
 	//GetEntityStateByKey
 	//
-	//  SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at FROM entitystate
-	//  WHERE entity_id = $1 AND key = $2 AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
+	//  FROM
+	//    entitystate
+	//  WHERE
+	//    entity_id = $1
+	//    AND KEY = $2
+	//    AND tenant_id = current_tenant_id()
 	GetEntityStateByKey(ctx context.Context, arg GetEntityStateByKeyParams) (*Entitystate, error)
 	// Usage: Comprehensive health check of entity state configuration
 	// Use case: System health monitoring, pre-deployment validation
 	//
 	//  SELECT
-	//      es.entity_id,
-	//      e.name as entity_name,
-	//      COUNT(DISTINCT es.key) as document_types_count,
-	//      COUNT(DISTINCT es.fiscal_year) as fiscal_years_count,
-	//      MIN(es.created_at) as oldest_sequence,
-	//      MAX(es.updated_at) as last_activity,
-	//      SUM(es.sequence - 1) as total_documents_created
-	//  FROM entitystate es
-	//  JOIN entities e ON es.entity_id = e.uuid
-	//  WHERE es.tenant_id = current_tenant_id()
-	//  GROUP BY es.entity_id, e.name
-	//  ORDER BY total_documents_created DESC
+	//    es.entity_id,
+	//    e.name AS entity_name,
+	//    COUNT(DISTINCT es.key) AS document_types_count,
+	//    COUNT(DISTINCT es.fiscal_year) AS fiscal_years_count,
+	//    MIN(es.created_at) AS oldest_sequence,
+	//    MAX(es.updated_at) AS last_activity,
+	//    SUM(es.sequence - 1) AS total_documents_created
+	//  FROM
+	//    entitystate es
+	//    JOIN entities e ON es.entity_id = e.uuid
+	//  WHERE
+	//    es.tenant_id = current_tenant_id()
+	//  GROUP BY
+	//    es.entity_id,
+	//    e.name
+	//  ORDER BY
+	//    total_documents_created DESC
 	GetEntityStateHealthCheck(ctx context.Context) ([]*GetEntityStateHealthCheckRow, error)
 	// Usage: Retrieves entity state history with optional filtering by key and fiscal year
 	// Use case: Audit trails, reporting, and historical sequence analysis
 	// NOTE: Consider adding pagination (LIMIT/OFFSET) for large datasets
 	//
-	//  SELECT es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at, e.name as entity_name
-	//  FROM entitystate es
-	//  JOIN entities e ON es.entity_id = e.uuid
-	//  WHERE es.entity_id = $1 AND e.tenant_id = current_tenant_id()
-	//  AND ($2::VARCHAR IS NULL OR es.key = $2)
-	//  AND ($3::SMALLINT IS NULL OR es.fiscal_year = $3)
-	//  ORDER BY es.fiscal_year DESC, es.key
+	//  SELECT
+	//    es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at,
+	//    e.name AS entity_name
+	//  FROM
+	//    entitystate es
+	//    JOIN entities e ON es.entity_id = e.uuid
+	//  WHERE
+	//    es.entity_id = $1
+	//    AND e.tenant_id = current_tenant_id()
+	//    AND (
+	//      $2::VARCHAR IS NULL
+	//      OR es.key = $2
+	//    )
+	//    AND (
+	//      $3::SMALLINT IS NULL
+	//      OR es.fiscal_year = $3
+	//    )
+	//  ORDER BY
+	//    es.fiscal_year DESC,
+	//    es.key
 	GetEntityStateHistory(ctx context.Context, arg GetEntityStateHistoryParams) ([]*GetEntityStateHistoryRow, error)
 	// =====================================================================
 	//  ANALYTICS & REPORTING QUERIES
@@ -1358,18 +2911,22 @@ type Querier interface {
 	// Usage: Provides statistical overview of sequence usage by document type
 	// Use case: Usage analytics, capacity planning, identifying heavily used document types
 	//
-	//
 	//  SELECT
-	//      key,
-	//      COUNT(*) as entity_count,
-	//      AVG(sequence)::BIGINT as avg_sequence,
-	//      MAX(sequence) as max_sequence,
-	//      MIN(sequence) as min_sequence,
-	//      SUM(sequence) as total_sequences_used
-	//  FROM entitystate
-	//  WHERE fiscal_year = $1 AND tenant_id = current_tenant_id()
-	//  GROUP BY key
-	//  ORDER BY total_sequences_used DESC
+	//    KEY,
+	//    COUNT(*) AS entity_count,
+	//    AVG(sequence)::BIGINT AS avg_sequence,
+	//    MAX(sequence) AS max_sequence,
+	//    MIN(sequence) AS min_sequence,
+	//    SUM(sequence) AS total_sequences_used
+	//  FROM
+	//    entitystate
+	//  WHERE
+	//    fiscal_year = $1
+	//    AND tenant_id = current_tenant_id()
+	//  GROUP BY
+	//    KEY
+	//  ORDER BY
+	//    total_sequences_used DESC
 	GetEntityStateStats(ctx context.Context, fiscalYear *int16) ([]*GetEntityStateStatsRow, error)
 	// =====================================================================
 	//  ENTITY STATE MANAGEMENT QUERIES
@@ -1381,92 +2938,162 @@ type Querier interface {
 	// Usage: Retrieves entity state with row-level locking for atomic sequence operations
 	// Use case: When you need to get and immediately update a sequence number safely
 	// NOTE: Handles query timeout to prevent deadlocks
+	// adjust as appropriate (e.g. '500ms', '5s')
+	// Actual SELECT with FOR UPDATE locking
 	//
-	//
-	//
-	//  DO $$
+	//  DO
+	//  $$
 	//  BEGIN
-	//    SET LOCAL lock_timeout = '3s'; -- adjust as appropriate (e.g. '500ms', '5s')
+	//  SET
+	//    LOCAL lock_timeout = '3s';
 	//
-	//    -- Actual SELECT with FOR UPDATE locking
-	//    PERFORM * FROM entitystate
-	//    WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
-	//    FOR UPDATE;
-	//  END $$
+	//  PERFORM *
+	//  FROM
+	//    entitystate
+	//  WHERE
+	//    entity_id = $1
+	//    AND KEY = $2
+	//    AND fiscal_year = $3
+	//    AND tenant_id = current_tenant_id() FOR
+	//  UPDATE
+	//  ;
+	//
+	//  END
+	//  $$
 	GetEntityStateWithLocking(ctx context.Context) (*GetEntityStateWithLockingRow, error)
 	// Usage: Retrieves all entity states for a specific fiscal year with optional entity unit filtering
 	// Use case: Cross-entity reporting, fiscal year analysis, bulk operations
 	// Parameters: $1=fiscal_year, $2=entity_unit_id (nullable for filtering by specific unit)
 	//
-	//  SELECT es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at, e.name as entity_name, eu.name as unit_name
-	//  FROM entitystate es
-	//  JOIN entities e ON es.entity_id = e.uuid
-	//  LEFT JOIN entities eu ON es.entity_unit_id = eu.uuid
-	//  WHERE es.fiscal_year = $1
-	//  AND e.tenant_id = current_tenant_id()
-	//  AND es.tenant_id = current_tenant_id()
-	//  AND ($2::UUID IS NULL OR es.entity_unit_id = $2)
-	//  ORDER BY e.name, COALESCE(eu.name, ''), es.key
+	//  SELECT
+	//    es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at,
+	//    e.name AS entity_name,
+	//    eu.name AS unit_name
+	//  FROM
+	//    entitystate es
+	//    JOIN entities e ON es.entity_id = e.uuid
+	//    LEFT JOIN entities eu ON es.entity_unit_id = eu.uuid
+	//  WHERE
+	//    es.fiscal_year = $1
+	//    AND e.tenant_id = current_tenant_id()
+	//    AND es.tenant_id = current_tenant_id()
+	//    AND (
+	//      $2::UUID IS NULL
+	//      OR es.entity_unit_id = $2
+	//    )
+	//  ORDER BY
+	//    e.name,
+	//    COALESCE(eu.name, ''),
+	//    es.key
 	GetEntityStatesByFiscalYear(ctx context.Context, arg GetEntityStatesByFiscalYearParams) ([]*GetEntityStatesByFiscalYearRow, error)
 	//GetEntityStats
 	//
 	//  SELECT
-	//  COUNT(*) as total_entities,
-	//  SUM(CASE WHEN is_active = true THEN 1 ELSE 0 END) as active_entities,
-	//  SUM(CASE WHEN hidden = false THEN 1 ELSE 0 END) as visible_entities,
-	//  COUNT(DISTINCT type) as entity_types,
-	//  SUM(CASE WHEN parent_id IS NULL THEN 1 ELSE 0 END) as root_entities,
-	//  SUM(CASE WHEN accrual_method = true THEN 1 ELSE 0 END) as accrual_entities,
-	//  SUM(CASE WHEN accrual_method = false THEN 1 ELSE 0 END) as cash_entities
-	//  FROM entities
+	//    COUNT(*) AS total_entities,
+	//    SUM(
+	//      CASE
+	//        WHEN is_active = TRUE THEN 1
+	//        ELSE 0
+	//      END
+	//    ) AS active_entities,
+	//    SUM(
+	//      CASE
+	//        WHEN hidden = false THEN 1
+	//        ELSE 0
+	//      END
+	//    ) AS visible_entities,
+	//    COUNT(DISTINCT TYPE) AS entity_types,
+	//    SUM(
+	//      CASE
+	//        WHEN parent_id IS NULL THEN 1
+	//        ELSE 0
+	//      END
+	//    ) AS root_entities,
+	//    SUM(
+	//      CASE
+	//        WHEN accrual_method = TRUE THEN 1
+	//        ELSE 0
+	//      END
+	//    ) AS accrual_entities,
+	//    SUM(
+	//      CASE
+	//        WHEN accrual_method = false THEN 1
+	//        ELSE 0
+	//      END
+	//    ) AS cash_entities
+	//  FROM
+	//    entities
 	GetEntityStats(ctx context.Context) (*GetEntityStatsRow, error)
 	//GetEntitySubtree
 	//
-	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at, hp.depth
-	//  FROM entities e
-	//  JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
-	//  WHERE hp.tenant_id = current_tenant_id()
-	//  AND hp.ancestor_id = $1
-	//  AND e.deleted_at IS NULL
-	//  AND ($2::INTEGER IS NULL OR hp.depth <= $2)
-	//  ORDER BY hp.depth, e.name
+	//  SELECT
+	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+	//    hp.depth
+	//  FROM
+	//    entities e
+	//    JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
+	//  WHERE
+	//    hp.tenant_id = current_tenant_id()
+	//    AND hp.ancestor_id = $1
+	//    AND e.deleted_at IS NULL
+	//    AND (
+	//      $2::INTEGER IS NULL
+	//      OR hp.depth <= $2
+	//    )
+	//  ORDER BY
+	//    hp.depth,
+	//    e.name
 	GetEntitySubtree(ctx context.Context, arg GetEntitySubtreeParams) ([]*GetEntitySubtreeRow, error)
 	//GetEntityTreeStructure
 	//
 	//  WITH RECURSIVE entity_tree AS (
 	//    SELECT
-	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
-	//    0 as level,
-	//    ARRAY[e.name] as path,
-	//    e.name as sort_path
-	//    FROM entities e
-	//    WHERE e.tenant_id = current_tenant_id()
-	//    AND e.parent_id IS NULL
-	//    AND e.deleted_at IS NULL
-	//
-	//    UNION ALL
-	//
+	//      e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+	//      0 AS LEVEL,
+	//      ARRAY [e.name] AS path,
+	//      e.name AS sort_path
+	//    FROM
+	//      entities e
+	//    WHERE
+	//      e.tenant_id = current_tenant_id()
+	//      AND e.parent_id IS NULL
+	//      AND e.deleted_at IS NULL
+	//    UNION
+	//    ALL
 	//    SELECT
-	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
-	//    et.level + 1,
-	//    et.path || e.name,
-	//    et.sort_path || '/' || e.name
-	//    FROM entities e
-	//    JOIN entity_tree et ON e.parent_id = et.uuid
-	//    WHERE e.tenant_id = current_tenant_id()
-	//    AND e.deleted_at IS NULL
-	//    AND et.level < 10
+	//      e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+	//      et.level + 1,
+	//      et.path || e.name,
+	//      et.sort_path || '/' || e.name
+	//    FROM
+	//      entities e
+	//      JOIN entity_tree et ON e.parent_id = et.uuid
+	//    WHERE
+	//      e.tenant_id = current_tenant_id()
+	//      AND e.deleted_at IS NULL
+	//      AND et.level < 10
 	//  )
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, level, path, sort_path FROM entity_tree
-	//  ORDER BY sort_path
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, level, path, sort_path
+	//  FROM
+	//    entity_tree
+	//  ORDER BY
+	//    sort_path
 	GetEntityTreeStructure(ctx context.Context) ([]*GetEntityTreeStructureRow, error)
 	// Usage: Gets specific sequence for an entity unit with locking
 	// Use case: Unit-specific sequence generation with concurrency safety
 	//
-	//  SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at FROM entitystate
-	//  WHERE entity_id = $1 AND entity_unit_id = $2 AND key = $3 AND fiscal_year = $4
-	//  AND tenant_id = current_tenant_id()
-	//  FOR UPDATE
+	//  SELECT
+	//    uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
+	//  FROM
+	//    entitystate
+	//  WHERE
+	//    entity_id = $1
+	//    AND entity_unit_id = $2
+	//    AND KEY = $3
+	//    AND fiscal_year = $4
+	//    AND tenant_id = current_tenant_id() FOR
+	//  UPDATE
 	GetEntityUnitSequence(ctx context.Context, arg GetEntityUnitSequenceParams) (*Entitystate, error)
 	// =====================================================================
 	//  ENTITY UNIT (SUB-ENTITY) QUERIES
@@ -1474,153 +3101,495 @@ type Querier interface {
 	// Usage: Retrieves all sequences for a specific entity unit/department
 	// Use case: Department-level reporting, unit-specific sequence management
 	//
-	//
-	//  SELECT es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at, e1.name as entity_name, e2.name as unit_name
-	//  FROM entitystate es
-	//  JOIN entities e1 ON es.entity_id = e1.uuid
-	//  LEFT JOIN entities e2 ON es.entity_unit_id = e2.uuid
-	//  WHERE es.entity_unit_id = $1 AND es.tenant_id = current_tenant_id()
-	//  ORDER BY es.key, es.fiscal_year
+	//  SELECT
+	//    es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at,
+	//    e1.name AS entity_name,
+	//    e2.name AS unit_name
+	//  FROM
+	//    entitystate es
+	//    JOIN entities e1 ON es.entity_id = e1.uuid
+	//    LEFT JOIN entities e2 ON es.entity_unit_id = e2.uuid
+	//  WHERE
+	//    es.entity_unit_id = $1
+	//    AND es.tenant_id = current_tenant_id()
+	//  ORDER BY
+	//    es.key,
+	//    es.fiscal_year
 	GetEntityUnitStates(ctx context.Context, entityUnitID *uuid.UUID) ([]*GetEntityUnitStatesRow, error)
 	// ===============================================
 	// Advanced Entity Queries
 	// ===============================================
 	//
-	//
-	//
 	//  SELECT
-	//  e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
-	//  COALESCE(MIN(hp.depth), 0) as level,
-	//  COUNT(children.uuid) as child_count,
-	//  parent_e.name as parent_name
-	//  FROM entities e
-	//  LEFT JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id AND hp.tenant_id = e.tenant_id
-	//  LEFT JOIN entities children ON children.parent_id = e.uuid AND children.tenant_id = e.tenant_id AND children.deleted_at IS NULL
-	//  LEFT JOIN entities parent_e ON parent_e.uuid = e.parent_id AND parent_e.tenant_id = e.tenant_id
-	//  WHERE e.uuid = $1 AND e.tenant_id = current_tenant_id() AND e.deleted_at IS NULL
-	//  GROUP BY e.uuid, parent_e.name
+	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
+	//    COALESCE(MIN(hp.depth), 0) AS LEVEL,
+	//    COUNT(children.uuid) AS child_count,
+	//    parent_e.name AS parent_name
+	//  FROM
+	//    entities e
+	//    LEFT JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
+	//    AND hp.tenant_id = e.tenant_id
+	//    LEFT JOIN entities children ON children.parent_id = e.uuid
+	//    AND children.tenant_id = e.tenant_id
+	//    AND children.deleted_at IS NULL
+	//    LEFT JOIN entities parent_e ON parent_e.uuid = e.parent_id
+	//    AND parent_e.tenant_id = e.tenant_id
+	//  WHERE
+	//    e.uuid = $1
+	//    AND e.tenant_id = current_tenant_id()
+	//    AND e.deleted_at IS NULL
+	//  GROUP BY
+	//    e.uuid,
+	//    parent_e.name
 	GetEntityWithHierarchyInfo(ctx context.Context, argUuid uuid.UUID) (*GetEntityWithHierarchyInfoRow, error)
 	// Usage: Hierarchical view of entity and all its unit sequences
 	// Use case: Complete entity structure analysis, hierarchical reporting
 	//
 	//  SELECT
-	//      es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at,
-	//      e1.name as entity_name,
-	//      e2.name as unit_name,
-	//      CASE WHEN es.entity_unit_id IS NULL THEN 'Main Entity' ELSE 'Unit' END as level_type
-	//  FROM entitystate es
-	//  JOIN entities e1 ON es.entity_id = e1.uuid
-	//  LEFT JOIN entities e2 ON es.entity_unit_id = e2.uuid
-	//  WHERE es.entity_id = $1 AND es.tenant_id = current_tenant_id()
-	//  ORDER BY level_type, COALESCE(e2.name, e1.name), es.key, es.fiscal_year
+	//    es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at,
+	//    e1.name AS entity_name,
+	//    e2.name AS unit_name,
+	//    CASE
+	//      WHEN es.entity_unit_id IS NULL THEN 'Main Entity'
+	//      ELSE 'Unit'
+	//    END AS level_type
+	//  FROM
+	//    entitystate es
+	//    JOIN entities e1 ON es.entity_id = e1.uuid
+	//    LEFT JOIN entities e2 ON es.entity_unit_id = e2.uuid
+	//  WHERE
+	//    es.entity_id = $1
+	//    AND es.tenant_id = current_tenant_id()
+	//  ORDER BY
+	//    level_type,
+	//    COALESCE(e2.name, e1.name),
+	//    es.key,
+	//    es.fiscal_year
 	GetEntityWithUnitStates(ctx context.Context, entityID uuid.UUID) ([]*GetEntityWithUnitStatesRow, error)
 	//GetEvaluationCacheStats
 	//
 	//  SELECT
-	//      COUNT(*) as total_cached_evaluations,
-	//      COUNT(CASE WHEN expires_at > NOW() THEN 1 END) as active_evaluations,
-	//      COUNT(CASE WHEN expires_at <= NOW() THEN 1 END) as expired_evaluations,
-	//      COUNT(DISTINCT user_id) as unique_users,
-	//      COUNT(DISTINCT resource_type) as unique_resource_types,
-	//      COUNT(DISTINCT action) as unique_actions,
-	//      AVG(evaluation_time_ms) as avg_evaluation_time_ms,
-	//      MIN(evaluation_time_ms) as min_evaluation_time_ms,
-	//      MAX(evaluation_time_ms) as max_evaluation_time_ms,
-	//      ROUND(
-	//          (COUNT(CASE WHEN expires_at > NOW() THEN 1 END)::NUMERIC /
-	//           NULLIF(COUNT(*), 0)) * 100, 2
-	//      ) as cache_hit_rate
-	//  FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
+	//    COUNT(*) AS total_cached_evaluations,
+	//    COUNT(
+	//      CASE
+	//        WHEN expires_at > NOW() THEN 1
+	//      END
+	//    ) AS active_evaluations,
+	//    COUNT(
+	//      CASE
+	//        WHEN expires_at <= NOW() THEN 1
+	//      END
+	//    ) AS expired_evaluations,
+	//    COUNT(DISTINCT user_id) AS unique_users,
+	//    COUNT(DISTINCT resource_type) AS unique_resource_types,
+	//    COUNT(DISTINCT ACTION) AS unique_actions,
+	//    AVG(evaluation_time_ms) AS avg_evaluation_time_ms,
+	//    MIN(evaluation_time_ms) AS min_evaluation_time_ms,
+	//    MAX(evaluation_time_ms) AS max_evaluation_time_ms,
+	//    ROUND(
+	//      (
+	//        COUNT(
+	//          CASE
+	//            WHEN expires_at > NOW() THEN 1
+	//          END
+	//        )::NUMERIC / NULLIF(COUNT(*), 0)
+	//      ) * 100,
+	//      2
+	//    ) AS cache_hit_rate
+	//  FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	GetEvaluationCacheStats(ctx context.Context) (*GetEvaluationCacheStatsRow, error)
 	//GetEvaluationMetrics
 	//
 	//  SELECT
-	//      AVG(evaluation_time_ms) as avg_evaluation_time,
-	//      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY evaluation_time_ms) as median_evaluation_time,
-	//      PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY evaluation_time_ms) as p95_evaluation_time,
-	//      PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY evaluation_time_ms) as p99_evaluation_time,
-	//      COUNT(*) as total_evaluations,
-	//      COUNT(DISTINCT user_id) as unique_users,
-	//      COUNT(DISTINCT resource_type || ':' || COALESCE(resource_id::TEXT, '')) as unique_resources
-	//  FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
+	//    AVG(evaluation_time_ms) AS avg_evaluation_time,
+	//    PERCENTILE_CONT(0.5) WITHIN GROUP (
+	//      ORDER BY
+	//        evaluation_time_ms
+	//    ) AS median_evaluation_time,
+	//    PERCENTILE_CONT(0.95) WITHIN GROUP (
+	//      ORDER BY
+	//        evaluation_time_ms
+	//    ) AS p95_evaluation_time,
+	//    PERCENTILE_CONT(0.99) WITHIN GROUP (
+	//      ORDER BY
+	//        evaluation_time_ms
+	//    ) AS p99_evaluation_time,
+	//    COUNT(*) AS total_evaluations,
+	//    COUNT(DISTINCT user_id) AS unique_users,
+	//    COUNT(
+	//      DISTINCT resource_type || ':' || COALESCE(resource_id::TEXT, '')
+	//    ) AS unique_resources
+	//  FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND evaluated_at >= $1
 	//    AND evaluated_at <= $2
 	GetEvaluationMetrics(ctx context.Context, arg GetEvaluationMetricsParams) (*GetEvaluationMetricsRow, error)
 	//GetEvaluationsByDecision
 	//
-	//  SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+	//  FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND decision = $1
 	//    AND evaluated_at >= $2
 	//    AND evaluated_at <= $3
-	//  ORDER BY evaluated_at DESC
-	//  LIMIT $4 OFFSET $5
+	//  ORDER BY
+	//    evaluated_at DESC
+	//  LIMIT
+	//    $4 OFFSET $5
 	GetEvaluationsByDecision(ctx context.Context, arg GetEvaluationsByDecisionParams) ([]*PolicyEvaluation, error)
+	// -- name: GetAccessControlEffectiveness :many
+	// -- Analyze access control effectiveness
+	// -- NOTE:
+	// SELECT
+	//   stats.user_id,
+	//   stats.resource_id,
+	//   r.name AS resource_name,
+	//   stats.role_id,
+	//   ro.name AS role_name,
+	//   stats.permission_id,
+	//   p.name AS permission_name,
+	//   stats.total_attempts,
+	//   stats.allowed_attempts,
+	//   stats.denied_attempts,
+	//   ROUND(
+	//     stats.denied_attempts::NUMERIC / stats.total_attempts * 100,
+	//     2
+	//   ) AS denial_rate_pct,
+	//   ROUND(stats.avg_risk_score, 2) AS avg_risk_score,
+	//   stats.first_attempt,
+	//   stats.last_attempt
+	// FROM (
+	//   SELECT
+	//     user_id,
+	//     resource_id,
+	//     role_id,
+	//     permission_id,
+	//     COUNT(*) AS total_attempts,
+	//     COUNT(*) FILTER (WHERE decision = 'ALLOW') AS allowed_attempts,
+	//     COUNT(*) FILTER (WHERE decision = 'DENY') AS denied_attempts,
+	//     AVG(risk_score) AS avg_risk_score,
+	//     MIN(created_at) AS first_attempt,
+	//     MAX(created_at) AS last_attempt
+	//   FROM audit_log al
+	//   WHERE
+	//     tenant_id = current_tenant_id()
+	//     AND event_category = 'ACCESS'
+	//     AND decision IS NOT NULL
+	//     AND al.created_at >= sqlc.arg('start_time')
+	//     AND al.created_at <= sqlc.arg('end_time')
+	//   GROUP BY user_id, resource_id, role_id, permission_id
+	// ) stats
+	// LEFT JOIN resources r ON stats.resource_id = r.id AND r.tenant_id = current_tenant_id()
+	// LEFT JOIN roles ro ON stats.role_id = ro.id AND ro.tenant_id = current_tenant_id()
+	// LEFT JOIN permissions p ON stats.permission_id = p.id AND p.tenant_id = current_tenant_id()
+	// WHERE
+	//   stats.total_attempts >= sqlc.arg('min_attempts')
+	//   AND (
+	//     sqlc.narg('min_denial_rate')::NUMERIC IS NULL
+	//     OR (stats.denied_attempts::NUMERIC / stats.total_attempts) >= sqlc.narg('min_denial_rate')
+	//   )
+	// ORDER BY denial_rate_pct DESC, stats.avg_risk_score DESC
+	// LIMIT sqlc.arg('limit');
+	// ================================================================================================
+	// FORENSIC INVESTIGATION QUERIES
+	// ================================================================================================
+	// Get detailed event timeline for forensic investigation
+	//
+	//
+	//
+	//  SELECT
+	//    al.id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.severity,
+	//    al.decision,
+	//    al.reason,
+	//    al.risk_score,
+	//    al.context,
+	//    al.ip_address,
+	//    al.user_agent,
+	//    al.session_id,
+	//    al.created_at,
+	//    LAG(al.created_at) OVER (
+	//      ORDER BY
+	//        al.created_at
+	//    ) AS prev_event_time,
+	//    LEAD(al.created_at) OVER (
+	//      ORDER BY
+	//        al.created_at
+	//    ) AS next_event_time,
+	//    EXTRACT(
+	//      EPOCH
+	//      FROM
+	//        (
+	//          al.created_at - LAG(al.created_at) OVER (
+	//            ORDER BY
+	//              al.created_at
+	//          )
+	//        )
+	//    ) AS seconds_since_prev
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.user_id = $1
+	//    AND al.created_at >= $2
+	//    AND al.created_at <= $3
+	//  ORDER BY
+	//    al.created_at ASC
+	GetEventTimelineForUser(ctx context.Context, arg GetEventTimelineForUserParams) ([]*GetEventTimelineForUserRow, error)
+	// Get event type distribution for analysis
+	//
+	//  SELECT
+	//    event_type,
+	//    event_category,
+	//    COUNT(*) AS event_count,
+	//    COUNT(DISTINCT user_id) AS unique_users,
+	//    AVG(risk_score) AS avg_risk_score,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        decision = 'DENY'
+	//    ) AS denied_count,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        severity IN ('HIGH', 'CRITICAL')
+	//    ) AS high_severity_count,
+	//    MIN(created_at) AS first_occurrence,
+	//    MAX(created_at) AS last_occurrence
+	//  FROM
+	//    audit_log
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND created_at >= $1
+	//    AND created_at <= $2
+	//    AND (
+	//      $3::VARCHAR IS NULL
+	//      OR event_category = $3
+	//    )
+	//  GROUP BY
+	//    event_type,
+	//    event_category
+	//  HAVING
+	//    COUNT(*) >= $4
+	//  ORDER BY
+	//    event_count DESC
+	//  LIMIT
+	//    $5
+	GetEventTypeDistribution(ctx context.Context, arg GetEventTypeDistributionParams) ([]*GetEventTypeDistributionRow, error)
 	//GetExpiredAccessRequests
 	//
-	//  SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+	//  FROM
+	//    access_requests
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND approval_status = 'APPROVED'
 	//    AND expires_at IS NOT NULL
 	//    AND expires_at < NOW()
-	//    AND auto_revoke = true
+	//    AND auto_revoke = TRUE
 	GetExpiredAccessRequests(ctx context.Context) ([]*AccessRequest, error)
+	// Get failed access attempts within a time range
+	//
+	//  SELECT
+	//    al.id,
+	//    al.user_id,
+	//    al.event_type,
+	//    al.entity_id,
+	//    al.resource_id,
+	//    al.reason,
+	//    al.risk_score,
+	//    al.ip_address,
+	//    al.user_agent,
+	//    al.created_at
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.decision = 'DENY'
+	//    AND al.event_category = 'ACCESS'
+	//    AND al.created_at >= $1
+	//    AND al.created_at <= $2
+	//    AND (
+	//      $3::UUID IS NULL
+	//      OR al.user_id = $3
+	//    )
+	//    AND (
+	//      $4::INET IS NULL
+	//      OR al.ip_address = $4
+	//    )
+	//  ORDER BY
+	//    al.created_at DESC
+	//  LIMIT
+	//    $6 OFFSET $5
+	GetFailedAccessAttempts(ctx context.Context, arg GetFailedAccessAttemptsParams) ([]*GetFailedAccessAttemptsRow, error)
 	//GetFeatureFlagByID
 	//
-	//  SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+	//  FROM
+	//    feature_flags
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND id = $1
 	//    AND deleted_at IS NULL
 	GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error)
 	//GetFeatureFlagByName
 	//
-	//  SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+	//  FROM
+	//    feature_flags
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND name = $1
 	//    AND deleted_at IS NULL
 	GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error)
 	//GetFeatureFlagStats
 	//
 	//  SELECT
-	//      COUNT(*) as total_flags,
-	//      COUNT(*) FILTER (WHERE default_value = true) as enabled_flags,
-	//      COUNT(*) FILTER (WHERE rollout_percentage IS NOT NULL) as rollout_flags,
-	//      AVG(rollout_percentage) as avg_rollout_percentage
-	//  FROM feature_flags
-	//  WHERE tenant_id = current_tenant_id()
+	//    COUNT(*) AS total_flags,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        default_value = TRUE
+	//    ) AS enabled_flags,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        rollout_percentage IS NOT NULL
+	//    ) AS rollout_flags,
+	//    AVG(rollout_percentage) AS avg_rollout_percentage
+	//  FROM
+	//    feature_flags
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND deleted_at IS NULL
 	GetFeatureFlagStats(ctx context.Context) (*GetFeatureFlagStatsRow, error)
 	//GetFeatureFlagsByType
 	//
-	//  SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+	//  FROM
+	//    feature_flags
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND flag_type = $1
 	//    AND deleted_at IS NULL
-	//  ORDER BY name
+	//  ORDER BY
+	//    name
 	GetFeatureFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error)
+	// Get high-risk audit events (risk_score >= threshold)
+	//
+	//  SELECT
+	//    al.id,
+	//    al.user_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.severity,
+	//    al.decision,
+	//    al.reason,
+	//    al.risk_score,
+	//    al.context,
+	//    al.ip_address,
+	//    al.created_at
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.risk_score >= $1
+	//    AND (
+	//      $2::VARCHAR IS NULL
+	//      OR al.event_category = $2
+	//    )
+	//    AND (
+	//      $3::TIMESTAMPTZ IS NULL
+	//      OR al.created_at >= $3
+	//    )
+	//    AND (
+	//      $4::TIMESTAMPTZ IS NULL
+	//      OR al.created_at <= $4
+	//    )
+	//  ORDER BY
+	//    al.risk_score DESC,
+	//    al.created_at DESC
+	//  LIMIT
+	//    $6 OFFSET $5
+	GetHighRiskEvents(ctx context.Context, arg GetHighRiskEventsParams) ([]*GetHighRiskEventsRow, error)
 	// Usage: Gets the highest sequence number for a specific entity/key/fiscal year combination
 	// Use case: Finding the current maximum sequence before manual adjustments
 	//
-	//  SELECT COALESCE(MAX(sequence), 0) AS sequence
-	//  FROM entitystate
-	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    COALESCE(MAX(sequence), 0) AS sequence
+	//  FROM
+	//    entitystate
+	//  WHERE
+	//    entity_id = $1
+	//    AND KEY = $2
+	//    AND fiscal_year = $3
+	//    AND tenant_id = current_tenant_id()
 	GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (interface{}, error)
+	// Get hourly event rates for capacity planning
+	//
+	//  SELECT
+	//    DATE_TRUNC('hour', al.created_at) AS hour_bucket,
+	//    COUNT(*) AS event_count,
+	//    COUNT(DISTINCT al.user_id) AS unique_users,
+	//    AVG(al.risk_score) AS avg_risk_score,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        al.decision = 'DENY'
+	//    ) AS denied_count
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.created_at >= $1
+	//    AND al.created_at <= $2
+	//  GROUP BY
+	//    DATE_TRUNC('hour', al.created_at)
+	//  ORDER BY
+	//    hour_bucket DESC
+	//  LIMIT
+	//    $3
+	GetHourlyEventRates(ctx context.Context, arg GetHourlyEventRatesParams) ([]*GetHourlyEventRatesRow, error)
 	//GetInconsistentHierarchyPaths
 	//
-	//  SELECT DISTINCT hp.ancestor_id, hp.descendant_id, hp.depth
-	//  FROM hierarchy_paths hp
-	//  LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid AND e1.tenant_id = hp.tenant_id
-	//  LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid AND e2.tenant_id = hp.tenant_id
-	//  WHERE hp.tenant_id = current_tenant_id()
-	//  AND (e1.uuid IS NULL OR e2.uuid IS NULL OR e1.deleted_at IS NOT NULL OR e2.deleted_at IS NOT NULL)
+	//  SELECT
+	//    DISTINCT hp.ancestor_id,
+	//    hp.descendant_id,
+	//    hp.depth
+	//  FROM
+	//    hierarchy_paths hp
+	//    LEFT JOIN entities e1 ON hp.ancestor_id = e1.uuid
+	//    AND e1.tenant_id = hp.tenant_id
+	//    LEFT JOIN entities e2 ON hp.descendant_id = e2.uuid
+	//    AND e2.tenant_id = hp.tenant_id
+	//  WHERE
+	//    hp.tenant_id = current_tenant_id()
+	//    AND (
+	//      e1.uuid IS NULL
+	//      OR e2.uuid IS NULL
+	//      OR e1.deleted_at IS NOT NULL
+	//      OR e2.deleted_at IS NOT NULL
+	//    )
 	GetInconsistentHierarchyPaths(ctx context.Context) ([]*GetInconsistentHierarchyPathsRow, error)
 	//GetLatestTenantUsageStats
 	//
-	//  SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
-	//  ORDER BY period_start DESC
-	//  LIMIT 1
+	//  SELECT
+	//    tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+	//  FROM
+	//    tenant_usage_stats
+	//  ORDER BY
+	//    period_start DESC
+	//  LIMIT
+	//    1
 	GetLatestTenantUsageStats(ctx context.Context) (*TenantUsageStat, error)
 	// Ensures positive sequence number
 	// =====================================================================
@@ -1629,61 +3598,108 @@ type Querier interface {
 	// Usage: Retrieves multiple entity states by document types in one query
 	// Use case: Dashboard displays, bulk document creation, batch processing
 	//
-	//
-	//
-	//  SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at FROM entitystate
-	//  WHERE entity_id = $1
-	//  AND key = ANY($2::VARCHAR[])
-	//  AND fiscal_year = $3
-	//  AND tenant_id = current_tenant_id()
-	//  ORDER BY key
+	//  SELECT
+	//    uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
+	//  FROM
+	//    entitystate
+	//  WHERE
+	//    entity_id = $1
+	//    AND KEY = ANY($2::VARCHAR [])
+	//    AND fiscal_year = $3
+	//    AND tenant_id = current_tenant_id()
+	//  ORDER BY
+	//    KEY
 	GetMultipleEntityStates(ctx context.Context, arg GetMultipleEntityStatesParams) ([]*Entitystate, error)
 	//GetNextSequenceNumber
 	//
-	//  INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id, entity_unit_id)
-	//  VALUES (gen_random_uuid(), $3, $2, 1, $1, $4)
-	//  ON CONFLICT (entity_id, key, fiscal_year) DO UPDATE
-	//  SET sequence = entitystate.sequence + 1
-	//  RETURNING sequence
+	//  INSERT INTO
+	//    entitystate (
+	//      uuid,
+	//      fiscal_year,
+	//      KEY,
+	//      sequence,
+	//      entity_id,
+	//      entity_unit_id
+	//    )
+	//  VALUES
+	//    (gen_random_uuid(), $3, $2, 1, $1, $4) ON CONFLICT (entity_id, KEY, fiscal_year) DO
+	//  UPDATE
+	//  SET
+	//    sequence = entitystate.sequence + 1
+	//  RETURNING
+	//    sequence
 	GetNextSequenceNumber(ctx context.Context, arg GetNextSequenceNumberParams) (int64, error)
 	// Usage: Gets existing entity state or creates new one with sequence = 1
 	// Use case: Lazy initialization of sequences when first document is created
 	//
-	//  INSERT INTO entitystate (entity_id, key, fiscal_year, sequence, tenant_id)
-	//  VALUES ($1, $2, $3, 1, current_tenant_id())
-	//  ON CONFLICT (tenant_id, entity_id, key, fiscal_year)
-	//  DO UPDATE SET updated_at = NOW()
-	//  RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
+	//  INSERT INTO
+	//    entitystate (entity_id, KEY, fiscal_year, sequence, tenant_id)
+	//  VALUES
+	//    ($1, $2, $3, 1, current_tenant_id()) ON CONFLICT (tenant_id, entity_id, KEY, fiscal_year) DO
+	//  UPDATE
+	//  SET
+	//    updated_at = NOW()
+	//  RETURNING
+	//    uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
 	GetOrCreateEntityState(ctx context.Context, arg GetOrCreateEntityStateParams) (*Entitystate, error)
 	//GetOrphanedEntities
 	//
-	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at FROM entities e
-	//  LEFT JOIN entities parent ON parent.uuid = e.parent_id AND parent.tenant_id = e.tenant_id
-	//  WHERE e.tenant_id = current_tenant_id()
-	//  AND e.parent_id IS NOT NULL
-	//  AND parent.uuid IS NULL
-	//  AND e.deleted_at IS NULL
+	//  SELECT
+	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
+	//  FROM
+	//    entities e
+	//    LEFT JOIN entities parent ON parent.uuid = e.parent_id
+	//    AND parent.tenant_id = e.tenant_id
+	//  WHERE
+	//    e.tenant_id = current_tenant_id()
+	//    AND e.parent_id IS NOT NULL
+	//    AND parent.uuid IS NULL
+	//    AND e.deleted_at IS NULL
 	GetOrphanedEntities(ctx context.Context) ([]*Entity, error)
 	//GetPendingAccessRequests
 	//
-	//  SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+	//  FROM
+	//    access_requests
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND approval_status = 'PENDING'
-	//    AND (expires_at IS NULL OR expires_at > NOW())
-	//  ORDER BY created_at ASC
+	//    AND (
+	//      expires_at IS NULL
+	//      OR expires_at > NOW()
+	//    )
+	//  ORDER BY
+	//    created_at ASC
 	GetPendingAccessRequests(ctx context.Context) ([]*AccessRequest, error)
 	//GetPersonByID
 	//
-	//  SELECT id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM persons WHERE id = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, entity_id, person_type, first_name, last_name, middle_name, email, phone, birth_date, national_id, tax_id, address, security_attributes, metadata, is_active, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    persons
+	//  WHERE
+	//    id = $1
+	//    AND deleted_at IS NULL
+	//    AND tenant_id = current_tenant_id()
 	GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error)
 	//GetPoliciesByEntityID
 	//
-	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-	//  WHERE tenant_id = current_tenant_id()
-	//    AND (entity_id = $1 OR entity_id IS NULL)
-	//    AND is_active = true
+	//  SELECT
+	//    id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+	//  FROM
+	//    policies
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND (
+	//      entity_id = $1
+	//      OR entity_id IS NULL
+	//    )
+	//    AND is_active = TRUE
 	//    AND deleted_at IS NULL
-	//  ORDER BY priority DESC, created_at ASC
+	//  ORDER BY
+	//    priority DESC,
+	//    created_at ASC
 	GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID) ([]*Policy, error)
 	// -- name: GetPoliciesForEvaluation :many
 	// SELECT * FROM policies
@@ -1707,9 +3723,12 @@ type Querier interface {
 	//   )
 	// ORDER BY priority DESC, created_at ASC;
 	//
-	//
-	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-	//  WHERE id = ANY($1::UUID[])
+	//  SELECT
+	//    id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+	//  FROM
+	//    policies
+	//  WHERE
+	//    id = ANY($1::UUID [])
 	GetPoliciesByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]*Policy, error)
 	// ABAC-specific queries for policy evaluation
 	//
@@ -1725,352 +3744,967 @@ type Querier interface {
 	//    obligations,
 	//    is_active,
 	//    created_at
-	//  FROM policies
-	//  WHERE tenant_id = current_tenant_id()
-	//    AND is_active = true
+	//  FROM
+	//    policies
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND is_active = TRUE
 	//    AND deleted_at IS NULL
 	//    AND (
-	//      $1::UUID IS NULL OR
-	//      entity_id IS NULL OR
-	//      entity_id = $1
+	//      $1::UUID IS NULL
+	//      OR entity_id IS NULL
+	//      OR entity_id = $1
 	//    )
 	//    AND (
-	//      target->>'resource_type' = $2 OR
-	//      target->>'resource_type' = '*' OR
-	//      target->>'resource_type' IS NULL
+	//      target ->> 'resource_type' = $2
+	//      OR target ->> 'resource_type' = '*'
+	//      OR target ->> 'resource_type' IS NULL
 	//    )
 	//    AND (
-	//      target->>'action' = $3 OR
-	//      target->>'action' = '*' OR
-	//      target->>'action' IS NULL
+	//      target ->> 'action' = $3
+	//      OR target ->> 'action' = '*'
+	//      OR target ->> 'action' IS NULL
 	//    )
-	//  ORDER BY priority DESC, created_at ASC
+	//  ORDER BY
+	//    priority DESC,
+	//    created_at ASC
 	GetPoliciesForEvaluation(ctx context.Context, arg GetPoliciesForEvaluationParams) ([]*GetPoliciesForEvaluationRow, error)
 	//GetPolicy
 	//
-	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  SELECT
+	//    id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+	//  FROM
+	//    policies
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
 	GetPolicy(ctx context.Context, id uuid.UUID) (*Policy, error)
 	//GetPolicyByName
 	//
-	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-	//  WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+	//  SELECT
+	//    id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+	//  FROM
+	//    policies
+	//  WHERE
+	//    name = $1
+	//    AND tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
 	GetPolicyByName(ctx context.Context, name string) (*Policy, error)
+	// Get recent security-related events (high risk, denials, critical severity)
+	//
+	//  SELECT
+	//    al.id,
+	//    al.user_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.severity,
+	//    al.decision,
+	//    al.reason,
+	//    al.risk_score,
+	//    al.ip_address,
+	//    al.context,
+	//    al.created_at
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND (
+	//      al.risk_score >= $1
+	//      OR al.decision = 'DENY'
+	//      OR al.severity IN ('HIGH', 'CRITICAL')
+	//    )
+	//    AND al.created_at >= $2
+	//    AND (
+	//      $3::VARCHAR IS NULL
+	//      OR al.event_category = $3
+	//    )
+	//  ORDER BY
+	//    CASE
+	//      al.severity
+	//      WHEN 'CRITICAL' THEN 5
+	//      WHEN 'HIGH' THEN 4
+	//      WHEN 'WARN' THEN 3
+	//      WHEN 'INFO' THEN 2
+	//      WHEN 'LOW' THEN 1
+	//    END DESC,
+	//    al.risk_score DESC,
+	//    al.created_at DESC
+	//  LIMIT
+	//    $4
+	GetRecentSecurityEvents(ctx context.Context, arg GetRecentSecurityEventsParams) ([]*GetRecentSecurityEventsRow, error)
 	//GetRecentlyDeletedEntities
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND deleted_at >= $1
-	//  AND deleted_at IS NOT NULL
-	//  ORDER BY deleted_at DESC
-	//  LIMIT $2
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND deleted_at >= $1
+	//    AND deleted_at IS NOT NULL
+	//  ORDER BY
+	//    deleted_at DESC
+	//  LIMIT
+	//    $2
 	GetRecentlyDeletedEntities(ctx context.Context, arg GetRecentlyDeletedEntitiesParams) ([]*Entity, error)
 	// =====================================================================
 	// 4. AUDIT AND MONITORING QUERIES
 	// =====================================================================
 	//
-	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND updated_at >= $1
-	//  AND deleted_at IS NULL
-	//  ORDER BY updated_at DESC
-	//  LIMIT $2
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND updated_at >= $1
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    updated_at DESC
+	//  LIMIT
+	//    $2
 	GetRecentlyModifiedEntities(ctx context.Context, arg GetRecentlyModifiedEntitiesParams) ([]*Entity, error)
+	// Find related events by context similarity
+	//
+	//  SELECT
+	//    al.id,
+	//    al.user_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.severity,
+	//    al.decision,
+	//    al.risk_score,
+	//    al.context,
+	//    al.created_at,
+	//    CASE
+	//      WHEN al.context ? $1 THEN 'EXACT_MATCH'
+	//      WHEN al.context::text ILIKE '%' || $2 || '%' THEN 'PARTIAL_MATCH'
+	//      ELSE 'NO_MATCH'
+	//    END AS context_match_type
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND (
+	//      al.context ? $1
+	//      OR al.context::text ILIKE '%' || $2 || '%'
+	//    )
+	//    AND al.created_at >= $3
+	//    AND al.created_at <= $4
+	//    AND (
+	//      $5::UUID IS NULL
+	//      OR al.id != $5
+	//    )
+	//  ORDER BY
+	//    CASE
+	//      context_match_type
+	//      WHEN 'EXACT_MATCH' THEN 2
+	//      WHEN 'PARTIAL_MATCH' THEN 1
+	//      ELSE 0
+	//    END DESC,
+	//    al.risk_score DESC,
+	//    al.created_at DESC
+	//  LIMIT
+	//    $6
+	GetRelatedEventsByContext(ctx context.Context, arg GetRelatedEventsByContextParams) ([]*GetRelatedEventsByContextRow, error)
 	//GetRequiredAttributeDefinitions
 	//
-	//  SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
-	//  WHERE is_required = true AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at
+	//  FROM
+	//    attribute_definitions
+	//  WHERE
+	//    is_required = TRUE
+	//    AND tenant_id = current_tenant_id()
 	GetRequiredAttributeDefinitions(ctx context.Context) ([]*AttributeDefinition, error)
 	//GetResourceEvaluationHistory
 	//
-	//  SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+	//  FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND resource_type = $1
-	//    AND ($2::UUID IS NULL OR resource_id = $2)
-	//    AND ($3::VARCHAR IS NULL OR action = $3)
-	//  ORDER BY evaluated_at DESC
-	//  LIMIT $4 OFFSET $5
+	//    AND (
+	//      $2::UUID IS NULL
+	//      OR resource_id = $2
+	//    )
+	//    AND (
+	//      $3::VARCHAR IS NULL
+	//      OR ACTION = $3
+	//    )
+	//  ORDER BY
+	//    evaluated_at DESC
+	//  LIMIT
+	//    $4 OFFSET $5
 	GetResourceEvaluationHistory(ctx context.Context, arg GetResourceEvaluationHistoryParams) ([]*PolicyEvaluation, error)
 	// Usage: Identifies missing sequence numbers (gaps in numbering)
 	// Use case: Audit compliance, finding deleted/voided documents, sequence integrity checks
 	//
 	//  WITH sequence_range AS (
-	//      SELECT generate_series(1, (
-	//          SELECT MAX(es1.sequence) FROM entitystate es1
-	//          WHERE es1.entity_id = $1 AND es1.key = $2 AND es1.fiscal_year = $3 AND es1.tenant_id = current_tenant_id()
-	//      )) as seq_num
+	//    SELECT
+	//      generate_series(
+	//        1,
+	//        (
+	//          SELECT
+	//            MAX(es1.sequence)
+	//          FROM
+	//            entitystate es1
+	//          WHERE
+	//            es1.entity_id = $1
+	//            AND es1.key = $2
+	//            AND es1.fiscal_year = $3
+	//            AND es1.tenant_id = current_tenant_id()
+	//        )
+	//      ) AS seq_num
 	//  )
-	//  SELECT seq_num as missing_sequence
-	//  FROM sequence_range
-	//  WHERE seq_num NOT IN (
-	//      SELECT es2.sequence FROM entitystate es2
-	//      WHERE es2.entity_id = $1 AND es2.key = $2 AND es2.fiscal_year = $3 AND es2.tenant_id = current_tenant_id()
-	//  )
+	//  SELECT
+	//    seq_num AS missing_sequence
+	//  FROM
+	//    sequence_range
+	//  WHERE
+	//    seq_num NOT IN (
+	//      SELECT
+	//        es2.sequence
+	//      FROM
+	//        entitystate es2
+	//      WHERE
+	//        es2.entity_id = $1
+	//        AND es2.key = $2
+	//        AND es2.fiscal_year = $3
+	//        AND es2.tenant_id = current_tenant_id()
+	//    )
 	GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error)
+	// Find similar incident patterns for threat intelligence
+	//
+	//  WITH incident_features AS (
+	//    SELECT
+	//      al_inner.event_type,
+	//      al_inner.event_category,
+	//      COUNT(DISTINCT al_inner.user_id) AS unique_users,
+	//      COUNT(DISTINCT al_inner.ip_address) AS unique_ips,
+	//      AVG(al_inner.risk_score) AS avg_risk_score,
+	//      COUNT(*) FILTER (
+	//        WHERE
+	//          al_inner.decision = 'DENY'
+	//      ) AS denied_count,
+	//      COUNT(*) AS total_events,
+	//      array_agg(DISTINCT al_inner.severity) AS severity_levels
+	//    FROM
+	//      audit_log al_inner
+	//    WHERE
+	//      al_inner.tenant_id = current_tenant_id()
+	//      AND al_inner.event_type = $5
+	//      AND al_inner.event_category = $6
+	//      AND al_inner.created_at >= $7
+	//      AND al_inner.created_at <= $8
+	//    GROUP BY
+	//      al_inner.event_type,
+	//      al_inner.event_category
+	//  )
+	//  SELECT
+	//    al.user_id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.severity,
+	//    al.decision,
+	//    al.risk_score,
+	//    al.ip_address,
+	//    al.created_at,
+	//    iff.avg_risk_score AS pattern_avg_risk,
+	//    iff.denied_count AS pattern_denied_count,
+	//    ABS(al.risk_score - iff.avg_risk_score) AS risk_deviation
+	//  FROM
+	//    audit_log al
+	//    CROSS JOIN incident_features iff
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.event_type = iff.event_type
+	//    AND al.event_category = iff.event_category
+	//    AND al.created_at >= $1
+	//    AND al.created_at <= $2
+	//    AND ABS(al.risk_score - iff.avg_risk_score) <= $3
+	//  ORDER BY
+	//    risk_deviation ASC,
+	//    al.created_at DESC
+	//  LIMIT
+	//    $4
+	GetSimilarIncidentPatterns(ctx context.Context, arg GetSimilarIncidentPatternsParams) ([]*GetSimilarIncidentPatternsRow, error)
 	// Usage: Finds entity states that haven't been updated recently
 	// Use case: Identifying inactive sequences, cleanup candidate identification
 	//
-	//  SELECT es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at, e.name as entity_name,
-	//         NOW() - es.updated_at as time_since_update
-	//  FROM entitystate es
-	//  JOIN entities e ON es.entity_id = e.uuid
-	//  WHERE es.updated_at < $1
-	//  AND es.tenant_id = current_tenant_id()
-	//  ORDER BY es.updated_at ASC
+	//  SELECT
+	//    es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at,
+	//    e.name AS entity_name,
+	//    NOW() - es.updated_at AS time_since_update
+	//  FROM
+	//    entitystate es
+	//    JOIN entities e ON es.entity_id = e.uuid
+	//  WHERE
+	//    es.updated_at < $1
+	//    AND es.tenant_id = current_tenant_id()
+	//  ORDER BY
+	//    es.updated_at ASC
 	GetStaleEntityStates(ctx context.Context, updatedAt time.Time) ([]*GetStaleEntityStatesRow, error)
+	// Get suspicious activity from specific IP addresses with risk analysis
+	//
+	//  SELECT
+	//    al.ip_address,
+	//    al.user_id,
+	//    al.event_type,
+	//    al.decision,
+	//    al.risk_score,
+	//    al.created_at,
+	//    COUNT(*) OVER (PARTITION BY al.ip_address) AS ip_event_count,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        al.decision = 'DENY'
+	//    ) OVER (PARTITION BY al.ip_address) AS ip_denied_count,
+	//    COUNT(DISTINCT al.user_id) OVER (PARTITION BY al.ip_address) AS unique_users_per_ip
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND (
+	//      $1::INET IS NULL
+	//      OR al.ip_address = $1
+	//    )
+	//    AND (
+	//      al.decision = 'DENY'
+	//      OR al.risk_score >= $2
+	//    )
+	//    AND al.created_at >= $3
+	//  ORDER BY
+	//    al.risk_score DESC,
+	//    al.created_at DESC
+	//  LIMIT
+	//    $5 OFFSET $4
+	GetSuspiciousActivityByIP(ctx context.Context, arg GetSuspiciousActivityByIPParams) ([]*GetSuspiciousActivityByIPRow, error)
 	//GetTenantByEmail
 	//
-	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-	//  WHERE email = $1 AND deleted_at IS NULL
+	//  SELECT
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    email = $1
+	//    AND deleted_at IS NULL
 	GetTenantByEmail(ctx context.Context, email string) (*Tenant, error)
 	//GetTenantByID
 	//
-	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-	//  WHERE id = $1 AND deleted_at IS NULL
+	//  SELECT
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    id = $1
+	//    AND deleted_at IS NULL
 	GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error)
 	//GetTenantBySlug
 	//
-	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-	//  WHERE slug = $1 AND deleted_at IS NULL
+	//  SELECT
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    slug = $1
+	//    AND deleted_at IS NULL
 	GetTenantBySlug(ctx context.Context, slug string) (*Tenant, error)
 	// SELECT * FROM tenants
 	// WHERE id = $1 AND deleted_at IS NULL;
 	//
-	//
-	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-	//  WHERE subdomain = $1 AND deleted_at IS NULL
+	//  SELECT
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    subdomain = $1
+	//    AND deleted_at IS NULL
 	GetTenantByUUID(ctx context.Context, subdomain *string) (*Tenant, error)
 	//GetTenantConfiguration
 	//
-	//  SELECT tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at FROM tenant_configurations WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+	//  FROM
+	//    tenant_configurations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	GetTenantConfiguration(ctx context.Context) (*TenantConfiguration, error)
 	// =====================================================
 	// ADVANCED ANALYTICS QUERIES
 	// =====================================================
 	// Admin-level analytics (requires explicit tenant_id for cross-tenant queries)
 	//
-	//
 	//  SELECT
-	//      DATE_TRUNC('month', created_at) as month,
-	//      COUNT(*) as new_tenants,
-	//      COUNT(*) FILTER (WHERE status = 'active') as active_new_tenants
-	//  FROM tenants
-	//  WHERE deleted_at IS NULL
+	//    DATE_TRUNC('month', created_at) AS MONTH,
+	//    COUNT(*) AS new_tenants,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        STATUS = 'active'
+	//    ) AS active_new_tenants
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    deleted_at IS NULL
 	//    AND created_at >= $1
 	//    AND created_at <= $2
-	//  GROUP BY DATE_TRUNC('month', created_at)
-	//  ORDER BY month
+	//  GROUP BY
+	//    DATE_TRUNC('month', created_at)
+	//  ORDER BY
+	//    MONTH
 	GetTenantGrowthStats(ctx context.Context, arg GetTenantGrowthStatsParams) ([]*GetTenantGrowthStatsRow, error)
 	//GetTenantStats
 	//
 	//  SELECT
-	//      COUNT(*) as total_tenants,
-	//      COUNT(*) FILTER (WHERE status = 'active') as active_tenants,
-	//      COUNT(*) FILTER (WHERE status = 'suspended') as suspended_tenants,
-	//      COUNT(*) FILTER (WHERE status = 'pending') as pending_tenants
-	//  FROM tenants
-	//  WHERE deleted_at IS NULL
+	//    COUNT(*) AS total_tenants,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        STATUS = 'active'
+	//    ) AS active_tenants,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        STATUS = 'suspended'
+	//    ) AS suspended_tenants,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        STATUS = 'pending'
+	//    ) AS pending_tenants
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    deleted_at IS NULL
 	GetTenantStats(ctx context.Context) (*GetTenantStatsRow, error)
 	//GetTenantStatusDistribution
 	//
 	//  SELECT
-	//      COUNT(*) as total_tenants,
-	//      COUNT(*) FILTER (WHERE status = 'active') as active_tenants,
-	//      COUNT(*) FILTER (WHERE status = 'suspended') as suspended_tenants,
-	//      COUNT(*) FILTER (WHERE status = 'pending') as pending_tenants,
-	//      ROUND(COUNT(*) FILTER (WHERE status = 'active') * 100.0 / COUNT(*), 2) as active_percentage,
-	//      ROUND(COUNT(*) FILTER (WHERE status = 'suspended') * 100.0 / COUNT(*), 2) as suspended_percentage,
-	//      ROUND(COUNT(*) FILTER (WHERE status = 'pending') * 100.0 / COUNT(*), 2) as pending_percentage
-	//  FROM tenants
-	//  WHERE deleted_at IS NULL
+	//    COUNT(*) AS total_tenants,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        STATUS = 'active'
+	//    ) AS active_tenants,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        STATUS = 'suspended'
+	//    ) AS suspended_tenants,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        STATUS = 'pending'
+	//    ) AS pending_tenants,
+	//    ROUND(
+	//      COUNT(*) FILTER (
+	//        WHERE
+	//          STATUS = 'active'
+	//      ) * 100.0 / COUNT(*),
+	//      2
+	//    ) AS active_percentage,
+	//    ROUND(
+	//      COUNT(*) FILTER (
+	//        WHERE
+	//          STATUS = 'suspended'
+	//      ) * 100.0 / COUNT(*),
+	//      2
+	//    ) AS suspended_percentage,
+	//    ROUND(
+	//      COUNT(*) FILTER (
+	//        WHERE
+	//          STATUS = 'pending'
+	//      ) * 100.0 / COUNT(*),
+	//      2
+	//    ) AS pending_percentage
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    deleted_at IS NULL
 	GetTenantStatusDistribution(ctx context.Context) (*GetTenantStatusDistributionRow, error)
 	//GetTenantUsageStats
 	//
-	//  SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
-	//  WHERE period_start = $1 AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+	//  FROM
+	//    tenant_usage_stats
+	//  WHERE
+	//    period_start = $1
+	//    AND tenant_id = current_tenant_id()
 	GetTenantUsageStats(ctx context.Context, periodStart time.Time) (*TenantUsageStat, error)
 	//GetTenantUsageStatsRange
 	//
-	//  SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
-	//  WHERE period_start >= $1
+	//  SELECT
+	//    tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+	//  FROM
+	//    tenant_usage_stats
+	//  WHERE
+	//    period_start >= $1
 	//    AND period_end <= $2
 	//    AND tenant_id = current_tenant_id()
-	//  ORDER BY period_start DESC
+	//  ORDER BY
+	//    period_start DESC
 	GetTenantUsageStatsRange(ctx context.Context, arg GetTenantUsageStatsRangeParams) ([]*TenantUsageStat, error)
 	//GetTenantsByCompanySize
 	//
-	//  SELECT company_size, COUNT(*) as tenant_count
-	//  FROM tenants
-	//  WHERE deleted_at IS NULL AND company_size IS NOT NULL
-	//  GROUP BY company_size
-	//  ORDER BY tenant_count DESC
+	//  SELECT
+	//    company_size,
+	//    COUNT(*) AS tenant_count
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    deleted_at IS NULL
+	//    AND company_size IS NOT NULL
+	//  GROUP BY
+	//    company_size
+	//  ORDER BY
+	//    tenant_count DESC
 	GetTenantsByCompanySize(ctx context.Context) ([]*GetTenantsByCompanySizeRow, error)
 	//GetTenantsByCurrency
 	//
-	//  SELECT currency_code, COUNT(*) as tenant_count
-	//  FROM tenants
-	//  WHERE deleted_at IS NULL
-	//  GROUP BY currency_code
-	//  ORDER BY tenant_count DESC
+	//  SELECT
+	//    currency_code,
+	//    COUNT(*) AS tenant_count
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    deleted_at IS NULL
+	//  GROUP BY
+	//    currency_code
+	//  ORDER BY
+	//    tenant_count DESC
 	GetTenantsByCurrency(ctx context.Context) ([]*GetTenantsByCurrencyRow, error)
 	//GetTenantsByIndustry
 	//
-	//  SELECT industry, COUNT(*) as tenant_count
-	//  FROM tenants
-	//  WHERE deleted_at IS NULL AND industry IS NOT NULL
-	//  GROUP BY industry
-	//  ORDER BY tenant_count DESC
+	//  SELECT
+	//    industry,
+	//    COUNT(*) AS tenant_count
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    deleted_at IS NULL
+	//    AND industry IS NOT NULL
+	//  GROUP BY
+	//    industry
+	//  ORDER BY
+	//    tenant_count DESC
 	GetTenantsByIndustry(ctx context.Context) ([]*GetTenantsByIndustryRow, error)
 	//GetTenantsByTimezone
 	//
-	//  SELECT timezone, COUNT(*) as tenant_count
-	//  FROM tenants
-	//  WHERE deleted_at IS NULL
-	//  GROUP BY timezone
-	//  ORDER BY tenant_count DESC
+	//  SELECT
+	//    timezone,
+	//    COUNT(*) AS tenant_count
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    deleted_at IS NULL
+	//  GROUP BY
+	//    timezone
+	//  ORDER BY
+	//    tenant_count DESC
 	GetTenantsByTimezone(ctx context.Context) ([]*GetTenantsByTimezoneRow, error)
 	//GetTenantsCreatedInDateRange
 	//
-	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-	//  WHERE created_at >= $1
+	//  SELECT
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    created_at >= $1
 	//    AND created_at <= $2
 	//    AND deleted_at IS NULL
-	//  ORDER BY created_at DESC
+	//  ORDER BY
+	//    created_at DESC
 	GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]*Tenant, error)
 	//GetUnusedEntityCodes
 	//
-	//  SELECT DISTINCT code
-	//  FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND code IS NOT NULL
-	//  AND deleted_at IS NOT NULL
-	//  ORDER BY code
+	//  SELECT
+	//    DISTINCT code
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND code IS NOT NULL
+	//    AND deleted_at IS NOT NULL
+	//  ORDER BY
+	//    code
 	GetUnusedEntityCodes(ctx context.Context) ([]*string, error)
 	//GetUserAccessRequestHistory
 	//
-	//  SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+	//  FROM
+	//    access_requests
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND requester_id = $1
-	//  ORDER BY created_at DESC
-	//  LIMIT $2 OFFSET $3
+	//  ORDER BY
+	//    created_at DESC
+	//  LIMIT
+	//    $2 OFFSET $3
 	GetUserAccessRequestHistory(ctx context.Context, arg GetUserAccessRequestHistoryParams) ([]*AccessRequest, error)
+	// Analyze user agent patterns for security insights
+	//
+	//  SELECT
+	//    user_agent,
+	//    COUNT(*) AS event_count,
+	//    COUNT(DISTINCT user_id) AS unique_users,
+	//    COUNT(DISTINCT ip_address) AS unique_ips,
+	//    AVG(risk_score) AS avg_risk_score,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        decision = 'DENY'
+	//    ) AS denied_count,
+	//    MIN(created_at) AS first_seen,
+	//    MAX(created_at) AS last_seen,
+	//    CASE
+	//      WHEN user_agent IS NULL THEN 'NO_USER_AGENT'
+	//      WHEN user_agent ILIKE '%bot%'
+	//      OR user_agent ILIKE '%crawler%' THEN 'BOT'
+	//      WHEN user_agent ILIKE '%curl%'
+	//      OR user_agent ILIKE '%wget%' THEN 'AUTOMATED_TOOL'
+	//      WHEN LENGTH(user_agent) < 20 THEN 'SUSPICIOUS_SHORT'
+	//      ELSE 'NORMAL'
+	//    END AS agent_category
+	//  FROM
+	//    audit_log
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND created_at >= $1
+	//    AND created_at <= $2
+	//  GROUP BY
+	//    user_agent
+	//  HAVING
+	//    COUNT(*) >= $3
+	//  ORDER BY
+	//    CASE
+	//      agent_category
+	//      WHEN 'SUSPICIOUS_SHORT' THEN 4
+	//      WHEN 'AUTOMATED_TOOL' THEN 3
+	//      WHEN 'BOT' THEN 2
+	//      WHEN 'NO_USER_AGENT' THEN 1
+	//      ELSE 0
+	//    END DESC,
+	//    avg_risk_score DESC,
+	//    event_count DESC
+	//  LIMIT
+	//    $4
+	GetUserAgentAnalysis(ctx context.Context, arg GetUserAgentAnalysisParams) ([]*GetUserAgentAnalysisRow, error)
+	// Get audit history for a specific user
+	//
+	//  SELECT
+	//    al.id,
+	//    al.event_type,
+	//    al.event_category,
+	//    al.severity,
+	//    al.decision,
+	//    al.reason,
+	//    al.risk_score,
+	//    al.context,
+	//    al.ip_address,
+	//    al.created_at
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.user_id = $1
+	//    AND (
+	//      $2::VARCHAR IS NULL
+	//      OR al.event_category = $2
+	//    )
+	//    AND (
+	//      $3::TIMESTAMPTZ IS NULL
+	//      OR al.created_at >= $3
+	//    )
+	//    AND (
+	//      $4::TIMESTAMPTZ IS NULL
+	//      OR al.created_at <= $4
+	//    )
+	//  ORDER BY
+	//    al.created_at DESC
+	//  LIMIT
+	//    $6 OFFSET $5
+	GetUserAuditHistory(ctx context.Context, arg GetUserAuditHistoryParams) ([]*GetUserAuditHistoryRow, error)
 	//GetUserByEmail
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE email = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
+	//  FROM
+	//    users
+	//  WHERE
+	//    email = $1
+	//    AND deleted_at IS NULL
+	//    AND tenant_id = current_tenant_id()
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	//GetUserByID
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE id = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
+	//  FROM
+	//    users
+	//  WHERE
+	//    id = $1
+	//    AND deleted_at IS NULL
+	//    AND tenant_id = current_tenant_id()
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
 	//GetUserByUsername
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users WHERE username = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
+	//  FROM
+	//    users
+	//  WHERE
+	//    username = $1
+	//    AND deleted_at IS NULL
+	//    AND tenant_id = current_tenant_id()
 	GetUserByUsername(ctx context.Context, username *string) (*User, error)
 	//GetUserEvaluationHistory
 	//
-	//  SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+	//  FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND user_id = $1
-	//    AND ($2::VARCHAR IS NULL OR resource_type = $2)
-	//    AND ($3::VARCHAR IS NULL OR action = $3)
-	//  ORDER BY evaluated_at DESC
-	//  LIMIT $4 OFFSET $5
+	//    AND (
+	//      $2::VARCHAR IS NULL
+	//      OR resource_type = $2
+	//    )
+	//    AND (
+	//      $3::VARCHAR IS NULL
+	//      OR ACTION = $3
+	//    )
+	//  ORDER BY
+	//    evaluated_at DESC
+	//  LIMIT
+	//    $4 OFFSET $5
 	GetUserEvaluationHistory(ctx context.Context, arg GetUserEvaluationHistoryParams) ([]*PolicyEvaluation, error)
 	//GetUserNotificationPreferences
 	//
-	//  SELECT id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at FROM notification_preferences
-	//  WHERE user_id = $1 AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
+	//  FROM
+	//    notification_preferences
+	//  WHERE
+	//    user_id = $1
+	//    AND tenant_id = current_tenant_id()
 	GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreference, error)
 	//GetUserPasswordByID
 	//
-	//  SELECT password_hash FROM users WHERE id = $1 AND deleted_at IS NULL AND tenant_id = current_tenant_id()
+	//  SELECT
+	//    password_hash
+	//  FROM
+	//    users
+	//  WHERE
+	//    id = $1
+	//    AND deleted_at IS NULL
+	//    AND tenant_id = current_tenant_id()
 	GetUserPasswordByID(ctx context.Context, id uuid.UUID) (*string, error)
+	// Get comprehensive risk profile for a user
+	//
+	//  SELECT
+	//    al.user_id,
+	//    COUNT(*) AS total_events,
+	//    AVG(al.risk_score) AS avg_risk_score,
+	//    MAX(al.risk_score) AS max_risk_score,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        al.decision = 'DENY'
+	//    ) AS failed_attempts,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        al.severity IN ('HIGH', 'CRITICAL')
+	//    ) AS high_severity_events,
+	//    COUNT(DISTINCT al.ip_address) AS unique_ips,
+	//    COUNT(DISTINCT al.event_category) AS unique_categories,
+	//    MIN(al.created_at) AS first_event,
+	//    MAX(al.created_at) AS last_event,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        al.created_at >= NOW() - INTERVAL '24 hours'
+	//    ) AS events_last_24h,
+	//    COUNT(*) FILTER (
+	//      WHERE
+	//        al.created_at >= NOW() - INTERVAL '7 days'
+	//    ) AS events_last_7d
+	//  FROM
+	//    audit_log al
+	//  WHERE
+	//    al.tenant_id = current_tenant_id()
+	//    AND al.user_id = $1
+	//    AND (
+	//      $2::TIMESTAMPTZ IS NULL
+	//      OR al.created_at >= $2
+	//    )
+	//  GROUP BY
+	//    al.user_id
+	GetUserRiskProfile(ctx context.Context, arg GetUserRiskProfileParams) (*GetUserRiskProfileRow, error)
+	// Get audit events for a specific session
+	//
+	//  SELECT
+	//    id,
+	//    event_type,
+	//    event_category,
+	//    severity,
+	//    decision,
+	//    reason,
+	//    context,
+	//    created_at
+	//  FROM
+	//    audit_log
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND session_id = $1
+	//  ORDER BY
+	//    created_at ASC
+	GetUserSessionEvents(ctx context.Context, sessionID *uuid.UUID) ([]*GetUserSessionEventsRow, error)
 	//HardDeleteEntity
 	//
-	//  DELETE FROM entities
-	//  WHERE uuid = $1 AND tenant_id = current_tenant_id()
+	//  DELETE FROM
+	//    entities
+	//  WHERE
+	//    uuid = $1
+	//    AND tenant_id = current_tenant_id()
 	HardDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	//HardDeletePolicy
 	//
-	//  DELETE FROM policies
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  DELETE FROM
+	//    policies
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	HardDeletePolicy(ctx context.Context, id uuid.UUID) error
 	//IncrementEntityStateSequence
 	//
-	//  UPDATE entitystate
-	//  SET sequence = sequence + 1
-	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
-	//  RETURNING sequence
+	//  UPDATE
+	//    entitystate
+	//  SET
+	//    sequence = sequence + 1
+	//  WHERE
+	//    entity_id = $1
+	//    AND KEY = $2
+	//    AND fiscal_year = $3
+	//    AND tenant_id = current_tenant_id()
+	//  RETURNING
+	//    sequence
 	IncrementEntityStateSequence(ctx context.Context, arg IncrementEntityStateSequenceParams) (int64, error)
 	//IncrementFailedLogins
 	//
-	//  UPDATE users SET failed_login_attempts = failed_login_attempts + 1 WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    users
+	//  SET
+	//    failed_login_attempts = failed_login_attempts + 1
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	IncrementFailedLogins(ctx context.Context, id uuid.UUID) error
 	//InvalidateActionEvaluations
 	//
-	//  DELETE FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
-	//    AND action = $1
+	//  DELETE FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND ACTION = $1
 	InvalidateActionEvaluations(ctx context.Context, action string) error
 	//InvalidateAllEvaluations
 	//
-	//  DELETE FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
+	//  DELETE FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	InvalidateAllEvaluations(ctx context.Context) error
 	//InvalidatePolicyEvaluations
 	//
-	//  DELETE FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
-	//    AND applicable_policies && $1::UUID[]
+	//  DELETE FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND applicable_policies && $1::UUID []
 	InvalidatePolicyEvaluations(ctx context.Context, dollar_1 []uuid.UUID) error
 	//InvalidateResourceEvaluations
 	//
-	//  DELETE FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
+	//  DELETE FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND resource_type = $1
-	//    AND ($2::UUID IS NULL OR resource_id = $2)
+	//    AND (
+	//      $2::UUID IS NULL
+	//      OR resource_id = $2
+	//    )
 	InvalidateResourceEvaluations(ctx context.Context, arg InvalidateResourceEvaluationsParams) error
 	//InvalidateUserEvaluations
 	//
-	//  DELETE FROM policy_evaluations
-	//  WHERE tenant_id = current_tenant_id()
+	//  DELETE FROM
+	//    policy_evaluations
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND user_id = $1
 	InvalidateUserEvaluations(ctx context.Context, userID uuid.UUID) error
 	//IsEntityAncestor
 	//
-	//  SELECT EXISTS(
-	//    SELECT 1 FROM hierarchy_paths
-	//    WHERE tenant_id = current_tenant_id()
-	//    AND ancestor_id = $1
-	//    AND descendant_id = $2
-	//    AND depth > 0
-	//  ) as is_ancestor
+	//  SELECT
+	//    EXISTS(
+	//      SELECT
+	//        1
+	//      FROM
+	//        hierarchy_paths
+	//      WHERE
+	//        tenant_id = current_tenant_id()
+	//        AND ancestor_id = $1
+	//        AND descendant_id = $2
+	//        AND depth > 0
+	//    ) AS is_ancestor
 	IsEntityAncestor(ctx context.Context, arg IsEntityAncestorParams) (bool, error)
 	//ListAccessRequestsByStatus
 	//
-	//  SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-	//  WHERE tenant_id = current_tenant_id()
-	//    AND ($1::text IS NULL OR approval_status = $1)
-	//    AND ($2::uuid IS NULL OR requester_id = $2)
-	//    AND ($3::uuid IS NULL OR target_user_id = $3)
-	//  ORDER BY created_at DESC
-	//  LIMIT $4 OFFSET $5
+	//  SELECT
+	//    id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+	//  FROM
+	//    access_requests
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND (
+	//      $1::text IS NULL
+	//      OR approval_status = $1
+	//    )
+	//    AND (
+	//      $2::uuid IS NULL
+	//      OR requester_id = $2
+	//    )
+	//    AND (
+	//      $3::uuid IS NULL
+	//      OR target_user_id = $3
+	//    )
+	//  ORDER BY
+	//    created_at DESC
+	//  LIMIT
+	//    $4 OFFSET $5
 	ListAccessRequestsByStatus(ctx context.Context, arg ListAccessRequestsByStatusParams) ([]*AccessRequest, error)
 	//ListActiveEntities
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE tenant_id = current_tenant_id() AND is_active = true AND deleted_at IS NULL
-	//  ORDER BY name
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND is_active = TRUE
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
 	ListActiveEntities(ctx context.Context) ([]*Entity, error)
 	//ListActivePolicies
 	//
-	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-	//  WHERE tenant_id = current_tenant_id() AND is_active = true AND deleted_at IS NULL
-	//  ORDER BY name
+	//  SELECT
+	//    id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+	//  FROM
+	//    policies
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND is_active = TRUE
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
 	ListActivePolicies(ctx context.Context) ([]*Policy, error)
 	// Attribute Definition Listing and Filtering
-	//
 	//
 	//  SELECT
 	//    id,
@@ -2088,416 +4722,712 @@ type Querier interface {
 	//    encryption_required,
 	//    is_active,
 	//    created_at
-	//  FROM attribute_definitions
-	//  WHERE tenant_id = current_tenant_id()
+	//  FROM
+	//    attribute_definitions
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND (
-	//      $1::VARCHAR IS NULL OR
-	//      name ILIKE '%' || $1 || '%'
+	//      $1::VARCHAR IS NULL
+	//      OR name ILIKE '%' || $1 || '%'
 	//    )
 	//    AND (
-	//      $2::VARCHAR IS NULL OR
-	//      category = $2
+	//      $2::VARCHAR IS NULL
+	//      OR category = $2
 	//    )
 	//    AND (
-	//      $3::BOOLEAN IS NULL OR
-	//      is_active = $3
+	//      $3::BOOLEAN IS NULL
+	//      OR is_active = $3
 	//    )
-	//  ORDER BY name ASC
-	//  LIMIT $5 OFFSET $4
+	//  ORDER BY
+	//    name ASC
+	//  LIMIT
+	//    $5 OFFSET $4
 	ListAttributeDefinitions(ctx context.Context, arg ListAttributeDefinitionsParams) ([]*AttributeDefinition, error)
 	//ListAttributeDefinitionsByCategory
 	//
-	//  SELECT id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at FROM attribute_definitions
-	//  WHERE tenant_id = current_tenant_id() AND category = $1 AND is_active = true
-	//  ORDER BY name
+	//  SELECT
+	//    id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at
+	//  FROM
+	//    attribute_definitions
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND category = $1
+	//    AND is_active = TRUE
+	//  ORDER BY
+	//    name
 	ListAttributeDefinitionsByCategory(ctx context.Context, category string) ([]*AttributeDefinition, error)
 	// Entity Listing and Filtering
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
-	//  ORDER BY name
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
 	ListEntities(ctx context.Context) ([]*Entity, error)
 	//ListEntitiesByType
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE tenant_id = current_tenant_id() AND type = $1 AND deleted_at IS NULL
-	//  ORDER BY name
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND TYPE = $1
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
 	ListEntitiesByType(ctx context.Context, type_ string) ([]*Entity, error)
 	//ListEntitiesByTypes
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND type = ANY($1::VARCHAR[])
-	//  AND deleted_at IS NULL
-	//  ORDER BY type, name
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND TYPE = ANY($1::VARCHAR [])
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    TYPE,
+	//    name
 	ListEntitiesByTypes(ctx context.Context, dollar_1 []string) ([]*Entity, error)
 	// Find all leaf nodes (entities with no children)
 	//
-	//  SELECT e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
-	//  FROM entities e
-	//  LEFT JOIN entities children ON children.parent_id = e.uuid AND children.tenant_id = e.tenant_id
-	//  WHERE children.uuid IS NULL
-	//  AND e.is_active = true
+	//  SELECT
+	//    e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
+	//  FROM
+	//    entities e
+	//    LEFT JOIN entities children ON children.parent_id = e.uuid
+	//    AND children.tenant_id = e.tenant_id
+	//  WHERE
+	//    children.uuid IS NULL
+	//    AND e.is_active = TRUE
 	ListEntitiesWithNochildren(ctx context.Context) ([]*Entity, error)
 	//ListEntitiesWithPagination
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
-	//  FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND deleted_at IS NULL
-	//  AND ($1 IS NULL OR type = $1)
-	//  AND ($2 IS NULL OR is_active = $2)
-	//  AND ($3 IS NULL OR hidden = $3)
-	//  ORDER BY name
-	//  LIMIT $5 OFFSET $4
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	//    AND (
+	//      $1 IS NULL
+	//      OR TYPE = $1
+	//    )
+	//    AND (
+	//      $2 IS NULL
+	//      OR is_active = $2
+	//    )
+	//    AND (
+	//      $3 IS NULL
+	//      OR hidden = $3
+	//    )
+	//  ORDER BY
+	//    name
+	//  LIMIT
+	//    $5 OFFSET $4
 	ListEntitiesWithPagination(ctx context.Context, arg ListEntitiesWithPaginationParams) ([]*Entity, error)
 	//ListEntityStates
 	//
-	//  SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at FROM entitystate
-	//  WHERE entity_id = $1
-	//  ORDER BY key, fiscal_year
+	//  SELECT
+	//    uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
+	//  FROM
+	//    entitystate
+	//  WHERE
+	//    entity_id = $1
+	//  ORDER BY
+	//    KEY,
+	//    fiscal_year
 	ListEntityStates(ctx context.Context, entityID uuid.UUID) ([]*Entitystate, error)
 	//ListFeatureFlags
 	//
-	//  SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+	//  FROM
+	//    feature_flags
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND deleted_at IS NULL
-	//    AND ($1::text IS NULL OR flag_type = $1)
-	//  ORDER BY name
-	//  LIMIT $2 OFFSET $3
+	//    AND (
+	//      $1::text IS NULL
+	//      OR flag_type = $1
+	//    )
+	//  ORDER BY
+	//    name
+	//  LIMIT
+	//    $2 OFFSET $3
 	ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsParams) ([]*FeatureFlag, error)
 	// Policy Listing and Filtering
 	//
-	//
-	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-	//  WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
-	//  ORDER BY name
+	//  SELECT
+	//    id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+	//  FROM
+	//    policies
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
 	ListPolicies(ctx context.Context) ([]*Policy, error)
 	//ListPoliciesByCategory
 	//
-	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-	//  WHERE tenant_id = current_tenant_id() AND category = $1 AND deleted_at IS NULL
-	//  ORDER BY name
+	//  SELECT
+	//    id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+	//  FROM
+	//    policies
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND category = $1
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
 	ListPoliciesByCategory(ctx context.Context, category *string) ([]*Policy, error)
 	//ListPoliciesByEffect
 	//
-	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-	//  WHERE tenant_id = current_tenant_id() AND effect = $1 AND deleted_at IS NULL
-	//  ORDER BY name
+	//  SELECT
+	//    id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+	//  FROM
+	//    policies
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND effect = $1
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
 	ListPoliciesByEffect(ctx context.Context, effect *string) ([]*Policy, error)
 	//ListTenants
 	//
-	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-	//  WHERE deleted_at IS NULL
-	//  ORDER BY created_at DESC
-	//  LIMIT $1 OFFSET $2
+	//  SELECT
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    deleted_at IS NULL
+	//  ORDER BY
+	//    created_at DESC
+	//  LIMIT
+	//    $1 OFFSET $2
 	ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Tenant, error)
 	//ListUsers
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
+	//  SELECT
+	//    id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
+	//  FROM
+	//    users
 	//  WHERE
-	//      ($3::text IS NULL OR user_type = $3::text)
-	//  AND ($4::text IS NULL OR account_status = $4::text)
-	//  AND deleted_at IS NULL
-	//  AND tenant_id = current_tenant_id()
-	//  ORDER BY created_at DESC
-	//  LIMIT $1
-	//  OFFSET $2
+	//    (
+	//      $3::text IS NULL
+	//      OR user_type = $3::text
+	//    )
+	//    AND (
+	//      $4::text IS NULL
+	//      OR account_status = $4::text
+	//    )
+	//    AND deleted_at IS NULL
+	//    AND tenant_id = current_tenant_id()
+	//  ORDER BY
+	//    created_at DESC
+	//  LIMIT
+	//    $1 OFFSET $2
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error)
 	//ListVisibleEntities
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE tenant_id = current_tenant_id() AND hidden = false AND deleted_at IS NULL
-	//  ORDER BY name
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND hidden = false
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
 	ListVisibleEntities(ctx context.Context) ([]*Entity, error)
 	// =====================================================================
 	// 3. HIERARCHY BULK OPERATIONS
 	// =====================================================================
 	//
-	//
 	//  WITH RECURSIVE affected_entities AS (
-	//    SELECT $1::UUID as entity_id, 0 as depth
-	//    UNION ALL
-	//    SELECT hp.descendant_id, ae.depth + 1
-	//    FROM affected_entities ae
-	//    JOIN hierarchy_paths hp ON hp.ancestor_id = ae.entity_id
-	//    WHERE ae.depth < 10
+	//    SELECT
+	//      $1::UUID AS entity_id,
+	//      0 AS depth
+	//    UNION
+	//    ALL
+	//    SELECT
+	//      hp.descendant_id,
+	//      ae.depth + 1
+	//    FROM
+	//      affected_entities ae
+	//      JOIN hierarchy_paths hp ON hp.ancestor_id = ae.entity_id
+	//    WHERE
+	//      ae.depth < 10
 	//  ),
 	//  delete_paths AS (
-	//    DELETE FROM hierarchy_paths
-	//    WHERE descendant_id IN (SELECT entity_id FROM affected_entities)
+	//    DELETE FROM
+	//      hierarchy_paths
+	//    WHERE
+	//      descendant_id IN (
+	//        SELECT
+	//          entity_id
+	//        FROM
+	//          affected_entities
+	//      )
 	//  ),
 	//  insert_new_paths AS (
-	//    INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	//    INSERT INTO
+	//      hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
 	//    SELECT
-	//    current_tenant_id(),
-	//    ancestor_paths.ancestor_id,
-	//    ae.entity_id,
-	//    ancestor_paths.depth + descendant_paths.depth + 1
-	//    FROM affected_entities ae
-	//    CROSS JOIN (
-	//      SELECT ancestor_id, depth FROM hierarchy_paths
-	//      WHERE descendant_id = $2
-	//      UNION ALL
-	//      SELECT $2::UUID, 0
-	//    ) ancestor_paths
-	//    CROSS JOIN (
-	//      SELECT descendant_id, depth FROM hierarchy_paths
-	//      WHERE ancestor_id = $1
-	//      UNION ALL
-	//      SELECT $1::UUID, 0
-	//    ) descendant_paths
-	//    WHERE ae.entity_id = descendant_paths.descendant_id
+	//      current_tenant_id(),
+	//      ancestor_paths.ancestor_id,
+	//      ae.entity_id,
+	//      ancestor_paths.depth + descendant_paths.depth + 1
+	//    FROM
+	//      affected_entities ae
+	//      CROSS JOIN (
+	//        SELECT
+	//          ancestor_id,
+	//          depth
+	//        FROM
+	//          hierarchy_paths
+	//        WHERE
+	//          descendant_id = $2
+	//        UNION
+	//        ALL
+	//        SELECT
+	//          $2::UUID,
+	//          0
+	//      ) ancestor_paths
+	//      CROSS JOIN (
+	//        SELECT
+	//          descendant_id,
+	//          depth
+	//        FROM
+	//          hierarchy_paths
+	//        WHERE
+	//          ancestor_id = $1
+	//        UNION
+	//        ALL
+	//        SELECT
+	//          $1::UUID,
+	//          0
+	//      ) descendant_paths
+	//    WHERE
+	//      ae.entity_id = descendant_paths.descendant_id
 	//  )
-	//  UPDATE entities SET parent_id = $2, updated_at = NOW() WHERE uuid = $1
+	//  UPDATE
+	//    entities
+	//  SET
+	//    parent_id = $2,
+	//    updated_at = NOW()
+	//  WHERE
+	//    uuid = $1
 	MoveEntityToNewParent(ctx context.Context, arg MoveEntityToNewParentParams) error
 	//RebuildHierarchyPaths
 	//
 	//  WITH RECURSIVE entity_hierarchy AS (
 	//    SELECT
-	//    uuid as ancestor_id,
-	//    uuid as descendant_id,
-	//    0 as depth,
-	//    tenant_id
-	//    FROM entities
-	//    WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
-	//
-	//    UNION ALL
-	//
+	//      uuid AS ancestor_id,
+	//      uuid AS descendant_id,
+	//      0 AS depth,
+	//      tenant_id
+	//    FROM
+	//      entities
+	//    WHERE
+	//      tenant_id = current_tenant_id()
+	//      AND deleted_at IS NULL
+	//    UNION
+	//    ALL
 	//    SELECT
-	//    eh.ancestor_id,
-	//    e.uuid,
-	//    eh.depth + 1,
-	//    e.tenant_id
-	//    FROM entity_hierarchy eh
-	//    JOIN entities e ON e.parent_id = eh.descendant_id
-	//    WHERE e.tenant_id = current_tenant_id()
-	//    AND e.deleted_at IS NULL
-	//    AND eh.depth < 10
+	//      eh.ancestor_id,
+	//      e.uuid,
+	//      eh.depth + 1,
+	//      e.tenant_id
+	//    FROM
+	//      entity_hierarchy eh
+	//      JOIN entities e ON e.parent_id = eh.descendant_id
+	//    WHERE
+	//      e.tenant_id = current_tenant_id()
+	//      AND e.deleted_at IS NULL
+	//      AND eh.depth < 10
 	//  ),
 	//  cleanup AS (
-	//    DELETE FROM hierarchy_paths WHERE tenant_id = current_tenant_id()
+	//    DELETE FROM
+	//      hierarchy_paths
+	//    WHERE
+	//      tenant_id = current_tenant_id()
 	//  )
-	//  INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
-	//  SELECT tenant_id, ancestor_id, descendant_id, depth
-	//  FROM entity_hierarchy
+	//  INSERT INTO
+	//    hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	//  SELECT
+	//    tenant_id,
+	//    ancestor_id,
+	//    descendant_id,
+	//    depth
+	//  FROM
+	//    entity_hierarchy
 	RebuildHierarchyPaths(ctx context.Context) error
 	// Usage: Resets all document sequences to 1 for an entity's fiscal year
 	// Use case: New fiscal year initialization or sequence resets
 	//
-	//  UPDATE entitystate
-	//  SET sequence = 1
-	//  WHERE entity_id = $1 AND fiscal_year = $2 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    entitystate
+	//  SET
+	//    sequence = 1
+	//  WHERE
+	//    entity_id = $1
+	//    AND fiscal_year = $2
+	//    AND tenant_id = current_tenant_id()
 	ResetAllEntitySequences(ctx context.Context, arg ResetAllEntitySequencesParams) error
 	//ResetEntityStateSequence
 	//
-	//  UPDATE entitystate
-	//  SET sequence = $3
-	//  WHERE entity_id = $1
-	//  AND key = $2
-	//  AND fiscal_year = $4
-	//  AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    entitystate
+	//  SET
+	//    sequence = $3
+	//  WHERE
+	//    entity_id = $1
+	//    AND KEY = $2
+	//    AND fiscal_year = $4
+	//    AND tenant_id = current_tenant_id()
 	ResetEntityStateSequence(ctx context.Context, arg ResetEntityStateSequenceParams) error
 	//ResetTenantContext
 	//
-	//  SELECT set_config('app.current_tenant_id', '', false)
+	//  SELECT
+	//    set_config('app.current_tenant_id', '', false)
 	ResetTenantContext(ctx context.Context) error
 	// =====================================================
 	// REPOSITORY INTERFACE REQUIRED QUERIES
 	// =====================================================
 	//
-	//
-	//  SELECT id FROM tenants
-	//  WHERE subdomain = $1 AND deleted_at IS NULL
+	//  SELECT
+	//    id
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    subdomain = $1
+	//    AND deleted_at IS NULL
 	ResolveSubdomainToID(ctx context.Context, subdomain *string) (uuid.UUID, error)
 	//RestoreEntity
 	//
-	//  UPDATE entities
-	//  SET deleted_at = NULL, updated_at = NOW()
-	//  WHERE uuid = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    entities
+	//  SET
+	//    deleted_at = NULL,
+	//    updated_at = NOW()
+	//  WHERE
+	//    uuid = $1
+	//    AND tenant_id = current_tenant_id()
 	RestoreEntity(ctx context.Context, argUuid uuid.UUID) error
 	//RestoreSoftDeletedUser
 	//
-	//  UPDATE users SET deleted_at = NULL WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    users
+	//  SET
+	//    deleted_at = NULL
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	RestoreSoftDeletedUser(ctx context.Context, id uuid.UUID) error
 	//RevokeUserRole
 	//
-	//  SELECT revoke_user_role($1, $2, $3)
+	//  SELECT
+	//    revoke_user_role($1, $2, $3)
 	RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) error
 	// =====================================================================
 	// 2. ENTITY SEARCH AND FILTERING ENHANCEMENTS
 	// =====================================================================
 	//
-	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND (code ILIKE '%' || $1 || '%' OR name ILIKE '%' || $1 || '%')
-	//  AND deleted_at IS NULL
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND (
+	//      code ILIKE '%' || $1 || '%'
+	//      OR name ILIKE '%' || $1 || '%'
+	//    )
+	//    AND deleted_at IS NULL
 	//  ORDER BY
-	//  CASE WHEN code ILIKE $1 || '%' THEN 1
-	//  WHEN name ILIKE $1 || '%' THEN 2
-	//  ELSE 3 END,
-	//  name
-	//  LIMIT $2
+	//    CASE
+	//      WHEN code ILIKE $1 || '%' THEN 1
+	//      WHEN name ILIKE $1 || '%' THEN 2
+	//      ELSE 3
+	//    END,
+	//    name
+	//  LIMIT
+	//    $2
 	SearchEntitiesByCodeAndName(ctx context.Context, arg SearchEntitiesByCodeAndNameParams) ([]*Entity, error)
 	//SearchEntitiesByName
 	//
-	//  SELECT uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at FROM entities
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND name ILIKE '%' || $1 || '%'
-	//  AND deleted_at IS NULL
-	//  ORDER BY name
-	//  LIMIT $2
+	//  SELECT
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//  FROM
+	//    entities
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND name ILIKE '%' || $1 || '%'
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
+	//  LIMIT
+	//    $2
 	SearchEntitiesByName(ctx context.Context, arg SearchEntitiesByNameParams) ([]*Entity, error)
 	//SearchFeatureFlags
 	//
-	//  SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-	//  WHERE tenant_id = current_tenant_id()
+	//  SELECT
+	//    id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+	//  FROM
+	//    feature_flags
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND deleted_at IS NULL
-	//    AND (name ILIKE '%' || $1 || '%' OR description ILIKE '%' || $1 || '%')
-	//  ORDER BY name
-	//  LIMIT $2 OFFSET $3
+	//    AND (
+	//      name ILIKE '%' || $1 || '%'
+	//      OR description ILIKE '%' || $1 || '%'
+	//    )
+	//  ORDER BY
+	//    name
+	//  LIMIT
+	//    $2 OFFSET $3
 	SearchFeatureFlags(ctx context.Context, arg SearchFeatureFlagsParams) ([]*FeatureFlag, error)
 	//SearchPolicies
 	//
-	//  SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-	//  WHERE tenant_id = current_tenant_id()
-	//      AND (name ILIKE '%' || $1 || '%' OR description ILIKE '%' || $1 || '%')
-	//      AND deleted_at IS NULL
-	//  ORDER BY name
-	//  LIMIT $2 OFFSET $3
+	//  SELECT
+	//    id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+	//  FROM
+	//    policies
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND (
+	//      name ILIKE '%' || $1 || '%'
+	//      OR description ILIKE '%' || $1 || '%'
+	//    )
+	//    AND deleted_at IS NULL
+	//  ORDER BY
+	//    name
+	//  LIMIT
+	//    $2 OFFSET $3
 	SearchPolicies(ctx context.Context, arg SearchPoliciesParams) ([]*Policy, error)
 	//SearchTenantsByName
 	//
-	//  SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-	//  WHERE name ILIKE '%' || $1 || '%'
+	//  SELECT
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    name ILIKE '%' || $1 || '%'
 	//    AND deleted_at IS NULL
-	//  ORDER BY name
-	//  LIMIT $3 OFFSET $2
+	//  ORDER BY
+	//    name
+	//  LIMIT
+	//    $3 OFFSET $2
 	SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]*Tenant, error)
 	//SearchUsersAdvanced
 	//
-	//  SELECT id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required FROM users
+	//  SELECT
+	//    id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
+	//  FROM
+	//    users
 	//  WHERE
-	//      (username ILIKE '%' || $3 || '%' OR email ILIKE '%' || $3 || '%')
-	//  AND deleted_at IS NULL
-	//  LIMIT $1
-	//  OFFSET $2
+	//    (
+	//      username ILIKE '%' || $3 || '%'
+	//      OR email ILIKE '%' || $3 || '%'
+	//    )
+	//    AND deleted_at IS NULL
+	//  LIMIT
+	//    $1 OFFSET $2
 	SearchUsersAdvanced(ctx context.Context, arg SearchUsersAdvancedParams) ([]*User, error)
 	// Usage: Manually sets a specific sequence number (with validation)
 	// Use case: Data migration, manual sequence adjustments, importing from other systems
 	//
-	//  UPDATE entitystate
-	//  SET sequence = $4, updated_at = NOW()
-	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
-	//  AND $4 > 0
+	//  UPDATE
+	//    entitystate
+	//  SET
+	//    sequence = $4,
+	//    updated_at = NOW()
+	//  WHERE
+	//    entity_id = $1
+	//    AND KEY = $2
+	//    AND fiscal_year = $3
+	//    AND tenant_id = current_tenant_id()
+	//    AND $4 > 0
 	SetEntitySequence(ctx context.Context, arg SetEntitySequenceParams) error
 	// =====================================================
 	// TENANT CONTEXT AND LIMITS QUERIES
 	// =====================================================
 	//
-	//
-	//  SELECT set_tenant_context($1)
+	//  SELECT
+	//    set_tenant_context($1)
 	SetTenantContext(ctx context.Context, tenantID uuid.UUID) error
 	//SoftDeleteAttributeDefinition
 	//
-	//  UPDATE attribute_definitions
-	//  SET deleted_at = NOW()
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    attribute_definitions
+	//  SET
+	//    deleted_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	SoftDeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	//SoftDeleteEntity
 	//
-	//  UPDATE entities
-	//  SET deleted_at = NOW(), updated_at = NOW()
-	//  WHERE uuid = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    entities
+	//  SET
+	//    deleted_at = NOW(),
+	//    updated_at = NOW()
+	//  WHERE
+	//    uuid = $1
+	//    AND tenant_id = current_tenant_id()
 	SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	//SoftDeletePolicy
 	//
-	//  UPDATE policies
-	//  SET deleted_at = NOW(), updated_at = NOW()
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    policies
+	//  SET
+	//    deleted_at = NOW(),
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	SoftDeletePolicy(ctx context.Context, id uuid.UUID) error
 	//SoftDeleteTenant
 	//
-	//  UPDATE tenants
-	//  SET deleted_at = NOW(), updated_at = NOW()
-	//  WHERE id = $1
+	//  UPDATE
+	//    tenants
+	//  SET
+	//    deleted_at = NOW(),
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $1
 	SoftDeleteTenant(ctx context.Context, id uuid.UUID) error
 	//SoftDeleteUser
 	//
-	//  UPDATE users SET deleted_at = NOW() WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    users
+	//  SET
+	//    deleted_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	//UnlockUser
 	//
-	//  UPDATE users SET failed_login_attempts = 0, lockout_until = NULL WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    users
+	//  SET
+	//    failed_login_attempts = 0,
+	//    lockout_until = NULL
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	UnlockUser(ctx context.Context, id uuid.UUID) error
 	//UpdateAccessRequestStatus
 	//
-	//  UPDATE access_requests
-	//  SET approval_status = $2, approved_by = $3, approved_at = $4,
-	//      approval_comments = $5, duration_hours = $6, expires_at = $7, updated_at = NOW()
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
-	//  RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+	//  UPDATE
+	//    access_requests
+	//  SET
+	//    approval_status = $2,
+	//    approved_by = $3,
+	//    approved_at = $4,
+	//    approval_comments = $5,
+	//    duration_hours = $6,
+	//    expires_at = $7,
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
+	//  RETURNING
+	//    id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
 	UpdateAccessRequestStatus(ctx context.Context, arg UpdateAccessRequestStatusParams) (*AccessRequest, error)
 	//UpdateAttributeDefinition
 	//
-	//  UPDATE attribute_definitions
+	//  UPDATE
+	//    attribute_definitions
 	//  SET
-	//      name = COALESCE($2, name),
-	//      display_name = COALESCE($3, display_name),
-	//      description = COALESCE($4, description),
-	//      data_type = COALESCE($5, data_type),
-	//      category = COALESCE($6, category),
-	//      is_required = COALESCE($7, is_required),
-	//      is_sensitive = COALESCE($8, is_sensitive),
-	//      default_value = COALESCE($9, default_value),
-	//      allowed_values = COALESCE($10, allowed_values),
-	//      validation_rules = COALESCE($11, validation_rules),
-	//      encryption_required = COALESCE($12, encryption_required),
-	//      is_active = COALESCE($13, is_active),
-	//      updated_at = NOW()
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
-	//  RETURNING id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at
+	//    name = COALESCE($2, name),
+	//    display_name = COALESCE($3, display_name),
+	//    description = COALESCE($4, description),
+	//    data_type = COALESCE($5, data_type),
+	//    category = COALESCE($6, category),
+	//    is_required = COALESCE($7, is_required),
+	//    is_sensitive = COALESCE($8, is_sensitive),
+	//    default_value = COALESCE($9, default_value),
+	//    allowed_values = COALESCE($10, allowed_values),
+	//    validation_rules = COALESCE($11, validation_rules),
+	//    encryption_required = COALESCE($12, encryption_required),
+	//    is_active = COALESCE($13, is_active),
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
+	//  RETURNING
+	//    id, tenant_id, name, display_name, description, data_type, category, is_required, is_sensitive, default_value, allowed_values, validation_rules, encryption_required, is_active, created_at
 	UpdateAttributeDefinition(ctx context.Context, arg UpdateAttributeDefinitionParams) (*AttributeDefinition, error)
 	//UpdateAttributeValue
 	//
-	//  UPDATE attribute_values
+	//  UPDATE
+	//    attribute_values
 	//  SET
-	//      value = COALESCE($2, value),
-	//      encrypted_value = COALESCE($3, encrypted_value),
-	//      is_encrypted = COALESCE($4, is_encrypted),
-	//      version = version + 1,
-	//      effective_from = COALESCE($5, effective_from),
-	//      effective_to = COALESCE($6, effective_to),
-	//      updated_at = NOW(),
-	//      updated_by = $7
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
-	//  RETURNING id, tenant_id, definition_id, entity_id, value, encrypted_value, is_encrypted, version, effective_from, effective_to, created_at, created_by, updated_at, updated_by
+	//    value = COALESCE($2, value),
+	//    encrypted_value = COALESCE($3, encrypted_value),
+	//    is_encrypted = COALESCE($4, is_encrypted),
+	//    version = version + 1,
+	//    effective_from = COALESCE($5, effective_from),
+	//    effective_to = COALESCE($6, effective_to),
+	//    updated_at = NOW(),
+	//    updated_by = $7
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
+	//  RETURNING
+	//    id, tenant_id, definition_id, entity_id, value, encrypted_value, is_encrypted, version, effective_from, effective_to, created_at, created_by, updated_at, updated_by
 	UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (*AttributeValue, error)
 	//UpdateCurrentTenant
 	//
-	//  UPDATE tenants
-	//  SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
-	//  WHERE id = current_tenant_id() AND deleted_at IS NULL
-	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  UPDATE
+	//    tenants
+	//  SET
+	//    name = $1,
+	//    subdomain = $2,
+	//    STATUS = $3,
+	//    industry = $4,
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	//  RETURNING
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error)
 	//UpdateEntity
 	//
-	//  UPDATE entities
+	//  UPDATE
+	//    entities
 	//  SET
-	//  name = COALESCE($2, name),
-	//  code = COALESCE($3, code),
-	//  type = COALESCE($4, type),
-	//  is_active = COALESCE($5, is_active),
-	//  hidden = COALESCE($6, hidden),
-	//  accrual_method = COALESCE($7, accrual_method),
-	//  fy_start_month = COALESCE($8, fy_start_month),
-	//  address = COALESCE($9, address),
-	//  picture = COALESCE($10, picture),
-	//  settings = COALESCE($11, settings),
-	//  updated_at = NOW()
-	//  WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-	//  RETURNING uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+	//    name = COALESCE($2, name),
+	//    code = COALESCE($3, code),
+	//    TYPE = COALESCE($4, TYPE),
+	//    is_active = COALESCE($5, is_active),
+	//    hidden = COALESCE($6, hidden),
+	//    accrual_method = COALESCE($7, accrual_method),
+	//    fy_start_month = COALESCE($8, fy_start_month),
+	//    address = COALESCE($9, address),
+	//    picture = COALESCE($10, picture),
+	//    settings = COALESCE($11, settings),
+	//    updated_at = NOW()
+	//  WHERE
+	//    uuid = $1
+	//    AND tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	//  RETURNING
+	//    uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 	UpdateEntity(ctx context.Context, arg UpdateEntityParams) (*Entity, error)
 	// =====================================================================
 	//  NEW SEQUENCE MANAGEMENT QUERIES
@@ -2505,237 +5435,404 @@ type Querier interface {
 	// Usage: Atomically increments sequence number and returns the new value
 	// Use case: Getting next sequence number for document creation (most common operation)
 	//
-	//
-	//  UPDATE entitystate
-	//  SET sequence = sequence + 1, updated_at = NOW()
-	//  WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
-	//  RETURNING sequence
+	//  UPDATE
+	//    entitystate
+	//  SET
+	//    sequence = sequence + 1,
+	//    updated_at = NOW()
+	//  WHERE
+	//    entity_id = $1
+	//    AND KEY = $2
+	//    AND fiscal_year = $3
+	//    AND tenant_id = current_tenant_id()
+	//  RETURNING
+	//    sequence
 	UpdateEntitySequence(ctx context.Context, arg UpdateEntitySequenceParams) (int64, error)
 	//UpdateEntityStateSequence
 	//
-	//  UPDATE entitystate
-	//  SET sequence = $3, updated_at = NOW()
-	//  WHERE entity_id = $1 AND key = $2 AND tenant_id = current_tenant_id()
-	//  RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
+	//  UPDATE
+	//    entitystate
+	//  SET
+	//    sequence = $3,
+	//    updated_at = NOW()
+	//  WHERE
+	//    entity_id = $1
+	//    AND KEY = $2
+	//    AND tenant_id = current_tenant_id()
+	//  RETURNING
+	//    uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
 	UpdateEntityStateSequence(ctx context.Context, arg UpdateEntityStateSequenceParams) (*Entitystate, error)
+	// Update compliance flags for an audit event
+	//
+	//  UPDATE
+	//    audit_log
+	//  SET
+	//    compliance_flags = $1
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND id = $2
+	UpdateEventComplianceFlags(ctx context.Context, arg UpdateEventComplianceFlagsParams) error
+	// ================================================================================================
+	// MAINTENANCE AND UTILITY QUERIES
+	// ================================================================================================
+	// Update risk score for an audit event
+	//
+	//  UPDATE
+	//    audit_log
+	//  SET
+	//    risk_score = $1
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND id = $2
+	UpdateEventRiskScore(ctx context.Context, arg UpdateEventRiskScoreParams) error
 	//UpdateFeatureFlag
 	//
-	//  UPDATE feature_flags
+	//  UPDATE
+	//    feature_flags
 	//  SET
-	//      name = $2,
-	//      description = $3,
-	//      flag_type = $4,
-	//      default_value = $5,
-	//      rollout_percentage = $6,
-	//      target_audience = $7,
-	//      metadata = $8,
-	//      updated_at = NOW()
-	//  WHERE tenant_id = current_tenant_id()
+	//    name = $2,
+	//    description = $3,
+	//    flag_type = $4,
+	//    default_value = $5,
+	//    rollout_percentage = $6,
+	//    target_audience = $7,
+	//    metadata = $8,
+	//    updated_at = NOW()
+	//  WHERE
+	//    tenant_id = current_tenant_id()
 	//    AND id = $1
 	//    AND deleted_at IS NULL
-	//  RETURNING id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+	//  RETURNING
+	//    id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 	UpdateFeatureFlag(ctx context.Context, arg UpdateFeatureFlagParams) (*FeatureFlag, error)
-	// Base case: self-reference
-	// Recursive case: add ancestors
+	//UpdateHierarchyPaths
 	//
 	//  WITH RECURSIVE hierarchy_cte AS (
-	//    SELECT current_tenant_id() as tenant_id, $1::UUID as ancestor_id, $1::UUID as descendant_id, 0 as depth
-	//    UNION ALL
-	//    SELECT h.tenant_id, hp.ancestor_id, h.descendant_id, h.depth + 1
-	//    FROM hierarchy_cte h
-	//    JOIN hierarchy_paths hp ON hp.descendant_id = h.ancestor_id AND hp.tenant_id = h.tenant_id
-	//    WHERE h.depth < 5 -- Prevent infinite recursion
+	//    -- Base case: self-reference
+	//    SELECT
+	//      current_tenant_id() AS tenant_id,
+	//      $1::UUID AS ancestor_id,
+	//      $1::UUID AS descendant_id,
+	//      0 AS depth
+	//    UNION
+	//    ALL
+	//    -- Recursive case: add ancestors
+	//    SELECT
+	//      h.tenant_id,
+	//      hp.ancestor_id,
+	//      h.descendant_id,
+	//      h.depth + 1
+	//    FROM
+	//      hierarchy_cte h
+	//      JOIN hierarchy_paths hp ON hp.descendant_id = h.ancestor_id
+	//      AND hp.tenant_id = h.tenant_id
+	//    WHERE
+	//      h.depth < 5 -- Prevent infinite recursion
 	//  )
-	//  INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
-	//  SELECT DISTINCT tenant_id, ancestor_id, descendant_id, depth
-	//  FROM hierarchy_cte
-	//  ON CONFLICT (tenant_id, ancestor_id, descendant_id) DO NOTHING
+	//  INSERT INTO
+	//    hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+	//  SELECT
+	//    DISTINCT tenant_id,
+	//    ancestor_id,
+	//    descendant_id,
+	//    depth
+	//  FROM
+	//    hierarchy_cte ON CONFLICT (tenant_id, ancestor_id, descendant_id) DO NOTHING
 	UpdateHierarchyPaths(ctx context.Context, dollar_1 uuid.UUID) error
 	//UpdatePolicy
 	//
-	//  UPDATE policies
+	//  UPDATE
+	//    policies
 	//  SET
-	//      entity_id = COALESCE($2, entity_id),
-	//      name = COALESCE($3, name),
-	//      display_name = COALESCE($4, display_name),
-	//      description = COALESCE($5, description),
-	//      policy_type = COALESCE($6, policy_type),
-	//      effect = COALESCE($7, effect),
-	//      priority = COALESCE($8, priority),
-	//      category = COALESCE($9, category),
-	//      target = COALESCE($10, target),
-	//      rule = COALESCE($11, rule),
-	//      obligations = COALESCE($12, obligations),
-	//      advice = COALESCE($13, advice),
-	//      is_active = COALESCE($14, is_active),
-	//      updated_at = NOW()
-	//  WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-	//  RETURNING id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+	//    entity_id = COALESCE($2, entity_id),
+	//    name = COALESCE($3, name),
+	//    display_name = COALESCE($4, display_name),
+	//    description = COALESCE($5, description),
+	//    policy_type = COALESCE($6, policy_type),
+	//    effect = COALESCE($7, effect),
+	//    priority = COALESCE($8, priority),
+	//    category = COALESCE($9, category),
+	//    target = COALESCE($10, target),
+	//    rule = COALESCE($11, rule),
+	//    obligations = COALESCE($12, obligations),
+	//    advice = COALESCE($13, advice),
+	//    is_active = COALESCE($14, is_active),
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	//  RETURNING
+	//    id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
 	UpdatePolicy(ctx context.Context, arg UpdatePolicyParams) (*Policy, error)
 	//UpdatePolicyStatus
 	//
-	//  UPDATE policies
-	//  SET is_active = $2, updated_at = NOW()
-	//  WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    policies
+	//  SET
+	//    is_active = $2,
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	UpdatePolicyStatus(ctx context.Context, arg UpdatePolicyStatusParams) error
 	//UpdateTenant
 	//
-	//  UPDATE tenants
+	//  UPDATE
+	//    tenants
 	//  SET
-	//      name = COALESCE($1, name),
-	//  subdomain = COALESCE($2, subdomain),
-	//  status = COALESCE($3, status),
-	//  industry = COALESCE($4, industry) ,
-	//  updated_at = NOW()
-	//  WHERE id = $5 AND deleted_at IS NULL
-	//    RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    name = COALESCE($1, name),
+	//    subdomain = COALESCE($2, subdomain),
+	//    STATUS = COALESCE($3, STATUS),
+	//    industry = COALESCE($4, industry),
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $5
+	//    AND deleted_at IS NULL
+	//  RETURNING
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Tenant, error)
 	//UpdateTenantComplete
 	//
-	//  UPDATE tenants
+	//  UPDATE
+	//    tenants
 	//  SET
-	//      name = COALESCE($1, name),
-	//      slug = COALESCE($2, slug),
-	//      email = COALESCE($3, email),
-	//      subdomain = COALESCE($4, subdomain),
-	//      status = COALESCE($5, status),
-	//      timezone = COALESCE($6, timezone),
-	//      currency_code = COALESCE($7, currency_code),
-	//      metadata = COALESCE($8, metadata),
-	//      industry = COALESCE($9, industry),
-	//      company_size = COALESCE($10, company_size),
-	//      tax_id = COALESCE($11, tax_id),
-	//      registration_number = COALESCE($12, registration_number),
-	//      legal_entity_type = COALESCE($13, legal_entity_type),
-	//      settings = COALESCE($14, settings),
-	//      updated_at = NOW()
-	//  WHERE id = $15 AND deleted_at IS NULL
-	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    name = COALESCE($1, name),
+	//    slug = COALESCE($2, slug),
+	//    email = COALESCE($3, email),
+	//    subdomain = COALESCE($4, subdomain),
+	//    STATUS = COALESCE($5, STATUS),
+	//    timezone = COALESCE($6, timezone),
+	//    currency_code = COALESCE($7, currency_code),
+	//    metadata = COALESCE($8, metadata),
+	//    industry = COALESCE($9, industry),
+	//    company_size = COALESCE($10, company_size),
+	//    tax_id = COALESCE($11, tax_id),
+	//    registration_number = COALESCE(
+	//      $12,
+	//      registration_number
+	//    ),
+	//    legal_entity_type = COALESCE(
+	//      $13,
+	//      legal_entity_type
+	//    ),
+	//    settings = COALESCE($14, settings),
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $15
+	//    AND deleted_at IS NULL
+	//  RETURNING
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenantComplete(ctx context.Context, arg UpdateTenantCompleteParams) (*Tenant, error)
 	//UpdateTenantConfiguration
 	//
-	//  UPDATE tenant_configurations
+	//  UPDATE
+	//    tenant_configurations
 	//  SET
-	//      max_users = COALESCE($1, max_users),
-	//      max_entities = COALESCE($2, max_entities),
-	//      max_transactions_per_month = COALESCE($3, max_transactions_per_month),
-	//      storage_quota = COALESCE($4, storage_quota),
-	//      features = COALESCE($5, features),
-	//      modules_enabled = COALESCE($6, modules_enabled),
-	//      accounting_method = COALESCE($7, accounting_method),
-	//      fiscal_year_start_month = COALESCE($8, fiscal_year_start_month),
-	//      default_currency = COALESCE($9, default_currency),
-	//      date_format = COALESCE($10, date_format),
-	//      number_format = COALESCE($11, number_format),
-	//      language_code = COALESCE($12, language_code),
-	//      password_policy = COALESCE($13, password_policy),
-	//      webhook_endpoints = COALESCE($14, webhook_endpoints),
-	//      api_rate_limits = COALESCE($15, api_rate_limits),
-	//      updated_at = NOW()
-	//      WHERE tenant_id =current_tenant_id()
-	//  RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+	//    max_users = COALESCE($1, max_users),
+	//    max_entities = COALESCE($2, max_entities),
+	//    max_transactions_per_month = COALESCE(
+	//      $3,
+	//      max_transactions_per_month
+	//    ),
+	//    storage_quota = COALESCE($4, storage_quota),
+	//    features = COALESCE($5, features),
+	//    modules_enabled = COALESCE($6, modules_enabled),
+	//    accounting_method = COALESCE(
+	//      $7,
+	//      accounting_method
+	//    ),
+	//    fiscal_year_start_month = COALESCE(
+	//      $8,
+	//      fiscal_year_start_month
+	//    ),
+	//    default_currency = COALESCE($9, default_currency),
+	//    date_format = COALESCE($10, date_format),
+	//    number_format = COALESCE($11, number_format),
+	//    language_code = COALESCE($12, language_code),
+	//    password_policy = COALESCE($13, password_policy),
+	//    webhook_endpoints = COALESCE(
+	//      $14,
+	//      webhook_endpoints
+	//    ),
+	//    api_rate_limits = COALESCE($15, api_rate_limits),
+	//    updated_at = NOW()
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//  RETURNING
+	//    tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 	UpdateTenantConfiguration(ctx context.Context, arg UpdateTenantConfigurationParams) (*TenantConfiguration, error)
 	//UpdateTenantFeatures
 	//
-	//  UPDATE tenant_configurations
-	//  SET features = $1, updated_at = NOW()
-	//  RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+	//  UPDATE
+	//    tenant_configurations
+	//  SET
+	//    features = $1,
+	//    updated_at = NOW()
+	//  RETURNING
+	//    tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 	UpdateTenantFeatures(ctx context.Context, features []byte) (*TenantConfiguration, error)
 	//UpdateTenantIndustry
 	//
-	//  UPDATE tenants
-	//  SET industry = $2, updated_at = NOW()
-	//  WHERE id = $1 AND deleted_at IS NULL
-	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  UPDATE
+	//    tenants
+	//  SET
+	//    industry = $2,
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND deleted_at IS NULL
+	//  RETURNING
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (*Tenant, error)
 	//UpdateTenantLimits
 	//
-	//  UPDATE tenant_configurations
+	//  UPDATE
+	//    tenant_configurations
 	//  SET
-	//      max_users = $1,
-	//      max_entities = $2,
-	//      max_transactions_per_month = $3,
-	//      storage_quota = $4,
-	//      updated_at = NOW()
-	//  RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+	//    max_users = $1,
+	//    max_entities = $2,
+	//    max_transactions_per_month = $3,
+	//    storage_quota = $4,
+	//    updated_at = NOW()
+	//  RETURNING
+	//    tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 	UpdateTenantLimits(ctx context.Context, arg UpdateTenantLimitsParams) (*TenantConfiguration, error)
 	//UpdateTenantMetadata
 	//
-	//  UPDATE tenants
-	//  SET metadata = $1, updated_at = NOW()
-	//  WHERE id = current_tenant_id() AND deleted_at IS NULL
-	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  UPDATE
+	//    tenants
+	//  SET
+	//    metadata = $1,
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	//  RETURNING
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenantMetadata(ctx context.Context, metadata []byte) (*Tenant, error)
 	//UpdateTenantModules
 	//
-	//  UPDATE tenant_configurations
-	//  SET modules_enabled = $1, updated_at = NOW()
-	//  RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+	//  UPDATE
+	//    tenant_configurations
+	//  SET
+	//    modules_enabled = $1,
+	//    updated_at = NOW()
+	//  RETURNING
+	//    tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 	UpdateTenantModules(ctx context.Context, modulesEnabled []byte) (*TenantConfiguration, error)
 	//UpdateTenantName
 	//
-	//  UPDATE tenants
-	//  SET name = $2, updated_at = NOW()
-	//  WHERE id = $1 AND deleted_at IS NULL
-	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  UPDATE
+	//    tenants
+	//  SET
+	//    name = $2,
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND deleted_at IS NULL
+	//  RETURNING
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenantName(ctx context.Context, arg UpdateTenantNameParams) (*Tenant, error)
 	//UpdateTenantSettings
 	//
-	//  UPDATE tenants
-	//  SET settings = $1, updated_at = NOW()
-	//  WHERE id = current_tenant_id() AND deleted_at IS NULL
-	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  UPDATE
+	//    tenants
+	//  SET
+	//    settings = $1,
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = current_tenant_id()
+	//    AND deleted_at IS NULL
+	//  RETURNING
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenantSettings(ctx context.Context, settings []byte) (*Tenant, error)
 	//
 	//
-	//  UPDATE tenants
-	//  SET status = $2, updated_at = NOW()
-	//  WHERE id = $1 AND deleted_at IS NULL
-	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  UPDATE
+	//    tenants
+	//  SET
+	//    STATUS = $2,
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND deleted_at IS NULL
+	//  RETURNING
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (*Tenant, error)
 	//UpdateTenantSubdomain
 	//
-	//  UPDATE tenants
-	//  SET subdomain = $2, updated_at = NOW()
-	//  WHERE id = $1 AND deleted_at IS NULL
-	//  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//  UPDATE
+	//    tenants
+	//  SET
+	//    subdomain = $2,
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND deleted_at IS NULL
+	//  RETURNING
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 	UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (*Tenant, error)
 	//UpdateTenantUsageStats
 	//
-	//  UPDATE tenant_usage_stats
+	//  UPDATE
+	//    tenant_usage_stats
 	//  SET
-	//      active_users = COALESCE($1, active_users),
-	//      total_entities = COALESCE($2, total_entities),
-	//      total_transactions = COALESCE($3, total_transactions),
-	//      storage_used = COALESCE($4, storage_used),
-	//      api_calls = COALESCE($5, api_calls),
-	//      avg_response_time = COALESCE($6, avg_response_time),
-	//      error_rate = COALESCE($7, error_rate),
-	//      monthly_revenue = COALESCE($8, monthly_revenue)
-	//  WHERE period_start = $9 AND tenant_id = current_tenant_id()
-	//  RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+	//    active_users = COALESCE($1, active_users),
+	//    total_entities = COALESCE($2, total_entities),
+	//    total_transactions = COALESCE(
+	//      $3,
+	//      total_transactions
+	//    ),
+	//    storage_used = COALESCE($4, storage_used),
+	//    api_calls = COALESCE($5, api_calls),
+	//    avg_response_time = COALESCE(
+	//      $6,
+	//      avg_response_time
+	//    ),
+	//    error_rate = COALESCE($7, error_rate),
+	//    monthly_revenue = COALESCE($8, monthly_revenue)
+	//  WHERE
+	//    period_start = $9
+	//    AND tenant_id = current_tenant_id()
+	//  RETURNING
+	//    tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
 	UpdateTenantUsageStats(ctx context.Context, arg UpdateTenantUsageStatsParams) (*TenantUsageStat, error)
 	//UpdateUser
 	//
-	//  UPDATE users
+	//  UPDATE
+	//    users
 	//  SET
-	//      username = COALESCE($1, username),
-	//      email = COALESCE($2, email),
-	//      user_type = COALESCE($3, user_type),
-	//      account_status = COALESCE($4, account_status),
-	//      session_timeout_minutes = COALESCE($5, session_timeout_minutes),
-	//      mfa_enabled = COALESCE($6, mfa_enabled),
-	//      updated_at = NOW()
-	//  WHERE id = $7 AND tenant_id = current_tenant_id()
-	//  RETURNING id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
+	//    username = COALESCE($1, username),
+	//    email = COALESCE($2, email),
+	//    user_type = COALESCE($3, user_type),
+	//    account_status = COALESCE($4, account_status),
+	//    session_timeout_minutes = COALESCE(
+	//      $5,
+	//      session_timeout_minutes
+	//    ),
+	//    mfa_enabled = COALESCE($6, mfa_enabled),
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $7
+	//    AND tenant_id = current_tenant_id()
+	//  RETURNING
+	//    id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error)
 	//UpdateUserLastLogin
 	//
-	//  UPDATE users SET last_login_at = NOW() WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    users
+	//  SET
+	//    last_login_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error
 	//UpdateUserNotificationPreferences
 	//
-	//  UPDATE notification_preferences
+	//  UPDATE
+	//    notification_preferences
 	//  SET
 	//    email_notifications = $2,
 	//    in_app_notifications = $3,
@@ -2744,61 +5841,110 @@ type Querier interface {
 	//    preferred_channels = $6,
 	//    quiet_hours = $7,
 	//    updated_at = NOW()
-	//  WHERE user_id = $1 AND tenant_id = current_tenant_id()
-	//  RETURNING id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
+	//  WHERE
+	//    user_id = $1
+	//    AND tenant_id = current_tenant_id()
+	//  RETURNING
+	//    id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
 	UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	//UpdateUserPassword
 	//
-	//  UPDATE users SET password_hash = $2, updated_at = NOW() WHERE id = $1 AND tenant_id = current_tenant_id()
+	//  UPDATE
+	//    users
+	//  SET
+	//    password_hash = $2,
+	//    updated_at = NOW()
+	//  WHERE
+	//    id = $1
+	//    AND tenant_id = current_tenant_id()
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	//ValidateCurrentTenant
 	//
-	//  SELECT 1 FROM tenants
-	//  WHERE id = current_setting('app.current_tenant_id')::uuid
+	//  SELECT
+	//    1
+	//  FROM
+	//    tenants
+	//  WHERE
+	//    id = current_setting('app.current_tenant_id')::uuid
 	//    AND deleted_at IS NULL
-	//    AND status = 'active'
+	//    AND STATUS = 'active'
 	ValidateCurrentTenant(ctx context.Context) error
 	// =====================================================================
 	// 1. ENTITY VALIDATION AND INTEGRITY CHECKS
 	// =====================================================================
 	//
-	//
-	//  SELECT EXISTS(
-	//    SELECT 1 FROM entities
-	//    WHERE code = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
-	//  )::BOOLEAN AS exists
+	//  SELECT
+	//    EXISTS(
+	//      SELECT
+	//        1
+	//      FROM
+	//        entities
+	//      WHERE
+	//        code = $1
+	//        AND tenant_id = current_tenant_id()
+	//        AND uuid != $2
+	//        AND deleted_at IS NULL
+	//    )::BOOLEAN AS EXISTS
 	ValidateEntityCode(ctx context.Context, arg ValidateEntityCodeParams) (bool, error)
 	//ValidateEntityHierarchy
 	//
 	//  SELECT
-	//  CASE
-	//  WHEN COUNT(*) = 0 THEN true
-	//  ELSE false
-	//  END as is_valid
-	//  FROM hierarchy_paths hp1
-	//  JOIN hierarchy_paths hp2 ON hp1.descendant_id = hp2.ancestor_id
-	//  WHERE hp1.ancestor_id = hp2.descendant_id
-	//  AND hp1.depth > 0
-	//  AND hp2.depth > 0
+	//    CASE
+	//      WHEN COUNT(*) = 0 THEN TRUE
+	//      ELSE false
+	//    END AS is_valid
+	//  FROM
+	//    hierarchy_paths hp1
+	//    JOIN hierarchy_paths hp2 ON hp1.descendant_id = hp2.ancestor_id
+	//  WHERE
+	//    hp1.ancestor_id = hp2.descendant_id
+	//    AND hp1.depth > 0
+	//    AND hp2.depth > 0
 	ValidateEntityHierarchy(ctx context.Context) (bool, error)
 	//ValidateEntityName
 	//
-	//  SELECT EXISTS(
-	//    SELECT 1 FROM entities
-	//    WHERE name = $1 AND tenant_id = current_tenant_id() AND uuid != $2 AND deleted_at IS NULL
-	//  ) AS exists
+	//  SELECT
+	//    EXISTS(
+	//      SELECT
+	//        1
+	//      FROM
+	//        entities
+	//      WHERE
+	//        name = $1
+	//        AND tenant_id = current_tenant_id()
+	//        AND uuid != $2
+	//        AND deleted_at IS NULL
+	//    ) AS EXISTS
 	ValidateEntityName(ctx context.Context, arg ValidateEntityNameParams) (bool, error)
 	//ValidateEntityParent
 	//
 	//  SELECT
-	//  (
-	//    CASE
-	//    WHEN $1 IS NULL THEN true
-	//    WHEN NOT EXISTS(SELECT 1 FROM entities WHERE uuid = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL) THEN false
-	//    WHEN EXISTS(SELECT 1 FROM hierarchy_paths WHERE tenant_id = current_tenant_id() AND ancestor_id = $2 AND descendant_id = $1) THEN false
-	//    ELSE true
-	//    END
-	//  )::BOOLEAN AS valid
+	//    (
+	//      CASE
+	//        WHEN $1 IS NULL THEN TRUE
+	//        WHEN NOT EXISTS(
+	//          SELECT
+	//            1
+	//          FROM
+	//            entities
+	//          WHERE
+	//            uuid = $1
+	//            AND tenant_id = current_tenant_id()
+	//            AND deleted_at IS NULL
+	//        ) THEN false
+	//        WHEN EXISTS(
+	//          SELECT
+	//            1
+	//          FROM
+	//            hierarchy_paths
+	//          WHERE
+	//            tenant_id = current_tenant_id()
+	//            AND ancestor_id = $2
+	//            AND descendant_id = $1
+	//        ) THEN false
+	//        ELSE TRUE
+	//      END
+	//    )::BOOLEAN AS valid
 	ValidateEntityParent(ctx context.Context, arg ValidateEntityParentParams) (bool, error)
 	// =====================================================================
 	//  VALIDATION & HEALTH CHECK QUERIES
@@ -2806,21 +5952,28 @@ type Querier interface {
 	// Usage: Checks for sequence numbering issues across all entities
 	// Use case: Data integrity audits, troubleshooting sequence problems
 	//
-	//
 	//  SELECT
-	//      entity_id,
-	//      key,
-	//      fiscal_year,
-	//      sequence,
-	//      CASE
-	//          WHEN sequence <= 0 THEN 'Invalid: Non-positive sequence'
-	//          WHEN sequence = 1 THEN 'OK: Initial state'
-	//          ELSE 'OK: In use'
-	//      END as status
-	//  FROM entitystate
-	//  WHERE tenant_id = current_tenant_id()
-	//  AND (sequence <= 0 OR sequence IS NULL)
-	//  ORDER BY entity_id, key, fiscal_year
+	//    entity_id,
+	//    KEY,
+	//    fiscal_year,
+	//    sequence,
+	//    CASE
+	//      WHEN sequence <= 0 THEN 'Invalid: Non-positive sequence'
+	//      WHEN sequence = 1 THEN 'OK: Initial state'
+	//      ELSE 'OK: In use'
+	//    END AS STATUS
+	//  FROM
+	//    entitystate
+	//  WHERE
+	//    tenant_id = current_tenant_id()
+	//    AND (
+	//      sequence <= 0
+	//      OR sequence IS NULL
+	//    )
+	//  ORDER BY
+	//    entity_id,
+	//    KEY,
+	//    fiscal_year
 	ValidateSequenceIntegrity(ctx context.Context) ([]*ValidateSequenceIntegrityRow, error)
 }
 

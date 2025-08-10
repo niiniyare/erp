@@ -8,16 +8,15 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 
 	"github.com/niiniyare/erp/internal/shared/token"
 )
 
 // MockRepository is a mock implementation of the Repository interface
-type MockRepository struct {
-	mock.Mock
-}
-
+//
+//	type MockRepository struct {
+//		mock.Mock
+//	}
 func (m *MockRepository) CreateAuditEvent(ctx context.Context, arg AuditEvent) error {
 	args := m.Called(ctx, arg)
 	return args.Error(0)

@@ -1,5 +1,8 @@
 package abac
 
+//go:generate go run go.uber.org/mock/mockgen -source=monitoring_service.go -destination=mock.go -package=abac
+
+
 import (
 	"context"
 	"fmt"

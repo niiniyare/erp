@@ -7,25 +7,314 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"net/netip"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createAuditEvent = `-- name: CreateAuditEvent :one
-INSERT INTO audit_log (
-  tenant_id,
-  user_id,
+const archiveOldAuditEvents = `-- name: ArchiveOldAuditEvents :many
+SELECT
+  id,
   event_type,
   event_category,
-  severity,
-  entity_id,
-  decision,
-  reason,
-  context
-) VALUES (
-  current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8
+  user_id,
+  risk_score,
+  created_at
+FROM
+  audit_log
+WHERE
+  tenant_id = current_tenant_id()
+  AND created_at < $1
+  AND (
+    $2::VARCHAR IS NULL
+    OR event_category = $2
+  )
+ORDER BY
+  created_at DESC
+LIMIT
+  $3
+`
+
+type ArchiveOldAuditEventsParams struct {
+	CutoffDate    sql.NullTime `json:"cutoff_date"`
+	EventCategory *string      `json:"event_category"`
+	Limit         int32        `json:"limit"`
+}
+
+type ArchiveOldAuditEventsRow struct {
+	ID            uuid.UUID    `json:"id"`
+	EventType     string       `json:"event_type"`
+	EventCategory *string      `json:"event_category"`
+	UserID        *uuid.UUID   `json:"user_id"`
+	RiskScore     *int32       `json:"risk_score"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+}
+
+// Archive old audit events before deletion (returns what will be deleted)
+//
+//	SELECT
+//	  id,
+//	  event_type,
+//	  event_category,
+//	  user_id,
+//	  risk_score,
+//	  created_at
+//	FROM
+//	  audit_log
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND created_at < $1
+//	  AND (
+//	    $2::VARCHAR IS NULL
+//	    OR event_category = $2
+//	  )
+//	ORDER BY
+//	  created_at DESC
+//	LIMIT
+//	  $3
+func (q *Queries) ArchiveOldAuditEvents(ctx context.Context, arg ArchiveOldAuditEventsParams) ([]*ArchiveOldAuditEventsRow, error) {
+	rows, err := q.db.Query(ctx, archiveOldAuditEvents, arg.CutoffDate, arg.EventCategory, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ArchiveOldAuditEventsRow{}
+	for rows.Next() {
+		var i ArchiveOldAuditEventsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.UserID,
+			&i.RiskScore,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const bulkAddComplianceFlags = `-- name: BulkAddComplianceFlags :exec
+UPDATE
+  audit_log
+SET
+  compliance_flags = compliance_flags || $1::jsonb
+WHERE
+  tenant_id = current_tenant_id()
+  AND event_type = $2
+  AND created_at >= $3
+  AND created_at <= $4
+  AND (
+    $5::VARCHAR IS NULL
+    OR event_category = $5
+  )
+`
+
+type BulkAddComplianceFlagsParams struct {
+	NewComplianceFlags []byte       `json:"new_compliance_flags"`
+	EventType          string       `json:"event_type"`
+	StartTime          sql.NullTime `json:"start_time"`
+	EndTime            sql.NullTime `json:"end_time"`
+	EventCategory      *string      `json:"event_category"`
+}
+
+// Bulk add compliance flags to events matching criteria
+//
+//	UPDATE
+//	  audit_log
+//	SET
+//	  compliance_flags = compliance_flags || $1::jsonb
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND event_type = $2
+//	  AND created_at >= $3
+//	  AND created_at <= $4
+//	  AND (
+//	    $5::VARCHAR IS NULL
+//	    OR event_category = $5
+//	  )
+func (q *Queries) BulkAddComplianceFlags(ctx context.Context, arg BulkAddComplianceFlagsParams) error {
+	_, err := q.db.Exec(ctx, bulkAddComplianceFlags,
+		arg.NewComplianceFlags,
+		arg.EventType,
+		arg.StartTime,
+		arg.EndTime,
+		arg.EventCategory,
+	)
+	return err
+}
+
+const bulkUpdateEventRiskScores = `-- name: BulkUpdateEventRiskScores :exec
+UPDATE
+  audit_log
+SET
+  risk_score = $1
+WHERE
+  tenant_id = current_tenant_id()
+  AND event_type = $2
+  AND created_at >= $3
+  AND created_at <= $4
+  AND (
+    $5::INTEGER IS NULL
+    OR risk_score = $5
+  )
+  AND (
+    $6::VARCHAR IS NULL
+    OR event_category = $6
+  )
+`
+
+type BulkUpdateEventRiskScoresParams struct {
+	NewRiskScore     *int32       `json:"new_risk_score"`
+	EventType        string       `json:"event_type"`
+	StartTime        sql.NullTime `json:"start_time"`
+	EndTime          sql.NullTime `json:"end_time"`
+	CurrentRiskScore *int32       `json:"current_risk_score"`
+	EventCategory    *string      `json:"event_category"`
+}
+
+// Bulk update risk scores based on criteria
+//
+//	UPDATE
+//	  audit_log
+//	SET
+//	  risk_score = $1
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND event_type = $2
+//	  AND created_at >= $3
+//	  AND created_at <= $4
+//	  AND (
+//	    $5::INTEGER IS NULL
+//	    OR risk_score = $5
+//	  )
+//	  AND (
+//	    $6::VARCHAR IS NULL
+//	    OR event_category = $6
+//	  )
+func (q *Queries) BulkUpdateEventRiskScores(ctx context.Context, arg BulkUpdateEventRiskScoresParams) error {
+	_, err := q.db.Exec(ctx, bulkUpdateEventRiskScores,
+		arg.NewRiskScore,
+		arg.EventType,
+		arg.StartTime,
+		arg.EndTime,
+		arg.CurrentRiskScore,
+		arg.EventCategory,
+	)
+	return err
+}
+
+const cleanupDuplicateEvents = `-- name: CleanupDuplicateEvents :exec
+WITH duplicates AS (
+  SELECT
+    id,
+    ROW_NUMBER() OVER (
+      PARTITION BY user_id,
+      event_type,
+      event_category,
+      ip_address,
+      DATE_TRUNC('minute', created_at)
+      ORDER BY
+        created_at ASC
+    ) AS rn
+  FROM
+    audit_log
+  WHERE
+    tenant_id = current_tenant_id()
+    AND audit_log.created_at >= $1
+    AND audit_log.created_at <= $2
 )
-RETURNING id, tenant_id, event_type, event_category, severity, user_id, target_user_id, entity_id, resource_id, action_id, role_id, permission_id, decision, reason, risk_score, context, ip_address, user_agent, session_id, compliance_flags, created_at
+DELETE FROM
+  audit_log
+WHERE
+  tenant_id = current_tenant_id()
+  AND id IN (
+    SELECT
+      id
+    FROM
+      duplicates
+    WHERE
+      rn > 1
+  )
+`
+
+type CleanupDuplicateEventsParams struct {
+	StartTime sql.NullTime `json:"start_time"`
+	EndTime   sql.NullTime `json:"end_time"`
+}
+
+// Remove duplicate events keeping only the first occurrence
+//
+//	WITH duplicates AS (
+//	  SELECT
+//	    id,
+//	    ROW_NUMBER() OVER (
+//	      PARTITION BY user_id,
+//	      event_type,
+//	      event_category,
+//	      ip_address,
+//	      DATE_TRUNC('minute', created_at)
+//	      ORDER BY
+//	        created_at ASC
+//	    ) AS rn
+//	  FROM
+//	    audit_log
+//	  WHERE
+//	    tenant_id = current_tenant_id()
+//	    AND audit_log.created_at >= $1
+//	    AND audit_log.created_at <= $2
+//	)
+//	DELETE FROM
+//	  audit_log
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND id IN (
+//	    SELECT
+//	      id
+//	    FROM
+//	      duplicates
+//	    WHERE
+//	      rn > 1
+//	  )
+func (q *Queries) CleanupDuplicateEvents(ctx context.Context, arg CleanupDuplicateEventsParams) error {
+	_, err := q.db.Exec(ctx, cleanupDuplicateEvents, arg.StartTime, arg.EndTime)
+	return err
+}
+
+const createAuditEvent = `-- name: CreateAuditEvent :one
+INSERT INTO
+  audit_log (
+    tenant_id,
+    user_id,
+    event_type,
+    event_category,
+    severity,
+    entity_id,
+    decision,
+    reason,
+    context
+  )
+VALUES
+  (
+    current_tenant_id(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8
+  )
+RETURNING
+  id, tenant_id, event_type, event_category, severity, user_id, target_user_id, entity_id, resource_id, action_id, role_id, permission_id, decision, reason, risk_score, context, ip_address, user_agent, session_id, compliance_flags, created_at
 `
 
 type CreateAuditEventParams struct {
@@ -39,22 +328,36 @@ type CreateAuditEventParams struct {
 	Context       []byte     `json:"context"`
 }
 
-// CreateAuditEvent
+// ================================================================================================
+// AUDIT LOG QUERIES - ADVANCED WITH SQLC.NARG/SQLC.ARG AND TENANT ISOLATION
+// ================================================================================================
 //
-//	INSERT INTO audit_log (
-//	  tenant_id,
-//	  user_id,
-//	  event_type,
-//	  event_category,
-//	  severity,
-//	  entity_id,
-//	  decision,
-//	  reason,
-//	  context
-//	) VALUES (
-//	  current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8
-//	)
-//	RETURNING id, tenant_id, event_type, event_category, severity, user_id, target_user_id, entity_id, resource_id, action_id, role_id, permission_id, decision, reason, risk_score, context, ip_address, user_agent, session_id, compliance_flags, created_at
+//	INSERT INTO
+//	  audit_log (
+//	    tenant_id,
+//	    user_id,
+//	    event_type,
+//	    event_category,
+//	    severity,
+//	    entity_id,
+//	    decision,
+//	    reason,
+//	    context
+//	  )
+//	VALUES
+//	  (
+//	    current_tenant_id(),
+//	    $1,
+//	    $2,
+//	    $3,
+//	    $4,
+//	    $5,
+//	    $6,
+//	    $7,
+//	    $8
+//	  )
+//	RETURNING
+//	  id, tenant_id, event_type, event_category, severity, user_id, target_user_id, entity_id, resource_id, action_id, role_id, permission_id, decision, reason, risk_score, context, ip_address, user_agent, session_id, compliance_flags, created_at
 func (q *Queries) CreateAuditEvent(ctx context.Context, arg CreateAuditEventParams) (*AuditLog, error) {
 	row := q.db.QueryRow(ctx, createAuditEvent,
 		arg.UserID,
@@ -91,4 +394,3319 @@ func (q *Queries) CreateAuditEvent(ctx context.Context, arg CreateAuditEventPara
 		&i.CreatedAt,
 	)
 	return &i, err
+}
+
+const deleteOldAuditEvents = `-- name: DeleteOldAuditEvents :exec
+DELETE FROM
+  audit_log
+WHERE
+  tenant_id = current_tenant_id()
+  AND created_at < $1
+`
+
+// Delete audit events older than specified date (for retention policies)
+//
+//	DELETE FROM
+//	  audit_log
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND created_at < $1
+func (q *Queries) DeleteOldAuditEvents(ctx context.Context, cutoffDate sql.NullTime) error {
+	_, err := q.db.Exec(ctx, deleteOldAuditEvents, cutoffDate)
+	return err
+}
+
+const getAdminActions = `-- name: GetAdminActions :many
+SELECT
+  al.id,
+  al.user_id,
+  al.target_user_id,
+  al.event_type,
+  al.event_category,
+  al.decision,
+  al.reason,
+  al.context,
+  al.created_at
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.target_user_id IS NOT NULL
+  AND al.event_category = 'ADMIN'
+  AND (
+    $1::UUID IS NULL
+    OR al.user_id = $1
+  )
+  AND (
+    $2::UUID IS NULL
+    OR al.target_user_id = $2
+  )
+  AND (
+    $3::TIMESTAMPTZ IS NULL
+    OR al.created_at >= $3
+  )
+  AND (
+    $4::TIMESTAMPTZ IS NULL
+    OR al.created_at <= $4
+  )
+ORDER BY
+  al.created_at DESC
+LIMIT
+  $6 OFFSET $5
+`
+
+type GetAdminActionsParams struct {
+	AdminUserID  *uuid.UUID   `json:"admin_user_id"`
+	TargetUserID *uuid.UUID   `json:"target_user_id"`
+	StartTime    sql.NullTime `json:"start_time"`
+	EndTime      sql.NullTime `json:"end_time"`
+	Offset       int32        `json:"offset"`
+	Limit        int32        `json:"limit"`
+}
+
+type GetAdminActionsRow struct {
+	ID            uuid.UUID    `json:"id"`
+	UserID        *uuid.UUID   `json:"user_id"`
+	TargetUserID  *uuid.UUID   `json:"target_user_id"`
+	EventType     string       `json:"event_type"`
+	EventCategory *string      `json:"event_category"`
+	Decision      *string      `json:"decision"`
+	Reason        string       `json:"reason"`
+	Context       []byte       `json:"context"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+}
+
+// Get administrative actions (events with target_user_id)
+//
+//	SELECT
+//	  al.id,
+//	  al.user_id,
+//	  al.target_user_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.decision,
+//	  al.reason,
+//	  al.context,
+//	  al.created_at
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.target_user_id IS NOT NULL
+//	  AND al.event_category = 'ADMIN'
+//	  AND (
+//	    $1::UUID IS NULL
+//	    OR al.user_id = $1
+//	  )
+//	  AND (
+//	    $2::UUID IS NULL
+//	    OR al.target_user_id = $2
+//	  )
+//	  AND (
+//	    $3::TIMESTAMPTZ IS NULL
+//	    OR al.created_at >= $3
+//	  )
+//	  AND (
+//	    $4::TIMESTAMPTZ IS NULL
+//	    OR al.created_at <= $4
+//	  )
+//	ORDER BY
+//	  al.created_at DESC
+//	LIMIT
+//	  $6 OFFSET $5
+func (q *Queries) GetAdminActions(ctx context.Context, arg GetAdminActionsParams) ([]*GetAdminActionsRow, error) {
+	rows, err := q.db.Query(ctx, getAdminActions,
+		arg.AdminUserID,
+		arg.TargetUserID,
+		arg.StartTime,
+		arg.EndTime,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetAdminActionsRow{}
+	for rows.Next() {
+		var i GetAdminActionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.TargetUserID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Decision,
+			&i.Reason,
+			&i.Context,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAnomalousUserBehavior = `-- name: GetAnomalousUserBehavior :many
+WITH user_stats AS (
+  SELECT
+    user_id,
+    AVG(risk_score) AS avg_risk_score,
+    STDDEV(risk_score) AS stddev_risk_score,
+    COUNT(*) AS event_count
+  FROM
+    audit_log
+  WHERE
+    tenant_id = current_tenant_id()
+    AND audit_log.created_at >= $5
+    AND audit_log.created_at <= $6
+  GROUP BY
+    user_id
+  HAVING
+    COUNT(*) >= $7
+)
+SELECT
+  al.user_id,
+  al.event_type,
+  al.event_category,
+  al.risk_score,
+  al.created_at,
+  u.email AS user_email,
+  e.name AS entity_name,
+  r.name AS resource_name,
+  CASE
+    WHEN al.context ? 'personal_data' THEN 'PERSONAL_DATA'
+    WHEN al.context ? 'sensitive_data' THEN 'SENSITIVE_DATA'
+    WHEN al.context ? 'financial_data' THEN 'FINANCIAL_DATA'
+    WHEN al.context ? 'health_data' THEN 'HEALTH_DATA'
+    ELSE 'GENERAL_DATA'
+  END AS data_classification
+FROM
+  audit_log al
+  LEFT JOIN users u ON al.user_id = u.id
+  LEFT JOIN entities e ON al.entity_id = e.uuid
+  AND u.tenant_id = current_tenant_id()
+  AND e.tenant_id = current_tenant_id()
+  LEFT JOIN resources r ON al.resource_id = r.id
+  AND r.tenant_id = current_tenant_id()
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.event_category = 'DATA'
+  AND al.created_at >= $1
+  AND al.created_at <= $2
+  AND (
+    $3::VARCHAR IS NULL
+    OR CASE
+      WHEN al.context ? 'personal_data' THEN 'PERSONAL_DATA'
+      WHEN al.context ? 'sensitive_data' THEN 'SENSITIVE_DATA'
+      WHEN al.context ? 'financial_data' THEN 'FINANCIAL_DATA'
+      WHEN al.context ? 'health_data' THEN 'HEALTH_DATA'
+      ELSE 'GENERAL_DATA'
+    END = $3
+  )
+ORDER BY
+  al.created_at DESC
+LIMIT
+  $4
+`
+
+type GetAnomalousUserBehaviorParams struct {
+	StartTime          sql.NullTime `json:"start_time"`
+	EndTime            sql.NullTime `json:"end_time"`
+	DataClassification *string      `json:"data_classification"`
+	Limit              int32        `json:"limit"`
+	BaselineStart      sql.NullTime `json:"baseline_start"`
+	BaselineEnd        sql.NullTime `json:"baseline_end"`
+	MinBaselineEvents  interface{}  `json:"min_baseline_events"`
+}
+
+type GetAnomalousUserBehaviorRow struct {
+	UserID             *uuid.UUID   `json:"user_id"`
+	EventType          string       `json:"event_type"`
+	EventCategory      *string      `json:"event_category"`
+	RiskScore          *int32       `json:"risk_score"`
+	CreatedAt          sql.NullTime `json:"created_at"`
+	UserEmail          *string      `json:"user_email"`
+	EntityName         *string      `json:"entity_name"`
+	ResourceName       *string      `json:"resource_name"`
+	DataClassification string       `json:"data_classification"`
+}
+
+// Detect anomalous user behavior patterns
+//
+//	WITH user_stats AS (
+//	  SELECT
+//	    user_id,
+//	    AVG(risk_score) AS avg_risk_score,
+//	    STDDEV(risk_score) AS stddev_risk_score,
+//	    COUNT(*) AS event_count
+//	  FROM
+//	    audit_log
+//	  WHERE
+//	    tenant_id = current_tenant_id()
+//	    AND audit_log.created_at >= $5
+//	    AND audit_log.created_at <= $6
+//	  GROUP BY
+//	    user_id
+//	  HAVING
+//	    COUNT(*) >= $7
+//	)
+//	SELECT
+//	  al.user_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.risk_score,
+//	  al.created_at,
+//	  u.email AS user_email,
+//	  e.name AS entity_name,
+//	  r.name AS resource_name,
+//	  CASE
+//	    WHEN al.context ? 'personal_data' THEN 'PERSONAL_DATA'
+//	    WHEN al.context ? 'sensitive_data' THEN 'SENSITIVE_DATA'
+//	    WHEN al.context ? 'financial_data' THEN 'FINANCIAL_DATA'
+//	    WHEN al.context ? 'health_data' THEN 'HEALTH_DATA'
+//	    ELSE 'GENERAL_DATA'
+//	  END AS data_classification
+//	FROM
+//	  audit_log al
+//	  LEFT JOIN users u ON al.user_id = u.id
+//	  LEFT JOIN entities e ON al.entity_id = e.uuid
+//	  AND u.tenant_id = current_tenant_id()
+//	  AND e.tenant_id = current_tenant_id()
+//	  LEFT JOIN resources r ON al.resource_id = r.id
+//	  AND r.tenant_id = current_tenant_id()
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.event_category = 'DATA'
+//	  AND al.created_at >= $1
+//	  AND al.created_at <= $2
+//	  AND (
+//	    $3::VARCHAR IS NULL
+//	    OR CASE
+//	      WHEN al.context ? 'personal_data' THEN 'PERSONAL_DATA'
+//	      WHEN al.context ? 'sensitive_data' THEN 'SENSITIVE_DATA'
+//	      WHEN al.context ? 'financial_data' THEN 'FINANCIAL_DATA'
+//	      WHEN al.context ? 'health_data' THEN 'HEALTH_DATA'
+//	      ELSE 'GENERAL_DATA'
+//	    END = $3
+//	  )
+//	ORDER BY
+//	  al.created_at DESC
+//	LIMIT
+//	  $4
+func (q *Queries) GetAnomalousUserBehavior(ctx context.Context, arg GetAnomalousUserBehaviorParams) ([]*GetAnomalousUserBehaviorRow, error) {
+	rows, err := q.db.Query(ctx, getAnomalousUserBehavior,
+		arg.StartTime,
+		arg.EndTime,
+		arg.DataClassification,
+		arg.Limit,
+		arg.BaselineStart,
+		arg.BaselineEnd,
+		arg.MinBaselineEvents,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetAnomalousUserBehaviorRow{}
+	for rows.Next() {
+		var i GetAnomalousUserBehaviorRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.RiskScore,
+			&i.CreatedAt,
+			&i.UserEmail,
+			&i.EntityName,
+			&i.ResourceName,
+			&i.DataClassification,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAuditEventByID = `-- name: GetAuditEventByID :one
+SELECT
+  id, tenant_id, event_type, event_category, severity, user_id, target_user_id, entity_id, resource_id, action_id, role_id, permission_id, decision, reason, risk_score, context, ip_address, user_agent, session_id, compliance_flags, created_at
+FROM
+  audit_log
+WHERE
+  tenant_id = current_tenant_id()
+  AND id = $1
+`
+
+// Get a specific audit event by ID
+//
+//	SELECT
+//	  id, tenant_id, event_type, event_category, severity, user_id, target_user_id, entity_id, resource_id, action_id, role_id, permission_id, decision, reason, risk_score, context, ip_address, user_agent, session_id, compliance_flags, created_at
+//	FROM
+//	  audit_log
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND id = $1
+func (q *Queries) GetAuditEventByID(ctx context.Context, id uuid.UUID) (*AuditLog, error) {
+	row := q.db.QueryRow(ctx, getAuditEventByID, id)
+	var i AuditLog
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.EventType,
+		&i.EventCategory,
+		&i.Severity,
+		&i.UserID,
+		&i.TargetUserID,
+		&i.EntityID,
+		&i.ResourceID,
+		&i.ActionID,
+		&i.RoleID,
+		&i.PermissionID,
+		&i.Decision,
+		&i.Reason,
+		&i.RiskScore,
+		&i.Context,
+		&i.IpAddress,
+		&i.UserAgent,
+		&i.SessionID,
+		&i.ComplianceFlags,
+		&i.CreatedAt,
+	)
+	return &i, err
+}
+
+const getAuditEvents = `-- name: GetAuditEvents :many
+SELECT
+  al.id,
+  al.tenant_id,
+  al.event_type,
+  al.event_category,
+  al.severity,
+  al.user_id,
+  al.target_user_id,
+  al.entity_id,
+  al.resource_id,
+  al.action_id,
+  al.role_id,
+  al.permission_id,
+  al.decision,
+  al.reason,
+  al.risk_score,
+  al.context,
+  al.ip_address,
+  al.user_agent,
+  al.session_id,
+  al.compliance_flags,
+  al.created_at
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND (
+    $1::UUID IS NULL
+    OR al.user_id = $1
+  )
+  AND (
+    $2::VARCHAR IS NULL
+    OR al.event_category = $2
+  )
+  AND (
+    $3::VARCHAR IS NULL
+    OR al.severity = $3
+  )
+  AND (
+    $4::TIMESTAMPTZ IS NULL
+    OR al.created_at >= $4
+  )
+  AND (
+    $5::TIMESTAMPTZ IS NULL
+    OR al.created_at <= $5
+  )
+ORDER BY
+  al.created_at DESC
+LIMIT
+  $7 OFFSET $6
+`
+
+type GetAuditEventsParams struct {
+	UserID        *uuid.UUID   `json:"user_id"`
+	EventCategory *string      `json:"event_category"`
+	Severity      *string      `json:"severity"`
+	StartTime     sql.NullTime `json:"start_time"`
+	EndTime       sql.NullTime `json:"end_time"`
+	Offset        int32        `json:"offset"`
+	Limit         int32        `json:"limit"`
+}
+
+// Get audit events with optional filters and pagination
+//
+//	SELECT
+//	  al.id,
+//	  al.tenant_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.severity,
+//	  al.user_id,
+//	  al.target_user_id,
+//	  al.entity_id,
+//	  al.resource_id,
+//	  al.action_id,
+//	  al.role_id,
+//	  al.permission_id,
+//	  al.decision,
+//	  al.reason,
+//	  al.risk_score,
+//	  al.context,
+//	  al.ip_address,
+//	  al.user_agent,
+//	  al.session_id,
+//	  al.compliance_flags,
+//	  al.created_at
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND (
+//	    $1::UUID IS NULL
+//	    OR al.user_id = $1
+//	  )
+//	  AND (
+//	    $2::VARCHAR IS NULL
+//	    OR al.event_category = $2
+//	  )
+//	  AND (
+//	    $3::VARCHAR IS NULL
+//	    OR al.severity = $3
+//	  )
+//	  AND (
+//	    $4::TIMESTAMPTZ IS NULL
+//	    OR al.created_at >= $4
+//	  )
+//	  AND (
+//	    $5::TIMESTAMPTZ IS NULL
+//	    OR al.created_at <= $5
+//	  )
+//	ORDER BY
+//	  al.created_at DESC
+//	LIMIT
+//	  $7 OFFSET $6
+func (q *Queries) GetAuditEvents(ctx context.Context, arg GetAuditEventsParams) ([]*AuditLog, error) {
+	rows, err := q.db.Query(ctx, getAuditEvents,
+		arg.UserID,
+		arg.EventCategory,
+		arg.Severity,
+		arg.StartTime,
+		arg.EndTime,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*AuditLog{}
+	for rows.Next() {
+		var i AuditLog
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Severity,
+			&i.UserID,
+			&i.TargetUserID,
+			&i.EntityID,
+			&i.ResourceID,
+			&i.ActionID,
+			&i.RoleID,
+			&i.PermissionID,
+			&i.Decision,
+			&i.Reason,
+			&i.RiskScore,
+			&i.Context,
+			&i.IpAddress,
+			&i.UserAgent,
+			&i.SessionID,
+			&i.ComplianceFlags,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAuditEventsByEntity = `-- name: GetAuditEventsByEntity :many
+SELECT
+  al.id,
+  al.user_id,
+  al.event_type,
+  al.event_category,
+  al.severity,
+  al.decision,
+  al.reason,
+  al.risk_score,
+  al.context,
+  al.created_at
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.entity_id = $1
+  AND (
+    $2::VARCHAR IS NULL
+    OR al.event_category = $2
+  )
+  AND (
+    $3::TIMESTAMPTZ IS NULL
+    OR al.created_at >= $3
+  )
+  AND (
+    $4::TIMESTAMPTZ IS NULL
+    OR al.created_at <= $4
+  )
+ORDER BY
+  al.created_at DESC
+LIMIT
+  $6 OFFSET $5
+`
+
+type GetAuditEventsByEntityParams struct {
+	EntityID      *uuid.UUID   `json:"entity_id"`
+	EventCategory *string      `json:"event_category"`
+	StartTime     sql.NullTime `json:"start_time"`
+	EndTime       sql.NullTime `json:"end_time"`
+	Offset        int32        `json:"offset"`
+	Limit         int32        `json:"limit"`
+}
+
+type GetAuditEventsByEntityRow struct {
+	ID            uuid.UUID    `json:"id"`
+	UserID        *uuid.UUID   `json:"user_id"`
+	EventType     string       `json:"event_type"`
+	EventCategory *string      `json:"event_category"`
+	Severity      *string      `json:"severity"`
+	Decision      *string      `json:"decision"`
+	Reason        string       `json:"reason"`
+	RiskScore     *int32       `json:"risk_score"`
+	Context       []byte       `json:"context"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+}
+
+// Get audit events for a specific entity
+//
+//	SELECT
+//	  al.id,
+//	  al.user_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.severity,
+//	  al.decision,
+//	  al.reason,
+//	  al.risk_score,
+//	  al.context,
+//	  al.created_at
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.entity_id = $1
+//	  AND (
+//	    $2::VARCHAR IS NULL
+//	    OR al.event_category = $2
+//	  )
+//	  AND (
+//	    $3::TIMESTAMPTZ IS NULL
+//	    OR al.created_at >= $3
+//	  )
+//	  AND (
+//	    $4::TIMESTAMPTZ IS NULL
+//	    OR al.created_at <= $4
+//	  )
+//	ORDER BY
+//	  al.created_at DESC
+//	LIMIT
+//	  $6 OFFSET $5
+func (q *Queries) GetAuditEventsByEntity(ctx context.Context, arg GetAuditEventsByEntityParams) ([]*GetAuditEventsByEntityRow, error) {
+	rows, err := q.db.Query(ctx, getAuditEventsByEntity,
+		arg.EntityID,
+		arg.EventCategory,
+		arg.StartTime,
+		arg.EndTime,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetAuditEventsByEntityRow{}
+	for rows.Next() {
+		var i GetAuditEventsByEntityRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Severity,
+			&i.Decision,
+			&i.Reason,
+			&i.RiskScore,
+			&i.Context,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAuditEventsByResource = `-- name: GetAuditEventsByResource :many
+SELECT
+  al.id,
+  al.user_id,
+  al.event_type,
+  al.event_category,
+  al.severity,
+  al.decision,
+  al.reason,
+  al.context,
+  al.created_at
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.resource_id = $1
+  AND (
+    $2::VARCHAR IS NULL
+    OR al.event_category = $2
+  )
+  AND (
+    $3::TIMESTAMPTZ IS NULL
+    OR al.created_at >= $3
+  )
+  AND (
+    $4::TIMESTAMPTZ IS NULL
+    OR al.created_at <= $4
+  )
+ORDER BY
+  al.created_at DESC
+LIMIT
+  $6 OFFSET $5
+`
+
+type GetAuditEventsByResourceParams struct {
+	ResourceID    *uuid.UUID   `json:"resource_id"`
+	EventCategory *string      `json:"event_category"`
+	StartTime     sql.NullTime `json:"start_time"`
+	EndTime       sql.NullTime `json:"end_time"`
+	Offset        int32        `json:"offset"`
+	Limit         int32        `json:"limit"`
+}
+
+type GetAuditEventsByResourceRow struct {
+	ID            uuid.UUID    `json:"id"`
+	UserID        *uuid.UUID   `json:"user_id"`
+	EventType     string       `json:"event_type"`
+	EventCategory *string      `json:"event_category"`
+	Severity      *string      `json:"severity"`
+	Decision      *string      `json:"decision"`
+	Reason        string       `json:"reason"`
+	Context       []byte       `json:"context"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+}
+
+// Get audit events for a specific resource
+//
+//	SELECT
+//	  al.id,
+//	  al.user_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.severity,
+//	  al.decision,
+//	  al.reason,
+//	  al.context,
+//	  al.created_at
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.resource_id = $1
+//	  AND (
+//	    $2::VARCHAR IS NULL
+//	    OR al.event_category = $2
+//	  )
+//	  AND (
+//	    $3::TIMESTAMPTZ IS NULL
+//	    OR al.created_at >= $3
+//	  )
+//	  AND (
+//	    $4::TIMESTAMPTZ IS NULL
+//	    OR al.created_at <= $4
+//	  )
+//	ORDER BY
+//	  al.created_at DESC
+//	LIMIT
+//	  $6 OFFSET $5
+func (q *Queries) GetAuditEventsByResource(ctx context.Context, arg GetAuditEventsByResourceParams) ([]*GetAuditEventsByResourceRow, error) {
+	rows, err := q.db.Query(ctx, getAuditEventsByResource,
+		arg.ResourceID,
+		arg.EventCategory,
+		arg.StartTime,
+		arg.EndTime,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetAuditEventsByResourceRow{}
+	for rows.Next() {
+		var i GetAuditEventsByResourceRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Severity,
+			&i.Decision,
+			&i.Reason,
+			&i.Context,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAuditLogHealth = `-- name: GetAuditLogHealth :one
+WITH event_volume AS (
+  SELECT
+    COUNT(*) AS total_events,
+    COUNT(*) FILTER (
+      WHERE
+        created_at >= NOW() - INTERVAL '1 hour'
+    ) AS events_last_hour,
+    COUNT(*) FILTER (
+      WHERE
+        created_at >= NOW() - INTERVAL '24 hours'
+    ) AS events_last_24h,
+    COUNT(*) FILTER (
+      WHERE
+        created_at >= NOW() - INTERVAL '7 days'
+    ) AS events_last_7d
+  FROM
+    audit_log
+  WHERE
+    tenant_id = current_tenant_id()
+),
+risk_metrics AS (
+  SELECT
+    AVG(risk_score) AS avg_risk_score,
+    STDDEV(risk_score) AS stddev_risk_score,
+    PERCENTILE_CONT(0.95) WITHIN GROUP (
+      ORDER BY
+        risk_score
+    ) AS p95_risk_score,
+    COUNT(*) FILTER (
+      WHERE
+        risk_score >= 80
+    ) AS high_risk_events
+  FROM
+    audit_log
+  WHERE
+    tenant_id = current_tenant_id()
+    AND created_at >= NOW() - INTERVAL '24 hours'
+),
+decision_metrics AS (
+  SELECT
+    COUNT(*) FILTER (
+      WHERE
+        decision = 'ALLOW'
+    ) AS allowed_events,
+    COUNT(*) FILTER (
+      WHERE
+        decision = 'DENY'
+    ) AS denied_events,
+    ROUND(
+      COUNT(*) FILTER (
+        WHERE
+          decision = 'DENY'
+      )::NUMERIC / COUNT(*) * 100,
+      2
+    ) AS denial_rate_pct
+  FROM
+    audit_log
+  WHERE
+    tenant_id = current_tenant_id()
+    AND decision IS NOT NULL
+    AND created_at >= NOW() - INTERVAL '24 hours'
+)
+SELECT
+  ev.total_events, ev.events_last_hour, ev.events_last_24h, ev.events_last_7d,
+  rm.avg_risk_score,
+  rm.stddev_risk_score,
+  rm.p95_risk_score,
+  rm.high_risk_events,
+  dm.allowed_events,
+  dm.denied_events,
+  dm.denial_rate_pct
+FROM
+  event_volume ev
+  CROSS JOIN risk_metrics rm
+  CROSS JOIN decision_metrics dm
+`
+
+type GetAuditLogHealthRow struct {
+	TotalEvents     int64          `json:"total_events"`
+	EventsLastHour  int64          `json:"events_last_hour"`
+	EventsLast24h   int64          `json:"events_last_24h"`
+	EventsLast7d    int64          `json:"events_last_7d"`
+	AvgRiskScore    float64        `json:"avg_risk_score"`
+	StddevRiskScore float64        `json:"stddev_risk_score"`
+	P95RiskScore    float64        `json:"p95_risk_score"`
+	HighRiskEvents  int64          `json:"high_risk_events"`
+	AllowedEvents   int64          `json:"allowed_events"`
+	DeniedEvents    int64          `json:"denied_events"`
+	DenialRatePct   pgtype.Numeric `json:"denial_rate_pct"`
+}
+
+// ================================================================================================
+// PERFORMANCE AND MONITORING QUERIES
+// ================================================================================================
+// Get audit log health metrics and performance indicators
+//
+//	WITH event_volume AS (
+//	  SELECT
+//	    COUNT(*) AS total_events,
+//	    COUNT(*) FILTER (
+//	      WHERE
+//	        created_at >= NOW() - INTERVAL '1 hour'
+//	    ) AS events_last_hour,
+//	    COUNT(*) FILTER (
+//	      WHERE
+//	        created_at >= NOW() - INTERVAL '24 hours'
+//	    ) AS events_last_24h,
+//	    COUNT(*) FILTER (
+//	      WHERE
+//	        created_at >= NOW() - INTERVAL '7 days'
+//	    ) AS events_last_7d
+//	  FROM
+//	    audit_log
+//	  WHERE
+//	    tenant_id = current_tenant_id()
+//	),
+//	risk_metrics AS (
+//	  SELECT
+//	    AVG(risk_score) AS avg_risk_score,
+//	    STDDEV(risk_score) AS stddev_risk_score,
+//	    PERCENTILE_CONT(0.95) WITHIN GROUP (
+//	      ORDER BY
+//	        risk_score
+//	    ) AS p95_risk_score,
+//	    COUNT(*) FILTER (
+//	      WHERE
+//	        risk_score >= 80
+//	    ) AS high_risk_events
+//	  FROM
+//	    audit_log
+//	  WHERE
+//	    tenant_id = current_tenant_id()
+//	    AND created_at >= NOW() - INTERVAL '24 hours'
+//	),
+//	decision_metrics AS (
+//	  SELECT
+//	    COUNT(*) FILTER (
+//	      WHERE
+//	        decision = 'ALLOW'
+//	    ) AS allowed_events,
+//	    COUNT(*) FILTER (
+//	      WHERE
+//	        decision = 'DENY'
+//	    ) AS denied_events,
+//	    ROUND(
+//	      COUNT(*) FILTER (
+//	        WHERE
+//	          decision = 'DENY'
+//	      )::NUMERIC / COUNT(*) * 100,
+//	      2
+//	    ) AS denial_rate_pct
+//	  FROM
+//	    audit_log
+//	  WHERE
+//	    tenant_id = current_tenant_id()
+//	    AND decision IS NOT NULL
+//	    AND created_at >= NOW() - INTERVAL '24 hours'
+//	)
+//	SELECT
+//	  ev.total_events, ev.events_last_hour, ev.events_last_24h, ev.events_last_7d,
+//	  rm.avg_risk_score,
+//	  rm.stddev_risk_score,
+//	  rm.p95_risk_score,
+//	  rm.high_risk_events,
+//	  dm.allowed_events,
+//	  dm.denied_events,
+//	  dm.denial_rate_pct
+//	FROM
+//	  event_volume ev
+//	  CROSS JOIN risk_metrics rm
+//	  CROSS JOIN decision_metrics dm
+func (q *Queries) GetAuditLogHealth(ctx context.Context) (*GetAuditLogHealthRow, error) {
+	row := q.db.QueryRow(ctx, getAuditLogHealth)
+	var i GetAuditLogHealthRow
+	err := row.Scan(
+		&i.TotalEvents,
+		&i.EventsLastHour,
+		&i.EventsLast24h,
+		&i.EventsLast7d,
+		&i.AvgRiskScore,
+		&i.StddevRiskScore,
+		&i.P95RiskScore,
+		&i.HighRiskEvents,
+		&i.AllowedEvents,
+		&i.DeniedEvents,
+		&i.DenialRatePct,
+	)
+	return &i, err
+}
+
+const getAuditStatsByCategory = `-- name: GetAuditStatsByCategory :many
+SELECT
+  event_category,
+  COUNT(*) AS event_count,
+  COUNT(*) FILTER (
+    WHERE
+      decision = 'DENY'
+  ) AS denied_count,
+  AVG(risk_score) AS avg_risk_score,
+  MAX(risk_score) AS max_risk_score,
+  COUNT(DISTINCT user_id) AS unique_users
+FROM
+  audit_log
+WHERE
+  tenant_id = current_tenant_id()
+  AND created_at >= $1
+  AND created_at <= $2
+  AND (
+    $3::VARCHAR IS NULL
+    OR severity = $3
+  )
+GROUP BY
+  event_category
+ORDER BY
+  event_count DESC
+`
+
+type GetAuditStatsByCategoryParams struct {
+	StartTime sql.NullTime `json:"start_time"`
+	EndTime   sql.NullTime `json:"end_time"`
+	Severity  *string      `json:"severity"`
+}
+
+type GetAuditStatsByCategoryRow struct {
+	EventCategory *string     `json:"event_category"`
+	EventCount    int64       `json:"event_count"`
+	DeniedCount   int64       `json:"denied_count"`
+	AvgRiskScore  float64     `json:"avg_risk_score"`
+	MaxRiskScore  interface{} `json:"max_risk_score"`
+	UniqueUsers   int64       `json:"unique_users"`
+}
+
+// ================================================================================================
+// ADVANCED ANALYTICS QUERIES
+// ================================================================================================
+// Count events by category within a time range with optional filters
+//
+//	SELECT
+//	  event_category,
+//	  COUNT(*) AS event_count,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      decision = 'DENY'
+//	  ) AS denied_count,
+//	  AVG(risk_score) AS avg_risk_score,
+//	  MAX(risk_score) AS max_risk_score,
+//	  COUNT(DISTINCT user_id) AS unique_users
+//	FROM
+//	  audit_log
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND created_at >= $1
+//	  AND created_at <= $2
+//	  AND (
+//	    $3::VARCHAR IS NULL
+//	    OR severity = $3
+//	  )
+//	GROUP BY
+//	  event_category
+//	ORDER BY
+//	  event_count DESC
+func (q *Queries) GetAuditStatsByCategory(ctx context.Context, arg GetAuditStatsByCategoryParams) ([]*GetAuditStatsByCategoryRow, error) {
+	rows, err := q.db.Query(ctx, getAuditStatsByCategory, arg.StartTime, arg.EndTime, arg.Severity)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetAuditStatsByCategoryRow{}
+	for rows.Next() {
+		var i GetAuditStatsByCategoryRow
+		if err := rows.Scan(
+			&i.EventCategory,
+			&i.EventCount,
+			&i.DeniedCount,
+			&i.AvgRiskScore,
+			&i.MaxRiskScore,
+			&i.UniqueUsers,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAuditStatsBySeverity = `-- name: GetAuditStatsBySeverity :many
+SELECT
+  severity,
+  COUNT(*) AS event_count,
+  COUNT(DISTINCT user_id) AS unique_users,
+  AVG(risk_score) AS avg_risk_score
+FROM
+  audit_log
+WHERE
+  tenant_id = current_tenant_id()
+  AND created_at >= $1
+  AND created_at <= $2
+  AND (
+    $3::VARCHAR IS NULL
+    OR event_category = $3
+  )
+GROUP BY
+  severity
+ORDER BY
+  CASE
+    severity
+    WHEN 'CRITICAL' THEN 5
+    WHEN 'HIGH' THEN 4
+    WHEN 'WARN' THEN 3
+    WHEN 'INFO' THEN 2
+    WHEN 'LOW' THEN 1
+  END DESC
+`
+
+type GetAuditStatsBySeverityParams struct {
+	StartTime     sql.NullTime `json:"start_time"`
+	EndTime       sql.NullTime `json:"end_time"`
+	EventCategory *string      `json:"event_category"`
+}
+
+type GetAuditStatsBySeverityRow struct {
+	Severity     *string `json:"severity"`
+	EventCount   int64   `json:"event_count"`
+	UniqueUsers  int64   `json:"unique_users"`
+	AvgRiskScore float64 `json:"avg_risk_score"`
+}
+
+// Count events by severity within a time range
+//
+//	SELECT
+//	  severity,
+//	  COUNT(*) AS event_count,
+//	  COUNT(DISTINCT user_id) AS unique_users,
+//	  AVG(risk_score) AS avg_risk_score
+//	FROM
+//	  audit_log
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND created_at >= $1
+//	  AND created_at <= $2
+//	  AND (
+//	    $3::VARCHAR IS NULL
+//	    OR event_category = $3
+//	  )
+//	GROUP BY
+//	  severity
+//	ORDER BY
+//	  CASE
+//	    severity
+//	    WHEN 'CRITICAL' THEN 5
+//	    WHEN 'HIGH' THEN 4
+//	    WHEN 'WARN' THEN 3
+//	    WHEN 'INFO' THEN 2
+//	    WHEN 'LOW' THEN 1
+//	  END DESC
+func (q *Queries) GetAuditStatsBySeverity(ctx context.Context, arg GetAuditStatsBySeverityParams) ([]*GetAuditStatsBySeverityRow, error) {
+	rows, err := q.db.Query(ctx, getAuditStatsBySeverity, arg.StartTime, arg.EndTime, arg.EventCategory)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetAuditStatsBySeverityRow{}
+	for rows.Next() {
+		var i GetAuditStatsBySeverityRow
+		if err := rows.Scan(
+			&i.Severity,
+			&i.EventCount,
+			&i.UniqueUsers,
+			&i.AvgRiskScore,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAuditStorageStats = `-- name: GetAuditStorageStats :one
+SELECT
+  COUNT(*) AS total_events,
+  COUNT(DISTINCT user_id) AS unique_users,
+  COUNT(DISTINCT ip_address) AS unique_ips,
+  COUNT(DISTINCT event_type) AS unique_event_types,
+  pg_size_pretty(pg_total_relation_size('audit_log')) AS table_size,
+  MIN(created_at) AS oldest_event,
+  MAX(created_at) AS newest_event,
+  COUNT(*) FILTER (
+    WHERE
+      created_at >= NOW() - INTERVAL '24 hours'
+  ) AS events_last_24h,
+  COUNT(*) FILTER (
+    WHERE
+      created_at >= NOW() - INTERVAL '7 days'
+  ) AS events_last_7d,
+  COUNT(*) FILTER (
+    WHERE
+      created_at >= NOW() - INTERVAL '30 days'
+  ) AS events_last_30d
+FROM
+  audit_log
+WHERE
+  tenant_id = current_tenant_id()
+`
+
+type GetAuditStorageStatsRow struct {
+	TotalEvents      int64       `json:"total_events"`
+	UniqueUsers      int64       `json:"unique_users"`
+	UniqueIps        int64       `json:"unique_ips"`
+	UniqueEventTypes int64       `json:"unique_event_types"`
+	TableSize        string      `json:"table_size"`
+	OldestEvent      interface{} `json:"oldest_event"`
+	NewestEvent      interface{} `json:"newest_event"`
+	EventsLast24h    int64       `json:"events_last_24h"`
+	EventsLast7d     int64       `json:"events_last_7d"`
+	EventsLast30d    int64       `json:"events_last_30d"`
+}
+
+// Get audit log storage statistics and metrics
+//
+//	SELECT
+//	  COUNT(*) AS total_events,
+//	  COUNT(DISTINCT user_id) AS unique_users,
+//	  COUNT(DISTINCT ip_address) AS unique_ips,
+//	  COUNT(DISTINCT event_type) AS unique_event_types,
+//	  pg_size_pretty(pg_total_relation_size('audit_log')) AS table_size,
+//	  MIN(created_at) AS oldest_event,
+//	  MAX(created_at) AS newest_event,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      created_at >= NOW() - INTERVAL '24 hours'
+//	  ) AS events_last_24h,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      created_at >= NOW() - INTERVAL '7 days'
+//	  ) AS events_last_7d,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      created_at >= NOW() - INTERVAL '30 days'
+//	  ) AS events_last_30d
+//	FROM
+//	  audit_log
+//	WHERE
+//	  tenant_id = current_tenant_id()
+func (q *Queries) GetAuditStorageStats(ctx context.Context) (*GetAuditStorageStatsRow, error) {
+	row := q.db.QueryRow(ctx, getAuditStorageStats)
+	var i GetAuditStorageStatsRow
+	err := row.Scan(
+		&i.TotalEvents,
+		&i.UniqueUsers,
+		&i.UniqueIps,
+		&i.UniqueEventTypes,
+		&i.TableSize,
+		&i.OldestEvent,
+		&i.NewestEvent,
+		&i.EventsLast24h,
+		&i.EventsLast7d,
+		&i.EventsLast30d,
+	)
+	return &i, err
+}
+
+const getComplianceEvents = `-- name: GetComplianceEvents :many
+SELECT
+  al.id,
+  al.user_id,
+  al.event_type,
+  al.event_category,
+  al.severity,
+  al.context,
+  al.compliance_flags,
+  al.created_at
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.compliance_flags ? $1
+  AND (
+    $2::TIMESTAMPTZ IS NULL
+    OR al.created_at >= $2
+  )
+  AND (
+    $3::TIMESTAMPTZ IS NULL
+    OR al.created_at <= $3
+  )
+ORDER BY
+  al.created_at DESC
+LIMIT
+  $5 OFFSET $4
+`
+
+type GetComplianceEventsParams struct {
+	ComplianceFlag []byte       `json:"compliance_flag"`
+	StartTime      sql.NullTime `json:"start_time"`
+	EndTime        sql.NullTime `json:"end_time"`
+	Offset         int32        `json:"offset"`
+	Limit          int32        `json:"limit"`
+}
+
+type GetComplianceEventsRow struct {
+	ID              uuid.UUID    `json:"id"`
+	UserID          *uuid.UUID   `json:"user_id"`
+	EventType       string       `json:"event_type"`
+	EventCategory   *string      `json:"event_category"`
+	Severity        *string      `json:"severity"`
+	Context         []byte       `json:"context"`
+	ComplianceFlags []byte       `json:"compliance_flags"`
+	CreatedAt       sql.NullTime `json:"created_at"`
+}
+
+// Get events with specific compliance flags
+//
+//	SELECT
+//	  al.id,
+//	  al.user_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.severity,
+//	  al.context,
+//	  al.compliance_flags,
+//	  al.created_at
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.compliance_flags ? $1
+//	  AND (
+//	    $2::TIMESTAMPTZ IS NULL
+//	    OR al.created_at >= $2
+//	  )
+//	  AND (
+//	    $3::TIMESTAMPTZ IS NULL
+//	    OR al.created_at <= $3
+//	  )
+//	ORDER BY
+//	  al.created_at DESC
+//	LIMIT
+//	  $5 OFFSET $4
+func (q *Queries) GetComplianceEvents(ctx context.Context, arg GetComplianceEventsParams) ([]*GetComplianceEventsRow, error) {
+	rows, err := q.db.Query(ctx, getComplianceEvents,
+		arg.ComplianceFlag,
+		arg.StartTime,
+		arg.EndTime,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetComplianceEventsRow{}
+	for rows.Next() {
+		var i GetComplianceEventsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Severity,
+			&i.Context,
+			&i.ComplianceFlags,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDuplicateEventAnalysis = `-- name: GetDuplicateEventAnalysis :many
+SELECT
+  al.user_id,
+  al.event_type,
+  al.event_category,
+  al.ip_address,
+  DATE_TRUNC('minute', al.created_at) AS time_bucket,
+  COUNT(*) AS duplicate_count,
+  array_agg(
+    al.id
+    ORDER BY
+      al.created_at
+  ) AS event_ids,
+  MIN(al.created_at) AS first_occurrence,
+  MAX(al.created_at) AS last_occurrence
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.created_at >= $1
+  AND al.created_at <= $2
+GROUP BY
+  al.user_id,
+  al.event_type,
+  al.event_category,
+  al.ip_address,
+  DATE_TRUNC('minute', al.created_at)
+HAVING
+  COUNT(*) >= $3
+ORDER BY
+  duplicate_count DESC,
+  first_occurrence DESC
+LIMIT
+  $4
+`
+
+type GetDuplicateEventAnalysisParams struct {
+	StartTime         sql.NullTime `json:"start_time"`
+	EndTime           sql.NullTime `json:"end_time"`
+	MinDuplicateCount interface{}  `json:"min_duplicate_count"`
+	Limit             int32        `json:"limit"`
+}
+
+type GetDuplicateEventAnalysisRow struct {
+	UserID          *uuid.UUID      `json:"user_id"`
+	EventType       string          `json:"event_type"`
+	EventCategory   *string         `json:"event_category"`
+	IpAddress       *netip.Addr     `json:"ip_address"`
+	TimeBucket      pgtype.Interval `json:"time_bucket"`
+	DuplicateCount  int64           `json:"duplicate_count"`
+	EventIds        interface{}     `json:"event_ids"`
+	FirstOccurrence interface{}     `json:"first_occurrence"`
+	LastOccurrence  interface{}     `json:"last_occurrence"`
+}
+
+// Identify potential duplicate events for cleanup
+//
+//	SELECT
+//	  al.user_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.ip_address,
+//	  DATE_TRUNC('minute', al.created_at) AS time_bucket,
+//	  COUNT(*) AS duplicate_count,
+//	  array_agg(
+//	    al.id
+//	    ORDER BY
+//	      al.created_at
+//	  ) AS event_ids,
+//	  MIN(al.created_at) AS first_occurrence,
+//	  MAX(al.created_at) AS last_occurrence
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.created_at >= $1
+//	  AND al.created_at <= $2
+//	GROUP BY
+//	  al.user_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.ip_address,
+//	  DATE_TRUNC('minute', al.created_at)
+//	HAVING
+//	  COUNT(*) >= $3
+//	ORDER BY
+//	  duplicate_count DESC,
+//	  first_occurrence DESC
+//	LIMIT
+//	  $4
+func (q *Queries) GetDuplicateEventAnalysis(ctx context.Context, arg GetDuplicateEventAnalysisParams) ([]*GetDuplicateEventAnalysisRow, error) {
+	rows, err := q.db.Query(ctx, getDuplicateEventAnalysis,
+		arg.StartTime,
+		arg.EndTime,
+		arg.MinDuplicateCount,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetDuplicateEventAnalysisRow{}
+	for rows.Next() {
+		var i GetDuplicateEventAnalysisRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.IpAddress,
+			&i.TimeBucket,
+			&i.DuplicateCount,
+			&i.EventIds,
+			&i.FirstOccurrence,
+			&i.LastOccurrence,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventTimelineForUser = `-- name: GetEventTimelineForUser :many
+
+
+SELECT
+  al.id,
+  al.event_type,
+  al.event_category,
+  al.severity,
+  al.decision,
+  al.reason,
+  al.risk_score,
+  al.context,
+  al.ip_address,
+  al.user_agent,
+  al.session_id,
+  al.created_at,
+  LAG(al.created_at) OVER (
+    ORDER BY
+      al.created_at
+  ) AS prev_event_time,
+  LEAD(al.created_at) OVER (
+    ORDER BY
+      al.created_at
+  ) AS next_event_time,
+  EXTRACT(
+    EPOCH
+    FROM
+      (
+        al.created_at - LAG(al.created_at) OVER (
+          ORDER BY
+            al.created_at
+        )
+      )
+  ) AS seconds_since_prev
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.user_id = $1
+  AND al.created_at >= $2
+  AND al.created_at <= $3
+ORDER BY
+  al.created_at ASC
+`
+
+type GetEventTimelineForUserParams struct {
+	UserID    *uuid.UUID   `json:"user_id"`
+	StartTime sql.NullTime `json:"start_time"`
+	EndTime   sql.NullTime `json:"end_time"`
+}
+
+type GetEventTimelineForUserRow struct {
+	ID               uuid.UUID      `json:"id"`
+	EventType        string         `json:"event_type"`
+	EventCategory    *string        `json:"event_category"`
+	Severity         *string        `json:"severity"`
+	Decision         *string        `json:"decision"`
+	Reason           string         `json:"reason"`
+	RiskScore        *int32         `json:"risk_score"`
+	Context          []byte         `json:"context"`
+	IpAddress        *netip.Addr    `json:"ip_address"`
+	UserAgent        string         `json:"user_agent"`
+	SessionID        *uuid.UUID     `json:"session_id"`
+	CreatedAt        sql.NullTime   `json:"created_at"`
+	PrevEventTime    interface{}    `json:"prev_event_time"`
+	NextEventTime    interface{}    `json:"next_event_time"`
+	SecondsSincePrev pgtype.Numeric `json:"seconds_since_prev"`
+}
+
+// -- name: GetAccessControlEffectiveness :many
+// -- Analyze access control effectiveness
+// -- NOTE:
+// SELECT
+//
+//	stats.user_id,
+//	stats.resource_id,
+//	r.name AS resource_name,
+//	stats.role_id,
+//	ro.name AS role_name,
+//	stats.permission_id,
+//	p.name AS permission_name,
+//	stats.total_attempts,
+//	stats.allowed_attempts,
+//	stats.denied_attempts,
+//	ROUND(
+//	  stats.denied_attempts::NUMERIC / stats.total_attempts * 100,
+//	  2
+//	) AS denial_rate_pct,
+//	ROUND(stats.avg_risk_score, 2) AS avg_risk_score,
+//	stats.first_attempt,
+//	stats.last_attempt
+//
+// FROM (
+//
+//	SELECT
+//	  user_id,
+//	  resource_id,
+//	  role_id,
+//	  permission_id,
+//	  COUNT(*) AS total_attempts,
+//	  COUNT(*) FILTER (WHERE decision = 'ALLOW') AS allowed_attempts,
+//	  COUNT(*) FILTER (WHERE decision = 'DENY') AS denied_attempts,
+//	  AVG(risk_score) AS avg_risk_score,
+//	  MIN(created_at) AS first_attempt,
+//	  MAX(created_at) AS last_attempt
+//	FROM audit_log al
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND event_category = 'ACCESS'
+//	  AND decision IS NOT NULL
+//	  AND al.created_at >= sqlc.arg('start_time')
+//	  AND al.created_at <= sqlc.arg('end_time')
+//	GROUP BY user_id, resource_id, role_id, permission_id
+//
+// ) stats
+// LEFT JOIN resources r ON stats.resource_id = r.id AND r.tenant_id = current_tenant_id()
+// LEFT JOIN roles ro ON stats.role_id = ro.id AND ro.tenant_id = current_tenant_id()
+// LEFT JOIN permissions p ON stats.permission_id = p.id AND p.tenant_id = current_tenant_id()
+// WHERE
+//
+//	stats.total_attempts >= sqlc.arg('min_attempts')
+//	AND (
+//	  sqlc.narg('min_denial_rate')::NUMERIC IS NULL
+//	  OR (stats.denied_attempts::NUMERIC / stats.total_attempts) >= sqlc.narg('min_denial_rate')
+//	)
+//
+// ORDER BY denial_rate_pct DESC, stats.avg_risk_score DESC
+// LIMIT sqlc.arg('limit');
+// ================================================================================================
+// FORENSIC INVESTIGATION QUERIES
+// ================================================================================================
+// Get detailed event timeline for forensic investigation
+//
+//	SELECT
+//	  al.id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.severity,
+//	  al.decision,
+//	  al.reason,
+//	  al.risk_score,
+//	  al.context,
+//	  al.ip_address,
+//	  al.user_agent,
+//	  al.session_id,
+//	  al.created_at,
+//	  LAG(al.created_at) OVER (
+//	    ORDER BY
+//	      al.created_at
+//	  ) AS prev_event_time,
+//	  LEAD(al.created_at) OVER (
+//	    ORDER BY
+//	      al.created_at
+//	  ) AS next_event_time,
+//	  EXTRACT(
+//	    EPOCH
+//	    FROM
+//	      (
+//	        al.created_at - LAG(al.created_at) OVER (
+//	          ORDER BY
+//	            al.created_at
+//	        )
+//	      )
+//	  ) AS seconds_since_prev
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.user_id = $1
+//	  AND al.created_at >= $2
+//	  AND al.created_at <= $3
+//	ORDER BY
+//	  al.created_at ASC
+func (q *Queries) GetEventTimelineForUser(ctx context.Context, arg GetEventTimelineForUserParams) ([]*GetEventTimelineForUserRow, error) {
+	rows, err := q.db.Query(ctx, getEventTimelineForUser, arg.UserID, arg.StartTime, arg.EndTime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetEventTimelineForUserRow{}
+	for rows.Next() {
+		var i GetEventTimelineForUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Severity,
+			&i.Decision,
+			&i.Reason,
+			&i.RiskScore,
+			&i.Context,
+			&i.IpAddress,
+			&i.UserAgent,
+			&i.SessionID,
+			&i.CreatedAt,
+			&i.PrevEventTime,
+			&i.NextEventTime,
+			&i.SecondsSincePrev,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventTypeDistribution = `-- name: GetEventTypeDistribution :many
+SELECT
+  event_type,
+  event_category,
+  COUNT(*) AS event_count,
+  COUNT(DISTINCT user_id) AS unique_users,
+  AVG(risk_score) AS avg_risk_score,
+  COUNT(*) FILTER (
+    WHERE
+      decision = 'DENY'
+  ) AS denied_count,
+  COUNT(*) FILTER (
+    WHERE
+      severity IN ('HIGH', 'CRITICAL')
+  ) AS high_severity_count,
+  MIN(created_at) AS first_occurrence,
+  MAX(created_at) AS last_occurrence
+FROM
+  audit_log
+WHERE
+  tenant_id = current_tenant_id()
+  AND created_at >= $1
+  AND created_at <= $2
+  AND (
+    $3::VARCHAR IS NULL
+    OR event_category = $3
+  )
+GROUP BY
+  event_type,
+  event_category
+HAVING
+  COUNT(*) >= $4
+ORDER BY
+  event_count DESC
+LIMIT
+  $5
+`
+
+type GetEventTypeDistributionParams struct {
+	StartTime      sql.NullTime `json:"start_time"`
+	EndTime        sql.NullTime `json:"end_time"`
+	EventCategory  *string      `json:"event_category"`
+	MinOccurrences interface{}  `json:"min_occurrences"`
+	Limit          int32        `json:"limit"`
+}
+
+type GetEventTypeDistributionRow struct {
+	EventType         string      `json:"event_type"`
+	EventCategory     *string     `json:"event_category"`
+	EventCount        int64       `json:"event_count"`
+	UniqueUsers       int64       `json:"unique_users"`
+	AvgRiskScore      float64     `json:"avg_risk_score"`
+	DeniedCount       int64       `json:"denied_count"`
+	HighSeverityCount int64       `json:"high_severity_count"`
+	FirstOccurrence   interface{} `json:"first_occurrence"`
+	LastOccurrence    interface{} `json:"last_occurrence"`
+}
+
+// Get event type distribution for analysis
+//
+//	SELECT
+//	  event_type,
+//	  event_category,
+//	  COUNT(*) AS event_count,
+//	  COUNT(DISTINCT user_id) AS unique_users,
+//	  AVG(risk_score) AS avg_risk_score,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      decision = 'DENY'
+//	  ) AS denied_count,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      severity IN ('HIGH', 'CRITICAL')
+//	  ) AS high_severity_count,
+//	  MIN(created_at) AS first_occurrence,
+//	  MAX(created_at) AS last_occurrence
+//	FROM
+//	  audit_log
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND created_at >= $1
+//	  AND created_at <= $2
+//	  AND (
+//	    $3::VARCHAR IS NULL
+//	    OR event_category = $3
+//	  )
+//	GROUP BY
+//	  event_type,
+//	  event_category
+//	HAVING
+//	  COUNT(*) >= $4
+//	ORDER BY
+//	  event_count DESC
+//	LIMIT
+//	  $5
+func (q *Queries) GetEventTypeDistribution(ctx context.Context, arg GetEventTypeDistributionParams) ([]*GetEventTypeDistributionRow, error) {
+	rows, err := q.db.Query(ctx, getEventTypeDistribution,
+		arg.StartTime,
+		arg.EndTime,
+		arg.EventCategory,
+		arg.MinOccurrences,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetEventTypeDistributionRow{}
+	for rows.Next() {
+		var i GetEventTypeDistributionRow
+		if err := rows.Scan(
+			&i.EventType,
+			&i.EventCategory,
+			&i.EventCount,
+			&i.UniqueUsers,
+			&i.AvgRiskScore,
+			&i.DeniedCount,
+			&i.HighSeverityCount,
+			&i.FirstOccurrence,
+			&i.LastOccurrence,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFailedAccessAttempts = `-- name: GetFailedAccessAttempts :many
+SELECT
+  al.id,
+  al.user_id,
+  al.event_type,
+  al.entity_id,
+  al.resource_id,
+  al.reason,
+  al.risk_score,
+  al.ip_address,
+  al.user_agent,
+  al.created_at
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.decision = 'DENY'
+  AND al.event_category = 'ACCESS'
+  AND al.created_at >= $1
+  AND al.created_at <= $2
+  AND (
+    $3::UUID IS NULL
+    OR al.user_id = $3
+  )
+  AND (
+    $4::INET IS NULL
+    OR al.ip_address = $4
+  )
+ORDER BY
+  al.created_at DESC
+LIMIT
+  $6 OFFSET $5
+`
+
+type GetFailedAccessAttemptsParams struct {
+	StartTime sql.NullTime `json:"start_time"`
+	EndTime   sql.NullTime `json:"end_time"`
+	UserID    *uuid.UUID   `json:"user_id"`
+	IpAddress *netip.Addr  `json:"ip_address"`
+	Offset    int32        `json:"offset"`
+	Limit     int32        `json:"limit"`
+}
+
+type GetFailedAccessAttemptsRow struct {
+	ID         uuid.UUID    `json:"id"`
+	UserID     *uuid.UUID   `json:"user_id"`
+	EventType  string       `json:"event_type"`
+	EntityID   *uuid.UUID   `json:"entity_id"`
+	ResourceID *uuid.UUID   `json:"resource_id"`
+	Reason     string       `json:"reason"`
+	RiskScore  *int32       `json:"risk_score"`
+	IpAddress  *netip.Addr  `json:"ip_address"`
+	UserAgent  string       `json:"user_agent"`
+	CreatedAt  sql.NullTime `json:"created_at"`
+}
+
+// Get failed access attempts within a time range
+//
+//	SELECT
+//	  al.id,
+//	  al.user_id,
+//	  al.event_type,
+//	  al.entity_id,
+//	  al.resource_id,
+//	  al.reason,
+//	  al.risk_score,
+//	  al.ip_address,
+//	  al.user_agent,
+//	  al.created_at
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.decision = 'DENY'
+//	  AND al.event_category = 'ACCESS'
+//	  AND al.created_at >= $1
+//	  AND al.created_at <= $2
+//	  AND (
+//	    $3::UUID IS NULL
+//	    OR al.user_id = $3
+//	  )
+//	  AND (
+//	    $4::INET IS NULL
+//	    OR al.ip_address = $4
+//	  )
+//	ORDER BY
+//	  al.created_at DESC
+//	LIMIT
+//	  $6 OFFSET $5
+func (q *Queries) GetFailedAccessAttempts(ctx context.Context, arg GetFailedAccessAttemptsParams) ([]*GetFailedAccessAttemptsRow, error) {
+	rows, err := q.db.Query(ctx, getFailedAccessAttempts,
+		arg.StartTime,
+		arg.EndTime,
+		arg.UserID,
+		arg.IpAddress,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetFailedAccessAttemptsRow{}
+	for rows.Next() {
+		var i GetFailedAccessAttemptsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.EventType,
+			&i.EntityID,
+			&i.ResourceID,
+			&i.Reason,
+			&i.RiskScore,
+			&i.IpAddress,
+			&i.UserAgent,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getHighRiskEvents = `-- name: GetHighRiskEvents :many
+SELECT
+  al.id,
+  al.user_id,
+  al.event_type,
+  al.event_category,
+  al.severity,
+  al.decision,
+  al.reason,
+  al.risk_score,
+  al.context,
+  al.ip_address,
+  al.created_at
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.risk_score >= $1
+  AND (
+    $2::VARCHAR IS NULL
+    OR al.event_category = $2
+  )
+  AND (
+    $3::TIMESTAMPTZ IS NULL
+    OR al.created_at >= $3
+  )
+  AND (
+    $4::TIMESTAMPTZ IS NULL
+    OR al.created_at <= $4
+  )
+ORDER BY
+  al.risk_score DESC,
+  al.created_at DESC
+LIMIT
+  $6 OFFSET $5
+`
+
+type GetHighRiskEventsParams struct {
+	MinRiskScore  *int32       `json:"min_risk_score"`
+	EventCategory *string      `json:"event_category"`
+	StartTime     sql.NullTime `json:"start_time"`
+	EndTime       sql.NullTime `json:"end_time"`
+	Offset        int32        `json:"offset"`
+	Limit         int32        `json:"limit"`
+}
+
+type GetHighRiskEventsRow struct {
+	ID            uuid.UUID    `json:"id"`
+	UserID        *uuid.UUID   `json:"user_id"`
+	EventType     string       `json:"event_type"`
+	EventCategory *string      `json:"event_category"`
+	Severity      *string      `json:"severity"`
+	Decision      *string      `json:"decision"`
+	Reason        string       `json:"reason"`
+	RiskScore     *int32       `json:"risk_score"`
+	Context       []byte       `json:"context"`
+	IpAddress     *netip.Addr  `json:"ip_address"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+}
+
+// Get high-risk audit events (risk_score >= threshold)
+//
+//	SELECT
+//	  al.id,
+//	  al.user_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.severity,
+//	  al.decision,
+//	  al.reason,
+//	  al.risk_score,
+//	  al.context,
+//	  al.ip_address,
+//	  al.created_at
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.risk_score >= $1
+//	  AND (
+//	    $2::VARCHAR IS NULL
+//	    OR al.event_category = $2
+//	  )
+//	  AND (
+//	    $3::TIMESTAMPTZ IS NULL
+//	    OR al.created_at >= $3
+//	  )
+//	  AND (
+//	    $4::TIMESTAMPTZ IS NULL
+//	    OR al.created_at <= $4
+//	  )
+//	ORDER BY
+//	  al.risk_score DESC,
+//	  al.created_at DESC
+//	LIMIT
+//	  $6 OFFSET $5
+func (q *Queries) GetHighRiskEvents(ctx context.Context, arg GetHighRiskEventsParams) ([]*GetHighRiskEventsRow, error) {
+	rows, err := q.db.Query(ctx, getHighRiskEvents,
+		arg.MinRiskScore,
+		arg.EventCategory,
+		arg.StartTime,
+		arg.EndTime,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetHighRiskEventsRow{}
+	for rows.Next() {
+		var i GetHighRiskEventsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Severity,
+			&i.Decision,
+			&i.Reason,
+			&i.RiskScore,
+			&i.Context,
+			&i.IpAddress,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getHourlyEventRates = `-- name: GetHourlyEventRates :many
+SELECT
+  DATE_TRUNC('hour', al.created_at) AS hour_bucket,
+  COUNT(*) AS event_count,
+  COUNT(DISTINCT al.user_id) AS unique_users,
+  AVG(al.risk_score) AS avg_risk_score,
+  COUNT(*) FILTER (
+    WHERE
+      al.decision = 'DENY'
+  ) AS denied_count
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.created_at >= $1
+  AND al.created_at <= $2
+GROUP BY
+  DATE_TRUNC('hour', al.created_at)
+ORDER BY
+  hour_bucket DESC
+LIMIT
+  $3
+`
+
+type GetHourlyEventRatesParams struct {
+	StartTime sql.NullTime `json:"start_time"`
+	EndTime   sql.NullTime `json:"end_time"`
+	Limit     int32        `json:"limit"`
+}
+
+type GetHourlyEventRatesRow struct {
+	HourBucket   pgtype.Interval `json:"hour_bucket"`
+	EventCount   int64           `json:"event_count"`
+	UniqueUsers  int64           `json:"unique_users"`
+	AvgRiskScore float64         `json:"avg_risk_score"`
+	DeniedCount  int64           `json:"denied_count"`
+}
+
+// Get hourly event rates for capacity planning
+//
+//	SELECT
+//	  DATE_TRUNC('hour', al.created_at) AS hour_bucket,
+//	  COUNT(*) AS event_count,
+//	  COUNT(DISTINCT al.user_id) AS unique_users,
+//	  AVG(al.risk_score) AS avg_risk_score,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      al.decision = 'DENY'
+//	  ) AS denied_count
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.created_at >= $1
+//	  AND al.created_at <= $2
+//	GROUP BY
+//	  DATE_TRUNC('hour', al.created_at)
+//	ORDER BY
+//	  hour_bucket DESC
+//	LIMIT
+//	  $3
+func (q *Queries) GetHourlyEventRates(ctx context.Context, arg GetHourlyEventRatesParams) ([]*GetHourlyEventRatesRow, error) {
+	rows, err := q.db.Query(ctx, getHourlyEventRates, arg.StartTime, arg.EndTime, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetHourlyEventRatesRow{}
+	for rows.Next() {
+		var i GetHourlyEventRatesRow
+		if err := rows.Scan(
+			&i.HourBucket,
+			&i.EventCount,
+			&i.UniqueUsers,
+			&i.AvgRiskScore,
+			&i.DeniedCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRecentSecurityEvents = `-- name: GetRecentSecurityEvents :many
+SELECT
+  al.id,
+  al.user_id,
+  al.event_type,
+  al.event_category,
+  al.severity,
+  al.decision,
+  al.reason,
+  al.risk_score,
+  al.ip_address,
+  al.context,
+  al.created_at
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND (
+    al.risk_score >= $1
+    OR al.decision = 'DENY'
+    OR al.severity IN ('HIGH', 'CRITICAL')
+  )
+  AND al.created_at >= $2
+  AND (
+    $3::VARCHAR IS NULL
+    OR al.event_category = $3
+  )
+ORDER BY
+  CASE
+    al.severity
+    WHEN 'CRITICAL' THEN 5
+    WHEN 'HIGH' THEN 4
+    WHEN 'WARN' THEN 3
+    WHEN 'INFO' THEN 2
+    WHEN 'LOW' THEN 1
+  END DESC,
+  al.risk_score DESC,
+  al.created_at DESC
+LIMIT
+  $4
+`
+
+type GetRecentSecurityEventsParams struct {
+	MinRiskScore  *int32       `json:"min_risk_score"`
+	StartTime     sql.NullTime `json:"start_time"`
+	EventCategory *string      `json:"event_category"`
+	Limit         int32        `json:"limit"`
+}
+
+type GetRecentSecurityEventsRow struct {
+	ID            uuid.UUID    `json:"id"`
+	UserID        *uuid.UUID   `json:"user_id"`
+	EventType     string       `json:"event_type"`
+	EventCategory *string      `json:"event_category"`
+	Severity      *string      `json:"severity"`
+	Decision      *string      `json:"decision"`
+	Reason        string       `json:"reason"`
+	RiskScore     *int32       `json:"risk_score"`
+	IpAddress     *netip.Addr  `json:"ip_address"`
+	Context       []byte       `json:"context"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+}
+
+// Get recent security-related events (high risk, denials, critical severity)
+//
+//	SELECT
+//	  al.id,
+//	  al.user_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.severity,
+//	  al.decision,
+//	  al.reason,
+//	  al.risk_score,
+//	  al.ip_address,
+//	  al.context,
+//	  al.created_at
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND (
+//	    al.risk_score >= $1
+//	    OR al.decision = 'DENY'
+//	    OR al.severity IN ('HIGH', 'CRITICAL')
+//	  )
+//	  AND al.created_at >= $2
+//	  AND (
+//	    $3::VARCHAR IS NULL
+//	    OR al.event_category = $3
+//	  )
+//	ORDER BY
+//	  CASE
+//	    al.severity
+//	    WHEN 'CRITICAL' THEN 5
+//	    WHEN 'HIGH' THEN 4
+//	    WHEN 'WARN' THEN 3
+//	    WHEN 'INFO' THEN 2
+//	    WHEN 'LOW' THEN 1
+//	  END DESC,
+//	  al.risk_score DESC,
+//	  al.created_at DESC
+//	LIMIT
+//	  $4
+func (q *Queries) GetRecentSecurityEvents(ctx context.Context, arg GetRecentSecurityEventsParams) ([]*GetRecentSecurityEventsRow, error) {
+	rows, err := q.db.Query(ctx, getRecentSecurityEvents,
+		arg.MinRiskScore,
+		arg.StartTime,
+		arg.EventCategory,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetRecentSecurityEventsRow{}
+	for rows.Next() {
+		var i GetRecentSecurityEventsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Severity,
+			&i.Decision,
+			&i.Reason,
+			&i.RiskScore,
+			&i.IpAddress,
+			&i.Context,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRelatedEventsByContext = `-- name: GetRelatedEventsByContext :many
+SELECT
+  al.id,
+  al.user_id,
+  al.event_type,
+  al.event_category,
+  al.severity,
+  al.decision,
+  al.risk_score,
+  al.context,
+  al.created_at,
+  CASE
+    WHEN al.context ? $1 THEN 'EXACT_MATCH'
+    WHEN al.context::text ILIKE '%' || $2 || '%' THEN 'PARTIAL_MATCH'
+    ELSE 'NO_MATCH'
+  END AS context_match_type
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND (
+    al.context ? $1
+    OR al.context::text ILIKE '%' || $2 || '%'
+  )
+  AND al.created_at >= $3
+  AND al.created_at <= $4
+  AND (
+    $5::UUID IS NULL
+    OR al.id != $5
+  )
+ORDER BY
+  CASE
+    context_match_type
+    WHEN 'EXACT_MATCH' THEN 2
+    WHEN 'PARTIAL_MATCH' THEN 1
+    ELSE 0
+  END DESC,
+  al.risk_score DESC,
+  al.created_at DESC
+LIMIT
+  $6
+`
+
+type GetRelatedEventsByContextParams struct {
+	ContextKey     []byte       `json:"context_key"`
+	ContextSearch  string       `json:"context_search"`
+	StartTime      sql.NullTime `json:"start_time"`
+	EndTime        sql.NullTime `json:"end_time"`
+	ExcludeEventID *uuid.UUID   `json:"exclude_event_id"`
+	Limit          int32        `json:"limit"`
+}
+
+type GetRelatedEventsByContextRow struct {
+	ID               uuid.UUID    `json:"id"`
+	UserID           *uuid.UUID   `json:"user_id"`
+	EventType        string       `json:"event_type"`
+	EventCategory    *string      `json:"event_category"`
+	Severity         *string      `json:"severity"`
+	Decision         *string      `json:"decision"`
+	RiskScore        *int32       `json:"risk_score"`
+	Context          []byte       `json:"context"`
+	CreatedAt        sql.NullTime `json:"created_at"`
+	ContextMatchType string       `json:"context_match_type"`
+}
+
+// Find related events by context similarity
+//
+//	SELECT
+//	  al.id,
+//	  al.user_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.severity,
+//	  al.decision,
+//	  al.risk_score,
+//	  al.context,
+//	  al.created_at,
+//	  CASE
+//	    WHEN al.context ? $1 THEN 'EXACT_MATCH'
+//	    WHEN al.context::text ILIKE '%' || $2 || '%' THEN 'PARTIAL_MATCH'
+//	    ELSE 'NO_MATCH'
+//	  END AS context_match_type
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND (
+//	    al.context ? $1
+//	    OR al.context::text ILIKE '%' || $2 || '%'
+//	  )
+//	  AND al.created_at >= $3
+//	  AND al.created_at <= $4
+//	  AND (
+//	    $5::UUID IS NULL
+//	    OR al.id != $5
+//	  )
+//	ORDER BY
+//	  CASE
+//	    context_match_type
+//	    WHEN 'EXACT_MATCH' THEN 2
+//	    WHEN 'PARTIAL_MATCH' THEN 1
+//	    ELSE 0
+//	  END DESC,
+//	  al.risk_score DESC,
+//	  al.created_at DESC
+//	LIMIT
+//	  $6
+func (q *Queries) GetRelatedEventsByContext(ctx context.Context, arg GetRelatedEventsByContextParams) ([]*GetRelatedEventsByContextRow, error) {
+	rows, err := q.db.Query(ctx, getRelatedEventsByContext,
+		arg.ContextKey,
+		arg.ContextSearch,
+		arg.StartTime,
+		arg.EndTime,
+		arg.ExcludeEventID,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetRelatedEventsByContextRow{}
+	for rows.Next() {
+		var i GetRelatedEventsByContextRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Severity,
+			&i.Decision,
+			&i.RiskScore,
+			&i.Context,
+			&i.CreatedAt,
+			&i.ContextMatchType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSimilarIncidentPatterns = `-- name: GetSimilarIncidentPatterns :many
+WITH incident_features AS (
+  SELECT
+    al_inner.event_type,
+    al_inner.event_category,
+    COUNT(DISTINCT al_inner.user_id) AS unique_users,
+    COUNT(DISTINCT al_inner.ip_address) AS unique_ips,
+    AVG(al_inner.risk_score) AS avg_risk_score,
+    COUNT(*) FILTER (
+      WHERE
+        al_inner.decision = 'DENY'
+    ) AS denied_count,
+    COUNT(*) AS total_events,
+    array_agg(DISTINCT al_inner.severity) AS severity_levels
+  FROM
+    audit_log al_inner
+  WHERE
+    al_inner.tenant_id = current_tenant_id()
+    AND al_inner.event_type = $5
+    AND al_inner.event_category = $6
+    AND al_inner.created_at >= $7
+    AND al_inner.created_at <= $8
+  GROUP BY
+    al_inner.event_type,
+    al_inner.event_category
+)
+SELECT
+  al.user_id,
+  al.event_type,
+  al.event_category,
+  al.severity,
+  al.decision,
+  al.risk_score,
+  al.ip_address,
+  al.created_at,
+  iff.avg_risk_score AS pattern_avg_risk,
+  iff.denied_count AS pattern_denied_count,
+  ABS(al.risk_score - iff.avg_risk_score) AS risk_deviation
+FROM
+  audit_log al
+  CROSS JOIN incident_features iff
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.event_type = iff.event_type
+  AND al.event_category = iff.event_category
+  AND al.created_at >= $1
+  AND al.created_at <= $2
+  AND ABS(al.risk_score - iff.avg_risk_score) <= $3
+ORDER BY
+  risk_deviation ASC,
+  al.created_at DESC
+LIMIT
+  $4
+`
+
+type GetSimilarIncidentPatternsParams struct {
+	SearchStart           sql.NullTime `json:"search_start"`
+	SearchEnd             sql.NullTime `json:"search_end"`
+	MaxRiskDeviation      *int32       `json:"max_risk_deviation"`
+	Limit                 int32        `json:"limit"`
+	IncidentEventType     string       `json:"incident_event_type"`
+	IncidentEventCategory *string      `json:"incident_event_category"`
+	PatternStart          sql.NullTime `json:"pattern_start"`
+	PatternEnd            sql.NullTime `json:"pattern_end"`
+}
+
+type GetSimilarIncidentPatternsRow struct {
+	UserID             *uuid.UUID   `json:"user_id"`
+	EventType          string       `json:"event_type"`
+	EventCategory      *string      `json:"event_category"`
+	Severity           *string      `json:"severity"`
+	Decision           *string      `json:"decision"`
+	RiskScore          *int32       `json:"risk_score"`
+	IpAddress          *netip.Addr  `json:"ip_address"`
+	CreatedAt          sql.NullTime `json:"created_at"`
+	PatternAvgRisk     float64      `json:"pattern_avg_risk"`
+	PatternDeniedCount int64        `json:"pattern_denied_count"`
+	RiskDeviation      int64        `json:"risk_deviation"`
+}
+
+// Find similar incident patterns for threat intelligence
+//
+//	WITH incident_features AS (
+//	  SELECT
+//	    al_inner.event_type,
+//	    al_inner.event_category,
+//	    COUNT(DISTINCT al_inner.user_id) AS unique_users,
+//	    COUNT(DISTINCT al_inner.ip_address) AS unique_ips,
+//	    AVG(al_inner.risk_score) AS avg_risk_score,
+//	    COUNT(*) FILTER (
+//	      WHERE
+//	        al_inner.decision = 'DENY'
+//	    ) AS denied_count,
+//	    COUNT(*) AS total_events,
+//	    array_agg(DISTINCT al_inner.severity) AS severity_levels
+//	  FROM
+//	    audit_log al_inner
+//	  WHERE
+//	    al_inner.tenant_id = current_tenant_id()
+//	    AND al_inner.event_type = $5
+//	    AND al_inner.event_category = $6
+//	    AND al_inner.created_at >= $7
+//	    AND al_inner.created_at <= $8
+//	  GROUP BY
+//	    al_inner.event_type,
+//	    al_inner.event_category
+//	)
+//	SELECT
+//	  al.user_id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.severity,
+//	  al.decision,
+//	  al.risk_score,
+//	  al.ip_address,
+//	  al.created_at,
+//	  iff.avg_risk_score AS pattern_avg_risk,
+//	  iff.denied_count AS pattern_denied_count,
+//	  ABS(al.risk_score - iff.avg_risk_score) AS risk_deviation
+//	FROM
+//	  audit_log al
+//	  CROSS JOIN incident_features iff
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.event_type = iff.event_type
+//	  AND al.event_category = iff.event_category
+//	  AND al.created_at >= $1
+//	  AND al.created_at <= $2
+//	  AND ABS(al.risk_score - iff.avg_risk_score) <= $3
+//	ORDER BY
+//	  risk_deviation ASC,
+//	  al.created_at DESC
+//	LIMIT
+//	  $4
+func (q *Queries) GetSimilarIncidentPatterns(ctx context.Context, arg GetSimilarIncidentPatternsParams) ([]*GetSimilarIncidentPatternsRow, error) {
+	rows, err := q.db.Query(ctx, getSimilarIncidentPatterns,
+		arg.SearchStart,
+		arg.SearchEnd,
+		arg.MaxRiskDeviation,
+		arg.Limit,
+		arg.IncidentEventType,
+		arg.IncidentEventCategory,
+		arg.PatternStart,
+		arg.PatternEnd,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetSimilarIncidentPatternsRow{}
+	for rows.Next() {
+		var i GetSimilarIncidentPatternsRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Severity,
+			&i.Decision,
+			&i.RiskScore,
+			&i.IpAddress,
+			&i.CreatedAt,
+			&i.PatternAvgRisk,
+			&i.PatternDeniedCount,
+			&i.RiskDeviation,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSuspiciousActivityByIP = `-- name: GetSuspiciousActivityByIP :many
+SELECT
+  al.ip_address,
+  al.user_id,
+  al.event_type,
+  al.decision,
+  al.risk_score,
+  al.created_at,
+  COUNT(*) OVER (PARTITION BY al.ip_address) AS ip_event_count,
+  COUNT(*) FILTER (
+    WHERE
+      al.decision = 'DENY'
+  ) OVER (PARTITION BY al.ip_address) AS ip_denied_count,
+  COUNT(DISTINCT al.user_id) OVER (PARTITION BY al.ip_address) AS unique_users_per_ip
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND (
+    $1::INET IS NULL
+    OR al.ip_address = $1
+  )
+  AND (
+    al.decision = 'DENY'
+    OR al.risk_score >= $2
+  )
+  AND al.created_at >= $3
+ORDER BY
+  al.risk_score DESC,
+  al.created_at DESC
+LIMIT
+  $5 OFFSET $4
+`
+
+type GetSuspiciousActivityByIPParams struct {
+	IpAddress    *netip.Addr  `json:"ip_address"`
+	MinRiskScore *int32       `json:"min_risk_score"`
+	StartTime    sql.NullTime `json:"start_time"`
+	Offset       int32        `json:"offset"`
+	Limit        int32        `json:"limit"`
+}
+
+type GetSuspiciousActivityByIPRow struct {
+	IpAddress        *netip.Addr  `json:"ip_address"`
+	UserID           *uuid.UUID   `json:"user_id"`
+	EventType        string       `json:"event_type"`
+	Decision         *string      `json:"decision"`
+	RiskScore        *int32       `json:"risk_score"`
+	CreatedAt        sql.NullTime `json:"created_at"`
+	IpEventCount     int64        `json:"ip_event_count"`
+	IpDeniedCount    int64        `json:"ip_denied_count"`
+	UniqueUsersPerIp int64        `json:"unique_users_per_ip"`
+}
+
+// Get suspicious activity from specific IP addresses with risk analysis
+//
+//	SELECT
+//	  al.ip_address,
+//	  al.user_id,
+//	  al.event_type,
+//	  al.decision,
+//	  al.risk_score,
+//	  al.created_at,
+//	  COUNT(*) OVER (PARTITION BY al.ip_address) AS ip_event_count,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      al.decision = 'DENY'
+//	  ) OVER (PARTITION BY al.ip_address) AS ip_denied_count,
+//	  COUNT(DISTINCT al.user_id) OVER (PARTITION BY al.ip_address) AS unique_users_per_ip
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND (
+//	    $1::INET IS NULL
+//	    OR al.ip_address = $1
+//	  )
+//	  AND (
+//	    al.decision = 'DENY'
+//	    OR al.risk_score >= $2
+//	  )
+//	  AND al.created_at >= $3
+//	ORDER BY
+//	  al.risk_score DESC,
+//	  al.created_at DESC
+//	LIMIT
+//	  $5 OFFSET $4
+func (q *Queries) GetSuspiciousActivityByIP(ctx context.Context, arg GetSuspiciousActivityByIPParams) ([]*GetSuspiciousActivityByIPRow, error) {
+	rows, err := q.db.Query(ctx, getSuspiciousActivityByIP,
+		arg.IpAddress,
+		arg.MinRiskScore,
+		arg.StartTime,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetSuspiciousActivityByIPRow{}
+	for rows.Next() {
+		var i GetSuspiciousActivityByIPRow
+		if err := rows.Scan(
+			&i.IpAddress,
+			&i.UserID,
+			&i.EventType,
+			&i.Decision,
+			&i.RiskScore,
+			&i.CreatedAt,
+			&i.IpEventCount,
+			&i.IpDeniedCount,
+			&i.UniqueUsersPerIp,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserAgentAnalysis = `-- name: GetUserAgentAnalysis :many
+SELECT
+  user_agent,
+  COUNT(*) AS event_count,
+  COUNT(DISTINCT user_id) AS unique_users,
+  COUNT(DISTINCT ip_address) AS unique_ips,
+  AVG(risk_score) AS avg_risk_score,
+  COUNT(*) FILTER (
+    WHERE
+      decision = 'DENY'
+  ) AS denied_count,
+  MIN(created_at) AS first_seen,
+  MAX(created_at) AS last_seen,
+  CASE
+    WHEN user_agent IS NULL THEN 'NO_USER_AGENT'
+    WHEN user_agent ILIKE '%bot%'
+    OR user_agent ILIKE '%crawler%' THEN 'BOT'
+    WHEN user_agent ILIKE '%curl%'
+    OR user_agent ILIKE '%wget%' THEN 'AUTOMATED_TOOL'
+    WHEN LENGTH(user_agent) < 20 THEN 'SUSPICIOUS_SHORT'
+    ELSE 'NORMAL'
+  END AS agent_category
+FROM
+  audit_log
+WHERE
+  tenant_id = current_tenant_id()
+  AND created_at >= $1
+  AND created_at <= $2
+GROUP BY
+  user_agent
+HAVING
+  COUNT(*) >= $3
+ORDER BY
+  CASE
+    agent_category
+    WHEN 'SUSPICIOUS_SHORT' THEN 4
+    WHEN 'AUTOMATED_TOOL' THEN 3
+    WHEN 'BOT' THEN 2
+    WHEN 'NO_USER_AGENT' THEN 1
+    ELSE 0
+  END DESC,
+  avg_risk_score DESC,
+  event_count DESC
+LIMIT
+  $4
+`
+
+type GetUserAgentAnalysisParams struct {
+	StartTime sql.NullTime `json:"start_time"`
+	EndTime   sql.NullTime `json:"end_time"`
+	MinEvents interface{}  `json:"min_events"`
+	Limit     int32        `json:"limit"`
+}
+
+type GetUserAgentAnalysisRow struct {
+	UserAgent     string      `json:"user_agent"`
+	EventCount    int64       `json:"event_count"`
+	UniqueUsers   int64       `json:"unique_users"`
+	UniqueIps     int64       `json:"unique_ips"`
+	AvgRiskScore  float64     `json:"avg_risk_score"`
+	DeniedCount   int64       `json:"denied_count"`
+	FirstSeen     interface{} `json:"first_seen"`
+	LastSeen      interface{} `json:"last_seen"`
+	AgentCategory string      `json:"agent_category"`
+}
+
+// Analyze user agent patterns for security insights
+//
+//	SELECT
+//	  user_agent,
+//	  COUNT(*) AS event_count,
+//	  COUNT(DISTINCT user_id) AS unique_users,
+//	  COUNT(DISTINCT ip_address) AS unique_ips,
+//	  AVG(risk_score) AS avg_risk_score,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      decision = 'DENY'
+//	  ) AS denied_count,
+//	  MIN(created_at) AS first_seen,
+//	  MAX(created_at) AS last_seen,
+//	  CASE
+//	    WHEN user_agent IS NULL THEN 'NO_USER_AGENT'
+//	    WHEN user_agent ILIKE '%bot%'
+//	    OR user_agent ILIKE '%crawler%' THEN 'BOT'
+//	    WHEN user_agent ILIKE '%curl%'
+//	    OR user_agent ILIKE '%wget%' THEN 'AUTOMATED_TOOL'
+//	    WHEN LENGTH(user_agent) < 20 THEN 'SUSPICIOUS_SHORT'
+//	    ELSE 'NORMAL'
+//	  END AS agent_category
+//	FROM
+//	  audit_log
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND created_at >= $1
+//	  AND created_at <= $2
+//	GROUP BY
+//	  user_agent
+//	HAVING
+//	  COUNT(*) >= $3
+//	ORDER BY
+//	  CASE
+//	    agent_category
+//	    WHEN 'SUSPICIOUS_SHORT' THEN 4
+//	    WHEN 'AUTOMATED_TOOL' THEN 3
+//	    WHEN 'BOT' THEN 2
+//	    WHEN 'NO_USER_AGENT' THEN 1
+//	    ELSE 0
+//	  END DESC,
+//	  avg_risk_score DESC,
+//	  event_count DESC
+//	LIMIT
+//	  $4
+func (q *Queries) GetUserAgentAnalysis(ctx context.Context, arg GetUserAgentAnalysisParams) ([]*GetUserAgentAnalysisRow, error) {
+	rows, err := q.db.Query(ctx, getUserAgentAnalysis,
+		arg.StartTime,
+		arg.EndTime,
+		arg.MinEvents,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetUserAgentAnalysisRow{}
+	for rows.Next() {
+		var i GetUserAgentAnalysisRow
+		if err := rows.Scan(
+			&i.UserAgent,
+			&i.EventCount,
+			&i.UniqueUsers,
+			&i.UniqueIps,
+			&i.AvgRiskScore,
+			&i.DeniedCount,
+			&i.FirstSeen,
+			&i.LastSeen,
+			&i.AgentCategory,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserAuditHistory = `-- name: GetUserAuditHistory :many
+SELECT
+  al.id,
+  al.event_type,
+  al.event_category,
+  al.severity,
+  al.decision,
+  al.reason,
+  al.risk_score,
+  al.context,
+  al.ip_address,
+  al.created_at
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.user_id = $1
+  AND (
+    $2::VARCHAR IS NULL
+    OR al.event_category = $2
+  )
+  AND (
+    $3::TIMESTAMPTZ IS NULL
+    OR al.created_at >= $3
+  )
+  AND (
+    $4::TIMESTAMPTZ IS NULL
+    OR al.created_at <= $4
+  )
+ORDER BY
+  al.created_at DESC
+LIMIT
+  $6 OFFSET $5
+`
+
+type GetUserAuditHistoryParams struct {
+	UserID        *uuid.UUID   `json:"user_id"`
+	EventCategory *string      `json:"event_category"`
+	StartTime     sql.NullTime `json:"start_time"`
+	EndTime       sql.NullTime `json:"end_time"`
+	Offset        int32        `json:"offset"`
+	Limit         int32        `json:"limit"`
+}
+
+type GetUserAuditHistoryRow struct {
+	ID            uuid.UUID    `json:"id"`
+	EventType     string       `json:"event_type"`
+	EventCategory *string      `json:"event_category"`
+	Severity      *string      `json:"severity"`
+	Decision      *string      `json:"decision"`
+	Reason        string       `json:"reason"`
+	RiskScore     *int32       `json:"risk_score"`
+	Context       []byte       `json:"context"`
+	IpAddress     *netip.Addr  `json:"ip_address"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+}
+
+// Get audit history for a specific user
+//
+//	SELECT
+//	  al.id,
+//	  al.event_type,
+//	  al.event_category,
+//	  al.severity,
+//	  al.decision,
+//	  al.reason,
+//	  al.risk_score,
+//	  al.context,
+//	  al.ip_address,
+//	  al.created_at
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.user_id = $1
+//	  AND (
+//	    $2::VARCHAR IS NULL
+//	    OR al.event_category = $2
+//	  )
+//	  AND (
+//	    $3::TIMESTAMPTZ IS NULL
+//	    OR al.created_at >= $3
+//	  )
+//	  AND (
+//	    $4::TIMESTAMPTZ IS NULL
+//	    OR al.created_at <= $4
+//	  )
+//	ORDER BY
+//	  al.created_at DESC
+//	LIMIT
+//	  $6 OFFSET $5
+func (q *Queries) GetUserAuditHistory(ctx context.Context, arg GetUserAuditHistoryParams) ([]*GetUserAuditHistoryRow, error) {
+	rows, err := q.db.Query(ctx, getUserAuditHistory,
+		arg.UserID,
+		arg.EventCategory,
+		arg.StartTime,
+		arg.EndTime,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetUserAuditHistoryRow{}
+	for rows.Next() {
+		var i GetUserAuditHistoryRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Severity,
+			&i.Decision,
+			&i.Reason,
+			&i.RiskScore,
+			&i.Context,
+			&i.IpAddress,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserRiskProfile = `-- name: GetUserRiskProfile :one
+SELECT
+  al.user_id,
+  COUNT(*) AS total_events,
+  AVG(al.risk_score) AS avg_risk_score,
+  MAX(al.risk_score) AS max_risk_score,
+  COUNT(*) FILTER (
+    WHERE
+      al.decision = 'DENY'
+  ) AS failed_attempts,
+  COUNT(*) FILTER (
+    WHERE
+      al.severity IN ('HIGH', 'CRITICAL')
+  ) AS high_severity_events,
+  COUNT(DISTINCT al.ip_address) AS unique_ips,
+  COUNT(DISTINCT al.event_category) AS unique_categories,
+  MIN(al.created_at) AS first_event,
+  MAX(al.created_at) AS last_event,
+  COUNT(*) FILTER (
+    WHERE
+      al.created_at >= NOW() - INTERVAL '24 hours'
+  ) AS events_last_24h,
+  COUNT(*) FILTER (
+    WHERE
+      al.created_at >= NOW() - INTERVAL '7 days'
+  ) AS events_last_7d
+FROM
+  audit_log al
+WHERE
+  al.tenant_id = current_tenant_id()
+  AND al.user_id = $1
+  AND (
+    $2::TIMESTAMPTZ IS NULL
+    OR al.created_at >= $2
+  )
+GROUP BY
+  al.user_id
+`
+
+type GetUserRiskProfileParams struct {
+	UserID    *uuid.UUID   `json:"user_id"`
+	StartTime sql.NullTime `json:"start_time"`
+}
+
+type GetUserRiskProfileRow struct {
+	UserID             *uuid.UUID  `json:"user_id"`
+	TotalEvents        int64       `json:"total_events"`
+	AvgRiskScore       float64     `json:"avg_risk_score"`
+	MaxRiskScore       interface{} `json:"max_risk_score"`
+	FailedAttempts     int64       `json:"failed_attempts"`
+	HighSeverityEvents int64       `json:"high_severity_events"`
+	UniqueIps          int64       `json:"unique_ips"`
+	UniqueCategories   int64       `json:"unique_categories"`
+	FirstEvent         interface{} `json:"first_event"`
+	LastEvent          interface{} `json:"last_event"`
+	EventsLast24h      int64       `json:"events_last_24h"`
+	EventsLast7d       int64       `json:"events_last_7d"`
+}
+
+// Get comprehensive risk profile for a user
+//
+//	SELECT
+//	  al.user_id,
+//	  COUNT(*) AS total_events,
+//	  AVG(al.risk_score) AS avg_risk_score,
+//	  MAX(al.risk_score) AS max_risk_score,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      al.decision = 'DENY'
+//	  ) AS failed_attempts,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      al.severity IN ('HIGH', 'CRITICAL')
+//	  ) AS high_severity_events,
+//	  COUNT(DISTINCT al.ip_address) AS unique_ips,
+//	  COUNT(DISTINCT al.event_category) AS unique_categories,
+//	  MIN(al.created_at) AS first_event,
+//	  MAX(al.created_at) AS last_event,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      al.created_at >= NOW() - INTERVAL '24 hours'
+//	  ) AS events_last_24h,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      al.created_at >= NOW() - INTERVAL '7 days'
+//	  ) AS events_last_7d
+//	FROM
+//	  audit_log al
+//	WHERE
+//	  al.tenant_id = current_tenant_id()
+//	  AND al.user_id = $1
+//	  AND (
+//	    $2::TIMESTAMPTZ IS NULL
+//	    OR al.created_at >= $2
+//	  )
+//	GROUP BY
+//	  al.user_id
+func (q *Queries) GetUserRiskProfile(ctx context.Context, arg GetUserRiskProfileParams) (*GetUserRiskProfileRow, error) {
+	row := q.db.QueryRow(ctx, getUserRiskProfile, arg.UserID, arg.StartTime)
+	var i GetUserRiskProfileRow
+	err := row.Scan(
+		&i.UserID,
+		&i.TotalEvents,
+		&i.AvgRiskScore,
+		&i.MaxRiskScore,
+		&i.FailedAttempts,
+		&i.HighSeverityEvents,
+		&i.UniqueIps,
+		&i.UniqueCategories,
+		&i.FirstEvent,
+		&i.LastEvent,
+		&i.EventsLast24h,
+		&i.EventsLast7d,
+	)
+	return &i, err
+}
+
+const getUserSessionEvents = `-- name: GetUserSessionEvents :many
+SELECT
+  id,
+  event_type,
+  event_category,
+  severity,
+  decision,
+  reason,
+  context,
+  created_at
+FROM
+  audit_log
+WHERE
+  tenant_id = current_tenant_id()
+  AND session_id = $1
+ORDER BY
+  created_at ASC
+`
+
+type GetUserSessionEventsRow struct {
+	ID            uuid.UUID    `json:"id"`
+	EventType     string       `json:"event_type"`
+	EventCategory *string      `json:"event_category"`
+	Severity      *string      `json:"severity"`
+	Decision      *string      `json:"decision"`
+	Reason        string       `json:"reason"`
+	Context       []byte       `json:"context"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+}
+
+// Get audit events for a specific session
+//
+//	SELECT
+//	  id,
+//	  event_type,
+//	  event_category,
+//	  severity,
+//	  decision,
+//	  reason,
+//	  context,
+//	  created_at
+//	FROM
+//	  audit_log
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND session_id = $1
+//	ORDER BY
+//	  created_at ASC
+func (q *Queries) GetUserSessionEvents(ctx context.Context, sessionID *uuid.UUID) ([]*GetUserSessionEventsRow, error) {
+	rows, err := q.db.Query(ctx, getUserSessionEvents, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetUserSessionEventsRow{}
+	for rows.Next() {
+		var i GetUserSessionEventsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.EventType,
+			&i.EventCategory,
+			&i.Severity,
+			&i.Decision,
+			&i.Reason,
+			&i.Context,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateEventComplianceFlags = `-- name: UpdateEventComplianceFlags :exec
+UPDATE
+  audit_log
+SET
+  compliance_flags = $1
+WHERE
+  tenant_id = current_tenant_id()
+  AND id = $2
+`
+
+type UpdateEventComplianceFlagsParams struct {
+	ComplianceFlags []byte    `json:"compliance_flags"`
+	ID              uuid.UUID `json:"id"`
+}
+
+// Update compliance flags for an audit event
+//
+//	UPDATE
+//	  audit_log
+//	SET
+//	  compliance_flags = $1
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND id = $2
+func (q *Queries) UpdateEventComplianceFlags(ctx context.Context, arg UpdateEventComplianceFlagsParams) error {
+	_, err := q.db.Exec(ctx, updateEventComplianceFlags, arg.ComplianceFlags, arg.ID)
+	return err
+}
+
+const updateEventRiskScore = `-- name: UpdateEventRiskScore :exec
+UPDATE
+  audit_log
+SET
+  risk_score = $1
+WHERE
+  tenant_id = current_tenant_id()
+  AND id = $2
+`
+
+type UpdateEventRiskScoreParams struct {
+	RiskScore *int32    `json:"risk_score"`
+	ID        uuid.UUID `json:"id"`
+}
+
+// ================================================================================================
+// MAINTENANCE AND UTILITY QUERIES
+// ================================================================================================
+// Update risk score for an audit event
+//
+//	UPDATE
+//	  audit_log
+//	SET
+//	  risk_score = $1
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND id = $2
+func (q *Queries) UpdateEventRiskScore(ctx context.Context, arg UpdateEventRiskScoreParams) error {
+	_, err := q.db.Exec(ctx, updateEventRiskScore, arg.RiskScore, arg.ID)
+	return err
 }

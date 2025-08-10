@@ -54,7 +54,7 @@
 --
 -- -- Combined queries with current tenant context
 -- -- name: GetCurrentTenantWithConfiguration :one
--- SELECT 
+-- SELECT
 --     t.*,
 --     tc.max_users,
 --     tc.storage_quota,
@@ -66,21 +66,21 @@
 --
 -- -- name: CheckCurrentTenantHasFeature :one
 -- SELECT EXISTS(
---     SELECT 1 FROM tenant_configurations 
---     WHERE tenant_id = current_tenant_id() 
+--     SELECT 1 FROM tenant_configurations
+--     WHERE tenant_id = current_tenant_id()
 --     AND features ? $1
 -- );
 --
 -- -- name: CheckCurrentTenantHasModule :one
 -- SELECT EXISTS(
---     SELECT 1 FROM tenant_configurations 
---     WHERE tenant_id = current_tenant_id() 
+--     SELECT 1 FROM tenant_configurations
+--     WHERE tenant_id = current_tenant_id()
 --     AND modules_enabled ? $1
 -- );
 --
 -- -- Admin queries (for system administration)
 -- -- name: GetTenantWithConfiguration :one
--- SELECT 
+-- SELECT
 --     t.*,
 --     tc.max_users,
 --     tc.storage_quota,
@@ -91,7 +91,7 @@
 -- WHERE t.id = $1 AND t.deleted_at IS NULL;
 --
 -- -- name: ListTenantsWithConfigurations :many
--- SELECT 
+-- SELECT
 --     t.*,
 --     tc.max_users,
 --     tc.storage_quota,
@@ -104,7 +104,7 @@
 -- LIMIT $1 OFFSET $2;
 --
 -- -- name: GetTenantsWithFeature :many
--- SELECT 
+-- SELECT
 --     t.*,
 --     tc.max_users,
 --     tc.storage_quota,
@@ -112,12 +112,12 @@
 --     tc.modules_enabled
 -- FROM tenants t
 -- JOIN tenant_configurations tc ON t.id = tc.tenant_id
--- WHERE tc.features ? $1 
+-- WHERE tc.features ? $1
 --   AND t.deleted_at IS NULL
 -- ORDER BY t.name;
 --
 -- -- name: GetTenantsWithModule :many
--- SELECT 
+-- SELECT
 --     t.*,
 --     tc.max_users,
 --     tc.storage_quota,
@@ -125,7 +125,7 @@
 --     tc.modules_enabled
 -- FROM tenants t
 -- JOIN tenant_configurations tc ON t.id = tc.tenant_id
--- WHERE tc.modules_enabled ? $1 
+-- WHERE tc.modules_enabled ? $1
 --   AND t.deleted_at IS NULL
 -- ORDER BY t.name;
 --

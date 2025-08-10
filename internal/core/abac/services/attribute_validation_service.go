@@ -1,5 +1,8 @@
 package services
 
+//go:generate go run go.uber.org/mock/mockgen -source=attribute_validation_service.go -destination=mock.go -package=services
+
+
 import (
 	"context"
 	"encoding/json"

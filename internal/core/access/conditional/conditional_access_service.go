@@ -1,5 +1,8 @@
 package conditional
 
+//go:generate go run go.uber.org/mock/mockgen -source=conditional_access_service.go -destination=mock.go -package=conditional
+
+
 import (
 	"context"
 	"fmt"

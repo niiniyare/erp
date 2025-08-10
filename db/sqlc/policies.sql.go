@@ -13,12 +13,25 @@ import (
 )
 
 const countPolicies = `-- name: CountPolicies :one
-SELECT COUNT(*) FROM policies 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  COUNT(*)
+FROM
+  policies
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
-  AND ($2::VARCHAR IS NULL OR category = $2)
-  AND ($3::BOOLEAN IS NULL OR is_active = $3)
+  AND (
+    $1::VARCHAR IS NULL
+    OR name ILIKE '%' || $1 || '%'
+  )
+  AND (
+    $2::VARCHAR IS NULL
+    OR category = $2
+  )
+  AND (
+    $3::BOOLEAN IS NULL
+    OR is_active = $3
+  )
 `
 
 type CountPoliciesParams struct {
@@ -29,12 +42,25 @@ type CountPoliciesParams struct {
 
 // CountPolicies
 //
-//	SELECT COUNT(*) FROM policies
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  COUNT(*)
+//	FROM
+//	  policies
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND deleted_at IS NULL
-//	  AND ($1::VARCHAR IS NULL OR name ILIKE '%' || $1 || '%')
-//	  AND ($2::VARCHAR IS NULL OR category = $2)
-//	  AND ($3::BOOLEAN IS NULL OR is_active = $3)
+//	  AND (
+//	    $1::VARCHAR IS NULL
+//	    OR name ILIKE '%' || $1 || '%'
+//	  )
+//	  AND (
+//	    $2::VARCHAR IS NULL
+//	    OR category = $2
+//	  )
+//	  AND (
+//	    $3::BOOLEAN IS NULL
+//	    OR is_active = $3
+//	  )
 func (q *Queries) CountPolicies(ctx context.Context, arg CountPoliciesParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countPolicies, arg.Column1, arg.Column2, arg.Column3)
 	var count int64
@@ -43,14 +69,44 @@ func (q *Queries) CountPolicies(ctx context.Context, arg CountPoliciesParams) (i
 }
 
 const createPolicy = `-- name: CreatePolicy :one
-
-INSERT INTO policies (
-    tenant_id, entity_id, name, display_name, description, policy_type,
-    effect, priority, category, target, rule, obligations, advice, is_active, created_by
-) VALUES (
-    current_tenant_id(), $1, $2, $3, $4, $5,
-    $6, $7, $8, $9, $10, $11, $12, $13, $14
-) RETURNING id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+INSERT INTO
+  policies (
+    tenant_id,
+    entity_id,
+    name,
+    display_name,
+    description,
+    policy_type,
+    effect,
+    priority,
+    category,
+    target,
+    rule,
+    obligations,
+    advice,
+    is_active,
+    created_by
+  )
+VALUES
+  (
+    current_tenant_id(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10,
+    $11,
+    $12,
+    $13,
+    $14
+  )
+RETURNING
+  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
 `
 
 type CreatePolicyParams struct {
@@ -72,13 +128,44 @@ type CreatePolicyParams struct {
 
 // Policies CRUD Operations
 //
-//	INSERT INTO policies (
-//	    tenant_id, entity_id, name, display_name, description, policy_type,
-//	    effect, priority, category, target, rule, obligations, advice, is_active, created_by
-//	) VALUES (
-//	    current_tenant_id(), $1, $2, $3, $4, $5,
-//	    $6, $7, $8, $9, $10, $11, $12, $13, $14
-//	) RETURNING id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+//	INSERT INTO
+//	  policies (
+//	    tenant_id,
+//	    entity_id,
+//	    name,
+//	    display_name,
+//	    description,
+//	    policy_type,
+//	    effect,
+//	    priority,
+//	    category,
+//	    target,
+//	    rule,
+//	    obligations,
+//	    advice,
+//	    is_active,
+//	    created_by
+//	  )
+//	VALUES
+//	  (
+//	    current_tenant_id(),
+//	    $1,
+//	    $2,
+//	    $3,
+//	    $4,
+//	    $5,
+//	    $6,
+//	    $7,
+//	    $8,
+//	    $9,
+//	    $10,
+//	    $11,
+//	    $12,
+//	    $13,
+//	    $14
+//	  )
+//	RETURNING
+//	  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
 func (q *Queries) CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*Policy, error) {
 	row := q.db.QueryRow(ctx, createPolicy,
 		arg.EntityID,
@@ -122,15 +209,21 @@ func (q *Queries) CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*Po
 }
 
 const getApplicablePolicies = `-- name: GetApplicablePolicies :many
-SELECT p.id, p.tenant_id, p.entity_id, p.name, p.display_name, p.description, p.policy_type, p.effect, p.priority, p.category, p.target, p.rule, p.obligations, p.advice, p.is_active, p.created_at, p.updated_at, p.created_by, p.deleted_at
-FROM policies p
-WHERE p.tenant_id = current_tenant_id()
+SELECT
+  p.id, p.tenant_id, p.entity_id, p.name, p.display_name, p.description, p.policy_type, p.effect, p.priority, p.category, p.target, p.rule, p.obligations, p.advice, p.is_active, p.created_at, p.updated_at, p.created_by, p.deleted_at
+FROM
+  policies p
+WHERE
+  p.tenant_id = current_tenant_id()
   AND p.is_active = TRUE
   AND p.deleted_at IS NULL
   AND (
-    p.target->'resources' ? $1::text OR p.target->'actions' ? $2::text
+    p.target -> 'resources' ? $1::text
+    OR p.target -> 'actions' ? $2::text
   )
-ORDER BY p.priority DESC, p.created_at ASC
+ORDER BY
+  p.priority DESC,
+  p.created_at ASC
 `
 
 type GetApplicablePoliciesParams struct {
@@ -140,15 +233,21 @@ type GetApplicablePoliciesParams struct {
 
 // GetApplicablePolicies
 //
-//	SELECT p.id, p.tenant_id, p.entity_id, p.name, p.display_name, p.description, p.policy_type, p.effect, p.priority, p.category, p.target, p.rule, p.obligations, p.advice, p.is_active, p.created_at, p.updated_at, p.created_by, p.deleted_at
-//	FROM policies p
-//	WHERE p.tenant_id = current_tenant_id()
+//	SELECT
+//	  p.id, p.tenant_id, p.entity_id, p.name, p.display_name, p.description, p.policy_type, p.effect, p.priority, p.category, p.target, p.rule, p.obligations, p.advice, p.is_active, p.created_at, p.updated_at, p.created_by, p.deleted_at
+//	FROM
+//	  policies p
+//	WHERE
+//	  p.tenant_id = current_tenant_id()
 //	  AND p.is_active = TRUE
 //	  AND p.deleted_at IS NULL
 //	  AND (
-//	    p.target->'resources' ? $1::text OR p.target->'actions' ? $2::text
+//	    p.target -> 'resources' ? $1::text
+//	    OR p.target -> 'actions' ? $2::text
 //	  )
-//	ORDER BY p.priority DESC, p.created_at ASC
+//	ORDER BY
+//	  p.priority DESC,
+//	  p.created_at ASC
 func (q *Queries) GetApplicablePolicies(ctx context.Context, arg GetApplicablePoliciesParams) ([]*Policy, error) {
 	rows, err := q.db.Query(ctx, getApplicablePolicies, arg.Column1, arg.Column2)
 	if err != nil {
@@ -190,22 +289,40 @@ func (q *Queries) GetApplicablePolicies(ctx context.Context, arg GetApplicablePo
 }
 
 const getPoliciesByEntityID = `-- name: GetPoliciesByEntityID :many
-SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies 
-WHERE tenant_id = current_tenant_id()
-  AND (entity_id = $1 OR entity_id IS NULL)
-  AND is_active = true
+SELECT
+  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+FROM
+  policies
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    entity_id = $1
+    OR entity_id IS NULL
+  )
+  AND is_active = TRUE
   AND deleted_at IS NULL
-ORDER BY priority DESC, created_at ASC
+ORDER BY
+  priority DESC,
+  created_at ASC
 `
 
 // GetPoliciesByEntityID
 //
-//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-//	WHERE tenant_id = current_tenant_id()
-//	  AND (entity_id = $1 OR entity_id IS NULL)
-//	  AND is_active = true
+//	SELECT
+//	  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+//	FROM
+//	  policies
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND (
+//	    entity_id = $1
+//	    OR entity_id IS NULL
+//	  )
+//	  AND is_active = TRUE
 //	  AND deleted_at IS NULL
-//	ORDER BY priority DESC, created_at ASC
+//	ORDER BY
+//	  priority DESC,
+//	  created_at ASC
 func (q *Queries) GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID) ([]*Policy, error) {
 	rows, err := q.db.Query(ctx, getPoliciesByEntityID, entityID)
 	if err != nil {
@@ -247,9 +364,12 @@ func (q *Queries) GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID
 }
 
 const getPoliciesByIDs = `-- name: GetPoliciesByIDs :many
-
-SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies 
-WHERE id = ANY($1::UUID[])
+SELECT
+  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+FROM
+  policies
+WHERE
+  id = ANY($1::UUID [])
 `
 
 // -- name: GetPoliciesForEvaluation :many
@@ -276,8 +396,12 @@ WHERE id = ANY($1::UUID[])
 //
 // ORDER BY priority DESC, created_at ASC;
 //
-//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-//	WHERE id = ANY($1::UUID[])
+//	SELECT
+//	  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+//	FROM
+//	  policies
+//	WHERE
+//	  id = ANY($1::UUID [])
 func (q *Queries) GetPoliciesByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]*Policy, error) {
 	rows, err := q.db.Query(ctx, getPoliciesByIDs, dollar_1)
 	if err != nil {
@@ -331,26 +455,30 @@ SELECT
   obligations,
   is_active,
   created_at
-FROM policies
-WHERE tenant_id = current_tenant_id()
-  AND is_active = true 
+FROM
+  policies
+WHERE
+  tenant_id = current_tenant_id()
+  AND is_active = TRUE
   AND deleted_at IS NULL
   AND (
-    $1::UUID IS NULL OR 
-    entity_id IS NULL OR 
-    entity_id = $1
+    $1::UUID IS NULL
+    OR entity_id IS NULL
+    OR entity_id = $1
   )
   AND (
-    target->>'resource_type' = $2 OR 
-    target->>'resource_type' = '*' OR 
-    target->>'resource_type' IS NULL
+    target ->> 'resource_type' = $2
+    OR target ->> 'resource_type' = '*'
+    OR target ->> 'resource_type' IS NULL
   )
   AND (
-    target->>'action' = $3 OR 
-    target->>'action' = '*' OR 
-    target->>'action' IS NULL
+    target ->> 'action' = $3
+    OR target ->> 'action' = '*'
+    OR target ->> 'action' IS NULL
   )
-ORDER BY priority DESC, created_at ASC
+ORDER BY
+  priority DESC,
+  created_at ASC
 `
 
 type GetPoliciesForEvaluationParams struct {
@@ -387,26 +515,30 @@ type GetPoliciesForEvaluationRow struct {
 //	  obligations,
 //	  is_active,
 //	  created_at
-//	FROM policies
-//	WHERE tenant_id = current_tenant_id()
-//	  AND is_active = true
+//	FROM
+//	  policies
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND is_active = TRUE
 //	  AND deleted_at IS NULL
 //	  AND (
-//	    $1::UUID IS NULL OR
-//	    entity_id IS NULL OR
-//	    entity_id = $1
+//	    $1::UUID IS NULL
+//	    OR entity_id IS NULL
+//	    OR entity_id = $1
 //	  )
 //	  AND (
-//	    target->>'resource_type' = $2 OR
-//	    target->>'resource_type' = '*' OR
-//	    target->>'resource_type' IS NULL
+//	    target ->> 'resource_type' = $2
+//	    OR target ->> 'resource_type' = '*'
+//	    OR target ->> 'resource_type' IS NULL
 //	  )
 //	  AND (
-//	    target->>'action' = $3 OR
-//	    target->>'action' = '*' OR
-//	    target->>'action' IS NULL
+//	    target ->> 'action' = $3
+//	    OR target ->> 'action' = '*'
+//	    OR target ->> 'action' IS NULL
 //	  )
-//	ORDER BY priority DESC, created_at ASC
+//	ORDER BY
+//	  priority DESC,
+//	  created_at ASC
 func (q *Queries) GetPoliciesForEvaluation(ctx context.Context, arg GetPoliciesForEvaluationParams) ([]*GetPoliciesForEvaluationRow, error) {
 	rows, err := q.db.Query(ctx, getPoliciesForEvaluation, arg.EntityID, arg.ResourceType, arg.Action)
 	if err != nil {
@@ -440,14 +572,26 @@ func (q *Queries) GetPoliciesForEvaluation(ctx context.Context, arg GetPoliciesF
 }
 
 const getPolicy = `-- name: GetPolicy :one
-SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+SELECT
+  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+FROM
+  policies
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 `
 
 // GetPolicy
 //
-//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-//	WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+//	SELECT
+//	  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+//	FROM
+//	  policies
+//	WHERE
+//	  id = $1
+//	  AND tenant_id = current_tenant_id()
+//	  AND deleted_at IS NULL
 func (q *Queries) GetPolicy(ctx context.Context, id uuid.UUID) (*Policy, error) {
 	row := q.db.QueryRow(ctx, getPolicy, id)
 	var i Policy
@@ -476,14 +620,26 @@ func (q *Queries) GetPolicy(ctx context.Context, id uuid.UUID) (*Policy, error) 
 }
 
 const getPolicyByName = `-- name: GetPolicyByName :one
-SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+SELECT
+  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+FROM
+  policies
+WHERE
+  name = $1
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 `
 
 // GetPolicyByName
 //
-//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-//	WHERE name = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
+//	SELECT
+//	  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+//	FROM
+//	  policies
+//	WHERE
+//	  name = $1
+//	  AND tenant_id = current_tenant_id()
+//	  AND deleted_at IS NULL
 func (q *Queries) GetPolicyByName(ctx context.Context, name string) (*Policy, error) {
 	row := q.db.QueryRow(ctx, getPolicyByName, name)
 	var i Policy
@@ -512,30 +668,50 @@ func (q *Queries) GetPolicyByName(ctx context.Context, name string) (*Policy, er
 }
 
 const hardDeletePolicy = `-- name: HardDeletePolicy :exec
-DELETE FROM policies
-WHERE id = $1 AND tenant_id = current_tenant_id()
+DELETE FROM
+  policies
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
 `
 
 // HardDeletePolicy
 //
-//	DELETE FROM policies
-//	WHERE id = $1 AND tenant_id = current_tenant_id()
+//	DELETE FROM
+//	  policies
+//	WHERE
+//	  id = $1
+//	  AND tenant_id = current_tenant_id()
 func (q *Queries) HardDeletePolicy(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, hardDeletePolicy, id)
 	return err
 }
 
 const listActivePolicies = `-- name: ListActivePolicies :many
-SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-WHERE tenant_id = current_tenant_id() AND is_active = true AND deleted_at IS NULL
-ORDER BY name
+SELECT
+  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+FROM
+  policies
+WHERE
+  tenant_id = current_tenant_id()
+  AND is_active = TRUE
+  AND deleted_at IS NULL
+ORDER BY
+  name
 `
 
 // ListActivePolicies
 //
-//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-//	WHERE tenant_id = current_tenant_id() AND is_active = true AND deleted_at IS NULL
-//	ORDER BY name
+//	SELECT
+//	  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+//	FROM
+//	  policies
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND is_active = TRUE
+//	  AND deleted_at IS NULL
+//	ORDER BY
+//	  name
 func (q *Queries) ListActivePolicies(ctx context.Context) ([]*Policy, error) {
 	rows, err := q.db.Query(ctx, listActivePolicies)
 	if err != nil {
@@ -577,17 +753,28 @@ func (q *Queries) ListActivePolicies(ctx context.Context) ([]*Policy, error) {
 }
 
 const listPolicies = `-- name: ListPolicies :many
-
-SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
-ORDER BY name
+SELECT
+  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+FROM
+  policies
+WHERE
+  tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+ORDER BY
+  name
 `
 
 // Policy Listing and Filtering
 //
-//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-//	WHERE tenant_id = current_tenant_id() AND deleted_at IS NULL
-//	ORDER BY name
+//	SELECT
+//	  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+//	FROM
+//	  policies
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND deleted_at IS NULL
+//	ORDER BY
+//	  name
 func (q *Queries) ListPolicies(ctx context.Context) ([]*Policy, error) {
 	rows, err := q.db.Query(ctx, listPolicies)
 	if err != nil {
@@ -629,16 +816,30 @@ func (q *Queries) ListPolicies(ctx context.Context) ([]*Policy, error) {
 }
 
 const listPoliciesByCategory = `-- name: ListPoliciesByCategory :many
-SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-WHERE tenant_id = current_tenant_id() AND category = $1 AND deleted_at IS NULL
-ORDER BY name
+SELECT
+  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+FROM
+  policies
+WHERE
+  tenant_id = current_tenant_id()
+  AND category = $1
+  AND deleted_at IS NULL
+ORDER BY
+  name
 `
 
 // ListPoliciesByCategory
 //
-//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-//	WHERE tenant_id = current_tenant_id() AND category = $1 AND deleted_at IS NULL
-//	ORDER BY name
+//	SELECT
+//	  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+//	FROM
+//	  policies
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND category = $1
+//	  AND deleted_at IS NULL
+//	ORDER BY
+//	  name
 func (q *Queries) ListPoliciesByCategory(ctx context.Context, category *string) ([]*Policy, error) {
 	rows, err := q.db.Query(ctx, listPoliciesByCategory, category)
 	if err != nil {
@@ -680,16 +881,30 @@ func (q *Queries) ListPoliciesByCategory(ctx context.Context, category *string) 
 }
 
 const listPoliciesByEffect = `-- name: ListPoliciesByEffect :many
-SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-WHERE tenant_id = current_tenant_id() AND effect = $1 AND deleted_at IS NULL
-ORDER BY name
+SELECT
+  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+FROM
+  policies
+WHERE
+  tenant_id = current_tenant_id()
+  AND effect = $1
+  AND deleted_at IS NULL
+ORDER BY
+  name
 `
 
 // ListPoliciesByEffect
 //
-//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-//	WHERE tenant_id = current_tenant_id() AND effect = $1 AND deleted_at IS NULL
-//	ORDER BY name
+//	SELECT
+//	  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+//	FROM
+//	  policies
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND effect = $1
+//	  AND deleted_at IS NULL
+//	ORDER BY
+//	  name
 func (q *Queries) ListPoliciesByEffect(ctx context.Context, effect *string) ([]*Policy, error) {
 	rows, err := q.db.Query(ctx, listPoliciesByEffect, effect)
 	if err != nil {
@@ -731,12 +946,21 @@ func (q *Queries) ListPoliciesByEffect(ctx context.Context, effect *string) ([]*
 }
 
 const searchPolicies = `-- name: SearchPolicies :many
-SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-WHERE tenant_id = current_tenant_id()
-    AND (name ILIKE '%' || $1 || '%' OR description ILIKE '%' || $1 || '%')
-    AND deleted_at IS NULL
-ORDER BY name
-LIMIT $2 OFFSET $3
+SELECT
+  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+FROM
+  policies
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    name ILIKE '%' || $1 || '%'
+    OR description ILIKE '%' || $1 || '%'
+  )
+  AND deleted_at IS NULL
+ORDER BY
+  name
+LIMIT
+  $2 OFFSET $3
 `
 
 type SearchPoliciesParams struct {
@@ -747,12 +971,21 @@ type SearchPoliciesParams struct {
 
 // SearchPolicies
 //
-//	SELECT id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at FROM policies
-//	WHERE tenant_id = current_tenant_id()
-//	    AND (name ILIKE '%' || $1 || '%' OR description ILIKE '%' || $1 || '%')
-//	    AND deleted_at IS NULL
-//	ORDER BY name
-//	LIMIT $2 OFFSET $3
+//	SELECT
+//	  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+//	FROM
+//	  policies
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND (
+//	    name ILIKE '%' || $1 || '%'
+//	    OR description ILIKE '%' || $1 || '%'
+//	  )
+//	  AND deleted_at IS NULL
+//	ORDER BY
+//	  name
+//	LIMIT
+//	  $2 OFFSET $3
 func (q *Queries) SearchPolicies(ctx context.Context, arg SearchPoliciesParams) ([]*Policy, error) {
 	rows, err := q.db.Query(ctx, searchPolicies, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -794,40 +1027,55 @@ func (q *Queries) SearchPolicies(ctx context.Context, arg SearchPoliciesParams) 
 }
 
 const softDeletePolicy = `-- name: SoftDeletePolicy :exec
-UPDATE policies
-SET deleted_at = NOW(), updated_at = NOW()
-WHERE id = $1 AND tenant_id = current_tenant_id()
+UPDATE
+  policies
+SET
+  deleted_at = NOW(),
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
 `
 
 // SoftDeletePolicy
 //
-//	UPDATE policies
-//	SET deleted_at = NOW(), updated_at = NOW()
-//	WHERE id = $1 AND tenant_id = current_tenant_id()
+//	UPDATE
+//	  policies
+//	SET
+//	  deleted_at = NOW(),
+//	  updated_at = NOW()
+//	WHERE
+//	  id = $1
+//	  AND tenant_id = current_tenant_id()
 func (q *Queries) SoftDeletePolicy(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, softDeletePolicy, id)
 	return err
 }
 
 const updatePolicy = `-- name: UpdatePolicy :one
-UPDATE policies
+UPDATE
+  policies
 SET
-    entity_id = COALESCE($2, entity_id),
-    name = COALESCE($3, name),
-    display_name = COALESCE($4, display_name),
-    description = COALESCE($5, description),
-    policy_type = COALESCE($6, policy_type),
-    effect = COALESCE($7, effect),
-    priority = COALESCE($8, priority),
-    category = COALESCE($9, category),
-    target = COALESCE($10, target),
-    rule = COALESCE($11, rule),
-    obligations = COALESCE($12, obligations),
-    advice = COALESCE($13, advice),
-    is_active = COALESCE($14, is_active),
-    updated_at = NOW()
-WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+  entity_id = COALESCE($2, entity_id),
+  name = COALESCE($3, name),
+  display_name = COALESCE($4, display_name),
+  description = COALESCE($5, description),
+  policy_type = COALESCE($6, policy_type),
+  effect = COALESCE($7, effect),
+  priority = COALESCE($8, priority),
+  category = COALESCE($9, category),
+  target = COALESCE($10, target),
+  rule = COALESCE($11, rule),
+  obligations = COALESCE($12, obligations),
+  advice = COALESCE($13, advice),
+  is_active = COALESCE($14, is_active),
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+RETURNING
+  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
 `
 
 type UpdatePolicyParams struct {
@@ -849,24 +1097,29 @@ type UpdatePolicyParams struct {
 
 // UpdatePolicy
 //
-//	UPDATE policies
+//	UPDATE
+//	  policies
 //	SET
-//	    entity_id = COALESCE($2, entity_id),
-//	    name = COALESCE($3, name),
-//	    display_name = COALESCE($4, display_name),
-//	    description = COALESCE($5, description),
-//	    policy_type = COALESCE($6, policy_type),
-//	    effect = COALESCE($7, effect),
-//	    priority = COALESCE($8, priority),
-//	    category = COALESCE($9, category),
-//	    target = COALESCE($10, target),
-//	    rule = COALESCE($11, rule),
-//	    obligations = COALESCE($12, obligations),
-//	    advice = COALESCE($13, advice),
-//	    is_active = COALESCE($14, is_active),
-//	    updated_at = NOW()
-//	WHERE id = $1 AND tenant_id = current_tenant_id() AND deleted_at IS NULL
-//	RETURNING id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
+//	  entity_id = COALESCE($2, entity_id),
+//	  name = COALESCE($3, name),
+//	  display_name = COALESCE($4, display_name),
+//	  description = COALESCE($5, description),
+//	  policy_type = COALESCE($6, policy_type),
+//	  effect = COALESCE($7, effect),
+//	  priority = COALESCE($8, priority),
+//	  category = COALESCE($9, category),
+//	  target = COALESCE($10, target),
+//	  rule = COALESCE($11, rule),
+//	  obligations = COALESCE($12, obligations),
+//	  advice = COALESCE($13, advice),
+//	  is_active = COALESCE($14, is_active),
+//	  updated_at = NOW()
+//	WHERE
+//	  id = $1
+//	  AND tenant_id = current_tenant_id()
+//	  AND deleted_at IS NULL
+//	RETURNING
+//	  id, tenant_id, entity_id, name, display_name, description, policy_type, effect, priority, category, target, rule, obligations, advice, is_active, created_at, updated_at, created_by, deleted_at
 func (q *Queries) UpdatePolicy(ctx context.Context, arg UpdatePolicyParams) (*Policy, error) {
 	row := q.db.QueryRow(ctx, updatePolicy,
 		arg.ID,
@@ -910,9 +1163,14 @@ func (q *Queries) UpdatePolicy(ctx context.Context, arg UpdatePolicyParams) (*Po
 }
 
 const updatePolicyStatus = `-- name: UpdatePolicyStatus :exec
-UPDATE policies 
-SET is_active = $2, updated_at = NOW()
-WHERE id = $1 AND tenant_id = current_tenant_id()
+UPDATE
+  policies
+SET
+  is_active = $2,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
 `
 
 type UpdatePolicyStatusParams struct {
@@ -922,9 +1180,14 @@ type UpdatePolicyStatusParams struct {
 
 // UpdatePolicyStatus
 //
-//	UPDATE policies
-//	SET is_active = $2, updated_at = NOW()
-//	WHERE id = $1 AND tenant_id = current_tenant_id()
+//	UPDATE
+//	  policies
+//	SET
+//	  is_active = $2,
+//	  updated_at = NOW()
+//	WHERE
+//	  id = $1
+//	  AND tenant_id = current_tenant_id()
 func (q *Queries) UpdatePolicyStatus(ctx context.Context, arg UpdatePolicyStatusParams) error {
 	_, err := q.db.Exec(ctx, updatePolicyStatus, arg.ID, arg.IsActive)
 	return err

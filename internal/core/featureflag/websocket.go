@@ -138,14 +138,14 @@ func (s *webSocketService) HandleConnection(ctx *gin.Context) {
 	ctxWithTrace, span := s.tracing.StartSpan(ctx.Request.Context(), "webSocketService.HandleConnection")
 	defer span.End()
 
-	logger := logger.WithFields(logger.Fields{"service": "websocket", "method": "HandleConnection"})
+	log := logger.WithFields(logger.Fields{"service": "websocket", "method": "HandleConnection"})
 
 	// Extract tenant and user from context/headers
 	tenantID, err := extractTenantIDFromContext(ctx)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to extract tenant ID")
-		logger.Error("Failed to extract tenant ID", logger.Fields{"error": err})
+		log.Error("Failed to extract tenant ID", logger.Fields{"error": err})
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Tenant ID required"})
 		return
 	}
@@ -154,7 +154,7 @@ func (s *webSocketService) HandleConnection(ctx *gin.Context) {
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to extract user ID")
-		logger.Error("Failed to extract user ID", logger.Fields{"error": err})
+		log.Error("Failed to extract user ID", logger.Fields{"error": err})
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "User ID required"})
 		return
 	}
@@ -169,7 +169,7 @@ func (s *webSocketService) HandleConnection(ctx *gin.Context) {
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to upgrade connection")
-		logger.Error("Failed to upgrade connection", logger.Fields{"error": err})
+		log.Error("Failed to upgrade connection", logger.Fields{"error": err})
 		return
 	}
 
@@ -186,7 +186,7 @@ func (s *webSocketService) HandleConnection(ctx *gin.Context) {
 	// Register connection
 	s.registerConnection(wsConn)
 
-	logger.Info("WebSocket connection established", logger.Fields{
+	log.Info("WebSocket connection established", logger.Fields{
 		"connection_id": wsConn.ID,
 		"tenant_id":     tenantID,
 		"user_id":       userID,
@@ -261,6 +261,7 @@ func (s *webSocketService) unregisterConnection(conn *WebSocketConnection) {
 // handleConnectionRead handles incoming messages from WebSocket connection
 func (s *webSocketService) handleConnectionRead(ctx context.Context, conn *WebSocketConnection) {
 	defer s.unregisterConnection(conn)
+	log := logger.WithFields(logger.Fields{"service": "websocket", "method": "handleConnectionRead"})
 
 	conn.Conn.SetReadLimit(512)
 	conn.Conn.SetReadDeadline(time.Now().Add(60 * time.Second))
@@ -276,7 +277,7 @@ func (s *webSocketService) handleConnectionRead(ctx context.Context, conn *WebSo
 		_, message, err := conn.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				logger.Error("WebSocket read error", logger.Fields{
+				log.Error("WebSocket read error", logger.Fields{
 					"connection_id": conn.ID,
 					"error":         err,
 				})
@@ -341,9 +342,10 @@ func (s *webSocketService) handleConnectionWrite(ctx context.Context, conn *WebS
 
 // handleIncomingMessage processes messages from clients
 func (s *webSocketService) handleIncomingMessage(ctx context.Context, conn *WebSocketConnection, message []byte) {
+	log := logger.WithFields(logger.Fields{"service": "websocket", "method": "handleIncomingMessage"})
 	var msg map[string]interface{}
 	if err := json.Unmarshal(message, &msg); err != nil {
-		logger.Error("Invalid WebSocket message", logger.Fields{
+		log.Error("Invalid WebSocket message", logger.Fields{
 			"connection_id": conn.ID,
 			"error":         err,
 		})
@@ -381,14 +383,14 @@ func (s *webSocketService) handleIncomingMessage(ctx context.Context, conn *WebS
 	case "subscribe":
 		// Handle subscription to specific flag updates
 		if flagName, ok := msg["flag_name"].(string); ok {
-			logger.Info("Client subscribed to flag", logger.Fields{
+			log.Info("Client subscribed to flag", logger.Fields{
 				"connection_id": conn.ID,
 				"flag_name":     flagName,
 			})
 		}
 
 	default:
-		logger.Warn("Unknown message type", logger.Fields{
+		log.Warn("Unknown message type", logger.Fields{
 			"connection_id": conn.ID,
 			"type":          msgType,
 		})
@@ -399,6 +401,7 @@ func (s *webSocketService) handleIncomingMessage(ctx context.Context, conn *WebS
 func (s *webSocketService) BroadcastToTenant(ctx context.Context, tenantID uuid.UUID, message *WebSocketMessage) error {
 	ctx, span := s.tracing.StartSpan(ctx, "webSocketService.BroadcastToTenant")
 	defer span.End()
+	log := logger.WithFields(logger.Fields{"service": "websocket", "method": "BroadcastToTenant"})
 
 	span.SetAttributes(attribute.String("tenant.id", tenantID.String()))
 
@@ -408,7 +411,7 @@ func (s *webSocketService) BroadcastToTenant(ctx context.Context, tenantID uuid.
 	s.mu.RUnlock()
 
 	if len(connections) == 0 {
-		logger.Info("No WebSocket connections found for tenant", logger.Fields{"tenant_id": tenantID})
+		log.Info("No WebSocket connections found for tenant", logger.Fields{"tenant_id": tenantID})
 		return nil
 	}
 
@@ -428,7 +431,7 @@ func (s *webSocketService) BroadcastToTenant(ctx context.Context, tenantID uuid.
 			sent++
 		default:
 			// Connection is blocked, remove it
-			logger.Warn("Removing blocked WebSocket connection", logger.Fields{
+			log.Warn("Removing blocked WebSocket connection", logger.Fields{
 				"connection_id": conn.ID,
 				"tenant_id":     tenantID,
 			})
@@ -443,7 +446,7 @@ func (s *webSocketService) BroadcastToTenant(ctx context.Context, tenantID uuid.
 		"connections":   sent,
 	})
 
-	logger.Info("Message broadcast to tenant", logger.Fields{
+	log.Info("Message broadcast to tenant", logger.Fields{
 		"tenant_id":     tenantID,
 		"message_type":  message.Type,
 		"message_event": message.Event,

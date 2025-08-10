@@ -13,14 +13,36 @@ import (
 )
 
 const countAccessRequestsByStatus = `-- name: CountAccessRequestsByStatus :one
-SELECT 
-    COUNT(*) as total_requests,
-    SUM(CASE WHEN approval_status = 'PENDING' THEN 1 ELSE 0 END) as pending_requests,
-    SUM(CASE WHEN approval_status = 'APPROVED' THEN 1 ELSE 0 END) as approved_requests,
-    SUM(CASE WHEN approval_status = 'REJECTED' THEN 1 ELSE 0 END) as rejected_requests,
-    SUM(CASE WHEN approval_status = 'EXPIRED' THEN 1 ELSE 0 END) as expired_requests
-FROM access_requests
-WHERE tenant_id = current_tenant_id()
+SELECT
+  COUNT(*) AS total_requests,
+  SUM(
+    CASE
+      WHEN approval_status = 'PENDING' THEN 1
+      ELSE 0
+    END
+  ) AS pending_requests,
+  SUM(
+    CASE
+      WHEN approval_status = 'APPROVED' THEN 1
+      ELSE 0
+    END
+  ) AS approved_requests,
+  SUM(
+    CASE
+      WHEN approval_status = 'REJECTED' THEN 1
+      ELSE 0
+    END
+  ) AS rejected_requests,
+  SUM(
+    CASE
+      WHEN approval_status = 'EXPIRED' THEN 1
+      ELSE 0
+    END
+  ) AS expired_requests
+FROM
+  access_requests
+WHERE
+  tenant_id = current_tenant_id()
   AND created_at >= $1
   AND created_at <= $2
 `
@@ -41,13 +63,35 @@ type CountAccessRequestsByStatusRow struct {
 // CountAccessRequestsByStatus
 //
 //	SELECT
-//	    COUNT(*) as total_requests,
-//	    SUM(CASE WHEN approval_status = 'PENDING' THEN 1 ELSE 0 END) as pending_requests,
-//	    SUM(CASE WHEN approval_status = 'APPROVED' THEN 1 ELSE 0 END) as approved_requests,
-//	    SUM(CASE WHEN approval_status = 'REJECTED' THEN 1 ELSE 0 END) as rejected_requests,
-//	    SUM(CASE WHEN approval_status = 'EXPIRED' THEN 1 ELSE 0 END) as expired_requests
-//	FROM access_requests
-//	WHERE tenant_id = current_tenant_id()
+//	  COUNT(*) AS total_requests,
+//	  SUM(
+//	    CASE
+//	      WHEN approval_status = 'PENDING' THEN 1
+//	      ELSE 0
+//	    END
+//	  ) AS pending_requests,
+//	  SUM(
+//	    CASE
+//	      WHEN approval_status = 'APPROVED' THEN 1
+//	      ELSE 0
+//	    END
+//	  ) AS approved_requests,
+//	  SUM(
+//	    CASE
+//	      WHEN approval_status = 'REJECTED' THEN 1
+//	      ELSE 0
+//	    END
+//	  ) AS rejected_requests,
+//	  SUM(
+//	    CASE
+//	      WHEN approval_status = 'EXPIRED' THEN 1
+//	      ELSE 0
+//	    END
+//	  ) AS expired_requests
+//	FROM
+//	  access_requests
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND created_at >= $1
 //	  AND created_at <= $2
 func (q *Queries) CountAccessRequestsByStatus(ctx context.Context, arg CountAccessRequestsByStatusParams) (*CountAccessRequestsByStatusRow, error) {
@@ -64,13 +108,40 @@ func (q *Queries) CountAccessRequestsByStatus(ctx context.Context, arg CountAcce
 }
 
 const createAccessRequest = `-- name: CreateAccessRequest :one
-INSERT INTO access_requests (
-    tenant_id, requester_id, target_user_id, entity_id, request_type,
-    role_id, permission_id, resource_id, justification, business_reason,
-    duration_hours, expires_at, auto_revoke
-) VALUES (
-    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-) RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+INSERT INTO
+  access_requests (
+    tenant_id,
+    requester_id,
+    target_user_id,
+    entity_id,
+    request_type,
+    role_id,
+    permission_id,
+    resource_id,
+    justification,
+    business_reason,
+    duration_hours,
+    expires_at,
+    auto_revoke
+  )
+VALUES
+  (
+    current_tenant_id(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10,
+    $11,
+    $12
+  )
+RETURNING
+  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
 `
 
 type CreateAccessRequestParams struct {
@@ -90,13 +161,40 @@ type CreateAccessRequestParams struct {
 
 // CreateAccessRequest
 //
-//	INSERT INTO access_requests (
-//	    tenant_id, requester_id, target_user_id, entity_id, request_type,
-//	    role_id, permission_id, resource_id, justification, business_reason,
-//	    duration_hours, expires_at, auto_revoke
-//	) VALUES (
-//	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-//	) RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+//	INSERT INTO
+//	  access_requests (
+//	    tenant_id,
+//	    requester_id,
+//	    target_user_id,
+//	    entity_id,
+//	    request_type,
+//	    role_id,
+//	    permission_id,
+//	    resource_id,
+//	    justification,
+//	    business_reason,
+//	    duration_hours,
+//	    expires_at,
+//	    auto_revoke
+//	  )
+//	VALUES
+//	  (
+//	    current_tenant_id(),
+//	    $1,
+//	    $2,
+//	    $3,
+//	    $4,
+//	    $5,
+//	    $6,
+//	    $7,
+//	    $8,
+//	    $9,
+//	    $10,
+//	    $11,
+//	    $12
+//	  )
+//	RETURNING
+//	  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
 func (q *Queries) CreateAccessRequest(ctx context.Context, arg CreateAccessRequestParams) (*AccessRequest, error) {
 	row := q.db.QueryRow(ctx, createAccessRequest,
 		arg.RequesterID,
@@ -139,14 +237,24 @@ func (q *Queries) CreateAccessRequest(ctx context.Context, arg CreateAccessReque
 }
 
 const getAccessRequestByID = `-- name: GetAccessRequestByID :one
-SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests 
-WHERE id = $1 AND tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+FROM
+  access_requests
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
 `
 
 // GetAccessRequestByID
 //
-//	SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-//	WHERE id = $1 AND tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+//	FROM
+//	  access_requests
+//	WHERE
+//	  id = $1
+//	  AND tenant_id = current_tenant_id()
 func (q *Queries) GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*AccessRequest, error) {
 	row := q.db.QueryRow(ctx, getAccessRequestByID, id)
 	var i AccessRequest
@@ -176,22 +284,30 @@ func (q *Queries) GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*Acce
 }
 
 const getExpiredAccessRequests = `-- name: GetExpiredAccessRequests :many
-SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+FROM
+  access_requests
+WHERE
+  tenant_id = current_tenant_id()
   AND approval_status = 'APPROVED'
   AND expires_at IS NOT NULL
   AND expires_at < NOW()
-  AND auto_revoke = true
+  AND auto_revoke = TRUE
 `
 
 // GetExpiredAccessRequests
 //
-//	SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+//	FROM
+//	  access_requests
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND approval_status = 'APPROVED'
 //	  AND expires_at IS NOT NULL
 //	  AND expires_at < NOW()
-//	  AND auto_revoke = true
+//	  AND auto_revoke = TRUE
 func (q *Queries) GetExpiredAccessRequests(ctx context.Context) ([]*AccessRequest, error) {
 	rows, err := q.db.Query(ctx, getExpiredAccessRequests)
 	if err != nil {
@@ -234,20 +350,36 @@ func (q *Queries) GetExpiredAccessRequests(ctx context.Context) ([]*AccessReques
 }
 
 const getPendingAccessRequests = `-- name: GetPendingAccessRequests :many
-SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+FROM
+  access_requests
+WHERE
+  tenant_id = current_tenant_id()
   AND approval_status = 'PENDING'
-  AND (expires_at IS NULL OR expires_at > NOW())
-ORDER BY created_at ASC
+  AND (
+    expires_at IS NULL
+    OR expires_at > NOW()
+  )
+ORDER BY
+  created_at ASC
 `
 
 // GetPendingAccessRequests
 //
-//	SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+//	FROM
+//	  access_requests
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND approval_status = 'PENDING'
-//	  AND (expires_at IS NULL OR expires_at > NOW())
-//	ORDER BY created_at ASC
+//	  AND (
+//	    expires_at IS NULL
+//	    OR expires_at > NOW()
+//	  )
+//	ORDER BY
+//	  created_at ASC
 func (q *Queries) GetPendingAccessRequests(ctx context.Context) ([]*AccessRequest, error) {
 	rows, err := q.db.Query(ctx, getPendingAccessRequests)
 	if err != nil {
@@ -290,11 +422,17 @@ func (q *Queries) GetPendingAccessRequests(ctx context.Context) ([]*AccessReques
 }
 
 const getUserAccessRequestHistory = `-- name: GetUserAccessRequestHistory :many
-SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+FROM
+  access_requests
+WHERE
+  tenant_id = current_tenant_id()
   AND requester_id = $1
-ORDER BY created_at DESC
-LIMIT $2 OFFSET $3
+ORDER BY
+  created_at DESC
+LIMIT
+  $2 OFFSET $3
 `
 
 type GetUserAccessRequestHistoryParams struct {
@@ -305,11 +443,17 @@ type GetUserAccessRequestHistoryParams struct {
 
 // GetUserAccessRequestHistory
 //
-//	SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+//	FROM
+//	  access_requests
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND requester_id = $1
-//	ORDER BY created_at DESC
-//	LIMIT $2 OFFSET $3
+//	ORDER BY
+//	  created_at DESC
+//	LIMIT
+//	  $2 OFFSET $3
 func (q *Queries) GetUserAccessRequestHistory(ctx context.Context, arg GetUserAccessRequestHistoryParams) ([]*AccessRequest, error) {
 	rows, err := q.db.Query(ctx, getUserAccessRequestHistory, arg.RequesterID, arg.Limit, arg.Offset)
 	if err != nil {
@@ -352,13 +496,28 @@ func (q *Queries) GetUserAccessRequestHistory(ctx context.Context, arg GetUserAc
 }
 
 const listAccessRequestsByStatus = `-- name: ListAccessRequestsByStatus :many
-SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-WHERE tenant_id = current_tenant_id()
-  AND ($1::text IS NULL OR approval_status = $1)
-  AND ($2::uuid IS NULL OR requester_id = $2)
-  AND ($3::uuid IS NULL OR target_user_id = $3)
-ORDER BY created_at DESC
-LIMIT $4 OFFSET $5
+SELECT
+  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+FROM
+  access_requests
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::text IS NULL
+    OR approval_status = $1
+  )
+  AND (
+    $2::uuid IS NULL
+    OR requester_id = $2
+  )
+  AND (
+    $3::uuid IS NULL
+    OR target_user_id = $3
+  )
+ORDER BY
+  created_at DESC
+LIMIT
+  $4 OFFSET $5
 `
 
 type ListAccessRequestsByStatusParams struct {
@@ -371,13 +530,28 @@ type ListAccessRequestsByStatusParams struct {
 
 // ListAccessRequestsByStatus
 //
-//	SELECT id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at FROM access_requests
-//	WHERE tenant_id = current_tenant_id()
-//	  AND ($1::text IS NULL OR approval_status = $1)
-//	  AND ($2::uuid IS NULL OR requester_id = $2)
-//	  AND ($3::uuid IS NULL OR target_user_id = $3)
-//	ORDER BY created_at DESC
-//	LIMIT $4 OFFSET $5
+//	SELECT
+//	  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+//	FROM
+//	  access_requests
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND (
+//	    $1::text IS NULL
+//	    OR approval_status = $1
+//	  )
+//	  AND (
+//	    $2::uuid IS NULL
+//	    OR requester_id = $2
+//	  )
+//	  AND (
+//	    $3::uuid IS NULL
+//	    OR target_user_id = $3
+//	  )
+//	ORDER BY
+//	  created_at DESC
+//	LIMIT
+//	  $4 OFFSET $5
 func (q *Queries) ListAccessRequestsByStatus(ctx context.Context, arg ListAccessRequestsByStatusParams) ([]*AccessRequest, error) {
 	rows, err := q.db.Query(ctx, listAccessRequestsByStatus,
 		arg.Column1,
@@ -426,11 +600,21 @@ func (q *Queries) ListAccessRequestsByStatus(ctx context.Context, arg ListAccess
 }
 
 const updateAccessRequestStatus = `-- name: UpdateAccessRequestStatus :one
-UPDATE access_requests 
-SET approval_status = $2, approved_by = $3, approved_at = $4,
-    approval_comments = $5, duration_hours = $6, expires_at = $7, updated_at = NOW()
-WHERE id = $1 AND tenant_id = current_tenant_id()
-RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+UPDATE
+  access_requests
+SET
+  approval_status = $2,
+  approved_by = $3,
+  approved_at = $4,
+  approval_comments = $5,
+  duration_hours = $6,
+  expires_at = $7,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+RETURNING
+  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
 `
 
 type UpdateAccessRequestStatusParams struct {
@@ -445,11 +629,21 @@ type UpdateAccessRequestStatusParams struct {
 
 // UpdateAccessRequestStatus
 //
-//	UPDATE access_requests
-//	SET approval_status = $2, approved_by = $3, approved_at = $4,
-//	    approval_comments = $5, duration_hours = $6, expires_at = $7, updated_at = NOW()
-//	WHERE id = $1 AND tenant_id = current_tenant_id()
-//	RETURNING id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
+//	UPDATE
+//	  access_requests
+//	SET
+//	  approval_status = $2,
+//	  approved_by = $3,
+//	  approved_at = $4,
+//	  approval_comments = $5,
+//	  duration_hours = $6,
+//	  expires_at = $7,
+//	  updated_at = NOW()
+//	WHERE
+//	  id = $1
+//	  AND tenant_id = current_tenant_id()
+//	RETURNING
+//	  id, tenant_id, requester_id, target_user_id, entity_id, request_type, role_id, permission_id, resource_id, justification, business_reason, duration_hours, approval_status, approved_by, approved_at, approval_comments, expires_at, auto_revoke, created_at, updated_at
 func (q *Queries) UpdateAccessRequestStatus(ctx context.Context, arg UpdateAccessRequestStatusParams) (*AccessRequest, error) {
 	row := q.db.QueryRow(ctx, updateAccessRequestStatus,
 		arg.ID,

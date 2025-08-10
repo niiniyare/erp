@@ -1,5 +1,8 @@
 package tenant
 
+//go:generate go run go.uber.org/mock/mockgen -source=repository.go -destination=mock.go -package=tenant
+
+
 import (
 	"context"
 	"fmt"

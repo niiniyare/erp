@@ -23,8 +23,3 @@ type AuditEvent struct {
 type Service interface {
 	Record(ctx context.Context, event AuditEvent) error
 }
-
-// Repository defines the interface for the audit repository.
-type Repository interface {
-	CreateAuditEvent(ctx context.Context, arg AuditEvent) error
-}

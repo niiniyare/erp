@@ -1,5 +1,8 @@
 package identity
 
+//go:generate go run go.uber.org/mock/mockgen -source=repository.go -destination=mock.go -package=identity
+
+
 import (
 	"context"
 	"database/sql"

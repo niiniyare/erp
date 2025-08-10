@@ -1,15 +1,14 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/api/middleware"
 	"github.com/niiniyare/erp/internal/core/featureflag"
 	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/middleware"
 )
 
 // FeatureFlagWebSocketHandler handles WebSocket connections for real-time feature flag updates
@@ -26,26 +25,26 @@ func NewFeatureFlagWebSocketHandler(webSocketService featureflag.WebSocketServic
 
 // HandleConnection handles WebSocket connection upgrade and management
 func (h *FeatureFlagWebSocketHandler) HandleConnection(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWebSocketHandler",
 		"method":  "HandleConnection",
 	})
 
 	// Validate authentication
-	if _, exists := c.Get(middleware.UserIDKey); !exists {
-		logger.Error("WebSocket connection attempt without authentication")
+	if _, exists := c.Get("authorized_user_id"); !exists {
+		log.Error("WebSocket connection attempt without authentication")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
 		return
 	}
 
 	// Validate tenant context
-	if _, exists := c.Get(middleware.TenantIDKey); !exists {
-		logger.Error("WebSocket connection attempt without tenant context")
+	if _, exists := c.Get("authorized_tenant_id"); !exists {
+		log.Error("WebSocket connection attempt without tenant context")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Tenant context required"})
 		return
 	}
 
-	logger.Info("Handling WebSocket connection for feature flag updates")
+	log.Info("Handling WebSocket connection for feature flag updates")
 
 	// Delegate to the WebSocket service
 	h.webSocketService.HandleConnection(c)
@@ -53,21 +52,21 @@ func (h *FeatureFlagWebSocketHandler) HandleConnection(c *gin.Context) {
 
 // GetConnectionStats returns current WebSocket connection statistics
 func (h *FeatureFlagWebSocketHandler) GetConnectionStats(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWebSocketHandler",
 		"method":  "GetConnectionStats",
 	})
 
 	// Validate admin permissions for stats access
 	if !h.isAdmin(c) {
-		logger.Error("Unauthorized attempt to access connection stats")
+		log.Error("Unauthorized attempt to access connection stats")
 		c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
 		return
 	}
 
 	stats := h.webSocketService.GetConnectionStats()
-	
-	logger.Info("Retrieved WebSocket connection stats", logger.Fields{
+
+	log.Info("Retrieved WebSocket connection stats", logger.Fields{
 		"total_connections": stats.TotalConnections,
 		"tenant_count":      len(stats.ConnectionsByTenant),
 	})
@@ -77,29 +76,29 @@ func (h *FeatureFlagWebSocketHandler) GetConnectionStats(c *gin.Context) {
 
 // SendTestNotification sends a test notification to verify WebSocket connectivity
 func (h *FeatureFlagWebSocketHandler) SendTestNotification(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWebSocketHandler",
 		"method":  "SendTestNotification",
 	})
 
 	// Validate admin permissions
 	if !h.isAdmin(c) {
-		logger.Error("Unauthorized attempt to send test notification")
+		log.Error("Unauthorized attempt to send test notification")
 		c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
 		return
 	}
 
 	// Get tenant ID from context
-	tenantID, exists := c.Get(middleware.TenantIDKey)
+	tenantID, exists := c.Get("authorized_tenant_id")
 	if !exists {
-		logger.Error("Tenant context not found")
+		log.Error("Tenant context not found")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Tenant context required"})
 		return
 	}
 
 	tenantUUID, ok := tenantID.(uuid.UUID)
 	if !ok {
-		logger.Error("Invalid tenant ID format")
+		log.Error("Invalid tenant ID format")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid tenant ID"})
 		return
 	}
@@ -112,19 +111,19 @@ func (h *FeatureFlagWebSocketHandler) SendTestNotification(c *gin.Context) {
 		ChangedBy:  uuid.Nil,
 		AppliedAt:  time.Now(),
 		Metadata: map[string]interface{}{
-			"test": true,
+			"test":    true,
 			"message": "This is a test notification to verify WebSocket connectivity",
 		},
 	}
 
 	err := h.webSocketService.NotifyFlagChange(c.Request.Context(), tenantUUID, testEvent)
 	if err != nil {
-		logger.Error("Failed to send test notification", logger.Fields{"error": err})
+		log.Error("Failed to send test notification", logger.Fields{"error": err})
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send notification"})
 		return
 	}
 
-	logger.Info("Test notification sent successfully", logger.Fields{
+	log.Info("Test notification sent successfully", logger.Fields{
 		"tenant_id": tenantUUID,
 		"flag_name": testEvent.FlagName,
 	})
@@ -138,14 +137,14 @@ func (h *FeatureFlagWebSocketHandler) SendTestNotification(c *gin.Context) {
 
 // BroadcastMessage broadcasts a custom message to all tenant connections (admin only)
 func (h *FeatureFlagWebSocketHandler) BroadcastMessage(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWebSocketHandler",
 		"method":  "BroadcastMessage",
 	})
 
 	// Validate admin permissions
 	if !h.isAdmin(c) {
-		logger.Error("Unauthorized attempt to broadcast message")
+		log.Error("Unauthorized attempt to broadcast message")
 		c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
 		return
 	}
@@ -159,22 +158,22 @@ func (h *FeatureFlagWebSocketHandler) BroadcastMessage(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Error("Invalid request body", logger.Fields{"error": err})
+		log.Error("Invalid request body", logger.Fields{"error": err})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
 	// Get tenant ID from context
-	tenantID, exists := c.Get(middleware.TenantIDKey)
+	tenantID, exists := c.Get("authorized_tenant_id")
 	if !exists {
-		logger.Error("Tenant context not found")
+		log.Error("Tenant context not found")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Tenant context required"})
 		return
 	}
 
 	tenantUUID, ok := tenantID.(uuid.UUID)
 	if !ok {
-		logger.Error("Invalid tenant ID format")
+		log.Error("Invalid tenant ID format")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid tenant ID"})
 		return
 	}
@@ -193,12 +192,12 @@ func (h *FeatureFlagWebSocketHandler) BroadcastMessage(c *gin.Context) {
 
 	err := h.webSocketService.BroadcastToTenant(c.Request.Context(), tenantUUID, message)
 	if err != nil {
-		logger.Error("Failed to broadcast message", logger.Fields{"error": err})
+		log.Error("Failed to broadcast message", logger.Fields{"error": err})
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to broadcast message"})
 		return
 	}
 
-	logger.Info("Message broadcast successfully", logger.Fields{
+	log.Info("Message broadcast successfully", logger.Fields{
 		"tenant_id":    tenantUUID,
 		"message_type": req.Type,
 		"event":        req.Event,
@@ -213,23 +212,23 @@ func (h *FeatureFlagWebSocketHandler) BroadcastMessage(c *gin.Context) {
 
 // CloseAllConnections closes all WebSocket connections (emergency use only)
 func (h *FeatureFlagWebSocketHandler) CloseAllConnections(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWebSocketHandler",
 		"method":  "CloseAllConnections",
 	})
 
 	// Validate admin permissions
 	if !h.isAdmin(c) {
-		logger.Error("Unauthorized attempt to close all connections")
+		log.Error("Unauthorized attempt to close all connections")
 		c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
 		return
 	}
 
-	logger.Warn("Emergency closure of all WebSocket connections requested")
+	log.Warn("Emergency closure of all WebSocket connections requested")
 
 	h.webSocketService.CloseAllConnections()
 
-	logger.Info("All WebSocket connections closed")
+	log.Info("All WebSocket connections closed")
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "All WebSocket connections closed",
@@ -259,3 +258,4 @@ func (h *FeatureFlagWebSocketHandler) isAdmin(c *gin.Context) bool {
 
 	return false
 }
+

@@ -12,21 +12,25 @@ import (
 )
 
 const bulkEvaluateFeatureFlags = `-- name: BulkEvaluateFeatureFlags :many
-SELECT 
-    name as flag_key,
-    CASE 
-        WHEN rollout_percentage IS NOT NULL THEN
-            CASE WHEN (ABS(HASHTEXT($1::text || name)) % 100) < rollout_percentage THEN default_value ELSE false END
-        ELSE default_value
-    END as evaluated_value,
-    default_value as is_enabled,
-    'default' as source,
-    'Basic evaluation' as reason,
-    '' as variation,
-    NOW() as evaluated_at
-FROM feature_flags
-WHERE tenant_id = current_tenant_id() 
-  AND name = ANY($2::text[])
+SELECT
+  name AS flag_key,
+  CASE
+    WHEN rollout_percentage IS NOT NULL THEN CASE
+      WHEN (ABS(HASHTEXT($1::text || name)) % 100) < rollout_percentage THEN default_value
+      ELSE false
+    END
+    ELSE default_value
+  END AS evaluated_value,
+  default_value AS is_enabled,
+  'default' AS source,
+  'Basic evaluation' AS reason,
+  '' AS variation,
+  NOW() AS evaluated_at
+FROM
+  feature_flags
+WHERE
+  tenant_id = current_tenant_id()
+  AND name = ANY($2::text [])
   AND deleted_at IS NULL
 `
 
@@ -48,20 +52,24 @@ type BulkEvaluateFeatureFlagsRow struct {
 // Simplified bulk evaluation based on current schema
 //
 //	SELECT
-//	    name as flag_key,
-//	    CASE
-//	        WHEN rollout_percentage IS NOT NULL THEN
-//	            CASE WHEN (ABS(HASHTEXT($1::text || name)) % 100) < rollout_percentage THEN default_value ELSE false END
-//	        ELSE default_value
-//	    END as evaluated_value,
-//	    default_value as is_enabled,
-//	    'default' as source,
-//	    'Basic evaluation' as reason,
-//	    '' as variation,
-//	    NOW() as evaluated_at
-//	FROM feature_flags
-//	WHERE tenant_id = current_tenant_id()
-//	  AND name = ANY($2::text[])
+//	  name AS flag_key,
+//	  CASE
+//	    WHEN rollout_percentage IS NOT NULL THEN CASE
+//	      WHEN (ABS(HASHTEXT($1::text || name)) % 100) < rollout_percentage THEN default_value
+//	      ELSE false
+//	    END
+//	    ELSE default_value
+//	  END AS evaluated_value,
+//	  default_value AS is_enabled,
+//	  'default' AS source,
+//	  'Basic evaluation' AS reason,
+//	  '' AS variation,
+//	  NOW() AS evaluated_at
+//	FROM
+//	  feature_flags
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND name = ANY($2::text [])
 //	  AND deleted_at IS NULL
 func (q *Queries) BulkEvaluateFeatureFlags(ctx context.Context, arg BulkEvaluateFeatureFlagsParams) ([]*BulkEvaluateFeatureFlagsRow, error) {
 	rows, err := q.db.Query(ctx, bulkEvaluateFeatureFlags, arg.Column1, arg.Column2)
@@ -92,15 +100,23 @@ func (q *Queries) BulkEvaluateFeatureFlags(ctx context.Context, arg BulkEvaluate
 }
 
 const cleanupExpiredFeatureFlags = `-- name: CleanupExpiredFeatureFlags :one
-SELECT COUNT(*) FROM feature_flags 
-WHERE tenant_id = current_tenant_id() 
+SELECT
+  COUNT(*)
+FROM
+  feature_flags
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
 
 // For future use when we add expires_at to metadata
 //
-//	SELECT COUNT(*) FROM feature_flags
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  COUNT(*)
+//	FROM
+//	  feature_flags
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND deleted_at IS NULL
 func (q *Queries) CleanupExpiredFeatureFlags(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, cleanupExpiredFeatureFlags)
@@ -110,13 +126,30 @@ func (q *Queries) CleanupExpiredFeatureFlags(ctx context.Context) (int64, error)
 }
 
 const createFeatureFlag = `-- name: CreateFeatureFlag :one
-
-INSERT INTO feature_flags (
-    tenant_id, name, description, flag_type, default_value, 
-    rollout_percentage, target_audience, metadata
-) VALUES (
-    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7
-) RETURNING id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+INSERT INTO
+  feature_flags (
+    tenant_id,
+    name,
+    description,
+    flag_type,
+    default_value,
+    rollout_percentage,
+    target_audience,
+    metadata
+  )
+VALUES
+  (
+    current_tenant_id(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7
+  )
+RETURNING
+  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 `
 
 type CreateFeatureFlagParams struct {
@@ -136,12 +169,30 @@ type CreateFeatureFlagParams struct {
 //
 // =====================================================================
 //
-//	INSERT INTO feature_flags (
-//	    tenant_id, name, description, flag_type, default_value,
-//	    rollout_percentage, target_audience, metadata
-//	) VALUES (
-//	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7
-//	) RETURNING id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+//	INSERT INTO
+//	  feature_flags (
+//	    tenant_id,
+//	    name,
+//	    description,
+//	    flag_type,
+//	    default_value,
+//	    rollout_percentage,
+//	    target_audience,
+//	    metadata
+//	  )
+//	VALUES
+//	  (
+//	    current_tenant_id(),
+//	    $1,
+//	    $2,
+//	    $3,
+//	    $4,
+//	    $5,
+//	    $6,
+//	    $7
+//	  )
+//	RETURNING
+//	  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 func (q *Queries) CreateFeatureFlag(ctx context.Context, arg CreateFeatureFlagParams) (*FeatureFlag, error) {
 	row := q.db.QueryRow(ctx, createFeatureFlag,
 		arg.Name,
@@ -171,18 +222,26 @@ func (q *Queries) CreateFeatureFlag(ctx context.Context, arg CreateFeatureFlagPa
 }
 
 const deleteFeatureFlag = `-- name: DeleteFeatureFlag :exec
-UPDATE feature_flags
-SET deleted_at = NOW(), updated_at = NOW()
-WHERE tenant_id = current_tenant_id() 
-  AND id = $1 
+UPDATE
+  feature_flags
+SET
+  deleted_at = NOW(),
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id()
+  AND id = $1
   AND deleted_at IS NULL
 `
 
 // DeleteFeatureFlag
 //
-//	UPDATE feature_flags
-//	SET deleted_at = NOW(), updated_at = NOW()
-//	WHERE tenant_id = current_tenant_id()
+//	UPDATE
+//	  feature_flags
+//	SET
+//	  deleted_at = NOW(),
+//	  updated_at = NOW()
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND id = $1
 //	  AND deleted_at IS NULL
 func (q *Queries) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
@@ -191,20 +250,30 @@ func (q *Queries) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
 }
 
 const getActiveFeatureFlags = `-- name: GetActiveFeatureFlags :many
-SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-WHERE tenant_id = current_tenant_id() 
+SELECT
+  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+FROM
+  feature_flags
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND default_value = true
-ORDER BY name
+  AND default_value = TRUE
+ORDER BY
+  name
 `
 
 // GetActiveFeatureFlags
 //
-//	SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+//	FROM
+//	  feature_flags
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND deleted_at IS NULL
-//	  AND default_value = true
-//	ORDER BY name
+//	  AND default_value = TRUE
+//	ORDER BY
+//	  name
 func (q *Queries) GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, error) {
 	rows, err := q.db.Query(ctx, getActiveFeatureFlags)
 	if err != nil {
@@ -239,16 +308,24 @@ func (q *Queries) GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, er
 }
 
 const getFeatureFlagByID = `-- name: GetFeatureFlagByID :one
-SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-WHERE tenant_id = current_tenant_id() 
-  AND id = $1 
+SELECT
+  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+FROM
+  feature_flags
+WHERE
+  tenant_id = current_tenant_id()
+  AND id = $1
   AND deleted_at IS NULL
 `
 
 // GetFeatureFlagByID
 //
-//	SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+//	FROM
+//	  feature_flags
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND id = $1
 //	  AND deleted_at IS NULL
 func (q *Queries) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error) {
@@ -272,16 +349,24 @@ func (q *Queries) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*Featur
 }
 
 const getFeatureFlagByName = `-- name: GetFeatureFlagByName :one
-SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-WHERE tenant_id = current_tenant_id() 
-  AND name = $1 
+SELECT
+  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+FROM
+  feature_flags
+WHERE
+  tenant_id = current_tenant_id()
+  AND name = $1
   AND deleted_at IS NULL
 `
 
 // GetFeatureFlagByName
 //
-//	SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+//	FROM
+//	  feature_flags
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND name = $1
 //	  AND deleted_at IS NULL
 func (q *Queries) GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error) {
@@ -305,13 +390,21 @@ func (q *Queries) GetFeatureFlagByName(ctx context.Context, name string) (*Featu
 }
 
 const getFeatureFlagStats = `-- name: GetFeatureFlagStats :one
-SELECT 
-    COUNT(*) as total_flags,
-    COUNT(*) FILTER (WHERE default_value = true) as enabled_flags,
-    COUNT(*) FILTER (WHERE rollout_percentage IS NOT NULL) as rollout_flags,
-    AVG(rollout_percentage) as avg_rollout_percentage
-FROM feature_flags
-WHERE tenant_id = current_tenant_id() 
+SELECT
+  COUNT(*) AS total_flags,
+  COUNT(*) FILTER (
+    WHERE
+      default_value = TRUE
+  ) AS enabled_flags,
+  COUNT(*) FILTER (
+    WHERE
+      rollout_percentage IS NOT NULL
+  ) AS rollout_flags,
+  AVG(rollout_percentage) AS avg_rollout_percentage
+FROM
+  feature_flags
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
 
@@ -325,12 +418,20 @@ type GetFeatureFlagStatsRow struct {
 // GetFeatureFlagStats
 //
 //	SELECT
-//	    COUNT(*) as total_flags,
-//	    COUNT(*) FILTER (WHERE default_value = true) as enabled_flags,
-//	    COUNT(*) FILTER (WHERE rollout_percentage IS NOT NULL) as rollout_flags,
-//	    AVG(rollout_percentage) as avg_rollout_percentage
-//	FROM feature_flags
-//	WHERE tenant_id = current_tenant_id()
+//	  COUNT(*) AS total_flags,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      default_value = TRUE
+//	  ) AS enabled_flags,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      rollout_percentage IS NOT NULL
+//	  ) AS rollout_flags,
+//	  AVG(rollout_percentage) AS avg_rollout_percentage
+//	FROM
+//	  feature_flags
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND deleted_at IS NULL
 func (q *Queries) GetFeatureFlagStats(ctx context.Context) (*GetFeatureFlagStatsRow, error) {
 	row := q.db.QueryRow(ctx, getFeatureFlagStats)
@@ -345,20 +446,30 @@ func (q *Queries) GetFeatureFlagStats(ctx context.Context) (*GetFeatureFlagStats
 }
 
 const getFeatureFlagsByType = `-- name: GetFeatureFlagsByType :many
-SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-WHERE tenant_id = current_tenant_id() 
+SELECT
+  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+FROM
+  feature_flags
+WHERE
+  tenant_id = current_tenant_id()
   AND flag_type = $1
   AND deleted_at IS NULL
-ORDER BY name
+ORDER BY
+  name
 `
 
 // GetFeatureFlagsByType
 //
-//	SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+//	FROM
+//	  feature_flags
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND flag_type = $1
 //	  AND deleted_at IS NULL
-//	ORDER BY name
+//	ORDER BY
+//	  name
 func (q *Queries) GetFeatureFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error) {
 	rows, err := q.db.Query(ctx, getFeatureFlagsByType, flagType)
 	if err != nil {
@@ -393,12 +504,21 @@ func (q *Queries) GetFeatureFlagsByType(ctx context.Context, flagType string) ([
 }
 
 const listFeatureFlags = `-- name: ListFeatureFlags :many
-SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-WHERE tenant_id = current_tenant_id() 
+SELECT
+  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+FROM
+  feature_flags
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR flag_type = $1)
-ORDER BY name
-LIMIT $2 OFFSET $3
+  AND (
+    $1::text IS NULL
+    OR flag_type = $1
+  )
+ORDER BY
+  name
+LIMIT
+  $2 OFFSET $3
 `
 
 type ListFeatureFlagsParams struct {
@@ -409,12 +529,21 @@ type ListFeatureFlagsParams struct {
 
 // ListFeatureFlags
 //
-//	SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+//	FROM
+//	  feature_flags
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND deleted_at IS NULL
-//	  AND ($1::text IS NULL OR flag_type = $1)
-//	ORDER BY name
-//	LIMIT $2 OFFSET $3
+//	  AND (
+//	    $1::text IS NULL
+//	    OR flag_type = $1
+//	  )
+//	ORDER BY
+//	  name
+//	LIMIT
+//	  $2 OFFSET $3
 func (q *Queries) ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsParams) ([]*FeatureFlag, error) {
 	rows, err := q.db.Query(ctx, listFeatureFlags, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -449,12 +578,21 @@ func (q *Queries) ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsPara
 }
 
 const searchFeatureFlags = `-- name: SearchFeatureFlags :many
-SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-WHERE tenant_id = current_tenant_id() 
+SELECT
+  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+FROM
+  feature_flags
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND (name ILIKE '%' || $1 || '%' OR description ILIKE '%' || $1 || '%')
-ORDER BY name
-LIMIT $2 OFFSET $3
+  AND (
+    name ILIKE '%' || $1 || '%'
+    OR description ILIKE '%' || $1 || '%'
+  )
+ORDER BY
+  name
+LIMIT
+  $2 OFFSET $3
 `
 
 type SearchFeatureFlagsParams struct {
@@ -465,12 +603,21 @@ type SearchFeatureFlagsParams struct {
 
 // SearchFeatureFlags
 //
-//	SELECT id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at FROM feature_flags
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+//	FROM
+//	  feature_flags
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND deleted_at IS NULL
-//	  AND (name ILIKE '%' || $1 || '%' OR description ILIKE '%' || $1 || '%')
-//	ORDER BY name
-//	LIMIT $2 OFFSET $3
+//	  AND (
+//	    name ILIKE '%' || $1 || '%'
+//	    OR description ILIKE '%' || $1 || '%'
+//	  )
+//	ORDER BY
+//	  name
+//	LIMIT
+//	  $2 OFFSET $3
 func (q *Queries) SearchFeatureFlags(ctx context.Context, arg SearchFeatureFlagsParams) ([]*FeatureFlag, error) {
 	rows, err := q.db.Query(ctx, searchFeatureFlags, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
@@ -505,20 +652,23 @@ func (q *Queries) SearchFeatureFlags(ctx context.Context, arg SearchFeatureFlags
 }
 
 const updateFeatureFlag = `-- name: UpdateFeatureFlag :one
-UPDATE feature_flags
-SET 
-    name = $2,
-    description = $3,
-    flag_type = $4,
-    default_value = $5,
-    rollout_percentage = $6,
-    target_audience = $7,
-    metadata = $8,
-    updated_at = NOW()
-WHERE tenant_id = current_tenant_id() 
-  AND id = $1 
+UPDATE
+  feature_flags
+SET
+  name = $2,
+  description = $3,
+  flag_type = $4,
+  default_value = $5,
+  rollout_percentage = $6,
+  target_audience = $7,
+  metadata = $8,
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id()
+  AND id = $1
   AND deleted_at IS NULL
-RETURNING id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+RETURNING
+  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 `
 
 type UpdateFeatureFlagParams struct {
@@ -534,20 +684,23 @@ type UpdateFeatureFlagParams struct {
 
 // UpdateFeatureFlag
 //
-//	UPDATE feature_flags
+//	UPDATE
+//	  feature_flags
 //	SET
-//	    name = $2,
-//	    description = $3,
-//	    flag_type = $4,
-//	    default_value = $5,
-//	    rollout_percentage = $6,
-//	    target_audience = $7,
-//	    metadata = $8,
-//	    updated_at = NOW()
-//	WHERE tenant_id = current_tenant_id()
+//	  name = $2,
+//	  description = $3,
+//	  flag_type = $4,
+//	  default_value = $5,
+//	  rollout_percentage = $6,
+//	  target_audience = $7,
+//	  metadata = $8,
+//	  updated_at = NOW()
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND id = $1
 //	  AND deleted_at IS NULL
-//	RETURNING id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+//	RETURNING
+//	  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 func (q *Queries) UpdateFeatureFlag(ctx context.Context, arg UpdateFeatureFlagParams) (*FeatureFlag, error) {
 	row := q.db.QueryRow(ctx, updateFeatureFlag,
 		arg.ID,

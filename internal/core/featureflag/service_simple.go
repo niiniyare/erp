@@ -158,8 +158,8 @@ func (s *simpleServiceImpl) UpdateFeatureFlag(ctx context.Context, id uuid.UUID,
 			go func() {
 				// Determine change type based on what was updated
 				changeType := "update_config"
-				oldValue := oldFlag.DefaultValue
-				newValue := flag.DefaultValue
+				var oldValue interface{} = oldFlag.DefaultValue
+				var newValue interface{} = flag.DefaultValue
 
 				if request.DefaultValue != nil {
 					if *request.DefaultValue != oldFlag.DefaultValue {

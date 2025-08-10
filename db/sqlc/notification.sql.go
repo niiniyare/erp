@@ -12,19 +12,30 @@ import (
 )
 
 const createUserNotificationPreferences = `-- name: CreateUserNotificationPreferences :one
-INSERT INTO notification_preferences (
-  tenant_id,
-  user_id,
-  email_notifications,
-  in_app_notifications,
-  slack_notifications,
-  notification_types,
-  preferred_channels,
-  quiet_hours
-) VALUES (
-  current_tenant_id(), $1, $2, $3, $4, $5, $6, $7
-)
-RETURNING id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
+INSERT INTO
+  notification_preferences (
+    tenant_id,
+    user_id,
+    email_notifications,
+    in_app_notifications,
+    slack_notifications,
+    notification_types,
+    preferred_channels,
+    quiet_hours
+  )
+VALUES
+  (
+    current_tenant_id(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7
+  )
+RETURNING
+  id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
 `
 
 type CreateUserNotificationPreferencesParams struct {
@@ -39,19 +50,30 @@ type CreateUserNotificationPreferencesParams struct {
 
 // CreateUserNotificationPreferences
 //
-//	INSERT INTO notification_preferences (
-//	  tenant_id,
-//	  user_id,
-//	  email_notifications,
-//	  in_app_notifications,
-//	  slack_notifications,
-//	  notification_types,
-//	  preferred_channels,
-//	  quiet_hours
-//	) VALUES (
-//	  current_tenant_id(), $1, $2, $3, $4, $5, $6, $7
-//	)
-//	RETURNING id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
+//	INSERT INTO
+//	  notification_preferences (
+//	    tenant_id,
+//	    user_id,
+//	    email_notifications,
+//	    in_app_notifications,
+//	    slack_notifications,
+//	    notification_types,
+//	    preferred_channels,
+//	    quiet_hours
+//	  )
+//	VALUES
+//	  (
+//	    current_tenant_id(),
+//	    $1,
+//	    $2,
+//	    $3,
+//	    $4,
+//	    $5,
+//	    $6,
+//	    $7
+//	  )
+//	RETURNING
+//	  id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
 func (q *Queries) CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error) {
 	row := q.db.QueryRow(ctx, createUserNotificationPreferences,
 		arg.UserID,
@@ -80,14 +102,24 @@ func (q *Queries) CreateUserNotificationPreferences(ctx context.Context, arg Cre
 }
 
 const getUserNotificationPreferences = `-- name: GetUserNotificationPreferences :one
-SELECT id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at FROM notification_preferences
-WHERE user_id = $1 AND tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
+FROM
+  notification_preferences
+WHERE
+  user_id = $1
+  AND tenant_id = current_tenant_id()
 `
 
 // GetUserNotificationPreferences
 //
-//	SELECT id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at FROM notification_preferences
-//	WHERE user_id = $1 AND tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
+//	FROM
+//	  notification_preferences
+//	WHERE
+//	  user_id = $1
+//	  AND tenant_id = current_tenant_id()
 func (q *Queries) GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreference, error) {
 	row := q.db.QueryRow(ctx, getUserNotificationPreferences, userID)
 	var i NotificationPreference
@@ -108,7 +140,8 @@ func (q *Queries) GetUserNotificationPreferences(ctx context.Context, userID uui
 }
 
 const updateUserNotificationPreferences = `-- name: UpdateUserNotificationPreferences :one
-UPDATE notification_preferences
+UPDATE
+  notification_preferences
 SET
   email_notifications = $2,
   in_app_notifications = $3,
@@ -117,8 +150,11 @@ SET
   preferred_channels = $6,
   quiet_hours = $7,
   updated_at = NOW()
-WHERE user_id = $1 AND tenant_id = current_tenant_id()
-RETURNING id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
+WHERE
+  user_id = $1
+  AND tenant_id = current_tenant_id()
+RETURNING
+  id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
 `
 
 type UpdateUserNotificationPreferencesParams struct {
@@ -133,7 +169,8 @@ type UpdateUserNotificationPreferencesParams struct {
 
 // UpdateUserNotificationPreferences
 //
-//	UPDATE notification_preferences
+//	UPDATE
+//	  notification_preferences
 //	SET
 //	  email_notifications = $2,
 //	  in_app_notifications = $3,
@@ -142,8 +179,11 @@ type UpdateUserNotificationPreferencesParams struct {
 //	  preferred_channels = $6,
 //	  quiet_hours = $7,
 //	  updated_at = NOW()
-//	WHERE user_id = $1 AND tenant_id = current_tenant_id()
-//	RETURNING id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
+//	WHERE
+//	  user_id = $1
+//	  AND tenant_id = current_tenant_id()
+//	RETURNING
+//	  id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
 func (q *Queries) UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error) {
 	row := q.db.QueryRow(ctx, updateUserNotificationPreferences,
 		arg.UserID,

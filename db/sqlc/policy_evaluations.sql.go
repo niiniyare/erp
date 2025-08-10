@@ -14,22 +14,53 @@ import (
 )
 
 const cacheEvaluationResult = `-- name: CacheEvaluationResult :exec
-
-INSERT INTO policy_evaluations (
-    tenant_id, user_id, resource_type, resource_id, action, entity_id, 
-    context_hash, decision, applicable_policies, policy_decisions, 
-    evaluation_time_ms, cache_key, expires_at
-) VALUES (
-    current_tenant_id(), $1, $2, $3, $4, $5, 
-    $6, $7, $8, $9, $10, $11, $12
-) ON CONFLICT (tenant_id, user_id, resource_type, resource_id, action, context_hash)
-DO UPDATE SET
-    decision = EXCLUDED.decision,
-    applicable_policies = EXCLUDED.applicable_policies,
-    policy_decisions = EXCLUDED.policy_decisions,
-    evaluation_time_ms = EXCLUDED.evaluation_time_ms,
-    evaluated_at = NOW(),
-    expires_at = EXCLUDED.expires_at
+INSERT INTO
+  policy_evaluations (
+    tenant_id,
+    user_id,
+    resource_type,
+    resource_id,
+    ACTION,
+    entity_id,
+    context_hash,
+    decision,
+    applicable_policies,
+    policy_decisions,
+    evaluation_time_ms,
+    cache_key,
+    expires_at
+  )
+VALUES
+  (
+    current_tenant_id(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10,
+    $11,
+    $12
+  ) ON CONFLICT (
+    tenant_id,
+    user_id,
+    resource_type,
+    resource_id,
+    ACTION,
+    context_hash
+  ) DO
+UPDATE
+SET
+  decision = EXCLUDED.decision,
+  applicable_policies = EXCLUDED.applicable_policies,
+  policy_decisions = EXCLUDED.policy_decisions,
+  evaluation_time_ms = EXCLUDED.evaluation_time_ms,
+  evaluated_at = NOW(),
+  expires_at = EXCLUDED.expires_at
 `
 
 type CacheEvaluationResultParams struct {
@@ -49,21 +80,53 @@ type CacheEvaluationResultParams struct {
 
 // Policy Evaluations CRUD Operations and Cache Management for ABAC
 //
-//	INSERT INTO policy_evaluations (
-//	    tenant_id, user_id, resource_type, resource_id, action, entity_id,
-//	    context_hash, decision, applicable_policies, policy_decisions,
-//	    evaluation_time_ms, cache_key, expires_at
-//	) VALUES (
-//	    current_tenant_id(), $1, $2, $3, $4, $5,
-//	    $6, $7, $8, $9, $10, $11, $12
-//	) ON CONFLICT (tenant_id, user_id, resource_type, resource_id, action, context_hash)
-//	DO UPDATE SET
-//	    decision = EXCLUDED.decision,
-//	    applicable_policies = EXCLUDED.applicable_policies,
-//	    policy_decisions = EXCLUDED.policy_decisions,
-//	    evaluation_time_ms = EXCLUDED.evaluation_time_ms,
-//	    evaluated_at = NOW(),
-//	    expires_at = EXCLUDED.expires_at
+//	INSERT INTO
+//	  policy_evaluations (
+//	    tenant_id,
+//	    user_id,
+//	    resource_type,
+//	    resource_id,
+//	    ACTION,
+//	    entity_id,
+//	    context_hash,
+//	    decision,
+//	    applicable_policies,
+//	    policy_decisions,
+//	    evaluation_time_ms,
+//	    cache_key,
+//	    expires_at
+//	  )
+//	VALUES
+//	  (
+//	    current_tenant_id(),
+//	    $1,
+//	    $2,
+//	    $3,
+//	    $4,
+//	    $5,
+//	    $6,
+//	    $7,
+//	    $8,
+//	    $9,
+//	    $10,
+//	    $11,
+//	    $12
+//	  ) ON CONFLICT (
+//	    tenant_id,
+//	    user_id,
+//	    resource_type,
+//	    resource_id,
+//	    ACTION,
+//	    context_hash
+//	  ) DO
+//	UPDATE
+//	SET
+//	  decision = EXCLUDED.decision,
+//	  applicable_policies = EXCLUDED.applicable_policies,
+//	  policy_decisions = EXCLUDED.policy_decisions,
+//	  evaluation_time_ms = EXCLUDED.evaluation_time_ms,
+//	  evaluated_at = NOW(),
+//	  expires_at = EXCLUDED.expires_at
 func (q *Queries) CacheEvaluationResult(ctx context.Context, arg CacheEvaluationResultParams) error {
 	_, err := q.db.Exec(ctx, cacheEvaluationResult,
 		arg.UserID,
@@ -83,27 +146,47 @@ func (q *Queries) CacheEvaluationResult(ctx context.Context, arg CacheEvaluation
 }
 
 const cleanupExpiredEvaluations = `-- name: CleanupExpiredEvaluations :exec
-DELETE FROM policy_evaluations 
-WHERE expires_at < NOW() AND tenant_id = current_tenant_id()
+DELETE FROM
+  policy_evaluations
+WHERE
+  expires_at < NOW()
+  AND tenant_id = current_tenant_id()
 `
 
 // CleanupExpiredEvaluations
 //
-//	DELETE FROM policy_evaluations
-//	WHERE expires_at < NOW() AND tenant_id = current_tenant_id()
+//	DELETE FROM
+//	  policy_evaluations
+//	WHERE
+//	  expires_at < NOW()
+//	  AND tenant_id = current_tenant_id()
 func (q *Queries) CleanupExpiredEvaluations(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, cleanupExpiredEvaluations)
 	return err
 }
 
 const countEvaluationsByDecision = `-- name: CountEvaluationsByDecision :one
-SELECT 
-    COUNT(CASE WHEN decision = 'ALLOW' THEN 1 END) as allow_count,
-    COUNT(CASE WHEN decision = 'DENY' THEN 1 END) as deny_count,
-    COUNT(CASE WHEN decision = 'NOT_APPLICABLE' THEN 1 END) as not_applicable_count,
-    COUNT(*) as total_count
-FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  COUNT(
+    CASE
+      WHEN decision = 'ALLOW' THEN 1
+    END
+  ) AS allow_count,
+  COUNT(
+    CASE
+      WHEN decision = 'DENY' THEN 1
+    END
+  ) AS deny_count,
+  COUNT(
+    CASE
+      WHEN decision = 'NOT_APPLICABLE' THEN 1
+    END
+  ) AS not_applicable_count,
+  COUNT(*) AS total_count
+FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
   AND evaluated_at >= $1
   AND evaluated_at <= $2
 `
@@ -123,12 +206,26 @@ type CountEvaluationsByDecisionRow struct {
 // CountEvaluationsByDecision
 //
 //	SELECT
-//	    COUNT(CASE WHEN decision = 'ALLOW' THEN 1 END) as allow_count,
-//	    COUNT(CASE WHEN decision = 'DENY' THEN 1 END) as deny_count,
-//	    COUNT(CASE WHEN decision = 'NOT_APPLICABLE' THEN 1 END) as not_applicable_count,
-//	    COUNT(*) as total_count
-//	FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
+//	  COUNT(
+//	    CASE
+//	      WHEN decision = 'ALLOW' THEN 1
+//	    END
+//	  ) AS allow_count,
+//	  COUNT(
+//	    CASE
+//	      WHEN decision = 'DENY' THEN 1
+//	    END
+//	  ) AS deny_count,
+//	  COUNT(
+//	    CASE
+//	      WHEN decision = 'NOT_APPLICABLE' THEN 1
+//	    END
+//	  ) AS not_applicable_count,
+//	  COUNT(*) AS total_count
+//	FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND evaluated_at >= $1
 //	  AND evaluated_at <= $2
 func (q *Queries) CountEvaluationsByDecision(ctx context.Context, arg CountEvaluationsByDecisionParams) (*CountEvaluationsByDecisionRow, error) {
@@ -144,15 +241,18 @@ func (q *Queries) CountEvaluationsByDecision(ctx context.Context, arg CountEvalu
 }
 
 const createPolicyEvaluation = `-- name: CreatePolicyEvaluation :one
-INSERT INTO policy_evaluations (
+INSERT INTO
+  policy_evaluations (
     user_id,
     resource_id,
-    action,
+    ACTION,
     context_hash,
     decision
-) VALUES (
-    $1, $2, $3, $4, $5
-) RETURNING id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+  )
+VALUES
+  ($1, $2, $3, $4, $5)
+RETURNING
+  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
 `
 
 type CreatePolicyEvaluationParams struct {
@@ -165,15 +265,18 @@ type CreatePolicyEvaluationParams struct {
 
 // CreatePolicyEvaluation
 //
-//	INSERT INTO policy_evaluations (
+//	INSERT INTO
+//	  policy_evaluations (
 //	    user_id,
 //	    resource_id,
-//	    action,
+//	    ACTION,
 //	    context_hash,
 //	    decision
-//	) VALUES (
-//	    $1, $2, $3, $4, $5
-//	) RETURNING id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+//	  )
+//	VALUES
+//	  ($1, $2, $3, $4, $5)
+//	RETURNING
+//	  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
 func (q *Queries) CreatePolicyEvaluation(ctx context.Context, arg CreatePolicyEvaluationParams) (*PolicyEvaluation, error) {
 	row := q.db.QueryRow(ctx, createPolicyEvaluation,
 		arg.UserID,
@@ -204,16 +307,26 @@ func (q *Queries) CreatePolicyEvaluation(ctx context.Context, arg CreatePolicyEv
 }
 
 const getCachedEvaluationResult = `-- name: GetCachedEvaluationResult :one
-SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
   AND user_id = $1
   AND resource_type = $2
-  AND ($3::UUID IS NULL AND resource_id IS NULL OR resource_id = $3)
-  AND action = $4
+  AND (
+    $3::UUID IS NULL
+    AND resource_id IS NULL
+    OR resource_id = $3
+  )
+  AND ACTION = $4
   AND context_hash = $5
   AND expires_at > NOW()
-ORDER BY evaluated_at DESC
-LIMIT 1
+ORDER BY
+  evaluated_at DESC
+LIMIT
+  1
 `
 
 type GetCachedEvaluationResultParams struct {
@@ -226,16 +339,26 @@ type GetCachedEvaluationResultParams struct {
 
 // GetCachedEvaluationResult
 //
-//	SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+//	FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND user_id = $1
 //	  AND resource_type = $2
-//	  AND ($3::UUID IS NULL AND resource_id IS NULL OR resource_id = $3)
-//	  AND action = $4
+//	  AND (
+//	    $3::UUID IS NULL
+//	    AND resource_id IS NULL
+//	    OR resource_id = $3
+//	  )
+//	  AND ACTION = $4
 //	  AND context_hash = $5
 //	  AND expires_at > NOW()
-//	ORDER BY evaluated_at DESC
-//	LIMIT 1
+//	ORDER BY
+//	  evaluated_at DESC
+//	LIMIT
+//	  1
 func (q *Queries) GetCachedEvaluationResult(ctx context.Context, arg GetCachedEvaluationResultParams) (*PolicyEvaluation, error) {
 	row := q.db.QueryRow(ctx, getCachedEvaluationResult,
 		arg.UserID,
@@ -266,22 +389,38 @@ func (q *Queries) GetCachedEvaluationResult(ctx context.Context, arg GetCachedEv
 }
 
 const getEvaluationCacheStats = `-- name: GetEvaluationCacheStats :one
-SELECT 
-    COUNT(*) as total_cached_evaluations,
-    COUNT(CASE WHEN expires_at > NOW() THEN 1 END) as active_evaluations,
-    COUNT(CASE WHEN expires_at <= NOW() THEN 1 END) as expired_evaluations,
-    COUNT(DISTINCT user_id) as unique_users,
-    COUNT(DISTINCT resource_type) as unique_resource_types,
-    COUNT(DISTINCT action) as unique_actions,
-    AVG(evaluation_time_ms) as avg_evaluation_time_ms,
-    MIN(evaluation_time_ms) as min_evaluation_time_ms,
-    MAX(evaluation_time_ms) as max_evaluation_time_ms,
-    ROUND(
-        (COUNT(CASE WHEN expires_at > NOW() THEN 1 END)::NUMERIC / 
-         NULLIF(COUNT(*), 0)) * 100, 2
-    ) as cache_hit_rate
-FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  COUNT(*) AS total_cached_evaluations,
+  COUNT(
+    CASE
+      WHEN expires_at > NOW() THEN 1
+    END
+  ) AS active_evaluations,
+  COUNT(
+    CASE
+      WHEN expires_at <= NOW() THEN 1
+    END
+  ) AS expired_evaluations,
+  COUNT(DISTINCT user_id) AS unique_users,
+  COUNT(DISTINCT resource_type) AS unique_resource_types,
+  COUNT(DISTINCT ACTION) AS unique_actions,
+  AVG(evaluation_time_ms) AS avg_evaluation_time_ms,
+  MIN(evaluation_time_ms) AS min_evaluation_time_ms,
+  MAX(evaluation_time_ms) AS max_evaluation_time_ms,
+  ROUND(
+    (
+      COUNT(
+        CASE
+          WHEN expires_at > NOW() THEN 1
+        END
+      )::NUMERIC / NULLIF(COUNT(*), 0)
+    ) * 100,
+    2
+  ) AS cache_hit_rate
+FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 type GetEvaluationCacheStatsRow struct {
@@ -300,21 +439,37 @@ type GetEvaluationCacheStatsRow struct {
 // GetEvaluationCacheStats
 //
 //	SELECT
-//	    COUNT(*) as total_cached_evaluations,
-//	    COUNT(CASE WHEN expires_at > NOW() THEN 1 END) as active_evaluations,
-//	    COUNT(CASE WHEN expires_at <= NOW() THEN 1 END) as expired_evaluations,
-//	    COUNT(DISTINCT user_id) as unique_users,
-//	    COUNT(DISTINCT resource_type) as unique_resource_types,
-//	    COUNT(DISTINCT action) as unique_actions,
-//	    AVG(evaluation_time_ms) as avg_evaluation_time_ms,
-//	    MIN(evaluation_time_ms) as min_evaluation_time_ms,
-//	    MAX(evaluation_time_ms) as max_evaluation_time_ms,
-//	    ROUND(
-//	        (COUNT(CASE WHEN expires_at > NOW() THEN 1 END)::NUMERIC /
-//	         NULLIF(COUNT(*), 0)) * 100, 2
-//	    ) as cache_hit_rate
-//	FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
+//	  COUNT(*) AS total_cached_evaluations,
+//	  COUNT(
+//	    CASE
+//	      WHEN expires_at > NOW() THEN 1
+//	    END
+//	  ) AS active_evaluations,
+//	  COUNT(
+//	    CASE
+//	      WHEN expires_at <= NOW() THEN 1
+//	    END
+//	  ) AS expired_evaluations,
+//	  COUNT(DISTINCT user_id) AS unique_users,
+//	  COUNT(DISTINCT resource_type) AS unique_resource_types,
+//	  COUNT(DISTINCT ACTION) AS unique_actions,
+//	  AVG(evaluation_time_ms) AS avg_evaluation_time_ms,
+//	  MIN(evaluation_time_ms) AS min_evaluation_time_ms,
+//	  MAX(evaluation_time_ms) AS max_evaluation_time_ms,
+//	  ROUND(
+//	    (
+//	      COUNT(
+//	        CASE
+//	          WHEN expires_at > NOW() THEN 1
+//	        END
+//	      )::NUMERIC / NULLIF(COUNT(*), 0)
+//	    ) * 100,
+//	    2
+//	  ) AS cache_hit_rate
+//	FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
 func (q *Queries) GetEvaluationCacheStats(ctx context.Context) (*GetEvaluationCacheStatsRow, error) {
 	row := q.db.QueryRow(ctx, getEvaluationCacheStats)
 	var i GetEvaluationCacheStatsRow
@@ -334,16 +489,29 @@ func (q *Queries) GetEvaluationCacheStats(ctx context.Context) (*GetEvaluationCa
 }
 
 const getEvaluationMetrics = `-- name: GetEvaluationMetrics :one
-SELECT 
-    AVG(evaluation_time_ms) as avg_evaluation_time,
-    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY evaluation_time_ms) as median_evaluation_time,
-    PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY evaluation_time_ms) as p95_evaluation_time,
-    PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY evaluation_time_ms) as p99_evaluation_time,
-    COUNT(*) as total_evaluations,
-    COUNT(DISTINCT user_id) as unique_users,
-    COUNT(DISTINCT resource_type || ':' || COALESCE(resource_id::TEXT, '')) as unique_resources
-FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  AVG(evaluation_time_ms) AS avg_evaluation_time,
+  PERCENTILE_CONT(0.5) WITHIN GROUP (
+    ORDER BY
+      evaluation_time_ms
+  ) AS median_evaluation_time,
+  PERCENTILE_CONT(0.95) WITHIN GROUP (
+    ORDER BY
+      evaluation_time_ms
+  ) AS p95_evaluation_time,
+  PERCENTILE_CONT(0.99) WITHIN GROUP (
+    ORDER BY
+      evaluation_time_ms
+  ) AS p99_evaluation_time,
+  COUNT(*) AS total_evaluations,
+  COUNT(DISTINCT user_id) AS unique_users,
+  COUNT(
+    DISTINCT resource_type || ':' || COALESCE(resource_id::TEXT, '')
+  ) AS unique_resources
+FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
   AND evaluated_at >= $1
   AND evaluated_at <= $2
 `
@@ -366,15 +534,28 @@ type GetEvaluationMetricsRow struct {
 // GetEvaluationMetrics
 //
 //	SELECT
-//	    AVG(evaluation_time_ms) as avg_evaluation_time,
-//	    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY evaluation_time_ms) as median_evaluation_time,
-//	    PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY evaluation_time_ms) as p95_evaluation_time,
-//	    PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY evaluation_time_ms) as p99_evaluation_time,
-//	    COUNT(*) as total_evaluations,
-//	    COUNT(DISTINCT user_id) as unique_users,
-//	    COUNT(DISTINCT resource_type || ':' || COALESCE(resource_id::TEXT, '')) as unique_resources
-//	FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
+//	  AVG(evaluation_time_ms) AS avg_evaluation_time,
+//	  PERCENTILE_CONT(0.5) WITHIN GROUP (
+//	    ORDER BY
+//	      evaluation_time_ms
+//	  ) AS median_evaluation_time,
+//	  PERCENTILE_CONT(0.95) WITHIN GROUP (
+//	    ORDER BY
+//	      evaluation_time_ms
+//	  ) AS p95_evaluation_time,
+//	  PERCENTILE_CONT(0.99) WITHIN GROUP (
+//	    ORDER BY
+//	      evaluation_time_ms
+//	  ) AS p99_evaluation_time,
+//	  COUNT(*) AS total_evaluations,
+//	  COUNT(DISTINCT user_id) AS unique_users,
+//	  COUNT(
+//	    DISTINCT resource_type || ':' || COALESCE(resource_id::TEXT, '')
+//	  ) AS unique_resources
+//	FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND evaluated_at >= $1
 //	  AND evaluated_at <= $2
 func (q *Queries) GetEvaluationMetrics(ctx context.Context, arg GetEvaluationMetricsParams) (*GetEvaluationMetricsRow, error) {
@@ -393,13 +574,19 @@ func (q *Queries) GetEvaluationMetrics(ctx context.Context, arg GetEvaluationMet
 }
 
 const getEvaluationsByDecision = `-- name: GetEvaluationsByDecision :many
-SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
   AND decision = $1
   AND evaluated_at >= $2
   AND evaluated_at <= $3
-ORDER BY evaluated_at DESC
-LIMIT $4 OFFSET $5
+ORDER BY
+  evaluated_at DESC
+LIMIT
+  $4 OFFSET $5
 `
 
 type GetEvaluationsByDecisionParams struct {
@@ -412,13 +599,19 @@ type GetEvaluationsByDecisionParams struct {
 
 // GetEvaluationsByDecision
 //
-//	SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+//	FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND decision = $1
 //	  AND evaluated_at >= $2
 //	  AND evaluated_at <= $3
-//	ORDER BY evaluated_at DESC
-//	LIMIT $4 OFFSET $5
+//	ORDER BY
+//	  evaluated_at DESC
+//	LIMIT
+//	  $4 OFFSET $5
 func (q *Queries) GetEvaluationsByDecision(ctx context.Context, arg GetEvaluationsByDecisionParams) ([]*PolicyEvaluation, error) {
 	rows, err := q.db.Query(ctx, getEvaluationsByDecision,
 		arg.Decision,
@@ -462,13 +655,25 @@ func (q *Queries) GetEvaluationsByDecision(ctx context.Context, arg GetEvaluatio
 }
 
 const getResourceEvaluationHistory = `-- name: GetResourceEvaluationHistory :many
-SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
   AND resource_type = $1
-  AND ($2::UUID IS NULL OR resource_id = $2)
-  AND ($3::VARCHAR IS NULL OR action = $3)
-ORDER BY evaluated_at DESC
-LIMIT $4 OFFSET $5
+  AND (
+    $2::UUID IS NULL
+    OR resource_id = $2
+  )
+  AND (
+    $3::VARCHAR IS NULL
+    OR ACTION = $3
+  )
+ORDER BY
+  evaluated_at DESC
+LIMIT
+  $4 OFFSET $5
 `
 
 type GetResourceEvaluationHistoryParams struct {
@@ -481,13 +686,25 @@ type GetResourceEvaluationHistoryParams struct {
 
 // GetResourceEvaluationHistory
 //
-//	SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+//	FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND resource_type = $1
-//	  AND ($2::UUID IS NULL OR resource_id = $2)
-//	  AND ($3::VARCHAR IS NULL OR action = $3)
-//	ORDER BY evaluated_at DESC
-//	LIMIT $4 OFFSET $5
+//	  AND (
+//	    $2::UUID IS NULL
+//	    OR resource_id = $2
+//	  )
+//	  AND (
+//	    $3::VARCHAR IS NULL
+//	    OR ACTION = $3
+//	  )
+//	ORDER BY
+//	  evaluated_at DESC
+//	LIMIT
+//	  $4 OFFSET $5
 func (q *Queries) GetResourceEvaluationHistory(ctx context.Context, arg GetResourceEvaluationHistoryParams) ([]*PolicyEvaluation, error) {
 	rows, err := q.db.Query(ctx, getResourceEvaluationHistory,
 		arg.ResourceType,
@@ -531,13 +748,25 @@ func (q *Queries) GetResourceEvaluationHistory(ctx context.Context, arg GetResou
 }
 
 const getUserEvaluationHistory = `-- name: GetUserEvaluationHistory :many
-SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
   AND user_id = $1
-  AND ($2::VARCHAR IS NULL OR resource_type = $2)
-  AND ($3::VARCHAR IS NULL OR action = $3)
-ORDER BY evaluated_at DESC
-LIMIT $4 OFFSET $5
+  AND (
+    $2::VARCHAR IS NULL
+    OR resource_type = $2
+  )
+  AND (
+    $3::VARCHAR IS NULL
+    OR ACTION = $3
+  )
+ORDER BY
+  evaluated_at DESC
+LIMIT
+  $4 OFFSET $5
 `
 
 type GetUserEvaluationHistoryParams struct {
@@ -550,13 +779,25 @@ type GetUserEvaluationHistoryParams struct {
 
 // GetUserEvaluationHistory
 //
-//	SELECT id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
+//	FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND user_id = $1
-//	  AND ($2::VARCHAR IS NULL OR resource_type = $2)
-//	  AND ($3::VARCHAR IS NULL OR action = $3)
-//	ORDER BY evaluated_at DESC
-//	LIMIT $4 OFFSET $5
+//	  AND (
+//	    $2::VARCHAR IS NULL
+//	    OR resource_type = $2
+//	  )
+//	  AND (
+//	    $3::VARCHAR IS NULL
+//	    OR ACTION = $3
+//	  )
+//	ORDER BY
+//	  evaluated_at DESC
+//	LIMIT
+//	  $4 OFFSET $5
 func (q *Queries) GetUserEvaluationHistory(ctx context.Context, arg GetUserEvaluationHistoryParams) ([]*PolicyEvaluation, error) {
 	rows, err := q.db.Query(ctx, getUserEvaluationHistory,
 		arg.UserID,
@@ -600,56 +841,73 @@ func (q *Queries) GetUserEvaluationHistory(ctx context.Context, arg GetUserEvalu
 }
 
 const invalidateActionEvaluations = `-- name: InvalidateActionEvaluations :exec
-DELETE FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
-  AND action = $1
+DELETE FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
+  AND ACTION = $1
 `
 
 // InvalidateActionEvaluations
 //
-//	DELETE FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
-//	  AND action = $1
+//	DELETE FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND ACTION = $1
 func (q *Queries) InvalidateActionEvaluations(ctx context.Context, action string) error {
 	_, err := q.db.Exec(ctx, invalidateActionEvaluations, action)
 	return err
 }
 
 const invalidateAllEvaluations = `-- name: InvalidateAllEvaluations :exec
-DELETE FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
+DELETE FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 // InvalidateAllEvaluations
 //
-//	DELETE FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
+//	DELETE FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
 func (q *Queries) InvalidateAllEvaluations(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, invalidateAllEvaluations)
 	return err
 }
 
 const invalidatePolicyEvaluations = `-- name: InvalidatePolicyEvaluations :exec
-DELETE FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
-  AND applicable_policies && $1::UUID[]
+DELETE FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
+  AND applicable_policies && $1::UUID []
 `
 
 // InvalidatePolicyEvaluations
 //
-//	DELETE FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
-//	  AND applicable_policies && $1::UUID[]
+//	DELETE FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	  AND applicable_policies && $1::UUID []
 func (q *Queries) InvalidatePolicyEvaluations(ctx context.Context, dollar_1 []uuid.UUID) error {
 	_, err := q.db.Exec(ctx, invalidatePolicyEvaluations, dollar_1)
 	return err
 }
 
 const invalidateResourceEvaluations = `-- name: InvalidateResourceEvaluations :exec
-DELETE FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
+DELETE FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
   AND resource_type = $1
-  AND ($2::UUID IS NULL OR resource_id = $2)
+  AND (
+    $2::UUID IS NULL
+    OR resource_id = $2
+  )
 `
 
 type InvalidateResourceEvaluationsParams struct {
@@ -659,25 +917,34 @@ type InvalidateResourceEvaluationsParams struct {
 
 // InvalidateResourceEvaluations
 //
-//	DELETE FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
+//	DELETE FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND resource_type = $1
-//	  AND ($2::UUID IS NULL OR resource_id = $2)
+//	  AND (
+//	    $2::UUID IS NULL
+//	    OR resource_id = $2
+//	  )
 func (q *Queries) InvalidateResourceEvaluations(ctx context.Context, arg InvalidateResourceEvaluationsParams) error {
 	_, err := q.db.Exec(ctx, invalidateResourceEvaluations, arg.ResourceType, arg.Column2)
 	return err
 }
 
 const invalidateUserEvaluations = `-- name: InvalidateUserEvaluations :exec
-DELETE FROM policy_evaluations 
-WHERE tenant_id = current_tenant_id()
+DELETE FROM
+  policy_evaluations
+WHERE
+  tenant_id = current_tenant_id()
   AND user_id = $1
 `
 
 // InvalidateUserEvaluations
 //
-//	DELETE FROM policy_evaluations
-//	WHERE tenant_id = current_tenant_id()
+//	DELETE FROM
+//	  policy_evaluations
+//	WHERE
+//	  tenant_id = current_tenant_id()
 //	  AND user_id = $1
 func (q *Queries) InvalidateUserEvaluations(ctx context.Context, userID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, invalidateUserEvaluations, userID)

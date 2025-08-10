@@ -15,25 +15,38 @@ import (
 )
 
 const bulkSoftDeleteTenants = `-- name: BulkSoftDeleteTenants :exec
-UPDATE tenants
-SET deleted_at = NOW(), updated_at = NOW()
-WHERE id = ANY($1::UUID[])
+UPDATE
+  tenants
+SET
+  deleted_at = NOW(),
+  updated_at = NOW()
+WHERE
+  id = ANY($1::UUID [])
 `
 
 // BulkSoftDeleteTenants
 //
-//	UPDATE tenants
-//	SET deleted_at = NOW(), updated_at = NOW()
-//	WHERE id = ANY($1::UUID[])
+//	UPDATE
+//	  tenants
+//	SET
+//	  deleted_at = NOW(),
+//	  updated_at = NOW()
+//	WHERE
+//	  id = ANY($1::UUID [])
 func (q *Queries) BulkSoftDeleteTenants(ctx context.Context, tenantIds []uuid.UUID) error {
 	_, err := q.db.Exec(ctx, bulkSoftDeleteTenants, tenantIds)
 	return err
 }
 
 const bulkUpdateTenantStatus = `-- name: BulkUpdateTenantStatus :exec
-UPDATE tenants
-SET status = $1, updated_at = NOW()
-WHERE id = ANY($2::UUID[]) AND deleted_at IS NULL
+UPDATE
+  tenants
+SET
+  STATUS = $1,
+  updated_at = NOW()
+WHERE
+  id = ANY($2::UUID [])
+  AND deleted_at IS NULL
 `
 
 type BulkUpdateTenantStatusParams struct {
@@ -45,21 +58,30 @@ type BulkUpdateTenantStatusParams struct {
 // BULK OPERATIONS
 // =====================================================
 //
-//	UPDATE tenants
-//	SET status = $1, updated_at = NOW()
-//	WHERE id = ANY($2::UUID[]) AND deleted_at IS NULL
+//	UPDATE
+//	  tenants
+//	SET
+//	  STATUS = $1,
+//	  updated_at = NOW()
+//	WHERE
+//	  id = ANY($2::UUID [])
+//	  AND deleted_at IS NULL
 func (q *Queries) BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error {
 	_, err := q.db.Exec(ctx, bulkUpdateTenantStatus, arg.Status, arg.ID)
 	return err
 }
 
 const checkCurrentTenantExists = `-- name: CheckCurrentTenantExists :one
-
-
-SELECT EXISTS(
-    SELECT 1 FROM tenants 
-    WHERE id = current_tenant_id() AND deleted_at IS NULL
-)
+SELECT
+  EXISTS(
+    SELECT
+      1
+    FROM
+      tenants
+    WHERE
+      id = current_tenant_id()
+      AND deleted_at IS NULL
+  )
 `
 
 // =====================================================
@@ -67,10 +89,16 @@ SELECT EXISTS(
 // =====================================================
 // Current tenant utilities
 //
-//	SELECT EXISTS(
-//	    SELECT 1 FROM tenants
-//	    WHERE id = current_tenant_id() AND deleted_at IS NULL
-//	)
+//	SELECT
+//	  EXISTS(
+//	    SELECT
+//	      1
+//	    FROM
+//	      tenants
+//	    WHERE
+//	      id = current_tenant_id()
+//	      AND deleted_at IS NULL
+//	  )
 func (q *Queries) CheckCurrentTenantExists(ctx context.Context) (bool, error) {
 	row := q.db.QueryRow(ctx, checkCurrentTenantExists)
 	var exists bool
@@ -79,18 +107,30 @@ func (q *Queries) CheckCurrentTenantExists(ctx context.Context) (bool, error) {
 }
 
 const checkSubdomainExists = `-- name: CheckSubdomainExists :one
-SELECT EXISTS(
-    SELECT 1 FROM tenants 
-    WHERE subdomain = $1 AND deleted_at IS NULL
-)
+SELECT
+  EXISTS(
+    SELECT
+      1
+    FROM
+      tenants
+    WHERE
+      subdomain = $1
+      AND deleted_at IS NULL
+  )
 `
 
 // CheckSubdomainExists
 //
-//	SELECT EXISTS(
-//	    SELECT 1 FROM tenants
-//	    WHERE subdomain = $1 AND deleted_at IS NULL
-//	)
+//	SELECT
+//	  EXISTS(
+//	    SELECT
+//	      1
+//	    FROM
+//	      tenants
+//	    WHERE
+//	      subdomain = $1
+//	      AND deleted_at IS NULL
+//	  )
 func (q *Queries) CheckSubdomainExists(ctx context.Context, subdomain *string) (bool, error) {
 	row := q.db.QueryRow(ctx, checkSubdomainExists, subdomain)
 	var exists bool
@@ -99,18 +139,30 @@ func (q *Queries) CheckSubdomainExists(ctx context.Context, subdomain *string) (
 }
 
 const checkTenantExists = `-- name: CheckTenantExists :one
-SELECT EXISTS(
-    SELECT 1 FROM tenants 
-    WHERE id = $1 AND deleted_at IS NULL
-)
+SELECT
+  EXISTS(
+    SELECT
+      1
+    FROM
+      tenants
+    WHERE
+      id = $1
+      AND deleted_at IS NULL
+  )
 `
 
 // CheckTenantExists
 //
-//	SELECT EXISTS(
-//	    SELECT 1 FROM tenants
-//	    WHERE id = $1 AND deleted_at IS NULL
-//	)
+//	SELECT
+//	  EXISTS(
+//	    SELECT
+//	      1
+//	    FROM
+//	      tenants
+//	    WHERE
+//	      id = $1
+//	      AND deleted_at IS NULL
+//	  )
 func (q *Queries) CheckTenantExists(ctx context.Context, id uuid.UUID) (bool, error) {
 	row := q.db.QueryRow(ctx, checkTenantExists, id)
 	var exists bool
@@ -119,7 +171,8 @@ func (q *Queries) CheckTenantExists(ctx context.Context, id uuid.UUID) (bool, er
 }
 
 const checkTenantLimits = `-- name: CheckTenantLimits :one
-SELECT check_tenant_limits(current_tenant_id(), $1, $2)
+SELECT
+  check_tenant_limits(current_tenant_id(), $1, $2)
 `
 
 type CheckTenantLimitsParams struct {
@@ -129,7 +182,8 @@ type CheckTenantLimitsParams struct {
 
 // CheckTenantLimits
 //
-//	SELECT check_tenant_limits(current_tenant_id(), $1, $2)
+//	SELECT
+//	  check_tenant_limits(current_tenant_id(), $1, $2)
 func (q *Queries) CheckTenantLimits(ctx context.Context, arg CheckTenantLimitsParams) (bool, error) {
 	row := q.db.QueryRow(ctx, checkTenantLimits, arg.PCheckType, arg.PAdditionalUsage)
 	var check_tenant_limits bool
@@ -138,18 +192,30 @@ func (q *Queries) CheckTenantLimits(ctx context.Context, arg CheckTenantLimitsPa
 }
 
 const checkTenantNameExists = `-- name: CheckTenantNameExists :one
-SELECT EXISTS(
-    SELECT 1 FROM tenants 
-    WHERE name = $1 AND deleted_at IS NULL
-)
+SELECT
+  EXISTS(
+    SELECT
+      1
+    FROM
+      tenants
+    WHERE
+      name = $1
+      AND deleted_at IS NULL
+  )
 `
 
 // CheckTenantNameExists
 //
-//	SELECT EXISTS(
-//	    SELECT 1 FROM tenants
-//	    WHERE name = $1 AND deleted_at IS NULL
-//	)
+//	SELECT
+//	  EXISTS(
+//	    SELECT
+//	      1
+//	    FROM
+//	      tenants
+//	    WHERE
+//	      name = $1
+//	      AND deleted_at IS NULL
+//	  )
 func (q *Queries) CheckTenantNameExists(ctx context.Context, name string) (bool, error) {
 	row := q.db.QueryRow(ctx, checkTenantNameExists, name)
 	var exists bool
@@ -158,10 +224,23 @@ func (q *Queries) CheckTenantNameExists(ctx context.Context, name string) (bool,
 }
 
 const countFilteredTenants = `-- name: CountFilteredTenants :one
-SELECT COUNT(*) FROM tenants
-WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
-  AND ($2::varchar IS NULL OR status = $2)
-  AND ($3::varchar IS NULL OR industry = $3)
+SELECT
+  COUNT(*)
+FROM
+  tenants
+WHERE
+  (
+    $1::varchar IS NULL
+    OR name ILIKE '%' || $1 || '%'
+  )
+  AND (
+    $2::varchar IS NULL
+    OR STATUS = $2
+  )
+  AND (
+    $3::varchar IS NULL
+    OR industry = $3
+  )
   AND deleted_at IS NULL
 `
 
@@ -173,10 +252,23 @@ type CountFilteredTenantsParams struct {
 
 // CountFilteredTenants
 //
-//	SELECT COUNT(*) FROM tenants
-//	WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
-//	  AND ($2::varchar IS NULL OR status = $2)
-//	  AND ($3::varchar IS NULL OR industry = $3)
+//	SELECT
+//	  COUNT(*)
+//	FROM
+//	  tenants
+//	WHERE
+//	  (
+//	    $1::varchar IS NULL
+//	    OR name ILIKE '%' || $1 || '%'
+//	  )
+//	  AND (
+//	    $2::varchar IS NULL
+//	    OR STATUS = $2
+//	  )
+//	  AND (
+//	    $3::varchar IS NULL
+//	    OR industry = $3
+//	  )
 //	  AND deleted_at IS NULL
 func (q *Queries) CountFilteredTenants(ctx context.Context, arg CountFilteredTenantsParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countFilteredTenants, arg.NameFilter, arg.StatusFilter, arg.IndustryFilter)
@@ -186,14 +278,22 @@ func (q *Queries) CountFilteredTenants(ctx context.Context, arg CountFilteredTen
 }
 
 const countTenants = `-- name: CountTenants :one
-SELECT COUNT(*) FROM tenants
-WHERE deleted_at IS NULL
+SELECT
+  COUNT(*)
+FROM
+  tenants
+WHERE
+  deleted_at IS NULL
 `
 
 // CountTenants
 //
-//	SELECT COUNT(*) FROM tenants
-//	WHERE deleted_at IS NULL
+//	SELECT
+//	  COUNT(*)
+//	FROM
+//	  tenants
+//	WHERE
+//	  deleted_at IS NULL
 func (q *Queries) CountTenants(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, countTenants)
 	var count int64
@@ -202,22 +302,26 @@ func (q *Queries) CountTenants(ctx context.Context) (int64, error) {
 }
 
 const createDefaultTenantConfiguration = `-- name: CreateDefaultTenantConfiguration :exec
-SELECT create_default_tenant_configuration(current_tenant_id())
+SELECT
+  create_default_tenant_configuration(current_tenant_id())
 `
 
 // CreateDefaultTenantConfiguration
 //
-//	SELECT create_default_tenant_configuration(current_tenant_id())
+//	SELECT
+//	  create_default_tenant_configuration(current_tenant_id())
 func (q *Queries) CreateDefaultTenantConfiguration(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, createDefaultTenantConfiguration)
 	return err
 }
 
 const createTenant = `-- name: CreateTenant :one
-
-INSERT INTO tenants (name, slug, email, subdomain, status, industry)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+INSERT INTO
+  tenants (name, slug, email, subdomain, STATUS, industry)
+VALUES
+  ($1, $2, $3, $4, $5, $6)
+RETURNING
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 `
 
 type CreateTenantParams struct {
@@ -234,9 +338,12 @@ type CreateTenantParams struct {
 // Note: These queries are for system administrators managing tenants
 // =====================================================
 //
-//	INSERT INTO tenants (name, slug, email, subdomain, status, industry)
-//	VALUES ($1, $2, $3, $4, $5, $6)
-//	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	INSERT INTO
+//	  tenants (name, slug, email, subdomain, STATUS, industry)
+//	VALUES
+//	  ($1, $2, $3, $4, $5, $6)
+//	RETURNING
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, createTenant,
 		arg.Name,
@@ -271,14 +378,42 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (*Te
 }
 
 const createTenantComplete = `-- name: CreateTenantComplete :one
-
-INSERT INTO tenants (
-    name, slug, email, subdomain, status, timezone, currency_code,
-    metadata, industry, company_size, tax_id, registration_number,
-    legal_entity_type, settings
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-) RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+INSERT INTO
+  tenants (
+    name,
+    slug,
+    email,
+    subdomain,
+    STATUS,
+    timezone,
+    currency_code,
+    metadata,
+    industry,
+    company_size,
+    tax_id,
+    registration_number,
+    legal_entity_type,
+    settings
+  )
+VALUES
+  (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10,
+    $11,
+    $12,
+    $13,
+    $14
+  )
+RETURNING
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 `
 
 type CreateTenantCompleteParams struct {
@@ -302,13 +437,42 @@ type CreateTenantCompleteParams struct {
 // ENHANCED TENANT QUERIES WITH NEW FIELDS
 // =====================================================
 //
-//	INSERT INTO tenants (
-//	    name, slug, email, subdomain, status, timezone, currency_code,
-//	    metadata, industry, company_size, tax_id, registration_number,
-//	    legal_entity_type, settings
-//	) VALUES (
-//	    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-//	) RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	INSERT INTO
+//	  tenants (
+//	    name,
+//	    slug,
+//	    email,
+//	    subdomain,
+//	    STATUS,
+//	    timezone,
+//	    currency_code,
+//	    metadata,
+//	    industry,
+//	    company_size,
+//	    tax_id,
+//	    registration_number,
+//	    legal_entity_type,
+//	    settings
+//	  )
+//	VALUES
+//	  (
+//	    $1,
+//	    $2,
+//	    $3,
+//	    $4,
+//	    $5,
+//	    $6,
+//	    $7,
+//	    $8,
+//	    $9,
+//	    $10,
+//	    $11,
+//	    $12,
+//	    $13,
+//	    $14
+//	  )
+//	RETURNING
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 func (q *Queries) CreateTenantComplete(ctx context.Context, arg CreateTenantCompleteParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, createTenantComplete,
 		arg.Name,
@@ -351,17 +515,46 @@ func (q *Queries) CreateTenantComplete(ctx context.Context, arg CreateTenantComp
 }
 
 const createTenantConfiguration = `-- name: CreateTenantConfiguration :one
-
-
-
-INSERT INTO tenant_configurations (
-    tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota,
-    features, modules_enabled, accounting_method, fiscal_year_start_month, 
-    default_currency, date_format, number_format, language_code,
-    password_policy, webhook_endpoints, api_rate_limits
-) VALUES (
-    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
-) RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+INSERT INTO
+  tenant_configurations (
+    tenant_id,
+    max_users,
+    max_entities,
+    max_transactions_per_month,
+    storage_quota,
+    features,
+    modules_enabled,
+    accounting_method,
+    fiscal_year_start_month,
+    default_currency,
+    date_format,
+    number_format,
+    language_code,
+    password_policy,
+    webhook_endpoints,
+    api_rate_limits
+  )
+VALUES
+  (
+    current_tenant_id(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10,
+    $11,
+    $12,
+    $13,
+    $14,
+    $15
+  )
+RETURNING
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 `
 
 type CreateTenantConfigurationParams struct {
@@ -648,14 +841,46 @@ type CreateTenantConfigurationParams struct {
 // TENANT CONFIGURATIONS QUERIES (RLS-AWARE)
 // =====================================================
 //
-//	INSERT INTO tenant_configurations (
-//	    tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota,
-//	    features, modules_enabled, accounting_method, fiscal_year_start_month,
-//	    default_currency, date_format, number_format, language_code,
-//	    password_policy, webhook_endpoints, api_rate_limits
-//	) VALUES (
-//	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
-//	) RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+//	INSERT INTO
+//	  tenant_configurations (
+//	    tenant_id,
+//	    max_users,
+//	    max_entities,
+//	    max_transactions_per_month,
+//	    storage_quota,
+//	    features,
+//	    modules_enabled,
+//	    accounting_method,
+//	    fiscal_year_start_month,
+//	    default_currency,
+//	    date_format,
+//	    number_format,
+//	    language_code,
+//	    password_policy,
+//	    webhook_endpoints,
+//	    api_rate_limits
+//	  )
+//	VALUES
+//	  (
+//	    current_tenant_id(),
+//	    $1,
+//	    $2,
+//	    $3,
+//	    $4,
+//	    $5,
+//	    $6,
+//	    $7,
+//	    $8,
+//	    $9,
+//	    $10,
+//	    $11,
+//	    $12,
+//	    $13,
+//	    $14,
+//	    $15
+//	  )
+//	RETURNING
+//	  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 func (q *Queries) CreateTenantConfiguration(ctx context.Context, arg CreateTenantConfigurationParams) (*TenantConfiguration, error) {
 	row := q.db.QueryRow(ctx, createTenantConfiguration,
 		arg.MaxUsers,
@@ -699,27 +924,50 @@ func (q *Queries) CreateTenantConfiguration(ctx context.Context, arg CreateTenan
 }
 
 const deleteTenant = `-- name: DeleteTenant :exec
-DELETE FROM tenants
+DELETE FROM
+  tenants
 `
 
 // DeleteTenant
 //
-//	DELETE FROM tenants
+//	DELETE FROM
+//	  tenants
 func (q *Queries) DeleteTenant(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, deleteTenant)
 	return err
 }
 
 const deleteTenantConfiguration = `-- name: DeleteTenantConfiguration :exec
-
-
-INSERT INTO tenant_usage_stats (
-    tenant_id, period_start, period_end, active_users, total_entities,
-    total_transactions, storage_used, api_calls, avg_response_time,
-    error_rate, monthly_revenue
-) VALUES (
-    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-) RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+INSERT INTO
+  tenant_usage_stats (
+    tenant_id,
+    period_start,
+    period_end,
+    active_users,
+    total_entities,
+    total_transactions,
+    storage_used,
+    api_calls,
+    avg_response_time,
+    error_rate,
+    monthly_revenue
+  )
+VALUES
+  (
+    current_tenant_id(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10
+  )
+RETURNING
+  tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
 `
 
 type DeleteTenantConfigurationParams struct {
@@ -740,13 +988,36 @@ type DeleteTenantConfigurationParams struct {
 // TENANT USAGE STATISTICS QUERIES (RLS-AWARE)
 // =====================================================
 //
-//	INSERT INTO tenant_usage_stats (
-//	    tenant_id, period_start, period_end, active_users, total_entities,
-//	    total_transactions, storage_used, api_calls, avg_response_time,
-//	    error_rate, monthly_revenue
-//	) VALUES (
-//	    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-//	) RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+//	INSERT INTO
+//	  tenant_usage_stats (
+//	    tenant_id,
+//	    period_start,
+//	    period_end,
+//	    active_users,
+//	    total_entities,
+//	    total_transactions,
+//	    storage_used,
+//	    api_calls,
+//	    avg_response_time,
+//	    error_rate,
+//	    monthly_revenue
+//	  )
+//	VALUES
+//	  (
+//	    current_tenant_id(),
+//	    $1,
+//	    $2,
+//	    $3,
+//	    $4,
+//	    $5,
+//	    $6,
+//	    $7,
+//	    $8,
+//	    $9,
+//	    $10
+//	  )
+//	RETURNING
+//	  tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
 func (q *Queries) DeleteTenantConfiguration(ctx context.Context, arg DeleteTenantConfigurationParams) error {
 	_, err := q.db.Exec(ctx, deleteTenantConfiguration,
 		arg.PeriodStart,
@@ -764,17 +1035,19 @@ func (q *Queries) DeleteTenantConfiguration(ctx context.Context, arg DeleteTenan
 }
 
 const deleteTenantUsageStats = `-- name: DeleteTenantUsageStats :exec
-DELETE FROM tenant_usage_stats
-
-WHERE period_start = $1
+DELETE FROM
+  tenant_usage_stats
+WHERE
+  period_start = $1
   AND tenant_id = current_tenant_id()
 `
 
 // DeleteTenantUsageStats
 //
-//	DELETE FROM tenant_usage_stats
-//
-//	WHERE period_start = $1
+//	DELETE FROM
+//	  tenant_usage_stats
+//	WHERE
+//	  period_start = $1
 //	  AND tenant_id = current_tenant_id()
 func (q *Queries) DeleteTenantUsageStats(ctx context.Context, periodStart time.Time) error {
 	_, err := q.db.Exec(ctx, deleteTenantUsageStats, periodStart)
@@ -782,18 +1055,44 @@ func (q *Queries) DeleteTenantUsageStats(ctx context.Context, periodStart time.T
 }
 
 const filterTenants = `-- name: FilterTenants :many
-
-SELECT id, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
-WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
-  AND ($2::varchar IS NULL OR status = $2)
-  AND ($3::varchar IS NULL OR industry = $3)
+SELECT
+  id,
+  name,
+  subdomain,
+  STATUS,
+  industry,
+  created_at,
+  updated_at,
+  deleted_at
+FROM
+  tenants
+WHERE
+  (
+    $1::varchar IS NULL
+    OR name ILIKE '%' || $1 || '%'
+  )
+  AND (
+    $2::varchar IS NULL
+    OR STATUS = $2
+  )
+  AND (
+    $3::varchar IS NULL
+    OR industry = $3
+  )
   AND deleted_at IS NULL
-ORDER BY 
-  CASE WHEN $4::varchar = 'name' THEN name END ASC,
-  CASE WHEN $4::varchar = 'created_at' THEN created_at END DESC,
-  CASE WHEN $4::varchar = 'updated_at' THEN updated_at END DESC,
+ORDER BY
+  CASE
+    WHEN $4::varchar = 'name' THEN name
+  END ASC,
+  CASE
+    WHEN $4::varchar = 'created_at' THEN created_at
+  END DESC,
+  CASE
+    WHEN $4::varchar = 'updated_at' THEN updated_at
+  END DESC,
   id DESC
-LIMIT $6 OFFSET $5
+LIMIT
+  $6 OFFSET $5
 `
 
 type FilterTenantsParams struct {
@@ -820,17 +1119,44 @@ type FilterTenantsRow struct {
 // ADVANCED QUERIES WITH FILTERS
 // =====================================================
 //
-//	SELECT id, name, subdomain, status, industry, created_at, updated_at, deleted_at FROM tenants
-//	WHERE ($1::varchar IS NULL OR name ILIKE '%' || $1 || '%')
-//	  AND ($2::varchar IS NULL OR status = $2)
-//	  AND ($3::varchar IS NULL OR industry = $3)
+//	SELECT
+//	  id,
+//	  name,
+//	  subdomain,
+//	  STATUS,
+//	  industry,
+//	  created_at,
+//	  updated_at,
+//	  deleted_at
+//	FROM
+//	  tenants
+//	WHERE
+//	  (
+//	    $1::varchar IS NULL
+//	    OR name ILIKE '%' || $1 || '%'
+//	  )
+//	  AND (
+//	    $2::varchar IS NULL
+//	    OR STATUS = $2
+//	  )
+//	  AND (
+//	    $3::varchar IS NULL
+//	    OR industry = $3
+//	  )
 //	  AND deleted_at IS NULL
 //	ORDER BY
-//	  CASE WHEN $4::varchar = 'name' THEN name END ASC,
-//	  CASE WHEN $4::varchar = 'created_at' THEN created_at END DESC,
-//	  CASE WHEN $4::varchar = 'updated_at' THEN updated_at END DESC,
+//	  CASE
+//	    WHEN $4::varchar = 'name' THEN name
+//	  END ASC,
+//	  CASE
+//	    WHEN $4::varchar = 'created_at' THEN created_at
+//	  END DESC,
+//	  CASE
+//	    WHEN $4::varchar = 'updated_at' THEN updated_at
+//	  END DESC,
 //	  id DESC
-//	LIMIT $6 OFFSET $5
+//	LIMIT
+//	  $6 OFFSET $5
 func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]*FilterTenantsRow, error) {
 	rows, err := q.db.Query(ctx, filterTenants,
 		arg.NameFilter,
@@ -868,16 +1194,28 @@ func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([
 }
 
 const getActiveTenants = `-- name: GetActiveTenants :many
-SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-WHERE status = 'active' AND deleted_at IS NULL
-ORDER BY name
+SELECT
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+FROM
+  tenants
+WHERE
+  STATUS = 'active'
+  AND deleted_at IS NULL
+ORDER BY
+  name
 `
 
 // GetActiveTenants
 //
-//	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-//	WHERE status = 'active' AND deleted_at IS NULL
-//	ORDER BY name
+//	SELECT
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	FROM
+//	  tenants
+//	WHERE
+//	  STATUS = 'active'
+//	  AND deleted_at IS NULL
+//	ORDER BY
+//	  name
 func (q *Queries) GetActiveTenants(ctx context.Context) ([]*Tenant, error) {
 	rows, err := q.db.Query(ctx, getActiveTenants)
 	if err != nil {
@@ -918,20 +1256,32 @@ func (q *Queries) GetActiveTenants(ctx context.Context) ([]*Tenant, error) {
 }
 
 const getAllTenantsRevenueAnalytics = `-- name: GetAllTenantsRevenueAnalytics :many
-SELECT 
-    t.id,
-    t.name,
-    t.industry,
-    SUM(tus.monthly_revenue) as total_revenue,
-    AVG(tus.monthly_revenue) as avg_monthly_revenue,
-    COUNT(tus.period_start) as months_tracked
-FROM tenants t
-LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
-WHERE t.deleted_at IS NULL
-  AND (tus.period_start IS NULL OR tus.period_start >= $1)
-  AND (tus.period_end IS NULL OR tus.period_end <= $2)
-GROUP BY t.id, t.name, t.industry
-ORDER BY total_revenue DESC NULLS LAST
+SELECT
+  t.id,
+  t.name,
+  t.industry,
+  SUM(tus.monthly_revenue) AS total_revenue,
+  AVG(tus.monthly_revenue) AS avg_monthly_revenue,
+  COUNT(tus.period_start) AS months_tracked
+FROM
+  tenants t
+  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+WHERE
+  t.deleted_at IS NULL
+  AND (
+    tus.period_start IS NULL
+    OR tus.period_start >= $1
+  )
+  AND (
+    tus.period_end IS NULL
+    OR tus.period_end <= $2
+  )
+GROUP BY
+  t.id,
+  t.name,
+  t.industry
+ORDER BY
+  total_revenue DESC NULLS LAST
 `
 
 type GetAllTenantsRevenueAnalyticsParams struct {
@@ -951,19 +1301,31 @@ type GetAllTenantsRevenueAnalyticsRow struct {
 // Admin-level revenue analytics (cross-tenant view)
 //
 //	SELECT
-//	    t.id,
-//	    t.name,
-//	    t.industry,
-//	    SUM(tus.monthly_revenue) as total_revenue,
-//	    AVG(tus.monthly_revenue) as avg_monthly_revenue,
-//	    COUNT(tus.period_start) as months_tracked
-//	FROM tenants t
-//	LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
-//	WHERE t.deleted_at IS NULL
-//	  AND (tus.period_start IS NULL OR tus.period_start >= $1)
-//	  AND (tus.period_end IS NULL OR tus.period_end <= $2)
-//	GROUP BY t.id, t.name, t.industry
-//	ORDER BY total_revenue DESC NULLS LAST
+//	  t.id,
+//	  t.name,
+//	  t.industry,
+//	  SUM(tus.monthly_revenue) AS total_revenue,
+//	  AVG(tus.monthly_revenue) AS avg_monthly_revenue,
+//	  COUNT(tus.period_start) AS months_tracked
+//	FROM
+//	  tenants t
+//	  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+//	WHERE
+//	  t.deleted_at IS NULL
+//	  AND (
+//	    tus.period_start IS NULL
+//	    OR tus.period_start >= $1
+//	  )
+//	  AND (
+//	    tus.period_end IS NULL
+//	    OR tus.period_end <= $2
+//	  )
+//	GROUP BY
+//	  t.id,
+//	  t.name,
+//	  t.industry
+//	ORDER BY
+//	  total_revenue DESC NULLS LAST
 func (q *Queries) GetAllTenantsRevenueAnalytics(ctx context.Context, arg GetAllTenantsRevenueAnalyticsParams) ([]*GetAllTenantsRevenueAnalyticsRow, error) {
 	rows, err := q.db.Query(ctx, getAllTenantsRevenueAnalytics, arg.PeriodStart, arg.PeriodEnd)
 	if err != nil {
@@ -992,20 +1354,26 @@ func (q *Queries) GetAllTenantsRevenueAnalytics(ctx context.Context, arg GetAllT
 }
 
 const getAllTenantsStorageAnalytics = `-- name: GetAllTenantsStorageAnalytics :many
-SELECT 
-    t.id,
-    t.name,
-    t.status,
-    tc.storage_quota,
-    COALESCE(tus.storage_used, 0) as current_storage_used,
-    ROUND(COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota, 2) as storage_usage_percentage
-FROM tenants t
-JOIN tenant_configurations tc ON t.id = tc.tenant_id
-LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id 
-    AND tus.period_start <= CURRENT_DATE 
-    AND tus.period_end >= CURRENT_DATE
-WHERE t.deleted_at IS NULL
-ORDER BY storage_usage_percentage DESC NULLS LAST
+SELECT
+  t.id,
+  t.name,
+  t.status,
+  tc.storage_quota,
+  COALESCE(tus.storage_used, 0) AS current_storage_used,
+  ROUND(
+    COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota,
+    2
+  ) AS storage_usage_percentage
+FROM
+  tenants t
+  JOIN tenant_configurations tc ON t.id = tc.tenant_id
+  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+  AND tus.period_start <= CURRENT_DATE
+  AND tus.period_end >= CURRENT_DATE
+WHERE
+  t.deleted_at IS NULL
+ORDER BY
+  storage_usage_percentage DESC NULLS LAST
 `
 
 type GetAllTenantsStorageAnalyticsRow struct {
@@ -1020,19 +1388,25 @@ type GetAllTenantsStorageAnalyticsRow struct {
 // Admin-level storage analytics (cross-tenant view)
 //
 //	SELECT
-//	    t.id,
-//	    t.name,
-//	    t.status,
-//	    tc.storage_quota,
-//	    COALESCE(tus.storage_used, 0) as current_storage_used,
-//	    ROUND(COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota, 2) as storage_usage_percentage
-//	FROM tenants t
-//	JOIN tenant_configurations tc ON t.id = tc.tenant_id
-//	LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
-//	    AND tus.period_start <= CURRENT_DATE
-//	    AND tus.period_end >= CURRENT_DATE
-//	WHERE t.deleted_at IS NULL
-//	ORDER BY storage_usage_percentage DESC NULLS LAST
+//	  t.id,
+//	  t.name,
+//	  t.status,
+//	  tc.storage_quota,
+//	  COALESCE(tus.storage_used, 0) AS current_storage_used,
+//	  ROUND(
+//	    COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota,
+//	    2
+//	  ) AS storage_usage_percentage
+//	FROM
+//	  tenants t
+//	  JOIN tenant_configurations tc ON t.id = tc.tenant_id
+//	  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+//	  AND tus.period_start <= CURRENT_DATE
+//	  AND tus.period_end >= CURRENT_DATE
+//	WHERE
+//	  t.deleted_at IS NULL
+//	ORDER BY
+//	  storage_usage_percentage DESC NULLS LAST
 func (q *Queries) GetAllTenantsStorageAnalytics(ctx context.Context) ([]*GetAllTenantsStorageAnalyticsRow, error) {
 	rows, err := q.db.Query(ctx, getAllTenantsStorageAnalytics)
 	if err != nil {
@@ -1061,9 +1435,13 @@ func (q *Queries) GetAllTenantsStorageAnalytics(ctx context.Context) ([]*GetAllT
 }
 
 const getCurrentTenant = `-- name: GetCurrentTenant :one
-
-SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-WHERE id = current_tenant_id() AND deleted_at IS NULL
+SELECT
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+FROM
+  tenants
+WHERE
+  id = current_tenant_id()
+  AND deleted_at IS NULL
 `
 
 // =====================================================
@@ -1071,8 +1449,13 @@ WHERE id = current_tenant_id() AND deleted_at IS NULL
 // These queries work within the current tenant context
 // =====================================================
 //
-//	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-//	WHERE id = current_tenant_id() AND deleted_at IS NULL
+//	SELECT
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	FROM
+//	  tenants
+//	WHERE
+//	  id = current_tenant_id()
+//	  AND deleted_at IS NULL
 func (q *Queries) GetCurrentTenant(ctx context.Context) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, getCurrentTenant)
 	var i Tenant
@@ -1100,18 +1483,20 @@ func (q *Queries) GetCurrentTenant(ctx context.Context) (*Tenant, error) {
 }
 
 const getCurrentTenantID = `-- name: GetCurrentTenantID :one
-SELECT CASE 
-    WHEN current_setting('app.current_tenant_id', true) = '' THEN NULL
+SELECT
+  CASE
+    WHEN current_setting('app.current_tenant_id', TRUE) = '' THEN NULL
     ELSE current_setting('app.current_tenant_id')::uuid
-END
+  END
 `
 
 // GetCurrentTenantID
 //
-//	SELECT CASE
-//	    WHEN current_setting('app.current_tenant_id', true) = '' THEN NULL
+//	SELECT
+//	  CASE
+//	    WHEN current_setting('app.current_tenant_id', TRUE) = '' THEN NULL
 //	    ELSE current_setting('app.current_tenant_id')::uuid
-//	END
+//	  END
 func (q *Queries) GetCurrentTenantID(ctx context.Context) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, getCurrentTenantID)
 	var column_1 uuid.UUID
@@ -1120,19 +1505,30 @@ func (q *Queries) GetCurrentTenantID(ctx context.Context) (uuid.UUID, error) {
 }
 
 const getCurrentTenantRevenueAnalytics = `-- name: GetCurrentTenantRevenueAnalytics :one
-SELECT 
-    t.id,
-    t.name,
-    t.industry,
-    SUM(tus.monthly_revenue) as total_revenue,
-    AVG(tus.monthly_revenue) as avg_monthly_revenue,
-    COUNT(tus.period_start) as months_tracked
-FROM tenants t
-LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
-WHERE t.deleted_at IS NULL
-  AND (tus.period_start IS NULL OR tus.period_start >= $1)
-  AND (tus.period_end IS NULL OR tus.period_end <= $2)
-GROUP BY t.id, t.name, t.industry
+SELECT
+  t.id,
+  t.name,
+  t.industry,
+  SUM(tus.monthly_revenue) AS total_revenue,
+  AVG(tus.monthly_revenue) AS avg_monthly_revenue,
+  COUNT(tus.period_start) AS months_tracked
+FROM
+  tenants t
+  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+WHERE
+  t.deleted_at IS NULL
+  AND (
+    tus.period_start IS NULL
+    OR tus.period_start >= $1
+  )
+  AND (
+    tus.period_end IS NULL
+    OR tus.period_end <= $2
+  )
+GROUP BY
+  t.id,
+  t.name,
+  t.industry
 `
 
 type GetCurrentTenantRevenueAnalyticsParams struct {
@@ -1152,18 +1548,29 @@ type GetCurrentTenantRevenueAnalyticsRow struct {
 // Current tenant revenue analytics (RLS-aware)
 //
 //	SELECT
-//	    t.id,
-//	    t.name,
-//	    t.industry,
-//	    SUM(tus.monthly_revenue) as total_revenue,
-//	    AVG(tus.monthly_revenue) as avg_monthly_revenue,
-//	    COUNT(tus.period_start) as months_tracked
-//	FROM tenants t
-//	LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
-//	WHERE t.deleted_at IS NULL
-//	  AND (tus.period_start IS NULL OR tus.period_start >= $1)
-//	  AND (tus.period_end IS NULL OR tus.period_end <= $2)
-//	GROUP BY t.id, t.name, t.industry
+//	  t.id,
+//	  t.name,
+//	  t.industry,
+//	  SUM(tus.monthly_revenue) AS total_revenue,
+//	  AVG(tus.monthly_revenue) AS avg_monthly_revenue,
+//	  COUNT(tus.period_start) AS months_tracked
+//	FROM
+//	  tenants t
+//	  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+//	WHERE
+//	  t.deleted_at IS NULL
+//	  AND (
+//	    tus.period_start IS NULL
+//	    OR tus.period_start >= $1
+//	  )
+//	  AND (
+//	    tus.period_end IS NULL
+//	    OR tus.period_end <= $2
+//	  )
+//	GROUP BY
+//	  t.id,
+//	  t.name,
+//	  t.industry
 func (q *Queries) GetCurrentTenantRevenueAnalytics(ctx context.Context, arg GetCurrentTenantRevenueAnalyticsParams) (*GetCurrentTenantRevenueAnalyticsRow, error) {
 	row := q.db.QueryRow(ctx, getCurrentTenantRevenueAnalytics, arg.PeriodStart, arg.PeriodEnd)
 	var i GetCurrentTenantRevenueAnalyticsRow
@@ -1179,19 +1586,24 @@ func (q *Queries) GetCurrentTenantRevenueAnalytics(ctx context.Context, arg GetC
 }
 
 const getCurrentTenantStorageUsage = `-- name: GetCurrentTenantStorageUsage :one
-SELECT 
-    t.id,
-    t.name,
-    t.status,
-    tc.storage_quota,
-    COALESCE(tus.storage_used, 0) as current_storage_used,
-    ROUND(COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota, 2) as storage_usage_percentage
-FROM tenants t
-JOIN tenant_configurations tc ON t.id = tc.tenant_id
-LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id 
-    AND tus.period_start <= CURRENT_DATE 
-    AND tus.period_end >= CURRENT_DATE
-WHERE t.deleted_at IS NULL
+SELECT
+  t.id,
+  t.name,
+  t.status,
+  tc.storage_quota,
+  COALESCE(tus.storage_used, 0) AS current_storage_used,
+  ROUND(
+    COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota,
+    2
+  ) AS storage_usage_percentage
+FROM
+  tenants t
+  JOIN tenant_configurations tc ON t.id = tc.tenant_id
+  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+  AND tus.period_start <= CURRENT_DATE
+  AND tus.period_end >= CURRENT_DATE
+WHERE
+  t.deleted_at IS NULL
 `
 
 type GetCurrentTenantStorageUsageRow struct {
@@ -1206,18 +1618,23 @@ type GetCurrentTenantStorageUsageRow struct {
 // Current tenant storage analytics (RLS-aware)
 //
 //	SELECT
-//	    t.id,
-//	    t.name,
-//	    t.status,
-//	    tc.storage_quota,
-//	    COALESCE(tus.storage_used, 0) as current_storage_used,
-//	    ROUND(COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota, 2) as storage_usage_percentage
-//	FROM tenants t
-//	JOIN tenant_configurations tc ON t.id = tc.tenant_id
-//	LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
-//	    AND tus.period_start <= CURRENT_DATE
-//	    AND tus.period_end >= CURRENT_DATE
-//	WHERE t.deleted_at IS NULL
+//	  t.id,
+//	  t.name,
+//	  t.status,
+//	  tc.storage_quota,
+//	  COALESCE(tus.storage_used, 0) AS current_storage_used,
+//	  ROUND(
+//	    COALESCE(tus.storage_used, 0) * 100.0 / tc.storage_quota,
+//	    2
+//	  ) AS storage_usage_percentage
+//	FROM
+//	  tenants t
+//	  JOIN tenant_configurations tc ON t.id = tc.tenant_id
+//	  LEFT JOIN tenant_usage_stats tus ON t.id = tus.tenant_id
+//	  AND tus.period_start <= CURRENT_DATE
+//	  AND tus.period_end >= CURRENT_DATE
+//	WHERE
+//	  t.deleted_at IS NULL
 func (q *Queries) GetCurrentTenantStorageUsage(ctx context.Context) (*GetCurrentTenantStorageUsageRow, error) {
 	row := q.db.QueryRow(ctx, getCurrentTenantStorageUsage)
 	var i GetCurrentTenantStorageUsageRow
@@ -1233,16 +1650,26 @@ func (q *Queries) GetCurrentTenantStorageUsage(ctx context.Context) (*GetCurrent
 }
 
 const getLatestTenantUsageStats = `-- name: GetLatestTenantUsageStats :one
-SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
-ORDER BY period_start DESC
-LIMIT 1
+SELECT
+  tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+FROM
+  tenant_usage_stats
+ORDER BY
+  period_start DESC
+LIMIT
+  1
 `
 
 // GetLatestTenantUsageStats
 //
-//	SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
-//	ORDER BY period_start DESC
-//	LIMIT 1
+//	SELECT
+//	  tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+//	FROM
+//	  tenant_usage_stats
+//	ORDER BY
+//	  period_start DESC
+//	LIMIT
+//	  1
 func (q *Queries) GetLatestTenantUsageStats(ctx context.Context) (*TenantUsageStat, error) {
 	row := q.db.QueryRow(ctx, getLatestTenantUsageStats)
 	var i TenantUsageStat
@@ -1264,14 +1691,24 @@ func (q *Queries) GetLatestTenantUsageStats(ctx context.Context) (*TenantUsageSt
 }
 
 const getTenantByEmail = `-- name: GetTenantByEmail :one
-SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-WHERE email = $1 AND deleted_at IS NULL
+SELECT
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+FROM
+  tenants
+WHERE
+  email = $1
+  AND deleted_at IS NULL
 `
 
 // GetTenantByEmail
 //
-//	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-//	WHERE email = $1 AND deleted_at IS NULL
+//	SELECT
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	FROM
+//	  tenants
+//	WHERE
+//	  email = $1
+//	  AND deleted_at IS NULL
 func (q *Queries) GetTenantByEmail(ctx context.Context, email string) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, getTenantByEmail, email)
 	var i Tenant
@@ -1299,14 +1736,24 @@ func (q *Queries) GetTenantByEmail(ctx context.Context, email string) (*Tenant, 
 }
 
 const getTenantByID = `-- name: GetTenantByID :one
-SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-WHERE id = $1 AND deleted_at IS NULL
+SELECT
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+FROM
+  tenants
+WHERE
+  id = $1
+  AND deleted_at IS NULL
 `
 
 // GetTenantByID
 //
-//	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-//	WHERE id = $1 AND deleted_at IS NULL
+//	SELECT
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	FROM
+//	  tenants
+//	WHERE
+//	  id = $1
+//	  AND deleted_at IS NULL
 func (q *Queries) GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, getTenantByID, id)
 	var i Tenant
@@ -1334,14 +1781,24 @@ func (q *Queries) GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, err
 }
 
 const getTenantBySlug = `-- name: GetTenantBySlug :one
-SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-WHERE slug = $1 AND deleted_at IS NULL
+SELECT
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+FROM
+  tenants
+WHERE
+  slug = $1
+  AND deleted_at IS NULL
 `
 
 // GetTenantBySlug
 //
-//	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-//	WHERE slug = $1 AND deleted_at IS NULL
+//	SELECT
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	FROM
+//	  tenants
+//	WHERE
+//	  slug = $1
+//	  AND deleted_at IS NULL
 func (q *Queries) GetTenantBySlug(ctx context.Context, slug string) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, getTenantBySlug, slug)
 	var i Tenant
@@ -1369,16 +1826,25 @@ func (q *Queries) GetTenantBySlug(ctx context.Context, slug string) (*Tenant, er
 }
 
 const getTenantByUUID = `-- name: GetTenantByUUID :one
-
-SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-WHERE subdomain = $1 AND deleted_at IS NULL
+SELECT
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+FROM
+  tenants
+WHERE
+  subdomain = $1
+  AND deleted_at IS NULL
 `
 
 // SELECT * FROM tenants
 // WHERE id = $1 AND deleted_at IS NULL;
 //
-//	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-//	WHERE subdomain = $1 AND deleted_at IS NULL
+//	SELECT
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	FROM
+//	  tenants
+//	WHERE
+//	  subdomain = $1
+//	  AND deleted_at IS NULL
 func (q *Queries) GetTenantByUUID(ctx context.Context, subdomain *string) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, getTenantByUUID, subdomain)
 	var i Tenant
@@ -1406,12 +1872,22 @@ func (q *Queries) GetTenantByUUID(ctx context.Context, subdomain *string) (*Tena
 }
 
 const getTenantConfiguration = `-- name: GetTenantConfiguration :one
-SELECT tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at FROM tenant_configurations WHERE tenant_id = current_tenant_id()
+SELECT
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 // GetTenantConfiguration
 //
-//	SELECT tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at FROM tenant_configurations WHERE tenant_id = current_tenant_id()
+//	SELECT
+//	  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+//	FROM
+//	  tenant_configurations
+//	WHERE
+//	  tenant_id = current_tenant_id()
 func (q *Queries) GetTenantConfiguration(ctx context.Context) (*TenantConfiguration, error) {
 	row := q.db.QueryRow(ctx, getTenantConfiguration)
 	var i TenantConfiguration
@@ -1439,17 +1915,23 @@ func (q *Queries) GetTenantConfiguration(ctx context.Context) (*TenantConfigurat
 }
 
 const getTenantGrowthStats = `-- name: GetTenantGrowthStats :many
-
-SELECT 
-    DATE_TRUNC('month', created_at) as month,
-    COUNT(*) as new_tenants,
-    COUNT(*) FILTER (WHERE status = 'active') as active_new_tenants
-FROM tenants
-WHERE deleted_at IS NULL
+SELECT
+  DATE_TRUNC('month', created_at) AS MONTH,
+  COUNT(*) AS new_tenants,
+  COUNT(*) FILTER (
+    WHERE
+      STATUS = 'active'
+  ) AS active_new_tenants
+FROM
+  tenants
+WHERE
+  deleted_at IS NULL
   AND created_at >= $1
   AND created_at <= $2
-GROUP BY DATE_TRUNC('month', created_at)
-ORDER BY month
+GROUP BY
+  DATE_TRUNC('month', created_at)
+ORDER BY
+  MONTH
 `
 
 type GetTenantGrowthStatsParams struct {
@@ -1469,15 +1951,22 @@ type GetTenantGrowthStatsRow struct {
 // Admin-level analytics (requires explicit tenant_id for cross-tenant queries)
 //
 //	SELECT
-//	    DATE_TRUNC('month', created_at) as month,
-//	    COUNT(*) as new_tenants,
-//	    COUNT(*) FILTER (WHERE status = 'active') as active_new_tenants
-//	FROM tenants
-//	WHERE deleted_at IS NULL
+//	  DATE_TRUNC('month', created_at) AS MONTH,
+//	  COUNT(*) AS new_tenants,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      STATUS = 'active'
+//	  ) AS active_new_tenants
+//	FROM
+//	  tenants
+//	WHERE
+//	  deleted_at IS NULL
 //	  AND created_at >= $1
 //	  AND created_at <= $2
-//	GROUP BY DATE_TRUNC('month', created_at)
-//	ORDER BY month
+//	GROUP BY
+//	  DATE_TRUNC('month', created_at)
+//	ORDER BY
+//	  MONTH
 func (q *Queries) GetTenantGrowthStats(ctx context.Context, arg GetTenantGrowthStatsParams) ([]*GetTenantGrowthStatsRow, error) {
 	rows, err := q.db.Query(ctx, getTenantGrowthStats, arg.CreatedAt, arg.CreatedAt_2)
 	if err != nil {
@@ -1499,13 +1988,24 @@ func (q *Queries) GetTenantGrowthStats(ctx context.Context, arg GetTenantGrowthS
 }
 
 const getTenantStats = `-- name: GetTenantStats :one
-SELECT 
-    COUNT(*) as total_tenants,
-    COUNT(*) FILTER (WHERE status = 'active') as active_tenants,
-    COUNT(*) FILTER (WHERE status = 'suspended') as suspended_tenants,
-    COUNT(*) FILTER (WHERE status = 'pending') as pending_tenants
-FROM tenants
-WHERE deleted_at IS NULL
+SELECT
+  COUNT(*) AS total_tenants,
+  COUNT(*) FILTER (
+    WHERE
+      STATUS = 'active'
+  ) AS active_tenants,
+  COUNT(*) FILTER (
+    WHERE
+      STATUS = 'suspended'
+  ) AS suspended_tenants,
+  COUNT(*) FILTER (
+    WHERE
+      STATUS = 'pending'
+  ) AS pending_tenants
+FROM
+  tenants
+WHERE
+  deleted_at IS NULL
 `
 
 type GetTenantStatsRow struct {
@@ -1518,12 +2018,23 @@ type GetTenantStatsRow struct {
 // GetTenantStats
 //
 //	SELECT
-//	    COUNT(*) as total_tenants,
-//	    COUNT(*) FILTER (WHERE status = 'active') as active_tenants,
-//	    COUNT(*) FILTER (WHERE status = 'suspended') as suspended_tenants,
-//	    COUNT(*) FILTER (WHERE status = 'pending') as pending_tenants
-//	FROM tenants
-//	WHERE deleted_at IS NULL
+//	  COUNT(*) AS total_tenants,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      STATUS = 'active'
+//	  ) AS active_tenants,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      STATUS = 'suspended'
+//	  ) AS suspended_tenants,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      STATUS = 'pending'
+//	  ) AS pending_tenants
+//	FROM
+//	  tenants
+//	WHERE
+//	  deleted_at IS NULL
 func (q *Queries) GetTenantStats(ctx context.Context) (*GetTenantStatsRow, error) {
 	row := q.db.QueryRow(ctx, getTenantStats)
 	var i GetTenantStatsRow
@@ -1537,16 +2048,45 @@ func (q *Queries) GetTenantStats(ctx context.Context) (*GetTenantStatsRow, error
 }
 
 const getTenantStatusDistribution = `-- name: GetTenantStatusDistribution :one
-SELECT 
-    COUNT(*) as total_tenants,
-    COUNT(*) FILTER (WHERE status = 'active') as active_tenants,
-    COUNT(*) FILTER (WHERE status = 'suspended') as suspended_tenants,
-    COUNT(*) FILTER (WHERE status = 'pending') as pending_tenants,
-    ROUND(COUNT(*) FILTER (WHERE status = 'active') * 100.0 / COUNT(*), 2) as active_percentage,
-    ROUND(COUNT(*) FILTER (WHERE status = 'suspended') * 100.0 / COUNT(*), 2) as suspended_percentage,
-    ROUND(COUNT(*) FILTER (WHERE status = 'pending') * 100.0 / COUNT(*), 2) as pending_percentage
-FROM tenants
-WHERE deleted_at IS NULL
+SELECT
+  COUNT(*) AS total_tenants,
+  COUNT(*) FILTER (
+    WHERE
+      STATUS = 'active'
+  ) AS active_tenants,
+  COUNT(*) FILTER (
+    WHERE
+      STATUS = 'suspended'
+  ) AS suspended_tenants,
+  COUNT(*) FILTER (
+    WHERE
+      STATUS = 'pending'
+  ) AS pending_tenants,
+  ROUND(
+    COUNT(*) FILTER (
+      WHERE
+        STATUS = 'active'
+    ) * 100.0 / COUNT(*),
+    2
+  ) AS active_percentage,
+  ROUND(
+    COUNT(*) FILTER (
+      WHERE
+        STATUS = 'suspended'
+    ) * 100.0 / COUNT(*),
+    2
+  ) AS suspended_percentage,
+  ROUND(
+    COUNT(*) FILTER (
+      WHERE
+        STATUS = 'pending'
+    ) * 100.0 / COUNT(*),
+    2
+  ) AS pending_percentage
+FROM
+  tenants
+WHERE
+  deleted_at IS NULL
 `
 
 type GetTenantStatusDistributionRow struct {
@@ -1562,15 +2102,44 @@ type GetTenantStatusDistributionRow struct {
 // GetTenantStatusDistribution
 //
 //	SELECT
-//	    COUNT(*) as total_tenants,
-//	    COUNT(*) FILTER (WHERE status = 'active') as active_tenants,
-//	    COUNT(*) FILTER (WHERE status = 'suspended') as suspended_tenants,
-//	    COUNT(*) FILTER (WHERE status = 'pending') as pending_tenants,
-//	    ROUND(COUNT(*) FILTER (WHERE status = 'active') * 100.0 / COUNT(*), 2) as active_percentage,
-//	    ROUND(COUNT(*) FILTER (WHERE status = 'suspended') * 100.0 / COUNT(*), 2) as suspended_percentage,
-//	    ROUND(COUNT(*) FILTER (WHERE status = 'pending') * 100.0 / COUNT(*), 2) as pending_percentage
-//	FROM tenants
-//	WHERE deleted_at IS NULL
+//	  COUNT(*) AS total_tenants,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      STATUS = 'active'
+//	  ) AS active_tenants,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      STATUS = 'suspended'
+//	  ) AS suspended_tenants,
+//	  COUNT(*) FILTER (
+//	    WHERE
+//	      STATUS = 'pending'
+//	  ) AS pending_tenants,
+//	  ROUND(
+//	    COUNT(*) FILTER (
+//	      WHERE
+//	        STATUS = 'active'
+//	    ) * 100.0 / COUNT(*),
+//	    2
+//	  ) AS active_percentage,
+//	  ROUND(
+//	    COUNT(*) FILTER (
+//	      WHERE
+//	        STATUS = 'suspended'
+//	    ) * 100.0 / COUNT(*),
+//	    2
+//	  ) AS suspended_percentage,
+//	  ROUND(
+//	    COUNT(*) FILTER (
+//	      WHERE
+//	        STATUS = 'pending'
+//	    ) * 100.0 / COUNT(*),
+//	    2
+//	  ) AS pending_percentage
+//	FROM
+//	  tenants
+//	WHERE
+//	  deleted_at IS NULL
 func (q *Queries) GetTenantStatusDistribution(ctx context.Context) (*GetTenantStatusDistributionRow, error) {
 	row := q.db.QueryRow(ctx, getTenantStatusDistribution)
 	var i GetTenantStatusDistributionRow
@@ -1587,14 +2156,24 @@ func (q *Queries) GetTenantStatusDistribution(ctx context.Context) (*GetTenantSt
 }
 
 const getTenantUsageStats = `-- name: GetTenantUsageStats :one
-SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
-WHERE period_start = $1 AND tenant_id = current_tenant_id()
+SELECT
+  tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+FROM
+  tenant_usage_stats
+WHERE
+  period_start = $1
+  AND tenant_id = current_tenant_id()
 `
 
 // GetTenantUsageStats
 //
-//	SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
-//	WHERE period_start = $1 AND tenant_id = current_tenant_id()
+//	SELECT
+//	  tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+//	FROM
+//	  tenant_usage_stats
+//	WHERE
+//	  period_start = $1
+//	  AND tenant_id = current_tenant_id()
 func (q *Queries) GetTenantUsageStats(ctx context.Context, periodStart time.Time) (*TenantUsageStat, error) {
 	row := q.db.QueryRow(ctx, getTenantUsageStats, periodStart)
 	var i TenantUsageStat
@@ -1616,11 +2195,16 @@ func (q *Queries) GetTenantUsageStats(ctx context.Context, periodStart time.Time
 }
 
 const getTenantUsageStatsRange = `-- name: GetTenantUsageStatsRange :many
-SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
-WHERE period_start >= $1 
+SELECT
+  tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+FROM
+  tenant_usage_stats
+WHERE
+  period_start >= $1
   AND period_end <= $2
   AND tenant_id = current_tenant_id()
-ORDER BY period_start DESC
+ORDER BY
+  period_start DESC
 `
 
 type GetTenantUsageStatsRangeParams struct {
@@ -1630,11 +2214,16 @@ type GetTenantUsageStatsRangeParams struct {
 
 // GetTenantUsageStatsRange
 //
-//	SELECT tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at FROM tenant_usage_stats
-//	WHERE period_start >= $1
+//	SELECT
+//	  tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+//	FROM
+//	  tenant_usage_stats
+//	WHERE
+//	  period_start >= $1
 //	  AND period_end <= $2
 //	  AND tenant_id = current_tenant_id()
-//	ORDER BY period_start DESC
+//	ORDER BY
+//	  period_start DESC
 func (q *Queries) GetTenantUsageStatsRange(ctx context.Context, arg GetTenantUsageStatsRangeParams) ([]*TenantUsageStat, error) {
 	rows, err := q.db.Query(ctx, getTenantUsageStatsRange, arg.PeriodStart, arg.PeriodEnd)
 	if err != nil {
@@ -1669,11 +2258,18 @@ func (q *Queries) GetTenantUsageStatsRange(ctx context.Context, arg GetTenantUsa
 }
 
 const getTenantsByCompanySize = `-- name: GetTenantsByCompanySize :many
-SELECT company_size, COUNT(*) as tenant_count
-FROM tenants
-WHERE deleted_at IS NULL AND company_size IS NOT NULL
-GROUP BY company_size
-ORDER BY tenant_count DESC
+SELECT
+  company_size,
+  COUNT(*) AS tenant_count
+FROM
+  tenants
+WHERE
+  deleted_at IS NULL
+  AND company_size IS NOT NULL
+GROUP BY
+  company_size
+ORDER BY
+  tenant_count DESC
 `
 
 type GetTenantsByCompanySizeRow struct {
@@ -1683,11 +2279,18 @@ type GetTenantsByCompanySizeRow struct {
 
 // GetTenantsByCompanySize
 //
-//	SELECT company_size, COUNT(*) as tenant_count
-//	FROM tenants
-//	WHERE deleted_at IS NULL AND company_size IS NOT NULL
-//	GROUP BY company_size
-//	ORDER BY tenant_count DESC
+//	SELECT
+//	  company_size,
+//	  COUNT(*) AS tenant_count
+//	FROM
+//	  tenants
+//	WHERE
+//	  deleted_at IS NULL
+//	  AND company_size IS NOT NULL
+//	GROUP BY
+//	  company_size
+//	ORDER BY
+//	  tenant_count DESC
 func (q *Queries) GetTenantsByCompanySize(ctx context.Context) ([]*GetTenantsByCompanySizeRow, error) {
 	rows, err := q.db.Query(ctx, getTenantsByCompanySize)
 	if err != nil {
@@ -1709,11 +2312,17 @@ func (q *Queries) GetTenantsByCompanySize(ctx context.Context) ([]*GetTenantsByC
 }
 
 const getTenantsByCurrency = `-- name: GetTenantsByCurrency :many
-SELECT currency_code, COUNT(*) as tenant_count
-FROM tenants
-WHERE deleted_at IS NULL
-GROUP BY currency_code
-ORDER BY tenant_count DESC
+SELECT
+  currency_code,
+  COUNT(*) AS tenant_count
+FROM
+  tenants
+WHERE
+  deleted_at IS NULL
+GROUP BY
+  currency_code
+ORDER BY
+  tenant_count DESC
 `
 
 type GetTenantsByCurrencyRow struct {
@@ -1723,11 +2332,17 @@ type GetTenantsByCurrencyRow struct {
 
 // GetTenantsByCurrency
 //
-//	SELECT currency_code, COUNT(*) as tenant_count
-//	FROM tenants
-//	WHERE deleted_at IS NULL
-//	GROUP BY currency_code
-//	ORDER BY tenant_count DESC
+//	SELECT
+//	  currency_code,
+//	  COUNT(*) AS tenant_count
+//	FROM
+//	  tenants
+//	WHERE
+//	  deleted_at IS NULL
+//	GROUP BY
+//	  currency_code
+//	ORDER BY
+//	  tenant_count DESC
 func (q *Queries) GetTenantsByCurrency(ctx context.Context) ([]*GetTenantsByCurrencyRow, error) {
 	rows, err := q.db.Query(ctx, getTenantsByCurrency)
 	if err != nil {
@@ -1749,11 +2364,18 @@ func (q *Queries) GetTenantsByCurrency(ctx context.Context) ([]*GetTenantsByCurr
 }
 
 const getTenantsByIndustry = `-- name: GetTenantsByIndustry :many
-SELECT industry, COUNT(*) as tenant_count
-FROM tenants
-WHERE deleted_at IS NULL AND industry IS NOT NULL
-GROUP BY industry
-ORDER BY tenant_count DESC
+SELECT
+  industry,
+  COUNT(*) AS tenant_count
+FROM
+  tenants
+WHERE
+  deleted_at IS NULL
+  AND industry IS NOT NULL
+GROUP BY
+  industry
+ORDER BY
+  tenant_count DESC
 `
 
 type GetTenantsByIndustryRow struct {
@@ -1763,11 +2385,18 @@ type GetTenantsByIndustryRow struct {
 
 // GetTenantsByIndustry
 //
-//	SELECT industry, COUNT(*) as tenant_count
-//	FROM tenants
-//	WHERE deleted_at IS NULL AND industry IS NOT NULL
-//	GROUP BY industry
-//	ORDER BY tenant_count DESC
+//	SELECT
+//	  industry,
+//	  COUNT(*) AS tenant_count
+//	FROM
+//	  tenants
+//	WHERE
+//	  deleted_at IS NULL
+//	  AND industry IS NOT NULL
+//	GROUP BY
+//	  industry
+//	ORDER BY
+//	  tenant_count DESC
 func (q *Queries) GetTenantsByIndustry(ctx context.Context) ([]*GetTenantsByIndustryRow, error) {
 	rows, err := q.db.Query(ctx, getTenantsByIndustry)
 	if err != nil {
@@ -1789,11 +2418,17 @@ func (q *Queries) GetTenantsByIndustry(ctx context.Context) ([]*GetTenantsByIndu
 }
 
 const getTenantsByTimezone = `-- name: GetTenantsByTimezone :many
-SELECT timezone, COUNT(*) as tenant_count
-FROM tenants
-WHERE deleted_at IS NULL
-GROUP BY timezone
-ORDER BY tenant_count DESC
+SELECT
+  timezone,
+  COUNT(*) AS tenant_count
+FROM
+  tenants
+WHERE
+  deleted_at IS NULL
+GROUP BY
+  timezone
+ORDER BY
+  tenant_count DESC
 `
 
 type GetTenantsByTimezoneRow struct {
@@ -1803,11 +2438,17 @@ type GetTenantsByTimezoneRow struct {
 
 // GetTenantsByTimezone
 //
-//	SELECT timezone, COUNT(*) as tenant_count
-//	FROM tenants
-//	WHERE deleted_at IS NULL
-//	GROUP BY timezone
-//	ORDER BY tenant_count DESC
+//	SELECT
+//	  timezone,
+//	  COUNT(*) AS tenant_count
+//	FROM
+//	  tenants
+//	WHERE
+//	  deleted_at IS NULL
+//	GROUP BY
+//	  timezone
+//	ORDER BY
+//	  tenant_count DESC
 func (q *Queries) GetTenantsByTimezone(ctx context.Context) ([]*GetTenantsByTimezoneRow, error) {
 	rows, err := q.db.Query(ctx, getTenantsByTimezone)
 	if err != nil {
@@ -1829,11 +2470,16 @@ func (q *Queries) GetTenantsByTimezone(ctx context.Context) ([]*GetTenantsByTime
 }
 
 const getTenantsCreatedInDateRange = `-- name: GetTenantsCreatedInDateRange :many
-SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-WHERE created_at >= $1 
+SELECT
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+FROM
+  tenants
+WHERE
+  created_at >= $1
   AND created_at <= $2
   AND deleted_at IS NULL
-ORDER BY created_at DESC
+ORDER BY
+  created_at DESC
 `
 
 type GetTenantsCreatedInDateRangeParams struct {
@@ -1843,11 +2489,16 @@ type GetTenantsCreatedInDateRangeParams struct {
 
 // GetTenantsCreatedInDateRange
 //
-//	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-//	WHERE created_at >= $1
+//	SELECT
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	FROM
+//	  tenants
+//	WHERE
+//	  created_at >= $1
 //	  AND created_at <= $2
 //	  AND deleted_at IS NULL
-//	ORDER BY created_at DESC
+//	ORDER BY
+//	  created_at DESC
 func (q *Queries) GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]*Tenant, error) {
 	rows, err := q.db.Query(ctx, getTenantsCreatedInDateRange, arg.CreatedAt, arg.CreatedAt_2)
 	if err != nil {
@@ -1888,10 +2539,16 @@ func (q *Queries) GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenan
 }
 
 const listTenants = `-- name: ListTenants :many
-SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-WHERE deleted_at IS NULL
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2
+SELECT
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+FROM
+  tenants
+WHERE
+  deleted_at IS NULL
+ORDER BY
+  created_at DESC
+LIMIT
+  $1 OFFSET $2
 `
 
 type ListTenantsParams struct {
@@ -1901,10 +2558,16 @@ type ListTenantsParams struct {
 
 // ListTenants
 //
-//	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-//	WHERE deleted_at IS NULL
-//	ORDER BY created_at DESC
-//	LIMIT $1 OFFSET $2
+//	SELECT
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	FROM
+//	  tenants
+//	WHERE
+//	  deleted_at IS NULL
+//	ORDER BY
+//	  created_at DESC
+//	LIMIT
+//	  $1 OFFSET $2
 func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Tenant, error) {
 	rows, err := q.db.Query(ctx, listTenants, arg.Limit, arg.Offset)
 	if err != nil {
@@ -1945,29 +2608,40 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Te
 }
 
 const resetTenantContext = `-- name: ResetTenantContext :exec
-SELECT set_config('app.current_tenant_id', '', false)
+SELECT
+  set_config('app.current_tenant_id', '', false)
 `
 
 // ResetTenantContext
 //
-//	SELECT set_config('app.current_tenant_id', '', false)
+//	SELECT
+//	  set_config('app.current_tenant_id', '', false)
 func (q *Queries) ResetTenantContext(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, resetTenantContext)
 	return err
 }
 
 const resolveSubdomainToID = `-- name: ResolveSubdomainToID :one
-
-SELECT id FROM tenants
-WHERE subdomain = $1 AND deleted_at IS NULL
+SELECT
+  id
+FROM
+  tenants
+WHERE
+  subdomain = $1
+  AND deleted_at IS NULL
 `
 
 // =====================================================
 // REPOSITORY INTERFACE REQUIRED QUERIES
 // =====================================================
 //
-//	SELECT id FROM tenants
-//	WHERE subdomain = $1 AND deleted_at IS NULL
+//	SELECT
+//	  id
+//	FROM
+//	  tenants
+//	WHERE
+//	  subdomain = $1
+//	  AND deleted_at IS NULL
 func (q *Queries) ResolveSubdomainToID(ctx context.Context, subdomain *string) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, resolveSubdomainToID, subdomain)
 	var id uuid.UUID
@@ -1976,11 +2650,17 @@ func (q *Queries) ResolveSubdomainToID(ctx context.Context, subdomain *string) (
 }
 
 const searchTenantsByName = `-- name: SearchTenantsByName :many
-SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-WHERE name ILIKE '%' || $1 || '%' 
+SELECT
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+FROM
+  tenants
+WHERE
+  name ILIKE '%' || $1 || '%'
   AND deleted_at IS NULL
-ORDER BY name
-LIMIT $3 OFFSET $2
+ORDER BY
+  name
+LIMIT
+  $3 OFFSET $2
 `
 
 type SearchTenantsByNameParams struct {
@@ -1991,11 +2671,17 @@ type SearchTenantsByNameParams struct {
 
 // SearchTenantsByName
 //
-//	SELECT id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at FROM tenants
-//	WHERE name ILIKE '%' || $1 || '%'
+//	SELECT
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	FROM
+//	  tenants
+//	WHERE
+//	  name ILIKE '%' || $1 || '%'
 //	  AND deleted_at IS NULL
-//	ORDER BY name
-//	LIMIT $3 OFFSET $2
+//	ORDER BY
+//	  name
+//	LIMIT
+//	  $3 OFFSET $2
 func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]*Tenant, error) {
 	rows, err := q.db.Query(ctx, searchTenantsByName, arg.Name, arg.Offset, arg.Limit)
 	if err != nil {
@@ -2036,41 +2722,59 @@ func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNa
 }
 
 const setTenantContext = `-- name: SetTenantContext :exec
-
-SELECT set_tenant_context($1)
+SELECT
+  set_tenant_context($1)
 `
 
 // =====================================================
 // TENANT CONTEXT AND LIMITS QUERIES
 // =====================================================
 //
-//	SELECT set_tenant_context($1)
+//	SELECT
+//	  set_tenant_context($1)
 func (q *Queries) SetTenantContext(ctx context.Context, tenantID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, setTenantContext, tenantID)
 	return err
 }
 
 const softDeleteTenant = `-- name: SoftDeleteTenant :exec
-UPDATE tenants
-SET deleted_at = NOW(), updated_at = NOW()
-WHERE id = $1
+UPDATE
+  tenants
+SET
+  deleted_at = NOW(),
+  updated_at = NOW()
+WHERE
+  id = $1
 `
 
 // SoftDeleteTenant
 //
-//	UPDATE tenants
-//	SET deleted_at = NOW(), updated_at = NOW()
-//	WHERE id = $1
+//	UPDATE
+//	  tenants
+//	SET
+//	  deleted_at = NOW(),
+//	  updated_at = NOW()
+//	WHERE
+//	  id = $1
 func (q *Queries) SoftDeleteTenant(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, softDeleteTenant, id)
 	return err
 }
 
 const updateCurrentTenant = `-- name: UpdateCurrentTenant :one
-UPDATE tenants
-SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
-WHERE id = current_tenant_id() AND deleted_at IS NULL
-RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+UPDATE
+  tenants
+SET
+  name = $1,
+  subdomain = $2,
+  STATUS = $3,
+  industry = $4,
+  updated_at = NOW()
+WHERE
+  id = current_tenant_id()
+  AND deleted_at IS NULL
+RETURNING
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateCurrentTenantParams struct {
@@ -2082,10 +2786,19 @@ type UpdateCurrentTenantParams struct {
 
 // UpdateCurrentTenant
 //
-//	UPDATE tenants
-//	SET name = $1, subdomain = $2, status = $3, industry = $4, updated_at = NOW()
-//	WHERE id = current_tenant_id() AND deleted_at IS NULL
-//	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	UPDATE
+//	  tenants
+//	SET
+//	  name = $1,
+//	  subdomain = $2,
+//	  STATUS = $3,
+//	  industry = $4,
+//	  updated_at = NOW()
+//	WHERE
+//	  id = current_tenant_id()
+//	  AND deleted_at IS NULL
+//	RETURNING
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateCurrentTenant,
 		arg.Name,
@@ -2118,15 +2831,19 @@ func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTena
 }
 
 const updateTenant = `-- name: UpdateTenant :one
-UPDATE tenants
-SET 
-    name = COALESCE($1, name), 
-subdomain = COALESCE($2, subdomain),
-status = COALESCE($3, status),
-industry = COALESCE($4, industry) ,
-updated_at = NOW()
-WHERE id = $5 AND deleted_at IS NULL
-  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+UPDATE
+  tenants
+SET
+  name = COALESCE($1, name),
+  subdomain = COALESCE($2, subdomain),
+  STATUS = COALESCE($3, STATUS),
+  industry = COALESCE($4, industry),
+  updated_at = NOW()
+WHERE
+  id = $5
+  AND deleted_at IS NULL
+RETURNING
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantParams struct {
@@ -2139,15 +2856,19 @@ type UpdateTenantParams struct {
 
 // UpdateTenant
 //
-//	UPDATE tenants
+//	UPDATE
+//	  tenants
 //	SET
-//	    name = COALESCE($1, name),
-//	subdomain = COALESCE($2, subdomain),
-//	status = COALESCE($3, status),
-//	industry = COALESCE($4, industry) ,
-//	updated_at = NOW()
-//	WHERE id = $5 AND deleted_at IS NULL
-//	  RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	  name = COALESCE($1, name),
+//	  subdomain = COALESCE($2, subdomain),
+//	  STATUS = COALESCE($3, STATUS),
+//	  industry = COALESCE($4, industry),
+//	  updated_at = NOW()
+//	WHERE
+//	  id = $5
+//	  AND deleted_at IS NULL
+//	RETURNING
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenant,
 		arg.Name,
@@ -2181,25 +2902,35 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Te
 }
 
 const updateTenantComplete = `-- name: UpdateTenantComplete :one
-UPDATE tenants
-SET 
-    name = COALESCE($1, name),
-    slug = COALESCE($2, slug),
-    email = COALESCE($3, email),
-    subdomain = COALESCE($4, subdomain),
-    status = COALESCE($5, status),
-    timezone = COALESCE($6, timezone),
-    currency_code = COALESCE($7, currency_code),
-    metadata = COALESCE($8, metadata),
-    industry = COALESCE($9, industry),
-    company_size = COALESCE($10, company_size),
-    tax_id = COALESCE($11, tax_id),
-    registration_number = COALESCE($12, registration_number),
-    legal_entity_type = COALESCE($13, legal_entity_type),
-    settings = COALESCE($14, settings),
-    updated_at = NOW()
-WHERE id = $15 AND deleted_at IS NULL
-RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+UPDATE
+  tenants
+SET
+  name = COALESCE($1, name),
+  slug = COALESCE($2, slug),
+  email = COALESCE($3, email),
+  subdomain = COALESCE($4, subdomain),
+  STATUS = COALESCE($5, STATUS),
+  timezone = COALESCE($6, timezone),
+  currency_code = COALESCE($7, currency_code),
+  metadata = COALESCE($8, metadata),
+  industry = COALESCE($9, industry),
+  company_size = COALESCE($10, company_size),
+  tax_id = COALESCE($11, tax_id),
+  registration_number = COALESCE(
+    $12,
+    registration_number
+  ),
+  legal_entity_type = COALESCE(
+    $13,
+    legal_entity_type
+  ),
+  settings = COALESCE($14, settings),
+  updated_at = NOW()
+WHERE
+  id = $15
+  AND deleted_at IS NULL
+RETURNING
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantCompleteParams struct {
@@ -2222,25 +2953,35 @@ type UpdateTenantCompleteParams struct {
 
 // UpdateTenantComplete
 //
-//	UPDATE tenants
+//	UPDATE
+//	  tenants
 //	SET
-//	    name = COALESCE($1, name),
-//	    slug = COALESCE($2, slug),
-//	    email = COALESCE($3, email),
-//	    subdomain = COALESCE($4, subdomain),
-//	    status = COALESCE($5, status),
-//	    timezone = COALESCE($6, timezone),
-//	    currency_code = COALESCE($7, currency_code),
-//	    metadata = COALESCE($8, metadata),
-//	    industry = COALESCE($9, industry),
-//	    company_size = COALESCE($10, company_size),
-//	    tax_id = COALESCE($11, tax_id),
-//	    registration_number = COALESCE($12, registration_number),
-//	    legal_entity_type = COALESCE($13, legal_entity_type),
-//	    settings = COALESCE($14, settings),
-//	    updated_at = NOW()
-//	WHERE id = $15 AND deleted_at IS NULL
-//	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	  name = COALESCE($1, name),
+//	  slug = COALESCE($2, slug),
+//	  email = COALESCE($3, email),
+//	  subdomain = COALESCE($4, subdomain),
+//	  STATUS = COALESCE($5, STATUS),
+//	  timezone = COALESCE($6, timezone),
+//	  currency_code = COALESCE($7, currency_code),
+//	  metadata = COALESCE($8, metadata),
+//	  industry = COALESCE($9, industry),
+//	  company_size = COALESCE($10, company_size),
+//	  tax_id = COALESCE($11, tax_id),
+//	  registration_number = COALESCE(
+//	    $12,
+//	    registration_number
+//	  ),
+//	  legal_entity_type = COALESCE(
+//	    $13,
+//	    legal_entity_type
+//	  ),
+//	  settings = COALESCE($14, settings),
+//	  updated_at = NOW()
+//	WHERE
+//	  id = $15
+//	  AND deleted_at IS NULL
+//	RETURNING
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenantComplete(ctx context.Context, arg UpdateTenantCompleteParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantComplete,
 		arg.Name,
@@ -2284,26 +3025,41 @@ func (q *Queries) UpdateTenantComplete(ctx context.Context, arg UpdateTenantComp
 }
 
 const updateTenantConfiguration = `-- name: UpdateTenantConfiguration :one
-UPDATE tenant_configurations
-SET 
-    max_users = COALESCE($1, max_users),
-    max_entities = COALESCE($2, max_entities),
-    max_transactions_per_month = COALESCE($3, max_transactions_per_month),
-    storage_quota = COALESCE($4, storage_quota),
-    features = COALESCE($5, features),
-    modules_enabled = COALESCE($6, modules_enabled),
-    accounting_method = COALESCE($7, accounting_method),
-    fiscal_year_start_month = COALESCE($8, fiscal_year_start_month),
-    default_currency = COALESCE($9, default_currency),
-    date_format = COALESCE($10, date_format),
-    number_format = COALESCE($11, number_format),
-    language_code = COALESCE($12, language_code),
-    password_policy = COALESCE($13, password_policy),
-    webhook_endpoints = COALESCE($14, webhook_endpoints),
-    api_rate_limits = COALESCE($15, api_rate_limits),
-    updated_at = NOW()
-    WHERE tenant_id =current_tenant_id() 
-RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+UPDATE
+  tenant_configurations
+SET
+  max_users = COALESCE($1, max_users),
+  max_entities = COALESCE($2, max_entities),
+  max_transactions_per_month = COALESCE(
+    $3,
+    max_transactions_per_month
+  ),
+  storage_quota = COALESCE($4, storage_quota),
+  features = COALESCE($5, features),
+  modules_enabled = COALESCE($6, modules_enabled),
+  accounting_method = COALESCE(
+    $7,
+    accounting_method
+  ),
+  fiscal_year_start_month = COALESCE(
+    $8,
+    fiscal_year_start_month
+  ),
+  default_currency = COALESCE($9, default_currency),
+  date_format = COALESCE($10, date_format),
+  number_format = COALESCE($11, number_format),
+  language_code = COALESCE($12, language_code),
+  password_policy = COALESCE($13, password_policy),
+  webhook_endpoints = COALESCE(
+    $14,
+    webhook_endpoints
+  ),
+  api_rate_limits = COALESCE($15, api_rate_limits),
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id()
+RETURNING
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 `
 
 type UpdateTenantConfigurationParams struct {
@@ -2326,26 +3082,41 @@ type UpdateTenantConfigurationParams struct {
 
 // UpdateTenantConfiguration
 //
-//	UPDATE tenant_configurations
+//	UPDATE
+//	  tenant_configurations
 //	SET
-//	    max_users = COALESCE($1, max_users),
-//	    max_entities = COALESCE($2, max_entities),
-//	    max_transactions_per_month = COALESCE($3, max_transactions_per_month),
-//	    storage_quota = COALESCE($4, storage_quota),
-//	    features = COALESCE($5, features),
-//	    modules_enabled = COALESCE($6, modules_enabled),
-//	    accounting_method = COALESCE($7, accounting_method),
-//	    fiscal_year_start_month = COALESCE($8, fiscal_year_start_month),
-//	    default_currency = COALESCE($9, default_currency),
-//	    date_format = COALESCE($10, date_format),
-//	    number_format = COALESCE($11, number_format),
-//	    language_code = COALESCE($12, language_code),
-//	    password_policy = COALESCE($13, password_policy),
-//	    webhook_endpoints = COALESCE($14, webhook_endpoints),
-//	    api_rate_limits = COALESCE($15, api_rate_limits),
-//	    updated_at = NOW()
-//	    WHERE tenant_id =current_tenant_id()
-//	RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+//	  max_users = COALESCE($1, max_users),
+//	  max_entities = COALESCE($2, max_entities),
+//	  max_transactions_per_month = COALESCE(
+//	    $3,
+//	    max_transactions_per_month
+//	  ),
+//	  storage_quota = COALESCE($4, storage_quota),
+//	  features = COALESCE($5, features),
+//	  modules_enabled = COALESCE($6, modules_enabled),
+//	  accounting_method = COALESCE(
+//	    $7,
+//	    accounting_method
+//	  ),
+//	  fiscal_year_start_month = COALESCE(
+//	    $8,
+//	    fiscal_year_start_month
+//	  ),
+//	  default_currency = COALESCE($9, default_currency),
+//	  date_format = COALESCE($10, date_format),
+//	  number_format = COALESCE($11, number_format),
+//	  language_code = COALESCE($12, language_code),
+//	  password_policy = COALESCE($13, password_policy),
+//	  webhook_endpoints = COALESCE(
+//	    $14,
+//	    webhook_endpoints
+//	  ),
+//	  api_rate_limits = COALESCE($15, api_rate_limits),
+//	  updated_at = NOW()
+//	WHERE
+//	  tenant_id = current_tenant_id()
+//	RETURNING
+//	  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 func (q *Queries) UpdateTenantConfiguration(ctx context.Context, arg UpdateTenantConfigurationParams) (*TenantConfiguration, error) {
 	row := q.db.QueryRow(ctx, updateTenantConfiguration,
 		arg.MaxUsers,
@@ -2389,16 +3160,24 @@ func (q *Queries) UpdateTenantConfiguration(ctx context.Context, arg UpdateTenan
 }
 
 const updateTenantFeatures = `-- name: UpdateTenantFeatures :one
-UPDATE tenant_configurations
-SET features = $1, updated_at = NOW()
-RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+UPDATE
+  tenant_configurations
+SET
+  features = $1,
+  updated_at = NOW()
+RETURNING
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 `
 
 // UpdateTenantFeatures
 //
-//	UPDATE tenant_configurations
-//	SET features = $1, updated_at = NOW()
-//	RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+//	UPDATE
+//	  tenant_configurations
+//	SET
+//	  features = $1,
+//	  updated_at = NOW()
+//	RETURNING
+//	  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 func (q *Queries) UpdateTenantFeatures(ctx context.Context, features []byte) (*TenantConfiguration, error) {
 	row := q.db.QueryRow(ctx, updateTenantFeatures, features)
 	var i TenantConfiguration
@@ -2426,10 +3205,16 @@ func (q *Queries) UpdateTenantFeatures(ctx context.Context, features []byte) (*T
 }
 
 const updateTenantIndustry = `-- name: UpdateTenantIndustry :one
-UPDATE tenants
-SET industry = $2, updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+UPDATE
+  tenants
+SET
+  industry = $2,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND deleted_at IS NULL
+RETURNING
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantIndustryParams struct {
@@ -2439,10 +3224,16 @@ type UpdateTenantIndustryParams struct {
 
 // UpdateTenantIndustry
 //
-//	UPDATE tenants
-//	SET industry = $2, updated_at = NOW()
-//	WHERE id = $1 AND deleted_at IS NULL
-//	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	UPDATE
+//	  tenants
+//	SET
+//	  industry = $2,
+//	  updated_at = NOW()
+//	WHERE
+//	  id = $1
+//	  AND deleted_at IS NULL
+//	RETURNING
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantIndustry, arg.ID, arg.Industry)
 	var i Tenant
@@ -2470,14 +3261,16 @@ func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndu
 }
 
 const updateTenantLimits = `-- name: UpdateTenantLimits :one
-UPDATE tenant_configurations
-SET 
-    max_users = $1,
-    max_entities = $2,
-    max_transactions_per_month = $3,
-    storage_quota = $4,
-    updated_at = NOW()
-RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+UPDATE
+  tenant_configurations
+SET
+  max_users = $1,
+  max_entities = $2,
+  max_transactions_per_month = $3,
+  storage_quota = $4,
+  updated_at = NOW()
+RETURNING
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 `
 
 type UpdateTenantLimitsParams struct {
@@ -2489,14 +3282,16 @@ type UpdateTenantLimitsParams struct {
 
 // UpdateTenantLimits
 //
-//	UPDATE tenant_configurations
+//	UPDATE
+//	  tenant_configurations
 //	SET
-//	    max_users = $1,
-//	    max_entities = $2,
-//	    max_transactions_per_month = $3,
-//	    storage_quota = $4,
-//	    updated_at = NOW()
-//	RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+//	  max_users = $1,
+//	  max_entities = $2,
+//	  max_transactions_per_month = $3,
+//	  storage_quota = $4,
+//	  updated_at = NOW()
+//	RETURNING
+//	  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 func (q *Queries) UpdateTenantLimits(ctx context.Context, arg UpdateTenantLimitsParams) (*TenantConfiguration, error) {
 	row := q.db.QueryRow(ctx, updateTenantLimits,
 		arg.MaxUsers,
@@ -2529,18 +3324,30 @@ func (q *Queries) UpdateTenantLimits(ctx context.Context, arg UpdateTenantLimits
 }
 
 const updateTenantMetadata = `-- name: UpdateTenantMetadata :one
-UPDATE tenants
-SET metadata = $1, updated_at = NOW()
-WHERE id = current_tenant_id() AND deleted_at IS NULL
-RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+UPDATE
+  tenants
+SET
+  metadata = $1,
+  updated_at = NOW()
+WHERE
+  id = current_tenant_id()
+  AND deleted_at IS NULL
+RETURNING
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 `
 
 // UpdateTenantMetadata
 //
-//	UPDATE tenants
-//	SET metadata = $1, updated_at = NOW()
-//	WHERE id = current_tenant_id() AND deleted_at IS NULL
-//	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	UPDATE
+//	  tenants
+//	SET
+//	  metadata = $1,
+//	  updated_at = NOW()
+//	WHERE
+//	  id = current_tenant_id()
+//	  AND deleted_at IS NULL
+//	RETURNING
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenantMetadata(ctx context.Context, metadata []byte) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantMetadata, metadata)
 	var i Tenant
@@ -2568,16 +3375,24 @@ func (q *Queries) UpdateTenantMetadata(ctx context.Context, metadata []byte) (*T
 }
 
 const updateTenantModules = `-- name: UpdateTenantModules :one
-UPDATE tenant_configurations
-SET modules_enabled = $1, updated_at = NOW()
-RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+UPDATE
+  tenant_configurations
+SET
+  modules_enabled = $1,
+  updated_at = NOW()
+RETURNING
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 `
 
 // UpdateTenantModules
 //
-//	UPDATE tenant_configurations
-//	SET modules_enabled = $1, updated_at = NOW()
-//	RETURNING tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+//	UPDATE
+//	  tenant_configurations
+//	SET
+//	  modules_enabled = $1,
+//	  updated_at = NOW()
+//	RETURNING
+//	  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 func (q *Queries) UpdateTenantModules(ctx context.Context, modulesEnabled []byte) (*TenantConfiguration, error) {
 	row := q.db.QueryRow(ctx, updateTenantModules, modulesEnabled)
 	var i TenantConfiguration
@@ -2605,10 +3420,16 @@ func (q *Queries) UpdateTenantModules(ctx context.Context, modulesEnabled []byte
 }
 
 const updateTenantName = `-- name: UpdateTenantName :one
-UPDATE tenants
-SET name = $2, updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+UPDATE
+  tenants
+SET
+  name = $2,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND deleted_at IS NULL
+RETURNING
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantNameParams struct {
@@ -2618,10 +3439,16 @@ type UpdateTenantNameParams struct {
 
 // UpdateTenantName
 //
-//	UPDATE tenants
-//	SET name = $2, updated_at = NOW()
-//	WHERE id = $1 AND deleted_at IS NULL
-//	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	UPDATE
+//	  tenants
+//	SET
+//	  name = $2,
+//	  updated_at = NOW()
+//	WHERE
+//	  id = $1
+//	  AND deleted_at IS NULL
+//	RETURNING
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenantName(ctx context.Context, arg UpdateTenantNameParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantName, arg.ID, arg.Name)
 	var i Tenant
@@ -2649,18 +3476,30 @@ func (q *Queries) UpdateTenantName(ctx context.Context, arg UpdateTenantNamePara
 }
 
 const updateTenantSettings = `-- name: UpdateTenantSettings :one
-UPDATE tenants
-SET settings = $1, updated_at = NOW()
-WHERE id = current_tenant_id() AND deleted_at IS NULL
-RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+UPDATE
+  tenants
+SET
+  settings = $1,
+  updated_at = NOW()
+WHERE
+  id = current_tenant_id()
+  AND deleted_at IS NULL
+RETURNING
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 `
 
 // UpdateTenantSettings
 //
-//	UPDATE tenants
-//	SET settings = $1, updated_at = NOW()
-//	WHERE id = current_tenant_id() AND deleted_at IS NULL
-//	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	UPDATE
+//	  tenants
+//	SET
+//	  settings = $1,
+//	  updated_at = NOW()
+//	WHERE
+//	  id = current_tenant_id()
+//	  AND deleted_at IS NULL
+//	RETURNING
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenantSettings(ctx context.Context, settings []byte) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantSettings, settings)
 	var i Tenant
@@ -2688,10 +3527,16 @@ func (q *Queries) UpdateTenantSettings(ctx context.Context, settings []byte) (*T
 }
 
 const updateTenantStatus = `-- name: UpdateTenantStatus :one
-UPDATE tenants
-SET status = $2, updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+UPDATE
+  tenants
+SET
+  STATUS = $2,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND deleted_at IS NULL
+RETURNING
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantStatusParams struct {
@@ -2699,10 +3544,23 @@ type UpdateTenantStatusParams struct {
 	Status string    `json:"status"`
 }
 
-// UPDATE tenants
-// SET status = $2, updated_at = NOW()
-// WHERE id = $1 AND deleted_at IS NULL
-// RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+// UPDATE
+//
+//	tenants
+//
+// SET
+//
+//	STATUS = $2,
+//	updated_at = NOW()
+//
+// WHERE
+//
+//	id = $1
+//	AND deleted_at IS NULL
+//
+// RETURNING
+//
+//	id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantStatus, arg.ID, arg.Status)
 	var i Tenant
@@ -2730,10 +3588,16 @@ func (q *Queries) UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatus
 }
 
 const updateTenantSubdomain = `-- name: UpdateTenantSubdomain :one
-UPDATE tenants
-SET subdomain = $2, updated_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+UPDATE
+  tenants
+SET
+  subdomain = $2,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND deleted_at IS NULL
+RETURNING
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantSubdomainParams struct {
@@ -2743,10 +3607,16 @@ type UpdateTenantSubdomainParams struct {
 
 // UpdateTenantSubdomain
 //
-//	UPDATE tenants
-//	SET subdomain = $2, updated_at = NOW()
-//	WHERE id = $1 AND deleted_at IS NULL
-//	RETURNING id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+//	UPDATE
+//	  tenants
+//	SET
+//	  subdomain = $2,
+//	  updated_at = NOW()
+//	WHERE
+//	  id = $1
+//	  AND deleted_at IS NULL
+//	RETURNING
+//	  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
 func (q *Queries) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (*Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenantSubdomain, arg.ID, arg.Subdomain)
 	var i Tenant
@@ -2774,18 +3644,28 @@ func (q *Queries) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSub
 }
 
 const updateTenantUsageStats = `-- name: UpdateTenantUsageStats :one
-UPDATE tenant_usage_stats
-SET 
-    active_users = COALESCE($1, active_users),
-    total_entities = COALESCE($2, total_entities),
-    total_transactions = COALESCE($3, total_transactions),
-    storage_used = COALESCE($4, storage_used),
-    api_calls = COALESCE($5, api_calls),
-    avg_response_time = COALESCE($6, avg_response_time),
-    error_rate = COALESCE($7, error_rate),
-    monthly_revenue = COALESCE($8, monthly_revenue)
-WHERE period_start = $9 AND tenant_id = current_tenant_id()
-RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+UPDATE
+  tenant_usage_stats
+SET
+  active_users = COALESCE($1, active_users),
+  total_entities = COALESCE($2, total_entities),
+  total_transactions = COALESCE(
+    $3,
+    total_transactions
+  ),
+  storage_used = COALESCE($4, storage_used),
+  api_calls = COALESCE($5, api_calls),
+  avg_response_time = COALESCE(
+    $6,
+    avg_response_time
+  ),
+  error_rate = COALESCE($7, error_rate),
+  monthly_revenue = COALESCE($8, monthly_revenue)
+WHERE
+  period_start = $9
+  AND tenant_id = current_tenant_id()
+RETURNING
+  tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
 `
 
 type UpdateTenantUsageStatsParams struct {
@@ -2802,18 +3682,28 @@ type UpdateTenantUsageStatsParams struct {
 
 // UpdateTenantUsageStats
 //
-//	UPDATE tenant_usage_stats
+//	UPDATE
+//	  tenant_usage_stats
 //	SET
-//	    active_users = COALESCE($1, active_users),
-//	    total_entities = COALESCE($2, total_entities),
-//	    total_transactions = COALESCE($3, total_transactions),
-//	    storage_used = COALESCE($4, storage_used),
-//	    api_calls = COALESCE($5, api_calls),
-//	    avg_response_time = COALESCE($6, avg_response_time),
-//	    error_rate = COALESCE($7, error_rate),
-//	    monthly_revenue = COALESCE($8, monthly_revenue)
-//	WHERE period_start = $9 AND tenant_id = current_tenant_id()
-//	RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+//	  active_users = COALESCE($1, active_users),
+//	  total_entities = COALESCE($2, total_entities),
+//	  total_transactions = COALESCE(
+//	    $3,
+//	    total_transactions
+//	  ),
+//	  storage_used = COALESCE($4, storage_used),
+//	  api_calls = COALESCE($5, api_calls),
+//	  avg_response_time = COALESCE(
+//	    $6,
+//	    avg_response_time
+//	  ),
+//	  error_rate = COALESCE($7, error_rate),
+//	  monthly_revenue = COALESCE($8, monthly_revenue)
+//	WHERE
+//	  period_start = $9
+//	  AND tenant_id = current_tenant_id()
+//	RETURNING
+//	  tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
 func (q *Queries) UpdateTenantUsageStats(ctx context.Context, arg UpdateTenantUsageStatsParams) (*TenantUsageStat, error) {
 	row := q.db.QueryRow(ctx, updateTenantUsageStats,
 		arg.ActiveUsers,
@@ -2845,18 +3735,26 @@ func (q *Queries) UpdateTenantUsageStats(ctx context.Context, arg UpdateTenantUs
 }
 
 const validateCurrentTenant = `-- name: ValidateCurrentTenant :exec
-SELECT 1 FROM tenants 
-WHERE id = current_setting('app.current_tenant_id')::uuid 
-  AND deleted_at IS NULL 
-  AND status = 'active'
+SELECT
+  1
+FROM
+  tenants
+WHERE
+  id = current_setting('app.current_tenant_id')::uuid
+  AND deleted_at IS NULL
+  AND STATUS = 'active'
 `
 
 // ValidateCurrentTenant
 //
-//	SELECT 1 FROM tenants
-//	WHERE id = current_setting('app.current_tenant_id')::uuid
+//	SELECT
+//	  1
+//	FROM
+//	  tenants
+//	WHERE
+//	  id = current_setting('app.current_tenant_id')::uuid
 //	  AND deleted_at IS NULL
-//	  AND status = 'active'
+//	  AND STATUS = 'active'
 func (q *Queries) ValidateCurrentTenant(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, validateCurrentTenant)
 	return err

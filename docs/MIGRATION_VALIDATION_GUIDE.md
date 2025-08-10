@@ -27,20 +27,20 @@ This guide shows you how to apply the standardized 3-tier validation system to a
 
 ## 🛠️ **Standard Implementation Pattern**
 
-### **Step 1: Add Validation Columns**
-
-Add these to **every table** in your migration:
-
-```sql
--- Standard validation columns (REQUIRED for all tables)
-version INTEGER NOT NULL DEFAULT 1,
-last_validation_run TIMESTAMPTZ,
-validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
-    validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
-),
-validation_errors JSONB DEFAULT '[]'::jsonb,
-```
-
+<!-- ### **Step 1: Add Validation Columns** -->
+<!---->
+<!-- Add these to **every table** in your migration: -->
+<!---->
+<!-- ```sql -->
+<!-- -- Standard validation columns (REQUIRED for all tables) -->
+<!-- version INTEGER NOT NULL DEFAULT 1, -->
+<!-- last_validation_run TIMESTAMPTZ, -->
+<!-- validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK ( -->
+<!--     validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR') -->
+<!-- ), -->
+<!-- validation_errors JSONB DEFAULT '[]'::jsonb, -->
+<!-- ``` -->
+<!---->
 ### **Step 2: Enhanced RLS Policies**
 
 Apply this pattern to **every table**:
@@ -139,20 +139,20 @@ SELECT * FROM your_table WHERE tenant_id = current_tenant_id();
 -- Should use tenant index, not sequential scan
 ```
 
-### **Check Validation System Health**
-```sql
--- Daily validation health check
-SELECT 
-    table_name,
-    COUNT(*) as total_records,
-    COUNT(*) FILTER (WHERE validation_status = 'VALID') as valid_records,
-    COUNT(*) FILTER (WHERE validation_status = 'ERROR') as error_records,
-    ROUND(100.0 * COUNT(*) FILTER (WHERE validation_status = 'VALID') / COUNT(*), 2) as health_percentage
-FROM information_schema.tables t
-JOIN your_table yt ON true  -- Replace with actual table
-WHERE t.table_schema = 'public'
-GROUP BY table_name;
-```
+<!-- ### **Check Validation System Health** -->
+<!-- ```sql -->
+<!-- -- Daily validation health check -->
+<!-- SELECT  -->
+<!--     table_name, -->
+<!--     COUNT(*) as total_records, -->
+<!--     COUNT(*) FILTER (WHERE validation_status = 'VALID') as valid_records, -->
+<!--     COUNT(*) FILTER (WHERE validation_status = 'ERROR') as error_records, -->
+<!--     ROUND(100.0 * COUNT(*) FILTER (WHERE validation_status = 'VALID') / COUNT(*), 2) as health_percentage -->
+<!-- FROM information_schema.tables t -->
+<!-- JOIN your_table yt ON true  -- Replace with actual table -->
+<!-- WHERE t.table_schema = 'public' -->
+<!-- GROUP BY table_name; -->
+<!-- ``` -->
 
 ### **Monitor Index Usage**
 ```sql

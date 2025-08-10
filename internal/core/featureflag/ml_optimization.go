@@ -4,30 +4,29 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"sort"
 	"time"
 
 	"github.com/google/uuid"
+	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
-	db "github.com/niiniyare/erp/db/sqlc"
 )
 
 // MLOptimizationService provides machine learning-based feature flag optimization
 type MLOptimizationService interface {
 	// Optimization recommendations
 	GetRolloutOptimization(ctx context.Context, flagID uuid.UUID) (*RolloutOptimization, error)
-	GetPerformanceMetrics(ctx context.Context, flagID uuid.UUID, timeRange TimeRange) (*PerformanceMetrics, error)
+	GetPerformanceMetrics(ctx context.Context, flagID uuid.UUID, timeRange MLTimeRange) (*PerformanceMetrics, error)
 	PredictOptimalRollout(ctx context.Context, flagID uuid.UUID, targetMetrics *TargetMetrics) (*RolloutPrediction, error)
-	
+
 	// A/B Testing optimization
 	OptimizeABTest(ctx context.Context, flagID uuid.UUID, variants []Variant) (*ABTestOptimization, error)
-	DetectAnomalies(ctx context.Context, flagID uuid.UUID, timeRange TimeRange) ([]*Anomaly, error)
-	
+	DetectAnomalies(ctx context.Context, flagID uuid.UUID, timeRange MLTimeRange) ([]*Anomaly, error)
+
 	// Automated decision making
 	ShouldAutoScale(ctx context.Context, flagID uuid.UUID) (*AutoScaleRecommendation, error)
 	GenerateOptimizationReport(ctx context.Context, flagID uuid.UUID) (*OptimizationReport, error)
-	
+
 	// Learning and training
 	TrainModel(ctx context.Context, modelType string, trainingData *TrainingData) (*ModelTrainingResult, error)
 	UpdateModelWeights(ctx context.Context, flagID uuid.UUID, outcome *OutcomeData) error
@@ -35,9 +34,9 @@ type MLOptimizationService interface {
 
 // mlOptimizationService implements MLOptimizationService
 type mlOptimizationService struct {
-	store               db.Store
-	metricsProvider     metrics.MetricsProvider
-	featureFlagService  SimpleService
+	store                db.Store
+	metricsProvider      metrics.MetricsProvider
+	featureFlagService   SimpleService
 	dataCollectionPeriod time.Duration
 }
 
@@ -57,13 +56,13 @@ func NewMLOptimizationService(
 
 // RolloutOptimization represents optimization recommendations for rollout
 type RolloutOptimization struct {
-	FlagID                    uuid.UUID              `json:"flag_id"`
-	FlagName                  string                 `json:"flag_name"`
-	CurrentRolloutPercentage  int32                  `json:"current_rollout_percentage"`
-	RecommendedPercentage     int32                  `json:"recommended_percentage"`
-	ConfidenceScore           float64                `json:"confidence_score"`
-	RiskAssessment           *RiskAssessment         `json:"risk_assessment"`
-	PerformanceImpact        *PerformanceImpact      `json:"performance_impact"`
+	FlagID                   uuid.UUID              `json:"flag_id"`
+	FlagName                 string                 `json:"flag_name"`
+	CurrentRolloutPercentage int32                  `json:"current_rollout_percentage"`
+	RecommendedPercentage    int32                  `json:"recommended_percentage"`
+	ConfidenceScore          float64                `json:"confidence_score"`
+	RiskAssessment           *RiskAssessment        `json:"risk_assessment"`
+	PerformanceImpact        *PerformanceImpact     `json:"performance_impact"`
 	OptimizationReason       string                 `json:"optimization_reason"`
 	RecommendationStrength   string                 `json:"recommendation_strength"` // weak, moderate, strong
 	EstimatedImpactMetrics   map[string]interface{} `json:"estimated_impact_metrics"`
@@ -73,59 +72,59 @@ type RolloutOptimization struct {
 
 // PerformanceMetrics represents performance data for a feature flag
 type PerformanceMetrics struct {
-	FlagID              uuid.UUID                  `json:"flag_id"`
-	TimeRange           TimeRange                  `json:"time_range"`
-	TotalUsers          int64                      `json:"total_users"`
-	EnabledUsers        int64                      `json:"enabled_users"`
-	ConversionRate      *ConversionRate            `json:"conversion_rate"`
-	PerformanceStats    *PerformanceStats          `json:"performance_stats"`
-	UserSegments        map[string]*SegmentMetrics `json:"user_segments"`
-	ErrorRates          *ErrorRates                `json:"error_rates"`
-	BusinessMetrics     map[string]float64         `json:"business_metrics"`
-	TrendAnalysis       *TrendAnalysis             `json:"trend_analysis"`
+	FlagID           uuid.UUID                  `json:"flag_id"`
+	TimeRange        TimeRange                  `json:"time_range"`
+	TotalUsers       int64                      `json:"total_users"`
+	EnabledUsers     int64                      `json:"enabled_users"`
+	ConversionRate   *ConversionRate            `json:"conversion_rate"`
+	PerformanceStats *PerformanceStats          `json:"performance_stats"`
+	UserSegments     map[string]*SegmentMetrics `json:"user_segments"`
+	ErrorRates       *ErrorRates                `json:"error_rates"`
+	BusinessMetrics  map[string]float64         `json:"business_metrics"`
+	TrendAnalysis    *MLTrendAnalysis           `json:"trend_analysis"`
 }
 
 // RolloutPrediction represents ML predictions for optimal rollout
 type RolloutPrediction struct {
-	FlagID                   uuid.UUID              `json:"flag_id"`
-	TargetMetrics           *TargetMetrics          `json:"target_metrics"`
-	PredictedOptimalRollout  int32                  `json:"predicted_optimal_rollout"`
-	PredictionConfidence     float64                `json:"prediction_confidence"`
-	ExpectedOutcomes         *ExpectedOutcomes       `json:"expected_outcomes"`
-	RolloutSteps            []*RolloutStep          `json:"rollout_steps"`
-	Timeline                *RolloutTimeline        `json:"timeline"`
-	RiskFactors             []*RiskFactor           `json:"risk_factors"`
+	FlagID                    uuid.UUID                   `json:"flag_id"`
+	TargetMetrics             *TargetMetrics              `json:"target_metrics"`
+	PredictedOptimalRollout   int32                       `json:"predicted_optimal_rollout"`
+	PredictionConfidence      float64                     `json:"prediction_confidence"`
+	ExpectedOutcomes          *ExpectedOutcomes           `json:"expected_outcomes"`
+	RolloutSteps              []*RolloutStep              `json:"rollout_steps"`
+	Timeline                  *RolloutTimeline            `json:"timeline"`
+	RiskFactors               []*MLRiskFactor             `json:"risk_factors"`
 	MonitoringRecommendations []*MonitoringRecommendation `json:"monitoring_recommendations"`
 }
 
 // ABTestOptimization represents A/B test optimization recommendations
 type ABTestOptimization struct {
-	FlagID              uuid.UUID           `json:"flag_id"`
-	TestVariants        []Variant           `json:"test_variants"`
-	OptimalVariant      *Variant            `json:"optimal_variant"`
-	StatisticalSignificance float64         `json:"statistical_significance"`
-	SampleSizeRecommendation int            `json:"sample_size_recommendation"`
-	TestDuration        time.Duration       `json:"test_duration"`
-	PowerAnalysis       *PowerAnalysis      `json:"power_analysis"`
-	VariantPerformance  map[string]*VariantMetrics `json:"variant_performance"`
-	DecisionRecommendation string          `json:"decision_recommendation"`
-	NextActions         []string            `json:"next_actions"`
+	FlagID                   uuid.UUID                  `json:"flag_id"`
+	TestVariants             []Variant                  `json:"test_variants"`
+	OptimalVariant           *Variant                   `json:"optimal_variant"`
+	StatisticalSignificance  float64                    `json:"statistical_significance"`
+	SampleSizeRecommendation int                        `json:"sample_size_recommendation"`
+	TestDuration             time.Duration              `json:"test_duration"`
+	PowerAnalysis            *PowerAnalysis             `json:"power_analysis"`
+	VariantPerformance       map[string]*VariantMetrics `json:"variant_performance"`
+	DecisionRecommendation   string                     `json:"decision_recommendation"`
+	NextActions              []string                   `json:"next_actions"`
 }
 
 // Anomaly represents detected anomalies in flag performance
 type Anomaly struct {
-	ID               uuid.UUID              `json:"id"`
-	FlagID           uuid.UUID              `json:"flag_id"`
-	AnomalyType      string                 `json:"anomaly_type"` // performance, error_rate, usage_pattern
-	Severity         string                 `json:"severity"`     // low, medium, high, critical
-	DetectedAt       time.Time              `json:"detected_at"`
-	Description      string                 `json:"description"`
-	AffectedMetrics  []string               `json:"affected_metrics"`
-	DeviationScore   float64                `json:"deviation_score"`
-	BaselineValue    float64                `json:"baseline_value"`
-	CurrentValue     float64                `json:"current_value"`
-	RecommendedAction string                `json:"recommended_action"`
-	Context          map[string]interface{} `json:"context,omitempty"`
+	ID                uuid.UUID              `json:"id"`
+	FlagID            uuid.UUID              `json:"flag_id"`
+	AnomalyType       string                 `json:"anomaly_type"` // performance, error_rate, usage_pattern
+	Severity          string                 `json:"severity"`     // low, medium, high, critical
+	DetectedAt        time.Time              `json:"detected_at"`
+	Description       string                 `json:"description"`
+	AffectedMetrics   []string               `json:"affected_metrics"`
+	DeviationScore    float64                `json:"deviation_score"`
+	BaselineValue     float64                `json:"baseline_value"`
+	CurrentValue      float64                `json:"current_value"`
+	RecommendedAction string                 `json:"recommended_action"`
+	Context           map[string]interface{} `json:"context,omitempty"`
 }
 
 // AutoScaleRecommendation represents auto-scaling recommendations
@@ -144,35 +143,35 @@ type AutoScaleRecommendation struct {
 
 // OptimizationReport represents a comprehensive optimization report
 type OptimizationReport struct {
-	FlagID                uuid.UUID                  `json:"flag_id"`
-	FlagName              string                     `json:"flag_name"`
-	ReportGeneratedAt     time.Time                  `json:"report_generated_at"`
-	ReportPeriod          TimeRange                  `json:"report_period"`
-	OverallHealth         string                     `json:"overall_health"` // excellent, good, fair, poor
-	HealthScore           float64                    `json:"health_score"`   // 0.0 to 1.0
-	KeyFindings           []string                   `json:"key_findings"`
-	PerformanceSummary    *PerformanceSummary        `json:"performance_summary"`
-	OptimizationHistory   []*OptimizationAction      `json:"optimization_history"`
-	CurrentRecommendations []*Recommendation         `json:"current_recommendations"`
-	FutureProjections     *FutureProjections         `json:"future_projections"`
-	CompetitorComparison  *CompetitorComparison      `json:"competitor_comparison,omitempty"`
-	ROIAnalysis           *ROIAnalysis               `json:"roi_analysis"`
+	FlagID                 uuid.UUID             `json:"flag_id"`
+	FlagName               string                `json:"flag_name"`
+	ReportGeneratedAt      time.Time             `json:"report_generated_at"`
+	ReportPeriod           TimeRange             `json:"report_period"`
+	OverallHealth          string                `json:"overall_health"` // excellent, good, fair, poor
+	HealthScore            float64               `json:"health_score"`   // 0.0 to 1.0
+	KeyFindings            []string              `json:"key_findings"`
+	PerformanceSummary     *PerformanceSummary   `json:"performance_summary"`
+	OptimizationHistory    []*OptimizationAction `json:"optimization_history"`
+	CurrentRecommendations []*MLRecommendation   `json:"current_recommendations"`
+	FutureProjections      *FutureProjections    `json:"future_projections"`
+	CompetitorComparison   *CompetitorComparison `json:"competitor_comparison,omitempty"`
+	ROIAnalysis            *ROIAnalysis          `json:"roi_analysis"`
 }
 
 // Supporting types for ML optimization
 
-type TimeRange struct {
+type MLTimeRange struct {
 	Start time.Time `json:"start"`
 	End   time.Time `json:"end"`
 }
 
 type TargetMetrics struct {
-	ConversionRate     *float64 `json:"conversion_rate,omitempty"`
-	ErrorRate          *float64 `json:"error_rate,omitempty"`
-	ResponseTime       *float64 `json:"response_time,omitempty"`
-	UserSatisfaction   *float64 `json:"user_satisfaction,omitempty"`
-	BusinessMetric     *float64 `json:"business_metric,omitempty"`
-	CustomMetrics      map[string]float64 `json:"custom_metrics,omitempty"`
+	ConversionRate   *float64           `json:"conversion_rate,omitempty"`
+	ErrorRate        *float64           `json:"error_rate,omitempty"`
+	ResponseTime     *float64           `json:"response_time,omitempty"`
+	UserSatisfaction *float64           `json:"user_satisfaction,omitempty"`
+	BusinessMetric   *float64           `json:"business_metric,omitempty"`
+	CustomMetrics    map[string]float64 `json:"custom_metrics,omitempty"`
 }
 
 type RiskAssessment struct {
@@ -183,18 +182,18 @@ type RiskAssessment struct {
 }
 
 type PerformanceImpact struct {
-	ResponseTimeChange    float64 `json:"response_time_change"`
-	ThroughputChange      float64 `json:"throughput_change"`
-	ErrorRateChange       float64 `json:"error_rate_change"`
-	ResourceUtilization   float64 `json:"resource_utilization"`
-	UserExperienceImpact  string  `json:"user_experience_impact"`
+	ResponseTimeChange   float64 `json:"response_time_change"`
+	ThroughputChange     float64 `json:"throughput_change"`
+	ErrorRateChange      float64 `json:"error_rate_change"`
+	ResourceUtilization  float64 `json:"resource_utilization"`
+	UserExperienceImpact string  `json:"user_experience_impact"`
 }
 
 type ConversionRate struct {
-	Overall         float64            `json:"overall"`
-	BySegment       map[string]float64 `json:"by_segment"`
-	Trend           string             `json:"trend"` // improving, declining, stable
-	ComparedToPrevious float64         `json:"compared_to_previous"`
+	Overall            float64            `json:"overall"`
+	BySegment          map[string]float64 `json:"by_segment"`
+	Trend              string             `json:"trend"` // improving, declining, stable
+	ComparedToPrevious float64            `json:"compared_to_previous"`
 }
 
 type PerformanceStats struct {
@@ -207,26 +206,26 @@ type PerformanceStats struct {
 }
 
 type SegmentMetrics struct {
-	UserCount        int64   `json:"user_count"`
-	ConversionRate   float64 `json:"conversion_rate"`
-	EngagementScore  float64 `json:"engagement_score"`
-	RetentionRate    float64 `json:"retention_rate"`
-	Satisfaction     float64 `json:"satisfaction"`
+	UserCount       int64   `json:"user_count"`
+	ConversionRate  float64 `json:"conversion_rate"`
+	EngagementScore float64 `json:"engagement_score"`
+	RetentionRate   float64 `json:"retention_rate"`
+	Satisfaction    float64 `json:"satisfaction"`
 }
 
 type ErrorRates struct {
-	Overall         float64            `json:"overall"`
-	ByErrorType     map[string]float64 `json:"by_error_type"`
-	ByEndpoint      map[string]float64 `json:"by_endpoint"`
-	TrendDirection  string             `json:"trend_direction"`
+	Overall        float64            `json:"overall"`
+	ByErrorType    map[string]float64 `json:"by_error_type"`
+	ByEndpoint     map[string]float64 `json:"by_endpoint"`
+	TrendDirection string             `json:"trend_direction"`
 }
 
-type TrendAnalysis struct {
-	Direction      string  `json:"direction"` // improving, declining, stable
-	Velocity       float64 `json:"velocity"`  // rate of change
-	Seasonality    bool    `json:"seasonality"`
-	Predictions    map[string]float64 `json:"predictions"`
-	ConfidenceLevel float64 `json:"confidence_level"`
+type MLTrendAnalysis struct {
+	Direction       string             `json:"direction"` // improving, declining, stable
+	Velocity        float64            `json:"velocity"`  // rate of change
+	Seasonality     bool               `json:"seasonality"`
+	Predictions     map[string]float64 `json:"predictions"`
+	ConfidenceLevel float64            `json:"confidence_level"`
 }
 
 type ExpectedOutcomes struct {
@@ -237,20 +236,20 @@ type ExpectedOutcomes struct {
 }
 
 type RolloutStep struct {
-	Percentage      int32         `json:"percentage"`
-	Duration        time.Duration `json:"duration"`
-	SuccessCriteria []string      `json:"success_criteria"`
-	RollbackTriggers []string     `json:"rollback_triggers"`
+	Percentage       int32         `json:"percentage"`
+	Duration         time.Duration `json:"duration"`
+	SuccessCriteria  []string      `json:"success_criteria"`
+	RollbackTriggers []string      `json:"rollback_triggers"`
 }
 
 type RolloutTimeline struct {
-	EstimatedDuration time.Duration          `json:"estimated_duration"`
-	Phases           []*TimelinePhase        `json:"phases"`
-	Milestones       []*Milestone           `json:"milestones"`
-	CriticalPath     []string               `json:"critical_path"`
+	EstimatedDuration time.Duration    `json:"estimated_duration"`
+	Phases            []*TimelinePhase `json:"phases"`
+	Milestones        []*Milestone     `json:"milestones"`
+	CriticalPath      []string         `json:"critical_path"`
 }
 
-type RiskFactor struct {
+type MLRiskFactor struct {
 	Factor      string  `json:"factor"`
 	Severity    string  `json:"severity"`
 	Probability float64 `json:"probability"`
@@ -259,71 +258,71 @@ type RiskFactor struct {
 }
 
 type MonitoringRecommendation struct {
-	MetricName      string        `json:"metric_name"`
-	AlertThreshold  float64       `json:"alert_threshold"`
-	CheckInterval   time.Duration `json:"check_interval"`
-	ActionRequired  string        `json:"action_required"`
+	MetricName     string        `json:"metric_name"`
+	AlertThreshold float64       `json:"alert_threshold"`
+	CheckInterval  time.Duration `json:"check_interval"`
+	ActionRequired string        `json:"action_required"`
 }
 
 type Variant struct {
-	ID             string                 `json:"id"`
-	Name           string                 `json:"name"`
-	Description    string                 `json:"description"`
-	Configuration  map[string]interface{} `json:"configuration"`
-	TrafficSplit   float64                `json:"traffic_split"`
-	IsControl      bool                   `json:"is_control"`
+	ID            string                 `json:"id"`
+	Name          string                 `json:"name"`
+	Description   string                 `json:"description"`
+	Configuration map[string]interface{} `json:"configuration"`
+	TrafficSplit  float64                `json:"traffic_split"`
+	IsControl     bool                   `json:"is_control"`
 }
 
 type PowerAnalysis struct {
-	StatisticalPower    float64 `json:"statistical_power"`
-	EffectSize          float64 `json:"effect_size"`
-	AlphaLevel          float64 `json:"alpha_level"`
-	RequiredSampleSize  int     `json:"required_sample_size"`
-	CurrentSampleSize   int     `json:"current_sample_size"`
-	TestDuration        time.Duration `json:"test_duration"`
+	StatisticalPower   float64       `json:"statistical_power"`
+	EffectSize         float64       `json:"effect_size"`
+	AlphaLevel         float64       `json:"alpha_level"`
+	RequiredSampleSize int           `json:"required_sample_size"`
+	CurrentSampleSize  int           `json:"current_sample_size"`
+	TestDuration       time.Duration `json:"test_duration"`
 }
 
 type VariantMetrics struct {
-	ConversionRate    float64            `json:"conversion_rate"`
-	SampleSize        int                `json:"sample_size"`
-	ConfidenceInterval *ConfidenceInterval `json:"confidence_interval"`
-	StatisticalSignificance float64      `json:"statistical_significance"`
-	BusinessMetrics   map[string]float64 `json:"business_metrics"`
+	ConversionRate          float64             `json:"conversion_rate"`
+	SampleSize              int                 `json:"sample_size"`
+	ConfidenceInterval      *ConfidenceInterval `json:"confidence_interval"`
+	StatisticalSignificance float64             `json:"statistical_significance"`
+	BusinessMetrics         map[string]float64  `json:"business_metrics"`
 }
 
 type ConfidenceInterval struct {
-	Lower  float64 `json:"lower"`
-	Upper  float64 `json:"upper"`
-	Level  float64 `json:"level"` // e.g., 0.95 for 95% confidence
+	Lower float64 `json:"lower"`
+	Upper float64 `json:"upper"`
+	Level float64 `json:"level"` // e.g., 0.95 for 95% confidence
 }
 
 type ScalingTimeline struct {
-	InitialPhase    time.Duration `json:"initial_phase"`
-	ScalingPhase    time.Duration `json:"scaling_phase"`
+	InitialPhase       time.Duration `json:"initial_phase"`
+	ScalingPhase       time.Duration `json:"scaling_phase"`
 	StabilizationPhase time.Duration `json:"stabilization_phase"`
-	TotalDuration   time.Duration `json:"total_duration"`
+	TotalDuration      time.Duration `json:"total_duration"`
 }
 
 type PerformanceSummary struct {
-	OverallScore        float64 `json:"overall_score"`
-	ConversionTrend     string  `json:"conversion_trend"`
-	PerformanceTrend    string  `json:"performance_trend"`
-	UserSatisfactionTrend string `json:"user_satisfaction_trend"`
-	ErrorRateTrend      string  `json:"error_rate_trend"`
-	KeyMetrics          map[string]float64 `json:"key_metrics"`
+	OverallScore          float64            `json:"overall_score"`
+	ConversionTrend       string             `json:"conversion_trend"`
+	PerformanceTrend      string             `json:"performance_trend"`
+	UserSatisfactionTrend string             `json:"user_satisfaction_trend"`
+	ErrorRateTrend        string             `json:"error_rate_trend"`
+	KeyMetrics            map[string]float64 `json:"key_metrics"`
 }
 
 type OptimizationAction struct {
-	ActionID      uuid.UUID `json:"action_id"`
-	Type          string    `json:"type"`
-	Description   string    `json:"description"`
-	PerformedAt   time.Time `json:"performed_at"`
-	PerformedBy   uuid.UUID `json:"performed_by"`
-	Impact        string    `json:"impact"`
-	Success       bool      `json:"success"`
+	ActionID    uuid.UUID `json:"action_id"`
+	Type        string    `json:"type"`
+	Description string    `json:"description"`
+	PerformedAt time.Time `json:"performed_at"`
+	PerformedBy uuid.UUID `json:"performed_by"`
+	Impact      string    `json:"impact"`
+	Success     bool      `json:"success"`
 }
 
-type Recommendation struct {
+type MLRecommendation struct {
 	ID          uuid.UUID `json:"id"`
 	Type        string    `json:"type"`
 	Title       string    `json:"title"`
@@ -336,43 +335,43 @@ type Recommendation struct {
 }
 
 type FutureProjections struct {
-	NextWeek        *ProjectionData `json:"next_week"`
-	NextMonth       *ProjectionData `json:"next_month"`
-	NextQuarter     *ProjectionData `json:"next_quarter"`
+	NextWeek         *ProjectionData    `json:"next_week"`
+	NextMonth        *ProjectionData    `json:"next_month"`
+	NextQuarter      *ProjectionData    `json:"next_quarter"`
 	TrendProjections map[string]float64 `json:"trend_projections"`
 }
 
 type ProjectionData struct {
-	ConversionRate    float64 `json:"conversion_rate"`
-	UserCount         int64   `json:"user_count"`
-	ErrorRate         float64 `json:"error_rate"`
-	PerformanceScore  float64 `json:"performance_score"`
-	ConfidenceLevel   float64 `json:"confidence_level"`
+	ConversionRate   float64 `json:"conversion_rate"`
+	UserCount        int64   `json:"user_count"`
+	ErrorRate        float64 `json:"error_rate"`
+	PerformanceScore float64 `json:"performance_score"`
+	ConfidenceLevel  float64 `json:"confidence_level"`
 }
 
 type CompetitorComparison struct {
-	Industry        string                 `json:"industry"`
-	ComparisonData  map[string]interface{} `json:"comparison_data"`
-	Ranking         int                    `json:"ranking"`
-	BestPractices   []string              `json:"best_practices"`
-	GapAnalysis     map[string]float64     `json:"gap_analysis"`
+	Industry       string                 `json:"industry"`
+	ComparisonData map[string]interface{} `json:"comparison_data"`
+	Ranking        int                    `json:"ranking"`
+	BestPractices  []string               `json:"best_practices"`
+	GapAnalysis    map[string]float64     `json:"gap_analysis"`
 }
 
 type ROIAnalysis struct {
-	Investment      float64 `json:"investment"`
-	Returns         float64 `json:"returns"`
-	ROI             float64 `json:"roi"`
+	Investment      float64       `json:"investment"`
+	Returns         float64       `json:"returns"`
+	ROI             float64       `json:"roi"`
 	PaybackPeriod   time.Duration `json:"payback_period"`
-	NPV             float64 `json:"npv"`
-	CostSavings     float64 `json:"cost_savings"`
-	RevenueIncrease float64 `json:"revenue_increase"`
+	NPV             float64       `json:"npv"`
+	CostSavings     float64       `json:"cost_savings"`
+	RevenueIncrease float64       `json:"revenue_increase"`
 }
 
 type TimelinePhase struct {
-	Name        string        `json:"name"`
-	Duration    time.Duration `json:"duration"`
-	Description string        `json:"description"`
-	Dependencies []string     `json:"dependencies"`
+	Name         string        `json:"name"`
+	Duration     time.Duration `json:"duration"`
+	Description  string        `json:"description"`
+	Dependencies []string      `json:"dependencies"`
 }
 
 type Milestone struct {
@@ -383,16 +382,16 @@ type Milestone struct {
 }
 
 type TrainingData struct {
-	Features    [][]float64 `json:"features"`
-	Labels      []float64   `json:"labels"`
+	Features    [][]float64            `json:"features"`
+	Labels      []float64              `json:"labels"`
 	Metadata    map[string]interface{} `json:"metadata"`
-	DataQuality *DataQuality `json:"data_quality"`
+	DataQuality *DataQuality           `json:"data_quality"`
 }
 
 type DataQuality struct {
-	Completeness float64 `json:"completeness"`
-	Accuracy     float64 `json:"accuracy"`
-	Consistency  float64 `json:"consistency"`
+	Completeness float64  `json:"completeness"`
+	Accuracy     float64  `json:"accuracy"`
+	Consistency  float64  `json:"consistency"`
 	Issues       []string `json:"issues"`
 }
 
@@ -409,18 +408,18 @@ type ModelTrainingResult struct {
 }
 
 type OutcomeData struct {
-	FlagID      uuid.UUID              `json:"flag_id"`
-	Outcome     string                 `json:"outcome"` // success, failure, partial
-	Metrics     map[string]float64     `json:"metrics"`
-	Context     map[string]interface{} `json:"context"`
-	RecordedAt  time.Time              `json:"recorded_at"`
+	FlagID     uuid.UUID              `json:"flag_id"`
+	Outcome    string                 `json:"outcome"` // success, failure, partial
+	Metrics    map[string]float64     `json:"metrics"`
+	Context    map[string]interface{} `json:"context"`
+	RecordedAt time.Time              `json:"recorded_at"`
 }
 
 // Implementation methods
 
 // GetRolloutOptimization provides ML-based rollout optimization recommendations
 func (s *mlOptimizationService) GetRolloutOptimization(ctx context.Context, flagID uuid.UUID) (*RolloutOptimization, error) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"service": "mlOptimizationService",
 		"method":  "GetRolloutOptimization",
 		"flag_id": flagID,
@@ -429,7 +428,7 @@ func (s *mlOptimizationService) GetRolloutOptimization(ctx context.Context, flag
 	// Get current flag information
 	flag, err := s.featureFlagService.GetFeatureFlagByID(ctx, flagID)
 	if err != nil {
-		logger.Error("Failed to get feature flag", logger.Fields{"error": err})
+		log.Error("Failed to get feature flag", logger.Fields{"error": err})
 		return nil, fmt.Errorf("failed to get feature flag: %w", err)
 	}
 
@@ -439,9 +438,9 @@ func (s *mlOptimizationService) GetRolloutOptimization(ctx context.Context, flag
 		End:   time.Now(),
 	}
 
-	metrics, err := s.GetPerformanceMetrics(ctx, flagID, timeRange)
+	metrics, err := s.GetPerformanceMetrics(ctx, flagID, MLTimeRange(timeRange))
 	if err != nil {
-		logger.Error("Failed to get performance metrics", logger.Fields{"error": err})
+		log.Error("Failed to get performance metrics", logger.Fields{"error": err})
 		return nil, fmt.Errorf("failed to get performance metrics: %w", err)
 	}
 
@@ -479,10 +478,10 @@ func (s *mlOptimizationService) GetRolloutOptimization(ctx context.Context, flag
 		},
 	}
 
-	logger.Info("Generated rollout optimization", logger.Fields{
-		"current_rollout":    currentRollout,
-		"recommended_rollout": recommendedRollout,
-		"confidence_score":   confidenceScore,
+	log.Info("Generated rollout optimization", logger.Fields{
+		"current_rollout":         currentRollout,
+		"recommended_rollout":     recommendedRollout,
+		"confidence_score":        confidenceScore,
 		"recommendation_strength": strength,
 	})
 
@@ -490,8 +489,8 @@ func (s *mlOptimizationService) GetRolloutOptimization(ctx context.Context, flag
 }
 
 // GetPerformanceMetrics collects and analyzes performance metrics for a flag
-func (s *mlOptimizationService) GetPerformanceMetrics(ctx context.Context, flagID uuid.UUID, timeRange TimeRange) (*PerformanceMetrics, error) {
-	logger := logger.WithFields(logger.Fields{
+func (s *mlOptimizationService) GetPerformanceMetrics(ctx context.Context, flagID uuid.UUID, timeRange MLTimeRange) (*PerformanceMetrics, error) {
+	log := logger.WithFields(logger.Fields{
 		"service": "mlOptimizationService",
 		"method":  "GetPerformanceMetrics",
 		"flag_id": flagID,
@@ -499,10 +498,10 @@ func (s *mlOptimizationService) GetPerformanceMetrics(ctx context.Context, flagI
 
 	// This is a simplified implementation
 	// In a real system, this would query actual metrics data
-	
+
 	metrics := &PerformanceMetrics{
 		FlagID:       flagID,
-		TimeRange:    timeRange,
+		TimeRange:    TimeRange(timeRange),
 		TotalUsers:   10000,
 		EnabledUsers: 5000,
 		ConversionRate: &ConversionRate{
@@ -536,10 +535,10 @@ func (s *mlOptimizationService) GetPerformanceMetrics(ctx context.Context, flagI
 			},
 		},
 		ErrorRates: &ErrorRates{
-			Overall:         0.002, // 0.2%
-			ByErrorType:     map[string]float64{"timeout": 0.001, "validation": 0.0005, "system": 0.0005},
-			ByEndpoint:      map[string]float64{"/api/feature": 0.001, "/api/config": 0.0008},
-			TrendDirection:  "stable",
+			Overall:        0.002, // 0.2%
+			ByErrorType:    map[string]float64{"timeout": 0.001, "validation": 0.0005, "system": 0.0005},
+			ByEndpoint:     map[string]float64{"/api/feature": 0.001, "/api/config": 0.0008},
+			TrendDirection: "stable",
 		},
 		BusinessMetrics: map[string]float64{
 			"revenue_per_user": 25.50,
@@ -547,7 +546,7 @@ func (s *mlOptimizationService) GetPerformanceMetrics(ctx context.Context, flagI
 			"satisfaction":     4.3,
 			"retention_rate":   0.87,
 		},
-		TrendAnalysis: &TrendAnalysis{
+		TrendAnalysis: &MLTrendAnalysis{
 			Direction:       "improving",
 			Velocity:        0.05, // 5% improvement per week
 			Seasonality:     false,
@@ -556,11 +555,11 @@ func (s *mlOptimizationService) GetPerformanceMetrics(ctx context.Context, flagI
 		},
 	}
 
-	logger.Info("Retrieved performance metrics", logger.Fields{
-		"total_users":    metrics.TotalUsers,
-		"enabled_users":  metrics.EnabledUsers,
+	log.Info("Retrieved performance metrics", logger.Fields{
+		"total_users":     metrics.TotalUsers,
+		"enabled_users":   metrics.EnabledUsers,
 		"conversion_rate": metrics.ConversionRate.Overall,
-		"error_rate":     metrics.ErrorRates.Overall,
+		"error_rate":      metrics.ErrorRates.Overall,
 	})
 
 	return metrics, nil
@@ -568,7 +567,7 @@ func (s *mlOptimizationService) GetPerformanceMetrics(ctx context.Context, flagI
 
 // PredictOptimalRollout uses ML to predict optimal rollout percentage
 func (s *mlOptimizationService) PredictOptimalRollout(ctx context.Context, flagID uuid.UUID, targetMetrics *TargetMetrics) (*RolloutPrediction, error) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"service": "mlOptimizationService",
 		"method":  "PredictOptimalRollout",
 		"flag_id": flagID,
@@ -579,8 +578,8 @@ func (s *mlOptimizationService) PredictOptimalRollout(ctx context.Context, flagI
 		Start: time.Now().Add(-7 * 24 * time.Hour),
 		End:   time.Now(),
 	}
-	
-	currentMetrics, err := s.GetPerformanceMetrics(ctx, flagID, timeRange)
+
+	currentMetrics, err := s.GetPerformanceMetrics(ctx, flagID, MLTimeRange(timeRange))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current metrics: %w", err)
 	}
@@ -588,12 +587,12 @@ func (s *mlOptimizationService) PredictOptimalRollout(ctx context.Context, flagI
 	// Apply ML prediction model
 	optimalRollout := s.predictUsingMLModel(currentMetrics, targetMetrics)
 	confidence := s.calculatePredictionConfidence(currentMetrics, targetMetrics)
-	
+
 	// Generate rollout strategy
 	rolloutSteps := s.generateRolloutSteps(optimalRollout)
 	timeline := s.estimateRolloutTimeline(rolloutSteps)
 	riskFactors := s.identifyRiskFactors(currentMetrics, optimalRollout)
-	
+
 	prediction := &RolloutPrediction{
 		FlagID:                  flagID,
 		TargetMetrics:           targetMetrics,
@@ -603,15 +602,15 @@ func (s *mlOptimizationService) PredictOptimalRollout(ctx context.Context, flagI
 			ConversionImprovement: 0.15, // Predicted 15% improvement
 			RiskReduction:         0.8,  // 80% risk reduction
 			PerformanceImpact: &PerformanceImpact{
-				ResponseTimeChange:   -5.0, // 5ms improvement
-				ThroughputChange:     10.0, // 10% increase
+				ResponseTimeChange:   -5.0,   // 5ms improvement
+				ThroughputChange:     10.0,   // 10% increase
 				ErrorRateChange:      -0.001, // 0.1% reduction
-				ResourceUtilization:  2.0,   // 2% increase
+				ResourceUtilization:  2.0,    // 2% increase
 				UserExperienceImpact: "positive",
 			},
 			BusinessImpact: map[string]float64{
-				"revenue_increase": 12.5,
-				"user_satisfaction": 0.3,
+				"revenue_increase":      12.5,
+				"user_satisfaction":     0.3,
 				"retention_improvement": 5.2,
 			},
 		},
@@ -634,7 +633,7 @@ func (s *mlOptimizationService) PredictOptimalRollout(ctx context.Context, flagI
 		},
 	}
 
-	logger.Info("Generated rollout prediction", logger.Fields{
+	log.Info("Generated rollout prediction", logger.Fields{
 		"optimal_rollout": optimalRollout,
 		"confidence":      confidence,
 		"rollout_steps":   len(rolloutSteps),
@@ -647,15 +646,15 @@ func (s *mlOptimizationService) PredictOptimalRollout(ctx context.Context, flagI
 
 func (s *mlOptimizationService) calculateOptimalRollout(metrics *PerformanceMetrics, currentRollout int32) int32 {
 	// Simplified ML algorithm - in production, this would use trained models
-	
+
 	// Base score calculation
 	conversionScore := metrics.ConversionRate.Overall * 100
-	performanceScore := math.Max(0, 100 - metrics.PerformanceStats.AverageResponseTime/5) // Penalty for slow response
-	errorScore := math.Max(0, 100 - metrics.ErrorRates.Overall*10000) // Penalty for errors
-	
+	performanceScore := math.Max(0, 100-metrics.PerformanceStats.AverageResponseTime/5) // Penalty for slow response
+	errorScore := math.Max(0, 100-metrics.ErrorRates.Overall*10000)                     // Penalty for errors
+
 	// Combined score
 	overallScore := (conversionScore + performanceScore + errorScore) / 3
-	
+
 	// Determine optimal rollout based on score
 	if overallScore > 85 {
 		return 100 // Full rollout
@@ -673,39 +672,39 @@ func (s *mlOptimizationService) calculateOptimalRollout(metrics *PerformanceMetr
 func (s *mlOptimizationService) calculateConfidenceScore(metrics *PerformanceMetrics) float64 {
 	// Base confidence on data volume and stability
 	dataVolumeScore := math.Min(1.0, float64(metrics.TotalUsers)/1000.0) // More users = higher confidence
-	
+
 	// Trend stability
 	trendStabilityScore := 0.8 // Would be calculated based on variance in real implementation
 	if metrics.TrendAnalysis.Direction == "stable" {
 		trendStabilityScore = 0.9
 	}
-	
+
 	return (dataVolumeScore + trendStabilityScore) / 2
 }
 
 func (s *mlOptimizationService) assessRisk(metrics *PerformanceMetrics, currentRollout, recommendedRollout int32) *RiskAssessment {
 	riskFactors := []string{}
 	riskScore := 0.0
-	
+
 	// Error rate risk
 	if metrics.ErrorRates.Overall > 0.01 { // > 1%
 		riskFactors = append(riskFactors, "High error rate detected")
 		riskScore += 0.3
 	}
-	
+
 	// Performance risk
 	if metrics.PerformanceStats.P95ResponseTime > 500 {
 		riskFactors = append(riskFactors, "High response time variance")
 		riskScore += 0.2
 	}
-	
+
 	// Rollout change magnitude risk
 	change := math.Abs(float64(recommendedRollout - currentRollout))
 	if change > 50 {
 		riskFactors = append(riskFactors, "Large rollout change recommended")
 		riskScore += 0.3
 	}
-	
+
 	// Determine overall risk level
 	overallRisk := "low"
 	if riskScore > 0.7 {
@@ -713,7 +712,7 @@ func (s *mlOptimizationService) assessRisk(metrics *PerformanceMetrics, currentR
 	} else if riskScore > 0.4 {
 		overallRisk = "medium"
 	}
-	
+
 	return &RiskAssessment{
 		OverallRisk: overallRisk,
 		RiskFactors: riskFactors,
@@ -730,19 +729,19 @@ func (s *mlOptimizationService) assessRisk(metrics *PerformanceMetrics, currentR
 func (s *mlOptimizationService) predictPerformanceImpact(metrics *PerformanceMetrics, recommendedRollout int32) *PerformanceImpact {
 	// Predict impact based on historical data and rollout percentage
 	rolloutFactor := float64(recommendedRollout) / 100.0
-	
+
 	return &PerformanceImpact{
-		ResponseTimeChange:   rolloutFactor * 5.0,  // Estimated 5ms increase per 100% rollout
-		ThroughputChange:     rolloutFactor * -2.0, // Estimated 2% decrease per 100% rollout
+		ResponseTimeChange:   rolloutFactor * 5.0,   // Estimated 5ms increase per 100% rollout
+		ThroughputChange:     rolloutFactor * -2.0,  // Estimated 2% decrease per 100% rollout
 		ErrorRateChange:      rolloutFactor * 0.001, // Estimated 0.1% increase per 100% rollout
 		ResourceUtilization:  rolloutFactor * 10.0,  // Estimated 10% increase per 100% rollout
-		UserExperienceImpact: "neutral", // Would be calculated based on UX metrics
+		UserExperienceImpact: "neutral",             // Would be calculated based on UX metrics
 	}
 }
 
 func (s *mlOptimizationService) generateOptimizationReason(metrics *PerformanceMetrics, currentRollout, recommendedRollout int32) string {
 	if recommendedRollout > currentRollout {
-		return fmt.Sprintf("Performance metrics are strong (conversion: %.1f%%, error rate: %.3f%%). Recommending increase to %d%%.", 
+		return fmt.Sprintf("Performance metrics are strong (conversion: %.1f%%, error rate: %.3f%%). Recommending increase to %d%%.",
 			metrics.ConversionRate.Overall*100, metrics.ErrorRates.Overall*100, recommendedRollout)
 	} else if recommendedRollout < currentRollout {
 		return fmt.Sprintf("Performance concerns detected. Recommending conservative rollback to %d%% for stability.", recommendedRollout)
@@ -761,7 +760,7 @@ func (s *mlOptimizationService) determineRecommendationStrength(confidenceScore 
 
 func (s *mlOptimizationService) estimateImpactMetrics(metrics *PerformanceMetrics, recommendedRollout int32) map[string]interface{} {
 	rolloutFactor := float64(recommendedRollout) / 100.0
-	
+
 	return map[string]interface{}{
 		"estimated_conversion_rate": metrics.ConversionRate.Overall * (1 + rolloutFactor*0.1), // 10% improvement potential
 		"estimated_user_impact":     int64(float64(metrics.TotalUsers) * rolloutFactor),
@@ -775,9 +774,9 @@ func (s *mlOptimizationService) predictUsingMLModel(currentMetrics *PerformanceM
 	// - Gradient boosting
 	// - Neural networks
 	// - Ensemble methods
-	
+
 	score := 0.0
-	
+
 	// Factor in current performance
 	if currentMetrics.ConversionRate.Overall > 0.1 {
 		score += 30
@@ -788,7 +787,7 @@ func (s *mlOptimizationService) predictUsingMLModel(currentMetrics *PerformanceM
 	if currentMetrics.PerformanceStats.AverageResponseTime < 200 {
 		score += 20
 	}
-	
+
 	// Factor in target metrics
 	if targetMetrics.ConversionRate != nil && *targetMetrics.ConversionRate > currentMetrics.ConversionRate.Overall {
 		score += 15
@@ -796,7 +795,7 @@ func (s *mlOptimizationService) predictUsingMLModel(currentMetrics *PerformanceM
 	if targetMetrics.ErrorRate != nil && *targetMetrics.ErrorRate < currentMetrics.ErrorRates.Overall {
 		score += 10
 	}
-	
+
 	// Convert score to rollout percentage
 	if score > 80 {
 		return 100
@@ -807,72 +806,72 @@ func (s *mlOptimizationService) predictUsingMLModel(currentMetrics *PerformanceM
 	} else if score > 20 {
 		return 25
 	}
-	
+
 	return 10
 }
 
 func (s *mlOptimizationService) calculatePredictionConfidence(currentMetrics *PerformanceMetrics, targetMetrics *TargetMetrics) float64 {
 	confidence := 0.5 // Base confidence
-	
+
 	// Higher confidence with more data
 	if currentMetrics.TotalUsers > 1000 {
 		confidence += 0.2
 	}
-	
+
 	// Higher confidence with stable trends
 	if currentMetrics.TrendAnalysis.Direction == "stable" || currentMetrics.TrendAnalysis.Direction == "improving" {
 		confidence += 0.2
 	}
-	
+
 	// Lower confidence with high error rates
 	if currentMetrics.ErrorRates.Overall > 0.01 {
 		confidence -= 0.1
 	}
-	
+
 	return math.Min(math.Max(confidence, 0.0), 1.0)
 }
 
 func (s *mlOptimizationService) generateRolloutSteps(optimalRollout int32) []*RolloutStep {
 	steps := []*RolloutStep{}
-	
+
 	// Generate progressive rollout steps
 	if optimalRollout > 50 {
 		steps = append(steps, &RolloutStep{
-			Percentage: 10,
-			Duration:   2 * time.Hour,
-			SuccessCriteria: []string{"Error rate < 0.5%", "Response time < 200ms"},
+			Percentage:       10,
+			Duration:         2 * time.Hour,
+			SuccessCriteria:  []string{"Error rate < 0.5%", "Response time < 200ms"},
 			RollbackTriggers: []string{"Error rate > 1%", "Conversion drop > 10%"},
 		})
 		steps = append(steps, &RolloutStep{
-			Percentage: 25,
-			Duration:   4 * time.Hour,
-			SuccessCriteria: []string{"Stable performance metrics", "User satisfaction maintained"},
+			Percentage:       25,
+			Duration:         4 * time.Hour,
+			SuccessCriteria:  []string{"Stable performance metrics", "User satisfaction maintained"},
 			RollbackTriggers: []string{"Performance degradation", "User complaints spike"},
 		})
 		steps = append(steps, &RolloutStep{
-			Percentage: 50,
-			Duration:   8 * time.Hour,
-			SuccessCriteria: []string{"Positive business metrics", "System stability"},
+			Percentage:       50,
+			Duration:         8 * time.Hour,
+			SuccessCriteria:  []string{"Positive business metrics", "System stability"},
 			RollbackTriggers: []string{"Business metric decline", "System instability"},
 		})
 		if optimalRollout > 75 {
 			steps = append(steps, &RolloutStep{
-				Percentage: optimalRollout,
-				Duration:   12 * time.Hour,
-				SuccessCriteria: []string{"Full rollout successful", "All metrics positive"},
+				Percentage:       optimalRollout,
+				Duration:         12 * time.Hour,
+				SuccessCriteria:  []string{"Full rollout successful", "All metrics positive"},
 				RollbackTriggers: []string{"Any critical metric failure"},
 			})
 		}
 	} else {
 		// Conservative rollout for lower targets
 		steps = append(steps, &RolloutStep{
-			Percentage: optimalRollout,
-			Duration:   6 * time.Hour,
-			SuccessCriteria: []string{"Stable operation", "No performance degradation"},
+			Percentage:       optimalRollout,
+			Duration:         6 * time.Hour,
+			SuccessCriteria:  []string{"Stable operation", "No performance degradation"},
 			RollbackTriggers: []string{"Any negative impact detected"},
 		})
 	}
-	
+
 	return steps
 }
 
@@ -880,21 +879,21 @@ func (s *mlOptimizationService) estimateRolloutTimeline(steps []*RolloutStep) *R
 	totalDuration := time.Duration(0)
 	phases := []*TimelinePhase{}
 	milestones := []*Milestone{}
-	
+
 	for i, step := range steps {
 		totalDuration += step.Duration
-		
+
 		phase := &TimelinePhase{
-			Name:        fmt.Sprintf("Rollout to %d%%", step.Percentage),
-			Duration:    step.Duration,
-			Description: fmt.Sprintf("Gradual rollout to %d%% of users", step.Percentage),
+			Name:         fmt.Sprintf("Rollout to %d%%", step.Percentage),
+			Duration:     step.Duration,
+			Description:  fmt.Sprintf("Gradual rollout to %d%% of users", step.Percentage),
 			Dependencies: []string{},
 		}
 		if i > 0 {
 			phase.Dependencies = append(phase.Dependencies, fmt.Sprintf("Phase %d success", i))
 		}
 		phases = append(phases, phase)
-		
+
 		milestone := &Milestone{
 			Name:        fmt.Sprintf("%d%% Rollout Milestone", step.Percentage),
 			TargetDate:  time.Now().Add(totalDuration),
@@ -903,21 +902,21 @@ func (s *mlOptimizationService) estimateRolloutTimeline(steps []*RolloutStep) *R
 		}
 		milestones = append(milestones, milestone)
 	}
-	
+
 	return &RolloutTimeline{
 		EstimatedDuration: totalDuration,
-		Phases:           phases,
-		Milestones:       milestones,
-		CriticalPath:     []string{"Performance validation", "User acceptance", "System stability"},
+		Phases:            phases,
+		Milestones:        milestones,
+		CriticalPath:      []string{"Performance validation", "User acceptance", "System stability"},
 	}
 }
 
-func (s *mlOptimizationService) identifyRiskFactors(metrics *PerformanceMetrics, optimalRollout int32) []*RiskFactor {
-	riskFactors := []*RiskFactor{}
-	
+func (s *mlOptimizationService) identifyRiskFactors(metrics *PerformanceMetrics, optimalRollout int32) []*MLRiskFactor {
+	riskFactors := []*MLRiskFactor{}
+
 	// Performance risk
 	if metrics.PerformanceStats.P95ResponseTime > 300 {
-		riskFactors = append(riskFactors, &RiskFactor{
+		riskFactors = append(riskFactors, &MLRiskFactor{
 			Factor:      "High response time variance",
 			Severity:    "medium",
 			Probability: 0.6,
@@ -925,10 +924,10 @@ func (s *mlOptimizationService) identifyRiskFactors(metrics *PerformanceMetrics,
 			Mitigation:  "Monitor P95 response times closely during rollout",
 		})
 	}
-	
+
 	// Error rate risk
 	if metrics.ErrorRates.Overall > 0.005 {
-		riskFactors = append(riskFactors, &RiskFactor{
+		riskFactors = append(riskFactors, &MLRiskFactor{
 			Factor:      "Elevated error rates",
 			Severity:    "high",
 			Probability: 0.8,
@@ -936,10 +935,10 @@ func (s *mlOptimizationService) identifyRiskFactors(metrics *PerformanceMetrics,
 			Mitigation:  "Implement circuit breakers and automated rollback",
 		})
 	}
-	
+
 	// Large rollout risk
 	if optimalRollout > 75 {
-		riskFactors = append(riskFactors, &RiskFactor{
+		riskFactors = append(riskFactors, &MLRiskFactor{
 			Factor:      "High rollout percentage",
 			Severity:    "medium",
 			Probability: 0.4,
@@ -947,7 +946,7 @@ func (s *mlOptimizationService) identifyRiskFactors(metrics *PerformanceMetrics,
 			Mitigation:  "Use canary deployments and gradual rollout",
 		})
 	}
-	
+
 	return riskFactors
 }
 
@@ -960,14 +959,14 @@ func (s *mlOptimizationService) OptimizeABTest(ctx context.Context, flagID uuid.
 	// This is a placeholder for the complete implementation
 	return &ABTestOptimization{
 		FlagID:                  flagID,
-		TestVariants:           variants,
+		TestVariants:            variants,
 		StatisticalSignificance: 0.95,
-		DecisionRecommendation: "Continue test for 2 more weeks to reach statistical significance",
+		DecisionRecommendation:  "Continue test for 2 more weeks to reach statistical significance",
 	}, nil
 }
 
 // DetectAnomalies identifies performance anomalies in feature flag metrics
-func (s *mlOptimizationService) DetectAnomalies(ctx context.Context, flagID uuid.UUID, timeRange TimeRange) ([]*Anomaly, error) {
+func (s *mlOptimizationService) DetectAnomalies(ctx context.Context, flagID uuid.UUID, timeRange MLTimeRange) ([]*Anomaly, error) {
 	// Implementation would use anomaly detection algorithms
 	// This is a placeholder for the complete implementation
 	return []*Anomaly{}, nil
@@ -978,9 +977,9 @@ func (s *mlOptimizationService) ShouldAutoScale(ctx context.Context, flagID uuid
 	// Implementation would analyze traffic patterns and performance metrics
 	// This is a placeholder for the complete implementation
 	return &AutoScaleRecommendation{
-		FlagID:         flagID,
-		ShouldScale:    false,
-		ScaleDirection: "maintain",
+		FlagID:          flagID,
+		ShouldScale:     false,
+		ScaleDirection:  "maintain",
 		ConfidenceLevel: 0.8,
 	}, nil
 }
@@ -1016,3 +1015,4 @@ func (s *mlOptimizationService) UpdateModelWeights(ctx context.Context, flagID u
 	// This is a placeholder for the complete implementation
 	return nil
 }
+

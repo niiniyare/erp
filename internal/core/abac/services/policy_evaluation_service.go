@@ -1,5 +1,8 @@
 package services
 
+//go:generate go run go.uber.org/mock/mockgen -source=policy_evaluation_service.go -destination=mock.go -package=services
+
+
 import (
 	"context"
 	"fmt"

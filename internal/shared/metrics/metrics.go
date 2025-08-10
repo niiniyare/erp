@@ -1,5 +1,8 @@
 package metrics
 
+//go:generate go run go.uber.org/mock/mockgen -source=metrics.go -destination=mock_metrics.go -package=metrics
+
+
 import (
 	"context"
 	"fmt"

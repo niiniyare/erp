@@ -53,6 +53,7 @@ The directory structure strictly follows the architectural pattern, separating c
 internal/
 ├── api/
 │   ├── design/           # API Design (Goa DSL) - The Source of Truth
+│   ├── middleware/       # Tenant context, auth, logging middleware
 │   └── handlers/         # HTTP Handlers (Adapter for API input)
 ├── core/
 │   ├── {domain}/         # Self-contained domain module (e.g., tenant, abac)
@@ -62,8 +63,6 @@ internal/
 │   │   └── *.go          # Interfaces (Ports) for services/repositories
 │   └── ...
 ├── platform/             # Cross-cutting infrastructure concerns (Adapters)
-│   ├── database/         # Database connection management
-│   ├── middleware/       # Tenant context, auth, logging middleware
 │   ├── cache/            # Caching implementation (e.g., Redis)
 │   └── config/           # Application configuration
 └── shared/               # Utilities used by all other layers

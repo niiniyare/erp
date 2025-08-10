@@ -1,5 +1,8 @@
 package featureflag
 
+//go:generate go run go.uber.org/mock/mockgen -source=admin_advanced_service.go -destination=mock.go -package=featureflag
+
+
 import (
 	"context"
 	"fmt"
