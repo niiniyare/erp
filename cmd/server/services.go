@@ -79,7 +79,8 @@ func InitializeServices(store db.Store, redisClient cache.Service, metricsServic
 
 	// Initialize feature flag service with audit logging
 	featureFlagRepo := featureflag.NewSimpleRepository(store)
-	baseFeatureFlagService := featureflag.NewSimpleService(featureFlagRepo, tenantService, store, auditService)
+	webSocketService := featureflag.NewWebSocketService(store, tracingService, metricsService)
+	baseFeatureFlagService := featureflag.NewSimpleService(featureFlagRepo, tenantService, store, auditService, webSocketService)
 
 	// Wrap with caching if Redis is available
 	var featureFlagService featureflag.SimpleService

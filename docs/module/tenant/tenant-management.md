@@ -190,51 +190,51 @@ CREATE TABLE tenant_configurations (
 CREATE INDEX idx_tenant_configs_modules ON tenant_configurations USING GIN (modules_enabled);
 ```
 
-### Organization Hierarchy
-
-```sql
--- Organization hierarchy within tenants
-CREATE TABLE organizations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    parent_id UUID REFERENCES organizations(id),
-    name VARCHAR(255) NOT NULL,
-    org_type VARCHAR(50) NOT NULL, -- company, division, department, team, subsidiary, branch
-    code VARCHAR(20) UNIQUE,
-    description TEXT,
-    
-    -- Address and contact
-    address JSONB,
-    phone VARCHAR(20),
-    email VARCHAR(255),
-    website VARCHAR(255),
-    
-    -- Financial settings
-    cost_center_code VARCHAR(20),
-    profit_center_code VARCHAR(20),
-    budget_allocated DECIMAL(15,2),
-    
-    -- Operational details
-    manager_id UUID,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    
-    CONSTRAINT valid_org_type CHECK (org_type IN ('company', 'division', 'department', 'team', 'subsidiary', 'branch'))
-);
-
--- RLS policy for organizations
-ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY organizations_tenant_isolation ON organizations
-    FOR ALL TO application_role
-    USING (tenant_id = current_tenant_id());
-
--- Indexes for performance
-CREATE INDEX idx_organizations_tenant_id ON organizations(tenant_id);
-CREATE INDEX idx_organizations_parent_id ON organizations(parent_id);
-CREATE INDEX idx_organizations_manager_id ON organizations(manager_id);
-```
+<!-- ### Organization Hierarchy -->
+<!---->
+<!-- ```sql -->
+<!-- -- Organization hierarchy within tenants -->
+<!-- CREATE TABLE organizations ( -->
+<!--     id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -->
+<!--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -->
+<!--     parent_id UUID REFERENCES organizations(id), -->
+<!--     name VARCHAR(255) NOT NULL, -->
+<!--     org_type VARCHAR(50) NOT NULL, -- company, division, department, team, subsidiary, branch -->
+<!--     code VARCHAR(20) UNIQUE, -->
+<!--     description TEXT, -->
+<!---->
+<!--     -- Address and contact -->
+<!--     address JSONB, -->
+<!--     phone VARCHAR(20), -->
+<!--     email VARCHAR(255), -->
+<!--     website VARCHAR(255), -->
+<!---->
+<!--     -- Financial settings -->
+<!--     cost_center_code VARCHAR(20), -->
+<!--     profit_center_code VARCHAR(20), -->
+<!--     budget_allocated DECIMAL(15,2), -->
+<!---->
+<!--     -- Operational details -->
+<!--     manager_id UUID, -->
+<!--     is_active BOOLEAN DEFAULT true, -->
+<!--     created_at TIMESTAMPTZ DEFAULT NOW(), -->
+<!--     updated_at TIMESTAMPTZ DEFAULT NOW(), -->
+<!---->
+<!--     CONSTRAINT valid_org_type CHECK (org_type IN ('company', 'division', 'department', 'team', 'subsidiary', 'branch')) -->
+<!-- ); -->
+<!---->
+<!-- -- RLS policy for organizations -->
+<!-- ALTER TABLE organizations ENABLE ROW LEVEL SECURITY; -->
+<!---->
+<!-- CREATE POLICY organizations_tenant_isolation ON organizations -->
+<!--     FOR ALL TO application_role -->
+<!--     USING (tenant_id = current_tenant_id()); -->
+<!---->
+<!-- -- Indexes for performance -->
+<!-- CREATE INDEX idx_organizations_tenant_id ON organizations(tenant_id); -->
+<!-- CREATE INDEX idx_organizations_parent_id ON organizations(parent_id); -->
+<!-- CREATE INDEX idx_organizations_manager_id ON organizations(manager_id); -->
+<!-- ``` -->
 
 ### Usage Statistics with Granular Tracking
 
@@ -1467,12 +1467,12 @@ interface TenantManagementAPI {
   PUT    /api/v1/tenants/{tenant_id}
   DELETE /api/v1/tenants/{tenant_id}
   
-  // Organization management
-  GET    /api/v1/tenants/{tenant_id}/organizations
-  POST   /api/v1/tenants/{tenant_id}/organizations
-  PUT    /api/v1/tenants/{tenant_id}/organizations/{org_id}
-  DELETE /api/v1/tenants/{tenant_id}/organizations/{org_id}
-  
+  // // Organization management
+  // GET    /api/v1/tenants/{tenant_id}/organizations
+  // POST   /api/v1/tenants/{tenant_id}/organizations
+  // PUT    /api/v1/tenants/{tenant_id}/organizations/{org_id}
+  // DELETE /api/v1/tenants/{tenant_id}/organizations/{org_id}
+  //
   // Configuration management
   GET    /api/v1/tenants/{tenant_id}/settings
   PUT    /api/v1/tenants/{tenant_id}/settings

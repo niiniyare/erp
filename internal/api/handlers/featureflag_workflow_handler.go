@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/api/middleware"
 	"github.com/niiniyare/erp/internal/core/featureflag"
+	"github.com/niiniyare/erp/internal/featureflag/workflow"
 	"github.com/niiniyare/erp/internal/shared/logger"
 )
 
@@ -31,7 +31,7 @@ func (h *FeatureFlagWorkflowHandler) RequestFeatureFlagChange(c *gin.Context) {
 		"method":  "RequestFeatureFlagChange",
 	})
 
-	var req featureflag.FeatureFlagChangeRequestInput
+	var req workflow.FeatureFlagChangeRequestInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Error("Invalid request body", logger.Fields{"error": err})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
@@ -77,7 +77,7 @@ func (h *FeatureFlagWorkflowHandler) RequestBulkFeatureFlagChange(c *gin.Context
 		"method":  "RequestBulkFeatureFlagChange",
 	})
 
-	var req featureflag.BulkFeatureFlagChangeRequestInput
+	var req workflow.BulkFeatureFlagChangeRequestInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Error("Invalid request body", logger.Fields{"error": err})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
@@ -141,7 +141,7 @@ func (h *FeatureFlagWorkflowHandler) ApproveFeatureFlagChange(c *gin.Context) {
 		return
 	}
 
-	var req featureflag.ApprovalRequestInput
+	var req workflow.ApprovalRequestInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Error("Invalid request body", logger.Fields{"error": err})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
@@ -189,7 +189,7 @@ func (h *FeatureFlagWorkflowHandler) ApproveFeatureFlagChange(c *gin.Context) {
 
 // RejectFeatureFlagChange handles POST /api/v1/feature-flags/workflows/:workflow_id/reject
 func (h *FeatureFlagWorkflowHandler) RejectFeatureFlagChange(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWorkflowHandler",
 		"method":  "RejectFeatureFlagChange",
 	})
@@ -200,9 +200,9 @@ func (h *FeatureFlagWorkflowHandler) RejectFeatureFlagChange(c *gin.Context) {
 		return
 	}
 
-	var req featureflag.RejectionRequestInput
+	var req workflow.RejectionRequestInput
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Error("Invalid request body", logger.Fields{"error": err})
+		log.Error("Invalid request body", logger.Fields{"error": err})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
 		return
 	}
@@ -214,7 +214,7 @@ func (h *FeatureFlagWorkflowHandler) RejectFeatureFlagChange(c *gin.Context) {
 	}
 
 	// Get approver ID from context
-	userID, exists := c.Get(middleware.UserIDKey)
+	userID, exists := c.Get("authorized_user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User authentication required"})
 		return
@@ -230,7 +230,7 @@ func (h *FeatureFlagWorkflowHandler) RejectFeatureFlagChange(c *gin.Context) {
 
 	err := h.workflowService.RejectFeatureFlagChange(c.Request.Context(), workflowID, &req)
 	if err != nil {
-		logger.Error("Failed to reject feature flag change", logger.Fields{
+		log.Error("Failed to reject feature flag change", logger.Fields{
 			"error":       err,
 			"workflow_id": workflowID,
 			"approver_id": approverUUID,
@@ -239,7 +239,7 @@ func (h *FeatureFlagWorkflowHandler) RejectFeatureFlagChange(c *gin.Context) {
 		return
 	}
 
-	logger.Info("Feature flag change rejected", logger.Fields{
+	log.Info("Feature flag change rejected", logger.Fields{
 		"workflow_id": workflowID,
 		"approver_id": approverUUID,
 		"reason":      req.Reason,
@@ -256,7 +256,7 @@ func (h *FeatureFlagWorkflowHandler) RejectFeatureFlagChange(c *gin.Context) {
 
 // GetWorkflowStatus handles GET /api/v1/feature-flags/workflows/:workflow_id/status
 func (h *FeatureFlagWorkflowHandler) GetWorkflowStatus(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWorkflowHandler",
 		"method":  "GetWorkflowStatus",
 	})
@@ -269,7 +269,7 @@ func (h *FeatureFlagWorkflowHandler) GetWorkflowStatus(c *gin.Context) {
 
 	status, err := h.workflowService.GetWorkflowStatus(c.Request.Context(), workflowID)
 	if err != nil {
-		logger.Error("Failed to get workflow status", logger.Fields{
+		log.Error("Failed to get workflow status", logger.Fields{
 			"error":       err,
 			"workflow_id": workflowID,
 		})
@@ -282,13 +282,13 @@ func (h *FeatureFlagWorkflowHandler) GetWorkflowStatus(c *gin.Context) {
 
 // ListPendingApprovals handles GET /api/v1/feature-flags/workflows/pending-approvals
 func (h *FeatureFlagWorkflowHandler) ListPendingApprovals(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWorkflowHandler",
 		"method":  "ListPendingApprovals",
 	})
 
 	// Parse query parameters
-	req := &featureflag.ListPendingApprovalsRequest{
+	req := &workflow.ListPendingApprovalsRequest{
 		Limit:  20, // Default limit
 		Offset: 0,  // Default offset
 	}
@@ -310,7 +310,7 @@ func (h *FeatureFlagWorkflowHandler) ListPendingApprovals(c *gin.Context) {
 	}
 
 	// Get approver ID from context (for filtering approvals assigned to current user)
-	if userID, exists := c.Get(middleware.UserIDKey); exists {
+	if userID, exists := c.Get("authorized_user_id"); exists {
 		if approverUUID, ok := userID.(uuid.UUID); ok {
 			req.ApproverID = &approverUUID
 		}
@@ -318,7 +318,7 @@ func (h *FeatureFlagWorkflowHandler) ListPendingApprovals(c *gin.Context) {
 
 	response, err := h.workflowService.ListPendingApprovals(c.Request.Context(), req)
 	if err != nil {
-		logger.Error("Failed to list pending approvals", logger.Fields{"error": err})
+		log.Error("Failed to list pending approvals", logger.Fields{"error": err})
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get pending approvals", "details": err.Error()})
 		return
 	}
@@ -328,7 +328,7 @@ func (h *FeatureFlagWorkflowHandler) ListPendingApprovals(c *gin.Context) {
 
 // CancelWorkflow handles DELETE /api/v1/feature-flags/workflows/:workflow_id
 func (h *FeatureFlagWorkflowHandler) CancelWorkflow(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWorkflowHandler",
 		"method":  "CancelWorkflow",
 	})
@@ -351,7 +351,7 @@ func (h *FeatureFlagWorkflowHandler) CancelWorkflow(c *gin.Context) {
 
 	err := h.workflowService.CancelWorkflow(c.Request.Context(), workflowID, req.Reason)
 	if err != nil {
-		logger.Error("Failed to cancel workflow", logger.Fields{
+		log.Error("Failed to cancel workflow", logger.Fields{
 			"error":       err,
 			"workflow_id": workflowID,
 		})
@@ -359,7 +359,7 @@ func (h *FeatureFlagWorkflowHandler) CancelWorkflow(c *gin.Context) {
 		return
 	}
 
-	logger.Info("Workflow cancelled", logger.Fields{
+	log.Info("Workflow cancelled", logger.Fields{
 		"workflow_id": workflowID,
 		"reason":      req.Reason,
 	})
@@ -374,14 +374,14 @@ func (h *FeatureFlagWorkflowHandler) CancelWorkflow(c *gin.Context) {
 
 // ScheduleAutoRollback handles POST /api/v1/feature-flags/workflows/auto-rollback
 func (h *FeatureFlagWorkflowHandler) ScheduleAutoRollback(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWorkflowHandler",
 		"method":  "ScheduleAutoRollback",
 	})
 
-	var req featureflag.ScheduleAutoRollbackRequest
+	var req workflow.ScheduleAutoRollbackRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Error("Invalid request body", logger.Fields{"error": err})
+		log.Error("Invalid request body", logger.Fields{"error": err})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
 		return
 	}
@@ -410,12 +410,12 @@ func (h *FeatureFlagWorkflowHandler) ScheduleAutoRollback(c *gin.Context) {
 
 	result, err := h.workflowService.ScheduleAutoRollback(c.Request.Context(), &req)
 	if err != nil {
-		logger.Error("Failed to schedule auto-rollback", logger.Fields{"error": err})
+		log.Error("Failed to schedule auto-rollback", logger.Fields{"error": err})
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to schedule auto-rollback", "details": err.Error()})
 		return
 	}
 
-	logger.Info("Auto-rollback scheduled", logger.Fields{
+	log.Info("Auto-rollback scheduled", logger.Fields{
 		"schedule_id": result.ScheduleID,
 		"flag_name":   req.FlagName,
 		"rollback_at": req.RollbackAt,
@@ -426,7 +426,7 @@ func (h *FeatureFlagWorkflowHandler) ScheduleAutoRollback(c *gin.Context) {
 
 // CancelAutoRollback handles DELETE /api/v1/feature-flags/workflows/auto-rollback/:schedule_id
 func (h *FeatureFlagWorkflowHandler) CancelAutoRollback(c *gin.Context) {
-	logger := logger.WithFields(logger.Fields{
+	log := logger.WithFields(logger.Fields{
 		"handler": "FeatureFlagWorkflowHandler",
 		"method":  "CancelAutoRollback",
 	})
@@ -439,7 +439,7 @@ func (h *FeatureFlagWorkflowHandler) CancelAutoRollback(c *gin.Context) {
 
 	err := h.workflowService.CancelAutoRollback(c.Request.Context(), scheduleID)
 	if err != nil {
-		logger.Error("Failed to cancel auto-rollback", logger.Fields{
+		log.Error("Failed to cancel auto-rollback", logger.Fields{
 			"error":       err,
 			"schedule_id": scheduleID,
 		})
@@ -447,7 +447,7 @@ func (h *FeatureFlagWorkflowHandler) CancelAutoRollback(c *gin.Context) {
 		return
 	}
 
-	logger.Info("Auto-rollback cancelled", logger.Fields{
+	log.Info("Auto-rollback cancelled", logger.Fields{
 		"schedule_id": scheduleID,
 	})
 
