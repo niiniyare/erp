@@ -153,7 +153,7 @@ SELECT
     evaluation_source,
     COUNT(*) as count,
     ROUND(AVG(CASE WHEN enabled THEN 1 ELSE 0 END) * 100, 2) as enabled_percentage
-FROM tenant_feature_flags_cache
+FROM mv_tenant_feature_flags_cache
 WHERE tenant_id = 'your-tenant-uuid'
 GROUP BY flag_type, evaluation_source
 ORDER BY flag_type, evaluation_source;
@@ -205,7 +205,7 @@ SELECT
     idx_tup_read as tuples_read,
     idx_tup_fetch as tuples_fetched
 FROM pg_stat_user_indexes 
-WHERE tablename IN ('feature_flags', 'tenant_feature_overrides', 'tenant_feature_flags_cache')
+WHERE tablename IN ('feature_flags', 'tenant_feature_overrides', 'mv_tenant_feature_flags_cache')
 ORDER BY idx_scan DESC;
 
 -- Table size statistics

@@ -20,7 +20,7 @@ COMMENT ON COLUMN users.rotation_required IS 'Forces password change on next log
 
 
 -- Optimized materialized view for permission evaluations
-CREATE MATERIALIZED VIEW user_effective_permissions AS
+CREATE MATERIALIZED VIEW mv_user_effective_permissions AS
 SELECT
     u.id AS user_id,
     u.tenant_id,
@@ -43,9 +43,9 @@ JOIN actions a ON rp.permission_id = a.id OR up.permission_id = a.id
 GROUP BY u.id, u.tenant_id, r.id, a.id;
 
 CREATE UNIQUE INDEX idx_user_effective_perms
-    ON user_effective_permissions (user_id, resource_id, action_id);
+    ON mv_user_effective_permissions (user_id, resource_id, action_id);
     
-COMMENT ON MATERIALIZED VIEW user_effective_permissions IS
+COMMENT ON MATERIALIZED VIEW mv_user_effective_permissions IS
 'Pre-computed effective permissions for all users with optimized access patterns';
 
 -- Session clustering
@@ -199,7 +199,7 @@ $$ LANGUAGE plpgsql;
 --- 5. Advanced Threat Detection View:
 
 
-CREATE VIEW security_threat_dashboard AS
+CREATE VIEW v_security_threat_dashboard AS
 SELECT 
     u.id AS user_id,
     u.username,
@@ -217,7 +217,7 @@ WHERE u.account_status = 'ACTIVE'
     AND (s.risk_score > 50 OR a.risk_score > 50)
 GROUP BY u.id;
 
-COMMENT ON VIEW security_threat_dashboard IS
+COMMENT ON VIEW v_security_threat_dashboard IS
 'Identifies potential security threats through session anomalies and audit patterns';
 
 

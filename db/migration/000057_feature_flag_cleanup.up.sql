@@ -180,7 +180,7 @@ BEGIN
                 'cache_entries', COUNT(*),
                 'last_refresh', MIN(cache_created_at)
             ) as details
-        FROM tenant_feature_flags_cache
+        FROM mv_tenant_feature_flags_cache
         
         UNION ALL
         
@@ -222,7 +222,7 @@ BEGIN
             COUNT(*) FILTER (WHERE tffc.evaluation_source = 'override')::INTEGER as overridden_flags,
             COUNT(*) FILTER (WHERE tffc.evaluation_source = 'rollout')::INTEGER as rollout_flags,
             jsonb_object_agg(tffc.flag_type, COUNT(*)) as flag_types
-        FROM tenant_feature_flags_cache tffc
+        FROM mv_tenant_feature_flags_cache tffc
         WHERE tffc.tenant_id = p_tenant_id
     ),
     audit_stats AS (

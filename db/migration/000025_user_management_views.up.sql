@@ -1,7 +1,7 @@
 -- ------------------------------------------------------------------------------------------------
 -- Comprehensive user view with all related data
 -- ------------------------------------------------------------------------------------------------
-CREATE VIEW user_complete_view AS
+CREATE VIEW v_user_complete_view AS
 SELECT
     u.id as user_id,
     u.tenant_id,
@@ -45,13 +45,13 @@ GROUP BY u.id, u.tenant_id, u.entity_id, u.username, u.email, u.user_type,
          e.employment_status, e.security_level,
          p.security_attributes, e.access_attributes, u.user_attributes;
 
-COMMENT ON VIEW user_complete_view IS
+COMMENT ON VIEW v_user_complete_view IS
 'Comprehensive view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.';
 
 -- ------------------------------------------------------------------------------------------------
 -- Role permissions summary view
 -- ------------------------------------------------------------------------------------------------
-CREATE VIEW role_permissions_summary AS
+CREATE VIEW v_role_permissions_summary AS
 SELECT
     r.tenant_id,
     r.id as role_id,
@@ -75,13 +75,13 @@ LEFT JOIN user_roles ur ON r.id = ur.role_id AND ur.is_active = true AND (ur.exp
 WHERE r.is_active = true AND r.deleted_at IS NULL
 GROUP BY r.tenant_id, r.id, r.name, r.display_name, r.role_type, r.level, r.module_id, m.name;
 
-COMMENT ON VIEW role_permissions_summary IS
+COMMENT ON VIEW v_role_permissions_summary IS
 'Summary view of roles with their permissions, resources, actions, and user assignment counts for role management and analysis.';
 
 -- ------------------------------------------------------------------------------------------------
 -- Audit summary view for security monitoring
 -- ------------------------------------------------------------------------------------------------
-CREATE VIEW audit_summary_view AS
+CREATE VIEW v_audit_summary_view AS
 SELECT
     tenant_id,
     event_category,
@@ -98,5 +98,5 @@ WHERE created_at >= NOW() - INTERVAL '7 days'
 GROUP BY tenant_id, event_category, severity, DATE_TRUNC('hour', created_at)
 ORDER BY hour_bucket DESC, event_count DESC;
 
-COMMENT ON VIEW audit_summary_view IS
+COMMENT ON VIEW v_audit_summary_view IS
 'Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.';

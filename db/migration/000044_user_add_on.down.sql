@@ -13,7 +13,7 @@ DROP INDEX IF EXISTS idx_user_sessions_time_brin;
 DROP INDEX IF EXISTS idx_audit_log_time_brin;
 
 -- 5. Revert Advanced Threat Detection View
-DROP VIEW IF EXISTS security_threat_dashboard;
+DROP VIEW IF EXISTS v_security_threat_dashboard;
 
 -- 4. Revert Compliance Enhancements
 DROP FUNCTION IF EXISTS enforce_data_retention;
@@ -24,7 +24,7 @@ DROP FUNCTION IF EXISTS terminate_risky_sessions;
 DROP FUNCTION IF EXISTS assess_session_risk;
 
 -- 2. Revert Performance Optimizations
-DROP MATERIALIZED VIEW IF EXISTS user_effective_permissions;
+DROP MATERIALIZED VIEW IF EXISTS mv_user_effective_permissions;
 
 -- 1. Revert Security Hardening Enhancements
 ALTER TABLE user_sessions 

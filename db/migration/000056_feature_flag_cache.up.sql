@@ -5,7 +5,7 @@
 -- =====================================================
 
 -- Materialized view for feature flag evaluation cache
-CREATE MATERIALIZED VIEW tenant_feature_flags_cache AS
+CREATE MATERIALIZED VIEW mv_tenant_feature_flags_cache AS
 WITH feature_evaluation AS (
     SELECT 
         ff.tenant_id,
@@ -65,42 +65,42 @@ FROM feature_evaluation;
 
 -- Primary lookup indexes
 CREATE UNIQUE INDEX idx_tenant_feature_cache_pk 
-    ON tenant_feature_flags_cache(tenant_id, feature_flag_id);
+    ON mv_tenant_feature_flags_cache(tenant_id, feature_flag_id);
 
 CREATE UNIQUE INDEX idx_tenant_feature_cache_name_lookup 
-    ON tenant_feature_flags_cache(tenant_id, feature_flag_name);
+    ON mv_tenant_feature_flags_cache(tenant_id, feature_flag_name);
 
 -- Query optimization indexes
 CREATE INDEX idx_tenant_feature_cache_tenant 
-    ON tenant_feature_flags_cache(tenant_id);
+    ON mv_tenant_feature_flags_cache(tenant_id);
 
 CREATE INDEX idx_tenant_feature_cache_enabled 
-    ON tenant_feature_flags_cache(enabled) WHERE enabled = true;
+    ON mv_tenant_feature_flags_cache(enabled) WHERE enabled = true;
 
 CREATE INDEX idx_tenant_feature_cache_source 
-    ON tenant_feature_flags_cache(evaluation_source);
+    ON mv_tenant_feature_flags_cache(evaluation_source);
 
 CREATE INDEX idx_tenant_feature_cache_flag_type 
-    ON tenant_feature_flags_cache(flag_type);
+    ON mv_tenant_feature_flags_cache(flag_type);
 
 CREATE INDEX idx_tenant_feature_cache_timestamp 
-    ON tenant_feature_flags_cache(cache_timestamp);
+    ON mv_tenant_feature_flags_cache(cache_timestamp);
 
 CREATE INDEX idx_tenant_feature_cache_rollout 
-    ON tenant_feature_flags_cache(rollout_percentage) 
+    ON mv_tenant_feature_flags_cache(rollout_percentage) 
     WHERE rollout_percentage IS NOT NULL;
 
 -- JSON indexes for complex queries
 CREATE INDEX idx_tenant_feature_cache_target_audience 
-    ON tenant_feature_flags_cache USING GIN (target_audience) 
+    ON mv_tenant_feature_flags_cache USING GIN (target_audience) 
     WHERE target_audience != '{}';
 
 CREATE INDEX idx_tenant_feature_cache_metadata 
-    ON tenant_feature_flags_cache USING GIN (metadata) 
+    ON mv_tenant_feature_flags_cache USING GIN (metadata) 
     WHERE metadata != '{}';
 
 CREATE INDEX idx_tenant_feature_cache_value 
-    ON tenant_feature_flags_cache USING GIN (value) 
+    ON mv_tenant_feature_flags_cache USING GIN (value) 
     WHERE value != '{}';
 
 -- =====================================================
@@ -111,7 +111,7 @@ CREATE INDEX idx_tenant_feature_cache_value
 CREATE OR REPLACE FUNCTION refresh_feature_flags_cache()
 RETURNS VOID AS $$
 BEGIN
-    REFRESH MATERIALIZED VIEW CONCURRENTLY tenant_feature_flags_cache;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY mv_tenant_feature_flags_cache;
     
     -- Log cache refresh
     INSERT INTO audit_log (
@@ -164,7 +164,7 @@ BEGIN
         COUNT(*) FILTER (WHERE tffc.evaluation_source = 'rollout') as rollout_count,
         COUNT(*) FILTER (WHERE tffc.evaluation_source = 'default') as default_count,
         NOW() - MIN(tffc.cache_created_at) as cache_age
-    FROM tenant_feature_flags_cache tffc;
+    FROM mv_tenant_feature_flags_cache tffc;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -180,7 +180,7 @@ BEGIN
     RETURN QUERY
     WITH cache_info AS (
         SELECT MAX(cache_timestamp) as max_cache_ts
-        FROM tenant_feature_flags_cache
+        FROM mv_tenant_feature_flags_cache
         WHERE tenant_id = p_tenant_id
     ),
     source_info AS (
@@ -233,7 +233,7 @@ BEGIN
     -- Get result from cache
     SELECT tffc.enabled, tffc.value
     INTO v_result
-    FROM tenant_feature_flags_cache tffc
+    FROM mv_tenant_feature_flags_cache tffc
     WHERE tffc.tenant_id = v_tenant_id 
       AND tffc.feature_flag_name = flag_name;
     
@@ -265,7 +265,7 @@ BEGIN
         tffc.value,
         tffc.flag_type::VARCHAR,
         tffc.evaluation_source::TEXT
-    FROM tenant_feature_flags_cache tffc
+    FROM mv_tenant_feature_flags_cache tffc
     WHERE tffc.tenant_id = v_tenant_id
     ORDER BY tffc.feature_flag_name;
 END;
@@ -315,12 +315,12 @@ GRANT EXECUTE ON FUNCTION evaluate_feature_flag_cached(VARCHAR) TO application_r
 GRANT EXECUTE ON FUNCTION evaluate_all_feature_flags_cached() TO application_role;
 
 -- Grant access to materialized view
-GRANT SELECT ON tenant_feature_flags_cache TO application_role, admin_role, readonly_role;
+GRANT SELECT ON mv_tenant_feature_flags_cache TO application_role, admin_role, readonly_role;
 
 -- =====================================================
 -- COMMENTS
 -- =====================================================
-COMMENT ON MATERIALIZED VIEW tenant_feature_flags_cache IS 'Materialized view for fast feature flag lookups with pre-computed evaluations';
+COMMENT ON MATERIALIZED VIEW mv_tenant_feature_flags_cache IS 'Materialized view for fast feature flag lookups with pre-computed evaluations';
 COMMENT ON FUNCTION refresh_feature_flags_cache() IS 'Refreshes the feature flags cache materialized view';
 COMMENT ON FUNCTION get_feature_flags_cache_stats() IS 'Returns statistics about the feature flags cache';
 COMMENT ON FUNCTION check_cache_freshness(UUID) IS 'Checks if the cache is stale for a specific tenant';

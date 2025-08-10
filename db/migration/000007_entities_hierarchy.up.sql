@@ -66,7 +66,31 @@ CREATE INDEX idx_hierarchy_paths_ancestor ON hierarchy_paths(ancestor_id);
 -- HIERARCHY MAINTENANCE TRIGGER
 -- =====================================================================
 
+CREATE OR REPLACE FUNCTION maintain_entity_id()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Always align entity_id with descendant_id
+    NEW.entity_id := NEW.descendant_id;
+    
+    -- Increment version only if row is actually modified
+    IF TG_OP = 'UPDATE' AND ROW(NEW.*) IS DISTINCT FROM ROW(OLD.*) THEN
+        NEW.version := OLD.version + 1;
+    END IF;
+    
+    -- Update timestamp
+    NEW.updated_at := NOW();
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION maintain_entity_id IS
+'Maintains entity_id consistency in hierarchy_paths by setting it to descendant_id.
+Increments version on updates and refreshes updated_at timestamp.';
 -- Apply the existing maintain_entity_id trigger to hierarchy_paths
+
+
+
 CREATE TRIGGER hierarchy_paths_maintain_entity_id
     BEFORE INSERT OR UPDATE ON hierarchy_paths
     FOR EACH ROW EXECUTE FUNCTION maintain_entity_id();

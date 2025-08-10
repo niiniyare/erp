@@ -49,28 +49,28 @@ CREATE TABLE user_activities (
 
 -- Create initial partitions (last 3 months + next 3 months)
 -- Current month partition
-CREATE TABLE user_activities_current PARTITION OF user_activities
-    FOR VALUES FROM (date_trunc('month', CURRENT_DATE)) 
-    TO (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month');
-
--- Previous 2 months partitions
-CREATE TABLE user_activities_prev1 PARTITION OF user_activities
-    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) - INTERVAL '1 month') 
-    TO (date_trunc('month', CURRENT_DATE));
-
-CREATE TABLE user_activities_prev2 PARTITION OF user_activities
-    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) - INTERVAL '2 months') 
-    TO (date_trunc('month', CURRENT_DATE) - INTERVAL '1 month');
-
--- Next 2 months partitions
-CREATE TABLE user_activities_next1 PARTITION OF user_activities
-    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month') 
-    TO (date_trunc('month', CURRENT_DATE) + INTERVAL '2 months');
-
-CREATE TABLE user_activities_next2 PARTITION OF user_activities
-    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) + INTERVAL '2 months') 
-    TO (date_trunc('month', CURRENT_DATE) + INTERVAL '3 months');
-
+-- CREATE TABLE user_activities_current PARTITION OF user_activities
+--     FOR VALUES FROM (date_trunc('month', CURRENT_DATE)) 
+--     TO (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month');
+--
+-- -- Previous 2 months partitions
+-- CREATE TABLE user_activities_prev1 PARTITION OF user_activities
+--     FOR VALUES FROM (date_trunc('month', CURRENT_DATE) - INTERVAL '1 month') 
+--     TO (date_trunc('month', CURRENT_DATE));
+--
+-- CREATE TABLE user_activities_prev2 PARTITION OF user_activities
+--     FOR VALUES FROM (date_trunc('month', CURRENT_DATE) - INTERVAL '2 months') 
+--     TO (date_trunc('month', CURRENT_DATE) - INTERVAL '1 month');
+--
+-- -- Next 2 months partitions
+-- CREATE TABLE user_activities_next1 PARTITION OF user_activities
+--     FOR VALUES FROM (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month') 
+--     TO (date_trunc('month', CURRENT_DATE) + INTERVAL '2 months');
+--
+-- CREATE TABLE user_activities_next2 PARTITION OF user_activities
+--     FOR VALUES FROM (date_trunc('month', CURRENT_DATE) + INTERVAL '2 months') 
+--     TO (date_trunc('month', CURRENT_DATE) + INTERVAL '3 months');
+--
 -- Performance indexes
 CREATE INDEX idx_user_activities_user_timestamp ON user_activities (user_id, timestamp DESC);
 CREATE INDEX idx_user_activities_tenant_timestamp ON user_activities (tenant_id, timestamp DESC);

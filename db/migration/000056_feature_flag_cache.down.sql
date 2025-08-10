@@ -34,4 +34,4 @@ DROP INDEX IF EXISTS idx_tenant_feature_cache_pk;
 -- =====================================================
 -- DROP MATERIALIZED VIEW
 -- =====================================================
-DROP MATERIALIZED VIEW IF EXISTS tenant_feature_flags_cache;
+DROP MATERIALIZED VIEW IF EXISTS mv_tenant_feature_flags_cache;
