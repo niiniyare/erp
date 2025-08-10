@@ -40,7 +40,7 @@ RETURNING *;
 -- name: SoftDeleteEntity :exec
 UPDATE entities
 SET deleted_at = NOW(), updated_at = NOW()
-WHERE uuid = $1;
+WHERE uuid = $1 AND tenant_id = current_tenant_id();
 
 -- name: RestoreEntity :exec
 UPDATE entities

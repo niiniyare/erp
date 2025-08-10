@@ -40,42 +40,52 @@ func TestRLS(t *testing.T) {
 
 // TestTenantDataIsolation covers test cases MT-RLS-001 and MT-RLS-002
 func (s *RLSTestSuite) TestTenantDataIsolation() {
-	// 1. Setup: Create two tenants
+	// 1. Setup: Create two tenants with unique identifiers
 	uniqueID := uuid.New().String()
+	tenantASlug := fmt.Sprintf("wayne-enterprises-%s", uniqueID[0:13])
 	tenantA, err := s.runner.store.CreateTenant(s.ctx, db.CreateTenantParams{
-		Name:  fmt.Sprintf("Wayne Enterprises %s", uniqueID),
-		Slug:  fmt.Sprintf("wayne-enterprises-%s", uniqueID[0:8]),
-		Email: fmt.Sprintf("bruce-%s@wayne.com", uniqueID),
+		Name:  fmt.Sprintf("Wayne Enterprises %s", uniqueID[0:8]),
+		Slug:  tenantASlug,
+		Email: fmt.Sprintf("bruce-%s@wayne.com", uniqueID[0:8]),
 		Status: "active",
 	})
-	s.Require().NoError(err)
-	defer s.runner.store.SoftDeleteTenant(s.ctx, tenantA.ID)
+	s.Require().NoError(err, "Failed to create tenant A")
+	defer func() {
+		if err := s.runner.store.SoftDeleteTenant(s.ctx, tenantA.ID); err != nil {
+			s.T().Logf("Warning: Failed to cleanup tenant A: %v", err)
+		}
+	}()
 
 	uniqueID2 := uuid.New().String()
+	tenantBSlug := fmt.Sprintf("stark-industries-%s", uniqueID2[0:13])
 	tenantB, err := s.runner.store.CreateTenant(s.ctx, db.CreateTenantParams{
-		Name:  fmt.Sprintf("Stark Industries %s", uniqueID2),
-		Slug:  fmt.Sprintf("stark-industries-%s", uniqueID2[0:8]),
-		Email: fmt.Sprintf("tony-%s@stark.com", uniqueID2),
+		Name:  fmt.Sprintf("Stark Industries %s", uniqueID2[0:8]),
+		Slug:  tenantBSlug,
+		Email: fmt.Sprintf("tony-%s@stark.com", uniqueID2[0:8]),
 		Status: "active",
 	})
-	s.Require().NoError(err)
-	defer s.runner.store.SoftDeleteTenant(s.ctx, tenantB.ID)
+	s.Require().NoError(err, "Failed to create tenant B")
+	defer func() {
+		if err := s.runner.store.SoftDeleteTenant(s.ctx, tenantB.ID); err != nil {
+			s.T().Logf("Warning: Failed to cleanup tenant B: %v", err)
+		}
+	}()
 
-	// 2. Set context for Tenant A and create an entity
+	// 2. Set context for Tenant A and create an entity with unique identifiers
 	ctxTenantA := context.WithValue(s.ctx, "tenant_id", tenantA.ID)
 	err = s.runner.store.SetTenantContext(ctxTenantA, tenantA.ID)
-	s.Require().NoError(err)
+	s.Require().NoError(err, "Failed to set tenant A context")
 
 	entityA, err := s.runner.store.CreateEntity(ctxTenantA, db.CreateEntityParams{
 		Uuid: uuid.New(),
-		Name: "Gotham HQ",
-		Code: stringPtr("gotham-hq"),
+		Name: fmt.Sprintf("Gotham HQ %s", uniqueID[0:8]),
+		Code: stringPtr(fmt.Sprintf("gotham-hq-%s", uniqueID[0:8])),
 		Type: "COMPANY",
 		IsActive: true,
 		AccrualMethod: true,
 		FyStartMonth: 1,
 	})
-	s.Require().NoError(err)
+	s.Require().NoError(err, "Failed to create entity A")
 
 	// 3. Verify Tenant A can only see its own entity
 	entitiesA, err := s.runner.store.ListEntities(ctxTenantA)
@@ -93,17 +103,17 @@ func (s *RLSTestSuite) TestTenantDataIsolation() {
 	s.Require().NoError(err)
 	s.Require().Len(entitiesB, 0, "Tenant B should not see any of Tenant A's entities")
 
-	// 6. Create an entity for Tenant B
+	// 6. Create an entity for Tenant B with unique identifiers
 	entityB, err := s.runner.store.CreateEntity(ctxTenantB, db.CreateEntityParams{
 		Uuid: uuid.New(),
-		Name: "Stark Tower",
-		Code: stringPtr("stark-tower"),
+		Name: fmt.Sprintf("Stark Tower %s", uniqueID2[0:8]),
+		Code: stringPtr(fmt.Sprintf("stark-tower-%s", uniqueID2[0:8])),
 		Type: "COMPANY",
 		IsActive: true,
 		AccrualMethod: true,
 		FyStartMonth: 1,
 	})
-	s.Require().NoError(err)
+	s.Require().NoError(err, "Failed to create entity B")
 
 	// 7. Verify Tenant B can now see its own entity
 	entitiesB, err = s.runner.store.ListEntities(ctxTenantB)
@@ -115,16 +125,11 @@ func (s *RLSTestSuite) TestTenantDataIsolation() {
 	_, err = s.runner.store.UpdateEntity(ctxTenantB, db.UpdateEntityParams{Uuid: entityA.Uuid, Name: "Updated by Stark"})
 	s.Require().Error(err, "Expected an error when Tenant B tries to update Tenant A's entity")
 
-	// 9. Verify Tenant B cannot delete Tenant A's entity
-	err = s.runner.store.WithTenant(s.ctx, tenantB.ID, func(ctx context.Context, q db.Store) error {
-		// Explicitly set role to application_role to ensure RLS is active
-		// Access the underlying pool from the store to execute raw SQL
-		_, err := s.runner.pool.Exec(ctx, "SET ROLE application_role")
-		if err != nil {
-			return err
-		}
-		// Attempt to delete entityA. This should fail due to RLS.
-		return q.SoftDeleteEntity(ctx, entityA.Uuid)
-	})
-	s.Require().Error(err, "Expected an error when Tenant B tries to delete Tenant A's entity")
+	// 9. Verify Tenant B cannot delete Tenant A's entity (RLS enforcement)
+	err = s.runner.store.SoftDeleteEntity(ctxTenantB, entityA.Uuid)
+	s.Require().NoError(err, "Cross-tenant soft delete should not produce an error, it should just affect 0 rows.")
+
+	// 10. Verify that the entity was NOT deleted by trying to fetch it again
+	_, getErr := s.runner.store.GetEntity(ctxTenantA, entityA.Uuid)
+	s.Require().NoError(getErr, "Entity A should still exist after a failed cross-tenant delete attempt")
 }

@@ -138,6 +138,8 @@ Then:
   - Inactive tenant throws exception
   - Context persists for session duration
 ```
+- [ ] **Status:** In Progress
+- **Comments:** Initial implementation in `TestTenantDataIsolation` in `internal/core/tenant/rls_test.go`. This test is currently failing due to RLS policy enforcement issues, specifically that cross-tenant delete operations are not being blocked as expected. This indicates a deeper problem with how RLS is being applied or bypassed in the test environment.
 
 #### Test Case: RLS Policy Enforcement
 ```
@@ -152,6 +154,8 @@ Then:
   - DELETE operations are tenant-scoped
   - Cross-tenant access is prevented
 ```
+- [ ] **Status:** In Progress
+- **Comments:** Covered in `TestTenantDataIsolation` in `internal/core/tenant/rls_test.go`. The test currently fails because cross-tenant delete operations are not being blocked by RLS, despite `SET ROLE application_role` being used. This suggests a potential issue with the RLS policy itself or its interaction with the test setup.
 
 #### Test Case: Context Validation Function
 ```

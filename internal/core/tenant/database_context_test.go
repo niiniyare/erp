@@ -174,21 +174,22 @@ func (suite *TenantDatabaseContextTestSuite) TearDownSuite() {
 }
 
 func (suite *TenantDatabaseContextTestSuite) SetupTest() {
-	// Create a test tenant for each test
+	// Create a test tenant for each test with unique identifiers to avoid collisions
+	uniqueID := uuid.New().String()
 	params := db.CreateTenantParams{
-		Name:      fmt.Sprintf("DB Test Tenant %s", uuid.New().String()),
-		Slug:      fmt.Sprintf("db-test-%s", uuid.New().String()[0:8]),
-		Email:     fmt.Sprintf("test-%s@db-tenant.com", uuid.New().String()),
-		Subdomain: stringPtr(fmt.Sprintf("db-test-%s", uuid.New().String()[0:8])),
+		Name:      fmt.Sprintf("DB Test Tenant %s", uniqueID[0:8]),
+		Slug:      fmt.Sprintf("db-test-%s", uniqueID[0:13]),
+		Email:     fmt.Sprintf("test-%s@db-tenant.com", uniqueID[0:8]),
+		Subdomain: stringPtr(fmt.Sprintf("db-test-%s", uniqueID[0:13])),
 		Status:    "active",
 		Industry:  stringPtr("technology"),
 	}
 
 	sqlcTenant, err := suite.store.CreateTenant(suite.ctx, params)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.T(), err, "Failed to create test tenant")
 
 	suite.testTenant, err = FromSQLCTenant(sqlcTenant)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.T(), err, "Failed to convert SQLC tenant")
 	suite.testTenantID = suite.testTenant.ID
 }
 
@@ -196,7 +197,9 @@ func (suite *TenantDatabaseContextTestSuite) TearDownTest() {
 	// Clean up test tenant
 	if suite.testTenantID != uuid.Nil {
 		err := suite.store.SoftDeleteTenant(suite.ctx, suite.testTenantID)
-		require.NoError(suite.T(), err)
+		if err != nil {
+			suite.T().Logf("Warning: Failed to cleanup test tenant %s: %v", suite.testTenantID, err)
+		}
 	}
 }
 
@@ -265,12 +268,13 @@ func (suite *TenantDatabaseContextTestSuite) TestPostgreSQLSessionContext() {
 
 // TestTenantContextSwitching tests switching between different tenant contexts
 func (suite *TenantDatabaseContextTestSuite) TestTenantContextSwitching() {
-	// Create a second test tenant
+	// Create a second test tenant with unique identifiers
+	uniqueID2 := uuid.New().String()
 	params2 := db.CreateTenantParams{
-		Name:      "Second Database Test Tenant",
-		Slug:      "db-test-tenant-2",
-		Email:     "test2@database-tenant.com",
-		Subdomain: stringPtr("db-test-2"),
+		Name:      fmt.Sprintf("Second DB Test Tenant %s", uniqueID2[0:8]),
+		Slug:      fmt.Sprintf("db-test-tenant-2-%s", uniqueID2[0:8]),
+		Email:     fmt.Sprintf("test2-%s@database-tenant.com", uniqueID2[0:8]),
+		Subdomain: stringPtr(fmt.Sprintf("db-test-2-%s", uniqueID2[0:8])),
 		Status:    "active",
 		Industry:  stringPtr("finance"),
 	}
@@ -391,12 +395,13 @@ func (suite *TenantDatabaseContextTestSuite) TestRepositorySessionContext() {
 
 // TestTenantContextIsolation tests that tenant context is properly isolated
 func (suite *TenantDatabaseContextTestSuite) TestTenantContextIsolation() {
-	// Create a second test tenant
+	// Create a second test tenant with unique identifiers
+	uniqueID3 := uuid.New().String()
 	params2 := db.CreateTenantParams{
-		Name:      "Isolation Test Tenant",
-		Slug:      "isolation-test-tenant",
-		Email:     "isolation@database-tenant.com",
-		Subdomain: stringPtr("isolation-test"),
+		Name:      fmt.Sprintf("Isolation Test Tenant %s", uniqueID3[0:8]),
+		Slug:      fmt.Sprintf("isolation-test-tenant-%s", uniqueID3[0:8]),
+		Email:     fmt.Sprintf("isolation-%s@database-tenant.com", uniqueID3[0:8]),
+		Subdomain: stringPtr(fmt.Sprintf("isolation-test-%s", uniqueID3[0:8])),
 		Status:    "active",
 		Industry:  stringPtr("retail"),
 	}
