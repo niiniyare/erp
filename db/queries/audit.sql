@@ -591,7 +591,6 @@ ORDER BY
 LIMIT
   sqlc.arg('limit');
 
-
 -- -- name: GetAccessControlEffectiveness :many
 -- -- Analyze access control effectiveness
 -- -- NOTE:
@@ -645,8 +644,6 @@ LIMIT
 --   )
 -- ORDER BY denial_rate_pct DESC, stats.avg_risk_score DESC
 -- LIMIT sqlc.arg('limit');
-
-
 -- ================================================================================================
 -- FORENSIC INVESTIGATION QUERIES
 -- ================================================================================================
