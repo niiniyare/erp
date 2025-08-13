@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/core/audit"
+	"github.com/niiniyare/erp/internal/shared/logger"
 )
 
 // In-memory template storage (in production, this would be database-backed)
@@ -40,7 +42,7 @@ func (s *adminServiceImpl) CreateFlagTemplate(ctx context.Context, request *Crea
 	// Store template (in production, this would be in database)
 	templateStore[template.ID] = template
 
-	s.logger.Info("Flag template created", map[string]interface{}{
+	s.logger.Info("Flag template created", logger.Fields{
 		"template_id":   template.ID.String(),
 		"template_name": template.Name,
 		"category":      template.Category,
@@ -63,7 +65,7 @@ func (s *adminServiceImpl) GetFlagTemplate(ctx context.Context, templateID uuid.
 		return nil, fmt.Errorf("template not found: %s", templateID.String())
 	}
 
-	s.logger.Debug("Flag template retrieved", map[string]interface{}{
+	s.logger.Debug("Flag template retrieved", logger.Fields{
 		"template_id":   template.ID.String(),
 		"template_name": template.Name,
 	})
@@ -121,7 +123,7 @@ func (s *adminServiceImpl) ListFlagTemplates(ctx context.Context, request *ListT
 		PageSize:  request.PageSize,
 	}
 
-	s.logger.Debug("Templates listed", map[string]interface{}{
+	s.logger.Debug("Templates listed", logger.Fields{
 		"total":           total,
 		"returned":        len(filteredTemplates),
 		"page":            request.Page,
@@ -173,11 +175,9 @@ func (s *adminServiceImpl) ApplyTemplate(ctx context.Context, request *ApplyTemp
 	}
 
 	// Start with template metadata
-	metadata := make(map[string]interface{})
-	if template.Metadata != nil {
-		for k, v := range template.Metadata {
-			metadata[k] = v
-		}
+	metadata := maps.Clone(template.Metadata)
+	if metadata == nil {
+		metadata = make(map[string]any)
 	}
 
 	// Add template source info
@@ -217,7 +217,7 @@ func (s *adminServiceImpl) ApplyTemplate(ctx context.Context, request *ApplyTemp
 		return nil, fmt.Errorf("failed to create flag from template: %w", err)
 	}
 
-	s.logger.Info("Template applied successfully", map[string]interface{}{
+	s.logger.Info("Template applied successfully", logger.Fields{
 		"template_id":   template.ID.String(),
 		"template_name": template.Name,
 		"flag_id":       flag.ID.String(),
@@ -226,7 +226,7 @@ func (s *adminServiceImpl) ApplyTemplate(ctx context.Context, request *ApplyTemp
 	})
 
 	// Audit template application
-	s.auditTemplateOperation(ctx, "apply_template", template, map[string]interface{}{
+	s.auditTemplateOperation(ctx, "apply_template", template, map[string]any{
 		"flag_id":   flag.ID.String(),
 		"flag_name": flag.Name,
 		"overrides": request.Overrides,
@@ -340,7 +340,7 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 			Category:     "feature_toggle",
 			FlagType:     FlagTypeBoolean,
 			DefaultValue: false,
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"use_case":   "feature_enablement",
 				"complexity": "low",
 				"risk_level": "low",
@@ -356,11 +356,11 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 				ID:   uuid.New(),
 				Name: "50% A/B Test",
 				Type: RolloutStrategyPercentage,
-				Configuration: map[string]interface{}{
+				Configuration: map[string]any{
 					"percentage": 50.0,
 				},
 			},
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"use_case":   "ab_testing",
 				"complexity": "medium",
 				"risk_level": "medium",
@@ -376,13 +376,13 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 				ID:   uuid.New(),
 				Name: "Gradual 5% to 100%",
 				Type: RolloutStrategyGradual,
-				Configuration: map[string]interface{}{
+				Configuration: map[string]any{
 					"initial_percentage": 5.0,
 					"final_percentage":   100.0,
 					"duration_hours":     168.0, // 1 week
 				},
 			},
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"use_case":   "safe_rollout",
 				"complexity": "high",
 				"risk_level": "medium",
@@ -394,7 +394,7 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 			Category:     "configuration",
 			FlagType:     FlagTypeString,
 			DefaultValue: "default_config",
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"use_case":   "configuration",
 				"complexity": "low",
 				"risk_level": "low",
@@ -406,7 +406,7 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 			Category:     "parameter",
 			FlagType:     FlagTypeNumber,
 			DefaultValue: 10.0,
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"use_case":   "parameter_tuning",
 				"complexity": "low",
 				"risk_level": "low",
@@ -418,7 +418,7 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 	for _, templateReq := range predefinedTemplates {
 		_, err := s.CreateFlagTemplate(ctx, &templateReq)
 		if err != nil {
-			s.logger.Warn("Failed to create predefined template", map[string]interface{}{
+			s.logger.Warn("Failed to create predefined template", logger.Fields{
 				"template_name": templateReq.Name,
 				"error":         err.Error(),
 			})
@@ -427,7 +427,7 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
 		}
 	}
 
-	s.logger.Info("Predefined templates created", map[string]interface{}{
+	s.logger.Info("Predefined templates created", logger.Fields{
 		"total_templates":      len(predefinedTemplates),
 		"successfully_created": successCount,
 	})
@@ -482,8 +482,8 @@ func (s *adminServiceImpl) GetRecommendedTemplate(ctx context.Context, useCase s
 }
 
 // Audit helper for template operations
-func (s *adminServiceImpl) auditTemplateOperation(ctx context.Context, operation string, template *FlagTemplate, additionalData map[string]interface{}) {
-	contextData := map[string]interface{}{
+func (s *adminServiceImpl) auditTemplateOperation(ctx context.Context, operation string, template *FlagTemplate, additionalData map[string]any) {
+	contextData := map[string]any{
 		"operation":     operation,
 		"template_id":   template.ID.String(),
 		"template_name": template.Name,
@@ -492,11 +492,7 @@ func (s *adminServiceImpl) auditTemplateOperation(ctx context.Context, operation
 	}
 
 	// Add additional data if provided
-	if additionalData != nil {
-		for k, v := range additionalData {
-			contextData[k] = v
-		}
-	}
+	maps.Copy(contextData, additionalData)
 
 	contextJSON, _ := json.Marshal(contextData)
 

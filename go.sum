@@ -59,8 +59,6 @@ github.com/gin-contrib/sse v0.1.0 h1:Y/yl/+YNO8GZSjAhjMsSuLt29uWRFHdHYUb5lYOV9qE
 github.com/gin-contrib/sse v0.1.0/go.mod h1:RHrZQHXnP2xjPF+u1gW/2HnVO7nvIa9PG3Gm+fLHvGI=
 github.com/gin-gonic/gin v1.10.1 h1:T0ujvqyCSqRopADpgPgiTT63DUQVSfojyME59Ei63pQ=
 github.com/gin-gonic/gin v1.10.1/go.mod h1:4PMNQiOhvDRa013RKVbsiNwoyezlm2rm0uX/T7kzp5Y=
-github.com/go-chi/chi/v5 v5.2.1 h1:KOIHODQj58PmL80G2Eak4WdvUzjSJSm0vG72crDCqb8=
-github.com/go-chi/chi/v5 v5.2.1/go.mod h1:L2yAIGWB3H+phAw1NxKwWM+7eUH/lU8pOMm5hHcoops=
 github.com/go-chi/chi/v5 v5.2.2 h1:CMwsvRVTbXVytCk1Wd72Zy1LAsAh9GxMmSNWLHCG618=
 github.com/go-chi/chi/v5 v5.2.2/go.mod h1:L2yAIGWB3H+phAw1NxKwWM+7eUH/lU8pOMm5hHcoops=
 github.com/go-kit/log v0.1.0/go.mod h1:zbhenjAZHb184qTLMA9ZjW7ThYL0H2mk7Q6pNt4vbaY=
@@ -286,8 +284,6 @@ go.uber.org/zap v1.18.1 h1:CSUJ2mjFszzEWt4CdKISEuChVIXGBn3lAPwkRGyVrc4=
 go.uber.org/zap v1.18.1/go.mod h1:xg/QME4nWcxGxrpdeYfq7UvYrLh66cuVKdrbD1XF/NI=
 goa.design/clue v1.2.1 h1:qFKQsNUzfwuBcTFZprfzOxipLTMiFvOLafuGm2Rnfh0=
 goa.design/clue v1.2.1/go.mod h1:Rn5RrcXYkqYNaActhTIcP76kchefNb0quA2or11ay9Q=
-goa.design/goa/v3 v3.21.1 h1:tLwhbcNoEBJm1CcJc3ks6oZ8BHYl6vFuxEBnl2kC428=
-goa.design/goa/v3 v3.21.1/go.mod h1:E+97AYffVIvDi6LkuNdfdvMZb8UFb/+ie3V0/WBBdgc=
 goa.design/goa/v3 v3.21.5 h1:eS6SHJ1KZ5q5bhT/llw0LMTCWbosBwlFX4v8MctYs38=
 goa.design/goa/v3 v3.21.5/go.mod h1:5THVDuChOIctYM+t3xmL4f2fJbFPzzwvrYMj3PQZg9g=
 golang.org/x/arch v0.0.0-20210923205945-b76863e36670/go.mod h1:5om86z9Hs0C8fWVUuoMHwpExlXzs5Tkyp9hOrfG7pp8=

@@ -1295,9 +1295,7 @@ type UserSession struct {
 	// JSONB containing geographic and network location data for location-based access control
 	LocationInfo []byte `json:"location_info"`
 	// Session expiration timestamp
-	ExpiresAt time.Time `json:"expires_at"`
-	// Calculated risk score from 0-100 based on action, context, and user behavior
-	RiskScore         *int32       `json:"risk_score"`
+	ExpiresAt         time.Time    `json:"expires_at"`
 	Version           int32        `json:"version"`
 	LastValidationRun sql.NullTime `json:"last_validation_run"`
 	ValidationStatus  *string      `json:"validation_status"`
@@ -1308,6 +1306,8 @@ type UserSession struct {
 	LastAccessedAt sql.NullTime `json:"last_accessed_at"`
 	// Whether the session is currently active
 	IsActive *bool `json:"is_active"`
+	// Calculated risk score (0-100) based on action, context, and user behavior
+	RiskScore *int32 `json:"risk_score"`
 }
 
 type VActiveEntity struct {
