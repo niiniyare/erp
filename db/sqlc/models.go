@@ -812,7 +812,8 @@ type Tenant struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	// Soft delete timestamp - NULL means active
-	DeletedAt sql.NullTime `json:"deleted_at"`
+	DeletedAt      sql.NullTime `json:"deleted_at"`
+	LastActivityAt sql.NullTime `json:"last_activity_at"`
 }
 
 // Tenant-specific configuration settings, feature flags, and resource limits

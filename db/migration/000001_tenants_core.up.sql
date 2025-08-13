@@ -193,7 +193,7 @@ BEGIN
 -- Return current tenant ID from session variable, default to NULL if not set
 RETURN COALESCE(
     nullif(
-        current_setting('app.current_tenant_id', TRUE),
+        current_setting('app.current_tenant_id', FALSE),
         ''
     ),
     NULL
@@ -224,7 +224,7 @@ ALTER TABLE
 
 -- Create policy for tenant isolation
 -- Only allow access to tenant data based on current session context
-CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USING (id = current_tenant_id());
+CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USING (id = current_tenant_id() OR current_tenant_id() IS NULL);
 
 -- Add policy comment
 COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';

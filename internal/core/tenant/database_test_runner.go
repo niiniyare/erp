@@ -25,7 +25,7 @@ func NewDatabaseTestRunner() (*DatabaseTestRunner, error) {
 	// Check if database tests should be run
 	databaseURL := os.Getenv("TEST_DATABASE_URL")
 	if databaseURL == "" {
-		databaseURL = "postgresql://admin:admin@localhost:5432/ledger?sslmode=disable"
+		databaseURL = TEST_DATABASE_URL
 		// return nil, fmt.Errorf("TEST_DATABASE_URL not set, database tests cannot run")
 	}
 

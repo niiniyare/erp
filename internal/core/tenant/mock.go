@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
+	db "github.com/niiniyare/erp/db/sqlc"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -144,6 +145,21 @@ func (mr *MockRepositoryMockRecorder) GetTenant(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenant", reflect.TypeOf((*MockRepository)(nil).GetTenant), ctx)
 }
 
+// GetTenantConfiguration mocks base method.
+func (m *MockRepository) GetTenantConfiguration(ctx context.Context) (*db.TenantConfiguration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTenantConfiguration", ctx)
+	ret0, _ := ret[0].(*db.TenantConfiguration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTenantConfiguration indicates an expected call of GetTenantConfiguration.
+func (mr *MockRepositoryMockRecorder) GetTenantConfiguration(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantConfiguration", reflect.TypeOf((*MockRepository)(nil).GetTenantConfiguration), ctx)
+}
+
 // List mocks base method.
 func (m *MockRepository) List(ctx context.Context, offset, limit int) ([]*Tenant, error) {
 	m.ctrl.T.Helper()
@@ -157,6 +173,21 @@ func (m *MockRepository) List(ctx context.Context, offset, limit int) ([]*Tenant
 func (mr *MockRepositoryMockRecorder) List(ctx, offset, limit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockRepository)(nil).List), ctx, offset, limit)
+}
+
+// ProvisionTenant mocks base method.
+func (m *MockRepository) ProvisionTenant(ctx context.Context, req ProvisionTenantRequest) (*ProvisionedTenantInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProvisionTenant", ctx, req)
+	ret0, _ := ret[0].(*ProvisionedTenantInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProvisionTenant indicates an expected call of ProvisionTenant.
+func (mr *MockRepositoryMockRecorder) ProvisionTenant(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProvisionTenant", reflect.TypeOf((*MockRepository)(nil).ProvisionTenant), ctx, req)
 }
 
 // ResetTenant mocks base method.

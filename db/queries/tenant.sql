@@ -248,45 +248,20 @@
 -- =====================================================
 -- name: CreateTenantConfiguration :one
 INSERT INTO
-  tenant_configurations (
-    tenant_id,
-    max_users,
-    max_entities,
-    max_transactions_per_month,
-    storage_quota,
-    features,
-    modules_enabled,
-    accounting_method,
-    fiscal_year_start_month,
-    default_currency,
-    date_format,
-    number_format,
-    language_code,
-    password_policy,
-    webhook_endpoints,
-    api_rate_limits
-  )
+  tenant_configurations (tenant_id, default_currency)
 VALUES
-  (
-    current_tenant_id(),
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    $8,
-    $9,
-    $10,
-    $11,
-    $12,
-    $13,
-    $14,
-    $15
-  )
+  ($1, $2)
 RETURNING
   *;
+
+-- name: InitializeUsageStats :one
+INSERT INTO tenant_usage_stats (tenant_id, period_start, period_end)
+VALUES (
+    $1,
+    date_trunc('month', CURRENT_DATE)::DATE,
+    (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month - 1 day')::DATE
+)
+RETURNING *;
 
 -- name: GetTenantConfiguration :one
 SELECT
@@ -477,6 +452,10 @@ SELECT
 SELECT
   create_default_tenant_configuration(current_tenant_id());
 
+-- name: ProvisionTenant :one
+SELECT t.id::uuid
+FROM provision_tenant_complete($1, $2, $3, $4, $5, $6, $7, $8) AS t;
+
 -- =====================================================
 -- ENHANCED TENANT QUERIES WITH NEW FIELDS
 -- =====================================================
@@ -516,7 +495,7 @@ VALUES
     $14
   )
 RETURNING
-  *;
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at;
 
 -- name: GetTenantBySlug :one
 SELECT
@@ -805,7 +784,7 @@ INSERT INTO
 VALUES
   ($1, $2, $3, $4, $5, $6)
 RETURNING
-  *;
+  id, slug, name, email, subdomain, status, industry, created_at, updated_at, deleted_at;
 
 -- name: GetTenantByID :one
 SELECT
@@ -1189,6 +1168,6 @@ SELECT
 FROM
   tenants
 WHERE
-  id = current_setting('app.current_tenant_id')::uuid
+  id = current_tenant_id()
   AND deleted_at IS NULL
   AND STATUS = 'active';

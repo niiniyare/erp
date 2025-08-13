@@ -2,7 +2,6 @@ package tenant
 
 //go:generate go run go.uber.org/mock/mockgen -source=repository.go -destination=mock.go -package=tenant
 
-
 import (
 	"context"
 	"fmt"
@@ -19,11 +18,15 @@ import (
 // Repository defines the interface for tenant data access
 // All operations use UUID-based tenant identification following RLS patterns
 type Repository interface {
+	// Tenant Provisioning
+	ProvisionTenant(ctx context.Context, req ProvisionTenantRequest) (*ProvisionedTenantInfo, error)
+
 	// Core CRUD operations (UUID-based)
 	Create(ctx context.Context, tenant *Tenant) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Tenant, error)
 	Update(ctx context.Context, id uuid.UUID, updates UpdateTenantRequest) error
 	Delete(ctx context.Context, id uuid.UUID) error
+	GetTenantConfiguration(ctx context.Context) (*db.TenantConfiguration, error)
 
 	// Query operations (UUID-based with RLS)
 	List(ctx context.Context, offset, limit int) ([]*Tenant, error)
@@ -302,6 +305,21 @@ func (r *repository) Delete(ctx context.Context, id uuid.UUID) error {
 	})
 
 	return nil
+}
+
+func (r *repository) GetTenantConfiguration(ctx context.Context) (*db.TenantConfiguration, error) {
+	ctx, span := r.tracer.StartSpan(ctx, "tenant.repository.GetTenantConfiguration")
+	defer span.End()
+
+	config, err := r.store.GetTenantConfiguration(ctx)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, errors.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get tenant configuration: %w", err)
+	}
+
+	return config, nil
 }
 
 // List implements Repository.List
@@ -653,4 +671,51 @@ func (r *repository) ResetTenant(ctx context.Context) error {
 	})
 
 	return nil
+}
+
+// ProvisionTenant implements Repository.ProvisionTenant
+// This method uses a transaction to ensure that tenant creation and its
+// initial configuration are atomic.
+func (r *repository) ProvisionTenant(ctx context.Context, req ProvisionTenantRequest) (*ProvisionedTenantInfo, error) {
+	ctx, span := r.tracer.StartSpan(ctx, "tenant.repository.ProvisionTenant")
+	defer span.End()
+
+	// Convert *string to string for SQLC parameters, handling nil
+	subdomain := ""
+	if req.Subdomain != nil {
+		subdomain = *req.Subdomain
+	}
+	industry := ""
+	if req.Industry != nil {
+		industry = *req.Industry
+	}
+	companySize := "small" // Default value
+	if req.CompanySize != nil {
+		companySize = *req.CompanySize
+	}
+
+	// Call the SQLC-generated ProvisionTenant function
+	provisionedID, err := r.store.ProvisionTenant(ctx, db.ProvisionTenantParams{
+		PName:        req.Name,
+		PEmail:       req.Email,
+		PSubdomain:   subdomain,
+		PIndustry:    industry,
+		PCompanySize: companySize,
+		PCurrencyCode: req.CurrencyCode,
+		PTimezone:    "UTC", // Default timezone
+		PSettings:    []byte("{}"), // Default settings
+	})
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "Failed to provision tenant via DB function")
+		return nil, fmt.Errorf("failed to provision tenant: %w", err)
+	}
+
+	return &ProvisionedTenantInfo{
+		TenantID:  provisionedID, // Use provisionedID directly
+		Slug:      "",            // Set to empty string
+		Subdomain: nil,           // Set to nil
+		Status:    "pending",     // Set to default status
+	}, nil
 }

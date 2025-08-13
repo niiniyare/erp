@@ -39,97 +39,116 @@ func TestRLS(t *testing.T) {
 }
 
 // TestTenantDataIsolation covers test cases MT-RLS-001 and MT-RLS-002
+// It has been refactored to use the WithTenant transactional context method.
 func (s *RLSTestSuite) TestTenantDataIsolation() {
-	// 1. Setup: Create two tenants with unique identifiers
+	// 1. Setup: Create two tenants with unique identifiers using a superuser context
+	superuserStore := db.NewStore(s.runner.pool)
 	uniqueID := uuid.New().String()
 	tenantASlug := fmt.Sprintf("wayne-enterprises-%s", uniqueID[0:13])
-	tenantA, err := s.runner.store.CreateTenant(s.ctx, db.CreateTenantParams{
-		Name:  fmt.Sprintf("Wayne Enterprises %s", uniqueID[0:8]),
-		Slug:  tenantASlug,
-		Email: fmt.Sprintf("bruce-%s@wayne.com", uniqueID[0:8]),
+	tenantA, err := superuserStore.CreateTenant(s.ctx, db.CreateTenantParams{
+		Name:   fmt.Sprintf("Wayne Enterprises %s", uniqueID[0:8]),
+		Slug:   tenantASlug,
+		Email:  fmt.Sprintf("bruce-%s@wayne.com", uniqueID[0:8]),
 		Status: "active",
 	})
 	s.Require().NoError(err, "Failed to create tenant A")
 	defer func() {
-		if err := s.runner.store.SoftDeleteTenant(s.ctx, tenantA.ID); err != nil {
+		if err := superuserStore.SoftDeleteTenant(s.ctx, tenantA.ID); err != nil {
 			s.T().Logf("Warning: Failed to cleanup tenant A: %v", err)
 		}
 	}()
 
 	uniqueID2 := uuid.New().String()
 	tenantBSlug := fmt.Sprintf("stark-industries-%s", uniqueID2[0:13])
-	tenantB, err := s.runner.store.CreateTenant(s.ctx, db.CreateTenantParams{
-		Name:  fmt.Sprintf("Stark Industries %s", uniqueID2[0:8]),
-		Slug:  tenantBSlug,
-		Email: fmt.Sprintf("tony-%s@stark.com", uniqueID2[0:8]),
+	tenantB, err := superuserStore.CreateTenant(s.ctx, db.CreateTenantParams{
+		Name:   fmt.Sprintf("Stark Industries %s", uniqueID2[0:8]),
+		Slug:   tenantBSlug,
+		Email:  fmt.Sprintf("tony-%s@stark.com", uniqueID2[0:8]),
 		Status: "active",
 	})
 	s.Require().NoError(err, "Failed to create tenant B")
 	defer func() {
-		if err := s.runner.store.SoftDeleteTenant(s.ctx, tenantB.ID); err != nil {
+		if err := superuserStore.SoftDeleteTenant(s.ctx, tenantB.ID); err != nil {
 			s.T().Logf("Warning: Failed to cleanup tenant B: %v", err)
 		}
 	}()
 
-	// 2. Set context for Tenant A and create an entity with unique identifiers
-	ctxTenantA := context.WithValue(s.ctx, "tenant_id", tenantA.ID)
-	err = s.runner.store.SetTenantContext(ctxTenantA, tenantA.ID)
-	s.Require().NoError(err, "Failed to set tenant A context")
+	var entityA *db.Entity
+	// 2. Use WithTenant for Tenant A to create and list an entity
+	err = s.runner.store.WithTenant(s.ctx, tenantA.ID, func(ctx context.Context, txStore db.Store) error {
+		var innerErr error
+		entityA, innerErr = txStore.CreateEntity(ctx, db.CreateEntityParams{
+			Uuid:          uuid.New(),
+			Name:          fmt.Sprintf("Gotham HQ %s", uniqueID[0:8]),
+			Code:          stringPtr(fmt.Sprintf("gotham-hq-%s", uniqueID[0:8])),
+			Type:          "COMPANY",
+			IsActive:      true,
+			AccrualMethod: true,
+			FyStartMonth:  1,
+		})
+		if innerErr != nil {
+			return fmt.Errorf("failed to create entity A: %w", innerErr)
+		}
 
-	entityA, err := s.runner.store.CreateEntity(ctxTenantA, db.CreateEntityParams{
-		Uuid: uuid.New(),
-		Name: fmt.Sprintf("Gotham HQ %s", uniqueID[0:8]),
-		Code: stringPtr(fmt.Sprintf("gotham-hq-%s", uniqueID[0:8])),
-		Type: "COMPANY",
-		IsActive: true,
-		AccrualMethod: true,
-		FyStartMonth: 1,
+		// 3. Verify Tenant A can only see its own entity
+		entitiesA, innerErr := txStore.ListEntities(ctx)
+		if innerErr != nil {
+			return fmt.Errorf("failed to list entities for tenant A: %w", innerErr)
+		}
+		s.Require().Len(entitiesA, 1, "Tenant A should only see 1 entity")
+		s.Require().Equal(entityA.Uuid, entitiesA[0].Uuid, "The entity UUID should match for Tenant A")
+		return nil
 	})
-	s.Require().NoError(err, "Failed to create entity A")
+	s.Require().NoError(err, "Transaction for Tenant A failed")
 
-	// 3. Verify Tenant A can only see its own entity
-	entitiesA, err := s.runner.store.ListEntities(ctxTenantA)
-	s.Require().NoError(err)
-	s.Require().Len(entitiesA, 1, "Tenant A should only see 1 entity")
-	s.Require().Equal(entityA.Uuid, entitiesA[0].Uuid, "The entity UUID should match for Tenant A")
+	// 4. Use WithTenant for Tenant B
+	err = s.runner.store.WithTenant(s.ctx, tenantB.ID, func(ctx context.Context, txStore db.Store) error {
+		// 5. Verify Tenant B cannot see Tenant A's entity
+		entitiesB, innerErr := txStore.ListEntities(ctx)
+		if innerErr != nil {
+			return fmt.Errorf("failed to list entities for tenant B: %w", innerErr)
+		}
+		s.Require().Len(entitiesB, 0, "Tenant B should not see any of Tenant A's entities")
 
-	// 4. Set context for Tenant B
-	ctxTenantB := context.WithValue(s.ctx, "tenant_id", tenantB.ID)
-	err = s.runner.store.SetTenantContext(ctxTenantB, tenantB.ID)
-	s.Require().NoError(err)
+		// 6. Create an entity for Tenant B
+		entityB, innerErr := txStore.CreateEntity(ctx, db.CreateEntityParams{
+			Uuid:          uuid.New(),
+			Name:          fmt.Sprintf("Stark Tower %s", uniqueID2[0:8]),
+			Code:          stringPtr(fmt.Sprintf("stark-tower-%s", uniqueID2[0:8])),
+			Type:          "COMPANY",
+			IsActive:      true,
+			AccrualMethod: true,
+			FyStartMonth:  1,
+		})
+		if innerErr != nil {
+			return fmt.Errorf("failed to create entity B: %w", innerErr)
+		}
 
-	// 5. Verify Tenant B cannot see Tenant A's entity
-	entitiesB, err := s.runner.store.ListEntities(ctxTenantB)
-	s.Require().NoError(err)
-	s.Require().Len(entitiesB, 0, "Tenant B should not see any of Tenant A's entities")
+		// 7. Verify Tenant B can now see its own entity
+		entitiesB, innerErr = txStore.ListEntities(ctx)
+		if innerErr != nil {
+			return fmt.Errorf("failed to list entities for tenant B after creation: %w", innerErr)
+		}
+		s.Require().Len(entitiesB, 1, "Tenant B should now see 1 entity")
+		s.Require().Equal(entityB.Uuid, entitiesB[0].Uuid)
 
-	// 6. Create an entity for Tenant B with unique identifiers
-	entityB, err := s.runner.store.CreateEntity(ctxTenantB, db.CreateEntityParams{
-		Uuid: uuid.New(),
-		Name: fmt.Sprintf("Stark Tower %s", uniqueID2[0:8]),
-		Code: stringPtr(fmt.Sprintf("stark-tower-%s", uniqueID2[0:8])),
-		Type: "COMPANY",
-		IsActive: true,
-		AccrualMethod: true,
-		FyStartMonth: 1,
+		// 8. Verify Tenant B cannot update Tenant A's entity
+		_, innerErr = txStore.UpdateEntity(ctx, db.UpdateEntityParams{Uuid: entityA.Uuid, Name: "Updated by Stark"})
+		s.Require().Error(innerErr, "Expected an error when Tenant B tries to update Tenant A's entity")
+
+		// 9. Verify Tenant B cannot delete Tenant A's entity
+		innerErr = txStore.SoftDeleteEntity(ctx, entityA.Uuid)
+		s.Require().NoError(innerErr, "Cross-tenant soft delete should not produce an error, it should just affect 0 rows.")
+
+		return nil
 	})
-	s.Require().NoError(err, "Failed to create entity B")
+	s.Require().NoError(err, "Transaction for Tenant B failed")
 
-	// 7. Verify Tenant B can now see its own entity
-	entitiesB, err = s.runner.store.ListEntities(ctxTenantB)
-	s.Require().NoError(err)
-	s.Require().Len(entitiesB, 1, "Tenant B should now see 1 entity")
-	s.Require().Equal(entityB.Uuid, entitiesB[0].Uuid)
-
-	// 8. Verify Tenant B cannot update Tenant A's entity
-	_, err = s.runner.store.UpdateEntity(ctxTenantB, db.UpdateEntityParams{Uuid: entityA.Uuid, Name: "Updated by Stark"})
-	s.Require().Error(err, "Expected an error when Tenant B tries to update Tenant A's entity")
-
-	// 9. Verify Tenant B cannot delete Tenant A's entity (RLS enforcement)
-	err = s.runner.store.SoftDeleteEntity(ctxTenantB, entityA.Uuid)
-	s.Require().NoError(err, "Cross-tenant soft delete should not produce an error, it should just affect 0 rows.")
-
-	// 10. Verify that the entity was NOT deleted by trying to fetch it again
-	_, getErr := s.runner.store.GetEntity(ctxTenantA, entityA.Uuid)
-	s.Require().NoError(getErr, "Entity A should still exist after a failed cross-tenant delete attempt")
+	// 10. Verify that entity A was NOT deleted by trying to fetch it again within its own context
+	err = s.runner.store.WithTenant(s.ctx, tenantA.ID, func(ctx context.Context, txStore db.Store) error {
+		_, getErr := txStore.GetEntity(ctx, entityA.Uuid)
+		s.Require().NoError(getErr, "Entity A should still exist after a failed cross-tenant delete attempt")
+		return nil
+	})
+	s.Require().NoError(err, "Verification transaction for Tenant A failed")
 }

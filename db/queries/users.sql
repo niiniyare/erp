@@ -1,6 +1,7 @@
 -- name: CreateUser :one
 INSERT INTO
   users (
+    tenant_id,
     entity_id,
     person_id,
     employee_id,
@@ -16,6 +17,7 @@ INSERT INTO
   )
 VALUES
   (
+    current_tenant_id(),
     $1,
     $2,
     $3,

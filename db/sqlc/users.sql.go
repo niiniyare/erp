@@ -128,6 +128,7 @@ func (q *Queries) CheckUsernameAvailability(ctx context.Context, username *strin
 const createUser = `-- name: CreateUser :one
 INSERT INTO
   users (
+    tenant_id,
     entity_id,
     person_id,
     employee_id,
@@ -143,6 +144,7 @@ INSERT INTO
   )
 VALUES
   (
+    current_tenant_id(),
     $1,
     $2,
     $3,
@@ -179,6 +181,7 @@ type CreateUserParams struct {
 //
 //	INSERT INTO
 //	  users (
+//	    tenant_id,
 //	    entity_id,
 //	    person_id,
 //	    employee_id,
@@ -194,6 +197,7 @@ type CreateUserParams struct {
 //	  )
 //	VALUES
 //	  (
+//	    current_tenant_id(),
 //	    $1,
 //	    $2,
 //	    $3,

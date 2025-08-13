@@ -1055,7 +1055,7 @@ type Querier interface {
 	//  VALUES
 	//    ($1, $2, $3, $4, $5, $6)
 	//  RETURNING
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	CreateTenant(ctx context.Context, arg CreateTenantParams) (*Tenant, error)
 	// =====================================================
 	// ENHANCED TENANT QUERIES WITH NEW FIELDS
@@ -1096,7 +1096,7 @@ type Querier interface {
 	//      $14
 	//    )
 	//  RETURNING
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	CreateTenantComplete(ctx context.Context, arg CreateTenantCompleteParams) (*Tenant, error)
 	// -- =====================================================
 	// -- SQLC QUERIES FOR ERP/ACCOUNTING SYSTEM
@@ -1348,43 +1348,9 @@ type Querier interface {
 	// =====================================================
 	//
 	//  INSERT INTO
-	//    tenant_configurations (
-	//      tenant_id,
-	//      max_users,
-	//      max_entities,
-	//      max_transactions_per_month,
-	//      storage_quota,
-	//      features,
-	//      modules_enabled,
-	//      accounting_method,
-	//      fiscal_year_start_month,
-	//      default_currency,
-	//      date_format,
-	//      number_format,
-	//      language_code,
-	//      password_policy,
-	//      webhook_endpoints,
-	//      api_rate_limits
-	//    )
+	//    tenant_configurations (tenant_id, default_currency)
 	//  VALUES
-	//    (
-	//      current_tenant_id(),
-	//      $1,
-	//      $2,
-	//      $3,
-	//      $4,
-	//      $5,
-	//      $6,
-	//      $7,
-	//      $8,
-	//      $9,
-	//      $10,
-	//      $11,
-	//      $12,
-	//      $13,
-	//      $14,
-	//      $15
-	//    )
+	//    ($1, $2)
 	//  RETURNING
 	//    tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
 	CreateTenantConfiguration(ctx context.Context, arg CreateTenantConfigurationParams) (*TenantConfiguration, error)
@@ -1392,6 +1358,7 @@ type Querier interface {
 	//
 	//  INSERT INTO
 	//    users (
+	//      tenant_id,
 	//      entity_id,
 	//      person_id,
 	//      employee_id,
@@ -1407,6 +1374,7 @@ type Querier interface {
 	//    )
 	//  VALUES
 	//    (
+	//      current_tenant_id(),
 	//      $1,
 	//      $2,
 	//      $3,
@@ -1651,7 +1619,7 @@ type Querier interface {
 	//GetActiveTenants
 	//
 	//  SELECT
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	//  FROM
 	//    tenants
 	//  WHERE
@@ -2342,7 +2310,7 @@ type Querier interface {
 	// =====================================================
 	//
 	//  SELECT
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	//  FROM
 	//    tenants
 	//  WHERE
@@ -2521,6 +2489,7 @@ type Querier interface {
 	//    entities
 	//  WHERE
 	//    uuid = $1
+	//    AND tenant_id = current_tenant_id()
 	//    AND deleted_at IS NULL
 	GetEntity(ctx context.Context, argUuid uuid.UUID) (*Entity, error)
 	//GetEntityAncestors
@@ -4085,7 +4054,7 @@ type Querier interface {
 	//GetTenantByEmail
 	//
 	//  SELECT
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	//  FROM
 	//    tenants
 	//  WHERE
@@ -4095,7 +4064,7 @@ type Querier interface {
 	//GetTenantByID
 	//
 	//  SELECT
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	//  FROM
 	//    tenants
 	//  WHERE
@@ -4105,7 +4074,7 @@ type Querier interface {
 	//GetTenantBySlug
 	//
 	//  SELECT
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	//  FROM
 	//    tenants
 	//  WHERE
@@ -4116,7 +4085,7 @@ type Querier interface {
 	// WHERE id = $1 AND deleted_at IS NULL;
 	//
 	//  SELECT
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	//  FROM
 	//    tenants
 	//  WHERE
@@ -4302,7 +4271,7 @@ type Querier interface {
 	//GetTenantsCreatedInDateRange
 	//
 	//  SELECT
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	//  FROM
 	//    tenants
 	//  WHERE
@@ -4595,6 +4564,16 @@ type Querier interface {
 	//    id = $1
 	//    AND tenant_id = current_tenant_id()
 	IncrementFailedLogins(ctx context.Context, id uuid.UUID) error
+	//InitializeUsageStats
+	//
+	//  INSERT INTO tenant_usage_stats (tenant_id, period_start, period_end)
+	//  VALUES (
+	//      $1,
+	//      date_trunc('month', CURRENT_DATE)::DATE,
+	//      (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month - 1 day')::DATE
+	//  )
+	//  RETURNING tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
+	InitializeUsageStats(ctx context.Context, tenantID uuid.UUID) (*TenantUsageStat, error)
 	//InvalidateActionEvaluations
 	//
 	//  DELETE FROM
@@ -4904,7 +4883,7 @@ type Querier interface {
 	//ListTenants
 	//
 	//  SELECT
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	//  FROM
 	//    tenants
 	//  WHERE
@@ -5028,6 +5007,11 @@ type Querier interface {
 	//  WHERE
 	//    uuid = $1
 	MoveEntityToNewParent(ctx context.Context, arg MoveEntityToNewParentParams) error
+	//ProvisionTenant
+	//
+	//  SELECT t.id::uuid
+	//  FROM provision_tenant_complete($1, $2, $3, $4, $5, $6, $7, $8) AS t
+	ProvisionTenant(ctx context.Context, arg ProvisionTenantParams) (uuid.UUID, error)
 	//RebuildHierarchyPaths
 	//
 	//  WITH RECURSIVE entity_hierarchy AS (
@@ -5218,7 +5202,7 @@ type Querier interface {
 	//SearchTenantsByName
 	//
 	//  SELECT
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	//  FROM
 	//    tenants
 	//  WHERE
@@ -5404,7 +5388,7 @@ type Querier interface {
 	//    id = current_tenant_id()
 	//    AND deleted_at IS NULL
 	//  RETURNING
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error)
 	//UpdateEntity
 	//
@@ -5590,7 +5574,7 @@ type Querier interface {
 	//    id = $5
 	//    AND deleted_at IS NULL
 	//  RETURNING
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Tenant, error)
 	//UpdateTenantComplete
 	//
@@ -5622,7 +5606,7 @@ type Querier interface {
 	//    id = $15
 	//    AND deleted_at IS NULL
 	//  RETURNING
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	UpdateTenantComplete(ctx context.Context, arg UpdateTenantCompleteParams) (*Tenant, error)
 	//UpdateTenantConfiguration
 	//
@@ -5683,7 +5667,7 @@ type Querier interface {
 	//    id = $1
 	//    AND deleted_at IS NULL
 	//  RETURNING
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (*Tenant, error)
 	//UpdateTenantLimits
 	//
@@ -5709,7 +5693,7 @@ type Querier interface {
 	//    id = current_tenant_id()
 	//    AND deleted_at IS NULL
 	//  RETURNING
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	UpdateTenantMetadata(ctx context.Context, metadata []byte) (*Tenant, error)
 	//UpdateTenantModules
 	//
@@ -5732,7 +5716,7 @@ type Querier interface {
 	//    id = $1
 	//    AND deleted_at IS NULL
 	//  RETURNING
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	UpdateTenantName(ctx context.Context, arg UpdateTenantNameParams) (*Tenant, error)
 	//UpdateTenantSettings
 	//
@@ -5745,7 +5729,7 @@ type Querier interface {
 	//    id = current_tenant_id()
 	//    AND deleted_at IS NULL
 	//  RETURNING
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	UpdateTenantSettings(ctx context.Context, settings []byte) (*Tenant, error)
 	//
 	//
@@ -5758,7 +5742,7 @@ type Querier interface {
 	//    id = $1
 	//    AND deleted_at IS NULL
 	//  RETURNING
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (*Tenant, error)
 	//UpdateTenantSubdomain
 	//
@@ -5771,7 +5755,7 @@ type Querier interface {
 	//    id = $1
 	//    AND deleted_at IS NULL
 	//  RETURNING
-	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at
+	//    id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
 	UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (*Tenant, error)
 	//UpdateTenantUsageStats
 	//
@@ -5865,7 +5849,7 @@ type Querier interface {
 	//  FROM
 	//    tenants
 	//  WHERE
-	//    id = current_setting('app.current_tenant_id')::uuid
+	//    id = current_tenant_id()
 	//    AND deleted_at IS NULL
 	//    AND STATUS = 'active'
 	ValidateCurrentTenant(ctx context.Context) error

@@ -3131,6 +3131,21 @@ func (mr *MockStoreMockRecorder) IncrementFailedLogins(ctx, id any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrementFailedLogins", reflect.TypeOf((*MockStore)(nil).IncrementFailedLogins), ctx, id)
 }
 
+// InitializeUsageStats mocks base method.
+func (m *MockStore) InitializeUsageStats(ctx context.Context, tenantID uuid.UUID) (*TenantUsageStat, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InitializeUsageStats", ctx, tenantID)
+	ret0, _ := ret[0].(*TenantUsageStat)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InitializeUsageStats indicates an expected call of InitializeUsageStats.
+func (mr *MockStoreMockRecorder) InitializeUsageStats(ctx, tenantID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitializeUsageStats", reflect.TypeOf((*MockStore)(nil).InitializeUsageStats), ctx, tenantID)
+}
+
 // InvalidateActionEvaluations mocks base method.
 func (m *MockStore) InvalidateActionEvaluations(ctx context.Context, action string) error {
 	m.ctrl.T.Helper()
@@ -3498,6 +3513,21 @@ func (m *MockStore) MoveEntityToNewParent(ctx context.Context, arg MoveEntityToN
 func (mr *MockStoreMockRecorder) MoveEntityToNewParent(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveEntityToNewParent", reflect.TypeOf((*MockStore)(nil).MoveEntityToNewParent), ctx, arg)
+}
+
+// ProvisionTenant mocks base method.
+func (m *MockStore) ProvisionTenant(ctx context.Context, arg ProvisionTenantParams) (uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProvisionTenant", ctx, arg)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProvisionTenant indicates an expected call of ProvisionTenant.
+func (mr *MockStoreMockRecorder) ProvisionTenant(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProvisionTenant", reflect.TypeOf((*MockStore)(nil).ProvisionTenant), ctx, arg)
 }
 
 // RebuildHierarchyPaths mocks base method.

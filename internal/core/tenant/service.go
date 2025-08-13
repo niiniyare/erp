@@ -19,6 +19,9 @@ import (
 // Service defines tenant business logic interface
 // This is the main interface that other system services should use
 type Service interface {
+	// Tenant Provisioning
+	ProvisionTenant(ctx context.Context, req ProvisionTenantRequest) (*ProvisionedTenantInfo, error)
+
 	// Core CRUD operations
 	CreateTenant(ctx context.Context, req CreateTenantRequest) (*Tenant, error)
 	GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error) // Get specific tenant by ID
@@ -806,6 +809,36 @@ func (s *service) WarmupCache(ctx context.Context, tenantID uuid.UUID) error {
 	})
 
 	return nil
+}
+
+// ProvisionTenant creates a new tenant along with its default configuration and
+// initial usage statistics in a single atomic transaction.
+func (s *service) ProvisionTenant(ctx context.Context, req ProvisionTenantRequest) (*ProvisionedTenantInfo, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "tenant.service.ProvisionTenant")
+	defer span.End()
+
+	// 1. Validate input request
+	if err := s.validateCreateTenantRequest(CreateTenantRequest{
+		Name:         req.Name,
+		Email:        req.Email,
+		Subdomain:    req.Subdomain,
+		CountryCode:  req.CountryCode,
+		CurrencyCode: req.CurrencyCode,
+	}); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "Invalid provisioning request")
+		return nil, err
+	}
+
+	// 2. Call repository to perform provisioning within a single transaction
+	provisionedInfo, err := s.repo.ProvisionTenant(ctx, req)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "Tenant provisioning failed")
+		return nil, fmt.Errorf("tenant provisioning transaction failed: %w", err)
+	}
+
+	return provisionedInfo, nil
 }
 
 // Helper methods for caching and validation

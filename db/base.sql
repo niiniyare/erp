@@ -4,43 +4,75 @@
 -- Enable UUID generation for unique identifiers
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Enable Row Level Security globally
-SET row_security = on;
+SET
+    row_security = ON;
 
 -- =====================================================
 -- ROLES AND PERMISSIONS
 -- =====================================================
 -- Create application role if it doesn't exist
-DO $$
+DO
+$$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'application_role') THEN
-        CREATE ROLE application_role;
-    END IF;
+IF NOT EXISTS (
+    SELECT
+        1
+    FROM
+        pg_roles
+    WHERE
+        rolname = 'application_role'
+) THEN CREATE ROLE application_role;
+
+END IF;
+
 END
-$$;
+$$
+;
 
 -- Create admin role if it doesn't exist
-DO $$
+DO
+$$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'admin_role') THEN
-        CREATE ROLE admin_role;
-    END IF;
+IF NOT EXISTS (
+    SELECT
+        1
+    FROM
+        pg_roles
+    WHERE
+        rolname = 'admin_role'
+) THEN CREATE ROLE admin_role;
+
+END IF;
+
 END
-$$;
-DO $$
+$$
+;
+
+DO
+$$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'readonly_role') THEN
-        CREATE ROLE readonly_role;
-    END IF;
+IF NOT EXISTS (
+    SELECT
+        1
+    FROM
+        pg_roles
+    WHERE
+        rolname = 'readonly_role'
+) THEN CREATE ROLE readonly_role;
+
+END IF;
+
 END
-$$;
+$$
+;
 
 -- =====================================================
 -- CORE TENANT MANAGEMENT
 -- =====================================================
-
 -- -----------------------------------------------------
 -- TENANTS TABLE
 -- -----------------------------------------------------
@@ -49,35 +81,34 @@ $$;
 CREATE TABLE tenants (
     -- Primary identifiers
     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    slug VARCHAR(50)  NOT NULL,
+    slug VARCHAR(50) NOT NULL,
     name VARCHAR(255) UNIQUE NOT NULL,
-
     -- Contact and access information
     email VARCHAR(255) NOT NULL,
     subdomain VARCHAR(63) UNIQUE,
-
     -- Status and operational settings
-    status VARCHAR(20) NOT NULL DEFAULT 'active'
-        CHECK (status IN ('active', 'suspended', 'pending')),
+    STATUS VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (STATUS IN ('active', 'suspended', 'pending')),
     timezone VARCHAR(50) NOT NULL DEFAULT 'UTC',
     currency_code CHAR(3) NOT NULL DEFAULT 'USD',
-
     -- Flexible metadata storage
     metadata JSONB DEFAULT '{}',
-
     -- Business classification
-    industry VARCHAR(50), -- For future industry-specific modules
-    company_size VARCHAR(20)
-        CHECK (company_size IN ('startup', 'small', 'medium', 'large', 'enterprise')),
-
+    industry VARCHAR(50),  -- For future industry-specific modules
+    company_size VARCHAR(20) CHECK (
+        company_size IN (
+            'startup',
+            'small',
+            'medium',
+            'large',
+            'enterprise'
+        )
+    ),
     -- Compliance and legal information
     tax_id VARCHAR(50),
     registration_number VARCHAR(50),
     legal_entity_type VARCHAR(50),
-
     -- Tenant-specific settings
     settings JSONB NOT NULL DEFAULT '{}',
-
     -- Audit timestamps
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -86,44 +117,67 @@ CREATE TABLE tenants (
 
 -- Create indexes for performance
 CREATE INDEX idx_tenants_slug ON tenants(slug);
-CREATE INDEX idx_tenants_status ON tenants(status);
-CREATE INDEX idx_tenants_subdomain ON tenants(subdomain) WHERE subdomain IS NOT NULL;
-CREATE INDEX idx_tenants_deleted_at ON tenants(deleted_at) WHERE deleted_at IS NOT NULL;
+
+CREATE INDEX idx_tenants_status ON tenants(STATUS);
+
+CREATE INDEX idx_tenants_subdomain ON tenants(subdomain)
+WHERE
+    subdomain IS NOT NULL;
+
+CREATE INDEX idx_tenants_deleted_at ON tenants(deleted_at)
+WHERE
+    deleted_at IS NOT NULL;
 
 -- Add comments for documentation
 COMMENT ON TABLE tenants IS 'Core tenant management table for multi-tenant SaaS architecture';
+
 COMMENT ON COLUMN tenants.id IS 'Universal unique identifier for external API references';
+
 COMMENT ON COLUMN tenants.slug IS 'URL-friendly tenant identifier';
+
 COMMENT ON COLUMN tenants.metadata IS 'Flexible JSONB storage for additional tenant metadata';
+
 COMMENT ON COLUMN tenants.settings IS 'Tenant-specific configuration settings';
+
 COMMENT ON COLUMN tenants.deleted_at IS 'Soft delete timestamp - NULL means active';
 
 -- =====================================================
 -- UTILITY FUNCTIONS
 -- =====================================================
-
 -- -----------------------------------------------------
 -- TENANT CONTEXT MANAGEMENT
 -- -----------------------------------------------------
 -- Function to set tenant context for the current session
-CREATE OR REPLACE FUNCTION set_tenant_context(tenant_id UUID)
-RETURNS VOID AS $$
+CREATE
+OR REPLACE FUNCTION set_tenant_context(tenant_id UUID) RETURNS VOID AS
+$$
 BEGIN
-    -- Validate tenant exists and is active
-    IF NOT EXISTS (
-        SELECT 1 FROM tenants
-        WHERE id = tenant_id AND status = 'active' AND deleted_at IS NULL
-    ) THEN
-        RAISE EXCEPTION 'Invalid or inactive tenant: %', tenant_id;
-    END IF;
+-- Validate tenant exists and is active
+IF NOT EXISTS (
+    SELECT
+        1
+    FROM
+        tenants
+    WHERE
+        id = tenant_id
+        AND STATUS = 'active'
+        AND deleted_at IS NULL
+) THEN RAISE EXCEPTION 'Invalid or inactive tenant: %',
+tenant_id;
 
-    -- Set session variable for tenant context
-    PERFORM set_config('app.current_tenant_id', tenant_id::text, true);
+END IF;
 
-    -- Log tenant context change (optional)
-    RAISE NOTICE 'Tenant context set to: %', tenant_id;
+-- Set session variable for tenant context
+PERFORM set_config('app.current_tenant_id', tenant_id::text, TRUE);
+
+-- Log tenant context change (optional)
+RAISE NOTICE 'Tenant context set to: %',
+tenant_id;
+
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Add function comment
 COMMENT ON FUNCTION set_tenant_context(UUID) IS 'Sets the current tenant context for the session with validation';
@@ -132,16 +186,28 @@ COMMENT ON FUNCTION set_tenant_context(UUID) IS 'Sets the current tenant context
 -- GET CURRENT TENANT FUNCTION
 -- -----------------------------------------------------
 -- Utility function to retrieve current tenant ID from session
-CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS UUID AS $$
+CREATE
+OR REPLACE FUNCTION current_tenant_id() RETURNS UUID AS
+$$
 BEGIN
-    -- Return current tenant ID from session variable, default to NULL if not set
-    RETURN COALESCE(nullif(current_setting('app.current_tenant_id', true), ''), NULL)::UUID;
+-- Return current tenant ID from session variable, default to NULL if not set
+RETURN COALESCE(
+    nullif(
+        current_setting('app.current_tenant_id', FALSE),
+        ''
+    ),
+    NULL
+)::UUID;
+
 EXCEPTION
-    WHEN OTHERS THEN
-        -- Return NULL if any error occurs (e.g., invalid cast)
-        RETURN NULL;
+WHEN OTHERS THEN
+-- Return NULL if any error occurs (e.g., invalid cast)
+RETURN NULL;
+
 END;
-$$ LANGUAGE plpgsql;
+
+$$
+LANGUAGE plpgsql;
 
 -- Add function comment
 COMMENT ON FUNCTION current_tenant_id() IS 'Retrieves the current tenant ID from session context';
@@ -149,18 +215,16 @@ COMMENT ON FUNCTION current_tenant_id() IS 'Retrieves the current tenant ID from
 -- =====================================================
 -- ROW LEVEL SECURITY (RLS)
 -- =====================================================
-
 -- -----------------------------------------------------
 -- ENABLE RLS ON TENANT TABLE
 -- -----------------------------------------------------
 -- Enable Row Level Security on tenants table
-ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE
+    tenants ENABLE ROW LEVEL SECURITY;
 
 -- Create policy for tenant isolation
 -- Only allow access to tenant data based on current session context
-CREATE POLICY tenant_isolation_policy ON tenants
-    FOR ALL TO application_role
-    USING (id = current_tenant_id());
+CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USING (id = current_tenant_id() OR current_tenant_id() IS NULL);
 
 -- Add policy comment
 COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
@@ -168,29 +232,40 @@ COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data iso
 -- =====================================================
 -- PERMISSIONS AND GRANTS
 -- =====================================================
-
 -- Grant necessary permissions to application role
-GRANT SELECT, INSERT, UPDATE, DELETE ON tenants TO application_role;
+GRANT
+SELECT
+,
+INSERT
+,
+UPDATE
+,
+    DELETE ON tenants TO application_role;
 
 -- Grant execute permissions on functions
 GRANT EXECUTE ON FUNCTION set_tenant_context(UUID) TO application_role;
+
 GRANT EXECUTE ON FUNCTION current_tenant_id() TO application_role;
 
 -- =====================================================
 -- TRIGGERS FOR AUTOMATIC TIMESTAMP UPDATES
 -- =====================================================
-
 -- -----------------------------------------------------
 -- UPDATED_AT TRIGGER FUNCTION
 -- -----------------------------------------------------
 -- Generic function to update the updated_at timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+CREATE
+OR REPLACE FUNCTION update_updated_at_column() RETURNS TRIGGER AS
+$$
 BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
+NEW.updated_at = NOW();
+
+RETURN NEW;
+
 END;
-$$ LANGUAGE plpgsql;
+
+$$
+LANGUAGE plpgsql;
 
 -- Add function comment
 COMMENT ON FUNCTION update_updated_at_column() IS 'Generic trigger function to update updated_at timestamp';
@@ -199,27 +274,33 @@ COMMENT ON FUNCTION update_updated_at_column() IS 'Generic trigger function to u
 -- APPLY TRIGGER TO TENANTS TABLE
 -- -----------------------------------------------------
 -- Trigger for tenants table
-CREATE TRIGGER update_tenants_updated_at
-    BEFORE UPDATE ON tenants
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_tenants_updated_at BEFORE
+UPDATE
+    ON tenants FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- -----------------------------------------------------
 -- SLUG GENERATION TRIGGER
 -- -----------------------------------------------------
-CREATE OR REPLACE FUNCTION generate_slug_from_name()
-RETURNS TRIGGER AS $$
+CREATE
+OR REPLACE FUNCTION generate_slug_from_name() RETURNS TRIGGER AS
+$$
 BEGIN
-    IF NEW.slug IS NULL THEN
-        NEW.slug := lower(regexp_replace(NEW.name, '[^a-zA-Z0-9]+', '-', 'g'));
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+IF NEW.slug IS NULL THEN NEW.slug := lower(
+    regexp_replace(NEW.name, '[^a-zA-Z0-9]+', '-', 'g')
+);
 
-CREATE TRIGGER tenant_slug_trigger
-    BEFORE INSERT ON tenants FOR EACH ROW
-    EXECUTE FUNCTION generate_slug_from_name();
+END IF;
+
+RETURN NEW;
+
+END;
+
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER tenant_slug_trigger BEFORE
+INSERT
+    ON tenants FOR EACH ROW EXECUTE FUNCTION generate_slug_from_name();
 -- =====================================================
 -- TENANT CONFIGURATIONS TABLE
 -- =====================================================
@@ -685,27 +766,6 @@ COMMENT ON CONSTRAINT valid_fy_start_month ON entities IS
 'Validates fiscal year start month is between 1 (January) and 12 (December)';
 
 -- =====================================================================
--- VALIDATION TRIGGER
--- =====================================================================
-
--- Validation trigger to maintain entity_id consistency
-CREATE OR REPLACE FUNCTION maintain_entity_id()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Set entity_id to uuid if not provided (for entities table)
-    IF TG_TABLE_NAME = 'entities' AND NEW.entity_id IS NULL THEN
-        NEW.entity_id := NEW.uuid;
-    END IF;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER entities_maintain_entity_id
-    BEFORE INSERT OR UPDATE ON entities
-    FOR EACH ROW EXECUTE FUNCTION maintain_entity_id();
-
--- =====================================================================
 -- ROW LEVEL SECURITY (RLS)
 -- =====================================================================
 
@@ -795,7 +855,31 @@ CREATE INDEX idx_hierarchy_paths_ancestor ON hierarchy_paths(ancestor_id);
 -- HIERARCHY MAINTENANCE TRIGGER
 -- =====================================================================
 
+CREATE OR REPLACE FUNCTION maintain_entity_id()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Always align entity_id with descendant_id
+    NEW.entity_id := NEW.descendant_id;
+    
+    -- Increment version only if row is actually modified
+    IF TG_OP = 'UPDATE' AND ROW(NEW.*) IS DISTINCT FROM ROW(OLD.*) THEN
+        NEW.version := OLD.version + 1;
+    END IF;
+    
+    -- Update timestamp
+    NEW.updated_at := NOW();
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION maintain_entity_id IS
+'Maintains entity_id consistency in hierarchy_paths by setting it to descendant_id.
+Increments version on updates and refreshes updated_at timestamp.';
 -- Apply the existing maintain_entity_id trigger to hierarchy_paths
+
+
+
 CREATE TRIGGER hierarchy_paths_maintain_entity_id
     BEFORE INSERT OR UPDATE ON hierarchy_paths
     FOR EACH ROW EXECUTE FUNCTION maintain_entity_id();
@@ -822,7 +906,8 @@ CREATE POLICY tenant_isolation_policy ON hierarchy_paths
 -- Admin bypass policy
 CREATE POLICY admin_full_access_policy ON hierarchy_paths
     FOR ALL TO admin_role
-    USING (true);-- =====================================================================
+    USING (true);
+-- =====================================================================
 -- ENTITY STATE MANAGEMENT TABLE - Document sequence tracking
 -- =====================================================================
 
@@ -1870,7 +1955,6 @@ CREATE TABLE user_sessions (
     device_info JSONB DEFAULT '{}'::jsonb,         -- Device fingerprinting data
     location_info JSONB DEFAULT '{}'::jsonb,       -- Geographic/network location for ABAC
     expires_at TIMESTAMPTZ NOT NULL,
-    risk_score INTEGER DEFAULT 0,                 -- Calculated risk score (0-100)
     
     -- Standard validation columns
     version INTEGER NOT NULL DEFAULT 1,
@@ -1895,7 +1979,6 @@ COMMENT ON COLUMN user_sessions.user_id IS 'Foreign key to users table identifyi
 COMMENT ON COLUMN user_sessions.session_token IS 'Unique session token for authentication';
 COMMENT ON COLUMN user_sessions.refresh_token IS 'Token used for session renewal';
 COMMENT ON COLUMN user_sessions.ip_address IS 'IP address of the client';
-COMMENT ON COLUMN user_sessions.risk_score IS 'Calculated risk score from 0-100 based on action, context, and user behavior';
 COMMENT ON COLUMN user_sessions.user_agent IS 'Browser/client user agent string';
 COMMENT ON COLUMN user_sessions.device_info IS 'JSONB containing device fingerprinting data for security analysis';
 COMMENT ON COLUMN user_sessions.location_info IS 'JSONB containing geographic and network location data for location-based access control';
@@ -2522,7 +2605,7 @@ CREATE POLICY audit_log_tenant_isolation ON audit_log
 -- ------------------------------------------------------------------------------------------------
 -- Comprehensive user view with all related data
 -- ------------------------------------------------------------------------------------------------
-CREATE VIEW user_complete_view AS
+CREATE VIEW v_user_complete_view AS
 SELECT
     u.id as user_id,
     u.tenant_id,
@@ -2566,13 +2649,13 @@ GROUP BY u.id, u.tenant_id, u.entity_id, u.username, u.email, u.user_type,
          e.employment_status, e.security_level,
          p.security_attributes, e.access_attributes, u.user_attributes;
 
-COMMENT ON VIEW user_complete_view IS
+COMMENT ON VIEW v_user_complete_view IS
 'Comprehensive view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.';
 
 -- ------------------------------------------------------------------------------------------------
 -- Role permissions summary view
 -- ------------------------------------------------------------------------------------------------
-CREATE VIEW role_permissions_summary AS
+CREATE VIEW v_role_permissions_summary AS
 SELECT
     r.tenant_id,
     r.id as role_id,
@@ -2596,13 +2679,13 @@ LEFT JOIN user_roles ur ON r.id = ur.role_id AND ur.is_active = true AND (ur.exp
 WHERE r.is_active = true AND r.deleted_at IS NULL
 GROUP BY r.tenant_id, r.id, r.name, r.display_name, r.role_type, r.level, r.module_id, m.name;
 
-COMMENT ON VIEW role_permissions_summary IS
+COMMENT ON VIEW v_role_permissions_summary IS
 'Summary view of roles with their permissions, resources, actions, and user assignment counts for role management and analysis.';
 
 -- ------------------------------------------------------------------------------------------------
 -- Audit summary view for security monitoring
 -- ------------------------------------------------------------------------------------------------
-CREATE VIEW audit_summary_view AS
+CREATE VIEW v_audit_summary_view AS
 SELECT
     tenant_id,
     event_category,
@@ -2619,7 +2702,7 @@ WHERE created_at >= NOW() - INTERVAL '7 days'
 GROUP BY tenant_id, event_category, severity, DATE_TRUNC('hour', created_at)
 ORDER BY hour_bucket DESC, event_count DESC;
 
-COMMENT ON VIEW audit_summary_view IS
+COMMENT ON VIEW v_audit_summary_view IS
 'Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.';
 -- =====================================================================
 -- USER FUNCTIONS AND TRIGGERS UP MIGRATION
@@ -2644,20 +2727,36 @@ COMMENT ON FUNCTION update_updated_at_column() IS
 -- ------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION enforce_tenant_isolation()
 RETURNS TRIGGER AS $$
+DECLARE
+    entity_tenant_id UUID;
 BEGIN
-    -- Ensure all foreign key references belong to the same tenant
-    IF TG_TABLE_NAME = 'persons' THEN
-        -- Validate entity belongs to same tenant
-        IF NOT EXISTS (
-            SELECT 1 FROM entities e
-            JOIN tenants t ON e.tenant_id = t.id
-            WHERE e.uuid = NEW.entity_id AND t.id = NEW.tenant_id
-        ) THEN
-            RAISE EXCEPTION 'Entity % does not belong to tenant %', NEW.entity_id, NEW.tenant_id;
-        END IF;
+    -- This trigger is intended to be generic. It checks if a referenced
+    -- entity (via entity_id) belongs to the same tenant as the new row.
+    -- It dynamically checks for the existence of an 'entity_id' column.
+
+    -- Check if the table has an 'entity_id' column
+    IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+        BEGIN
+            -- This block will fail if entity_id does not exist, and the exception will be caught.
+            IF NEW.entity_id IS NOT NULL THEN
+                -- Get the tenant_id from the referenced entity
+                SELECT tenant_id INTO entity_tenant_id
+                FROM entities
+                WHERE uuid = NEW.entity_id;
+
+                -- If the referenced entity doesn't exist or tenant_ids don't match, raise an exception.
+                IF NOT FOUND OR entity_tenant_id != NEW.tenant_id THEN
+                    RAISE EXCEPTION 'Tenant mismatch: Referenced entity (%) does not belong to tenant %', NEW.entity_id, NEW.tenant_id;
+                END IF;
+            END IF;
+        EXCEPTION
+            WHEN undefined_column THEN
+                -- The table does not have an entity_id column, so we can ignore it.
+                -- You could log this notice for debugging purposes if you want.
+                -- RAISE NOTICE 'Table % does not have an entity_id column, skipping tenant isolation check.', TG_TABLE_NAME;
+        END;
     END IF;
 
-    -- Add similar validations for other tables as needed
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -3621,6 +3720,10 @@ CREATE POLICY user_permissions_admin_access ON user_permissions
 
 --- 1. Security Hardening Enhancements:
 
+-- Add risk_score to user_sessions
+ALTER TABLE user_sessions
+    ADD COLUMN risk_score INT DEFAULT 0;
+COMMENT ON COLUMN user_sessions.risk_score IS 'Calculated risk score (0-100) based on action, context, and user behavior';
 
 -- Password security enhancements
 ALTER TABLE users
@@ -3637,7 +3740,7 @@ COMMENT ON COLUMN users.rotation_required IS 'Forces password change on next log
 
 
 -- Optimized materialized view for permission evaluations
-CREATE MATERIALIZED VIEW user_effective_permissions AS
+CREATE MATERIALIZED VIEW mv_user_effective_permissions AS
 SELECT
     u.id AS user_id,
     u.tenant_id,
@@ -3660,9 +3763,9 @@ JOIN actions a ON rp.permission_id = a.id OR up.permission_id = a.id
 GROUP BY u.id, u.tenant_id, r.id, a.id;
 
 CREATE UNIQUE INDEX idx_user_effective_perms
-    ON user_effective_permissions (user_id, resource_id, action_id);
+    ON mv_user_effective_permissions (user_id, resource_id, action_id);
     
-COMMENT ON MATERIALIZED VIEW user_effective_permissions IS
+COMMENT ON MATERIALIZED VIEW mv_user_effective_permissions IS
 'Pre-computed effective permissions for all users with optimized access patterns';
 
 -- Session clustering
@@ -3816,7 +3919,7 @@ $$ LANGUAGE plpgsql;
 --- 5. Advanced Threat Detection View:
 
 
-CREATE VIEW security_threat_dashboard AS
+CREATE VIEW v_security_threat_dashboard AS
 SELECT 
     u.id AS user_id,
     u.username,
@@ -3834,7 +3937,7 @@ WHERE u.account_status = 'ACTIVE'
     AND (s.risk_score > 50 OR a.risk_score > 50)
 GROUP BY u.id;
 
-COMMENT ON VIEW security_threat_dashboard IS
+COMMENT ON VIEW v_security_threat_dashboard IS
 'Identifies potential security threats through session anomalies and audit patterns';
 
 
@@ -4266,28 +4369,28 @@ CREATE TABLE user_activities (
 
 -- Create initial partitions (last 3 months + next 3 months)
 -- Current month partition
-CREATE TABLE user_activities_current PARTITION OF user_activities
-    FOR VALUES FROM (date_trunc('month', CURRENT_DATE)) 
-    TO (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month');
-
--- Previous 2 months partitions
-CREATE TABLE user_activities_prev1 PARTITION OF user_activities
-    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) - INTERVAL '1 month') 
-    TO (date_trunc('month', CURRENT_DATE));
-
-CREATE TABLE user_activities_prev2 PARTITION OF user_activities
-    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) - INTERVAL '2 months') 
-    TO (date_trunc('month', CURRENT_DATE) - INTERVAL '1 month');
-
--- Next 2 months partitions
-CREATE TABLE user_activities_next1 PARTITION OF user_activities
-    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month') 
-    TO (date_trunc('month', CURRENT_DATE) + INTERVAL '2 months');
-
-CREATE TABLE user_activities_next2 PARTITION OF user_activities
-    FOR VALUES FROM (date_trunc('month', CURRENT_DATE) + INTERVAL '2 months') 
-    TO (date_trunc('month', CURRENT_DATE) + INTERVAL '3 months');
-
+-- CREATE TABLE user_activities_current PARTITION OF user_activities
+--     FOR VALUES FROM (date_trunc('month', CURRENT_DATE)) 
+--     TO (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month');
+--
+-- -- Previous 2 months partitions
+-- CREATE TABLE user_activities_prev1 PARTITION OF user_activities
+--     FOR VALUES FROM (date_trunc('month', CURRENT_DATE) - INTERVAL '1 month') 
+--     TO (date_trunc('month', CURRENT_DATE));
+--
+-- CREATE TABLE user_activities_prev2 PARTITION OF user_activities
+--     FOR VALUES FROM (date_trunc('month', CURRENT_DATE) - INTERVAL '2 months') 
+--     TO (date_trunc('month', CURRENT_DATE) - INTERVAL '1 month');
+--
+-- -- Next 2 months partitions
+-- CREATE TABLE user_activities_next1 PARTITION OF user_activities
+--     FOR VALUES FROM (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month') 
+--     TO (date_trunc('month', CURRENT_DATE) + INTERVAL '2 months');
+--
+-- CREATE TABLE user_activities_next2 PARTITION OF user_activities
+--     FOR VALUES FROM (date_trunc('month', CURRENT_DATE) + INTERVAL '2 months') 
+--     TO (date_trunc('month', CURRENT_DATE) + INTERVAL '3 months');
+--
 -- Performance indexes
 CREATE INDEX idx_user_activities_user_timestamp ON user_activities (user_id, timestamp DESC);
 CREATE INDEX idx_user_activities_tenant_timestamp ON user_activities (tenant_id, timestamp DESC);
@@ -4422,7 +4525,8 @@ $$ LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION create_monthly_user_activities_partition(DATE) TO application_role;
 GRANT EXECUTE ON FUNCTION drop_old_user_activities_partitions(INTEGER) TO application_role;
 GRANT EXECUTE ON FUNCTION create_monthly_user_activities_partition(DATE) TO admin_role;
-GRANT EXECUTE ON FUNCTION drop_old_user_activities_partitions(INTEGER) TO admin_role;-- Creates the core feature_flags table with proper indexing and RLS
+GRANT EXECUTE ON FUNCTION drop_old_user_activities_partitions(INTEGER) TO admin_role;
+-- Creates the core feature_flags table with proper indexing and RLS
 
 -- =====================================================
 -- FEATURE FLAGS TABLE
@@ -5193,7 +5297,7 @@ COMMENT ON TRIGGER tenant_feature_overrides_audit_trigger ON tenant_feature_over
 -- =====================================================
 
 -- Materialized view for feature flag evaluation cache
-CREATE MATERIALIZED VIEW tenant_feature_flags_cache AS
+CREATE MATERIALIZED VIEW mv_tenant_feature_flags_cache AS
 WITH feature_evaluation AS (
     SELECT 
         ff.tenant_id,
@@ -5253,42 +5357,42 @@ FROM feature_evaluation;
 
 -- Primary lookup indexes
 CREATE UNIQUE INDEX idx_tenant_feature_cache_pk 
-    ON tenant_feature_flags_cache(tenant_id, feature_flag_id);
+    ON mv_tenant_feature_flags_cache(tenant_id, feature_flag_id);
 
 CREATE UNIQUE INDEX idx_tenant_feature_cache_name_lookup 
-    ON tenant_feature_flags_cache(tenant_id, feature_flag_name);
+    ON mv_tenant_feature_flags_cache(tenant_id, feature_flag_name);
 
 -- Query optimization indexes
 CREATE INDEX idx_tenant_feature_cache_tenant 
-    ON tenant_feature_flags_cache(tenant_id);
+    ON mv_tenant_feature_flags_cache(tenant_id);
 
 CREATE INDEX idx_tenant_feature_cache_enabled 
-    ON tenant_feature_flags_cache(enabled) WHERE enabled = true;
+    ON mv_tenant_feature_flags_cache(enabled) WHERE enabled = true;
 
 CREATE INDEX idx_tenant_feature_cache_source 
-    ON tenant_feature_flags_cache(evaluation_source);
+    ON mv_tenant_feature_flags_cache(evaluation_source);
 
 CREATE INDEX idx_tenant_feature_cache_flag_type 
-    ON tenant_feature_flags_cache(flag_type);
+    ON mv_tenant_feature_flags_cache(flag_type);
 
 CREATE INDEX idx_tenant_feature_cache_timestamp 
-    ON tenant_feature_flags_cache(cache_timestamp);
+    ON mv_tenant_feature_flags_cache(cache_timestamp);
 
 CREATE INDEX idx_tenant_feature_cache_rollout 
-    ON tenant_feature_flags_cache(rollout_percentage) 
+    ON mv_tenant_feature_flags_cache(rollout_percentage) 
     WHERE rollout_percentage IS NOT NULL;
 
 -- JSON indexes for complex queries
 CREATE INDEX idx_tenant_feature_cache_target_audience 
-    ON tenant_feature_flags_cache USING GIN (target_audience) 
+    ON mv_tenant_feature_flags_cache USING GIN (target_audience) 
     WHERE target_audience != '{}';
 
 CREATE INDEX idx_tenant_feature_cache_metadata 
-    ON tenant_feature_flags_cache USING GIN (metadata) 
+    ON mv_tenant_feature_flags_cache USING GIN (metadata) 
     WHERE metadata != '{}';
 
 CREATE INDEX idx_tenant_feature_cache_value 
-    ON tenant_feature_flags_cache USING GIN (value) 
+    ON mv_tenant_feature_flags_cache USING GIN (value) 
     WHERE value != '{}';
 
 -- =====================================================
@@ -5299,7 +5403,7 @@ CREATE INDEX idx_tenant_feature_cache_value
 CREATE OR REPLACE FUNCTION refresh_feature_flags_cache()
 RETURNS VOID AS $$
 BEGIN
-    REFRESH MATERIALIZED VIEW CONCURRENTLY tenant_feature_flags_cache;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY mv_tenant_feature_flags_cache;
     
     -- Log cache refresh
     INSERT INTO audit_log (
@@ -5352,7 +5456,7 @@ BEGIN
         COUNT(*) FILTER (WHERE tffc.evaluation_source = 'rollout') as rollout_count,
         COUNT(*) FILTER (WHERE tffc.evaluation_source = 'default') as default_count,
         NOW() - MIN(tffc.cache_created_at) as cache_age
-    FROM tenant_feature_flags_cache tffc;
+    FROM mv_tenant_feature_flags_cache tffc;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -5368,7 +5472,7 @@ BEGIN
     RETURN QUERY
     WITH cache_info AS (
         SELECT MAX(cache_timestamp) as max_cache_ts
-        FROM tenant_feature_flags_cache
+        FROM mv_tenant_feature_flags_cache
         WHERE tenant_id = p_tenant_id
     ),
     source_info AS (
@@ -5421,7 +5525,7 @@ BEGIN
     -- Get result from cache
     SELECT tffc.enabled, tffc.value
     INTO v_result
-    FROM tenant_feature_flags_cache tffc
+    FROM mv_tenant_feature_flags_cache tffc
     WHERE tffc.tenant_id = v_tenant_id 
       AND tffc.feature_flag_name = flag_name;
     
@@ -5453,7 +5557,7 @@ BEGIN
         tffc.value,
         tffc.flag_type::VARCHAR,
         tffc.evaluation_source::TEXT
-    FROM tenant_feature_flags_cache tffc
+    FROM mv_tenant_feature_flags_cache tffc
     WHERE tffc.tenant_id = v_tenant_id
     ORDER BY tffc.feature_flag_name;
 END;
@@ -5503,12 +5607,12 @@ GRANT EXECUTE ON FUNCTION evaluate_feature_flag_cached(VARCHAR) TO application_r
 GRANT EXECUTE ON FUNCTION evaluate_all_feature_flags_cached() TO application_role;
 
 -- Grant access to materialized view
-GRANT SELECT ON tenant_feature_flags_cache TO application_role, admin_role, readonly_role;
+GRANT SELECT ON mv_tenant_feature_flags_cache TO application_role, admin_role, readonly_role;
 
 -- =====================================================
 -- COMMENTS
 -- =====================================================
-COMMENT ON MATERIALIZED VIEW tenant_feature_flags_cache IS 'Materialized view for fast feature flag lookups with pre-computed evaluations';
+COMMENT ON MATERIALIZED VIEW mv_tenant_feature_flags_cache IS 'Materialized view for fast feature flag lookups with pre-computed evaluations';
 COMMENT ON FUNCTION refresh_feature_flags_cache() IS 'Refreshes the feature flags cache materialized view';
 COMMENT ON FUNCTION get_feature_flags_cache_stats() IS 'Returns statistics about the feature flags cache';
 COMMENT ON FUNCTION check_cache_freshness(UUID) IS 'Checks if the cache is stale for a specific tenant';
@@ -5697,7 +5801,7 @@ BEGIN
                 'cache_entries', COUNT(*),
                 'last_refresh', MIN(cache_created_at)
             ) as details
-        FROM tenant_feature_flags_cache
+        FROM mv_tenant_feature_flags_cache
         
         UNION ALL
         
@@ -5739,7 +5843,7 @@ BEGIN
             COUNT(*) FILTER (WHERE tffc.evaluation_source = 'override')::INTEGER as overridden_flags,
             COUNT(*) FILTER (WHERE tffc.evaluation_source = 'rollout')::INTEGER as rollout_flags,
             jsonb_object_agg(tffc.flag_type, COUNT(*)) as flag_types
-        FROM tenant_feature_flags_cache tffc
+        FROM mv_tenant_feature_flags_cache tffc
         WHERE tffc.tenant_id = p_tenant_id
     ),
     audit_stats AS (
@@ -6309,7 +6413,7 @@ SELECT
     evaluation_source,
     COUNT(*) as count,
     ROUND(AVG(CASE WHEN enabled THEN 1 ELSE 0 END) * 100, 2) as enabled_percentage
-FROM tenant_feature_flags_cache
+FROM mv_tenant_feature_flags_cache
 WHERE tenant_id = 'your-tenant-uuid'
 GROUP BY flag_type, evaluation_source
 ORDER BY flag_type, evaluation_source;
@@ -6361,7 +6465,7 @@ SELECT
     idx_tup_read as tuples_read,
     idx_tup_fetch as tuples_fetched
 FROM pg_stat_user_indexes 
-WHERE tablename IN ('feature_flags', 'tenant_feature_overrides', 'tenant_feature_flags_cache')
+WHERE tablename IN ('feature_flags', 'tenant_feature_overrides', 'mv_tenant_feature_flags_cache')
 ORDER BY idx_scan DESC;
 
 -- Table size statistics
@@ -6482,3 +6586,119 @@ FEATURE FLAG BEST PRACTICES:
    - Verify rollout percentages work as expected
    - Test override functionality
 */
+CREATE OR REPLACE FUNCTION enforce_tenant_isolation()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Ensure all foreign key references belong to the same tenant
+    IF TG_TABLE_NAME = 'persons' THEN
+        -- Validate entity belongs to same tenant
+        IF NOT EXISTS (
+            SELECT 1 FROM entities e
+            JOIN tenants t ON e.tenant_id = t.id
+            WHERE e.uuid = NEW.entity_id AND t.id = NEW.tenant_id
+        ) THEN
+            RAISE EXCEPTION 'Entity % does not belong to tenant %', NEW.entity_id, NEW.tenant_id;
+        END IF;
+    ELSE
+        RAISE NOTICE 'enforce_tenant_isolation trigger fired on table %', TG_TABLE_NAME;
+    END IF;
+
+    -- Add similar validations for other tables as needed
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+GRANT SELECT, INSERT, UPDATE, DELETE ON entities TO application_role;
+
+-- Tenant context validation
+CREATE OR REPLACE FUNCTION validate_and_set_tenant_context(p_tenant_id UUID)
+RETURNS TABLE(tenant_name TEXT, tenant_status TEXT) AS $$
+DECLARE
+    v_tenant_record RECORD;
+BEGIN
+    -- Validate and fetch tenant information
+    SELECT id, name, status, deleted_at, last_activity_at
+    INTO v_tenant_record
+    FROM tenants
+    WHERE id = p_tenant_id;
+
+    -- Check if tenant exists
+    IF v_tenant_record.id IS NULL THEN
+        RAISE EXCEPTION 'Tenant not found: %', p_tenant_id;
+    END IF;
+
+    -- Check if tenant is soft-deleted
+    IF v_tenant_record.deleted_at IS NOT NULL THEN
+        RAISE EXCEPTION 'Tenant is deleted: %', p_tenant_id;
+    END IF;
+
+    -- Check tenant status
+    IF v_tenant_record.status NOT IN ('active', 'pending') THEN
+        RAISE EXCEPTION 'Tenant is not active: % (status: %)', p_tenant_id, v_tenant_record.status;
+    END IF;
+
+    -- Update last activity
+    UPDATE tenants 
+    SET last_activity_at = NOW() 
+    WHERE id = p_tenant_id;
+
+    -- Set tenant context
+    PERFORM set_config('app.current_tenant_id', p_tenant_id::text, true);
+
+    -- Return tenant information
+    RETURN QUERY SELECT v_tenant_record.name, v_tenant_record.status;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;ALTER TABLE tenants ADD COLUMN last_activity_at TIMESTAMPTZ DEFAULT NOW();-- Tenant provisioning function
+CREATE OR REPLACE FUNCTION provision_tenant_complete(
+    p_name VARCHAR(255),
+    p_email VARCHAR(255),
+    p_subdomain VARCHAR(63) DEFAULT NULL,
+    p_industry VARCHAR(50) DEFAULT NULL,
+    p_company_size VARCHAR(20) DEFAULT 'small',
+    p_currency_code CHAR(3) DEFAULT 'USD',
+    p_timezone VARCHAR(50) DEFAULT 'UTC',
+    p_settings JSONB DEFAULT '{}'
+)
+RETURNS TABLE(
+    id UUID
+) AS $body$
+DECLARE
+    v_tenant_id UUID;
+    v_slug VARCHAR(50);
+BEGIN
+    -- Generate UUID and slug
+    v_tenant_id := uuid_generate_v4();
+    v_slug := lower(regexp_replace(p_name, '[^a-zA-Z0-9]+', '-', 'g'));
+
+    -- Ensure slug uniqueness
+    WHILE EXISTS (SELECT 1 FROM tenants WHERE slug = v_slug AND deleted_at IS NULL) LOOP
+        v_slug := v_slug || '-' || substring(v_tenant_id::text, 1, 8);
+    END LOOP;
+
+    -- Create tenant record
+    INSERT INTO tenants (
+        id, slug, name, email, subdomain, status, industry, 
+        company_size, currency_code, timezone, settings
+    ) VALUES (
+        v_tenant_id, v_slug, p_name, p_email, p_subdomain, 'pending',
+        p_industry, p_company_size, p_currency_code, p_timezone, p_settings
+    );
+
+    -- Create default configuration
+    INSERT INTO tenant_configurations (
+        tenant_id, default_currency
+    ) VALUES (
+        v_tenant_id, p_currency_code
+    );
+
+    -- Initialize usage statistics for current month
+    INSERT INTO tenant_usage_stats (tenant_id, period_start, period_end)
+    VALUES (
+        v_tenant_id,
+        date_trunc('month', CURRENT_DATE)::DATE,
+        (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month - 1 day')::DATE
+    );
+
+    -- Return tenant information
+    RETURN QUERY SELECT v_tenant_id AS id;
+END;
+$body$ LANGUAGE plpgsql;

@@ -44,6 +44,7 @@ FROM
   entities
 WHERE
   uuid = $1
+  AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
 -- name: GetEntityByCode :one
