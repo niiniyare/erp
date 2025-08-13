@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/niiniyare/erp/internal/core/access/conditional"
 )
@@ -25,7 +25,7 @@ func TestAdvancedEvaluationEngine_StructCreation(t *testing.T) {
 	// Verify it implements the interface
 	var _ AdvancedEvaluationEngine = engine
 
-	assert.NotNil(t, engine)
+	require.NotNil(t, engine)
 }
 
 // TestComplexRuleEvaluationLogic tests the complex rule evaluation logic with nil rules only
@@ -44,11 +44,19 @@ func TestComplexRuleEvaluationLogic(t *testing.T) {
 		EvaluatedAt: time.Now(),
 	}
 
+<<<<<<< HEAD:internal/core/featureflag/advanced_evaluation_simple_test.go
 	assert.NotNil(t, result)
 	assert.False(t, result.Enabled)
 	assert.Equal(t, "No evaluation rules provided", result.Reason)
 	assert.Equal(t, flagID, result.FlagID)
 	assert.Equal(t, userID, result.UserID)
+=======
+	require.NotNil(t, result)
+	require.False(t, result.Enabled)
+	require.Equal(t, "No evaluation rules provided", result.Reason)
+	require.Equal(t, flagID, result.FlagID)
+	require.Equal(t, userID, result.UserID)
+>>>>>>> ft/ffg:internal/core/featureflag/evaluation_simple_test.go.bk
 }
 
 // TestRuleEvaluation tests individual rule evaluation
@@ -149,8 +157,8 @@ func TestRuleEvaluation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, paths := engine.evaluateRule(ctx, tt.rule, tt.context)
-			assert.Equal(t, tt.expected, result)
-			assert.NotEmpty(t, paths)
+			require.Equal(t, tt.expected, result)
+			require.NotEmpty(t, paths)
 		})
 	}
 }
@@ -185,7 +193,7 @@ func TestConditionOperatorEvaluation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := engine.evaluateConditionOperator(tt.operator, tt.actual, tt.expected, tt.values, tt.caseSensitive)
-			assert.Equal(t, tt.result, result)
+			require.Equal(t, tt.result, result)
 		})
 	}
 }
@@ -245,7 +253,7 @@ func TestContextFieldValueExtraction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.field, func(t *testing.T) {
 			result := engine.extractFieldValue(tt.field, context)
-			assert.Equal(t, tt.expected, result)
+			require.Equal(t, tt.expected, result)
 		})
 	}
 }
@@ -260,15 +268,23 @@ func TestUserIDHashingConsistency(t *testing.T) {
 	// Same user ID should always produce the same hash
 	hash1a := engine.hashUserID(userID1)
 	hash1b := engine.hashUserID(userID1)
+<<<<<<< HEAD:internal/core/featureflag/advanced_evaluation_simple_test.go
 	assert.Equal(t, hash1a, hash1b)
 
 	// Different user IDs should (very likely) produce different hashes
 	hash2 := engine.hashUserID(userID2)
 	assert.NotEqual(t, hash1a, hash2)
+=======
+	require.Equal(t, hash1a, hash1b)
+
+	// Different user IDs should (very likely) produce different hashes
+	hash2 := engine.hashUserID(userID2)
+	require.NotEqual(t, hash1a, hash2)
+>>>>>>> ft/ffg:internal/core/featureflag/evaluation_simple_test.go.bk
 
 	// Hash should be within expected range for percentage calculations
-	assert.True(t, hash1a >= 0)
-	assert.True(t, hash2 >= 0)
+	require.True(t, int(hash1a) >= 0)
+	require.True(t, int(hash2) >= 0)
 }
 
 // TestLogicalOperatorEvaluation tests AND, OR, NOT logical operators
@@ -422,8 +438,8 @@ func TestLogicalOperatorEvaluation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, paths := engine.evaluateRule(ctx, tt.rule, tt.context)
-			assert.Equal(t, tt.expected, result)
-			assert.NotEmpty(t, paths)
+			require.Equal(t, tt.expected, result)
+			require.NotEmpty(t, paths)
 		})
 	}
 }

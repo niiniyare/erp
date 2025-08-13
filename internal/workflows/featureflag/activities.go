@@ -81,11 +81,19 @@ func (a *FeatureFlagActivities) ValidateFeatureFlagChangeActivity(ctx context.Co
 
 	// Validate change type
 	validChangeTypes := map[string]bool{
+<<<<<<< HEAD
 		"enable":          true,
 		"disable":         true,
 		"update_rollout":  true,
 		"update_config":   true,
 		"rollback":        true,
+=======
+		"enable":         true,
+		"disable":        true,
+		"update_rollout": true,
+		"update_config":  true,
+		"rollback":       true,
+>>>>>>> ft/ffg
 	}
 
 	if !validChangeTypes[req.ChangeType] {
@@ -163,7 +171,11 @@ func (a *FeatureFlagActivities) CreateAccessRequestActivity(ctx context.Context,
 
 	// Create access request
 	accessReq := &request.CreateAccessRequestRequest{
+<<<<<<< HEAD
 		EntityID:       uuid.New(), // Use a generated ID for the flag change request
+=======
+		EntityID:       uuid.New(),                        // Use a generated ID for the flag change request
+>>>>>>> ft/ffg
 		RequestType:    request.RequestTypeResourceAccess, // Treat as resource access
 		Justification:  fmt.Sprintf("Feature flag change: %s\n%s", req.ChangeType, req.Justification),
 		BusinessReason: &req.BusinessReason,
@@ -242,9 +254,15 @@ func (a *FeatureFlagActivities) ApplyFeatureFlagChangeActivity(ctx context.Conte
 		AppliedAt: time.Now(),
 	}
 
+<<<<<<< HEAD
 	logger.Info("Feature flag change applied successfully", 
 		"flag_id", result.FlagID, 
 		"flag_name", req.FlagName, 
+=======
+	logger.Info("Feature flag change applied successfully",
+		"flag_id", result.FlagID,
+		"flag_name", req.FlagName,
+>>>>>>> ft/ffg
 		"old_value", oldValue,
 		"new_value", req.NewValue)
 
@@ -357,7 +375,11 @@ func NewDefaultPolicyService() PolicyService {
 func (s *DefaultPolicyService) GetApprovalPolicy(ctx context.Context, tenantID uuid.UUID, flagName string, changeType string) (*workflow.FeatureFlagApprovalPolicy, error) {
 	// Default policy - require approval for production-like flags
 	productionPattern := regexp.MustCompile(`(?i)prod|production|live|critical`)
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> ft/ffg
 	policy := &workflow.FeatureFlagApprovalPolicy{
 		TenantID:             tenantID,
 		FlagNamePattern:      ".*", // Match all flags by default
@@ -385,4 +407,8 @@ func (s *DefaultPolicyService) CheckApprovalRequired(ctx context.Context, tenant
 	}
 
 	return false, nil
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> ft/ffg

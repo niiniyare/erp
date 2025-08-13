@@ -76,7 +76,7 @@ func (e *AdminPermissionEvaluator) EvaluateBulkOperationPermission(
 		ResourceType: ResourceTypeFeatureFlagBulk,
 		Action:       action,
 		EntityID:     &tenantID,
-		Context: map[string]interface{}{
+		Context: map[string]any{
 			AttrBulkOperationSize: bulkSize,
 			AttrRequestReason:     reason,
 		},
@@ -97,7 +97,7 @@ func (e *AdminPermissionEvaluator) EvaluateSystemOperationPermission(
 		ResourceType: ResourceTypeFeatureFlagSystem,
 		Action:       action,
 		EntityID:     &tenantID,
-		Context: map[string]interface{}{
+		Context: map[string]any{
 			"system_operation": true,
 		},
 	}
@@ -117,7 +117,7 @@ func (e *AdminPermissionEvaluator) EvaluateEmergencyOperationPermission(
 		ResourceType: ResourceTypeFeatureFlagSystem,
 		Action:       ActionEmergencyControl,
 		EntityID:     &tenantID,
-		Context: map[string]interface{}{
+		Context: map[string]any{
 			AttrRequestReason:     reason,
 			"emergency_operation": true,
 			"requires_approval":   true,
@@ -294,9 +294,9 @@ type PolicyDefinition struct {
 
 // PolicyCondition represents a condition within an ABAC policy
 type PolicyCondition struct {
-	Attribute string      `json:"attribute"`
-	Operator  string      `json:"operator"`
-	Value     interface{} `json:"value"`
+	Attribute string `json:"attribute"`
+	Operator  string `json:"operator"`
+	Value     any    `json:"value"`
 }
 
 // RequiredRolesForAction returns the roles required for a specific action

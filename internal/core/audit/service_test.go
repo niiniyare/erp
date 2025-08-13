@@ -13,6 +13,7 @@ import (
 )
 
 // MockRepository is a mock implementation of the Repository interface
+<<<<<<< HEAD
 //
 //	type MockRepository struct {
 //		mock.Mock
@@ -22,6 +23,8 @@ func (m *MockRepository) CreateAuditEvent(ctx context.Context, arg AuditEvent) e
 	return args.Error(0)
 }
 
+=======
+>>>>>>> ft/ffg
 func TestRecord(t *testing.T) {
 	// 1. Setup
 	mockRepo := new(MockRepository)

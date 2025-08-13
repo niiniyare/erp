@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/core/audit"
+	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 )
 
@@ -81,7 +82,7 @@ func (s *adminServiceImpl) BulkEnableFlags(ctx context.Context, request *BulkEna
 	// Audit the bulk operation
 	s.auditBulkOperation(ctx, "bulk_enable_flags", request.Reason, result)
 
-	s.logger.Info("Bulk enable flags completed", map[string]interface{}{
+	s.logger.Info("Bulk enable flags completed", logger.Fields{
 		"total":          result.TotalRequested,
 		"successful":     result.Successful,
 		"failed":         result.Failed,
@@ -417,7 +418,7 @@ func (s *adminServiceImpl) processBulkRolloutUpdate(ctx context.Context, update 
 
 // auditBulkOperation logs bulk operations for compliance and monitoring
 func (s *adminServiceImpl) auditBulkOperation(ctx context.Context, operation, reason string, result *BulkOperationResult) {
-	contextData, _ := json.Marshal(map[string]interface{}{
+	contextData, _ := json.Marshal(map[string]any{
 		"operation":         operation,
 		"reason":            reason,
 		"total_requested":   result.TotalRequested,

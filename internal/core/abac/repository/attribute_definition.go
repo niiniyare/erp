@@ -1,7 +1,11 @@
 package repository
 
+<<<<<<< HEAD:internal/core/abac/repository/attribute_definition_repository.go
 //go:generate go run go.uber.org/mock/mockgen -source=attribute_definition_repository.go -destination=mock.go -package=repository
 
+=======
+//go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
+>>>>>>> ft/ffg:internal/core/abac/repository/attribute_definition.go
 
 import (
 	"context"

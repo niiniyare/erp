@@ -1,5 +1,7 @@
 package abac
 
+//go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
+
 import (
 	"context"
 	"crypto/sha256"

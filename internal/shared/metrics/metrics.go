@@ -1,7 +1,11 @@
 package metrics
 
+<<<<<<< HEAD
 //go:generate go run go.uber.org/mock/mockgen -source=metrics.go -destination=mock_metrics.go -package=metrics
 
+=======
+//go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
+>>>>>>> ft/ffg
 
 import (
 	"context"

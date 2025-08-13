@@ -328,11 +328,12 @@ type LocationAnalysisMetrics struct {
 }
 
 type RiskFactor struct {
-	Factor string  `json:"factor"`
-	Count  int     `json:"count"`
-	Impact float64 `json:"impact"`
+	Factor      string  `json:"factor"`
+	Count       int     `json:"count,omitempty"`
+	Impact      float64 `json:"impact"`
+	Probability float64 `json:"probability,omitempty"`
+	Description string  `json:"description,omitempty"`
 }
-
 type AnalyticsInsight struct {
 	Type        string         `json:"type"`
 	Title       string         `json:"title"`

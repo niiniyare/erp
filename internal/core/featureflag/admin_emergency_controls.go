@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/core/audit"
+	"github.com/niiniyare/erp/internal/shared/logger"
 )
 
 // EmergencyDisableAll disables all feature flags system-wide
@@ -18,7 +19,7 @@ func (s *adminServiceImpl) EmergencyDisableAll(ctx context.Context, reason strin
 	startTime := time.Now()
 	rollbackToken := generateRollbackToken()
 
-	s.logger.Warn("EMERGENCY DISABLE ALL INITIATED", map[string]interface{}{
+	s.logger.Warn("EMERGENCY DISABLE ALL INITIATED", logger.Fields{
 		"reason":         reason,
 		"rollback_token": rollbackToken,
 		"initiated_at":   startTime,
@@ -74,13 +75,13 @@ func (s *adminServiceImpl) EmergencyDisableAll(ctx context.Context, reason strin
 	}
 
 	if len(errors) > 0 {
-		s.logger.Error("Emergency disable completed with errors", map[string]interface{}{
+		s.logger.Error("Emergency disable completed with errors", logger.Fields{
 			"affected_flags": affectedCount,
 			"errors":         errors,
 			"rollback_token": rollbackToken,
 		})
 	} else {
-		s.logger.Info("Emergency disable completed successfully", map[string]interface{}{
+		s.logger.Info("Emergency disable completed successfully", logger.Fields{
 			"affected_flags": affectedCount,
 			"rollback_token": rollbackToken,
 		})
@@ -97,7 +98,7 @@ func (s *adminServiceImpl) EmergencyEnableAll(ctx context.Context, reason string
 	startTime := time.Now()
 	rollbackToken := generateRollbackToken()
 
-	s.logger.Warn("EMERGENCY ENABLE ALL INITIATED", map[string]interface{}{
+	s.logger.Warn("EMERGENCY ENABLE ALL INITIATED", logger.Fields{
 		"reason":         reason,
 		"rollback_token": rollbackToken,
 		"initiated_at":   startTime,
@@ -169,7 +170,7 @@ func (s *adminServiceImpl) CreateRolloutStrategy(ctx context.Context, request *C
 	}
 
 	// Store strategy (this would be persisted in a real implementation)
-	s.logger.Info("Rollout strategy created", map[string]interface{}{
+	s.logger.Info("Rollout strategy created", logger.Fields{
 		"strategy_id":   strategy.ID.String(),
 		"strategy_name": strategy.Name,
 		"strategy_type": string(strategy.Type),
@@ -486,7 +487,7 @@ func (s *adminServiceImpl) generateCacheRecommendations(stats CacheOverallStats)
 // Audit methods
 
 func (s *adminServiceImpl) auditEmergencyAction(ctx context.Context, action, reason string, result *EmergencyActionResult, errors []string) {
-	contextData, _ := json.Marshal(map[string]interface{}{
+	contextData, _ := json.Marshal(map[string]any{
 		"action":           action,
 		"reason":           reason,
 		"affected_flags":   result.AffectedFlags,
@@ -507,7 +508,7 @@ func (s *adminServiceImpl) auditEmergencyAction(ctx context.Context, action, rea
 }
 
 func (s *adminServiceImpl) auditRolloutStrategyAction(ctx context.Context, action string, strategy *RolloutStrategy) {
-	contextData, _ := json.Marshal(map[string]interface{}{
+	contextData, _ := json.Marshal(map[string]any{
 		"action":        action,
 		"strategy_id":   strategy.ID.String(),
 		"strategy_name": strategy.Name,
@@ -528,7 +529,7 @@ func (s *adminServiceImpl) auditRolloutStrategyAction(ctx context.Context, actio
 }
 
 func (s *adminServiceImpl) auditCacheOperation(ctx context.Context, operation string, request interface{}, result *CacheOperationResult) {
-	contextData, _ := json.Marshal(map[string]interface{}{
+	contextData, _ := json.Marshal(map[string]any{
 		"operation":       operation,
 		"request":         request,
 		"items_processed": result.ItemsProcessed,

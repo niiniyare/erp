@@ -130,44 +130,44 @@ type BulkOperationSummary struct {
 
 // Flag Templates
 type FlagTemplate struct {
-	ID              uuid.UUID              `json:"id"`
-	Name            string                 `json:"name"`
-	Description     string                 `json:"description"`
-	Category        string                 `json:"category"`
-	FlagType        FlagType               `json:"flag_type"`
-	DefaultValue    interface{}            `json:"default_value"`
-	RolloutStrategy *RolloutStrategy       `json:"rollout_strategy,omitempty"`
-	TargetAudience  map[string]interface{} `json:"target_audience,omitempty"`
-	Metadata        map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt       time.Time              `json:"created_at"`
-	UpdatedAt       time.Time              `json:"updated_at"`
+	ID              uuid.UUID        `json:"id"`
+	Name            string           `json:"name"`
+	Description     string           `json:"description"`
+	Category        string           `json:"category"`
+	FlagType        FlagType         `json:"flag_type"`
+	DefaultValue    any              `json:"default_value"`
+	RolloutStrategy *RolloutStrategy `json:"rollout_strategy,omitempty"`
+	TargetAudience  map[string]any   `json:"target_audience,omitempty"`
+	Metadata        map[string]any   `json:"metadata,omitempty"`
+	CreatedAt       time.Time        `json:"created_at"`
+	UpdatedAt       time.Time        `json:"updated_at"`
 }
 
 type CreateFlagTemplateRequest struct {
-	Name            string                 `json:"name" validate:"required"`
-	Description     string                 `json:"description" validate:"required"`
-	Category        string                 `json:"category" validate:"required"`
-	FlagType        FlagType               `json:"flag_type" validate:"required"`
-	DefaultValue    interface{}            `json:"default_value" validate:"required"`
-	RolloutStrategy *RolloutStrategy       `json:"rollout_strategy,omitempty"`
-	TargetAudience  map[string]interface{} `json:"target_audience,omitempty"`
-	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	Name            string           `json:"name" validate:"required"`
+	Description     string           `json:"description" validate:"required"`
+	Category        string           `json:"category" validate:"required"`
+	FlagType        FlagType         `json:"flag_type" validate:"required"`
+	DefaultValue    any              `json:"default_value" validate:"required"`
+	RolloutStrategy *RolloutStrategy `json:"rollout_strategy,omitempty"`
+	TargetAudience  map[string]any   `json:"target_audience,omitempty"`
+	Metadata        map[string]any   `json:"metadata,omitempty"`
 }
 
 type ApplyTemplateRequest struct {
-	TemplateID uuid.UUID              `json:"template_id" validate:"required"`
-	FlagName   string                 `json:"flag_name" validate:"required"`
-	Overrides  map[string]interface{} `json:"overrides,omitempty"`
+	TemplateID uuid.UUID      `json:"template_id" validate:"required"`
+	FlagName   string         `json:"flag_name" validate:"required"`
+	Overrides  map[string]any `json:"overrides,omitempty"`
 }
 
 // Rollout Strategies
 type RolloutStrategy struct {
-	ID            uuid.UUID              `json:"id"`
-	Name          string                 `json:"name"`
-	Description   string                 `json:"description"`
-	Type          RolloutStrategyType    `json:"type"`
-	Configuration map[string]interface{} `json:"configuration"`
-	CreatedAt     time.Time              `json:"created_at"`
+	ID            uuid.UUID           `json:"id"`
+	Name          string              `json:"name"`
+	Description   string              `json:"description"`
+	Type          RolloutStrategyType `json:"type"`
+	Configuration map[string]any      `json:"configuration"`
+	CreatedAt     time.Time           `json:"created_at"`
 }
 
 type RolloutStrategyType string
@@ -180,10 +180,10 @@ const (
 )
 
 type CreateRolloutStrategyRequest struct {
-	Name          string                 `json:"name" validate:"required"`
-	Description   string                 `json:"description" validate:"required"`
-	Type          RolloutStrategyType    `json:"type" validate:"required"`
-	Configuration map[string]interface{} `json:"configuration" validate:"required"`
+	Name          string              `json:"name" validate:"required"`
+	Description   string              `json:"description" validate:"required"`
+	Type          RolloutStrategyType `json:"type" validate:"required"`
+	Configuration map[string]any      `json:"configuration" validate:"required"`
 }
 
 // System Health and Metrics
