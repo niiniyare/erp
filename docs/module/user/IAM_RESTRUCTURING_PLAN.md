@@ -34,67 +34,166 @@ internal/core/
 - **Shared Services**: Tracing, Logger, Metrics (OpenTelemetry, structured logging, Prometheus)
 - **SQLC Integration**: Type-safe database operations
 
-## 🏗️ Target Architecture
+## 🏗️ Target Architecture (UPDATED)
 
 ### New IAM Service Structure
 
 ```
 internal/core/iam/
-├── service.go                    # Main IAM Service interface
-├── identity/                     # Identity management domain
-│   ├── service.go                # Identity service
-│   ├── repository.go             # Identity repository
-│   └── models.go                 # User/Person/Employee models
-├── authorization/                # Authorization domain (ABAC)
-│   ├── service.go                # ABAC service
-│   ├── repository.go             # Policy/attribute repositories
-│   └── models.go                 # Policy/decision models
-├── access/                       # Access management domain
-│   ├── service.go                # Access request service
-│   ├── repository.go             # Access repository
-│   └── models.go                 # Access request models
-├── analytics/                    # User analytics domain
-│   ├── service.go                # User analytics service
-│   └── models.go                 # Analytics models
-└── shared/                       # Shared IAM utilities
-    ├── types.go                  # Common IAM types
-    └── errors.go                 # IAM-specific errors
+├── service.go                    # Main IAM Service interface (unified entry point)
+├── model/                        # All IAM domain models and types
+│   ├── types.go                  # IAM-specific enums and constants
+│   └── entities.go               # All IAM domain models (User, Policy, etc.)
+├── repo/                         # Repository interfaces
+├── authn/                        # Authentication domain
+│   └── service.go                # Login, password reset, MFA, user identity
+├── authz/                        # Authorization domain
+│   └── service.go                # ABAC, RBAC, hybrid access control
+└── policy/                       # Policy domain
+    └── service.go                # Policy evaluation, caching, lifecycle
 ```
 
-### Unified IAM Service Interface
+**Key Improvements:**
+- **Centralized Models**: All IAM types and entities in `model/` directory
+- **Domain Separation**: Clear boundaries between `authn`, `authz`, and `policy`
+- **Flat Structure**: Follows existing service patterns in the codebase
+- **Local Types**: IAM-specific types copied from shared types for domain independence
+
+### Unified IAM Service Interface (UPDATED)
 
 ```go
 // IAM Service consolidates all identity and access management functionality
 type Service interface {
-    // Identity Management
-    GetUser(ctx context.Context, userID uuid.UUID) (*identity.User, error)
-    CreateUser(ctx context.Context, req *identity.CreateUserRequest) (*identity.User, error)
-    UpdateUser(ctx context.Context, req *identity.UpdateUserRequest) (*identity.User, error)
+    // Authentication operations (includes identity management)
+    authn.Service
     
-    // Authorization (ABAC)
-    EvaluatePermission(ctx context.Context, req *authorization.PermissionRequest) (*authorization.PermissionResult, error)
-    BulkEvaluatePermissions(ctx context.Context, req *authorization.BulkPermissionRequest) (*authorization.BulkPermissionResult, error)
+    // Authorization operations (ABAC, RBAC, hybrid)
+    authz.Service
     
-    // Access Management
-    CreateAccessRequest(ctx context.Context, req *access.CreateAccessRequest) (*access.AccessRequest, error)
-    ProcessAccessRequest(ctx context.Context, req *access.ProcessAccessRequest) error
+    // Policy operations (evaluation, caching, lifecycle)
+    policy.Service
+}
+
+// Domain service interfaces
+type authn.Service interface {
+    // User Management
+    CreateUser(ctx context.Context, req *CreateUserRequest) (*model.User, error)
+    GetUser(ctx context.Context, userID uuid.UUID) (*model.User, error)
+    UpdateUser(ctx context.Context, req *UpdateUserRequest) (*model.User, error)
     
-    // Analytics
-    TrackUserActivity(ctx context.Context, req *analytics.UserActivityRequest) error
-    GetUserAnalytics(ctx context.Context, req *analytics.UserAnalyticsRequest) (*analytics.UserAnalyticsResult, error)
+    // Authentication
+    Authenticate(ctx context.Context, req *AuthenticationRequest) (*AuthenticationResult, error)
+    
+    // Password Management & MFA
+    ChangePassword(ctx context.Context, req *ChangePasswordRequest) error
+    EnableMFA(ctx context.Context, req *EnableMFARequest) (*MFASetupResult, error)
+    
+    // Role Management
+    AssignRole(ctx context.Context, req *AssignRoleRequest) error
+    GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*model.Role, error)
+}
+
+type authz.Service interface {
+    // Permission Evaluation
+    EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResult, error)
+    BulkEvaluatePermissions(ctx context.Context, req *BulkPermissionEvaluationRequest) (*BulkPermissionEvaluationResult, error)
+    
+    // Access Requests
+    CreateAccessRequest(ctx context.Context, req *CreateAccessRequestRequest) (*model.AccessRequest, error)
+    ProcessAccessRequest(ctx context.Context, req *ProcessAccessRequestRequest) error
+    
+    // Permission Management
+    GrantPermission(ctx context.Context, req *GrantPermissionRequest) error
+    ListUserPermissions(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) ([]*model.Permission, error)
+}
+
+type policy.Service interface {
+    // Policy Management
+    CreatePolicy(ctx context.Context, req *CreatePolicyRequest) (*model.Policy, error)
+    GetPolicy(ctx context.Context, policyID uuid.UUID) (*model.Policy, error)
+    UpdatePolicy(ctx context.Context, req *UpdatePolicyRequest) (*model.Policy, error)
+    
+    // Policy Evaluation
+    EvaluatePolicy(ctx context.Context, req *PolicyEvaluationRequest) (*PolicyEvaluationResult, error)
+    TestPolicy(ctx context.Context, req *PolicyTestRequest) (*PolicyTestResult, error)
+    
+    // Policy Caching
+    InvalidatePolicyCache(ctx context.Context, policyIDs []uuid.UUID) error
+    GetPolicyCacheStats(ctx context.Context) (*PolicyCacheStats, error)
 }
 ```
 
+## 📊 Implementation Progress
+
+### ✅ **COMPLETED WORK**
+
+#### Phase 1.1: Foundation Structure (COMPLETED)
+- ✅ **Improved Directory Structure**: Created domain-driven IAM structure
+  ```
+  internal/core/iam/
+  ├── service.go         # ✅ Main unified IAM service interface
+  ├── model/            # ✅ Centralized model directory
+  │   ├── types.go      # ✅ IAM-specific enums and constants 
+  │   └── entities.go   # ✅ All IAM domain models
+  ├── repo/             # ✅ Repository interfaces directory
+  ├── authn/            # ✅ Authentication domain
+  │   └── service.go    # ✅ Authentication service interface
+  ├── authz/            # ✅ Authorization domain  
+  │   └── service.go    # ✅ Authorization service interface
+  └── policy/           # ✅ Policy domain
+      └── service.go    # ✅ Policy service interface
+  ```
+
+#### Phase 1.2: Model Definitions (COMPLETED)
+- ✅ **Local Type Definitions**: Copied and localized IAM types from `internal/shared/types/`
+  - ✅ `PolicyEffect`, `PolicyDecisionType`, `AttributeDataType`
+  - ✅ `UserAccountStatus`, `EmploymentStatus`, `MFAMethod`
+  - ✅ `RequestType`, `ApprovalStatus`, `SessionStatus`
+
+- ✅ **Comprehensive Domain Models**: Created all IAM entity models
+  - ✅ **Identity Models**: `User`, `Person`, `Employee`, `Role`, `UserRole`, `Session`
+  - ✅ **Authorization Models**: `Permission`, `Policy`, `PolicyTarget`, `PolicyDecision`, `Attribute`
+  - ✅ **Access Models**: `AccessRequest`, `ApprovalWorkflow`, `ConditionalAccessPolicy`
+  - ✅ **Analytics Models**: `UserActivity`, `UserAnalytics`
+  - ✅ **Policy Models**: `PolicyTemplate`, `PolicyVersion`, `PolicyConflict`
+
+#### Phase 1.3: Service Interface Design (COMPLETED)
+- ✅ **Main IAM Service**: Unified service interface using composition pattern
+- ✅ **Authentication Service**: Complete interface with 25+ methods covering:
+  - User/Person/Employee management
+  - Authentication & token management
+  - Password management & MFA
+  - Session management & role assignment
+- ✅ **Authorization Service**: Complete interface with 15+ methods covering:
+  - Permission evaluation (single & bulk)
+  - Access request workflows
+  - Permission management & conditional access
+- ✅ **Policy Service**: Complete interface with 20+ methods covering:
+  - Policy lifecycle management
+  - Policy evaluation & testing
+  - Template & versioning support
+
+#### Phase 1.4: Integration Patterns (COMPLETED)
+- ✅ **Tenant Context Integration**: Helper methods for tenant management
+- ✅ **Shared Services Integration**: Logger, metrics, tracing, audit, feature flags
+- ✅ **Model Type Integration**: Updated service interfaces to use local model types
+
+### 🔄 **CURRENT STATUS**
+- **Phase 1**: ✅ **COMPLETED** - Foundation structure and interfaces ready
+- **Next**: Phase 2 - Begin implementation of service logic and repository interfaces
+
+---
+
 ## 📊 Implementation Phases
 
-### Phase 1: Foundation Setup (Week 1)
+### Phase 1: Foundation Setup (Week 1) ✅ COMPLETED
 
-#### 1.1 Create IAM Module Structure
-- [ ] Create main IAM service interface at `internal/core/iam/service.go`
-- [ ] Set up domain directories (identity, authorization, access, analytics)
-- [ ] Create shared types and error definitions
+#### 1.1 Create IAM Module Structure ✅ COMPLETED
+- [x] Create main IAM service interface at `internal/core/iam/service.go`
+- [x] Set up domain directories (authn, authz, policy)  
+- [x] Create shared types and error definitions
 
-#### 1.2 Service Interface Design
+#### 1.2 Service Interface Design ✅ COMPLETED
 ```go
 // internal/core/iam/service.go
 package iam
@@ -145,11 +244,11 @@ type service struct {
 }
 ```
 
-#### 1.3 Dependency Injection Setup
-- [ ] Create IAM service constructor with dependency injection
-- [ ] Integrate with existing shared services (logger, metrics, tracing)
-- [ ] Set up audit logging integration
-- [ ] Configure feature flag service integration
+#### 1.3 Dependency Injection Setup ✅ COMPLETED
+- [x] Create IAM service constructor with dependency injection
+- [x] Integrate with existing shared services (logger, metrics, tracing)
+- [x] Set up audit logging integration
+- [x] Configure feature flag service integration
 
 ### Phase 2: Identity Domain Migration (Week 2)
 
