@@ -159,12 +159,12 @@ type ApplyTemplateRequest struct {
 
 // Rollout Strategies
 type RolloutStrategy struct {
-	ID            uuid.UUID              `json:"id"`
-	Name          string                 `json:"name"`
-	Description   string                 `json:"description"`
-	Type          RolloutStrategyType    `json:"type"`
-	Configuration map[string]any `json:"configuration"`
-	CreatedAt     time.Time              `json:"created_at"`
+	ID            uuid.UUID           `json:"id"`
+	Name          string              `json:"name"`
+	Description   string              `json:"description"`
+	Type          RolloutStrategyType `json:"type"`
+	Configuration map[string]any      `json:"configuration"`
+	CreatedAt     time.Time           `json:"created_at"`
 }
 
 type RolloutStrategyType string
@@ -177,10 +177,10 @@ const (
 )
 
 type CreateRolloutStrategyRequest struct {
-	Name          string                 `json:"name" validate:"required"`
-	Description   string                 `json:"description" validate:"required"`
-	Type          RolloutStrategyType    `json:"type" validate:"required"`
-	Configuration map[string]any `json:"configuration" validate:"required"`
+	Name          string              `json:"name" validate:"required"`
+	Description   string              `json:"description" validate:"required"`
+	Type          RolloutStrategyType `json:"type" validate:"required"`
+	Configuration map[string]any      `json:"configuration" validate:"required"`
 }
 
 // System Health and Metrics
