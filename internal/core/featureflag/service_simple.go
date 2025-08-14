@@ -35,20 +35,20 @@ type SimpleService interface {
 
 // simpleServiceImpl implements the SimpleService interface
 type simpleServiceImpl struct {
-	repository      SimpleRepository
-	tenantService   tenant.Service
-	store           db.Store
-	auditService    audit.Service
+	repository       SimpleRepository
+	tenantService    tenant.Service
+	store            db.Store
+	auditService     audit.Service
 	webSocketService WebSocketService // Add WebSocket service for real-time updates
 }
 
 // NewSimpleService creates a new simple feature flag service
 func NewSimpleService(repository SimpleRepository, tenantService tenant.Service, store db.Store, auditService audit.Service, webSocketService WebSocketService) SimpleService {
 	return &simpleServiceImpl{
-		repository:      repository,
-		tenantService:   tenantService,
-		store:           store,
-		auditService:    auditService,
+		repository:       repository,
+		tenantService:    tenantService,
+		store:            store,
+		auditService:     auditService,
 		webSocketService: webSocketService,
 	}
 }

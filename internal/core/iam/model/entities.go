@@ -10,27 +10,27 @@ import (
 
 // User represents a user account in the system
 type User struct {
-	ID               uuid.UUID         `json:"id"`
-	TenantID         uuid.UUID         `json:"tenant_id"`
-	Email            string            `json:"email"`
-	PasswordHash     string            `json:"-"` // Never serialize password hash
-	FirstName        string            `json:"first_name"`
-	LastName         string            `json:"last_name"`
-	PhoneNumber      *string           `json:"phone_number,omitempty"`
-	AccountStatus    UserAccountStatus `json:"account_status"`
-	EmailVerified    bool              `json:"email_verified"`
-	PhoneVerified    bool              `json:"phone_verified"`
-	MFAEnabled       bool              `json:"mfa_enabled"`
-	MFAMethod        *MFAMethod        `json:"mfa_method,omitempty"`
-	MFASecret        *string           `json:"-"` // Never serialize MFA secret
-	LastLoginAt      *time.Time        `json:"last_login_at,omitempty"`
-	PasswordExpired  bool              `json:"password_expired"`
-	FailedLoginCount int               `json:"failed_login_count"`
-	LockedUntil      *time.Time        `json:"locked_until,omitempty"`
+	ID               uuid.UUID              `json:"id"`
+	TenantID         uuid.UUID              `json:"tenant_id"`
+	Email            string                 `json:"email"`
+	PasswordHash     string                 `json:"-"` // Never serialize password hash
+	FirstName        string                 `json:"first_name"`
+	LastName         string                 `json:"last_name"`
+	PhoneNumber      *string                `json:"phone_number,omitempty"`
+	AccountStatus    UserAccountStatus      `json:"account_status"`
+	EmailVerified    bool                   `json:"email_verified"`
+	PhoneVerified    bool                   `json:"phone_verified"`
+	MFAEnabled       bool                   `json:"mfa_enabled"`
+	MFAMethod        *MFAMethod             `json:"mfa_method,omitempty"`
+	MFASecret        *string                `json:"-"` // Never serialize MFA secret
+	LastLoginAt      *time.Time             `json:"last_login_at,omitempty"`
+	PasswordExpired  bool                   `json:"password_expired"`
+	FailedLoginCount int                    `json:"failed_login_count"`
+	LockedUntil      *time.Time             `json:"locked_until,omitempty"`
 	Metadata         map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt        time.Time         `json:"created_at"`
-	UpdatedAt        time.Time         `json:"updated_at"`
-	DeletedAt        *time.Time        `json:"deleted_at,omitempty"`
+	CreatedAt        time.Time              `json:"created_at"`
+	UpdatedAt        time.Time              `json:"updated_at"`
+	DeletedAt        *time.Time             `json:"deleted_at,omitempty"`
 }
 
 // IsLocked checks if the user account is currently locked
@@ -95,11 +95,11 @@ func (e *Employee) IsActive() bool {
 
 // Address represents a physical address
 type Address struct {
-	Street     string  `json:"street"`
-	City       string  `json:"city"`
-	State      string  `json:"state"`
-	PostalCode string  `json:"postal_code"`
-	Country    string  `json:"country"`
+	Street     string   `json:"street"`
+	City       string   `json:"city"`
+	State      string   `json:"state"`
+	PostalCode string   `json:"postal_code"`
+	Country    string   `json:"country"`
 	Latitude   *float64 `json:"latitude,omitempty"`
 	Longitude  *float64 `json:"longitude,omitempty"`
 }
@@ -178,22 +178,22 @@ func (p *Permission) IsExpired() bool {
 
 // Policy represents an ABAC policy
 type Policy struct {
-	ID          uuid.UUID                 `json:"id"`
-	TenantID    uuid.UUID                 `json:"tenant_id"`
-	Name        string                    `json:"name"`
-	Description string                    `json:"description"`
-	Version     int                       `json:"version"`
-	Effect      PolicyEffect              `json:"effect"`
-	Target      *PolicyTarget             `json:"target,omitempty"`
-	Condition   *PolicyCondition          `json:"condition,omitempty"`
-	Rules       []*PolicyRule             `json:"rules,omitempty"`
-	Priority    int                       `json:"priority"`
-	Enabled     bool                      `json:"enabled"`
-	Algorithm   PolicyCombiningAlgorithm  `json:"algorithm"`
-	Metadata    map[string]interface{}    `json:"metadata,omitempty"`
-	CreatedAt   time.Time                 `json:"created_at"`
-	UpdatedAt   time.Time                 `json:"updated_at"`
-	DeletedAt   *time.Time                `json:"deleted_at,omitempty"`
+	ID          uuid.UUID                `json:"id"`
+	TenantID    uuid.UUID                `json:"tenant_id"`
+	Name        string                   `json:"name"`
+	Description string                   `json:"description"`
+	Version     int                      `json:"version"`
+	Effect      PolicyEffect             `json:"effect"`
+	Target      *PolicyTarget            `json:"target,omitempty"`
+	Condition   *PolicyCondition         `json:"condition,omitempty"`
+	Rules       []*PolicyRule            `json:"rules,omitempty"`
+	Priority    int                      `json:"priority"`
+	Enabled     bool                     `json:"enabled"`
+	Algorithm   PolicyCombiningAlgorithm `json:"algorithm"`
+	Metadata    map[string]interface{}   `json:"metadata,omitempty"`
+	CreatedAt   time.Time                `json:"created_at"`
+	UpdatedAt   time.Time                `json:"updated_at"`
+	DeletedAt   *time.Time               `json:"deleted_at,omitempty"`
 }
 
 // PolicyTarget defines what the policy applies to
@@ -235,15 +235,15 @@ type PolicyRule struct {
 
 // PolicyDecision represents the result of evaluating a policy
 type PolicyDecision struct {
-	PolicyID    uuid.UUID            `json:"policy_id"`
-	PolicyName  string               `json:"policy_name"`
-	Decision    PolicyDecisionType   `json:"decision"`
-	Effect      PolicyEffect         `json:"effect"`
-	Reason      string               `json:"reason"`
-	Obligations []*PolicyObligation  `json:"obligations,omitempty"`
-	Advice      []*PolicyAdvice      `json:"advice,omitempty"`
+	PolicyID    uuid.UUID              `json:"policy_id"`
+	PolicyName  string                 `json:"policy_name"`
+	Decision    PolicyDecisionType     `json:"decision"`
+	Effect      PolicyEffect           `json:"effect"`
+	Reason      string                 `json:"reason"`
+	Obligations []*PolicyObligation    `json:"obligations,omitempty"`
+	Advice      []*PolicyAdvice        `json:"advice,omitempty"`
 	Attributes  map[string]interface{} `json:"attributes,omitempty"`
-	EvaluatedAt time.Time            `json:"evaluated_at"`
+	EvaluatedAt time.Time              `json:"evaluated_at"`
 }
 
 // PolicyObligation represents an obligation that must be fulfilled
@@ -282,12 +282,12 @@ type Attribute struct {
 
 // AttributeConstraints defines constraints for an attribute
 type AttributeConstraints struct {
-	MinValue     *float64    `json:"min_value,omitempty"`
-	MaxValue     *float64    `json:"max_value,omitempty"`
-	MinLength    *int        `json:"min_length,omitempty"`
-	MaxLength    *int        `json:"max_length,omitempty"`
-	Pattern      *string     `json:"pattern,omitempty"`
-	AllowedValues []string   `json:"allowed_values,omitempty"`
+	MinValue      *float64 `json:"min_value,omitempty"`
+	MaxValue      *float64 `json:"max_value,omitempty"`
+	MinLength     *int     `json:"min_length,omitempty"`
+	MaxLength     *int     `json:"max_length,omitempty"`
+	Pattern       *string  `json:"pattern,omitempty"`
+	AllowedValues []string `json:"allowed_values,omitempty"`
 }
 
 // ─── ACCESS REQUEST MODELS ───────────────────────────────────────────────────
@@ -345,14 +345,14 @@ type ApprovalWorkflow struct {
 
 // ApprovalStep represents a step in an approval workflow
 type ApprovalStep struct {
-	ID             string     `json:"id"`
-	Name           string     `json:"name"`
-	Order          int        `json:"order"`
-	RequiredVotes  int        `json:"required_votes"`
-	ApproverRoles  []string   `json:"approver_roles,omitempty"`
-	ApproverUsers  []uuid.UUID `json:"approver_users,omitempty"`
-	TimeoutHours   *int       `json:"timeout_hours,omitempty"`
-	AutoApprove    bool       `json:"auto_approve"`
+	ID            string      `json:"id"`
+	Name          string      `json:"name"`
+	Order         int         `json:"order"`
+	RequiredVotes int         `json:"required_votes"`
+	ApproverRoles []string    `json:"approver_roles,omitempty"`
+	ApproverUsers []uuid.UUID `json:"approver_users,omitempty"`
+	TimeoutHours  *int        `json:"timeout_hours,omitempty"`
+	AutoApprove   bool        `json:"auto_approve"`
 }
 
 // ConditionalAccessPolicy represents a conditional access policy
@@ -379,13 +379,13 @@ type PolicyAction struct {
 
 // AccessContext represents the context for conditional access evaluation
 type AccessContext struct {
-	IPAddress    string                 `json:"ip_address"`
-	UserAgent    string                 `json:"user_agent"`
-	Location     *GeolocationContext    `json:"location,omitempty"`
-	Device       *DeviceContext         `json:"device,omitempty"`
-	Time         time.Time              `json:"time"`
-	RiskLevel    string                 `json:"risk_level"`
-	Attributes   map[string]interface{} `json:"attributes,omitempty"`
+	IPAddress  string                 `json:"ip_address"`
+	UserAgent  string                 `json:"user_agent"`
+	Location   *GeolocationContext    `json:"location,omitempty"`
+	Device     *DeviceContext         `json:"device,omitempty"`
+	Time       time.Time              `json:"time"`
+	RiskLevel  string                 `json:"risk_level"`
+	Attributes map[string]interface{} `json:"attributes,omitempty"`
 }
 
 // GeolocationContext represents geolocation information
@@ -399,11 +399,11 @@ type GeolocationContext struct {
 
 // DeviceContext represents device information
 type DeviceContext struct {
-	DeviceID   string `json:"device_id"`
-	Platform   string `json:"platform"`
-	Browser    string `json:"browser"`
-	IsTrusted  bool   `json:"is_trusted"`
-	IsManaged  bool   `json:"is_managed"`
+	DeviceID  string `json:"device_id"`
+	Platform  string `json:"platform"`
+	Browser   string `json:"browser"`
+	IsTrusted bool   `json:"is_trusted"`
+	IsManaged bool   `json:"is_managed"`
 }
 
 // AccessCondition represents a condition for access
@@ -432,11 +432,11 @@ type PolicyTemplate struct {
 
 // PolicyTemplateSpec defines the template specification
 type PolicyTemplateSpec struct {
-	Effect      PolicyEffect       `json:"effect"`
-	Target      *PolicyTarget      `json:"target,omitempty"`
-	Condition   *PolicyCondition   `json:"condition,omitempty"`
-	Rules       []*PolicyRule      `json:"rules,omitempty"`
-	Variables   map[string]string  `json:"variables,omitempty"`
+	Effect    PolicyEffect      `json:"effect"`
+	Target    *PolicyTarget     `json:"target,omitempty"`
+	Condition *PolicyCondition  `json:"condition,omitempty"`
+	Rules     []*PolicyRule     `json:"rules,omitempty"`
+	Variables map[string]string `json:"variables,omitempty"`
 }
 
 // TemplateParameter represents a parameter in a policy template
@@ -481,29 +481,29 @@ type UserActivity struct {
 
 // UserAnalytics represents user analytics data
 type UserAnalytics struct {
-	UserID              uuid.UUID `json:"user_id"`
-	TenantID            uuid.UUID `json:"tenant_id"`
-	LoginCount          int64     `json:"login_count"`
-	LastLoginAt         *time.Time `json:"last_login_at,omitempty"`
-	FailedLoginCount    int64     `json:"failed_login_count"`
-	SessionCount        int64     `json:"session_count"`
-	AverageSessionDuration int64  `json:"average_session_duration_minutes"`
-	AccessRequestCount  int64     `json:"access_request_count"`
-	PermissionUsageCount int64    `json:"permission_usage_count"`
-	LastActivityAt      *time.Time `json:"last_activity_at,omitempty"`
-	UpdatedAt           time.Time `json:"updated_at"`
+	UserID                 uuid.UUID  `json:"user_id"`
+	TenantID               uuid.UUID  `json:"tenant_id"`
+	LoginCount             int64      `json:"login_count"`
+	LastLoginAt            *time.Time `json:"last_login_at,omitempty"`
+	FailedLoginCount       int64      `json:"failed_login_count"`
+	SessionCount           int64      `json:"session_count"`
+	AverageSessionDuration int64      `json:"average_session_duration_minutes"`
+	AccessRequestCount     int64      `json:"access_request_count"`
+	PermissionUsageCount   int64      `json:"permission_usage_count"`
+	LastActivityAt         *time.Time `json:"last_activity_at,omitempty"`
+	UpdatedAt              time.Time  `json:"updated_at"`
 }
 
 // ─── POLICY ANALYSIS MODELS ──────────────────────────────────────────────────
 
 // PolicyConflict represents a conflict between policies
 type PolicyConflict struct {
-	ID          string     `json:"id"`
-	Type        string     `json:"type"`
-	Severity    string     `json:"severity"`
-	Description string     `json:"description"`
+	ID          string      `json:"id"`
+	Type        string      `json:"type"`
+	Severity    string      `json:"severity"`
+	Description string      `json:"description"`
 	PolicyIDs   []uuid.UUID `json:"policy_ids"`
-	Suggestion  string     `json:"suggestion"`
+	Suggestion  string      `json:"suggestion"`
 }
 
 // PolicyWarning represents a warning about a policy
@@ -540,20 +540,20 @@ type PolicyTestCase struct {
 
 // PolicyEnvironment represents the environment context for policy evaluation
 type PolicyEnvironment struct {
-	Time         time.Time              `json:"time"`
-	IPAddress    string                 `json:"ip_address"`
-	Location     *GeolocationContext    `json:"location,omitempty"`
-	Device       *DeviceContext         `json:"device,omitempty"`
-	RiskLevel    string                 `json:"risk_level"`
-	Attributes   map[string]interface{} `json:"attributes,omitempty"`
+	Time       time.Time              `json:"time"`
+	IPAddress  string                 `json:"ip_address"`
+	Location   *GeolocationContext    `json:"location,omitempty"`
+	Device     *DeviceContext         `json:"device,omitempty"`
+	RiskLevel  string                 `json:"risk_level"`
+	Attributes map[string]interface{} `json:"attributes,omitempty"`
 }
 
 // PolicyTestResult represents the result of a policy test
 type PolicyTestResult struct {
-	TestCaseID  string             `json:"test_case_id"`
-	Passed      bool               `json:"passed"`
-	Actual      PolicyDecisionType `json:"actual"`
-	Expected    PolicyDecisionType `json:"expected"`
-	Reason      string             `json:"reason,omitempty"`
-	Duration    time.Duration      `json:"duration"`
+	TestCaseID string             `json:"test_case_id"`
+	Passed     bool               `json:"passed"`
+	Actual     PolicyDecisionType `json:"actual"`
+	Expected   PolicyDecisionType `json:"expected"`
+	Reason     string             `json:"reason,omitempty"`
+	Duration   time.Duration      `json:"duration"`
 }

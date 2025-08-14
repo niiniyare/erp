@@ -365,9 +365,9 @@ func (h *FeatureFlagWorkflowHandler) CancelWorkflow(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":     "Workflow cancelled successfully",
-		"workflow_id": workflowID,
-		"reason":      req.Reason,
+		"message":      "Workflow cancelled successfully",
+		"workflow_id":  workflowID,
+		"reason":       req.Reason,
 		"cancelled_at": time.Now(),
 	})
 }

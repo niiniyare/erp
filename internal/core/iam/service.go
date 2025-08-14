@@ -38,10 +38,10 @@ type service struct {
 	policyService policy.Service
 
 	// External dependencies
-	tenantService    tenant.Service
-	auditService     audit.Service
+	tenantService      tenant.Service
+	auditService       audit.Service
 	featureFlagService featureflag.Service
-	cache            cache.Service
+	cache              cache.Service
 
 	// Shared infrastructure
 	logger  logger.Logger

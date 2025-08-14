@@ -736,4 +736,3 @@ func (s *service) generateRefreshToken() string {
 	// Placeholder implementation - would use cryptographically secure token generation
 	return fmt.Sprintf("refresh_%s", uuid.New().String())
 }
-

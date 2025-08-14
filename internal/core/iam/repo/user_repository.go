@@ -4,17 +4,18 @@ package repo
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/iam/model"
 	db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/core/iam/model"
+	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/internal/shared/errors"
 )
 
 // userRepository implements UserRepository interface
@@ -47,21 +48,24 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) (*model.U
 
 	var createdUser *model.User
 	err := r.store.WithTenant(ctx, user.TenantID, func(ctx context.Context, store db.Store) error {
+		// Convert user metadata to JSON bytes
+		userAttributesJSON, _ := json.Marshal(user.Metadata)
+		settingsJSON, _ := json.Marshal(map[string]interface{}{})
+
 		// Convert domain model to SQLC params
 		params := db.CreateUserParams{
-			ID:               user.ID,
-			TenantID:         user.TenantID,
-			Email:            user.Email,
-			PasswordHash:     user.PasswordHash,
-			FirstName:        user.FirstName,
-			LastName:         user.LastName,
-			PhoneNumber:      user.PhoneNumber,
-			AccountStatus:    string(user.AccountStatus),
-			EmailVerified:    user.EmailVerified,
-			PhoneVerified:    user.PhoneVerified,
-			MfaEnabled:       user.MFAEnabled,
-			FailedLoginCount: int32(user.FailedLoginCount),
-			Metadata:         user.Metadata,
+			EntityID:              user.TenantID, // Using TenantID as EntityID for now
+			PersonID:              nil,           // Will be set when linking to Person
+			EmployeeID:            nil,           // Will be set when linking to Employee
+			Username:              nil,           // Optional username
+			Email:                 user.Email,
+			PasswordHash:          &user.PasswordHash,
+			UserType:              "INTERNAL", // Default user type
+			AccountStatus:         stringPtr(string(user.AccountStatus)),
+			SessionTimeoutMinutes: int32Ptr(480), // Default 8 hours
+			MfaEnabled:            &user.MFAEnabled,
+			UserAttributes:        userAttributesJSON,
+			Settings:              settingsJSON,
 		}
 
 		// Create user using SQLC
@@ -79,16 +83,16 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) (*model.U
 			ID:               dbUser.ID,
 			TenantID:         dbUser.TenantID,
 			Email:            dbUser.Email,
-			PasswordHash:     dbUser.PasswordHash,
-			FirstName:        dbUser.FirstName,
-			LastName:         dbUser.LastName,
-			PhoneNumber:      dbUser.PhoneNumber,
-			AccountStatus:    model.UserAccountStatus(dbUser.AccountStatus),
-			EmailVerified:    dbUser.EmailVerified,
-			PhoneVerified:    dbUser.PhoneVerified,
-			MFAEnabled:       dbUser.MfaEnabled,
-			FailedLoginCount: int(dbUser.FailedLoginCount),
-			Metadata:         dbUser.Metadata,
+			PasswordHash:     getStringValue(dbUser.PasswordHash),
+			FirstName:        user.FirstName, // These aren't in the DB user table
+			LastName:         user.LastName,  // They're in the persons table
+			PhoneNumber:      user.PhoneNumber,
+			AccountStatus:    model.UserAccountStatus(getStringValue(dbUser.AccountStatus)),
+			EmailVerified:    false, // Default value
+			PhoneVerified:    false, // Default value
+			MFAEnabled:       getBoolValue(dbUser.MfaEnabled),
+			FailedLoginCount: int(getInt32Value(dbUser.FailedLoginAttempts)),
+			Metadata:         user.Metadata,
 			CreatedAt:        dbUser.CreatedAt,
 			UpdatedAt:        dbUser.UpdatedAt,
 		}
@@ -116,7 +120,7 @@ func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User
 
 	// Get current tenant from context (this should be handled by service layer)
 	tenantID := getTenantIDFromContext(ctx)
-	
+
 	var user *model.User
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, store db.Store) error {
 		dbUser, err := store.GetUserByID(ctx, id)
@@ -132,16 +136,16 @@ func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User
 			ID:               dbUser.ID,
 			TenantID:         dbUser.TenantID,
 			Email:            dbUser.Email,
-			PasswordHash:     dbUser.PasswordHash,
-			FirstName:        dbUser.FirstName,
-			LastName:         dbUser.LastName,
-			PhoneNumber:      dbUser.PhoneNumber,
-			AccountStatus:    model.UserAccountStatus(dbUser.AccountStatus),
-			EmailVerified:    dbUser.EmailVerified,
-			PhoneVerified:    dbUser.PhoneVerified,
-			MFAEnabled:       dbUser.MfaEnabled,
-			FailedLoginCount: int(dbUser.FailedLoginCount),
-			Metadata:         dbUser.Metadata,
+			PasswordHash:     getStringValue(dbUser.PasswordHash),
+			FirstName:        "",  // Will come from Person entity
+			LastName:         "",  // Will come from Person entity
+			PhoneNumber:      nil, // Will come from Person entity
+			AccountStatus:    model.UserAccountStatus(getStringValue(dbUser.AccountStatus)),
+			EmailVerified:    false, // Default value
+			PhoneVerified:    false, // Default value
+			MFAEnabled:       getBoolValue(dbUser.MfaEnabled),
+			FailedLoginCount: int(getInt32Value(dbUser.FailedLoginAttempts)),
+			Metadata:         make(map[string]interface{}), // Will unmarshal from UserAttributes
 			CreatedAt:        dbUser.CreatedAt,
 			UpdatedAt:        dbUser.UpdatedAt,
 		}
@@ -165,7 +169,7 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*model.U
 	defer span.End()
 
 	tenantID := getTenantIDFromContext(ctx)
-	
+
 	var user *model.User
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, store db.Store) error {
 		dbUser, err := store.GetUserByEmail(ctx, email)
@@ -181,16 +185,16 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*model.U
 			ID:               dbUser.ID,
 			TenantID:         dbUser.TenantID,
 			Email:            dbUser.Email,
-			PasswordHash:     dbUser.PasswordHash,
-			FirstName:        dbUser.FirstName,
-			LastName:         dbUser.LastName,
-			PhoneNumber:      dbUser.PhoneNumber,
-			AccountStatus:    model.UserAccountStatus(dbUser.AccountStatus),
-			EmailVerified:    dbUser.EmailVerified,
-			PhoneVerified:    dbUser.PhoneVerified,
-			MFAEnabled:       dbUser.MfaEnabled,
-			FailedLoginCount: int(dbUser.FailedLoginCount),
-			Metadata:         dbUser.Metadata,
+			PasswordHash:     getStringValue(dbUser.PasswordHash),
+			FirstName:        "",  // Will come from Person entity
+			LastName:         "",  // Will come from Person entity
+			PhoneNumber:      nil, // Will come from Person entity
+			AccountStatus:    model.UserAccountStatus(getStringValue(dbUser.AccountStatus)),
+			EmailVerified:    false, // Default value
+			PhoneVerified:    false, // Default value
+			MFAEnabled:       getBoolValue(dbUser.MfaEnabled),
+			FailedLoginCount: int(getInt32Value(dbUser.FailedLoginAttempts)),
+			Metadata:         make(map[string]interface{}), // Will unmarshal from UserAttributes
 			CreatedAt:        dbUser.CreatedAt,
 			UpdatedAt:        dbUser.UpdatedAt,
 		}
@@ -217,17 +221,13 @@ func (r *userRepository) Update(ctx context.Context, user *model.User) (*model.U
 	err := r.store.WithTenant(ctx, user.TenantID, func(ctx context.Context, store db.Store) error {
 		// Convert domain model to SQLC params
 		params := db.UpdateUserParams{
-			ID:               user.ID,
-			FirstName:        user.FirstName,
-			LastName:         user.LastName,
-			PhoneNumber:      user.PhoneNumber,
-			AccountStatus:    string(user.AccountStatus),
-			EmailVerified:    user.EmailVerified,
-			PhoneVerified:    user.PhoneVerified,
-			MfaEnabled:       user.MFAEnabled,
-			FailedLoginCount: int32(user.FailedLoginCount),
-			Metadata:         user.Metadata,
-			UpdatedAt:        time.Now(),
+			ID:                    user.ID,
+			Username:              nil, // Username updates handled separately
+			Email:                 &user.Email,
+			UserType:              nil, // UserType updates handled separately
+			AccountStatus:         stringPtr(string(user.AccountStatus)),
+			SessionTimeoutMinutes: nil, // Session timeout handled separately
+			MfaEnabled:            &user.MFAEnabled,
 		}
 
 		dbUser, err := store.UpdateUser(ctx, params)
@@ -243,16 +243,16 @@ func (r *userRepository) Update(ctx context.Context, user *model.User) (*model.U
 			ID:               dbUser.ID,
 			TenantID:         dbUser.TenantID,
 			Email:            dbUser.Email,
-			PasswordHash:     dbUser.PasswordHash,
-			FirstName:        dbUser.FirstName,
-			LastName:         dbUser.LastName,
-			PhoneNumber:      dbUser.PhoneNumber,
-			AccountStatus:    model.UserAccountStatus(dbUser.AccountStatus),
-			EmailVerified:    dbUser.EmailVerified,
-			PhoneVerified:    dbUser.PhoneVerified,
-			MFAEnabled:       dbUser.MfaEnabled,
-			FailedLoginCount: int(dbUser.FailedLoginCount),
-			Metadata:         dbUser.Metadata,
+			PasswordHash:     getStringValue(dbUser.PasswordHash),
+			FirstName:        "",  // These come from Person entity
+			LastName:         "",  // These come from Person entity
+			PhoneNumber:      nil, // These come from Person entity
+			AccountStatus:    model.UserAccountStatus(getStringValue(dbUser.AccountStatus)),
+			EmailVerified:    false, // Default values
+			PhoneVerified:    false, // Default values
+			MFAEnabled:       getBoolValue(dbUser.MfaEnabled),
+			FailedLoginCount: int(getInt32Value(dbUser.FailedLoginAttempts)),
+			Metadata:         user.Metadata, // Preserve original metadata
 			CreatedAt:        dbUser.CreatedAt,
 			UpdatedAt:        dbUser.UpdatedAt,
 		}
@@ -279,9 +279,9 @@ func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	defer span.End()
 
 	tenantID := getTenantIDFromContext(ctx)
-	
+
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, store db.Store) error {
-		err := store.DeleteUser(ctx, id)
+		err := store.SoftDeleteUser(ctx, id)
 		if err != nil {
 			if err == db.ErrNoRows {
 				return errors.NewBusinessError("USER_NOT_FOUND", "User not found")
@@ -311,12 +311,14 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*model.
 	defer span.End()
 
 	tenantID := getTenantIDFromContext(ctx)
-	
+
 	var users []*model.User
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, store db.Store) error {
 		params := db.ListUsersParams{
-			Limit:  int32(limit),
-			Offset: int32(offset),
+			Limit:         int32(limit),
+			Offset:        int32(offset),
+			UserType:      "", // Empty string for no filter
+			AccountStatus: "", // Empty string for no filter
 		}
 
 		dbUsers, err := store.ListUsers(ctx, params)
@@ -331,16 +333,16 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*model.
 				ID:               dbUser.ID,
 				TenantID:         dbUser.TenantID,
 				Email:            dbUser.Email,
-				PasswordHash:     dbUser.PasswordHash,
-				FirstName:        dbUser.FirstName,
-				LastName:         dbUser.LastName,
-				PhoneNumber:      dbUser.PhoneNumber,
-				AccountStatus:    model.UserAccountStatus(dbUser.AccountStatus),
-				EmailVerified:    dbUser.EmailVerified,
-				PhoneVerified:    dbUser.PhoneVerified,
-				MFAEnabled:       dbUser.MfaEnabled,
-				FailedLoginCount: int(dbUser.FailedLoginCount),
-				Metadata:         dbUser.Metadata,
+				PasswordHash:     getStringValue(dbUser.PasswordHash),
+				FirstName:        "",  // Will come from Person entity
+				LastName:         "",  // Will come from Person entity
+				PhoneNumber:      nil, // Will come from Person entity
+				AccountStatus:    model.UserAccountStatus(getStringValue(dbUser.AccountStatus)),
+				EmailVerified:    false, // Default value
+				PhoneVerified:    false, // Default value
+				MFAEnabled:       getBoolValue(dbUser.MfaEnabled),
+				FailedLoginCount: int(getInt32Value(dbUser.FailedLoginAttempts)),
+				Metadata:         make(map[string]interface{}), // Will unmarshal from UserAttributes
 				CreatedAt:        dbUser.CreatedAt,
 				UpdatedAt:        dbUser.UpdatedAt,
 			}
@@ -365,17 +367,18 @@ func (r *userRepository) GetPasswordHash(ctx context.Context, userID uuid.UUID) 
 	defer span.End()
 
 	tenantID := getTenantIDFromContext(ctx)
-	
+
 	var hash string
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, store db.Store) error {
 		var err error
-		hash, err = store.GetUserPasswordHash(ctx, userID)
+		hashPtr, err := store.GetUserPasswordByID(ctx, userID)
 		if err != nil {
 			if err == db.ErrNoRows {
 				return errors.NewBusinessError("USER_NOT_FOUND", "User not found")
 			}
 			return fmt.Errorf("failed to get password hash: %w", err)
 		}
+		hash = getStringValue(hashPtr)
 		return nil
 	})
 
@@ -393,12 +396,11 @@ func (r *userRepository) UpdatePasswordHash(ctx context.Context, userID uuid.UUI
 	defer span.End()
 
 	tenantID := getTenantIDFromContext(ctx)
-	
+
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, store db.Store) error {
 		params := db.UpdateUserPasswordParams{
 			ID:           userID,
-			PasswordHash: hash,
-			UpdatedAt:    time.Now(),
+			PasswordHash: &hash,
 		}
 
 		err := store.UpdateUserPassword(ctx, params)
@@ -436,14 +438,92 @@ func isDuplicateKeyError(err error) bool {
 	return false
 }
 
-// Additional methods would be implemented following the same pattern:
-// - ListByStatus
-// - Count
-// - UpdateLastLogin
-// - LockAccount
-// - UnlockAccount
-// - UpdateFailedLoginCount
-// - SetMFASecret
-// - GetMFASecret
-// - EnableMFA
-// - DisableMFA
+// Helper functions for pointer conversions
+func stringPtr(s string) *string {
+	return &s
+}
+
+func int32Ptr(i int32) *int32 {
+	return &i
+}
+
+func getStringValue(ptr *string) string {
+	if ptr == nil {
+		return ""
+	}
+	return *ptr
+}
+
+func getBoolValue(ptr *bool) bool {
+	if ptr == nil {
+		return false
+	}
+	return *ptr
+}
+
+func getInt32Value(ptr *int32) int32 {
+	if ptr == nil {
+		return 0
+	}
+	return *ptr
+}
+
+// ListByStatus lists users by account status
+func (r *userRepository) ListByStatus(ctx context.Context, status model.UserAccountStatus) ([]*model.User, error) {
+	// TODO: Implement when SQLC query is available
+	return nil, fmt.Errorf("ListByStatus not implemented")
+}
+
+// Count returns total number of users
+func (r *userRepository) Count(ctx context.Context) (int64, error) {
+	// TODO: Implement when SQLC query is available
+	return 0, fmt.Errorf("Count not implemented")
+}
+
+// UpdateLastLogin updates user's last login timestamp
+func (r *userRepository) UpdateLastLogin(ctx context.Context, userID uuid.UUID, loginTime time.Time) error {
+	// TODO: Implement when SQLC query is available
+	return fmt.Errorf("UpdateLastLogin not implemented")
+}
+
+// LockAccount locks a user account
+func (r *userRepository) LockAccount(ctx context.Context, userID uuid.UUID, lockedUntil *time.Time, reason string) error {
+	// TODO: Implement when SQLC query is available
+	return fmt.Errorf("LockAccount not implemented")
+}
+
+// UnlockAccount unlocks a user account
+func (r *userRepository) UnlockAccount(ctx context.Context, userID uuid.UUID) error {
+	// TODO: Implement when SQLC query is available
+	return fmt.Errorf("UnlockAccount not implemented")
+}
+
+// UpdateFailedLoginCount updates failed login attempt count
+func (r *userRepository) UpdateFailedLoginCount(ctx context.Context, userID uuid.UUID, count int) error {
+	// TODO: Implement when SQLC query is available
+	return fmt.Errorf("UpdateFailedLoginCount not implemented")
+}
+
+// SetMFASecret sets MFA secret for user
+func (r *userRepository) SetMFASecret(ctx context.Context, userID uuid.UUID, secret string) error {
+	// TODO: Implement when SQLC query is available
+	return fmt.Errorf("SetMFASecret not implemented")
+}
+
+// GetMFASecret retrieves MFA secret for user
+func (r *userRepository) GetMFASecret(ctx context.Context, userID uuid.UUID) (string, error) {
+	// TODO: Implement when SQLC query is available
+	return "", fmt.Errorf("GetMFASecret not implemented")
+}
+
+// EnableMFA enables MFA for user
+func (r *userRepository) EnableMFA(ctx context.Context, userID uuid.UUID, method model.MFAMethod) error {
+	// TODO: Implement when SQLC query is available
+	return fmt.Errorf("EnableMFA not implemented")
+}
+
+// DisableMFA disables MFA for user
+func (r *userRepository) DisableMFA(ctx context.Context, userID uuid.UUID) error {
+	// TODO: Implement when SQLC query is available
+	return fmt.Errorf("DisableMFA not implemented")
+}

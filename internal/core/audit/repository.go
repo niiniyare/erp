@@ -58,26 +58,26 @@ func (r *repository) CreateAuditEvent(ctx context.Context, tenantID uuid.UUID, r
 			return err
 		}
 		auditEvent = &AuditEvent{
-			ID:            dbAuditEvent.ID,
-			UserID:        dbAuditEvent.UserID,
-			EventType:     dbAuditEvent.EventType,
-			EventCategory: dbAuditEvent.EventCategory,
-			Severity:      dbAuditEvent.Severity,
-			TargetUserID:  &dbAuditEvent.TargetUserID,
-			EntityID:      &dbAuditEvent.EntityID,
-			ResourceID:    &dbAuditEvent.ResourceID,
-			ActionID:      &dbAuditEvent.ActionID,
-			RoleID:        &dbAuditEvent.RoleID,
-			PermissionID:  &dbAuditEvent.PermissionID,
-			Decision:      &dbAuditEvent.Decision,
-			Reason:        &dbAuditEvent.Reason,
-			RiskScore:     &dbAuditEvent.RiskScore,
-			Context:       dbAuditEvent.Context,
-			IPAddress:     &dbAuditEvent.IpAddress,
-			UserAgent:     &dbAuditEvent.UserAgent,
-			SessionID:     &dbAuditEvent.SessionID,
+			ID:              dbAuditEvent.ID,
+			UserID:          dbAuditEvent.UserID,
+			EventType:       dbAuditEvent.EventType,
+			EventCategory:   dbAuditEvent.EventCategory,
+			Severity:        dbAuditEvent.Severity,
+			TargetUserID:    &dbAuditEvent.TargetUserID,
+			EntityID:        &dbAuditEvent.EntityID,
+			ResourceID:      &dbAuditEvent.ResourceID,
+			ActionID:        &dbAuditEvent.ActionID,
+			RoleID:          &dbAuditEvent.RoleID,
+			PermissionID:    &dbAuditEvent.PermissionID,
+			Decision:        &dbAuditEvent.Decision,
+			Reason:          &dbAuditEvent.Reason,
+			RiskScore:       &dbAuditEvent.RiskScore,
+			Context:         dbAuditEvent.Context,
+			IPAddress:       &dbAuditEvent.IpAddress,
+			UserAgent:       &dbAuditEvent.UserAgent,
+			SessionID:       &dbAuditEvent.SessionID,
 			ComplianceFlags: dbAuditEvent.ComplianceFlags,
-			CreatedAt:     dbAuditEvent.CreatedAt,
+			CreatedAt:       dbAuditEvent.CreatedAt,
 		}
 		return nil
 	})
@@ -316,7 +316,7 @@ func (r *repository) BulkUpdateEventRiskScores(ctx context.Context, tenantID uui
 	})
 }
 
-func (r *repository) BulkAddComplianceFlags(ctx context.context.Context, tenantID uuid.UUID, params BulkAddComplianceFlagsParams) error {
+func (r *repository) BulkAddComplianceFlags(ctx context.Context, tenantID uuid.UUID, params BulkAddComplianceFlagsParams) error {
 	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
 		// Implementation for BulkAddComplianceFlags
 		return nil

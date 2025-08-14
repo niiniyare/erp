@@ -49,202 +49,202 @@ type ABTestAnalyticsService interface {
 
 // StatisticalTestRequest contains parameters for statistical significance testing
 type StatisticalTestRequest struct {
-	ExperimentID   uuid.UUID          `json:"experiment_id"`
-	VariantA       *VariantData       `json:"variant_a"`
-	VariantB       *VariantData       `json:"variant_b"`
-	MetricType     MetricType         `json:"metric_type"`
-	ConfidenceLevel float64           `json:"confidence_level"`
-	TestType       StatisticalTestType `json:"test_type"`
-	AlternativeHypothesis string      `json:"alternative_hypothesis"` // "two-sided", "greater", "less"
+	ExperimentID          uuid.UUID           `json:"experiment_id"`
+	VariantA              *VariantData        `json:"variant_a"`
+	VariantB              *VariantData        `json:"variant_b"`
+	MetricType            MetricType          `json:"metric_type"`
+	ConfidenceLevel       float64             `json:"confidence_level"`
+	TestType              StatisticalTestType `json:"test_type"`
+	AlternativeHypothesis string              `json:"alternative_hypothesis"` // "two-sided", "greater", "less"
 }
 
 // StatisticalTestResult contains the results of statistical significance testing
 type StatisticalTestResult struct {
-	ExperimentID      uuid.UUID `json:"experiment_id"`
-	TestType          StatisticalTestType `json:"test_type"`
-	PValue            float64   `json:"p_value"`
-	TestStatistic     float64   `json:"test_statistic"`
-	CriticalValue     float64   `json:"critical_value"`
-	IsSignificant     bool      `json:"is_significant"`
-	EffectSize        float64   `json:"effect_size"`
+	ExperimentID       uuid.UUID           `json:"experiment_id"`
+	TestType           StatisticalTestType `json:"test_type"`
+	PValue             float64             `json:"p_value"`
+	TestStatistic      float64             `json:"test_statistic"`
+	CriticalValue      float64             `json:"critical_value"`
+	IsSignificant      bool                `json:"is_significant"`
+	EffectSize         float64             `json:"effect_size"`
 	ConfidenceInterval *ConfidenceInterval `json:"confidence_interval"`
-	PowerEstimate     float64   `json:"power_estimate"`
-	SampleSizes       map[string]int64 `json:"sample_sizes"`
-	Interpretation    string    `json:"interpretation"`
-	Recommendations   []string  `json:"recommendations"`
+	PowerEstimate      float64             `json:"power_estimate"`
+	SampleSizes        map[string]int64    `json:"sample_sizes"`
+	Interpretation     string              `json:"interpretation"`
+	Recommendations    []string            `json:"recommendations"`
 }
 
 // TTestRequest contains parameters for Student's t-test
 type TTestRequest struct {
-	ExperimentID    uuid.UUID    `json:"experiment_id"`
+	ExperimentID    uuid.UUID       `json:"experiment_id"`
 	VariantA        *ContinuousData `json:"variant_a"`
 	VariantB        *ContinuousData `json:"variant_b"`
-	ConfidenceLevel float64      `json:"confidence_level"`
-	TTestType       TTestType    `json:"t_test_type"`
-	EqualVariances  bool         `json:"equal_variances"`
+	ConfidenceLevel float64         `json:"confidence_level"`
+	TTestType       TTestType       `json:"t_test_type"`
+	EqualVariances  bool            `json:"equal_variances"`
 }
 
 // TTestResult contains the results of a t-test
 type TTestResult struct {
-	ExperimentID      uuid.UUID `json:"experiment_id"`
-	TStatistic        float64   `json:"t_statistic"`
-	DegreesOfFreedom  float64   `json:"degrees_of_freedom"`
-	PValue            float64   `json:"p_value"`
-	IsSignificant     bool      `json:"is_significant"`
-	EffectSize        float64   `json:"effect_size"` // Cohen's d
-	ConfidenceInterval *ConfidenceInterval `json:"confidence_interval"`
-	PowerAnalysis     *PowerAnalysisResult `json:"power_analysis"`
+	ExperimentID       uuid.UUID            `json:"experiment_id"`
+	TStatistic         float64              `json:"t_statistic"`
+	DegreesOfFreedom   float64              `json:"degrees_of_freedom"`
+	PValue             float64              `json:"p_value"`
+	IsSignificant      bool                 `json:"is_significant"`
+	EffectSize         float64              `json:"effect_size"` // Cohen's d
+	ConfidenceInterval *ConfidenceInterval  `json:"confidence_interval"`
+	PowerAnalysis      *PowerAnalysisResult `json:"power_analysis"`
 }
 
 // ChiSquareTestRequest contains parameters for chi-square test
 type ChiSquareTestRequest struct {
-	ExperimentID    uuid.UUID       `json:"experiment_id"`
-	ObservedCounts  [][]int64       `json:"observed_counts"`
-	ExpectedCounts  [][]float64     `json:"expected_counts,omitempty"`
-	ConfidenceLevel float64         `json:"confidence_level"`
+	ExperimentID    uuid.UUID         `json:"experiment_id"`
+	ObservedCounts  [][]int64         `json:"observed_counts"`
+	ExpectedCounts  [][]float64       `json:"expected_counts,omitempty"`
+	ConfidenceLevel float64           `json:"confidence_level"`
 	TestType        ChiSquareTestType `json:"test_type"`
 }
 
 // ChiSquareTestResult contains the results of a chi-square test
 type ChiSquareTestResult struct {
-	ExperimentID      uuid.UUID `json:"experiment_id"`
-	ChiSquareStatistic float64  `json:"chi_square_statistic"`
-	DegreesOfFreedom   int      `json:"degrees_of_freedom"`
-	PValue            float64   `json:"p_value"`
-	IsSignificant     bool      `json:"is_significant"`
-	CramersV          float64   `json:"cramers_v"` // Effect size measure
-	Residuals         [][]float64 `json:"residuals"`
-	ExpectedCounts    [][]float64 `json:"expected_counts"`
+	ExperimentID       uuid.UUID   `json:"experiment_id"`
+	ChiSquareStatistic float64     `json:"chi_square_statistic"`
+	DegreesOfFreedom   int         `json:"degrees_of_freedom"`
+	PValue             float64     `json:"p_value"`
+	IsSignificant      bool        `json:"is_significant"`
+	CramersV           float64     `json:"cramers_v"` // Effect size measure
+	Residuals          [][]float64 `json:"residuals"`
+	ExpectedCounts     [][]float64 `json:"expected_counts"`
 }
 
 // ZTestRequest contains parameters for Z-test
 type ZTestRequest struct {
-	ExperimentID    uuid.UUID     `json:"experiment_id"`
+	ExperimentID    uuid.UUID       `json:"experiment_id"`
 	VariantA        *ProportionData `json:"variant_a"`
 	VariantB        *ProportionData `json:"variant_b"`
-	ConfidenceLevel float64       `json:"confidence_level"`
-	TestType        ZTestType     `json:"test_type"`
+	ConfidenceLevel float64         `json:"confidence_level"`
+	TestType        ZTestType       `json:"test_type"`
 }
 
 // ZTestResult contains the results of a Z-test
 type ZTestResult struct {
-	ExperimentID      uuid.UUID `json:"experiment_id"`
-	ZStatistic        float64   `json:"z_statistic"`
-	PValue            float64   `json:"p_value"`
-	IsSignificant     bool      `json:"is_significant"`
-	EffectSize        float64   `json:"effect_size"`
+	ExperimentID       uuid.UUID           `json:"experiment_id"`
+	ZStatistic         float64             `json:"z_statistic"`
+	PValue             float64             `json:"p_value"`
+	IsSignificant      bool                `json:"is_significant"`
+	EffectSize         float64             `json:"effect_size"`
 	ConfidenceInterval *ConfidenceInterval `json:"confidence_interval"`
-	PooledProportion  float64   `json:"pooled_proportion"`
+	PooledProportion   float64             `json:"pooled_proportion"`
 }
 
 // BayesianAnalysisRequest contains parameters for Bayesian analysis
 type BayesianAnalysisRequest struct {
-	ExperimentID   uuid.UUID       `json:"experiment_id"`
-	VariantA       *VariantData    `json:"variant_a"`
-	VariantB       *VariantData    `json:"variant_b"`
-	PriorBelief    *PriorDistribution `json:"prior_belief"`
-	CredibilityLevel float64       `json:"credibility_level"`
-	NumSamples     int             `json:"num_samples"`
+	ExperimentID     uuid.UUID          `json:"experiment_id"`
+	VariantA         *VariantData       `json:"variant_a"`
+	VariantB         *VariantData       `json:"variant_b"`
+	PriorBelief      *PriorDistribution `json:"prior_belief"`
+	CredibilityLevel float64            `json:"credibility_level"`
+	NumSamples       int                `json:"num_samples"`
 }
 
 // BayesianAnalysisResult contains the results of Bayesian analysis
 type BayesianAnalysisResult struct {
-	ExperimentID         uuid.UUID `json:"experiment_id"`
-	PosteriorA           *PosteriorDistribution `json:"posterior_a"`
-	PosteriorB           *PosteriorDistribution `json:"posterior_b"`
-	ProbabilityBWins     float64   `json:"probability_b_wins"`
-	ExpectedLoss         float64   `json:"expected_loss"`
-	CredibleInterval     *CredibleInterval `json:"credible_interval"`
-	BayesFactor          float64   `json:"bayes_factor"`
-	EffectSize           *BayesianEffectSize `json:"effect_size"`
-	DecisionRecommendation string  `json:"decision_recommendation"`
+	ExperimentID           uuid.UUID              `json:"experiment_id"`
+	PosteriorA             *PosteriorDistribution `json:"posterior_a"`
+	PosteriorB             *PosteriorDistribution `json:"posterior_b"`
+	ProbabilityBWins       float64                `json:"probability_b_wins"`
+	ExpectedLoss           float64                `json:"expected_loss"`
+	CredibleInterval       *CredibleInterval      `json:"credible_interval"`
+	BayesFactor            float64                `json:"bayes_factor"`
+	EffectSize             *BayesianEffectSize    `json:"effect_size"`
+	DecisionRecommendation string                 `json:"decision_recommendation"`
 }
 
 // PowerAnalysisRequest contains parameters for power analysis
 type PowerAnalysisRequest struct {
-	ExperimentID    uuid.UUID `json:"experiment_id"`
-	EffectSize      float64   `json:"effect_size"`
-	Alpha           float64   `json:"alpha"`
-	Power           float64   `json:"power"`
-	SampleSizeA     int64     `json:"sample_size_a"`
-	SampleSizeB     int64     `json:"sample_size_b"`
-	TestType        StatisticalTestType `json:"test_type"`
-	AnalysisType    PowerAnalysisType `json:"analysis_type"`
+	ExperimentID uuid.UUID           `json:"experiment_id"`
+	EffectSize   float64             `json:"effect_size"`
+	Alpha        float64             `json:"alpha"`
+	Power        float64             `json:"power"`
+	SampleSizeA  int64               `json:"sample_size_a"`
+	SampleSizeB  int64               `json:"sample_size_b"`
+	TestType     StatisticalTestType `json:"test_type"`
+	AnalysisType PowerAnalysisType   `json:"analysis_type"`
 }
 
 // PowerAnalysisResult contains the results of power analysis
 type PowerAnalysisResult struct {
-	ExperimentID       uuid.UUID `json:"experiment_id"`
-	Power              float64   `json:"power"`
-	RequiredSampleSize int64     `json:"required_sample_size"`
-	DetectableEffectSize float64 `json:"detectable_effect_size"`
-	TypeIIError        float64   `json:"type_ii_error"`
-	PowerCurve         []PowerPoint `json:"power_curve"`
-	Interpretation     string    `json:"interpretation"`
-	Recommendations    []string  `json:"recommendations"`
+	ExperimentID         uuid.UUID    `json:"experiment_id"`
+	Power                float64      `json:"power"`
+	RequiredSampleSize   int64        `json:"required_sample_size"`
+	DetectableEffectSize float64      `json:"detectable_effect_size"`
+	TypeIIError          float64      `json:"type_ii_error"`
+	PowerCurve           []PowerPoint `json:"power_curve"`
+	Interpretation       string       `json:"interpretation"`
+	Recommendations      []string     `json:"recommendations"`
 }
 
 // SampleSizeRequest contains parameters for sample size calculation
 type SampleSizeRequest struct {
-	ExperimentID    uuid.UUID `json:"experiment_id"`
-	MinimumEffectSize float64 `json:"minimum_effect_size"`
-	Power           float64   `json:"power"`
-	Alpha           float64   `json:"alpha"`
-	TestType        StatisticalTestType `json:"test_type"`
-	AllocationRatio float64   `json:"allocation_ratio"`
-	BaselineRate    float64   `json:"baseline_rate,omitempty"`
-	EstimatedStdDev float64   `json:"estimated_std_dev,omitempty"`
+	ExperimentID      uuid.UUID           `json:"experiment_id"`
+	MinimumEffectSize float64             `json:"minimum_effect_size"`
+	Power             float64             `json:"power"`
+	Alpha             float64             `json:"alpha"`
+	TestType          StatisticalTestType `json:"test_type"`
+	AllocationRatio   float64             `json:"allocation_ratio"`
+	BaselineRate      float64             `json:"baseline_rate,omitempty"`
+	EstimatedStdDev   float64             `json:"estimated_std_dev,omitempty"`
 }
 
 // SampleSizeResult contains the calculated sample size requirements
 type SampleSizeResult struct {
-	ExperimentID         uuid.UUID `json:"experiment_id"`
-	RequiredSampleSizeA  int64     `json:"required_sample_size_a"`
-	RequiredSampleSizeB  int64     `json:"required_sample_size_b"`
-	TotalRequiredSamples int64     `json:"total_required_samples"`
-	EstimatedDuration    time.Duration `json:"estimated_duration"`
+	ExperimentID         uuid.UUID          `json:"experiment_id"`
+	RequiredSampleSizeA  int64              `json:"required_sample_size_a"`
+	RequiredSampleSizeB  int64              `json:"required_sample_size_b"`
+	TotalRequiredSamples int64              `json:"total_required_samples"`
+	EstimatedDuration    time.Duration      `json:"estimated_duration"`
 	TrafficAllocation    map[string]float64 `json:"traffic_allocation"`
-	PowerValidation      *PowerValidation `json:"power_validation"`
+	PowerValidation      *PowerValidation   `json:"power_validation"`
 }
 
 // EarlyStoppingRequest contains parameters for early stopping evaluation
 type EarlyStoppingRequest struct {
-	ExperimentID     uuid.UUID `json:"experiment_id"`
-	CurrentData      *ExperimentData `json:"current_data"`
+	ExperimentID     uuid.UUID         `json:"experiment_id"`
+	CurrentData      *ExperimentData   `json:"current_data"`
 	StoppingCriteria *StoppingCriteria `json:"stopping_criteria"`
-	MinRunDuration   time.Duration `json:"min_run_duration"`
-	MaxRunDuration   time.Duration `json:"max_run_duration"`
+	MinRunDuration   time.Duration     `json:"min_run_duration"`
+	MaxRunDuration   time.Duration     `json:"max_run_duration"`
 }
 
 // EarlyStoppingResult contains early stopping recommendations
 type EarlyStoppingResult struct {
-	ExperimentID        uuid.UUID `json:"experiment_id"`
-	ShouldStop          bool      `json:"should_stop"`
-	StopReason          string    `json:"stop_reason"`
-	Confidence          float64   `json:"confidence"`
-	ProbabilityThreshold float64  `json:"probability_threshold"`
-	CurrentPower        float64   `json:"current_power"`
-	FutilityAnalysis    *FutilityAnalysis `json:"futility_analysis"`
-	Recommendations     []string  `json:"recommendations"`
+	ExperimentID         uuid.UUID         `json:"experiment_id"`
+	ShouldStop           bool              `json:"should_stop"`
+	StopReason           string            `json:"stop_reason"`
+	Confidence           float64           `json:"confidence"`
+	ProbabilityThreshold float64           `json:"probability_threshold"`
+	CurrentPower         float64           `json:"current_power"`
+	FutilityAnalysis     *FutilityAnalysis `json:"futility_analysis"`
+	Recommendations      []string          `json:"recommendations"`
 }
 
 // MultivariateAnalysisRequest contains parameters for multivariate testing
 type MultivariateAnalysisRequest struct {
-	ExperimentID  uuid.UUID    `json:"experiment_id"`
-	Factors       []Factor     `json:"factors"`
-	Variants      []MultivariateVariant `json:"variants"`
-	Interactions  []string     `json:"interactions"`
-	ConfidenceLevel float64    `json:"confidence_level"`
+	ExperimentID    uuid.UUID             `json:"experiment_id"`
+	Factors         []Factor              `json:"factors"`
+	Variants        []MultivariateVariant `json:"variants"`
+	Interactions    []string              `json:"interactions"`
+	ConfidenceLevel float64               `json:"confidence_level"`
 }
 
 // MultivariateAnalysisResult contains multivariate analysis results
 type MultivariateAnalysisResult struct {
-	ExperimentID    uuid.UUID `json:"experiment_id"`
-	MainEffects     []FactorEffect `json:"main_effects"`
+	ExperimentID       uuid.UUID           `json:"experiment_id"`
+	MainEffects        []FactorEffect      `json:"main_effects"`
 	InteractionEffects []InteractionEffect `json:"interaction_effects"`
-	BestCombination *VariantCombination `json:"best_combination"`
-	SignificantFactors []string `json:"significant_factors"`
-	ModelFit        *ModelFitStatistics `json:"model_fit"`
+	BestCombination    *VariantCombination `json:"best_combination"`
+	SignificantFactors []string            `json:"significant_factors"`
+	ModelFit           *ModelFitStatistics `json:"model_fit"`
 }
 
 // Support types for A/B test analytics
@@ -252,32 +252,32 @@ type MultivariateAnalysisResult struct {
 type MetricType string
 
 const (
-	MetricTypeContinuous   MetricType = "continuous"
-	MetricTypeProportion   MetricType = "proportion"
-	MetricTypeCount        MetricType = "count"
-	MetricTypeConversion   MetricType = "conversion"
-	MetricTypeRevenue      MetricType = "revenue"
-	MetricTypeTime         MetricType = "time"
+	MetricTypeContinuous MetricType = "continuous"
+	MetricTypeProportion MetricType = "proportion"
+	MetricTypeCount      MetricType = "count"
+	MetricTypeConversion MetricType = "conversion"
+	MetricTypeRevenue    MetricType = "revenue"
+	MetricTypeTime       MetricType = "time"
 )
 
 type StatisticalTestType string
 
 const (
-	StatisticalTestTTest     StatisticalTestType = "t_test"
-	StatisticalTestZTest     StatisticalTestType = "z_test"
-	StatisticalTestChiSquare StatisticalTestType = "chi_square"
-	StatisticalTestFisher    StatisticalTestType = "fisher_exact"
+	StatisticalTestTTest       StatisticalTestType = "t_test"
+	StatisticalTestZTest       StatisticalTestType = "z_test"
+	StatisticalTestChiSquare   StatisticalTestType = "chi_square"
+	StatisticalTestFisher      StatisticalTestType = "fisher_exact"
 	StatisticalTestMannWhitney StatisticalTestType = "mann_whitney"
-	StatisticalTestWilcoxon  StatisticalTestType = "wilcoxon"
+	StatisticalTestWilcoxon    StatisticalTestType = "wilcoxon"
 )
 
 type TTestType string
 
 const (
-	TTestTypeOneSample  TTestType = "one_sample"
-	TTestTypeTwoSample  TTestType = "two_sample"
-	TTestTypePaired     TTestType = "paired"
-	TTestTypeWelch      TTestType = "welch"
+	TTestTypeOneSample TTestType = "one_sample"
+	TTestTypeTwoSample TTestType = "two_sample"
+	TTestTypePaired    TTestType = "paired"
+	TTestTypeWelch     TTestType = "welch"
 )
 
 type ZTestType string
@@ -307,27 +307,27 @@ const (
 // Data structures for statistical tests
 
 type VariantData struct {
-	Name         string    `json:"name"`
-	SampleSize   int64     `json:"sample_size"`
-	Conversions  int64     `json:"conversions,omitempty"`
-	Mean         float64   `json:"mean,omitempty"`
-	StdDev       float64   `json:"std_dev,omitempty"`
-	Values       []float64 `json:"values,omitempty"`
+	Name        string    `json:"name"`
+	SampleSize  int64     `json:"sample_size"`
+	Conversions int64     `json:"conversions,omitempty"`
+	Mean        float64   `json:"mean,omitempty"`
+	StdDev      float64   `json:"std_dev,omitempty"`
+	Values      []float64 `json:"values,omitempty"`
 }
 
 type ContinuousData struct {
-	Name         string    `json:"name"`
-	SampleSize   int64     `json:"sample_size"`
-	Mean         float64   `json:"mean"`
-	StdDev       float64   `json:"std_dev"`
-	Values       []float64 `json:"values,omitempty"`
+	Name       string    `json:"name"`
+	SampleSize int64     `json:"sample_size"`
+	Mean       float64   `json:"mean"`
+	StdDev     float64   `json:"std_dev"`
+	Values     []float64 `json:"values,omitempty"`
 }
 
 type ProportionData struct {
-	Name        string `json:"name"`
-	SampleSize  int64  `json:"sample_size"`
-	Successes   int64  `json:"successes"`
-	Proportion  float64 `json:"proportion"`
+	Name       string  `json:"name"`
+	SampleSize int64   `json:"sample_size"`
+	Successes  int64   `json:"successes"`
+	Proportion float64 `json:"proportion"`
 }
 
 type ConfidenceInterval struct {
@@ -355,9 +355,9 @@ type PosteriorDistribution struct {
 }
 
 type BayesianEffectSize struct {
-	Mean           float64 `json:"mean"`
+	Mean             float64           `json:"mean"`
 	CredibleInterval *CredibleInterval `json:"credible_interval"`
-	Probability    float64 `json:"probability"`
+	Probability      float64           `json:"probability"`
 }
 
 type PowerPoint struct {
@@ -373,16 +373,16 @@ type PowerValidation struct {
 }
 
 type ExperimentData struct {
-	StartTime    time.Time `json:"start_time"`
-	CurrentTime  time.Time `json:"current_time"`
+	StartTime    time.Time     `json:"start_time"`
+	CurrentTime  time.Time     `json:"current_time"`
 	Variants     []VariantData `json:"variants"`
-	TotalSamples int64     `json:"total_samples"`
+	TotalSamples int64         `json:"total_samples"`
 }
 
 type StoppingCriteria struct {
-	MinProbability   float64 `json:"min_probability"`
-	MaxPValue        float64 `json:"max_p_value"`
-	MinEffectSize    float64 `json:"min_effect_size"`
+	MinProbability    float64 `json:"min_probability"`
+	MaxPValue         float64 `json:"max_p_value"`
+	MinEffectSize     float64 `json:"min_effect_size"`
 	FutilityThreshold float64 `json:"futility_threshold"`
 }
 
@@ -393,9 +393,9 @@ type FutilityAnalysis struct {
 }
 
 type Factor struct {
-	Name     string   `json:"name"`
-	Levels   []string `json:"levels"`
-	Type     string   `json:"type"`
+	Name   string   `json:"name"`
+	Levels []string `json:"levels"`
+	Type   string   `json:"type"`
 }
 
 type MultivariateVariant struct {
@@ -406,17 +406,17 @@ type MultivariateVariant struct {
 }
 
 type FactorEffect struct {
-	Factor      string  `json:"factor"`
-	Effect      float64 `json:"effect"`
-	PValue      float64 `json:"p_value"`
-	IsSignificant bool  `json:"is_significant"`
+	Factor        string  `json:"factor"`
+	Effect        float64 `json:"effect"`
+	PValue        float64 `json:"p_value"`
+	IsSignificant bool    `json:"is_significant"`
 }
 
 type InteractionEffect struct {
-	Factors     []string `json:"factors"`
-	Effect      float64  `json:"effect"`
-	PValue      float64  `json:"p_value"`
-	IsSignificant bool   `json:"is_significant"`
+	Factors       []string `json:"factors"`
+	Effect        float64  `json:"effect"`
+	PValue        float64  `json:"p_value"`
+	IsSignificant bool     `json:"is_significant"`
 }
 
 type VariantCombination struct {
@@ -874,15 +874,15 @@ func (s *abTestAnalyticsService) extractObservedCounts(variantA, variantB *Varia
 
 func (s *abTestAnalyticsService) calculateTStatistic(request *TTestRequest) (float64, error) {
 	meanDiff := request.VariantB.Mean - request.VariantA.Mean
-	
+
 	// Calculate pooled standard error
 	var pooledSE float64
 	if request.EqualVariances {
 		// Equal variances assumed - use pooled variance
-		pooledVar := ((float64(request.VariantA.SampleSize-1) * math.Pow(request.VariantA.StdDev, 2)) + 
-		             (float64(request.VariantB.SampleSize-1) * math.Pow(request.VariantB.StdDev, 2))) / 
-		            float64(request.VariantA.SampleSize + request.VariantB.SampleSize - 2)
-		
+		pooledVar := ((float64(request.VariantA.SampleSize-1) * math.Pow(request.VariantA.StdDev, 2)) +
+			(float64(request.VariantB.SampleSize-1) * math.Pow(request.VariantB.StdDev, 2))) /
+			float64(request.VariantA.SampleSize+request.VariantB.SampleSize-2)
+
 		pooledSE = math.Sqrt(pooledVar * (1.0/float64(request.VariantA.SampleSize) + 1.0/float64(request.VariantB.SampleSize)))
 	} else {
 		// Welch's t-test - unequal variances
@@ -890,11 +890,11 @@ func (s *abTestAnalyticsService) calculateTStatistic(request *TTestRequest) (flo
 		varB := math.Pow(request.VariantB.StdDev, 2) / float64(request.VariantB.SampleSize)
 		pooledSE = math.Sqrt(varA + varB)
 	}
-	
+
 	if pooledSE == 0 {
 		return 0, ErrStatisticalTestFailed
 	}
-	
+
 	return meanDiff / pooledSE, nil
 }
 
@@ -902,15 +902,15 @@ func (s *abTestAnalyticsService) calculateDegreesOfFreedom(request *TTestRequest
 	if request.EqualVariances {
 		return float64(request.VariantA.SampleSize + request.VariantB.SampleSize - 2)
 	}
-	
+
 	// Welch-Satterthwaite equation for unequal variances
 	varA := math.Pow(request.VariantA.StdDev, 2) / float64(request.VariantA.SampleSize)
 	varB := math.Pow(request.VariantB.StdDev, 2) / float64(request.VariantB.SampleSize)
-	
-	numerator := math.Pow(varA + varB, 2)
-	denominator := (math.Pow(varA, 2) / float64(request.VariantA.SampleSize - 1)) + 
-	               (math.Pow(varB, 2) / float64(request.VariantB.SampleSize - 1))
-	
+
+	numerator := math.Pow(varA+varB, 2)
+	denominator := (math.Pow(varA, 2) / float64(request.VariantA.SampleSize-1)) +
+		(math.Pow(varB, 2) / float64(request.VariantB.SampleSize-1))
+
 	return numerator / denominator
 }
 
@@ -918,15 +918,15 @@ func (s *abTestAnalyticsService) calculateTTestPValue(tStatistic, df float64) fl
 	// This is a simplified calculation. In a real implementation, you would use
 	// a proper statistical library like gonum or call an external service
 	// For now, we'll use an approximation
-	
+
 	if df <= 0 {
 		return 1.0
 	}
-	
+
 	// Convert t-statistic to p-value using two-tailed test
 	// This is a simplified approximation
 	absTStat := math.Abs(tStatistic)
-	
+
 	// Rough approximation for demonstration
 	if absTStat > 3.0 {
 		return 0.001
@@ -937,7 +937,7 @@ func (s *abTestAnalyticsService) calculateTTestPValue(tStatistic, df float64) fl
 	} else if absTStat > 1.645 {
 		return 0.10
 	}
-	
+
 	return 0.5 * (1.0 - absTStat/4.0)
 }
 
@@ -949,18 +949,18 @@ func (s *abTestAnalyticsService) calculateTTestPValue(tStatistic, df float64) fl
 func (s *abTestAnalyticsService) calculateCohensD(variantA, variantB *ContinuousData) float64 {
 	meanDiff := variantB.Mean - variantA.Mean
 	pooledStdDev := math.Sqrt((math.Pow(variantA.StdDev, 2) + math.Pow(variantB.StdDev, 2)) / 2.0)
-	
+
 	if pooledStdDev == 0 {
 		return 0
 	}
-	
+
 	return meanDiff / pooledStdDev
 }
 
 func (s *abTestAnalyticsService) calculateMeanDifferenceCI(request *TTestRequest) *ConfidenceInterval {
 	// Simplified confidence interval calculation
 	meanDiff := request.VariantB.Mean - request.VariantA.Mean
-	
+
 	// This would use proper t-distribution critical values in a real implementation
 	criticalValue := 1.96 // approximation for 95% confidence
 	if request.ConfidenceLevel == 0.99 {
@@ -968,13 +968,13 @@ func (s *abTestAnalyticsService) calculateMeanDifferenceCI(request *TTestRequest
 	} else if request.ConfidenceLevel == 0.90 {
 		criticalValue = 1.645
 	}
-	
+
 	// Simplified standard error calculation
-	se := math.Sqrt(math.Pow(request.VariantA.StdDev, 2)/float64(request.VariantA.SampleSize) + 
-	               math.Pow(request.VariantB.StdDev, 2)/float64(request.VariantB.SampleSize))
-	
+	se := math.Sqrt(math.Pow(request.VariantA.StdDev, 2)/float64(request.VariantA.SampleSize) +
+		math.Pow(request.VariantB.StdDev, 2)/float64(request.VariantB.SampleSize))
+
 	margin := criticalValue * se
-	
+
 	return &ConfidenceInterval{
 		LowerBound: meanDiff - margin,
 		UpperBound: meanDiff + margin,
@@ -989,7 +989,7 @@ func (s *abTestAnalyticsService) PerformPowerAnalysis(ctx context.Context, reque
 	defer span.End()
 
 	timer := s.metrics.Timer("ab_test_analytics_power_analysis", metrics.Fields{
-		"test_type": string(request.TestType),
+		"test_type":     string(request.TestType),
 		"analysis_type": string(request.AnalysisType),
 	})
 	defer timer.Stop()
@@ -1008,12 +1008,12 @@ func (s *abTestAnalyticsService) PerformPowerAnalysis(ctx context.Context, reque
 		power = s.calculateStatisticalPower(request)
 		detectableEffectSize = request.EffectSize
 		requiredSampleSize = request.SampleSizeA + request.SampleSizeB
-		
+
 	case PowerAnalysisCalculateSampleSize:
 		requiredSampleSize = s.calculateRequiredSampleSizeForPower(request)
 		power = request.Power
 		detectableEffectSize = request.EffectSize
-		
+
 	case PowerAnalysisCalculateEffectSize:
 		detectableEffectSize = s.calculateDetectableEffectSize(request)
 		power = request.Power
@@ -1035,7 +1035,7 @@ func (s *abTestAnalyticsService) PerformPowerAnalysis(ctx context.Context, reque
 	}
 
 	s.metrics.IncrementCounter("ab_test_analytics_power_analyses_completed", metrics.Fields{
-		"analysis_type": string(request.AnalysisType),
+		"analysis_type":  string(request.AnalysisType),
 		"power_adequate": power >= 0.8,
 	})
 
@@ -1070,7 +1070,7 @@ func (s *abTestAnalyticsService) CalculateRequiredSampleSize(ctx context.Context
 	}
 
 	totalSamples := sampleSizeA + sampleSizeB
-	
+
 	// Estimate duration based on typical traffic patterns
 	estimatedDuration = s.estimateExperimentDuration(totalSamples)
 
@@ -1094,7 +1094,7 @@ func (s *abTestAnalyticsService) CalculateRequiredSampleSize(ctx context.Context
 	}
 
 	s.metrics.IncrementCounter("ab_test_analytics_sample_size_calculations_completed", metrics.Fields{
-		"test_type": string(request.TestType),
+		"test_type":     string(request.TestType),
 		"total_samples": totalSamples,
 	})
 
@@ -1114,21 +1114,21 @@ func (s *abTestAnalyticsService) MonitorSampleSizeAdequacy(ctx context.Context, 
 
 	// NOTE: Future improvement - Get actual experiment data from repository
 	// For now, we'll simulate the monitoring with sample data
-	
+
 	// Simulated current sample size (would come from database)
 	currentSampleSize := int64(850)
-	
+
 	// Simulated required sample size (would be calculated or stored)
 	requiredSampleSize := int64(1000)
-	
+
 	// Calculate adequacy metrics
 	percentageComplete := float64(currentSampleSize) / float64(requiredSampleSize) * 100.0
 	if percentageComplete > 100.0 {
 		percentageComplete = 100.0
 	}
-	
+
 	isAdequate := currentSampleSize >= requiredSampleSize
-	
+
 	// Estimate completion time based on current rate
 	// NOTE: Future improvement - Track actual enrollment rate over time
 	dailyEnrollmentRate := 50 // samples per day (would be calculated from historical data)
@@ -1136,10 +1136,10 @@ func (s *abTestAnalyticsService) MonitorSampleSizeAdequacy(ctx context.Context, 
 	if remainingSamples < 0 {
 		remainingSamples = 0
 	}
-	
+
 	daysRemaining := float64(remainingSamples) / float64(dailyEnrollmentRate)
-	estimatedCompletion := time.Now().Add(time.Duration(daysRemaining * 24) * time.Hour)
-	
+	estimatedCompletion := time.Now().Add(time.Duration(daysRemaining*24) * time.Hour)
+
 	result := &SampleSizeAdequacyResult{
 		ExperimentID:        experimentID,
 		CurrentSampleSize:   currentSampleSize,
@@ -1150,15 +1150,15 @@ func (s *abTestAnalyticsService) MonitorSampleSizeAdequacy(ctx context.Context, 
 	}
 
 	s.metrics.IncrementCounter("ab_test_analytics_adequacy_checks", metrics.Fields{
-		"is_adequate": isAdequate,
+		"is_adequate":         isAdequate,
 		"percentage_complete": int(percentageComplete),
 	})
 
 	s.logger.Info("Sample size adequacy monitored", logger.Fields{
 		"experiment_id": experimentID,
-		"current_size": currentSampleSize,
+		"current_size":  currentSampleSize,
 		"required_size": requiredSampleSize,
-		"is_adequate": isAdequate,
+		"is_adequate":   isAdequate,
 	})
 
 	return result, nil
@@ -1258,8 +1258,8 @@ func (s *abTestAnalyticsService) EvaluateEarlyStoppingCriteria(ctx context.Conte
 	}
 
 	s.metrics.IncrementCounter("ab_test_analytics_early_stopping_evaluations", metrics.Fields{
-		"should_stop": shouldStop,
-		"is_significant": isSignificant,
+		"should_stop":       shouldStop,
+		"is_significant":    isSignificant,
 		"meets_effect_size": meetsEffectSize,
 	})
 
@@ -1340,17 +1340,17 @@ func (s *abTestAnalyticsService) GenerateExperimentReport(ctx context.Context, e
 				Mean:        0.116,
 				StdDev:      0.320,
 			},
-			MetricType:             MetricTypeProportion,
-			ConfidenceLevel:        0.95,
-			TestType:               StatisticalTestZTest,
-			AlternativeHypothesis:  "two-sided",
+			MetricType:            MetricTypeProportion,
+			ConfidenceLevel:       0.95,
+			TestType:              StatisticalTestZTest,
+			AlternativeHypothesis: "two-sided",
 		}
 
 		statisticalResult, err := s.CalculateStatisticalSignificance(ctx, statisticalRequest)
 		if err != nil {
 			s.logger.Warn("Failed to calculate statistical significance for report", logger.Fields{
 				"experiment_id": experimentID,
-				"error": err.Error(),
+				"error":         err.Error(),
 			})
 		} else {
 			report.StatisticalResults = statisticalResult
@@ -1383,7 +1383,7 @@ func (s *abTestAnalyticsService) GenerateExperimentReport(ctx context.Context, e
 		if err != nil {
 			s.logger.Warn("Failed to perform Bayesian analysis for report", logger.Fields{
 				"experiment_id": experimentID,
-				"error": err.Error(),
+				"error":         err.Error(),
 			})
 		} else {
 			report.BayesianResults = bayesianResult
@@ -1407,7 +1407,7 @@ func (s *abTestAnalyticsService) GenerateExperimentReport(ctx context.Context, e
 		if err != nil {
 			s.logger.Warn("Failed to perform power analysis for report", logger.Fields{
 				"experiment_id": experimentID,
-				"error": err.Error(),
+				"error":         err.Error(),
 			})
 		} else {
 			report.PowerAnalysis = powerResult
@@ -1428,22 +1428,22 @@ func (s *abTestAnalyticsService) GenerateExperimentReport(ctx context.Context, e
 	if options.IncludeVisualizations {
 		// NOTE: Future improvement - Implement actual visualization generation
 		report.Visualizations = map[string]interface{}{
-			"conversion_rate_chart": "placeholder_chart_data",
+			"conversion_rate_chart":   "placeholder_chart_data",
 			"statistical_power_curve": "placeholder_power_curve",
 			"bayesian_posterior_plot": "placeholder_posterior_plot",
 		}
 	}
 
 	s.metrics.IncrementCounter("ab_test_analytics_reports_generated", metrics.Fields{
-		"format": options.Format,
+		"format":            options.Format,
 		"includes_bayesian": options.IncludeBayesian,
-		"includes_power": options.IncludePowerAnalysis,
+		"includes_power":    options.IncludePowerAnalysis,
 	})
 
 	s.logger.Info("Experiment report generated", logger.Fields{
 		"experiment_id": experimentID,
-		"format": options.Format,
-		"sections": len(options.Sections),
+		"format":        options.Format,
+		"sections":      len(options.Sections),
 	})
 
 	return report, nil
@@ -1477,15 +1477,15 @@ func (s *abTestAnalyticsService) CalculateBayesianCredibleInterval(ctx context.C
 
 func (s *abTestAnalyticsService) convertTTestToStatisticalResult(tResult *TTestResult, request *StatisticalTestRequest) *StatisticalTestResult {
 	return &StatisticalTestResult{
-		ExperimentID:      request.ExperimentID,
-		TestType:          StatisticalTestTTest,
-		PValue:            tResult.PValue,
-		TestStatistic:     tResult.TStatistic,
-		CriticalValue:     1.96, // Simplified
-		IsSignificant:     tResult.IsSignificant,
-		EffectSize:        tResult.EffectSize,
+		ExperimentID:       request.ExperimentID,
+		TestType:           StatisticalTestTTest,
+		PValue:             tResult.PValue,
+		TestStatistic:      tResult.TStatistic,
+		CriticalValue:      1.96, // Simplified
+		IsSignificant:      tResult.IsSignificant,
+		EffectSize:         tResult.EffectSize,
 		ConfidenceInterval: tResult.ConfidenceInterval,
-		PowerEstimate:     0.8, // Simplified
+		PowerEstimate:      0.8, // Simplified
 		SampleSizes: map[string]int64{
 			"variant_a": request.VariantA.SampleSize,
 			"variant_b": request.VariantB.SampleSize,
@@ -1497,15 +1497,15 @@ func (s *abTestAnalyticsService) convertTTestToStatisticalResult(tResult *TTestR
 
 func (s *abTestAnalyticsService) convertZTestToStatisticalResult(zResult *ZTestResult, request *StatisticalTestRequest) *StatisticalTestResult {
 	return &StatisticalTestResult{
-		ExperimentID:      request.ExperimentID,
-		TestType:          StatisticalTestZTest,
-		PValue:            zResult.PValue,
-		TestStatistic:     zResult.ZStatistic,
-		CriticalValue:     1.96,
-		IsSignificant:     zResult.IsSignificant,
-		EffectSize:        zResult.EffectSize,
+		ExperimentID:       request.ExperimentID,
+		TestType:           StatisticalTestZTest,
+		PValue:             zResult.PValue,
+		TestStatistic:      zResult.ZStatistic,
+		CriticalValue:      1.96,
+		IsSignificant:      zResult.IsSignificant,
+		EffectSize:         zResult.EffectSize,
 		ConfidenceInterval: zResult.ConfidenceInterval,
-		PowerEstimate:     0.8,
+		PowerEstimate:      0.8,
 		SampleSizes: map[string]int64{
 			"variant_a": request.VariantA.SampleSize,
 			"variant_b": request.VariantB.SampleSize,
@@ -1517,15 +1517,15 @@ func (s *abTestAnalyticsService) convertZTestToStatisticalResult(zResult *ZTestR
 
 func (s *abTestAnalyticsService) convertChiSquareToStatisticalResult(chiResult *ChiSquareTestResult, request *StatisticalTestRequest) *StatisticalTestResult {
 	return &StatisticalTestResult{
-		ExperimentID:      request.ExperimentID,
-		TestType:          StatisticalTestChiSquare,
-		PValue:            chiResult.PValue,
-		TestStatistic:     chiResult.ChiSquareStatistic,
-		CriticalValue:     3.841, // Simplified for df=1
-		IsSignificant:     chiResult.IsSignificant,
-		EffectSize:        chiResult.CramersV,
+		ExperimentID:       request.ExperimentID,
+		TestType:           StatisticalTestChiSquare,
+		PValue:             chiResult.PValue,
+		TestStatistic:      chiResult.ChiSquareStatistic,
+		CriticalValue:      3.841, // Simplified for df=1
+		IsSignificant:      chiResult.IsSignificant,
+		EffectSize:         chiResult.CramersV,
 		ConfidenceInterval: nil, // Not applicable for chi-square
-		PowerEstimate:     0.8,
+		PowerEstimate:      0.8,
 		SampleSizes: map[string]int64{
 			"variant_a": request.VariantA.SampleSize,
 			"variant_b": request.VariantB.SampleSize,
@@ -1561,7 +1561,7 @@ func (s *abTestAnalyticsService) validateChiSquareTestRequest(request *ChiSquare
 	if request.ConfidenceLevel <= 0 || request.ConfidenceLevel >= 1 {
 		return ErrInvalidConfidenceLevel
 	}
-	
+
 	// Check minimum sample size for each cell
 	for _, row := range request.ObservedCounts {
 		for _, count := range row {
@@ -1609,12 +1609,12 @@ func (s *abTestAnalyticsService) calculateExpectedCounts(observed [][]int64) [][
 	rows := len(observed)
 	cols := len(observed[0])
 	expected := make([][]float64, rows)
-	
+
 	// Calculate row and column totals
 	rowTotals := make([]int64, rows)
 	colTotals := make([]int64, cols)
 	grandTotal := int64(0)
-	
+
 	for i := 0; i < rows; i++ {
 		expected[i] = make([]float64, cols)
 		for j := 0; j < cols; j++ {
@@ -1623,20 +1623,20 @@ func (s *abTestAnalyticsService) calculateExpectedCounts(observed [][]int64) [][
 			grandTotal += observed[i][j]
 		}
 	}
-	
+
 	// Calculate expected counts
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			expected[i][j] = float64(rowTotals[i] * colTotals[j]) / float64(grandTotal)
+			expected[i][j] = float64(rowTotals[i]*colTotals[j]) / float64(grandTotal)
 		}
 	}
-	
+
 	return expected
 }
 
 func (s *abTestAnalyticsService) calculateChiSquareStatistic(observed [][]int64, expected [][]float64) (float64, error) {
 	chiSquare := 0.0
-	
+
 	for i := 0; i < len(observed); i++ {
 		for j := 0; j < len(observed[i]); j++ {
 			if expected[i][j] == 0 {
@@ -1646,7 +1646,7 @@ func (s *abTestAnalyticsService) calculateChiSquareStatistic(observed [][]int64,
 			chiSquare += (diff * diff) / expected[i][j]
 		}
 	}
-	
+
 	return chiSquare, nil
 }
 
@@ -1674,7 +1674,7 @@ func (s *abTestAnalyticsService) calculateChiSquarePValue(chiSquare float64, df 
 func (s *abTestAnalyticsService) calculateCramersV(chiSquare float64, observed [][]int64) float64 {
 	rows := len(observed)
 	cols := len(observed[0])
-	
+
 	// Calculate total sample size
 	n := int64(0)
 	for i := 0; i < rows; i++ {
@@ -1682,18 +1682,18 @@ func (s *abTestAnalyticsService) calculateCramersV(chiSquare float64, observed [
 			n += observed[i][j]
 		}
 	}
-	
+
 	if n == 0 {
 		return 0
 	}
-	
+
 	minDim := math.Min(float64(rows-1), float64(cols-1))
 	return math.Sqrt(chiSquare / (float64(n) * minDim))
 }
 
 func (s *abTestAnalyticsService) calculateStandardizedResiduals(observed [][]int64, expected [][]float64) [][]float64 {
 	residuals := make([][]float64, len(observed))
-	
+
 	for i := 0; i < len(observed); i++ {
 		residuals[i] = make([]float64, len(observed[i]))
 		for j := 0; j < len(observed[i]); j++ {
@@ -1702,43 +1702,43 @@ func (s *abTestAnalyticsService) calculateStandardizedResiduals(observed [][]int
 			}
 		}
 	}
-	
+
 	return residuals
 }
 
 func (s *abTestAnalyticsService) calculatePooledProportion(variantA, variantB *ProportionData) float64 {
 	totalSuccesses := variantA.Successes + variantB.Successes
 	totalSamples := variantA.SampleSize + variantB.SampleSize
-	
+
 	if totalSamples == 0 {
 		return 0
 	}
-	
+
 	return float64(totalSuccesses) / float64(totalSamples)
 }
 
 func (s *abTestAnalyticsService) calculateZStatistic(request *ZTestRequest, pooledProportion float64) (float64, error) {
 	propDiff := request.VariantB.Proportion - request.VariantA.Proportion
-	
+
 	// Calculate standard error
 	if pooledProportion == 0 || pooledProportion == 1 {
 		return 0, ErrStatisticalTestFailed
 	}
-	
-	se := math.Sqrt(pooledProportion * (1 - pooledProportion) * 
+
+	se := math.Sqrt(pooledProportion * (1 - pooledProportion) *
 		(1.0/float64(request.VariantA.SampleSize) + 1.0/float64(request.VariantB.SampleSize)))
-	
+
 	if se == 0 {
 		return 0, ErrStatisticalTestFailed
 	}
-	
+
 	return propDiff / se, nil
 }
 
 func (s *abTestAnalyticsService) calculateZTestPValue(zStatistic float64) float64 {
 	// Simplified p-value calculation using normal distribution
 	absZ := math.Abs(zStatistic)
-	
+
 	if absZ > 3.291 {
 		return 0.001
 	} else if absZ > 2.576 {
@@ -1748,7 +1748,7 @@ func (s *abTestAnalyticsService) calculateZTestPValue(zStatistic float64) float6
 	} else if absZ > 1.645 {
 		return 0.10
 	}
-	
+
 	return 0.5 * (1.0 - absZ/4.0)
 }
 
@@ -1761,11 +1761,11 @@ func (s *abTestAnalyticsService) calculateProportionEffectSize(variantA, variant
 
 func (s *abTestAnalyticsService) calculateProportionDifferenceCI(request *ZTestRequest) *ConfidenceInterval {
 	propDiff := request.VariantB.Proportion - request.VariantA.Proportion
-	
+
 	// Standard error for difference in proportions
 	se := math.Sqrt((request.VariantA.Proportion*(1-request.VariantA.Proportion))/float64(request.VariantA.SampleSize) +
 		(request.VariantB.Proportion*(1-request.VariantB.Proportion))/float64(request.VariantB.SampleSize))
-	
+
 	// Critical value
 	criticalValue := 1.96
 	if request.ConfidenceLevel == 0.99 {
@@ -1773,9 +1773,9 @@ func (s *abTestAnalyticsService) calculateProportionDifferenceCI(request *ZTestR
 	} else if request.ConfidenceLevel == 0.90 {
 		criticalValue = 1.645
 	}
-	
+
 	margin := float64(criticalValue) * se
-	
+
 	return &ConfidenceInterval{
 		LowerBound: propDiff - margin,
 		UpperBound: propDiff + margin,
@@ -1801,11 +1801,11 @@ func (s *abTestAnalyticsService) updatePosterior(prior *PriorDistribution, varia
 	// Simplified Bayesian update for beta-binomial model
 	alpha := prior.Parameters[0] + float64(variant.Conversions)
 	beta := prior.Parameters[1] + float64(variant.SampleSize-variant.Conversions)
-	
+
 	mean := alpha / (alpha + beta)
 	variance := (alpha * beta) / ((alpha + beta) * (alpha + beta) * (alpha + beta + 1))
 	stdDev := math.Sqrt(variance)
-	
+
 	return &PosteriorDistribution{
 		Type:       "beta",
 		Parameters: []float64{alpha, beta},
@@ -1817,30 +1817,30 @@ func (s *abTestAnalyticsService) updatePosterior(prior *PriorDistribution, varia
 func (s *abTestAnalyticsService) calculateProbabilityBWins(posteriorA, posteriorB *PosteriorDistribution, numSamples int) float64 {
 	// Simplified Monte Carlo simulation
 	wins := 0
-	
+
 	for i := 0; i < numSamples; i++ {
 		// Generate samples from beta distributions (simplified)
 		sampleA := posteriorA.Mean + (rand.Float64()-0.5)*posteriorA.StdDev*2
 		sampleB := posteriorB.Mean + (rand.Float64()-0.5)*posteriorB.StdDev*2
-		
+
 		if sampleB > sampleA {
 			wins++
 		}
 	}
-	
+
 	return float64(wins) / float64(numSamples)
 }
 
 func (s *abTestAnalyticsService) calculateExpectedLoss(posteriorA, posteriorB *PosteriorDistribution) float64 {
 	// Simplified expected loss calculation
-	return math.Abs(posteriorB.Mean - posteriorA.Mean) * 0.1
+	return math.Abs(posteriorB.Mean-posteriorA.Mean) * 0.1
 }
 
 func (s *abTestAnalyticsService) calculateBayesianCredibleInterval(posteriorA, posteriorB *PosteriorDistribution, level float64) *CredibleInterval {
 	// Simplified credible interval for difference
 	diff := posteriorB.Mean - posteriorA.Mean
 	combinedStdDev := math.Sqrt(posteriorA.StdDev*posteriorA.StdDev + posteriorB.StdDev*posteriorB.StdDev)
-	
+
 	// Approximate critical value
 	criticalValue := 1.96
 	if level == 0.99 {
@@ -1848,9 +1848,9 @@ func (s *abTestAnalyticsService) calculateBayesianCredibleInterval(posteriorA, p
 	} else if level == 0.90 {
 		criticalValue = 1.645
 	}
-	
+
 	margin := float64(criticalValue) * combinedStdDev
-	
+
 	return &CredibleInterval{
 		LowerBound: diff - margin,
 		UpperBound: diff + margin,
@@ -1866,16 +1866,16 @@ func (s *abTestAnalyticsService) calculateBayesFactor(prior *PriorDistribution, 
 func (s *abTestAnalyticsService) calculateBayesianEffectSize(posteriorA, posteriorB *PosteriorDistribution, level float64) *BayesianEffectSize {
 	diff := posteriorB.Mean - posteriorA.Mean
 	combinedStdDev := math.Sqrt(posteriorA.StdDev*posteriorA.StdDev + posteriorB.StdDev*posteriorB.StdDev)
-	
+
 	criticalValue := 1.96
 	if level == 0.99 {
 		criticalValue = 2.576
 	} else if level == 0.90 {
 		criticalValue = 1.645
 	}
-	
+
 	margin := float64(criticalValue) * combinedStdDev
-	
+
 	return &BayesianEffectSize{
 		Mean: diff,
 		CredibleInterval: &CredibleInterval{
@@ -1915,7 +1915,7 @@ func (s *abTestAnalyticsService) generateStatisticalInterpretation(pValue float6
 
 func (s *abTestAnalyticsService) generateStatisticalRecommendations(isSignificant bool, effectSize float64) []string {
 	recommendations := []string{}
-	
+
 	if isSignificant {
 		if math.Abs(effectSize) > 0.8 {
 			recommendations = append(recommendations, "Large effect size detected. Consider implementing the winning variant.")
@@ -1928,7 +1928,7 @@ func (s *abTestAnalyticsService) generateStatisticalRecommendations(isSignifican
 		recommendations = append(recommendations, "No significant difference detected. Consider longer test duration or larger sample size.")
 		recommendations = append(recommendations, "Review test design and hypothesis for potential improvements.")
 	}
-	
+
 	return recommendations
 }
 
@@ -1944,102 +1944,102 @@ type SampleSizeAdequacyResult struct {
 }
 
 type SequentialTestRequest struct {
-	ExperimentID    uuid.UUID `json:"experiment_id"`
-	CurrentData     *ExperimentData `json:"current_data"`
-	AlphaSpending   float64   `json:"alpha_spending"`
-	BetaSpending    float64   `json:"beta_spending"`
-	AnalysisNumber  int       `json:"analysis_number"`
+	ExperimentID   uuid.UUID       `json:"experiment_id"`
+	CurrentData    *ExperimentData `json:"current_data"`
+	AlphaSpending  float64         `json:"alpha_spending"`
+	BetaSpending   float64         `json:"beta_spending"`
+	AnalysisNumber int             `json:"analysis_number"`
 }
 
 type SequentialTestResult struct {
-	ExperimentID           uuid.UUID `json:"experiment_id"`
-	CumulativeAlphaSpent   float64   `json:"cumulative_alpha_spent"`
-	CumulativeBetaSpent    float64   `json:"cumulative_beta_spent"`
-	BoundaryValue          float64   `json:"boundary_value"`
-	TestStatistic          float64   `json:"test_statistic"`
-	ShouldStop             bool      `json:"should_stop"`
-	StoppingReason         string    `json:"stopping_reason"`
+	ExperimentID         uuid.UUID `json:"experiment_id"`
+	CumulativeAlphaSpent float64   `json:"cumulative_alpha_spent"`
+	CumulativeBetaSpent  float64   `json:"cumulative_beta_spent"`
+	BoundaryValue        float64   `json:"boundary_value"`
+	TestStatistic        float64   `json:"test_statistic"`
+	ShouldStop           bool      `json:"should_stop"`
+	StoppingReason       string    `json:"stopping_reason"`
 }
 
 type InteractionEffectsRequest struct {
-	ExperimentID uuid.UUID         `json:"experiment_id"`
-	Factors      []Factor          `json:"factors"`
-	Data         []ExperimentData  `json:"data"`
+	ExperimentID uuid.UUID        `json:"experiment_id"`
+	Factors      []Factor         `json:"factors"`
+	Data         []ExperimentData `json:"data"`
 }
 
 type InteractionEffectsResult struct {
-	ExperimentID   uuid.UUID           `json:"experiment_id"`
-	Interactions   []InteractionEffect `json:"interactions"`
-	MainEffects    []FactorEffect      `json:"main_effects"`
-	ModelSummary   *ModelFitStatistics `json:"model_summary"`
+	ExperimentID uuid.UUID           `json:"experiment_id"`
+	Interactions []InteractionEffect `json:"interactions"`
+	MainEffects  []FactorEffect      `json:"main_effects"`
+	ModelSummary *ModelFitStatistics `json:"model_summary"`
 }
 
 type ReportOptions struct {
-	IncludeBayesian      bool     `json:"include_bayesian"`
-	IncludePowerAnalysis bool     `json:"include_power_analysis"`
-	IncludeVisualizations bool    `json:"include_visualizations"`
-	Format               string   `json:"format"`
-	Sections             []string `json:"sections"`
+	IncludeBayesian       bool     `json:"include_bayesian"`
+	IncludePowerAnalysis  bool     `json:"include_power_analysis"`
+	IncludeVisualizations bool     `json:"include_visualizations"`
+	Format                string   `json:"format"`
+	Sections              []string `json:"sections"`
 }
 
 type ExperimentReport struct {
-	ExperimentID      uuid.UUID                `json:"experiment_id"`
-	GeneratedAt       time.Time                `json:"generated_at"`
-	ExecutiveSummary  string                   `json:"executive_summary"`
+	ExperimentID       uuid.UUID               `json:"experiment_id"`
+	GeneratedAt        time.Time               `json:"generated_at"`
+	ExecutiveSummary   string                  `json:"executive_summary"`
 	StatisticalResults *StatisticalTestResult  `json:"statistical_results"`
-	BayesianResults   *BayesianAnalysisResult  `json:"bayesian_results"`
-	PowerAnalysis     *PowerAnalysisResult     `json:"power_analysis"`
-	Recommendations   []string                 `json:"recommendations"`
-	Visualizations    map[string]interface{}   `json:"visualizations"`
+	BayesianResults    *BayesianAnalysisResult `json:"bayesian_results"`
+	PowerAnalysis      *PowerAnalysisResult    `json:"power_analysis"`
+	Recommendations    []string                `json:"recommendations"`
+	Visualizations     map[string]interface{}  `json:"visualizations"`
 }
 
 type MetaAnalysisRequest struct {
-	ExperimentIDs []uuid.UUID `json:"experiment_ids"`
-	AnalysisType  string      `json:"analysis_type"`
-	WeightingMethod string    `json:"weighting_method"`
+	ExperimentIDs   []uuid.UUID `json:"experiment_ids"`
+	AnalysisType    string      `json:"analysis_type"`
+	WeightingMethod string      `json:"weighting_method"`
 }
 
 type MetaAnalysisResult struct {
-	OverallEffectSize     float64                `json:"overall_effect_size"`
-	ConfidenceInterval    *ConfidenceInterval    `json:"confidence_interval"`
-	HeterogeneityTest     *HeterogeneityTest     `json:"heterogeneity_test"`
-	ForestPlot           map[string]interface{} `json:"forest_plot"`
-	Studies              []StudyResult          `json:"studies"`
+	OverallEffectSize  float64                `json:"overall_effect_size"`
+	ConfidenceInterval *ConfidenceInterval    `json:"confidence_interval"`
+	HeterogeneityTest  *HeterogeneityTest     `json:"heterogeneity_test"`
+	ForestPlot         map[string]interface{} `json:"forest_plot"`
+	Studies            []StudyResult          `json:"studies"`
 }
 
 type NoveltyEffectResult struct {
-	ExperimentID      uuid.UUID `json:"experiment_id"`
-	NoveltyDetected   bool      `json:"novelty_detected"`
-	NoveltyPeriod     time.Duration `json:"novelty_period"`
-	BaselineEffect    float64   `json:"baseline_effect"`
-	NoveltyEffect     float64   `json:"novelty_effect"`
-	Recommendations   []string  `json:"recommendations"`
+	ExperimentID    uuid.UUID     `json:"experiment_id"`
+	NoveltyDetected bool          `json:"novelty_detected"`
+	NoveltyPeriod   time.Duration `json:"novelty_period"`
+	BaselineEffect  float64       `json:"baseline_effect"`
+	NoveltyEffect   float64       `json:"novelty_effect"`
+	Recommendations []string      `json:"recommendations"`
 }
 
 type CredibleIntervalRequest struct {
-	ExperimentID     uuid.UUID             `json:"experiment_id"`
+	ExperimentID     uuid.UUID              `json:"experiment_id"`
 	PosteriorA       *PosteriorDistribution `json:"posterior_a"`
 	PosteriorB       *PosteriorDistribution `json:"posterior_b"`
-	CredibilityLevel float64               `json:"credibility_level"`
+	CredibilityLevel float64                `json:"credibility_level"`
 }
 
 type CredibleIntervalResult struct {
-	ExperimentID      uuid.UUID         `json:"experiment_id"`
-	CredibleInterval  *CredibleInterval `json:"credible_interval"`
-	Interpretation    string            `json:"interpretation"`
+	ExperimentID     uuid.UUID         `json:"experiment_id"`
+	CredibleInterval *CredibleInterval `json:"credible_interval"`
+	Interpretation   string            `json:"interpretation"`
 }
 
 type HeterogeneityTest struct {
-	QStatistic    float64 `json:"q_statistic"`
-	PValue        float64 `json:"p_value"`
-	ISquared      float64 `json:"i_squared"`
-	TauSquared    float64 `json:"tau_squared"`
+	QStatistic float64 `json:"q_statistic"`
+	PValue     float64 `json:"p_value"`
+	ISquared   float64 `json:"i_squared"`
+	TauSquared float64 `json:"tau_squared"`
 }
 
 type StudyResult struct {
-	ExperimentID   uuid.UUID `json:"experiment_id"`
-	EffectSize     float64   `json:"effect_size"`
-	StandardError  float64   `json:"standard_error"`
-	Weight         float64   `json:"weight"`
-	SampleSize     int64     `json:"sample_size"`
+	ExperimentID  uuid.UUID `json:"experiment_id"`
+	EffectSize    float64   `json:"effect_size"`
+	StandardError float64   `json:"standard_error"`
+	Weight        float64   `json:"weight"`
+	SampleSize    int64     `json:"sample_size"`
 }

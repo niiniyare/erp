@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/iam/model"
 	"github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/core/iam/model"
 )
 
 // UserRepository defines the interface for user data operations
@@ -20,22 +20,22 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
 	Update(ctx context.Context, user *model.User) (*model.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	
+
 	// Query operations
 	List(ctx context.Context, limit, offset int) ([]*model.User, error)
 	ListByStatus(ctx context.Context, status model.UserAccountStatus) ([]*model.User, error)
 	Count(ctx context.Context) (int64, error)
-	
+
 	// Authentication specific
 	GetPasswordHash(ctx context.Context, userID uuid.UUID) (string, error)
 	UpdatePasswordHash(ctx context.Context, userID uuid.UUID, hash string) error
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID, loginTime time.Time) error
-	
+
 	// Account management
 	LockAccount(ctx context.Context, userID uuid.UUID, lockedUntil *time.Time, reason string) error
 	UnlockAccount(ctx context.Context, userID uuid.UUID) error
 	UpdateFailedLoginCount(ctx context.Context, userID uuid.UUID, count int) error
-	
+
 	// MFA operations
 	SetMFASecret(ctx context.Context, userID uuid.UUID, secret string) error
 	GetMFASecret(ctx context.Context, userID uuid.UUID) (string, error)
@@ -78,7 +78,7 @@ type RoleRepository interface {
 	List(ctx context.Context, limit, offset int) ([]*model.Role, error)
 	ListByEntity(ctx context.Context, entityID uuid.UUID) ([]*model.Role, error)
 	Count(ctx context.Context) (int64, error)
-	
+
 	// Role hierarchy
 	GetChildRoles(ctx context.Context, parentID uuid.UUID) ([]*model.Role, error)
 	GetRoleHierarchy(ctx context.Context, roleID uuid.UUID) ([]*model.Role, error)
@@ -92,7 +92,7 @@ type UserRoleRepository interface {
 	GetUserRolesByEntity(ctx context.Context, userID, entityID uuid.UUID) ([]*model.UserRole, error)
 	GetRoleUsers(ctx context.Context, roleID uuid.UUID) ([]*model.UserRole, error)
 	IsUserInRole(ctx context.Context, userID, roleID uuid.UUID, entityID *uuid.UUID) (bool, error)
-	
+
 	// Bulk operations
 	AssignBulk(ctx context.Context, userRoles []*model.UserRole) error
 	RemoveBulk(ctx context.Context, userRoleIDs []uuid.UUID) error
@@ -105,7 +105,7 @@ type SessionRepository interface {
 	GetByToken(ctx context.Context, token string) (*model.Session, error)
 	Update(ctx context.Context, session *model.Session) (*model.Session, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	
+
 	// Session management
 	InvalidateSession(ctx context.Context, sessionID uuid.UUID) error
 	InvalidateUserSessions(ctx context.Context, userID uuid.UUID) error
@@ -125,11 +125,11 @@ type PolicyRepository interface {
 	ListByEntity(ctx context.Context, entityID uuid.UUID) ([]*model.Policy, error)
 	ListEnabled(ctx context.Context) ([]*model.Policy, error)
 	Count(ctx context.Context) (int64, error)
-	
+
 	// Policy evaluation
 	GetPoliciesForEvaluation(ctx context.Context, resourceType, action string, entityID *uuid.UUID) ([]*model.Policy, error)
 	GetPoliciesByPriority(ctx context.Context, entityID *uuid.UUID) ([]*model.Policy, error)
-	
+
 	// Policy search
 	SearchPolicies(ctx context.Context, query string, limit, offset int) ([]*model.Policy, error)
 }
@@ -153,16 +153,16 @@ type PermissionRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*model.Permission, error)
 	Update(ctx context.Context, permission *model.Permission) (*model.Permission, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	
+
 	// Permission queries
 	GetUserPermissions(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) ([]*model.Permission, error)
 	GetResourcePermissions(ctx context.Context, resourceType string, resourceID *uuid.UUID) ([]*model.Permission, error)
 	CheckPermission(ctx context.Context, userID uuid.UUID, resourceType, action string, resourceID *uuid.UUID) (bool, error)
-	
+
 	// Grant/Revoke operations
 	GrantPermission(ctx context.Context, userID uuid.UUID, resourceType, action string, resourceID, entityID *uuid.UUID, expiresAt *time.Time) error
 	RevokePermission(ctx context.Context, userID uuid.UUID, resourceType, action string, resourceID, entityID *uuid.UUID) error
-	
+
 	// Cleanup
 	RemoveExpiredPermissions(ctx context.Context) error
 }
@@ -173,7 +173,7 @@ type AccessRequestRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*model.AccessRequest, error)
 	Update(ctx context.Context, request *model.AccessRequest) (*model.AccessRequest, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	
+
 	// Query operations
 	List(ctx context.Context, limit, offset int) ([]*model.AccessRequest, error)
 	ListByRequester(ctx context.Context, requesterID uuid.UUID) ([]*model.AccessRequest, error)
@@ -182,10 +182,10 @@ type AccessRequestRepository interface {
 	ListPendingApprovals(ctx context.Context, approverID uuid.UUID) ([]*model.AccessRequest, error)
 	Count(ctx context.Context) (int64, error)
 	CountByStatus(ctx context.Context, status model.ApprovalStatus) (int64, error)
-	
+
 	// Status management
 	UpdateStatus(ctx context.Context, requestID uuid.UUID, status model.ApprovalStatus, approvedBy *uuid.UUID, comments *string) error
-	
+
 	// Cleanup
 	RemoveExpiredRequests(ctx context.Context) error
 }
@@ -247,7 +247,7 @@ type UserAnalyticsRepository interface {
 	IncrementFailedLoginCount(ctx context.Context, userID uuid.UUID) error
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID, loginTime time.Time) error
 	UpdateLastActivity(ctx context.Context, userID uuid.UUID, activityTime time.Time) error
-	
+
 	// Activity tracking
 	RecordActivity(ctx context.Context, activity *model.UserActivity) error
 	GetUserActivities(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*model.UserActivity, error)
@@ -264,7 +264,7 @@ type IAMRepository interface {
 	Roles() RoleRepository
 	UserRoles() UserRoleRepository
 	Sessions() SessionRepository
-	
+
 	// Authorization repositories
 	Policies() PolicyRepository
 	Attributes() AttributeRepository
@@ -272,14 +272,14 @@ type IAMRepository interface {
 	AccessRequests() AccessRequestRepository
 	ApprovalWorkflows() ApprovalWorkflowRepository
 	ConditionalAccess() ConditionalAccessRepository
-	
+
 	// Policy management repositories
 	PolicyTemplates() PolicyTemplateRepository
 	PolicyVersions() PolicyVersionRepository
-	
+
 	// Analytics repositories
 	UserAnalytics() UserAnalyticsRepository
-	
+
 	// Transaction support using existing Store interface
 	Store() db.Store
 }

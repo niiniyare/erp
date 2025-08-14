@@ -2,7 +2,6 @@ package analytics
 
 //go:generate go run go.uber.org/mock/mockgen -source=user_analytics_service.go -destination=mock.go -package=analytics
 
-
 import (
 	"context"
 	"encoding/json"

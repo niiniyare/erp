@@ -2,7 +2,6 @@ package services
 
 //go:generate go run go.uber.org/mock/mockgen -source=policy_decision_service.go -destination=mock.go -package=services
 
-
 import (
 	"context"
 	"time"

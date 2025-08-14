@@ -2,15 +2,14 @@ package featureflag
 
 //go:generate go run go.uber.org/mock/mockgen -source=workflow_service.go -destination=mock.go -package=featureflag
 
-
 import (
 	"context"
 
+	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/access/request"
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/featureflag/workflow"
 	"github.com/niiniyare/erp/internal/shared/logger"
-	db "github.com/niiniyare/erp/db/sqlc"
 )
 
 // WorkflowService handles feature flag workflows with approval processes.

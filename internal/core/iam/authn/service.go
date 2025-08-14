@@ -20,45 +20,45 @@ type Service interface {
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 	UpdateUser(ctx context.Context, req *UpdateUserRequest) (*model.User, error)
 	DeleteUser(ctx context.Context, userID uuid.UUID) error
-	
+
 	// Person Management
 	CreatePerson(ctx context.Context, req *CreatePersonRequest) (*model.Person, error)
 	GetPerson(ctx context.Context, personID uuid.UUID) (*model.Person, error)
 	UpdatePerson(ctx context.Context, req *UpdatePersonRequest) (*model.Person, error)
-	
+
 	// Employee Management
 	CreateEmployee(ctx context.Context, req *CreateEmployeeRequest) (*model.Employee, error)
 	GetEmployee(ctx context.Context, employeeID uuid.UUID) (*model.Employee, error)
 	UpdateEmployee(ctx context.Context, req *UpdateEmployeeRequest) (*model.Employee, error)
-	
+
 	// Authentication
 	Authenticate(ctx context.Context, req *AuthenticationRequest) (*AuthenticationResult, error)
 	ValidateToken(ctx context.Context, token string) (*TokenValidationResult, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*TokenRefreshResult, error)
 	Logout(ctx context.Context, userID uuid.UUID) error
-	
+
 	// Password Management
 	ChangePassword(ctx context.Context, req *ChangePasswordRequest) error
 	ResetPassword(ctx context.Context, req *ResetPasswordRequest) error
 	ValidatePassword(ctx context.Context, userID uuid.UUID, password string) error
-	
+
 	// Multi-Factor Authentication (MFA)
 	EnableMFA(ctx context.Context, req *EnableMFARequest) (*MFASetupResult, error)
 	DisableMFA(ctx context.Context, userID uuid.UUID) error
 	ValidateMFA(ctx context.Context, req *ValidateMFARequest) (*MFAValidationResult, error)
 	GenerateMFABackupCodes(ctx context.Context, userID uuid.UUID) ([]string, error)
-	
+
 	// Session Management
 	CreateSession(ctx context.Context, req *CreateSessionRequest) (*model.Session, error)
 	GetSession(ctx context.Context, sessionID uuid.UUID) (*model.Session, error)
 	InvalidateSession(ctx context.Context, sessionID uuid.UUID) error
 	InvalidateAllUserSessions(ctx context.Context, userID uuid.UUID) error
-	
+
 	// Role Management
 	AssignRole(ctx context.Context, req *AssignRoleRequest) error
 	RemoveRole(ctx context.Context, req *RemoveRoleRequest) error
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*model.Role, error)
-	
+
 	// Account Management
 	LockAccount(ctx context.Context, userID uuid.UUID, reason string) error
 	UnlockAccount(ctx context.Context, userID uuid.UUID) error
@@ -67,40 +67,40 @@ type Service interface {
 
 // Request/Response types
 type CreateUserRequest struct {
-	Email       string            `json:"email" validate:"required,email"`
-	Password    string            `json:"password" validate:"required,min=8"`
-	FirstName   string            `json:"first_name" validate:"required"`
-	LastName    string            `json:"last_name" validate:"required"`
-	PhoneNumber *string           `json:"phone_number,omitempty"`
+	Email       string                 `json:"email" validate:"required,email"`
+	Password    string                 `json:"password" validate:"required,min=8"`
+	FirstName   string                 `json:"first_name" validate:"required"`
+	LastName    string                 `json:"last_name" validate:"required"`
+	PhoneNumber *string                `json:"phone_number,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type UpdateUserRequest struct {
-	UserID      uuid.UUID         `json:"user_id" validate:"required"`
-	FirstName   *string           `json:"first_name,omitempty"`
-	LastName    *string           `json:"last_name,omitempty"`
-	PhoneNumber *string           `json:"phone_number,omitempty"`
+	UserID      uuid.UUID              `json:"user_id" validate:"required"`
+	FirstName   *string                `json:"first_name,omitempty"`
+	LastName    *string                `json:"last_name,omitempty"`
+	PhoneNumber *string                `json:"phone_number,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type CreatePersonRequest struct {
-	FirstName   string            `json:"first_name" validate:"required"`
-	LastName    string            `json:"last_name" validate:"required"`
-	Email       *string           `json:"email,omitempty" validate:"omitempty,email"`
-	PhoneNumber *string           `json:"phone_number,omitempty"`
-	DateOfBirth *time.Time        `json:"date_of_birth,omitempty"`
-	Address     *model.Address    `json:"address,omitempty"`
+	FirstName   string                 `json:"first_name" validate:"required"`
+	LastName    string                 `json:"last_name" validate:"required"`
+	Email       *string                `json:"email,omitempty" validate:"omitempty,email"`
+	PhoneNumber *string                `json:"phone_number,omitempty"`
+	DateOfBirth *time.Time             `json:"date_of_birth,omitempty"`
+	Address     *model.Address         `json:"address,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type UpdatePersonRequest struct {
-	PersonID    uuid.UUID         `json:"person_id" validate:"required"`
-	FirstName   *string           `json:"first_name,omitempty"`
-	LastName    *string           `json:"last_name,omitempty"`
-	Email       *string           `json:"email,omitempty" validate:"omitempty,email"`
-	PhoneNumber *string           `json:"phone_number,omitempty"`
-	DateOfBirth *time.Time        `json:"date_of_birth,omitempty"`
-	Address     *model.Address    `json:"address,omitempty"`
+	PersonID    uuid.UUID              `json:"person_id" validate:"required"`
+	FirstName   *string                `json:"first_name,omitempty"`
+	LastName    *string                `json:"last_name,omitempty"`
+	Email       *string                `json:"email,omitempty" validate:"omitempty,email"`
+	PhoneNumber *string                `json:"phone_number,omitempty"`
+	DateOfBirth *time.Time             `json:"date_of_birth,omitempty"`
+	Address     *model.Address         `json:"address,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -139,8 +139,8 @@ type AuthenticationResult struct {
 }
 
 type TokenValidationResult struct {
-	Valid  bool      `json:"valid"`
-	UserID uuid.UUID `json:"user_id,omitempty"`
+	Valid  bool                   `json:"valid"`
+	UserID uuid.UUID              `json:"user_id,omitempty"`
 	Claims map[string]interface{} `json:"claims,omitempty"`
 }
 

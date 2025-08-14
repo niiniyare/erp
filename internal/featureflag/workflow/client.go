@@ -69,30 +69,30 @@ type AutoRollbackConfig struct {
 
 // FeatureFlagWorkflowResult represents the result of a workflow
 type FeatureFlagWorkflowResult struct {
-	WorkflowID        string                 `json:"workflow_id"`
-	Status            string                 `json:"status"`
-	FlagName          string                 `json:"flag_name"`
-	ChangeType        string                 `json:"change_type"`
-	RequiresApproval  bool                   `json:"requires_approval"`
-	AccessRequestID   *uuid.UUID             `json:"access_request_id,omitempty"`
-	EstimatedDuration time.Duration          `json:"estimated_duration"`
-	CreatedAt         time.Time              `json:"created_at"`
-	CompletedAt       *time.Time             `json:"completed_at,omitempty"`
+	WorkflowID        string                   `json:"workflow_id"`
+	Status            string                   `json:"status"`
+	FlagName          string                   `json:"flag_name"`
+	ChangeType        string                   `json:"change_type"`
+	RequiresApproval  bool                     `json:"requires_approval"`
+	AccessRequestID   *uuid.UUID               `json:"access_request_id,omitempty"`
+	EstimatedDuration time.Duration            `json:"estimated_duration"`
+	CreatedAt         time.Time                `json:"created_at"`
+	CompletedAt       *time.Time               `json:"completed_at,omitempty"`
 	Result            *FeatureFlagChangeResult `json:"result,omitempty"`
 }
 
 // BulkFeatureFlagWorkflowResult represents bulk workflow result
 type BulkFeatureFlagWorkflowResult struct {
-	WorkflowID        string                            `json:"workflow_id"`
-	Status            string                            `json:"status"`
-	TotalChanges      int                               `json:"total_changes"`
-	CompletedChanges  int                               `json:"completed_changes"`
-	FailedChanges     int                               `json:"failed_changes"`
-	RequiresApproval  bool                              `json:"requires_approval"`
-	AccessRequestIDs  []uuid.UUID                       `json:"access_request_ids,omitempty"`
-	EstimatedDuration time.Duration                     `json:"estimated_duration"`
-	CreatedAt         time.Time                         `json:"created_at"`
-	CompletedAt       *time.Time                        `json:"completed_at,omitempty"`
+	WorkflowID        string                              `json:"workflow_id"`
+	Status            string                              `json:"status"`
+	TotalChanges      int                                 `json:"total_changes"`
+	CompletedChanges  int                                 `json:"completed_changes"`
+	FailedChanges     int                                 `json:"failed_changes"`
+	RequiresApproval  bool                                `json:"requires_approval"`
+	AccessRequestIDs  []uuid.UUID                         `json:"access_request_ids,omitempty"`
+	EstimatedDuration time.Duration                       `json:"estimated_duration"`
+	CreatedAt         time.Time                           `json:"created_at"`
+	CompletedAt       *time.Time                          `json:"completed_at,omitempty"`
 	Results           map[string]*FeatureFlagChangeResult `json:"results,omitempty"`
 }
 
@@ -143,18 +143,18 @@ type ListPendingApprovalsResponse struct {
 
 // PendingApproval represents a pending approval request
 type PendingApproval struct {
-	WorkflowID        string     `json:"workflow_id"`
-	AccessRequestID   uuid.UUID  `json:"access_request_id"`
-	FlagName          string     `json:"flag_name"`
-	ChangeType        string     `json:"change_type"`
-	NewValue          interface{} `json:"new_value"`
-	RequestedBy       uuid.UUID  `json:"requested_by"`
-	Justification     string     `json:"justification"`
-	BusinessReason    string     `json:"business_reason,omitempty"`
-	CreatedAt         time.Time  `json:"created_at"`
-	ExpiresAt         *time.Time `json:"expires_at,omitempty"`
-	Priority          string     `json:"priority"` // low, medium, high, critical
-	ImpactAssessment  string     `json:"impact_assessment,omitempty"`
+	WorkflowID       string      `json:"workflow_id"`
+	AccessRequestID  uuid.UUID   `json:"access_request_id"`
+	FlagName         string      `json:"flag_name"`
+	ChangeType       string      `json:"change_type"`
+	NewValue         interface{} `json:"new_value"`
+	RequestedBy      uuid.UUID   `json:"requested_by"`
+	Justification    string      `json:"justification"`
+	BusinessReason   string      `json:"business_reason,omitempty"`
+	CreatedAt        time.Time   `json:"created_at"`
+	ExpiresAt        *time.Time  `json:"expires_at,omitempty"`
+	Priority         string      `json:"priority"` // low, medium, high, critical
+	ImpactAssessment string      `json:"impact_assessment,omitempty"`
 }
 
 // ScheduleAutoRollbackRequest represents auto-rollback scheduling request

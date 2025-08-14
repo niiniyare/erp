@@ -195,8 +195,6 @@ func (suite *RLSPoliciesTestSuite) TearDownTest() {
 	suite.Require().NoError(err, "Failed to reset role after RLS alteration in TearDownTest")
 }
 
-
-
 func (suite *RLSPoliciesTestSuite) TearDownSuite() {
 	// Clean up test tenants
 	if suite.tenant1ID != uuid.Nil {
@@ -254,7 +252,6 @@ func (suite *RLSPoliciesTestSuite) TestContextValidationFunction() {
 
 // TestTenantRLSIsolation tests that tenants can only see their own data
 func (suite *RLSPoliciesTestSuite) TestTenantRLSIsolation() {
-	
 
 	suite.Run("BasicTenantIsolation", func() {
 		// Set context to first tenant

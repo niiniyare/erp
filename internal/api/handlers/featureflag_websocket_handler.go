@@ -257,4 +257,3 @@ func (h *FeatureFlagWebSocketHandler) isAdmin(c *gin.Context) bool {
 
 	return false
 }
-

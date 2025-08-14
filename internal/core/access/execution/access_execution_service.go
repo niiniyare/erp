@@ -2,7 +2,6 @@ package execution
 
 //go:generate go run go.uber.org/mock/mockgen -source=access_execution_service.go -destination=mock.go -package=execution
 
-
 import (
 	"context"
 	"fmt"

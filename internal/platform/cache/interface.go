@@ -2,7 +2,6 @@ package cache
 
 //go:generate go run go.uber.org/mock/mockgen -source=interface.go -destination=mock.go -package=cache
 
-
 import (
 	"context"
 	"errors"

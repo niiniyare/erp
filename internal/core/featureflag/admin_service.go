@@ -2,7 +2,6 @@ package featureflag
 
 //go:generate go run go.uber.org/mock/mockgen -source=admin_service.go -destination=mock.go -package=featureflag
 
-
 import (
 	"context"
 	"time"

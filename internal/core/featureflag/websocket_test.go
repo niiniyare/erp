@@ -30,16 +30,16 @@ func TestWebSocketConnectionManagement(t *testing.T) {
 
 	tenantID := uuid.New()
 	userID := uuid.New()
-	
+
 	// This test validates the WebSocket connection logic structure
 	// In a full implementation, this would test actual WebSocket connections
-	
+
 	t.Run("ValidateWebSocketMessageStructure", func(t *testing.T) {
 		// Test WebSocket message structure
 		msg := TestWebSocketMessage{
-			Type:      "system",
-			Event:     "connected",
-			TenantID:  tenantID,
+			Type:     "system",
+			Event:    "connected",
+			TenantID: tenantID,
 			Data: map[string]interface{}{
 				"connection_id": uuid.New(),
 				"message":       "Connected to feature flag real-time updates",
@@ -47,19 +47,19 @@ func TestWebSocketConnectionManagement(t *testing.T) {
 			Timestamp: time.Now(),
 			MessageID: uuid.New(),
 		}
-		
+
 		// Verify message structure
 		assert.Equal(t, "system", msg.Type)
 		assert.Equal(t, "connected", msg.Event)
 		assert.Equal(t, tenantID, msg.TenantID)
 		assert.NotEmpty(t, msg.MessageID)
 		assert.NotZero(t, msg.Timestamp)
-		
+
 		// Check connection data
 		assert.Contains(t, msg.Data, "connection_id")
 		assert.Contains(t, msg.Data, "message")
 	})
-	
+
 	t.Run("ValidateFeatureFlagChangeEvent", func(t *testing.T) {
 		// Test flag change event structure
 		changeEvent := featureflag.FeatureFlagChangeEvent{
@@ -74,7 +74,7 @@ func TestWebSocketConnectionManagement(t *testing.T) {
 				"reason": "testing",
 			},
 		}
-		
+
 		// Verify event structure
 		assert.NotEmpty(t, changeEvent.FlagID)
 		assert.Equal(t, "test-flag", changeEvent.FlagName)
@@ -86,7 +86,7 @@ func TestWebSocketConnectionManagement(t *testing.T) {
 	})
 }
 
-// Test Case FF-WS-002: Real-time Flag Change Notifications  
+// Test Case FF-WS-002: Real-time Flag Change Notifications
 func TestRealTimeFlagChangeNotifications(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping WebSocket integration test in short mode")
@@ -95,27 +95,27 @@ func TestRealTimeFlagChangeNotifications(t *testing.T) {
 	tenantID := uuid.New()
 	userID := uuid.New()
 	flagID := uuid.New()
-	
+
 	t.Run("ValidateFlagChangeNotificationStructure", func(t *testing.T) {
 		// Create flag change event
 		changeEvent := featureflag.FeatureFlagChangeEvent{
-			FlagID:      flagID,
-			FlagName:    "test-flag",
-			ChangeType:  "enable",
-			OldValue:    false,
-			NewValue:    true,
-			ChangedBy:   userID,
-			AppliedAt:   time.Now(),
+			FlagID:     flagID,
+			FlagName:   "test-flag",
+			ChangeType: "enable",
+			OldValue:   false,
+			NewValue:   true,
+			ChangedBy:  userID,
+			AppliedAt:  time.Now(),
 			Metadata: map[string]interface{}{
 				"reason": "testing",
 			},
 		}
-		
+
 		// Create WebSocket message structure
 		notificationMsg := TestWebSocketMessage{
-			Type:      "feature_flag", 
-			Event:     "flag_changed",
-			TenantID:  tenantID,
+			Type:     "feature_flag",
+			Event:    "flag_changed",
+			TenantID: tenantID,
 			Data: map[string]interface{}{
 				"flag_id":     changeEvent.FlagID,
 				"flag_name":   changeEvent.FlagName,
@@ -129,14 +129,14 @@ func TestRealTimeFlagChangeNotifications(t *testing.T) {
 			Timestamp: time.Now(),
 			MessageID: uuid.New(),
 		}
-		
+
 		// Verify notification structure
 		assert.Equal(t, "feature_flag", notificationMsg.Type)
 		assert.Equal(t, "flag_changed", notificationMsg.Event)
 		assert.Equal(t, tenantID, notificationMsg.TenantID)
 		assert.NotEmpty(t, notificationMsg.MessageID)
 		assert.NotZero(t, notificationMsg.Timestamp)
-		
+
 		// Verify event data
 		data := notificationMsg.Data
 		assert.Equal(t, flagID, data["flag_id"])
@@ -160,22 +160,22 @@ func TestWebSocketTenantIsolation(t *testing.T) {
 	tenantB := uuid.New()
 	userID := uuid.New()
 	flagID := uuid.New()
-	
+
 	t.Run("ValidateTenantIsolationLogic", func(t *testing.T) {
 		// Create flag change event for tenant A
 		changeEventA := featureflag.FeatureFlagChangeEvent{
 			FlagID:     flagID,
-			FlagName:   "test-flag-tenant-a", 
+			FlagName:   "test-flag-tenant-a",
 			ChangeType: "enable",
 			NewValue:   true,
 			ChangedBy:  userID,
 			AppliedAt:  time.Now(),
 		}
-		
+
 		// Message should be scoped to tenant A
 		msgTenantA := TestWebSocketMessage{
 			Type:     "feature_flag",
-			Event:    "flag_changed", 
+			Event:    "flag_changed",
 			TenantID: tenantA, // Should only go to tenant A
 			Data: map[string]interface{}{
 				"flag_id":   changeEventA.FlagID,
@@ -184,11 +184,11 @@ func TestWebSocketTenantIsolation(t *testing.T) {
 			Timestamp: time.Now(),
 			MessageID: uuid.New(),
 		}
-		
+
 		// Verify tenant scoping
 		assert.Equal(t, tenantA, msgTenantA.TenantID)
 		assert.NotEqual(t, tenantB, msgTenantA.TenantID)
-		
+
 		// Simulate connection stats that would show tenant separation
 		connectionStats := map[string]interface{}{
 			"total_connections": 2,
@@ -197,7 +197,7 @@ func TestWebSocketTenantIsolation(t *testing.T) {
 				tenantB: 1,
 			},
 		}
-		
+
 		stats := connectionStats["connections_by_tenant"].(map[uuid.UUID]int)
 		assert.Equal(t, 1, stats[tenantA])
 		assert.Equal(t, 1, stats[tenantB])
@@ -213,23 +213,23 @@ func TestWebSocketPerformanceUnderLoad(t *testing.T) {
 
 	tenantID := uuid.New()
 	numConnections := 100
-	
+
 	t.Run("ValidatePerformanceCharacteristics", func(t *testing.T) {
 		// Simulate performance metrics that should be tracked
 		performanceMetrics := map[string]interface{}{
-			"total_connections":      numConnections,
-			"broadcast_latency_ms":   50, // Should be < 100ms
-			"memory_usage_stable":    true,
-			"message_delivery_rate":  0.99, // 99% delivery success
+			"total_connections":     numConnections,
+			"broadcast_latency_ms":  50, // Should be < 100ms
+			"memory_usage_stable":   true,
+			"message_delivery_rate": 0.99, // 99% delivery success
 		}
-		
+
 		// Verify performance expectations
 		assert.Equal(t, numConnections, performanceMetrics["total_connections"])
 		assert.Less(t, performanceMetrics["broadcast_latency_ms"].(int), 100)
 		assert.True(t, performanceMetrics["memory_usage_stable"].(bool))
 		assert.GreaterOrEqual(t, performanceMetrics["message_delivery_rate"].(float64), 0.95)
 	})
-	
+
 	t.Run("ValidateBroadcastEfficiency", func(t *testing.T) {
 		// Test broadcast message structure for efficiency
 		changeEvent := featureflag.FeatureFlagChangeEvent{
@@ -240,10 +240,10 @@ func TestWebSocketPerformanceUnderLoad(t *testing.T) {
 			ChangedBy:  uuid.New(),
 			AppliedAt:  time.Now(),
 		}
-		
+
 		// Measure the time it would take to prepare broadcast
 		start := time.Now()
-		
+
 		// Simulate message preparation
 		msg := TestWebSocketMessage{
 			Type:     "feature_flag",
@@ -258,9 +258,9 @@ func TestWebSocketPerformanceUnderLoad(t *testing.T) {
 			Timestamp: time.Now(),
 			MessageID: uuid.New(),
 		}
-		
+
 		duration := time.Since(start)
-		
+
 		// Message preparation should be very fast
 		assert.Less(t, duration, 1*time.Millisecond)
 		assert.NotNil(t, msg)
@@ -275,17 +275,17 @@ func TestWebSocketHeartbeat(t *testing.T) {
 	}
 
 	tenantID := uuid.New()
-	
+
 	t.Run("ValidateHeartbeatMessageStructure", func(t *testing.T) {
 		// Simulate heartbeat request
 		heartbeatRequest := map[string]interface{}{
 			"type": "heartbeat",
 		}
-		
+
 		// Simulate heartbeat response
 		heartbeatResponse := TestWebSocketMessage{
 			Type:     "system",
-			Event:    "heartbeat", 
+			Event:    "heartbeat",
 			TenantID: tenantID,
 			Data: map[string]interface{}{
 				"status": "ok",
@@ -293,7 +293,7 @@ func TestWebSocketHeartbeat(t *testing.T) {
 			Timestamp: time.Now(),
 			MessageID: uuid.New(),
 		}
-		
+
 		// Verify heartbeat structures
 		assert.Equal(t, "heartbeat", heartbeatRequest["type"])
 		assert.Equal(t, "system", heartbeatResponse.Type)
@@ -311,22 +311,22 @@ func TestApprovalRequiredNotification(t *testing.T) {
 
 	tenantID := uuid.New()
 	userID := uuid.New()
-	
+
 	t.Run("ValidateApprovalNotificationStructure", func(t *testing.T) {
 		// Create approval required event
 		approvalEvent := featureflag.ApprovalRequiredEvent{
 			AccessRequestID: uuid.New(),
-			FlagName:       "test-flag",
-			ChangeType:     "enable",
-			RequestedBy:    userID,
-			Justification:  "Testing approval workflow",
-			BusinessReason: "Product requirement",
-			RequestedAt:    time.Now(),
+			FlagName:        "test-flag",
+			ChangeType:      "enable",
+			RequestedBy:     userID,
+			Justification:   "Testing approval workflow",
+			BusinessReason:  "Product requirement",
+			RequestedAt:     time.Now(),
 			Metadata: map[string]interface{}{
 				"priority": "high",
 			},
 		}
-		
+
 		// Create approval notification message
 		approvalMsg := TestWebSocketMessage{
 			Type:     "access_request",
@@ -334,23 +334,23 @@ func TestApprovalRequiredNotification(t *testing.T) {
 			TenantID: tenantID,
 			Data: map[string]interface{}{
 				"access_request_id": approvalEvent.AccessRequestID,
-				"flag_name":        approvalEvent.FlagName,
-				"change_type":      approvalEvent.ChangeType,
-				"requested_by":     approvalEvent.RequestedBy,
-				"justification":    approvalEvent.Justification,
-				"business_reason":  approvalEvent.BusinessReason,
-				"requested_at":     approvalEvent.RequestedAt,
-				"metadata":         approvalEvent.Metadata,
+				"flag_name":         approvalEvent.FlagName,
+				"change_type":       approvalEvent.ChangeType,
+				"requested_by":      approvalEvent.RequestedBy,
+				"justification":     approvalEvent.Justification,
+				"business_reason":   approvalEvent.BusinessReason,
+				"requested_at":      approvalEvent.RequestedAt,
+				"metadata":          approvalEvent.Metadata,
 			},
 			Timestamp: time.Now(),
 			MessageID: uuid.New(),
 		}
-		
+
 		// Verify notification structure
 		assert.Equal(t, "access_request", approvalMsg.Type)
 		assert.Equal(t, "approval_required", approvalMsg.Event)
 		assert.Equal(t, tenantID, approvalMsg.TenantID)
-		
+
 		// Verify event data
 		data := approvalMsg.Data
 		assert.Equal(t, approvalEvent.AccessRequestID, data["access_request_id"])
@@ -361,7 +361,7 @@ func TestApprovalRequiredNotification(t *testing.T) {
 		assert.Equal(t, "Product requirement", data["business_reason"])
 		assert.Contains(t, data, "requested_at")
 		assert.Contains(t, data, "metadata")
-		
+
 		metadata := data["metadata"].(map[string]interface{})
 		assert.Equal(t, "high", metadata["priority"])
 	})
@@ -372,18 +372,18 @@ func TestWebSocketFlagCreationIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
-	
+
 	t.Run("ValidateIntegrationWorkflow", func(t *testing.T) {
 		// This validates the workflow integration structure
-		// In a full implementation, this would test the complete integration 
+		// In a full implementation, this would test the complete integration
 		// with actual flag creation triggering WebSocket notifications
-		
+
 		tenantID := uuid.New()
 		userID := uuid.New()
 		flagID := uuid.New()
-		
+
 		// Simulate the workflow: Flag Creation -> WebSocket Notification
-		
+
 		// Step 1: Flag creation event
 		flagCreated := featureflag.FeatureFlag{
 			ID:           flagID,
@@ -393,36 +393,36 @@ func TestWebSocketFlagCreationIntegration(t *testing.T) {
 			DefaultValue: true,
 			Enabled:      true,
 		}
-		
+
 		// Step 2: WebSocket notification triggered
 		creationNotification := TestWebSocketMessage{
 			Type:     "feature_flag",
 			Event:    "flag_created",
 			TenantID: tenantID,
 			Data: map[string]interface{}{
-				"flag_id":      flagCreated.ID,
-				"flag_name":    flagCreated.Name,
-				"description":  flagCreated.Description,
-				"flag_type":    flagCreated.FlagType,
+				"flag_id":       flagCreated.ID,
+				"flag_name":     flagCreated.Name,
+				"description":   flagCreated.Description,
+				"flag_type":     flagCreated.FlagType,
 				"default_value": flagCreated.DefaultValue,
-				"enabled":      flagCreated.Enabled,
-				"created_by":   userID,
+				"enabled":       flagCreated.Enabled,
+				"created_by":    userID,
 			},
 			Timestamp: time.Now(),
 			MessageID: uuid.New(),
 		}
-		
+
 		// Verify integration workflow structure
 		assert.NotEmpty(t, flagCreated.ID)
 		assert.Equal(t, "integration-test-flag", flagCreated.Name)
 		assert.Equal(t, featureflag.FlagTypeBoolean, flagCreated.FlagType)
-		
+
 		assert.Equal(t, "feature_flag", creationNotification.Type)
 		assert.Equal(t, "flag_created", creationNotification.Event)
 		assert.Equal(t, tenantID, creationNotification.TenantID)
 		assert.Equal(t, flagID, creationNotification.Data["flag_id"])
 		assert.Equal(t, userID, creationNotification.Data["created_by"])
-		
+
 		t.Log("WebSocket integration workflow structure validated")
 	})
 }

@@ -17,35 +17,35 @@ type Service interface {
 	// Permission Evaluation
 	EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResult, error)
 	BulkEvaluatePermissions(ctx context.Context, req *BulkPermissionEvaluationRequest) (*BulkPermissionEvaluationResult, error)
-	
+
 	// User Permissions
 	GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) (*UserEffectivePermissions, error)
 	CalculateRoleHierarchy(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) (*RoleHierarchy, error)
-	
+
 	// Access Requests
 	CreateAccessRequest(ctx context.Context, req *CreateAccessRequestRequest) (*model.AccessRequest, error)
 	GetAccessRequest(ctx context.Context, requestID uuid.UUID) (*model.AccessRequest, error)
 	ProcessAccessRequest(ctx context.Context, req *ProcessAccessRequestRequest) error
 	ListAccessRequests(ctx context.Context, req *ListAccessRequestsRequest) (*ListAccessRequestsResult, error)
-	
+
 	// Approval Workflows
 	CreateApprovalWorkflow(ctx context.Context, req *CreateApprovalWorkflowRequest) (*model.ApprovalWorkflow, error)
 	GetApprovalWorkflow(ctx context.Context, workflowID uuid.UUID) (*model.ApprovalWorkflow, error)
 	UpdateApprovalWorkflow(ctx context.Context, req *UpdateApprovalWorkflowRequest) error
-	
+
 	// Conditional Access
 	EvaluateConditionalAccess(ctx context.Context, req *ConditionalAccessRequest) (*ConditionalAccessResult, error)
 	CreateConditionalAccessPolicy(ctx context.Context, req *CreateConditionalAccessPolicyRequest) (*model.ConditionalAccessPolicy, error)
 	UpdateConditionalAccessPolicy(ctx context.Context, req *UpdateConditionalAccessPolicyRequest) error
-	
+
 	// Permission Management
 	GrantPermission(ctx context.Context, req *GrantPermissionRequest) error
 	RevokePermission(ctx context.Context, req *RevokePermissionRequest) error
 	ListUserPermissions(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) ([]*model.Permission, error)
-	
+
 	// Decision History and Audit
 	GetDecisionHistory(ctx context.Context, userID uuid.UUID, limit int) ([]*DecisionHistoryEntry, error)
-	
+
 	// Cache Management
 	InvalidateUserCache(ctx context.Context, userID uuid.UUID) error
 	InvalidatePolicyCache(ctx context.Context, policyIDs []uuid.UUID) error
@@ -107,38 +107,38 @@ type RoleHierarchy struct {
 
 // Access Request types
 type CreateAccessRequestRequest struct {
-	UserID       uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType string                 `json:"resource_type" validate:"required"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Action       string                 `json:"action" validate:"required"`
-	Justification string                `json:"justification" validate:"required"`
-	Duration     *time.Duration         `json:"duration,omitempty"`
-	Priority     string                 `json:"priority" validate:"oneof=low medium high urgent"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	UserID        uuid.UUID              `json:"user_id" validate:"required"`
+	ResourceType  string                 `json:"resource_type" validate:"required"`
+	ResourceID    *uuid.UUID             `json:"resource_id,omitempty"`
+	Action        string                 `json:"action" validate:"required"`
+	Justification string                 `json:"justification" validate:"required"`
+	Duration      *time.Duration         `json:"duration,omitempty"`
+	Priority      string                 `json:"priority" validate:"oneof=low medium high urgent"`
+	Metadata      map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type ProcessAccessRequestRequest struct {
-	RequestID   uuid.UUID `json:"request_id" validate:"required"`
-	Action      string    `json:"action" validate:"required,oneof=approve reject"`
-	ApproverID  uuid.UUID `json:"approver_id" validate:"required"`
-	Comments    string    `json:"comments,omitempty"`
-	Conditions  []string  `json:"conditions,omitempty"`
+	RequestID  uuid.UUID `json:"request_id" validate:"required"`
+	Action     string    `json:"action" validate:"required,oneof=approve reject"`
+	ApproverID uuid.UUID `json:"approver_id" validate:"required"`
+	Comments   string    `json:"comments,omitempty"`
+	Conditions []string  `json:"conditions,omitempty"`
 }
 
 type ListAccessRequestsRequest struct {
-	UserID     *uuid.UUID `json:"user_id,omitempty"`
-	Status     *string    `json:"status,omitempty"`
-	EntityID   *uuid.UUID `json:"entity_id,omitempty"`
-	Limit      int        `json:"limit" validate:"min=1,max=100"`
-	Offset     int        `json:"offset" validate:"min=0"`
+	UserID   *uuid.UUID `json:"user_id,omitempty"`
+	Status   *string    `json:"status,omitempty"`
+	EntityID *uuid.UUID `json:"entity_id,omitempty"`
+	Limit    int        `json:"limit" validate:"min=1,max=100"`
+	Offset   int        `json:"offset" validate:"min=0"`
 }
 
 type ListAccessRequestsResult struct {
-	Requests   []*model.AccessRequest `json:"requests"`
-	Total      int                    `json:"total"`
-	Limit      int                    `json:"limit"`
-	Offset     int                    `json:"offset"`
-	HasMore    bool                   `json:"has_more"`
+	Requests []*model.AccessRequest `json:"requests"`
+	Total    int                    `json:"total"`
+	Limit    int                    `json:"limit"`
+	Offset   int                    `json:"offset"`
+	HasMore  bool                   `json:"has_more"`
 }
 
 // Approval Workflow types
@@ -159,39 +159,39 @@ type UpdateApprovalWorkflowRequest struct {
 
 // Conditional Access types
 type ConditionalAccessRequest struct {
-	UserID       uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType string                 `json:"resource_type" validate:"required"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Action       string                 `json:"action" validate:"required"`
-	Context      *model.AccessContext   `json:"context,omitempty"`
+	UserID       uuid.UUID            `json:"user_id" validate:"required"`
+	ResourceType string               `json:"resource_type" validate:"required"`
+	ResourceID   *uuid.UUID           `json:"resource_id,omitempty"`
+	Action       string               `json:"action" validate:"required"`
+	Context      *model.AccessContext `json:"context,omitempty"`
 }
 
 type ConditionalAccessResult struct {
-	Allowed    bool                       `json:"allowed"`
-	Conditions []*model.AccessCondition   `json:"conditions,omitempty"`
-	Reason     string                     `json:"reason,omitempty"`
-	Metadata   map[string]interface{}     `json:"metadata,omitempty"`
+	Allowed    bool                     `json:"allowed"`
+	Conditions []*model.AccessCondition `json:"conditions,omitempty"`
+	Reason     string                   `json:"reason,omitempty"`
+	Metadata   map[string]interface{}   `json:"metadata,omitempty"`
 }
 
 type CreateConditionalAccessPolicyRequest struct {
-	Name        string                     `json:"name" validate:"required"`
-	Description string                     `json:"description"`
-	Conditions  []*model.PolicyCondition   `json:"conditions" validate:"required,min=1"`
-	Actions     []*model.PolicyAction      `json:"actions" validate:"required,min=1"`
-	Priority    int                        `json:"priority" validate:"min=0"`
-	Enabled     bool                       `json:"enabled"`
-	Metadata    map[string]interface{}     `json:"metadata,omitempty"`
+	Name        string                   `json:"name" validate:"required"`
+	Description string                   `json:"description"`
+	Conditions  []*model.PolicyCondition `json:"conditions" validate:"required,min=1"`
+	Actions     []*model.PolicyAction    `json:"actions" validate:"required,min=1"`
+	Priority    int                      `json:"priority" validate:"min=0"`
+	Enabled     bool                     `json:"enabled"`
+	Metadata    map[string]interface{}   `json:"metadata,omitempty"`
 }
 
 type UpdateConditionalAccessPolicyRequest struct {
-	PolicyID    uuid.UUID                  `json:"policy_id" validate:"required"`
-	Name        *string                    `json:"name,omitempty"`
-	Description *string                    `json:"description,omitempty"`
-	Conditions  []*model.PolicyCondition   `json:"conditions,omitempty"`
-	Actions     []*model.PolicyAction      `json:"actions,omitempty"`
-	Priority    *int                       `json:"priority,omitempty"`
-	Enabled     *bool                      `json:"enabled,omitempty"`
-	Metadata    map[string]interface{}     `json:"metadata,omitempty"`
+	PolicyID    uuid.UUID                `json:"policy_id" validate:"required"`
+	Name        *string                  `json:"name,omitempty"`
+	Description *string                  `json:"description,omitempty"`
+	Conditions  []*model.PolicyCondition `json:"conditions,omitempty"`
+	Actions     []*model.PolicyAction    `json:"actions,omitempty"`
+	Priority    *int                     `json:"priority,omitempty"`
+	Enabled     *bool                    `json:"enabled,omitempty"`
+	Metadata    map[string]interface{}   `json:"metadata,omitempty"`
 }
 
 // Permission Management types
@@ -215,18 +215,18 @@ type RevokePermissionRequest struct {
 
 // Decision History types
 type DecisionHistoryEntry struct {
-	ID             uuid.UUID                  `json:"id"`
-	UserID         uuid.UUID                  `json:"user_id"`
-	ResourceType   string                     `json:"resource_type"`
-	ResourceID     *uuid.UUID                 `json:"resource_id,omitempty"`
-	Action         string                     `json:"action"`
-	Decision       model.PolicyDecisionType   `json:"decision"`
-	Allowed        bool                       `json:"allowed"`
-	EvaluationTime time.Duration              `json:"evaluation_time"`
-	EvaluatedAt    time.Time                  `json:"evaluated_at"`
-	PolicyCount    int                        `json:"policy_count"`
-	CacheHit       bool                       `json:"cache_hit"`
-	RequestID      string                     `json:"request_id"`
+	ID             uuid.UUID                `json:"id"`
+	UserID         uuid.UUID                `json:"user_id"`
+	ResourceType   string                   `json:"resource_type"`
+	ResourceID     *uuid.UUID               `json:"resource_id,omitempty"`
+	Action         string                   `json:"action"`
+	Decision       model.PolicyDecisionType `json:"decision"`
+	Allowed        bool                     `json:"allowed"`
+	EvaluationTime time.Duration            `json:"evaluation_time"`
+	EvaluatedAt    time.Time                `json:"evaluated_at"`
+	PolicyCount    int                      `json:"policy_count"`
+	CacheHit       bool                     `json:"cache_hit"`
+	RequestID      string                   `json:"request_id"`
 }
 
 // Cache Statistics types

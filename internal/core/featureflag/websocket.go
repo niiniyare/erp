@@ -11,10 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
-	db "github.com/niiniyare/erp/db/sqlc"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -25,13 +25,13 @@ type WebSocketService interface {
 	HandleConnection(ctx *gin.Context)
 	BroadcastToTenant(ctx context.Context, tenantID uuid.UUID, message *WebSocketMessage) error
 	BroadcastToAllTenants(ctx context.Context, message *WebSocketMessage) error
-	
+
 	// Feature flag specific notifications
 	NotifyFlagChange(ctx context.Context, tenantID uuid.UUID, event *FeatureFlagChangeEvent) error
 	NotifyFlagCreated(ctx context.Context, tenantID uuid.UUID, flag *FeatureFlag) error
 	NotifyFlagDeleted(ctx context.Context, tenantID uuid.UUID, flagName string) error
 	NotifyApprovalRequired(ctx context.Context, tenantID uuid.UUID, event *ApprovalRequiredEvent) error
-	
+
 	// Health and metrics
 	GetConnectionStats() *ConnectionStats
 	CloseAllConnections()
@@ -85,12 +85,12 @@ type ApprovalRequiredEvent struct {
 
 // ConnectionStats represents WebSocket connection statistics
 type ConnectionStats struct {
-	TotalConnections    int                `json:"total_connections"`
-	ConnectionsByTenant map[uuid.UUID]int  `json:"connections_by_tenant"`
-	ConnectionsByUser   map[uuid.UUID]int  `json:"connections_by_user"`
-	AverageLatency      time.Duration      `json:"average_latency"`
-	MessagesPerSecond   float64            `json:"messages_per_second"`
-	UpdatedAt           time.Time          `json:"updated_at"`
+	TotalConnections    int               `json:"total_connections"`
+	ConnectionsByTenant map[uuid.UUID]int `json:"connections_by_tenant"`
+	ConnectionsByUser   map[uuid.UUID]int `json:"connections_by_user"`
+	AverageLatency      time.Duration     `json:"average_latency"`
+	MessagesPerSecond   float64           `json:"messages_per_second"`
+	UpdatedAt           time.Time         `json:"updated_at"`
 }
 
 // webSocketService implements WebSocketService
@@ -102,7 +102,7 @@ type webSocketService struct {
 	tenantConns map[uuid.UUID][]*WebSocketConnection
 	mu          sync.RWMutex
 	upgrader    websocket.Upgrader
-	
+
 	// Message tracking for metrics
 	messageCount int64
 	lastSecond   time.Time
@@ -194,9 +194,9 @@ func (s *webSocketService) HandleConnection(ctx *gin.Context) {
 
 	// Send welcome message
 	welcomeMessage := &WebSocketMessage{
-		Type:      "system",
-		Event:     "connected",
-		TenantID:  tenantID,
+		Type:     "system",
+		Event:    "connected",
+		TenantID: tenantID,
 		Data: map[string]interface{}{
 			"connection_id": wsConn.ID,
 			"message":       "Connected to feature flag real-time updates",
@@ -221,7 +221,7 @@ func (s *webSocketService) registerConnection(conn *WebSocketConnection) {
 	defer s.mu.Unlock()
 
 	s.connections[conn.ID] = conn
-	
+
 	if _, exists := s.tenantConns[conn.TenantID]; !exists {
 		s.tenantConns[conn.TenantID] = make([]*WebSocketConnection, 0)
 	}
@@ -234,7 +234,7 @@ func (s *webSocketService) unregisterConnection(conn *WebSocketConnection) {
 	defer s.mu.Unlock()
 
 	delete(s.connections, conn.ID)
-	
+
 	// Remove from tenant connections
 	if tenantConns, exists := s.tenantConns[conn.TenantID]; exists {
 		for i, c := range tenantConns {
@@ -243,7 +243,7 @@ func (s *webSocketService) unregisterConnection(conn *WebSocketConnection) {
 				break
 			}
 		}
-		
+
 		// Clean up empty tenant connection lists
 		if len(s.tenantConns[conn.TenantID]) == 0 {
 			delete(s.tenantConns, conn.TenantID)
@@ -363,7 +363,7 @@ func (s *webSocketService) handleIncomingMessage(ctx context.Context, conn *WebS
 		conn.mu.Lock()
 		conn.LastSeen = time.Now()
 		conn.mu.Unlock()
-		
+
 		// Send heartbeat response
 		response := &WebSocketMessage{
 			Type:      "system",
@@ -486,7 +486,7 @@ func (s *webSocketService) BroadcastToAllTenants(ctx context.Context, message *W
 	for _, conn := range allConnections {
 		// Update message tenant ID for each connection
 		message.TenantID = conn.TenantID
-		
+
 		select {
 		case conn.Send <- message:
 			sent++
@@ -615,7 +615,7 @@ func extractTenantIDFromContext(ctx *gin.Context) (uuid.UUID, error) {
 		// Try to get from query parameter
 		tenantIDStr = ctx.Query("tenant_id")
 	}
-	
+
 	if tenantIDStr == "" {
 		return uuid.Nil, fmt.Errorf("tenant ID not found in headers or query parameters")
 	}
@@ -629,7 +629,7 @@ func extractUserIDFromContext(ctx *gin.Context) (uuid.UUID, error) {
 		// Try to get from query parameter
 		userIDStr = ctx.Query("user_id")
 	}
-	
+
 	if userIDStr == "" {
 		return uuid.Nil, fmt.Errorf("user ID not found in headers or query parameters")
 	}

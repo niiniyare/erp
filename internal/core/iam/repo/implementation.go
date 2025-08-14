@@ -3,12 +3,6 @@ package repo
 //go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
 
 import (
-	"context"
-	"time"
-
-	"github.com/google/uuid"
-
-	"github.com/niiniyare/erp/internal/core/iam/model"
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -21,23 +15,23 @@ type iamRepository struct {
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
 	tracer  tracing.TracingService
-	
+
 	// Repository implementations
-	userRepo         UserRepository
-	personRepo       PersonRepository
-	employeeRepo     EmployeeRepository
-	roleRepo         RoleRepository
-	userRoleRepo     UserRoleRepository
-	sessionRepo      SessionRepository
-	policyRepo       PolicyRepository
-	attributeRepo    AttributeRepository
-	permissionRepo   PermissionRepository
-	accessReqRepo    AccessRequestRepository
-	approvalRepo     ApprovalWorkflowRepository
-	conditionalRepo  ConditionalAccessRepository
-	policyTplRepo    PolicyTemplateRepository
-	policyVerRepo    PolicyVersionRepository
-	analyticsRepo    UserAnalyticsRepository
+	userRepo        UserRepository
+	personRepo      PersonRepository
+	employeeRepo    EmployeeRepository
+	roleRepo        RoleRepository
+	userRoleRepo    UserRoleRepository
+	sessionRepo     SessionRepository
+	policyRepo      PolicyRepository
+	attributeRepo   AttributeRepository
+	permissionRepo  PermissionRepository
+	accessReqRepo   AccessRequestRepository
+	approvalRepo    ApprovalWorkflowRepository
+	conditionalRepo ConditionalAccessRepository
+	policyTplRepo   PolicyTemplateRepository
+	policyVerRepo   PolicyVersionRepository
+	analyticsRepo   UserAnalyticsRepository
 }
 
 // NewIAMRepository creates a new IAM repository implementation
@@ -53,7 +47,7 @@ func NewIAMRepository(
 		metrics: metrics,
 		tracer:  tracer,
 	}
-	
+
 	// Initialize repository implementations
 	repo.userRepo = NewUserRepository(store, logger, metrics, tracer)
 	// TODO: Implement remaining repository constructors
@@ -71,7 +65,7 @@ func NewIAMRepository(
 	// repo.policyTplRepo = NewPolicyTemplateRepository(store, logger, metrics, tracer)
 	// repo.policyVerRepo = NewPolicyVersionRepository(store, logger, metrics, tracer)
 	// repo.analyticsRepo = NewUserAnalyticsRepository(store, logger, metrics, tracer)
-	
+
 	return repo
 }
 

@@ -272,7 +272,7 @@ func (s *ServiceTestSuite) TestSoftDeleteTenant() {
 					s.repo.EXPECT().Delete(s.ctx, tenantID).Return(dbError),
 				)
 			},
-			expectError: true,
+			expectError:   true,
 			expectedError: fmt.Errorf("failed to delete tenant: db error"),
 		},
 	}
