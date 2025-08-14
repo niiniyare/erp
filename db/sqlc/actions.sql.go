@@ -23,14 +23,6 @@ type CreateActionParams struct {
 	ActionType string `json:"action_type"`
 }
 
-// CreateAction
-//
-//	INSERT INTO
-//	  actions (tenant_id, name, action_type)
-//	VALUES
-//	  (current_tenant_id(), $1, $2)
-//	RETURNING
-//	  id, tenant_id, name, display_name, description, action_type, action_category, risk_level, requires_approval, is_active, created_at
 func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error) {
 	row := q.db.QueryRow(ctx, createAction, arg.Name, arg.ActionType)
 	var i Action

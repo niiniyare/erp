@@ -1,5 +1,7 @@
 package policy
 
+//go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
+
 import (
 	"context"
 	"time"
@@ -25,26 +27,26 @@ type Service interface {
 	TestPolicy(ctx context.Context, req *PolicyTestRequest) (*PolicyTestResult, error)
 	
 	// Policy Templates
-	CreatePolicyTemplate(ctx context.Context, req *CreatePolicyTemplateRequest) (*PolicyTemplate, error)
-	GetPolicyTemplate(ctx context.Context, templateID uuid.UUID) (*PolicyTemplate, error)
-	ListPolicyTemplates(ctx context.Context) ([]*PolicyTemplate, error)
-	InstantiatePolicyFromTemplate(ctx context.Context, req *InstantiatePolicyRequest) (*Policy, error)
+	CreatePolicyTemplate(ctx context.Context, req *CreatePolicyTemplateRequest) (*model.PolicyTemplate, error)
+	GetPolicyTemplate(ctx context.Context, templateID uuid.UUID) (*model.PolicyTemplate, error)
+	ListPolicyTemplates(ctx context.Context) ([]*model.PolicyTemplate, error)
+	InstantiatePolicyFromTemplate(ctx context.Context, req *InstantiatePolicyRequest) (*model.Policy, error)
 	
 	// Policy Versions
-	CreatePolicyVersion(ctx context.Context, req *CreatePolicyVersionRequest) (*PolicyVersion, error)
-	GetPolicyVersion(ctx context.Context, policyID uuid.UUID, version int) (*PolicyVersion, error)
-	ListPolicyVersions(ctx context.Context, policyID uuid.UUID) ([]*PolicyVersion, error)
+	CreatePolicyVersion(ctx context.Context, req *CreatePolicyVersionRequest) (*model.PolicyVersion, error)
+	GetPolicyVersion(ctx context.Context, policyID uuid.UUID, version int) (*model.PolicyVersion, error)
+	ListPolicyVersions(ctx context.Context, policyID uuid.UUID) ([]*model.PolicyVersion, error)
 	PromotePolicyVersion(ctx context.Context, policyID uuid.UUID, version int) error
 	
 	// Policy Attributes
-	CreateAttribute(ctx context.Context, req *CreateAttributeRequest) (*Attribute, error)
-	GetAttribute(ctx context.Context, attributeID uuid.UUID) (*Attribute, error)
-	UpdateAttribute(ctx context.Context, req *UpdateAttributeRequest) (*Attribute, error)
+	CreateAttribute(ctx context.Context, req *CreateAttributeRequest) (*model.Attribute, error)
+	GetAttribute(ctx context.Context, attributeID uuid.UUID) (*model.Attribute, error)
+	UpdateAttribute(ctx context.Context, req *UpdateAttributeRequest) (*model.Attribute, error)
 	DeleteAttribute(ctx context.Context, attributeID uuid.UUID) error
 	ListAttributes(ctx context.Context, req *ListAttributesRequest) (*ListAttributesResult, error)
 	
 	// Policy Combining
-	CombinePolicyDecisions(ctx context.Context, decisions []*PolicyDecision, algorithm string) (*CombinedPolicyDecision, error)
+	CombinePolicyDecisions(ctx context.Context, decisions []*model.PolicyDecision, algorithm string) (*CombinedPolicyDecision, error)
 	
 	// Policy Analysis
 	AnalyzePolicyConflicts(ctx context.Context, policyIDs []uuid.UUID) (*PolicyConflictAnalysis, error)
@@ -61,10 +63,10 @@ type CreatePolicyRequest struct {
 	Name        string                 `json:"name" validate:"required"`
 	Description string                 `json:"description"`
 	Version     int                    `json:"version" validate:"min=1"`
-	Effect      types.PolicyEffect     `json:"effect" validate:"required,oneof=allow deny"`
-	Target      *PolicyTarget          `json:"target" validate:"required"`
-	Condition   *PolicyCondition       `json:"condition,omitempty"`
-	Rules       []*PolicyRule          `json:"rules,omitempty"`
+	Effect      model.PolicyEffect     `json:"effect" validate:"required,oneof=allow deny"`
+	Target      *model.PolicyTarget    `json:"target" validate:"required"`
+	Condition   *model.PolicyCondition `json:"condition,omitempty"`
+	Rules       []*model.PolicyRule    `json:"rules,omitempty"`
 	Priority    int                    `json:"priority" validate:"min=0"`
 	Enabled     bool                   `json:"enabled"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
@@ -74,10 +76,10 @@ type UpdatePolicyRequest struct {
 	PolicyID    uuid.UUID              `json:"policy_id" validate:"required"`
 	Name        *string                `json:"name,omitempty"`
 	Description *string                `json:"description,omitempty"`
-	Effect      *types.PolicyEffect    `json:"effect,omitempty"`
-	Target      *PolicyTarget          `json:"target,omitempty"`
-	Condition   *PolicyCondition       `json:"condition,omitempty"`
-	Rules       []*PolicyRule          `json:"rules,omitempty"`
+	Effect      *model.PolicyEffect    `json:"effect,omitempty"`
+	Target      *model.PolicyTarget    `json:"target,omitempty"`
+	Condition   *model.PolicyCondition `json:"condition,omitempty"`
+	Rules       []*model.PolicyRule    `json:"rules,omitempty"`
 	Priority    *int                   `json:"priority,omitempty"`
 	Enabled     *bool                  `json:"enabled,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
@@ -92,30 +94,30 @@ type ListPoliciesRequest struct {
 }
 
 type ListPoliciesResult struct {
-	Policies []*Policy `json:"policies"`
-	Total    int       `json:"total"`
-	Limit    int       `json:"limit"`
-	Offset   int       `json:"offset"`
-	HasMore  bool      `json:"has_more"`
+	Policies []*model.Policy `json:"policies"`
+	Total    int             `json:"total"`
+	Limit    int             `json:"limit"`
+	Offset   int             `json:"offset"`
+	HasMore  bool            `json:"has_more"`
 }
 
 // Policy Evaluation types
 type PolicyEvaluationRequest struct {
 	PolicyID     uuid.UUID              `json:"policy_id" validate:"required"`
-	Subject      *PolicySubject         `json:"subject" validate:"required"`
-	Resource     *PolicyResource        `json:"resource" validate:"required"`
+	Subject      *model.PolicySubject   `json:"subject" validate:"required"`
+	Resource     *model.PolicyResource  `json:"resource" validate:"required"`
 	Action       string                 `json:"action" validate:"required"`
-	Environment  *PolicyEnvironment     `json:"environment,omitempty"`
+	Environment  *model.PolicyEnvironment `json:"environment,omitempty"`
 	Context      map[string]interface{} `json:"context,omitempty"`
 }
 
 type PolicyEvaluationResult struct {
 	PolicyID     uuid.UUID                `json:"policy_id"`
-	Decision     types.PolicyDecisionType `json:"decision"`
-	Effect       types.PolicyEffect       `json:"effect"`
+	Decision     model.PolicyDecisionType `json:"decision"`
+	Effect       model.PolicyEffect       `json:"effect"`
 	Reason       string                   `json:"reason"`
-	Obligations  []*PolicyObligation      `json:"obligations,omitempty"`
-	Advice       []*PolicyAdvice          `json:"advice,omitempty"`
+	Obligations  []*model.PolicyObligation `json:"obligations,omitempty"`
+	Advice       []*model.PolicyAdvice    `json:"advice,omitempty"`
 	Attributes   map[string]interface{}   `json:"attributes,omitempty"`
 	EvaluatedAt  time.Time                `json:"evaluated_at"`
 }
@@ -133,18 +135,18 @@ type BulkPolicyEvaluationResult struct {
 
 type PolicyTestRequest struct {
 	PolicyID     uuid.UUID              `json:"policy_id" validate:"required"`
-	TestCases    []*PolicyTestCase      `json:"test_cases" validate:"required,min=1"`
+	TestCases    []*model.PolicyTestCase `json:"test_cases" validate:"required,min=1"`
 	RequestID    string                 `json:"request_id,omitempty"`
 }
 
 type PolicyTestResult struct {
-	PolicyID     uuid.UUID           `json:"policy_id"`
-	PolicyName   string              `json:"policy_name"`
-	TestResults  []*PolicyTestResult `json:"test_results"`
-	PassedCount  int                 `json:"passed_count"`
-	FailedCount  int                 `json:"failed_count"`
-	RequestID    string              `json:"request_id"`
-	Timestamp    time.Time           `json:"timestamp"`
+	PolicyID     uuid.UUID                  `json:"policy_id"`
+	PolicyName   string                     `json:"policy_name"`
+	TestResults  []*model.PolicyTestResult  `json:"test_results"`
+	PassedCount  int                        `json:"passed_count"`
+	FailedCount  int                        `json:"failed_count"`
+	RequestID    string                     `json:"request_id"`
+	Timestamp    time.Time                  `json:"timestamp"`
 }
 
 // Policy Template types
@@ -152,8 +154,8 @@ type CreatePolicyTemplateRequest struct {
 	Name        string                 `json:"name" validate:"required"`
 	Description string                 `json:"description"`
 	Category    string                 `json:"category" validate:"required"`
-	Template    *PolicyTemplateSpec    `json:"template" validate:"required"`
-	Parameters  []*TemplateParameter   `json:"parameters,omitempty"`
+	Template    *model.PolicyTemplateSpec `json:"template" validate:"required"`
+	Parameters  []*model.TemplateParameter `json:"parameters,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -168,9 +170,9 @@ type InstantiatePolicyRequest struct {
 type CreatePolicyVersionRequest struct {
 	PolicyID    uuid.UUID              `json:"policy_id" validate:"required"`
 	Changes     string                 `json:"changes" validate:"required"`
-	Target      *PolicyTarget          `json:"target,omitempty"`
-	Condition   *PolicyCondition       `json:"condition,omitempty"`
-	Rules       []*PolicyRule          `json:"rules,omitempty"`
+	Target      *model.PolicyTarget    `json:"target,omitempty"`
+	Condition   *model.PolicyCondition `json:"condition,omitempty"`
+	Rules       []*model.PolicyRule    `json:"rules,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -183,7 +185,7 @@ type CreateAttributeRequest struct {
 	Required    bool                   `json:"required"`
 	Multivalued bool                   `json:"multivalued"`
 	DefaultValue interface{}           `json:"default_value,omitempty"`
-	Constraints *AttributeConstraints  `json:"constraints,omitempty"`
+	Constraints *model.AttributeConstraints `json:"constraints,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -196,7 +198,7 @@ type UpdateAttributeRequest struct {
 	Required     *bool                  `json:"required,omitempty"`
 	Multivalued  *bool                  `json:"multivalued,omitempty"`
 	DefaultValue interface{}            `json:"default_value,omitempty"`
-	Constraints  *AttributeConstraints  `json:"constraints,omitempty"`
+	Constraints  *model.AttributeConstraints `json:"constraints,omitempty"`
 	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -208,29 +210,29 @@ type ListAttributesRequest struct {
 }
 
 type ListAttributesResult struct {
-	Attributes []*Attribute `json:"attributes"`
-	Total      int          `json:"total"`
-	Limit      int          `json:"limit"`
-	Offset     int          `json:"offset"`
-	HasMore    bool         `json:"has_more"`
+	Attributes []*model.Attribute `json:"attributes"`
+	Total      int                `json:"total"`
+	Limit      int                `json:"limit"`
+	Offset     int                `json:"offset"`
+	HasMore    bool               `json:"has_more"`
 }
 
 // Policy Combining types
 type CombinedPolicyDecision struct {
-	Decision    types.PolicyDecisionType `json:"decision"`
+	Decision    model.PolicyDecisionType `json:"decision"`
 	Algorithm   string                   `json:"algorithm"`
-	Decisions   []*PolicyDecision        `json:"decisions"`
-	Obligations []*PolicyObligation      `json:"obligations,omitempty"`
-	Advice      []*PolicyAdvice          `json:"advice,omitempty"`
+	Decisions   []*model.PolicyDecision  `json:"decisions"`
+	Obligations []*model.PolicyObligation `json:"obligations,omitempty"`
+	Advice      []*model.PolicyAdvice    `json:"advice,omitempty"`
 	Timestamp   time.Time                `json:"timestamp"`
 }
 
 // Policy Analysis types
 type PolicyConflictAnalysis struct {
-	Conflicts    []*PolicyConflict `json:"conflicts"`
-	Warnings     []*PolicyWarning  `json:"warnings"`
-	Suggestions  []*PolicySuggestion `json:"suggestions"`
-	AnalyzedAt   time.Time         `json:"analyzed_at"`
+	Conflicts    []*model.PolicyConflict   `json:"conflicts"`
+	Warnings     []*model.PolicyWarning    `json:"warnings"`
+	Suggestions  []*model.PolicySuggestion `json:"suggestions"`
+	AnalyzedAt   time.Time                 `json:"analyzed_at"`
 }
 
 type PolicyImpactAnalysis struct {

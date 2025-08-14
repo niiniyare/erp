@@ -1,10 +1,6 @@
 package tenant
 
-<<<<<<< HEAD
-//go:generate go run go.uber.org/mock/mockgen -source=repository.go -destination=mock.go -package=tenant
-=======
 //go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
->>>>>>> ft/ffg
 
 import (
 	"context"
@@ -700,14 +696,14 @@ func (r *repository) ProvisionTenant(ctx context.Context, req ProvisionTenantReq
 
 	// Call the SQLC-generated ProvisionTenant function
 	provisionedID, err := r.store.ProvisionTenant(ctx, db.ProvisionTenantParams{
-		PName:        req.Name,
-		PEmail:       req.Email,
-		PSubdomain:   subdomain,
-		PIndustry:    industry,
-		PCompanySize: companySize,
+		PName:         req.Name,
+		PEmail:        req.Email,
+		PSubdomain:    subdomain,
+		PIndustry:     industry,
+		PCompanySize:  companySize,
 		PCurrencyCode: req.CurrencyCode,
-		PTimezone:    "UTC", // Default timezone
-		PSettings:    []byte("{}"), // Default settings
+		PTimezone:     "UTC",        // Default timezone
+		PSettings:     []byte("{}"), // Default settings
 	})
 
 	if err != nil {

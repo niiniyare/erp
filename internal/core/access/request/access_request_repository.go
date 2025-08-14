@@ -1,11 +1,6 @@
 package request
 
-<<<<<<< HEAD
-//go:generate go run go.uber.org/mock/mockgen -source=access_request_repository.go -destination=mock.go -package=request
-
-=======
 //go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
->>>>>>> ft/ffg
 
 import (
 	"context"

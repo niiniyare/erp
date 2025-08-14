@@ -33,11 +33,7 @@ func (c *workflowClient) RequestFeatureFlagChange(ctx context.Context, req *work
 
 	// This is where the logic from the old service goes.
 	// In a real implementation, we would get tenant and user from context.
-<<<<<<< HEAD
-	userID := uuid.New() // Placeholder
-=======
 	userID := uuid.New()   // Placeholder
->>>>>>> ft/ffg
 	tenantID := uuid.New() // Placeholder
 
 	workflowReq := &workflow.FeatureFlagChangeRequest{

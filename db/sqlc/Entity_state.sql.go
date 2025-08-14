@@ -26,15 +26,6 @@ WHERE
 
 // Usage: Soft delete or archive old entity states
 // Use case: Long-term data archival while maintaining referential integrity
-//
-//	UPDATE
-//	  entitystate
-//	SET
-//	  updated_at = NOW()
-//	WHERE
-//	  fiscal_year < $1
-//	  AND tenant_id = current_tenant_id()
-//	  AND updated_at < (NOW() - INTERVAL '$2 months')
 func (q *Queries) ArchiveOldEntityStates(ctx context.Context, fiscalYear *int16) error {
 	_, err := q.db.Exec(ctx, archiveOldEntityStates, fiscalYear)
 	return err
@@ -73,21 +64,6 @@ type BulkCreateEntityStatesParams struct {
 // Usage: Creates multiple entity states in batch for different document types
 // Use case: Initial setup of document sequences for a new entity
 // NOTE: Missing tenant_id assignment and UUID generation - should be addressed
-//
-//	INSERT INTO
-//	  entitystate (
-//	    entity_id,
-//	    KEY,
-//	    sequence_number,
-//	    fiscal_year,
-//	    tenant_id
-//	  )
-//	SELECT
-//	  $1,
-//	  unnest($2::VARCHAR []),
-//	  1,
-//	  $3,
-//	  current_tenant_id() ON CONFLICT (entity_id, KEY, fiscal_year) DO NOTHING
 func (q *Queries) BulkCreateEntityStates(ctx context.Context, arg BulkCreateEntityStatesParams) error {
 	_, err := q.db.Exec(ctx, bulkCreateEntityStates, arg.EntityID, arg.Column2, arg.FiscalYear)
 	return err
@@ -123,25 +99,6 @@ type BulkCreateEntityStatesFixedParams struct {
 
 // Usage: Improved bulk creation with proper tenant_id and UUID handling
 // Use case: Initial entity setup, adding new document types to existing entities
-//
-//	INSERT INTO
-//	  entitystate (
-//	    uuid,
-//	    tenant_id,
-//	    entity_id,
-//	    KEY,
-//	    fiscal_year,
-//	    sequence,
-//	    entity_unit_id
-//	  )
-//	SELECT
-//	  gen_random_uuid(),
-//	  current_tenant_id(),
-//	  $1,
-//	  unnest($2::VARCHAR []),
-//	  $3,
-//	  1,
-//	  $4 ON CONFLICT (tenant_id, entity_id, KEY, fiscal_year) DO NOTHING
 func (q *Queries) BulkCreateEntityStatesFixed(ctx context.Context, arg BulkCreateEntityStatesFixedParams) error {
 	_, err := q.db.Exec(ctx, bulkCreateEntityStatesFixed,
 		arg.EntityID,
@@ -181,24 +138,6 @@ type BulkUpdateSequencesParams struct {
 
 // Usage: Updates multiple sequences in a single transaction
 // Use case: Batch sequence adjustments, data synchronization, bulk imports
-//
-//	UPDATE
-//	  entitystate
-//	SET
-//	  sequence = data.new_sequence,
-//	  updated_at = NOW()
-//	FROM
-//	  (
-//	    SELECT
-//	      unnest($1::UUID []) AS entity_id,
-//	      unnest($2::VARCHAR []) AS KEY,
-//	      unnest($3::BIGINT []) AS new_sequence
-//	  ) AS data
-//	WHERE
-//	  entitystate.entity_id = data.entity_id
-//	  AND entitystate.key = data.key
-//	  AND entitystate.fiscal_year = $4
-//	  AND entitystate.tenant_id = current_tenant_id()
 func (q *Queries) BulkUpdateSequences(ctx context.Context, arg BulkUpdateSequencesParams) error {
 	_, err := q.db.Exec(ctx, bulkUpdateSequences,
 		arg.Column1,
@@ -230,13 +169,6 @@ type DeleteUnusedEntityStatesParams struct {
 // =====================================================================
 // Usage: Removes entity states for old fiscal years or inactive entities
 // Use case: Data retention policy enforcement, database cleanup
-//
-//	DELETE FROM
-//	  entitystate
-//	WHERE
-//	  entity_id = $1
-//	  AND fiscal_year < $2
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) DeleteUnusedEntityStates(ctx context.Context, arg DeleteUnusedEntityStatesParams) error {
 	_, err := q.db.Exec(ctx, deleteUnusedEntityStates, arg.EntityID, arg.FiscalYear)
 	return err
@@ -272,24 +204,6 @@ type GetDuplicateSequenceCheckRow struct {
 
 // Usage: Identifies potential duplicate sequence configurations
 // Use case: Data integrity verification, migration validation
-//
-//	SELECT
-//	  tenant_id,
-//	  entity_id,
-//	  KEY,
-//	  fiscal_year,
-//	  COUNT(*)
-//	FROM
-//	  entitystate
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	GROUP BY
-//	  tenant_id,
-//	  entity_id,
-//	  KEY,
-//	  fiscal_year
-//	HAVING
-//	  COUNT(*) > 1
 func (q *Queries) GetDuplicateSequenceCheck(ctx context.Context) ([]*GetDuplicateSequenceCheckRow, error) {
 	rows, err := q.db.Query(ctx, getDuplicateSequenceCheck)
 	if err != nil {
@@ -343,21 +257,6 @@ type GetEntitySequenceSummaryRow struct {
 
 // Usage: Summary view of all sequences for an entity across fiscal years
 // Use case: Entity overview dashboards, year-over-year comparisons
-//
-//	SELECT
-//	  fiscal_year,
-//	  KEY,
-//	  sequence,
-//	  updated_at,
-//	  (sequence - 1) AS documents_created
-//	FROM
-//	  entitystate
-//	WHERE
-//	  entity_id = $1
-//	  AND tenant_id = current_tenant_id()
-//	ORDER BY
-//	  fiscal_year DESC,
-//	  KEY
 func (q *Queries) GetEntitySequenceSummary(ctx context.Context, entityID uuid.UUID) ([]*GetEntitySequenceSummaryRow, error) {
 	rows, err := q.db.Query(ctx, getEntitySequenceSummary, entityID)
 	if err != nil {
@@ -417,25 +316,6 @@ type GetEntityStateHealthCheckRow struct {
 
 // Usage: Comprehensive health check of entity state configuration
 // Use case: System health monitoring, pre-deployment validation
-//
-//	SELECT
-//	  es.entity_id,
-//	  e.name AS entity_name,
-//	  COUNT(DISTINCT es.key) AS document_types_count,
-//	  COUNT(DISTINCT es.fiscal_year) AS fiscal_years_count,
-//	  MIN(es.created_at) AS oldest_sequence,
-//	  MAX(es.updated_at) AS last_activity,
-//	  SUM(es.sequence - 1) AS total_documents_created
-//	FROM
-//	  entitystate es
-//	  JOIN entities e ON es.entity_id = e.uuid
-//	WHERE
-//	  es.tenant_id = current_tenant_id()
-//	GROUP BY
-//	  es.entity_id,
-//	  e.name
-//	ORDER BY
-//	  total_documents_created DESC
 func (q *Queries) GetEntityStateHealthCheck(ctx context.Context) ([]*GetEntityStateHealthCheckRow, error) {
 	rows, err := q.db.Query(ctx, getEntityStateHealthCheck)
 	if err != nil {
@@ -509,27 +389,6 @@ type GetEntityStateHistoryRow struct {
 // Usage: Retrieves entity state history with optional filtering by key and fiscal year
 // Use case: Audit trails, reporting, and historical sequence analysis
 // NOTE: Consider adding pagination (LIMIT/OFFSET) for large datasets
-//
-//	SELECT
-//	  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at,
-//	  e.name AS entity_name
-//	FROM
-//	  entitystate es
-//	  JOIN entities e ON es.entity_id = e.uuid
-//	WHERE
-//	  es.entity_id = $1
-//	  AND e.tenant_id = current_tenant_id()
-//	  AND (
-//	    $2::VARCHAR IS NULL
-//	    OR es.key = $2
-//	  )
-//	  AND (
-//	    $3::SMALLINT IS NULL
-//	    OR es.fiscal_year = $3
-//	  )
-//	ORDER BY
-//	  es.fiscal_year DESC,
-//	  es.key
 func (q *Queries) GetEntityStateHistory(ctx context.Context, arg GetEntityStateHistoryParams) ([]*GetEntityStateHistoryRow, error) {
 	rows, err := q.db.Query(ctx, getEntityStateHistory, arg.EntityID, arg.Column2, arg.Column3)
 	if err != nil {
@@ -596,23 +455,6 @@ type GetEntityStateStatsRow struct {
 // =====================================================================
 // Usage: Provides statistical overview of sequence usage by document type
 // Use case: Usage analytics, capacity planning, identifying heavily used document types
-//
-//	SELECT
-//	  KEY,
-//	  COUNT(*) AS entity_count,
-//	  AVG(sequence)::BIGINT AS avg_sequence,
-//	  MAX(sequence) AS max_sequence,
-//	  MIN(sequence) AS min_sequence,
-//	  SUM(sequence) AS total_sequences_used
-//	FROM
-//	  entitystate
-//	WHERE
-//	  fiscal_year = $1
-//	  AND tenant_id = current_tenant_id()
-//	GROUP BY
-//	  KEY
-//	ORDER BY
-//	  total_sequences_used DESC
 func (q *Queries) GetEntityStateStats(ctx context.Context, fiscalYear *int16) ([]*GetEntityStateStatsRow, error) {
 	rows, err := q.db.Query(ctx, getEntityStateStats, fiscalYear)
 	if err != nil {
@@ -681,26 +523,6 @@ type GetEntityStateWithLockingRow struct {
 // NOTE: Handles query timeout to prevent deadlocks
 // adjust as appropriate (e.g. '500ms', '5s')
 // Actual SELECT with FOR UPDATE locking
-//
-//	DO
-//	$$
-//	BEGIN
-//	SET
-//	  LOCAL lock_timeout = '3s';
-//
-//	PERFORM *
-//	FROM
-//	  entitystate
-//	WHERE
-//	  entity_id = $1
-//	  AND KEY = $2
-//	  AND fiscal_year = $3
-//	  AND tenant_id = current_tenant_id() FOR
-//	UPDATE
-//	;
-//
-//	END
-//	$$
 func (q *Queries) GetEntityStateWithLocking(ctx context.Context) (*GetEntityStateWithLockingRow, error) {
 	row := q.db.QueryRow(ctx, getEntityStateWithLocking)
 	var i GetEntityStateWithLockingRow
@@ -753,27 +575,6 @@ type GetEntityStatesByFiscalYearRow struct {
 // Usage: Retrieves all entity states for a specific fiscal year with optional entity unit filtering
 // Use case: Cross-entity reporting, fiscal year analysis, bulk operations
 // Parameters: $1=fiscal_year, $2=entity_unit_id (nullable for filtering by specific unit)
-//
-//	SELECT
-//	  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at,
-//	  e.name AS entity_name,
-//	  eu.name AS unit_name
-//	FROM
-//	  entitystate es
-//	  JOIN entities e ON es.entity_id = e.uuid
-//	  LEFT JOIN entities eu ON es.entity_unit_id = eu.uuid
-//	WHERE
-//	  es.fiscal_year = $1
-//	  AND e.tenant_id = current_tenant_id()
-//	  AND es.tenant_id = current_tenant_id()
-//	  AND (
-//	    $2::UUID IS NULL
-//	    OR es.entity_unit_id = $2
-//	  )
-//	ORDER BY
-//	  e.name,
-//	  COALESCE(eu.name, ''),
-//	  es.key
 func (q *Queries) GetEntityStatesByFiscalYear(ctx context.Context, arg GetEntityStatesByFiscalYearParams) ([]*GetEntityStatesByFiscalYearRow, error) {
 	rows, err := q.db.Query(ctx, getEntityStatesByFiscalYear, arg.FiscalYear, arg.Column2)
 	if err != nil {
@@ -829,18 +630,6 @@ type GetEntityUnitSequenceParams struct {
 
 // Usage: Gets specific sequence for an entity unit with locking
 // Use case: Unit-specific sequence generation with concurrency safety
-//
-//	SELECT
-//	  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
-//	FROM
-//	  entitystate
-//	WHERE
-//	  entity_id = $1
-//	  AND entity_unit_id = $2
-//	  AND KEY = $3
-//	  AND fiscal_year = $4
-//	  AND tenant_id = current_tenant_id() FOR
-//	UPDATE
 func (q *Queries) GetEntityUnitSequence(ctx context.Context, arg GetEntityUnitSequenceParams) (*Entitystate, error) {
 	row := q.db.QueryRow(ctx, getEntityUnitSequence,
 		arg.EntityID,
@@ -901,21 +690,6 @@ type GetEntityUnitStatesRow struct {
 // =====================================================================
 // Usage: Retrieves all sequences for a specific entity unit/department
 // Use case: Department-level reporting, unit-specific sequence management
-//
-//	SELECT
-//	  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at,
-//	  e1.name AS entity_name,
-//	  e2.name AS unit_name
-//	FROM
-//	  entitystate es
-//	  JOIN entities e1 ON es.entity_id = e1.uuid
-//	  LEFT JOIN entities e2 ON es.entity_unit_id = e2.uuid
-//	WHERE
-//	  es.entity_unit_id = $1
-//	  AND es.tenant_id = current_tenant_id()
-//	ORDER BY
-//	  es.key,
-//	  es.fiscal_year
 func (q *Queries) GetEntityUnitStates(ctx context.Context, entityUnitID *uuid.UUID) ([]*GetEntityUnitStatesRow, error) {
 	rows, err := q.db.Query(ctx, getEntityUnitStates, entityUnitID)
 	if err != nil {
@@ -988,27 +762,6 @@ type GetEntityWithUnitStatesRow struct {
 
 // Usage: Hierarchical view of entity and all its unit sequences
 // Use case: Complete entity structure analysis, hierarchical reporting
-//
-//	SELECT
-//	  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at,
-//	  e1.name AS entity_name,
-//	  e2.name AS unit_name,
-//	  CASE
-//	    WHEN es.entity_unit_id IS NULL THEN 'Main Entity'
-//	    ELSE 'Unit'
-//	  END AS level_type
-//	FROM
-//	  entitystate es
-//	  JOIN entities e1 ON es.entity_id = e1.uuid
-//	  LEFT JOIN entities e2 ON es.entity_unit_id = e2.uuid
-//	WHERE
-//	  es.entity_id = $1
-//	  AND es.tenant_id = current_tenant_id()
-//	ORDER BY
-//	  level_type,
-//	  COALESCE(e2.name, e1.name),
-//	  es.key,
-//	  es.fiscal_year
 func (q *Queries) GetEntityWithUnitStates(ctx context.Context, entityID uuid.UUID) ([]*GetEntityWithUnitStatesRow, error) {
 	rows, err := q.db.Query(ctx, getEntityWithUnitStates, entityID)
 	if err != nil {
@@ -1062,16 +815,6 @@ type GetHighestSequenceNumberParams struct {
 
 // Usage: Gets the highest sequence number for a specific entity/key/fiscal year combination
 // Use case: Finding the current maximum sequence before manual adjustments
-//
-//	SELECT
-//	  COALESCE(MAX(sequence), 0) AS sequence
-//	FROM
-//	  entitystate
-//	WHERE
-//	  entity_id = $1
-//	  AND KEY = $2
-//	  AND fiscal_year = $3
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (interface{}, error) {
 	row := q.db.QueryRow(ctx, getHighestSequenceNumber, arg.EntityID, arg.Key, arg.FiscalYear)
 	var sequence interface{}
@@ -1107,18 +850,6 @@ type GetMultipleEntityStatesParams struct {
 // =====================================================================
 // Usage: Retrieves multiple entity states by document types in one query
 // Use case: Dashboard displays, bulk document creation, batch processing
-//
-//	SELECT
-//	  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
-//	FROM
-//	  entitystate
-//	WHERE
-//	  entity_id = $1
-//	  AND KEY = ANY($2::VARCHAR [])
-//	  AND fiscal_year = $3
-//	  AND tenant_id = current_tenant_id()
-//	ORDER BY
-//	  KEY
 func (q *Queries) GetMultipleEntityStates(ctx context.Context, arg GetMultipleEntityStatesParams) ([]*Entitystate, error) {
 	rows, err := q.db.Query(ctx, getMultipleEntityStates, arg.EntityID, arg.Column2, arg.FiscalYear)
 	if err != nil {
@@ -1169,16 +900,6 @@ type GetOrCreateEntityStateParams struct {
 
 // Usage: Gets existing entity state or creates new one with sequence = 1
 // Use case: Lazy initialization of sequences when first document is created
-//
-//	INSERT INTO
-//	  entitystate (entity_id, KEY, fiscal_year, sequence, tenant_id)
-//	VALUES
-//	  ($1, $2, $3, 1, current_tenant_id()) ON CONFLICT (tenant_id, entity_id, KEY, fiscal_year) DO
-//	UPDATE
-//	SET
-//	  updated_at = NOW()
-//	RETURNING
-//	  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
 func (q *Queries) GetOrCreateEntityState(ctx context.Context, arg GetOrCreateEntityStateParams) (*Entitystate, error) {
 	row := q.db.QueryRow(ctx, getOrCreateEntityState, arg.EntityID, arg.Key, arg.FiscalYear)
 	var i Entitystate
@@ -1240,40 +961,6 @@ type GetSequenceGapsParams struct {
 
 // Usage: Identifies missing sequence numbers (gaps in numbering)
 // Use case: Audit compliance, finding deleted/voided documents, sequence integrity checks
-//
-//	WITH sequence_range AS (
-//	  SELECT
-//	    generate_series(
-//	      1,
-//	      (
-//	        SELECT
-//	          MAX(es1.sequence)
-//	        FROM
-//	          entitystate es1
-//	        WHERE
-//	          es1.entity_id = $1
-//	          AND es1.key = $2
-//	          AND es1.fiscal_year = $3
-//	          AND es1.tenant_id = current_tenant_id()
-//	      )
-//	    ) AS seq_num
-//	)
-//	SELECT
-//	  seq_num AS missing_sequence
-//	FROM
-//	  sequence_range
-//	WHERE
-//	  seq_num NOT IN (
-//	    SELECT
-//	      es2.sequence
-//	    FROM
-//	      entitystate es2
-//	    WHERE
-//	      es2.entity_id = $1
-//	      AND es2.key = $2
-//	      AND es2.fiscal_year = $3
-//	      AND es2.tenant_id = current_tenant_id()
-//	  )
 func (q *Queries) GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error) {
 	rows, err := q.db.Query(ctx, getSequenceGaps, arg.EntityID, arg.Key, arg.FiscalYear)
 	if err != nil {
@@ -1325,19 +1012,6 @@ type GetStaleEntityStatesRow struct {
 
 // Usage: Finds entity states that haven't been updated recently
 // Use case: Identifying inactive sequences, cleanup candidate identification
-//
-//	SELECT
-//	  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at,
-//	  e.name AS entity_name,
-//	  NOW() - es.updated_at AS time_since_update
-//	FROM
-//	  entitystate es
-//	  JOIN entities e ON es.entity_id = e.uuid
-//	WHERE
-//	  es.updated_at < $1
-//	  AND es.tenant_id = current_tenant_id()
-//	ORDER BY
-//	  es.updated_at ASC
 func (q *Queries) GetStaleEntityStates(ctx context.Context, updatedAt time.Time) ([]*GetStaleEntityStatesRow, error) {
 	rows, err := q.db.Query(ctx, getStaleEntityStates, updatedAt)
 	if err != nil {
@@ -1388,15 +1062,6 @@ type ResetAllEntitySequencesParams struct {
 
 // Usage: Resets all document sequences to 1 for an entity's fiscal year
 // Use case: New fiscal year initialization or sequence resets
-//
-//	UPDATE
-//	  entitystate
-//	SET
-//	  sequence = 1
-//	WHERE
-//	  entity_id = $1
-//	  AND fiscal_year = $2
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) ResetAllEntitySequences(ctx context.Context, arg ResetAllEntitySequencesParams) error {
 	_, err := q.db.Exec(ctx, resetAllEntitySequences, arg.EntityID, arg.FiscalYear)
 	return err
@@ -1425,18 +1090,6 @@ type SetEntitySequenceParams struct {
 
 // Usage: Manually sets a specific sequence number (with validation)
 // Use case: Data migration, manual sequence adjustments, importing from other systems
-//
-//	UPDATE
-//	  entitystate
-//	SET
-//	  sequence = $4,
-//	  updated_at = NOW()
-//	WHERE
-//	  entity_id = $1
-//	  AND KEY = $2
-//	  AND fiscal_year = $3
-//	  AND tenant_id = current_tenant_id()
-//	  AND $4 > 0
 func (q *Queries) SetEntitySequence(ctx context.Context, arg SetEntitySequenceParams) error {
 	_, err := q.db.Exec(ctx, setEntitySequence,
 		arg.EntityID,
@@ -1475,19 +1128,6 @@ type UpdateEntitySequenceParams struct {
 // =====================================================================
 // Usage: Atomically increments sequence number and returns the new value
 // Use case: Getting next sequence number for document creation (most common operation)
-//
-//	UPDATE
-//	  entitystate
-//	SET
-//	  sequence = sequence + 1,
-//	  updated_at = NOW()
-//	WHERE
-//	  entity_id = $1
-//	  AND KEY = $2
-//	  AND fiscal_year = $3
-//	  AND tenant_id = current_tenant_id()
-//	RETURNING
-//	  sequence
 func (q *Queries) UpdateEntitySequence(ctx context.Context, arg UpdateEntitySequenceParams) (int64, error) {
 	row := q.db.QueryRow(ctx, updateEntitySequence, arg.EntityID, arg.Key, arg.FiscalYear)
 	var sequence int64
@@ -1535,29 +1175,6 @@ type ValidateSequenceIntegrityRow struct {
 // =====================================================================
 // Usage: Checks for sequence numbering issues across all entities
 // Use case: Data integrity audits, troubleshooting sequence problems
-//
-//	SELECT
-//	  entity_id,
-//	  KEY,
-//	  fiscal_year,
-//	  sequence,
-//	  CASE
-//	    WHEN sequence <= 0 THEN 'Invalid: Non-positive sequence'
-//	    WHEN sequence = 1 THEN 'OK: Initial state'
-//	    ELSE 'OK: In use'
-//	  END AS STATUS
-//	FROM
-//	  entitystate
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	  AND (
-//	    sequence <= 0
-//	    OR sequence IS NULL
-//	  )
-//	ORDER BY
-//	  entity_id,
-//	  KEY,
-//	  fiscal_year
 func (q *Queries) ValidateSequenceIntegrity(ctx context.Context) ([]*ValidateSequenceIntegrityRow, error) {
 	rows, err := q.db.Query(ctx, validateSequenceIntegrity)
 	if err != nil {

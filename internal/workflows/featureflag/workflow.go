@@ -70,11 +70,6 @@ func FeatureFlagWorkflow(ctx workflow.Context, req *workflow.FeatureFlagChangeRe
 		}
 
 		selector := workflow.NewSelector(ctx)
-<<<<<<< HEAD
-		
-=======
-
->>>>>>> ft/ffg
 		// Wait for approval signal
 		var approvalResult workflow.ApprovalResult
 		approvalFuture := workflow.NewFuture(ctx)
@@ -88,17 +83,10 @@ func FeatureFlagWorkflow(ctx workflow.Context, req *workflow.FeatureFlagChangeRe
 			var signal workflow.ApprovalSignal
 			c.Receive(ctx, &signal)
 			approvalResult = workflow.ApprovalResult{
-<<<<<<< HEAD
-				Approved:    signal.Approved,
-				ApproverID:  signal.ApproverID,
-				Comments:    signal.Comments,
-				ApprovedAt:  signal.ApprovedAt,
-=======
 				Approved:   signal.Approved,
 				ApproverID: signal.ApproverID,
 				Comments:   signal.Comments,
 				ApprovedAt: signal.ApprovedAt,
->>>>>>> ft/ffg
 			}
 			approvalFuture.Set(approvalResult, nil)
 		})
@@ -113,11 +101,6 @@ func FeatureFlagWorkflow(ctx workflow.Context, req *workflow.FeatureFlagChangeRe
 			// Timeout occurred - expire the access request
 			logger.Info("Approval timeout occurred", "request_id", accessRequestID)
 			workflow.ExecuteActivity(ctx, ExpireAccessRequestActivity, *accessRequestID)
-<<<<<<< HEAD
-			
-=======
-
->>>>>>> ft/ffg
 			result.Status = "approval_timeout"
 			result.Error = "Approval timeout exceeded"
 			return &result, nil
@@ -202,11 +185,6 @@ func BulkFeatureFlagWorkflow(ctx workflow.Context, req *workflow.BulkFeatureFlag
 
 	// Execute individual flag changes as child workflows
 	var futures []workflow.ChildWorkflowFuture
-<<<<<<< HEAD
-	
-=======
-
->>>>>>> ft/ffg
 	for _, change := range req.Changes {
 		// Create individual change request
 		individualReq := &workflow.FeatureFlagChangeRequest{
@@ -230,11 +208,6 @@ func BulkFeatureFlagWorkflow(ctx workflow.Context, req *workflow.BulkFeatureFlag
 		var childResult workflow.FeatureFlagChangeResult
 		err := future.Get(ctx, &childResult)
 		flagName := req.Changes[i].FlagName
-<<<<<<< HEAD
-		
-=======
-
->>>>>>> ft/ffg
 		if err != nil {
 			logger.Error("Child workflow failed", "flag_name", flagName, "error", err)
 			childResult.Status = "workflow_failed"
@@ -242,11 +215,6 @@ func BulkFeatureFlagWorkflow(ctx workflow.Context, req *workflow.BulkFeatureFlag
 		}
 
 		result.Results[flagName] = &childResult
-<<<<<<< HEAD
-		
-=======
-
->>>>>>> ft/ffg
 		if childResult.Status == "completed" {
 			result.SuccessCount++
 		} else {
@@ -255,17 +223,10 @@ func BulkFeatureFlagWorkflow(ctx workflow.Context, req *workflow.BulkFeatureFlag
 	}
 
 	result.TotalCount = len(req.Changes)
-<<<<<<< HEAD
-	
-	logger.Info("Bulk feature flag workflow completed", 
-		"total", result.TotalCount,
-		"success", result.SuccessCount, 
-=======
 
 	logger.Info("Bulk feature flag workflow completed",
 		"total", result.TotalCount,
 		"success", result.SuccessCount,
->>>>>>> ft/ffg
 		"failures", result.FailureCount)
 
 	return &result, nil
@@ -319,11 +280,7 @@ func AutoRollbackWorkflow(ctx workflow.Context, req *workflow.AutoRollbackReques
 		Justification:  "Automatic rollback after expiration",
 		BusinessReason: "Scheduled rollback",
 		Metadata: map[string]interface{}{
-<<<<<<< HEAD
-			"auto_rollback": true,
-=======
 			"auto_rollback":         true,
->>>>>>> ft/ffg
 			"original_scheduled_at": req.RollbackAt,
 		},
 	}
@@ -349,18 +306,6 @@ func AutoRollbackWorkflow(ctx workflow.Context, req *workflow.AutoRollbackReques
 
 	// Create audit event
 	auditReq := workflow.AuditEventRequest{
-<<<<<<< HEAD
-		TenantID:   req.TenantID,
-		FlagName:   req.FlagName,
-		ChangeType: "auto_rollback",
-		OldValue:   changeResult.OldValue,
-		NewValue:   req.RollbackValue,
-		RequestedBy: uuid.Nil,
-		AppliedAt:  changeResult.AppliedAt,
-		Metadata: map[string]interface{}{
-			"auto_rollback": true,
-			"scheduled_at": req.RollbackAt,
-=======
 		TenantID:    req.TenantID,
 		FlagName:    req.FlagName,
 		ChangeType:  "auto_rollback",
@@ -371,7 +316,6 @@ func AutoRollbackWorkflow(ctx workflow.Context, req *workflow.AutoRollbackReques
 		Metadata: map[string]interface{}{
 			"auto_rollback": true,
 			"scheduled_at":  req.RollbackAt,
->>>>>>> ft/ffg
 		},
 	}
 	workflow.ExecuteActivity(ctx, CreateAuditEventActivity, auditReq)
@@ -383,8 +327,4 @@ func AutoRollbackWorkflow(ctx workflow.Context, req *workflow.AutoRollbackReques
 
 	logger.Info("Auto-rollback completed successfully", "flag_name", req.FlagName)
 	return &result, nil
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> ft/ffg

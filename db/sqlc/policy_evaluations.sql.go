@@ -79,54 +79,6 @@ type CacheEvaluationResultParams struct {
 }
 
 // Policy Evaluations CRUD Operations and Cache Management for ABAC
-//
-//	INSERT INTO
-//	  policy_evaluations (
-//	    tenant_id,
-//	    user_id,
-//	    resource_type,
-//	    resource_id,
-//	    ACTION,
-//	    entity_id,
-//	    context_hash,
-//	    decision,
-//	    applicable_policies,
-//	    policy_decisions,
-//	    evaluation_time_ms,
-//	    cache_key,
-//	    expires_at
-//	  )
-//	VALUES
-//	  (
-//	    current_tenant_id(),
-//	    $1,
-//	    $2,
-//	    $3,
-//	    $4,
-//	    $5,
-//	    $6,
-//	    $7,
-//	    $8,
-//	    $9,
-//	    $10,
-//	    $11,
-//	    $12
-//	  ) ON CONFLICT (
-//	    tenant_id,
-//	    user_id,
-//	    resource_type,
-//	    resource_id,
-//	    ACTION,
-//	    context_hash
-//	  ) DO
-//	UPDATE
-//	SET
-//	  decision = EXCLUDED.decision,
-//	  applicable_policies = EXCLUDED.applicable_policies,
-//	  policy_decisions = EXCLUDED.policy_decisions,
-//	  evaluation_time_ms = EXCLUDED.evaluation_time_ms,
-//	  evaluated_at = NOW(),
-//	  expires_at = EXCLUDED.expires_at
 func (q *Queries) CacheEvaluationResult(ctx context.Context, arg CacheEvaluationResultParams) error {
 	_, err := q.db.Exec(ctx, cacheEvaluationResult,
 		arg.UserID,
@@ -153,13 +105,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// CleanupExpiredEvaluations
-//
-//	DELETE FROM
-//	  policy_evaluations
-//	WHERE
-//	  expires_at < NOW()
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) CleanupExpiredEvaluations(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, cleanupExpiredEvaluations)
 	return err
@@ -203,31 +148,6 @@ type CountEvaluationsByDecisionRow struct {
 	TotalCount         int64 `json:"total_count"`
 }
 
-// CountEvaluationsByDecision
-//
-//	SELECT
-//	  COUNT(
-//	    CASE
-//	      WHEN decision = 'ALLOW' THEN 1
-//	    END
-//	  ) AS allow_count,
-//	  COUNT(
-//	    CASE
-//	      WHEN decision = 'DENY' THEN 1
-//	    END
-//	  ) AS deny_count,
-//	  COUNT(
-//	    CASE
-//	      WHEN decision = 'NOT_APPLICABLE' THEN 1
-//	    END
-//	  ) AS not_applicable_count,
-//	  COUNT(*) AS total_count
-//	FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	  AND evaluated_at >= $1
-//	  AND evaluated_at <= $2
 func (q *Queries) CountEvaluationsByDecision(ctx context.Context, arg CountEvaluationsByDecisionParams) (*CountEvaluationsByDecisionRow, error) {
 	row := q.db.QueryRow(ctx, countEvaluationsByDecision, arg.EvaluatedAt, arg.EvaluatedAt_2)
 	var i CountEvaluationsByDecisionRow
@@ -263,20 +183,6 @@ type CreatePolicyEvaluationParams struct {
 	Decision    string     `json:"decision"`
 }
 
-// CreatePolicyEvaluation
-//
-//	INSERT INTO
-//	  policy_evaluations (
-//	    user_id,
-//	    resource_id,
-//	    ACTION,
-//	    context_hash,
-//	    decision
-//	  )
-//	VALUES
-//	  ($1, $2, $3, $4, $5)
-//	RETURNING
-//	  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
 func (q *Queries) CreatePolicyEvaluation(ctx context.Context, arg CreatePolicyEvaluationParams) (*PolicyEvaluation, error) {
 	row := q.db.QueryRow(ctx, createPolicyEvaluation,
 		arg.UserID,
@@ -337,28 +243,6 @@ type GetCachedEvaluationResultParams struct {
 	ContextHash  string    `json:"context_hash"`
 }
 
-// GetCachedEvaluationResult
-//
-//	SELECT
-//	  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
-//	FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	  AND user_id = $1
-//	  AND resource_type = $2
-//	  AND (
-//	    $3::UUID IS NULL
-//	    AND resource_id IS NULL
-//	    OR resource_id = $3
-//	  )
-//	  AND ACTION = $4
-//	  AND context_hash = $5
-//	  AND expires_at > NOW()
-//	ORDER BY
-//	  evaluated_at DESC
-//	LIMIT
-//	  1
 func (q *Queries) GetCachedEvaluationResult(ctx context.Context, arg GetCachedEvaluationResultParams) (*PolicyEvaluation, error) {
 	row := q.db.QueryRow(ctx, getCachedEvaluationResult,
 		arg.UserID,
@@ -436,40 +320,6 @@ type GetEvaluationCacheStatsRow struct {
 	CacheHitRate           pgtype.Numeric `json:"cache_hit_rate"`
 }
 
-// GetEvaluationCacheStats
-//
-//	SELECT
-//	  COUNT(*) AS total_cached_evaluations,
-//	  COUNT(
-//	    CASE
-//	      WHEN expires_at > NOW() THEN 1
-//	    END
-//	  ) AS active_evaluations,
-//	  COUNT(
-//	    CASE
-//	      WHEN expires_at <= NOW() THEN 1
-//	    END
-//	  ) AS expired_evaluations,
-//	  COUNT(DISTINCT user_id) AS unique_users,
-//	  COUNT(DISTINCT resource_type) AS unique_resource_types,
-//	  COUNT(DISTINCT ACTION) AS unique_actions,
-//	  AVG(evaluation_time_ms) AS avg_evaluation_time_ms,
-//	  MIN(evaluation_time_ms) AS min_evaluation_time_ms,
-//	  MAX(evaluation_time_ms) AS max_evaluation_time_ms,
-//	  ROUND(
-//	    (
-//	      COUNT(
-//	        CASE
-//	          WHEN expires_at > NOW() THEN 1
-//	        END
-//	      )::NUMERIC / NULLIF(COUNT(*), 0)
-//	    ) * 100,
-//	    2
-//	  ) AS cache_hit_rate
-//	FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
 func (q *Queries) GetEvaluationCacheStats(ctx context.Context) (*GetEvaluationCacheStatsRow, error) {
 	row := q.db.QueryRow(ctx, getEvaluationCacheStats)
 	var i GetEvaluationCacheStatsRow
@@ -531,33 +381,6 @@ type GetEvaluationMetricsRow struct {
 	UniqueResources      int64   `json:"unique_resources"`
 }
 
-// GetEvaluationMetrics
-//
-//	SELECT
-//	  AVG(evaluation_time_ms) AS avg_evaluation_time,
-//	  PERCENTILE_CONT(0.5) WITHIN GROUP (
-//	    ORDER BY
-//	      evaluation_time_ms
-//	  ) AS median_evaluation_time,
-//	  PERCENTILE_CONT(0.95) WITHIN GROUP (
-//	    ORDER BY
-//	      evaluation_time_ms
-//	  ) AS p95_evaluation_time,
-//	  PERCENTILE_CONT(0.99) WITHIN GROUP (
-//	    ORDER BY
-//	      evaluation_time_ms
-//	  ) AS p99_evaluation_time,
-//	  COUNT(*) AS total_evaluations,
-//	  COUNT(DISTINCT user_id) AS unique_users,
-//	  COUNT(
-//	    DISTINCT resource_type || ':' || COALESCE(resource_id::TEXT, '')
-//	  ) AS unique_resources
-//	FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	  AND evaluated_at >= $1
-//	  AND evaluated_at <= $2
 func (q *Queries) GetEvaluationMetrics(ctx context.Context, arg GetEvaluationMetricsParams) (*GetEvaluationMetricsRow, error) {
 	row := q.db.QueryRow(ctx, getEvaluationMetrics, arg.EvaluatedAt, arg.EvaluatedAt_2)
 	var i GetEvaluationMetricsRow
@@ -597,21 +420,6 @@ type GetEvaluationsByDecisionParams struct {
 	Offset        int32        `json:"offset"`
 }
 
-// GetEvaluationsByDecision
-//
-//	SELECT
-//	  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
-//	FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	  AND decision = $1
-//	  AND evaluated_at >= $2
-//	  AND evaluated_at <= $3
-//	ORDER BY
-//	  evaluated_at DESC
-//	LIMIT
-//	  $4 OFFSET $5
 func (q *Queries) GetEvaluationsByDecision(ctx context.Context, arg GetEvaluationsByDecisionParams) ([]*PolicyEvaluation, error) {
 	rows, err := q.db.Query(ctx, getEvaluationsByDecision,
 		arg.Decision,
@@ -684,27 +492,6 @@ type GetResourceEvaluationHistoryParams struct {
 	Offset       int32     `json:"offset"`
 }
 
-// GetResourceEvaluationHistory
-//
-//	SELECT
-//	  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
-//	FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	  AND resource_type = $1
-//	  AND (
-//	    $2::UUID IS NULL
-//	    OR resource_id = $2
-//	  )
-//	  AND (
-//	    $3::VARCHAR IS NULL
-//	    OR ACTION = $3
-//	  )
-//	ORDER BY
-//	  evaluated_at DESC
-//	LIMIT
-//	  $4 OFFSET $5
 func (q *Queries) GetResourceEvaluationHistory(ctx context.Context, arg GetResourceEvaluationHistoryParams) ([]*PolicyEvaluation, error) {
 	rows, err := q.db.Query(ctx, getResourceEvaluationHistory,
 		arg.ResourceType,
@@ -777,27 +564,6 @@ type GetUserEvaluationHistoryParams struct {
 	Offset  int32     `json:"offset"`
 }
 
-// GetUserEvaluationHistory
-//
-//	SELECT
-//	  id, tenant_id, user_id, resource_type, resource_id, action, entity_id, context_hash, decision, applicable_policies, policy_decisions, evaluation_time_ms, cache_key, evaluated_at, expires_at
-//	FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	  AND user_id = $1
-//	  AND (
-//	    $2::VARCHAR IS NULL
-//	    OR resource_type = $2
-//	  )
-//	  AND (
-//	    $3::VARCHAR IS NULL
-//	    OR ACTION = $3
-//	  )
-//	ORDER BY
-//	  evaluated_at DESC
-//	LIMIT
-//	  $4 OFFSET $5
 func (q *Queries) GetUserEvaluationHistory(ctx context.Context, arg GetUserEvaluationHistoryParams) ([]*PolicyEvaluation, error) {
 	rows, err := q.db.Query(ctx, getUserEvaluationHistory,
 		arg.UserID,
@@ -848,13 +614,6 @@ WHERE
   AND ACTION = $1
 `
 
-// InvalidateActionEvaluations
-//
-//	DELETE FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	  AND ACTION = $1
 func (q *Queries) InvalidateActionEvaluations(ctx context.Context, action string) error {
 	_, err := q.db.Exec(ctx, invalidateActionEvaluations, action)
 	return err
@@ -867,12 +626,6 @@ WHERE
   tenant_id = current_tenant_id()
 `
 
-// InvalidateAllEvaluations
-//
-//	DELETE FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
 func (q *Queries) InvalidateAllEvaluations(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, invalidateAllEvaluations)
 	return err
@@ -886,13 +639,6 @@ WHERE
   AND applicable_policies && $1::UUID []
 `
 
-// InvalidatePolicyEvaluations
-//
-//	DELETE FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	  AND applicable_policies && $1::UUID []
 func (q *Queries) InvalidatePolicyEvaluations(ctx context.Context, dollar_1 []uuid.UUID) error {
 	_, err := q.db.Exec(ctx, invalidatePolicyEvaluations, dollar_1)
 	return err
@@ -915,17 +661,6 @@ type InvalidateResourceEvaluationsParams struct {
 	Column2      uuid.UUID `json:"column_2"`
 }
 
-// InvalidateResourceEvaluations
-//
-//	DELETE FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	  AND resource_type = $1
-//	  AND (
-//	    $2::UUID IS NULL
-//	    OR resource_id = $2
-//	  )
 func (q *Queries) InvalidateResourceEvaluations(ctx context.Context, arg InvalidateResourceEvaluationsParams) error {
 	_, err := q.db.Exec(ctx, invalidateResourceEvaluations, arg.ResourceType, arg.Column2)
 	return err
@@ -939,13 +674,6 @@ WHERE
   AND user_id = $1
 `
 
-// InvalidateUserEvaluations
-//
-//	DELETE FROM
-//	  policy_evaluations
-//	WHERE
-//	  tenant_id = current_tenant_id()
-//	  AND user_id = $1
 func (q *Queries) InvalidateUserEvaluations(ctx context.Context, userID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, invalidateUserEvaluations, userID)
 	return err

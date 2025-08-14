@@ -25,10 +25,6 @@ type AssignUserRoleParams struct {
 	PAssignedBy uuid.UUID `json:"p_assigned_by"`
 }
 
-// AssignUserRole
-//
-//	SELECT
-//	  assign_user_role($1, $2, $3, $4)
 func (q *Queries) AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (interface{}, error) {
 	row := q.db.QueryRow(ctx, assignUserRole,
 		arg.PUserID,
@@ -52,16 +48,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// CheckEmailAvailability
-//
-//	SELECT
-//	  COUNT(*) = 0
-//	FROM
-//	  users
-//	WHERE
-//	  email = $1
-//	  AND deleted_at IS NULL
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) CheckEmailAvailability(ctx context.Context, email string) (bool, error) {
 	row := q.db.QueryRow(ctx, checkEmailAvailability, email)
 	var column_1 bool
@@ -80,16 +66,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// CheckEmployeeNumberAvailability
-//
-//	SELECT
-//	  COUNT(*) = 0
-//	FROM
-//	  employees
-//	WHERE
-//	  employee_number = $1
-//	  AND deleted_at IS NULL
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) CheckEmployeeNumberAvailability(ctx context.Context, employeeNumber string) (bool, error) {
 	row := q.db.QueryRow(ctx, checkEmployeeNumberAvailability, employeeNumber)
 	var column_1 bool
@@ -108,16 +84,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// CheckUsernameAvailability
-//
-//	SELECT
-//	  COUNT(*) = 0
-//	FROM
-//	  users
-//	WHERE
-//	  username = $1
-//	  AND deleted_at IS NULL
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) CheckUsernameAvailability(ctx context.Context, username *string) (bool, error) {
 	row := q.db.QueryRow(ctx, checkUsernameAvailability, username)
 	var column_1 bool
@@ -177,42 +143,6 @@ type CreateUserParams struct {
 	Settings              []byte     `json:"settings"`
 }
 
-// CreateUser
-//
-//	INSERT INTO
-//	  users (
-//	    tenant_id,
-//	    entity_id,
-//	    person_id,
-//	    employee_id,
-//	    username,
-//	    email,
-//	    password_hash,
-//	    user_type,
-//	    account_status,
-//	    session_timeout_minutes,
-//	    mfa_enabled,
-//	    user_attributes,
-//	    settings
-//	  )
-//	VALUES
-//	  (
-//	    current_tenant_id(),
-//	    $1,
-//	    $2,
-//	    $3,
-//	    $4,
-//	    $5,
-//	    $6,
-//	    $7,
-//	    $8,
-//	    $9,
-//	    $10,
-//	    $11,
-//	    $12
-//	  )
-//	RETURNING
-//	  id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.EntityID,
@@ -358,21 +288,6 @@ type GetCompleteUserProfileRow struct {
 	DeletedAt_3           sql.NullTime `json:"deleted_at_3"`
 }
 
-// GetCompleteUserProfile
-//
-//	SELECT
-//	  u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.username, u.email, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.version, u.last_validation_run, u.validation_status, u.validation_errors, u.created_at, u.updated_at, u.deleted_at, u.password_strength, u.compromised, u.rotation_required,
-//	  p.id, p.tenant_id, p.entity_id, p.person_type, p.first_name, p.last_name, p.middle_name, p.email, p.phone, p.birth_date, p.national_id, p.tax_id, p.address, p.security_attributes, p.metadata, p.is_active, p.version, p.last_validation_run, p.validation_status, p.validation_errors, p.created_at, p.updated_at, p.deleted_at,
-//	  e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.security_level, e.access_attributes, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at
-//	FROM
-//	  users u
-//	  LEFT JOIN persons p ON u.person_id = p.id
-//	  AND p.tenant_id = u.tenant_id
-//	  LEFT JOIN employees e ON u.employee_id = e.id
-//	  AND e.tenant_id = u.tenant_id
-//	WHERE
-//	  u.id = $1
-//	  AND u.deleted_at IS NULL
 func (q *Queries) GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*GetCompleteUserProfileRow, error) {
 	row := q.db.QueryRow(ctx, getCompleteUserProfile, id)
 	var i GetCompleteUserProfileRow
@@ -467,16 +382,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// GetUserByEmail
-//
-//	SELECT
-//	  id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
-//	FROM
-//	  users
-//	WHERE
-//	  email = $1
-//	  AND deleted_at IS NULL
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
@@ -526,16 +431,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// GetUserByID
-//
-//	SELECT
-//	  id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
-//	FROM
-//	  users
-//	WHERE
-//	  id = $1
-//	  AND deleted_at IS NULL
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	row := q.db.QueryRow(ctx, getUserByID, id)
 	var i User
@@ -585,16 +480,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// GetUserByUsername
-//
-//	SELECT
-//	  id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
-//	FROM
-//	  users
-//	WHERE
-//	  username = $1
-//	  AND deleted_at IS NULL
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) GetUserByUsername(ctx context.Context, username *string) (*User, error) {
 	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
@@ -644,16 +529,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// GetUserPasswordByID
-//
-//	SELECT
-//	  password_hash
-//	FROM
-//	  users
-//	WHERE
-//	  id = $1
-//	  AND deleted_at IS NULL
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) GetUserPasswordByID(ctx context.Context, id uuid.UUID) (*string, error) {
 	row := q.db.QueryRow(ctx, getUserPasswordByID, id)
 	var password_hash *string
@@ -671,15 +546,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// IncrementFailedLogins
-//
-//	UPDATE
-//	  users
-//	SET
-//	  failed_login_attempts = failed_login_attempts + 1
-//	WHERE
-//	  id = $1
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) IncrementFailedLogins(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, incrementFailedLogins, id)
 	return err
@@ -714,27 +580,6 @@ type ListUsersParams struct {
 	AccountStatus string `json:"account_status"`
 }
 
-// ListUsers
-//
-//	SELECT
-//	  id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
-//	FROM
-//	  users
-//	WHERE
-//	  (
-//	    $3::text IS NULL
-//	    OR user_type = $3::text
-//	  )
-//	  AND (
-//	    $4::text IS NULL
-//	    OR account_status = $4::text
-//	  )
-//	  AND deleted_at IS NULL
-//	  AND tenant_id = current_tenant_id()
-//	ORDER BY
-//	  created_at DESC
-//	LIMIT
-//	  $1 OFFSET $2
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error) {
 	rows, err := q.db.Query(ctx, listUsers,
 		arg.Limit,
@@ -801,15 +646,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// RestoreSoftDeletedUser
-//
-//	UPDATE
-//	  users
-//	SET
-//	  deleted_at = NULL
-//	WHERE
-//	  id = $1
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) RestoreSoftDeletedUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, restoreSoftDeletedUser, id)
 	return err
@@ -826,10 +662,6 @@ type RevokeUserRoleParams struct {
 	PEntityID uuid.UUID `json:"p_entity_id"`
 }
 
-// RevokeUserRole
-//
-//	SELECT
-//	  revoke_user_role($1, $2, $3)
 func (q *Queries) RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) error {
 	_, err := q.db.Exec(ctx, revokeUserRole, arg.PUserID, arg.PRoleID, arg.PEntityID)
 	return err
@@ -856,20 +688,6 @@ type SearchUsersAdvancedParams struct {
 	Query  string `json:"query"`
 }
 
-// SearchUsersAdvanced
-//
-//	SELECT
-//	  id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
-//	FROM
-//	  users
-//	WHERE
-//	  (
-//	    username ILIKE '%' || $3 || '%'
-//	    OR email ILIKE '%' || $3 || '%'
-//	  )
-//	  AND deleted_at IS NULL
-//	LIMIT
-//	  $1 OFFSET $2
 func (q *Queries) SearchUsersAdvanced(ctx context.Context, arg SearchUsersAdvancedParams) ([]*User, error) {
 	rows, err := q.db.Query(ctx, searchUsersAdvanced, arg.Limit, arg.Offset, arg.Query)
 	if err != nil {
@@ -931,15 +749,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// SoftDeleteUser
-//
-//	UPDATE
-//	  users
-//	SET
-//	  deleted_at = NOW()
-//	WHERE
-//	  id = $1
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, softDeleteUser, id)
 	return err
@@ -956,16 +765,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// UnlockUser
-//
-//	UPDATE
-//	  users
-//	SET
-//	  failed_login_attempts = 0,
-//	  lockout_until = NULL
-//	WHERE
-//	  id = $1
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) UnlockUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, unlockUser, id)
 	return err
@@ -1002,26 +801,6 @@ type UpdateUserParams struct {
 	ID                    uuid.UUID `json:"id"`
 }
 
-// UpdateUser
-//
-//	UPDATE
-//	  users
-//	SET
-//	  username = COALESCE($1, username),
-//	  email = COALESCE($2, email),
-//	  user_type = COALESCE($3, user_type),
-//	  account_status = COALESCE($4, account_status),
-//	  session_timeout_minutes = COALESCE(
-//	    $5,
-//	    session_timeout_minutes
-//	  ),
-//	  mfa_enabled = COALESCE($6, mfa_enabled),
-//	  updated_at = NOW()
-//	WHERE
-//	  id = $7
-//	  AND tenant_id = current_tenant_id()
-//	RETURNING
-//	  id, tenant_id, entity_id, person_id, employee_id, username, email, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, password_strength, compromised, rotation_required
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.Username,
@@ -1078,15 +857,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// UpdateUserLastLogin
-//
-//	UPDATE
-//	  users
-//	SET
-//	  last_login_at = NOW()
-//	WHERE
-//	  id = $1
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, updateUserLastLogin, id)
 	return err
@@ -1108,16 +878,6 @@ type UpdateUserPasswordParams struct {
 	PasswordHash *string   `json:"password_hash"`
 }
 
-// UpdateUserPassword
-//
-//	UPDATE
-//	  users
-//	SET
-//	  password_hash = $2,
-//	  updated_at = NOW()
-//	WHERE
-//	  id = $1
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
 	_, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.PasswordHash)
 	return err

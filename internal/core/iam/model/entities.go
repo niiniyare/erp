@@ -547,3 +547,13 @@ type PolicyEnvironment struct {
 	RiskLevel    string                 `json:"risk_level"`
 	Attributes   map[string]interface{} `json:"attributes,omitempty"`
 }
+
+// PolicyTestResult represents the result of a policy test
+type PolicyTestResult struct {
+	TestCaseID  string             `json:"test_case_id"`
+	Passed      bool               `json:"passed"`
+	Actual      PolicyDecisionType `json:"actual"`
+	Expected    PolicyDecisionType `json:"expected"`
+	Reason      string             `json:"reason,omitempty"`
+	Duration    time.Duration      `json:"duration"`
+}

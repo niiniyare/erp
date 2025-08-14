@@ -62,40 +62,6 @@ type CreateEmployeeParams struct {
 	AccessAttributes []byte     `json:"access_attributes"`
 }
 
-// CreateEmployee
-//
-//	INSERT INTO
-//	  employees (
-//	    person_id,
-//	    employee_number,
-//	    entity_id,
-//	    position_title,
-//	    department_id,
-//	    manager_id,
-//	    hire_date,
-//	    salary_info,
-//	    employment_status,
-//	    work_schedule,
-//	    security_level,
-//	    access_attributes
-//	  )
-//	VALUES
-//	  (
-//	    $1,
-//	    $2,
-//	    $3,
-//	    $4,
-//	    $5,
-//	    $6,
-//	    $7,
-//	    $8,
-//	    $9,
-//	    $10,
-//	    $11,
-//	    $12
-//	  )
-//	RETURNING
-//	  id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
 func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (*Employee, error) {
 	row := q.db.QueryRow(ctx, createEmployee,
 		arg.PersonID,
@@ -150,16 +116,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// GetEmployeeByID
-//
-//	SELECT
-//	  id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
-//	FROM
-//	  employees
-//	WHERE
-//	  id = $1
-//	  AND deleted_at IS NULL
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error) {
 	row := q.db.QueryRow(ctx, getEmployeeByID, id)
 	var i Employee

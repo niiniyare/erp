@@ -48,32 +48,6 @@ type CreateUserNotificationPreferencesParams struct {
 	QuietHours         []byte    `json:"quiet_hours"`
 }
 
-// CreateUserNotificationPreferences
-//
-//	INSERT INTO
-//	  notification_preferences (
-//	    tenant_id,
-//	    user_id,
-//	    email_notifications,
-//	    in_app_notifications,
-//	    slack_notifications,
-//	    notification_types,
-//	    preferred_channels,
-//	    quiet_hours
-//	  )
-//	VALUES
-//	  (
-//	    current_tenant_id(),
-//	    $1,
-//	    $2,
-//	    $3,
-//	    $4,
-//	    $5,
-//	    $6,
-//	    $7
-//	  )
-//	RETURNING
-//	  id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
 func (q *Queries) CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error) {
 	row := q.db.QueryRow(ctx, createUserNotificationPreferences,
 		arg.UserID,
@@ -111,15 +85,6 @@ WHERE
   AND tenant_id = current_tenant_id()
 `
 
-// GetUserNotificationPreferences
-//
-//	SELECT
-//	  id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
-//	FROM
-//	  notification_preferences
-//	WHERE
-//	  user_id = $1
-//	  AND tenant_id = current_tenant_id()
 func (q *Queries) GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreference, error) {
 	row := q.db.QueryRow(ctx, getUserNotificationPreferences, userID)
 	var i NotificationPreference
@@ -167,23 +132,6 @@ type UpdateUserNotificationPreferencesParams struct {
 	QuietHours         []byte    `json:"quiet_hours"`
 }
 
-// UpdateUserNotificationPreferences
-//
-//	UPDATE
-//	  notification_preferences
-//	SET
-//	  email_notifications = $2,
-//	  in_app_notifications = $3,
-//	  slack_notifications = $4,
-//	  notification_types = $5,
-//	  preferred_channels = $6,
-//	  quiet_hours = $7,
-//	  updated_at = NOW()
-//	WHERE
-//	  user_id = $1
-//	  AND tenant_id = current_tenant_id()
-//	RETURNING
-//	  id, tenant_id, user_id, email_notifications, in_app_notifications, slack_notifications, notification_types, preferred_channels, quiet_hours, created_at, updated_at
 func (q *Queries) UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error) {
 	row := q.db.QueryRow(ctx, updateUserNotificationPreferences,
 		arg.UserID,

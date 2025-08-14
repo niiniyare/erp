@@ -1,11 +1,6 @@
 package logger
 
-<<<<<<< HEAD
-//go:generate go run go.uber.org/mock/mockgen -source=logger.go -destination=mock_logger.go -package=logger
-
-=======
 //go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
->>>>>>> ft/ffg
 
 import (
 	"context"
