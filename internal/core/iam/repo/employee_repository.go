@@ -158,7 +158,7 @@ func (r *employeeRepository) ListByStatus(ctx context.Context, status model.Empl
 }
 
 // ListByDepartment lists employees by department
-func (r *employeeRepository) ListByDepartment(ctx context.Context, departmentID uuid.UUID) ([]*model.Employee, error) {
+func (r *employeeRepository) ListByDepartment(ctx context.Context, department string) ([]*model.Employee, error) {
 	// TODO: Implement when SQLC query is available
 	return nil, fmt.Errorf("ListByDepartment not implemented")
 }
@@ -167,6 +167,12 @@ func (r *employeeRepository) ListByDepartment(ctx context.Context, departmentID 
 func (r *employeeRepository) ListByManager(ctx context.Context, managerID uuid.UUID) ([]*model.Employee, error) {
 	// TODO: Implement when SQLC query is available
 	return nil, fmt.Errorf("ListByManager not implemented")
+}
+
+// Count returns total number of employees
+func (r *employeeRepository) Count(ctx context.Context) (int64, error) {
+	// TODO: Implement when SQLC query is available
+	return 0, fmt.Errorf("Count not implemented")
 }
 
 // GetDirectReports retrieves direct reports for a manager

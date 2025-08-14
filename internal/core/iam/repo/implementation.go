@@ -50,10 +50,10 @@ func NewIAMRepository(
 
 	// Initialize repository implementations
 	repo.userRepo = NewUserRepository(store, logger, metrics, tracer)
+	repo.personRepo = NewPersonRepository(store, logger, metrics, tracer)
+	repo.employeeRepo = NewEmployeeRepository(store, logger, metrics, tracer)
+	repo.roleRepo = NewRoleRepository(store, logger, metrics, tracer)
 	// TODO: Implement remaining repository constructors
-	// repo.personRepo = NewPersonRepository(store, logger, metrics, tracer)
-	// repo.employeeRepo = NewEmployeeRepository(store, logger, metrics, tracer)
-	// repo.roleRepo = NewRoleRepository(store, logger, metrics, tracer)
 	// repo.userRoleRepo = NewUserRoleRepository(store, logger, metrics, tracer)
 	// repo.sessionRepo = NewSessionRepository(store, logger, metrics, tracer)
 	// repo.policyRepo = NewPolicyRepository(store, logger, metrics, tracer)
@@ -71,9 +71,9 @@ func NewIAMRepository(
 
 // Core repositories
 func (r *iamRepository) Users() UserRepository         { return r.userRepo }
-func (r *iamRepository) Persons() PersonRepository     { return nil } // TODO: implement
-func (r *iamRepository) Employees() EmployeeRepository { return nil } // TODO: implement
-func (r *iamRepository) Roles() RoleRepository         { return nil } // TODO: implement
+func (r *iamRepository) Persons() PersonRepository     { return r.personRepo }
+func (r *iamRepository) Employees() EmployeeRepository { return r.employeeRepo }
+func (r *iamRepository) Roles() RoleRepository         { return r.roleRepo }
 func (r *iamRepository) UserRoles() UserRoleRepository { return nil } // TODO: implement
 func (r *iamRepository) Sessions() SessionRepository   { return nil } // TODO: implement
 

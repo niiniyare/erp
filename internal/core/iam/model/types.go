@@ -149,3 +149,26 @@ const (
 	SessionStatusRevoked  SessionStatus = "REVOKED"
 	SessionStatusInactive SessionStatus = "INACTIVE"
 )
+
+// PersonType represents the type/classification of a person
+type PersonType string
+
+const (
+	PersonTypeIndividual PersonType = "INDIVIDUAL"
+	PersonTypeEmployee   PersonType = "EMPLOYEE"
+	PersonTypeContact    PersonType = "CONTACT"
+	PersonTypeCustomer   PersonType = "CUSTOMER"
+	PersonTypeVendor     PersonType = "VENDOR"
+	PersonTypeContractor PersonType = "CONTRACTOR"
+)
+
+// RoleType represents the type/classification of a role
+type RoleType string
+
+const (
+	RoleTypeSystem     RoleType = "SYSTEM"     // Built-in roles
+	RoleTypeTenant     RoleType = "TENANT"     // Tenant-wide roles
+	RoleTypeEntity     RoleType = "ENTITY"     // Entity-scoped roles
+	RoleTypeCustom     RoleType = "CUSTOM"     // User-defined roles
+	RoleTypeFunctional RoleType = "FUNCTIONAL" // Job-based roles
+)

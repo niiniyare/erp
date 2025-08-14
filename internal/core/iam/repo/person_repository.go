@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -164,6 +163,12 @@ func (r *personRepository) List(ctx context.Context, limit, offset int) ([]*mode
 
 	// TODO: Implement when SQLC query is available
 	return nil, fmt.Errorf("List not implemented")
+}
+
+// Count returns total number of persons
+func (r *personRepository) Count(ctx context.Context) (int64, error) {
+	// TODO: Implement when SQLC query is available
+	return 0, fmt.Errorf("Count not implemented")
 }
 
 // ListByType lists persons by person type
