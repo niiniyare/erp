@@ -497,12 +497,14 @@ func (s *adminServiceImpl) auditEmergencyAction(ctx context.Context, action, rea
 		"errors":           errors,
 	})
 
-	s.auditService.Record(ctx, audit.AuditEvent{
+	decision := fmt.Sprintf("EXECUTED_%s", action)
+	reasonStr := fmt.Sprintf("Emergency action executed: %s - %s", action, reason)
+	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     "admin_emergency_action",
 		EventCategory: AuditCategoryAdmin,
 		Severity:      AuditSeverityCritical, // Emergency actions are critical
-		Decision:      fmt.Sprintf("EXECUTED_%s", action),
-		Reason:        fmt.Sprintf("Emergency action executed: %s - %s", action, reason),
+		Decision:      &decision,
+		Reason:        &reasonStr,
 		Context:       contextData,
 	})
 }
@@ -517,13 +519,16 @@ func (s *adminServiceImpl) auditRolloutStrategyAction(ctx context.Context, actio
 		"created_at":    strategy.CreatedAt,
 	})
 
-	s.auditService.Record(ctx, audit.AuditEvent{
+	decision := fmt.Sprintf("EXECUTED_%s", action)
+	reason := fmt.Sprintf("Rollout strategy %s: %s", action, strategy.Name)
+	strategyEntityID := strategy.ID
+	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     "admin_rollout_strategy",
 		EventCategory: AuditCategoryAdmin,
 		Severity:      AuditSeverityInfo,
-		EntityID:      uuid.NullUUID{UUID: strategy.ID, Valid: true},
-		Decision:      fmt.Sprintf("EXECUTED_%s", action),
-		Reason:        fmt.Sprintf("Rollout strategy %s: %s", action, strategy.Name),
+		EntityID:      &strategyEntityID,
+		Decision:      &decision,
+		Reason:        &reason,
 		Context:       contextData,
 	})
 }
@@ -544,12 +549,14 @@ func (s *adminServiceImpl) auditCacheOperation(ctx context.Context, operation st
 		severity = AuditSeverityWarn
 	}
 
-	s.auditService.Record(ctx, audit.AuditEvent{
+	decision := fmt.Sprintf("EXECUTED_%s", operation)
+	reason := fmt.Sprintf("Cache operation executed: %s", operation)
+	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     "admin_cache_operation",
 		EventCategory: AuditCategoryAdmin,
 		Severity:      severity,
-		Decision:      fmt.Sprintf("EXECUTED_%s", operation),
-		Reason:        fmt.Sprintf("Cache operation executed: %s", operation),
+		Decision:      &decision,
+		Reason:        &reason,
 		Context:       contextData,
 	})
 }

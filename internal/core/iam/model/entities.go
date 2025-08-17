@@ -51,25 +51,25 @@ func (u *User) FullName() string {
 
 // Person represents a person entity (can exist without a user account)
 type Person struct {
-	ID                 uuid.UUID                    `json:"id"`
-	TenantID           uuid.UUID                    `json:"tenant_id"`
-	EntityID           uuid.UUID                    `json:"entity_id"`
-	PersonType         PersonType                   `json:"person_type"`
-	FirstName          string                       `json:"first_name"`
-	LastName           string                       `json:"last_name"`
-	MiddleName         *string                      `json:"middle_name,omitempty"`
-	Email              *string                      `json:"email,omitempty"`
-	PhoneNumber        *string                      `json:"phone_number,omitempty"`
-	BirthDate          time.Time                    `json:"birth_date"`
-	NationalID         *string                      `json:"national_id,omitempty"`
-	TaxID              *string                      `json:"tax_id,omitempty"`
-	Address            map[string]interface{}       `json:"address,omitempty"`
-	SecurityAttributes map[string]interface{}       `json:"security_attributes,omitempty"`
-	Metadata           map[string]interface{}       `json:"metadata,omitempty"`
-	IsActive           bool                         `json:"is_active"`
-	CreatedAt          time.Time                    `json:"created_at"`
-	UpdatedAt          time.Time                    `json:"updated_at"`
-	DeletedAt          *time.Time                   `json:"deleted_at,omitempty"`
+	ID                 uuid.UUID              `json:"id"`
+	TenantID           uuid.UUID              `json:"tenant_id"`
+	EntityID           uuid.UUID              `json:"entity_id"`
+	PersonType         PersonType             `json:"person_type"`
+	FirstName          string                 `json:"first_name"`
+	LastName           string                 `json:"last_name"`
+	MiddleName         *string                `json:"middle_name,omitempty"`
+	Email              *string                `json:"email,omitempty"`
+	PhoneNumber        *string                `json:"phone_number,omitempty"`
+	BirthDate          time.Time              `json:"birth_date"`
+	NationalID         *string                `json:"national_id,omitempty"`
+	TaxID              *string                `json:"tax_id,omitempty"`
+	Address            map[string]interface{} `json:"address,omitempty"`
+	SecurityAttributes map[string]interface{} `json:"security_attributes,omitempty"`
+	Metadata           map[string]interface{} `json:"metadata,omitempty"`
+	IsActive           bool                   `json:"is_active"`
+	CreatedAt          time.Time              `json:"created_at"`
+	UpdatedAt          time.Time              `json:"updated_at"`
+	DeletedAt          *time.Time             `json:"deleted_at,omitempty"`
 }
 
 // FullName returns the person's full name
@@ -79,24 +79,24 @@ func (p *Person) FullName() string {
 
 // Employee represents an employee (links to a person)
 type Employee struct {
-	ID               uuid.UUID                    `json:"id"`
-	TenantID         uuid.UUID                    `json:"tenant_id"`
-	PersonID         uuid.UUID                    `json:"person_id"`
-	EmployeeNumber   string                       `json:"employee_number"`
-	EntityID         uuid.UUID                    `json:"entity_id"`
-	PositionTitle    *string                      `json:"position_title,omitempty"`
-	DepartmentID     *uuid.UUID                   `json:"department_id,omitempty"`
-	ManagerID        *uuid.UUID                   `json:"manager_id,omitempty"`
-	HireDate         time.Time                    `json:"hire_date"`
-	TerminationDate  *time.Time                   `json:"termination_date,omitempty"`
-	SalaryInfo       map[string]interface{}       `json:"salary_info,omitempty"`
-	EmploymentStatus EmploymentStatus             `json:"employment_status"`
-	WorkSchedule     map[string]interface{}       `json:"work_schedule,omitempty"`
-	SecurityLevel    int                          `json:"security_level"`
-	AccessAttributes map[string]interface{}       `json:"access_attributes,omitempty"`
-	CreatedAt        time.Time                    `json:"created_at"`
-	UpdatedAt        time.Time                    `json:"updated_at"`
-	DeletedAt        *time.Time                   `json:"deleted_at,omitempty"`
+	ID               uuid.UUID              `json:"id"`
+	TenantID         uuid.UUID              `json:"tenant_id"`
+	PersonID         uuid.UUID              `json:"person_id"`
+	EmployeeNumber   string                 `json:"employee_number"`
+	EntityID         uuid.UUID              `json:"entity_id"`
+	PositionTitle    *string                `json:"position_title,omitempty"`
+	DepartmentID     *uuid.UUID             `json:"department_id,omitempty"`
+	ManagerID        *uuid.UUID             `json:"manager_id,omitempty"`
+	HireDate         time.Time              `json:"hire_date"`
+	TerminationDate  *time.Time             `json:"termination_date,omitempty"`
+	SalaryInfo       map[string]interface{} `json:"salary_info,omitempty"`
+	EmploymentStatus EmploymentStatus       `json:"employment_status"`
+	WorkSchedule     map[string]interface{} `json:"work_schedule,omitempty"`
+	SecurityLevel    int                    `json:"security_level"`
+	AccessAttributes map[string]interface{} `json:"access_attributes,omitempty"`
+	CreatedAt        time.Time              `json:"created_at"`
+	UpdatedAt        time.Time              `json:"updated_at"`
+	DeletedAt        *time.Time             `json:"deleted_at,omitempty"`
 }
 
 // IsActive checks if the employee is currently active

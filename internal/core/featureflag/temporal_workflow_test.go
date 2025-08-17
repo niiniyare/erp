@@ -1,15 +1,11 @@
 package featureflag_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"github.com/niiniyare/erp/internal/core/featureflag"
 )
 
 // TestWorkflowRequest represents workflow request structure for testing
@@ -44,7 +40,6 @@ func TestFeatureFlagChangeApprovalWorkflow(t *testing.T) {
 		t.Skip("Skipping Temporal workflow integration test in short mode")
 	}
 
-	tenantID := uuid.New()
 	userID := uuid.New()
 	approverID := uuid.New()
 
@@ -210,7 +205,6 @@ func TestBulkChangeApprovalWorkflow(t *testing.T) {
 		t.Skip("Skipping bulk workflow integration test in short mode")
 	}
 
-	tenantID := uuid.New()
 	userID := uuid.New()
 	approverID := uuid.New()
 
@@ -468,7 +462,7 @@ func TestWorkflowApprovalAndRejection(t *testing.T) {
 
 	t.Run("ValidateApprovalAuditTrail", func(t *testing.T) {
 		// Test audit trail for approval process
-		workflowID := "audit-trail-" + uuid.New().String()
+		// workflowID := "audit-trail-" + uuid.New().String()
 
 		auditTrail := []map[string]interface{}{
 			{
@@ -529,7 +523,6 @@ func TestAutoRollbackScheduling(t *testing.T) {
 		t.Skip("Skipping auto-rollback test in short mode")
 	}
 
-	tenantID := uuid.New()
 	userID := uuid.New()
 	flagID := uuid.New()
 
@@ -679,7 +672,6 @@ func TestWorkflowIntegrationLifecycle(t *testing.T) {
 
 	t.Run("ValidateCompleteWorkflowLifecycle", func(t *testing.T) {
 		// Test the complete workflow from request to execution
-		tenantID := uuid.New()
 		userID := uuid.New()
 		approverID := uuid.New()
 

@@ -18,6 +18,7 @@ type FeatureFlag struct {
 	DefaultValue      bool           `json:"default_value"`
 	RolloutPercentage *int32         `json:"rollout_percentage,omitempty"`
 	TargetAudience    map[string]any `json:"target_audience"`
+	Enabled           bool           `json:"enabled"`
 	Metadata          map[string]any `json:"metadata"`
 	CreatedAt         time.Time      `json:"created_at"`
 	UpdatedAt         time.Time      `json:"updated_at"`

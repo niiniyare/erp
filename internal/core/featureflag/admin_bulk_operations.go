@@ -438,12 +438,14 @@ func (s *adminServiceImpl) auditBulkOperation(ctx context.Context, operation, re
 		severity = AuditSeverityHigh // Low success rate is concerning
 	}
 
-	s.auditService.Record(ctx, audit.AuditEvent{
+	decision := fmt.Sprintf("EXECUTED_%s", operation)
+	reasonMsg := fmt.Sprintf("Admin bulk operation: %s (%d/%d successful)", operation, result.Successful, result.TotalRequested)
+	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     "admin_bulk_operation",
 		EventCategory: AuditCategoryAdmin,
 		Severity:      severity,
-		Decision:      fmt.Sprintf("EXECUTED_%s", operation),
-		Reason:        fmt.Sprintf("Admin bulk operation: %s (%d/%d successful)", operation, result.Successful, result.TotalRequested),
+		Decision:      &decision,
+		Reason:        &reasonMsg,
 		Context:       contextData,
 	})
 

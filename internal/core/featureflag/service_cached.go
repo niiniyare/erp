@@ -17,7 +17,7 @@ import (
 
 // CachedFeatureFlagService wraps the simple service with Redis caching
 type CachedFeatureFlagService struct {
-	service SimpleService
+	service Service
 	cache   cache.Service
 	logger  logger.Logger
 	metrics *metrics.MetricsService
@@ -26,12 +26,12 @@ type CachedFeatureFlagService struct {
 
 // NewCachedFeatureFlagService creates a new cached feature flag service
 func NewCachedFeatureFlagService(
-	service SimpleService,
+	service Service,
 	cache cache.Service,
 	logger logger.Logger,
 	metrics *metrics.MetricsService,
 	tracing tracing.TracingService,
-) SimpleService {
+) Service {
 	return &CachedFeatureFlagService{
 		service: service,
 		cache:   cache,

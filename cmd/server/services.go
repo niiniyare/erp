@@ -20,7 +20,7 @@ import (
 	"github.com/niiniyare/erp/internal/core/notification"
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	loggerPkg "github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
@@ -32,7 +32,7 @@ type Services struct {
 	IdentityService         identity.Service
 	ABACService             abac.Service
 	AuditService            audit.Service
-	FeatureFlagService      featureflag.SimpleService
+	FeatureFlagService      featureflag.Service
 	AdminFeatureFlagService featureflag.AdminService
 
 	// Access services
@@ -44,18 +44,18 @@ type Services struct {
 	ExecutionService         execution.AccessExecutionService
 }
 
-func InitializeServices(store db.Store, redisClient cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*Services, error) {
+func InitializeServices(store db.Store, redisClient cache.Service, logger loggerPkg.Logger, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*Services, error) {
 	// Initialize repositories
 	tenantRepo := tenant.NewRepository(store, tracingService)
 	entityRepo := entity.NewRepository(store, tracingService, metricsService)
 	identityRepo := identity.NewRepository(store, tracingService, metricsService)
-	auditRepo := audit.NewRepository(store)
+	auditRepo := audit.NewRepository(store, logger, tracingService, metricsService)
 	notificationRepo := notification.NewRepository(store)
 
 	// Initialize ABAC repositories
-	policyRepo := repository.NewPolicyRepository(store, redisClient, logger.WithFields(logger.Fields{}), metricsService, tracingService)
-	attributeRepo := repository.NewAttributeRepository(store, redisClient, logger.WithFields(logger.Fields{}), metricsService, tracingService)
-	policyEvaluationRepo := repository.NewPolicyEvaluationRepository(store, redisClient, logger.WithFields(logger.Fields{}), metricsService, tracingService)
+	policyRepo := repository.NewPolicyRepository(store, redisClient, logger.WithFields(loggerPkg.Fields{}), metricsService, tracingService)
+	attributeRepo := repository.NewAttributeRepository(store, redisClient, logger.WithFields(loggerPkg.Fields{}), metricsService, tracingService)
+	policyEvaluationRepo := repository.NewPolicyEvaluationRepository(store, redisClient, logger.WithFields(loggerPkg.Fields{}), metricsService, tracingService)
 
 	// Initialize core business services
 	tenantService := tenant.NewService(tenantRepo, redisClient, tracingService)
@@ -69,36 +69,36 @@ func InitializeServices(store db.Store, redisClient cache.Service, metricsServic
 		policyEvaluationRepo,
 		identityService,
 		tenantService,
-		logger.WithFields(logger.Fields{}),
+		logger.WithFields(loggerPkg.Fields{}),
 		metricsService,
 		tracingService,
 	)
 
 	// Initialize domain services
-	auditService := audit.NewService(auditRepo)
+	auditService := audit.NewService(auditRepo, redisClient, logger, tracingService, metricsService)
 
 	// Initialize feature flag service with audit logging
-	featureFlagRepo := featureflag.NewSimpleRepository(store)
+	featureFlagRepo := featureflag.NewRepository(store)
 	webSocketService := featureflag.NewWebSocketService(store, tracingService, metricsService)
-	baseFeatureFlagService := featureflag.NewSimpleService(featureFlagRepo, tenantService, store, auditService, webSocketService)
+	baseFeatureFlagService := featureflag.NewService(featureFlagRepo, tenantService, store, auditService, webSocketService)
 
 	// Wrap with caching if Redis is available
-	var featureFlagService featureflag.SimpleService
+	var featureFlagService featureflag.Service
 	if redisClient != nil {
 		featureFlagService = featureflag.NewCachedFeatureFlagService(
 			baseFeatureFlagService,
 			redisClient,
-			logger.WithFields(logger.Fields{"service": "featureflag_cached"}),
+			logger.WithFields(loggerPkg.Fields{"service": "featureflag_cached"}),
 			metricsService,
 			tracingService,
 		)
-		logger.Info("Feature flag service initialized with Redis caching", logger.Fields{
+		logger.Info("Feature flag service initialized with Redis caching", loggerPkg.Fields{
 			"service": "featureflag",
 			"caching": "enabled",
 		})
 	} else {
 		featureFlagService = baseFeatureFlagService
-		logger.Info("Feature flag service initialized without caching", logger.Fields{
+		logger.Info("Feature flag service initialized without caching", loggerPkg.Fields{
 			"service": "featureflag",
 			"caching": "disabled",
 		})
@@ -108,12 +108,12 @@ func InitializeServices(store db.Store, redisClient cache.Service, metricsServic
 	adminFeatureFlagService := featureflag.NewAdminService(
 		featureFlagService,
 		auditService,
-		logger.WithFields(logger.Fields{"service": "admin_featureflag"}),
+		logger.WithFields(loggerPkg.Fields{"service": "admin_featureflag"}),
 		metricsService,
 		tracingService,
 		nil, // CacheWarmer can be nil for now
 	)
-	logger.Info("Admin feature flag service initialized", logger.Fields{
+	logger.Info("Admin feature flag service initialized", loggerPkg.Fields{
 		"service": "admin_featureflag",
 		"status":  "ready",
 	})
@@ -158,13 +158,13 @@ func InitializeServices(store db.Store, redisClient cache.Service, metricsServic
 	}
 
 	// Log all initialized services dynamically
-	logInitializedServices(services)
+	logInitializedServices(services, logger)
 
 	return services, nil
 }
 
 // logInitializedServices dynamically logs all services using reflection
-func logInitializedServices(services *Services) {
+func logInitializedServices(services *Services, logger loggerPkg.Logger) {
 	serviceCount := 0
 	coreServices := make(map[string]any)
 	accessServices := make(map[string]any)
@@ -200,7 +200,7 @@ func logInitializedServices(services *Services) {
 	}
 
 	// Log summary
-	logger.Info("🚀 Business Services Initialized", logger.Fields{
+	logger.Info("🚀 Business Services Initialized", loggerPkg.Fields{
 		"total_services": serviceCount,
 		"status":         "ready",
 	})

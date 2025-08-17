@@ -36,7 +36,7 @@ type MLOptimizationService interface {
 type mlOptimizationService struct {
 	store                db.Store
 	metricsProvider      metrics.MetricsProvider
-	featureFlagService   SimpleService
+	featureFlagService   Service
 	dataCollectionPeriod time.Duration
 }
 
@@ -44,7 +44,7 @@ type mlOptimizationService struct {
 func NewMLOptimizationService(
 	store db.Store,
 	metricsProvider metrics.MetricsProvider,
-	featureFlagService SimpleService,
+	featureFlagService Service,
 ) MLOptimizationService {
 	return &mlOptimizationService{
 		store:                store,

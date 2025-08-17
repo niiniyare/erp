@@ -144,8 +144,8 @@ func BenchmarkFeatureFlagEvaluation(b *testing.B) {
 	}
 }
 
-// TestSimpleService shows how the feature flag service would be used
-func TestSimpleService(t *testing.T) {
+// TestService shows how the feature flag service would be used
+func TestService(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping simple service test")
 	}

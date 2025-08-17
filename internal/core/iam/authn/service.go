@@ -168,9 +168,11 @@ type EnableMFARequest struct {
 }
 
 type MFASetupResult struct {
-	Secret      string   `json:"secret,omitempty"`
-	QRCode      string   `json:"qr_code,omitempty"`
-	BackupCodes []string `json:"backup_codes"`
+	Secret        string   `json:"secret,omitempty"`
+	QRCode        string   `json:"qr_code,omitempty"`
+	BackupCodes   []string `json:"backup_codes"`
+	Method        string   `json:"method"`
+	SetupComplete bool     `json:"setup_complete"`
 }
 
 type ValidateMFARequest struct {
@@ -179,14 +181,15 @@ type ValidateMFARequest struct {
 }
 
 type MFAValidationResult struct {
-	Valid bool `json:"valid"`
+	Valid       bool      `json:"valid"`
+	ValidatedAt time.Time `json:"validated_at"`
 }
 
 type CreateSessionRequest struct {
-	UserID    uuid.UUID `json:"user_id" validate:"required"`
-	IPAddress string    `json:"ip_address"`
-	UserAgent string    `json:"user_agent"`
-	ExpiresAt time.Time `json:"expires_at"`
+	UserID             uuid.UUID     `json:"user_id" validate:"required"`
+	IPAddress          string        `json:"ip_address"`
+	UserAgent          string        `json:"user_agent"`
+	ExpirationDuration time.Duration `json:"expiration_duration"`
 }
 
 type AssignRoleRequest struct {

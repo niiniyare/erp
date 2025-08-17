@@ -38,8 +38,9 @@ func NewService(
 	}
 }
 
-func (s *service) CreateAuditEvent(ctx context.Context, tenantID uuid.UUID, req CreateAuditEventRequest) (*AuditEvent, error) {
-	return s.repo.CreateAuditEvent(ctx, tenantID, req)
+func (s *service) CreateAuditEvent(ctx context.Context, req CreateAuditEventRequest) (*AuditEvent, error) {
+	// The repository will get tenant ID from the database session context (RLS)
+	return s.repo.CreateAuditEvent(ctx, req)
 }
 
 func (s *service) GetAuditEvents(ctx context.Context, tenantID uuid.UUID, filters AuditEventFilters) ([]AuditEvent, error) {

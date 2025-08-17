@@ -13,6 +13,7 @@ type Infrastructure struct {
 	Config  *config.Config
 	Tracing tracing.TracingService
 	Metrics *metrics.MetricsService
+	logger  logger.Logger
 }
 
 func InitializeInfrastructure() (*Infrastructure, error) {

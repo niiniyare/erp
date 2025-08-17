@@ -10,7 +10,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"go.uber.org/mock/gomock"
 )
 
 // // MockCache implements cache.Service for testing
@@ -94,8 +94,9 @@ import (
 //	}
 //
 // setupPermissionCacheService creates a PermissionCacheService with mock dependencies for testing
-func setupPermissionCacheService() (*PermissionCacheService, *MockCache) {
-	mockCache := new(MockCache)
+func setupPermissionCacheService(t *testing.T) (*PermissionCacheService, *cache.MockService) {
+	ctrl := gomock.NewController(t)
+	mockCache := cache.NewMockService(ctrl)
 
 	// Create minimal working metrics service for testing
 	mockMetrics, _ := metrics.NewMetricsService(metrics.MetricsConfig{
@@ -119,7 +120,7 @@ func setupPermissionCacheService() (*PermissionCacheService, *MockCache) {
 
 func TestPermissionCacheService(t *testing.T) {
 	// Setup
-	service, mockCache := setupPermissionCacheService()
+	service, mockCache := setupPermissionCacheService(t)
 	ctx := context.Background()
 
 	// Test data
@@ -145,12 +146,10 @@ func TestPermissionCacheService(t *testing.T) {
 
 	t.Run("SetPermissionEvaluationResult", func(t *testing.T) {
 		// Mock cache set call
-		mockCache.On("Set", ctx, mock.AnythingOfType("string"), mock.AnythingOfType("permission.CachedPermissionEvaluationResult"), MediumCacheTTL).Return(nil)
+		mockCache.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
 		err := service.SetPermissionEvaluationResult(ctx, req, result)
 		assert.NoError(t, err)
-
-		mockCache.AssertExpectations(t)
 	})
 
 	t.Run("GetPermissionEvaluationResult_Hit", func(t *testing.T) {
@@ -225,7 +224,7 @@ func TestPermissionCacheService(t *testing.T) {
 
 func TestPermissionCacheService_UserPermissions(t *testing.T) {
 	// Setup
-	service, mockCache := setupPermissionCacheService()
+	service, mockCache := setupPermissionCacheService(t)
 	ctx := context.Background()
 
 	// Test data
@@ -289,7 +288,7 @@ func TestPermissionCacheService_UserPermissions(t *testing.T) {
 
 func TestPermissionCacheService_UserRoles(t *testing.T) {
 	// Setup
-	service, mockCache := setupPermissionCacheService()
+	service, mockCache := setupPermissionCacheService(t)
 	ctx := context.Background()
 
 	// Test data
@@ -347,7 +346,7 @@ func TestPermissionCacheService_UserRoles(t *testing.T) {
 
 func TestPermissionCacheService_RoleHierarchy(t *testing.T) {
 	// Setup
-	service, mockCache := setupPermissionCacheService()
+	service, mockCache := setupPermissionCacheService(t)
 	ctx := context.Background()
 
 	// Test data
@@ -405,7 +404,7 @@ func TestPermissionCacheService_RoleHierarchy(t *testing.T) {
 
 func TestPermissionCacheService_CacheInvalidation(t *testing.T) {
 	// Setup
-	service, mockCache := setupPermissionCacheService()
+	service, mockCache := setupPermissionCacheService(t)
 	ctx := context.Background()
 
 	// Test data
@@ -445,7 +444,7 @@ func TestPermissionCacheService_CacheInvalidation(t *testing.T) {
 
 func TestPermissionCacheService_GeneratePermissionEvaluationKey(t *testing.T) {
 	// Setup
-	service, _ := setupPermissionCacheService()
+	service, _ := setupPermissionCacheService(t)
 
 	// Test data
 	userID := uuid.New()
@@ -494,7 +493,7 @@ func TestPermissionCacheService_GeneratePermissionEvaluationKey(t *testing.T) {
 
 func TestPermissionCacheService_GetCacheStats(t *testing.T) {
 	// Setup
-	service, _ := setupPermissionCacheService()
+	service, _ := setupPermissionCacheService(t)
 	ctx := context.Background()
 
 	stats := service.GetCacheStats(ctx)

@@ -29,7 +29,7 @@ type WorkflowService interface {
 // workflowService implements WorkflowService
 type workflowService struct {
 	workflowClient     workflow.Client
-	featureFlagService SimpleService
+	featureFlagService Service
 	accessRequestRepo  request.AccessRequestRepository
 	tenantService      tenant.Service
 	store              db.Store
@@ -39,7 +39,7 @@ type workflowService struct {
 // NewWorkflowService creates a new workflow service
 func NewWorkflowService(
 	workflowClient workflow.Client,
-	featureFlagService SimpleService,
+	featureFlagService Service,
 	accessRequestRepo request.AccessRequestRepository,
 	tenantService tenant.Service,
 	store db.Store,

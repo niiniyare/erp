@@ -25,13 +25,13 @@ func TestRecord(t *testing.T) {
 	// 1. Setup
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	
+
 	mockRepo := NewMockRepository(ctrl)
 	mockCache := cache.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockTracing := tracing.NewMockTracingService(ctrl)
 	mockMetrics, _ := metrics.NewMetricsService(metrics.MetricsConfig{Enabled: false})
-	
+
 	auditService := NewService(mockRepo, mockCache, mockLogger, mockTracing, mockMetrics)
 
 	userID := uuid.New()
@@ -51,11 +51,11 @@ func TestRecord(t *testing.T) {
 		Context:       json.RawMessage(`{"ip": "127.0.0.1"}`),
 	}
 
-	tenantID := uuid.New()
-	
+	_ = uuid.New() // tenantID no longer needed for CreateAuditEvent
+
 	// 2. Expectations - using gomock expectations
-	mockRepo.EXPECT().CreateAuditEvent(gomock.Any(), tenantID, gomock.Any()).Return(nil, nil).Times(1)
-	
+	mockRepo.EXPECT().CreateAuditEvent(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
+
 	// Mock other dependencies that might be called
 	mockSpan := tracing.NewMockSpan(ctrl)
 	mockSpan.EXPECT().End().AnyTimes()
@@ -64,7 +64,7 @@ func TestRecord(t *testing.T) {
 	mockTracing.EXPECT().StartSpan(gomock.Any(), gomock.Any(), gomock.Any()).Return(ctx, mockSpan).AnyTimes()
 
 	// 3. Execution
-	auditEvent, err := auditService.CreateAuditEvent(ctx, tenantID, CreateAuditEventRequest{
+	auditEvent, err := auditService.CreateAuditEvent(ctx, CreateAuditEventRequest{
 		EventType:     event.EventType,
 		EventCategory: event.EventCategory,
 		Severity:      event.Severity,

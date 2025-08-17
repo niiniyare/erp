@@ -3,10 +3,12 @@ package audit
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/netip"
 	"time"
 
 	db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/shared"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -31,14 +33,19 @@ func NewRepository(store db.Store, logger logger.Logger, tracing tracing.Tracing
 	}
 }
 
-func (r *repository) CreateAuditEvent(ctx context.Context, tenantID uuid.UUID, req CreateAuditEventRequest) (*AuditEvent, error) {
+func (r *repository) CreateAuditEvent(ctx context.Context, req CreateAuditEventRequest) (*AuditEvent, error) {
+
 	var auditEvent *AuditEvent
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenantID has not been set in the context")
+	}
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
 		var reason string
 		if req.Reason != nil {
 			reason = *req.Reason
 		}
-		
+
 		params := db.CreateAuditEventParams{
 			EventType:     req.EventType,
 			EventCategory: &req.EventCategory, // Convert string to *string
@@ -59,7 +66,7 @@ func (r *repository) CreateAuditEvent(ctx context.Context, tenantID uuid.UUID, r
 		if dbAuditEvent.UserID != nil {
 			userID = *dbAuditEvent.UserID
 		}
-		
+
 		var eventCategory, severity string
 		if dbAuditEvent.EventCategory != nil {
 			eventCategory = *dbAuditEvent.EventCategory
@@ -67,24 +74,24 @@ func (r *repository) CreateAuditEvent(ctx context.Context, tenantID uuid.UUID, r
 		if dbAuditEvent.Severity != nil {
 			severity = *dbAuditEvent.Severity
 		}
-		
+
 		var riskScore *int
 		if dbAuditEvent.RiskScore != nil {
 			riskScoreInt := int(*dbAuditEvent.RiskScore)
 			riskScore = &riskScoreInt
 		}
-		
+
 		var ipAddress *string
 		if dbAuditEvent.IpAddress != nil {
 			ipStr := dbAuditEvent.IpAddress.String()
 			ipAddress = &ipStr
 		}
-		
+
 		var createdAt time.Time
 		if dbAuditEvent.CreatedAt.Valid {
 			createdAt = dbAuditEvent.CreatedAt.Time
 		}
-		
+
 		auditEvent = &AuditEvent{
 			ID:              dbAuditEvent.ID,
 			UserID:          userID,

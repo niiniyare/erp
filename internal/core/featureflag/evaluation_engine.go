@@ -211,7 +211,7 @@ type VariantAssignment struct {
 // advancedEvaluationEngine implements AdvancedEvaluationEngine
 type advancedEvaluationEngine struct {
 	conditionalAccessService conditional.ConditionalAccessService
-	simpleService            SimpleService
+	simpleService            Service
 	logger                   logger.Logger
 	metrics                  metrics.MetricsProvider
 	tracing                  tracing.TracingService
@@ -220,7 +220,7 @@ type advancedEvaluationEngine struct {
 // NewAdvancedEvaluationEngine creates a new advanced evaluation engine
 func NewAdvancedEvaluationEngine(
 	conditionalAccessService conditional.ConditionalAccessService,
-	simpleService SimpleService,
+	simpleService Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
 	tracing tracing.TracingService,

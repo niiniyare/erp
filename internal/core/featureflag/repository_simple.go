@@ -13,8 +13,8 @@ import (
 	db "github.com/niiniyare/erp/db/sqlc"
 )
 
-// SimpleRepository defines the data access interface for feature flags
-type SimpleRepository interface {
+// Repository defines the data access interface for feature flags
+type Repository interface {
 	// Feature Flag CRUD Operations
 	CreateFeatureFlag(ctx context.Context, flag *CreateFeatureFlagRequest) (*FeatureFlag, error)
 	GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error)
@@ -33,14 +33,14 @@ type SimpleRepository interface {
 	GetFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error)
 }
 
-// simpleRepositoryImpl implements the SimpleRepository interface
-type simpleRepositoryImpl struct {
+// RepositoryImpl implements the Repository interface
+type repository struct {
 	store db.Store
 }
 
-// NewSimpleRepository creates a new simple feature flag repository
-func NewSimpleRepository(store db.Store) SimpleRepository {
-	return &simpleRepositoryImpl{
+// NewRepository creates a new simple feature flag repository
+func NewRepository(store db.Store) Repository {
+	return &repository{
 		store: store,
 	}
 }
@@ -72,7 +72,7 @@ type SimpleEvaluationResult struct {
 }
 
 // CreateFeatureFlag creates a new feature flag
-func (r *simpleRepositoryImpl) CreateFeatureFlag(ctx context.Context, req *CreateFeatureFlagRequest) (*FeatureFlag, error) {
+func (r *repository) CreateFeatureFlag(ctx context.Context, req *CreateFeatureFlagRequest) (*FeatureFlag, error) {
 	var result *FeatureFlag
 
 	err := r.store.WithTx(ctx, func(ctx context.Context, store db.Store) error {
@@ -100,7 +100,7 @@ func (r *simpleRepositoryImpl) CreateFeatureFlag(ctx context.Context, req *Creat
 }
 
 // GetFeatureFlagByName retrieves a feature flag by name
-func (r *simpleRepositoryImpl) GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error) {
+func (r *repository) GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error) {
 	dbFlag, err := r.store.GetFeatureFlagByName(ctx, name)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -113,7 +113,7 @@ func (r *simpleRepositoryImpl) GetFeatureFlagByName(ctx context.Context, name st
 }
 
 // GetFeatureFlagByID retrieves a feature flag by ID
-func (r *simpleRepositoryImpl) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error) {
+func (r *repository) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error) {
 	dbFlag, err := r.store.GetFeatureFlagByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -126,7 +126,7 @@ func (r *simpleRepositoryImpl) GetFeatureFlagByID(ctx context.Context, id uuid.U
 }
 
 // UpdateFeatureFlag updates an existing feature flag
-func (r *simpleRepositoryImpl) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, req *UpdateFeatureFlagRequest) (*FeatureFlag, error) {
+func (r *repository) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, req *UpdateFeatureFlagRequest) (*FeatureFlag, error) {
 	var result *FeatureFlag
 
 	err := r.store.WithTx(ctx, func(ctx context.Context, store db.Store) error {
@@ -177,7 +177,7 @@ func (r *simpleRepositoryImpl) UpdateFeatureFlag(ctx context.Context, id uuid.UU
 }
 
 // DeleteFeatureFlag deletes a feature flag (soft delete)
-func (r *simpleRepositoryImpl) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
+func (r *repository) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
 	return r.store.WithTx(ctx, func(ctx context.Context, store db.Store) error {
 		err := store.DeleteFeatureFlag(ctx, id)
 		if err != nil {
@@ -188,7 +188,7 @@ func (r *simpleRepositoryImpl) DeleteFeatureFlag(ctx context.Context, id uuid.UU
 }
 
 // ListFeatureFlags lists feature flags with optional filters
-func (r *simpleRepositoryImpl) ListFeatureFlags(ctx context.Context, params ListFeatureFlagsParams) ([]*FeatureFlag, error) {
+func (r *repository) ListFeatureFlags(ctx context.Context, params ListFeatureFlagsParams) ([]*FeatureFlag, error) {
 	var flagType string
 	if params.FlagType != nil {
 		flagType = *params.FlagType
@@ -212,7 +212,7 @@ func (r *simpleRepositoryImpl) ListFeatureFlags(ctx context.Context, params List
 }
 
 // GetActiveFlags retrieves all active feature flags
-func (r *simpleRepositoryImpl) GetActiveFlags(ctx context.Context) ([]*FeatureFlag, error) {
+func (r *repository) GetActiveFlags(ctx context.Context) ([]*FeatureFlag, error) {
 	dbFlags, err := r.store.GetActiveFeatureFlags(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active flags: %w", err)
@@ -227,7 +227,7 @@ func (r *simpleRepositoryImpl) GetActiveFlags(ctx context.Context) ([]*FeatureFl
 }
 
 // EvaluateFlags performs bulk flag evaluation
-func (r *simpleRepositoryImpl) EvaluateFlags(ctx context.Context, userID *string, flagNames []string) ([]*SimpleEvaluationResult, error) {
+func (r *repository) EvaluateFlags(ctx context.Context, userID *string, flagNames []string) ([]*SimpleEvaluationResult, error) {
 	var userParam string
 	if userID != nil {
 		userParam = *userID
@@ -258,7 +258,7 @@ func (r *simpleRepositoryImpl) EvaluateFlags(ctx context.Context, userID *string
 }
 
 // GetFlagStats retrieves feature flag statistics
-func (r *simpleRepositoryImpl) GetFlagStats(ctx context.Context) (*FlagStats, error) {
+func (r *repository) GetFlagStats(ctx context.Context) (*FlagStats, error) {
 	dbStats, err := r.store.GetFeatureFlagStats(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get flag stats: %w", err)
@@ -275,7 +275,7 @@ func (r *simpleRepositoryImpl) GetFlagStats(ctx context.Context) (*FlagStats, er
 }
 
 // SearchFlags searches feature flags by name/description
-func (r *simpleRepositoryImpl) SearchFlags(ctx context.Context, query string, limit, offset int32) ([]*FeatureFlag, error) {
+func (r *repository) SearchFlags(ctx context.Context, query string, limit, offset int32) ([]*FeatureFlag, error) {
 	dbFlags, err := r.store.SearchFeatureFlags(ctx, db.SearchFeatureFlagsParams{
 		Column1: query,
 		Limit:   limit,
@@ -294,7 +294,7 @@ func (r *simpleRepositoryImpl) SearchFlags(ctx context.Context, query string, li
 }
 
 // GetFlagsByType retrieves flags by type
-func (r *simpleRepositoryImpl) GetFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error) {
+func (r *repository) GetFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error) {
 	dbFlags, err := r.store.GetFeatureFlagsByType(ctx, flagType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get flags by type: %w", err)

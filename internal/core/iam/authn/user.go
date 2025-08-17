@@ -7,9 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/core/iam/repo"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -94,11 +92,6 @@ func (s *service) GetUser(ctx context.Context, userID uuid.UUID) (*model.User, e
 	}
 
 	// Cache miss - get from database
-	tenantID, err := s.getCurrentTenantID(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	foundUser, err := s.repo.Users().GetByID(ctx, userID)
 
 	if err != nil {
@@ -117,11 +110,6 @@ func (s *service) GetUser(ctx context.Context, userID uuid.UUID) (*model.User, e
 func (s *service) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "authn.service.GetUserByEmail")
 	defer span.End()
-
-	tenantID, err := s.getCurrentTenantID(ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	user, err := s.repo.Users().GetByEmail(ctx, email)
 
@@ -159,11 +147,6 @@ func (s *service) UpdateUser(ctx context.Context, req *UpdateUserRequest) (*mode
 	user.UpdatedAt = time.Now()
 
 	// Update in database
-	tenantID, err := s.getCurrentTenantID(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	updatedUser, err := s.repo.Users().Update(ctx, user)
 
 	if err != nil {
@@ -186,11 +169,6 @@ func (s *service) UpdateUser(ctx context.Context, req *UpdateUserRequest) (*mode
 func (s *service) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 	ctx, span := s.tracer.StartSpan(ctx, "authn.service.DeleteUser")
 	defer span.End()
-
-	tenantID, err := s.getCurrentTenantID(ctx)
-	if err != nil {
-		return err
-	}
 
 	err := s.repo.Users().Delete(ctx, userID)
 

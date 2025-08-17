@@ -67,7 +67,7 @@ func (a *AuditServiceAdapter) LogPermissionEvaluation(ctx context.Context, evalu
 		"risk_factors":       evaluation.RiskFactors,
 	})
 
-	tenantID, _ := shared.GetTenantID(ctx)
+	_, _ = shared.GetTenantID(ctx) // Keep for consistency but no longer needed
 	req := audit.CreateAuditEventRequest{
 		UserID:        &evaluation.UserID,
 		EventType:     "permission_evaluation",
@@ -77,6 +77,6 @@ func (a *AuditServiceAdapter) LogPermissionEvaluation(ctx context.Context, evalu
 		Reason:        stringPtr("Permission evaluation completed"),
 		Context:       contextData,
 	}
-	_, err := a.auditService.CreateAuditEvent(ctx, tenantID, req)
+	_, err := a.auditService.CreateAuditEvent(ctx, req)
 	return err
 }

@@ -20,14 +20,10 @@ import (
 // Service defines the unified IAM service interface that consolidates
 // authentication, authorization, and policy management functionality
 type Service interface {
-	// Authentication operations
-	authn.Service
-
-	// Authorization operations (ABAC, RBAC, hybrid)
-	authz.Service
-
-	// Policy operations
-	policy.Service
+	// Get individual service instances
+	Authentication() authn.Service
+	Authorization() authz.Service
+	Policy() policy.Service
 }
 
 // service implements the unified IAM service
@@ -93,4 +89,18 @@ func (s *service) getCurrentTenantSlug(ctx context.Context) string {
 		return ""
 	}
 	return tenant.Slug
+}
+
+// Service access methods
+
+func (s *service) Authentication() authn.Service {
+	return s.authnService
+}
+
+func (s *service) Authorization() authz.Service {
+	return s.authzService
+}
+
+func (s *service) Policy() policy.Service {
+	return s.policyService
 }

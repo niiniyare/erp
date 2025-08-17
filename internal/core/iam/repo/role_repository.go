@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/iam/model"
 	db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/core/iam/model"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"

@@ -12,8 +12,8 @@ import (
 	"github.com/niiniyare/erp/internal/core/tenant"
 )
 
-// SimpleService defines the business logic interface for feature flags
-type SimpleService interface {
+// Servicedefines the business logic interface for feature flags
+type Service interface {
 	// Feature Flag Management
 	CreateFeatureFlag(ctx context.Context, request *CreateFeatureFlagRequest) (*FeatureFlag, error)
 	GetFeatureFlag(ctx context.Context, name string) (*FeatureFlag, error)
@@ -33,18 +33,18 @@ type SimpleService interface {
 	GetFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error)
 }
 
-// simpleServiceImpl implements the SimpleService interface
-type simpleServiceImpl struct {
-	repository       SimpleRepository
+// ServiceImpl implements the Service interface
+type service struct {
+	repository       Repository
 	tenantService    tenant.Service
 	store            db.Store
 	auditService     audit.Service
 	webSocketService WebSocketService // Add WebSocket service for real-time updates
 }
 
-// NewSimpleService creates a new simple feature flag service
-func NewSimpleService(repository SimpleRepository, tenantService tenant.Service, store db.Store, auditService audit.Service, webSocketService WebSocketService) SimpleService {
-	return &simpleServiceImpl{
+// NewServicecreates a new simple feature flag service
+func NewService(repository Repository, tenantService tenant.Service, store db.Store, auditService audit.Service, webSocketService WebSocketService) Service {
+	return &service{
 		repository:       repository,
 		tenantService:    tenantService,
 		store:            store,
@@ -68,7 +68,7 @@ type ListFeatureFlagsResponse struct {
 }
 
 // CreateFeatureFlag creates a new feature flag with tenant context validation
-func (s *simpleServiceImpl) CreateFeatureFlag(ctx context.Context, request *CreateFeatureFlagRequest) (*FeatureFlag, error) {
+func (s *service) CreateFeatureFlag(ctx context.Context, request *CreateFeatureFlagRequest) (*FeatureFlag, error) {
 	// Validate tenant context exists
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
@@ -114,7 +114,7 @@ func (s *simpleServiceImpl) CreateFeatureFlag(ctx context.Context, request *Crea
 }
 
 // GetFeatureFlag retrieves a feature flag by name with tenant context
-func (s *simpleServiceImpl) GetFeatureFlag(ctx context.Context, name string) (*FeatureFlag, error) {
+func (s *service) GetFeatureFlag(ctx context.Context, name string) (*FeatureFlag, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
@@ -123,7 +123,7 @@ func (s *simpleServiceImpl) GetFeatureFlag(ctx context.Context, name string) (*F
 }
 
 // GetFeatureFlagByID retrieves a feature flag by ID with tenant context
-func (s *simpleServiceImpl) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error) {
+func (s *service) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
@@ -132,7 +132,7 @@ func (s *simpleServiceImpl) GetFeatureFlagByID(ctx context.Context, id uuid.UUID
 }
 
 // UpdateFeatureFlag updates a feature flag with tenant context validation
-func (s *simpleServiceImpl) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, request *UpdateFeatureFlagRequest) (*FeatureFlag, error) {
+func (s *service) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, request *UpdateFeatureFlagRequest) (*FeatureFlag, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
@@ -198,7 +198,7 @@ func (s *simpleServiceImpl) UpdateFeatureFlag(ctx context.Context, id uuid.UUID,
 }
 
 // DeleteFeatureFlag deletes a feature flag with tenant context validation
-func (s *simpleServiceImpl) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
+func (s *service) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return fmt.Errorf("invalid tenant context: %w", err)
 	}
@@ -232,7 +232,7 @@ func (s *simpleServiceImpl) DeleteFeatureFlag(ctx context.Context, id uuid.UUID)
 }
 
 // ListFeatureFlags lists feature flags with tenant context
-func (s *simpleServiceImpl) ListFeatureFlags(ctx context.Context, request *ListFeatureFlagsRequest) (*ListFeatureFlagsResponse, error) {
+func (s *service) ListFeatureFlags(ctx context.Context, request *ListFeatureFlagsRequest) (*ListFeatureFlagsResponse, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
@@ -277,7 +277,7 @@ func (s *simpleServiceImpl) ListFeatureFlags(ctx context.Context, request *ListF
 }
 
 // EvaluateFlag evaluates a single feature flag with tenant context
-func (s *simpleServiceImpl) EvaluateFlag(ctx context.Context, name string, evalCtx *EvaluationContext) (*EvaluationResult, error) {
+func (s *service) EvaluateFlag(ctx context.Context, name string, evalCtx *EvaluationContext) (*EvaluationResult, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
@@ -313,7 +313,7 @@ func (s *simpleServiceImpl) EvaluateFlag(ctx context.Context, name string, evalC
 }
 
 // EvaluateFlags evaluates multiple feature flags with tenant context
-func (s *simpleServiceImpl) EvaluateFlags(ctx context.Context, names []string, evalCtx *EvaluationContext) (*BulkEvaluationResponse, error) {
+func (s *service) EvaluateFlags(ctx context.Context, names []string, evalCtx *EvaluationContext) (*BulkEvaluationResponse, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
@@ -342,7 +342,7 @@ func (s *simpleServiceImpl) EvaluateFlags(ctx context.Context, names []string, e
 }
 
 // IsEnabled checks if a feature flag is enabled with tenant context
-func (s *simpleServiceImpl) IsEnabled(ctx context.Context, name string, evalCtx *EvaluationContext) (bool, error) {
+func (s *service) IsEnabled(ctx context.Context, name string, evalCtx *EvaluationContext) (bool, error) {
 	result, err := s.EvaluateFlag(ctx, name, evalCtx)
 	if err != nil {
 		return false, err
@@ -351,7 +351,7 @@ func (s *simpleServiceImpl) IsEnabled(ctx context.Context, name string, evalCtx 
 }
 
 // GetFlagStats retrieves feature flag statistics with tenant context
-func (s *simpleServiceImpl) GetFlagStats(ctx context.Context) (*FlagStats, error) {
+func (s *service) GetFlagStats(ctx context.Context) (*FlagStats, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
@@ -360,7 +360,7 @@ func (s *simpleServiceImpl) GetFlagStats(ctx context.Context) (*FlagStats, error
 }
 
 // SearchFlags searches feature flags with tenant context
-func (s *simpleServiceImpl) SearchFlags(ctx context.Context, query string, limit, offset int32) ([]*FeatureFlag, error) {
+func (s *service) SearchFlags(ctx context.Context, query string, limit, offset int32) ([]*FeatureFlag, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
@@ -377,7 +377,7 @@ func (s *simpleServiceImpl) SearchFlags(ctx context.Context, query string, limit
 }
 
 // GetFlagsByType retrieves flags by type with tenant context
-func (s *simpleServiceImpl) GetFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error) {
+func (s *service) GetFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
@@ -386,7 +386,7 @@ func (s *simpleServiceImpl) GetFlagsByType(ctx context.Context, flagType string)
 }
 
 // evaluateSimpleFlag performs basic flag evaluation
-func (s *simpleServiceImpl) evaluateSimpleFlag(flag *FeatureFlag, evalCtx *EvaluationContext) *EvaluationResult {
+func (s *service) evaluateSimpleFlag(flag *FeatureFlag, evalCtx *EvaluationContext) *EvaluationResult {
 	now := time.Now()
 
 	// Basic evaluation logic
@@ -429,7 +429,7 @@ func (s *simpleServiceImpl) evaluateSimpleFlag(flag *FeatureFlag, evalCtx *Evalu
 }
 
 // calculateSimpleHash calculates a simple hash for rollout distribution
-func (s *simpleServiceImpl) calculateSimpleHash(flagName string, userID *uuid.UUID) int {
+func (s *service) calculateSimpleHash(flagName string, userID *uuid.UUID) int {
 	var input string
 	if userID != nil {
 		input = flagName + ":" + userID.String()
@@ -473,7 +473,7 @@ const (
 )
 
 // auditFlagCreated logs flag creation event
-func (s *simpleServiceImpl) auditFlagCreated(ctx context.Context, flag *FeatureFlag, request *CreateFeatureFlagRequest) {
+func (s *service) auditFlagCreated(ctx context.Context, flag *FeatureFlag, request *CreateFeatureFlagRequest) {
 	contextData, _ := json.Marshal(map[string]any{
 		"flag_id":            flag.ID.String(),
 		"flag_name":          flag.Name,
@@ -485,19 +485,22 @@ func (s *simpleServiceImpl) auditFlagCreated(ctx context.Context, flag *FeatureF
 		"tenant_id":          flag.TenantID.String(),
 	})
 
-	s.auditService.Record(ctx, audit.AuditEvent{
+	decision := "CREATED"
+	reason := fmt.Sprintf("Feature flag '%s' created successfully", flag.Name)
+	flagEntityID := flag.ID
+	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     AuditEventFeatureFlagCreated,
 		EventCategory: AuditCategoryFeatureManagement,
 		Severity:      AuditSeverityInfo,
-		EntityID:      uuid.NullUUID{UUID: flag.ID, Valid: true},
-		Decision:      "CREATED",
-		Reason:        fmt.Sprintf("Feature flag '%s' created successfully", flag.Name),
+		EntityID:      &flagEntityID,
+		Decision:      &decision,
+		Reason:        &reason,
 		Context:       contextData,
 	})
 }
 
 // auditFlagUpdated logs flag update event
-func (s *simpleServiceImpl) auditFlagUpdated(ctx context.Context, flag *FeatureFlag, request *UpdateFeatureFlagRequest) {
+func (s *service) auditFlagUpdated(ctx context.Context, flag *FeatureFlag, request *UpdateFeatureFlagRequest) {
 	contextData, _ := json.Marshal(map[string]any{
 		"flag_id":        flag.ID.String(),
 		"flag_name":      flag.Name,
@@ -511,19 +514,22 @@ func (s *simpleServiceImpl) auditFlagUpdated(ctx context.Context, flag *FeatureF
 		severity = AuditSeverityWarn // Value changes are more significant
 	}
 
-	s.auditService.Record(ctx, audit.AuditEvent{
+	decision := "UPDATED"
+	reason := fmt.Sprintf("Feature flag '%s' updated successfully", flag.Name)
+	flagEntityID := flag.ID
+	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     AuditEventFeatureFlagUpdated,
 		EventCategory: AuditCategoryFeatureManagement,
 		Severity:      severity,
-		EntityID:      uuid.NullUUID{UUID: flag.ID, Valid: true},
-		Decision:      "UPDATED",
-		Reason:        fmt.Sprintf("Feature flag '%s' updated successfully", flag.Name),
+		EntityID:      &flagEntityID,
+		Decision:      &decision,
+		Reason:        &reason,
 		Context:       contextData,
 	})
 }
 
 // auditFlagDeleted logs flag deletion event
-func (s *simpleServiceImpl) auditFlagDeleted(ctx context.Context, flag *FeatureFlag) {
+func (s *service) auditFlagDeleted(ctx context.Context, flag *FeatureFlag) {
 	contextData, _ := json.Marshal(map[string]any{
 		"flag_id":    flag.ID.String(),
 		"flag_name":  flag.Name,
@@ -532,19 +538,22 @@ func (s *simpleServiceImpl) auditFlagDeleted(ctx context.Context, flag *FeatureF
 		"deleted_at": time.Now(),
 	})
 
-	s.auditService.Record(ctx, audit.AuditEvent{
+	decision := "DELETED"
+	reason := fmt.Sprintf("Feature flag '%s' deleted successfully", flag.Name)
+	flagEntityID := flag.ID
+	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     AuditEventFeatureFlagDeleted,
 		EventCategory: AuditCategoryFeatureManagement,
 		Severity:      AuditSeverityHigh, // Deletions are high severity
-		EntityID:      uuid.NullUUID{UUID: flag.ID, Valid: true},
-		Decision:      "DELETED",
-		Reason:        fmt.Sprintf("Feature flag '%s' deleted successfully", flag.Name),
+		EntityID:      &flagEntityID,
+		Decision:      &decision,
+		Reason:        &reason,
 		Context:       contextData,
 	})
 }
 
 // auditFlagEvaluated logs flag evaluation event
-func (s *simpleServiceImpl) auditFlagEvaluated(ctx context.Context, flag *FeatureFlag, evalCtx *EvaluationContext, result *EvaluationResult) {
+func (s *service) auditFlagEvaluated(ctx context.Context, flag *FeatureFlag, evalCtx *EvaluationContext, result *EvaluationResult) {
 	contextData, _ := json.Marshal(map[string]any{
 		"flag_name":          flag.Name,
 		"flag_id":            flag.ID.String(),
@@ -558,19 +567,22 @@ func (s *simpleServiceImpl) auditFlagEvaluated(ctx context.Context, flag *Featur
 		"cache_hit":          result.Metadata.CacheHit,
 	})
 
-	s.auditService.Record(ctx, audit.AuditEvent{
+	decision := fmt.Sprintf("EVALUATED_%t", result.Enabled)
+	reason := fmt.Sprintf("Feature flag '%s' evaluated: %v", flag.Name, result.Value)
+	flagEntityID := flag.ID
+	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     AuditEventFeatureFlagEvaluated,
 		EventCategory: AuditCategoryAccess,
 		Severity:      AuditSeverityInfo,
-		EntityID:      uuid.NullUUID{UUID: flag.ID, Valid: true},
-		Decision:      fmt.Sprintf("EVALUATED_%t", result.Enabled),
-		Reason:        fmt.Sprintf("Feature flag '%s' evaluated: %v", flag.Name, result.Value),
+		EntityID:      &flagEntityID,
+		Decision:      &decision,
+		Reason:        &reason,
 		Context:       contextData,
 	})
 }
 
 // auditFlagListed logs flag listing event
-func (s *simpleServiceImpl) auditFlagListed(ctx context.Context, request *ListFeatureFlagsRequest, response *ListFeatureFlagsResponse) {
+func (s *service) auditFlagListed(ctx context.Context, request *ListFeatureFlagsRequest, response *ListFeatureFlagsResponse) {
 	contextData, _ := json.Marshal(map[string]any{
 		"page":      request.Page,
 		"page_size": request.PageSize,
@@ -579,18 +591,20 @@ func (s *simpleServiceImpl) auditFlagListed(ctx context.Context, request *ListFe
 		"returned":  len(response.FeatureFlags),
 	})
 
-	s.auditService.Record(ctx, audit.AuditEvent{
+	decision := "LISTED"
+	reason := fmt.Sprintf("Listed %d feature flags (page %d)", len(response.FeatureFlags), request.Page)
+	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     AuditEventFeatureFlagListed,
 		EventCategory: AuditCategoryAccess,
 		Severity:      AuditSeverityInfo,
-		Decision:      "LISTED",
-		Reason:        fmt.Sprintf("Listed %d feature flags (page %d)", len(response.FeatureFlags), request.Page),
+		Decision:      &decision,
+		Reason:        &reason,
 		Context:       contextData,
 	})
 }
 
 // auditFlagSearched logs flag search event
-func (s *simpleServiceImpl) auditFlagSearched(ctx context.Context, query string, limit, offset int32, results []*FeatureFlag) {
+func (s *service) auditFlagSearched(ctx context.Context, query string, limit, offset int32, results []*FeatureFlag) {
 	contextData, _ := json.Marshal(map[string]any{
 		"query":         query,
 		"limit":         limit,
@@ -599,18 +613,20 @@ func (s *simpleServiceImpl) auditFlagSearched(ctx context.Context, query string,
 		"searched_at":   time.Now(),
 	})
 
-	s.auditService.Record(ctx, audit.AuditEvent{
+	decision := "SEARCHED"
+	reason := fmt.Sprintf("Searched feature flags with query '%s', found %d results", query, len(results))
+	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     AuditEventFeatureFlagSearched,
 		EventCategory: AuditCategoryAccess,
 		Severity:      AuditSeverityInfo,
-		Decision:      "SEARCHED",
-		Reason:        fmt.Sprintf("Searched feature flags with query '%s', found %d results", query, len(results)),
+		Decision:      &decision,
+		Reason:        &reason,
 		Context:       contextData,
 	})
 }
 
 // getUpdatedFields returns a list of fields that were updated
-func (s *simpleServiceImpl) getUpdatedFields(request *UpdateFeatureFlagRequest) []string {
+func (s *service) getUpdatedFields(request *UpdateFeatureFlagRequest) []string {
 	var fields []string
 	if request.Description != nil {
 		fields = append(fields, "description")

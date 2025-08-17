@@ -668,7 +668,7 @@ func (s *userAnalyticsService) AssessUserRisk(ctx context.Context, userID uuid.U
 			"anomalies":       len(behavioralAnomalies),
 		})
 
-		tenantID, _ := shared.GetTenantID(ctx)
+		_, _ = shared.GetTenantID(ctx) // Keep for consistency but no longer needed
 		req := audit.CreateAuditEventRequest{
 			UserID:        &userID,
 			EventType:     "security_violation",
@@ -678,7 +678,7 @@ func (s *userAnalyticsService) AssessUserRisk(ctx context.Context, userID uuid.U
 			Reason:        stringPtr(fmt.Sprintf("High risk user detected: score %d", overallRiskScore)),
 			Context:       contextData,
 		}
-		if _, err := s.auditService.CreateAuditEvent(ctx, tenantID, req); err != nil {
+		if _, err := s.auditService.CreateAuditEvent(ctx, req); err != nil {
 			// Silently handle the error, don't fail the main operation
 			_ = err
 		}

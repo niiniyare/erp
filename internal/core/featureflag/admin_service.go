@@ -1,6 +1,6 @@
 package featureflag
 
-//go:generate go run go.uber.org/mock/mockgen -source=admin_service.go -destination=mock.go -package=featureflag
+//go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
 
 import (
 	"context"
@@ -45,7 +45,7 @@ type AdminService interface {
 
 // adminServiceImpl implements AdminService
 type adminServiceImpl struct {
-	baseService  SimpleService
+	baseService  Service
 	auditService audit.Service
 	logger       logger.Logger
 	metrics      *metrics.MetricsService
@@ -55,7 +55,7 @@ type adminServiceImpl struct {
 
 // NewAdminService creates a new admin service for feature flags
 func NewAdminService(
-	baseService SimpleService,
+	baseService Service,
 	auditService audit.Service,
 	logger logger.Logger,
 	metrics *metrics.MetricsService,

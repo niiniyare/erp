@@ -501,13 +501,16 @@ func (s *adminServiceImpl) auditTemplateOperation(ctx context.Context, operation
 		severity = AuditSeverityWarn // Template applications create new flags
 	}
 
-	s.auditService.Record(ctx, audit.AuditEvent{
+	decision := fmt.Sprintf("EXECUTED_%s", operation)
+	reason := fmt.Sprintf("Template operation: %s on template %s", operation, template.Name)
+	templateEntityID := template.ID
+	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     "admin_template_operation",
 		EventCategory: AuditCategoryAdmin,
 		Severity:      severity,
-		EntityID:      uuid.NullUUID{UUID: template.ID, Valid: true},
-		Decision:      fmt.Sprintf("EXECUTED_%s", operation),
-		Reason:        fmt.Sprintf("Template operation: %s on template %s", operation, template.Name),
+		EntityID:      &templateEntityID,
+		Decision:      &decision,
+		Reason:        &reason,
 		Context:       contextJSON,
 	})
 }

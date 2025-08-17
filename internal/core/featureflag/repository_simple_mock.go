@@ -17,32 +17,32 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockSimpleRepository is a mock of SimpleRepository interface.
-type MockSimpleRepository struct {
+// MockRepository is a mock of Repository interface.
+type MockRepository struct {
 	ctrl     *gomock.Controller
-	recorder *MockSimpleRepositoryMockRecorder
+	recorder *MockRepositoryMockRecorder
 	isgomock struct{}
 }
 
-// MockSimpleRepositoryMockRecorder is the mock recorder for MockSimpleRepository.
-type MockSimpleRepositoryMockRecorder struct {
-	mock *MockSimpleRepository
+// MockRepositoryMockRecorder is the mock recorder for MockRepository.
+type MockRepositoryMockRecorder struct {
+	mock *MockRepository
 }
 
-// NewMockSimpleRepository creates a new mock instance.
-func NewMockSimpleRepository(ctrl *gomock.Controller) *MockSimpleRepository {
-	mock := &MockSimpleRepository{ctrl: ctrl}
-	mock.recorder = &MockSimpleRepositoryMockRecorder{mock}
+// NewMockRepository creates a new mock instance.
+func NewMockRepository(ctrl *gomock.Controller) *MockRepository {
+	mock := &MockRepository{ctrl: ctrl}
+	mock.recorder = &MockRepositoryMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockSimpleRepository) EXPECT() *MockSimpleRepositoryMockRecorder {
+func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
 // CreateFeatureFlag mocks base method.
-func (m *MockSimpleRepository) CreateFeatureFlag(ctx context.Context, flag *CreateFeatureFlagRequest) (*FeatureFlag, error) {
+func (m *MockRepository) CreateFeatureFlag(ctx context.Context, flag *CreateFeatureFlagRequest) (*FeatureFlag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateFeatureFlag", ctx, flag)
 	ret0, _ := ret[0].(*FeatureFlag)
@@ -51,13 +51,13 @@ func (m *MockSimpleRepository) CreateFeatureFlag(ctx context.Context, flag *Crea
 }
 
 // CreateFeatureFlag indicates an expected call of CreateFeatureFlag.
-func (mr *MockSimpleRepositoryMockRecorder) CreateFeatureFlag(ctx, flag any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) CreateFeatureFlag(ctx, flag any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFeatureFlag", reflect.TypeOf((*MockSimpleRepository)(nil).CreateFeatureFlag), ctx, flag)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFeatureFlag", reflect.TypeOf((*MockRepository)(nil).CreateFeatureFlag), ctx, flag)
 }
 
 // DeleteFeatureFlag mocks base method.
-func (m *MockSimpleRepository) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
+func (m *MockRepository) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteFeatureFlag", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -65,13 +65,13 @@ func (m *MockSimpleRepository) DeleteFeatureFlag(ctx context.Context, id uuid.UU
 }
 
 // DeleteFeatureFlag indicates an expected call of DeleteFeatureFlag.
-func (mr *MockSimpleRepositoryMockRecorder) DeleteFeatureFlag(ctx, id any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) DeleteFeatureFlag(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFeatureFlag", reflect.TypeOf((*MockSimpleRepository)(nil).DeleteFeatureFlag), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFeatureFlag", reflect.TypeOf((*MockRepository)(nil).DeleteFeatureFlag), ctx, id)
 }
 
 // EvaluateFlags mocks base method.
-func (m *MockSimpleRepository) EvaluateFlags(ctx context.Context, userID *string, flagNames []string) ([]*SimpleEvaluationResult, error) {
+func (m *MockRepository) EvaluateFlags(ctx context.Context, userID *string, flagNames []string) ([]*SimpleEvaluationResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EvaluateFlags", ctx, userID, flagNames)
 	ret0, _ := ret[0].([]*SimpleEvaluationResult)
@@ -80,13 +80,13 @@ func (m *MockSimpleRepository) EvaluateFlags(ctx context.Context, userID *string
 }
 
 // EvaluateFlags indicates an expected call of EvaluateFlags.
-func (mr *MockSimpleRepositoryMockRecorder) EvaluateFlags(ctx, userID, flagNames any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) EvaluateFlags(ctx, userID, flagNames any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EvaluateFlags", reflect.TypeOf((*MockSimpleRepository)(nil).EvaluateFlags), ctx, userID, flagNames)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EvaluateFlags", reflect.TypeOf((*MockRepository)(nil).EvaluateFlags), ctx, userID, flagNames)
 }
 
 // GetActiveFlags mocks base method.
-func (m *MockSimpleRepository) GetActiveFlags(ctx context.Context) ([]*FeatureFlag, error) {
+func (m *MockRepository) GetActiveFlags(ctx context.Context) ([]*FeatureFlag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetActiveFlags", ctx)
 	ret0, _ := ret[0].([]*FeatureFlag)
@@ -95,13 +95,13 @@ func (m *MockSimpleRepository) GetActiveFlags(ctx context.Context) ([]*FeatureFl
 }
 
 // GetActiveFlags indicates an expected call of GetActiveFlags.
-func (mr *MockSimpleRepositoryMockRecorder) GetActiveFlags(ctx any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetActiveFlags(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveFlags", reflect.TypeOf((*MockSimpleRepository)(nil).GetActiveFlags), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveFlags", reflect.TypeOf((*MockRepository)(nil).GetActiveFlags), ctx)
 }
 
 // GetFeatureFlagByID mocks base method.
-func (m *MockSimpleRepository) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error) {
+func (m *MockRepository) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetFeatureFlagByID", ctx, id)
 	ret0, _ := ret[0].(*FeatureFlag)
@@ -110,13 +110,13 @@ func (m *MockSimpleRepository) GetFeatureFlagByID(ctx context.Context, id uuid.U
 }
 
 // GetFeatureFlagByID indicates an expected call of GetFeatureFlagByID.
-func (mr *MockSimpleRepositoryMockRecorder) GetFeatureFlagByID(ctx, id any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetFeatureFlagByID(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagByID", reflect.TypeOf((*MockSimpleRepository)(nil).GetFeatureFlagByID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagByID", reflect.TypeOf((*MockRepository)(nil).GetFeatureFlagByID), ctx, id)
 }
 
 // GetFeatureFlagByName mocks base method.
-func (m *MockSimpleRepository) GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error) {
+func (m *MockRepository) GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetFeatureFlagByName", ctx, name)
 	ret0, _ := ret[0].(*FeatureFlag)
@@ -125,13 +125,13 @@ func (m *MockSimpleRepository) GetFeatureFlagByName(ctx context.Context, name st
 }
 
 // GetFeatureFlagByName indicates an expected call of GetFeatureFlagByName.
-func (mr *MockSimpleRepositoryMockRecorder) GetFeatureFlagByName(ctx, name any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetFeatureFlagByName(ctx, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagByName", reflect.TypeOf((*MockSimpleRepository)(nil).GetFeatureFlagByName), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagByName", reflect.TypeOf((*MockRepository)(nil).GetFeatureFlagByName), ctx, name)
 }
 
 // GetFlagStats mocks base method.
-func (m *MockSimpleRepository) GetFlagStats(ctx context.Context) (*FlagStats, error) {
+func (m *MockRepository) GetFlagStats(ctx context.Context) (*FlagStats, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetFlagStats", ctx)
 	ret0, _ := ret[0].(*FlagStats)
@@ -140,13 +140,13 @@ func (m *MockSimpleRepository) GetFlagStats(ctx context.Context) (*FlagStats, er
 }
 
 // GetFlagStats indicates an expected call of GetFlagStats.
-func (mr *MockSimpleRepositoryMockRecorder) GetFlagStats(ctx any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetFlagStats(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlagStats", reflect.TypeOf((*MockSimpleRepository)(nil).GetFlagStats), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlagStats", reflect.TypeOf((*MockRepository)(nil).GetFlagStats), ctx)
 }
 
 // GetFlagsByType mocks base method.
-func (m *MockSimpleRepository) GetFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error) {
+func (m *MockRepository) GetFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetFlagsByType", ctx, flagType)
 	ret0, _ := ret[0].([]*FeatureFlag)
@@ -155,13 +155,13 @@ func (m *MockSimpleRepository) GetFlagsByType(ctx context.Context, flagType stri
 }
 
 // GetFlagsByType indicates an expected call of GetFlagsByType.
-func (mr *MockSimpleRepositoryMockRecorder) GetFlagsByType(ctx, flagType any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetFlagsByType(ctx, flagType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlagsByType", reflect.TypeOf((*MockSimpleRepository)(nil).GetFlagsByType), ctx, flagType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlagsByType", reflect.TypeOf((*MockRepository)(nil).GetFlagsByType), ctx, flagType)
 }
 
 // ListFeatureFlags mocks base method.
-func (m *MockSimpleRepository) ListFeatureFlags(ctx context.Context, params ListFeatureFlagsParams) ([]*FeatureFlag, error) {
+func (m *MockRepository) ListFeatureFlags(ctx context.Context, params ListFeatureFlagsParams) ([]*FeatureFlag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListFeatureFlags", ctx, params)
 	ret0, _ := ret[0].([]*FeatureFlag)
@@ -170,13 +170,13 @@ func (m *MockSimpleRepository) ListFeatureFlags(ctx context.Context, params List
 }
 
 // ListFeatureFlags indicates an expected call of ListFeatureFlags.
-func (mr *MockSimpleRepositoryMockRecorder) ListFeatureFlags(ctx, params any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) ListFeatureFlags(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeatureFlags", reflect.TypeOf((*MockSimpleRepository)(nil).ListFeatureFlags), ctx, params)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeatureFlags", reflect.TypeOf((*MockRepository)(nil).ListFeatureFlags), ctx, params)
 }
 
 // SearchFlags mocks base method.
-func (m *MockSimpleRepository) SearchFlags(ctx context.Context, query string, limit, offset int32) ([]*FeatureFlag, error) {
+func (m *MockRepository) SearchFlags(ctx context.Context, query string, limit, offset int32) ([]*FeatureFlag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchFlags", ctx, query, limit, offset)
 	ret0, _ := ret[0].([]*FeatureFlag)
@@ -185,13 +185,13 @@ func (m *MockSimpleRepository) SearchFlags(ctx context.Context, query string, li
 }
 
 // SearchFlags indicates an expected call of SearchFlags.
-func (mr *MockSimpleRepositoryMockRecorder) SearchFlags(ctx, query, limit, offset any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) SearchFlags(ctx, query, limit, offset any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchFlags", reflect.TypeOf((*MockSimpleRepository)(nil).SearchFlags), ctx, query, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchFlags", reflect.TypeOf((*MockRepository)(nil).SearchFlags), ctx, query, limit, offset)
 }
 
 // UpdateFeatureFlag mocks base method.
-func (m *MockSimpleRepository) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, flag *UpdateFeatureFlagRequest) (*FeatureFlag, error) {
+func (m *MockRepository) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, flag *UpdateFeatureFlagRequest) (*FeatureFlag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateFeatureFlag", ctx, id, flag)
 	ret0, _ := ret[0].(*FeatureFlag)
@@ -200,7 +200,7 @@ func (m *MockSimpleRepository) UpdateFeatureFlag(ctx context.Context, id uuid.UU
 }
 
 // UpdateFeatureFlag indicates an expected call of UpdateFeatureFlag.
-func (mr *MockSimpleRepositoryMockRecorder) UpdateFeatureFlag(ctx, id, flag any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) UpdateFeatureFlag(ctx, id, flag any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFeatureFlag", reflect.TypeOf((*MockSimpleRepository)(nil).UpdateFeatureFlag), ctx, id, flag)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFeatureFlag", reflect.TypeOf((*MockRepository)(nil).UpdateFeatureFlag), ctx, id, flag)
 }

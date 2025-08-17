@@ -15,7 +15,7 @@ import (
 
 // FeatureFlagService implements the Goa-generated featureflag.Service interface
 type FeatureFlagService struct {
-	service corefeatureflag.SimpleService
+	service corefeatureflag.Service
 	logger  logger.Logger
 	metrics *metrics.MetricsService
 	tracing tracing.TracingService
@@ -23,7 +23,7 @@ type FeatureFlagService struct {
 
 // NewFeatureFlagService creates a new Goa feature flag service implementation
 func NewFeatureFlagService(
-	service corefeatureflag.SimpleService,
+	service corefeatureflag.Service,
 	logger logger.Logger,
 	metrics *metrics.MetricsService,
 	tracing tracing.TracingService,

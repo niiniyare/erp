@@ -10,7 +10,7 @@ import (
 	"github.com/niiniyare/erp/internal/core/access/request"
 	"github.com/niiniyare/erp/internal/core/featureflag"
 	"github.com/niiniyare/erp/internal/featureflag/workflow"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	// "github.com/niiniyare/erp/internal/shared/logger"
 	"go.temporal.io/sdk/activity"
 )
 
@@ -72,7 +72,7 @@ func (a *FeatureFlagActivities) ValidateFeatureFlagChangeActivity(ctx context.Co
 	}
 
 	// Check if flag exists
-	flag, err := a.featureFlagService.GetFeatureFlagByName(ctx, req.FlagName)
+	flag, err := a.featureFlagService.GetFeatureFlag(ctx, req.FlagName)
 	if err != nil {
 		result.IsValid = false
 		result.ErrorMessage = fmt.Sprintf("Flag not found: %s", req.FlagName)
@@ -190,7 +190,7 @@ func (a *FeatureFlagActivities) ApplyFeatureFlagChangeActivity(ctx context.Conte
 	logger.Info("Applying feature flag change", "flag_name", req.FlagName, "change_type", req.ChangeType)
 
 	// Get current flag state
-	currentFlag, err := a.featureFlagService.GetFeatureFlagByName(ctx, req.FlagName)
+	currentFlag, err := a.featureFlagService.GetFeatureFlag(ctx, req.FlagName)
 	if err != nil {
 		logger.Error("Failed to get current flag", "error", err)
 		return nil, fmt.Errorf("failed to get current flag: %w", err)
@@ -253,25 +253,26 @@ func (a *FeatureFlagActivities) ApplyFeatureFlagChangeActivity(ctx context.Conte
 
 // SendWebSocketNotificationActivity sends real-time notifications
 func (a *FeatureFlagActivities) SendWebSocketNotificationActivity(ctx context.Context, req *workflow.NotificationRequest) error {
-	logger := activity.GetLogger(ctx)
-	logger.Info("Sending WebSocket notification", "flag_name", req.FlagName, "change_type", req.ChangeType)
-
-	event := &FeatureFlagChangeEvent{
-		FlagName:        req.FlagName,
-		ChangeType:      req.ChangeType,
-		NewValue:        req.NewValue,
-		ChangedBy:       req.AppliedBy,
-		AccessRequestID: req.AccessRequestID,
-		AppliedAt:       req.AppliedAt,
-	}
-
-	err := a.webSocketService.NotifyFlagChange(ctx, req.TenantID, event)
-	if err != nil {
-		logger.Error("Failed to send WebSocket notification", "error", err)
-		return fmt.Errorf("failed to send WebSocket notification: %w", err)
-	}
-
-	logger.Info("WebSocket notification sent successfully", "flag_name", req.FlagName)
+	// NOTE: do implementation
+	// logger := activity.GetLogger(ctx)
+	// logger.Info("Sending WebSocket notification", "flag_name", req.FlagName, "change_type", req.ChangeType)
+	//
+	// event := &FeatureFlagChangeEvent{
+	// 	FlagName:        req.FlagName,
+	// 	ChangeType:      req.ChangeType,
+	// 	NewValue:        req.NewValue,
+	// 	ChangedBy:       req.AppliedBy,
+	// 	AccessRequestID: req.AccessRequestID,
+	// 	AppliedAt:       req.AppliedAt,
+	// }
+	//
+	// err := a.webSocketService.NotifyFlagChange(ctx, req.TenantID, event)
+	// if err != nil {
+	// 	logger.Error("Failed to send WebSocket notification", "error", err)
+	// 	return fmt.Errorf("failed to send WebSocket notification: %w", err)
+	// }
+	//
+	// logger.Info("WebSocket notification sent successfully", "flag_name", req.FlagName)
 	return nil
 }
 

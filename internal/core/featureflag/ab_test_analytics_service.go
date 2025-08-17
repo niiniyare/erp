@@ -163,14 +163,15 @@ type BayesianAnalysisResult struct {
 
 // PowerAnalysisRequest contains parameters for power analysis
 type PowerAnalysisRequest struct {
-	ExperimentID uuid.UUID           `json:"experiment_id"`
-	EffectSize   float64             `json:"effect_size"`
-	Alpha        float64             `json:"alpha"`
-	Power        float64             `json:"power"`
-	SampleSizeA  int64               `json:"sample_size_a"`
-	SampleSizeB  int64               `json:"sample_size_b"`
-	TestType     StatisticalTestType `json:"test_type"`
-	AnalysisType PowerAnalysisType   `json:"analysis_type"`
+	ExperimentID      uuid.UUID           `json:"experiment_id"`
+	EffectSize        float64             `json:"effect_size"`
+	MinimumEffectSize float64             `json:"minimum_effect_size"`
+	Alpha             float64             `json:"alpha"`
+	Power             float64             `json:"power"`
+	SampleSizeA       int64               `json:"sample_size_a"`
+	SampleSizeB       int64               `json:"sample_size_b"`
+	TestType          StatisticalTestType `json:"test_type"`
+	AnalysisType      PowerAnalysisType   `json:"analysis_type"`
 }
 
 // PowerAnalysisResult contains the results of power analysis
@@ -188,6 +189,7 @@ type PowerAnalysisResult struct {
 // SampleSizeRequest contains parameters for sample size calculation
 type SampleSizeRequest struct {
 	ExperimentID      uuid.UUID           `json:"experiment_id"`
+	EffectSize        float64             `json:"effect_size"`
 	MinimumEffectSize float64             `json:"minimum_effect_size"`
 	Power             float64             `json:"power"`
 	Alpha             float64             `json:"alpha"`
@@ -211,6 +213,7 @@ type SampleSizeResult struct {
 // EarlyStoppingRequest contains parameters for early stopping evaluation
 type EarlyStoppingRequest struct {
 	ExperimentID     uuid.UUID         `json:"experiment_id"`
+	Alpha            float64           `json:"alpha"`
 	CurrentData      *ExperimentData   `json:"current_data"`
 	StoppingCriteria *StoppingCriteria `json:"stopping_criteria"`
 	MinRunDuration   time.Duration     `json:"min_run_duration"`
@@ -549,7 +552,7 @@ func (s *abTestAnalyticsService) CalculateStatisticalSignificance(ctx context.Co
 		"is_significant": result.IsSignificant,
 		"effect_size":    result.EffectSize,
 	})
-	tenantID, _ := shared.GetTenantID(ctx)
+	_, _ = shared.GetTenantID(ctx) // Keep for consistency but no longer needed
 	req := audit.CreateAuditEventRequest{
 		EventType:     "statistical_test_performed",
 		EventCategory: "analytics",
@@ -560,7 +563,7 @@ func (s *abTestAnalyticsService) CalculateStatisticalSignificance(ctx context.Co
 		Context:       auditData,
 	}
 
-	if _, err := s.auditService.CreateAuditEvent(ctx, tenantID, req); err != nil {
+	if _, err := s.auditService.CreateAuditEvent(ctx, req); err != nil {
 		s.logger.Warn("Failed to audit statistical test", logger.Fields{
 			"experiment_id": request.ExperimentID,
 			"error":         err.Error(),
@@ -811,7 +814,7 @@ func (s *abTestAnalyticsService) PerformBayesianAnalysis(ctx context.Context, re
 		"expected_loss":      expectedLoss,
 		"bayes_factor":       bayesFactor,
 	})
-	tenantID2, _ := shared.GetTenantID(ctx)
+	_, _ = shared.GetTenantID(ctx) // Keep for consistency but no longer needed
 	req2 := audit.CreateAuditEventRequest{
 		EventType:     "bayesian_analysis_performed",
 		EventCategory: "analytics",
@@ -821,7 +824,7 @@ func (s *abTestAnalyticsService) PerformBayesianAnalysis(ctx context.Context, re
 		Reason:        stringPtr("Bayesian A/B test analysis performed"),
 		Context:       auditData,
 	}
-	if _, err := s.auditService.CreateAuditEvent(ctx, tenantID2, req2); err != nil {
+	if _, err := s.auditService.CreateAuditEvent(ctx, req2); err != nil {
 		s.logger.Warn("Failed to audit Bayesian analysis", logger.Fields{
 			"experiment_id": request.ExperimentID,
 			"error":         err.Error(),
@@ -1325,7 +1328,7 @@ func (s *abTestAnalyticsService) GenerateExperimentReport(ctx context.Context, e
 	}
 
 	// Generate statistical results if requested
-	if s.includeSection("statistical", options.Sections) {
+	if s.includeSection("statistical") {
 		// Create sample statistical test request
 		statisticalRequest := &StatisticalTestRequest{
 			ExperimentID: experimentID,
@@ -1361,7 +1364,7 @@ func (s *abTestAnalyticsService) GenerateExperimentReport(ctx context.Context, e
 	}
 
 	// Generate Bayesian analysis if requested
-	if options.IncludeBayesian && s.includeSection("bayesian", options.Sections) {
+	if options.IncludeBayesian && s.includeSection("bayesian") {
 		bayesianRequest := &BayesianAnalysisRequest{
 			ExperimentID: experimentID,
 			VariantA: &VariantData{
@@ -1394,7 +1397,7 @@ func (s *abTestAnalyticsService) GenerateExperimentReport(ctx context.Context, e
 	}
 
 	// Generate power analysis if requested
-	if options.IncludePowerAnalysis && s.includeSection("power", options.Sections) {
+	if options.IncludePowerAnalysis && s.includeSection("power") {
 		powerRequest := &PowerAnalysisRequest{
 			ExperimentID: experimentID,
 			EffectSize:   0.3,
@@ -1418,12 +1421,12 @@ func (s *abTestAnalyticsService) GenerateExperimentReport(ctx context.Context, e
 	}
 
 	// Generate executive summary
-	if s.includeSection("summary", options.Sections) {
-		report.ExecutiveSummary = s.generateExecutiveSummary(report)
+	if s.includeSection("summary") {
+		report.ExecutiveSummary = s.generateExecutiveSummary(report).(string)
 	}
 
 	// Generate recommendations
-	if s.includeSection("recommendations", options.Sections) {
+	if s.includeSection("recommendations") {
 		report.Recommendations = s.generateReportRecommendations(report)
 	}
 
@@ -2349,6 +2352,7 @@ func (s *abTestAnalyticsService) performFutilityAnalysis(request *EarlyStoppingR
 		explanation = "Effect size is very small, unlikely to reach significance"
 		reasonCode = "negligible_effect"
 	}
+	_ = reasonCode // Use the variable to avoid unused warning
 
 	return &FutilityAnalysis{
 		IsFutile:             isFutile,
