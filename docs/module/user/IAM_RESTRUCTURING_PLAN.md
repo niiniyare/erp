@@ -4,35 +4,59 @@
 
 This document outlines the comprehensive plan to restructure existing IAM-related services into a unified, domain-driven IAM module following clean architecture principles. This is a **restructuring effort** that consolidates existing functionality while improving organization and maintainability.
 
-## 📋 Current State Analysis
+## 📋 Current State Analysis (UPDATED - Based on Actual Codebase)
 
 ### Existing Services Structure
 
 ```
 internal/core/
-├── identity/           # Complete User/Person/Employee management (40+ files)
-├── abac/              # Comprehensive ABAC system (40+ files) 
-├── access/            # Access request workflows
-├── analytics/         # User analytics (part of IAM)
-├── audit/             # Security audit logging
-└── iam/               # Empty directory structure
+├── identity/           # Core identity service (7 files) - User/Person/Employee management
+│   ├── model.go                 # Domain models with type safety
+│   ├── service.go               # Business logic with caching
+│   ├── repository.go            # SQLC integration with proper error handling
+│   └── *_test.go, *_mock.go     # Comprehensive testing setup
+├── abac/              # Mature ABAC system (40+ files) - Production ready
+│   ├── service.go               # Main ABAC service with full implementation
+│   ├── policy_evaluation_engine.go  # Advanced policy evaluation (1900+ lines)
+│   ├── activities/              # Activity-based architecture
+│   ├── services/                # Specialized sub-services
+│   ├── repository/              # ABAC-specific repositories
+│   ├── workflows/               # Temporal workflow integration
+│   └── models/domain.go         # Comprehensive ABAC models
+├── access/            # Sophisticated access management (20+ files)
+│   ├── request/                 # Access request workflows
+│   ├── approval/                # Approval process engine
+│   ├── conditional/             # Conditional access policies
+│   ├── execution/               # Access execution service
+│   └── permission/              # Permission caching
+├── analytics/         # Advanced user analytics (2 files)
+│   └── user_analytics_service.go  # Comprehensive user behavior analysis (1300+ lines)
+└── iam/               # NEW: Unified IAM module (PARTIALLY IMPLEMENTED)
+    ├── service.go               # ✅ Main unified IAM service interface
+    ├── model/                   # ✅ Centralized domain models
+    ├── repo/                    # ✅ Repository interfaces with implementations
+    ├── authn/                   # ✅ Authentication domain service interface
+    ├── authz/                   # ✅ Authorization domain service interface  
+    └── policy/                  # ✅ Policy domain service interface
 ```
 
-### Current Dependencies
+### Current Dependencies (ANALYZED FROM CODEBASE)
 
 - **ABAC Service** → **Identity Service** (as PIP - Policy Information Point)
 - **Access Service** → **Identity Service** (for user context)
-- **Analytics Service** → Part of IAM domain
-- **Audit Service** → Required for all data operations
-- **Feature Flag Service** → Existing service to be reused
+- **Access Service** → **ABAC Service** (for permission evaluation)
+- **Analytics Service** → **Audit Service** (for security event logging)
+- **Analytics Service** → **Conditional Access** (for device/location info)
+- **All Services** → **Tenant Service** (for multi-tenant isolation)
 
-### Existing Integration Patterns
+### Existing Integration Patterns (VERIFIED)
 
 - **Tenant Context Lifecycle**: PostgreSQL RLS with session variables
 - **Database Transactions**: WithTenant, WithTx, BeginTxWithTenant patterns
 - **Multi-tenant Cache**: Redis with automatic tenant isolation
 - **Shared Services**: Tracing, Logger, Metrics (OpenTelemetry, structured logging, Prometheus)
-- **SQLC Integration**: Type-safe database operations
+- **SQLC Integration**: Type-safe database operations with proper error handling
+- **Mock Generation**: Comprehensive test coverage with auto-generated mocks
 
 ## 🏗️ Target Architecture (UPDATED)
 
@@ -242,7 +266,7 @@ Features are only marked as completed when ALL corresponding test cases pass. Ba
 
 ---
 
-## 📊 Implementation Phases
+## 📊 Implementation Phases (UPDATED - Reflects Actual vs Planned Architecture)
 
 ### Phase 1: Foundation Setup (Week 1) ✅ COMPLETED
 
@@ -308,15 +332,30 @@ type service struct {
 - [x] Set up audit logging integration
 - [x] Configure feature flag service integration
 
-### Phase 2: Identity Domain Migration (Week 2)
+### Phase 2: Service Implementation (Week 2) ⚠️ IN PROGRESS
 
-#### 2.1 Move Identity Service
-- [ ] Copy existing identity service to `internal/core/iam/identity/`
-- [ ] Update import paths and package declarations
-- [ ] Maintain existing interfaces and functionality
-- [ ] Preserve User/Person/Employee model separation
+**NOTE**: This phase differs from the original plan. Instead of migrating existing services, we're implementing new services that leverage existing mature implementations.
 
-#### 2.2 Database Integration
+#### 2.1 Authentication Service Implementation ⚠️ PARTIALLY COMPLETED
+- [x] Interface definition completed with 25+ methods
+- [x] Repository layer foundation established
+- [ ] **CRITICAL GAP**: Business logic implementation missing
+- [ ] **MISSING**: Integration with existing `internal/core/identity/service.go` (317 lines of mature logic)
+- [ ] **MISSING**: Password hashing, caching, and authentication flow
+
+#### 2.2 Authorization Service Implementation ❌ PENDING
+- [x] Interface definition completed with 15+ methods  
+- [ ] **CRITICAL GAP**: No implementation exists
+- [ ] **MISSING**: Integration with existing `internal/core/abac/service.go` (794 lines of production code)
+- [ ] **MISSING**: Policy evaluation engine integration (1900+ lines of sophisticated logic)
+
+#### 2.3 Policy Service Implementation ❌ PENDING
+- [x] Interface definition completed with 20+ methods
+- [ ] **CRITICAL GAP**: No implementation exists
+- [ ] **MISSING**: Integration with existing ABAC policy evaluation engine
+- [ ] **MISSING**: Policy lifecycle management from mature ABAC system
+
+#### 2.4 Database Integration
 ```go
 // internal/core/iam/identity/service.go
 func (s *service) CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error) {
@@ -340,12 +379,15 @@ func (s *service) CreateUser(ctx context.Context, req *CreateUserRequest) (*User
 - [ ] Use tenant-aware cache keys with automatic isolation
 - [ ] Implement cache invalidation patterns
 
-### Phase 3: Authorization Domain Migration (Week 3)
+### Phase 3: Legacy Integration (Week 3) ❌ NOT STARTED
 
-#### 3.1 Move ABAC Service
-- [ ] Migrate comprehensive ABAC system to `internal/core/iam/authorization/`
-- [ ] Preserve existing 40+ file structure and functionality
-- [ ] Maintain PIP (Policy Information Point) integration with identity service
+**ARCHITECTURAL DECISION REQUIRED**: The original plan to "migrate" services needs revision. The existing services are mature and production-ready:
+
+#### 3.1 ABAC Integration Strategy ❌ PENDING
+- [ ] **DECISION NEEDED**: Adapter pattern vs full migration
+- [ ] **CHALLENGE**: 40+ files in ABAC system with sophisticated policy evaluation
+- [ ] **RISK**: Existing policy evaluation engine (1900+ lines) would need complete rewrite
+- [ ] **RECOMMENDATION**: Create adapter layer instead of migration
 
 #### 3.2 Service Integration
 ```go
@@ -368,7 +410,7 @@ func NewService(
 - [ ] Keep policy evaluation caching mechanisms
 - [ ] Preserve attribute collection from identity service
 
-### Phase 4: Access Management Migration (Week 4)
+### Phase 4: Access Management Integration (Week 4) ❌ NOT STARTED
 
 #### 4.1 Move Access Service
 - [ ] Migrate access request workflows to `internal/core/iam/access/`
@@ -397,7 +439,7 @@ func (s *service) CreateAccessRequest(ctx context.Context, req *CreateAccessRequ
 }
 ```
 
-### Phase 5: Analytics Integration (Week 5)
+### Phase 5: Analytics Integration (Week 5) ❌ NOT STARTED
 
 #### 5.1 Move Analytics Service
 - [ ] Migrate user analytics to `internal/core/iam/analytics/`
@@ -417,7 +459,9 @@ func (s *service) TrackUserActivity(ctx context.Context, req *UserActivityReques
 }
 ```
 
-### Phase 6: Service Composition (Week 6)
+### Phase 6: Service Composition (Week 6) ❌ NOT STARTED
+
+**CURRENT REALITY**: The unified IAM service exists but only as a composition interface without actual business logic integration.
 
 #### 6.1 Unified IAM Service Implementation
 ```go
@@ -686,4 +730,78 @@ func setupIAMService(
 
 ---
 
-This restructuring plan provides a comprehensive, low-risk approach to organizing IAM services while preserving all existing functionality and integration patterns. The phased approach allows for careful validation at each step and easy rollback if needed.
+## 🔄 Migration Guide
+
+### Current State Reality Check
+
+Based on the actual codebase analysis, here's the migration mapping from existing mature services to the new IAM architecture:
+
+### Migration Mapping Table
+
+| Functional Group | Current Location | Target Location | Files/Components | Migration Strategy | Status |
+|------------------|------------------|-----------------|------------------|--------------------|---------|
+| **User Identity Management** | `internal/core/identity/` | `internal/core/iam/authn/` | `service.go` (317 lines), `repository.go`, `model.go` | Adapter pattern - wrap existing service | ❌ Pending |
+| **Authentication & Sessions** | `internal/core/identity/` | `internal/core/iam/authn/` | Authentication logic, session management, password hashing | Integrate with existing bcrypt and caching | ❌ Pending |
+| **ABAC Core Engine** | `internal/core/abac/` | `internal/core/iam/authz/` | `service.go` (794 lines), `policy_evaluation_engine.go` (1900+ lines) | **CRITICAL**: Adapter pattern required - too complex to migrate | ❌ Pending |
+| **Policy Information Point** | `internal/core/abac/services/` | `internal/core/iam/authz/` | Attribute collection, PIP integration | Leverage existing identity service integration | ❌ Pending |
+| **Policy Lifecycle** | `internal/core/abac/activities/` | `internal/core/iam/policy/` | Policy CRUD, validation, versioning | Wrap existing Temporal workflows | ❌ Pending |
+| **Access Request Workflows** | `internal/core/access/request/` | `internal/core/iam/authz/` | `access_request_service.go` (806 lines) | Integrate sophisticated approval engine | ❌ Pending |
+| **Conditional Access** | `internal/core/access/conditional/` | `internal/core/iam/authz/` | Device/location policies, risk assessment | Preserve existing conditional logic | ❌ Pending |
+| **User Analytics** | `internal/core/analytics/` | `internal/core/iam/analytics/` | `user_analytics_service.go` (1300+ lines) | Wrap existing behavioral analysis | ❌ Pending |
+| **Permission Caching** | `internal/core/access/permission/` | `internal/core/iam/authz/` | Redis-based permission caching | Integrate tenant-aware caching | ❌ Pending |
+| **Audit Integration** | All modules | `internal/core/iam/` | Cross-cutting audit logging | Maintain existing audit patterns | ❌ Pending |
+
+**Note**: All `*_test.go`, `*_mock.go` files and mock directories should follow their parent functionality to maintain test coverage continuity.
+
+### Critical Architecture Decisions Needed
+
+#### 1. **Adapter vs Migration Strategy**
+```go
+// RECOMMENDED: Adapter Pattern
+type authzService struct {
+    // Wrap existing mature services
+    abacService     abac.Service     // 794 lines of production code
+    accessService   access.Service   // 806 lines of workflow logic
+    identityService identity.Service // 317 lines of user management
+}
+
+// Instead of rewriting 2000+ lines of sophisticated logic
+```
+
+#### 2. **Integration Points Preservation**
+- **Multi-tenant Context**: All existing `WithTenant` patterns must be preserved
+- **SQLC Integration**: Existing type-safe database operations must remain
+- **Redis Caching**: Tenant-aware caching with automatic isolation
+- **Temporal Workflows**: Access request approval workflows
+- **OpenTelemetry**: Distributed tracing across all IAM operations
+
+#### 3. **Data Flow Integration**
+```
+Unified IAM Service
+├── Authentication Domain (authn)
+│   └── Wraps: internal/core/identity/service.go
+├── Authorization Domain (authz) 
+│   ├── Wraps: internal/core/abac/service.go
+│   ├── Wraps: internal/core/access/request/
+│   └── Wraps: internal/core/access/conditional/
+└── Policy Domain (policy)
+    └── Wraps: internal/core/abac/activities/
+```
+
+### Implementation Priority
+
+1. **IMMEDIATE (Week 1)**: Implement adapter pattern for authentication service
+2. **HIGH (Week 2)**: Create ABAC service adapter (avoid rewriting 1900+ lines)
+3. **MEDIUM (Week 3)**: Integrate access request workflows
+4. **LOW (Week 4)**: Analytics and policy management integration
+
+### Risk Mitigation
+
+- **Zero Rewrite Policy**: Leverage existing mature implementations
+- **Backward Compatibility**: Maintain all existing interfaces during transition
+- **Incremental Migration**: Phase-by-phase rollout with feature flags
+- **Test Coverage**: Ensure all existing tests continue to pass
+
+---
+
+This migration guide reflects the **actual codebase reality** where existing services are mature and production-ready, requiring an integration strategy rather than a complete rewrite.
