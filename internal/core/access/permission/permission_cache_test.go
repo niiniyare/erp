@@ -13,85 +13,86 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockCache implements cache.Service for testing
-type MockCache struct {
-	mock.Mock
-}
-
-func (m *MockCache) Get(ctx context.Context, key string, dest interface{}) error {
-	args := m.Called(ctx, key, dest)
-	if f, ok := args.Get(0).(func(interface{})); ok {
-		f(dest)
-		return nil
-	}
-	return args.Error(0)
-}
-
-func (m *MockCache) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
-	args := m.Called(ctx, key, value, ttl)
-	return args.Error(0)
-}
-
-func (m *MockCache) Delete(ctx context.Context, key string) error {
-	args := m.Called(ctx, key)
-	return args.Error(0)
-}
-
-func (m *MockCache) Exists(ctx context.Context, key string) (bool, error) {
-	args := m.Called(ctx, key)
-	return args.Bool(0), args.Error(1)
-}
-
-func (m *MockCache) Clear(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
-
-func (m *MockCache) Flush(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
-
-func (m *MockCache) MGet(ctx context.Context, keys []string, dest interface{}) error {
-	args := m.Called(ctx, keys, dest)
-	return args.Error(0)
-}
-
-func (m *MockCache) MSet(ctx context.Context, pairs map[string]interface{}, expiration time.Duration) error {
-	args := m.Called(ctx, pairs, expiration)
-	return args.Error(0)
-}
-
-func (m *MockCache) MDelete(ctx context.Context, keys []string) error {
-	args := m.Called(ctx, keys)
-	return args.Error(0)
-}
-
-func (m *MockCache) DeletePattern(ctx context.Context, pattern string) error {
-	args := m.Called(ctx, pattern)
-	return args.Error(0)
-}
-
-func (m *MockCache) TTL(ctx context.Context, key string) (time.Duration, error) {
-	args := m.Called(ctx, key)
-	return args.Get(0).(time.Duration), args.Error(1)
-}
-
-func (m *MockCache) Ping(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
-
-func (m *MockCache) Stats() *cache.CacheStats {
-	args := m.Called()
-	return args.Get(0).(*cache.CacheStats)
-}
-
-func (m *MockCache) Close() error {
-	args := m.Called()
-	return args.Error(0)
-}
-
+// // MockCache implements cache.Service for testing
+//
+//	type MockCache struct {
+//		mock.Mock
+//	}
+//
+//	func (m *MockCache) Get(ctx context.Context, key string, dest interface{}) error {
+//		args := m.Called(ctx, key, dest)
+//		if f, ok := args.Get(0).(func(interface{})); ok {
+//			f(dest)
+//			return nil
+//		}
+//		return args.Error(0)
+//	}
+//
+//	func (m *MockCache) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+//		args := m.Called(ctx, key, value, ttl)
+//		return args.Error(0)
+//	}
+//
+//	func (m *MockCache) Delete(ctx context.Context, key string) error {
+//		args := m.Called(ctx, key)
+//		return args.Error(0)
+//	}
+//
+//	func (m *MockCache) Exists(ctx context.Context, key string) (bool, error) {
+//		args := m.Called(ctx, key)
+//		return args.Bool(0), args.Error(1)
+//	}
+//
+//	func (m *MockCache) Clear(ctx context.Context) error {
+//		args := m.Called(ctx)
+//		return args.Error(0)
+//	}
+//
+//	func (m *MockCache) Flush(ctx context.Context) error {
+//		args := m.Called(ctx)
+//		return args.Error(0)
+//	}
+//
+//	func (m *MockCache) MGet(ctx context.Context, keys []string, dest interface{}) error {
+//		args := m.Called(ctx, keys, dest)
+//		return args.Error(0)
+//	}
+//
+//	func (m *MockCache) MSet(ctx context.Context, pairs map[string]interface{}, expiration time.Duration) error {
+//		args := m.Called(ctx, pairs, expiration)
+//		return args.Error(0)
+//	}
+//
+//	func (m *MockCache) MDelete(ctx context.Context, keys []string) error {
+//		args := m.Called(ctx, keys)
+//		return args.Error(0)
+//	}
+//
+//	func (m *MockCache) DeletePattern(ctx context.Context, pattern string) error {
+//		args := m.Called(ctx, pattern)
+//		return args.Error(0)
+//	}
+//
+//	func (m *MockCache) TTL(ctx context.Context, key string) (time.Duration, error) {
+//		args := m.Called(ctx, key)
+//		return args.Get(0).(time.Duration), args.Error(1)
+//	}
+//
+//	func (m *MockCache) Ping(ctx context.Context) error {
+//		args := m.Called(ctx)
+//		return args.Error(0)
+//	}
+//
+//	func (m *MockCache) Stats() *cache.CacheStats {
+//		args := m.Called()
+//		return args.Get(0).(*cache.CacheStats)
+//	}
+//
+//	func (m *MockCache) Close() error {
+//		args := m.Called()
+//		return args.Error(0)
+//	}
+//
 // setupPermissionCacheService creates a PermissionCacheService with mock dependencies for testing
 func setupPermissionCacheService() (*PermissionCacheService, *MockCache) {
 	mockCache := new(MockCache)

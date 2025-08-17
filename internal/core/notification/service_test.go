@@ -13,31 +13,9 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// MockEmailService is a mock implementation of EmailService
-type MockEmailService struct {
-	shouldError bool
-	errorMsg    string
-}
+// Remove manual mock since we have a generated one
 
-func (m *MockEmailService) SendEmail(ctx context.Context, to []string, subject, body string, data map[string]any) error {
-	if m.shouldError {
-		return errors.New(m.errorMsg)
-	}
-	return nil
-}
-
-// MockSlackService is a mock implementation of SlackService
-type MockSlackService struct {
-	shouldError bool
-	errorMsg    string
-}
-
-func (m *MockSlackService) SendSlackMessage(ctx context.Context, userIDs []string, message string, data map[string]any) error {
-	if m.shouldError {
-		return errors.New(m.errorMsg)
-	}
-	return nil
-}
+// Remove manual SlackService mock as well
 
 // NotificationServiceTestSuite defines the test suite
 type NotificationServiceTestSuite struct {
@@ -60,8 +38,8 @@ func (suite *NotificationServiceTestSuite) SetupTest() {
 	suite.mockMetrics, err = metrics.NewMetricsService(metrics.MetricsConfig{Enabled: false})
 	require.NoError(suite.T(), err)
 
-	suite.mockEmail = &MockEmailService{}
-	suite.mockSlack = &MockSlackService{}
+	suite.mockEmail = NewMockEmailService(suite.ctrl)
+	suite.mockSlack = NewMockSlackService(suite.ctrl)
 	suite.mockRepo = NewMockRepository(suite.ctrl)
 
 	suite.service = NewNotificationService(
@@ -180,8 +158,7 @@ func (suite *NotificationServiceTestSuite) TestSend() {
 				NotificationTypes:  map[NotificationType]bool{NotificationTypeGeneric: true},
 			},
 			setupMocks: func() {
-				suite.mockEmail.shouldError = true
-				suite.mockEmail.errorMsg = "email failed"
+				suite.mockEmail.EXPECT().SendEmail(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("email failed")).Times(1)
 			},
 			expectedError:  "email notification failed: email failed",
 			expectRepoCall: true,
@@ -205,8 +182,7 @@ func (suite *NotificationServiceTestSuite) TestSend() {
 				NotificationTypes:  map[NotificationType]bool{NotificationTypeGeneric: true},
 			},
 			setupMocks: func() {
-				suite.mockSlack.shouldError = true
-				suite.mockSlack.errorMsg = "slack failed"
+				suite.mockSlack.EXPECT().SendSlackMessage(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("slack failed")).Times(1)
 			},
 			expectedError:  "slack notification failed: slack failed",
 			expectRepoCall: true,
@@ -282,9 +258,7 @@ func (suite *NotificationServiceTestSuite) TestSend() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			// Reset mocks
-			suite.mockEmail.shouldError = false
-			suite.mockSlack.shouldError = false
+			// Note: gomock automatically resets expectations between tests
 			if tc.setupMocks != nil {
 				tc.setupMocks()
 			}

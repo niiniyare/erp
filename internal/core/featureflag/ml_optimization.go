@@ -290,11 +290,7 @@ type VariantMetrics struct {
 	BusinessMetrics         map[string]float64  `json:"business_metrics"`
 }
 
-type ConfidenceInterval struct {
-	Lower float64 `json:"lower"`
-	Upper float64 `json:"upper"`
-	Level float64 `json:"level"` // e.g., 0.95 for 95% confidence
-}
+// ConfidenceInterval is defined in ab_test_analytics_service.go
 
 type ScalingTimeline struct {
 	InitialPhase       time.Duration `json:"initial_phase"`

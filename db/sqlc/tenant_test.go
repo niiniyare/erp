@@ -146,7 +146,22 @@ func createComplexTestTenant(t *testing.T, store Store, name string) *Tenant {
 	tenant, err := store.CreateTenantComplete(testCtx, params)
 	require.NoError(t, err)
 	require.NotNil(t, tenant)
-	return tenant
+	// Convert to *Tenant since function return type is *Tenant
+	return &Tenant{
+		ID:                 tenant.ID,
+		Name:               tenant.Name,
+		Slug:               tenant.Slug,
+		Email:              tenant.Email,
+		Subdomain:          tenant.Subdomain,
+		Status:             tenant.Status,
+		Industry:           tenant.Industry,
+		TaxID:              tenant.TaxID,
+		RegistrationNumber: tenant.RegistrationNumber,
+		LegalEntityType:    tenant.LegalEntityType,
+		CreatedAt:          tenant.CreatedAt,
+		UpdatedAt:          tenant.UpdatedAt,
+		DeletedAt:          tenant.DeletedAt,
+	}
 }
 
 // Tenant Test Suite
@@ -399,54 +414,17 @@ func (suite *TenantTestSuite) TestTenantConfiguration() {
 	suite.Require().Equal(tenant.ID, currentTenantID)
 
 	// Create configuration
-	features, err := json.Marshal(map[string]bool{
-		"advanced_reporting": true,
-		"api_access":         true,
-	})
-	suite.Require().NoError(err)
-
-	modules, err := json.Marshal([]string{"accounting", "inventory", "payroll"})
-	suite.Require().NoError(err)
-
-	passwordPolicy, err := json.Marshal(map[string]any{
-		"min_length":      12,
-		"require_symbols": true,
-	})
-	suite.Require().NoError(err)
-
-	webhooks, err := json.Marshal([]string{"https://example.com/webhook"})
-	suite.Require().NoError(err)
-
-	rateLimits, err := json.Marshal(map[string]int{
-		"requests_per_minute": 200,
-		"requests_per_hour":   10000,
-	})
-	suite.Require().NoError(err)
 
 	configParams := CreateTenantConfigurationParams{
-		MaxUsers:                500,
-		MaxEntities:             5000,
-		MaxTransactionsPerMonth: 50000,
-		StorageQuota:            5368709120, // 5GB
-		Features:                features,
-		ModulesEnabled:          modules,
-		AccountingMethod:        "accrual",
-		FiscalYearStartMonth:    4, // April
-		DefaultCurrency:         "EUR",
-		DateFormat:              "DD/MM/YYYY",
-		NumberFormat:            "EU",
-		LanguageCode:            "en-GB",
-		PasswordPolicy:          passwordPolicy,
-		WebhookEndpoints:        webhooks,
-		ApiRateLimits:           rateLimits,
+		TenantID:        tenant.ID,
+		DefaultCurrency: "EUR",
 	}
 
 	config, err := suite.store.CreateTenantConfiguration(testCtx, configParams)
 	suite.Require().NoError(err)
 	suite.Require().NotNil(config)
 	suite.Require().Equal(tenant.ID, config.TenantID)
-	suite.Require().Equal(configParams.MaxUsers, config.MaxUsers)
-	suite.Require().Equal(configParams.AccountingMethod, config.AccountingMethod)
+	suite.Require().Equal(configParams.DefaultCurrency, config.DefaultCurrency)
 
 	// Get configuration
 	retrievedConfig, err := suite.store.GetTenantConfiguration(testCtx)

@@ -34,50 +34,78 @@ func NewRepository(store db.Store, logger logger.Logger, tracing tracing.Tracing
 func (r *repository) CreateAuditEvent(ctx context.Context, tenantID uuid.UUID, req CreateAuditEventRequest) (*AuditEvent, error) {
 	var auditEvent *AuditEvent
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		var reason string
+		if req.Reason != nil {
+			reason = *req.Reason
+		}
+		
 		params := db.CreateAuditEventParams{
 			EventType:     req.EventType,
-			EventCategory: req.EventCategory,
-			Severity:      req.Severity,
+			EventCategory: &req.EventCategory, // Convert string to *string
+			Severity:      &req.Severity,      // Convert string to *string
 			Context:       req.Context,
-		}
-		if req.UserID != nil {
-			params.UserID = *req.UserID
-		}
-		if req.EntityID != nil {
-			params.EntityID = *req.EntityID
-		}
-		if req.Decision != nil {
-			params.Decision = *req.Decision
-		}
-		if req.Reason != nil {
-			params.Reason = *req.Reason
+			UserID:        req.UserID,
+			EntityID:      req.EntityID,
+			Decision:      req.Decision,
+			Reason:        reason, // Handle nil pointer properly
 		}
 
 		dbAuditEvent, err := s.CreateAuditEvent(ctx, params)
 		if err != nil {
 			return err
 		}
+		// Convert SQLC model to domain model, handling nullable fields properly
+		var userID uuid.UUID
+		if dbAuditEvent.UserID != nil {
+			userID = *dbAuditEvent.UserID
+		}
+		
+		var eventCategory, severity string
+		if dbAuditEvent.EventCategory != nil {
+			eventCategory = *dbAuditEvent.EventCategory
+		}
+		if dbAuditEvent.Severity != nil {
+			severity = *dbAuditEvent.Severity
+		}
+		
+		var riskScore *int
+		if dbAuditEvent.RiskScore != nil {
+			riskScoreInt := int(*dbAuditEvent.RiskScore)
+			riskScore = &riskScoreInt
+		}
+		
+		var ipAddress *string
+		if dbAuditEvent.IpAddress != nil {
+			ipStr := dbAuditEvent.IpAddress.String()
+			ipAddress = &ipStr
+		}
+		
+		var createdAt time.Time
+		if dbAuditEvent.CreatedAt.Valid {
+			createdAt = dbAuditEvent.CreatedAt.Time
+		}
+		
 		auditEvent = &AuditEvent{
 			ID:              dbAuditEvent.ID,
-			UserID:          dbAuditEvent.UserID,
+			UserID:          userID,
 			EventType:       dbAuditEvent.EventType,
-			EventCategory:   dbAuditEvent.EventCategory,
-			Severity:        dbAuditEvent.Severity,
-			TargetUserID:    &dbAuditEvent.TargetUserID,
-			EntityID:        &dbAuditEvent.EntityID,
-			ResourceID:      &dbAuditEvent.ResourceID,
-			ActionID:        &dbAuditEvent.ActionID,
-			RoleID:          &dbAuditEvent.RoleID,
-			PermissionID:    &dbAuditEvent.PermissionID,
-			Decision:        &dbAuditEvent.Decision,
+			EventCategory:   eventCategory,
+			Severity:        severity,
+			TargetUserID:    dbAuditEvent.TargetUserID,
+			EntityID:        dbAuditEvent.EntityID,
+			ResourceID:      dbAuditEvent.ResourceID,
+			ActionID:        dbAuditEvent.ActionID,
+			RoleID:          dbAuditEvent.RoleID,
+			PermissionID:    dbAuditEvent.PermissionID,
+			Decision:        dbAuditEvent.Decision,
 			Reason:          &dbAuditEvent.Reason,
-			RiskScore:       &dbAuditEvent.RiskScore,
+			RiskScore:       riskScore,
 			Context:         dbAuditEvent.Context,
-			IPAddress:       &dbAuditEvent.IpAddress,
+			IPAddress:       ipAddress,
 			UserAgent:       &dbAuditEvent.UserAgent,
-			SessionID:       &dbAuditEvent.SessionID,
+			SessionID:       dbAuditEvent.SessionID,
 			ComplianceFlags: dbAuditEvent.ComplianceFlags,
-			CreatedAt:       dbAuditEvent.CreatedAt,
+			CreatedAt:       createdAt,
 		}
 		return nil
 	})

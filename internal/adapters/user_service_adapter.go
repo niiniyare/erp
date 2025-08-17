@@ -9,7 +9,13 @@ import (
 	"github.com/niiniyare/erp/internal/core/access/request"
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/identity"
+	"github.com/niiniyare/erp/internal/shared"
 )
+
+// Helper function to create string pointer
+func stringPtr(s string) *string {
+	return &s
+}
 
 // UserServiceAdapter adapts the identity.Service to request.UserService interface
 type UserServiceAdapter struct {
@@ -61,15 +67,16 @@ func (a *AuditServiceAdapter) LogPermissionEvaluation(ctx context.Context, evalu
 		"risk_factors":       evaluation.RiskFactors,
 	})
 
-	auditEvent := audit.AuditEvent{
-		UserID:        evaluation.UserID,
+	tenantID, _ := shared.GetTenantID(ctx)
+	req := audit.CreateAuditEventRequest{
+		UserID:        &evaluation.UserID,
 		EventType:     "permission_evaluation",
 		EventCategory: "access_control",
 		Severity:      "info",
-		Decision:      evaluation.Decision,
-		Reason:        "Permission evaluation completed",
+		Decision:      &evaluation.Decision,
+		Reason:        stringPtr("Permission evaluation completed"),
 		Context:       contextData,
 	}
-
-	return a.auditService.Record(ctx, auditEvent)
+	_, err := a.auditService.CreateAuditEvent(ctx, tenantID, req)
+	return err
 }

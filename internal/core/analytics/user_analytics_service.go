@@ -17,7 +17,13 @@ import (
 
 	"github.com/niiniyare/erp/internal/core/access/conditional"
 	"github.com/niiniyare/erp/internal/core/audit"
+	"github.com/niiniyare/erp/internal/shared"
 )
+
+// Helper function to create string pointer
+func stringPtr(s string) *string {
+	return &s
+}
 
 // Type aliases for external dependencies
 type AuditService = audit.Service
@@ -662,15 +668,20 @@ func (s *userAnalyticsService) AssessUserRisk(ctx context.Context, userID uuid.U
 			"anomalies":       len(behavioralAnomalies),
 		})
 
-		s.auditService.Record(ctx, AuditEvent{
-			UserID:        userID,
+		tenantID, _ := shared.GetTenantID(ctx)
+		req := audit.CreateAuditEventRequest{
+			UserID:        &userID,
 			EventType:     "security_violation",
 			EventCategory: "risk_assessment",
 			Severity:      AuditSeverityHigh,
-			Decision:      "high_risk_detected",
-			Reason:        fmt.Sprintf("High risk user detected: score %d", overallRiskScore),
+			Decision:      stringPtr("high_risk_detected"),
+			Reason:        stringPtr(fmt.Sprintf("High risk user detected: score %d", overallRiskScore)),
 			Context:       contextData,
-		})
+		}
+		if _, err := s.auditService.CreateAuditEvent(ctx, tenantID, req); err != nil {
+			// Silently handle the error, don't fail the main operation
+			_ = err
+		}
 	}
 
 	s.metrics.ObserveHistogram("user_risk_score", float64(overallRiskScore), map[string]any{
