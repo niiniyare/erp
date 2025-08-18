@@ -2,16 +2,19 @@ package repo
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 
+	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/platform/db"
+	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
 // UserRepositoryTestSuite defines test suite for user repository operations
@@ -29,7 +32,11 @@ func (s *UserRepositoryTestSuite) SetupTest() {
 	// TODO: Set up tenant context
 	// TODO: Set up database store with proper test isolation
 	s.store = setupTestDatabase(s.T())
-	s.repo = NewUserRepository(s.store)
+	ctrl := gomock.NewController(s.T())
+	logger := logger.NewMockLogger(ctrl)
+	metric := metrics.NewMockMetricsProvider(ctrl)
+	tracing := tracing.NewMockTracingService(ctrl)
+	s.repo = NewUserRepository(s.store, logger, metric, tracing)
 }
 
 // TestUserRepository runs the user repository test suite
@@ -51,14 +58,14 @@ func (s *UserRepositoryTestSuite) TestCreateUser() {
 			name: "ValidData_CreatesRecord",
 			spec: "REPO-001",
 			user: &model.User{
-				ID:                  uuid.New(),
-				PersonID:            uuidPtr(uuid.New()),
-				EmployeeID:          uuidPtr(uuid.New()),
-				Email:               "test@example.com",
-				PasswordHash:        "$2a$10$hashedpassword",
-				AccountStatus:       model.UserAccountStatusActive,
-				FailedLoginAttempts: 0,
-				MFAEnabled:          false,
+				ID:               uuid.New(),
+				PersonID:         uuidPtr(uuid.New()),
+				EmployeeID:       uuidPtr(uuid.New()),
+				Email:            "test@example.com",
+				PasswordHash:     "$2a$10$hashedpassword",
+				AccountStatus:    model.UserAccountStatusActive,
+				FailedLoginCount: 0,
+				MFAEnabled:       false,
 			},
 			setupTenant: true,
 			validateResult: func(t *testing.T, user *model.User) {

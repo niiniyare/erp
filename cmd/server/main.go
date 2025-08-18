@@ -28,7 +28,7 @@ func main() {
 	defer database.Close()
 
 	// Initialize all services
-	services, err := InitializeServices(database.Store, database.RedisClient, infra.logger, infra.Metrics, infra.Tracing)
+	services, err := InitializeServices(database.Store, database.RedisClient, infra.Logger, infra.Metrics, infra.Tracing)
 	if err != nil {
 		logger.Fatal("Failed to initialize services", logger.Fields{"error": err})
 	}

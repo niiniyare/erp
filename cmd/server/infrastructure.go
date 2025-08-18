@@ -13,7 +13,7 @@ type Infrastructure struct {
 	Config  *config.Config
 	Tracing tracing.TracingService
 	Metrics *metrics.MetricsService
-	logger  logger.Logger
+	Logger  logger.Logger
 }
 
 func InitializeInfrastructure() (*Infrastructure, error) {
@@ -21,15 +21,16 @@ func InitializeInfrastructure() (*Infrastructure, error) {
 	if err := logger.InitializeFromEnv(); err != nil {
 		return nil, err
 	}
+	log := logger.WithFields(logger.Fields{})
 
-	logger.Info("Starting Awo ERP server", logger.Fields{
+	log.Info("Starting Awo ERP server", logger.Fields{
 		"service": "awo-server",
 		"version": "1.0.0",
 	})
 
 	// Load configuration
 	cfg := config.Load()
-	logger.Info("Configuration loaded", logger.Fields{
+	log.Info("Configuration loaded", logger.Fields{
 		"server_port": cfg.Server.Port,
 		"db_host":     cfg.Database.Host,
 		"redis_host":  cfg.Redis.Host,
@@ -62,6 +63,7 @@ func InitializeInfrastructure() (*Infrastructure, error) {
 		Config:  cfg,
 		Tracing: tracingService,
 		Metrics: metricsService,
+		Logger:  log,
 	}, nil
 }
 
