@@ -516,11 +516,7 @@ type AuthenticationService interface {
 	Logout(ctx context.Context, userID, sessionID uuid.UUID) error
 }
 
-type AuthenticationRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-	MFACode  string `json:"mfa_code,omitempty"`
-}
+// Note: AuthenticationRequest is already defined in service.go
 
 type AuthenticationResponse struct {
 	AccessToken  string    `json:"access_token"`
