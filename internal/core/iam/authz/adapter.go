@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/abac"
 	"github.com/niiniyare/erp/internal/core/access"
@@ -53,6 +54,17 @@ func (a *adapter) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 	ctx, span := a.tracer.StartSpan(ctx, "authz.adapter.EvaluatePermission")
 	defer span.End()
 
+	// Add tracing attributes for better observability
+	span.SetAttributes(
+		attribute.String("user_id", req.UserID.String()),
+		attribute.String("resource_type", req.ResourceType),
+		attribute.String("action", req.Action),
+		attribute.String("request_id", req.RequestID),
+	)
+	if req.EntityID != nil {
+		span.SetAttributes(attribute.String("entity_id", req.EntityID.String()))
+	}
+
 	startTime := time.Now()
 	defer func() {
 		duration := time.Since(startTime)
@@ -90,17 +102,27 @@ func (a *adapter) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 		Timestamp:        abacResult.Timestamp,
 	}
 
+	// Add result attributes to span for complete traceability
+	span.SetAttributes(
+		attribute.String("decision", string(result.Decision)),
+		attribute.Bool("cache_hit", result.CacheHit),
+		attribute.Int64("evaluation_time_ms", result.EvaluationTimeMS),
+		attribute.Int("policy_count", len(result.PolicyDecisions)),
+	)
+
 	a.metrics.IncrementCounter("authz.adapter.permission_evaluation.success",
 		metrics.Fields{"decision": string(result.Decision), "cache_hit": fmt.Sprintf("%t", result.CacheHit)})
 
 	a.logger.InfoContext(ctx, "Permission evaluation completed via ABAC adapter",
 		logger.Fields{
+			"correlation_id":     result.RequestID,
 			"user_id":            req.UserID,
 			"resource_type":      req.ResourceType,
 			"action":             req.Action,
 			"decision":           result.Decision,
 			"evaluation_time_ms": result.EvaluationTimeMS,
 			"cache_hit":          result.CacheHit,
+			"tenant_id":          req.EntityID,
 		})
 
 	return result, nil
