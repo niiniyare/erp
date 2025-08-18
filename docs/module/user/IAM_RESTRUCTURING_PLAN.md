@@ -810,6 +810,64 @@ Unified IAM Service
 
 This TDD plan guarantees every method and integration path works as expected through executable, measurable, and traceable testing from human-readable specs to automated tests to passing implementations.
 
+#### Test Design Principles ✅ UPDATED
+
+**All IAM module unit tests follow these standardized design principles:**
+
+1. **Table-Driven Test Structure**: All unit tests use table-driven design with subtests using `t.Run()` for better organization and parallel execution
+2. **testify.suite Framework**: All tests are organized using `testify.suite.Suite` for consistent test fixture setup, teardown, and shared state management  
+3. **Fail-Fast Assertions**: All validations use `testify/require` for strict fail-fast behavior instead of `testify/assert`, ensuring tests stop immediately on the first failure
+4. **Spec ID Traceability**: Each table entry includes its corresponding Spec ID (e.g., "AUTHN-003") to maintain one-to-one linkage between specifications and tests
+5. **Go Idiomatic Naming**: Test functions follow Go naming conventions with descriptive names that clearly indicate the test scenario
+6. **Grouped Test Cases**: Similar test cases (valid/invalid input, edge cases, error propagation) are grouped into logical tables within each test function
+7. **Structured Test Fixtures**: Each test suite defines `SetupTest()` method for consistent test fixture initialization across all test methods
+
+**Example Test Structure:**
+```go
+type UserManagementTestSuite struct {
+    suite.Suite
+    ctx     context.Context
+    service Service
+}
+
+func (s *UserManagementTestSuite) SetupTest() {
+    s.ctx = context.Background()
+    s.service = setupTestService(s.T())
+}
+
+func (s *UserManagementTestSuite) TestCreateUser() {
+    testCases := []struct {
+        name        string
+        spec        string      // Spec ID for traceability
+        request     *CreateUserRequest
+        expectedErr string
+        validateResult func(*testing.T, *model.User)
+    }{
+        {
+            name: "ValidInput_ReturnsUser",
+            spec: "AUTHN-001",
+            request: &CreateUserRequest{...},
+            validateResult: func(t *testing.T, user *model.User) {
+                require.NotNil(t, user)
+                require.Equal(t, "expected@email.com", user.Email)
+            },
+        },
+    }
+    
+    for _, tc := range testCases {
+        s.Run(tc.spec+"_"+tc.name, func() {
+            // Test implementation with require assertions
+        })
+    }
+}
+```
+
+**Test Coverage Requirements:**
+- All unit tests maintain spec ID traceability through test names and table entries
+- All assertions use `require` package for fail-fast behavior 
+- All functional groups organized into separate test suites
+- All tests follow the fail-first TDD approach during implementation
+
 ### Functional Group Implementation
 
 #### 1. Authentication Domain (authn) - Week 1

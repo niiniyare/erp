@@ -5,206 +5,606 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/niiniyare/erp/internal/core/iam/model"
 )
 
+// PolicyManagementTestSuite defines test suite for policy management operations
+type PolicyManagementTestSuite struct {
+	suite.Suite
+	ctx     context.Context
+	service PolicyService
+	// Mock dependencies will be added here
+}
+
+// SetupTest initializes test fixtures for each test
+func (s *PolicyManagementTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	// TODO: Set up tenant context
+	// TODO: Set up service with mocked dependencies
+	s.service = setupTestPolicyService(s.T())
+}
+
+// TestPolicyManagement runs the policy management test suite
+func TestPolicyManagement(t *testing.T) {
+	suite.Run(t, new(PolicyManagementTestSuite))
+}
+
 // TestCreatePolicy implements POLICY-001: Policy Management - CreatePolicy
-// Spec: Valid policy definition with rules
-// Expected: Policy created, validated, and immediately active
-func TestCreatePolicy_ValidDefinition_ReturnsPolicy(t *testing.T) {
-	t.Skip("POLICY-001: Implementation pending - fail-first approach")
-
-	// FAIL FIRST: This test will fail until implementation is complete
-	ctx := context.Background()
-
-	req := &CreatePolicyRequest{
-		Name:        "Finance Document Access",
-		Description: "Allows finance team to access financial documents during business hours",
-		Target: &model.PolicyTarget{
-			Resources: "documents",
-			Actions:   []string{"read", "write"},
-			Subjects:  []string{"finance_team"},
+func (s *PolicyManagementTestSuite) TestCreatePolicy() {
+	testCases := []struct {
+		name        string
+		spec        string
+		request     *CreatePolicyRequest
+		requestType string
+		expectedErr string
+		validateResult func(*testing.T, *model.Policy)
+	}{
+		{
+			name: "ValidDefinition_ReturnsPolicy",
+			spec: "POLICY-001",
+			request: &CreatePolicyRequest{
+				Name:        "Finance Document Access",
+				Description: "Allows finance team to access financial documents during business hours",
+				Target: &model.PolicyTarget{
+					Resources: "documents",
+					Actions:   []string{"read", "write"},
+					Subjects:  []string{"finance_team"},
+				},
+				Rules: []model.PolicyRule{
+					{
+						Effect: model.PolicyEffectAllow,
+						Condition: &model.PolicyCondition{
+							"user.department": "finance",
+							"environment.time_of_day": map[string]any{
+								"$gte": "09:00",
+								"$lte": "17:00",
+							},
+						},
+					},
+				},
+				Priority: 100,
+				Enabled:  true,
+			},
+			requestType: "valid",
+			validateResult: func(t *testing.T, policy *model.Policy) {
+				require.NotEqual(t, uuid.Nil, policy.ID)
+				require.Equal(t, "Finance Document Access", policy.Name)
+				require.True(t, policy.Enabled)
+				require.NotZero(t, policy.CreatedAt)
+				require.NotZero(t, policy.UpdatedAt)
+				require.Equal(t, int32(1), policy.Version)
+			},
 		},
-		Rules: []model.PolicyRule{
-			{
-				Effect: model.PolicyEffectAllow,
-				Condition: &model.PolicyCondition{
-					"user.department": "finance",
-					"environment.time_of_day": map[string]any{
-						"$gte": "09:00",
-						"$lte": "17:00",
+		{
+			name: "InvalidSyntax_ReturnsError",
+			spec: "POLICY-001",
+			request: &CreatePolicyRequest{
+				Name: "Invalid Policy",
+				Rules: []model.PolicyRule{
+					{
+						Effect:    model.PolicyEffectAllow,
+						Condition: &model.PolicyCondition{"invalid_syntax": "{{malformed_expression}}"},
 					},
 				},
 			},
+			requestType: "invalid_syntax",
+			expectedErr: "invalid policy syntax",
 		},
-		Priority: 100,
-		Enabled:  true,
+		{
+			name: "ConflictingRules_ReturnsError",
+			spec: "POLICY-001",
+			request: &CreatePolicyRequest{
+				Name: "Conflicting Policy",
+				Rules: []model.PolicyRule{
+					{Effect: model.PolicyEffectAllow, Condition: &model.PolicyCondition{"user.role": "admin"}},
+					{Effect: model.PolicyEffectDeny, Condition: &model.PolicyCondition{"user.role": "admin"}},
+				},
+			},
+			requestType: "conflicting_rules",
+			expectedErr: "conflicting policy rules detected",
+		},
 	}
 
-	// Act
-	// TODO: Call service.CreatePolicy()
+	for _, tc := range testCases {
+		s.Run(tc.spec+"_"+tc.name, func() {
+			// FAIL FIRST: Implementation pending
+			s.T().Skip(tc.spec + ": Implementation pending - fail-first approach")
 
-	// Assert
-	t.Fail("POLICY-001: Policy creation test implementation required")
-	// TODO: Assert policy created with correct fields
-	// TODO: Assert policy is validated
-	// TODO: Assert policy is immediately active
-	// TODO: Assert unique policy ID generated
-}
+			// Arrange
+			switch tc.requestType {
+			case "valid":
+				// TODO: Set up valid policy context
+			case "invalid_syntax":
+				// TODO: Set up invalid syntax scenario
+			case "conflicting_rules":
+				// TODO: Set up conflicting rules scenario
+			}
 
-// TestCreatePolicy_InvalidSyntax_ReturnsError implements POLICY-001 edge case
-func TestCreatePolicy_InvalidSyntax_ReturnsError(t *testing.T) {
-	t.Skip("POLICY-001: Edge case - invalid policy syntax")
+			// Act
+			policy, err := s.service.CreatePolicy(s.ctx, tc.request)
 
-	t.Fail("POLICY-001: Invalid syntax validation test required")
-}
-
-// TestCreatePolicy_ConflictingRules_ReturnsError implements POLICY-001 edge case
-func TestCreatePolicy_ConflictingRules_ReturnsError(t *testing.T) {
-	t.Skip("POLICY-001: Edge case - conflicting rules")
-
-	t.Fail("POLICY-001: Conflicting rules validation test required")
+			// Assert
+			if tc.expectedErr != "" {
+				require.Error(s.T(), err)
+				require.Contains(s.T(), err.Error(), tc.expectedErr)
+				require.Nil(s.T(), policy)
+			} else {
+				require.NoError(s.T(), err)
+				require.NotNil(s.T(), policy)
+				if tc.validateResult != nil {
+					tc.validateResult(s.T(), policy)
+				}
+			}
+		})
+	}
 }
 
 // TestGetPolicy implements POLICY-002: Policy Management - GetPolicy
-// Spec: Existing policy
-// Expected: Policy details returned with current version
-func TestGetPolicy_ExistingPolicy_ReturnsPolicy(t *testing.T) {
-	t.Skip("POLICY-002: Implementation pending - fail-first approach")
+func (s *PolicyManagementTestSuite) TestGetPolicy() {
+	testCases := []struct {
+		name        string
+		spec        string
+		policyID    uuid.UUID
+		setupPolicy string
+		expectedErr string
+		validateResult func(*testing.T, *model.Policy)
+	}{
+		{
+			name:        "ExistingPolicy_ReturnsPolicy",
+			spec:        "POLICY-002",
+			policyID:    uuid.New(),
+			setupPolicy: "existing_policy",
+			validateResult: func(t *testing.T, policy *model.Policy) {
+				require.NotNil(t, policy)
+				require.NotEqual(t, uuid.Nil, policy.ID)
+				require.NotEmpty(t, policy.Name)
+				require.NotZero(t, policy.Version)
+			},
+		},
+		{
+			name:        "PolicyNotFound_ReturnsError",
+			spec:        "POLICY-002",
+			policyID:    uuid.New(),
+			setupPolicy: "not_found",
+			expectedErr: "policy not found",
+		},
+		{
+			name:        "DeletedPolicy_ReturnsError",
+			spec:        "POLICY-002",
+			policyID:    uuid.New(),
+			setupPolicy: "deleted_policy",
+			expectedErr: "policy has been deleted",
+		},
+	}
 
-	t.Fail("POLICY-002: GetPolicy test implementation required")
-}
+	for _, tc := range testCases {
+		s.Run(tc.spec+"_"+tc.name, func() {
+			// FAIL FIRST: Implementation pending
+			s.T().Skip(tc.spec + ": Implementation pending - fail-first approach")
 
-// TestGetPolicy_NotFound_ReturnsError implements POLICY-002 edge case
-func TestGetPolicy_NotFound_ReturnsError(t *testing.T) {
-	t.Skip("POLICY-002: Edge case - policy not found")
+			// Arrange
+			switch tc.setupPolicy {
+			case "existing_policy":
+				// TODO: Create test policy
+			case "not_found":
+				// TODO: Use non-existent policy ID
+			case "deleted_policy":
+				// TODO: Create and delete policy
+			}
 
-	t.Fail("POLICY-002: Policy not found test required")
-}
+			// Act
+			policy, err := s.service.GetPolicy(s.ctx, tc.policyID)
 
-// TestGetPolicy_DeletedPolicy_ReturnsError implements POLICY-002 edge case
-func TestGetPolicy_DeletedPolicy_ReturnsError(t *testing.T) {
-	t.Skip("POLICY-002: Edge case - deleted policy")
-
-	t.Fail("POLICY-002: Deleted policy test required")
+			// Assert
+			if tc.expectedErr != "" {
+				require.Error(s.T(), err)
+				require.Contains(s.T(), err.Error(), tc.expectedErr)
+				require.Nil(s.T(), policy)
+			} else {
+				require.NoError(s.T(), err)
+				require.NotNil(s.T(), policy)
+				if tc.validateResult != nil {
+					tc.validateResult(s.T(), policy)
+				}
+			}
+		})
+	}
 }
 
 // TestUpdatePolicy implements POLICY-003: Policy Management - UpdatePolicy
-// Spec: Existing policy, valid changes
-// Expected: Policy updated, version incremented, cache invalidated
-func TestUpdatePolicy_ValidChanges_UpdatesPolicy(t *testing.T) {
-	t.Skip("POLICY-003: Implementation pending - fail-first approach")
+func (s *PolicyManagementTestSuite) TestUpdatePolicy() {
+	testCases := []struct {
+		name        string
+		spec        string
+		policyID    uuid.UUID
+		request     *UpdatePolicyRequest
+		setupPolicy string
+		expectedErr string
+		validateResult func(*testing.T, *model.Policy)
+	}{
+		{
+			name:     "ValidChanges_UpdatesPolicy",
+			spec:     "POLICY-003",
+			policyID: uuid.New(),
+			request: &UpdatePolicyRequest{
+				Name:        stringPtr("Updated Policy Name"),
+				Description: stringPtr("Updated description"),
+				Enabled:     boolPtr(false),
+			},
+			setupPolicy: "existing_policy",
+			validateResult: func(t *testing.T, policy *model.Policy) {
+				require.Equal(t, "Updated Policy Name", policy.Name)
+				require.False(t, policy.Enabled)
+				require.Greater(t, policy.Version, int32(1)) // Version incremented
+				// TODO: Verify cache invalidated
+			},
+		},
+		{
+			name:     "InvalidChanges_ReturnsError",
+			spec:     "POLICY-003",
+			policyID: uuid.New(),
+			request: &UpdatePolicyRequest{
+				Rules: &[]model.PolicyRule{
+					{Effect: model.PolicyEffectAllow, Condition: &model.PolicyCondition{"invalid": "{{syntax}}"}},
+				},
+			},
+			setupPolicy: "existing_policy",
+			expectedErr: "invalid policy changes",
+		},
+		{
+			name:        "PolicyInUse_RequiresConfirmation",
+			spec:        "POLICY-003",
+			policyID:    uuid.New(),
+			request:     &UpdatePolicyRequest{Name: stringPtr("In Use Policy")},
+			setupPolicy: "policy_in_use",
+			expectedErr: "policy is in use, confirmation required",
+		},
+	}
 
-	t.Fail("POLICY-003: UpdatePolicy test implementation required")
-}
+	for _, tc := range testCases {
+		s.Run(tc.spec+"_"+tc.name, func() {
+			// FAIL FIRST: Implementation pending
+			s.T().Skip(tc.spec + ": Implementation pending - fail-first approach")
 
-// TestUpdatePolicy_InvalidChanges_ReturnsError implements POLICY-003 edge case
-func TestUpdatePolicy_InvalidChanges_ReturnsError(t *testing.T) {
-	t.Skip("POLICY-003: Edge case - invalid changes")
+			// Arrange
+			switch tc.setupPolicy {
+			case "existing_policy":
+				// TODO: Create test policy
+			case "policy_in_use":
+				// TODO: Create policy that's actively being used
+			}
 
-	t.Fail("POLICY-003: Invalid changes test required")
-}
+			// Act
+			policy, err := s.service.UpdatePolicy(s.ctx, tc.policyID, tc.request)
 
-// TestUpdatePolicy_PolicyInUse_RequiresConfirmation implements POLICY-003 edge case
-func TestUpdatePolicy_PolicyInUse_RequiresConfirmation(t *testing.T) {
-	t.Skip("POLICY-003: Edge case - policy in use")
-
-	t.Fail("POLICY-003: Policy in use test required")
+			// Assert
+			if tc.expectedErr != "" {
+				require.Error(s.T(), err)
+				require.Contains(s.T(), err.Error(), tc.expectedErr)
+				require.Nil(s.T(), policy)
+			} else {
+				require.NoError(s.T(), err)
+				require.NotNil(s.T(), policy)
+				if tc.validateResult != nil {
+					tc.validateResult(s.T(), policy)
+				}
+			}
+		})
+	}
 }
 
 // TestDeletePolicy implements POLICY-004: Policy Management - DeletePolicy
-// Spec: Existing policy not in critical use
-// Expected: Policy marked deleted, cache cleared, dependent policies notified
-func TestDeletePolicy_NotInUse_DeletesPolicy(t *testing.T) {
-	t.Skip("POLICY-004: Implementation pending - fail-first approach")
-
-	t.Fail("POLICY-004: DeletePolicy test implementation required")
-}
-
-// TestDeletePolicy_SystemPolicy_ReturnsError implements POLICY-004 edge case
-func TestDeletePolicy_SystemPolicy_ReturnsError(t *testing.T) {
-	t.Skip("POLICY-004: Edge case - system policy")
-
-	t.Fail("POLICY-004: System policy protection test required")
-}
-
-// Policy validation tests
-func TestValidatePolicy_ValidSyntax_PassesValidation(t *testing.T) {
-	t.Skip("POLICY-001: Policy validation - implementation pending")
-
-	// TODO: Test policy syntax validation
-	// TODO: Test rule structure validation
-	// TODO: Test condition expression validation
-	t.Fail("POLICY-001: Policy validation test required")
-}
-
-func TestValidatePolicy_CircularReferences_ReturnsError(t *testing.T) {
-	t.Skip("BOUNDARY-002: Policy syntax validation")
-
-	// TODO: Test detection of circular policy references
-	t.Fail("BOUNDARY-002: Circular reference validation test required")
-}
-
-// Property test for policy versioning
-func TestProperty_PolicyVersioning_MaintainsHistory(t *testing.T) {
-	t.Skip("POLICY-013: Property test - versioning")
-
-	// TODO: Property test for policy version history
-	// Invariant: Each update creates a new version, history is preserved
-	t.Fail("POLICY-013: Versioning property test required")
-}
-
-// Performance test for policy CRUD operations
-func TestPerformance_PolicyOperations_MeetLatencyRequirements(t *testing.T) {
-	t.Skip("PERF-003: Policy operation performance")
-
-	// TODO: Performance test for policy CRUD operations
-	// Target: Create/Update < 100ms, Read < 10ms
-	t.Fail("PERF-003: Policy performance test required")
-}
-
-// Concurrent modification test
-func TestConcurrency_PolicyUpdate_HandlesConcurrentModifications(t *testing.T) {
-	t.Skip("POLICY-003: Concurrency test - implementation pending")
-
-	// TODO: Test concurrent policy modifications
-	// TODO: Verify optimistic locking or conflict resolution
-	t.Fail("POLICY-003: Concurrent modification test required")
-}
-
-// Benchmark for policy creation
-func BenchmarkCreatePolicy(b *testing.B) {
-	b.Skip("POLICY-001: Benchmark - implementation pending")
-
-	// TODO: Benchmark policy creation performance
-	// Target: < 100ms per policy creation
-}
-
-// Benchmark for policy retrieval
-func BenchmarkGetPolicy(b *testing.B) {
-	b.Skip("POLICY-002: Benchmark - implementation pending")
-
-	// TODO: Benchmark policy retrieval performance
-	// Target: < 10ms per policy retrieval
-}
-
-// Load test for bulk policy operations
-func TestLoad_BulkPolicyOperations_HandlesLoad(t *testing.T) {
-	if testing.Short() {
-		t.Skip("LOAD-003: Skipping load test in short mode")
+func (s *PolicyManagementTestSuite) TestDeletePolicy() {
+	testCases := []struct {
+		name        string
+		spec        string
+		policyID    uuid.UUID
+		setupPolicy string
+		expectedErr string
+		validateResult func(*testing.T)
+	}{
+		{
+			name:        "NotInUse_DeletesPolicy",
+			spec:        "POLICY-004",
+			policyID:    uuid.New(),
+			setupPolicy: "unused_policy",
+			validateResult: func(t *testing.T) {
+				// TODO: Verify policy marked deleted
+				// TODO: Verify cache cleared
+				// TODO: Verify dependent policies notified
+			},
+		},
+		{
+			name:        "SystemPolicy_ReturnsError",
+			spec:        "POLICY-004",
+			policyID:    uuid.New(),
+			setupPolicy: "system_policy",
+			expectedErr: "cannot delete system policy",
+		},
+		{
+			name:        "PolicyInUse_ReturnsError",
+			spec:        "POLICY-004",
+			policyID:    uuid.New(),
+			setupPolicy: "policy_in_use",
+			expectedErr: "policy is currently in use",
+		},
 	}
 
-	t.Skip("LOAD-003: Load test - implementation pending")
+	for _, tc := range testCases {
+		s.Run(tc.spec+"_"+tc.name, func() {
+			// FAIL FIRST: Implementation pending
+			s.T().Skip(tc.spec + ": Implementation pending - fail-first approach")
 
-	// TODO: Load test for bulk policy operations
-	// Target: Handle 100 concurrent policy operations
-	t.Fail("LOAD-003: Bulk policy operations load test required")
+			// Arrange
+			switch tc.setupPolicy {
+			case "unused_policy":
+				// TODO: Create unused policy
+			case "system_policy":
+				// TODO: Create system policy
+			case "policy_in_use":
+				// TODO: Create policy that's actively being used
+			}
+
+			// Act
+			err := s.service.DeletePolicy(s.ctx, tc.policyID)
+
+			// Assert
+			if tc.expectedErr != "" {
+				require.Error(s.T(), err)
+				require.Contains(s.T(), err.Error(), tc.expectedErr)
+			} else {
+				require.NoError(s.T(), err)
+				if tc.validateResult != nil {
+					tc.validateResult(s.T())
+				}
+			}
+		})
+	}
 }
 
-// Helper functions for test setup
+// TestPolicyValidation implements policy validation tests
+func (s *PolicyManagementTestSuite) TestPolicyValidation() {
+	testCases := []struct {
+		name        string
+		spec        string
+		policy      *model.Policy
+		validationType string
+		expectedErr string
+		validateResult func(*testing.T)
+	}{
+		{
+			name: "ValidSyntax_PassesValidation",
+			spec: "POLICY-001",
+			policy: &model.Policy{
+				Rules: []model.PolicyRule{
+					{
+						Effect:    model.PolicyEffectAllow,
+						Condition: &model.PolicyCondition{"user.department": "finance"},
+					},
+				},
+			},
+			validationType: "syntax_validation",
+		},
+		{
+			name: "CircularReferences_ReturnsError",
+			spec: "BOUNDARY-002",
+			policy: &model.Policy{
+				Rules: []model.PolicyRule{
+					{
+						Effect:    model.PolicyEffectAllow,
+						Condition: &model.PolicyCondition{"policy.reference": "self"},
+					},
+				},
+			},
+			validationType: "circular_reference",
+			expectedErr:    "circular policy reference detected",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.spec+"_"+tc.name, func() {
+			// FAIL FIRST: Implementation pending
+			s.T().Skip(tc.spec + ": Policy validation - implementation pending")
+
+			// Execute validation based on type
+			switch tc.validationType {
+			case "syntax_validation":
+				// TODO: Test policy syntax validation
+				// TODO: Test rule structure validation
+				// TODO: Test condition expression validation
+			case "circular_reference":
+				// TODO: Test detection of circular policy references
+			}
+
+			if tc.expectedErr != "" {
+				// TODO: Assert validation error
+				s.T().Fail()
+			} else {
+				// TODO: Assert validation passes
+				if tc.validateResult != nil {
+					tc.validateResult(s.T())
+				}
+			}
+		})
+	}
+}
+
+// TestSpecializedPolicyTests implements property, performance, and concurrency tests
+func (s *PolicyManagementTestSuite) TestSpecializedPolicyTests() {
+	testCases := []struct {
+		name        string
+		spec        string
+		testType    string
+		validateResult func(*testing.T)
+	}{
+		{
+			name:     "PolicyVersioning_MaintainsHistory",
+			spec:     "POLICY-013",
+			testType: "property",
+			validateResult: func(t *testing.T) {
+				// TODO: Property test for policy version history
+				// Invariant: Each update creates a new version, history is preserved
+			},
+		},
+		{
+			name:     "PolicyOperations_MeetLatencyRequirements",
+			spec:     "PERF-003",
+			testType: "performance",
+			validateResult: func(t *testing.T) {
+				// TODO: Performance test for policy CRUD operations
+				// Target: Create/Update < 100ms, Read < 10ms
+			},
+		},
+		{
+			name:     "PolicyUpdate_HandlesConcurrentModifications",
+			spec:     "POLICY-003",
+			testType: "concurrency",
+			validateResult: func(t *testing.T) {
+				// TODO: Test concurrent policy modifications
+				// TODO: Verify optimistic locking or conflict resolution
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.spec+"_"+tc.name, func() {
+			// FAIL FIRST: Implementation pending
+			s.T().Skip(tc.spec + ": " + tc.testType + " test - implementation pending")
+
+			// Execute based on test type
+			switch tc.testType {
+			case "property":
+				// TODO: Property-based testing
+			case "performance":
+				// TODO: Performance testing
+			case "concurrency":
+				// TODO: Concurrency testing
+			}
+
+			if tc.validateResult != nil {
+				tc.validateResult(s.T())
+			}
+		})
+	}
+}
+
+// TestLoadTesting implements load testing for bulk operations
+func (s *PolicyManagementTestSuite) TestLoadTesting() {
+	if testing.Short() {
+		s.T().Skip("LOAD-003: Skipping load test in short mode")
+	}
+
+	testCases := []struct {
+		name        string
+		spec        string
+		operation   string
+		validateResult func(*testing.T)
+	}{
+		{
+			name:      "BulkPolicyOperations_HandlesLoad",
+			spec:      "LOAD-003",
+			operation: "bulk_operations",
+			validateResult: func(t *testing.T) {
+				// TODO: Load test for bulk policy operations
+				// Target: Handle 100 concurrent policy operations
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.spec+"_"+tc.name, func() {
+			// FAIL FIRST: Implementation pending
+			s.T().Skip(tc.spec + ": Load test - implementation pending")
+
+			// Execute load testing
+			switch tc.operation {
+			case "bulk_operations":
+				// TODO: Bulk operations load testing
+			}
+
+			if tc.validateResult != nil {
+				tc.validateResult(s.T())
+			}
+		})
+	}
+}
+
+// Benchmark tests for performance requirements
+func BenchmarkPolicyManagement(b *testing.B) {
+	benchmarkCases := []struct {
+		name string
+		spec string
+		fn   func(*testing.B)
+	}{
+		{
+			name: "CreatePolicy",
+			spec: "POLICY-001",
+			fn: func(b *testing.B) {
+				// TODO: Benchmark policy creation performance
+				// Target: < 100ms per policy creation
+				b.Skip("POLICY-001: Benchmark - implementation pending")
+			},
+		},
+		{
+			name: "GetPolicy",
+			spec: "POLICY-002",
+			fn: func(b *testing.B) {
+				// TODO: Benchmark policy retrieval performance
+				// Target: < 10ms per policy retrieval
+				b.Skip("POLICY-002: Benchmark - implementation pending")
+			},
+		},
+	}
+
+	for _, bc := range benchmarkCases {
+		b.Run(bc.spec+"_"+bc.name, bc.fn)
+	}
+}
+
+// Additional types needed for policy operations
+type PolicyService interface {
+	CreatePolicy(ctx context.Context, req *CreatePolicyRequest) (*model.Policy, error)
+	GetPolicy(ctx context.Context, policyID uuid.UUID) (*model.Policy, error)
+	UpdatePolicy(ctx context.Context, policyID uuid.UUID, req *UpdatePolicyRequest) (*model.Policy, error)
+	DeletePolicy(ctx context.Context, policyID uuid.UUID) error
+}
+
+type CreatePolicyRequest struct {
+	Name        string               `json:"name" validate:"required"`
+	Description string               `json:"description"`
+	Target      *model.PolicyTarget  `json:"target" validate:"required"`
+	Rules       []model.PolicyRule   `json:"rules" validate:"required,min=1"`
+	Priority    int32                `json:"priority"`
+	Enabled     bool                 `json:"enabled"`
+}
+
+type UpdatePolicyRequest struct {
+	Name        *string              `json:"name,omitempty"`
+	Description *string              `json:"description,omitempty"`
+	Target      *model.PolicyTarget  `json:"target,omitempty"`
+	Rules       *[]model.PolicyRule  `json:"rules,omitempty"`
+	Priority    *int32               `json:"priority,omitempty"`
+	Enabled     *bool                `json:"enabled,omitempty"`
+}
+
+// Helper functions
+func stringPtr(s string) *string {
+	return &s
+}
+
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+func setupTestPolicyService(t *testing.T) PolicyService {
+	// TODO: Set up service with mocked dependencies
+	t.Helper()
+	return nil // Placeholder until implementation
+}
+
 func setupTestPolicy() *CreatePolicyRequest {
 	return &CreatePolicyRequest{
 		Name:        "Test Policy",
@@ -216,7 +616,7 @@ func setupTestPolicy() *CreatePolicyRequest {
 		Rules: []model.PolicyRule{
 			{
 				Effect:    model.PolicyEffectAllow,
-				Condition: map[string]any{"user.test": true},
+				Condition: &model.PolicyCondition{"user.test": true},
 			},
 		},
 		Priority: 1,

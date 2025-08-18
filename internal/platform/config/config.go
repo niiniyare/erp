@@ -152,7 +152,7 @@ func Load() *Config {
 	v.SetConfigType("yaml")
 	v.AddConfigPath(".")
 	v.AddConfigPath("./config")
-	v.AddConfigPath("$HOME/.config/myapp")
+	v.AddConfigPath("../../../")
 	v.AddConfigPath("/etc/myapp")
 
 	// Enable reading from environment variables

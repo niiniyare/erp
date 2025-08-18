@@ -330,6 +330,11 @@ func createProductionErrorHandler() func(context.Context, http.ResponseWriter, e
 			http.Error(w, `{"error":"Internal server error","code":"INTERNAL_ERROR"}`, statusCode)
 			return
 		}
+
+		// Fallback for development mode or non-500 errors
+		// Use the default encoder to write the error to the response
+		enc := goahttp.ResponseEncoder(ctx, w)
+		enc.Encode(err)
 	}
 }
 

@@ -7,8 +7,6 @@ vars:
   DB_URL: 'postgresql://{{.DB_USER}}:{{.DB_PSSWD}}@localhost:5432/{{.DB_NAME}}?sslmode=disable'
   MIGRATION_PATH: db/migration/
   SQLC_OUT: db/sqlc
-  PROTO: api/proto/v1
-  PB: api/pb/v1
   REQUIRED_TOOLS: sqlc protoc mockgen migrate dbdocs psql buf
 # ============================================================================
 # 🧪 General
@@ -41,35 +39,6 @@ tasks:
       - task: test
       - task: proto
       - task: sqlc
-        # ============================================================================
-        # 🧬 API Layer (Handlers, Middleware, Routes)
-        # ============================================================================
-  proto:
-    desc: Generate gRPC and gateway files
-    deps: [check-tools]
-    cmds:
-      - mkdir -p {{.PB}}
-      - |
-        protoc --proto_path={{.PROTO}} \
-          --go_out={{.PB}} --go_opt=paths=source_relative \
-          --go-grpc_out={{.PB}} --go-grpc_opt=paths=source_relative \
-          --grpc-gateway_out={{.PB}} --grpc-gateway_opt=paths=source_relative \
-          {{.PROTO}}/*.proto
-  buf:
-    desc: Use Buf to generate proto files
-    cmds:
-      - buf generate --output {{.PB}}
-  buf-lint:
-    desc: Lint proto files with Buf
-    cmds:
-      - buf lint | jq
-  evans:
-    desc: Start Evans gRPC REPL
-    cmds:
-      - evans --host localhost --port 9090 -r repl
-      # ============================================================================
-      # 🧠 Core Business Layer (Domain, Services, Interfaces)
-      # ============================================================================
   sqlc-lint:
     desc: Detection of bad queries
     cmds:
