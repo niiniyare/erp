@@ -2165,7 +2165,7 @@ func (h *UserGoaHandler) SetSessionContext(ctx context.Context, p *user.SetSessi
 	return result, nil
 }
 
-// GetUserContext gets comprehensive user context for ABAC
+// GetUserContext gets user context for ABAC
 func (h *UserGoaHandler) GetUserContext(ctx context.Context, p *user.GetUserContextPayload) (*user.UserContextResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "user.get_user_context",
 		tracing.WithSpanKind(tracing.SpanKindServer),
@@ -2179,7 +2179,7 @@ func (h *UserGoaHandler) GetUserContext(ctx context.Context, p *user.GetUserCont
 	})
 	defer timer.Stop()
 
-	// TODO: Implement comprehensive user context retrieval
+	// TODO: Implement user context retrieval
 	result := &user.UserContextResult{
 		UserID:      p.ID,
 		RetrievedAt: "2024-01-01T00:00:00Z",

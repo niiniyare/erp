@@ -18,7 +18,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// AttributeCollector provides comprehensive attribute collection and coordination
+// AttributeCollector provides attribute collection and coordination
 type AttributeCollector interface {
 	// Attribute Collection
 	CollectAttributes(ctx context.Context, req *AttributeCollectionRequest) (*AttributeCollectionResult, error)

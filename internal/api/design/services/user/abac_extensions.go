@@ -199,7 +199,7 @@ var _ = Service("user", func() {
 
 	// User Context Analytics
 	Method("get_user_context", func() {
-		Description("Get comprehensive user context for ABAC")
+		Description("Get user context for ABAC")
 
 		Payload(func() {
 			Attribute("id", String, "User ID", func() {

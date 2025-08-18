@@ -114,7 +114,7 @@ func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
 }
 
 // GetByID implements Repository.GetByID
-// Retrieves tenant by UUID with RLS enforcement and comprehensive tracing
+// Retrieves tenant by UUID with RLS enforcement and tracing
 func (r *repository) GetByID(ctx context.Context, id uuid.UUID) (*Tenant, error) {
 	ctx, span := r.tracer.StartSpan(ctx, "tenant.repository.GetByID")
 	defer span.End()

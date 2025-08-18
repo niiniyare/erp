@@ -477,7 +477,7 @@ func (s *accessExecutionService) CleanupExpiredAccess(ctx context.Context) error
 
 	logger.Info("Starting cleanup of expired temporary access", logger.Fields{})
 
-	// TODO: Implement comprehensive cleanup
+	// TODO: Implement cleanup
 	// This should:
 	// 1. Find all expired temporary access records
 	// 2. Revoke the granted access (roles, permissions, policies)

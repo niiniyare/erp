@@ -546,7 +546,7 @@ func (me *migrationEngine) performRiskAssessment(ctx context.Context, req *Migra
 		MitigationStrategies: []MitigationStrategy{
 			{
 				StrategyID:     uuid.New(),
-				Description:    "Implement comprehensive testing before activation",
+				Description:    "Implement testing before activation",
 				Implementation: "Create parallel validation environment",
 				Effectiveness:  0.8,
 			},

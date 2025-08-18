@@ -19,7 +19,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// MonitoringService provides comprehensive ABAC monitoring and observability
+// MonitoringService provides ABAC monitoring and observability
 type MonitoringService interface {
 	// Performance Monitoring
 	RecordEvaluationMetrics(ctx context.Context, req *EvaluationMetricsRequest) error

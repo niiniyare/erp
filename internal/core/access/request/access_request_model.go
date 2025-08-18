@@ -51,7 +51,7 @@ type Permission struct {
 	DisplayName *string   `json:"display_name,omitempty"`
 }
 
-// AccessRequestWithDetails includes related entity details for comprehensive view
+// AccessRequestWithDetails includes related entity details for view
 type AccessRequestWithDetails struct {
 	*AccessRequest
 	RequesterDetails  *User        `json:"requester_details,omitempty"`

@@ -1467,7 +1467,7 @@ func NewFieldEncryptionServiceFactory(config *Config) (*FieldEncryptionService, 
 	return NewFieldEncryptionService(encryptionSvc, fieldRepo, finalKeyRepo, logger, metrics, config), nil
 }
 
-// Usage Example with comprehensive error handling and logging
+// Usage Example with error handling and logging
 func ExampleUsage() error {
 	ctx := context.Background()
 

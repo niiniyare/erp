@@ -355,7 +355,7 @@ type SecurityIncident struct {
 	UserAccountability string    `json:"user_accountability"` // PRIMARY, SECONDARY, NONE
 }
 
-// UserRiskAssessment represents comprehensive user risk assessment
+// UserRiskAssessment represents user risk assessment
 type UserRiskAssessment struct {
 	OverallRiskScore      int                      `json:"overall_risk_score"` // 0-100
 	RiskLevel             string                   `json:"risk_level"`         // LOW, MEDIUM, HIGH, CRITICAL
@@ -539,7 +539,7 @@ func NewUserAnalyticsService(
 	}
 }
 
-// AnalyzeUserBehavior performs comprehensive user behavior analysis
+// AnalyzeUserBehavior performs user behavior analysis
 func (s *userAnalyticsService) AnalyzeUserBehavior(ctx context.Context, userID uuid.UUID, analysisWindow time.Duration) (*UserBehaviorPattern, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "userAnalyticsService.AnalyzeUserBehavior")
 	defer span.End()
@@ -596,7 +596,7 @@ func (s *userAnalyticsService) AnalyzeUserBehavior(ctx context.Context, userID u
 	return pattern, nil
 }
 
-// AssessUserRisk performs comprehensive user risk assessment
+// AssessUserRisk performs user risk assessment
 func (s *userAnalyticsService) AssessUserRisk(ctx context.Context, userID uuid.UUID) (*UserRiskAssessment, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "userAnalyticsService.AssessUserRisk")
 	defer span.End()
@@ -765,7 +765,7 @@ func (s *userAnalyticsService) EstablishBaseline(ctx context.Context, userID uui
 		return fmt.Errorf("insufficient data points for baseline: have %d, need %d", len(activities), minDataPoints)
 	}
 
-	// Perform comprehensive analysis to establish baseline
+	// Perform analysis to establish baseline
 	pattern, err := s.AnalyzeUserBehavior(ctx, userID, analysisWindow)
 	if err != nil {
 		return fmt.Errorf("failed to analyze behavior for baseline: %w", err)
@@ -940,7 +940,7 @@ func (s *userAnalyticsService) getUserActivities(ctx context.Context, userID uui
 
 // analyzeLoginPatterns analyzes login behavior patterns
 func (s *userAnalyticsService) analyzeLoginPatterns(activities []*UserActivity) LoginPatterns {
-	// TODO: Implement comprehensive login pattern analysis
+	// TODO: Implement login pattern analysis
 	return LoginPatterns{
 		TypicalLoginHours:      []int{9, 10, 13, 14}, // Sample data
 		AverageSessionDuration: 4 * time.Hour,
@@ -951,7 +951,7 @@ func (s *userAnalyticsService) analyzeLoginPatterns(activities []*UserActivity) 
 
 // analyzeActivityPatterns analyzes activity behavior patterns
 func (s *userAnalyticsService) analyzeActivityPatterns(activities []*UserActivity) ActivityPatterns {
-	// TODO: Implement comprehensive activity pattern analysis
+	// TODO: Implement activity pattern analysis
 	return ActivityPatterns{
 		PeakActivityHours: []int{10, 11, 14, 15},
 		ActivityDistribution: map[string]float64{
@@ -965,7 +965,7 @@ func (s *userAnalyticsService) analyzeActivityPatterns(activities []*UserActivit
 
 // analyzeAccessPatterns analyzes access behavior patterns
 func (s *userAnalyticsService) analyzeAccessPatterns(activities []*UserActivity) AccessPatterns {
-	// TODO: Implement comprehensive access pattern analysis
+	// TODO: Implement access pattern analysis
 	return AccessPatterns{
 		PermissionUsagePatterns: []PermissionUsagePattern{},
 		ElevatedAccessPatterns: ElevatedAccessPatterns{
@@ -978,7 +978,7 @@ func (s *userAnalyticsService) analyzeAccessPatterns(activities []*UserActivity)
 
 // analyzeProductivityMetrics analyzes productivity patterns
 func (s *userAnalyticsService) analyzeProductivityMetrics(activities []*UserActivity) ProductivityMetrics {
-	// TODO: Implement comprehensive productivity analysis
+	// TODO: Implement productivity analysis
 	return ProductivityMetrics{
 		TaskCompletionRate:  0.85,
 		AverageTaskDuration: 45 * time.Minute,
@@ -987,7 +987,7 @@ func (s *userAnalyticsService) analyzeProductivityMetrics(activities []*UserActi
 
 // analyzeSecurityProfile analyzes security behavior
 func (s *userAnalyticsService) analyzeSecurityProfile(activities []*UserActivity) SecurityProfile {
-	// TODO: Implement comprehensive security profile analysis
+	// TODO: Implement security profile analysis
 	return SecurityProfile{
 		PasswordChangeFrequency: 0.25, // Every 4 months
 		MFAUsageConsistency:     0.95,
@@ -997,7 +997,7 @@ func (s *userAnalyticsService) analyzeSecurityProfile(activities []*UserActivity
 
 // assessRisk performs risk assessment based on patterns
 func (s *userAnalyticsService) assessRisk(activities []*UserActivity) UserRiskAssessment {
-	// TODO: Implement comprehensive risk assessment
+	// TODO: Implement risk assessment
 	return UserRiskAssessment{
 		OverallRiskScore: 25,
 		RiskLevel:        "LOW",

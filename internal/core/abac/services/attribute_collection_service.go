@@ -477,7 +477,7 @@ func (s *attributeCollectionService) CollectActionAttributes(ctx context.Context
 	return attributes, nil
 }
 
-// CollectAllAttributes collects all attributes for a comprehensive evaluation context
+// CollectAllAttributes collects all attributes for a evaluation context
 func (s *attributeCollectionService) CollectAllAttributes(ctx context.Context, req *AttributeCollectionRequest) (*models.AttributeContext, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "attributeCollectionService.CollectAllAttributes",
 		tracing.WithAttributes(

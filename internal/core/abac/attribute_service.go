@@ -21,7 +21,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// AttributeService provides comprehensive attribute management capabilities
+// AttributeService provides attribute management capabilities
 type AttributeService interface {
 	// Attribute Definition Management
 	CreateAttributeDefinition(ctx context.Context, req *CreateAttributeDefinitionRequest) (*AttributeDefinitionResult, error)

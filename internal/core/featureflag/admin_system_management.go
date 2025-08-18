@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// GetSystemHealth returns comprehensive health information about the feature flag system
+// GetSystemHealth returns health information about the feature flag system
 func (s *adminServiceImpl) GetSystemHealth(ctx context.Context) (*SystemHealthResult, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "admin.get_system_health")
 	defer span.End()
@@ -52,7 +52,7 @@ func (s *adminServiceImpl) GetSystemHealth(ctx context.Context) (*SystemHealthRe
 	return result, nil
 }
 
-// GetSystemMetrics returns comprehensive system metrics
+// GetSystemMetrics returns system metrics
 func (s *adminServiceImpl) GetSystemMetrics(ctx context.Context, request *SystemMetricsRequest) (*SystemMetricsResult, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "admin.get_system_metrics")
 	defer span.End()

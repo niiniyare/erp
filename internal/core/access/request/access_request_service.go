@@ -80,7 +80,7 @@ type accessRequestService struct {
 	approverService approval.ApproverService
 	// Execution service for granting/revoking access
 	executionService execution.AccessExecutionService
-	// Audit service for comprehensive logging
+	// Audit service for logging
 	auditService audit.Service
 }
 

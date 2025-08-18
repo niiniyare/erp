@@ -141,7 +141,7 @@ type AutoScaleRecommendation struct {
 	ScalingTimeline     *ScalingTimeline       `json:"scaling_timeline"`
 }
 
-// OptimizationReport represents a comprehensive optimization report
+// OptimizationReport represents a optimization report
 type OptimizationReport struct {
 	FlagID                 uuid.UUID             `json:"flag_id"`
 	FlagName               string                `json:"flag_name"`
@@ -947,7 +947,7 @@ func (s *mlOptimizationService) identifyRiskFactors(metrics *PerformanceMetrics,
 }
 
 // Additional methods would be implemented for the remaining interface methods
-// This is a comprehensive foundation for ML-based feature flag optimization
+// This is a foundation for ML-based feature flag optimization
 
 // OptimizeABTest provides A/B test optimization recommendations
 func (s *mlOptimizationService) OptimizeABTest(ctx context.Context, flagID uuid.UUID, variants []Variant) (*ABTestOptimization, error) {
@@ -980,7 +980,7 @@ func (s *mlOptimizationService) ShouldAutoScale(ctx context.Context, flagID uuid
 	}, nil
 }
 
-// GenerateOptimizationReport creates a comprehensive optimization report
+// GenerateOptimizationReport creates a optimization report
 func (s *mlOptimizationService) GenerateOptimizationReport(ctx context.Context, flagID uuid.UUID) (*OptimizationReport, error) {
 	// Implementation would aggregate all optimization data
 	// This is a placeholder for the complete implementation

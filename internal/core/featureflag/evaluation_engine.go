@@ -475,7 +475,7 @@ func (e *advancedEvaluationEngine) EvaluateVariant(ctx context.Context, request 
 	ctx, span := e.tracing.StartSpan(ctx, "advancedEvaluationEngine.EvaluateVariant")
 	defer span.End()
 
-	// TODO: Implement comprehensive A/B testing variant evaluation
+	// TODO: Implement A/B testing variant evaluation
 	// This is a placeholder implementation
 
 	return &VariantEvaluationResult{

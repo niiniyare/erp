@@ -454,7 +454,7 @@ func (s *conditionalAccessService) EnrichAccessContext(ctx context.Context, base
 
 // GetDeviceInfo extracts device information from user agent and IP
 func (s *conditionalAccessService) GetDeviceInfo(ctx context.Context, userAgent, ipAddress string) (*DeviceInfo, error) {
-	// TODO: Implement comprehensive device detection
+	// TODO: Implement device detection
 	// This would typically use a user agent parsing library
 
 	deviceInfo := &DeviceInfo{
@@ -927,7 +927,7 @@ func (s *conditionalAccessService) isTimeInRange(currentTime, startTime, endTime
 
 // generateDeviceFingerprint generates a device fingerprint
 func (s *conditionalAccessService) generateDeviceFingerprint(userAgent, ipAddress string) string {
-	// TODO: Implement comprehensive device fingerprinting
+	// TODO: Implement device fingerprinting
 	// This is a simplified version
 	return fmt.Sprintf("%x", []byte(userAgent+ipAddress))[:16]
 }
@@ -985,7 +985,7 @@ func (s *conditionalAccessService) detectBrowser(userAgent string) string {
 
 // getNetworkInfo gets network information from IP address
 func (s *conditionalAccessService) getNetworkInfo(ipAddress string) *NetworkInfo {
-	// TODO: Implement comprehensive network analysis
+	// TODO: Implement network analysis
 	// This would typically involve:
 	// - IP geolocation services
 	// - VPN detection services

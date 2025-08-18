@@ -67,7 +67,7 @@ type PolicyUsageRequest struct {
 	GroupBy   string     `json:"group_by,omitempty"` // "day", "hour", "user", etc.
 }
 
-// PolicyManager provides comprehensive policy management capabilities
+// PolicyManager provides policy management capabilities
 type PolicyManager interface {
 	// Policy CRUD Operations
 	CreatePolicy(ctx context.Context, req *CreatePolicyRequest) (*PolicyManagementResult, error)

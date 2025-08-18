@@ -149,7 +149,7 @@ type EvaluationPerformanceAnalysis struct {
 	Bottlenecks      []string      `json:"bottlenecks,omitempty"`
 }
 
-// PolicyEvaluationEngine provides comprehensive policy evaluation capabilities
+// PolicyEvaluationEngine provides policy evaluation capabilities
 type PolicyEvaluationEngine interface {
 	// Core Evaluation
 	EvaluatePolicy(ctx context.Context, req *PolicyEvaluationRequest) (*PolicyEvaluationResult, error)

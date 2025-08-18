@@ -17,7 +17,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-// ABTestAnalyticsService provides comprehensive A/B test analytics with statistical significance
+// ABTestAnalyticsService provides A/B test analytics with statistical significance
 type ABTestAnalyticsService interface {
 	// Statistical significance testing
 	CalculateStatisticalSignificance(ctx context.Context, request *StatisticalTestRequest) (*StatisticalTestResult, error)
@@ -1320,7 +1320,7 @@ func (s *abTestAnalyticsService) GenerateExperimentReport(ctx context.Context, e
 	}
 
 	// NOTE: Future improvement - Fetch actual experiment data from repository
-	// For now, we'll create a comprehensive report with simulated data
+	// For now, we'll create a report with simulated data
 
 	report := &ExperimentReport{
 		ExperimentID: experimentID,

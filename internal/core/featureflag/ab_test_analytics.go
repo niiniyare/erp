@@ -932,7 +932,7 @@ package featureflag
 // }
 //
 // // Additional method implementations would follow similar patterns
-// // This provides a comprehensive foundation for advanced A/B test analytics
+// // This provides a foundation for advanced A/B test analytics
 //
 // // Placeholder implementations for remaining methods
 // func (s *abTestAnalyticsService) PerformBayesianAnalysis(ctx context.Context, testID uuid.UUID) (*BayesianAnalysisResult, error) {
@@ -1014,7 +1014,7 @@ package featureflag
 // }
 //
 // func (s *abTestAnalyticsService) GenerateTestReport(ctx context.Context, testID uuid.UUID) (*ABTestReport, error) {
-// 	// Implementation would generate comprehensive test report
+// 	// Implementation would generate test report
 // 	return &ABTestReport{
 // 		TestID:      testID,
 // 		GeneratedAt: time.Now(),

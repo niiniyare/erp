@@ -258,7 +258,7 @@ func NewPolicyDecisionService(
 	}
 }
 
-// MakeDecision makes a comprehensive policy decision
+// MakeDecision makes a policy decision
 func (s *policyDecisionService) MakeDecision(ctx context.Context, req *DecisionRequest) (*DecisionResponse, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "policyDecisionService.MakeDecision",
 		tracing.WithAttributes(

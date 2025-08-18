@@ -251,7 +251,7 @@ func (s *approverService) GetUserHierarchy(ctx context.Context, userID uuid.UUID
 	ctx, span := s.tracing.StartSpan(ctx, "approverService.GetUserHierarchy")
 	defer span.End()
 
-	// TODO: Implement comprehensive hierarchy retrieval
+	// TODO: Implement hierarchy retrieval
 	// For now, return basic hierarchy information
 	_, err := s.userService.GetUserByID(ctx, userID)
 	if err != nil {
@@ -288,7 +288,7 @@ func (s *approverService) CheckApprovalPermissions(ctx context.Context, approver
 	ctx, span := s.tracing.StartSpan(ctx, "approverService.CheckApprovalPermissions")
 	defer span.End()
 
-	// TODO: Implement comprehensive permission checking
+	// TODO: Implement permission checking
 	// This would integrate with the permission evaluation system to check if the approver
 	// has the necessary permissions to approve access to the target resource
 
