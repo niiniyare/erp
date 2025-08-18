@@ -314,6 +314,15 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*model.
 
 	var users []*model.User
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, store db.Store) error {
+		// Validate bounds to prevent integer overflow
+		if limit > 2147483647 || limit < 0 {
+			return errors.NewBusinessErrorWithContext(ctx, "INVALID_LIMIT", "Limit value out of valid range")
+		}
+		if offset > 2147483647 || offset < 0 {
+			return errors.NewBusinessErrorWithContext(ctx, "INVALID_OFFSET", "Offset value out of valid range")
+		}
+
+		// #nosec G115 - Safe conversion after bounds check
 		params := db.ListUsersParams{
 			Limit:         int32(limit),
 			Offset:        int32(offset),

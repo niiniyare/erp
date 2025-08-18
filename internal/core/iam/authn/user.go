@@ -100,8 +100,10 @@ func (s *service) GetUser(ctx context.Context, userID uuid.UUID) (*model.User, e
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	// Cache the result
-	s.getTenantCache(ctx).Set(ctx, cacheKey, foundUser, time.Hour)
+	// Cache the result - log any cache errors but don't fail the operation
+	if err := s.getTenantCache(ctx).Set(ctx, cacheKey, foundUser, time.Hour); err != nil {
+		s.logger.WarnContext(ctx, "Failed to cache user data", logger.Fields{"error": err.Error(), "cache_key": cacheKey})
+	}
 	s.metrics.IncrementCounter("authn_user_cache_misses", nil)
 
 	return foundUser, nil

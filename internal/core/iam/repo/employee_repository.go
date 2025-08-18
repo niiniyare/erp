@@ -64,7 +64,14 @@ func (r *employeeRepository) Create(ctx context.Context, employee *model.Employe
 			SalaryInfo:       salaryInfoJSON,
 			EmploymentStatus: stringPtr(string(employee.EmploymentStatus)),
 			WorkSchedule:     workScheduleJSON,
-			SecurityLevel:    int32Ptr(int32(employee.SecurityLevel)),
+			SecurityLevel: func() *int32 {
+				// Validate bounds to prevent integer overflow
+				if employee.SecurityLevel > 2147483647 || employee.SecurityLevel < -2147483648 {
+					return nil // Return nil for invalid values rather than overflow
+				}
+				// #nosec G115 - Safe conversion after bounds check
+				return int32Ptr(int32(employee.SecurityLevel))
+			}(),
 			AccessAttributes: accessAttrsJSON,
 		}
 
@@ -212,15 +219,15 @@ func convertEmployeeToDomain(dbEmployee *db.Employee) *model.Employee {
 		UpdatedAt:        dbEmployee.UpdatedAt,
 	}
 
-	// Unmarshal JSON fields
+	// Unmarshal JSON fields - silently ignore errors for non-critical fields
 	if dbEmployee.SalaryInfo != nil {
-		json.Unmarshal(dbEmployee.SalaryInfo, &employee.SalaryInfo)
+		_ = json.Unmarshal(dbEmployee.SalaryInfo, &employee.SalaryInfo)
 	}
 	if dbEmployee.WorkSchedule != nil {
-		json.Unmarshal(dbEmployee.WorkSchedule, &employee.WorkSchedule)
+		_ = json.Unmarshal(dbEmployee.WorkSchedule, &employee.WorkSchedule)
 	}
 	if dbEmployee.AccessAttributes != nil {
-		json.Unmarshal(dbEmployee.AccessAttributes, &employee.AccessAttributes)
+		_ = json.Unmarshal(dbEmployee.AccessAttributes, &employee.AccessAttributes)
 	}
 
 	return employee

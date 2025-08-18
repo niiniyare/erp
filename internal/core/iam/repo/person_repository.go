@@ -209,15 +209,15 @@ func convertPersonToDomain(dbPerson *db.Person) *model.Person {
 		UpdatedAt:   dbPerson.UpdatedAt,
 	}
 
-	// Unmarshal JSON fields
+	// Unmarshal JSON fields - silently ignore errors for non-critical fields
 	if dbPerson.Address != nil {
-		json.Unmarshal(dbPerson.Address, &person.Address)
+		_ = json.Unmarshal(dbPerson.Address, &person.Address)
 	}
 	if dbPerson.SecurityAttributes != nil {
-		json.Unmarshal(dbPerson.SecurityAttributes, &person.SecurityAttributes)
+		_ = json.Unmarshal(dbPerson.SecurityAttributes, &person.SecurityAttributes)
 	}
 	if dbPerson.Metadata != nil {
-		json.Unmarshal(dbPerson.Metadata, &person.Metadata)
+		_ = json.Unmarshal(dbPerson.Metadata, &person.Metadata)
 	}
 
 	return person

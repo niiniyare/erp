@@ -197,7 +197,9 @@ func (s *service) ChangePassword(ctx context.Context, req *ChangePasswordRequest
 	s.auditDataOperation(ctx, "CHANGE_PASSWORD", "user", req.UserID)
 
 	// Invalidate all user sessions
-	s.InvalidateAllUserSessions(ctx, req.UserID)
+	if err := s.InvalidateAllUserSessions(ctx, req.UserID); err != nil {
+		s.logger.WarnContext(ctx, "Failed to invalidate user sessions after password change", logger.Fields{"error": err.Error(), "user_id": req.UserID.String()})
+	}
 
 	s.metrics.IncrementCounter("authn_passwords_changed", nil)
 
@@ -272,17 +274,23 @@ func (s *service) generateTokens(ctx context.Context, user *model.User) (accessT
 
 func (s *service) handleFailedLogin(ctx context.Context, userID uuid.UUID) {
 	// Increment failed login count directly through repository
-	s.repo.Users().UpdateFailedLoginCount(ctx, userID, 1)
+	if err := s.repo.Users().UpdateFailedLoginCount(ctx, userID, 1); err != nil {
+		s.logger.WarnContext(ctx, "Failed to increment failed login count", logger.Fields{"error": err.Error(), "user_id": userID.String()})
+	}
 }
 
 func (s *service) updateLastLogin(ctx context.Context, userID uuid.UUID) {
 	// Update last login directly through repository
-	s.repo.Users().UpdateLastLogin(ctx, userID, time.Now())
+	if err := s.repo.Users().UpdateLastLogin(ctx, userID, time.Now()); err != nil {
+		s.logger.WarnContext(ctx, "Failed to update last login", logger.Fields{"error": err.Error(), "user_id": userID.String()})
+	}
 }
 
 func (s *service) resetFailedLoginCount(ctx context.Context, userID uuid.UUID) {
 	// Reset failed login count directly through repository
-	s.repo.Users().UpdateFailedLoginCount(ctx, userID, 0)
+	if err := s.repo.Users().UpdateFailedLoginCount(ctx, userID, 0); err != nil {
+		s.logger.WarnContext(ctx, "Failed to reset failed login count", logger.Fields{"error": err.Error(), "user_id": userID.String()})
+	}
 }
 
 func (s *service) invalidateUserCaches(ctx context.Context, userID uuid.UUID) {
@@ -294,7 +302,9 @@ func (s *service) invalidateUserCaches(ctx context.Context, userID uuid.UUID) {
 
 	tenantCache := s.getTenantCache(ctx)
 	for _, key := range cacheKeys {
-		tenantCache.Delete(ctx, key)
+		if err := tenantCache.Delete(ctx, key); err != nil {
+			s.logger.WarnContext(ctx, "Failed to delete cache key", logger.Fields{"error": err.Error(), "cache_key": key})
+		}
 	}
 }
 
@@ -309,9 +319,12 @@ func (s *service) auditDataOperation(ctx context.Context, operation string, enti
 		ResourceID:    &entityID,
 	}
 
-	// Fire and forget audit logging
+	// Fire and forget audit logging - handle any errors
 	go func() {
-		s.auditService.CreateAuditEvent(context.Background(), auditReq)
+		_, err := s.auditService.CreateAuditEvent(context.Background(), auditReq)
+		if err != nil {
+			s.logger.ErrorContext(ctx, "Failed to create audit event", logger.Fields{"error": err.Error()})
+		}
 	}()
 }
 
@@ -603,8 +616,10 @@ func (s *service) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*model.
 		return nil, fmt.Errorf("failed to get user roles: %w", err)
 	}
 
-	// Cache the result
-	s.getTenantCache(ctx).Set(ctx, cacheKey, roles, time.Hour)
+	// Cache the result - log any cache errors but don't fail the operation
+	if err := s.getTenantCache(ctx).Set(ctx, cacheKey, roles, time.Hour); err != nil {
+		s.logger.WarnContext(ctx, "Failed to cache user roles", logger.Fields{"error": err.Error(), "cache_key": cacheKey})
+	}
 	s.metrics.IncrementCounter("authn_user_roles_cache_misses", nil)
 
 	return roles, nil
