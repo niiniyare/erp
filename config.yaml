@@ -1,1 +1,387 @@
-port: 8081  # Change this to 8081 or another free port
+# Application Configuration
+app:
+  name: "AwoERP"                    # Application name
+  version: "0.1.0"                  # Application version
+  stage: "dev"              # Options: development, staging, production, testing
+  debug: true                       # Enable debug mode (overrides stage-based log level)
+  environment: "local"              # Custom environment identifier
+  namespace: "default"              # Kubernetes namespace or deployment namespace
+
+# Server Configuration
+server:
+  port: "8080"                      # HTTP server port
+  grpc_port: "9090"                 # gRPC server port
+  read_timeout: "30s"               # HTTP read timeout
+  write_timeout: "30s"              # HTTP write timeout
+  host: "0.0.0.0"                   # Server bind address
+  shutdown_timeout: "30s"           # Graceful shutdown timeout
+  max_header_size: "1MB"            # Maximum header size
+  idle_timeout: "60s"               # Keep-alive idle timeout
+
+# Goa Configuration
+goa:
+  # OpenAPI/Swagger Configuration
+  # openapi:
+  #   enabled: true                   # Enable OpenAPI documentation
+  #   path: "/swagger"                # Swagger UI path
+  #   spec_path: "/openapi.json"      # OpenAPI spec endpoint
+  #   title: "Ledger API"             # API title
+  #   description: "Ledger service API documentation"
+  #   version: "1.0.0"                # API version
+  #   contact:
+  #     name: "API Support"
+  #     email: "api-support@example.com"
+  #     url: "https://example.com/support"
+  #   license:
+  #     name: "MIT"
+  #     url: "https://opensource.org/licenses/MIT"
+  #   servers:
+  #     - url: "http://localhost:8080"
+  #       description: "Development server"
+  #     - url: "https://api.example.com"
+  #       description: "Production server"
+
+  # CORS Configuration
+  cors:
+    enabled: true                   # Enable CORS middleware
+    allow_origins:                  # Allowed origins
+      - "http://localhost:3000"
+      - "https://app.example.com"
+    allow_methods:                  # Allowed HTTP methods
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+      - "PATCH"
+    allow_headers:                  # Allowed headers
+      - "Content-Type"
+      - "Authorization"
+      - "X-Requested-With"
+      - "X-TenantID"
+      - "Accept"
+      - "Origin"
+    expose_headers:                 # Exposed headers
+      - "Content-Length"
+      - "Content-Type"
+      - "X-Total-Count"
+    allow_credentials: true         # Allow credentials
+    max_age: 86400                  # Preflight cache duration (seconds)
+
+  # Request/Response Configuration
+  request:
+    max_body_size: "10MB"           # Maximum request body size
+    timeout: "30s"                  # Request timeout
+    rate_limit:
+      enabled: true                 # Enable rate limiting
+      requests_per_minute: 60       # Requests per minute per IP
+      burst: 10                     # Burst capacity
+
+  # Middleware Configuration
+  middleware:
+    request_id:
+      enabled: true                 # Enable request ID middleware
+      header: "X-Request-ID"        # Request ID header name
+    
+    logging:
+      enabled: true                 # Enable request logging
+      log_request_body: false       # Log request bodies (be careful with sensitive data)
+      log_response_body: false      # Log response bodies
+      skip_paths:                   # Paths to skip logging
+        - "/health"
+        - "/metrics"
+        - "/swagger"
+    
+    recovery:
+      enabled: true                 # Enable panic recovery
+      
+    metrics:
+      enabled: true                 # Enable metrics collection
+      path: "/metrics"              # Metrics endpoint path
+      
+    health:
+      enabled: true                 # Enable health check endpoint
+      path: "/health"               # Health check path
+      detailed: false               # Include detailed health info
+
+  # Security Configuration
+  security:
+    jwt:
+      enabled: true                 # Enable JWT validation
+      signing_method: "HS256"       # JWT signing method
+      claims_map:                   # Custom claims mapping
+        user_id: "sub"
+        roles: "roles"
+        permissions: "permissions"
+    
+    api_key:
+      enabled: false                # Enable API key authentication
+      header: "X-API-Key"           # API key header name
+      
+    basic_auth:
+      enabled: false                # Enable basic authentication
+
+  # Response Configuration
+  response:
+    default_format: "json"          # Default response format
+    pretty_json: true               # Pretty print JSON in development
+    include_stack_trace: false      # Include stack traces in errors (dev only)
+    
+  # File Upload Configuration
+  upload:
+    max_file_size: "50MB"           # Maximum file upload size
+    allowed_types:                  # Allowed MIME types
+      - "image/jpeg"
+      - "image/png"
+      - "image/gif"
+      - "application/pdf"
+      - "text/csv"
+    temp_dir: "/tmp/uploads"        # Temporary upload directory
+    
+  # Circuit Breaker Configuration
+  circuit_breaker:
+    enabled: false                  # Enable circuit breaker
+    failure_threshold: 5            # Failures before opening circuit
+    reset_timeout: "60s"            # Reset timeout
+    half_open_max_requests: 3       # Max requests in half-open state
+
+# Database Configuration (PostgreSQL)
+database:
+  host: "localhost"                 # Database host
+  port: 5432                        # Database port
+  user: "admin"                     # Database username
+  password: "admin"                 # Database password
+  database: "ledger"                # Database name
+  ssl_mode: "disable"               # SSL mode: disable, require, verify-ca, verify-full
+  max_open_conns: 25                # Maximum open connections
+  max_idle_conns: 5                 # Maximum idle connections
+  conn_max_lifetime: "5m"           # Connection maximum lifetime
+
+# Redis Configuration
+redis:
+  host: "localhost"                 # Redis host
+  port: 6379                        # Redis port
+  password: ""                      # Redis password (empty for no auth)
+  db: 0                            # Redis database number
+
+# Temporal Configuration
+temporal:
+  host_port: "localhost:7233"       # Temporal server host:port
+
+# Authentication Configuration
+auth:
+  jwt_secret: "secret-key" # JWT signing secret (required for production)
+
+# Feature Flags
+features:
+  enable_new_dashboard: false       # Enable new dashboard feature
+
+# Logger Configuration
+logger:
+  type: "zerolog"                   # Logger type: zap, zerolog, slog
+  level: "debug"                    # Log level: debug, info, warn, error, fatal
+  format: "console"                 # Log format: json, text, console
+  development: true                 # Enable development mode features
+  service_name: "AwoERP"           # Service name for structured logging
+  version: "1.0.0"                 # Service version for logging
+  output: "stdout"                  # Output destination: stdout, stderr, or file path
+
+---
+# Example Production Configuration
+# Copy this section to a separate file (e.g., config-production.yaml) for production use
+
+# app:
+#   name: "ledger"
+#   version: "1.0.0"
+#   stage: "production"
+#   debug: false
+#   environment: "production"
+#   namespace: "ledger-prod"
+#
+# server:
+#   port: "8080"
+#   grpc_port: "9090"
+#   read_timeout: "30s"
+#   write_timeout: "30s"
+#   host: "0.0.0.0"
+#   shutdown_timeout: "15s"
+#   max_header_size: "1MB"
+#   idle_timeout: "60s"
+#
+# goa:
+#   openapi:
+#     enabled: true
+#     path: "/docs"
+#     spec_path: "/openapi.json"
+#     title: "Ledger API"
+#     description: "Production Ledger API"
+#     version: "1.0.0"
+#     servers:
+#       - url: "https://api.example.com"
+#         description: "Production server"
+#
+#   cors:
+#     enabled: true
+#     allow_origins:
+#       - "https://app.example.com"
+#       - "https://admin.example.com"
+#     allow_credentials: true
+#     max_age: 86400
+#
+#   request:
+#     max_body_size: "5MB"
+#     timeout: "15s"
+#     rate_limit:
+#       enabled: true
+#       requests_per_minute: 100
+#       burst: 20
+#
+#   middleware:
+#     logging:
+#       enabled: true
+#       log_request_body: false
+#       log_response_body: false
+#     metrics:
+#       enabled: true
+#     health:
+#       enabled: true
+#       detailed: false
+#
+#   security:
+#     jwt:
+#       enabled: true
+#       signing_method: "RS256"
+#
+#   response:
+#     pretty_json: false
+#     include_stack_trace: false
+#
+# database:
+#   host: "${DB_HOST}"                # Use environment variables in production
+#   port: 5432
+#   user: "${DB_USER}"
+#   password: "${DB_PASSWORD}"
+#   database: "${DB_NAME}"
+#   ssl_mode: "require"               # Enable SSL in production
+#   max_open_conns: 100
+#   max_idle_conns: 10
+#   conn_max_lifetime: "10m"
+#
+# redis:
+#   host: "${REDIS_HOST}"
+#   port: 6379
+#   password: "${REDIS_PASSWORD}"
+#   db: 0
+#
+# temporal:
+#   host_port: "${TEMPORAL_HOST_PORT}"
+#
+# auth:
+#   jwt_secret: "${JWT_SECRET}"       # Always use environment variable for secrets
+#
+# features:
+#   enable_new_dashboard: true
+#
+# logger:
+#   type: "zerolog"
+#   level: "info"                     # Higher log level for production
+#   format: "json"                    # JSON format for structured logging in production
+#   development: false
+#   service_name: "AwoERP"
+#   version: "1.0.0"
+#   output: "stdout"
+#
+# ---
+# # Example Staging Configuration
+# # Copy this section to a separate file (e.g., config-staging.yaml) for staging use
+#
+# app:
+#   name: "ledger"
+#   version: "1.0.0"
+#   stage: "staging"
+#   debug: false
+#   environment: "staging"
+#   namespace: "ledger-staging"
+#
+# server:
+#   port: "8080"
+#   grpc_port: "9090"
+#   read_timeout: "30s"
+#   write_timeout: "30s"
+#
+# database:
+#   host: "${DB_HOST}"
+#   port: 5432
+#   user: "${DB_USER}"
+#   password: "${DB_PASSWORD}"
+#   database: "${DB_NAME}"
+#   ssl_mode: "require"
+#   max_open_conns: 50
+#   max_idle_conns: 10
+#   conn_max_lifetime: "10m"
+#
+# redis:
+#   host: "${REDIS_HOST}"
+#   port: 6379
+#   password: "${REDIS_PASSWORD}"
+#   db: 0
+#
+# temporal:
+#   host_port: "${TEMPORAL_HOST_PORT}"
+#
+# auth:
+#   jwt_secret: "${JWT_SECRET}"
+#
+# features:
+#   enable_new_dashboard: true        # Test new features in staging
+#
+# logger:
+#   type: "zerolog"
+#   level: "debug"                    # More verbose logging for staging
+#   format: "json"
+#   development: false
+#   service_name: "AwoERP"
+#   version: "1.0.0"
+#   output: "stdout"
+#
+# ---
+# Environment Variable Reference
+# These environment variables can override the YAML config values:
+
+# App Configuration
+# APP_NAME, APP_VERSION, APP_STAGE, DEBUG, APP_DEBUG, ENVIRONMENT, APP_ENV, NAMESPACE, APP_NAMESPACE
+
+# Server Configuration  
+# SERVER_PORT, GRPC_PORT, SERVER_READ_TIMEOUT, SERVER_WRITE_TIMEOUT, SERVER_HOST
+# SERVER_SHUTDOWN_TIMEOUT, SERVER_MAX_HEADER_SIZE, SERVER_IDLE_TIMEOUT
+
+# Goa Configuration
+# GOA_OPENAPI_ENABLED, GOA_OPENAPI_PATH, GOA_OPENAPI_SPEC_PATH, GOA_OPENAPI_TITLE
+# GOA_CORS_ENABLED, GOA_CORS_ALLOW_CREDENTIALS, GOA_CORS_MAX_AGE
+# GOA_REQUEST_MAX_BODY_SIZE, GOA_REQUEST_TIMEOUT
+# GOA_RATE_LIMIT_ENABLED, GOA_RATE_LIMIT_RPM, GOA_RATE_LIMIT_BURST
+# GOA_MIDDLEWARE_LOGGING_ENABLED, GOA_MIDDLEWARE_METRICS_ENABLED
+# GOA_MIDDLEWARE_HEALTH_ENABLED, GOA_MIDDLEWARE_HEALTH_PATH
+# GOA_SECURITY_JWT_ENABLED, GOA_SECURITY_JWT_SIGNING_METHOD
+# GOA_RESPONSE_PRETTY_JSON, GOA_RESPONSE_INCLUDE_STACK_TRACE
+# GOA_UPLOAD_MAX_FILE_SIZE, GOA_UPLOAD_TEMP_DIR
+# GOA_CIRCUIT_BREAKER_ENABLED, GOA_CIRCUIT_BREAKER_FAILURE_THRESHOLD
+
+# Database Configuration
+# DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_SSL_MODE
+# DB_MAX_OPEN_CONNS, DB_MAX_IDLE_CONNS, DB_CONN_MAX_LIFETIME
+
+# Redis Configuration
+# REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB
+
+# Temporal Configuration
+# TEMPORAL_HOST_PORT
+
+# Auth Configuration
+# JWT_SECRET
+
+# Feature Flags
+# ENABLE_NEW_DASHBOARD
+
+# Logger Configuration
+# LOG_TYPE, LOG_LEVEL, LOG_FORMAT, LOG_DEV, SERVICE_NAME, SERVICE_VERSION, LOG_OUTPUT
