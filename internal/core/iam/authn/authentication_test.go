@@ -34,11 +34,11 @@ func TestAuthentication(t *testing.T) {
 // TestAuthenticate implements AUTHN-008: Authentication - Authenticate
 func (s *AuthenticationTestSuite) TestAuthenticate() {
 	testCases := []struct {
-		name        string
-		spec        string
-		request     *AuthenticationRequest
-		setupUser   string
-		expectedErr string
+		name           string
+		spec           string
+		request        *AuthenticationRequest
+		setupUser      string
+		expectedErr    string
 		validateResult func(*testing.T, *AuthenticationResponse)
 	}{
 		{
@@ -65,7 +65,7 @@ func (s *AuthenticationTestSuite) TestAuthenticate() {
 				Email:    "test@example.com",
 				Password: "WrongPassword",
 			},
-			setupUser: "active_user",
+			setupUser:   "active_user",
 			expectedErr: "invalid credentials",
 		},
 		{
@@ -75,7 +75,7 @@ func (s *AuthenticationTestSuite) TestAuthenticate() {
 				Email:    "locked@example.com",
 				Password: "ValidPassword123!",
 			},
-			setupUser: "locked_user",
+			setupUser:   "locked_user",
 			expectedErr: "account locked",
 		},
 		{
@@ -131,11 +131,11 @@ func (s *AuthenticationTestSuite) TestAuthenticate() {
 // TestValidateToken implements AUTHN-009: Authentication - ValidateToken
 func (s *AuthenticationTestSuite) TestValidateToken() {
 	testCases := []struct {
-		name        string
-		spec        string
-		token       string
-		tokenType   string
-		expectedErr string
+		name           string
+		spec           string
+		token          string
+		tokenType      string
+		expectedErr    string
 		validateResult func(*testing.T, *TokenValidation)
 	}{
 		{
@@ -216,11 +216,11 @@ func (s *AuthenticationTestSuite) TestValidateToken() {
 // TestRefreshToken implements AUTHN-010: Authentication - RefreshToken
 func (s *AuthenticationTestSuite) TestRefreshToken() {
 	testCases := []struct {
-		name        string
-		spec        string
-		refreshToken string
-		tokenState  string
-		expectedErr string
+		name           string
+		spec           string
+		refreshToken   string
+		tokenState     string
+		expectedErr    string
 		validateResult func(*testing.T, *AuthenticationResponse)
 	}{
 		{
@@ -293,12 +293,12 @@ func (s *AuthenticationTestSuite) TestRefreshToken() {
 // TestLogout implements AUTHN-011: Authentication - Logout
 func (s *AuthenticationTestSuite) TestLogout() {
 	testCases := []struct {
-		name        string
-		spec        string
-		userID      uuid.UUID
-		sessionID   uuid.UUID
-		logoutType  string
-		expectedErr string
+		name           string
+		spec           string
+		userID         uuid.UUID
+		sessionID      uuid.UUID
+		logoutType     string
+		expectedErr    string
 		validateResult func(*testing.T)
 	}{
 		{
@@ -369,9 +369,9 @@ func (s *AuthenticationTestSuite) TestLogout() {
 // TestSpecializedTests implements property, contract, and security tests
 func (s *AuthenticationTestSuite) TestSpecializedTests() {
 	testCases := []struct {
-		name        string
-		spec        string
-		testType    string
+		name           string
+		spec           string
+		testType       string
 		validateResult func(*testing.T)
 	}{
 		{
@@ -430,11 +430,11 @@ func (s *AuthenticationTestSuite) TestPerformanceAndLoad() {
 	if testing.Short() {
 		s.T().Skip("LOAD-001: Skipping load test in short mode")
 	}
-	
+
 	testCases := []struct {
-		name        string
-		spec        string
-		testType    string
+		name           string
+		spec           string
+		testType       string
 		validateResult func(*testing.T)
 	}{
 		{
@@ -528,9 +528,9 @@ type AuthenticationResponse struct {
 }
 
 type TokenValidation struct {
-	Valid    bool              `json:"valid"`
-	UserID   uuid.UUID         `json:"user_id"`
-	TenantID uuid.UUID         `json:"tenant_id"`
+	Valid    bool                   `json:"valid"`
+	UserID   uuid.UUID              `json:"user_id"`
+	TenantID uuid.UUID              `json:"tenant_id"`
 	Claims   map[string]interface{} `json:"claims"`
 }
 

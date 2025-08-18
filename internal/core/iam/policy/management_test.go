@@ -35,11 +35,11 @@ func TestPolicyManagement(t *testing.T) {
 // TestCreatePolicy implements POLICY-001: Policy Management - CreatePolicy
 func (s *PolicyManagementTestSuite) TestCreatePolicy() {
 	testCases := []struct {
-		name        string
-		spec        string
-		request     *CreatePolicyRequest
-		requestType string
-		expectedErr string
+		name           string
+		spec           string
+		request        *CreatePolicyRequest
+		requestType    string
+		expectedErr    string
 		validateResult func(*testing.T, *model.Policy)
 	}{
 		{
@@ -145,11 +145,11 @@ func (s *PolicyManagementTestSuite) TestCreatePolicy() {
 // TestGetPolicy implements POLICY-002: Policy Management - GetPolicy
 func (s *PolicyManagementTestSuite) TestGetPolicy() {
 	testCases := []struct {
-		name        string
-		spec        string
-		policyID    uuid.UUID
-		setupPolicy string
-		expectedErr string
+		name           string
+		spec           string
+		policyID       uuid.UUID
+		setupPolicy    string
+		expectedErr    string
 		validateResult func(*testing.T, *model.Policy)
 	}{
 		{
@@ -217,12 +217,12 @@ func (s *PolicyManagementTestSuite) TestGetPolicy() {
 // TestUpdatePolicy implements POLICY-003: Policy Management - UpdatePolicy
 func (s *PolicyManagementTestSuite) TestUpdatePolicy() {
 	testCases := []struct {
-		name        string
-		spec        string
-		policyID    uuid.UUID
-		request     *UpdatePolicyRequest
-		setupPolicy string
-		expectedErr string
+		name           string
+		spec           string
+		policyID       uuid.UUID
+		request        *UpdatePolicyRequest
+		setupPolicy    string
+		expectedErr    string
 		validateResult func(*testing.T, *model.Policy)
 	}{
 		{
@@ -299,11 +299,11 @@ func (s *PolicyManagementTestSuite) TestUpdatePolicy() {
 // TestDeletePolicy implements POLICY-004: Policy Management - DeletePolicy
 func (s *PolicyManagementTestSuite) TestDeletePolicy() {
 	testCases := []struct {
-		name        string
-		spec        string
-		policyID    uuid.UUID
-		setupPolicy string
-		expectedErr string
+		name           string
+		spec           string
+		policyID       uuid.UUID
+		setupPolicy    string
+		expectedErr    string
 		validateResult func(*testing.T)
 	}{
 		{
@@ -368,11 +368,11 @@ func (s *PolicyManagementTestSuite) TestDeletePolicy() {
 // TestPolicyValidation implements policy validation tests
 func (s *PolicyManagementTestSuite) TestPolicyValidation() {
 	testCases := []struct {
-		name        string
-		spec        string
-		policy      *model.Policy
+		name           string
+		spec           string
+		policy         *model.Policy
 		validationType string
-		expectedErr string
+		expectedErr    string
 		validateResult func(*testing.T)
 	}{
 		{
@@ -435,9 +435,9 @@ func (s *PolicyManagementTestSuite) TestPolicyValidation() {
 // TestSpecializedPolicyTests implements property, performance, and concurrency tests
 func (s *PolicyManagementTestSuite) TestSpecializedPolicyTests() {
 	testCases := []struct {
-		name        string
-		spec        string
-		testType    string
+		name           string
+		spec           string
+		testType       string
 		validateResult func(*testing.T)
 	}{
 		{
@@ -498,9 +498,9 @@ func (s *PolicyManagementTestSuite) TestLoadTesting() {
 	}
 
 	testCases := []struct {
-		name        string
-		spec        string
-		operation   string
+		name           string
+		spec           string
+		operation      string
 		validateResult func(*testing.T)
 	}{
 		{
@@ -573,21 +573,21 @@ type PolicyService interface {
 }
 
 type CreatePolicyRequest struct {
-	Name        string               `json:"name" validate:"required"`
-	Description string               `json:"description"`
-	Target      *model.PolicyTarget  `json:"target" validate:"required"`
-	Rules       []model.PolicyRule   `json:"rules" validate:"required,min=1"`
-	Priority    int32                `json:"priority"`
-	Enabled     bool                 `json:"enabled"`
+	Name        string              `json:"name" validate:"required"`
+	Description string              `json:"description"`
+	Target      *model.PolicyTarget `json:"target" validate:"required"`
+	Rules       []model.PolicyRule  `json:"rules" validate:"required,min=1"`
+	Priority    int32               `json:"priority"`
+	Enabled     bool                `json:"enabled"`
 }
 
 type UpdatePolicyRequest struct {
-	Name        *string              `json:"name,omitempty"`
-	Description *string              `json:"description,omitempty"`
-	Target      *model.PolicyTarget  `json:"target,omitempty"`
-	Rules       *[]model.PolicyRule  `json:"rules,omitempty"`
-	Priority    *int32               `json:"priority,omitempty"`
-	Enabled     *bool                `json:"enabled,omitempty"`
+	Name        *string             `json:"name,omitempty"`
+	Description *string             `json:"description,omitempty"`
+	Target      *model.PolicyTarget `json:"target,omitempty"`
+	Rules       *[]model.PolicyRule `json:"rules,omitempty"`
+	Priority    *int32              `json:"priority,omitempty"`
+	Enabled     *bool               `json:"enabled,omitempty"`
 }
 
 // Helper functions

@@ -70,7 +70,8 @@ sqlc: ## Generate SQLC store code
 	@sqlc generate
 
 mock: ## Generate mocks for interfaces
-	@./generate_all_mocks.sh
+	# @./generate_all_mocks.sh
+		@go generate  ./...
 fmt: ## Format Go code
 	@go fmt ./...
 

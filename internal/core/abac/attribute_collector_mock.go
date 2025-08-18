@@ -220,27 +220,3 @@ func (mr *MockAttributeCollectorMockRecorder) UpdateAttributeSource(ctx, req any
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAttributeSource", reflect.TypeOf((*MockAttributeCollector)(nil).UpdateAttributeSource), ctx, req)
 }
-
-// MockAttributeSourceConnector is a mock of AttributeSourceConnector interface.
-type MockAttributeSourceConnector struct {
-	ctrl     *gomock.Controller
-	recorder *MockAttributeSourceConnectorMockRecorder
-	isgomock struct{}
-}
-
-// MockAttributeSourceConnectorMockRecorder is the mock recorder for MockAttributeSourceConnector.
-type MockAttributeSourceConnectorMockRecorder struct {
-	mock *MockAttributeSourceConnector
-}
-
-// NewMockAttributeSourceConnector creates a new mock instance.
-func NewMockAttributeSourceConnector(ctrl *gomock.Controller) *MockAttributeSourceConnector {
-	mock := &MockAttributeSourceConnector{ctrl: ctrl}
-	mock.recorder = &MockAttributeSourceConnectorMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAttributeSourceConnector) EXPECT() *MockAttributeSourceConnectorMockRecorder {
-	return m.recorder
-}

@@ -50,7 +50,8 @@ tasks:
   mock:
     desc: Generate mocks for interfaces
     cmds:
-      - bash ./generate_all_mocks.sh
+      # - bash ./generate_all_mocks.sh
+      - go generate  ./...
   fmt:
     desc: Format Go code
     cmds:

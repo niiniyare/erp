@@ -48,7 +48,7 @@ func (a *adapter) CreateUser(ctx context.Context, req *CreateUserRequest) (*mode
 	// Convert IAM request to identity request
 	// Generate UUID for entity_id since it's required in identity service
 	entityID := uuid.New() // TODO: This should come from tenant context or be configurable
-	
+
 	identityReq := &identity.CreateUserRequest{
 		EntityID:              entityID,
 		Username:              req.Email, // Use email as username for now
@@ -163,7 +163,7 @@ func (a *adapter) CreatePerson(ctx context.Context, req *CreatePersonRequest) (*
 
 	// Convert IAM request to identity request
 	entityID := uuid.New() // TODO: This should come from tenant context or be configurable
-	
+
 	identityReq := &identity.CreatePersonRequest{
 		EntityID:   entityID,
 		PersonType: "INDIVIDUAL", // Default person type
@@ -219,7 +219,7 @@ func (a *adapter) CreateEmployee(ctx context.Context, req *CreateEmployeeRequest
 
 	// Convert IAM request to identity request
 	entityID := uuid.New() // TODO: This should come from tenant context or be configurable
-	
+
 	identityReq := &identity.CreateEmployeeRequest{
 		PersonID:       req.PersonID,
 		EmployeeNumber: req.EmployeeNumber,
@@ -474,7 +474,7 @@ func (a *adapter) convertIdentityUserToIAMUser(identityUser *identity.User) *mod
 		LastName:         lastName,
 		PhoneNumber:      nil, // Not directly available in identity user
 		AccountStatus:    model.UserAccountStatus(identityUser.AccountStatus),
-		EmailVerified:    true, // Default assumption
+		EmailVerified:    true,  // Default assumption
 		PhoneVerified:    false, // Default assumption
 		MFAEnabled:       identityUser.MfaEnabled,
 		MFAMethod:        nil, // Not available in identity service
@@ -566,9 +566,9 @@ func (a *adapter) convertIdentityRoleToIAMRole(identityRole *identity.Role) *mod
 		ID:          identityRole.ID,
 		TenantID:    identityRole.UserID, // Note: This mapping may need adjustment based on actual identity role structure
 		Name:        identityRole.Name,
-		Description: "", // Default empty description
+		Description: "",  // Default empty description
 		ParentID:    nil, // Not available in identity role model
-		EntityID:    nil, // Not available in identity role model  
+		EntityID:    nil, // Not available in identity role model
 		Metadata:    nil, // Not available in identity role model
 		CreatedAt:   identityRole.AssignedAt,
 		UpdatedAt:   identityRole.AssignedAt,
