@@ -231,17 +231,17 @@ type PolicyResource struct {
 
 // PolicyCondition represents a condition in a policy
 type PolicyCondition struct {
-	Expression string                 `json:"expression"`
-	Attributes map[string]interface{} `json:"attributes,omitempty"`
+	Expression string         `json:"expression"`
+	Attributes map[string]any `json:"attributes,omitempty"`
 }
 
 // PolicyRule represents a rule within a policy
 type PolicyRule struct {
-	ID          string                 `json:"id"`
-	Description string                 `json:"description"`
-	Effect      PolicyEffect           `json:"effect"`
-	Condition   *PolicyCondition       `json:"condition,omitempty"`
-	Attributes  map[string]interface{} `json:"attributes,omitempty"`
+	ID          string           `json:"id"`
+	Description string           `json:"description"`
+	Effect      PolicyEffect     `json:"effect"`
+	Condition   *PolicyCondition `json:"condition,omitempty"`
+	Attributes  map[string]any   `json:"attributes,omitempty"`
 }
 
 // PolicyDecision represents the result of evaluating a policy

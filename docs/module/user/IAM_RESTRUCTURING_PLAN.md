@@ -694,7 +694,7 @@ func setupIAMService(
 - Clear domain separation within IAM
 - Reduced complexity for API consumers
 
-### Enhanced Maintainability
+### Maintainability
 - Domain-driven structure improves code organization
 - Centralized IAM service interface simplifies testing
 - Clear separation of concerns within IAM domain
@@ -804,4 +804,198 @@ Unified IAM Service
 
 ---
 
-This migration guide reflects the **actual codebase reality** where existing services are mature and production-ready, requiring an integration strategy rather than a complete rewrite.
+## 🧪 TDD Implementation Plan
+
+### Test-Driven Development Strategy
+
+This TDD plan guarantees every method and integration path works as expected through executable, measurable, and traceable testing from human-readable specs to automated tests to passing implementations.
+
+### Functional Group Implementation
+
+#### 1. Authentication Domain (authn) - Week 1
+
+**Scope & Goals:**
+- Implement adapter pattern wrapping `internal/core/identity/service.go` (317 lines)
+- Provide unified authentication interface with existing functionality
+- Maintain password hashing, caching, and session management
+
+**Interfaces/Contracts:**
+```go
+// Old contract: internal/core/identity/service.go
+type identityService interface {
+    CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error)
+    Authenticate(ctx context.Context, email, password string) (*AuthResult, error)
+    // ... 15+ methods
+}
+
+// New adapter contract: internal/core/iam/authn/service.go
+type Service interface {
+    CreateUser(ctx context.Context, req *CreateUserRequest) (*model.User, error)
+    Authenticate(ctx context.Context, req *AuthenticationRequest) (*AuthenticationResult, error)
+    // ... 25+ methods (expanded interface)
+}
+```
+
+**Risks & Invariants:**
+- **NEVER CHANGE**: Password hashing algorithm (bcrypt compatibility)
+- **NEVER CHANGE**: Session token format (JWT compatibility)
+- **NEVER CHANGE**: Tenant context patterns (`WithTenant`)
+- **PRESERVE**: All existing user validation rules
+- **MAINTAIN**: Cache invalidation behavior
+
+**Test Strategy:**
+- **Unit Tests**: Each service method with mocked dependencies
+- **Contract Tests**: Identical behavior between old and new services
+- **Property Tests**: Password hashing determinism, session expiry
+- **Integration Tests**: Database transactions, cache coherence, tenant isolation
+
+**TDD Loop - Authentication Service:**
+1. **Write Failing Test**: `TestCreateUser_ValidInput_ReturnsUser`
+2. **Implement**: Create stub that calls legacy identity service
+3. **Refactor**: Add validation, error handling, audit logging
+4. **Re-run**: Ensure all tests pass including contract tests
+5. **Repeat**: For each of 25+ interface methods
+
+**Definition of Done:**
+- [✓] All AUTHN-001 to AUTHN-026 specs exist and PASS
+- [✓] Contract tests PASS (same results as legacy service)
+- [✓] Coverage ≥ 90% for authentication paths
+- [✓] Benchmarks show <10ms authentication latency
+- [✓] Race detector passes with `-race` flag
+- [✓] Integration tests with PostgreSQL + Redis pass
+
+#### 2. Authorization Domain (authz) - Week 2
+
+**Scope & Goals:**
+- Wrap existing `internal/core/abac/service.go` (794 lines) + `policy_evaluation_engine.go` (1900+ lines)
+- Integrate access request workflows from `internal/core/access/request/` (806 lines)
+- Preserve sophisticated policy evaluation and caching
+
+**Risks & Invariants:**
+- **NEVER REWRITE**: 1900+ lines of policy evaluation engine
+- **PRESERVE**: Deny-overrides combining algorithm
+- **MAINTAIN**: Policy Information Point (PIP) integration with identity service
+- **KEEP**: Temporal workflow integration for access requests
+- **PRESERVE**: Redis caching patterns and tenant isolation
+
+**Test Strategy:**
+- **Property Tests**: Policy evaluation monotonicity, deny-overrides invariant
+- **Contract Tests**: Identical ALLOW/DENY decisions vs legacy ABAC service
+- **Workflow Tests**: Complete access request approval cycles
+- **Cache Tests**: Performance and consistency under load
+
+**Definition of Done:**
+- [✓] All AUTHZ-001 to AUTHZ-021 specs exist and PASS
+- [✓] Property tests confirm policy evaluation invariants
+- [✓] Contract tests PASS (identical decisions vs legacy)
+- [✓] Coverage ≥ 85% with focus on critical policy paths
+- [✓] Performance tests: 99th percentile evaluation < 50ms
+- [✓] Temporal workflows complete access request cycles
+
+#### 3. Policy Domain - Week 3
+
+**Scope & Goals:**
+- Wrap policy lifecycle management from `internal/core/abac/activities/`
+- Integrate policy evaluation engine functionality
+- Provide policy testing and validation capabilities
+
+**Risks & Invariants:**
+- **PRESERVE**: Policy syntax validation and parsing
+- **MAINTAIN**: Policy versioning and rollback capabilities
+- **KEEP**: Cache invalidation on policy updates
+- **PRESERVE**: Temporal-based policy lifecycle workflows
+
+**Definition of Done:**
+- [✓] All POLICY-001 to POLICY-014 specs exist and PASS
+- [✓] Property tests confirm deterministic evaluation
+- [✓] Coverage ≥ 85% with focus on policy validation
+- [✓] Cache hit rates > 90% for policy evaluations
+
+### Weekly Rollout Schedule
+
+| Week | Focus | Exit Criteria | Tests Passing |
+|------|-------|---------------|---------------|
+| 1 | Authentication Domain | All AUTHN tests pass, contract compatibility verified | 26 specs (AUTHN-001 to AUTHN-026) |
+| 2 | Authorization Domain | All AUTHZ tests pass, policy evaluation works | 21 specs (AUTHZ-001 to AUTHZ-021) |
+| 3 | Policy Domain | All POLICY tests pass, deterministic evaluation | 14 specs (POLICY-001 to POLICY-014) |
+| 4 | Repository Completion | All REPO tests pass, complex queries optimized | 10 specs (REPO-001 to REPO-010) |
+| 5 | Integration & E2E | End-to-end workflows, golden path testing | 10 specs (E2E-001 to E2E-010) |
+| 6 | Performance & Security | Load testing, chaos engineering, security validation | 30+ specs (PERF, SECURITY, CHAOS, etc.) |
+
+## 📊 Traceability Matrix
+
+### Spec ID → Test → Implementation → CI Gate Mapping
+
+| Spec ID | Test File | Implementation Target | Migration Group | CI Gate |
+|---------|-----------|----------------------|-----------------|----------|
+| **Authentication Domain** |
+| AUTHN-001 | `internal/core/iam/authn/user_management_test.go::TestCreateUser` | `internal/core/iam/authn/implementation.go::CreateUser` | User Identity Management | unit-tests + coverage ≥90% |
+| AUTHN-008 | `internal/core/iam/authn/authentication_test.go::TestAuthenticate` | `internal/core/iam/authn/implementation.go::Authenticate` | Authentication & Sessions | unit-tests + integration-db |
+| AUTHN-012 | `internal/core/iam/authn/password_test.go::TestChangePassword` | `internal/core/iam/authn/implementation.go::ChangePassword` | Authentication & Sessions | unit-tests + security-tests |
+| AUTHN-015 | `internal/core/iam/authn/mfa_test.go::TestEnableMFA` | `internal/core/iam/authn/implementation.go::EnableMFA` | Authentication & Sessions | unit-tests + integration-redis |
+| **Authorization Domain** |
+| AUTHZ-001 | `internal/core/iam/authz/permission_test.go::TestEvaluatePermission` | `internal/core/iam/authz/implementation.go::EvaluatePermission` | ABAC Core Engine | unit-tests + property-tests + perf |
+| AUTHZ-002 | `internal/core/iam/authz/bulk_evaluation_test.go::TestBulkEvaluatePermissions` | `internal/core/iam/authz/implementation.go::BulkEvaluatePermissions` | ABAC Core Engine | unit-tests + load-tests |
+| AUTHZ-005 | `internal/core/iam/authz/access_request_test.go::TestCreateAccessRequest` | `internal/core/iam/authz/implementation.go::CreateAccessRequest` | Access Request Workflows | unit-tests + temporal-tests |
+| **Policy Domain** |
+| POLICY-001 | `internal/core/iam/policy/management_test.go::TestCreatePolicy` | `internal/core/iam/policy/implementation.go::CreatePolicy` | Policy Lifecycle | unit-tests + validation-tests |
+| POLICY-005 | `internal/core/iam/policy/evaluation_test.go::TestEvaluatePolicy` | `internal/core/iam/policy/implementation.go::EvaluatePolicy` | Policy Lifecycle | unit-tests + property-tests |
+| **Repository Layer** |
+| REPO-001 | `internal/core/iam/repo/user_test.go::TestCreateUser` | `internal/core/iam/repo/implementation.go::CreateUser` | User Identity Management | unit-tests + integration-db |
+| REPO-005 | `internal/core/iam/repo/isolation_test.go::TestCrossTenantAccess` | `internal/core/iam/repo/implementation.go::GetUser` | Audit Integration | integration-db + rls-tests |
+| **Contract Compatibility** |
+| CONTRACT-001 | `internal/core/iam/authn/compatibility_test.go::TestUserCreationCompatibility` | `internal/core/iam/authn/adapter.go::CreateUser` | User Identity Management | contract-tests |
+| CONTRACT-002 | `internal/core/iam/authz/compatibility_test.go::TestPermissionEvaluationCompatibility` | `internal/core/iam/authz/adapter.go::EvaluatePermission` | ABAC Core Engine | contract-tests |
+
+### CI Pipeline Gates
+
+**Gate 1: Code Quality**
+- `golangci-lint` clean
+- `go vet` passes  
+- No TODO/FIXME in changed code
+- Test files exist for all implementation files
+
+**Gate 2: Unit Tests**
+- All unit tests pass
+- Coverage thresholds:
+  - Authentication paths: ≥90%
+  - Policy evaluation: ≥90%
+  - Other packages: ≥85%
+
+**Gate 3: Integration Tests**
+- Database integration tests pass
+- Redis cache tests pass
+- Temporal workflow tests pass
+- Multi-tenant isolation verified
+
+**Gate 4: Contract & Property Tests**
+- Contract tests pass (legacy vs new behavior identical)
+- Property tests pass (invariants hold)
+- Determinism tests pass (reproducible results)
+
+**Gate 5: Performance & Load**
+- Permission evaluation latency < 50ms (99th percentile)
+- Cache hit rates > 90%
+- Database query performance < 100ms (95th percentile)
+- Race detector passes with `-race` flag
+
+### Definition of Done (DoD) Checklist
+
+For each functional group to be marked as COMPLETE:
+
+- [ ] All linked spec IDs exist in `@docs/module/user/test_cases.md`
+- [ ] All linked test files exist and PASS
+- [ ] Fail-first approach demonstrated in commit history
+- [ ] Coverage thresholds met and enforced
+- [ ] Contract tests pass (adapter compatibility verified)
+- [ ] Integration tests pass (DB + Redis + Temporal)
+- [ ] Property tests pass (invariants hold)
+- [ ] Performance benchmarks added and meeting targets
+- [ ] Security tests pass (boundary conditions, auth failures)
+- [ ] Race detector clean
+- [ ] Documentation updated
+- [ ] All CI gates pass
+
+---
+
+This TDD implementation plan provides a comprehensive, measurable, and traceable approach to implementing the IAM restructuring while maintaining the **adapter-over-rewrite** strategy and preserving all existing functionality.

@@ -358,65 +358,10 @@ Then:
 
 ## Performance Tests
 
-```
-Test ID: IAM-PERF-001
-Description: Test permission evaluation latency under load.
-Given: 1000 concurrent users making requests that trigger ABAC evaluations.
-When: The load test runs for 10 minutes.
-Then:
-  - The 99th percentile for `EvaluatePermission` calls remains below 50ms.
-  - The error rate is less than 0.01%.
-```
-```
-Test ID: IAM-PERF-002
-Description: Test cache performance.
-Given: A "warmed up" cache with common policies and user attributes.
-When: A high volume of requests for the same set of users/resources is simulated.
-Then:
-  - The cache hit rate for policy and attribute caches is > 90%.
-  - The database query volume remains low.
-```
+### Golden Path Testing
 
-## End-to-End (E2E) Workflow Tests
-
-```
-Test ID: IAM-E2E-001
-Description: Test the complete user onboarding and first login workflow.
-Given: An HR administrator.
-When:
-  1. The admin creates a new Person and associated Employee record.
-  2. The admin registers a User account for that employee, triggering a welcome email.
-  3. The new user clicks the link, sets their password, and configures MFA.
-  4. The user logs in for the first time.
-Then:
-  - The user is successfully authenticated.
-  - The user has the correct default set of permissions based on their assigned role.
-  - The user can access the resources allowed by their default role.
-```
-```
-Test ID: IAM-E2E-002
-Description: Test the complete access request and approval workflow.
-Given: A user who needs temporary access to a specific project folder.
-When:
-  1. The user submits an access request via the API with a justification.
-  - The system creates an `access_requests` record with status 'PENDING'.
-  - The user's manager is notified.
-  - The manager approves the request.
-  - The system grants the user a temporary role or permission.
-Then:
-  - The user can now access the project folder.
-  - After the specified duration, the access is automatically revoked.
-  - The entire workflow is captured in the audit log.
-```
-```
-Test ID: IAM-E2E-003
-Description: Test the complete user offboarding workflow.
-Given: An active employee with multiple role assignments.
-When: An HR admin initiates the offboarding process for the employee.
-Then:
-  - The user's `account_status` is immediately set to 'INACTIVE' or 'LOCKED'.
-  - All active sessions for the user are terminated.
-  - All roles and permissions are effectively revoked.
-  - Any subsequent API calls using the user's old tokens fail with a `401 Unauthorized` error.
-  - The user's record is soft-deleted by setting the `deleted_at` timestamp.
-```
+| ID | Group | Feature/Method | Preconditions (Given) | Action (When) | Expected (Then) | Edge/Negative | Trace (File:Func) |
+|----|-------|----------------|------------------------|---------------|-----------------|---------------|-------------------|
+| E2E-008 | Golden Path | HappyPathUserJourney | New organization setup | Complete user setup → role assignment → policy evaluation → resource access | Entire happy path completes without errors | Any step failure breaks the chain | internal/core/iam/e2e/golden_path_test.go::TestHappyPathUserJourney |
+| E2E-009 | Golden Path | DailyOperations | Established system | Authentication → permission checks → resource access → logout | Typical daily operations work smoothly | Performance degradation, intermittent failures | internal/core/iam/e2e/golden_path_test.go::TestDailyOperations |
+| E2E-010 | Golden Path | AdministrativeOperations | Admin user with full permissions | User management → role management → policy updates → audit review | Administrative operations complete successfully | Permission issues, data consistency problems | internal/core/iam/e2e/golden_path_test.go::TestAdministrativeOperations |

@@ -8,15 +8,15 @@ import (
 
 // FeatureFlagChangeRequest represents a request to change a feature flag
 type FeatureFlagChangeRequest struct {
-	TenantID             uuid.UUID              `json:"tenant_id"`
-	RequestedBy          uuid.UUID              `json:"requested_by"`
-	FlagName             string                 `json:"flag_name"`
-	ChangeType           string                 `json:"change_type"` // enable, disable, update_rollout, update_config
-	NewValue             interface{}            `json:"new_value"`
-	Justification        string                 `json:"justification"`
-	BusinessReason       string                 `json:"business_reason"`
-	ApprovalTimeoutHours int                    `json:"approval_timeout_hours"`
-	Metadata             map[string]interface{} `json:"metadata,omitempty"`
+	TenantID             uuid.UUID      `json:"tenant_id"`
+	RequestedBy          uuid.UUID      `json:"requested_by"`
+	FlagName             string         `json:"flag_name"`
+	ChangeType           string         `json:"change_type"` // enable, disable, update_rollout, update_config
+	NewValue             any            `json:"new_value"`
+	Justification        string         `json:"justification"`
+	BusinessReason       string         `json:"business_reason"`
+	ApprovalTimeoutHours int            `json:"approval_timeout_hours"`
+	Metadata             map[string]any `json:"metadata,omitempty"`
 }
 
 // BulkFeatureFlagChangeRequest represents a bulk change request
@@ -31,18 +31,18 @@ type BulkFeatureFlagChangeRequest struct {
 
 // IndividualFlagChange represents a single flag change in bulk operation
 type IndividualFlagChange struct {
-	FlagName   string                 `json:"flag_name"`
-	ChangeType string                 `json:"change_type"`
-	NewValue   interface{}            `json:"new_value"`
-	Metadata   map[string]interface{} `json:"metadata,omitempty"`
+	FlagName   string         `json:"flag_name"`
+	ChangeType string         `json:"change_type"`
+	NewValue   any            `json:"new_value"`
+	Metadata   map[string]any `json:"metadata,omitempty"`
 }
 
 // FeatureFlagChangeResult represents the result of a flag change workflow
 type FeatureFlagChangeResult struct {
 	Status          string          `json:"status"` // completed, rejected, failed, validation_failed, approval_timeout
 	FlagID          *uuid.UUID      `json:"flag_id,omitempty"`
-	OldValue        interface{}     `json:"old_value,omitempty"`
-	NewValue        interface{}     `json:"new_value,omitempty"`
+	OldValue        any             `json:"old_value,omitempty"`
+	NewValue        any             `json:"new_value,omitempty"`
 	AppliedAt       *time.Time      `json:"applied_at,omitempty"`
 	ApprovalDetails *ApprovalResult `json:"approval_details,omitempty"`
 	Error           string          `json:"error,omitempty"`
@@ -85,55 +85,55 @@ type ApprovalSignal struct {
 
 // ApplyChangeResult represents the result of applying a flag change
 type ApplyChangeResult struct {
-	FlagID    uuid.UUID   `json:"flag_id"`
-	OldValue  interface{} `json:"old_value"`
-	AppliedAt time.Time   `json:"applied_at"`
+	FlagID    uuid.UUID `json:"flag_id"`
+	OldValue  any       `json:"old_value"`
+	AppliedAt time.Time `json:"applied_at"`
 }
 
 // NotificationRequest represents a WebSocket notification request
 type NotificationRequest struct {
-	TenantID        uuid.UUID   `json:"tenant_id"`
-	FlagName        string      `json:"flag_name"`
-	ChangeType      string      `json:"change_type"`
-	NewValue        interface{} `json:"new_value"`
-	AppliedBy       uuid.UUID   `json:"applied_by"`
-	AccessRequestID *uuid.UUID  `json:"access_request_id,omitempty"`
-	AppliedAt       time.Time   `json:"applied_at"`
+	TenantID        uuid.UUID  `json:"tenant_id"`
+	FlagName        string     `json:"flag_name"`
+	ChangeType      string     `json:"change_type"`
+	NewValue        any        `json:"new_value"`
+	AppliedBy       uuid.UUID  `json:"applied_by"`
+	AccessRequestID *uuid.UUID `json:"access_request_id,omitempty"`
+	AppliedAt       time.Time  `json:"applied_at"`
 }
 
 // AuditEventRequest represents an audit event creation request
 type AuditEventRequest struct {
-	TenantID        uuid.UUID              `json:"tenant_id"`
-	FlagName        string                 `json:"flag_name"`
-	ChangeType      string                 `json:"change_type"`
-	OldValue        interface{}            `json:"old_value"`
-	NewValue        interface{}            `json:"new_value"`
-	RequestedBy     uuid.UUID              `json:"requested_by"`
-	AccessRequestID *uuid.UUID             `json:"access_request_id,omitempty"`
-	AppliedAt       time.Time              `json:"applied_at"`
-	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	TenantID        uuid.UUID      `json:"tenant_id"`
+	FlagName        string         `json:"flag_name"`
+	ChangeType      string         `json:"change_type"`
+	OldValue        any            `json:"old_value"`
+	NewValue        any            `json:"new_value"`
+	RequestedBy     uuid.UUID      `json:"requested_by"`
+	AccessRequestID *uuid.UUID     `json:"access_request_id,omitempty"`
+	AppliedAt       time.Time      `json:"applied_at"`
+	Metadata        map[string]any `json:"metadata,omitempty"`
 }
 
 // AutoRollbackRequest represents an auto-rollback request
 type AutoRollbackRequest struct {
-	TenantID      uuid.UUID   `json:"tenant_id"`
-	FlagID        uuid.UUID   `json:"flag_id"`
-	FlagName      string      `json:"flag_name"`
-	RollbackAt    time.Time   `json:"rollback_at"`
-	RollbackValue interface{} `json:"rollback_value"`
+	TenantID      uuid.UUID `json:"tenant_id"`
+	FlagID        uuid.UUID `json:"flag_id"`
+	FlagName      string    `json:"flag_name"`
+	RollbackAt    time.Time `json:"rollback_at"`
+	RollbackValue any       `json:"rollback_value"`
 }
 
 // AutoRollbackResult represents the result of auto-rollback
 type AutoRollbackResult struct {
-	Status       string      `json:"status"` // completed, failed, skipped
-	FlagID       uuid.UUID   `json:"flag_id"`
-	FlagName     string      `json:"flag_name"`
-	ScheduledAt  time.Time   `json:"scheduled_at"`
-	OldValue     interface{} `json:"old_value,omitempty"`
-	NewValue     interface{} `json:"new_value,omitempty"`
-	RolledBackAt *time.Time  `json:"rolled_back_at,omitempty"`
-	Reason       string      `json:"reason,omitempty"`
-	Error        string      `json:"error,omitempty"`
+	Status       string     `json:"status"` // completed, failed, skipped
+	FlagID       uuid.UUID  `json:"flag_id"`
+	FlagName     string     `json:"flag_name"`
+	ScheduledAt  time.Time  `json:"scheduled_at"`
+	OldValue     any        `json:"old_value,omitempty"`
+	NewValue     any        `json:"new_value,omitempty"`
+	RolledBackAt *time.Time `json:"rolled_back_at,omitempty"`
+	Reason       string     `json:"reason,omitempty"`
+	Error        string     `json:"error,omitempty"`
 }
 
 // FeatureFlagApprovalPolicy represents approval requirements for flag changes
@@ -151,22 +151,22 @@ type FeatureFlagApprovalPolicy struct {
 
 // WebSocketMessage represents a real-time notification message
 type WebSocketMessage struct {
-	Type      string      `json:"type"`
-	Event     string      `json:"event"`
-	TenantID  uuid.UUID   `json:"tenant_id"`
-	Data      interface{} `json:"data"`
-	Timestamp time.Time   `json:"timestamp"`
+	Type      string    `json:"type"`
+	Event     string    `json:"event"`
+	TenantID  uuid.UUID `json:"tenant_id"`
+	Data      any       `json:"data"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 // FeatureFlagChangeEvent represents a feature flag change event for WebSocket
 type FeatureFlagChangeEvent struct {
-	FlagID          uuid.UUID              `json:"flag_id"`
-	FlagName        string                 `json:"flag_name"`
-	ChangeType      string                 `json:"change_type"`
-	OldValue        interface{}            `json:"old_value,omitempty"`
-	NewValue        interface{}            `json:"new_value"`
-	ChangedBy       uuid.UUID              `json:"changed_by"`
-	AccessRequestID *uuid.UUID             `json:"access_request_id,omitempty"`
-	AppliedAt       time.Time              `json:"applied_at"`
-	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	FlagID          uuid.UUID      `json:"flag_id"`
+	FlagName        string         `json:"flag_name"`
+	ChangeType      string         `json:"change_type"`
+	OldValue        any            `json:"old_value,omitempty"`
+	NewValue        any            `json:"new_value"`
+	ChangedBy       uuid.UUID      `json:"changed_by"`
+	AccessRequestID *uuid.UUID     `json:"access_request_id,omitempty"`
+	AppliedAt       time.Time      `json:"applied_at"`
+	Metadata        map[string]any `json:"metadata,omitempty"`
 }
