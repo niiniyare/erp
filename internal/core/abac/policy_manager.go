@@ -17,8 +17,6 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// ─── MISSING TYPE DEFINITIONS ─────────────────────────────────────────────
-
 // ListPoliciesRequest represents a request to list policies
 type ListPoliciesRequest struct {
 	TenantID   uuid.UUID             `json:"tenant_id"`

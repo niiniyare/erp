@@ -19,8 +19,6 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// ─── MISSING TYPE DEFINITIONS ─────────────────────────────────────────────
-
 // BatchFetchAttributesRequest for batch attribute fetching
 type BatchFetchAttributesRequest struct {
 	Requests  []FetchAttributesRequest `json:"requests"`

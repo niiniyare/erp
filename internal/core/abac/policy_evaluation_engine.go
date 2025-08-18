@@ -20,8 +20,6 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// ─── MISSING TYPE DEFINITIONS ─────────────────────────────────────────────
-
 // MultiplePolicyEvaluationRequest represents a request to evaluate multiple policies
 type MultiplePolicyEvaluationRequest struct {
 	PolicyIDs []uuid.UUID    `json:"policy_ids"`
@@ -454,7 +452,7 @@ func (pee *policyEvaluationEngine) executePolicyEvaluation(
 		}
 	}
 
-	// Evaluate rules (simplified - Policy model doesn't include Rules field)
+	//NOTE: Evaluate rules (simplified - Policy model doesn't include Rules field)
 	ruleResults := make([]RuleEvaluationResult, 0)
 	applicableRules := make([]ApplicableRule, 0)
 
@@ -812,7 +810,7 @@ func (eac *EvaluationAttributeContext) GetUsedAttributes() []AttributeUsage {
 		usage = append(usage, AttributeUsage{
 			AttributePath: path,
 			Category:      eac.categorizeAttributePath(path),
-			UsageCount:    1, // Simplified for now
+			UsageCount:    1, //NOTE: Simplified for now
 		})
 	}
 
@@ -1125,7 +1123,7 @@ func (pee *policyEvaluationEngine) resolveEvaluationAttributes(
 		UsedPaths:   make([]string, 0),
 	}
 
-	// Additional attribute resolution logic would go here
+	// NOTE:Additional attribute resolution logic would go here
 	// This could involve calling the attribute resolver service
 	// to fetch additional attributes from external sources
 
@@ -1135,31 +1133,31 @@ func (pee *policyEvaluationEngine) resolveEvaluationAttributes(
 // Stub implementations for cache and other methods
 
 func (pee *policyEvaluationEngine) checkEvaluationCache(ctx context.Context, req *PolicyEvaluationRequest) *PolicyEvaluationResult {
-	// Implementation would check cache based on request parameters
+	// TODO:Implementation would check cache based on request parameters
 	return nil
 }
 
 func (pee *policyEvaluationEngine) cacheEvaluationResult(ctx context.Context, req *PolicyEvaluationRequest, result *PolicyEvaluationResult) {
-	// Implementation would cache the result
+	// TODO:Implementationwould cache the result
 }
 
 func (pee *policyEvaluationEngine) evaluateTarget(ctx context.Context, target *models.PolicyTarget, attributeCtx *EvaluationAttributeContext) (*TargetEvaluationResult, error) {
-	// Implementation would evaluate policy/rule target
+	// TODO:Implementation would evaluate policy/rule target
 	return &TargetEvaluationResult{Applicable: true}, nil
 }
 
 func (pee *policyEvaluationEngine) collectObligations(ctx context.Context, ruleResults []RuleEvaluationResult, decision types.PolicyDecisionType) []PolicyObligation {
-	// Implementation would collect obligations from applicable rules
+	// TODO:Implementation would collect obligations from applicable rules
 	return []PolicyObligation{}
 }
 
 func (pee *policyEvaluationEngine) collectAdvice(ctx context.Context, ruleResults []RuleEvaluationResult, decision types.PolicyDecisionType) []PolicyAdvice {
-	// Implementation would collect advice from applicable rules
+	// TODO:Implementation would collect advice from applicable rules
 	return []PolicyAdvice{}
 }
 
 func (pee *policyEvaluationEngine) generateEvaluationExplanation(ctx context.Context, policy *models.Policy, ruleResults []RuleEvaluationResult, result *PolicyEvaluationResult) *EvaluationExplanation {
-	// Implementation would generate detailed explanation
+	// TODO:Implementation would generate detailed explanation
 	return &EvaluationExplanation{
 		Decision: result.Decision,
 		Reason:   "Policy evaluation completed",
@@ -1212,7 +1210,7 @@ func (neo *NotEqualOperator) GetArity() int   { return 2 }
 type GreaterThanOperator struct{}
 
 func (gto *GreaterThanOperator) Evaluate(left, right any) (bool, error) {
-	// Implementation would handle numeric comparison
+	// TODO:Implementation would handle numeric comparison
 	return false, nil
 }
 func (gto *GreaterThanOperator) GetName() string { return "gt" }
@@ -1339,7 +1337,7 @@ func (rmo *RegexMatchOperator) GetArity() int   { return 2 }
 type InOperator struct{}
 
 func (io *InOperator) Evaluate(left, right any) (bool, error) {
-	// Implementation would check if left is in right (array/slice)
+	// TODO:Implementation would check if left is in right (array/slice)
 	return false, nil
 }
 func (io *InOperator) GetName() string { return "in" }
@@ -1348,7 +1346,7 @@ func (io *InOperator) GetArity() int   { return 2 }
 type NotInOperator struct{}
 
 func (nio *NotInOperator) Evaluate(left, right any) (bool, error) {
-	// Implementation would check if left is not in right (array/slice)
+	// TODO:Implementation would check if left is not in right (array/slice)
 	return false, nil
 }
 func (nio *NotInOperator) GetName() string { return "notin" }
@@ -1492,9 +1490,8 @@ func (sf *SubstringFunction) Execute(args []any) (any, error) {
 		return "", nil
 	}
 	end := start + length
-	if end > len(str) {
-		end = len(str)
-	}
+	end = min(end, len(str))
+
 	return str[start:end], nil
 }
 func (sf *SubstringFunction) GetName() string               { return "substr" }
@@ -1507,7 +1504,7 @@ func (af *AbsoluteFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("abs function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
-	// Implementation would handle numeric absolute value
+	// TODO:Implementation would handle numeric absolute value
 	return args[0], nil
 }
 func (af *AbsoluteFunction) GetName() string               { return "abs" }
@@ -1520,7 +1517,7 @@ func (mf *MinFunction) Execute(args []any) (any, error) {
 	if len(args) < 2 {
 		return nil, fmt.Errorf("min function requires at least 2 arguments, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
-	// Implementation would find minimum value
+	// TODO:Implementatio would find minimum value
 	return args[0], nil
 }
 func (mf *MinFunction) GetName() string               { return "min" }
@@ -1533,7 +1530,7 @@ func (maxf *MaxFunction) Execute(args []any) (any, error) {
 	if len(args) < 2 {
 		return nil, fmt.Errorf("max function requires at least 2 arguments, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
-	// Implementation would find maximum value
+	// TODO:Implementatio would find maximum value
 	return args[0], nil
 }
 func (maxf *MaxFunction) GetName() string               { return "max" }
@@ -1543,7 +1540,7 @@ func (maxf *MaxFunction) ValidateArgs(args []any) error { return nil }
 type SumFunction struct{}
 
 func (sf2 *SumFunction) Execute(args []any) (any, error) {
-	// Implementation would sum numeric values
+	// TODO:Implementatiowould sum numeric values
 	return 0, nil
 }
 func (sf2 *SumFunction) GetName() string               { return "sum" }
@@ -1553,7 +1550,7 @@ func (sf2 *SumFunction) ValidateArgs(args []any) error { return nil }
 type AverageFunction struct{}
 
 func (avgf *AverageFunction) Execute(args []any) (any, error) {
-	// Implementation would calculate average
+	// TODO:Implementatio would calculate average
 	return 0.0, nil
 }
 func (avgf *AverageFunction) GetName() string               { return "avg" }
@@ -1572,7 +1569,7 @@ func (nf *NowFunction) ValidateArgs(args []any) error { return nil }
 type DateFunction struct{}
 
 func (df *DateFunction) Execute(args []any) (any, error) {
-	// Implementation would parse date string
+	// TODO:Implementatio would parse date string
 	return time.Now(), nil
 }
 func (df *DateFunction) GetName() string               { return "date" }
@@ -1582,7 +1579,7 @@ func (df *DateFunction) ValidateArgs(args []any) error { return nil }
 type TimeFormatFunction struct{}
 
 func (tff *TimeFormatFunction) Execute(args []any) (any, error) {
-	// Implementation would format time
+	// TODO:Implementatio would format time
 	return "", nil
 }
 func (tff *TimeFormatFunction) GetName() string               { return "timeformat" }
@@ -1592,7 +1589,7 @@ func (tff *TimeFormatFunction) ValidateArgs(args []any) error { return nil }
 type DateDifferenceFunction struct{}
 
 func (ddf *DateDifferenceFunction) Execute(args []any) (any, error) {
-	// Implementation would calculate date difference
+	// TODO:Implementatio would calculate date difference
 	return time.Duration(0), nil
 }
 func (ddf *DateDifferenceFunction) GetName() string               { return "datediff" }
@@ -1605,7 +1602,7 @@ func (cf *CountFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("count function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
-	// Implementation would count elements in collection
+	// TODO:Implementatio would count elements in collection
 	return 0, nil
 }
 func (cf *CountFunction) GetName() string               { return "count" }
@@ -1615,7 +1612,7 @@ func (cf *CountFunction) ValidateArgs(args []any) error { return nil }
 type FirstFunction struct{}
 
 func (ff *FirstFunction) Execute(args []any) (any, error) {
-	// Implementation would return first element
+	// TODO:Implementatio would return first element
 	return nil, nil
 }
 func (ff *FirstFunction) GetName() string               { return "first" }
@@ -1625,7 +1622,7 @@ func (ff *FirstFunction) ValidateArgs(args []any) error { return nil }
 type LastFunction struct{}
 
 func (lf *LastFunction) Execute(args []any) (any, error) {
-	// Implementation would return last element
+	// TODO:Implementatio would return last element
 	return nil, nil
 }
 func (lf *LastFunction) GetName() string               { return "last" }
@@ -1635,7 +1632,7 @@ func (lf *LastFunction) ValidateArgs(args []any) error { return nil }
 type DistinctFunction struct{}
 
 func (df2 *DistinctFunction) Execute(args []any) (any, error) {
-	// Implementation would return distinct elements
+	// TODO:Implementatio would return distinct elements
 	return args[0], nil
 }
 func (df2 *DistinctFunction) GetName() string               { return "distinct" }
@@ -1672,7 +1669,7 @@ func (ef2 *EmptyFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("empty function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
-	// Implementation would check if collection/string is empty
+	// TODO:Implementatio would check if collection/string is empty
 	return false, nil
 }
 func (ef2 *EmptyFunction) GetName() string               { return "empty" }
@@ -1703,7 +1700,7 @@ func (are *AdvancedRuleEngine) tokenizeExpression(expression string) ([]string, 
 }
 
 func (are *AdvancedRuleEngine) parseTokens(tokens []string) (*ExpressionNode, error) {
-	// Simple parser - in practice this would build a proper AST
+	//NOTE: Simple parser - in practice this would build a proper AST
 	if len(tokens) == 0 {
 		return nil, fmt.Errorf("empty expression, tokens: %v: %w", tokens, errors.ErrInvalidInput)
 	}
@@ -1729,7 +1726,7 @@ func (are *AdvancedRuleEngine) executeCompiledExpression(
 	compiled *CompiledExpression,
 	attributeCtx *EvaluationAttributeContext,
 ) (*ExpressionEvaluationResult, error) {
-	// Simple execution - in practice this would traverse the AST
+	//NOTE: Simple execution - in practice this would traverse the AST
 	return &ExpressionEvaluationResult{
 		Result:      true,
 		Explanation: "Expression evaluated successfully",
@@ -1767,7 +1764,7 @@ type SecurityContext struct {
 
 // AnalyzeEvaluationPerformance analyzes the performance of policy evaluations
 func (pee *policyEvaluationEngine) AnalyzeEvaluationPerformance(ctx context.Context, req *PerformanceAnalysisRequest) (*EvaluationPerformanceAnalysis, error) {
-	// Placeholder implementation
+	// TODO:Implementatio
 	return &EvaluationPerformanceAnalysis{
 		PolicyID:         req.PolicyID,
 		TotalEvaluations: 100,
@@ -1779,6 +1776,7 @@ func (pee *policyEvaluationEngine) AnalyzeEvaluationPerformance(ctx context.Cont
 
 // BatchEvaluatePolicy evaluates multiple policies in batch
 func (pee *policyEvaluationEngine) BatchEvaluatePolicy(ctx context.Context, req *BatchPolicyEvaluationRequest) (*BatchPolicyEvaluationResult, error) {
+	// TODO:Implementatio
 	// Placeholder implementation
 	results := make([]*PolicyEvaluationResult, len(req.Requests))
 	for i, singleReq := range req.Requests {
@@ -1807,6 +1805,7 @@ func (pee *policyEvaluationEngine) BatchEvaluatePolicy(ctx context.Context, req 
 
 // EvaluatePolicies evaluates multiple policies
 func (pee *policyEvaluationEngine) EvaluatePolicies(ctx context.Context, req *MultiplePolicyEvaluationRequest) (*MultiplePolicyEvaluationResult, error) {
+	// TODO:Implementatio
 	// Placeholder implementation
 	return &MultiplePolicyEvaluationResult{
 		Results:   []PolicyEvaluationResult{},
@@ -1817,6 +1816,7 @@ func (pee *policyEvaluationEngine) EvaluatePolicies(ctx context.Context, req *Mu
 
 // EvaluateRule evaluates a single rule
 func (pee *policyEvaluationEngine) EvaluateRule(ctx context.Context, req *RuleEvaluationRequest) (*RuleEvaluationResult, error) {
+	// TODO:Implementatio
 	// Placeholder implementation
 	// Create a UUID from the string RuleID
 	ruleUUID, err := uuid.Parse(req.RuleID)
@@ -1835,6 +1835,7 @@ func (pee *policyEvaluationEngine) EvaluateRule(ctx context.Context, req *RuleEv
 
 // EvaluateWithContext evaluates policy with enhanced context
 func (pee *policyEvaluationEngine) EvaluateWithContext(ctx context.Context, req *ContextualEvaluationRequest) (*ContextualEvaluationResult, error) {
+	// TODO:Implementatio
 	// Placeholder implementation
 	return &ContextualEvaluationResult{
 		PolicyID:  req.PolicyID,
@@ -1847,6 +1848,7 @@ func (pee *policyEvaluationEngine) EvaluateWithContext(ctx context.Context, req 
 
 // GetEvaluationMetrics returns evaluation metrics
 func (pee *policyEvaluationEngine) GetEvaluationMetrics(ctx context.Context, req *repository.GetEvaluationMetricsRequest) (*repository.EvaluationMetrics, error) {
+	// TODO:Implementatio
 	// Placeholder implementation
 	return &repository.EvaluationMetrics{
 		TotalEvaluations:       1000,
@@ -1861,6 +1863,7 @@ func (pee *policyEvaluationEngine) GetEvaluationMetrics(ctx context.Context, req
 
 // ParseRuleExpression parses a rule expression
 func (pee *policyEvaluationEngine) ParseRuleExpression(ctx context.Context, expression string) (*ParsedRuleExpression, error) {
+	// TODO:Implementatio
 	// Placeholder implementation
 	return &ParsedRuleExpression{
 		Expression: expression,

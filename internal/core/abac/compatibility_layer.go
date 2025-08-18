@@ -17,7 +17,6 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// Missing type definitions
 type HybridEvaluator interface {
 	EvaluateHybrid(ctx context.Context, req any) (any, error)
 }

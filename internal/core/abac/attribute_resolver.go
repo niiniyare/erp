@@ -21,8 +21,6 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// // Missing type definitions
-
 // AttributeResolver provides intelligent attribute resolution with advanced caching
 type AttributeResolver interface {
 	// Attribute Resolution
