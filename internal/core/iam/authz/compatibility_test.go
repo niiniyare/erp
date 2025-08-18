@@ -16,9 +16,9 @@ import (
 // CompatibilityTestSuite defines test suite for compatibility testing
 type CompatibilityTestSuite struct {
 	suite.Suite
-	ctx            context.Context
-	legacyABAC     legacyabac.Service
-	legacyAccess   legacyaccess.Service
+	ctx             context.Context
+	legacyABAC      legacyabac.Service
+	legacyAccess    legacyaccess.Service
 	newAuthzService AuthorizationService
 	// Test data will be added here
 }
@@ -186,10 +186,10 @@ func (s *CompatibilityTestSuite) TestAccessRequestCompatibility() {
 // TestSpecializedCompatibility implements various contract tests
 func (s *CompatibilityTestSuite) TestSpecializedCompatibility() {
 	testCases := []struct {
-		name        string
-		spec        string
-		testType    string
-		description string
+		name           string
+		spec           string
+		testType       string
+		description    string
 		validateResult func(*testing.T)
 	}{
 		{
@@ -255,10 +255,10 @@ func (s *CompatibilityTestSuite) TestIntegrationCompatibility() {
 	}
 
 	testCases := []struct {
-		name        string
-		spec        string
-		scenario    string
-		description string
+		name           string
+		spec           string
+		scenario       string
+		description    string
 		validateResult func(*testing.T)
 	}{
 		{
@@ -342,3 +342,4 @@ type AuthorizationService interface {
 	EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResponse, error)
 	// Add other methods as needed for compatibility testing
 }
+

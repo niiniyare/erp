@@ -574,19 +574,19 @@ func setupTenantContext(ctx context.Context, tenantID uuid.UUID) context.Context
 }
 
 // Additional types needed for repository operations
-type UserRepository interface {
-	CreateUser(ctx context.Context, user *model.User) (*model.User, error)
-	GetUser(ctx context.Context, userID uuid.UUID) (*model.User, error)
-	UpdateUser(ctx context.Context, userID uuid.UUID, updates map[string]any) (*model.User, error)
-	SoftDeleteUser(ctx context.Context, userID uuid.UUID) error
-	GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID) ([]model.Permission, error)
-}
-
-func NewUserRepository(store db.Store) UserRepository {
-	// TODO: Return actual implementation
-	return nil
-}
-
+//
+//	type UserRepository interface {
+//		CreateUser(ctx context.Context, user *model.User) (*model.User, error)
+//		GetUser(ctx context.Context, userID uuid.UUID) (*model.User, error)
+//		UpdateUser(ctx context.Context, userID uuid.UUID, updates map[string]any) (*model.User, error)
+//		SoftDeleteUser(ctx context.Context, userID uuid.UUID) error
+//		GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID) ([]model.Permission, error)
+//	}
+//
+//	func NewUserRepository(store db.Store) UserRepository {
+//		// TODO: Return actual implementation
+//		return nil
+//	}
 func uuidPtr(id uuid.UUID) *uuid.UUID {
 	return &id
 }
