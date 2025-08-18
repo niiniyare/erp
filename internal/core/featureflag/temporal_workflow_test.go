@@ -10,28 +10,28 @@ import (
 
 // TestWorkflowRequest represents workflow request structure for testing
 type TestWorkflowRequest struct {
-	WorkflowID        string                 `json:"workflow_id"`
-	FlagName          string                 `json:"flag_name"`
-	ChangeType        string                 `json:"change_type"`
-	Justification     string                 `json:"justification"`
-	BusinessReason    string                 `json:"business_reason,omitempty"`
-	RequestedBy       uuid.UUID              `json:"requested_by"`
-	RequestedAt       time.Time              `json:"requested_at"`
-	RequiredApprovers int                    `json:"required_approvers"`
-	TimeoutMinutes    int                    `json:"timeout_minutes"`
-	Metadata          map[string]interface{} `json:"metadata,omitempty"`
+	WorkflowID        string         `json:"workflow_id"`
+	FlagName          string         `json:"flag_name"`
+	ChangeType        string         `json:"change_type"`
+	Justification     string         `json:"justification"`
+	BusinessReason    string         `json:"business_reason,omitempty"`
+	RequestedBy       uuid.UUID      `json:"requested_by"`
+	RequestedAt       time.Time      `json:"requested_at"`
+	RequiredApprovers int            `json:"required_approvers"`
+	TimeoutMinutes    int            `json:"timeout_minutes"`
+	Metadata          map[string]any `json:"metadata,omitempty"`
 }
 
 // TestWorkflowResult represents workflow result structure for testing
 type TestWorkflowResult struct {
-	WorkflowID     string                   `json:"workflow_id"`
-	Status         string                   `json:"status"` // pending, approved, rejected, timeout
-	ApprovedBy     *uuid.UUID               `json:"approved_by,omitempty"`
-	RejectedBy     *uuid.UUID               `json:"rejected_by,omitempty"`
-	CompletedAt    time.Time                `json:"completed_at"`
-	ExecutionTime  time.Duration            `json:"execution_time"`
-	RollbackToken  string                   `json:"rollback_token,omitempty"`
-	AppliedChanges []map[string]interface{} `json:"applied_changes,omitempty"`
+	WorkflowID     string           `json:"workflow_id"`
+	Status         string           `json:"status"` // pending, approved, rejected, timeout
+	ApprovedBy     *uuid.UUID       `json:"approved_by,omitempty"`
+	RejectedBy     *uuid.UUID       `json:"rejected_by,omitempty"`
+	CompletedAt    time.Time        `json:"completed_at"`
+	ExecutionTime  time.Duration    `json:"execution_time"`
+	RollbackToken  string           `json:"rollback_token,omitempty"`
+	AppliedChanges []map[string]any `json:"applied_changes,omitempty"`
 }
 
 // Test Case FF-WORKFLOW-001: Feature Flag Change Approval Workflow
@@ -55,7 +55,7 @@ func TestFeatureFlagChangeApprovalWorkflow(t *testing.T) {
 			RequestedAt:       time.Now(),
 			RequiredApprovers: 1,
 			TimeoutMinutes:    60,
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"priority":       "medium",
 				"affected_users": 1000,
 				"risk_level":     "low",
@@ -100,7 +100,7 @@ func TestFeatureFlagChangeApprovalWorkflow(t *testing.T) {
 			CompletedAt:   approvalTime,
 			ExecutionTime: approvalTime.Sub(request.RequestedAt),
 			RollbackToken: "rollback-" + uuid.New().String(),
-			AppliedChanges: []map[string]interface{}{
+			AppliedChanges: []map[string]any{
 				{
 					"flag_name":   request.FlagName,
 					"change_type": request.ChangeType,
@@ -210,7 +210,7 @@ func TestBulkChangeApprovalWorkflow(t *testing.T) {
 
 	t.Run("ValidateBulkWorkflowStructure", func(t *testing.T) {
 		// Test bulk workflow request structure
-		bulkChanges := []map[string]interface{}{
+		bulkChanges := []map[string]any{
 			{
 				"flag_name":    "feature-1",
 				"change_type":  "enable",
@@ -237,7 +237,7 @@ func TestBulkChangeApprovalWorkflow(t *testing.T) {
 			RequestedAt:       time.Now(),
 			RequiredApprovers: 2,   // Bulk changes require more approvers
 			TimeoutMinutes:    120, // Longer timeout for bulk operations
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"bulk_changes":    bulkChanges,
 				"change_count":    len(bulkChanges),
 				"priority":        "high",
@@ -258,7 +258,7 @@ func TestBulkChangeApprovalWorkflow(t *testing.T) {
 		assert.Equal(t, 3, metadata["change_count"])
 		assert.Equal(t, "high", metadata["priority"])
 
-		changes := metadata["bulk_changes"].([]map[string]interface{})
+		changes := metadata["bulk_changes"].([]map[string]any)
 		assert.Len(t, changes, 3)
 		assert.Equal(t, "feature-1", changes[0]["flag_name"])
 		assert.Equal(t, "enable", changes[0]["change_type"])
@@ -277,7 +277,7 @@ func TestBulkChangeApprovalWorkflow(t *testing.T) {
 			CompletedAt:   approvalTime,
 			ExecutionTime: 30 * time.Minute,
 			RollbackToken: "bulk-rollback-" + uuid.New().String(),
-			AppliedChanges: []map[string]interface{}{
+			AppliedChanges: []map[string]any{
 				{
 					"flag_name":   "feature-1",
 					"change_type": "enable",
@@ -342,7 +342,7 @@ func TestBulkChangeApprovalWorkflow(t *testing.T) {
 			CompletedAt:   time.Now(),
 			ExecutionTime: 45 * time.Minute,
 			RollbackToken: "partial-rollback-" + uuid.New().String(),
-			AppliedChanges: []map[string]interface{}{
+			AppliedChanges: []map[string]any{
 				{
 					"flag_name":   "feature-1",
 					"change_type": "enable",
@@ -399,7 +399,7 @@ func TestWorkflowApprovalAndRejection(t *testing.T) {
 		// Test approval with comments
 		workflowID := "approval-comments-" + uuid.New().String()
 
-		approvalData := map[string]interface{}{
+		approvalData := map[string]any{
 			"workflow_id": workflowID,
 			"approver_id": approverID,
 			"decision":    "approve",
@@ -429,7 +429,7 @@ func TestWorkflowApprovalAndRejection(t *testing.T) {
 		// Test rejection with detailed reason
 		workflowID := "rejection-reason-" + uuid.New().String()
 
-		rejectionData := map[string]interface{}{
+		rejectionData := map[string]any{
 			"workflow_id": workflowID,
 			"approver_id": approverID,
 			"decision":    "reject",
@@ -464,7 +464,7 @@ func TestWorkflowApprovalAndRejection(t *testing.T) {
 		// Test audit trail for approval process
 		// workflowID := "audit-trail-" + uuid.New().String()
 
-		auditTrail := []map[string]interface{}{
+		auditTrail := []map[string]any{
 			{
 				"timestamp": time.Now().Add(-60 * time.Minute),
 				"event":     "workflow_created",
@@ -528,11 +528,11 @@ func TestAutoRollbackScheduling(t *testing.T) {
 
 	t.Run("ValidateRollbackScheduleCreation", func(t *testing.T) {
 		// Test auto-rollback schedule creation
-		rollbackRequest := map[string]interface{}{
+		rollbackRequest := map[string]any{
 			"flag_id":     flagID,
 			"flag_name":   "rollback-test-flag",
 			"rollback_at": time.Now().Add(2 * time.Hour),
-			"original_state": map[string]interface{}{
+			"original_state": map[string]any{
 				"enabled":            false,
 				"rollout_percentage": 0,
 				"default_value":      false,
@@ -551,7 +551,7 @@ func TestAutoRollbackScheduling(t *testing.T) {
 		assert.Contains(t, rollbackRequest, "original_state")
 		assert.Contains(t, rollbackRequest, "schedule_id")
 
-		originalState := rollbackRequest["original_state"].(map[string]interface{})
+		originalState := rollbackRequest["original_state"].(map[string]any)
 		assert.Equal(t, false, originalState["enabled"])
 		assert.Equal(t, 0, originalState["rollout_percentage"])
 		assert.Equal(t, false, originalState["default_value"])
@@ -562,12 +562,12 @@ func TestAutoRollbackScheduling(t *testing.T) {
 		scheduleID := "schedule-" + uuid.New().String()
 		rollbackTime := time.Now()
 
-		rollbackExecution := map[string]interface{}{
+		rollbackExecution := map[string]any{
 			"schedule_id":      scheduleID,
 			"flag_id":          flagID,
 			"executed_at":      rollbackTime,
 			"execution_status": "success",
-			"changes_applied": []map[string]interface{}{
+			"changes_applied": []map[string]any{
 				{
 					"property":   "enabled",
 					"from_value": true,
@@ -591,7 +591,7 @@ func TestAutoRollbackScheduling(t *testing.T) {
 		assert.Equal(t, flagID, rollbackExecution["flag_id"])
 		assert.Equal(t, "success", rollbackExecution["execution_status"])
 
-		changes := rollbackExecution["changes_applied"].([]map[string]interface{})
+		changes := rollbackExecution["changes_applied"].([]map[string]any)
 		assert.Len(t, changes, 2)
 
 		// Verify enabled was set back to false
@@ -616,7 +616,7 @@ func TestAutoRollbackScheduling(t *testing.T) {
 		// Test rollback schedule cancellation
 		scheduleID := "schedule-" + uuid.New().String()
 
-		cancellationData := map[string]interface{}{
+		cancellationData := map[string]any{
 			"schedule_id":         scheduleID,
 			"cancelled_at":        time.Now(),
 			"cancelled_by":        userID,
@@ -636,7 +636,7 @@ func TestAutoRollbackScheduling(t *testing.T) {
 		// Test rollback failure handling
 		scheduleID := "schedule-" + uuid.New().String()
 
-		rollbackFailure := map[string]interface{}{
+		rollbackFailure := map[string]any{
 			"schedule_id":      scheduleID,
 			"flag_id":          flagID,
 			"executed_at":      time.Now(),
@@ -699,7 +699,7 @@ func TestWorkflowIntegrationLifecycle(t *testing.T) {
 			CompletedAt:   approvalTime,
 			ExecutionTime: approvalTime.Sub(request.RequestedAt),
 			RollbackToken: "integration-rollback-" + uuid.New().String(),
-			AppliedChanges: []map[string]interface{}{
+			AppliedChanges: []map[string]any{
 				{
 					"flag_name":         request.FlagName,
 					"change_type":       request.ChangeType,

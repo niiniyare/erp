@@ -63,7 +63,7 @@ func (suite *AuditServiceTestSuite) TearDownTest() {
 // Test Record - Success Case
 func (suite *AuditServiceTestSuite) TestRecord_Success() {
 	// Arrange
-	contextData := map[string]interface{}{
+	contextData := map[string]any{
 		"action": "create_user",
 		"target": "user123",
 	}
@@ -119,7 +119,7 @@ func (suite *AuditServiceTestSuite) TestRecord_RepositoryError() {
 // Test Record - User Authentication Event
 func (suite *AuditServiceTestSuite) TestRecord_AuthenticationEvent() {
 	// Arrange
-	contextData := map[string]interface{}{
+	contextData := map[string]any{
 		"ip_address":   "192.168.1.100",
 		"user_agent":   "Mozilla/5.0",
 		"login_method": "password",
@@ -150,7 +150,7 @@ func (suite *AuditServiceTestSuite) TestRecord_AuthenticationEvent() {
 // Test Record - Authorization Event
 func (suite *AuditServiceTestSuite) TestRecord_AuthorizationEvent() {
 	// Arrange
-	contextData := map[string]interface{}{
+	contextData := map[string]any{
 		"resource":   "/api/users",
 		"action":     "READ",
 		"permission": "users.read",
@@ -183,7 +183,7 @@ func (suite *AuditServiceTestSuite) TestRecord_AuthorizationEvent() {
 func (suite *AuditServiceTestSuite) TestRecord_AccessRequestEvent() {
 	// Arrange
 	requestID := uuid.New()
-	contextData := map[string]interface{}{
+	contextData := map[string]any{
 		"request_id":   requestID.String(),
 		"request_type": "ROLE_ASSIGNMENT",
 		"target_user":  uuid.New().String(),
@@ -216,7 +216,7 @@ func (suite *AuditServiceTestSuite) TestRecord_AccessRequestEvent() {
 // Test Record - Security Event
 func (suite *AuditServiceTestSuite) TestRecord_SecurityEvent() {
 	// Arrange
-	contextData := map[string]interface{}{
+	contextData := map[string]any{
 		"ip_address":     "192.168.1.100",
 		"attempt_count":  3,
 		"blocked_until":  "2024-01-01T12:00:00Z",
@@ -248,12 +248,12 @@ func (suite *AuditServiceTestSuite) TestRecord_SecurityEvent() {
 // Test Record - Data Modification Event
 func (suite *AuditServiceTestSuite) TestRecord_DataModificationEvent() {
 	// Arrange
-	contextData := map[string]interface{}{
+	contextData := map[string]any{
 		"table_name":     "users",
 		"record_id":      suite.testUserID.String(),
 		"fields_changed": []string{"email", "last_name"},
-		"old_values":     map[string]interface{}{"email": "old@example.com"},
-		"new_values":     map[string]interface{}{"email": "new@example.com"},
+		"old_values":     map[string]any{"email": "old@example.com"},
+		"new_values":     map[string]any{"email": "new@example.com"},
 	}
 	contextJSON, _ := json.Marshal(contextData)
 
@@ -282,7 +282,7 @@ func (suite *AuditServiceTestSuite) TestRecord_DataModificationEvent() {
 // Test Record - Error Event
 func (suite *AuditServiceTestSuite) TestRecord_ErrorEvent() {
 	// Arrange
-	contextData := map[string]interface{}{
+	contextData := map[string]any{
 		"error_message": "Database connection timeout",
 		"operation":     "get_user_permissions",
 		"duration_ms":   5000,
@@ -314,7 +314,7 @@ func (suite *AuditServiceTestSuite) TestRecord_ErrorEvent() {
 // Test Record - Compliance Event
 func (suite *AuditServiceTestSuite) TestRecord_ComplianceEvent() {
 	// Arrange
-	contextData := map[string]interface{}{
+	contextData := map[string]any{
 		"regulation":         "GDPR",
 		"data_subject":       "user123@example.com",
 		"request_type":       "data_deletion",

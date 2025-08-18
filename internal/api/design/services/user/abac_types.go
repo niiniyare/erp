@@ -25,7 +25,7 @@ var UserAttributesResult = Type("UserAttributesResult", func() {
 
 	// Core user attributes
 	Attribute("attributes", MapOf(String, Any), "User attributes for ABAC", func() {
-		Example(map[string]interface{}{
+		Example(map[string]any{
 			"user.department":         "finance",
 			"user.security_level":     7,
 			"user.employment_status":  "active",
@@ -41,7 +41,7 @@ var UserAttributesResult = Type("UserAttributesResult", func() {
 
 	// Derived/computed attributes
 	Attribute("derived_attributes", MapOf(String, Any), "Computed user attributes", func() {
-		Example(map[string]interface{}{
+		Example(map[string]any{
 			"user.experience_level":           "senior",
 			"user.risk_profile":               "low",
 			"user.clearance_expired":          false,
@@ -134,7 +134,7 @@ var SetUserAttributesPayload = Type("SetUserAttributesPayload", func() {
 		Example("550e8400-e29b-41d4-a716-446655440000")
 	})
 	Attribute("attributes", MapOf(String, Any), "User attributes to set", func() {
-		Example(map[string]interface{}{
+		Example(map[string]any{
 			"user.department":        "finance",
 			"user.security_level":    7,
 			"user.employment_status": "active",
@@ -462,7 +462,7 @@ var CheckPermissionPayload = Type("CheckPermissionPayload", func() {
 		Example("read")
 	})
 	Attribute("context", MapOf(String, Any), "Additional context", func() {
-		Example(map[string]interface{}{
+		Example(map[string]any{
 			"urgency":         "normal",
 			"business_reason": "quarterly_reporting",
 		})

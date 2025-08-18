@@ -545,7 +545,7 @@ func (s *AdminFeatureFlagService) auditABACDecision(
 	userID, tenantID uuid.UUID,
 	action string,
 	result *abac.PermissionEvaluationResult,
-	payload interface{},
+	payload any,
 ) {
 	s.logger.Info("Admin feature flag ABAC decision audit", logger.Fields{
 		"event_type":         "abac_authorization_decision",

@@ -58,9 +58,9 @@ type CollectUserAttributesInput struct {
 
 // CollectUserAttributesOutput represents output of user attribute collection
 type CollectUserAttributesOutput struct {
-	Attributes map[string]interface{} `json:"attributes"`
-	Source     string                 `json:"source"`
-	Timestamp  time.Time              `json:"timestamp"`
+	Attributes map[string]any `json:"attributes"`
+	Source     string         `json:"source"`
+	Timestamp  time.Time      `json:"timestamp"`
 }
 
 // CollectUserAttributes collects user attributes from various sources
@@ -80,7 +80,7 @@ func (a *AttributeCollectionActivities) CollectUserAttributes(ctx context.Contex
 			"request_id": input.RequestID,
 		})
 
-	attributes := make(map[string]interface{})
+	attributes := make(map[string]any)
 
 	// Get user basic attributes
 	userAttrs, err := a.collectBasicUserAttributes(ctx, input.UserID)
@@ -165,13 +165,13 @@ func (a *AttributeCollectionActivities) CollectUserAttributes(ctx context.Contex
 }
 
 // collectBasicUserAttributes collects basic user information
-func (a *AttributeCollectionActivities) collectBasicUserAttributes(ctx context.Context, userID uuid.UUID) (map[string]interface{}, error) {
+func (a *AttributeCollectionActivities) collectBasicUserAttributes(ctx context.Context, userID uuid.UUID) (map[string]any, error) {
 	user, err := a.identityService.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	attributes := map[string]interface{}{
+	attributes := map[string]any{
 		"id":         user.ID.String(),
 		"email":      user.Email,
 		"status":     user.AccountStatus,
@@ -195,15 +195,15 @@ func (a *AttributeCollectionActivities) collectBasicUserAttributes(ctx context.C
 }
 
 // collectPersonAttributes collects person-specific attributes
-func (a *AttributeCollectionActivities) collectPersonAttributes(ctx context.Context, userID uuid.UUID) (map[string]interface{}, error) {
+func (a *AttributeCollectionActivities) collectPersonAttributes(ctx context.Context, userID uuid.UUID) (map[string]any, error) {
 	// Get user by ID to check if it has person-related data
 	_, err := a.identityService.GetUserByID(ctx, userID)
 	if err != nil {
-		return map[string]interface{}{}, nil // Not found or error
+		return map[string]any{}, nil // Not found or error
 	}
 
 	// This is a placeholder - adjust based on actual person model
-	attributes := map[string]interface{}{
+	attributes := map[string]any{
 		"is_person": true,
 		"type":      "person",
 	}
@@ -212,15 +212,15 @@ func (a *AttributeCollectionActivities) collectPersonAttributes(ctx context.Cont
 }
 
 // collectEmployeeAttributes collects employee-specific attributes
-func (a *AttributeCollectionActivities) collectEmployeeAttributes(ctx context.Context, userID uuid.UUID) (map[string]interface{}, error) {
+func (a *AttributeCollectionActivities) collectEmployeeAttributes(ctx context.Context, userID uuid.UUID) (map[string]any, error) {
 	// Get user by ID to check if it has employee-related data
 	_, err := a.identityService.GetUserByID(ctx, userID)
 	if err != nil {
-		return map[string]interface{}{}, nil // Not found or error
+		return map[string]any{}, nil // Not found or error
 	}
 
 	// This is a placeholder - adjust based on actual employee model
-	attributes := map[string]interface{}{
+	attributes := map[string]any{
 		"is_employee": true,
 		"type":        "employee",
 	}
@@ -229,10 +229,10 @@ func (a *AttributeCollectionActivities) collectEmployeeAttributes(ctx context.Co
 }
 
 // collectRoleAttributes collects role-based attributes
-func (a *AttributeCollectionActivities) collectRoleAttributes(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) (map[string]interface{}, error) {
+func (a *AttributeCollectionActivities) collectRoleAttributes(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) (map[string]any, error) {
 	// This is a placeholder for role collection
 	// You'll need to implement based on your role/permission system
-	attributes := map[string]interface{}{
+	attributes := map[string]any{
 		"has_roles": false,
 	}
 
@@ -240,13 +240,13 @@ func (a *AttributeCollectionActivities) collectRoleAttributes(ctx context.Contex
 }
 
 // collectStoredAttributes collects custom stored attributes
-func (a *AttributeCollectionActivities) collectStoredAttributes(ctx context.Context, entityID uuid.UUID, category types.AttributeCategory) (map[string]interface{}, error) {
+func (a *AttributeCollectionActivities) collectStoredAttributes(ctx context.Context, entityID uuid.UUID, category types.AttributeCategory) (map[string]any, error) {
 	attributeValues, err := a.attributeRepo.GetAttributeValuesByEntity(ctx, entityID, category)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stored attributes: %w", err)
 	}
 
-	attributes := make(map[string]interface{})
+	attributes := make(map[string]any)
 	for _, attrValue := range attributeValues {
 		// You'll need to implement attribute definition lookup to get the name
 		attributes[fmt.Sprintf("attr_%s", attrValue.DefinitionID.String())] = attrValue.Value
@@ -265,9 +265,9 @@ type CollectResourceAttributesInput struct {
 
 // CollectResourceAttributesOutput represents output of resource attribute collection
 type CollectResourceAttributesOutput struct {
-	Attributes map[string]interface{} `json:"attributes"`
-	Source     string                 `json:"source"`
-	Timestamp  time.Time              `json:"timestamp"`
+	Attributes map[string]any `json:"attributes"`
+	Source     string         `json:"source"`
+	Timestamp  time.Time      `json:"timestamp"`
 }
 
 // CollectResourceAttributes collects resource attributes
@@ -288,7 +288,7 @@ func (a *AttributeCollectionActivities) CollectResourceAttributes(ctx context.Co
 			"request_id":    input.RequestID,
 		})
 
-	attributes := make(map[string]interface{})
+	attributes := make(map[string]any)
 
 	// Add basic resource attributes
 	attributes["type"] = input.ResourceType
@@ -356,8 +356,8 @@ func (a *AttributeCollectionActivities) CollectResourceAttributes(ctx context.Co
 }
 
 // collectResourceSpecificAttributes collects attributes specific to resource type
-func (a *AttributeCollectionActivities) collectResourceSpecificAttributes(ctx context.Context, input *CollectResourceAttributesInput) (map[string]interface{}, error) {
-	attributes := make(map[string]interface{})
+func (a *AttributeCollectionActivities) collectResourceSpecificAttributes(ctx context.Context, input *CollectResourceAttributesInput) (map[string]any, error) {
+	attributes := make(map[string]any)
 
 	switch input.ResourceType {
 	case "user":
@@ -386,18 +386,18 @@ func (a *AttributeCollectionActivities) collectResourceSpecificAttributes(ctx co
 
 // BuildEnvironmentContextInput represents input for environment context building
 type BuildEnvironmentContextInput struct {
-	IPAddress   string                 `json:"ip_address,omitempty"`
-	UserAgent   string                 `json:"user_agent,omitempty"`
-	SessionData map[string]interface{} `json:"session_data,omitempty"`
-	RequestTime time.Time              `json:"request_time"`
-	RequestID   string                 `json:"request_id"`
+	IPAddress   string         `json:"ip_address,omitempty"`
+	UserAgent   string         `json:"user_agent,omitempty"`
+	SessionData map[string]any `json:"session_data,omitempty"`
+	RequestTime time.Time      `json:"request_time"`
+	RequestID   string         `json:"request_id"`
 }
 
 // BuildEnvironmentContextOutput represents output of environment context building
 type BuildEnvironmentContextOutput struct {
-	Context   map[string]interface{} `json:"context"`
-	Source    string                 `json:"source"`
-	Timestamp time.Time              `json:"timestamp"`
+	Context   map[string]any `json:"context"`
+	Source    string         `json:"source"`
+	Timestamp time.Time      `json:"timestamp"`
 }
 
 // BuildEnvironmentContext builds environment context for policy evaluation
@@ -416,7 +416,7 @@ func (a *AttributeCollectionActivities) BuildEnvironmentContext(ctx context.Cont
 			"request_id": input.RequestID,
 		})
 
-	context := make(map[string]interface{})
+	context := make(map[string]any)
 
 	// Time-based attributes
 	timeAttrs := a.buildTimeAttributes(input.RequestTime)
@@ -475,13 +475,13 @@ func (a *AttributeCollectionActivities) BuildEnvironmentContext(ctx context.Cont
 }
 
 // buildTimeAttributes builds time-based context attributes
-func (a *AttributeCollectionActivities) buildTimeAttributes(requestTime time.Time) map[string]interface{} {
+func (a *AttributeCollectionActivities) buildTimeAttributes(requestTime time.Time) map[string]any {
 	now := requestTime
 	if requestTime.IsZero() {
 		now = time.Now()
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"current_time":      now,
 		"hour":              now.Hour(),
 		"day_of_week":       now.Weekday().String(),
@@ -496,8 +496,8 @@ func (a *AttributeCollectionActivities) buildTimeAttributes(requestTime time.Tim
 }
 
 // buildNetworkAttributes builds network-based context attributes
-func (a *AttributeCollectionActivities) buildNetworkAttributes(ipAddress string) map[string]interface{} {
-	attributes := map[string]interface{}{
+func (a *AttributeCollectionActivities) buildNetworkAttributes(ipAddress string) map[string]any {
+	attributes := map[string]any{
 		"ip_address": ipAddress,
 	}
 
@@ -520,8 +520,8 @@ func (a *AttributeCollectionActivities) buildNetworkAttributes(ipAddress string)
 }
 
 // buildDeviceAttributes builds device-based context attributes
-func (a *AttributeCollectionActivities) buildDeviceAttributes(userAgent string) map[string]interface{} {
-	attributes := map[string]interface{}{
+func (a *AttributeCollectionActivities) buildDeviceAttributes(userAgent string) map[string]any {
+	attributes := map[string]any{
 		"user_agent": userAgent,
 	}
 
@@ -569,8 +569,8 @@ func (a *AttributeCollectionActivities) buildDeviceAttributes(userAgent string) 
 }
 
 // buildSessionAttributes builds session-based context attributes
-func (a *AttributeCollectionActivities) buildSessionAttributes(sessionData map[string]interface{}) map[string]interface{} {
-	attributes := make(map[string]interface{})
+func (a *AttributeCollectionActivities) buildSessionAttributes(sessionData map[string]any) map[string]any {
+	attributes := make(map[string]any)
 
 	for k, v := range sessionData {
 		switch k {
@@ -592,8 +592,8 @@ func (a *AttributeCollectionActivities) buildSessionAttributes(sessionData map[s
 }
 
 // buildRiskAttributes builds risk-based context attributes
-func (a *AttributeCollectionActivities) buildRiskAttributes(ctx context.Context, input *BuildEnvironmentContextInput) map[string]interface{} {
-	attributes := map[string]interface{}{
+func (a *AttributeCollectionActivities) buildRiskAttributes(ctx context.Context, input *BuildEnvironmentContextInput) map[string]any {
+	attributes := map[string]any{
 		"risk_score": 0.0,
 		"risk_level": "low",
 	}
@@ -660,10 +660,10 @@ func (a *AttributeCollectionActivities) isPrivateIP(ip net.IP) bool {
 }
 
 // buildSimpleGeolocation provides basic geolocation (placeholder implementation)
-func (a *AttributeCollectionActivities) buildSimpleGeolocation(ipAddress string) map[string]interface{} {
+func (a *AttributeCollectionActivities) buildSimpleGeolocation(ipAddress string) map[string]any {
 	// This is a very basic implementation
 	// In production, you would use a proper geolocation service like MaxMind GeoIP2
-	attributes := map[string]interface{}{
+	attributes := map[string]any{
 		"country":  "unknown",
 		"region":   "unknown",
 		"city":     "unknown",

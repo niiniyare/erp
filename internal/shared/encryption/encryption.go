@@ -54,7 +54,7 @@ type EncryptionError struct {
 	Code    string
 	Message string
 	Cause   error
-	Context map[string]interface{}
+	Context map[string]any
 }
 
 func (e *EncryptionError) Error() string {
@@ -68,7 +68,7 @@ func (e *EncryptionError) Unwrap() error {
 	return e.Cause
 }
 
-func NewEncryptionError(code, message string, cause error, context map[string]interface{}) *EncryptionError {
+func NewEncryptionError(code, message string, cause error, context map[string]any) *EncryptionError {
 	return &EncryptionError{
 		Code:    code,
 		Message: message,
@@ -556,7 +556,7 @@ func (ckr *CachedKeyRepository) ListKeys(ctx context.Context) (map[KeyID][]*Encr
 
 func (ckr *CachedKeyRepository) RotateKey(ctx context.Context, keyID KeyID) (*EncryptionKey, error) {
 	// Clear all cached versions of this key
-	ckr.cache.Range(func(key, value interface{}) bool {
+	ckr.cache.Range(func(key, value any) bool {
 		keyStr := key.(string)
 		if keyStr[:len(keyID)] == string(keyID) {
 			ckr.cache.Delete(key)
@@ -577,7 +577,7 @@ func (ckr *CachedKeyRepository) cleanupExpired() {
 
 	for range ticker.C {
 		now := time.Now()
-		ckr.cache.Range(func(key, value interface{}) bool {
+		ckr.cache.Range(func(key, value any) bool {
 			entry := value.(*cacheEntry)
 			if now.After(entry.expiresAt) || entry.key.IsExpired() {
 				ckr.cache.Delete(key)
@@ -612,7 +612,7 @@ func NewEncryptionService(keyRepo KeyRepository, maxDataSize int, logger *zap.Lo
 		logger:      logger,
 		metrics:     metrics,
 		aeadPool: sync.Pool{
-			New: func() interface{} {
+			New: func() any {
 				return make(map[string]cipher.AEAD)
 			},
 		},
@@ -639,14 +639,14 @@ func (es *encryptionService) Encrypt(ctx context.Context, plaintext string, keyI
 	if err != nil {
 		es.metrics.IncrementErrorCount("encrypt", "key_retrieval_failed")
 		return nil, NewEncryptionError(ErrCodeKeyNotFound, "failed to retrieve encryption key", err,
-			map[string]interface{}{"keyID": keyID})
+			map[string]any{"keyID": keyID})
 	}
 
 	aead, err := es.createAEAD(key)
 	if err != nil {
 		es.metrics.IncrementErrorCount("encrypt", "aead_creation_failed")
 		return nil, NewEncryptionError(ErrCodeEncryptionFailed, "failed to create AEAD", err,
-			map[string]interface{}{"keyID": keyID, "algorithm": key.Algorithm()})
+			map[string]any{"keyID": keyID, "algorithm": key.Algorithm()})
 	}
 
 	nonce := make([]byte, aead.NonceSize())
@@ -688,7 +688,7 @@ func (es *encryptionService) Decrypt(ctx context.Context, payload *EncryptedPayl
 	if err != nil {
 		es.metrics.IncrementErrorCount("decrypt", "key_retrieval_failed")
 		return "", NewEncryptionError(ErrCodeKeyNotFound, "failed to retrieve decryption key", err,
-			map[string]interface{}{
+			map[string]any{
 				"keyID":      payload.KeyID(),
 				"keyVersion": payload.KeyVersion(),
 			})
@@ -698,7 +698,7 @@ func (es *encryptionService) Decrypt(ctx context.Context, payload *EncryptedPayl
 	if err != nil {
 		es.metrics.IncrementErrorCount("decrypt", "aead_creation_failed")
 		return "", NewEncryptionError(ErrCodeDecryptionFailed, "failed to create AEAD", err,
-			map[string]interface{}{
+			map[string]any{
 				"keyID":     payload.KeyID(),
 				"algorithm": key.Algorithm(),
 			})
@@ -710,7 +710,7 @@ func (es *encryptionService) Decrypt(ctx context.Context, payload *EncryptedPayl
 	if err != nil {
 		es.metrics.IncrementErrorCount("decrypt", "decryption_failed")
 		return "", NewEncryptionError(ErrCodeDecryptionFailed, "failed to decrypt data", err,
-			map[string]interface{}{
+			map[string]any{
 				"keyID":      payload.KeyID(),
 				"keyVersion": payload.KeyVersion(),
 			})
@@ -809,7 +809,7 @@ func (es *encryptionService) BulkEncrypt(ctx context.Context, data map[string]st
 
 	if len(errors) > 0 {
 		return results, NewEncryptionError(ErrCodeEncryptionFailed, "bulk encryption partially failed", nil,
-			map[string]interface{}{"errors": errors})
+			map[string]any{"errors": errors})
 	}
 
 	return results, nil
@@ -871,7 +871,7 @@ func (es *encryptionService) BulkDecrypt(ctx context.Context, payloads map[strin
 
 	if len(errors) > 0 {
 		return results, NewEncryptionError(ErrCodeDecryptionFailed, "bulk decryption partially failed", nil,
-			map[string]interface{}{"errors": errors})
+			map[string]any{"errors": errors})
 	}
 
 	return results, nil
@@ -895,7 +895,7 @@ func (es *encryptionService) createAEAD(key *EncryptionKey) (cipher.AEAD, error)
 		return nil, NewEncryptionError(ErrCodeInvalidAlgorithm, "ChaCha20Poly1305 not implemented", nil, nil)
 	default:
 		return nil, NewEncryptionError(ErrCodeInvalidAlgorithm, "unsupported algorithm", nil,
-			map[string]interface{}{"algorithm": key.Algorithm()})
+			map[string]any{"algorithm": key.Algorithm()})
 	}
 }
 
@@ -951,7 +951,7 @@ func (fes *FieldEncryptionService) EncryptAndStore(ctx context.Context, id, fiel
 
 	if len(plaintext) > fes.config.Encryption.MaxDataSize {
 		return NewEncryptionError(ErrCodeDataTooLarge, "plaintext too large", nil,
-			map[string]interface{}{
+			map[string]any{
 				"size":    len(plaintext),
 				"maxSize": fes.config.Encryption.MaxDataSize,
 			})
@@ -1084,7 +1084,7 @@ func (fes *FieldEncryptionService) BulkEncryptAndStore(ctx context.Context, fiel
 
 		if err := fes.repository.Save(ctx, fieldEncryption); err != nil {
 			return NewEncryptionError(ErrCodeServiceUnavailable, "failed to save bulk encrypted field", err,
-				map[string]interface{}{"fieldID": id})
+				map[string]any{"fieldID": id})
 		}
 	}
 
@@ -1152,18 +1152,18 @@ func (kr *SecureInMemoryKeyRepository) GetKey(ctx context.Context, keyID KeyID, 
 	versions, exists := kr.keys[keyID]
 	if !exists {
 		return nil, NewEncryptionError(ErrCodeKeyNotFound, "key ID not found", nil,
-			map[string]interface{}{"keyID": keyID})
+			map[string]any{"keyID": keyID})
 	}
 
 	key, exists := versions[version]
 	if !exists {
 		return nil, NewEncryptionError(ErrCodeKeyNotFound, "key version not found", nil,
-			map[string]interface{}{"keyID": keyID, "version": version})
+			map[string]any{"keyID": keyID, "version": version})
 	}
 
 	if key.IsExpired() {
 		return nil, NewEncryptionError(ErrCodeKeyNotFound, "key expired", nil,
-			map[string]interface{}{"keyID": keyID, "version": version})
+			map[string]any{"keyID": keyID, "version": version})
 	}
 
 	return key, nil
@@ -1176,7 +1176,7 @@ func (kr *SecureInMemoryKeyRepository) GetLatestKey(ctx context.Context, keyID K
 	versions, exists := kr.keys[keyID]
 	if !exists {
 		return nil, NewEncryptionError(ErrCodeKeyNotFound, "key ID not found", nil,
-			map[string]interface{}{"keyID": keyID})
+			map[string]any{"keyID": keyID})
 	}
 
 	var latestKey *EncryptionKey
@@ -1191,7 +1191,7 @@ func (kr *SecureInMemoryKeyRepository) GetLatestKey(ctx context.Context, keyID K
 
 	if latestKey == nil {
 		return nil, NewEncryptionError(ErrCodeKeyNotFound, "no valid key found", nil,
-			map[string]interface{}{"keyID": keyID})
+			map[string]any{"keyID": keyID})
 	}
 
 	return latestKey, nil
@@ -1236,7 +1236,7 @@ func (kr *SecureInMemoryKeyRepository) RotateKey(ctx context.Context, keyID KeyI
 	versions, exists := kr.keys[keyID]
 	if !exists {
 		return nil, NewEncryptionError(ErrCodeKeyNotFound, "key ID not found", nil,
-			map[string]interface{}{"keyID": keyID})
+			map[string]any{"keyID": keyID})
 	}
 
 	// Find the highest version number
@@ -1329,7 +1329,7 @@ func (fr *ThreadSafeFieldRepository) FindByID(ctx context.Context, id string) (*
 	field, exists := fr.fields[id]
 	if !exists {
 		return nil, NewEncryptionError(ErrCodeServiceUnavailable, "field not found", nil,
-			map[string]interface{}{"fieldID": id})
+			map[string]any{"fieldID": id})
 	}
 
 	return field, nil
@@ -1363,7 +1363,7 @@ func (fr *ThreadSafeFieldRepository) Delete(ctx context.Context, id string) erro
 
 	if _, exists := fr.fields[id]; !exists {
 		return NewEncryptionError(ErrCodeServiceUnavailable, "field not found", nil,
-			map[string]interface{}{"fieldID": id})
+			map[string]any{"fieldID": id})
 	}
 
 	delete(fr.fields, id)

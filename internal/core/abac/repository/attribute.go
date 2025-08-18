@@ -711,7 +711,7 @@ func (r *attributeRepository) convertSQLCAttributeDefinitionToModel(attrDef *db.
 		return nil, fmt.Errorf("failed to unmarshal allowed_values: %w", err)
 	}
 
-	var validationRules map[string]interface{}
+	var validationRules map[string]any
 	if err := json.Unmarshal(attrDef.ValidationRules, &validationRules); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal validation_rules: %w", err)
 	}

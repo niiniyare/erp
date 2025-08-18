@@ -2012,12 +2012,12 @@ func (h *UserGoaHandler) GetAttributes(ctx context.Context, p *user.GetAttribute
 		UserID:      p.ID,
 		UserType:    "standard",
 		RetrievedAt: "2024-01-01T00:00:00Z",
-		Attributes: map[string]interface{}{
+		Attributes: map[string]any{
 			"department": "engineering",
 			"role":       "developer",
 			"level":      "senior",
 		},
-		DerivedAttributes: map[string]interface{}{
+		DerivedAttributes: map[string]any{
 			"access_level": "high",
 		},
 	}
@@ -2127,7 +2127,7 @@ func (h *UserGoaHandler) GetSessionAttributes(ctx context.Context, p *user.GetSe
 		UserID:    p.UserID,
 		Status:    "active",
 		CreatedAt: "2024-01-01T00:00:00Z",
-		Attributes: map[string]interface{}{
+		Attributes: map[string]any{
 			"ip_address":  "192.168.1.1",
 			"location":    "office",
 			"device_type": "laptop",
@@ -2183,11 +2183,11 @@ func (h *UserGoaHandler) GetUserContext(ctx context.Context, p *user.GetUserCont
 	result := &user.UserContextResult{
 		UserID:      p.ID,
 		RetrievedAt: "2024-01-01T00:00:00Z",
-		UserAttributes: map[string]interface{}{
+		UserAttributes: map[string]any{
 			"department": "engineering",
 			"role":       "developer",
 		},
-		DerivedAttributes: map[string]interface{}{
+		DerivedAttributes: map[string]any{
 			"access_level": "high",
 		},
 	}

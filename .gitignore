@@ -1,5 +1,5 @@
 bin/
 logs/
-internal/api/gen/
+# internal/api/gen/
 internal/gen/gen/http/openapi*.json
 internal/gen/gen/http/openapi*.yaml

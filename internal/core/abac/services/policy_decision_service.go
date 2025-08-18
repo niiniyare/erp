@@ -26,7 +26,7 @@ type PolicyDecisionService interface {
 	MakeBulkDecision(ctx context.Context, req *BulkDecisionRequest) (*BulkDecisionResponse, error)
 
 	// Authorization checks
-	IsAuthorized(ctx context.Context, userID uuid.UUID, resourceType string, resourceID *uuid.UUID, action string, context map[string]interface{}) (bool, error)
+	IsAuthorized(ctx context.Context, userID uuid.UUID, resourceType string, resourceID *uuid.UUID, action string, context map[string]any) (bool, error)
 	CheckPermission(ctx context.Context, req *PermissionCheckRequest) (*PermissionCheckResponse, error)
 
 	// Batch operations
@@ -43,18 +43,18 @@ type PolicyDecisionService interface {
 
 // DecisionRequest represents a policy decision request
 type DecisionRequest struct {
-	UserID          uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType    string                 `json:"resource_type" validate:"required"`
-	ResourceID      *uuid.UUID             `json:"resource_id,omitempty"`
-	Action          string                 `json:"action" validate:"required"`
-	EntityID        *uuid.UUID             `json:"entity_id,omitempty"`
-	Context         map[string]interface{} `json:"context,omitempty"`
-	RequestID       string                 `json:"request_id"`
-	UseCache        bool                   `json:"use_cache"`
-	CacheResults    bool                   `json:"cache_results"`
-	IncludeDetails  bool                   `json:"include_details"`
-	IncludeAdvice   bool                   `json:"include_advice"`
-	ExplainDecision bool                   `json:"explain_decision"`
+	UserID          uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType    string         `json:"resource_type" validate:"required"`
+	ResourceID      *uuid.UUID     `json:"resource_id,omitempty"`
+	Action          string         `json:"action" validate:"required"`
+	EntityID        *uuid.UUID     `json:"entity_id,omitempty"`
+	Context         map[string]any `json:"context,omitempty"`
+	RequestID       string         `json:"request_id"`
+	UseCache        bool           `json:"use_cache"`
+	CacheResults    bool           `json:"cache_results"`
+	IncludeDetails  bool           `json:"include_details"`
+	IncludeAdvice   bool           `json:"include_advice"`
+	ExplainDecision bool           `json:"explain_decision"`
 }
 
 // DecisionResponse represents a policy decision response
@@ -96,13 +96,13 @@ type BulkDecisionResponse struct {
 
 // PermissionCheckRequest represents a permission check request
 type PermissionCheckRequest struct {
-	UserID       uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType string                 `json:"resource_type" validate:"required"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Action       string                 `json:"action" validate:"required"`
-	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Context      map[string]interface{} `json:"context,omitempty"`
-	RequestID    string                 `json:"request_id"`
+	UserID       uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType string         `json:"resource_type" validate:"required"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Action       string         `json:"action" validate:"required"`
+	EntityID     *uuid.UUID     `json:"entity_id,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
+	RequestID    string         `json:"request_id"`
 }
 
 // PermissionCheckResponse represents a permission check response
@@ -132,7 +132,7 @@ type DecisionAuditLog struct {
 	CacheHit       bool                       `json:"cache_hit"`
 	RequestID      string                     `json:"request_id"`
 	TenantID       uuid.UUID                  `json:"tenant_id"`
-	Context        map[string]interface{}     `json:"context,omitempty"`
+	Context        map[string]any             `json:"context,omitempty"`
 }
 
 // DecisionAuditTrail provides detailed audit information
@@ -146,11 +146,11 @@ type DecisionAuditTrail struct {
 
 // EvaluationStep represents a step in the evaluation process
 type EvaluationStep struct {
-	StepType    string                 `json:"step_type"`
-	Description string                 `json:"description"`
-	Result      interface{}            `json:"result"`
-	Duration    time.Duration          `json:"duration"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	StepType    string         `json:"step_type"`
+	Description string         `json:"description"`
+	Result      any            `json:"result"`
+	Duration    time.Duration  `json:"duration"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 // CacheEvent represents a cache-related event during evaluation
@@ -173,10 +173,10 @@ type EvaluationTiming struct {
 
 // PolicyDiscoveryRequest represents a request to discover applicable policies
 type PolicyDiscoveryRequest struct {
-	UserID       uuid.UUID              `json:"user_id"`
-	ResourceType string                 `json:"resource_type"`
-	Action       string                 `json:"action"`
-	Context      map[string]interface{} `json:"context,omitempty"`
+	UserID       uuid.UUID      `json:"user_id"`
+	ResourceType string         `json:"resource_type"`
+	Action       string         `json:"action"`
+	Context      map[string]any `json:"context,omitempty"`
 }
 
 // PolicySummary provides a summary of a policy
@@ -191,12 +191,12 @@ type PolicySummary struct {
 
 // DecisionExplanationRequest represents a request for decision explanation
 type DecisionExplanationRequest struct {
-	UserID       uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType string                 `json:"resource_type" validate:"required"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Action       string                 `json:"action" validate:"required"`
-	Context      map[string]interface{} `json:"context,omitempty"`
-	DetailLevel  string                 `json:"detail_level"` // "basic", "detailed", "verbose"
+	UserID       uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType string         `json:"resource_type" validate:"required"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Action       string         `json:"action" validate:"required"`
+	Context      map[string]any `json:"context,omitempty"`
+	DetailLevel  string         `json:"detail_level"` // "basic", "detailed", "verbose"
 }
 
 // DecisionExplanation provides an explanation of how a decision was made
@@ -204,7 +204,7 @@ type DecisionExplanation struct {
 	FinalDecision      types.PolicyDecisionType   `json:"final_decision"`
 	ReasoningSummary   string                     `json:"reasoning_summary"`
 	PolicyEvaluations  []*PolicyEvaluationSummary `json:"policy_evaluations"`
-	AttributesUsed     map[string]interface{}     `json:"attributes_used"`
+	AttributesUsed     map[string]any             `json:"attributes_used"`
 	ConflictResolution *ConflictResolutionSummary `json:"conflict_resolution,omitempty"`
 	CombiningAlgorithm string                     `json:"combining_algorithm"`
 	Recommendations    []string                   `json:"recommendations,omitempty"`
@@ -456,7 +456,7 @@ func (s *policyDecisionService) MakeBulkDecision(ctx context.Context, req *BulkD
 }
 
 // IsAuthorized checks if a user is authorized for an action
-func (s *policyDecisionService) IsAuthorized(ctx context.Context, userID uuid.UUID, resourceType string, resourceID *uuid.UUID, action string, context map[string]interface{}) (bool, error) {
+func (s *policyDecisionService) IsAuthorized(ctx context.Context, userID uuid.UUID, resourceType string, resourceID *uuid.UUID, action string, context map[string]any) (bool, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "policyDecisionService.IsAuthorized")
 	defer span.End()
 
@@ -592,8 +592,8 @@ func (s *policyDecisionService) GetDecisionHistory(ctx context.Context, userID u
 			Decision:     eval.Decision,
 			Allowed:      eval.Decision == types.PolicyDecisionAllow,
 			EvaluatedAt:  eval.EvaluatedAt,
-			Context:      make(map[string]interface{}), // No context field in PolicyEvaluation
-			CacheHit:     false,                        // No cache hit field in PolicyEvaluation
+			Context:      make(map[string]any),
+			CacheHit:     false, // No cache hit field in PolicyEvaluation
 		}
 		auditLogs = append(auditLogs, auditLog)
 	}
@@ -644,7 +644,7 @@ func (s *policyDecisionService) ExplainDecision(ctx context.Context, req *Decisi
 				Reason:       "User matches the required attributes",
 			},
 		},
-		AttributesUsed: map[string]interface{}{
+		AttributesUsed: map[string]any{
 			"user.role":     "manager",
 			"resource.type": req.ResourceType,
 			"action.name":   req.Action,

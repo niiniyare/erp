@@ -113,7 +113,7 @@ func testAdminRoleBulkOperationPermission(t *testing.T) {
 		ResourceType: featureflag.ResourceTypeFeatureFlagBulk,
 		Action:       featureflag.ActionBulkEnable,
 		EntityID:     &tenantID,
-		Context: map[string]interface{}{
+		Context: map[string]any{
 			featureflag.AttrBulkOperationSize: flagCount,
 			featureflag.AttrRequestReason:     reason,
 		},
@@ -300,7 +300,7 @@ func testSuperAdminEmergencyAccess(t *testing.T) {
 		ResourceType: featureflag.ResourceTypeFeatureFlagSystem,
 		Action:       featureflag.ActionEmergencyControl,
 		EntityID:     &tenantID,
-		Context: map[string]interface{}{
+		Context: map[string]any{
 			featureflag.AttrRequestReason: reason,
 			"emergency_operation":         true,
 			"requires_approval":           true,

@@ -284,7 +284,7 @@ func (h *abacGoaHandler) Explain(ctx context.Context, p *abacGen.ExplainPayload)
 		FinalDecision:      &finalDecision,
 		ReasoningSummary:   &reasoningSummary,
 		CombiningAlgorithm: &combiningAlgorithm,
-		AttributesUsed:     make(map[string]interface{}),
+		AttributesUsed:     make(map[string]any),
 		Recommendations:    []string{},
 		PolicyEvaluations:  []*abacGen.PolicyEvaluationSummary{},
 		ConflictResolution: &abacGen.ConflictResolutionSummary{

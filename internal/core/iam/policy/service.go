@@ -69,7 +69,7 @@ type CreatePolicyRequest struct {
 	Rules       []*model.PolicyRule    `json:"rules,omitempty"`
 	Priority    int                    `json:"priority" validate:"min=0"`
 	Enabled     bool                   `json:"enabled"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Metadata    map[string]any         `json:"metadata,omitempty"`
 }
 
 type UpdatePolicyRequest struct {
@@ -82,7 +82,7 @@ type UpdatePolicyRequest struct {
 	Rules       []*model.PolicyRule    `json:"rules,omitempty"`
 	Priority    *int                   `json:"priority,omitempty"`
 	Enabled     *bool                  `json:"enabled,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Metadata    map[string]any         `json:"metadata,omitempty"`
 }
 
 type ListPoliciesRequest struct {
@@ -108,7 +108,7 @@ type PolicyEvaluationRequest struct {
 	Resource    *model.PolicyResource    `json:"resource" validate:"required"`
 	Action      string                   `json:"action" validate:"required"`
 	Environment *model.PolicyEnvironment `json:"environment,omitempty"`
-	Context     map[string]interface{}   `json:"context,omitempty"`
+	Context     map[string]any           `json:"context,omitempty"`
 }
 
 type PolicyEvaluationResult struct {
@@ -118,7 +118,7 @@ type PolicyEvaluationResult struct {
 	Reason      string                    `json:"reason"`
 	Obligations []*model.PolicyObligation `json:"obligations,omitempty"`
 	Advice      []*model.PolicyAdvice     `json:"advice,omitempty"`
-	Attributes  map[string]interface{}    `json:"attributes,omitempty"`
+	Attributes  map[string]any            `json:"attributes,omitempty"`
 	EvaluatedAt time.Time                 `json:"evaluated_at"`
 }
 
@@ -156,14 +156,14 @@ type CreatePolicyTemplateRequest struct {
 	Category    string                     `json:"category" validate:"required"`
 	Template    *model.PolicyTemplateSpec  `json:"template" validate:"required"`
 	Parameters  []*model.TemplateParameter `json:"parameters,omitempty"`
-	Metadata    map[string]interface{}     `json:"metadata,omitempty"`
+	Metadata    map[string]any             `json:"metadata,omitempty"`
 }
 
 type InstantiatePolicyRequest struct {
-	TemplateID  uuid.UUID              `json:"template_id" validate:"required"`
-	Name        string                 `json:"name" validate:"required"`
-	Description string                 `json:"description"`
-	Parameters  map[string]interface{} `json:"parameters,omitempty"`
+	TemplateID  uuid.UUID      `json:"template_id" validate:"required"`
+	Name        string         `json:"name" validate:"required"`
+	Description string         `json:"description"`
+	Parameters  map[string]any `json:"parameters,omitempty"`
 }
 
 // Policy Version types
@@ -173,7 +173,7 @@ type CreatePolicyVersionRequest struct {
 	Target    *model.PolicyTarget    `json:"target,omitempty"`
 	Condition *model.PolicyCondition `json:"condition,omitempty"`
 	Rules     []*model.PolicyRule    `json:"rules,omitempty"`
-	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+	Metadata  map[string]any         `json:"metadata,omitempty"`
 }
 
 // Attribute Management types
@@ -184,9 +184,9 @@ type CreateAttributeRequest struct {
 	Description  string                      `json:"description"`
 	Required     bool                        `json:"required"`
 	Multivalued  bool                        `json:"multivalued"`
-	DefaultValue interface{}                 `json:"default_value,omitempty"`
+	DefaultValue any                         `json:"default_value,omitempty"`
 	Constraints  *model.AttributeConstraints `json:"constraints,omitempty"`
-	Metadata     map[string]interface{}      `json:"metadata,omitempty"`
+	Metadata     map[string]any              `json:"metadata,omitempty"`
 }
 
 type UpdateAttributeRequest struct {
@@ -197,9 +197,9 @@ type UpdateAttributeRequest struct {
 	Description  *string                     `json:"description,omitempty"`
 	Required     *bool                       `json:"required,omitempty"`
 	Multivalued  *bool                       `json:"multivalued,omitempty"`
-	DefaultValue interface{}                 `json:"default_value,omitempty"`
+	DefaultValue any                         `json:"default_value,omitempty"`
 	Constraints  *model.AttributeConstraints `json:"constraints,omitempty"`
-	Metadata     map[string]interface{}      `json:"metadata,omitempty"`
+	Metadata     map[string]any              `json:"metadata,omitempty"`
 }
 
 type ListAttributesRequest struct {
@@ -236,13 +236,13 @@ type PolicyConflictAnalysis struct {
 }
 
 type PolicyImpactAnalysis struct {
-	PolicyID        uuid.UUID              `json:"policy_id"`
-	AffectedUsers   int                    `json:"affected_users"`
-	AffectedRoles   int                    `json:"affected_roles"`
-	Impact          string                 `json:"impact"`
-	Recommendations []string               `json:"recommendations"`
-	Metadata        map[string]interface{} `json:"metadata,omitempty"`
-	AnalyzedAt      time.Time              `json:"analyzed_at"`
+	PolicyID        uuid.UUID      `json:"policy_id"`
+	AffectedUsers   int            `json:"affected_users"`
+	AffectedRoles   int            `json:"affected_roles"`
+	Impact          string         `json:"impact"`
+	Recommendations []string       `json:"recommendations"`
+	Metadata        map[string]any `json:"metadata,omitempty"`
+	AnalyzedAt      time.Time      `json:"analyzed_at"`
 }
 
 // Policy Caching types

@@ -39,14 +39,14 @@ var FeatureFlagResult = ResultType("application/vnd.featureflag", func() {
 			Example(25)
 		})
 		Attribute("target_audience", MapOf(String, Any), "Target audience configuration", func() {
-			Example(map[string]interface{}{
+			Example(map[string]any{
 				"user_roles":           []string{"admin", "manager"},
 				"min_account_age_days": 30,
 				"beta_users":           true,
 			})
 		})
 		Attribute("metadata", MapOf(String, Any), "Additional metadata", func() {
-			Example(map[string]interface{}{
+			Example(map[string]any{
 				"category":    "ui",
 				"owner":       "frontend-team",
 				"jira_ticket": "DASH-123",
@@ -117,14 +117,14 @@ var CreateFeatureFlagPayload = Type("CreateFeatureFlagPayload", func() {
 		Example(25)
 	})
 	Attribute("target_audience", MapOf(String, Any), "Target audience configuration", func() {
-		Example(map[string]interface{}{
+		Example(map[string]any{
 			"user_roles":           []string{"admin", "manager"},
 			"min_account_age_days": 30,
 			"beta_users":           true,
 		})
 	})
 	Attribute("metadata", MapOf(String, Any), "Additional metadata", func() {
-		Example(map[string]interface{}{
+		Example(map[string]any{
 			"category":    "ui",
 			"owner":       "frontend-team",
 			"jira_ticket": "DASH-123",
@@ -153,14 +153,14 @@ var UpdateFeatureFlagPayload = Type("UpdateFeatureFlagPayload", func() {
 		Example(50)
 	})
 	Attribute("target_audience", MapOf(String, Any), "Target audience configuration", func() {
-		Example(map[string]interface{}{
+		Example(map[string]any{
 			"user_roles":           []string{"admin", "manager", "user"},
 			"min_account_age_days": 7,
 			"beta_users":           true,
 		})
 	})
 	Attribute("metadata", MapOf(String, Any), "Additional metadata", func() {
-		Example(map[string]interface{}{
+		Example(map[string]any{
 			"category":        "ui",
 			"owner":           "frontend-team",
 			"jira_ticket":     "DASH-123",
@@ -304,7 +304,7 @@ var FeatureFlagStats = Type("FeatureFlagStats", func() {
 		Example(42.5)
 	})
 	Attribute("flags_by_type", MapOf(String, UInt64), "Flag count by type", func() {
-		Example(map[string]interface{}{
+		Example(map[string]any{
 			"boolean": 20,
 			"string":  3,
 			"number":  1,

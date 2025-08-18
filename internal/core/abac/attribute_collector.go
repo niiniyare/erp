@@ -104,53 +104,53 @@ const (
 )
 
 type CollectionContext struct {
-	RequestContext      map[string]interface{} `json:"request_context,omitempty"`
-	UserContext         *UserContext           `json:"user_context,omitempty"`
-	SessionContext      *SessionContext        `json:"session_context,omitempty"`
-	EnvironmentContext  *EnvironmentContext    `json:"environment_context,omitempty"`
-	PolicyContext       *PolicyContext         `json:"policy_context,omitempty"`
-	CollectionTimestamp time.Time              `json:"collection_timestamp"`
+	RequestContext      map[string]any      `json:"request_context,omitempty"`
+	UserContext         *UserContext        `json:"user_context,omitempty"`
+	SessionContext      *SessionContext     `json:"session_context,omitempty"`
+	EnvironmentContext  *EnvironmentContext `json:"environment_context,omitempty"`
+	PolicyContext       *PolicyContext      `json:"policy_context,omitempty"`
+	CollectionTimestamp time.Time           `json:"collection_timestamp"`
 }
 
 type UserContext struct {
-	UserID       uuid.UUID              `json:"user_id"`
-	Username     string                 `json:"username,omitempty"`
-	Roles        []string               `json:"roles,omitempty"`
-	Groups       []string               `json:"groups,omitempty"`
-	Department   string                 `json:"department,omitempty"`
-	Organization string                 `json:"organization,omitempty"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	UserID       uuid.UUID      `json:"user_id"`
+	Username     string         `json:"username,omitempty"`
+	Roles        []string       `json:"roles,omitempty"`
+	Groups       []string       `json:"groups,omitempty"`
+	Department   string         `json:"department,omitempty"`
+	Organization string         `json:"organization,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
 }
 
 type SessionContext struct {
-	SessionID    uuid.UUID              `json:"session_id"`
-	IPAddress    string                 `json:"ip_address,omitempty"`
-	UserAgent    string                 `json:"user_agent,omitempty"`
-	Location     *GeographicLocation    `json:"location,omitempty"`
-	DeviceInfo   *DeviceInfo            `json:"device_info,omitempty"`
-	StartTime    time.Time              `json:"start_time"`
-	LastActivity time.Time              `json:"last_activity"`
-	Properties   map[string]interface{} `json:"properties,omitempty"`
+	SessionID    uuid.UUID           `json:"session_id"`
+	IPAddress    string              `json:"ip_address,omitempty"`
+	UserAgent    string              `json:"user_agent,omitempty"`
+	Location     *GeographicLocation `json:"location,omitempty"`
+	DeviceInfo   *DeviceInfo         `json:"device_info,omitempty"`
+	StartTime    time.Time           `json:"start_time"`
+	LastActivity time.Time           `json:"last_activity"`
+	Properties   map[string]any      `json:"properties,omitempty"`
 }
 
 type EnvironmentContext struct {
-	Timestamp        time.Time              `json:"timestamp"`
-	TimeZone         string                 `json:"time_zone,omitempty"`
-	BusinessHours    bool                   `json:"business_hours"`
-	WorkingDay       bool                   `json:"working_day"`
-	Holiday          bool                   `json:"holiday"`
-	SystemLoad       float64                `json:"system_load,omitempty"`
-	NetworkCondition string                 `json:"network_condition,omitempty"`
-	SecurityLevel    string                 `json:"security_level,omitempty"`
-	Properties       map[string]interface{} `json:"properties,omitempty"`
+	Timestamp        time.Time      `json:"timestamp"`
+	TimeZone         string         `json:"time_zone,omitempty"`
+	BusinessHours    bool           `json:"business_hours"`
+	WorkingDay       bool           `json:"working_day"`
+	Holiday          bool           `json:"holiday"`
+	SystemLoad       float64        `json:"system_load,omitempty"`
+	NetworkCondition string         `json:"network_condition,omitempty"`
+	SecurityLevel    string         `json:"security_level,omitempty"`
+	Properties       map[string]any `json:"properties,omitempty"`
 }
 
 type PolicyContext struct {
-	PolicyIDs      []uuid.UUID            `json:"policy_ids,omitempty"`
-	EvaluationMode string                 `json:"evaluation_mode,omitempty"`
-	DecisionScope  string                 `json:"decision_scope,omitempty"`
-	CacheStrategy  string                 `json:"cache_strategy,omitempty"`
-	Properties     map[string]interface{} `json:"properties,omitempty"`
+	PolicyIDs      []uuid.UUID    `json:"policy_ids,omitempty"`
+	EvaluationMode string         `json:"evaluation_mode,omitempty"`
+	DecisionScope  string         `json:"decision_scope,omitempty"`
+	CacheStrategy  string         `json:"cache_strategy,omitempty"`
+	Properties     map[string]any `json:"properties,omitempty"`
 }
 
 type GeographicLocation struct {
@@ -162,13 +162,13 @@ type GeographicLocation struct {
 }
 
 type DeviceInfo struct {
-	DeviceType      string                 `json:"device_type,omitempty"`
-	OperatingSystem string                 `json:"operating_system,omitempty"`
-	Browser         string                 `json:"browser,omitempty"`
-	Platform        string                 `json:"platform,omitempty"`
-	IsMobile        bool                   `json:"is_mobile"`
-	IsSecure        bool                   `json:"is_secure"`
-	Properties      map[string]interface{} `json:"properties,omitempty"`
+	DeviceType      string         `json:"device_type,omitempty"`
+	OperatingSystem string         `json:"operating_system,omitempty"`
+	Browser         string         `json:"browser,omitempty"`
+	Platform        string         `json:"platform,omitempty"`
+	IsMobile        bool           `json:"is_mobile"`
+	IsSecure        bool           `json:"is_secure"`
+	Properties      map[string]any `json:"properties,omitempty"`
 }
 
 type AttributeCollectionOptions struct {
@@ -191,11 +191,11 @@ type SourcePreference struct {
 }
 
 type TransformationRule struct {
-	RuleID         uuid.UUID              `json:"rule_id"`
-	AttributeName  string                 `json:"attribute_name"`
-	Transformation string                 `json:"transformation"`
-	Parameters     map[string]interface{} `json:"parameters,omitempty"`
-	Conditions     []string               `json:"conditions,omitempty"`
+	RuleID         uuid.UUID      `json:"rule_id"`
+	AttributeName  string         `json:"attribute_name"`
+	Transformation string         `json:"transformation"`
+	Parameters     map[string]any `json:"parameters,omitempty"`
+	Conditions     []string       `json:"conditions,omitempty"`
 }
 
 type CollectionPriority string
@@ -231,7 +231,7 @@ const (
 
 type CollectedAttribute struct {
 	AttributeName  string                  `json:"attribute_name"`
-	AttributeValue interface{}             `json:"attribute_value"`
+	AttributeValue any                     `json:"attribute_value"`
 	DataType       types.AttributeDataType `json:"data_type"`
 	SourceID       uuid.UUID               `json:"source_id"`
 	SourceName     string                  `json:"source_name"`
@@ -239,7 +239,7 @@ type CollectedAttribute struct {
 	ExpiresAt      *time.Time              `json:"expires_at,omitempty"`
 	Confidence     float64                 `json:"confidence"`
 	Quality        AttributeQuality        `json:"quality"`
-	Metadata       map[string]interface{}  `json:"metadata,omitempty"`
+	Metadata       map[string]any          `json:"metadata,omitempty"`
 	IsFromCache    bool                    `json:"is_from_cache"`
 	CollectionTime time.Duration           `json:"collection_time"`
 }
@@ -1057,7 +1057,7 @@ type CollectionMetrics struct{}
 type SourceHealthStatus struct{}
 
 // Placeholder connector and monitor types
-type AttributeSourceConnector interface{}
+type AttributeSourceConnector any
 type AttributePrefetcher struct{}
 type SourceHealthMonitor struct{}
 

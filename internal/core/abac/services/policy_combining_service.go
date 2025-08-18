@@ -52,7 +52,7 @@ type CombiningRequest struct {
 	CollectObligations  bool                           `json:"collect_obligations"`
 	CollectAdvice       bool                           `json:"collect_advice"`
 	RequestID           string                         `json:"request_id"`
-	Context             map[string]interface{}         `json:"context,omitempty"`
+	Context             map[string]any                 `json:"context,omitempty"`
 }
 
 // DecisionInput represents an input decision for combining
@@ -65,7 +65,7 @@ type DecisionInput struct {
 	Weight      float64                    `json:"weight"`
 	Obligations []*models.PolicyObligation `json:"obligations,omitempty"`
 	Advice      []*models.PolicyAdvice     `json:"advice,omitempty"`
-	Metadata    map[string]interface{}     `json:"metadata,omitempty"`
+	Metadata    map[string]any             `json:"metadata,omitempty"`
 	EvaluatedAt time.Time                  `json:"evaluated_at"`
 }
 
@@ -98,14 +98,14 @@ type RuleCombiningResult struct {
 
 // ConflictAnalysis represents an analysis of conflicts between decisions
 type ConflictAnalysis struct {
-	ConflictDetected     bool                   `json:"conflict_detected"`
-	ConflictType         ConflictType           `json:"conflict_type"`
-	ConflictingDecisions []*DecisionInput       `json:"conflicting_decisions"`
-	AllowDecisions       []*DecisionInput       `json:"allow_decisions"`
-	DenyDecisions        []*DecisionInput       `json:"deny_decisions"`
-	ConflictSeverity     ConflictSeverity       `json:"conflict_severity"`
-	ConflictReasons      []string               `json:"conflict_reasons"`
-	AnalysisMetadata     map[string]interface{} `json:"analysis_metadata,omitempty"`
+	ConflictDetected     bool             `json:"conflict_detected"`
+	ConflictType         ConflictType     `json:"conflict_type"`
+	ConflictingDecisions []*DecisionInput `json:"conflicting_decisions"`
+	AllowDecisions       []*DecisionInput `json:"allow_decisions"`
+	DenyDecisions        []*DecisionInput `json:"deny_decisions"`
+	ConflictSeverity     ConflictSeverity `json:"conflict_severity"`
+	ConflictReasons      []string         `json:"conflict_reasons"`
+	AnalysisMetadata     map[string]any   `json:"analysis_metadata,omitempty"`
 }
 
 // ConflictResolution represents how a conflict was resolved
@@ -115,7 +115,7 @@ type ConflictResolution struct {
 	ResolvedDecision    types.PolicyDecisionType `json:"resolved_decision"`
 	ResolutionReason    string                   `json:"resolution_reason"`
 	OverriddenDecisions []*DecisionInput         `json:"overridden_decisions,omitempty"`
-	ResolutionMetadata  map[string]interface{}   `json:"resolution_metadata,omitempty"`
+	ResolutionMetadata  map[string]any           `json:"resolution_metadata,omitempty"`
 }
 
 // CombiningStep represents a step in the combining process
@@ -125,7 +125,7 @@ type CombiningStep struct {
 	InputCount  int                      `json:"input_count"`
 	Result      types.PolicyDecisionType `json:"result"`
 	Rationale   string                   `json:"rationale"`
-	Metadata    map[string]interface{}   `json:"metadata,omitempty"`
+	Metadata    map[string]any           `json:"metadata,omitempty"`
 }
 
 // RuleCombiningStep represents a step in rule combining
@@ -642,7 +642,7 @@ func (s *policyCombiningService) DetectConflicts(ctx context.Context, decisions 
 		AllowDecisions:   make([]*DecisionInput, 0),
 		DenyDecisions:    make([]*DecisionInput, 0),
 		ConflictReasons:  make([]string, 0),
-		AnalysisMetadata: make(map[string]interface{}),
+		AnalysisMetadata: make(map[string]any),
 	}
 
 	// Separate allow and deny decisions
@@ -707,7 +707,7 @@ func (s *policyCombiningService) ResolveConflicts(ctx context.Context, conflicts
 
 	resolution := &ConflictResolution{
 		ResolutionMethod:   string(algorithm),
-		ResolutionMetadata: make(map[string]interface{}),
+		ResolutionMetadata: make(map[string]any),
 	}
 
 	switch algorithm {

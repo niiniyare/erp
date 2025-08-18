@@ -137,13 +137,13 @@ func TestAttributeService(t *testing.T) {
 			IsRequired:   true,
 			IsMultiValue: false,
 			DefaultValue: "engineering",
-			AllowedValues: []interface{}{
+			AllowedValues: []any{
 				"engineering", "sales", "marketing", "hr", "finance",
 			},
 			ValidationRules: []AttributeValidationRule{
 				{
 					RuleType:   "length",
-					Parameters: map[string]interface{}{"min": 1, "max": 50},
+					Parameters: map[string]any{"min": 1, "max": 50},
 				},
 			},
 			Constraints: AttributeConstraints{
@@ -155,7 +155,7 @@ func TestAttributeService(t *testing.T) {
 				AuditingRequired:   false,
 				AccessLevel:        "standard",
 			},
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"source": "hr_system",
 			},
 			Tags:      []string{"user", "department", "organizational"},

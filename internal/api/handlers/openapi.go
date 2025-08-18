@@ -39,7 +39,7 @@ func (h *OpenapiHandler) Spec(ctx context.Context) (*openapi.SpecResult, error) 
 	}
 
 	// Parse the OpenAPI specification
-	var spec map[string]interface{}
+	var spec map[string]any
 	if err := json.Unmarshal(specData, &spec); err != nil {
 		logger.ErrorContext(ctx, "Failed to parse OpenAPI spec", logger.Fields{
 			"error": err.Error(),
@@ -52,7 +52,7 @@ func (h *OpenapiHandler) Spec(ctx context.Context) (*openapi.SpecResult, error) 
 	}
 
 	logger.InfoContext(ctx, "OpenAPI spec served successfully", logger.Fields{
-		"endpoints_count": len(spec["paths"].(map[string]interface{})),
+		"endpoints_count": len(spec["paths"].(map[string]any)),
 	})
 
 	return result, nil

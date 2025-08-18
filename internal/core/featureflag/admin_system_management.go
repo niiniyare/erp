@@ -43,7 +43,7 @@ func (s *adminServiceImpl) GetSystemHealth(ctx context.Context) (*SystemHealthRe
 	// Generate recommendations based on health status
 	result.RecommendedActions = s.generateHealthRecommendations(result.ComponentHealth)
 
-	s.logger.Info("System health check completed", map[string]interface{}{
+	s.logger.Info("System health check completed", map[string]any{
 		"overall_score": result.OverallScore,
 		"status":        result.Status,
 		"check_time":    time.Since(startTime),

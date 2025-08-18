@@ -181,7 +181,7 @@ func (scm *securityComplianceManager) EncryptSensitiveData(ctx context.Context, 
 		ResourceType: "sensitive_data",
 		ResourceID:   req.DataID,
 		Action:       "encrypt",
-		Details: map[string]interface{}{
+		Details: map[string]any{
 			"data_type":         req.DataType,
 			"classification":    classification,
 			"security_level":    req.SecurityLevel,
@@ -207,7 +207,7 @@ func (scm *securityComplianceManager) EncryptSensitiveData(ctx context.Context, 
 		Classification:   classification,
 		SecurityLevel:    req.SecurityLevel,
 		EncryptionMethod: "AES-256-GCM",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"encrypted_at": time.Now(),
 			"key_version":  "v1",
 		},
@@ -237,7 +237,7 @@ func (scm *securityComplianceManager) DecryptSensitiveData(ctx context.Context, 
 		ResourceType: "sensitive_data",
 		ResourceID:   req.DataID,
 		Action:       "decrypt",
-		Details: map[string]interface{}{
+		Details: map[string]any{
 			"purpose": req.Purpose,
 		},
 		Timestamp: time.Now(),
@@ -391,7 +391,7 @@ func (scm *securityComplianceManager) QueryAuditLog(ctx context.Context, req *Au
 		ActorID:      req.ActorID,
 		ResourceType: "audit_log",
 		Action:       "query",
-		Details: map[string]interface{}{
+		Details: map[string]any{
 			"filters":      getLogsReq,
 			"result_count": len(events),
 		},
@@ -465,7 +465,7 @@ func (scm *securityComplianceManager) GenerateComplianceReport(ctx context.Conte
 		ActorID:      req.RequestedBy,
 		ResourceType: "compliance_report",
 		Action:       "generate",
-		Details: map[string]interface{}{
+		Details: map[string]any{
 			"framework":      req.Framework,
 			"period_start":   req.PeriodStart,
 			"period_end":     req.PeriodEnd,
@@ -632,7 +632,7 @@ func (scm *securityComplianceManager) ProcessDataSubjectRequest(ctx context.Cont
 		ResourceType: "personal_data",
 		ResourceID:   &req.SubjectID,
 		Action:       string(req.RequestType),
-		Details: map[string]interface{}{
+		Details: map[string]any{
 			"request_type": req.RequestType,
 			"status":       response.Status,
 		},
@@ -952,8 +952,8 @@ func (scm *securityComplianceManager) validateAuditQueryAccess(ctx context.Conte
 	return nil
 }
 
-func (scm *securityComplianceManager) buildAuditFilters(req *AuditQueryRequest) map[string]interface{} {
-	filters := make(map[string]interface{})
+func (scm *securityComplianceManager) buildAuditFilters(req *AuditQueryRequest) map[string]any {
+	filters := make(map[string]any)
 
 	if req.EventType != nil {
 		filters["event_type"] = *req.EventType
@@ -1037,7 +1037,7 @@ func (scm *securityComplianceManager) generateFrameworkReport(ctx context.Contex
 	}, nil
 }
 
-func (scm *securityComplianceManager) validateComplianceRule(ctx context.Context, rule ComplianceRule, context map[string]interface{}) (*ComplianceViolation, error) {
+func (scm *securityComplianceManager) validateComplianceRule(ctx context.Context, rule ComplianceRule, context map[string]any) (*ComplianceViolation, error) {
 	// Implementation would validate compliance rule against context
 	return nil, nil
 }
@@ -1061,12 +1061,12 @@ type EncryptDataRequest struct {
 }
 
 type EncryptedDataResult struct {
-	EncryptedData    string                 `json:"encrypted_data"`
-	IsEncrypted      bool                   `json:"is_encrypted"`
-	Classification   DataClassification     `json:"classification"`
-	SecurityLevel    SecurityLevel          `json:"security_level"`
-	EncryptionMethod string                 `json:"encryption_method,omitempty"`
-	Metadata         map[string]interface{} `json:"metadata,omitempty"`
+	EncryptedData    string             `json:"encrypted_data"`
+	IsEncrypted      bool               `json:"is_encrypted"`
+	Classification   DataClassification `json:"classification"`
+	SecurityLevel    SecurityLevel      `json:"security_level"`
+	EncryptionMethod string             `json:"encryption_method,omitempty"`
+	Metadata         map[string]any     `json:"metadata,omitempty"`
 }
 
 type DecryptDataRequest struct {
@@ -1083,32 +1083,32 @@ type DecryptedDataResult struct {
 }
 
 type AuditEventRequest struct {
-	EventType    AuditEventType         `json:"event_type" validate:"required"`
-	ActorID      *uuid.UUID             `json:"actor_id,omitempty"`
-	ResourceType string                 `json:"resource_type" validate:"required"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Action       string                 `json:"action" validate:"required"`
-	Result       *string                `json:"result,omitempty"`
-	Details      map[string]interface{} `json:"details,omitempty"`
-	Timestamp    time.Time              `json:"timestamp"`
-	IPAddress    *string                `json:"ip_address,omitempty"`
-	UserAgent    *string                `json:"user_agent,omitempty"`
-	SessionID    *string                `json:"session_id,omitempty"`
+	EventType    AuditEventType `json:"event_type" validate:"required"`
+	ActorID      *uuid.UUID     `json:"actor_id,omitempty"`
+	ResourceType string         `json:"resource_type" validate:"required"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Action       string         `json:"action" validate:"required"`
+	Result       *string        `json:"result,omitempty"`
+	Details      map[string]any `json:"details,omitempty"`
+	Timestamp    time.Time      `json:"timestamp"`
+	IPAddress    *string        `json:"ip_address,omitempty"`
+	UserAgent    *string        `json:"user_agent,omitempty"`
+	SessionID    *string        `json:"session_id,omitempty"`
 }
 
 type AuditEvent struct {
-	ID           uuid.UUID              `json:"id"`
-	EventType    AuditEventType         `json:"event_type"`
-	ActorID      *uuid.UUID             `json:"actor_id"`
-	ResourceType string                 `json:"resource_type"`
-	ResourceID   *uuid.UUID             `json:"resource_id"`
-	Action       string                 `json:"action"`
-	Result       *string                `json:"result"`
-	Details      map[string]interface{} `json:"details"`
-	Timestamp    time.Time              `json:"timestamp"`
-	IPAddress    *string                `json:"ip_address"`
-	UserAgent    *string                `json:"user_agent"`
-	SessionID    *string                `json:"session_id"`
+	ID           uuid.UUID      `json:"id"`
+	EventType    AuditEventType `json:"event_type"`
+	ActorID      *uuid.UUID     `json:"actor_id"`
+	ResourceType string         `json:"resource_type"`
+	ResourceID   *uuid.UUID     `json:"resource_id"`
+	Action       string         `json:"action"`
+	Result       *string        `json:"result"`
+	Details      map[string]any `json:"details"`
+	Timestamp    time.Time      `json:"timestamp"`
+	IPAddress    *string        `json:"ip_address"`
+	UserAgent    *string        `json:"user_agent"`
+	SessionID    *string        `json:"session_id"`
 }
 
 type AuditQueryRequest struct {
@@ -1149,21 +1149,21 @@ type ComplianceReport struct {
 }
 
 type SecurityRiskRequest struct {
-	RequestID   uuid.UUID              `json:"request_id"`
-	Context     SecurityContext        `json:"context" validate:"required"`
-	RiskFactors map[string]interface{} `json:"risk_factors,omitempty"`
-	RequestedBy *uuid.UUID             `json:"requested_by,omitempty"`
+	RequestID   uuid.UUID       `json:"request_id"`
+	Context     SecurityContext `json:"context" validate:"required"`
+	RiskFactors map[string]any  `json:"risk_factors,omitempty"`
+	RequestedBy *uuid.UUID      `json:"requested_by,omitempty"`
 }
 
 type SecurityRiskAssessment struct {
-	RequestID       uuid.UUID              `json:"request_id"`
-	OverallRisk     float64                `json:"overall_risk"`
-	RiskLevel       RiskLevel              `json:"risk_level"`
-	RiskScores      map[string]float64     `json:"risk_scores"`
-	Factors         map[string]interface{} `json:"factors"`
-	Recommendations []string               `json:"recommendations"`
-	AssessedAt      time.Time              `json:"assessed_at"`
-	ValidUntil      time.Time              `json:"valid_until"`
+	RequestID       uuid.UUID          `json:"request_id"`
+	OverallRisk     float64            `json:"overall_risk"`
+	RiskLevel       RiskLevel          `json:"risk_level"`
+	RiskScores      map[string]float64 `json:"risk_scores"`
+	Factors         map[string]any     `json:"factors"`
+	Recommendations []string           `json:"recommendations"`
+	AssessedAt      time.Time          `json:"assessed_at"`
+	ValidUntil      time.Time          `json:"valid_until"`
 }
 
 // Enums and Constants
@@ -1255,22 +1255,22 @@ type ComplianceRule struct {
 }
 
 type ComplianceValidator interface {
-	Validate(context map[string]interface{}) error
+	Validate(context map[string]any) error
 }
 
 type ComplianceViolation struct {
-	RuleID      string                 `json:"rule_id"`
-	Description string                 `json:"description"`
-	Severity    string                 `json:"severity"`
-	Details     map[string]interface{} `json:"details"`
+	RuleID      string         `json:"rule_id"`
+	Description string         `json:"description"`
+	Severity    string         `json:"severity"`
+	Details     map[string]any `json:"details"`
 }
 
 type ComplianceFinding struct {
-	ID          string                 `json:"id"`
-	Type        string                 `json:"type"`
-	Severity    string                 `json:"severity"`
-	Description string                 `json:"description"`
-	Details     map[string]interface{} `json:"details"`
+	ID          string         `json:"id"`
+	Type        string         `json:"type"`
+	Severity    string         `json:"severity"`
+	Description string         `json:"description"`
+	Details     map[string]any `json:"details"`
 }
 
 type ConsentManager struct{}
@@ -1284,7 +1284,7 @@ type DataProcessor struct{}
 type PrivacyRegulation string
 
 type PrivacyFilter interface {
-	Apply(data interface{}) (interface{}, error)
+	Apply(data any) (any, error)
 }
 
 type DataSubjectRequest struct {
@@ -1342,13 +1342,13 @@ func (rc *RiskCalculator) AggregateRiskScores(scores map[string]float64) float64
 }
 
 type RiskModel interface {
-	CalculateRisk(factors map[string]interface{}) (float64, error)
+	CalculateRisk(factors map[string]any) (float64, error)
 }
 
 type RiskFactor struct {
-	Name   string      `json:"name"`
-	Value  interface{} `json:"value"`
-	Weight float64     `json:"weight"`
+	Name   string  `json:"name"`
+	Value  any     `json:"value"`
+	Weight float64 `json:"weight"`
 }
 
 type SecurityEvent struct{}
@@ -1361,7 +1361,7 @@ type SecurityAlert struct{}
 
 // Additional stub methods
 
-func (scm *securityComplianceManager) determineApplicableRegulations(context map[string]interface{}) []PrivacyRegulation {
+func (scm *securityComplianceManager) determineApplicableRegulations(context map[string]any) []PrivacyRegulation {
 	return []PrivacyRegulation{}
 }
 
@@ -1369,11 +1369,11 @@ func (pc *PrivacyController) GetDataProcessor(regulation PrivacyRegulation) (*Da
 	return &DataProcessor{}, nil
 }
 
-func (dp *DataProcessor) ApplyFilters(ctx context.Context, data interface{}, context map[string]interface{}) (interface{}, []string, error) {
+func (dp *DataProcessor) ApplyFilters(ctx context.Context, data any, context map[string]any) (any, []string, error) {
 	return data, []string{}, nil
 }
 
-func (pc *PrivacyController) CheckConsentRequirements(ctx context.Context, context map[string]interface{}) (bool, error) {
+func (pc *PrivacyController) CheckConsentRequirements(ctx context.Context, context map[string]any) (bool, error) {
 	return false, nil
 }
 
@@ -1407,8 +1407,8 @@ func (scm *securityComplianceManager) collectSecurityEvents(ctx context.Context,
 	return []SecurityEvent{}, nil
 }
 
-func (scm *securityComplianceManager) collectRiskFactors(ctx context.Context, req *SecurityRiskRequest) (map[string]interface{}, error) {
-	return make(map[string]interface{}), nil
+func (scm *securityComplianceManager) collectRiskFactors(ctx context.Context, req *SecurityRiskRequest) (map[string]any, error) {
+	return make(map[string]any), nil
 }
 
 func (ra *RiskAssessor) initializeRiskModels() {}
@@ -1426,19 +1426,19 @@ func (scm *securityComplianceManager) determineRiskLevel(score float64) RiskLeve
 	}
 }
 
-func (scm *securityComplianceManager) generateRiskRecommendations(ctx context.Context, level RiskLevel, factors map[string]interface{}) []string {
+func (scm *securityComplianceManager) generateRiskRecommendations(ctx context.Context, level RiskLevel, factors map[string]any) []string {
 	return []string{}
 }
 
 // Additional supporting types
 
 type PrivacyFilterRequest struct {
-	Data        interface{}            `json:"data"`
-	DataContext map[string]interface{} `json:"data_context"`
+	Data        any            `json:"data"`
+	DataContext map[string]any `json:"data_context"`
 }
 
 type PrivacyFilterResult struct {
-	FilteredData    interface{}         `json:"filtered_data"`
+	FilteredData    any                 `json:"filtered_data"`
 	AppliedFilters  []string            `json:"applied_filters"`
 	ConsentRequired bool                `json:"consent_required"`
 	Regulations     []PrivacyRegulation `json:"regulations"`
@@ -1464,8 +1464,8 @@ type SecurityEnforcementResult struct {
 }
 
 type ComplianceValidationRequest struct {
-	Framework ComplianceFramework    `json:"framework"`
-	Context   map[string]interface{} `json:"context"`
+	Framework ComplianceFramework `json:"framework"`
+	Context   map[string]any      `json:"context"`
 }
 
 type ComplianceValidationResult struct {
@@ -1478,8 +1478,8 @@ type ComplianceValidationResult struct {
 }
 
 type SecurityAnomalyRequest struct {
-	TimeWindow time.Duration          `json:"time_window"`
-	Context    map[string]interface{} `json:"context"`
+	TimeWindow time.Duration  `json:"time_window"`
+	Context    map[string]any `json:"context"`
 }
 
 type SecurityAnomalyResult struct {
@@ -1495,24 +1495,24 @@ type SecurityMetricsRequest struct {
 }
 
 type SecurityMetrics struct {
-	TotalEvents  int                    `json:"total_events"`
-	AnomalyCount int                    `json:"anomaly_count"`
-	ThreatLevel  string                 `json:"threat_level"`
-	Metrics      map[string]interface{} `json:"metrics"`
-	GeneratedAt  time.Time              `json:"generated_at"`
+	TotalEvents  int            `json:"total_events"`
+	AnomalyCount int            `json:"anomaly_count"`
+	ThreatLevel  string         `json:"threat_level"`
+	Metrics      map[string]any `json:"metrics"`
+	GeneratedAt  time.Time      `json:"generated_at"`
 }
 
 type RiskProfileUpdateRequest struct {
-	ProfileID uuid.UUID              `json:"profile_id"`
-	Updates   map[string]interface{} `json:"updates"`
+	ProfileID uuid.UUID      `json:"profile_id"`
+	Updates   map[string]any `json:"updates"`
 }
 
 type RiskProfile struct {
-	ID        uuid.UUID              `json:"id"`
-	Factors   map[string]interface{} `json:"factors"`
-	Score     float64                `json:"score"`
-	Level     RiskLevel              `json:"level"`
-	UpdatedAt time.Time              `json:"updated_at"`
+	ID        uuid.UUID      `json:"id"`
+	Factors   map[string]any `json:"factors"`
+	Score     float64        `json:"score"`
+	Level     RiskLevel      `json:"level"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
 type AuditExportRequest struct {

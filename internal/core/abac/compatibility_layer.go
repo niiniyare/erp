@@ -19,7 +19,7 @@ import (
 
 // Missing type definitions
 type HybridEvaluator interface {
-	EvaluateHybrid(ctx context.Context, req interface{}) (interface{}, error)
+	EvaluateHybrid(ctx context.Context, req any) (any, error)
 }
 
 // CompatibilityLayer provides RBAC-ABAC compatibility features
@@ -73,13 +73,13 @@ func NewCompatibilityLayer(
 // Legacy RBAC Support Types
 
 type LegacyRBACRequest struct {
-	UserID        uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType  string                 `json:"resource_type" validate:"required"`
-	ResourceID    *uuid.UUID             `json:"resource_id,omitempty"`
-	Action        string                 `json:"action" validate:"required"`
-	Context       map[string]interface{} `json:"context,omitempty"`
-	RoleOverrides []RoleOverride         `json:"role_overrides,omitempty"`
-	LegacyMode    LegacyMode             `json:"legacy_mode"`
+	UserID        uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType  string         `json:"resource_type" validate:"required"`
+	ResourceID    *uuid.UUID     `json:"resource_id,omitempty"`
+	Action        string         `json:"action" validate:"required"`
+	Context       map[string]any `json:"context,omitempty"`
+	RoleOverrides []RoleOverride `json:"role_overrides,omitempty"`
+	LegacyMode    LegacyMode     `json:"legacy_mode"`
 }
 
 type LegacyMode string
@@ -92,11 +92,11 @@ const (
 )
 
 type RoleOverride struct {
-	RoleID         uuid.UUID              `json:"role_id"`
-	Action         string                 `json:"action"` // "add", "remove", "modify"
-	Conditions     map[string]interface{} `json:"conditions,omitempty"`
-	TemporaryUntil *time.Time             `json:"temporary_until,omitempty"`
-	Reason         string                 `json:"reason,omitempty"`
+	RoleID         uuid.UUID      `json:"role_id"`
+	Action         string         `json:"action"` // "add", "remove", "modify"
+	Conditions     map[string]any `json:"conditions,omitempty"`
+	TemporaryUntil *time.Time     `json:"temporary_until,omitempty"`
+	Reason         string         `json:"reason,omitempty"`
 }
 
 type LegacyRBACResult struct {
@@ -104,32 +104,32 @@ type LegacyRBACResult struct {
 	EvaluationMode      LegacyMode               `json:"evaluation_mode"`
 	ApplicableRoles     []LegacyRoleInfo         `json:"applicable_roles"`
 	PermissionMatrix    PermissionMatrix         `json:"permission_matrix"`
-	AttributeEnrichment map[string]interface{}   `json:"attribute_enrichment,omitempty"`
+	AttributeEnrichment map[string]any           `json:"attribute_enrichment,omitempty"`
 	CompatibilityIssues []CompatibilityIssue     `json:"compatibility_issues,omitempty"`
 	ExecutionTime       time.Duration            `json:"execution_time"`
 	Timestamp           time.Time                `json:"timestamp"`
 }
 
 type LegacyRoleInfo struct {
-	RoleID      uuid.UUID              `json:"role_id"`
-	RoleName    string                 `json:"role_name"`
-	RoleType    string                 `json:"role_type"`
-	Permissions []LegacyPermission     `json:"permissions"`
-	Hierarchy   []string               `json:"hierarchy"`
-	Constraints map[string]interface{} `json:"constraints,omitempty"`
-	Source      string                 `json:"source"` // "direct", "inherited", "computed"
-	IsActive    bool                   `json:"is_active"`
+	RoleID      uuid.UUID          `json:"role_id"`
+	RoleName    string             `json:"role_name"`
+	RoleType    string             `json:"role_type"`
+	Permissions []LegacyPermission `json:"permissions"`
+	Hierarchy   []string           `json:"hierarchy"`
+	Constraints map[string]any     `json:"constraints,omitempty"`
+	Source      string             `json:"source"` // "direct", "inherited", "computed"
+	IsActive    bool               `json:"is_active"`
 }
 
 type LegacyPermission struct {
-	Permission    string                 `json:"permission"`
-	ResourceType  string                 `json:"resource_type"`
-	ResourceID    *uuid.UUID             `json:"resource_id,omitempty"`
-	Actions       []string               `json:"actions"`
-	Constraints   map[string]interface{} `json:"constraints,omitempty"`
-	GrantedBy     string                 `json:"granted_by"`
-	EffectiveFrom time.Time              `json:"effective_from"`
-	EffectiveTo   *time.Time             `json:"effective_to,omitempty"`
+	Permission    string         `json:"permission"`
+	ResourceType  string         `json:"resource_type"`
+	ResourceID    *uuid.UUID     `json:"resource_id,omitempty"`
+	Actions       []string       `json:"actions"`
+	Constraints   map[string]any `json:"constraints,omitempty"`
+	GrantedBy     string         `json:"granted_by"`
+	EffectiveFrom time.Time      `json:"effective_from"`
+	EffectiveTo   *time.Time     `json:"effective_to,omitempty"`
 }
 
 type PermissionMatrix struct {
@@ -141,17 +141,17 @@ type PermissionMatrix struct {
 }
 
 type ResourcePermissions struct {
-	ResourceType   string                 `json:"resource_type"`
-	ResourceID     *uuid.UUID             `json:"resource_id,omitempty"`
-	AllowedActions []string               `json:"allowed_actions"`
-	DeniedActions  []string               `json:"denied_actions"`
-	Conditions     map[string]interface{} `json:"conditions,omitempty"`
+	ResourceType   string         `json:"resource_type"`
+	ResourceID     *uuid.UUID     `json:"resource_id,omitempty"`
+	AllowedActions []string       `json:"allowed_actions"`
+	DeniedActions  []string       `json:"denied_actions"`
+	Conditions     map[string]any `json:"conditions,omitempty"`
 }
 
 type ConditionalPermission struct {
-	Permission   string                 `json:"permission"`
-	Conditions   map[string]interface{} `json:"conditions"`
-	Requirements []string               `json:"requirements"`
+	Permission   string         `json:"permission"`
+	Conditions   map[string]any `json:"conditions"`
+	Requirements []string       `json:"requirements"`
 }
 
 type CompatibilityIssue struct {
@@ -179,7 +179,7 @@ func (cl *compatibilityLayer) EvaluateLegacyRBAC(ctx context.Context, req *Legac
 
 	var decision types.PolicyDecisionType
 	var applicableRoles []LegacyRoleInfo
-	var attributeEnrichment map[string]interface{}
+	var attributeEnrichment map[string]any
 	var compatibilityIssues []CompatibilityIssue
 
 	switch req.LegacyMode {
@@ -267,7 +267,7 @@ type RBACTranslationResult struct {
 	SourceIdentifier  string                  `json:"source_identifier"`
 	CreatedPolicies   []TranslatedPolicy      `json:"created_policies"`
 	CreatedAttributes []TranslatedAttribute   `json:"created_attributes"`
-	TransformationMap map[string]interface{}  `json:"transformation_map"`
+	TransformationMap map[string]any          `json:"transformation_map"`
 	SemanticAnalysis  SemanticAnalysis        `json:"semantic_analysis"`
 	ValidationResults []TranslationValidation `json:"validation_results"`
 	ExecutionTime     time.Duration           `json:"execution_time"`
@@ -275,24 +275,24 @@ type RBACTranslationResult struct {
 }
 
 type TranslatedPolicy struct {
-	PolicyID    uuid.UUID              `json:"policy_id"`
-	PolicyName  string                 `json:"policy_name"`
-	PolicyType  types.PolicyType       `json:"policy_type"`
-	SourceRole  string                 `json:"source_role"`
-	Target      map[string]interface{} `json:"target"`
-	Rule        map[string]interface{} `json:"rule"`
-	Confidence  float64                `json:"confidence"`
-	Assumptions []string               `json:"assumptions"`
+	PolicyID    uuid.UUID        `json:"policy_id"`
+	PolicyName  string           `json:"policy_name"`
+	PolicyType  types.PolicyType `json:"policy_type"`
+	SourceRole  string           `json:"source_role"`
+	Target      map[string]any   `json:"target"`
+	Rule        map[string]any   `json:"rule"`
+	Confidence  float64          `json:"confidence"`
+	Assumptions []string         `json:"assumptions"`
 }
 
 type TranslatedAttribute struct {
-	AttributeID      uuid.UUID              `json:"attribute_id"`
-	AttributeName    string                 `json:"attribute_name"`
-	DataType         string                 `json:"data_type"`
-	Category         string                 `json:"category"`
-	SourcePermission string                 `json:"source_permission"`
-	DefaultValue     interface{}            `json:"default_value,omitempty"`
-	Constraints      map[string]interface{} `json:"constraints,omitempty"`
+	AttributeID      uuid.UUID      `json:"attribute_id"`
+	AttributeName    string         `json:"attribute_name"`
+	DataType         string         `json:"data_type"`
+	Category         string         `json:"category"`
+	SourcePermission string         `json:"source_permission"`
+	DefaultValue     any            `json:"default_value,omitempty"`
+	Constraints      map[string]any `json:"constraints,omitempty"`
 }
 
 type SemanticAnalysis struct {
@@ -411,23 +411,23 @@ type GradualMigrationConfig struct {
 }
 
 type MigrationPhaseConfig struct {
-	PhaseID           uuid.UUID              `json:"phase_id"`
-	PhaseName         string                 `json:"phase_name"`
-	UserCriteria      UserCriteria           `json:"user_criteria"`
-	ResourceCriteria  ResourceCriteria       `json:"resource_criteria"`
-	EvaluationMode    HybridEvaluationMode   `json:"evaluation_mode"`
-	RolloutPercentage float64                `json:"rollout_percentage"`
-	StartDate         *time.Time             `json:"start_date,omitempty"`
-	EndDate           *time.Time             `json:"end_date,omitempty"`
-	Configuration     map[string]interface{} `json:"configuration,omitempty"`
+	PhaseID           uuid.UUID            `json:"phase_id"`
+	PhaseName         string               `json:"phase_name"`
+	UserCriteria      UserCriteria         `json:"user_criteria"`
+	ResourceCriteria  ResourceCriteria     `json:"resource_criteria"`
+	EvaluationMode    HybridEvaluationMode `json:"evaluation_mode"`
+	RolloutPercentage float64              `json:"rollout_percentage"`
+	StartDate         *time.Time           `json:"start_date,omitempty"`
+	EndDate           *time.Time           `json:"end_date,omitempty"`
+	Configuration     map[string]any       `json:"configuration,omitempty"`
 }
 
 type UserCriteria struct {
-	UserIDs     []uuid.UUID            `json:"user_ids,omitempty"`
-	UserGroups  []string               `json:"user_groups,omitempty"`
-	Departments []string               `json:"departments,omitempty"`
-	Roles       []string               `json:"roles,omitempty"`
-	Attributes  map[string]interface{} `json:"attributes,omitempty"`
+	UserIDs     []uuid.UUID    `json:"user_ids,omitempty"`
+	UserGroups  []string       `json:"user_groups,omitempty"`
+	Departments []string       `json:"departments,omitempty"`
+	Roles       []string       `json:"roles,omitempty"`
+	Attributes  map[string]any `json:"attributes,omitempty"`
 }
 
 type ResourceCriteria struct {
@@ -451,14 +451,14 @@ type MonitoringConfig struct {
 }
 
 type AlertRule struct {
-	RuleID        uuid.UUID              `json:"rule_id"`
-	RuleName      string                 `json:"rule_name"`
-	Condition     string                 `json:"condition"`
-	Threshold     float64                `json:"threshold"`
-	Severity      string                 `json:"severity"`
-	Actions       []string               `json:"actions"`
-	Recipients    []string               `json:"recipients"`
-	Configuration map[string]interface{} `json:"configuration,omitempty"`
+	RuleID        uuid.UUID      `json:"rule_id"`
+	RuleName      string         `json:"rule_name"`
+	Condition     string         `json:"condition"`
+	Threshold     float64        `json:"threshold"`
+	Severity      string         `json:"severity"`
+	Actions       []string       `json:"actions"`
+	Recipients    []string       `json:"recipients"`
+	Configuration map[string]any `json:"configuration,omitempty"`
 }
 
 type GradualMigrationOptions struct {
@@ -482,14 +482,14 @@ type GradualMigrationResult struct {
 }
 
 type ActiveMigrationPhase struct {
-	PhaseID       uuid.UUID              `json:"phase_id"`
-	PhaseName     string                 `json:"phase_name"`
-	Status        string                 `json:"status"`
-	Progress      float64                `json:"progress"`
-	AffectedUsers int32                  `json:"affected_users"`
-	Configuration map[string]interface{} `json:"configuration"`
-	StartedAt     time.Time              `json:"started_at"`
-	EstimatedEnd  *time.Time             `json:"estimated_end,omitempty"`
+	PhaseID       uuid.UUID      `json:"phase_id"`
+	PhaseName     string         `json:"phase_name"`
+	Status        string         `json:"status"`
+	Progress      float64        `json:"progress"`
+	AffectedUsers int32          `json:"affected_users"`
+	Configuration map[string]any `json:"configuration"`
+	StartedAt     time.Time      `json:"started_at"`
+	EstimatedEnd  *time.Time     `json:"estimated_end,omitempty"`
 }
 
 type PhaseScheduleEntry struct {
@@ -534,11 +534,11 @@ type MitigationAction struct {
 }
 
 type SafetyMeasure struct {
-	MeasureID     uuid.UUID              `json:"measure_id"`
-	MeasureType   string                 `json:"measure_type"`
-	Description   string                 `json:"description"`
-	Enabled       bool                   `json:"enabled"`
-	Configuration map[string]interface{} `json:"configuration,omitempty"`
+	MeasureID     uuid.UUID      `json:"measure_id"`
+	MeasureType   string         `json:"measure_type"`
+	Description   string         `json:"description"`
+	Enabled       bool           `json:"enabled"`
+	Configuration map[string]any `json:"configuration,omitempty"`
 }
 
 func (cl *compatibilityLayer) ConfigureGradualMigration(ctx context.Context, req *GradualMigrationConfig) (*GradualMigrationResult, error) {
@@ -623,11 +623,11 @@ func (cl *compatibilityLayer) evaluateStrictRBAC(ctx context.Context, req *Legac
 	return types.PolicyDecisionAllow, roles
 }
 
-func (cl *compatibilityLayer) evaluateEnhancedRBAC(ctx context.Context, req *LegacyRBACRequest) (types.PolicyDecisionType, []LegacyRoleInfo, map[string]interface{}) {
+func (cl *compatibilityLayer) evaluateEnhancedRBAC(ctx context.Context, req *LegacyRBACRequest) (types.PolicyDecisionType, []LegacyRoleInfo, map[string]any) {
 	decision, roles := cl.evaluateStrictRBAC(ctx, req)
 
 	// Add attribute enrichment
-	enrichment := map[string]interface{}{
+	enrichment := map[string]any{
 		"user.department":  "engineering",
 		"user.clearance":   "standard",
 		"context.time":     time.Now(),
@@ -695,10 +695,10 @@ func (cl *compatibilityLayer) translateRoleToPolicy(ctx context.Context, req *RB
 			PolicyName: fmt.Sprintf("%s_access_policy", req.RoleName),
 			PolicyType: types.PolicyTypeAccess,
 			SourceRole: req.RoleName,
-			Target: map[string]interface{}{
+			Target: map[string]any{
 				"user.role": req.RoleName,
 			},
-			Rule: map[string]interface{}{
+			Rule: map[string]any{
 				"allow": true,
 			},
 			Confidence:  0.9,
@@ -744,8 +744,8 @@ func (cl *compatibilityLayer) translateComplete(ctx context.Context, req *RBACTr
 	return policies, attributes, nil
 }
 
-func (cl *compatibilityLayer) generateTransformationMap(ctx context.Context, req *RBACTranslationRequest, policies []TranslatedPolicy, attributes []TranslatedAttribute) map[string]interface{} {
-	return map[string]interface{}{
+func (cl *compatibilityLayer) generateTransformationMap(ctx context.Context, req *RBACTranslationRequest, policies []TranslatedPolicy, attributes []TranslatedAttribute) map[string]any {
+	return map[string]any{
 		"source_role":         req.RoleName,
 		"policies_created":    len(policies),
 		"attributes_created":  len(attributes),

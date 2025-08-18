@@ -19,16 +19,16 @@ import (
 
 // AttributeSource represents an external source for attribute collection
 type AttributeSource struct {
-	ID        uuid.UUID              `json:"id"`
-	TenantID  uuid.UUID              `json:"tenant_id"`
-	Name      string                 `json:"name"`
-	Type      string                 `json:"type"` // "ldap", "rest_api", "database", etc.
-	Config    map[string]interface{} `json:"config"`
-	IsActive  bool                   `json:"is_active"`
-	Priority  int32                  `json:"priority"`
-	CreatedAt time.Time              `json:"created_at"`
-	UpdatedAt time.Time              `json:"updated_at"`
-	DeletedAt *time.Time             `json:"deleted_at,omitempty"`
+	ID        uuid.UUID      `json:"id"`
+	TenantID  uuid.UUID      `json:"tenant_id"`
+	Name      string         `json:"name"`
+	Type      string         `json:"type"` // "ldap", "rest_api", "database", etc.
+	Config    map[string]any `json:"config"`
+	IsActive  bool           `json:"is_active"`
+	Priority  int32          `json:"priority"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt *time.Time     `json:"deleted_at,omitempty"`
 }
 
 // AttributeDefinition defines the structure and constraints of an attribute

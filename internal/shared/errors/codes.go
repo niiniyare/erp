@@ -127,13 +127,13 @@ func (ve ValidationErrors) ToMap() map[string][]string {
 
 // RepositoryError represents a failure in the repository layer
 type RepositoryError struct {
-	Code      string                 `json:"code"`    // e.g., "REJECT_FAILED"
-	Message   string                 `json:"message"` // e.g., "Failed to reject access request"
-	Err       error                  `json:"-"`       // Underlying cause (not serialized)
-	Details   map[string]interface{} `json:"details,omitempty"`
-	Operation string                 `json:"operation,omitempty"` // Database operation
-	Table     string                 `json:"table,omitempty"`     // Affected table
-	TenantID  string                 `json:"tenant_id,omitempty"`
+	Code      string         `json:"code"`    // e.g., "REJECT_FAILED"
+	Message   string         `json:"message"` // e.g., "Failed to reject access request"
+	Err       error          `json:"-"`       // Underlying cause (not serialized)
+	Details   map[string]any `json:"details,omitempty"`
+	Operation string         `json:"operation,omitempty"` // Database operation
+	Table     string         `json:"table,omitempty"`     // Affected table
+	TenantID  string         `json:"tenant_id,omitempty"`
 }
 
 func (e *RepositoryError) Error() string {
@@ -170,9 +170,9 @@ func (e *RepositoryError) Unwrap() error {
 }
 
 // WithDetail adds details to the error
-func (e *RepositoryError) WithDetail(key string, value interface{}) *RepositoryError {
+func (e *RepositoryError) WithDetail(key string, value any) *RepositoryError {
 	if e.Details == nil {
-		e.Details = make(map[string]interface{})
+		e.Details = make(map[string]any)
 	}
 	e.Details[key] = value
 	return e
@@ -202,7 +202,7 @@ func NewRepositoryError(code, message string, err error) *RepositoryError {
 		Code:    code,
 		Message: message,
 		Err:     err,
-		Details: make(map[string]interface{}),
+		Details: make(map[string]any),
 	}
 }
 
@@ -234,17 +234,17 @@ func IsRepositoryErrorCode(err error, code string) bool {
 
 // BusinessError represents domain-specific business logic errors
 type BusinessError struct {
-	Code        string                 `json:"code"`
-	Message     string                 `json:"message"`
-	Details     map[string]interface{} `json:"details,omitempty"`
-	Suggestions []string               `json:"suggestions,omitempty"` // User-friendly suggestions
-	HTTPStatus  int                    `json:"-"`                     // HTTP status code mapping
-	Severity    Severity               `json:"severity"`
-	Category    Category               `json:"category"`
-	TenantID    string                 `json:"tenant_id,omitempty"`
-	UserID      string                 `json:"user_id,omitempty"`
-	Retryable   bool                   `json:"retryable"`
-	Err         error                  `json:"-"`
+	Code        string         `json:"code"`
+	Message     string         `json:"message"`
+	Details     map[string]any `json:"details,omitempty"`
+	Suggestions []string       `json:"suggestions,omitempty"` // User-friendly suggestions
+	HTTPStatus  int            `json:"-"`                     // HTTP status code mapping
+	Severity    Severity       `json:"severity"`
+	Category    Category       `json:"category"`
+	TenantID    string         `json:"tenant_id,omitempty"`
+	UserID      string         `json:"user_id,omitempty"`
+	Retryable   bool           `json:"retryable"`
+	Err         error          `json:"-"`
 }
 
 func (e *BusinessError) Error() string {
@@ -280,9 +280,9 @@ func (e *BusinessError) Unwrap() error {
 }
 
 // WithDetail adds details to the business error
-func (e *BusinessError) WithDetail(key string, value interface{}) *BusinessError {
+func (e *BusinessError) WithDetail(key string, value any) *BusinessError {
 	if e.Details == nil {
-		e.Details = make(map[string]interface{})
+		e.Details = make(map[string]any)
 	}
 	e.Details[key] = value
 	return e
@@ -318,7 +318,7 @@ func NewBusinessError(code, message string) *BusinessError {
 	return &BusinessError{
 		Code:       code,
 		Message:    message,
-		Details:    make(map[string]interface{}),
+		Details:    make(map[string]any),
 		HTTPStatus: http.StatusBadRequest,
 		Severity:   SeverityError,
 		Category:   CategoryBusiness,
@@ -432,14 +432,14 @@ func ErrThirdPartyAPIFailure(service string, statusCode int) *BusinessError {
 
 // ErrorCollection aggregates multiple errors with context
 type ErrorCollection struct {
-	Errors    []error                `json:"errors"`
-	Context   map[string]interface{} `json:"context,omitempty"`
-	Operation string                 `json:"operation,omitempty"`
-	TenantID  string                 `json:"tenant_id,omitempty"`
-	RequestID string                 `json:"request_id,omitempty"`
-	Timestamp time.Time              `json:"timestamp"`
-	Severity  Severity               `json:"severity"`
-	Category  Category               `json:"category"`
+	Errors    []error        `json:"errors"`
+	Context   map[string]any `json:"context,omitempty"`
+	Operation string         `json:"operation,omitempty"`
+	TenantID  string         `json:"tenant_id,omitempty"`
+	RequestID string         `json:"request_id,omitempty"`
+	Timestamp time.Time      `json:"timestamp"`
+	Severity  Severity       `json:"severity"`
+	Category  Category       `json:"category"`
 }
 
 func (ec *ErrorCollection) Error() string {
@@ -527,7 +527,7 @@ func (ec *ErrorCollection) updateSeverity(err error) {
 func NewErrorCollection(operation string) *ErrorCollection {
 	return &ErrorCollection{
 		Errors:    make([]error, 0),
-		Context:   make(map[string]interface{}),
+		Context:   make(map[string]any),
 		Operation: operation,
 		Timestamp: time.Now(),
 		Severity:  SeverityInfo,
@@ -554,14 +554,14 @@ func NewErrorCollectionWithContext(ctx context.Context, operation string) *Error
 
 // HTTPError represents an error that can be directly returned as HTTP response
 type HTTPError struct {
-	Status    int                    `json:"status"`
-	Code      string                 `json:"code"`
-	Message   string                 `json:"message"`
-	Details   map[string]interface{} `json:"details,omitempty"`
-	Errors    []error                `json:"errors,omitempty"`
-	Timestamp time.Time              `json:"timestamp"`
-	RequestID string                 `json:"request_id,omitempty"`
-	TraceID   string                 `json:"trace_id,omitempty"`
+	Status    int            `json:"status"`
+	Code      string         `json:"code"`
+	Message   string         `json:"message"`
+	Details   map[string]any `json:"details,omitempty"`
+	Errors    []error        `json:"errors,omitempty"`
+	Timestamp time.Time      `json:"timestamp"`
+	RequestID string         `json:"request_id,omitempty"`
+	TraceID   string         `json:"trace_id,omitempty"`
 }
 
 func (e *HTTPError) Error() string {
@@ -578,7 +578,7 @@ func ToHTTPError(err error) *HTTPError {
 		Status:    http.StatusInternalServerError,
 		Code:      "INTERNAL_ERROR",
 		Message:   "An internal error occurred",
-		Details:   make(map[string]interface{}),
+		Details:   make(map[string]any),
 		Timestamp: time.Now(),
 	}
 
@@ -677,9 +677,9 @@ func sanitizeValue(value any) any {
 			}
 		}
 		return v
-	case map[string]interface{}:
+	case map[string]any:
 		// Recursively sanitize maps
-		sanitized := make(map[string]interface{})
+		sanitized := make(map[string]any)
 		for k, val := range v {
 			sanitized[k] = sanitizeValue(val)
 		}

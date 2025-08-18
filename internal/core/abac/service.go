@@ -102,13 +102,13 @@ func NewService(
 
 // PermissionEvaluationRequest represents a permission evaluation request
 type PermissionEvaluationRequest struct {
-	UserID       uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType string                 `json:"resource_type" validate:"required"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Action       string                 `json:"action" validate:"required"`
-	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Context      map[string]interface{} `json:"context,omitempty"`
-	RequestID    string                 `json:"request_id,omitempty"`
+	UserID       uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType string         `json:"resource_type" validate:"required"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Action       string         `json:"action" validate:"required"`
+	EntityID     *uuid.UUID     `json:"entity_id,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
+	RequestID    string         `json:"request_id,omitempty"`
 }
 
 // PermissionEvaluationResult represents the result of permission evaluation
@@ -200,7 +200,7 @@ func (s *service) EvaluatePermission(ctx context.Context, req *PermissionEvaluat
 	}
 
 	// Combine all attributes
-	allAttributes := make(map[string]interface{})
+	allAttributes := make(map[string]any)
 
 	// Add user attributes
 	for k, v := range userAttrs.Attributes {

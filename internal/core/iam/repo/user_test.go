@@ -17,9 +17,9 @@ import (
 // UserRepositoryTestSuite defines test suite for user repository operations
 type UserRepositoryTestSuite struct {
 	suite.Suite
-	ctx    context.Context
-	store  db.Store
-	repo   UserRepository
+	ctx   context.Context
+	store db.Store
+	repo  UserRepository
 	// Mock dependencies will be added here
 }
 
@@ -40,25 +40,25 @@ func TestUserRepository(t *testing.T) {
 // TestCreateUser implements REPO-001, REPO-006: CRUD Operations - CreateUser
 func (s *UserRepositoryTestSuite) TestCreateUser() {
 	testCases := []struct {
-		name        string
-		spec        string
-		user        *model.User
-		setupTenant bool
-		expectedErr string
+		name           string
+		spec           string
+		user           *model.User
+		setupTenant    bool
+		expectedErr    string
 		validateResult func(*testing.T, *model.User)
 	}{
 		{
 			name: "ValidData_CreatesRecord",
 			spec: "REPO-001",
 			user: &model.User{
-				ID:                 uuid.New(),
-				PersonID:           uuidPtr(uuid.New()),
-				EmployeeID:         uuidPtr(uuid.New()),
-				Email:              "test@example.com",
-				PasswordHash:       "$2a$10$hashedpassword",
-				AccountStatus:      model.UserAccountStatusActive,
+				ID:                  uuid.New(),
+				PersonID:            uuidPtr(uuid.New()),
+				EmployeeID:          uuidPtr(uuid.New()),
+				Email:               "test@example.com",
+				PasswordHash:        "$2a$10$hashedpassword",
+				AccountStatus:       model.UserAccountStatusActive,
 				FailedLoginAttempts: 0,
-				MFAEnabled:         false,
+				MFAEnabled:          false,
 			},
 			setupTenant: true,
 			validateResult: func(t *testing.T, user *model.User) {
@@ -123,12 +123,12 @@ func (s *UserRepositoryTestSuite) TestCreateUser() {
 // TestGetUser implements REPO-002, REPO-005: CRUD Operations - GetUser
 func (s *UserRepositoryTestSuite) TestGetUser() {
 	testCases := []struct {
-		name        string
-		spec        string
-		userID      uuid.UUID
-		setupUser   bool
-		sameTenant  bool
-		expectedErr string
+		name           string
+		spec           string
+		userID         uuid.UUID
+		setupUser      bool
+		sameTenant     bool
+		expectedErr    string
 		validateResult func(*testing.T, *model.User)
 	}{
 		{
@@ -171,13 +171,13 @@ func (s *UserRepositoryTestSuite) TestGetUser() {
 			ctx := s.ctx
 			tenantA := uuid.New()
 			tenantB := uuid.New()
-			
+
 			if tc.setupUser {
 				// Create user in tenant A
 				ctx = setupTenantContext(ctx, tenantA)
 				// TODO: Create test user
 			}
-			
+
 			// Set query context
 			if tc.sameTenant {
 				ctx = setupTenantContext(ctx, tenantA)
@@ -207,19 +207,19 @@ func (s *UserRepositoryTestSuite) TestGetUser() {
 // TestUpdateUser implements REPO-003: CRUD Operations - UpdateUser
 func (s *UserRepositoryTestSuite) TestUpdateUser() {
 	testCases := []struct {
-		name        string
-		spec        string
-		userID      uuid.UUID
-		updates     map[string]interface{}
-		setupUser   bool
-		expectedErr string
+		name           string
+		spec           string
+		userID         uuid.UUID
+		updates        map[string]any
+		setupUser      bool
+		expectedErr    string
 		validateResult func(*testing.T, *model.User, time.Time)
 	}{
 		{
 			name:      "ValidUpdates_UpdatesRecord",
 			spec:      "REPO-003",
 			userID:    uuid.New(),
-			updates:   map[string]interface{}{"first_name": "Updated", "last_name": "Name"},
+			updates:   map[string]any{"first_name": "Updated", "last_name": "Name"},
 			setupUser: true,
 			validateResult: func(t *testing.T, user *model.User, originalUpdatedAt time.Time) {
 				require.Equal(t, "Updated", user.FirstName)
@@ -231,7 +231,7 @@ func (s *UserRepositoryTestSuite) TestUpdateUser() {
 			name:        "ConcurrentUpdate_HandlesOptimisticLocking",
 			spec:        "REPO-003",
 			userID:      uuid.New(),
-			updates:     map[string]interface{}{"first_name": "Concurrent"},
+			updates:     map[string]any{"first_name": "Concurrent"},
 			setupUser:   true,
 			expectedErr: "concurrent modification detected",
 		},
@@ -239,7 +239,7 @@ func (s *UserRepositoryTestSuite) TestUpdateUser() {
 			name:        "UserNotFound_ReturnsError",
 			spec:        "REPO-003",
 			userID:      uuid.New(),
-			updates:     map[string]interface{}{"first_name": "NotFound"},
+			updates:     map[string]any{"first_name": "NotFound"},
 			setupUser:   false,
 			expectedErr: "user not found",
 		},
@@ -253,7 +253,7 @@ func (s *UserRepositoryTestSuite) TestUpdateUser() {
 			// Arrange
 			ctx := setupTenantContext(s.ctx, uuid.New())
 			var originalUpdatedAt time.Time
-			
+
 			if tc.setupUser {
 				// TODO: Create test user and capture original updated_at
 				originalUpdatedAt = time.Now()
@@ -281,19 +281,19 @@ func (s *UserRepositoryTestSuite) TestUpdateUser() {
 // TestSoftDeleteUser implements REPO-004: CRUD Operations - SoftDeleteUser
 func (s *UserRepositoryTestSuite) TestSoftDeleteUser() {
 	testCases := []struct {
-		name        string
-		spec        string
-		userID      uuid.UUID
-		setupUser   bool
+		name           string
+		spec           string
+		userID         uuid.UUID
+		setupUser      bool
 		alreadyDeleted bool
-		expectedErr string
+		expectedErr    string
 		validateResult func(*testing.T)
 	}{
 		{
-			name:      "ActiveUser_SetsDeletedAt",
-			spec:      "REPO-004",
-			userID:    uuid.New(),
-			setupUser: true,
+			name:           "ActiveUser_SetsDeletedAt",
+			spec:           "REPO-004",
+			userID:         uuid.New(),
+			setupUser:      true,
 			alreadyDeleted: false,
 			validateResult: func(t *testing.T) {
 				// TODO: Verify deleted_at is set
@@ -302,12 +302,12 @@ func (s *UserRepositoryTestSuite) TestSoftDeleteUser() {
 			},
 		},
 		{
-			name:        "AlreadyDeleted_ReturnsError",
-			spec:        "REPO-004",
-			userID:      uuid.New(),
-			setupUser:   true,
+			name:           "AlreadyDeleted_ReturnsError",
+			spec:           "REPO-004",
+			userID:         uuid.New(),
+			setupUser:      true,
 			alreadyDeleted: true,
-			expectedErr: "user already deleted",
+			expectedErr:    "user already deleted",
 		},
 		{
 			name:        "UserNotFound_ReturnsError",
@@ -325,7 +325,7 @@ func (s *UserRepositoryTestSuite) TestSoftDeleteUser() {
 
 			// Arrange
 			ctx := setupTenantContext(s.ctx, uuid.New())
-			
+
 			if tc.setupUser {
 				// TODO: Create test user
 				if tc.alreadyDeleted {
@@ -353,10 +353,10 @@ func (s *UserRepositoryTestSuite) TestSoftDeleteUser() {
 // TestTenantIsolation implements REPO-005, REPO-006, REPO-007: Tenant Isolation
 func (s *UserRepositoryTestSuite) TestTenantIsolation() {
 	testCases := []struct {
-		name        string
-		spec        string
-		scenario    string
-		expectedErr string
+		name           string
+		spec           string
+		scenario       string
+		expectedErr    string
 		validateResult func(*testing.T)
 	}{
 		{
@@ -392,7 +392,7 @@ func (s *UserRepositoryTestSuite) TestTenantIsolation() {
 			// Arrange
 			tenantA := uuid.MustParse("123e4567-e89b-12d3-a456-426614174001")
 			tenantB := uuid.MustParse("123e4567-e89b-12d3-a456-426614174002")
-			
+
 			switch tc.scenario {
 			case "cross_tenant_access":
 				// TODO: Create user in tenant A, try to access from tenant B
@@ -416,15 +416,14 @@ func (s *UserRepositoryTestSuite) TestTenantIsolation() {
 	}
 }
 
-
 // TestGetUserEffectivePermissions implements REPO-008: Complex Queries - GetUserEffectivePermissions
 func (s *UserRepositoryTestSuite) TestGetUserEffectivePermissions() {
 	testCases := []struct {
-		name        string
-		spec        string
-		userID      uuid.UUID
-		setupScenario string
-		expectedErr string
+		name           string
+		spec           string
+		userID         uuid.UUID
+		setupScenario  string
+		expectedErr    string
 		validateResult func(*testing.T, []model.Permission)
 	}{
 		{
@@ -466,7 +465,7 @@ func (s *UserRepositoryTestSuite) TestGetUserEffectivePermissions() {
 
 			// Arrange
 			ctx := setupTenantContext(s.ctx, uuid.New())
-			
+
 			switch tc.setupScenario {
 			case "user_with_roles_and_permissions":
 				// TODO: Create user with roles and direct permissions
@@ -496,9 +495,9 @@ func (s *UserRepositoryTestSuite) TestGetUserEffectivePermissions() {
 // TestTransactionsAndPerformance implements transaction, performance, and load tests
 func (s *UserRepositoryTestSuite) TestTransactionsAndPerformance() {
 	testCases := []struct {
-		name        string
-		spec        string
-		testType    string
+		name           string
+		spec           string
+		testType       string
 		validateResult func(*testing.T)
 	}{
 		{
@@ -571,7 +570,7 @@ func setupTenantContext(ctx context.Context, tenantID uuid.UUID) context.Context
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *model.User) (*model.User, error)
 	GetUser(ctx context.Context, userID uuid.UUID) (*model.User, error)
-	UpdateUser(ctx context.Context, userID uuid.UUID, updates map[string]interface{}) (*model.User, error)
+	UpdateUser(ctx context.Context, userID uuid.UUID, updates map[string]any) (*model.User, error)
 	SoftDeleteUser(ctx context.Context, userID uuid.UUID) error
 	GetUserEffectivePermissions(ctx context.Context, userID uuid.UUID) ([]model.Permission, error)
 }
@@ -590,9 +589,9 @@ func (s *UserRepositoryTestSuite) TestIntegration() {
 	if testing.Short() {
 		s.T().Skip("REPO-001: Skipping integration test in short mode")
 	}
-	
+
 	s.T().Skip("REPO-001: Integration test - implementation pending")
-	
+
 	// TODO: Integration test with real PostgreSQL
 	// TODO: Test all CRUD operations
 	// TODO: Test transaction handling

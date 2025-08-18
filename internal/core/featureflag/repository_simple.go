@@ -311,7 +311,7 @@ func (r *repository) GetFlagsByType(ctx context.Context, flagType string) ([]*Fe
 // Helper functions
 
 // mustMarshalJSON marshals data to JSON, returning empty object on error
-func mustMarshalJSON(v interface{}) []byte {
+func mustMarshalJSON(v any) []byte {
 	if v == nil {
 		return []byte("{}")
 	}

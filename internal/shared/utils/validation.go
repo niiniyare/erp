@@ -29,7 +29,7 @@ func init() {
 
 // ValidateStruct validates a struct based on 'validate' tags.
 // It returns a ValidationErrors collection, which is nil if there are no errors.
-func ValidateStruct(s interface{}) error {
+func ValidateStruct(s any) error {
 	err := validate.Struct(s)
 	if err == nil {
 		return nil

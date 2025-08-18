@@ -168,7 +168,7 @@ func (s *IdentityServiceTestSuite) TestGetUserByID() {
 			expectedUser:  expectedUser,
 			expectedError: nil,
 			mockExpectations: func(repo *MockRepository, cache *cache.MockService, userID uuid.UUID, user *User) {
-				cache.EXPECT().Get(gomock.Any(), fmt.Sprintf("user:id:%s", userID), gomock.Any()).DoAndReturn(func(_ context.Context, _ string, dest interface{}) error {
+				cache.EXPECT().Get(gomock.Any(), fmt.Sprintf("user:id:%s", userID), gomock.Any()).DoAndReturn(func(_ context.Context, _ string, dest any) error {
 					destPtr := dest.(*User)
 					*destPtr = *user
 					return nil
@@ -236,7 +236,7 @@ func (s *IdentityServiceTestSuite) TestGetUserByEmail() {
 			expectedUser:  &User{ID: uuid.New(), Email: "email.hit@example.com"},
 			expectedError: nil,
 			mockExpectations: func(repo *MockRepository, cache *cache.MockService, email string, user *User) {
-				cache.EXPECT().Get(gomock.Any(), fmt.Sprintf("user:email:%s", email), gomock.Any()).DoAndReturn(func(_ context.Context, _ string, dest interface{}) error {
+				cache.EXPECT().Get(gomock.Any(), fmt.Sprintf("user:email:%s", email), gomock.Any()).DoAndReturn(func(_ context.Context, _ string, dest any) error {
 					destPtr := dest.(*User)
 					*destPtr = *user
 					return nil
@@ -305,7 +305,7 @@ func (s *IdentityServiceTestSuite) TestGetUserByUsername() {
 			expectedUser:  &User{ID: uuid.New(), Username: "username.hit", Email: "user@name.com"},
 			expectedError: nil,
 			mockExpectations: func(repo *MockRepository, cache *cache.MockService, username string, user *User) {
-				cache.EXPECT().Get(gomock.Any(), fmt.Sprintf("user:username:%s", username), gomock.Any()).DoAndReturn(func(_ context.Context, _ string, dest interface{}) error {
+				cache.EXPECT().Get(gomock.Any(), fmt.Sprintf("user:username:%s", username), gomock.Any()).DoAndReturn(func(_ context.Context, _ string, dest any) error {
 					destPtr := dest.(*User)
 					*destPtr = *user
 					return nil

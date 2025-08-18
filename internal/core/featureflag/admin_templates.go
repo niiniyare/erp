@@ -273,7 +273,7 @@ func (s *adminServiceImpl) validateTemplateRequest(request *CreateFlagTemplateRe
 	return nil
 }
 
-func (s *adminServiceImpl) validateDefaultValueForType(value interface{}, flagType FlagType) error {
+func (s *adminServiceImpl) validateDefaultValueForType(value any, flagType FlagType) error {
 	switch flagType {
 	case FlagTypeBoolean:
 		if _, ok := value.(bool); !ok {

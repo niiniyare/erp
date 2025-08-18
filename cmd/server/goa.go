@@ -203,7 +203,7 @@ func InitializeGOAServer(services *Services, metricsService *metrics.MetricsServ
 	}, nil
 }
 
-func logMountedEndpoints(mounts interface{}, serviceName string) {
+func logMountedEndpoints(mounts any, serviceName string) {
 	// Use reflection to handle different mount types
 	v := reflect.ValueOf(mounts)
 	if v.Kind() != reflect.Slice {

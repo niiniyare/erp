@@ -105,7 +105,7 @@ type EvaluationMetricsRequest struct {
 	PoliciesEvaluated  int32                    `json:"policies_evaluated"`
 	AttributesAccessed int32                    `json:"attributes_accessed"`
 	Timestamp          time.Time                `json:"timestamp"`
-	Metadata           map[string]interface{}   `json:"metadata,omitempty"`
+	Metadata           map[string]any           `json:"metadata,omitempty"`
 }
 
 type MetricsQueryRequest struct {
@@ -309,7 +309,7 @@ type PolicyDecisionEvent struct {
 	Action         string                   `json:"action" validate:"required"`
 	Decision       types.PolicyDecisionType `json:"decision" validate:"required"`
 	DecisionReason string                   `json:"decision_reason"`
-	Context        map[string]interface{}   `json:"context"`
+	Context        map[string]any           `json:"context"`
 	IPAddress      string                   `json:"ip_address,omitempty"`
 	UserAgent      string                   `json:"user_agent,omitempty"`
 	SessionID      *uuid.UUID               `json:"session_id,omitempty"`
@@ -336,9 +336,9 @@ type DecisionPatternRequest struct {
 }
 
 type PatternFilter struct {
-	FilterType  string      `json:"filter_type"`
-	FilterKey   string      `json:"filter_key"`
-	FilterValue interface{} `json:"filter_value"`
+	FilterType  string `json:"filter_type"`
+	FilterKey   string `json:"filter_key"`
+	FilterValue any    `json:"filter_value"`
 }
 
 type PatternType string
@@ -605,11 +605,11 @@ type AffectedEntity struct {
 }
 
 type AnomalyContext struct {
-	TriggerEvents        []string               `json:"trigger_events"`
-	EnvironmentalFactors []string               `json:"environmental_factors"`
-	SystemState          map[string]interface{} `json:"system_state"`
-	TemporalContext      TemporalContext        `json:"temporal_context"`
-	GeographicContext    *GeographicContext     `json:"geographic_context,omitempty"`
+	TriggerEvents        []string           `json:"trigger_events"`
+	EnvironmentalFactors []string           `json:"environmental_factors"`
+	SystemState          map[string]any     `json:"system_state"`
+	TemporalContext      TemporalContext    `json:"temporal_context"`
+	GeographicContext    *GeographicContext `json:"geographic_context,omitempty"`
 }
 
 type TemporalContext struct {
@@ -892,18 +892,18 @@ type AlertManager struct {
 }
 
 type Alert struct {
-	AlertID     uuid.UUID              `json:"alert_id"`
-	AlertType   AlertType              `json:"alert_type"`
-	Severity    AlertSeverity          `json:"severity"`
-	Title       string                 `json:"title"`
-	Description string                 `json:"description"`
-	Status      AlertStatus            `json:"status"`
-	Source      AlertSource            `json:"source"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
-	ResolvedAt  *time.Time             `json:"resolved_at,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	Labels      map[string]string      `json:"labels,omitempty"`
+	AlertID     uuid.UUID         `json:"alert_id"`
+	AlertType   AlertType         `json:"alert_type"`
+	Severity    AlertSeverity     `json:"severity"`
+	Title       string            `json:"title"`
+	Description string            `json:"description"`
+	Status      AlertStatus       `json:"status"`
+	Source      AlertSource       `json:"source"`
+	CreatedAt   time.Time         `json:"created_at"`
+	UpdatedAt   time.Time         `json:"updated_at"`
+	ResolvedAt  *time.Time        `json:"resolved_at,omitempty"`
+	Metadata    map[string]any    `json:"metadata,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
 }
 
 type AlertType string
@@ -1016,13 +1016,13 @@ type HealthMonitor struct {
 }
 
 type HealthCheck struct {
-	CheckName    string                 `json:"check_name"`
-	CheckType    string                 `json:"check_type"`
-	Status       HealthStatus           `json:"status"`
-	LastChecked  time.Time              `json:"last_checked"`
-	ResponseTime time.Duration          `json:"response_time"`
-	ErrorMessage string                 `json:"error_message,omitempty"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	CheckName    string         `json:"check_name"`
+	CheckType    string         `json:"check_type"`
+	Status       HealthStatus   `json:"status"`
+	LastChecked  time.Time      `json:"last_checked"`
+	ResponseTime time.Duration  `json:"response_time"`
+	ErrorMessage string         `json:"error_message,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
 }
 
 type HealthStatus string

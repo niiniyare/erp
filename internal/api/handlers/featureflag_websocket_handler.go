@@ -109,7 +109,7 @@ func (h *FeatureFlagWebSocketHandler) SendTestNotification(c *gin.Context) {
 		NewValue:   true,
 		ChangedBy:  uuid.Nil,
 		AppliedAt:  time.Now(),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"test":    true,
 			"message": "This is a test notification to verify WebSocket connectivity",
 		},
@@ -150,10 +150,10 @@ func (h *FeatureFlagWebSocketHandler) BroadcastMessage(c *gin.Context) {
 
 	// Parse request body
 	var req struct {
-		Type    string      `json:"type" binding:"required"`
-		Event   string      `json:"event" binding:"required"`
-		Data    interface{} `json:"data"`
-		Message string      `json:"message"`
+		Type    string `json:"type" binding:"required"`
+		Event   string `json:"event" binding:"required"`
+		Data    any    `json:"data"`
+		Message string `json:"message"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -182,7 +182,7 @@ func (h *FeatureFlagWebSocketHandler) BroadcastMessage(c *gin.Context) {
 		Type:     req.Type,
 		Event:    req.Event,
 		TenantID: tenantUUID,
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"message": req.Message,
 			"data":    req.Data,
 			"from":    "admin",

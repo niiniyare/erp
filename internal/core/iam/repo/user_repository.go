@@ -50,7 +50,7 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) (*model.U
 	err := r.store.WithTenant(ctx, user.TenantID, func(ctx context.Context, store db.Store) error {
 		// Convert user metadata to JSON bytes
 		userAttributesJSON, _ := json.Marshal(user.Metadata)
-		settingsJSON, _ := json.Marshal(map[string]interface{}{})
+		settingsJSON, _ := json.Marshal(map[string]any{})
 
 		// Convert domain model to SQLC params
 		params := db.CreateUserParams{
@@ -145,7 +145,7 @@ func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User
 			PhoneVerified:    false, // Default value
 			MFAEnabled:       getBoolValue(dbUser.MfaEnabled),
 			FailedLoginCount: int(getInt32Value(dbUser.FailedLoginAttempts)),
-			Metadata:         make(map[string]interface{}), // Will unmarshal from UserAttributes
+			Metadata:         make(map[string]any),
 			CreatedAt:        dbUser.CreatedAt,
 			UpdatedAt:        dbUser.UpdatedAt,
 		}
@@ -194,7 +194,7 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*model.U
 			PhoneVerified:    false, // Default value
 			MFAEnabled:       getBoolValue(dbUser.MfaEnabled),
 			FailedLoginCount: int(getInt32Value(dbUser.FailedLoginAttempts)),
-			Metadata:         make(map[string]interface{}), // Will unmarshal from UserAttributes
+			Metadata:         make(map[string]any),
 			CreatedAt:        dbUser.CreatedAt,
 			UpdatedAt:        dbUser.UpdatedAt,
 		}
@@ -342,7 +342,7 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*model.
 				PhoneVerified:    false, // Default value
 				MFAEnabled:       getBoolValue(dbUser.MfaEnabled),
 				FailedLoginCount: int(getInt32Value(dbUser.FailedLoginAttempts)),
-				Metadata:         make(map[string]interface{}), // Will unmarshal from UserAttributes
+				Metadata:         make(map[string]any),
 				CreatedAt:        dbUser.CreatedAt,
 				UpdatedAt:        dbUser.UpdatedAt,
 			}

@@ -133,18 +133,18 @@ type AttributeSourceRepository interface {
 
 // CreateAttributeSourceRequest represents attribute source creation request
 type CreateAttributeSourceRequest struct {
-	Name     string                 `json:"name"`
-	Type     string                 `json:"type"`
-	Config   map[string]interface{} `json:"config"`
-	TenantID uuid.UUID              `json:"tenant_id"`
-	IsActive bool                   `json:"is_active"`
+	Name     string         `json:"name"`
+	Type     string         `json:"type"`
+	Config   map[string]any `json:"config"`
+	TenantID uuid.UUID      `json:"tenant_id"`
+	IsActive bool           `json:"is_active"`
 }
 
 // UpdateAttributeSourceRequest represents attribute source update request
 type UpdateAttributeSourceRequest struct {
-	Name     *string                `json:"name,omitempty"`
-	Config   map[string]interface{} `json:"config,omitempty"`
-	IsActive *bool                  `json:"is_active,omitempty"`
+	Name     *string        `json:"name,omitempty"`
+	Config   map[string]any `json:"config,omitempty"`
+	IsActive *bool          `json:"is_active,omitempty"`
 }
 
 // ListAttributeSourcesRequest represents attribute source listing request
@@ -188,14 +188,14 @@ type AuditLogRepository interface {
 
 // CreateAuditLogRequest represents audit log creation request
 type CreateAuditLogRequest struct {
-	EventType  string                 `json:"event_type"`
-	EntityID   uuid.UUID              `json:"entity_id"`
-	EntityType string                 `json:"entity_type"`
-	UserID     uuid.UUID              `json:"user_id"`
-	Action     string                 `json:"action"`
-	Details    map[string]interface{} `json:"details,omitempty"`
-	IPAddress  string                 `json:"ip_address,omitempty"`
-	UserAgent  string                 `json:"user_agent,omitempty"`
+	EventType  string         `json:"event_type"`
+	EntityID   uuid.UUID      `json:"entity_id"`
+	EntityType string         `json:"entity_type"`
+	UserID     uuid.UUID      `json:"user_id"`
+	Action     string         `json:"action"`
+	Details    map[string]any `json:"details,omitempty"`
+	IPAddress  string         `json:"ip_address,omitempty"`
+	UserAgent  string         `json:"user_agent,omitempty"`
 }
 
 // GetAuditLogsRequest represents audit logs retrieval request
@@ -220,16 +220,16 @@ type SearchAuditLogsRequest struct {
 
 // AuditLogEntry represents an audit log entry
 type AuditLogEntry struct {
-	ID         uuid.UUID              `json:"id"`
-	EventType  string                 `json:"event_type"`
-	EntityID   uuid.UUID              `json:"entity_id"`
-	EntityType string                 `json:"entity_type"`
-	UserID     uuid.UUID              `json:"user_id"`
-	Action     string                 `json:"action"`
-	Details    map[string]interface{} `json:"details,omitempty"`
-	IPAddress  string                 `json:"ip_address,omitempty"`
-	UserAgent  string                 `json:"user_agent,omitempty"`
-	CreatedAt  time.Time              `json:"created_at"`
+	ID         uuid.UUID      `json:"id"`
+	EventType  string         `json:"event_type"`
+	EntityID   uuid.UUID      `json:"entity_id"`
+	EntityType string         `json:"entity_type"`
+	UserID     uuid.UUID      `json:"user_id"`
+	Action     string         `json:"action"`
+	Details    map[string]any `json:"details,omitempty"`
+	IPAddress  string         `json:"ip_address,omitempty"`
+	UserAgent  string         `json:"user_agent,omitempty"`
+	CreatedAt  time.Time      `json:"created_at"`
 }
 
 // CreateAttributeDefinitionRequest represents attribute definition creation request

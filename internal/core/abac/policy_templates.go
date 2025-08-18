@@ -40,32 +40,32 @@ type PolicyTemplate struct {
 }
 
 type PolicyTemplateContent struct {
-	PolicyType  types.PolicyType       `json:"policy_type"`
-	Effect      types.PolicyEffect     `json:"effect"`
-	Priority    int32                  `json:"priority"`
-	Target      map[string]interface{} `json:"target"`
-	Rule        map[string]interface{} `json:"rule"`
-	Obligations map[string]interface{} `json:"obligations,omitempty"`
-	Advice      map[string]interface{} `json:"advice,omitempty"`
+	PolicyType  types.PolicyType   `json:"policy_type"`
+	Effect      types.PolicyEffect `json:"effect"`
+	Priority    int32              `json:"priority"`
+	Target      map[string]any     `json:"target"`
+	Rule        map[string]any     `json:"rule"`
+	Obligations map[string]any     `json:"obligations,omitempty"`
+	Advice      map[string]any     `json:"advice,omitempty"`
 }
 
 type TemplateParameter struct {
-	Name            string                 `json:"name"`
-	DisplayName     string                 `json:"display_name"`
-	Description     string                 `json:"description"`
-	Type            string                 `json:"type"` // "string", "number", "boolean", "array", "object"
-	Required        bool                   `json:"required"`
-	DefaultValue    interface{}            `json:"default_value,omitempty"`
-	AllowedValues   []interface{}          `json:"allowed_values,omitempty"`
-	ValidationRules map[string]interface{} `json:"validation_rules,omitempty"`
-	Placeholder     string                 `json:"placeholder,omitempty"`
+	Name            string         `json:"name"`
+	DisplayName     string         `json:"display_name"`
+	Description     string         `json:"description"`
+	Type            string         `json:"type"` // "string", "number", "boolean", "array", "object"
+	Required        bool           `json:"required"`
+	DefaultValue    any            `json:"default_value,omitempty"`
+	AllowedValues   []any          `json:"allowed_values,omitempty"`
+	ValidationRules map[string]any `json:"validation_rules,omitempty"`
+	Placeholder     string         `json:"placeholder,omitempty"`
 }
 
 type TemplateExample struct {
-	Name           string                 `json:"name"`
-	Description    string                 `json:"description"`
-	Parameters     map[string]interface{} `json:"parameters"`
-	ExpectedPolicy PolicyTemplateContent  `json:"expected_policy"`
+	Name           string                `json:"name"`
+	Description    string                `json:"description"`
+	Parameters     map[string]any        `json:"parameters"`
+	ExpectedPolicy PolicyTemplateContent `json:"expected_policy"`
 }
 
 type TemplateMetadata struct {
@@ -199,10 +199,10 @@ type ImportedPolicy struct {
 }
 
 type FailedImport struct {
-	OriginalName string                 `json:"original_name"`
-	Reason       string                 `json:"reason"`
-	Errors       []string               `json:"errors"`
-	PolicyData   map[string]interface{} `json:"policy_data,omitempty"`
+	OriginalName string         `json:"original_name"`
+	Reason       string         `json:"reason"`
+	Errors       []string       `json:"errors"`
+	PolicyData   map[string]any `json:"policy_data,omitempty"`
 }
 
 type ImportWarning struct {
@@ -593,19 +593,19 @@ func (pm *policyManager) calculateTemplateComplexity(req *CreatePolicyTemplateRe
 }
 
 type ImportPolicyData struct {
-	Name        string                 `json:"name"`
-	DisplayName *string                `json:"display_name,omitempty"`
-	Description *string                `json:"description,omitempty"`
-	PolicyType  types.PolicyType       `json:"policy_type"`
-	Effect      types.PolicyEffect     `json:"effect"`
-	Priority    int32                  `json:"priority"`
-	Category    types.PolicyCategory   `json:"category"`
-	Target      map[string]interface{} `json:"target"`
-	Rule        map[string]interface{} `json:"rule"`
-	Obligations map[string]interface{} `json:"obligations,omitempty"`
-	Advice      map[string]interface{} `json:"advice,omitempty"`
-	IsActive    bool                   `json:"is_active"`
-	Tags        []string               `json:"tags,omitempty"`
+	Name        string               `json:"name"`
+	DisplayName *string              `json:"display_name,omitempty"`
+	Description *string              `json:"description,omitempty"`
+	PolicyType  types.PolicyType     `json:"policy_type"`
+	Effect      types.PolicyEffect   `json:"effect"`
+	Priority    int32                `json:"priority"`
+	Category    types.PolicyCategory `json:"category"`
+	Target      map[string]any       `json:"target"`
+	Rule        map[string]any       `json:"rule"`
+	Obligations map[string]any       `json:"obligations,omitempty"`
+	Advice      map[string]any       `json:"advice,omitempty"`
+	IsActive    bool                 `json:"is_active"`
+	Tags        []string             `json:"tags,omitempty"`
 }
 
 func (pm *policyManager) parseImportData(ctx context.Context, format string, data []byte) ([]ImportPolicyData, error) {
@@ -766,11 +766,11 @@ func (pm *policyManager) getPoliciesByFilters(ctx context.Context, filters Polic
 	return pm.policyRepo.ListPolicies(ctx, listReq)
 }
 
-func (pm *policyManager) transformPoliciesForExport(ctx context.Context, policies []*models.Policy, options ExportOptions) []map[string]interface{} {
-	var exportData []map[string]interface{}
+func (pm *policyManager) transformPoliciesForExport(ctx context.Context, policies []*models.Policy, options ExportOptions) []map[string]any {
+	var exportData []map[string]any
 
 	for _, policy := range policies {
-		policyMap := map[string]interface{}{
+		policyMap := map[string]any{
 			"id":           policy.ID,
 			"name":         policy.Name,
 			"display_name": policy.DisplayName,
@@ -804,7 +804,7 @@ func (pm *policyManager) transformPoliciesForExport(ctx context.Context, policie
 	return exportData
 }
 
-func (pm *policyManager) generateExportData(ctx context.Context, data []map[string]interface{}, format string, options ExportOptions) ([]byte, error) {
+func (pm *policyManager) generateExportData(ctx context.Context, data []map[string]any, format string, options ExportOptions) ([]byte, error) {
 	switch strings.ToLower(format) {
 	case "json":
 		if options.MinifyOutput {
@@ -823,11 +823,11 @@ func (pm *policyManager) generateExportData(ctx context.Context, data []map[stri
 	}
 }
 
-func (pm *policyManager) generateSplitExport(ctx context.Context, data []map[string]interface{}, format string, options ExportOptions) map[string][]byte {
+func (pm *policyManager) generateSplitExport(ctx context.Context, data []map[string]any, format string, options ExportOptions) map[string][]byte {
 	files := make(map[string][]byte)
 
 	// Group by category
-	categoryGroups := make(map[string][]map[string]interface{})
+	categoryGroups := make(map[string][]map[string]any)
 	for _, policyData := range data {
 		if category, ok := policyData["category"].(string); ok {
 			categoryGroups[category] = append(categoryGroups[category], policyData)

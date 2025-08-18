@@ -50,37 +50,37 @@ type WebSocketConnection struct {
 
 // WebSocketMessage represents a message sent over WebSocket
 type WebSocketMessage struct {
-	Type      string      `json:"type"`
-	Event     string      `json:"event"`
-	TenantID  uuid.UUID   `json:"tenant_id"`
-	Data      interface{} `json:"data"`
-	Timestamp time.Time   `json:"timestamp"`
-	MessageID uuid.UUID   `json:"message_id"`
+	Type      string    `json:"type"`
+	Event     string    `json:"event"`
+	TenantID  uuid.UUID `json:"tenant_id"`
+	Data      any       `json:"data"`
+	Timestamp time.Time `json:"timestamp"`
+	MessageID uuid.UUID `json:"message_id"`
 }
 
 // FeatureFlagChangeEvent represents a feature flag change for real-time updates
 type FeatureFlagChangeEvent struct {
-	FlagID          uuid.UUID              `json:"flag_id"`
-	FlagName        string                 `json:"flag_name"`
-	ChangeType      string                 `json:"change_type"` // enable, disable, update_rollout, created, deleted
-	OldValue        interface{}            `json:"old_value,omitempty"`
-	NewValue        interface{}            `json:"new_value"`
-	ChangedBy       uuid.UUID              `json:"changed_by"`
-	AccessRequestID *uuid.UUID             `json:"access_request_id,omitempty"`
-	AppliedAt       time.Time              `json:"applied_at"`
-	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	FlagID          uuid.UUID      `json:"flag_id"`
+	FlagName        string         `json:"flag_name"`
+	ChangeType      string         `json:"change_type"` // enable, disable, update_rollout, created, deleted
+	OldValue        any            `json:"old_value,omitempty"`
+	NewValue        any            `json:"new_value"`
+	ChangedBy       uuid.UUID      `json:"changed_by"`
+	AccessRequestID *uuid.UUID     `json:"access_request_id,omitempty"`
+	AppliedAt       time.Time      `json:"applied_at"`
+	Metadata        map[string]any `json:"metadata,omitempty"`
 }
 
 // ApprovalRequiredEvent represents an approval request event
 type ApprovalRequiredEvent struct {
-	AccessRequestID uuid.UUID              `json:"access_request_id"`
-	FlagName        string                 `json:"flag_name"`
-	ChangeType      string                 `json:"change_type"`
-	RequestedBy     uuid.UUID              `json:"requested_by"`
-	Justification   string                 `json:"justification"`
-	BusinessReason  string                 `json:"business_reason,omitempty"`
-	RequestedAt     time.Time              `json:"requested_at"`
-	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	AccessRequestID uuid.UUID      `json:"access_request_id"`
+	FlagName        string         `json:"flag_name"`
+	ChangeType      string         `json:"change_type"`
+	RequestedBy     uuid.UUID      `json:"requested_by"`
+	Justification   string         `json:"justification"`
+	BusinessReason  string         `json:"business_reason,omitempty"`
+	RequestedAt     time.Time      `json:"requested_at"`
+	Metadata        map[string]any `json:"metadata,omitempty"`
 }
 
 // ConnectionStats represents WebSocket connection statistics
@@ -197,7 +197,7 @@ func (s *webSocketService) HandleConnection(ctx *gin.Context) {
 		Type:     "system",
 		Event:    "connected",
 		TenantID: tenantID,
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"connection_id": wsConn.ID,
 			"message":       "Connected to feature flag real-time updates",
 		},
@@ -343,7 +343,7 @@ func (s *webSocketService) handleConnectionWrite(ctx context.Context, conn *WebS
 // handleIncomingMessage processes messages from clients
 func (s *webSocketService) handleIncomingMessage(ctx context.Context, conn *WebSocketConnection, message []byte) {
 	log := logger.WithFields(logger.Fields{"service": "websocket", "method": "handleIncomingMessage"})
-	var msg map[string]interface{}
+	var msg map[string]any
 	if err := json.Unmarshal(message, &msg); err != nil {
 		log.Error("Invalid WebSocket message", logger.Fields{
 			"connection_id": conn.ID,
@@ -369,7 +369,7 @@ func (s *webSocketService) handleIncomingMessage(ctx context.Context, conn *WebS
 			Type:      "system",
 			Event:     "heartbeat",
 			TenantID:  conn.TenantID,
-			Data:      map[string]interface{}{"status": "ok"},
+			Data:      map[string]any{"status": "ok"},
 			Timestamp: time.Now(),
 			MessageID: uuid.New(),
 		}

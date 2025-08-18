@@ -55,7 +55,7 @@ type BulkFeatureFlagChangeRequestInput struct {
 type IndividualFlagChangeInput struct {
 	FlagName     string              `json:"flag_name" validate:"required"`
 	ChangeType   string              `json:"change_type" validate:"required"`
-	NewValue     interface{}         `json:"new_value" validate:"required"`
+	NewValue     any                 `json:"new_value" validate:"required"`
 	AutoRollback *AutoRollbackConfig `json:"auto_rollback,omitempty"`
 	Metadata     map[string]any      `json:"metadata,omitempty"`
 }

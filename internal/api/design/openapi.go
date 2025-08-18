@@ -18,9 +18,9 @@ var _ = Service("openapi", func() {
 
 		Result(func() {
 			Attribute("spec", Any, "OpenAPI specification", func() {
-				Example(map[string]interface{}{
+				Example(map[string]any{
 					"openapi": "3.0.3",
-					"info": map[string]interface{}{
+					"info": map[string]any{
 						"title":   "Enterprise AWO ERP System API",
 						"version": "1.0.0",
 					},

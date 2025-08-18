@@ -627,7 +627,7 @@ func (r *attributeDefinitionRepository) fromSQLCAttributeDefinition(sqlcAttrDef 
 		}
 	}
 
-	var validationRules map[string]interface{}
+	var validationRules map[string]any
 	if len(sqlcAttrDef.ValidationRules) > 0 {
 		if err := json.Unmarshal(sqlcAttrDef.ValidationRules, &validationRules); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal validation_rules: %w", err)

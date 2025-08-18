@@ -227,7 +227,7 @@ func convertEmployeeToDomain(dbEmployee *db.Employee) *model.Employee {
 }
 
 // Helper function to convert sql.NullTime to *time.Time
-func convertTimePointer(nullTime interface{}) *time.Time {
+func convertTimePointer(nullTime any) *time.Time {
 	// TODO: Implement proper conversion based on the actual type
 	return nil
 }

@@ -24,9 +24,9 @@ import (
 
 // MultiplePolicyEvaluationRequest represents a request to evaluate multiple policies
 type MultiplePolicyEvaluationRequest struct {
-	PolicyIDs []uuid.UUID            `json:"policy_ids"`
-	Context   map[string]interface{} `json:"context"`
-	RequestID string                 `json:"request_id"`
+	PolicyIDs []uuid.UUID    `json:"policy_ids"`
+	Context   map[string]any `json:"context"`
+	RequestID string         `json:"request_id"`
 }
 
 // MultiplePolicyEvaluationResult represents the result of multiple policy evaluation
@@ -52,26 +52,26 @@ type BatchPolicyEvaluationResult struct {
 
 // ContextualEvaluationRequest represents a contextual evaluation request
 type ContextualEvaluationRequest struct {
-	PolicyID  uuid.UUID              `json:"policy_id"`
-	Context   map[string]interface{} `json:"context"`
-	Scenario  string                 `json:"scenario,omitempty"`
-	RequestID string                 `json:"request_id"`
+	PolicyID  uuid.UUID      `json:"policy_id"`
+	Context   map[string]any `json:"context"`
+	Scenario  string         `json:"scenario,omitempty"`
+	RequestID string         `json:"request_id"`
 }
 
 // ContextualEvaluationResult represents the result of contextual evaluation
 type ContextualEvaluationResult struct {
 	PolicyID  uuid.UUID                `json:"policy_id"`
 	Decision  types.PolicyDecisionType `json:"decision"`
-	Context   map[string]interface{}   `json:"context"`
+	Context   map[string]any           `json:"context"`
 	Reasoning string                   `json:"reasoning,omitempty"`
 	RequestID string                   `json:"request_id"`
 }
 
 // EvaluationSimulationRequest represents a simulation request
 type EvaluationSimulationRequest struct {
-	PolicyID  uuid.UUID                `json:"policy_id"`
-	Scenarios []map[string]interface{} `json:"scenarios"`
-	RequestID string                   `json:"request_id"`
+	PolicyID  uuid.UUID        `json:"policy_id"`
+	Scenarios []map[string]any `json:"scenarios"`
+	RequestID string           `json:"request_id"`
 }
 
 // EvaluationSimulationResult represents the result of evaluation simulation
@@ -93,10 +93,10 @@ type SimulationSummary struct {
 
 // RuleEvaluationRequest represents a rule evaluation request
 type RuleEvaluationRequest struct {
-	RuleID    string                 `json:"rule_id"`
-	Rule      string                 `json:"rule"`
-	Context   map[string]interface{} `json:"context"`
-	RequestID string                 `json:"request_id"`
+	RuleID    string         `json:"rule_id"`
+	Rule      string         `json:"rule"`
+	Context   map[string]any `json:"context"`
+	RequestID string         `json:"request_id"`
 }
 
 // ParsedRuleExpression represents a parsed rule expression
@@ -111,18 +111,18 @@ type ParsedRuleExpression struct {
 
 // PIPResolutionRequest represents a request for PIP resolution
 type PIPResolutionRequest struct {
-	AttributeName string                 `json:"attribute_name"`
-	EntityID      uuid.UUID              `json:"entity_id"`
-	Context       map[string]interface{} `json:"context,omitempty"`
+	AttributeName string         `json:"attribute_name"`
+	EntityID      uuid.UUID      `json:"entity_id"`
+	Context       map[string]any `json:"context,omitempty"`
 }
 
 // PIPResolutionResult represents the result of PIP resolution
 type PIPResolutionResult struct {
-	AttributeName string      `json:"attribute_name"`
-	Value         interface{} `json:"value"`
-	Source        string      `json:"source"`
-	Success       bool        `json:"success"`
-	ErrorMsg      string      `json:"error_msg,omitempty"`
+	AttributeName string `json:"attribute_name"`
+	Value         any    `json:"value"`
+	Source        string `json:"source"`
+	Success       bool   `json:"success"`
+	ErrorMsg      string `json:"error_msg,omitempty"`
 }
 
 // RegisterPIPProviderRequest represents a request to register a PIP provider
@@ -239,30 +239,30 @@ type PolicyEvaluationResult struct {
 	Advice          []PolicyAdvice           `json:"advice,omitempty"`
 	EvaluationTime  time.Duration            `json:"evaluation_time"`
 	CacheHit        bool                     `json:"cache_hit"`
-	Metadata        map[string]interface{}   `json:"metadata,omitempty"`
+	Metadata        map[string]any           `json:"metadata,omitempty"`
 }
 
 type SubjectContext struct {
-	UserID     uuid.UUID              `json:"user_id" validate:"required"`
-	Roles      []string               `json:"roles,omitempty"`
-	Groups     []string               `json:"groups,omitempty"`
-	Attributes map[string]interface{} `json:"attributes,omitempty"`
-	Claims     map[string]interface{} `json:"claims,omitempty"`
+	UserID     uuid.UUID      `json:"user_id" validate:"required"`
+	Roles      []string       `json:"roles,omitempty"`
+	Groups     []string       `json:"groups,omitempty"`
+	Attributes map[string]any `json:"attributes,omitempty"`
+	Claims     map[string]any `json:"claims,omitempty"`
 }
 
 type ResourceContext struct {
-	ResourceID   uuid.UUID              `json:"resource_id" validate:"required"`
-	ResourceType string                 `json:"resource_type" validate:"required"`
-	Owner        *uuid.UUID             `json:"owner,omitempty"`
-	Attributes   map[string]interface{} `json:"attributes,omitempty"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	ResourceID   uuid.UUID      `json:"resource_id" validate:"required"`
+	ResourceType string         `json:"resource_type" validate:"required"`
+	Owner        *uuid.UUID     `json:"owner,omitempty"`
+	Attributes   map[string]any `json:"attributes,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
 }
 
 type ActionContext struct {
-	Action     string                 `json:"action" validate:"required"`
-	Operations []string               `json:"operations,omitempty"`
-	Intent     *string                `json:"intent,omitempty"`
-	Attributes map[string]interface{} `json:"attributes,omitempty"`
+	Action     string         `json:"action" validate:"required"`
+	Operations []string       `json:"operations,omitempty"`
+	Intent     *string        `json:"intent,omitempty"`
+	Attributes map[string]any `json:"attributes,omitempty"`
 }
 
 // EnvironmentContext type already defined in attribute_collector.go
@@ -714,7 +714,7 @@ func (pipm *PolicyInformationPointManager) ResolveAttribute(
 	category string,
 	attributeID string,
 	subjectID uuid.UUID,
-) (interface{}, error) {
+) (any, error) {
 
 	// Check cache first
 	if value, found := pipm.cache.Get(category, attributeID, subjectID); found {
@@ -745,16 +745,16 @@ func (pipm *PolicyInformationPointManager) ResolveAttribute(
 // Supporting Types and Interfaces
 
 type RuleOperator interface {
-	Evaluate(left, right interface{}) (bool, error)
+	Evaluate(left, right any) (bool, error)
 	GetName() string
 	GetArity() int
 }
 
 type RuleFunction interface {
-	Execute(args []interface{}) (interface{}, error)
+	Execute(args []any) (any, error)
 	GetName() string
 	GetArity() int
-	ValidateArgs(args []interface{}) error
+	ValidateArgs(args []any) error
 }
 
 type CompiledExpression struct {
@@ -767,7 +767,7 @@ type CompiledExpression struct {
 
 type ExpressionNode struct {
 	Type     NodeType
-	Value    interface{}
+	Value    any
 	Operator string
 	Function string
 	Children []*ExpressionNode
@@ -787,12 +787,12 @@ type EvaluationAttributeContext struct {
 	Resource    ResourceContext
 	Action      ActionContext
 	Environment EnvironmentContext
-	Resolved    map[string]interface{}
+	Resolved    map[string]any
 	UsedPaths   []string
 	mutex       sync.RWMutex
 }
 
-func (eac *EvaluationAttributeContext) GetAttribute(path string) (interface{}, bool) {
+func (eac *EvaluationAttributeContext) GetAttribute(path string) (any, bool) {
 	eac.mutex.Lock()
 	defer eac.mutex.Unlock()
 
@@ -819,7 +819,7 @@ func (eac *EvaluationAttributeContext) GetUsedAttributes() []AttributeUsage {
 	return usage
 }
 
-func (eac *EvaluationAttributeContext) resolveAttributePath(path string) (interface{}, bool) {
+func (eac *EvaluationAttributeContext) resolveAttributePath(path string) (any, bool) {
 	// Parse attribute path (e.g., "subject.roles", "resource.owner", "environment.time")
 	parts := strings.Split(path, ".")
 	if len(parts) < 2 {
@@ -857,7 +857,7 @@ func (eac *EvaluationAttributeContext) categorizeAttributePath(path string) stri
 
 // Helper methods for attribute resolution
 
-func (eac *EvaluationAttributeContext) getSubjectAttribute(attribute string) (interface{}, bool) {
+func (eac *EvaluationAttributeContext) getSubjectAttribute(attribute string) (any, bool) {
 	switch attribute {
 	case "id":
 		return eac.Subject.UserID, true
@@ -876,7 +876,7 @@ func (eac *EvaluationAttributeContext) getSubjectAttribute(attribute string) (in
 	}
 }
 
-func (eac *EvaluationAttributeContext) getResourceAttribute(attribute string) (interface{}, bool) {
+func (eac *EvaluationAttributeContext) getResourceAttribute(attribute string) (any, bool) {
 	switch attribute {
 	case "id":
 		return eac.Resource.ResourceID, true
@@ -895,7 +895,7 @@ func (eac *EvaluationAttributeContext) getResourceAttribute(attribute string) (i
 	}
 }
 
-func (eac *EvaluationAttributeContext) getActionAttribute(attribute string) (interface{}, bool) {
+func (eac *EvaluationAttributeContext) getActionAttribute(attribute string) (any, bool) {
 	switch attribute {
 	case "action":
 		return eac.Action.Action, true
@@ -911,7 +911,7 @@ func (eac *EvaluationAttributeContext) getActionAttribute(attribute string) (int
 	}
 }
 
-func (eac *EvaluationAttributeContext) getEnvironmentAttribute(attribute string) (interface{}, bool) {
+func (eac *EvaluationAttributeContext) getEnvironmentAttribute(attribute string) (any, bool) {
 	switch attribute {
 	case "timestamp":
 		return eac.Environment.Timestamp, true
@@ -948,19 +948,19 @@ type AttributeUsage struct {
 }
 
 type PolicyObligation struct {
-	ID          uuid.UUID              `json:"id"`
-	Type        string                 `json:"type"`
-	Description string                 `json:"description"`
-	Parameters  map[string]interface{} `json:"parameters,omitempty"`
-	Fulfillment ObligationFulfillment  `json:"fulfillment"`
+	ID          uuid.UUID             `json:"id"`
+	Type        string                `json:"type"`
+	Description string                `json:"description"`
+	Parameters  map[string]any        `json:"parameters,omitempty"`
+	Fulfillment ObligationFulfillment `json:"fulfillment"`
 }
 
 type PolicyAdvice struct {
-	ID          uuid.UUID              `json:"id"`
-	Type        string                 `json:"type"`
-	Description string                 `json:"description"`
-	Parameters  map[string]interface{} `json:"parameters,omitempty"`
-	Severity    AdviceSeverity         `json:"severity"`
+	ID          uuid.UUID      `json:"id"`
+	Type        string         `json:"type"`
+	Description string         `json:"description"`
+	Parameters  map[string]any `json:"parameters,omitempty"`
+	Severity    AdviceSeverity `json:"severity"`
 }
 
 type ObligationFulfillment string
@@ -1002,10 +1002,10 @@ type RuleTraceEntry struct {
 }
 
 type AttributeReference struct {
-	Path     string      `json:"path"`
-	Value    interface{} `json:"value"`
-	Source   string      `json:"source"`
-	Resolved bool        `json:"resolved"`
+	Path     string `json:"path"`
+	Value    any    `json:"value"`
+	Source   string `json:"source"`
+	Resolved bool   `json:"resolved"`
 }
 
 // Evaluation modes and options
@@ -1042,7 +1042,7 @@ const (
 // PIP Provider Interface
 
 type PIPProvider interface {
-	ResolveAttribute(ctx context.Context, attributeID string, subjectID uuid.UUID) (interface{}, error)
+	ResolveAttribute(ctx context.Context, attributeID string, subjectID uuid.UUID) (any, error)
 	GetSupportedAttributes() []string
 	GetProviderInfo() PIPProviderInfo
 }
@@ -1065,7 +1065,7 @@ func NewPIPCache() *PIPCache {
 	}
 }
 
-func (pc *PIPCache) Get(category, attributeID string, subjectID uuid.UUID) (interface{}, bool) {
+func (pc *PIPCache) Get(category, attributeID string, subjectID uuid.UUID) (any, bool) {
 	pc.mutex.RLock()
 	defer pc.mutex.RUnlock()
 
@@ -1078,7 +1078,7 @@ func (pc *PIPCache) Get(category, attributeID string, subjectID uuid.UUID) (inte
 	return entry.Value, true
 }
 
-func (pc *PIPCache) Set(category, attributeID string, subjectID uuid.UUID, value interface{}) {
+func (pc *PIPCache) Set(category, attributeID string, subjectID uuid.UUID, value any) {
 	pc.mutex.Lock()
 	defer pc.mutex.Unlock()
 
@@ -1090,7 +1090,7 @@ func (pc *PIPCache) Set(category, attributeID string, subjectID uuid.UUID, value
 }
 
 type PIPCacheEntry struct {
-	Value     interface{}
+	Value     any
 	ExpiresAt time.Time
 }
 
@@ -1121,7 +1121,7 @@ func (pee *policyEvaluationEngine) resolveEvaluationAttributes(
 		Resource:    req.Resource,
 		Action:      req.Action,
 		Environment: req.Environment,
-		Resolved:    make(map[string]interface{}),
+		Resolved:    make(map[string]any),
 		UsedPaths:   make([]string, 0),
 	}
 
@@ -1195,7 +1195,7 @@ func NewEvaluationPerformanceTracker() *EvaluationPerformanceTracker {
 
 type EqualOperator struct{}
 
-func (eo *EqualOperator) Evaluate(left, right interface{}) (bool, error) {
+func (eo *EqualOperator) Evaluate(left, right any) (bool, error) {
 	return reflect.DeepEqual(left, right), nil
 }
 func (eo *EqualOperator) GetName() string { return "eq" }
@@ -1203,7 +1203,7 @@ func (eo *EqualOperator) GetArity() int   { return 2 }
 
 type NotEqualOperator struct{}
 
-func (neo *NotEqualOperator) Evaluate(left, right interface{}) (bool, error) {
+func (neo *NotEqualOperator) Evaluate(left, right any) (bool, error) {
 	return !reflect.DeepEqual(left, right), nil
 }
 func (neo *NotEqualOperator) GetName() string { return "ne" }
@@ -1211,7 +1211,7 @@ func (neo *NotEqualOperator) GetArity() int   { return 2 }
 
 type GreaterThanOperator struct{}
 
-func (gto *GreaterThanOperator) Evaluate(left, right interface{}) (bool, error) {
+func (gto *GreaterThanOperator) Evaluate(left, right any) (bool, error) {
 	// Implementation would handle numeric comparison
 	return false, nil
 }
@@ -1220,7 +1220,7 @@ func (gto *GreaterThanOperator) GetArity() int   { return 2 }
 
 type GreaterThanEqualOperator struct{}
 
-func (gteo *GreaterThanEqualOperator) Evaluate(left, right interface{}) (bool, error) {
+func (gteo *GreaterThanEqualOperator) Evaluate(left, right any) (bool, error) {
 	return false, nil
 }
 func (gteo *GreaterThanEqualOperator) GetName() string { return "gte" }
@@ -1228,7 +1228,7 @@ func (gteo *GreaterThanEqualOperator) GetArity() int   { return 2 }
 
 type LessThanOperator struct{}
 
-func (lto *LessThanOperator) Evaluate(left, right interface{}) (bool, error) {
+func (lto *LessThanOperator) Evaluate(left, right any) (bool, error) {
 	return false, nil
 }
 func (lto *LessThanOperator) GetName() string { return "lt" }
@@ -1236,7 +1236,7 @@ func (lto *LessThanOperator) GetArity() int   { return 2 }
 
 type LessThanEqualOperator struct{}
 
-func (lteo *LessThanEqualOperator) Evaluate(left, right interface{}) (bool, error) {
+func (lteo *LessThanEqualOperator) Evaluate(left, right any) (bool, error) {
 	return false, nil
 }
 func (lteo *LessThanEqualOperator) GetName() string { return "lte" }
@@ -1244,7 +1244,7 @@ func (lteo *LessThanEqualOperator) GetArity() int   { return 2 }
 
 type AndOperator struct{}
 
-func (ao *AndOperator) Evaluate(left, right interface{}) (bool, error) {
+func (ao *AndOperator) Evaluate(left, right any) (bool, error) {
 	leftBool, leftOk := left.(bool)
 	rightBool, rightOk := right.(bool)
 	if !leftOk || !rightOk {
@@ -1257,7 +1257,7 @@ func (ao *AndOperator) GetArity() int   { return 2 }
 
 type OrOperator struct{}
 
-func (oo *OrOperator) Evaluate(left, right interface{}) (bool, error) {
+func (oo *OrOperator) Evaluate(left, right any) (bool, error) {
 	leftBool, leftOk := left.(bool)
 	rightBool, rightOk := right.(bool)
 	if !leftOk || !rightOk {
@@ -1270,7 +1270,7 @@ func (oo *OrOperator) GetArity() int   { return 2 }
 
 type NotOperator struct{}
 
-func (no *NotOperator) Evaluate(left, right interface{}) (bool, error) {
+func (no *NotOperator) Evaluate(left, right any) (bool, error) {
 	leftBool, leftOk := left.(bool)
 	if !leftOk {
 		return false, fmt.Errorf("NOT operator requires boolean operand, operand: %v: %w", left, errors.ErrInvalidInput)
@@ -1282,7 +1282,7 @@ func (no *NotOperator) GetArity() int   { return 1 }
 
 type ContainsOperator struct{}
 
-func (co *ContainsOperator) Evaluate(left, right interface{}) (bool, error) {
+func (co *ContainsOperator) Evaluate(left, right any) (bool, error) {
 	leftStr, leftOk := left.(string)
 	rightStr, rightOk := right.(string)
 	if !leftOk || !rightOk {
@@ -1295,7 +1295,7 @@ func (co *ContainsOperator) GetArity() int   { return 2 }
 
 type StartsWithOperator struct{}
 
-func (swo *StartsWithOperator) Evaluate(left, right interface{}) (bool, error) {
+func (swo *StartsWithOperator) Evaluate(left, right any) (bool, error) {
 	leftStr, leftOk := left.(string)
 	rightStr, rightOk := right.(string)
 	if !leftOk || !rightOk {
@@ -1308,7 +1308,7 @@ func (swo *StartsWithOperator) GetArity() int   { return 2 }
 
 type EndsWithOperator struct{}
 
-func (ewo *EndsWithOperator) Evaluate(left, right interface{}) (bool, error) {
+func (ewo *EndsWithOperator) Evaluate(left, right any) (bool, error) {
 	leftStr, leftOk := left.(string)
 	rightStr, rightOk := right.(string)
 	if !leftOk || !rightOk {
@@ -1321,7 +1321,7 @@ func (ewo *EndsWithOperator) GetArity() int   { return 2 }
 
 type RegexMatchOperator struct{}
 
-func (rmo *RegexMatchOperator) Evaluate(left, right interface{}) (bool, error) {
+func (rmo *RegexMatchOperator) Evaluate(left, right any) (bool, error) {
 	leftStr, leftOk := left.(string)
 	rightStr, rightOk := right.(string)
 	if !leftOk || !rightOk {
@@ -1338,7 +1338,7 @@ func (rmo *RegexMatchOperator) GetArity() int   { return 2 }
 
 type InOperator struct{}
 
-func (io *InOperator) Evaluate(left, right interface{}) (bool, error) {
+func (io *InOperator) Evaluate(left, right any) (bool, error) {
 	// Implementation would check if left is in right (array/slice)
 	return false, nil
 }
@@ -1347,7 +1347,7 @@ func (io *InOperator) GetArity() int   { return 2 }
 
 type NotInOperator struct{}
 
-func (nio *NotInOperator) Evaluate(left, right interface{}) (bool, error) {
+func (nio *NotInOperator) Evaluate(left, right any) (bool, error) {
 	// Implementation would check if left is not in right (array/slice)
 	return false, nil
 }
@@ -1356,7 +1356,7 @@ func (nio *NotInOperator) GetArity() int   { return 2 }
 
 type SubsetOperator struct{}
 
-func (so *SubsetOperator) Evaluate(left, right interface{}) (bool, error) {
+func (so *SubsetOperator) Evaluate(left, right any) (bool, error) {
 	return false, nil
 }
 func (so *SubsetOperator) GetName() string { return "subset" }
@@ -1364,7 +1364,7 @@ func (so *SubsetOperator) GetArity() int   { return 2 }
 
 type SupersetOperator struct{}
 
-func (sso *SupersetOperator) Evaluate(left, right interface{}) (bool, error) {
+func (sso *SupersetOperator) Evaluate(left, right any) (bool, error) {
 	return false, nil
 }
 func (sso *SupersetOperator) GetName() string { return "superset" }
@@ -1372,7 +1372,7 @@ func (sso *SupersetOperator) GetArity() int   { return 2 }
 
 type IntersectsOperator struct{}
 
-func (io2 *IntersectsOperator) Evaluate(left, right interface{}) (bool, error) {
+func (io2 *IntersectsOperator) Evaluate(left, right any) (bool, error) {
 	return false, nil
 }
 func (io2 *IntersectsOperator) GetName() string { return "intersects" }
@@ -1380,7 +1380,7 @@ func (io2 *IntersectsOperator) GetArity() int   { return 2 }
 
 type BeforeOperator struct{}
 
-func (bo *BeforeOperator) Evaluate(left, right interface{}) (bool, error) {
+func (bo *BeforeOperator) Evaluate(left, right any) (bool, error) {
 	return false, nil
 }
 func (bo *BeforeOperator) GetName() string { return "before" }
@@ -1388,7 +1388,7 @@ func (bo *BeforeOperator) GetArity() int   { return 2 }
 
 type AfterOperator struct{}
 
-func (ao2 *AfterOperator) Evaluate(left, right interface{}) (bool, error) {
+func (ao2 *AfterOperator) Evaluate(left, right any) (bool, error) {
 	return false, nil
 }
 func (ao2 *AfterOperator) GetName() string { return "after" }
@@ -1396,7 +1396,7 @@ func (ao2 *AfterOperator) GetArity() int   { return 2 }
 
 type DuringOperator struct{}
 
-func (do *DuringOperator) Evaluate(left, right interface{}) (bool, error) {
+func (do *DuringOperator) Evaluate(left, right any) (bool, error) {
 	return false, nil
 }
 func (do *DuringOperator) GetName() string { return "during" }
@@ -1404,7 +1404,7 @@ func (do *DuringOperator) GetArity() int   { return 2 }
 
 type BetweenOperator struct{}
 
-func (bo2 *BetweenOperator) Evaluate(left, right interface{}) (bool, error) {
+func (bo2 *BetweenOperator) Evaluate(left, right any) (bool, error) {
 	return false, nil
 }
 func (bo2 *BetweenOperator) GetName() string { return "between" }
@@ -1414,7 +1414,7 @@ func (bo2 *BetweenOperator) GetArity() int   { return 3 }
 
 type StringLengthFunction struct{}
 
-func (slf *StringLengthFunction) Execute(args []interface{}) (interface{}, error) {
+func (slf *StringLengthFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("strlen function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
@@ -1424,13 +1424,13 @@ func (slf *StringLengthFunction) Execute(args []interface{}) (interface{}, error
 	}
 	return len(str), nil
 }
-func (slf *StringLengthFunction) GetName() string                       { return "strlen" }
-func (slf *StringLengthFunction) GetArity() int                         { return 1 }
-func (slf *StringLengthFunction) ValidateArgs(args []interface{}) error { return nil }
+func (slf *StringLengthFunction) GetName() string               { return "strlen" }
+func (slf *StringLengthFunction) GetArity() int                 { return 1 }
+func (slf *StringLengthFunction) ValidateArgs(args []any) error { return nil }
 
 type UpperCaseFunction struct{}
 
-func (ucf *UpperCaseFunction) Execute(args []interface{}) (interface{}, error) {
+func (ucf *UpperCaseFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("upper function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
@@ -1440,13 +1440,13 @@ func (ucf *UpperCaseFunction) Execute(args []interface{}) (interface{}, error) {
 	}
 	return strings.ToUpper(str), nil
 }
-func (ucf *UpperCaseFunction) GetName() string                       { return "upper" }
-func (ucf *UpperCaseFunction) GetArity() int                         { return 1 }
-func (ucf *UpperCaseFunction) ValidateArgs(args []interface{}) error { return nil }
+func (ucf *UpperCaseFunction) GetName() string               { return "upper" }
+func (ucf *UpperCaseFunction) GetArity() int                 { return 1 }
+func (ucf *UpperCaseFunction) ValidateArgs(args []any) error { return nil }
 
 type LowerCaseFunction struct{}
 
-func (lcf *LowerCaseFunction) Execute(args []interface{}) (interface{}, error) {
+func (lcf *LowerCaseFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("lower function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
@@ -1456,13 +1456,13 @@ func (lcf *LowerCaseFunction) Execute(args []interface{}) (interface{}, error) {
 	}
 	return strings.ToLower(str), nil
 }
-func (lcf *LowerCaseFunction) GetName() string                       { return "lower" }
-func (lcf *LowerCaseFunction) GetArity() int                         { return 1 }
-func (lcf *LowerCaseFunction) ValidateArgs(args []interface{}) error { return nil }
+func (lcf *LowerCaseFunction) GetName() string               { return "lower" }
+func (lcf *LowerCaseFunction) GetArity() int                 { return 1 }
+func (lcf *LowerCaseFunction) ValidateArgs(args []any) error { return nil }
 
 type TrimFunction struct{}
 
-func (tf *TrimFunction) Execute(args []interface{}) (interface{}, error) {
+func (tf *TrimFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("trim function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
@@ -1472,13 +1472,13 @@ func (tf *TrimFunction) Execute(args []interface{}) (interface{}, error) {
 	}
 	return strings.TrimSpace(str), nil
 }
-func (tf *TrimFunction) GetName() string                       { return "trim" }
-func (tf *TrimFunction) GetArity() int                         { return 1 }
-func (tf *TrimFunction) ValidateArgs(args []interface{}) error { return nil }
+func (tf *TrimFunction) GetName() string               { return "trim" }
+func (tf *TrimFunction) GetArity() int                 { return 1 }
+func (tf *TrimFunction) ValidateArgs(args []any) error { return nil }
 
 type SubstringFunction struct{}
 
-func (sf *SubstringFunction) Execute(args []interface{}) (interface{}, error) {
+func (sf *SubstringFunction) Execute(args []any) (any, error) {
 	if len(args) != 3 {
 		return nil, fmt.Errorf("substr function requires exactly 3 arguments, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
@@ -1497,191 +1497,191 @@ func (sf *SubstringFunction) Execute(args []interface{}) (interface{}, error) {
 	}
 	return str[start:end], nil
 }
-func (sf *SubstringFunction) GetName() string                       { return "substr" }
-func (sf *SubstringFunction) GetArity() int                         { return 3 }
-func (sf *SubstringFunction) ValidateArgs(args []interface{}) error { return nil }
+func (sf *SubstringFunction) GetName() string               { return "substr" }
+func (sf *SubstringFunction) GetArity() int                 { return 3 }
+func (sf *SubstringFunction) ValidateArgs(args []any) error { return nil }
 
 type AbsoluteFunction struct{}
 
-func (af *AbsoluteFunction) Execute(args []interface{}) (interface{}, error) {
+func (af *AbsoluteFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("abs function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
 	// Implementation would handle numeric absolute value
 	return args[0], nil
 }
-func (af *AbsoluteFunction) GetName() string                       { return "abs" }
-func (af *AbsoluteFunction) GetArity() int                         { return 1 }
-func (af *AbsoluteFunction) ValidateArgs(args []interface{}) error { return nil }
+func (af *AbsoluteFunction) GetName() string               { return "abs" }
+func (af *AbsoluteFunction) GetArity() int                 { return 1 }
+func (af *AbsoluteFunction) ValidateArgs(args []any) error { return nil }
 
 type MinFunction struct{}
 
-func (mf *MinFunction) Execute(args []interface{}) (interface{}, error) {
+func (mf *MinFunction) Execute(args []any) (any, error) {
 	if len(args) < 2 {
 		return nil, fmt.Errorf("min function requires at least 2 arguments, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
 	// Implementation would find minimum value
 	return args[0], nil
 }
-func (mf *MinFunction) GetName() string                       { return "min" }
-func (mf *MinFunction) GetArity() int                         { return -1 } // Variable arity
-func (mf *MinFunction) ValidateArgs(args []interface{}) error { return nil }
+func (mf *MinFunction) GetName() string               { return "min" }
+func (mf *MinFunction) GetArity() int                 { return -1 } // Variable arity
+func (mf *MinFunction) ValidateArgs(args []any) error { return nil }
 
 type MaxFunction struct{}
 
-func (maxf *MaxFunction) Execute(args []interface{}) (interface{}, error) {
+func (maxf *MaxFunction) Execute(args []any) (any, error) {
 	if len(args) < 2 {
 		return nil, fmt.Errorf("max function requires at least 2 arguments, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
 	// Implementation would find maximum value
 	return args[0], nil
 }
-func (maxf *MaxFunction) GetName() string                       { return "max" }
-func (maxf *MaxFunction) GetArity() int                         { return -1 } // Variable arity
-func (maxf *MaxFunction) ValidateArgs(args []interface{}) error { return nil }
+func (maxf *MaxFunction) GetName() string               { return "max" }
+func (maxf *MaxFunction) GetArity() int                 { return -1 } // Variable arity
+func (maxf *MaxFunction) ValidateArgs(args []any) error { return nil }
 
 type SumFunction struct{}
 
-func (sf2 *SumFunction) Execute(args []interface{}) (interface{}, error) {
+func (sf2 *SumFunction) Execute(args []any) (any, error) {
 	// Implementation would sum numeric values
 	return 0, nil
 }
-func (sf2 *SumFunction) GetName() string                       { return "sum" }
-func (sf2 *SumFunction) GetArity() int                         { return -1 } // Variable arity
-func (sf2 *SumFunction) ValidateArgs(args []interface{}) error { return nil }
+func (sf2 *SumFunction) GetName() string               { return "sum" }
+func (sf2 *SumFunction) GetArity() int                 { return -1 } // Variable arity
+func (sf2 *SumFunction) ValidateArgs(args []any) error { return nil }
 
 type AverageFunction struct{}
 
-func (avgf *AverageFunction) Execute(args []interface{}) (interface{}, error) {
+func (avgf *AverageFunction) Execute(args []any) (any, error) {
 	// Implementation would calculate average
 	return 0.0, nil
 }
-func (avgf *AverageFunction) GetName() string                       { return "avg" }
-func (avgf *AverageFunction) GetArity() int                         { return -1 } // Variable arity
-func (avgf *AverageFunction) ValidateArgs(args []interface{}) error { return nil }
+func (avgf *AverageFunction) GetName() string               { return "avg" }
+func (avgf *AverageFunction) GetArity() int                 { return -1 } // Variable arity
+func (avgf *AverageFunction) ValidateArgs(args []any) error { return nil }
 
 type NowFunction struct{}
 
-func (nf *NowFunction) Execute(args []interface{}) (interface{}, error) {
+func (nf *NowFunction) Execute(args []any) (any, error) {
 	return time.Now(), nil
 }
-func (nf *NowFunction) GetName() string                       { return "now" }
-func (nf *NowFunction) GetArity() int                         { return 0 }
-func (nf *NowFunction) ValidateArgs(args []interface{}) error { return nil }
+func (nf *NowFunction) GetName() string               { return "now" }
+func (nf *NowFunction) GetArity() int                 { return 0 }
+func (nf *NowFunction) ValidateArgs(args []any) error { return nil }
 
 type DateFunction struct{}
 
-func (df *DateFunction) Execute(args []interface{}) (interface{}, error) {
+func (df *DateFunction) Execute(args []any) (any, error) {
 	// Implementation would parse date string
 	return time.Now(), nil
 }
-func (df *DateFunction) GetName() string                       { return "date" }
-func (df *DateFunction) GetArity() int                         { return 1 }
-func (df *DateFunction) ValidateArgs(args []interface{}) error { return nil }
+func (df *DateFunction) GetName() string               { return "date" }
+func (df *DateFunction) GetArity() int                 { return 1 }
+func (df *DateFunction) ValidateArgs(args []any) error { return nil }
 
 type TimeFormatFunction struct{}
 
-func (tff *TimeFormatFunction) Execute(args []interface{}) (interface{}, error) {
+func (tff *TimeFormatFunction) Execute(args []any) (any, error) {
 	// Implementation would format time
 	return "", nil
 }
-func (tff *TimeFormatFunction) GetName() string                       { return "timeformat" }
-func (tff *TimeFormatFunction) GetArity() int                         { return 2 }
-func (tff *TimeFormatFunction) ValidateArgs(args []interface{}) error { return nil }
+func (tff *TimeFormatFunction) GetName() string               { return "timeformat" }
+func (tff *TimeFormatFunction) GetArity() int                 { return 2 }
+func (tff *TimeFormatFunction) ValidateArgs(args []any) error { return nil }
 
 type DateDifferenceFunction struct{}
 
-func (ddf *DateDifferenceFunction) Execute(args []interface{}) (interface{}, error) {
+func (ddf *DateDifferenceFunction) Execute(args []any) (any, error) {
 	// Implementation would calculate date difference
 	return time.Duration(0), nil
 }
-func (ddf *DateDifferenceFunction) GetName() string                       { return "datediff" }
-func (ddf *DateDifferenceFunction) GetArity() int                         { return 2 }
-func (ddf *DateDifferenceFunction) ValidateArgs(args []interface{}) error { return nil }
+func (ddf *DateDifferenceFunction) GetName() string               { return "datediff" }
+func (ddf *DateDifferenceFunction) GetArity() int                 { return 2 }
+func (ddf *DateDifferenceFunction) ValidateArgs(args []any) error { return nil }
 
 type CountFunction struct{}
 
-func (cf *CountFunction) Execute(args []interface{}) (interface{}, error) {
+func (cf *CountFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("count function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
 	// Implementation would count elements in collection
 	return 0, nil
 }
-func (cf *CountFunction) GetName() string                       { return "count" }
-func (cf *CountFunction) GetArity() int                         { return 1 }
-func (cf *CountFunction) ValidateArgs(args []interface{}) error { return nil }
+func (cf *CountFunction) GetName() string               { return "count" }
+func (cf *CountFunction) GetArity() int                 { return 1 }
+func (cf *CountFunction) ValidateArgs(args []any) error { return nil }
 
 type FirstFunction struct{}
 
-func (ff *FirstFunction) Execute(args []interface{}) (interface{}, error) {
+func (ff *FirstFunction) Execute(args []any) (any, error) {
 	// Implementation would return first element
 	return nil, nil
 }
-func (ff *FirstFunction) GetName() string                       { return "first" }
-func (ff *FirstFunction) GetArity() int                         { return 1 }
-func (ff *FirstFunction) ValidateArgs(args []interface{}) error { return nil }
+func (ff *FirstFunction) GetName() string               { return "first" }
+func (ff *FirstFunction) GetArity() int                 { return 1 }
+func (ff *FirstFunction) ValidateArgs(args []any) error { return nil }
 
 type LastFunction struct{}
 
-func (lf *LastFunction) Execute(args []interface{}) (interface{}, error) {
+func (lf *LastFunction) Execute(args []any) (any, error) {
 	// Implementation would return last element
 	return nil, nil
 }
-func (lf *LastFunction) GetName() string                       { return "last" }
-func (lf *LastFunction) GetArity() int                         { return 1 }
-func (lf *LastFunction) ValidateArgs(args []interface{}) error { return nil }
+func (lf *LastFunction) GetName() string               { return "last" }
+func (lf *LastFunction) GetArity() int                 { return 1 }
+func (lf *LastFunction) ValidateArgs(args []any) error { return nil }
 
 type DistinctFunction struct{}
 
-func (df2 *DistinctFunction) Execute(args []interface{}) (interface{}, error) {
+func (df2 *DistinctFunction) Execute(args []any) (any, error) {
 	// Implementation would return distinct elements
 	return args[0], nil
 }
-func (df2 *DistinctFunction) GetName() string                       { return "distinct" }
-func (df2 *DistinctFunction) GetArity() int                         { return 1 }
-func (df2 *DistinctFunction) ValidateArgs(args []interface{}) error { return nil }
+func (df2 *DistinctFunction) GetName() string               { return "distinct" }
+func (df2 *DistinctFunction) GetArity() int                 { return 1 }
+func (df2 *DistinctFunction) ValidateArgs(args []any) error { return nil }
 
 type TypeFunction struct{}
 
-func (tf2 *TypeFunction) Execute(args []interface{}) (interface{}, error) {
+func (tf2 *TypeFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("type function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
 	return reflect.TypeOf(args[0]).String(), nil
 }
-func (tf2 *TypeFunction) GetName() string                       { return "type" }
-func (tf2 *TypeFunction) GetArity() int                         { return 1 }
-func (tf2 *TypeFunction) ValidateArgs(args []interface{}) error { return nil }
+func (tf2 *TypeFunction) GetName() string               { return "type" }
+func (tf2 *TypeFunction) GetArity() int                 { return 1 }
+func (tf2 *TypeFunction) ValidateArgs(args []any) error { return nil }
 
 type ExistsFunction struct{}
 
-func (ef *ExistsFunction) Execute(args []interface{}) (interface{}, error) {
+func (ef *ExistsFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("exists function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
 	return args[0] != nil, nil
 }
-func (ef *ExistsFunction) GetName() string                       { return "exists" }
-func (ef *ExistsFunction) GetArity() int                         { return 1 }
-func (ef *ExistsFunction) ValidateArgs(args []interface{}) error { return nil }
+func (ef *ExistsFunction) GetName() string               { return "exists" }
+func (ef *ExistsFunction) GetArity() int                 { return 1 }
+func (ef *ExistsFunction) ValidateArgs(args []any) error { return nil }
 
 type EmptyFunction struct{}
 
-func (ef2 *EmptyFunction) Execute(args []interface{}) (interface{}, error) {
+func (ef2 *EmptyFunction) Execute(args []any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("empty function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
 	// Implementation would check if collection/string is empty
 	return false, nil
 }
-func (ef2 *EmptyFunction) GetName() string                       { return "empty" }
-func (ef2 *EmptyFunction) GetArity() int                         { return 1 }
-func (ef2 *EmptyFunction) ValidateArgs(args []interface{}) error { return nil }
+func (ef2 *EmptyFunction) GetName() string               { return "empty" }
+func (ef2 *EmptyFunction) GetArity() int                 { return 1 }
+func (ef2 *EmptyFunction) ValidateArgs(args []any) error { return nil }
 
 type DefaultFunction struct{}
 
-func (df3 *DefaultFunction) Execute(args []interface{}) (interface{}, error) {
+func (df3 *DefaultFunction) Execute(args []any) (any, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf("default function requires exactly 2 arguments, got %d: %w", len(args), errors.ErrInvalidInput)
 	}
@@ -1690,9 +1690,9 @@ func (df3 *DefaultFunction) Execute(args []interface{}) (interface{}, error) {
 	}
 	return args[1], nil
 }
-func (df3 *DefaultFunction) GetName() string                       { return "default" }
-func (df3 *DefaultFunction) GetArity() int                         { return 2 }
-func (df3 *DefaultFunction) ValidateArgs(args []interface{}) error { return nil }
+func (df3 *DefaultFunction) GetName() string               { return "default" }
+func (df3 *DefaultFunction) GetArity() int                 { return 2 }
+func (df3 *DefaultFunction) ValidateArgs(args []any) error { return nil }
 
 // Stub implementations for advanced rule engine
 
@@ -1757,12 +1757,12 @@ type DeviceInformation struct {
 }
 
 type SecurityContext struct {
-	ThreatLevel         string                 `json:"threat_level"`
-	AuthenticationLevel string                 `json:"authentication_level"`
-	EncryptionLevel     string                 `json:"encryption_level"`
-	SecurityFlags       []string               `json:"security_flags"`
-	RiskScore           float64                `json:"risk_score"`
-	Attributes          map[string]interface{} `json:"attributes"`
+	ThreatLevel         string         `json:"threat_level"`
+	AuthenticationLevel string         `json:"authentication_level"`
+	EncryptionLevel     string         `json:"encryption_level"`
+	SecurityFlags       []string       `json:"security_flags"`
+	RiskScore           float64        `json:"risk_score"`
+	Attributes          map[string]any `json:"attributes"`
 }
 
 // AnalyzeEvaluationPerformance analyzes the performance of policy evaluations
@@ -1926,7 +1926,7 @@ func (pee *policyEvaluationEngine) ValidateRuleExpression(ctx context.Context, e
 		Passed:   true,
 		Message:  "Rule expression validation passed",
 		Severity: "info",
-		Details:  map[string]interface{}{"expression": expression},
+		Details:  map[string]any{"expression": expression},
 	}, nil
 }
 

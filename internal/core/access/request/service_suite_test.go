@@ -117,12 +117,12 @@ type MockCache struct {
 	mock.Mock
 }
 
-func (m *MockCache) Get(ctx context.Context, key string, dest interface{}) error {
+func (m *MockCache) Get(ctx context.Context, key string, dest any) error {
 	args := m.Called(ctx, key, dest)
 	return args.Error(0)
 }
 
-func (m *MockCache) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+func (m *MockCache) Set(ctx context.Context, key string, value any, ttl time.Duration) error {
 	args := m.Called(ctx, key, value, ttl)
 	return args.Error(0)
 }
@@ -154,7 +154,7 @@ func (m *MockSpan) End() {
 	m.Called()
 }
 
-func (m *MockSpan) SetAttributes(attrs ...interface{}) {
+func (m *MockSpan) SetAttributes(attrs ...any) {
 	m.Called(attrs)
 }
 

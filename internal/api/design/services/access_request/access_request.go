@@ -569,7 +569,7 @@ var UserBehaviorResult = Type("UserBehaviorResult", func() {
 		Example([]string{"office", "home"})
 	})
 	Attribute("device_usage", MapOf(String, Int), "Device usage patterns", func() {
-		Example(map[string]interface{}{"desktop": 80, "mobile": 20})
+		Example(map[string]any{"desktop": 80, "mobile": 20})
 	})
 	Attribute("access_patterns", ArrayOf(String), "Common access patterns", func() {
 		Example([]string{"morning_reports", "afternoon_updates"})

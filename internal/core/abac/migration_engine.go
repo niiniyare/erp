@@ -63,16 +63,16 @@ func NewMigrationEngine(
 // Migration Planning Types
 
 type MigrationSourceSystem struct {
-	SystemType     string                 `json:"system_type"` // "rbac", "custom", "external"
-	SystemName     string                 `json:"system_name"`
-	ConnectionInfo map[string]interface{} `json:"connection_info,omitempty"`
-	DataSource     string                 `json:"data_source"` // "database", "api", "file"
+	SystemType     string         `json:"system_type"` // "rbac", "custom", "external"
+	SystemName     string         `json:"system_name"`
+	ConnectionInfo map[string]any `json:"connection_info,omitempty"`
+	DataSource     string         `json:"data_source"` // "database", "api", "file"
 }
 
 type MigrationTargetSystem struct {
-	SystemType    string                 `json:"system_type"` // "abac"
-	EntityID      *uuid.UUID             `json:"entity_id,omitempty"`
-	Configuration map[string]interface{} `json:"configuration,omitempty"`
+	SystemType    string         `json:"system_type"` // "abac"
+	EntityID      *uuid.UUID     `json:"entity_id,omitempty"`
+	Configuration map[string]any `json:"configuration,omitempty"`
 }
 
 type MigrationScope struct {
@@ -126,13 +126,13 @@ const (
 )
 
 type MigrationPhase struct {
-	PhaseID           uuid.UUID              `json:"phase_id"`
-	PhaseName         string                 `json:"phase_name"`
-	PhaseOrder        int32                  `json:"phase_order"`
-	Dependencies      []uuid.UUID            `json:"dependencies,omitempty"`
-	Scope             MigrationScope         `json:"scope"`
-	Configuration     map[string]interface{} `json:"configuration,omitempty"`
-	EstimatedDuration time.Duration          `json:"estimated_duration"`
+	PhaseID           uuid.UUID      `json:"phase_id"`
+	PhaseName         string         `json:"phase_name"`
+	PhaseOrder        int32          `json:"phase_order"`
+	Dependencies      []uuid.UUID    `json:"dependencies,omitempty"`
+	Scope             MigrationScope `json:"scope"`
+	Configuration     map[string]any `json:"configuration,omitempty"`
+	EstimatedDuration time.Duration  `json:"estimated_duration"`
 }
 
 type MigrationFailureHandling struct {
@@ -165,15 +165,15 @@ const (
 )
 
 type MigrationStep struct {
-	StepID            uuid.UUID              `json:"step_id"`
-	StepName          string                 `json:"step_name"`
-	StepType          MigrationStepType      `json:"step_type"`
-	StepOrder         int32                  `json:"step_order"`
-	Dependencies      []uuid.UUID            `json:"dependencies,omitempty"`
-	Configuration     map[string]interface{} `json:"configuration"`
-	EstimatedDuration time.Duration          `json:"estimated_duration"`
-	Reversible        bool                   `json:"reversible"`
-	CriticalStep      bool                   `json:"critical_step"`
+	StepID            uuid.UUID         `json:"step_id"`
+	StepName          string            `json:"step_name"`
+	StepType          MigrationStepType `json:"step_type"`
+	StepOrder         int32             `json:"step_order"`
+	Dependencies      []uuid.UUID       `json:"dependencies,omitempty"`
+	Configuration     map[string]any    `json:"configuration"`
+	EstimatedDuration time.Duration     `json:"estimated_duration"`
+	Reversible        bool              `json:"reversible"`
+	CriticalStep      bool              `json:"critical_step"`
 }
 
 type MigrationStepType string
@@ -324,43 +324,43 @@ type MigrationStepSummary struct {
 }
 
 type MigrationArtifact struct {
-	ArtifactID   uuid.UUID              `json:"artifact_id"`
-	ArtifactType string                 `json:"artifact_type"` // "policy", "attribute", "role_mapping", "report"
-	ArtifactName string                 `json:"artifact_name"`
-	Location     string                 `json:"location"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt    time.Time              `json:"created_at"`
+	ArtifactID   uuid.UUID      `json:"artifact_id"`
+	ArtifactType string         `json:"artifact_type"` // "policy", "attribute", "role_mapping", "report"
+	ArtifactName string         `json:"artifact_name"`
+	Location     string         `json:"location"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
+	CreatedAt    time.Time      `json:"created_at"`
 }
 
 type TransformationResult struct {
-	SourceType     string                 `json:"source_type"` // "role", "permission", "user"
-	SourceID       string                 `json:"source_id"`
-	SourceName     string                 `json:"source_name"`
-	TargetType     string                 `json:"target_type"` // "policy", "attribute"
-	TargetID       *uuid.UUID             `json:"target_id,omitempty"`
-	TargetName     string                 `json:"target_name"`
-	Transformation string                 `json:"transformation"`
-	Success        bool                   `json:"success"`
-	Details        map[string]interface{} `json:"details,omitempty"`
+	SourceType     string         `json:"source_type"` // "role", "permission", "user"
+	SourceID       string         `json:"source_id"`
+	SourceName     string         `json:"source_name"`
+	TargetType     string         `json:"target_type"` // "policy", "attribute"
+	TargetID       *uuid.UUID     `json:"target_id,omitempty"`
+	TargetName     string         `json:"target_name"`
+	Transformation string         `json:"transformation"`
+	Success        bool           `json:"success"`
+	Details        map[string]any `json:"details,omitempty"`
 }
 
 type MigrationError struct {
-	ErrorID     uuid.UUID              `json:"error_id"`
-	ErrorType   string                 `json:"error_type"`
-	ErrorCode   string                 `json:"error_code"`
-	Message     string                 `json:"message"`
-	Context     map[string]interface{} `json:"context,omitempty"`
-	Severity    string                 `json:"severity"`
-	Recoverable bool                   `json:"recoverable"`
+	ErrorID     uuid.UUID      `json:"error_id"`
+	ErrorType   string         `json:"error_type"`
+	ErrorCode   string         `json:"error_code"`
+	Message     string         `json:"message"`
+	Context     map[string]any `json:"context,omitempty"`
+	Severity    string         `json:"severity"`
+	Recoverable bool           `json:"recoverable"`
 }
 
 type MigrationWarning struct {
-	WarningID      uuid.UUID              `json:"warning_id"`
-	WarningType    string                 `json:"warning_type"`
-	Message        string                 `json:"message"`
-	Context        map[string]interface{} `json:"context,omitempty"`
-	Actionable     bool                   `json:"actionable"`
-	Recommendation string                 `json:"recommendation,omitempty"`
+	WarningID      uuid.UUID      `json:"warning_id"`
+	WarningType    string         `json:"warning_type"`
+	Message        string         `json:"message"`
+	Context        map[string]any `json:"context,omitempty"`
+	Actionable     bool           `json:"actionable"`
+	Recommendation string         `json:"recommendation,omitempty"`
 }
 
 func (me *migrationEngine) ExecuteMigrationStep(ctx context.Context, req *MigrationStepRequest) (*MigrationStepResult, error) {
@@ -431,7 +431,7 @@ func (me *migrationEngine) generateMigrationSteps(ctx context.Context, req *Migr
 		StepName:          "Analyze Source System",
 		StepType:          MigrationStepTypeAnalyze,
 		StepOrder:         1,
-		Configuration:     map[string]interface{}{"analysis_depth": "comprehensive"},
+		Configuration:     map[string]any{"analysis_depth": "comprehensive"},
 		EstimatedDuration: 30 * time.Minute,
 		Reversible:        true,
 		CriticalStep:      false,
@@ -443,7 +443,7 @@ func (me *migrationEngine) generateMigrationSteps(ctx context.Context, req *Migr
 		StepType:          MigrationStepTypeExtract,
 		StepOrder:         2,
 		Dependencies:      []uuid.UUID{steps[0].StepID},
-		Configuration:     map[string]interface{}{"include_metadata": true},
+		Configuration:     map[string]any{"include_metadata": true},
 		EstimatedDuration: 45 * time.Minute,
 		Reversible:        true,
 		CriticalStep:      false,
@@ -455,7 +455,7 @@ func (me *migrationEngine) generateMigrationSteps(ctx context.Context, req *Migr
 		StepType:          MigrationStepTypeTransform,
 		StepOrder:         3,
 		Dependencies:      []uuid.UUID{steps[1].StepID},
-		Configuration:     map[string]interface{}{"preserve_semantics": true},
+		Configuration:     map[string]any{"preserve_semantics": true},
 		EstimatedDuration: 90 * time.Minute,
 		Reversible:        true,
 		CriticalStep:      true,
@@ -467,7 +467,7 @@ func (me *migrationEngine) generateMigrationSteps(ctx context.Context, req *Migr
 		StepType:          MigrationStepTypeValidate,
 		StepOrder:         4,
 		Dependencies:      []uuid.UUID{steps[2].StepID},
-		Configuration:     map[string]interface{}{"validation_level": "strict"},
+		Configuration:     map[string]any{"validation_level": "strict"},
 		EstimatedDuration: 60 * time.Minute,
 		Reversible:        true,
 		CriticalStep:      true,
@@ -479,7 +479,7 @@ func (me *migrationEngine) generateMigrationSteps(ctx context.Context, req *Migr
 		StepType:          MigrationStepTypeLoad,
 		StepOrder:         5,
 		Dependencies:      []uuid.UUID{steps[3].StepID},
-		Configuration:     map[string]interface{}{"batch_size": 100},
+		Configuration:     map[string]any{"batch_size": 100},
 		EstimatedDuration: 30 * time.Minute,
 		Reversible:        true,
 		CriticalStep:      true,
@@ -491,7 +491,7 @@ func (me *migrationEngine) generateMigrationSteps(ctx context.Context, req *Migr
 		StepType:          MigrationStepTypeVerify,
 		StepOrder:         6,
 		Dependencies:      []uuid.UUID{steps[4].StepID},
-		Configuration:     map[string]interface{}{"test_coverage": 100},
+		Configuration:     map[string]any{"test_coverage": 100},
 		EstimatedDuration: 45 * time.Minute,
 		Reversible:        false,
 		CriticalStep:      true,

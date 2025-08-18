@@ -10,27 +10,27 @@ import (
 
 // User represents a user account in the system
 type User struct {
-	ID               uuid.UUID              `json:"id"`
-	TenantID         uuid.UUID              `json:"tenant_id"`
-	Email            string                 `json:"email"`
-	PasswordHash     string                 `json:"-"` // Never serialize password hash
-	FirstName        string                 `json:"first_name"`
-	LastName         string                 `json:"last_name"`
-	PhoneNumber      *string                `json:"phone_number,omitempty"`
-	AccountStatus    UserAccountStatus      `json:"account_status"`
-	EmailVerified    bool                   `json:"email_verified"`
-	PhoneVerified    bool                   `json:"phone_verified"`
-	MFAEnabled       bool                   `json:"mfa_enabled"`
-	MFAMethod        *MFAMethod             `json:"mfa_method,omitempty"`
-	MFASecret        *string                `json:"-"` // Never serialize MFA secret
-	LastLoginAt      *time.Time             `json:"last_login_at,omitempty"`
-	PasswordExpired  bool                   `json:"password_expired"`
-	FailedLoginCount int                    `json:"failed_login_count"`
-	LockedUntil      *time.Time             `json:"locked_until,omitempty"`
-	Metadata         map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt        time.Time              `json:"created_at"`
-	UpdatedAt        time.Time              `json:"updated_at"`
-	DeletedAt        *time.Time             `json:"deleted_at,omitempty"`
+	ID               uuid.UUID         `json:"id"`
+	TenantID         uuid.UUID         `json:"tenant_id"`
+	Email            string            `json:"email"`
+	PasswordHash     string            `json:"-"` // Never serialize password hash
+	FirstName        string            `json:"first_name"`
+	LastName         string            `json:"last_name"`
+	PhoneNumber      *string           `json:"phone_number,omitempty"`
+	AccountStatus    UserAccountStatus `json:"account_status"`
+	EmailVerified    bool              `json:"email_verified"`
+	PhoneVerified    bool              `json:"phone_verified"`
+	MFAEnabled       bool              `json:"mfa_enabled"`
+	MFAMethod        *MFAMethod        `json:"mfa_method,omitempty"`
+	MFASecret        *string           `json:"-"` // Never serialize MFA secret
+	LastLoginAt      *time.Time        `json:"last_login_at,omitempty"`
+	PasswordExpired  bool              `json:"password_expired"`
+	FailedLoginCount int               `json:"failed_login_count"`
+	LockedUntil      *time.Time        `json:"locked_until,omitempty"`
+	Metadata         map[string]any    `json:"metadata,omitempty"`
+	CreatedAt        time.Time         `json:"created_at"`
+	UpdatedAt        time.Time         `json:"updated_at"`
+	DeletedAt        *time.Time        `json:"deleted_at,omitempty"`
 }
 
 // IsLocked checks if the user account is currently locked
@@ -51,25 +51,25 @@ func (u *User) FullName() string {
 
 // Person represents a person entity (can exist without a user account)
 type Person struct {
-	ID                 uuid.UUID              `json:"id"`
-	TenantID           uuid.UUID              `json:"tenant_id"`
-	EntityID           uuid.UUID              `json:"entity_id"`
-	PersonType         PersonType             `json:"person_type"`
-	FirstName          string                 `json:"first_name"`
-	LastName           string                 `json:"last_name"`
-	MiddleName         *string                `json:"middle_name,omitempty"`
-	Email              *string                `json:"email,omitempty"`
-	PhoneNumber        *string                `json:"phone_number,omitempty"`
-	BirthDate          time.Time              `json:"birth_date"`
-	NationalID         *string                `json:"national_id,omitempty"`
-	TaxID              *string                `json:"tax_id,omitempty"`
-	Address            map[string]interface{} `json:"address,omitempty"`
-	SecurityAttributes map[string]interface{} `json:"security_attributes,omitempty"`
-	Metadata           map[string]interface{} `json:"metadata,omitempty"`
-	IsActive           bool                   `json:"is_active"`
-	CreatedAt          time.Time              `json:"created_at"`
-	UpdatedAt          time.Time              `json:"updated_at"`
-	DeletedAt          *time.Time             `json:"deleted_at,omitempty"`
+	ID                 uuid.UUID      `json:"id"`
+	TenantID           uuid.UUID      `json:"tenant_id"`
+	EntityID           uuid.UUID      `json:"entity_id"`
+	PersonType         PersonType     `json:"person_type"`
+	FirstName          string         `json:"first_name"`
+	LastName           string         `json:"last_name"`
+	MiddleName         *string        `json:"middle_name,omitempty"`
+	Email              *string        `json:"email,omitempty"`
+	PhoneNumber        *string        `json:"phone_number,omitempty"`
+	BirthDate          time.Time      `json:"birth_date"`
+	NationalID         *string        `json:"national_id,omitempty"`
+	TaxID              *string        `json:"tax_id,omitempty"`
+	Address            map[string]any `json:"address,omitempty"`
+	SecurityAttributes map[string]any `json:"security_attributes,omitempty"`
+	Metadata           map[string]any `json:"metadata,omitempty"`
+	IsActive           bool           `json:"is_active"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	DeletedAt          *time.Time     `json:"deleted_at,omitempty"`
 }
 
 // FullName returns the person's full name
@@ -79,24 +79,24 @@ func (p *Person) FullName() string {
 
 // Employee represents an employee (links to a person)
 type Employee struct {
-	ID               uuid.UUID              `json:"id"`
-	TenantID         uuid.UUID              `json:"tenant_id"`
-	PersonID         uuid.UUID              `json:"person_id"`
-	EmployeeNumber   string                 `json:"employee_number"`
-	EntityID         uuid.UUID              `json:"entity_id"`
-	PositionTitle    *string                `json:"position_title,omitempty"`
-	DepartmentID     *uuid.UUID             `json:"department_id,omitempty"`
-	ManagerID        *uuid.UUID             `json:"manager_id,omitempty"`
-	HireDate         time.Time              `json:"hire_date"`
-	TerminationDate  *time.Time             `json:"termination_date,omitempty"`
-	SalaryInfo       map[string]interface{} `json:"salary_info,omitempty"`
-	EmploymentStatus EmploymentStatus       `json:"employment_status"`
-	WorkSchedule     map[string]interface{} `json:"work_schedule,omitempty"`
-	SecurityLevel    int                    `json:"security_level"`
-	AccessAttributes map[string]interface{} `json:"access_attributes,omitempty"`
-	CreatedAt        time.Time              `json:"created_at"`
-	UpdatedAt        time.Time              `json:"updated_at"`
-	DeletedAt        *time.Time             `json:"deleted_at,omitempty"`
+	ID               uuid.UUID        `json:"id"`
+	TenantID         uuid.UUID        `json:"tenant_id"`
+	PersonID         uuid.UUID        `json:"person_id"`
+	EmployeeNumber   string           `json:"employee_number"`
+	EntityID         uuid.UUID        `json:"entity_id"`
+	PositionTitle    *string          `json:"position_title,omitempty"`
+	DepartmentID     *uuid.UUID       `json:"department_id,omitempty"`
+	ManagerID        *uuid.UUID       `json:"manager_id,omitempty"`
+	HireDate         time.Time        `json:"hire_date"`
+	TerminationDate  *time.Time       `json:"termination_date,omitempty"`
+	SalaryInfo       map[string]any   `json:"salary_info,omitempty"`
+	EmploymentStatus EmploymentStatus `json:"employment_status"`
+	WorkSchedule     map[string]any   `json:"work_schedule,omitempty"`
+	SecurityLevel    int              `json:"security_level"`
+	AccessAttributes map[string]any   `json:"access_attributes,omitempty"`
+	CreatedAt        time.Time        `json:"created_at"`
+	UpdatedAt        time.Time        `json:"updated_at"`
+	DeletedAt        *time.Time       `json:"deleted_at,omitempty"`
 }
 
 // IsActive checks if the employee is currently active
@@ -117,16 +117,16 @@ type Address struct {
 
 // Role represents a role in the system
 type Role struct {
-	ID          uuid.UUID              `json:"id"`
-	TenantID    uuid.UUID              `json:"tenant_id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	ParentID    *uuid.UUID             `json:"parent_id,omitempty"`
-	EntityID    *uuid.UUID             `json:"entity_id,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
-	DeletedAt   *time.Time             `json:"deleted_at,omitempty"`
+	ID          uuid.UUID      `json:"id"`
+	TenantID    uuid.UUID      `json:"tenant_id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	ParentID    *uuid.UUID     `json:"parent_id,omitempty"`
+	EntityID    *uuid.UUID     `json:"entity_id,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   *time.Time     `json:"deleted_at,omitempty"`
 }
 
 // UserRole represents the assignment of a role to a user
@@ -169,17 +169,17 @@ func (s *Session) IsExpired() bool {
 
 // Permission represents a permission in the system
 type Permission struct {
-	ID           uuid.UUID              `json:"id"`
-	TenantID     uuid.UUID              `json:"tenant_id"`
-	ResourceType string                 `json:"resource_type"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Action       string                 `json:"action"`
-	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Conditions   []string               `json:"conditions,omitempty"`
-	ExpiresAt    *time.Time             `json:"expires_at,omitempty"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt    time.Time              `json:"created_at"`
-	UpdatedAt    time.Time              `json:"updated_at"`
+	ID           uuid.UUID      `json:"id"`
+	TenantID     uuid.UUID      `json:"tenant_id"`
+	ResourceType string         `json:"resource_type"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Action       string         `json:"action"`
+	EntityID     *uuid.UUID     `json:"entity_id,omitempty"`
+	Conditions   []string       `json:"conditions,omitempty"`
+	ExpiresAt    *time.Time     `json:"expires_at,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 // IsExpired checks if the permission has expired
@@ -201,7 +201,7 @@ type Policy struct {
 	Priority    int                      `json:"priority"`
 	Enabled     bool                     `json:"enabled"`
 	Algorithm   PolicyCombiningAlgorithm `json:"algorithm"`
-	Metadata    map[string]interface{}   `json:"metadata,omitempty"`
+	Metadata    map[string]any           `json:"metadata,omitempty"`
 	CreatedAt   time.Time                `json:"created_at"`
 	UpdatedAt   time.Time                `json:"updated_at"`
 	DeletedAt   *time.Time               `json:"deleted_at,omitempty"`
@@ -217,16 +217,16 @@ type PolicyTarget struct {
 
 // PolicySubject represents a subject in a policy
 type PolicySubject struct {
-	Type       string                 `json:"type"` // user, role, group
-	ID         *uuid.UUID             `json:"id,omitempty"`
-	Attributes map[string]interface{} `json:"attributes,omitempty"`
+	Type       string         `json:"type"` // user, role, group
+	ID         *uuid.UUID     `json:"id,omitempty"`
+	Attributes map[string]any `json:"attributes,omitempty"`
 }
 
 // PolicyResource represents a resource in a policy
 type PolicyResource struct {
-	Type       string                 `json:"type"`
-	ID         *uuid.UUID             `json:"id,omitempty"`
-	Attributes map[string]interface{} `json:"attributes,omitempty"`
+	Type       string         `json:"type"`
+	ID         *uuid.UUID     `json:"id,omitempty"`
+	Attributes map[string]any `json:"attributes,omitempty"`
 }
 
 // PolicyCondition represents a condition in a policy
@@ -246,49 +246,49 @@ type PolicyRule struct {
 
 // PolicyDecision represents the result of evaluating a policy
 type PolicyDecision struct {
-	PolicyID    uuid.UUID              `json:"policy_id"`
-	PolicyName  string                 `json:"policy_name"`
-	Decision    PolicyDecisionType     `json:"decision"`
-	Effect      PolicyEffect           `json:"effect"`
-	Reason      string                 `json:"reason"`
-	Obligations []*PolicyObligation    `json:"obligations,omitempty"`
-	Advice      []*PolicyAdvice        `json:"advice,omitempty"`
-	Attributes  map[string]interface{} `json:"attributes,omitempty"`
-	EvaluatedAt time.Time              `json:"evaluated_at"`
+	PolicyID    uuid.UUID           `json:"policy_id"`
+	PolicyName  string              `json:"policy_name"`
+	Decision    PolicyDecisionType  `json:"decision"`
+	Effect      PolicyEffect        `json:"effect"`
+	Reason      string              `json:"reason"`
+	Obligations []*PolicyObligation `json:"obligations,omitempty"`
+	Advice      []*PolicyAdvice     `json:"advice,omitempty"`
+	Attributes  map[string]any      `json:"attributes,omitempty"`
+	EvaluatedAt time.Time           `json:"evaluated_at"`
 }
 
 // PolicyObligation represents an obligation that must be fulfilled
 type PolicyObligation struct {
-	ID          string                 `json:"id"`
-	Type        string                 `json:"type"`
-	Description string                 `json:"description"`
-	Attributes  map[string]interface{} `json:"attributes,omitempty"`
+	ID          string         `json:"id"`
+	Type        string         `json:"type"`
+	Description string         `json:"description"`
+	Attributes  map[string]any `json:"attributes,omitempty"`
 }
 
 // PolicyAdvice represents advice for the decision
 type PolicyAdvice struct {
-	ID          string                 `json:"id"`
-	Type        string                 `json:"type"`
-	Description string                 `json:"description"`
-	Attributes  map[string]interface{} `json:"attributes,omitempty"`
+	ID          string         `json:"id"`
+	Type        string         `json:"type"`
+	Description string         `json:"description"`
+	Attributes  map[string]any `json:"attributes,omitempty"`
 }
 
 // Attribute represents an ABAC attribute
 type Attribute struct {
-	ID           uuid.UUID              `json:"id"`
-	TenantID     uuid.UUID              `json:"tenant_id"`
-	Name         string                 `json:"name"`
-	Type         AttributeDataType      `json:"type"`
-	Category     AttributeCategory      `json:"category"`
-	Description  string                 `json:"description"`
-	Required     bool                   `json:"required"`
-	Multivalued  bool                   `json:"multivalued"`
-	DefaultValue interface{}            `json:"default_value,omitempty"`
-	Constraints  *AttributeConstraints  `json:"constraints,omitempty"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt    time.Time              `json:"created_at"`
-	UpdatedAt    time.Time              `json:"updated_at"`
-	DeletedAt    *time.Time             `json:"deleted_at,omitempty"`
+	ID           uuid.UUID             `json:"id"`
+	TenantID     uuid.UUID             `json:"tenant_id"`
+	Name         string                `json:"name"`
+	Type         AttributeDataType     `json:"type"`
+	Category     AttributeCategory     `json:"category"`
+	Description  string                `json:"description"`
+	Required     bool                  `json:"required"`
+	Multivalued  bool                  `json:"multivalued"`
+	DefaultValue any                   `json:"default_value,omitempty"`
+	Constraints  *AttributeConstraints `json:"constraints,omitempty"`
+	Metadata     map[string]any        `json:"metadata,omitempty"`
+	CreatedAt    time.Time             `json:"created_at"`
+	UpdatedAt    time.Time             `json:"updated_at"`
+	DeletedAt    *time.Time            `json:"deleted_at,omitempty"`
 }
 
 // AttributeConstraints defines constraints for an attribute
@@ -305,30 +305,30 @@ type AttributeConstraints struct {
 
 // AccessRequest represents an access request
 type AccessRequest struct {
-	ID               uuid.UUID              `json:"id"`
-	TenantID         uuid.UUID              `json:"tenant_id"`
-	RequesterID      uuid.UUID              `json:"requester_id"`
-	TargetUserID     *uuid.UUID             `json:"target_user_id,omitempty"`
-	EntityID         *uuid.UUID             `json:"entity_id,omitempty"`
-	RequestType      RequestType            `json:"request_type"`
-	ResourceType     string                 `json:"resource_type"`
-	ResourceID       *uuid.UUID             `json:"resource_id,omitempty"`
-	Action           string                 `json:"action"`
-	RoleID           *uuid.UUID             `json:"role_id,omitempty"`
-	PermissionID     *uuid.UUID             `json:"permission_id,omitempty"`
-	Justification    string                 `json:"justification"`
-	BusinessReason   *string                `json:"business_reason,omitempty"`
-	Duration         *time.Duration         `json:"duration,omitempty"`
-	Priority         string                 `json:"priority"`
-	ApprovalStatus   ApprovalStatus         `json:"approval_status"`
-	ApprovedBy       *uuid.UUID             `json:"approved_by,omitempty"`
-	ApprovedAt       *time.Time             `json:"approved_at,omitempty"`
-	ApprovalComments *string                `json:"approval_comments,omitempty"`
-	ExpiresAt        *time.Time             `json:"expires_at,omitempty"`
-	AutoRevoke       bool                   `json:"auto_revoke"`
-	Metadata         map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt        time.Time              `json:"created_at"`
-	UpdatedAt        time.Time              `json:"updated_at"`
+	ID               uuid.UUID      `json:"id"`
+	TenantID         uuid.UUID      `json:"tenant_id"`
+	RequesterID      uuid.UUID      `json:"requester_id"`
+	TargetUserID     *uuid.UUID     `json:"target_user_id,omitempty"`
+	EntityID         *uuid.UUID     `json:"entity_id,omitempty"`
+	RequestType      RequestType    `json:"request_type"`
+	ResourceType     string         `json:"resource_type"`
+	ResourceID       *uuid.UUID     `json:"resource_id,omitempty"`
+	Action           string         `json:"action"`
+	RoleID           *uuid.UUID     `json:"role_id,omitempty"`
+	PermissionID     *uuid.UUID     `json:"permission_id,omitempty"`
+	Justification    string         `json:"justification"`
+	BusinessReason   *string        `json:"business_reason,omitempty"`
+	Duration         *time.Duration `json:"duration,omitempty"`
+	Priority         string         `json:"priority"`
+	ApprovalStatus   ApprovalStatus `json:"approval_status"`
+	ApprovedBy       *uuid.UUID     `json:"approved_by,omitempty"`
+	ApprovedAt       *time.Time     `json:"approved_at,omitempty"`
+	ApprovalComments *string        `json:"approval_comments,omitempty"`
+	ExpiresAt        *time.Time     `json:"expires_at,omitempty"`
+	AutoRevoke       bool           `json:"auto_revoke"`
+	Metadata         map[string]any `json:"metadata,omitempty"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
 }
 
 // IsExpired checks if the access request has expired
@@ -343,15 +343,15 @@ func (ar *AccessRequest) CanBeApproved() bool {
 
 // ApprovalWorkflow represents an approval workflow
 type ApprovalWorkflow struct {
-	ID          uuid.UUID              `json:"id"`
-	TenantID    uuid.UUID              `json:"tenant_id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Steps       []*ApprovalStep        `json:"steps"`
-	Enabled     bool                   `json:"enabled"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
+	ID          uuid.UUID       `json:"id"`
+	TenantID    uuid.UUID       `json:"tenant_id"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Steps       []*ApprovalStep `json:"steps"`
+	Enabled     bool            `json:"enabled"`
+	Metadata    map[string]any  `json:"metadata,omitempty"`
+	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
 // ApprovalStep represents a step in an approval workflow
@@ -368,35 +368,35 @@ type ApprovalStep struct {
 
 // ConditionalAccessPolicy represents a conditional access policy
 type ConditionalAccessPolicy struct {
-	ID          uuid.UUID              `json:"id"`
-	TenantID    uuid.UUID              `json:"tenant_id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Conditions  []*PolicyCondition     `json:"conditions"`
-	Actions     []*PolicyAction        `json:"actions"`
-	Priority    int                    `json:"priority"`
-	Enabled     bool                   `json:"enabled"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
+	ID          uuid.UUID          `json:"id"`
+	TenantID    uuid.UUID          `json:"tenant_id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Conditions  []*PolicyCondition `json:"conditions"`
+	Actions     []*PolicyAction    `json:"actions"`
+	Priority    int                `json:"priority"`
+	Enabled     bool               `json:"enabled"`
+	Metadata    map[string]any     `json:"metadata,omitempty"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
 }
 
 // PolicyAction represents an action in a conditional access policy
 type PolicyAction struct {
-	Type        string                 `json:"type"`
-	Description string                 `json:"description"`
-	Parameters  map[string]interface{} `json:"parameters,omitempty"`
+	Type        string         `json:"type"`
+	Description string         `json:"description"`
+	Parameters  map[string]any `json:"parameters,omitempty"`
 }
 
 // AccessContext represents the context for conditional access evaluation
 type AccessContext struct {
-	IPAddress  string                 `json:"ip_address"`
-	UserAgent  string                 `json:"user_agent"`
-	Location   *GeolocationContext    `json:"location,omitempty"`
-	Device     *DeviceContext         `json:"device,omitempty"`
-	Time       time.Time              `json:"time"`
-	RiskLevel  string                 `json:"risk_level"`
-	Attributes map[string]interface{} `json:"attributes,omitempty"`
+	IPAddress  string              `json:"ip_address"`
+	UserAgent  string              `json:"user_agent"`
+	Location   *GeolocationContext `json:"location,omitempty"`
+	Device     *DeviceContext      `json:"device,omitempty"`
+	Time       time.Time           `json:"time"`
+	RiskLevel  string              `json:"risk_level"`
+	Attributes map[string]any      `json:"attributes,omitempty"`
 }
 
 // GeolocationContext represents geolocation information
@@ -419,26 +419,26 @@ type DeviceContext struct {
 
 // AccessCondition represents a condition for access
 type AccessCondition struct {
-	Type        string                 `json:"type"`
-	Description string                 `json:"description"`
-	Required    bool                   `json:"required"`
-	Parameters  map[string]interface{} `json:"parameters,omitempty"`
+	Type        string         `json:"type"`
+	Description string         `json:"description"`
+	Required    bool           `json:"required"`
+	Parameters  map[string]any `json:"parameters,omitempty"`
 }
 
 // ─── POLICY TEMPLATE MODELS ──────────────────────────────────────────────────
 
 // PolicyTemplate represents a policy template
 type PolicyTemplate struct {
-	ID          uuid.UUID              `json:"id"`
-	TenantID    uuid.UUID              `json:"tenant_id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Category    string                 `json:"category"`
-	Template    *PolicyTemplateSpec    `json:"template"`
-	Parameters  []*TemplateParameter   `json:"parameters,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
+	ID          uuid.UUID            `json:"id"`
+	TenantID    uuid.UUID            `json:"tenant_id"`
+	Name        string               `json:"name"`
+	Description string               `json:"description"`
+	Category    string               `json:"category"`
+	Template    *PolicyTemplateSpec  `json:"template"`
+	Parameters  []*TemplateParameter `json:"parameters,omitempty"`
+	Metadata    map[string]any       `json:"metadata,omitempty"`
+	CreatedAt   time.Time            `json:"created_at"`
+	UpdatedAt   time.Time            `json:"updated_at"`
 }
 
 // PolicyTemplateSpec defines the template specification
@@ -452,42 +452,42 @@ type PolicyTemplateSpec struct {
 
 // TemplateParameter represents a parameter in a policy template
 type TemplateParameter struct {
-	Name         string      `json:"name"`
-	Type         string      `json:"type"`
-	Description  string      `json:"description"`
-	Required     bool        `json:"required"`
-	DefaultValue interface{} `json:"default_value,omitempty"`
+	Name         string `json:"name"`
+	Type         string `json:"type"`
+	Description  string `json:"description"`
+	Required     bool   `json:"required"`
+	DefaultValue any    `json:"default_value,omitempty"`
 }
 
 // PolicyVersion represents a version of a policy
 type PolicyVersion struct {
-	ID        uuid.UUID              `json:"id"`
-	TenantID  uuid.UUID              `json:"tenant_id"`
-	PolicyID  uuid.UUID              `json:"policy_id"`
-	Version   int                    `json:"version"`
-	Changes   string                 `json:"changes"`
-	Target    *PolicyTarget          `json:"target,omitempty"`
-	Condition *PolicyCondition       `json:"condition,omitempty"`
-	Rules     []*PolicyRule          `json:"rules,omitempty"`
-	IsActive  bool                   `json:"is_active"`
-	Metadata  map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt time.Time              `json:"created_at"`
+	ID        uuid.UUID        `json:"id"`
+	TenantID  uuid.UUID        `json:"tenant_id"`
+	PolicyID  uuid.UUID        `json:"policy_id"`
+	Version   int              `json:"version"`
+	Changes   string           `json:"changes"`
+	Target    *PolicyTarget    `json:"target,omitempty"`
+	Condition *PolicyCondition `json:"condition,omitempty"`
+	Rules     []*PolicyRule    `json:"rules,omitempty"`
+	IsActive  bool             `json:"is_active"`
+	Metadata  map[string]any   `json:"metadata,omitempty"`
+	CreatedAt time.Time        `json:"created_at"`
 }
 
 // ─── ANALYTICS MODELS ────────────────────────────────────────────────────────
 
 // UserActivity represents user activity tracking
 type UserActivity struct {
-	ID           uuid.UUID              `json:"id"`
-	TenantID     uuid.UUID              `json:"tenant_id"`
-	UserID       uuid.UUID              `json:"user_id"`
-	ActivityType string                 `json:"activity_type"`
-	Resource     string                 `json:"resource"`
-	Action       string                 `json:"action"`
-	Details      map[string]interface{} `json:"details,omitempty"`
-	IPAddress    string                 `json:"ip_address"`
-	UserAgent    string                 `json:"user_agent"`
-	Timestamp    time.Time              `json:"timestamp"`
+	ID           uuid.UUID      `json:"id"`
+	TenantID     uuid.UUID      `json:"tenant_id"`
+	UserID       uuid.UUID      `json:"user_id"`
+	ActivityType string         `json:"activity_type"`
+	Resource     string         `json:"resource"`
+	Action       string         `json:"action"`
+	Details      map[string]any `json:"details,omitempty"`
+	IPAddress    string         `json:"ip_address"`
+	UserAgent    string         `json:"user_agent"`
+	Timestamp    time.Time      `json:"timestamp"`
 }
 
 // UserAnalytics represents user analytics data
@@ -538,25 +538,25 @@ type PolicySuggestion struct {
 
 // PolicyTestCase represents a test case for policy testing
 type PolicyTestCase struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Subject     *PolicySubject         `json:"subject"`
-	Resource    *PolicyResource        `json:"resource"`
-	Action      string                 `json:"action"`
-	Environment *PolicyEnvironment     `json:"environment,omitempty"`
-	Expected    PolicyDecisionType     `json:"expected"`
-	Attributes  map[string]interface{} `json:"attributes,omitempty"`
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Subject     *PolicySubject     `json:"subject"`
+	Resource    *PolicyResource    `json:"resource"`
+	Action      string             `json:"action"`
+	Environment *PolicyEnvironment `json:"environment,omitempty"`
+	Expected    PolicyDecisionType `json:"expected"`
+	Attributes  map[string]any     `json:"attributes,omitempty"`
 }
 
 // PolicyEnvironment represents the environment context for policy evaluation
 type PolicyEnvironment struct {
-	Time       time.Time              `json:"time"`
-	IPAddress  string                 `json:"ip_address"`
-	Location   *GeolocationContext    `json:"location,omitempty"`
-	Device     *DeviceContext         `json:"device,omitempty"`
-	RiskLevel  string                 `json:"risk_level"`
-	Attributes map[string]interface{} `json:"attributes,omitempty"`
+	Time       time.Time           `json:"time"`
+	IPAddress  string              `json:"ip_address"`
+	Location   *GeolocationContext `json:"location,omitempty"`
+	Device     *DeviceContext      `json:"device,omitempty"`
+	RiskLevel  string              `json:"risk_level"`
+	Attributes map[string]any      `json:"attributes,omitempty"`
 }
 
 // PolicyTestResult represents the result of a policy test

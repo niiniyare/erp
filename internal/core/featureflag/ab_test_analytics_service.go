@@ -546,7 +546,7 @@ func (s *abTestAnalyticsService) CalculateStatisticalSignificance(ctx context.Co
 	})
 
 	// Audit the statistical test
-	auditData, _ := json.Marshal(map[string]interface{}{
+	auditData, _ := json.Marshal(map[string]any{
 		"test_type":      string(request.TestType),
 		"p_value":        result.PValue,
 		"is_significant": result.IsSignificant,
@@ -809,7 +809,7 @@ func (s *abTestAnalyticsService) PerformBayesianAnalysis(ctx context.Context, re
 	})
 
 	// Audit the Bayesian analysis
-	auditData, _ := json.Marshal(map[string]interface{}{
+	auditData, _ := json.Marshal(map[string]any{
 		"probability_b_wins": probBWins,
 		"expected_loss":      expectedLoss,
 		"bayes_factor":       bayesFactor,
@@ -1433,7 +1433,7 @@ func (s *abTestAnalyticsService) GenerateExperimentReport(ctx context.Context, e
 	// Add visualizations placeholder if requested
 	if options.IncludeVisualizations {
 		// NOTE: Future improvement - Implement actual visualization generation
-		report.Visualizations = map[string]interface{}{
+		report.Visualizations = map[string]any{
 			"conversion_rate_chart":   "placeholder_chart_data",
 			"statistical_power_curve": "placeholder_power_curve",
 			"bayesian_posterior_plot": "placeholder_posterior_plot",
@@ -1996,7 +1996,7 @@ type ExperimentReport struct {
 	BayesianResults    *BayesianAnalysisResult `json:"bayesian_results"`
 	PowerAnalysis      *PowerAnalysisResult    `json:"power_analysis"`
 	Recommendations    []string                `json:"recommendations"`
-	Visualizations     map[string]interface{}  `json:"visualizations"`
+	Visualizations     map[string]any          `json:"visualizations"`
 }
 
 type MetaAnalysisRequest struct {
@@ -2006,11 +2006,11 @@ type MetaAnalysisRequest struct {
 }
 
 type MetaAnalysisResult struct {
-	OverallEffectSize  float64                `json:"overall_effect_size"`
-	ConfidenceInterval *ConfidenceInterval    `json:"confidence_interval"`
-	HeterogeneityTest  *HeterogeneityTest     `json:"heterogeneity_test"`
-	ForestPlot         map[string]interface{} `json:"forest_plot"`
-	Studies            []StudyResult          `json:"studies"`
+	OverallEffectSize  float64             `json:"overall_effect_size"`
+	ConfidenceInterval *ConfidenceInterval `json:"confidence_interval"`
+	HeterogeneityTest  *HeterogeneityTest  `json:"heterogeneity_test"`
+	ForestPlot         map[string]any      `json:"forest_plot"`
+	Studies            []StudyResult       `json:"studies"`
 }
 
 type NoveltyEffectResult struct {
@@ -2483,15 +2483,15 @@ func (s *abTestAnalyticsService) includeSection(sectionType string) bool {
 	return true
 }
 
-func (s *abTestAnalyticsService) generateExecutiveSummary(results interface{}) interface{} {
+func (s *abTestAnalyticsService) generateExecutiveSummary(results any) any {
 	// NOTE:Simple executive summary
-	return map[string]interface{}{
+	return map[string]any{
 		"summary": "A/B test analysis completed",
 		"status":  "completed",
 	}
 }
 
-func (s *abTestAnalyticsService) generateReportRecommendations(results interface{}) []string {
+func (s *abTestAnalyticsService) generateReportRecommendations(results any) []string {
 	// NOTE: Simple recommendations
 	return []string{"Review test results and determine next steps"}
 }

@@ -119,7 +119,7 @@ type AttributeCache struct {
 type CachedEvaluation struct {
 	Decision        types.PolicyDecisionType `json:"decision"`
 	PolicyDecisions []*models.PolicyDecision `json:"policy_decisions"`
-	Context         map[string]interface{}   `json:"context"`
+	Context         map[string]any           `json:"context"`
 	EvaluatedAt     time.Time                `json:"evaluated_at"`
 	TTL             time.Duration            `json:"ttl"`
 	HitCount        int32                    `json:"hit_count"`
@@ -128,7 +128,7 @@ type CachedEvaluation struct {
 
 type CachedAttribute struct {
 	AttributeName  string        `json:"attribute_name"`
-	AttributeValue interface{}   `json:"attribute_value"`
+	AttributeValue any           `json:"attribute_value"`
 	DataType       string        `json:"data_type"`
 	Source         string        `json:"source"`
 	CachedAt       time.Time     `json:"cached_at"`
@@ -137,12 +137,12 @@ type CachedAttribute struct {
 }
 
 type CacheRequest struct {
-	UserID       uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType string                 `json:"resource_type" validate:"required"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Action       string                 `json:"action" validate:"required"`
-	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Context      map[string]interface{} `json:"context,omitempty"`
+	UserID       uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType string         `json:"resource_type" validate:"required"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Action       string         `json:"action" validate:"required"`
+	EntityID     *uuid.UUID     `json:"entity_id,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
 }
 
 type CachedEvaluationResult struct {
@@ -160,7 +160,7 @@ type CacheEvaluationRequest struct {
 	CacheKey        string                   `json:"cache_key" validate:"required"`
 	Decision        types.PolicyDecisionType `json:"decision" validate:"required"`
 	PolicyDecisions []*models.PolicyDecision `json:"policy_decisions,omitempty"`
-	Context         map[string]interface{}   `json:"context,omitempty"`
+	Context         map[string]any           `json:"context,omitempty"`
 	TTL             time.Duration            `json:"ttl"`
 }
 
@@ -346,14 +346,14 @@ type BatchEvaluationRequest struct {
 }
 
 type SingleEvaluationRequest struct {
-	EvaluationID uuid.UUID              `json:"evaluation_id"`
-	UserID       uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType string                 `json:"resource_type" validate:"required"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Action       string                 `json:"action" validate:"required"`
-	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Context      map[string]interface{} `json:"context,omitempty"`
-	Priority     int32                  `json:"priority"`
+	EvaluationID uuid.UUID      `json:"evaluation_id"`
+	UserID       uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType string         `json:"resource_type" validate:"required"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Action       string         `json:"action" validate:"required"`
+	EntityID     *uuid.UUID     `json:"entity_id,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
+	Priority     int32          `json:"priority"`
 }
 
 // BatchFailureStrategy type already defined in attribute_collector.go
@@ -520,7 +520,7 @@ type PolicyCompilationRequest struct {
 	PolicyID          uuid.UUID                    `json:"policy_id" validate:"required"`
 	OptimizationLevel CompilationOptimizationLevel `json:"optimization_level"`
 	TargetPlatform    string                       `json:"target_platform"`
-	CompilerOptions   map[string]interface{}       `json:"compiler_options,omitempty"`
+	CompilerOptions   map[string]any               `json:"compiler_options,omitempty"`
 }
 
 type CompilationOptimizationLevel string
@@ -544,12 +544,12 @@ type CompiledPolicy struct {
 }
 
 type CompiledCode struct {
-	ExecutionPlan   ExecutionPlan          `json:"execution_plan"`
-	OptimizedTarget map[string]interface{} `json:"optimized_target"`
-	OptimizedRule   map[string]interface{} `json:"optimized_rule"`
-	PrecomputedData map[string]interface{} `json:"precomputed_data,omitempty"`
-	IndexHints      []IndexHint            `json:"index_hints,omitempty"`
-	CacheStrategies []CacheStrategy        `json:"cache_strategies,omitempty"`
+	ExecutionPlan   ExecutionPlan   `json:"execution_plan"`
+	OptimizedTarget map[string]any  `json:"optimized_target"`
+	OptimizedRule   map[string]any  `json:"optimized_rule"`
+	PrecomputedData map[string]any  `json:"precomputed_data,omitempty"`
+	IndexHints      []IndexHint     `json:"index_hints,omitempty"`
+	CacheStrategies []CacheStrategy `json:"cache_strategies,omitempty"`
 }
 
 type ExecutionPlan struct {
@@ -561,20 +561,20 @@ type ExecutionPlan struct {
 }
 
 type ExecutionStep struct {
-	StepID         int32                  `json:"step_id"`
-	StepType       string                 `json:"step_type"`
-	Operation      string                 `json:"operation"`
-	Dependencies   []int32                `json:"dependencies,omitempty"`
-	EstimatedTime  time.Duration          `json:"estimated_time"`
-	Configuration  map[string]interface{} `json:"configuration,omitempty"`
-	Parallelizable bool                   `json:"parallelizable"`
+	StepID         int32          `json:"step_id"`
+	StepType       string         `json:"step_type"`
+	Operation      string         `json:"operation"`
+	Dependencies   []int32        `json:"dependencies,omitempty"`
+	EstimatedTime  time.Duration  `json:"estimated_time"`
+	Configuration  map[string]any `json:"configuration,omitempty"`
+	Parallelizable bool           `json:"parallelizable"`
 }
 
 type AppliedOptimization struct {
-	OptimizationType string                 `json:"optimization_type"`
-	Description      string                 `json:"description"`
-	EstimatedBenefit float64                `json:"estimated_benefit"`
-	Configuration    map[string]interface{} `json:"configuration,omitempty"`
+	OptimizationType string         `json:"optimization_type"`
+	Description      string         `json:"description"`
+	EstimatedBenefit float64        `json:"estimated_benefit"`
+	Configuration    map[string]any `json:"configuration,omitempty"`
 }
 
 type CompilationPerformanceMetrics struct {
@@ -680,11 +680,11 @@ func (po *performanceOptimizer) CompilePolicy(ctx context.Context, req *PolicyCo
 // Query Optimization Types
 
 type QueryOptimizationRequest struct {
-	QueryType         string                 `json:"query_type"`
-	QueryParameters   map[string]interface{} `json:"query_parameters"`
-	ExpectedLoad      QueryLoadProfile       `json:"expected_load"`
-	Constraints       QueryConstraints       `json:"constraints"`
-	OptimizationGoals []OptimizationGoal     `json:"optimization_goals"`
+	QueryType         string             `json:"query_type"`
+	QueryParameters   map[string]any     `json:"query_parameters"`
+	ExpectedLoad      QueryLoadProfile   `json:"expected_load"`
+	Constraints       QueryConstraints   `json:"constraints"`
+	OptimizationGoals []OptimizationGoal `json:"optimization_goals"`
 }
 
 type QueryLoadProfile struct {
@@ -727,11 +727,11 @@ type QueryOptimizationPlan struct {
 }
 
 type QueryOptimizationStep struct {
-	StepID          int32                  `json:"step_id"`
-	StepType        string                 `json:"step_type"`
-	Description     string                 `json:"description"`
-	Configuration   map[string]interface{} `json:"configuration,omitempty"`
-	EstimatedImpact float64                `json:"estimated_impact"`
+	StepID          int32          `json:"step_id"`
+	StepType        string         `json:"step_type"`
+	Description     string         `json:"description"`
+	Configuration   map[string]any `json:"configuration,omitempty"`
+	EstimatedImpact float64        `json:"estimated_impact"`
 }
 
 type ParallelizationPlan struct {
@@ -820,10 +820,10 @@ const (
 )
 
 type MetricFilter struct {
-	FilterType  string      `json:"filter_type"`
-	FilterKey   string      `json:"filter_key"`
-	FilterValue interface{} `json:"filter_value"`
-	Operator    string      `json:"operator"`
+	FilterType  string `json:"filter_type"`
+	FilterKey   string `json:"filter_key"`
+	FilterValue any    `json:"filter_value"`
+	Operator    string `json:"operator"`
 }
 
 type PerformanceMetrics struct {
@@ -915,12 +915,12 @@ type PerformanceRecommendation struct {
 func (po *performanceOptimizer) generateCacheKey(req *CacheRequest) string {
 	// Create a deterministic cache key
 	keyData := struct {
-		UserID       uuid.UUID              `json:"user_id"`
-		ResourceType string                 `json:"resource_type"`
-		ResourceID   *uuid.UUID             `json:"resource_id"`
-		Action       string                 `json:"action"`
-		EntityID     *uuid.UUID             `json:"entity_id"`
-		Context      map[string]interface{} `json:"context"`
+		UserID       uuid.UUID      `json:"user_id"`
+		ResourceType string         `json:"resource_type"`
+		ResourceID   *uuid.UUID     `json:"resource_id"`
+		Action       string         `json:"action"`
+		EntityID     *uuid.UUID     `json:"entity_id"`
+		Context      map[string]any `json:"context"`
 	}{
 		UserID:       req.UserID,
 		ResourceType: req.ResourceType,
@@ -939,7 +939,7 @@ func (po *performanceOptimizer) calculateEvaluationChecksum(req *CacheEvaluation
 	checksumData := struct {
 		Decision        types.PolicyDecisionType `json:"decision"`
 		PolicyDecisions []*models.PolicyDecision `json:"policy_decisions"`
-		Context         map[string]interface{}   `json:"context"`
+		Context         map[string]any           `json:"context"`
 	}{
 		Decision:        req.Decision,
 		PolicyDecisions: req.PolicyDecisions,

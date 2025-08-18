@@ -49,8 +49,8 @@ type ABACAuthorizationConfig struct {
 }
 
 // RequireBulkOperationPermission creates middleware for bulk operations
-func (m *ABACMiddleware) RequireBulkOperationPermission(action string) func(context.Context, interface{}, *security.JWTScheme) (context.Context, error) {
-	return func(ctx context.Context, payload interface{}, scheme *security.JWTScheme) (context.Context, error) {
+func (m *ABACMiddleware) RequireBulkOperationPermission(action string) func(context.Context, any, *security.JWTScheme) (context.Context, error) {
+	return func(ctx context.Context, payload any, scheme *security.JWTScheme) (context.Context, error) {
 		ctx, span := m.tracing.StartSpan(ctx, "abac.middleware.bulk_operation",
 			tracing.WithAttributes(
 				attribute.String("action", action),
@@ -119,8 +119,8 @@ func (m *ABACMiddleware) RequireBulkOperationPermission(action string) func(cont
 }
 
 // RequireSystemOperationPermission creates middleware for system operations
-func (m *ABACMiddleware) RequireSystemOperationPermission(action string) func(context.Context, interface{}, *security.JWTScheme) (context.Context, error) {
-	return func(ctx context.Context, payload interface{}, scheme *security.JWTScheme) (context.Context, error) {
+func (m *ABACMiddleware) RequireSystemOperationPermission(action string) func(context.Context, any, *security.JWTScheme) (context.Context, error) {
+	return func(ctx context.Context, payload any, scheme *security.JWTScheme) (context.Context, error) {
 		ctx, span := m.tracing.StartSpan(ctx, "abac.middleware.system_operation",
 			tracing.WithAttributes(
 				attribute.String("action", action),
@@ -183,8 +183,8 @@ func (m *ABACMiddleware) RequireSystemOperationPermission(action string) func(co
 }
 
 // RequireEmergencyOperationPermission creates middleware for emergency operations
-func (m *ABACMiddleware) RequireEmergencyOperationPermission() func(context.Context, interface{}, *security.JWTScheme) (context.Context, error) {
-	return func(ctx context.Context, payload interface{}, scheme *security.JWTScheme) (context.Context, error) {
+func (m *ABACMiddleware) RequireEmergencyOperationPermission() func(context.Context, any, *security.JWTScheme) (context.Context, error) {
+	return func(ctx context.Context, payload any, scheme *security.JWTScheme) (context.Context, error) {
 		ctx, span := m.tracing.StartSpan(ctx, "abac.middleware.emergency_operation",
 			tracing.WithAttributes(
 				attribute.String("action", featureflag.ActionEmergencyControl),
@@ -272,7 +272,7 @@ func (m *ABACMiddleware) extractUserFromJWT(ctx context.Context, scheme *securit
 }
 
 // extractBulkOperationDetails extracts bulk operation details from payload
-func (m *ABACMiddleware) extractBulkOperationDetails(payload interface{}) (int, string) {
+func (m *ABACMiddleware) extractBulkOperationDetails(payload any) (int, string) {
 	// NOTE:
 	// This would extract from the actual Goa payload structure
 	// Implementation depends on the specific payload types
@@ -285,7 +285,7 @@ func (m *ABACMiddleware) extractBulkOperationDetails(payload interface{}) (int, 
 }
 
 // extractReasonFromPayload extracts reason from payload
-func (m *ABACMiddleware) extractReasonFromPayload(payload interface{}) string {
+func (m *ABACMiddleware) extractReasonFromPayload(payload any) string {
 	// Extract reason from the emergency operation payload
 	return "emergency_reason" // Replace with actual extraction
 }
@@ -387,7 +387,7 @@ func (m *ABACMiddleware) LogAuthorizationDecision(
 	userID uuid.UUID,
 	action string,
 	result *abac.PermissionEvaluationResult,
-	payload interface{},
+	payload any,
 ) {
 	m.logger.Info("ABAC authorization decision logged", logger.Fields{
 		"event_type":         "authorization_decision",

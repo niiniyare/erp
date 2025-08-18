@@ -33,7 +33,7 @@ func TestCreatePolicy_ValidDefinition_ReturnsPolicy(t *testing.T) {
 				Effect: model.PolicyEffectAllow,
 				Condition: &model.PolicyCondition{
 					"user.department": "finance",
-					"environment.time_of_day": map[string]interface{}{
+					"environment.time_of_day": map[string]any{
 						"$gte": "09:00",
 						"$lte": "17:00",
 					},
@@ -216,11 +216,10 @@ func setupTestPolicy() *CreatePolicyRequest {
 		Rules: []model.PolicyRule{
 			{
 				Effect:    model.PolicyEffectAllow,
-				Condition: map[string]interface{}{"user.test": true},
+				Condition: map[string]any{"user.test": true},
 			},
 		},
 		Priority: 1,
 		Enabled:  true,
 	}
 }
-

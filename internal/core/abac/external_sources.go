@@ -61,8 +61,8 @@ type SourceConnectionTestResult struct {
 
 // ValidateSourceConfigRequest represents a request to validate source configuration
 type ValidateSourceConfigRequest struct {
-	SourceConfig map[string]interface{} `json:"source_config"`
-	SourceType   string                 `json:"source_type"`
+	SourceConfig map[string]any `json:"source_config"`
+	SourceType   string         `json:"source_type"`
 }
 
 // SourceConfigValidationResult represents the result of source configuration validation
@@ -75,20 +75,20 @@ type SourceConfigValidationResult struct {
 
 // FetchAttributesRequest represents a request to fetch attributes from external sources
 type FetchAttributesRequest struct {
-	SourceID       uuid.UUID              `json:"source_id"`
-	SubjectID      uuid.UUID              `json:"subject_id"`
-	AttributeNames []string               `json:"attribute_names,omitempty"`
-	Context        map[string]interface{} `json:"context,omitempty"`
+	SourceID       uuid.UUID      `json:"source_id"`
+	SubjectID      uuid.UUID      `json:"subject_id"`
+	AttributeNames []string       `json:"attribute_names,omitempty"`
+	Context        map[string]any `json:"context,omitempty"`
 }
 
 // ExternalAttributesResult represents the result of fetching attributes from external sources
 type ExternalAttributesResult struct {
-	SourceID   uuid.UUID              `json:"source_id"`
-	SubjectID  uuid.UUID              `json:"subject_id"`
-	Attributes map[string]interface{} `json:"attributes"`
-	FetchedAt  time.Time              `json:"fetched_at"`
-	Success    bool                   `json:"success"`
-	ErrorMsg   string                 `json:"error_msg,omitempty"`
+	SourceID   uuid.UUID      `json:"source_id"`
+	SubjectID  uuid.UUID      `json:"subject_id"`
+	Attributes map[string]any `json:"attributes"`
+	FetchedAt  time.Time      `json:"fetched_at"`
+	Success    bool           `json:"success"`
+	ErrorMsg   string         `json:"error_msg,omitempty"`
 }
 
 // SourceMetricsRequest represents a request for source metrics
@@ -265,7 +265,7 @@ type ExternalSourceConfiguration struct {
 	DatabaseConfig *DatabaseConfiguration `json:"database_config,omitempty"`
 
 	// Custom Source Configuration
-	CustomConfig map[string]interface{} `json:"custom_config,omitempty"`
+	CustomConfig map[string]any `json:"custom_config,omitempty"`
 }
 
 type LDAPConfiguration struct {
@@ -317,7 +317,7 @@ func NewLDAPAttributeConnector(config *LDAPConfiguration, logger logger.Logger, 
 	}
 }
 
-func (lac *LDAPAttributeConnector) FetchUserAttributes(ctx context.Context, userID string) (map[string]interface{}, error) {
+func (lac *LDAPAttributeConnector) FetchUserAttributes(ctx context.Context, userID string) (map[string]any, error) {
 	startTime := time.Now()
 	defer func() {
 		lac.metrics.ObserveHistogram("abac.external_source.ldap.fetch_duration",
@@ -403,7 +403,7 @@ func NewRESTAPIAttributeConnector(config *RESTAPIConfiguration, logger logger.Lo
 	}
 }
 
-func (rac *RESTAPIAttributeConnector) FetchUserAttributes(ctx context.Context, userID string) (map[string]interface{}, error) {
+func (rac *RESTAPIAttributeConnector) FetchUserAttributes(ctx context.Context, userID string) (map[string]any, error) {
 	startTime := time.Now()
 	defer func() {
 		rac.metrics.ObserveHistogram("abac.external_source.rest_api.fetch_duration",
@@ -446,13 +446,13 @@ func (rac *RESTAPIAttributeConnector) FetchUserAttributes(ctx context.Context, u
 		return nil, fmt.Errorf("API request failed - status: %d, url: %s", resp.StatusCode, url)
 	}
 
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("failed to decode JSON response: %w", err)
 	}
 
 	// Transform response according to endpoint mapping
-	attributes := make(map[string]interface{})
+	attributes := make(map[string]any)
 	if endpoint.ResponseMapping != nil {
 		for apiField, internalAttr := range endpoint.ResponseMapping {
 			if value, exists := response[apiField]; exists {
@@ -699,7 +699,7 @@ type RegisterDatabaseSourceRequest struct {
 type RegisterCustomSourceRequest struct {
 	Name             string                         `json:"name" validate:"required,min=1,max=100"`
 	Description      *string                        `json:"description,omitempty"`
-	CustomConfig     map[string]interface{}         `json:"custom_config" validate:"required"`
+	CustomConfig     map[string]any                 `json:"custom_config" validate:"required"`
 	ConnectorType    string                         `json:"connector_type" validate:"required"`
 	IsActive         bool                           `json:"is_active"`
 	Priority         int                            `json:"priority"`
@@ -772,7 +772,7 @@ type APIEndpoint struct {
 
 type LDAPConnectionPool struct {
 	config      *LDAPConfiguration
-	connections chan interface{} // *ldapv3.Conn
+	connections chan any // *ldapv3.Conn
 	mutex       sync.Mutex
 	logger      logger.Logger
 }
@@ -780,11 +780,11 @@ type LDAPConnectionPool struct {
 func NewLDAPConnectionPool(config *LDAPConfiguration) *LDAPConnectionPool {
 	return &LDAPConnectionPool{
 		config:      config,
-		connections: make(chan interface{}, config.ConnectionPool.MaxSize),
+		connections: make(chan any, config.ConnectionPool.MaxSize),
 	}
 }
 
-func (pool *LDAPConnectionPool) GetConnection(ctx context.Context) (interface{}, error) { // *ldapv3.Conn
+func (pool *LDAPConnectionPool) GetConnection(ctx context.Context) (any, error) { // *ldapv3.Conn
 	select {
 	case conn := <-pool.connections:
 		return conn, nil
@@ -793,7 +793,7 @@ func (pool *LDAPConnectionPool) GetConnection(ctx context.Context) (interface{},
 	}
 }
 
-func (pool *LDAPConnectionPool) ReturnConnection(conn interface{}) {
+func (pool *LDAPConnectionPool) ReturnConnection(conn any) {
 	select {
 	case pool.connections <- conn:
 	default:
@@ -801,10 +801,10 @@ func (pool *LDAPConnectionPool) ReturnConnection(conn interface{}) {
 	}
 }
 
-func (pool *LDAPConnectionPool) createConnection() (interface{}, error) { // *ldapv3.Conn
+func (pool *LDAPConnectionPool) createConnection() (any, error) { // *ldapv3.Conn
 	// address := fmt.Sprintf("%s:%d", pool.config.Host, pool.config.Port)
 
-	var conn interface{} // *ldapv3.Conn
+	var conn any // *ldapv3.Conn
 	var err error
 
 	if pool.config.UseTLS {
@@ -961,17 +961,17 @@ func (easm *externalAttributeSourceManager) DeleteAttributeSource(ctx context.Co
 // Helper Components
 
 type SourceConnectorRegistry struct {
-	connectors map[uuid.UUID]interface{}
+	connectors map[uuid.UUID]any
 	mutex      sync.RWMutex
 }
 
 func NewSourceConnectorRegistry() *SourceConnectorRegistry {
 	return &SourceConnectorRegistry{
-		connectors: make(map[uuid.UUID]interface{}),
+		connectors: make(map[uuid.UUID]any),
 	}
 }
 
-func (scr *SourceConnectorRegistry) RegisterConnector(sourceID uuid.UUID, connector interface{}) {
+func (scr *SourceConnectorRegistry) RegisterConnector(sourceID uuid.UUID, connector any) {
 	scr.mutex.Lock()
 	defer scr.mutex.Unlock()
 	scr.connectors[sourceID] = connector
@@ -988,7 +988,7 @@ func NewExternalSourceHealthMonitor() *ExternalSourceHealthMonitor {
 	}
 }
 
-func (eshm *ExternalSourceHealthMonitor) StartMonitoring(sourceID uuid.UUID, connector interface{}) {
+func (eshm *ExternalSourceHealthMonitor) StartMonitoring(sourceID uuid.UUID, connector any) {
 	// Implementation for health monitoring
 }
 

@@ -30,7 +30,7 @@ func TestFeatureFlagIntegration(t *testing.T) {
 			Description:  "A test feature flag",
 			FlagType:     featureflag.FlagTypeBoolean,
 			DefaultValue: true,
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"category": "test",
 				"owner":    "engineering",
 			},
@@ -172,11 +172,11 @@ func TestService(t *testing.T) {
 		FlagType:          featureflag.FlagTypeBoolean,
 		DefaultValue:      false,
 		RolloutPercentage: func() *int32 { p := int32(25); return &p }(), // 25% rollout
-		TargetAudience: map[string]interface{}{
+		TargetAudience: map[string]any{
 			"roles":     []string{"admin", "manager"},
 			"plan_type": "enterprise",
 		},
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"category":    "ui",
 			"owner":       "frontend-team",
 			"launched_at": time.Now().Format(time.RFC3339),

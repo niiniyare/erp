@@ -46,13 +46,13 @@ func NewPolicyEvaluationActivities(
 
 // EvaluatePoliciesActivityInput represents input for policy evaluation
 type EvaluatePoliciesActivityInput struct {
-	UserID       uuid.UUID              `json:"user_id"`
-	ResourceType string                 `json:"resource_type"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Action       string                 `json:"action"`
-	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Attributes   map[string]interface{} `json:"attributes"`
-	RequestID    string                 `json:"request_id"`
+	UserID       uuid.UUID      `json:"user_id"`
+	ResourceType string         `json:"resource_type"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Action       string         `json:"action"`
+	EntityID     *uuid.UUID     `json:"entity_id,omitempty"`
+	Attributes   map[string]any `json:"attributes"`
+	RequestID    string         `json:"request_id"`
 }
 
 // PolicyDecisionResult is an alias for models.PolicyDecision for workflow compatibility
@@ -283,7 +283,7 @@ func (a *PolicyEvaluationActivities) evaluateSinglePolicy(ctx context.Context, p
 }
 
 // evaluateTarget checks if the policy target matches the request
-func (a *PolicyEvaluationActivities) evaluateTarget(ctx context.Context, target map[string]interface{}, input *EvaluatePoliciesActivityInput) bool {
+func (a *PolicyEvaluationActivities) evaluateTarget(ctx context.Context, target map[string]any, input *EvaluatePoliciesActivityInput) bool {
 	// Check resource type
 	if resourceType, ok := target["resource_type"].(string); ok {
 		if resourceType != input.ResourceType && resourceType != "*" {
@@ -309,7 +309,7 @@ func (a *PolicyEvaluationActivities) evaluateTarget(ctx context.Context, target 
 }
 
 // evaluateRule evaluates the policy rule against the request attributes
-func (a *PolicyEvaluationActivities) evaluateRule(ctx context.Context, rule map[string]interface{}, input *EvaluatePoliciesActivityInput) (bool, error) {
+func (a *PolicyEvaluationActivities) evaluateRule(ctx context.Context, rule map[string]any, input *EvaluatePoliciesActivityInput) (bool, error) {
 	// Handle different rule types
 	if conditions, ok := rule["conditions"]; ok {
 		return a.evaluateConditions(ctx, conditions, input.Attributes)
@@ -331,9 +331,9 @@ func (a *PolicyEvaluationActivities) evaluateRule(ctx context.Context, rule map[
 }
 
 // evaluateConditions evaluates complex conditions (AND, OR, NOT)
-func (a *PolicyEvaluationActivities) evaluateConditions(ctx context.Context, conditions interface{}, attributes map[string]interface{}) (bool, error) {
+func (a *PolicyEvaluationActivities) evaluateConditions(ctx context.Context, conditions any, attributes map[string]any) (bool, error) {
 	switch cond := conditions.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		// Handle AND, OR, NOT operators
 		if andConds, ok := cond["AND"]; ok {
 			return a.evaluateAndConditions(ctx, andConds, attributes)
@@ -349,7 +349,7 @@ func (a *PolicyEvaluationActivities) evaluateConditions(ctx context.Context, con
 		// Simple attribute comparison
 		return a.evaluateAttributeCondition(ctx, cond, attributes)
 
-	case []interface{}:
+	case []any:
 		// Array of conditions (implicit AND)
 		for _, condition := range cond {
 			result, err := a.evaluateConditions(ctx, condition, attributes)
@@ -364,8 +364,8 @@ func (a *PolicyEvaluationActivities) evaluateConditions(ctx context.Context, con
 }
 
 // evaluateAndConditions evaluates AND conditions
-func (a *PolicyEvaluationActivities) evaluateAndConditions(ctx context.Context, conditions interface{}, attributes map[string]interface{}) (bool, error) {
-	condList, ok := conditions.([]interface{})
+func (a *PolicyEvaluationActivities) evaluateAndConditions(ctx context.Context, conditions any, attributes map[string]any) (bool, error) {
+	condList, ok := conditions.([]any)
 	if !ok {
 		return false, fmt.Errorf("AND conditions must be an array")
 	}
@@ -380,8 +380,8 @@ func (a *PolicyEvaluationActivities) evaluateAndConditions(ctx context.Context, 
 }
 
 // evaluateOrConditions evaluates OR conditions
-func (a *PolicyEvaluationActivities) evaluateOrConditions(ctx context.Context, conditions interface{}, attributes map[string]interface{}) (bool, error) {
-	condList, ok := conditions.([]interface{})
+func (a *PolicyEvaluationActivities) evaluateOrConditions(ctx context.Context, conditions any, attributes map[string]any) (bool, error) {
+	condList, ok := conditions.([]any)
 	if !ok {
 		return false, fmt.Errorf("OR conditions must be an array")
 	}
@@ -399,7 +399,7 @@ func (a *PolicyEvaluationActivities) evaluateOrConditions(ctx context.Context, c
 }
 
 // evaluateAttributeCondition evaluates a simple attribute condition
-func (a *PolicyEvaluationActivities) evaluateAttributeCondition(ctx context.Context, condition map[string]interface{}, attributes map[string]interface{}) (bool, error) {
+func (a *PolicyEvaluationActivities) evaluateAttributeCondition(ctx context.Context, condition map[string]any, attributes map[string]any) (bool, error) {
 	attrName, ok := condition["attribute"].(string)
 	if !ok {
 		return false, fmt.Errorf("condition must specify attribute name")
@@ -420,7 +420,7 @@ func (a *PolicyEvaluationActivities) evaluateAttributeCondition(ctx context.Cont
 }
 
 // compareWithOperator compares values using the specified operator
-func (a *PolicyEvaluationActivities) compareWithOperator(operator string, actual, expected interface{}) (bool, error) {
+func (a *PolicyEvaluationActivities) compareWithOperator(operator string, actual, expected any) (bool, error) {
 	switch operator {
 	case "eq", "equals":
 		return a.compareValues(actual, expected), nil
@@ -444,12 +444,12 @@ func (a *PolicyEvaluationActivities) compareWithOperator(operator string, actual
 }
 
 // compareValues compares two values for equality
-func (a *PolicyEvaluationActivities) compareValues(actual, expected interface{}) bool {
+func (a *PolicyEvaluationActivities) compareValues(actual, expected any) bool {
 	return fmt.Sprintf("%v", actual) == fmt.Sprintf("%v", expected)
 }
 
 // compareNumbers compares numeric values
-func (a *PolicyEvaluationActivities) compareNumbers(actual, expected interface{}, compareFn func(float64, float64) bool) (bool, error) {
+func (a *PolicyEvaluationActivities) compareNumbers(actual, expected any, compareFn func(float64, float64) bool) (bool, error) {
 	actualNum, ok1 := actual.(float64)
 	expectedNum, ok2 := expected.(float64)
 
@@ -466,7 +466,7 @@ func (a *PolicyEvaluationActivities) compareNumbers(actual, expected interface{}
 }
 
 // toFloat64 converts various numeric types to float64
-func (a *PolicyEvaluationActivities) toFloat64(val interface{}) (float64, bool) {
+func (a *PolicyEvaluationActivities) toFloat64(val any) (float64, bool) {
 	switch v := val.(type) {
 	case float64:
 		return v, true
@@ -484,8 +484,8 @@ func (a *PolicyEvaluationActivities) toFloat64(val interface{}) (float64, bool) 
 }
 
 // valueInList checks if a value is in a list
-func (a *PolicyEvaluationActivities) valueInList(value interface{}, list interface{}) bool {
-	listSlice, ok := list.([]interface{})
+func (a *PolicyEvaluationActivities) valueInList(value any, list any) bool {
+	listSlice, ok := list.([]any)
 	if !ok {
 		return false
 	}
@@ -517,7 +517,7 @@ func (a *PolicyEvaluationActivities) applyCombiningAlgorithm(ctx context.Context
 }
 
 // generateContextHash generates a hash for the evaluation context
-func (a *PolicyEvaluationActivities) generateContextHash(attributes map[string]interface{}) string {
+func (a *PolicyEvaluationActivities) generateContextHash(attributes map[string]any) string {
 	// Simple hash generation - in production, use proper cryptographic hash
 	data, _ := json.Marshal(attributes)
 	return fmt.Sprintf("%x", len(data))

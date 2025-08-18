@@ -533,7 +533,7 @@ func (s *adminServiceImpl) auditRolloutStrategyAction(ctx context.Context, actio
 	})
 }
 
-func (s *adminServiceImpl) auditCacheOperation(ctx context.Context, operation string, request interface{}, result *CacheOperationResult) {
+func (s *adminServiceImpl) auditCacheOperation(ctx context.Context, operation string, request any, result *CacheOperationResult) {
 	contextData, _ := json.Marshal(map[string]any{
 		"operation":       operation,
 		"request":         request,

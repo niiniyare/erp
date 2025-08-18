@@ -130,20 +130,20 @@ func NewPolicyManager(
 // Policy CRUD Operations
 
 type CreatePolicyRequest struct {
-	Name        string                 `json:"name" validate:"required,min=1,max=150"`
-	DisplayName *string                `json:"display_name,omitempty"`
-	Description *string                `json:"description,omitempty"`
-	PolicyType  types.PolicyType       `json:"policy_type" validate:"required"`
-	Effect      types.PolicyEffect     `json:"effect" validate:"required"`
-	Priority    int32                  `json:"priority" validate:"min=1,max=1000"`
-	Category    types.PolicyCategory   `json:"category" validate:"required"`
-	Target      map[string]interface{} `json:"target" validate:"required"`
-	Rule        map[string]interface{} `json:"rule" validate:"required"`
-	Obligations map[string]interface{} `json:"obligations,omitempty"`
-	Advice      map[string]interface{} `json:"advice,omitempty"`
-	EntityID    *uuid.UUID             `json:"entity_id,omitempty"`
-	Tags        []string               `json:"tags,omitempty"`
-	CreatedBy   *uuid.UUID             `json:"created_by,omitempty"`
+	Name        string               `json:"name" validate:"required,min=1,max=150"`
+	DisplayName *string              `json:"display_name,omitempty"`
+	Description *string              `json:"description,omitempty"`
+	PolicyType  types.PolicyType     `json:"policy_type" validate:"required"`
+	Effect      types.PolicyEffect   `json:"effect" validate:"required"`
+	Priority    int32                `json:"priority" validate:"min=1,max=1000"`
+	Category    types.PolicyCategory `json:"category" validate:"required"`
+	Target      map[string]any       `json:"target" validate:"required"`
+	Rule        map[string]any       `json:"rule" validate:"required"`
+	Obligations map[string]any       `json:"obligations,omitempty"`
+	Advice      map[string]any       `json:"advice,omitempty"`
+	EntityID    *uuid.UUID           `json:"entity_id,omitempty"`
+	Tags        []string             `json:"tags,omitempty"`
+	CreatedBy   *uuid.UUID           `json:"created_by,omitempty"`
 }
 
 type PolicyManagementResult struct {
@@ -248,21 +248,21 @@ func (pm *policyManager) CreatePolicy(ctx context.Context, req *CreatePolicyRequ
 }
 
 type UpdatePolicyRequest struct {
-	ID          uuid.UUID              `json:"id" validate:"required"`
-	Name        *string                `json:"name,omitempty"`
-	DisplayName *string                `json:"display_name,omitempty"`
-	Description *string                `json:"description,omitempty"`
-	PolicyType  *types.PolicyType      `json:"policy_type,omitempty"`
-	Effect      *types.PolicyEffect    `json:"effect,omitempty"`
-	Priority    *int32                 `json:"priority,omitempty"`
-	Category    *types.PolicyCategory  `json:"category,omitempty"`
-	Target      map[string]interface{} `json:"target,omitempty"`
-	Rule        map[string]interface{} `json:"rule,omitempty"`
-	Obligations map[string]interface{} `json:"obligations,omitempty"`
-	Advice      map[string]interface{} `json:"advice,omitempty"`
-	IsActive    *bool                  `json:"is_active,omitempty"`
-	Tags        []string               `json:"tags,omitempty"`
-	UpdatedBy   *uuid.UUID             `json:"updated_by,omitempty"`
+	ID          uuid.UUID             `json:"id" validate:"required"`
+	Name        *string               `json:"name,omitempty"`
+	DisplayName *string               `json:"display_name,omitempty"`
+	Description *string               `json:"description,omitempty"`
+	PolicyType  *types.PolicyType     `json:"policy_type,omitempty"`
+	Effect      *types.PolicyEffect   `json:"effect,omitempty"`
+	Priority    *int32                `json:"priority,omitempty"`
+	Category    *types.PolicyCategory `json:"category,omitempty"`
+	Target      map[string]any        `json:"target,omitempty"`
+	Rule        map[string]any        `json:"rule,omitempty"`
+	Obligations map[string]any        `json:"obligations,omitempty"`
+	Advice      map[string]any        `json:"advice,omitempty"`
+	IsActive    *bool                 `json:"is_active,omitempty"`
+	Tags        []string              `json:"tags,omitempty"`
+	UpdatedBy   *uuid.UUID            `json:"updated_by,omitempty"`
 }
 
 func (pm *policyManager) UpdatePolicy(ctx context.Context, req *UpdatePolicyRequest) (*PolicyManagementResult, error) {

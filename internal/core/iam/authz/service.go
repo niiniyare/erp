@@ -54,13 +54,13 @@ type Service interface {
 
 // Request/Response types for Permission Evaluation
 type PermissionEvaluationRequest struct {
-	UserID       uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType string                 `json:"resource_type" validate:"required"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Action       string                 `json:"action" validate:"required"`
-	EntityID     *uuid.UUID             `json:"entity_id,omitempty"`
-	Context      map[string]interface{} `json:"context,omitempty"`
-	RequestID    string                 `json:"request_id,omitempty"`
+	UserID       uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType string         `json:"resource_type" validate:"required"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Action       string         `json:"action" validate:"required"`
+	EntityID     *uuid.UUID     `json:"entity_id,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
+	RequestID    string         `json:"request_id,omitempty"`
 }
 
 type PermissionEvaluationResult struct {
@@ -107,14 +107,14 @@ type RoleHierarchy struct {
 
 // Access Request types
 type CreateAccessRequestRequest struct {
-	UserID        uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType  string                 `json:"resource_type" validate:"required"`
-	ResourceID    *uuid.UUID             `json:"resource_id,omitempty"`
-	Action        string                 `json:"action" validate:"required"`
-	Justification string                 `json:"justification" validate:"required"`
-	Duration      *time.Duration         `json:"duration,omitempty"`
-	Priority      string                 `json:"priority" validate:"oneof=low medium high urgent"`
-	Metadata      map[string]interface{} `json:"metadata,omitempty"`
+	UserID        uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType  string         `json:"resource_type" validate:"required"`
+	ResourceID    *uuid.UUID     `json:"resource_id,omitempty"`
+	Action        string         `json:"action" validate:"required"`
+	Justification string         `json:"justification" validate:"required"`
+	Duration      *time.Duration `json:"duration,omitempty"`
+	Priority      string         `json:"priority" validate:"oneof=low medium high urgent"`
+	Metadata      map[string]any `json:"metadata,omitempty"`
 }
 
 type ProcessAccessRequestRequest struct {
@@ -143,18 +143,18 @@ type ListAccessRequestsResult struct {
 
 // Approval Workflow types
 type CreateApprovalWorkflowRequest struct {
-	Name        string                 `json:"name" validate:"required"`
-	Description string                 `json:"description"`
-	Steps       []*model.ApprovalStep  `json:"steps" validate:"required,min=1"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Name        string                `json:"name" validate:"required"`
+	Description string                `json:"description"`
+	Steps       []*model.ApprovalStep `json:"steps" validate:"required,min=1"`
+	Metadata    map[string]any        `json:"metadata,omitempty"`
 }
 
 type UpdateApprovalWorkflowRequest struct {
-	WorkflowID  uuid.UUID              `json:"workflow_id" validate:"required"`
-	Name        *string                `json:"name,omitempty"`
-	Description *string                `json:"description,omitempty"`
-	Steps       []*model.ApprovalStep  `json:"steps,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	WorkflowID  uuid.UUID             `json:"workflow_id" validate:"required"`
+	Name        *string               `json:"name,omitempty"`
+	Description *string               `json:"description,omitempty"`
+	Steps       []*model.ApprovalStep `json:"steps,omitempty"`
+	Metadata    map[string]any        `json:"metadata,omitempty"`
 }
 
 // Conditional Access types
@@ -170,7 +170,7 @@ type ConditionalAccessResult struct {
 	Allowed    bool                     `json:"allowed"`
 	Conditions []*model.AccessCondition `json:"conditions,omitempty"`
 	Reason     string                   `json:"reason,omitempty"`
-	Metadata   map[string]interface{}   `json:"metadata,omitempty"`
+	Metadata   map[string]any           `json:"metadata,omitempty"`
 }
 
 type CreateConditionalAccessPolicyRequest struct {
@@ -180,7 +180,7 @@ type CreateConditionalAccessPolicyRequest struct {
 	Actions     []*model.PolicyAction    `json:"actions" validate:"required,min=1"`
 	Priority    int                      `json:"priority" validate:"min=0"`
 	Enabled     bool                     `json:"enabled"`
-	Metadata    map[string]interface{}   `json:"metadata,omitempty"`
+	Metadata    map[string]any           `json:"metadata,omitempty"`
 }
 
 type UpdateConditionalAccessPolicyRequest struct {
@@ -191,7 +191,7 @@ type UpdateConditionalAccessPolicyRequest struct {
 	Actions     []*model.PolicyAction    `json:"actions,omitempty"`
 	Priority    *int                     `json:"priority,omitempty"`
 	Enabled     *bool                    `json:"enabled,omitempty"`
-	Metadata    map[string]interface{}   `json:"metadata,omitempty"`
+	Metadata    map[string]any           `json:"metadata,omitempty"`
 }
 
 // Permission Management types

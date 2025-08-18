@@ -29,8 +29,8 @@ type Service interface {
 	Flush(ctx context.Context) error
 
 	// Bulk operations
-	MGet(ctx context.Context, keys []string, dest interface{}) error
-	MSet(ctx context.Context, pairs map[string]interface{}, expiration time.Duration) error
+	MGet(ctx context.Context, keys []string, dest any) error
+	MSet(ctx context.Context, pairs map[string]any, expiration time.Duration) error
 	MDelete(ctx context.Context, keys []string) error
 
 	// Pattern operations

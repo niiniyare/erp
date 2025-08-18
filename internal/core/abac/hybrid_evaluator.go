@@ -58,7 +58,7 @@ type HybridEvaluationRequest struct {
 	ResourceID     *uuid.UUID              `json:"resource_id,omitempty"`
 	Action         string                  `json:"action" validate:"required"`
 	EntityID       *uuid.UUID              `json:"entity_id,omitempty"`
-	Context        map[string]interface{}  `json:"context,omitempty"`
+	Context        map[string]any          `json:"context,omitempty"`
 	EvaluationMode HybridEvaluationMode    `json:"evaluation_mode"`
 	Options        HybridEvaluationOptions `json:"options"`
 }
@@ -104,7 +104,7 @@ type RBACEvaluationResult struct {
 type ABACEvaluationResult struct {
 	Decision           types.PolicyDecisionType `json:"decision"`
 	ApplicablePolicies []*models.PolicyDecision `json:"applicable_policies"`
-	AttributesUsed     map[string]interface{}   `json:"attributes_used"`
+	AttributesUsed     map[string]any           `json:"attributes_used"`
 	ExecutionTime      time.Duration            `json:"execution_time"`
 	CacheHit           bool                     `json:"cache_hit"`
 }
@@ -118,11 +118,11 @@ type RoleInfo struct {
 }
 
 type PermissionInfo struct {
-	Permission   string                 `json:"permission"`
-	ResourceType string                 `json:"resource_type"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Constraints  map[string]interface{} `json:"constraints,omitempty"`
-	Source       string                 `json:"source"`
+	Permission   string         `json:"permission"`
+	ResourceType string         `json:"resource_type"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Constraints  map[string]any `json:"constraints,omitempty"`
+	Source       string         `json:"source"`
 }
 
 type CombinedAnalysis struct {
@@ -157,7 +157,7 @@ type PerformanceComparison struct {
 	RecommendedMode   HybridEvaluationMode `json:"recommended_mode"`
 }
 
-func (he *hybridEvaluator) EvaluateHybrid(ctx context.Context, req interface{}) (interface{}, error) {
+func (he *hybridEvaluator) EvaluateHybrid(ctx context.Context, req any) (any, error) {
 	hybridReq, ok := req.(*HybridEvaluationRequest)
 	if !ok {
 		return nil, fmt.Errorf("invalid request type for hybrid evaluation")
@@ -284,11 +284,11 @@ type RoleAttributeInheritanceResult struct {
 }
 
 type AttributeValue struct {
-	Value       interface{}            `json:"value"`
-	DataType    string                 `json:"data_type"`
-	Source      string                 `json:"source"`
-	Priority    int32                  `json:"priority"`
-	Constraints map[string]interface{} `json:"constraints,omitempty"`
+	Value       any            `json:"value"`
+	DataType    string         `json:"data_type"`
+	Source      string         `json:"source"`
+	Priority    int32          `json:"priority"`
+	Constraints map[string]any `json:"constraints,omitempty"`
 }
 
 // AttributeSource type removed - using the one from attribute_collector.go
@@ -390,14 +390,14 @@ func (he *hybridEvaluator) InheritAttributesFromRoles(ctx context.Context, req *
 // Permission Elevation
 
 type PermissionElevationRequest struct {
-	UserID        uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType  string                 `json:"resource_type" validate:"required"`
-	ResourceID    *uuid.UUID             `json:"resource_id,omitempty"`
-	Action        string                 `json:"action" validate:"required"`
-	EntityID      *uuid.UUID             `json:"entity_id,omitempty"`
-	Context       map[string]interface{} `json:"context,omitempty"`
-	Justification string                 `json:"justification" validate:"required"`
-	RequestedBy   *uuid.UUID             `json:"requested_by,omitempty"`
+	UserID        uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType  string         `json:"resource_type" validate:"required"`
+	ResourceID    *uuid.UUID     `json:"resource_id,omitempty"`
+	Action        string         `json:"action" validate:"required"`
+	EntityID      *uuid.UUID     `json:"entity_id,omitempty"`
+	Context       map[string]any `json:"context,omitempty"`
+	Justification string         `json:"justification" validate:"required"`
+	RequestedBy   *uuid.UUID     `json:"requested_by,omitempty"`
 }
 
 type PermissionElevationResult struct {
@@ -434,12 +434,12 @@ const (
 )
 
 type ElevatedPermission struct {
-	Permission   string                 `json:"permission"`
-	ResourceType string                 `json:"resource_type"`
-	ResourceID   *uuid.UUID             `json:"resource_id,omitempty"`
-	Constraints  map[string]interface{} `json:"constraints,omitempty"`
-	GrantedAt    time.Time              `json:"granted_at"`
-	ExpiresAt    *time.Time             `json:"expires_at,omitempty"`
+	Permission   string         `json:"permission"`
+	ResourceType string         `json:"resource_type"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Constraints  map[string]any `json:"constraints,omitempty"`
+	GrantedAt    time.Time      `json:"granted_at"`
+	ExpiresAt    *time.Time     `json:"expires_at,omitempty"`
 }
 
 type ApprovalRequirement struct {
@@ -451,11 +451,11 @@ type ApprovalRequirement struct {
 }
 
 type ElevationAuditEntry struct {
-	Action       string                 `json:"action"`
-	ActorID      *uuid.UUID             `json:"actor_id,omitempty"`
-	Timestamp    time.Time              `json:"timestamp"`
-	Details      map[string]interface{} `json:"details,omitempty"`
-	SystemAction bool                   `json:"system_action"`
+	Action       string         `json:"action"`
+	ActorID      *uuid.UUID     `json:"actor_id,omitempty"`
+	Timestamp    time.Time      `json:"timestamp"`
+	Details      map[string]any `json:"details,omitempty"`
+	SystemAction bool           `json:"system_action"`
 }
 
 type ElevationRiskAssessment struct {
@@ -677,7 +677,7 @@ func (he *hybridEvaluator) evaluateABAC(ctx context.Context, req *HybridEvaluati
 	return &ABACEvaluationResult{
 		Decision:           types.PolicyDecisionAllow,
 		ApplicablePolicies: []*models.PolicyDecision{},
-		AttributesUsed: map[string]interface{}{
+		AttributesUsed: map[string]any{
 			"user.department": "engineering",
 			"resource.type":   req.ResourceType,
 		},

@@ -193,7 +193,7 @@ func (suite *PostgreSQLSessionTestSuite) TestTenantContextSpecificFunctions() {
 				assert.NoError(suite.T(), err)
 
 				// Test our CASE logic (matches GetCurrentTenantID query)
-				var result interface{}
+				var result any
 				err = suite.pool.QueryRow(suite.ctx, `
 					SELECT CASE 
 						WHEN current_setting('app.current_tenant_id', true) = '' THEN NULL

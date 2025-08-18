@@ -32,12 +32,12 @@ type AttributeValidationService interface {
 	ValidateAttributeContext(ctx context.Context, attrContext *models.AttributeContext) ([]ValidationError, error)
 
 	// Validation rules
-	ValidateDataType(ctx context.Context, value interface{}, dataType types.AttributeDataType) error
-	ValidateConstraints(ctx context.Context, value interface{}, constraints map[string]interface{}) error
-	ValidateEnumValues(ctx context.Context, value interface{}, allowedValues []interface{}) error
+	ValidateDataType(ctx context.Context, value any, dataType types.AttributeDataType) error
+	ValidateConstraints(ctx context.Context, value any, constraints map[string]any) error
+	ValidateEnumValues(ctx context.Context, value any, allowedValues []any) error
 
 	// Utility methods
-	NormalizeAttributeValue(ctx context.Context, value interface{}, dataType types.AttributeDataType) (interface{}, error)
+	NormalizeAttributeValue(ctx context.Context, value any, dataType types.AttributeDataType) (any, error)
 	GetValidationRules(ctx context.Context, attributeName string) (*ValidationRules, error)
 	ValidateRequired(ctx context.Context, attributes map[string]*models.AttributeValue, requiredAttributes []string) error
 }
@@ -60,18 +60,18 @@ type ValidationRules struct {
 	MinValue        *float64                `json:"min_value,omitempty"`
 	MaxValue        *float64                `json:"max_value,omitempty"`
 	Pattern         *string                 `json:"pattern,omitempty"`
-	AllowedValues   []interface{}           `json:"allowed_values,omitempty"`
+	AllowedValues   []any                   `json:"allowed_values,omitempty"`
 	CustomValidator *string                 `json:"custom_validator,omitempty"`
-	Constraints     map[string]interface{}  `json:"constraints,omitempty"`
+	Constraints     map[string]any          `json:"constraints,omitempty"`
 }
 
 // ValidationContext provides context for validation operations
 type ValidationContext struct {
-	TenantID       uuid.UUID              `json:"tenant_id"`
-	UserID         uuid.UUID              `json:"user_id"`
-	RequestID      string                 `json:"request_id"`
-	ValidationTime time.Time              `json:"validation_time"`
-	Metadata       map[string]interface{} `json:"metadata,omitempty"`
+	TenantID       uuid.UUID      `json:"tenant_id"`
+	UserID         uuid.UUID      `json:"user_id"`
+	RequestID      string         `json:"request_id"`
+	ValidationTime time.Time      `json:"validation_time"`
+	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
 // attributeValidationService implements AttributeValidationService
@@ -145,7 +145,7 @@ func (s *attributeValidationService) ValidateAttribute(ctx context.Context, attr
 	// Validate allowed values (enum validation)
 	if len(definition.AllowedValues) > 0 {
 		// Convert []string to []interface{} for validation
-		allowedValues := make([]interface{}, len(definition.AllowedValues))
+		allowedValues := make([]any, len(definition.AllowedValues))
 		for i, v := range definition.AllowedValues {
 			allowedValues[i] = v
 		}
@@ -327,7 +327,7 @@ func (s *attributeValidationService) ValidateAttributeContext(ctx context.Contex
 }
 
 // ValidateDataType validates that a value matches the expected data type
-func (s *attributeValidationService) ValidateDataType(ctx context.Context, value interface{}, dataType types.AttributeDataType) error {
+func (s *attributeValidationService) ValidateDataType(ctx context.Context, value any, dataType types.AttributeDataType) error {
 	ctx, span := s.tracing.StartSpan(ctx, "attributeValidationService.ValidateDataType",
 		tracing.WithAttributes(attribute.String("data_type", string(dataType))))
 	defer span.End()
@@ -385,7 +385,7 @@ func (s *attributeValidationService) ValidateDataType(ctx context.Context, value
 	case types.AttributeDataTypeArray:
 		// Check if it's a slice or array
 		switch value.(type) {
-		case []interface{}, []string, []int, []float64, []bool:
+		case []any, []string, []int, []float64, []bool:
 			// Valid array types
 		default:
 			return errors.NewBusinessError("INVALID_DATA_TYPE", "Value must be an array").
@@ -407,7 +407,7 @@ func (s *attributeValidationService) ValidateDataType(ctx context.Context, value
 }
 
 // ValidateConstraints validates value against constraints
-func (s *attributeValidationService) ValidateConstraints(ctx context.Context, value interface{}, constraints map[string]interface{}) error {
+func (s *attributeValidationService) ValidateConstraints(ctx context.Context, value any, constraints map[string]any) error {
 	ctx, span := s.tracing.StartSpan(ctx, "attributeValidationService.ValidateConstraints")
 	defer span.End()
 
@@ -444,7 +444,7 @@ func (s *attributeValidationService) ValidateConstraints(ctx context.Context, va
 }
 
 // ValidateEnumValues validates that a value is within allowed enum values
-func (s *attributeValidationService) ValidateEnumValues(ctx context.Context, value interface{}, allowedValues []interface{}) error {
+func (s *attributeValidationService) ValidateEnumValues(ctx context.Context, value any, allowedValues []any) error {
 	ctx, span := s.tracing.StartSpan(ctx, "attributeValidationService.ValidateEnumValues")
 	defer span.End()
 
@@ -460,7 +460,7 @@ func (s *attributeValidationService) ValidateEnumValues(ctx context.Context, val
 }
 
 // NormalizeAttributeValue normalizes an attribute value according to its data type
-func (s *attributeValidationService) NormalizeAttributeValue(ctx context.Context, value interface{}, dataType types.AttributeDataType) (interface{}, error) {
+func (s *attributeValidationService) NormalizeAttributeValue(ctx context.Context, value any, dataType types.AttributeDataType) (any, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "attributeValidationService.NormalizeAttributeValue")
 	defer span.End()
 
@@ -520,7 +520,7 @@ func (s *attributeValidationService) GetValidationRules(ctx context.Context, att
 	}
 
 	// Convert AllowedValues from []string to []interface{}
-	var allowedValues []interface{}
+	var allowedValues []any
 	for _, v := range definition.AllowedValues {
 		allowedValues = append(allowedValues, v)
 	}
@@ -580,7 +580,7 @@ func (s *attributeValidationService) ValidateRequired(ctx context.Context, attri
 
 // Helper methods for constraint validation
 
-func (s *attributeValidationService) validateMinLength(value interface{}, constraint interface{}) error {
+func (s *attributeValidationService) validateMinLength(value any, constraint any) error {
 	minLength, ok := constraint.(int)
 	if !ok {
 		return errors.NewBusinessError("INVALID_CONSTRAINT", "min_length constraint must be an integer")
@@ -600,7 +600,7 @@ func (s *attributeValidationService) validateMinLength(value interface{}, constr
 	return nil
 }
 
-func (s *attributeValidationService) validateMaxLength(value interface{}, constraint interface{}) error {
+func (s *attributeValidationService) validateMaxLength(value any, constraint any) error {
 	maxLength, ok := constraint.(int)
 	if !ok {
 		return errors.NewBusinessError("INVALID_CONSTRAINT", "max_length constraint must be an integer")
@@ -620,7 +620,7 @@ func (s *attributeValidationService) validateMaxLength(value interface{}, constr
 	return nil
 }
 
-func (s *attributeValidationService) validateMinValue(value interface{}, constraint interface{}) error {
+func (s *attributeValidationService) validateMinValue(value any, constraint any) error {
 	minValue, ok := constraint.(float64)
 	if !ok {
 		return errors.NewBusinessError("INVALID_CONSTRAINT", "min_value constraint must be a number")
@@ -649,7 +649,7 @@ func (s *attributeValidationService) validateMinValue(value interface{}, constra
 	return nil
 }
 
-func (s *attributeValidationService) validateMaxValue(value interface{}, constraint interface{}) error {
+func (s *attributeValidationService) validateMaxValue(value any, constraint any) error {
 	maxValue, ok := constraint.(float64)
 	if !ok {
 		return errors.NewBusinessError("INVALID_CONSTRAINT", "max_value constraint must be a number")
@@ -678,7 +678,7 @@ func (s *attributeValidationService) validateMaxValue(value interface{}, constra
 	return nil
 }
 
-func (s *attributeValidationService) validatePattern(value interface{}, constraint interface{}) error {
+func (s *attributeValidationService) validatePattern(value any, constraint any) error {
 	pattern, ok := constraint.(string)
 	if !ok {
 		return errors.NewBusinessError("INVALID_CONSTRAINT", "pattern constraint must be a string")
@@ -705,7 +705,7 @@ func (s *attributeValidationService) validatePattern(value interface{}, constrai
 	return nil
 }
 
-func (s *attributeValidationService) validateCustomConstraint(ctx context.Context, value interface{}, constraint interface{}) error {
+func (s *attributeValidationService) validateCustomConstraint(ctx context.Context, value any, constraint any) error {
 	// TODO: Implement custom constraint validation
 	// This could involve calling external validation services or applying custom business rules
 	s.logger.WarnContext(ctx, "Custom constraint validation not implemented",
@@ -715,7 +715,7 @@ func (s *attributeValidationService) validateCustomConstraint(ctx context.Contex
 
 // Helper functions
 
-func isEmptyValue(value interface{}) bool {
+func isEmptyValue(value any) bool {
 	if value == nil {
 		return true
 	}
@@ -723,16 +723,16 @@ func isEmptyValue(value interface{}) bool {
 	switch v := value.(type) {
 	case string:
 		return strings.TrimSpace(v) == ""
-	case []interface{}:
+	case []any:
 		return len(v) == 0
-	case map[string]interface{}:
+	case map[string]any:
 		return len(v) == 0
 	default:
 		return false
 	}
 }
 
-func compareValues(a, b interface{}) bool {
+func compareValues(a, b any) bool {
 	// Handle different numeric types
 	switch va := a.(type) {
 	case int:

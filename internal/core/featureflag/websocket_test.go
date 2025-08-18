@@ -12,12 +12,12 @@ import (
 
 // TestWebSocketMessage represents the message structure for testing
 type TestWebSocketMessage struct {
-	Type      string                 `json:"type"`
-	Event     string                 `json:"event"`
-	TenantID  uuid.UUID              `json:"tenant_id"`
-	Data      map[string]interface{} `json:"data"`
-	Timestamp time.Time              `json:"timestamp"`
-	MessageID uuid.UUID              `json:"message_id"`
+	Type      string         `json:"type"`
+	Event     string         `json:"event"`
+	TenantID  uuid.UUID      `json:"tenant_id"`
+	Data      map[string]any `json:"data"`
+	Timestamp time.Time      `json:"timestamp"`
+	MessageID uuid.UUID      `json:"message_id"`
 }
 
 // Test Case FF-WS-001: WebSocket Connection Management
@@ -38,7 +38,7 @@ func TestWebSocketConnectionManagement(t *testing.T) {
 			Type:     "system",
 			Event:    "connected",
 			TenantID: tenantID,
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"connection_id": uuid.New(),
 				"message":       "Connected to feature flag real-time updates",
 			},
@@ -68,7 +68,7 @@ func TestWebSocketConnectionManagement(t *testing.T) {
 			NewValue:   true,
 			ChangedBy:  userID,
 			AppliedAt:  time.Now(),
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"reason": "testing",
 			},
 		}
@@ -104,7 +104,7 @@ func TestRealTimeFlagChangeNotifications(t *testing.T) {
 			NewValue:   true,
 			ChangedBy:  userID,
 			AppliedAt:  time.Now(),
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"reason": "testing",
 			},
 		}
@@ -114,7 +114,7 @@ func TestRealTimeFlagChangeNotifications(t *testing.T) {
 			Type:     "feature_flag",
 			Event:    "flag_changed",
 			TenantID: tenantID,
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"flag_id":     changeEvent.FlagID,
 				"flag_name":   changeEvent.FlagName,
 				"change_type": changeEvent.ChangeType,
@@ -175,7 +175,7 @@ func TestWebSocketTenantIsolation(t *testing.T) {
 			Type:     "feature_flag",
 			Event:    "flag_changed",
 			TenantID: tenantA, // Should only go to tenant A
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"flag_id":   changeEventA.FlagID,
 				"flag_name": changeEventA.FlagName,
 			},
@@ -188,7 +188,7 @@ func TestWebSocketTenantIsolation(t *testing.T) {
 		assert.NotEqual(t, tenantB, msgTenantA.TenantID)
 
 		// Simulate connection stats that would show tenant separation
-		connectionStats := map[string]interface{}{
+		connectionStats := map[string]any{
 			"total_connections": 2,
 			"connections_by_tenant": map[uuid.UUID]int{
 				tenantA: 1,
@@ -214,7 +214,7 @@ func TestWebSocketPerformanceUnderLoad(t *testing.T) {
 
 	t.Run("ValidatePerformanceCharacteristics", func(t *testing.T) {
 		// Simulate performance metrics that should be tracked
-		performanceMetrics := map[string]interface{}{
+		performanceMetrics := map[string]any{
 			"total_connections":     numConnections,
 			"broadcast_latency_ms":  50, // Should be < 100ms
 			"memory_usage_stable":   true,
@@ -247,7 +247,7 @@ func TestWebSocketPerformanceUnderLoad(t *testing.T) {
 			Type:     "feature_flag",
 			Event:    "flag_changed",
 			TenantID: tenantID,
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"flag_id":     changeEvent.FlagID,
 				"flag_name":   changeEvent.FlagName,
 				"change_type": changeEvent.ChangeType,
@@ -276,7 +276,7 @@ func TestWebSocketHeartbeat(t *testing.T) {
 
 	t.Run("ValidateHeartbeatMessageStructure", func(t *testing.T) {
 		// Simulate heartbeat request
-		heartbeatRequest := map[string]interface{}{
+		heartbeatRequest := map[string]any{
 			"type": "heartbeat",
 		}
 
@@ -285,7 +285,7 @@ func TestWebSocketHeartbeat(t *testing.T) {
 			Type:     "system",
 			Event:    "heartbeat",
 			TenantID: tenantID,
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"status": "ok",
 			},
 			Timestamp: time.Now(),
@@ -320,7 +320,7 @@ func TestApprovalRequiredNotification(t *testing.T) {
 			Justification:   "Testing approval workflow",
 			BusinessReason:  "Product requirement",
 			RequestedAt:     time.Now(),
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"priority": "high",
 			},
 		}
@@ -330,7 +330,7 @@ func TestApprovalRequiredNotification(t *testing.T) {
 			Type:     "access_request",
 			Event:    "approval_required",
 			TenantID: tenantID,
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"access_request_id": approvalEvent.AccessRequestID,
 				"flag_name":         approvalEvent.FlagName,
 				"change_type":       approvalEvent.ChangeType,
@@ -360,7 +360,7 @@ func TestApprovalRequiredNotification(t *testing.T) {
 		assert.Contains(t, data, "requested_at")
 		assert.Contains(t, data, "metadata")
 
-		metadata := data["metadata"].(map[string]interface{})
+		metadata := data["metadata"].(map[string]any)
 		assert.Equal(t, "high", metadata["priority"])
 	})
 }
@@ -397,7 +397,7 @@ func TestWebSocketFlagCreationIntegration(t *testing.T) {
 			Type:     "feature_flag",
 			Event:    "flag_created",
 			TenantID: tenantID,
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"flag_id":       flagCreated.ID,
 				"flag_name":     flagCreated.Name,
 				"description":   flagCreated.Description,

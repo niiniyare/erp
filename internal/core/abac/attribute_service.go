@@ -83,12 +83,12 @@ type CreateAttributeDefinitionRequest struct {
 	Category         types.AttributeCategory   `json:"category" validate:"required"`
 	IsRequired       bool                      `json:"is_required"`
 	IsMultiValue     bool                      `json:"is_multi_value"`
-	DefaultValue     interface{}               `json:"default_value,omitempty"`
-	AllowedValues    []interface{}             `json:"allowed_values,omitempty"`
+	DefaultValue     any                       `json:"default_value,omitempty"`
+	AllowedValues    []any                     `json:"allowed_values,omitempty"`
 	ValidationRules  []AttributeValidationRule `json:"validation_rules,omitempty"`
 	Constraints      AttributeConstraints      `json:"constraints,omitempty"`
 	SecuritySettings AttributeSecuritySettings `json:"security_settings,omitempty"`
-	Metadata         map[string]interface{}    `json:"metadata,omitempty"`
+	Metadata         map[string]any            `json:"metadata,omitempty"`
 	Tags             []string                  `json:"tags,omitempty"`
 	CreatedBy        *uuid.UUID                `json:"created_by,omitempty"`
 }
@@ -100,12 +100,12 @@ type UpdateAttributeDefinitionRequest struct {
 	Description      *string                    `json:"description,omitempty"`
 	IsRequired       *bool                      `json:"is_required,omitempty"`
 	IsMultiValue     *bool                      `json:"is_multi_value,omitempty"`
-	DefaultValue     interface{}                `json:"default_value,omitempty"`
-	AllowedValues    []interface{}              `json:"allowed_values,omitempty"`
+	DefaultValue     any                        `json:"default_value,omitempty"`
+	AllowedValues    []any                      `json:"allowed_values,omitempty"`
 	ValidationRules  []AttributeValidationRule  `json:"validation_rules,omitempty"`
 	Constraints      *AttributeConstraints      `json:"constraints,omitempty"`
 	SecuritySettings *AttributeSecuritySettings `json:"security_settings,omitempty"`
-	Metadata         map[string]interface{}     `json:"metadata,omitempty"`
+	Metadata         map[string]any             `json:"metadata,omitempty"`
 	Tags             []string                   `json:"tags,omitempty"`
 	UpdatedBy        *uuid.UUID                 `json:"updated_by,omitempty"`
 }
@@ -118,13 +118,13 @@ type DeleteAttributeDefinitionRequest struct {
 }
 
 type AttributeValidationRule struct {
-	RuleID       uuid.UUID              `json:"rule_id"`
-	RuleType     AttributeRuleType      `json:"rule_type"`
-	RuleName     string                 `json:"rule_name"`
-	Description  string                 `json:"description,omitempty"`
-	Parameters   map[string]interface{} `json:"parameters"`
-	ErrorMessage string                 `json:"error_message,omitempty"`
-	IsActive     bool                   `json:"is_active"`
+	RuleID       uuid.UUID         `json:"rule_id"`
+	RuleType     AttributeRuleType `json:"rule_type"`
+	RuleName     string            `json:"rule_name"`
+	Description  string            `json:"description,omitempty"`
+	Parameters   map[string]any    `json:"parameters"`
+	ErrorMessage string            `json:"error_message,omitempty"`
+	IsActive     bool              `json:"is_active"`
 }
 
 type AttributeRuleType string
@@ -174,18 +174,18 @@ const (
 )
 
 type AttributeMaskingRule struct {
-	RuleID      uuid.UUID              `json:"rule_id"`
-	RuleType    string                 `json:"rule_type"` // "partial", "full", "tokenize", "hash"
-	Pattern     string                 `json:"pattern,omitempty"`
-	Replacement string                 `json:"replacement,omitempty"`
-	Conditions  map[string]interface{} `json:"conditions,omitempty"`
+	RuleID      uuid.UUID      `json:"rule_id"`
+	RuleType    string         `json:"rule_type"` // "partial", "full", "tokenize", "hash"
+	Pattern     string         `json:"pattern,omitempty"`
+	Replacement string         `json:"replacement,omitempty"`
+	Conditions  map[string]any `json:"conditions,omitempty"`
 }
 
 type AttributeClassification struct {
-	ClassificationType   string                 `json:"classification_type"`  // "pii", "phi", "financial", "legal"
-	ClassificationLevel  string                 `json:"classification_level"` // "low", "medium", "high", "critical"
-	ComplianceFrameworks []string               `json:"compliance_frameworks,omitempty"`
-	HandlingInstructions map[string]interface{} `json:"handling_instructions,omitempty"`
+	ClassificationType   string         `json:"classification_type"`  // "pii", "phi", "financial", "legal"
+	ClassificationLevel  string         `json:"classification_level"` // "low", "medium", "high", "critical"
+	ComplianceFrameworks []string       `json:"compliance_frameworks,omitempty"`
+	HandlingInstructions map[string]any `json:"handling_instructions,omitempty"`
 }
 
 type AttributeDefinitionResult struct {
@@ -197,11 +197,11 @@ type AttributeDefinitionResult struct {
 }
 
 type ValidationResult struct {
-	ValidationID   uuid.UUID              `json:"validation_id"`
-	ValidationType string                 `json:"validation_type"`
-	Status         string                 `json:"status"` // "passed", "failed", "warning"
-	Message        string                 `json:"message"`
-	Details        map[string]interface{} `json:"details,omitempty"`
+	ValidationID   uuid.UUID      `json:"validation_id"`
+	ValidationType string         `json:"validation_type"`
+	Status         string         `json:"status"` // "passed", "failed", "warning"
+	Message        string         `json:"message"`
+	Details        map[string]any `json:"details,omitempty"`
 }
 
 type SecurityAnalysis struct {
@@ -450,15 +450,15 @@ type AttributeAccessPermission struct {
 }
 
 type AttributeAuditEntry struct {
-	AuditID   uuid.UUID              `json:"audit_id"`
-	Action    string                 `json:"action"`
-	ActorID   *uuid.UUID             `json:"actor_id,omitempty"`
-	ActorType string                 `json:"actor_type"`
-	Timestamp time.Time              `json:"timestamp"`
-	Details   map[string]interface{} `json:"details,omitempty"`
-	IPAddress string                 `json:"ip_address,omitempty"`
-	UserAgent string                 `json:"user_agent,omitempty"`
-	Result    string                 `json:"result"`
+	AuditID   uuid.UUID      `json:"audit_id"`
+	Action    string         `json:"action"`
+	ActorID   *uuid.UUID     `json:"actor_id,omitempty"`
+	ActorType string         `json:"actor_type"`
+	Timestamp time.Time      `json:"timestamp"`
+	Details   map[string]any `json:"details,omitempty"`
+	IPAddress string         `json:"ip_address,omitempty"`
+	UserAgent string         `json:"user_agent,omitempty"`
+	Result    string         `json:"result"`
 }
 
 type SecurityIncident struct {
@@ -605,11 +605,11 @@ func (as *attributeService) GetAttributeDefinition(ctx context.Context, id uuid.
 // Attribute Value Validation
 
 type ValidateAttributeValueRequest struct {
-	AttributeID     uuid.UUID              `json:"attribute_id" validate:"required"`
-	Value           interface{}            `json:"value" validate:"required"`
-	Context         map[string]interface{} `json:"context,omitempty"`
-	ValidationLevel ValidationLevel        `json:"validation_level"`
-	SkipRules       []uuid.UUID            `json:"skip_rules,omitempty"`
+	AttributeID     uuid.UUID       `json:"attribute_id" validate:"required"`
+	Value           any             `json:"value" validate:"required"`
+	Context         map[string]any  `json:"context,omitempty"`
+	ValidationLevel ValidationLevel `json:"validation_level"`
+	SkipRules       []uuid.UUID     `json:"skip_rules,omitempty"`
 }
 
 // ValidationLevel type already defined in attribute_collector.go
@@ -618,20 +618,20 @@ type AttributeValidationResult struct {
 	AttributeID       uuid.UUID              `json:"attribute_id"`
 	IsValid           bool                   `json:"is_valid"`
 	ValidationResults []RuleValidationResult `json:"validation_results"`
-	NormalizedValue   interface{}            `json:"normalized_value,omitempty"`
+	NormalizedValue   any                    `json:"normalized_value,omitempty"`
 	ValidationTime    time.Duration          `json:"validation_time"`
 	Warnings          []ValidationWarning    `json:"warnings,omitempty"`
 	Suggestions       []ValidationSuggestion `json:"suggestions,omitempty"`
 }
 
 type RuleValidationResult struct {
-	RuleID   uuid.UUID              `json:"rule_id"`
-	RuleName string                 `json:"rule_name"`
-	RuleType AttributeRuleType      `json:"rule_type"`
-	Passed   bool                   `json:"passed"`
-	Message  string                 `json:"message"`
-	Severity string                 `json:"severity"`
-	Details  map[string]interface{} `json:"details,omitempty"`
+	RuleID   uuid.UUID         `json:"rule_id"`
+	RuleName string            `json:"rule_name"`
+	RuleType AttributeRuleType `json:"rule_type"`
+	Passed   bool              `json:"passed"`
+	Message  string            `json:"message"`
+	Severity string            `json:"severity"`
+	Details  map[string]any    `json:"details,omitempty"`
 }
 
 type ValidationWarning struct {
@@ -641,10 +641,10 @@ type ValidationWarning struct {
 }
 
 type ValidationSuggestion struct {
-	SuggestionType string      `json:"suggestion_type"`
-	Description    string      `json:"description"`
-	SuggestedValue interface{} `json:"suggested_value,omitempty"`
-	Confidence     float64     `json:"confidence"`
+	SuggestionType string  `json:"suggestion_type"`
+	Description    string  `json:"description"`
+	SuggestedValue any     `json:"suggested_value,omitempty"`
+	Confidence     float64 `json:"confidence"`
 }
 
 func (as *attributeService) ValidateAttributeValue(ctx context.Context, req *ValidateAttributeValueRequest) (*AttributeValidationResult, error) {
@@ -662,7 +662,7 @@ func (as *attributeService) ValidateAttributeValue(ctx context.Context, req *Val
 
 	// Perform validation based on data type
 	var validationResults []RuleValidationResult
-	var normalizedValue interface{}
+	var normalizedValue any
 	var warnings []ValidationWarning
 	var suggestions []ValidationSuggestion
 
@@ -680,9 +680,9 @@ func (as *attributeService) ValidateAttributeValue(ctx context.Context, req *Val
 		// Custom validation rules
 		if len(attributeDef.ValidationRules) > 0 {
 			// Convert map[string]any to []map[string]interface{}
-			var rulesSlice []map[string]interface{}
+			var rulesSlice []map[string]any
 			for _, rule := range attributeDef.ValidationRules {
-				if ruleMap, ok := rule.(map[string]interface{}); ok {
+				if ruleMap, ok := rule.(map[string]any); ok {
 					rulesSlice = append(rulesSlice, ruleMap)
 				}
 			}
@@ -828,7 +828,7 @@ func (as *attributeService) isValidDataType(dataType types.AttributeDataType) bo
 	return false
 }
 
-func (as *attributeService) isValueCompatibleWithDataType(dataType types.AttributeDataType, value interface{}) bool {
+func (as *attributeService) isValueCompatibleWithDataType(dataType types.AttributeDataType, value any) bool {
 	switch dataType {
 	case types.AttributeDataTypeString:
 		_, ok := value.(string)
@@ -854,7 +854,7 @@ func (as *attributeService) isValueCompatibleWithDataType(dataType types.Attribu
 	case types.AttributeDataTypeArray:
 		// Check if it's a slice or array
 		switch value.(type) {
-		case []interface{}, []string, []int, []float64:
+		case []any, []string, []int, []float64:
 			return true
 		}
 		return false
@@ -866,7 +866,7 @@ func (as *attributeService) isValueCompatibleWithDataType(dataType types.Attribu
 	return false
 }
 
-func (as *attributeService) validateDataType(dataType types.AttributeDataType, value interface{}) RuleValidationResult {
+func (as *attributeService) validateDataType(dataType types.AttributeDataType, value any) RuleValidationResult {
 	ruleResult := RuleValidationResult{
 		RuleID:   uuid.New(),
 		RuleName: "data_type_validation",
@@ -885,7 +885,7 @@ func (as *attributeService) validateDataType(dataType types.AttributeDataType, v
 	return ruleResult
 }
 
-func (as *attributeService) normalizeValue(dataType types.AttributeDataType, value interface{}) interface{} {
+func (as *attributeService) normalizeValue(dataType types.AttributeDataType, value any) any {
 	switch dataType {
 	case types.AttributeDataTypeString:
 		if str, ok := value.(string); ok {
@@ -930,7 +930,7 @@ func (as *attributeService) normalizeValue(dataType types.AttributeDataType, val
 	return value
 }
 
-func (as *attributeService) validateConstraints(constraints map[string]interface{}, value interface{}) []RuleValidationResult {
+func (as *attributeService) validateConstraints(constraints map[string]any, value any) []RuleValidationResult {
 	var results []RuleValidationResult
 
 	// This is a simplified implementation
@@ -954,7 +954,7 @@ func (as *attributeService) validateConstraints(constraints map[string]interface
 	return results
 }
 
-func (as *attributeService) validateCustomRules(rules []map[string]interface{}, value interface{}, context map[string]interface{}) []RuleValidationResult {
+func (as *attributeService) validateCustomRules(rules []map[string]any, value any, context map[string]any) []RuleValidationResult {
 	var results []RuleValidationResult
 
 	// This is a simplified implementation
@@ -979,7 +979,7 @@ func (as *attributeService) validateCustomRules(rules []map[string]interface{}, 
 	return results
 }
 
-func (as *attributeService) generateValueSuggestions(attributeDef *models.AttributeDefinition, value interface{}) []ValidationSuggestion {
+func (as *attributeService) generateValueSuggestions(attributeDef *models.AttributeDefinition, value any) []ValidationSuggestion {
 	var suggestions []ValidationSuggestion
 
 	// Example suggestion logic
@@ -1117,10 +1117,10 @@ func (as *attributeService) containsPII(name string, description *string) bool {
 
 // Helper methods for converting request structures to repository structures
 
-func (as *attributeService) convertValidationRules(rules []AttributeValidationRule) []map[string]interface{} {
-	var converted []map[string]interface{}
+func (as *attributeService) convertValidationRules(rules []AttributeValidationRule) []map[string]any {
+	var converted []map[string]any
 	for _, rule := range rules {
-		ruleMap := map[string]interface{}{
+		ruleMap := map[string]any{
 			"rule_id":       rule.RuleID,
 			"rule_type":     string(rule.RuleType),
 			"rule_name":     rule.RuleName,
@@ -1134,8 +1134,8 @@ func (as *attributeService) convertValidationRules(rules []AttributeValidationRu
 	return converted
 }
 
-func (as *attributeService) convertConstraints(constraints AttributeConstraints) map[string]interface{} {
-	constraintsMap := make(map[string]interface{})
+func (as *attributeService) convertConstraints(constraints AttributeConstraints) map[string]any {
+	constraintsMap := make(map[string]any)
 
 	if constraints.MinLength != nil {
 		constraintsMap["min_length"] = *constraints.MinLength
@@ -1161,8 +1161,8 @@ func (as *attributeService) convertConstraints(constraints AttributeConstraints)
 	return constraintsMap
 }
 
-func (as *attributeService) convertSecuritySettings(settings AttributeSecuritySettings) map[string]interface{} {
-	settingsMap := map[string]interface{}{
+func (as *attributeService) convertSecuritySettings(settings AttributeSecuritySettings) map[string]any {
+	settingsMap := map[string]any{
 		"encryption_required":  settings.EncryptionRequired,
 		"encryption_algorithm": settings.EncryptionAlgorithm,
 		"access_level":         string(settings.AccessLevel),

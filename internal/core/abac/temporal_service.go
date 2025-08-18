@@ -376,13 +376,13 @@ func (s *temporalService) InvalidateCacheAsync(ctx context.Context, req *Tempora
 
 // WorkflowStatus represents the status of a workflow
 type WorkflowStatus struct {
-	WorkflowID string      `json:"workflow_id"`
-	RunID      string      `json:"run_id"`
-	Status     string      `json:"status"`
-	Result     interface{} `json:"result,omitempty"`
-	Error      string      `json:"error,omitempty"`
-	StartTime  time.Time   `json:"start_time"`
-	CloseTime  *time.Time  `json:"close_time,omitempty"`
+	WorkflowID string     `json:"workflow_id"`
+	RunID      string     `json:"run_id"`
+	Status     string     `json:"status"`
+	Result     any        `json:"result,omitempty"`
+	Error      string     `json:"error,omitempty"`
+	StartTime  time.Time  `json:"start_time"`
+	CloseTime  *time.Time `json:"close_time,omitempty"`
 }
 
 // GetWorkflowStatus gets the status of a workflow
@@ -420,7 +420,7 @@ func (s *temporalService) GetWorkflowStatus(ctx context.Context, workflowID stri
 
 	// Try to get result if workflow is completed
 	if desc.WorkflowExecutionInfo.Status.String() == "Completed" {
-		var result interface{}
+		var result any
 		err = s.workflowClient.GetWorkflow(ctx, workflowID, "").Get(ctx, &result)
 		if err != nil {
 			status.Error = err.Error()

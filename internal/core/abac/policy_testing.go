@@ -29,7 +29,7 @@ type PolicyTestRequest struct {
 type PolicyTestCase struct {
 	Name           string                   `json:"name" validate:"required"`
 	Description    string                   `json:"description,omitempty"`
-	Context        map[string]interface{}   `json:"context" validate:"required"`
+	Context        map[string]any           `json:"context" validate:"required"`
 	ExpectedResult types.PolicyDecisionType `json:"expected_result" validate:"required"`
 	UserID         uuid.UUID                `json:"user_id" validate:"required"`
 	ResourceType   string                   `json:"resource_type" validate:"required"`
@@ -69,17 +69,17 @@ type PolicyTestCaseResult struct {
 }
 
 type PolicyTestCaseDetails struct {
-	AttributesCollected map[string]interface{} `json:"attributes_collected"`
-	RuleEvaluationSteps []RuleEvaluationStep   `json:"rule_evaluation_steps"`
-	TargetMatched       bool                   `json:"target_matched"`
-	CacheHit            bool                   `json:"cache_hit"`
+	AttributesCollected map[string]any       `json:"attributes_collected"`
+	RuleEvaluationSteps []RuleEvaluationStep `json:"rule_evaluation_steps"`
+	TargetMatched       bool                 `json:"target_matched"`
+	CacheHit            bool                 `json:"cache_hit"`
 }
 
 type RuleEvaluationStep struct {
-	StepNumber  int                    `json:"step_number"`
-	Description string                 `json:"description"`
-	Result      bool                   `json:"result"`
-	Details     map[string]interface{} `json:"details,omitempty"`
+	StepNumber  int            `json:"step_number"`
+	Description string         `json:"description"`
+	Result      bool           `json:"result"`
+	Details     map[string]any `json:"details,omitempty"`
 }
 
 type PolicyTestSummary struct {
@@ -226,13 +226,13 @@ func (pm *policyManager) executeTestCase(ctx context.Context, policy *models.Pol
 				StepNumber:  1,
 				Description: "Target evaluation",
 				Result:      true,
-				Details:     map[string]interface{}{"matched": true},
+				Details:     map[string]any{"matched": true},
 			},
 			{
 				StepNumber:  2,
 				Description: "Rule evaluation",
 				Result:      true,
-				Details:     map[string]interface{}{"conditions_met": true},
+				Details:     map[string]any{"conditions_met": true},
 			},
 		},
 	}
@@ -337,17 +337,17 @@ type PolicyChange struct {
 }
 
 type PolicyTestDataSet struct {
-	Users      []uuid.UUID              `json:"users"`
-	Resources  []PolicyTestResource     `json:"resources"`
-	Actions    []string                 `json:"actions"`
-	Contexts   []map[string]interface{} `json:"contexts"`
-	SampleSize int                      `json:"sample_size"` // Number of random combinations to test
+	Users      []uuid.UUID          `json:"users"`
+	Resources  []PolicyTestResource `json:"resources"`
+	Actions    []string             `json:"actions"`
+	Contexts   []map[string]any     `json:"contexts"`
+	SampleSize int                  `json:"sample_size"` // Number of random combinations to test
 }
 
 type PolicyTestResource struct {
-	Type       string                 `json:"type"`
-	ID         *uuid.UUID             `json:"id,omitempty"`
-	Attributes map[string]interface{} `json:"attributes,omitempty"`
+	Type       string         `json:"type"`
+	ID         *uuid.UUID     `json:"id,omitempty"`
+	Attributes map[string]any `json:"attributes,omitempty"`
 }
 
 type PolicySimulationResult struct {

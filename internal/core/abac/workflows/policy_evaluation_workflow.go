@@ -126,7 +126,7 @@ func PolicyEvaluationWorkflow(ctx workflow.Context, input PolicyEvaluationWorkfl
 	}
 
 	// Step 5: Combine all attributes
-	allAttributes := make(map[string]interface{})
+	allAttributes := make(map[string]any)
 
 	// Add user attributes
 	for k, v := range userAttrs.Attributes {
@@ -308,7 +308,7 @@ func BulkPolicyEvaluationWorkflow(ctx workflow.Context, input BulkPolicyEvaluati
 // Helper functions
 
 // generateContextHash creates a simple hash of the attributes for caching
-func generateContextHash(attributes map[string]interface{}) string {
+func generateContextHash(attributes map[string]any) string {
 	// Simple hash generation - in production, use proper cryptographic hash
 	hash := ""
 	for k, v := range attributes {

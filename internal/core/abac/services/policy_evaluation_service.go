@@ -56,7 +56,7 @@ type PolicyEvaluationResult struct {
 	EvaluationTime time.Duration              `json:"evaluation_time"`
 	EvaluatedAt    time.Time                  `json:"evaluated_at"`
 	ErrorDetails   *string                    `json:"error_details,omitempty"`
-	Context        map[string]interface{}     `json:"context,omitempty"`
+	Context        map[string]any             `json:"context,omitempty"`
 }
 
 // PolicySetEvaluationResult represents the result of evaluating multiple policies
@@ -89,16 +89,16 @@ type RuleEvaluationResult struct {
 
 // AccessDecisionRequest represents a request for access decision
 type AccessDecisionRequest struct {
-	UserID          uuid.UUID              `json:"user_id" validate:"required"`
-	ResourceType    string                 `json:"resource_type" validate:"required"`
-	ResourceID      *uuid.UUID             `json:"resource_id,omitempty"`
-	Action          string                 `json:"action" validate:"required"`
-	EntityID        *uuid.UUID             `json:"entity_id,omitempty"`
-	SessionData     map[string]interface{} `json:"session_data,omitempty"`
-	EnvironmentData map[string]interface{} `json:"environment_data,omitempty"`
-	RequestID       string                 `json:"request_id"`
-	CacheResults    bool                   `json:"cache_results"`
-	UseCache        bool                   `json:"use_cache"`
+	UserID          uuid.UUID      `json:"user_id" validate:"required"`
+	ResourceType    string         `json:"resource_type" validate:"required"`
+	ResourceID      *uuid.UUID     `json:"resource_id,omitempty"`
+	Action          string         `json:"action" validate:"required"`
+	EntityID        *uuid.UUID     `json:"entity_id,omitempty"`
+	SessionData     map[string]any `json:"session_data,omitempty"`
+	EnvironmentData map[string]any `json:"environment_data,omitempty"`
+	RequestID       string         `json:"request_id"`
+	CacheResults    bool           `json:"cache_results"`
+	UseCache        bool           `json:"use_cache"`
 }
 
 // AccessDecisionResponse represents the response to an access decision request
@@ -117,14 +117,14 @@ type AccessDecisionResponse struct {
 
 // EvaluationContextRequest represents a request to create evaluation context
 type EvaluationContextRequest struct {
-	UserID          uuid.UUID              `json:"user_id"`
-	ResourceType    string                 `json:"resource_type"`
-	ResourceID      *uuid.UUID             `json:"resource_id,omitempty"`
-	Action          string                 `json:"action"`
-	EntityID        *uuid.UUID             `json:"entity_id,omitempty"`
-	SessionData     map[string]interface{} `json:"session_data,omitempty"`
-	EnvironmentData map[string]interface{} `json:"environment_data,omitempty"`
-	IncludeExpired  bool                   `json:"include_expired"`
+	UserID          uuid.UUID      `json:"user_id"`
+	ResourceType    string         `json:"resource_type"`
+	ResourceID      *uuid.UUID     `json:"resource_id,omitempty"`
+	Action          string         `json:"action"`
+	EntityID        *uuid.UUID     `json:"entity_id,omitempty"`
+	SessionData     map[string]any `json:"session_data,omitempty"`
+	EnvironmentData map[string]any `json:"environment_data,omitempty"`
+	IncludeExpired  bool           `json:"include_expired"`
 }
 
 // ConflictResolutionDetails provides details about conflict resolution
@@ -188,35 +188,35 @@ func (s *policyEvaluationService) EvaluatePolicy(ctx context.Context, policy *mo
 		PolicyID:    policy.ID,
 		PolicyName:  policy.Name,
 		EvaluatedAt: time.Now(),
-		Context:     make(map[string]interface{}),
+		Context:     make(map[string]any),
 	}
 
 	// Check if policy target matches
 	if policy.Target != nil {
 		// Convert map[string]any to PolicyTarget
 		policyTarget := &models.PolicyTarget{}
-		if resources, ok := policy.Target["resources"].([]interface{}); ok {
+		if resources, ok := policy.Target["resources"].([]any); ok {
 			for _, r := range resources {
 				if res, ok := r.(string); ok {
 					policyTarget.Resources = append(policyTarget.Resources, res)
 				}
 			}
 		}
-		if actions, ok := policy.Target["actions"].([]interface{}); ok {
+		if actions, ok := policy.Target["actions"].([]any); ok {
 			for _, a := range actions {
 				if act, ok := a.(string); ok {
 					policyTarget.Actions = append(policyTarget.Actions, act)
 				}
 			}
 		}
-		if subjects, ok := policy.Target["subjects"].([]interface{}); ok {
+		if subjects, ok := policy.Target["subjects"].([]any); ok {
 			for _, s := range subjects {
 				if subj, ok := s.(string); ok {
 					policyTarget.Subjects = append(policyTarget.Subjects, subj)
 				}
 			}
 		}
-		if env, ok := policy.Target["environment"].(map[string]interface{}); ok {
+		if env, ok := policy.Target["environment"].(map[string]any); ok {
 			policyTarget.Environment = env
 		}
 
@@ -392,7 +392,7 @@ func (s *policyEvaluationService) EvaluateRule(ctx context.Context, rule *models
 	if rule.Attributes != nil {
 		// Create a simple PolicyTarget from attributes
 		policyTarget := &models.PolicyTarget{}
-		if resources, ok := rule.Attributes["resources"].([]interface{}); ok {
+		if resources, ok := rule.Attributes["resources"].([]any); ok {
 			for _, r := range resources {
 				if res, ok := r.(string); ok {
 					policyTarget.Resources = append(policyTarget.Resources, res)

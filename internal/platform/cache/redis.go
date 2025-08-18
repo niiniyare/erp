@@ -281,7 +281,7 @@ func (r *redisClient) decompressData(data []byte) ([]byte, error) {
 }
 
 // serializeValue serializes and optionally compresses a value
-func (r *redisClient) serializeValue(ctx context.Context, value interface{}) ([]byte, error) {
+func (r *redisClient) serializeValue(ctx context.Context, value any) ([]byte, error) {
 	data, err := json.Marshal(value)
 	if err != nil {
 		return nil, err
@@ -295,7 +295,7 @@ func (r *redisClient) serializeValue(ctx context.Context, value interface{}) ([]
 }
 
 // deserializeValue deserializes and optionally decompresses a value
-func (r *redisClient) deserializeValue(data []byte, dest interface{}) error {
+func (r *redisClient) deserializeValue(data []byte, dest any) error {
 	decompressed, err := r.decompressData(data)
 	if err != nil {
 		return err
@@ -357,7 +357,7 @@ func (r *redisClient) updateStats(operation string, err error, startTime time.Ti
 }
 
 // Get retrieves a value from cache (maintains original signature)
-func (r *redisClient) Get(ctx context.Context, key string, dest interface{}) error {
+func (r *redisClient) Get(ctx context.Context, key string, dest any) error {
 	startTime := time.Now()
 
 	var err error
@@ -379,7 +379,7 @@ func (r *redisClient) Get(ctx context.Context, key string, dest interface{}) err
 }
 
 // Set stores a value in cache (maintains original signature)
-func (r *redisClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+func (r *redisClient) Set(ctx context.Context, key string, value any, expiration time.Duration) error {
 	startTime := time.Now()
 
 	var err error
@@ -435,7 +435,7 @@ func (r *redisClient) Flush(ctx context.Context) error {
 //  methods (additional functionality)
 
 // MGet retrieves multiple values
-func (r *redisClient) MGet(ctx context.Context, keys []string, dest interface{}) error {
+func (r *redisClient) MGet(ctx context.Context, keys []string, dest any) error {
 	if len(keys) == 0 {
 		return nil
 	}
@@ -451,10 +451,10 @@ func (r *redisClient) MGet(ctx context.Context, keys []string, dest interface{})
 			return err
 		}
 
-		results := make([]interface{}, len(vals))
+		results := make([]any, len(vals))
 		for i, val := range vals {
 			if val != nil {
-				var decoded interface{}
+				var decoded any
 				if strVal, ok := val.(string); ok {
 					if err := r.deserializeValue([]byte(strVal), &decoded); err != nil {
 						return err
@@ -469,7 +469,7 @@ func (r *redisClient) MGet(ctx context.Context, keys []string, dest interface{})
 }
 
 // MSet sets multiple values
-func (r *redisClient) MSet(ctx context.Context, pairs map[string]interface{}, expiration time.Duration) error {
+func (r *redisClient) MSet(ctx context.Context, pairs map[string]any, expiration time.Duration) error {
 	if len(pairs) == 0 {
 		return nil
 	}

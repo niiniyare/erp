@@ -279,13 +279,13 @@ type PolicyConflictResolution struct {
 }
 
 type PolicyResolutionStep struct {
-	StepNumber    int32                  `json:"step_number"`
-	Action        string                 `json:"action"`
-	Description   string                 `json:"description"`
-	PolicyID      *uuid.UUID             `json:"policy_id,omitempty"`
-	Changes       map[string]interface{} `json:"changes,omitempty"`
-	Priority      string                 `json:"priority"`
-	EstimatedTime string                 `json:"estimated_time"`
+	StepNumber    int32          `json:"step_number"`
+	Action        string         `json:"action"`
+	Description   string         `json:"description"`
+	PolicyID      *uuid.UUID     `json:"policy_id,omitempty"`
+	Changes       map[string]any `json:"changes,omitempty"`
+	Priority      string         `json:"priority"`
+	EstimatedTime string         `json:"estimated_time"`
 }
 
 func (pm *policyManager) DetectPolicyConflicts(ctx context.Context, req *PolicyConflictRequest) (*PolicyConflictResult, error) {
@@ -437,11 +437,11 @@ type PolicyChangesSummary struct {
 }
 
 type PolicyChangelogEntry struct {
-	Field      string      `json:"field"`
-	OldValue   interface{} `json:"old_value"`
-	NewValue   interface{} `json:"new_value"`
-	ChangeType string      `json:"change_type"` // "added", "modified", "removed"
-	Impact     string      `json:"impact"`
+	Field      string `json:"field"`
+	OldValue   any    `json:"old_value"`
+	NewValue   any    `json:"new_value"`
+	ChangeType string `json:"change_type"` // "added", "modified", "removed"
+	Impact     string `json:"impact"`
 }
 
 func (pm *policyManager) CreatePolicyVersion(ctx context.Context, req *CreatePolicyVersionRequest) (*PolicyVersionResult, error) {

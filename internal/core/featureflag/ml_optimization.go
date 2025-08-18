@@ -56,18 +56,18 @@ func NewMLOptimizationService(
 
 // RolloutOptimization represents optimization recommendations for rollout
 type RolloutOptimization struct {
-	FlagID                   uuid.UUID              `json:"flag_id"`
-	FlagName                 string                 `json:"flag_name"`
-	CurrentRolloutPercentage int32                  `json:"current_rollout_percentage"`
-	RecommendedPercentage    int32                  `json:"recommended_percentage"`
-	ConfidenceScore          float64                `json:"confidence_score"`
-	RiskAssessment           *RiskAssessment        `json:"risk_assessment"`
-	PerformanceImpact        *PerformanceImpact     `json:"performance_impact"`
-	OptimizationReason       string                 `json:"optimization_reason"`
-	RecommendationStrength   string                 `json:"recommendation_strength"` // weak, moderate, strong
-	EstimatedImpactMetrics   map[string]interface{} `json:"estimated_impact_metrics"`
-	NextReviewAt             time.Time              `json:"next_review_at"`
-	Metadata                 map[string]interface{} `json:"metadata,omitempty"`
+	FlagID                   uuid.UUID          `json:"flag_id"`
+	FlagName                 string             `json:"flag_name"`
+	CurrentRolloutPercentage int32              `json:"current_rollout_percentage"`
+	RecommendedPercentage    int32              `json:"recommended_percentage"`
+	ConfidenceScore          float64            `json:"confidence_score"`
+	RiskAssessment           *RiskAssessment    `json:"risk_assessment"`
+	PerformanceImpact        *PerformanceImpact `json:"performance_impact"`
+	OptimizationReason       string             `json:"optimization_reason"`
+	RecommendationStrength   string             `json:"recommendation_strength"` // weak, moderate, strong
+	EstimatedImpactMetrics   map[string]any     `json:"estimated_impact_metrics"`
+	NextReviewAt             time.Time          `json:"next_review_at"`
+	Metadata                 map[string]any     `json:"metadata,omitempty"`
 }
 
 // PerformanceMetrics represents performance data for a feature flag
@@ -113,32 +113,32 @@ type ABTestOptimization struct {
 
 // Anomaly represents detected anomalies in flag performance
 type Anomaly struct {
-	ID                uuid.UUID              `json:"id"`
-	FlagID            uuid.UUID              `json:"flag_id"`
-	AnomalyType       string                 `json:"anomaly_type"` // performance, error_rate, usage_pattern
-	Severity          string                 `json:"severity"`     // low, medium, high, critical
-	DetectedAt        time.Time              `json:"detected_at"`
-	Description       string                 `json:"description"`
-	AffectedMetrics   []string               `json:"affected_metrics"`
-	DeviationScore    float64                `json:"deviation_score"`
-	BaselineValue     float64                `json:"baseline_value"`
-	CurrentValue      float64                `json:"current_value"`
-	RecommendedAction string                 `json:"recommended_action"`
-	Context           map[string]interface{} `json:"context,omitempty"`
+	ID                uuid.UUID      `json:"id"`
+	FlagID            uuid.UUID      `json:"flag_id"`
+	AnomalyType       string         `json:"anomaly_type"` // performance, error_rate, usage_pattern
+	Severity          string         `json:"severity"`     // low, medium, high, critical
+	DetectedAt        time.Time      `json:"detected_at"`
+	Description       string         `json:"description"`
+	AffectedMetrics   []string       `json:"affected_metrics"`
+	DeviationScore    float64        `json:"deviation_score"`
+	BaselineValue     float64        `json:"baseline_value"`
+	CurrentValue      float64        `json:"current_value"`
+	RecommendedAction string         `json:"recommended_action"`
+	Context           map[string]any `json:"context,omitempty"`
 }
 
 // AutoScaleRecommendation represents auto-scaling recommendations
 type AutoScaleRecommendation struct {
-	FlagID              uuid.UUID              `json:"flag_id"`
-	ShouldScale         bool                   `json:"should_scale"`
-	ScaleDirection      string                 `json:"scale_direction"` // up, down, maintain
-	RecommendedChange   int32                  `json:"recommended_change"`
-	ConfidenceLevel     float64                `json:"confidence_level"`
-	ScalingReason       string                 `json:"scaling_reason"`
-	SafetyChecks        []string               `json:"safety_checks"`
-	PreScaleMetrics     map[string]interface{} `json:"pre_scale_metrics"`
-	ExpectedPostMetrics map[string]interface{} `json:"expected_post_metrics"`
-	ScalingTimeline     *ScalingTimeline       `json:"scaling_timeline"`
+	FlagID              uuid.UUID        `json:"flag_id"`
+	ShouldScale         bool             `json:"should_scale"`
+	ScaleDirection      string           `json:"scale_direction"` // up, down, maintain
+	RecommendedChange   int32            `json:"recommended_change"`
+	ConfidenceLevel     float64          `json:"confidence_level"`
+	ScalingReason       string           `json:"scaling_reason"`
+	SafetyChecks        []string         `json:"safety_checks"`
+	PreScaleMetrics     map[string]any   `json:"pre_scale_metrics"`
+	ExpectedPostMetrics map[string]any   `json:"expected_post_metrics"`
+	ScalingTimeline     *ScalingTimeline `json:"scaling_timeline"`
 }
 
 // OptimizationReport represents a optimization report
@@ -265,12 +265,12 @@ type MonitoringRecommendation struct {
 }
 
 type Variant struct {
-	ID            string                 `json:"id"`
-	Name          string                 `json:"name"`
-	Description   string                 `json:"description"`
-	Configuration map[string]interface{} `json:"configuration"`
-	TrafficSplit  float64                `json:"traffic_split"`
-	IsControl     bool                   `json:"is_control"`
+	ID            string         `json:"id"`
+	Name          string         `json:"name"`
+	Description   string         `json:"description"`
+	Configuration map[string]any `json:"configuration"`
+	TrafficSplit  float64        `json:"traffic_split"`
+	IsControl     bool           `json:"is_control"`
 }
 
 type PowerAnalysis struct {
@@ -346,11 +346,11 @@ type ProjectionData struct {
 }
 
 type CompetitorComparison struct {
-	Industry       string                 `json:"industry"`
-	ComparisonData map[string]interface{} `json:"comparison_data"`
-	Ranking        int                    `json:"ranking"`
-	BestPractices  []string               `json:"best_practices"`
-	GapAnalysis    map[string]float64     `json:"gap_analysis"`
+	Industry       string             `json:"industry"`
+	ComparisonData map[string]any     `json:"comparison_data"`
+	Ranking        int                `json:"ranking"`
+	BestPractices  []string           `json:"best_practices"`
+	GapAnalysis    map[string]float64 `json:"gap_analysis"`
 }
 
 type ROIAnalysis struct {
@@ -378,10 +378,10 @@ type Milestone struct {
 }
 
 type TrainingData struct {
-	Features    [][]float64            `json:"features"`
-	Labels      []float64              `json:"labels"`
-	Metadata    map[string]interface{} `json:"metadata"`
-	DataQuality *DataQuality           `json:"data_quality"`
+	Features    [][]float64    `json:"features"`
+	Labels      []float64      `json:"labels"`
+	Metadata    map[string]any `json:"metadata"`
+	DataQuality *DataQuality   `json:"data_quality"`
 }
 
 type DataQuality struct {
@@ -404,11 +404,11 @@ type ModelTrainingResult struct {
 }
 
 type OutcomeData struct {
-	FlagID     uuid.UUID              `json:"flag_id"`
-	Outcome    string                 `json:"outcome"` // success, failure, partial
-	Metrics    map[string]float64     `json:"metrics"`
-	Context    map[string]interface{} `json:"context"`
-	RecordedAt time.Time              `json:"recorded_at"`
+	FlagID     uuid.UUID          `json:"flag_id"`
+	Outcome    string             `json:"outcome"` // success, failure, partial
+	Metrics    map[string]float64 `json:"metrics"`
+	Context    map[string]any     `json:"context"`
+	RecordedAt time.Time          `json:"recorded_at"`
 }
 
 // Implementation methods
@@ -467,7 +467,7 @@ func (s *mlOptimizationService) GetRolloutOptimization(ctx context.Context, flag
 		RecommendationStrength:   strength,
 		EstimatedImpactMetrics:   s.estimateImpactMetrics(metrics, recommendedRollout),
 		NextReviewAt:             time.Now().Add(24 * time.Hour),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"model_version": "1.0",
 			"algorithm":     "gradient_boost_optimizer",
 			"data_points":   metrics.TotalUsers,
@@ -754,10 +754,10 @@ func (s *mlOptimizationService) determineRecommendationStrength(confidenceScore 
 	return "weak"
 }
 
-func (s *mlOptimizationService) estimateImpactMetrics(metrics *PerformanceMetrics, recommendedRollout int32) map[string]interface{} {
+func (s *mlOptimizationService) estimateImpactMetrics(metrics *PerformanceMetrics, recommendedRollout int32) map[string]any {
 	rolloutFactor := float64(recommendedRollout) / 100.0
 
-	return map[string]interface{}{
+	return map[string]any{
 		"estimated_conversion_rate": metrics.ConversionRate.Overall * (1 + rolloutFactor*0.1), // 10% improvement potential
 		"estimated_user_impact":     int64(float64(metrics.TotalUsers) * rolloutFactor),
 		"estimated_error_rate":      metrics.ErrorRates.Overall * (1 + rolloutFactor*0.2), // 20% error increase potential

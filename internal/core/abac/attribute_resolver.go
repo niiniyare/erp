@@ -104,21 +104,21 @@ type AttributeResolutionRequest struct {
 }
 
 type ResolutionContext struct {
-	TargetType          AttributeTargetType    `json:"target_type" validate:"required"`
-	TargetID            uuid.UUID              `json:"target_id" validate:"required"`
-	RequestContext      map[string]interface{} `json:"request_context,omitempty"`
-	UserContext         *UserContext           `json:"user_context,omitempty"`
-	SessionContext      *SessionContext        `json:"session_context,omitempty"`
-	PolicyContext       *PolicyContext         `json:"policy_context,omitempty"`
-	ResolutionTime      time.Time              `json:"resolution_time"`
-	QualityRequirements QualityRequirements    `json:"quality_requirements"`
+	TargetType          AttributeTargetType `json:"target_type" validate:"required"`
+	TargetID            uuid.UUID           `json:"target_id" validate:"required"`
+	RequestContext      map[string]any      `json:"request_context,omitempty"`
+	UserContext         *UserContext        `json:"user_context,omitempty"`
+	SessionContext      *SessionContext     `json:"session_context,omitempty"`
+	PolicyContext       *PolicyContext      `json:"policy_context,omitempty"`
+	ResolutionTime      time.Time           `json:"resolution_time"`
+	QualityRequirements QualityRequirements `json:"quality_requirements"`
 }
 
 type AttributeQuery struct {
 	QueryID             uuid.UUID                 `json:"query_id"`
 	AttributeName       string                    `json:"attribute_name" validate:"required"`
 	AttributeType       types.AttributeDataType   `json:"attribute_type,omitempty"`
-	QueryParameters     map[string]interface{}    `json:"query_parameters,omitempty"`
+	QueryParameters     map[string]any            `json:"query_parameters,omitempty"`
 	FallbackStrategy    AttributeFallbackStrategy `json:"fallback_strategy"`
 	CacheHints          CacheHints                `json:"cache_hints"`
 	DependencyRules     []DependencyRule          `json:"dependency_rules,omitempty"`
@@ -192,11 +192,11 @@ const (
 )
 
 type InvalidationRule struct {
-	RuleType         InvalidationType       `json:"rule_type"`
-	TriggerEvents    []string               `json:"trigger_events,omitempty"`
-	Conditions       map[string]interface{} `json:"conditions,omitempty"`
-	PropagationScope PropagationScope       `json:"propagation_scope"`
-	Delay            time.Duration          `json:"delay,omitempty"`
+	RuleType         InvalidationType `json:"rule_type"`
+	TriggerEvents    []string         `json:"trigger_events,omitempty"`
+	Conditions       map[string]any   `json:"conditions,omitempty"`
+	PropagationScope PropagationScope `json:"propagation_scope"`
+	Delay            time.Duration    `json:"delay,omitempty"`
 }
 
 type InvalidationType string
@@ -218,13 +218,13 @@ const (
 )
 
 type AttributeTransformation struct {
-	TransformationID    uuid.UUID              `json:"transformation_id"`
-	TransformationType  TransformationType     `json:"transformation_type"`
-	SourceAttribute     string                 `json:"source_attribute"`
-	TargetAttribute     string                 `json:"target_attribute"`
-	TransformationLogic string                 `json:"transformation_logic"`
-	Parameters          map[string]interface{} `json:"parameters,omitempty"`
-	Conditions          []string               `json:"conditions,omitempty"`
+	TransformationID    uuid.UUID          `json:"transformation_id"`
+	TransformationType  TransformationType `json:"transformation_type"`
+	SourceAttribute     string             `json:"source_attribute"`
+	TargetAttribute     string             `json:"target_attribute"`
+	TransformationLogic string             `json:"transformation_logic"`
+	Parameters          map[string]any     `json:"parameters,omitempty"`
+	Conditions          []string           `json:"conditions,omitempty"`
 }
 
 type TransformationType string
@@ -358,12 +358,12 @@ const (
 )
 
 type CustomEvictionRule struct {
-	RuleID     uuid.UUID              `json:"rule_id"`
-	RuleName   string                 `json:"rule_name"`
-	Condition  string                 `json:"condition"`
-	Action     EvictionAction         `json:"action"`
-	Priority   int32                  `json:"priority"`
-	Parameters map[string]interface{} `json:"parameters,omitempty"`
+	RuleID     uuid.UUID      `json:"rule_id"`
+	RuleName   string         `json:"rule_name"`
+	Condition  string         `json:"condition"`
+	Action     EvictionAction `json:"action"`
+	Priority   int32          `json:"priority"`
+	Parameters map[string]any `json:"parameters,omitempty"`
 }
 
 type ConsistencySettings struct {
@@ -451,14 +451,14 @@ const (
 
 type ResolvedAttribute struct {
 	AttributeName      string                  `json:"attribute_name"`
-	AttributeValue     interface{}             `json:"attribute_value"`
+	AttributeValue     any                     `json:"attribute_value"`
 	DataType           types.AttributeDataType `json:"data_type"`
 	Quality            AttributeQuality        `json:"quality"`
 	ResolutionPath     []ResolutionStep        `json:"resolution_path"`
 	CacheInfo          AttributeCacheInfo      `json:"cache_info"`
 	DependencyInfo     AttributeDependencyInfo `json:"dependency_info"`
 	TransformationInfo []TransformationInfo    `json:"transformation_info,omitempty"`
-	Metadata           map[string]interface{}  `json:"metadata,omitempty"`
+	Metadata           map[string]any          `json:"metadata,omitempty"`
 	ResolvedAt         time.Time               `json:"resolved_at"`
 	ExpiresAt          *time.Time              `json:"expires_at,omitempty"`
 }
@@ -515,8 +515,8 @@ type DependencyChainLink struct {
 type TransformationInfo struct {
 	TransformationID   uuid.UUID          `json:"transformation_id"`
 	TransformationType TransformationType `json:"transformation_type"`
-	SourceValue        interface{}        `json:"source_value"`
-	TargetValue        interface{}        `json:"target_value"`
+	SourceValue        any                `json:"source_value"`
+	TargetValue        any                `json:"target_value"`
 	Success            bool               `json:"success"`
 	ExecutionTime      time.Duration      `json:"execution_time"`
 	ErrorMessage       string             `json:"error_message,omitempty"`

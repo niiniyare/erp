@@ -26,7 +26,7 @@ func TestPermissionEvaluationCompatibility_SameInputs_IdenticalResults(t *testin
 		userID   uuid.UUID
 		resource string
 		action   string
-		context  map[string]interface{}
+		context  map[string]any
 		expected string // "ALLOW", "DENY", or "INDETERMINATE"
 	}{
 		{
@@ -34,7 +34,7 @@ func TestPermissionEvaluationCompatibility_SameInputs_IdenticalResults(t *testin
 			userID:   uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"),
 			resource: "documents",
 			action:   "read",
-			context: map[string]interface{}{
+			context: map[string]any{
 				"department": "finance",
 			},
 			expected: "ALLOW",
@@ -44,7 +44,7 @@ func TestPermissionEvaluationCompatibility_SameInputs_IdenticalResults(t *testin
 			userID:   uuid.MustParse("123e4567-e89b-12d3-a456-426614174002"),
 			resource: "documents",
 			action:   "delete",
-			context: map[string]interface{}{
+			context: map[string]any{
 				"department": "hr",
 			},
 			expected: "DENY",
@@ -54,7 +54,7 @@ func TestPermissionEvaluationCompatibility_SameInputs_IdenticalResults(t *testin
 			userID:   uuid.MustParse("123e4567-e89b-12d3-a456-426614174003"),
 			resource: "reports",
 			action:   "access",
-			context: map[string]interface{}{
+			context: map[string]any{
 				"time_of_day": "02:00", // Outside business hours
 			},
 			expected: "DENY",
@@ -64,7 +64,7 @@ func TestPermissionEvaluationCompatibility_SameInputs_IdenticalResults(t *testin
 			userID:   uuid.MustParse("123e4567-e89b-12d3-a456-426614174004"),
 			resource: "sensitive_data",
 			action:   "read",
-			context: map[string]interface{}{
+			context: map[string]any{
 				"has_role": "manager",     // Would normally ALLOW
 				"location": "external_ip", // But location policy DENYs
 			},
@@ -211,13 +211,12 @@ func setupNewServices(t *testing.T) Service {
 	return nil
 }
 
-func generateTestPolicies() []interface{} {
+func generateTestPolicies() []any {
 	// TODO: Generate consistent test policies for both services
-	return []interface{}{}
+	return []any{}
 }
 
 func generateTestUsers() []uuid.UUID {
 	// TODO: Generate consistent test users for both services
 	return []uuid.UUID{}
 }
-

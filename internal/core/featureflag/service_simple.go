@@ -158,8 +158,8 @@ func (s *service) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, request *
 			go func() {
 				// Determine change type based on what was updated
 				changeType := "update_config"
-				var oldValue interface{} = oldFlag.DefaultValue
-				var newValue interface{} = flag.DefaultValue
+				var oldValue any = oldFlag.DefaultValue
+				var newValue any = flag.DefaultValue
 
 				if request.DefaultValue != nil {
 					if *request.DefaultValue != oldFlag.DefaultValue {
@@ -392,7 +392,7 @@ func (s *service) evaluateSimpleFlag(flag *FeatureFlag, evalCtx *EvaluationConte
 	// Basic evaluation logic
 	var enabled bool
 	var reason EvaluationReason
-	var value interface{}
+	var value any
 
 	// Check rollout percentage if present
 	if flag.RolloutPercentage != nil && *flag.RolloutPercentage > 0 {

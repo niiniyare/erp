@@ -98,19 +98,19 @@ func (s *EntityTestSuite) TestPersonModelCreation() {
 				FirstName:  "Bob",
 				LastName:   "Johnson",
 				BirthDate:  time.Date(1980, 12, 25, 0, 0, 0, 0, time.UTC),
-				Address: map[string]interface{}{
+				Address: map[string]any{
 					"street":      "123 Main St",
 					"city":        "Anytown",
 					"state":       "CA",
 					"postal_code": "12345",
 					"country":     "US",
 				},
-				SecurityAttributes: map[string]interface{}{
+				SecurityAttributes: map[string]any{
 					"clearance_level": "confidential",
 					"department":      "engineering",
 					"location":        "HQ",
 				},
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"hire_source":       "referral",
 					"emergency_contact": "spouse",
 				},
@@ -224,20 +224,20 @@ func (s *EntityTestSuite) TestEmployeeModelCreation() {
 				EmployeeNumber: "EMP003",
 				EntityID:       entityID,
 				HireDate:       time.Date(2022, 3, 1, 0, 0, 0, 0, time.UTC),
-				SalaryInfo: map[string]interface{}{
+				SalaryInfo: map[string]any{
 					"base_salary":    75000,
 					"currency":       "USD",
 					"pay_frequency":  "monthly",
 					"bonus_eligible": true,
 				},
-				WorkSchedule: map[string]interface{}{
+				WorkSchedule: map[string]any{
 					"type":           "standard",
 					"hours_per_week": 40,
 					"start_time":     "09:00",
 					"end_time":       "17:00",
 					"timezone":       "America/New_York",
 				},
-				AccessAttributes: map[string]interface{}{
+				AccessAttributes: map[string]any{
 					"vpn_access":        true,
 					"admin_rights":      false,
 					"data_access_level": "standard",
@@ -380,7 +380,7 @@ func (s *EntityTestSuite) TestUserModelCreation() {
 				MFASecret:        stringPtr("encrypted.totp.secret"),
 				FailedLoginCount: 0,
 				LastLoginAt:      timePtr(time.Now().AddDate(0, -2, 0)),
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"role":               "admin",
 					"last_login_ip":      "192.168.1.100",
 					"security_questions": 3,
@@ -500,9 +500,9 @@ func (s *EntityTestSuite) TestRoleModelCreation() {
 				TenantID:    tenantID,
 				Name:        "data_analyst",
 				Description: "Analyzes business data with time restrictions",
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"permissions": []string{"read_reports", "export_data"},
-					"time_restrictions": map[string]interface{}{
+					"time_restrictions": map[string]any{
 						"start_time": "09:00",
 						"end_time":   "17:00",
 						"timezone":   "America/New_York",
@@ -520,7 +520,7 @@ func (s *EntityTestSuite) TestRoleModelCreation() {
 				s.Require().Len(permissions, 2)
 				s.Require().Equal("read_reports", permissions[0])
 				s.Require().Equal("export_data", permissions[1])
-				timeRestrictions := r.Metadata["time_restrictions"].(map[string]interface{})
+				timeRestrictions := r.Metadata["time_restrictions"].(map[string]any)
 				s.Require().Equal("09:00", timeRestrictions["start_time"])
 				s.Require().Equal("17:00", timeRestrictions["end_time"])
 			},
@@ -563,7 +563,7 @@ func (s *EntityTestSuite) TestPermissionModelCreation() {
 				Action:       "delete",
 				EntityID:     &entityID,
 				Conditions:   []string{"ip_restrictions", "time_based"},
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"risk_level":        "HIGH",
 					"requires_approval": true,
 					"category":          "ADMINISTRATIVE",
@@ -596,7 +596,7 @@ func (s *EntityTestSuite) TestPermissionModelCreation() {
 				TenantID:     tenantID,
 				ResourceType: "public_reports",
 				Action:       "read",
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"risk_level": "LOW",
 					"category":   "STANDARD",
 				},
@@ -621,7 +621,7 @@ func (s *EntityTestSuite) TestPermissionModelCreation() {
 				Action:       "bulk_import",
 				Conditions:   []string{"max_records=1000", "approval_required"},
 				ExpiresAt:    timePtr(time.Now().Add(time.Hour * 24 * 30)), // 30 days
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"risk_level":        "CRITICAL",
 					"category":          "BULK",
 					"requires_approval": true,

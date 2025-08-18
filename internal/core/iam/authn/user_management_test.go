@@ -36,10 +36,10 @@ func TestUserManagement(t *testing.T) {
 // TestCreateUser implements AUTHN-001, AUTHN-005, AUTHN-007: User Management - CreateUser
 func (s *UserManagementTestSuite) TestCreateUser() {
 	testCases := []struct {
-		name        string
-		spec        string
-		request     *CreateUserRequest
-		expectedErr string
+		name           string
+		spec           string
+		request        *CreateUserRequest
+		expectedErr    string
 		validateResult func(*testing.T, *model.User)
 	}{
 		{
@@ -206,10 +206,10 @@ func (s *UserManagementTestSuite) TestGetUser() {
 // TestUpdateUser implements AUTHN-003: User Management - UpdateUser
 func (s *UserManagementTestSuite) TestUpdateUser() {
 	testCases := []struct {
-		name        string
-		spec        string
-		request     *UpdateUserRequest
-		expectedErr string
+		name           string
+		spec           string
+		request        *UpdateUserRequest
+		expectedErr    string
 		validateResult func(*testing.T, *model.User)
 	}{
 		{
@@ -362,20 +362,20 @@ func BenchmarkUserManagement(b *testing.B) {
 
 // Additional types needed for request structures
 type CreateUserRequest struct {
-	Email          string                 `json:"email" validate:"required,email"`
-	Password       string                 `json:"password" validate:"required,min=8"`
-	FirstName      string                 `json:"first_name" validate:"required"`
-	LastName       string                 `json:"last_name" validate:"required"`
-	PhoneNumber    *string                `json:"phone_number,omitempty"`
-	EmployeeNumber *string                `json:"employee_number,omitempty"`
-	Department     *string                `json:"department,omitempty"`
-	Metadata       map[string]interface{} `json:"metadata,omitempty"`
+	Email          string         `json:"email" validate:"required,email"`
+	Password       string         `json:"password" validate:"required,min=8"`
+	FirstName      string         `json:"first_name" validate:"required"`
+	LastName       string         `json:"last_name" validate:"required"`
+	PhoneNumber    *string        `json:"phone_number,omitempty"`
+	EmployeeNumber *string        `json:"employee_number,omitempty"`
+	Department     *string        `json:"department,omitempty"`
+	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
 type UpdateUserRequest struct {
-	UserID      uuid.UUID              `json:"user_id" validate:"required"`
-	FirstName   *string                `json:"first_name,omitempty"`
-	LastName    *string                `json:"last_name,omitempty"`
-	PhoneNumber *string                `json:"phone_number,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	UserID      uuid.UUID      `json:"user_id" validate:"required"`
+	FirstName   *string        `json:"first_name,omitempty"`
+	LastName    *string        `json:"last_name,omitempty"`
+	PhoneNumber *string        `json:"phone_number,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }

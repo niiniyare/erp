@@ -67,41 +67,41 @@ type Service interface {
 
 // Request/Response types
 type CreateUserRequest struct {
-	Email       string                 `json:"email" validate:"required,email"`
-	Password    string                 `json:"password" validate:"required,min=8"`
-	FirstName   string                 `json:"first_name" validate:"required"`
-	LastName    string                 `json:"last_name" validate:"required"`
-	PhoneNumber *string                `json:"phone_number,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Email       string         `json:"email" validate:"required,email"`
+	Password    string         `json:"password" validate:"required,min=8"`
+	FirstName   string         `json:"first_name" validate:"required"`
+	LastName    string         `json:"last_name" validate:"required"`
+	PhoneNumber *string        `json:"phone_number,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 type UpdateUserRequest struct {
-	UserID      uuid.UUID              `json:"user_id" validate:"required"`
-	FirstName   *string                `json:"first_name,omitempty"`
-	LastName    *string                `json:"last_name,omitempty"`
-	PhoneNumber *string                `json:"phone_number,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	UserID      uuid.UUID      `json:"user_id" validate:"required"`
+	FirstName   *string        `json:"first_name,omitempty"`
+	LastName    *string        `json:"last_name,omitempty"`
+	PhoneNumber *string        `json:"phone_number,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 type CreatePersonRequest struct {
-	FirstName   string                 `json:"first_name" validate:"required"`
-	LastName    string                 `json:"last_name" validate:"required"`
-	Email       *string                `json:"email,omitempty" validate:"omitempty,email"`
-	PhoneNumber *string                `json:"phone_number,omitempty"`
-	DateOfBirth *time.Time             `json:"date_of_birth,omitempty"`
-	Address     *model.Address         `json:"address,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	FirstName   string         `json:"first_name" validate:"required"`
+	LastName    string         `json:"last_name" validate:"required"`
+	Email       *string        `json:"email,omitempty" validate:"omitempty,email"`
+	PhoneNumber *string        `json:"phone_number,omitempty"`
+	DateOfBirth *time.Time     `json:"date_of_birth,omitempty"`
+	Address     *model.Address `json:"address,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 type UpdatePersonRequest struct {
-	PersonID    uuid.UUID              `json:"person_id" validate:"required"`
-	FirstName   *string                `json:"first_name,omitempty"`
-	LastName    *string                `json:"last_name,omitempty"`
-	Email       *string                `json:"email,omitempty" validate:"omitempty,email"`
-	PhoneNumber *string                `json:"phone_number,omitempty"`
-	DateOfBirth *time.Time             `json:"date_of_birth,omitempty"`
-	Address     *model.Address         `json:"address,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	PersonID    uuid.UUID      `json:"person_id" validate:"required"`
+	FirstName   *string        `json:"first_name,omitempty"`
+	LastName    *string        `json:"last_name,omitempty"`
+	Email       *string        `json:"email,omitempty" validate:"omitempty,email"`
+	PhoneNumber *string        `json:"phone_number,omitempty"`
+	DateOfBirth *time.Time     `json:"date_of_birth,omitempty"`
+	Address     *model.Address `json:"address,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 type CreateEmployeeRequest struct {
@@ -139,9 +139,9 @@ type AuthenticationResult struct {
 }
 
 type TokenValidationResult struct {
-	Valid  bool                   `json:"valid"`
-	UserID uuid.UUID              `json:"user_id,omitempty"`
-	Claims map[string]interface{} `json:"claims,omitempty"`
+	Valid  bool           `json:"valid"`
+	UserID uuid.UUID      `json:"user_id,omitempty"`
+	Claims map[string]any `json:"claims,omitempty"`
 }
 
 type TokenRefreshResult struct {
