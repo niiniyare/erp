@@ -2,9 +2,8 @@ package abac
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"reflect"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -19,6 +18,35 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 	"github.com/niiniyare/erp/internal/shared/types"
 )
+
+// EvaluationPerformanceTracker tracks performance metrics for policy evaluations
+type EvaluationPerformanceTracker struct {
+	evaluationTimes []time.Duration
+	cacheHitRate    float64
+	totalRequests   int64
+	errors          int64
+	mu              sync.RWMutex
+}
+
+// NewEvaluationPerformanceTracker creates a new performance tracker
+func NewEvaluationPerformanceTracker() *EvaluationPerformanceTracker {
+	return &EvaluationPerformanceTracker{
+		evaluationTimes: make([]time.Duration, 0),
+	}
+}
+
+// RecordEvaluation records a policy evaluation's performance
+func (ept *EvaluationPerformanceTracker) RecordEvaluation(duration time.Duration, cacheHit bool, success bool) {
+	ept.mu.Lock()
+	defer ept.mu.Unlock()
+	
+	ept.evaluationTimes = append(ept.evaluationTimes, duration)
+	ept.totalRequests++
+	
+	if !success {
+		ept.errors++
+	}
+}
 
 // MultiplePolicyEvaluationRequest represents a request to evaluate multiple policies
 type MultiplePolicyEvaluationRequest struct {
@@ -179,7 +207,7 @@ type policyEvaluationEngine struct {
 	policyRepo         repository.PolicyRepository
 	attributeResolver  AttributeResolver
 	externalSources    ExternalAttributeSourceManager
-	ruleEngine         *AdvancedRuleEngine
+	ruleEngine         RuleEngine
 	pipManager         *PolicyInformationPointManager
 	evaluationCache    *EvaluationCache
 	performanceTracker *EvaluationPerformanceTracker
@@ -264,98 +292,6 @@ type ActionContext struct {
 }
 
 // EnvironmentContext type already defined in attribute_collector.go
-
-// Advanced Rule Engine
-
-type AdvancedRuleEngine struct {
-	operators       map[string]RuleOperator
-	functions       map[string]RuleFunction
-	expressionCache map[string]*CompiledExpression
-	validationCache map[string]*ValidationResult
-	mutex           sync.RWMutex
-}
-
-func NewAdvancedRuleEngine() *AdvancedRuleEngine {
-	engine := &AdvancedRuleEngine{
-		operators:       make(map[string]RuleOperator),
-		functions:       make(map[string]RuleFunction),
-		expressionCache: make(map[string]*CompiledExpression),
-		validationCache: make(map[string]*ValidationResult),
-	}
-
-	engine.registerBuiltinOperators()
-	engine.registerBuiltinFunctions()
-
-	return engine
-}
-
-func (are *AdvancedRuleEngine) registerBuiltinOperators() {
-	// Comparison operators
-	are.operators["eq"] = &EqualOperator{}
-	are.operators["ne"] = &NotEqualOperator{}
-	are.operators["gt"] = &GreaterThanOperator{}
-	are.operators["gte"] = &GreaterThanEqualOperator{}
-	are.operators["lt"] = &LessThanOperator{}
-	are.operators["lte"] = &LessThanEqualOperator{}
-
-	// Logical operators
-	are.operators["and"] = &AndOperator{}
-	are.operators["or"] = &OrOperator{}
-	are.operators["not"] = &NotOperator{}
-
-	// String operators
-	are.operators["contains"] = &ContainsOperator{}
-	are.operators["startswith"] = &StartsWithOperator{}
-	are.operators["endswith"] = &EndsWithOperator{}
-	are.operators["matches"] = &RegexMatchOperator{}
-
-	// Collection operators
-	are.operators["in"] = &InOperator{}
-	are.operators["notin"] = &NotInOperator{}
-	are.operators["subset"] = &SubsetOperator{}
-	are.operators["superset"] = &SupersetOperator{}
-	are.operators["intersects"] = &IntersectsOperator{}
-
-	// Temporal operators
-	are.operators["before"] = &BeforeOperator{}
-	are.operators["after"] = &AfterOperator{}
-	are.operators["during"] = &DuringOperator{}
-	are.operators["between"] = &BetweenOperator{}
-}
-
-func (are *AdvancedRuleEngine) registerBuiltinFunctions() {
-	// String functions
-	are.functions["strlen"] = &StringLengthFunction{}
-	are.functions["upper"] = &UpperCaseFunction{}
-	are.functions["lower"] = &LowerCaseFunction{}
-	are.functions["trim"] = &TrimFunction{}
-	are.functions["substr"] = &SubstringFunction{}
-
-	// Math functions
-	are.functions["abs"] = &AbsoluteFunction{}
-	are.functions["min"] = &MinFunction{}
-	are.functions["max"] = &MaxFunction{}
-	are.functions["sum"] = &SumFunction{}
-	are.functions["avg"] = &AverageFunction{}
-
-	// Date functions
-	are.functions["now"] = &NowFunction{}
-	are.functions["date"] = &DateFunction{}
-	are.functions["timeformat"] = &TimeFormatFunction{}
-	are.functions["datediff"] = &DateDifferenceFunction{}
-
-	// Collection functions
-	are.functions["count"] = &CountFunction{}
-	are.functions["first"] = &FirstFunction{}
-	are.functions["last"] = &LastFunction{}
-	are.functions["distinct"] = &DistinctFunction{}
-
-	// Utility functions
-	are.functions["type"] = &TypeFunction{}
-	are.functions["exists"] = &ExistsFunction{}
-	are.functions["empty"] = &EmptyFunction{}
-	are.functions["default"] = &DefaultFunction{}
-}
 
 // Core Evaluation Implementation
 
@@ -452,27 +388,27 @@ func (pee *policyEvaluationEngine) executePolicyEvaluation(
 		}
 	}
 
-	//NOTE: Evaluate rules (simplified - Policy model doesn't include Rules field)
-	ruleResults := make([]RuleEvaluationResult, 0)
-	applicableRules := make([]ApplicableRule, 0)
-
-	// Placeholder rule evaluation based on policy effect
-	dummyRule := &models.PolicyRule{
-		ID:         "default_rule",
-		Expression: "true",
+	// Evaluate the policy rule
+	ruleResults := make([]RuleEvaluationResult, 0, 1)
+	applicableRules := make([]ApplicableRule, 0, 1)
+	
+	// Since Policy.Rule is map[string]any, we need to evaluate it differently
+	// For now, simplified evaluation - assume policy allows if target matches
+	ruleResult := &RuleEvaluationResult{
+		RuleID:     policy.ID,
+		Decision:   types.PolicyDecisionAllow,
+		Applicable: true,
 	}
-	ruleResult, err := pee.evaluateRule(ctx, dummyRule, attributeCtx)
-	if err != nil {
-		pee.logger.Error("Failed to evaluate rule", logger.Fields{"error": err.Error(), "rule_id": dummyRule.ID})
-	} else {
-		ruleResults = append(ruleResults, *ruleResult)
+	
+	// TODO: Implement proper rule evaluation with RuleEngine interface
 
+	if ruleResult != nil {
+		ruleResults = append(ruleResults, *ruleResult)
 		if ruleResult.Applicable {
 			applicableRules = append(applicableRules, ApplicableRule{
-				RuleID:      uuid.New(), // Generate a UUID for the dummy rule
+				RuleID:      ruleResult.RuleID,
 				Decision:    ruleResult.Decision,
 				Effect:      policy.Effect,
-				Condition:   &models.PolicyCondition{Expression: dummyRule.Expression},
 				Explanation: ruleResult.Explanation,
 			})
 		}
@@ -505,92 +441,6 @@ func (pee *policyEvaluationEngine) executePolicyEvaluation(
 }
 
 // Rule Evaluation
-
-func (pee *policyEvaluationEngine) evaluateRule(
-	ctx context.Context,
-	rule *models.PolicyRule,
-	attributeCtx *EvaluationAttributeContext,
-) (*RuleEvaluationResult, error) {
-
-	ruleUUID := uuid.New() // Generate UUID for string rule ID
-	result := &RuleEvaluationResult{
-		RuleID:     ruleUUID,
-		Decision:   types.PolicyDecisionDeny,
-		Applicable: false,
-	}
-
-	// Simplified rule evaluation (no target field in PolicyRule model)
-	// Evaluate based on rule expression - basic implementation
-	if rule.Expression != "" && rule.Expression == "true" {
-		result.Applicable = true
-		result.Decision = types.PolicyDecisionAllow
-		result.Explanation = "Rule expression evaluated to true"
-	} else {
-		result.Applicable = false
-		result.Decision = types.PolicyDecisionDeny
-		result.Explanation = "Rule expression evaluated to false"
-	}
-
-	return result, nil
-}
-
-// Advanced Rule Engine Implementation
-
-func (are *AdvancedRuleEngine) EvaluateExpression(
-	ctx context.Context,
-	expression string,
-	attributeCtx *EvaluationAttributeContext,
-) (*ExpressionEvaluationResult, error) {
-
-	// Check cache first
-	are.mutex.RLock()
-	compiled, exists := are.expressionCache[expression]
-	are.mutex.RUnlock()
-
-	if !exists {
-		// Parse and compile expression
-		var err error
-		compiled, err = are.parseExpression(expression)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse expression: %w", err)
-		}
-
-		// Cache compiled expression
-		are.mutex.Lock()
-		are.expressionCache[expression] = compiled
-		are.mutex.Unlock()
-	}
-
-	// Execute compiled expression
-	result, err := are.executeCompiledExpression(ctx, compiled, attributeCtx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute expression: %w", err)
-	}
-
-	return result, nil
-}
-
-func (are *AdvancedRuleEngine) parseExpression(expression string) (*CompiledExpression, error) {
-	// Tokenize expression
-	tokens, err := are.tokenizeExpression(expression)
-	if err != nil {
-		return nil, fmt.Errorf("failed to tokenize expression: %w", err)
-	}
-
-	// Parse tokens into AST
-	ast, err := are.parseTokens(tokens)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse tokens: %w", err)
-	}
-
-	// Compile AST to executable form
-	compiled, err := are.compileAST(ast)
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile AST: %w", err)
-	}
-
-	return compiled, nil
-}
 
 // Combining Algorithms
 
@@ -741,44 +591,6 @@ func (pipm *PolicyInformationPointManager) ResolveAttribute(
 }
 
 // Supporting Types and Interfaces
-
-type RuleOperator interface {
-	Evaluate(left, right any) (bool, error)
-	GetName() string
-	GetArity() int
-}
-
-type RuleFunction interface {
-	Execute(args []any) (any, error)
-	GetName() string
-	GetArity() int
-	ValidateArgs(args []any) error
-}
-
-type CompiledExpression struct {
-	AST        *ExpressionNode
-	Variables  []string
-	Functions  []string
-	Operators  []string
-	Complexity int
-}
-
-type ExpressionNode struct {
-	Type     NodeType
-	Value    any
-	Operator string
-	Function string
-	Children []*ExpressionNode
-}
-
-type NodeType string
-
-const (
-	NodeTypeLiteral  NodeType = "literal"
-	NodeTypeVariable NodeType = "variable"
-	NodeTypeOperator NodeType = "operator"
-	NodeTypeFunction NodeType = "function"
-)
 
 type EvaluationAttributeContext struct {
 	Subject     SubjectContext
@@ -1052,50 +864,6 @@ type PIPProviderInfo struct {
 	Attributes  []string `json:"attributes"`
 }
 
-type PIPCache struct {
-	cache map[string]*PIPCacheEntry
-	mutex sync.RWMutex
-}
-
-func NewPIPCache() *PIPCache {
-	return &PIPCache{
-		cache: make(map[string]*PIPCacheEntry),
-	}
-}
-
-func (pc *PIPCache) Get(category, attributeID string, subjectID uuid.UUID) (any, bool) {
-	pc.mutex.RLock()
-	defer pc.mutex.RUnlock()
-
-	key := fmt.Sprintf("%s:%s:%s", category, attributeID, subjectID.String())
-	entry, exists := pc.cache[key]
-	if !exists || entry.IsExpired() {
-		return nil, false
-	}
-
-	return entry.Value, true
-}
-
-func (pc *PIPCache) Set(category, attributeID string, subjectID uuid.UUID, value any) {
-	pc.mutex.Lock()
-	defer pc.mutex.Unlock()
-
-	key := fmt.Sprintf("%s:%s:%s", category, attributeID, subjectID.String())
-	pc.cache[key] = &PIPCacheEntry{
-		Value:     value,
-		ExpiresAt: time.Now().Add(5 * time.Minute), // Default TTL
-	}
-}
-
-type PIPCacheEntry struct {
-	Value     any
-	ExpiresAt time.Time
-}
-
-func (pce *PIPCacheEntry) IsExpired() bool {
-	return time.Now().After(pce.ExpiresAt)
-}
-
 // Helper functions
 
 func (pee *policyEvaluationEngine) mapEffectToDecision(effect types.PolicyEffect) types.PolicyDecisionType {
@@ -1133,17 +901,95 @@ func (pee *policyEvaluationEngine) resolveEvaluationAttributes(
 // Stub implementations for cache and other methods
 
 func (pee *policyEvaluationEngine) checkEvaluationCache(ctx context.Context, req *PolicyEvaluationRequest) *PolicyEvaluationResult {
-	// TODO:Implementation would check cache based on request parameters
+	if !req.Options.EnableCaching {
+		return nil
+	}
+	cachedResult, found := pee.evaluationCache.Get(req)
+	if found {
+		return cachedResult
+	}
 	return nil
 }
 
 func (pee *policyEvaluationEngine) cacheEvaluationResult(ctx context.Context, req *PolicyEvaluationRequest, result *PolicyEvaluationResult) {
-	// TODO:Implementationwould cache the result
+	if !req.Options.EnableCaching {
+		return
+	}
+	pee.evaluationCache.Set(req, result)
 }
 
 func (pee *policyEvaluationEngine) evaluateTarget(ctx context.Context, target *models.PolicyTarget, attributeCtx *EvaluationAttributeContext) (*TargetEvaluationResult, error) {
-	// TODO:Implementation would evaluate policy/rule target
-	return &TargetEvaluationResult{Applicable: true}, nil
+	if target == nil {
+		// A nil target means the policy applies to everything.
+		return &TargetEvaluationResult{Applicable: true}, nil
+	}
+
+	// Build a single boolean expression from the target fields.
+	expression, err := pee.buildTargetExpression(target)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build target expression: %w", err)
+	}
+
+	// If the expression is empty, the target is considered met (it's not restrictive).
+	if expression == "" {
+		return &TargetEvaluationResult{Applicable: true}, nil
+	}
+
+	// Use the rule engine to evaluate the constructed expression.
+	evalResult, err := pee.ruleEngine.EvaluateExpression(ctx, expression, attributeCtx)
+	if err != nil {
+		pee.logger.Error("Failed to evaluate policy target expression", logger.Fields{
+			"error":      err.Error(),
+			"expression": expression,
+		})
+		// If the target can't be evaluated, we should default to not-applicable for safety.
+		return &TargetEvaluationResult{
+			Applicable: false,
+			Details: []ExplanationDetail{{
+				Component:   "target",
+				Description: "Expression evaluation failed",
+				Result:      err.Error(),
+			}},
+		}, nil
+	}
+
+	return &TargetEvaluationResult{Applicable: evalResult.Result}, nil
+}
+
+// buildTargetExpression constructs a single boolean expression string from a PolicyTarget struct.
+func (pee *policyEvaluationEngine) buildTargetExpression(target *models.PolicyTarget) (string, error) {
+	var conditions []string
+
+	// Helper to create 'in' expressions for string slices.
+	addInCondition := func(attribute string, values []string) {
+		if len(values) > 0 {
+			// e.g., `resource.type in ["type1", "type2"]`
+			jsonValues, _ := json.Marshal(values)
+			conditions = append(conditions, fmt.Sprintf("%s in %s", attribute, string(jsonValues)))
+		}
+	}
+
+	addInCondition("resource.resource_type", target.ResourceTypes)
+	addInCondition("action.action", target.Actions)
+	// Note: The subject and resource ID checks would need to align with the attribute context.
+	// Assuming "resource.id" and "subject.id" are available paths.
+	addInCondition("resource.id", target.Resources)
+	addInCondition("subject.id", target.Subjects)
+
+	// For the environment map, we can create equality checks.
+	for key, value := range target.Environment {
+		jsonValue, err := json.Marshal(value)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal environment value for key '%s': %w", key, err)
+		}
+		conditions = append(conditions, fmt.Sprintf("environment.%s == %s", key, string(jsonValue)))
+	}
+
+	if len(conditions) == 0 {
+		return "", nil
+	}
+
+	return strings.Join(conditions, " && "), nil
 }
 
 func (pee *policyEvaluationEngine) collectObligations(ctx context.Context, ruleResults []RuleEvaluationResult, decision types.PolicyDecisionType) []PolicyObligation {
@@ -1174,592 +1020,6 @@ type RuleEvaluationResult struct {
 	Decision    types.PolicyDecisionType `json:"decision"`
 	Applicable  bool                     `json:"applicable"`
 	Explanation string                   `json:"explanation,omitempty"`
-}
-
-type ExpressionEvaluationResult struct {
-	Result      bool   `json:"result"`
-	Explanation string `json:"explanation,omitempty"`
-}
-
-// Additional stub components
-
-type EvaluationPerformanceTracker struct{}
-
-func NewEvaluationPerformanceTracker() *EvaluationPerformanceTracker {
-	return &EvaluationPerformanceTracker{}
-}
-
-// Stub operator implementations
-
-type EqualOperator struct{}
-
-func (eo *EqualOperator) Evaluate(left, right any) (bool, error) {
-	return reflect.DeepEqual(left, right), nil
-}
-func (eo *EqualOperator) GetName() string { return "eq" }
-func (eo *EqualOperator) GetArity() int   { return 2 }
-
-type NotEqualOperator struct{}
-
-func (neo *NotEqualOperator) Evaluate(left, right any) (bool, error) {
-	return !reflect.DeepEqual(left, right), nil
-}
-func (neo *NotEqualOperator) GetName() string { return "ne" }
-func (neo *NotEqualOperator) GetArity() int   { return 2 }
-
-type GreaterThanOperator struct{}
-
-func (gto *GreaterThanOperator) Evaluate(left, right any) (bool, error) {
-	// TODO:Implementation would handle numeric comparison
-	return false, nil
-}
-func (gto *GreaterThanOperator) GetName() string { return "gt" }
-func (gto *GreaterThanOperator) GetArity() int   { return 2 }
-
-type GreaterThanEqualOperator struct{}
-
-func (gteo *GreaterThanEqualOperator) Evaluate(left, right any) (bool, error) {
-	return false, nil
-}
-func (gteo *GreaterThanEqualOperator) GetName() string { return "gte" }
-func (gteo *GreaterThanEqualOperator) GetArity() int   { return 2 }
-
-type LessThanOperator struct{}
-
-func (lto *LessThanOperator) Evaluate(left, right any) (bool, error) {
-	return false, nil
-}
-func (lto *LessThanOperator) GetName() string { return "lt" }
-func (lto *LessThanOperator) GetArity() int   { return 2 }
-
-type LessThanEqualOperator struct{}
-
-func (lteo *LessThanEqualOperator) Evaluate(left, right any) (bool, error) {
-	return false, nil
-}
-func (lteo *LessThanEqualOperator) GetName() string { return "lte" }
-func (lteo *LessThanEqualOperator) GetArity() int   { return 2 }
-
-type AndOperator struct{}
-
-func (ao *AndOperator) Evaluate(left, right any) (bool, error) {
-	leftBool, leftOk := left.(bool)
-	rightBool, rightOk := right.(bool)
-	if !leftOk || !rightOk {
-		return false, fmt.Errorf("AND operator requires boolean operands, left: %v, right: %v: %w", left, right, errors.ErrInvalidInput)
-	}
-	return leftBool && rightBool, nil
-}
-func (ao *AndOperator) GetName() string { return "and" }
-func (ao *AndOperator) GetArity() int   { return 2 }
-
-type OrOperator struct{}
-
-func (oo *OrOperator) Evaluate(left, right any) (bool, error) {
-	leftBool, leftOk := left.(bool)
-	rightBool, rightOk := right.(bool)
-	if !leftOk || !rightOk {
-		return false, fmt.Errorf("OR operator requires boolean operands, left: %v, right: %v: %w", left, right, errors.ErrInvalidInput)
-	}
-	return leftBool || rightBool, nil
-}
-func (oo *OrOperator) GetName() string { return "or" }
-func (oo *OrOperator) GetArity() int   { return 2 }
-
-type NotOperator struct{}
-
-func (no *NotOperator) Evaluate(left, right any) (bool, error) {
-	leftBool, leftOk := left.(bool)
-	if !leftOk {
-		return false, fmt.Errorf("NOT operator requires boolean operand, operand: %v: %w", left, errors.ErrInvalidInput)
-	}
-	return !leftBool, nil
-}
-func (no *NotOperator) GetName() string { return "not" }
-func (no *NotOperator) GetArity() int   { return 1 }
-
-type ContainsOperator struct{}
-
-func (co *ContainsOperator) Evaluate(left, right any) (bool, error) {
-	leftStr, leftOk := left.(string)
-	rightStr, rightOk := right.(string)
-	if !leftOk || !rightOk {
-		return false, fmt.Errorf("CONTAINS operator requires string operands, left: %v, right: %v: %w", left, right, errors.ErrInvalidInput)
-	}
-	return strings.Contains(leftStr, rightStr), nil
-}
-func (co *ContainsOperator) GetName() string { return "contains" }
-func (co *ContainsOperator) GetArity() int   { return 2 }
-
-type StartsWithOperator struct{}
-
-func (swo *StartsWithOperator) Evaluate(left, right any) (bool, error) {
-	leftStr, leftOk := left.(string)
-	rightStr, rightOk := right.(string)
-	if !leftOk || !rightOk {
-		return false, fmt.Errorf("STARTSWITH operator requires string operands, left: %v, right: %v: %w", left, right, errors.ErrInvalidInput)
-	}
-	return strings.HasPrefix(leftStr, rightStr), nil
-}
-func (swo *StartsWithOperator) GetName() string { return "startswith" }
-func (swo *StartsWithOperator) GetArity() int   { return 2 }
-
-type EndsWithOperator struct{}
-
-func (ewo *EndsWithOperator) Evaluate(left, right any) (bool, error) {
-	leftStr, leftOk := left.(string)
-	rightStr, rightOk := right.(string)
-	if !leftOk || !rightOk {
-		return false, fmt.Errorf("ENDSWITH operator requires string operands, left: %v, right: %v: %w", left, right, errors.ErrInvalidInput)
-	}
-	return strings.HasSuffix(leftStr, rightStr), nil
-}
-func (ewo *EndsWithOperator) GetName() string { return "endswith" }
-func (ewo *EndsWithOperator) GetArity() int   { return 2 }
-
-type RegexMatchOperator struct{}
-
-func (rmo *RegexMatchOperator) Evaluate(left, right any) (bool, error) {
-	leftStr, leftOk := left.(string)
-	rightStr, rightOk := right.(string)
-	if !leftOk || !rightOk {
-		return false, fmt.Errorf("MATCHES operator requires string operands, left: %v, right: %v: %w", left, right, errors.ErrInvalidInput)
-	}
-	matched, err := regexp.MatchString(rightStr, leftStr)
-	if err != nil {
-		return false, fmt.Errorf("regex match failed: %w", err)
-	}
-	return matched, nil
-}
-func (rmo *RegexMatchOperator) GetName() string { return "matches" }
-func (rmo *RegexMatchOperator) GetArity() int   { return 2 }
-
-type InOperator struct{}
-
-func (io *InOperator) Evaluate(left, right any) (bool, error) {
-	// TODO:Implementation would check if left is in right (array/slice)
-	return false, nil
-}
-func (io *InOperator) GetName() string { return "in" }
-func (io *InOperator) GetArity() int   { return 2 }
-
-type NotInOperator struct{}
-
-func (nio *NotInOperator) Evaluate(left, right any) (bool, error) {
-	// TODO:Implementation would check if left is not in right (array/slice)
-	return false, nil
-}
-func (nio *NotInOperator) GetName() string { return "notin" }
-func (nio *NotInOperator) GetArity() int   { return 2 }
-
-type SubsetOperator struct{}
-
-func (so *SubsetOperator) Evaluate(left, right any) (bool, error) {
-	return false, nil
-}
-func (so *SubsetOperator) GetName() string { return "subset" }
-func (so *SubsetOperator) GetArity() int   { return 2 }
-
-type SupersetOperator struct{}
-
-func (sso *SupersetOperator) Evaluate(left, right any) (bool, error) {
-	return false, nil
-}
-func (sso *SupersetOperator) GetName() string { return "superset" }
-func (sso *SupersetOperator) GetArity() int   { return 2 }
-
-type IntersectsOperator struct{}
-
-func (io2 *IntersectsOperator) Evaluate(left, right any) (bool, error) {
-	return false, nil
-}
-func (io2 *IntersectsOperator) GetName() string { return "intersects" }
-func (io2 *IntersectsOperator) GetArity() int   { return 2 }
-
-type BeforeOperator struct{}
-
-func (bo *BeforeOperator) Evaluate(left, right any) (bool, error) {
-	return false, nil
-}
-func (bo *BeforeOperator) GetName() string { return "before" }
-func (bo *BeforeOperator) GetArity() int   { return 2 }
-
-type AfterOperator struct{}
-
-func (ao2 *AfterOperator) Evaluate(left, right any) (bool, error) {
-	return false, nil
-}
-func (ao2 *AfterOperator) GetName() string { return "after" }
-func (ao2 *AfterOperator) GetArity() int   { return 2 }
-
-type DuringOperator struct{}
-
-func (do *DuringOperator) Evaluate(left, right any) (bool, error) {
-	return false, nil
-}
-func (do *DuringOperator) GetName() string { return "during" }
-func (do *DuringOperator) GetArity() int   { return 2 }
-
-type BetweenOperator struct{}
-
-func (bo2 *BetweenOperator) Evaluate(left, right any) (bool, error) {
-	return false, nil
-}
-func (bo2 *BetweenOperator) GetName() string { return "between" }
-func (bo2 *BetweenOperator) GetArity() int   { return 3 }
-
-// Stub function implementations
-
-type StringLengthFunction struct{}
-
-func (slf *StringLengthFunction) Execute(args []any) (any, error) {
-	if len(args) != 1 {
-		return nil, fmt.Errorf("strlen function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	str, ok := args[0].(string)
-	if !ok {
-		return nil, fmt.Errorf("strlen function requires string argument, got %v: %w", reflect.TypeOf(args[0]), errors.ErrInvalidInput)
-	}
-	return len(str), nil
-}
-func (slf *StringLengthFunction) GetName() string               { return "strlen" }
-func (slf *StringLengthFunction) GetArity() int                 { return 1 }
-func (slf *StringLengthFunction) ValidateArgs(args []any) error { return nil }
-
-type UpperCaseFunction struct{}
-
-func (ucf *UpperCaseFunction) Execute(args []any) (any, error) {
-	if len(args) != 1 {
-		return nil, fmt.Errorf("upper function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	str, ok := args[0].(string)
-	if !ok {
-		return nil, fmt.Errorf("upper function requires string argument, got %v: %w", reflect.TypeOf(args[0]), errors.ErrInvalidInput)
-	}
-	return strings.ToUpper(str), nil
-}
-func (ucf *UpperCaseFunction) GetName() string               { return "upper" }
-func (ucf *UpperCaseFunction) GetArity() int                 { return 1 }
-func (ucf *UpperCaseFunction) ValidateArgs(args []any) error { return nil }
-
-type LowerCaseFunction struct{}
-
-func (lcf *LowerCaseFunction) Execute(args []any) (any, error) {
-	if len(args) != 1 {
-		return nil, fmt.Errorf("lower function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	str, ok := args[0].(string)
-	if !ok {
-		return nil, fmt.Errorf("lower function requires string argument, got %v: %w", reflect.TypeOf(args[0]), errors.ErrInvalidInput)
-	}
-	return strings.ToLower(str), nil
-}
-func (lcf *LowerCaseFunction) GetName() string               { return "lower" }
-func (lcf *LowerCaseFunction) GetArity() int                 { return 1 }
-func (lcf *LowerCaseFunction) ValidateArgs(args []any) error { return nil }
-
-type TrimFunction struct{}
-
-func (tf *TrimFunction) Execute(args []any) (any, error) {
-	if len(args) != 1 {
-		return nil, fmt.Errorf("trim function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	str, ok := args[0].(string)
-	if !ok {
-		return nil, fmt.Errorf("trim function requires string argument, got %v: %w", reflect.TypeOf(args[0]), errors.ErrInvalidInput)
-	}
-	return strings.TrimSpace(str), nil
-}
-func (tf *TrimFunction) GetName() string               { return "trim" }
-func (tf *TrimFunction) GetArity() int                 { return 1 }
-func (tf *TrimFunction) ValidateArgs(args []any) error { return nil }
-
-type SubstringFunction struct{}
-
-func (sf *SubstringFunction) Execute(args []any) (any, error) {
-	if len(args) != 3 {
-		return nil, fmt.Errorf("substr function requires exactly 3 arguments, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	str, ok1 := args[0].(string)
-	start, ok2 := args[1].(int)
-	length, ok3 := args[2].(int)
-	if !ok1 || !ok2 || !ok3 {
-		return nil, fmt.Errorf("substr function requires (string, int, int) arguments: %w", errors.ErrInvalidInput)
-	}
-	if start < 0 || start >= len(str) || length < 0 {
-		return "", nil
-	}
-	end := start + length
-	end = min(end, len(str))
-
-	return str[start:end], nil
-}
-func (sf *SubstringFunction) GetName() string               { return "substr" }
-func (sf *SubstringFunction) GetArity() int                 { return 3 }
-func (sf *SubstringFunction) ValidateArgs(args []any) error { return nil }
-
-type AbsoluteFunction struct{}
-
-func (af *AbsoluteFunction) Execute(args []any) (any, error) {
-	if len(args) != 1 {
-		return nil, fmt.Errorf("abs function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	// TODO:Implementation would handle numeric absolute value
-	return args[0], nil
-}
-func (af *AbsoluteFunction) GetName() string               { return "abs" }
-func (af *AbsoluteFunction) GetArity() int                 { return 1 }
-func (af *AbsoluteFunction) ValidateArgs(args []any) error { return nil }
-
-type MinFunction struct{}
-
-func (mf *MinFunction) Execute(args []any) (any, error) {
-	if len(args) < 2 {
-		return nil, fmt.Errorf("min function requires at least 2 arguments, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	// TODO:Implementatio would find minimum value
-	return args[0], nil
-}
-func (mf *MinFunction) GetName() string               { return "min" }
-func (mf *MinFunction) GetArity() int                 { return -1 } // Variable arity
-func (mf *MinFunction) ValidateArgs(args []any) error { return nil }
-
-type MaxFunction struct{}
-
-func (maxf *MaxFunction) Execute(args []any) (any, error) {
-	if len(args) < 2 {
-		return nil, fmt.Errorf("max function requires at least 2 arguments, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	// TODO:Implementatio would find maximum value
-	return args[0], nil
-}
-func (maxf *MaxFunction) GetName() string               { return "max" }
-func (maxf *MaxFunction) GetArity() int                 { return -1 } // Variable arity
-func (maxf *MaxFunction) ValidateArgs(args []any) error { return nil }
-
-type SumFunction struct{}
-
-func (sf2 *SumFunction) Execute(args []any) (any, error) {
-	// TODO:Implementatiowould sum numeric values
-	return 0, nil
-}
-func (sf2 *SumFunction) GetName() string               { return "sum" }
-func (sf2 *SumFunction) GetArity() int                 { return -1 } // Variable arity
-func (sf2 *SumFunction) ValidateArgs(args []any) error { return nil }
-
-type AverageFunction struct{}
-
-func (avgf *AverageFunction) Execute(args []any) (any, error) {
-	// TODO:Implementatio would calculate average
-	return 0.0, nil
-}
-func (avgf *AverageFunction) GetName() string               { return "avg" }
-func (avgf *AverageFunction) GetArity() int                 { return -1 } // Variable arity
-func (avgf *AverageFunction) ValidateArgs(args []any) error { return nil }
-
-type NowFunction struct{}
-
-func (nf *NowFunction) Execute(args []any) (any, error) {
-	return time.Now(), nil
-}
-func (nf *NowFunction) GetName() string               { return "now" }
-func (nf *NowFunction) GetArity() int                 { return 0 }
-func (nf *NowFunction) ValidateArgs(args []any) error { return nil }
-
-type DateFunction struct{}
-
-func (df *DateFunction) Execute(args []any) (any, error) {
-	// TODO:Implementatio would parse date string
-	return time.Now(), nil
-}
-func (df *DateFunction) GetName() string               { return "date" }
-func (df *DateFunction) GetArity() int                 { return 1 }
-func (df *DateFunction) ValidateArgs(args []any) error { return nil }
-
-type TimeFormatFunction struct{}
-
-func (tff *TimeFormatFunction) Execute(args []any) (any, error) {
-	// TODO:Implementatio would format time
-	return "", nil
-}
-func (tff *TimeFormatFunction) GetName() string               { return "timeformat" }
-func (tff *TimeFormatFunction) GetArity() int                 { return 2 }
-func (tff *TimeFormatFunction) ValidateArgs(args []any) error { return nil }
-
-type DateDifferenceFunction struct{}
-
-func (ddf *DateDifferenceFunction) Execute(args []any) (any, error) {
-	// TODO:Implementatio would calculate date difference
-	return time.Duration(0), nil
-}
-func (ddf *DateDifferenceFunction) GetName() string               { return "datediff" }
-func (ddf *DateDifferenceFunction) GetArity() int                 { return 2 }
-func (ddf *DateDifferenceFunction) ValidateArgs(args []any) error { return nil }
-
-type CountFunction struct{}
-
-func (cf *CountFunction) Execute(args []any) (any, error) {
-	if len(args) != 1 {
-		return nil, fmt.Errorf("count function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	// TODO:Implementatio would count elements in collection
-	return 0, nil
-}
-func (cf *CountFunction) GetName() string               { return "count" }
-func (cf *CountFunction) GetArity() int                 { return 1 }
-func (cf *CountFunction) ValidateArgs(args []any) error { return nil }
-
-type FirstFunction struct{}
-
-func (ff *FirstFunction) Execute(args []any) (any, error) {
-	// TODO:Implementatio would return first element
-	return nil, nil
-}
-func (ff *FirstFunction) GetName() string               { return "first" }
-func (ff *FirstFunction) GetArity() int                 { return 1 }
-func (ff *FirstFunction) ValidateArgs(args []any) error { return nil }
-
-type LastFunction struct{}
-
-func (lf *LastFunction) Execute(args []any) (any, error) {
-	// TODO:Implementatio would return last element
-	return nil, nil
-}
-func (lf *LastFunction) GetName() string               { return "last" }
-func (lf *LastFunction) GetArity() int                 { return 1 }
-func (lf *LastFunction) ValidateArgs(args []any) error { return nil }
-
-type DistinctFunction struct{}
-
-func (df2 *DistinctFunction) Execute(args []any) (any, error) {
-	// TODO:Implementatio would return distinct elements
-	return args[0], nil
-}
-func (df2 *DistinctFunction) GetName() string               { return "distinct" }
-func (df2 *DistinctFunction) GetArity() int                 { return 1 }
-func (df2 *DistinctFunction) ValidateArgs(args []any) error { return nil }
-
-type TypeFunction struct{}
-
-func (tf2 *TypeFunction) Execute(args []any) (any, error) {
-	if len(args) != 1 {
-		return nil, fmt.Errorf("type function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	return reflect.TypeOf(args[0]).String(), nil
-}
-func (tf2 *TypeFunction) GetName() string               { return "type" }
-func (tf2 *TypeFunction) GetArity() int                 { return 1 }
-func (tf2 *TypeFunction) ValidateArgs(args []any) error { return nil }
-
-type ExistsFunction struct{}
-
-func (ef *ExistsFunction) Execute(args []any) (any, error) {
-	if len(args) != 1 {
-		return nil, fmt.Errorf("exists function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	return args[0] != nil, nil
-}
-func (ef *ExistsFunction) GetName() string               { return "exists" }
-func (ef *ExistsFunction) GetArity() int                 { return 1 }
-func (ef *ExistsFunction) ValidateArgs(args []any) error { return nil }
-
-type EmptyFunction struct{}
-
-func (ef2 *EmptyFunction) Execute(args []any) (any, error) {
-	if len(args) != 1 {
-		return nil, fmt.Errorf("empty function requires exactly 1 argument, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	// TODO:Implementatio would check if collection/string is empty
-	return false, nil
-}
-func (ef2 *EmptyFunction) GetName() string               { return "empty" }
-func (ef2 *EmptyFunction) GetArity() int                 { return 1 }
-func (ef2 *EmptyFunction) ValidateArgs(args []any) error { return nil }
-
-type DefaultFunction struct{}
-
-func (df3 *DefaultFunction) Execute(args []any) (any, error) {
-	if len(args) != 2 {
-		return nil, fmt.Errorf("default function requires exactly 2 arguments, got %d: %w", len(args), errors.ErrInvalidInput)
-	}
-	if args[0] != nil {
-		return args[0], nil
-	}
-	return args[1], nil
-}
-func (df3 *DefaultFunction) GetName() string               { return "default" }
-func (df3 *DefaultFunction) GetArity() int                 { return 2 }
-func (df3 *DefaultFunction) ValidateArgs(args []any) error { return nil }
-
-// Stub implementations for advanced rule engine
-
-func (are *AdvancedRuleEngine) tokenizeExpression(expression string) ([]string, error) {
-	// Simple tokenization - in practice this would be more sophisticated
-	tokens := strings.Fields(expression)
-	return tokens, nil
-}
-
-func (are *AdvancedRuleEngine) parseTokens(tokens []string) (*ExpressionNode, error) {
-	//NOTE: Simple parser - in practice this would build a proper AST
-	if len(tokens) == 0 {
-		return nil, fmt.Errorf("empty expression, tokens: %v: %w", tokens, errors.ErrInvalidInput)
-	}
-
-	return &ExpressionNode{
-		Type:  NodeTypeLiteral,
-		Value: tokens[0],
-	}, nil
-}
-
-func (are *AdvancedRuleEngine) compileAST(ast *ExpressionNode) (*CompiledExpression, error) {
-	return &CompiledExpression{
-		AST:        ast,
-		Variables:  []string{},
-		Functions:  []string{},
-		Operators:  []string{},
-		Complexity: 1,
-	}, nil
-}
-
-func (are *AdvancedRuleEngine) executeCompiledExpression(
-	ctx context.Context,
-	compiled *CompiledExpression,
-	attributeCtx *EvaluationAttributeContext,
-) (*ExpressionEvaluationResult, error) {
-	//NOTE: Simple execution - in practice this would traverse the AST
-	return &ExpressionEvaluationResult{
-		Result:      true,
-		Explanation: "Expression evaluated successfully",
-	}, nil
-}
-
-// Additional supporting types for geographic, network, device, and security contexts
-
-// GeographicLocation type already defined in attribute_collector.go
-
-type NetworkInformation struct {
-	IPAddress   string `json:"ip_address"`
-	UserAgent   string `json:"user_agent"`
-	Protocol    string `json:"protocol"`
-	Port        int    `json:"port"`
-	NetworkType string `json:"network_type"`
-}
-
-type DeviceInformation struct {
-	DeviceID   string `json:"device_id"`
-	DeviceType string `json:"device_type"`
-	OS         string `json:"os"`
-	OSVersion  string `json:"os_version"`
-	Browser    string `json:"browser"`
-}
-
-type SecurityContext struct {
-	ThreatLevel         string         `json:"threat_level"`
-	AuthenticationLevel string         `json:"authentication_level"`
-	EncryptionLevel     string         `json:"encryption_level"`
-	SecurityFlags       []string       `json:"security_flags"`
-	RiskScore           float64        `json:"risk_score"`
-	Attributes          map[string]any `json:"attributes"`
 }
 
 // AnalyzeEvaluationPerformance analyzes the performance of policy evaluations

@@ -49,18 +49,18 @@ func (s *PolicyManagementTestSuite) TestCreatePolicy() {
 				Name:        "Finance Document Access",
 				Description: "Allows finance team to access financial documents during business hours",
 				Target: &model.PolicyTarget{
-					Resources: "documents",
+					Resources: []*model.PolicyResource{{Type: "documents"}},
 					Actions:   []string{"read", "write"},
-					Subjects:  []string{"finance_team"},
+					Subjects:  []*model.PolicySubject{{Type: "finance_team"}},
 				},
-				Rules: []model.PolicyRule{
+				Rules: []*model.PolicyRule{
 					{
 						Effect: model.PolicyEffectAllow,
 						Condition: &model.PolicyCondition{
-							"user.department": "finance",
-							"environment.time_of_day": map[string]any{
-								"$gte": "09:00",
-								"$lte": "17:00",
+							Expression: "user.department == 'finance' AND time_of_day BETWEEN '09:00' AND '17:00'",
+							Attributes: map[string]any{
+								"department": "finance",
+								"time_range": map[string]string{"start": "09:00", "end": "17:00"},
 							},
 						},
 					},
@@ -83,10 +83,13 @@ func (s *PolicyManagementTestSuite) TestCreatePolicy() {
 			spec: "POLICY-001",
 			request: &CreatePolicyRequest{
 				Name: "Invalid Policy",
-				Rules: []model.PolicyRule{
+				Rules: []*model.PolicyRule{
 					{
-						Effect:    model.PolicyEffectAllow,
-						Condition: &model.PolicyCondition{"invalid_syntax": "{{malformed_expression}}"},
+						Effect: model.PolicyEffectAllow,
+						Condition: &model.PolicyCondition{
+							Expression: "{{malformed_expression}}",
+							Attributes: map[string]any{"syntax_error": true},
+						},
 					},
 				},
 			},
@@ -98,9 +101,21 @@ func (s *PolicyManagementTestSuite) TestCreatePolicy() {
 			spec: "POLICY-001",
 			request: &CreatePolicyRequest{
 				Name: "Conflicting Policy",
-				Rules: []model.PolicyRule{
-					{Effect: model.PolicyEffectAllow, Condition: &model.PolicyCondition{"user.role": "admin"}},
-					{Effect: model.PolicyEffectDeny, Condition: &model.PolicyCondition{"user.role": "admin"}},
+				Rules: []*model.PolicyRule{
+					{
+						Effect: model.PolicyEffectAllow,
+						Condition: &model.PolicyCondition{
+							Expression: "user.role == 'admin'",
+							Attributes: map[string]any{"role": "admin"},
+						},
+					},
+					{
+						Effect: model.PolicyEffectDeny,
+						Condition: &model.PolicyCondition{
+							Expression: "user.role == 'admin'",
+							Attributes: map[string]any{"role": "admin"},
+						},
+					},
 				},
 			},
 			requestType: "conflicting_rules",
@@ -247,8 +262,14 @@ func (s *PolicyManagementTestSuite) TestUpdatePolicy() {
 			spec:     "POLICY-003",
 			policyID: uuid.New(),
 			request: &UpdatePolicyRequest{
-				Rules: &[]model.PolicyRule{
-					{Effect: model.PolicyEffectAllow, Condition: &model.PolicyCondition{"invalid": "{{syntax}}"}},
+				Rules: []*model.PolicyRule{
+					{
+						Effect: model.PolicyEffectAllow,
+						Condition: &model.PolicyCondition{
+							Expression: "{{invalid_syntax}}",
+							Attributes: map[string]any{"invalid": true},
+						},
+					},
 				},
 			},
 			setupPolicy: "existing_policy",
@@ -379,10 +400,13 @@ func (s *PolicyManagementTestSuite) TestPolicyValidation() {
 			name: "ValidSyntax_PassesValidation",
 			spec: "POLICY-001",
 			policy: &model.Policy{
-				Rules: []model.PolicyRule{
+				Rules: []*model.PolicyRule{
 					{
-						Effect:    model.PolicyEffectAllow,
-						Condition: &model.PolicyCondition{"user.department": "finance"},
+						Effect: model.PolicyEffectAllow,
+						Condition: &model.PolicyCondition{
+							Expression: "user.department == 'finance'",
+							Attributes: map[string]any{"department": "finance"},
+						},
 					},
 				},
 			},
@@ -392,10 +416,13 @@ func (s *PolicyManagementTestSuite) TestPolicyValidation() {
 			name: "CircularReferences_ReturnsError",
 			spec: "BOUNDARY-002",
 			policy: &model.Policy{
-				Rules: []model.PolicyRule{
+				Rules: []*model.PolicyRule{
 					{
-						Effect:    model.PolicyEffectAllow,
-						Condition: &model.PolicyCondition{"policy.reference": "self"},
+						Effect: model.PolicyEffectAllow,
+						Condition: &model.PolicyCondition{
+							Expression: "policy.reference == 'self'",
+							Attributes: map[string]any{"reference": "self"},
+						},
 					},
 				},
 			},
@@ -572,20 +599,13 @@ type PolicyService interface {
 	DeletePolicy(ctx context.Context, policyID uuid.UUID) error
 }
 
-type CreatePolicyRequest struct {
-	Name        string              `json:"name" validate:"required"`
-	Description string              `json:"description"`
-	Target      *model.PolicyTarget `json:"target" validate:"required"`
-	Rules       []model.PolicyRule  `json:"rules" validate:"required,min=1"`
-	Priority    int32               `json:"priority"`
-	Enabled     bool                `json:"enabled"`
-}
+// Removed duplicate type declarations - using the ones from service.go
 
-type UpdatePolicyRequest struct {
+type UpdatePolicyRequestTest struct {
 	Name        *string             `json:"name,omitempty"`
 	Description *string             `json:"description,omitempty"`
 	Target      *model.PolicyTarget `json:"target,omitempty"`
-	Rules       *[]model.PolicyRule `json:"rules,omitempty"`
+	Rules       *[]*model.PolicyRule `json:"rules,omitempty"`
 	Priority    *int32              `json:"priority,omitempty"`
 	Enabled     *bool               `json:"enabled,omitempty"`
 }
@@ -610,13 +630,16 @@ func setupTestPolicy() *CreatePolicyRequest {
 		Name:        "Test Policy",
 		Description: "A test policy for unit testing",
 		Target: &model.PolicyTarget{
-			ResourceType: "test_resource",
-			Actions:      []string{"read"},
+			Resources: []*model.PolicyResource{{Type: "test_resource"}},
+			Actions:   []string{"read"},
 		},
-		Rules: []model.PolicyRule{
+		Rules: []*model.PolicyRule{
 			{
-				Effect:    model.PolicyEffectAllow,
-				Condition: &model.PolicyCondition{"user.test": true},
+				Effect: model.PolicyEffectAllow,
+				Condition: &model.PolicyCondition{
+					Expression: "user.test == true",
+					Attributes: map[string]any{"test": true},
+				},
 			},
 		},
 		Priority: 1,

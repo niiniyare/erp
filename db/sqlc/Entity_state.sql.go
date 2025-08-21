@@ -305,13 +305,13 @@ ORDER BY
 `
 
 type GetEntityStateHealthCheckRow struct {
-	EntityID              uuid.UUID `json:"entity_id"`
-	EntityName            string    `json:"entity_name"`
-	DocumentTypesCount    int64     `json:"document_types_count"`
-	FiscalYearsCount      int64     `json:"fiscal_years_count"`
-	OldestSequence        any       `json:"oldest_sequence"`
-	LastActivity          any       `json:"last_activity"`
-	TotalDocumentsCreated int64     `json:"total_documents_created"`
+	EntityID              uuid.UUID   `json:"entity_id"`
+	EntityName            string      `json:"entity_name"`
+	DocumentTypesCount    int64       `json:"document_types_count"`
+	FiscalYearsCount      int64       `json:"fiscal_years_count"`
+	OldestSequence        interface{} `json:"oldest_sequence"`
+	LastActivity          interface{} `json:"last_activity"`
+	TotalDocumentsCreated int64       `json:"total_documents_created"`
 }
 
 // Usage: Comprehensive health check of entity state configuration
@@ -440,12 +440,12 @@ ORDER BY
 `
 
 type GetEntityStateStatsRow struct {
-	Key                string `json:"key"`
-	EntityCount        int64  `json:"entity_count"`
-	AvgSequence        int64  `json:"avg_sequence"`
-	MaxSequence        any    `json:"max_sequence"`
-	MinSequence        any    `json:"min_sequence"`
-	TotalSequencesUsed int64  `json:"total_sequences_used"`
+	Key                string      `json:"key"`
+	EntityCount        int64       `json:"entity_count"`
+	AvgSequence        int64       `json:"avg_sequence"`
+	MaxSequence        interface{} `json:"max_sequence"`
+	MinSequence        interface{} `json:"min_sequence"`
+	TotalSequencesUsed int64       `json:"total_sequences_used"`
 }
 
 // =====================================================================
@@ -815,9 +815,9 @@ type GetHighestSequenceNumberParams struct {
 
 // Usage: Gets the highest sequence number for a specific entity/key/fiscal year combination
 // Use case: Finding the current maximum sequence before manual adjustments
-func (q *Queries) GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (any, error) {
+func (q *Queries) GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (interface{}, error) {
 	row := q.db.QueryRow(ctx, getHighestSequenceNumber, arg.EntityID, arg.Key, arg.FiscalYear)
-	var sequence any
+	var sequence interface{}
 	err := row.Scan(&sequence)
 	return sequence, err
 }

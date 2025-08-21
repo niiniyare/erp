@@ -29,13 +29,13 @@ CREATE TABLE employees (
     security_level INTEGER DEFAULT 0,             -- Numeric security clearance level (0=lowest)
     access_attributes JSONB DEFAULT '{}'::jsonb,  -- Employment-specific ABAC attributes
     
-    -- Standard validation columns
-    version INTEGER NOT NULL DEFAULT 1,
-    last_validation_run TIMESTAMPTZ,
-    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
-        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
-    ),
-    validation_errors JSONB DEFAULT '[]'::jsonb,
+    -- -- Standard validation columns
+    -- version INTEGER NOT NULL DEFAULT 1,
+    -- last_validation_run TIMESTAMPTZ,
+    -- validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
+    --     validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
+    -- ),
+    -- validation_errors JSONB DEFAULT '[]'::jsonb,
     
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -130,11 +130,11 @@ ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
 CREATE POLICY employees_tenant_isolation ON employees
     FOR ALL TO application_role
     USING (
-        current_tenant_id() IS NOT NULL 
+        current_tenant_id() IS NOT NULL AND deleted_at IS NOT NULL
         AND tenant_id = current_tenant_id()
     )
     WITH CHECK (
-        current_tenant_id() IS NOT NULL 
+        current_tenant_id() IS NOT NULL AND deleted_at IS NOT NULL
         AND tenant_id = current_tenant_id()
     );
 

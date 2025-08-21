@@ -44,7 +44,7 @@ VALUES
     $12
   )
 RETURNING
-  id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+  id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, created_at, updated_at, deleted_at
 `
 
 type CreateEmployeeParams struct {
@@ -94,10 +94,6 @@ func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) 
 		&i.WorkSchedule,
 		&i.SecurityLevel,
 		&i.AccessAttributes,
-		&i.Version,
-		&i.LastValidationRun,
-		&i.ValidationStatus,
-		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -107,7 +103,7 @@ func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) 
 
 const getEmployeeByID = `-- name: GetEmployeeByID :one
 SELECT
-  id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at
+  id, tenant_id, person_id, employee_number, entity_id, position_title, department_id, manager_id, hire_date, termination_date, salary_info, employment_status, work_schedule, security_level, access_attributes, created_at, updated_at, deleted_at
 FROM
   employees
 WHERE
@@ -135,10 +131,6 @@ func (q *Queries) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee,
 		&i.WorkSchedule,
 		&i.SecurityLevel,
 		&i.AccessAttributes,
-		&i.Version,
-		&i.LastValidationRun,
-		&i.ValidationStatus,
-		&i.ValidationErrors,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

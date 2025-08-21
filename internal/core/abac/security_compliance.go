@@ -21,6 +21,22 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
+// SecurityContext represents security-related information for policy evaluation
+type SecurityContext struct {
+	UserID           uuid.UUID          `json:"user_id"`
+	SessionID        string             `json:"session_id"`
+	IPAddress        string             `json:"ip_address"`
+	UserAgent        string             `json:"user_agent"`
+	TenantID         uuid.UUID          `json:"tenant_id"`
+	SecurityLevel    string             `json:"security_level"`
+	AuthMethod       string             `json:"auth_method"`
+	Roles            []string           `json:"roles"`
+	Permissions      []string           `json:"permissions"`
+	SecurityHeaders  map[string]string  `json:"security_headers,omitempty"`
+	ThreatIndicators map[string]float64 `json:"threat_indicators,omitempty"`
+	ComplianceFlags  map[string]bool    `json:"compliance_flags,omitempty"`
+}
+
 // SecurityComplianceManager manages security and compliance for ABAC
 type SecurityComplianceManager interface {
 	// Data Protection

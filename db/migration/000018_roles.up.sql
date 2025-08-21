@@ -21,13 +21,13 @@ CREATE TABLE IF NOT EXISTS roles (
     is_system_role BOOLEAN DEFAULT false,
     is_active BOOLEAN DEFAULT true,
 
-    -- Standard validation columns
-    version INTEGER NOT NULL DEFAULT 1,
-    last_validation_run TIMESTAMPTZ,
-    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
-        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
-    ),
-    validation_errors JSONB DEFAULT '[]'::jsonb,
+    -- -- Standard validation columns
+    -- version INTEGER NOT NULL DEFAULT 1,
+    -- last_validation_run TIMESTAMPTZ,
+    -- validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
+    --     validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
+    -- ),
+    -- validation_errors JSONB DEFAULT '[]'::jsonb,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -36,8 +36,7 @@ CREATE TABLE IF NOT EXISTS roles (
     CONSTRAINT roles_name_unique_per_tenant UNIQUE (tenant_id, name)
 );
 
-COMMENT ON TABLE roles IS
-'Roles with module association, entity scoping, and hierarchical structure. Supports both RBAC and ABAC with conditional access rules.';
+COMMENT ON TABLE roles IS 'Roles with module association, entity scoping, and hierarchical structure. Supports both RBAC and ABAC with conditional access rules.';
 
 COMMENT ON COLUMN roles.role_type IS 'Role classification: SYSTEM (built-in), TENANT (tenant-wide), ENTITY (entity-scoped), CUSTOM (user-defined), FUNCTIONAL (job-based)';
 COMMENT ON COLUMN roles.parent_role_id IS 'Parent role for inheritance hierarchy';

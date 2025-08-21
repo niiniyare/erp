@@ -96,7 +96,7 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 
 // GetUserByUsername retrieves a user by username
 func (r *repository) GetUserByUsername(ctx context.Context, username string) (*User, error) {
-	sqlcUser, err := r.store.GetUserByUsername(ctx, &username)
+	sqlcUser, err := r.store.GetUserByUsername(ctx, username)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.ErrUserNotFound
@@ -236,10 +236,7 @@ func fromSQLCUser(sqlcUser *db.User) (*User, error) {
 		return nil, err
 	}
 
-	var username string
-	if sqlcUser.Username != nil {
-		username = *sqlcUser.Username
-	}
+	username := sqlcUser.Username
 
 	var accountStatus AccountStatus
 	if sqlcUser.AccountStatus != nil {
@@ -479,7 +476,7 @@ func toSQLCCreateUserParams(req *CreateUserRequest, hashedPassword string) (db.C
 		EntityID:              req.EntityID,
 		PersonID:              req.PersonID,
 		EmployeeID:            req.EmployeeID,
-		Username:              &req.Username,
+		Username:              req.Username,
 		Email:                 req.Email,
 		PasswordHash:          &hashedPassword,
 		UserType:              req.UserType,

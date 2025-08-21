@@ -12,6 +12,9 @@ import (
 type User struct {
 	ID               uuid.UUID         `json:"id"`
 	TenantID         uuid.UUID         `json:"tenant_id"`
+	EntityID         uuid.UUID         `json:"entity_id"`
+	PersonID         *uuid.UUID        `json:"person_id,omitempty"`
+	EmployeeID       *uuid.UUID        `json:"employee_id,omitempty"`
 	Email            string            `json:"email"`
 	PasswordHash     string            `json:"-"` // Never serialize password hash
 	FirstName        string            `json:"first_name"`

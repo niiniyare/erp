@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS policies (
     description TEXT,
     policy_type VARCHAR(50) DEFAULT 'ABAC'
         CHECK (policy_type IN ('ABAC', 'RBAC', 'HYBRID', 'TIME_BASED', 'LOCATION_BASED')),
-    effect VARCHAR(20) DEFAULT 'ALLOW' CHECK (effect IN ('ALLOW', 'DENY')),
+    effect VARCHAR(5) DEFAULT 'ALLOW' CHECK (effect IN ('ALLOW', 'DENY')),
     priority INTEGER DEFAULT 100,                  -- Higher numbers = higher priority
     category VARCHAR(50) DEFAULT 'ACCESS'
         CHECK (category IN ('ACCESS', 'DATA_FILTER', 'FIELD_MASK', 'AUDIT', 'COMPLIANCE')),
@@ -48,8 +48,21 @@ COMMENT ON COLUMN policies.advice IS 'JSONB defining optional actions and recomm
 ALTER TABLE policies ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY policies_tenant_isolation ON policies
-    FOR ALL TO public
-    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    FOR ALL TO application_role
+    USING (
+        current_tenant_id() IS NOT NULL
+        AND tenant_id = current_tenant_id()
+    )
+    WITH CHECK (
+        current_tenant_id() IS NOT NULL
+        AND tenant_id = current_tenant_id()
+    );
+
+
+CREATE POLICY policies_admin ON policies
+    FOR ALL TO admin_role
+    USING (true)
+    WITH CHECK (true);
 
 -- =====================================================================
 -- MIGRATION COMPLETION MESSAGE

@@ -109,7 +109,7 @@ func (s *UserRepositoryTestSuite) TestCreateUser() {
 			}
 
 			// Act
-			result, err := s.repo.CreateUser(ctx, tc.user)
+			result, err := s.repo.Create(ctx, tc.user)
 
 			// Assert
 			if tc.expectedErr != "" {
@@ -193,7 +193,7 @@ func (s *UserRepositoryTestSuite) TestGetUser() {
 			}
 
 			// Act
-			user, err := s.repo.GetUser(ctx, tc.userID)
+			user, err := s.repo.GetByID(ctx, tc.userID)
 
 			// Assert
 			if tc.expectedErr != "" {
@@ -258,7 +258,7 @@ func (s *UserRepositoryTestSuite) TestUpdateUser() {
 			s.T().Skip(tc.spec + ": Implementation pending - fail-first approach")
 
 			// Arrange
-			ctx := setupTenantContext(s.ctx, uuid.New())
+			_ = setupTenantContext(s.ctx, uuid.New()) // ctx unused since test is disabled
 			var originalUpdatedAt time.Time
 
 			if tc.setupUser {
@@ -267,7 +267,10 @@ func (s *UserRepositoryTestSuite) TestUpdateUser() {
 			}
 
 			// Act
-			user, err := s.repo.UpdateUser(ctx, tc.userID, tc.updates)
+			// Note: Update method signature is different, this test needs to be reworked
+			// user, err := s.repo.Update(ctx, tc.user)
+			var user *model.User
+			var err error
 
 			// Assert
 			if tc.expectedErr != "" {
@@ -341,7 +344,7 @@ func (s *UserRepositoryTestSuite) TestSoftDeleteUser() {
 			}
 
 			// Act
-			err := s.repo.SoftDeleteUser(ctx, tc.userID)
+			err := s.repo.Delete(ctx, tc.userID)
 
 			// Assert
 			if tc.expectedErr != "" {
@@ -397,8 +400,8 @@ func (s *UserRepositoryTestSuite) TestTenantIsolation() {
 			s.T().Skip(tc.spec + ": Implementation pending - fail-first approach")
 
 			// Arrange
-			tenantA := uuid.MustParse("123e4567-e89b-12d3-a456-426614174001")
-			tenantB := uuid.MustParse("123e4567-e89b-12d3-a456-426614174002")
+			_ = uuid.MustParse("123e4567-e89b-12d3-a456-426614174001") // tenantA unused since test is disabled
+			_ = uuid.MustParse("123e4567-e89b-12d3-a456-426614174002") // tenantB unused since test is disabled
 
 			switch tc.scenario {
 			case "cross_tenant_access":
@@ -471,7 +474,7 @@ func (s *UserRepositoryTestSuite) TestGetUserEffectivePermissions() {
 			s.T().Skip(tc.spec + ": Implementation pending - fail-first approach")
 
 			// Arrange
-			ctx := setupTenantContext(s.ctx, uuid.New())
+			_ = setupTenantContext(s.ctx, uuid.New()) // ctx unused since test is disabled
 
 			switch tc.setupScenario {
 			case "user_with_roles_and_permissions":
@@ -483,7 +486,10 @@ func (s *UserRepositoryTestSuite) TestGetUserEffectivePermissions() {
 			}
 
 			// Act
-			permissions, err := s.repo.GetUserEffectivePermissions(ctx, tc.userID)
+			// Note: This should use PermissionRepository.GetUserPermissions instead
+			// permissions, err := s.permissionRepo.GetUserPermissions(ctx, tc.userID, nil)
+			var permissions []model.Permission
+			var err error
 
 			// Assert
 			if tc.expectedErr != "" {

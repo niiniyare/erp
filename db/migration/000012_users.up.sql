@@ -18,8 +18,8 @@ CREATE TABLE users (
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
     person_id UUID REFERENCES persons(id) ON DELETE SET NULL,
     employee_id UUID REFERENCES employees(id) ON DELETE SET NULL,
-    username VARCHAR(100),
     email VARCHAR(255) NOT NULL,
+    username VARCHAR(100) NOT NULL,
     password_hash VARCHAR(255),
     user_type VARCHAR(20) NOT NULL DEFAULT 'INTERNAL'
         CHECK (user_type IN ('INTERNAL', 'CUSTOMER', 'VENDOR', 'PARTNER', 'API', 'SERVICE', 'ADMIN')),
@@ -36,14 +36,9 @@ CREATE TABLE users (
     user_attributes JSONB DEFAULT '{}'::jsonb,     -- ABAC user attributes
     settings JSONB DEFAULT '{}'::jsonb,            -- User preferences and settings
     
-    -- Standard validation columns
-    version INTEGER NOT NULL DEFAULT 1,
-    last_validation_run TIMESTAMPTZ,
-    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
-        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
-    ),
-    validation_errors JSONB DEFAULT '[]'::jsonb,
-    
+    password_strength INT DEFAULT 0,         
+    compromised BOOLEAN DEFAULT false,       
+    rotation_required BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
@@ -81,6 +76,9 @@ COMMENT ON COLUMN users.lockout_until IS 'Timestamp until which account is locke
 COMMENT ON COLUMN users.session_timeout_minutes IS 'Session timeout in minutes (default 480 = 8 hours)';
 COMMENT ON COLUMN users.mfa_enabled IS 'Whether multi-factor authentication is enabled';
 COMMENT ON COLUMN users.mfa_secret IS 'Secret key for MFA token generation';
+COMMENT ON COLUMN users.password_strength IS 'Password strength score (0-100) based on complexity';
+COMMENT ON COLUMN users.compromised IS 'Flag if password found in breach databases';
+COMMENT ON COLUMN users.rotation_required IS 'Forces password change on next login';
 COMMENT ON COLUMN users.user_attributes IS 'JSONB containing ABAC attributes for fine-grained access control';
 COMMENT ON COLUMN users.settings IS 'JSONB containing user preferences and application settings';
 COMMENT ON COLUMN users.deleted_at IS 'Soft delete timestamp - NULL means record is active';
@@ -153,7 +151,7 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 CREATE POLICY users_tenant_isolation ON users
     FOR ALL TO application_role
     USING (
-        current_tenant_id() IS NOT NULL 
+        current_tenant_id() IS NOT NULL AND deleted_at IS NOT NULL
         AND tenant_id = current_tenant_id()
     )
     WITH CHECK (

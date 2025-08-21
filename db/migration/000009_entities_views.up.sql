@@ -55,8 +55,6 @@ SELECT
 FROM org_chart oc
 JOIN tenants t ON oc.tenant_id = t.id;
 
--- Note: Views inherit RLS from their underlying tables
--- RLS will be enforced through the entities and tenants tables that the view uses
 
 /*
  * Entity Hierarchy Structure View
@@ -94,8 +92,6 @@ WHERE cc.type = 'COST_CENTER'
   AND r.deleted_at IS NULL
   AND c.deleted_at IS NULL;
 
--- Note: Views inherit RLS from their underlying tables
--- RLS will be enforced through the entities and tenants tables that the view uses
 
 /*
  * Cost Center Basic Information View
@@ -139,8 +135,6 @@ WHERE cc.type = 'COST_CENTER'
   AND r.deleted_at IS NULL
   AND c.deleted_at IS NULL;
 
--- Note: Views inherit RLS from their underlying tables
--- RLS will be enforced through the entities and tenants tables that the view uses
 
 /*
  * Department Summary View
@@ -188,9 +182,6 @@ GROUP BY
   r.uuid, r.name,
   c.uuid, c.name;
 
--- Note: Views inherit RLS from their underlying tables
--- RLS will be enforced through the entities and tenants tables that the view uses
-
 /*
  * Company Structure View
  * 
@@ -225,8 +216,6 @@ WHERE c.type = 'COMPANY'
   AND c.deleted_at IS NULL
   AND e.deleted_at IS NULL;
 
--- Note: Views inherit RLS from their underlying tables
--- RLS will be enforced through the entities and tenants tables that the view uses
 
 /*
  * Tenant Entity Summary View
@@ -322,8 +311,6 @@ WHERE e.deleted_at IS NULL
   AND (r.deleted_at IS NULL OR r.uuid IS NULL)
   AND (d.deleted_at IS NULL OR d.uuid IS NULL);
 
--- Note: Views inherit RLS from their underlying tables
--- RLS will be enforced through the entities and tenants tables that the view uses
 
 /*
  * Entity Change Log View
@@ -358,8 +345,6 @@ FROM entities e
 JOIN tenants t ON e.tenant_id = t.id
 ORDER BY e.updated_at DESC;
 
--- Note: Views inherit RLS from their underlying tables
--- RLS will be enforced through the entities and tenants tables that the view uses
 
 /*
  * Entity Hierarchy Paths View
@@ -394,8 +379,6 @@ WHERE a.deleted_at IS NULL
   AND d.deleted_at IS NULL
 ORDER BY hp.depth, a.name, d.name;
 
--- Note: Views inherit RLS from their underlying tables
--- RLS will be enforced through the entities and tenants tables that the view uses
 
 /*
  * Tenant Resource Utilization View
@@ -429,5 +412,3 @@ LEFT JOIN entities e ON e.tenant_id = t.id
 LEFT JOIN entitystate es ON es.tenant_id = t.id
 GROUP BY t.id, t.name, t.status;
 
--- Note: Views inherit RLS from their underlying tables
--- RLS will be enforced through the entities and tenants tables that the view uses

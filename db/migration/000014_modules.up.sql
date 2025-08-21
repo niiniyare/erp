@@ -13,14 +13,14 @@ CREATE TABLE IF NOT EXISTS modules (
     version VARCHAR(20),
     is_active BOOLEAN DEFAULT true,
 
-    -- Standard validation columns
-    validation_version INTEGER NOT NULL DEFAULT 1,
-    last_validation_run TIMESTAMPTZ,
-    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
-        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
-    ),
-    validation_errors JSONB DEFAULT '[]'::jsonb,
-
+    -- -- Standard validation columns
+    -- validation_version INTEGER NOT NULL DEFAULT 1,
+    -- last_validation_run TIMESTAMPTZ,
+    -- validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
+    --     validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
+    -- ),
+    -- validation_errors JSONB DEFAULT '[]'::jsonb,
+    --
     created_at TIMESTAMPTZ DEFAULT NOW(),
 
     CONSTRAINT modules_name_unique_per_tenant UNIQUE (tenant_id, name)

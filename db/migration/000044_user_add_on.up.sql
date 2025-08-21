@@ -1,20 +1,5 @@
 --- 1. Security Hardening Enhancements:
 
--- Add risk_score to user_sessions
-ALTER TABLE user_sessions
-    ADD COLUMN risk_score INT DEFAULT 0;
-COMMENT ON COLUMN user_sessions.risk_score IS 'Calculated risk score (0-100) based on action, context, and user behavior';
-
--- Password security enhancements
-ALTER TABLE users
-    ADD COLUMN password_strength INT DEFAULT 0,
-    ADD COLUMN compromised BOOLEAN DEFAULT false,
-    ADD COLUMN rotation_required BOOLEAN DEFAULT false;
-
-COMMENT ON COLUMN users.password_strength IS 'Password strength score (0-100) based on complexity';
-COMMENT ON COLUMN users.compromised IS 'Flag if password found in breach databases';
-COMMENT ON COLUMN users.rotation_required IS 'Forces password change on next login';
-
 
 --- 2. Performance Optimizations:
 

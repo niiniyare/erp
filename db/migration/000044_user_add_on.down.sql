@@ -28,12 +28,7 @@ DROP MATERIALIZED VIEW IF EXISTS mv_user_effective_permissions;
 
 -- 1. Revert Security Hardening Enhancements
 ALTER TABLE user_sessions 
-    DROP COLUMN IF EXISTS risk_score,
     DROP COLUMN IF EXISTS anomaly_flags,
     DROP COLUMN IF EXISTS mfa_verified_at;
 
-ALTER TABLE users 
-    DROP COLUMN IF EXISTS password_strength,
-    DROP COLUMN IF EXISTS compromised,
-    DROP COLUMN IF EXISTS rotation_required;
 

@@ -57,7 +57,7 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) (*model.U
 			EntityID:              user.TenantID, // Using TenantID as EntityID for now
 			PersonID:              nil,           // Will be set when linking to Person
 			EmployeeID:            nil,           // Will be set when linking to Employee
-			Username:              nil,           // Optional username
+			Username:              user.Email,    // Use email as username
 			Email:                 user.Email,
 			PasswordHash:          &user.PasswordHash,
 			UserType:              "INTERNAL", // Default user type

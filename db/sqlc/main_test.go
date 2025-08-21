@@ -51,7 +51,7 @@ func createModuleForTest(t *testing.T, ctx context.Context) *Module {
 
 func createUserForTest(t *testing.T, ctx context.Context) *User {
 	arg := CreateUserParams{
-		Username: stringPtr("testuser"),
+		Username: "testuser",
 		Email:    "testuser@example.com",
 	}
 	user, err := testQueries.CreateUser(ctx, arg)

@@ -20,7 +20,7 @@ INSERT INTO
 VALUES
   (current_tenant_id(), $1, $2, $3)
 RETURNING
-  id, tenant_id, name, display_name, description, category, version, is_active, validation_version, last_validation_run, validation_status, validation_errors, created_at
+  id, tenant_id, name, display_name, description, category, version, is_active, created_at
 `
 
 type CreateModuleParams struct {
@@ -41,10 +41,6 @@ func (q *Queries) CreateModule(ctx context.Context, arg CreateModuleParams) (*Mo
 		&i.Category,
 		&i.Version,
 		&i.IsActive,
-		&i.ValidationVersion,
-		&i.LastValidationRun,
-		&i.ValidationStatus,
-		&i.ValidationErrors,
 		&i.CreatedAt,
 	)
 	return &i, err

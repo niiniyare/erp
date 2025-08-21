@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS permissions (
     name VARCHAR(200) NOT NULL,
     display_name VARCHAR(250),
     description TEXT,
-    effect VARCHAR(20) DEFAULT 'ALLOW' CHECK (effect IN ('ALLOW', 'DENY')),
+    effect VARCHAR(5) DEFAULT 'ALLOW' CHECK (effect IN ('ALLOW', 'DENY')),
     conditions JSONB DEFAULT '{}'::jsonb,          -- ABAC evaluation conditions
     data_filters JSONB DEFAULT '{}'::jsonb,       -- Row-level security filters
     field_restrictions JSONB DEFAULT '{}'::jsonb, -- Column-level restrictions

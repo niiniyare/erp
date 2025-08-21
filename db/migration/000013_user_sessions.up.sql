@@ -22,15 +22,8 @@ CREATE TABLE user_sessions (
     device_info JSONB DEFAULT '{}'::jsonb,         -- Device fingerprinting data
     location_info JSONB DEFAULT '{}'::jsonb,       -- Geographic/network location for ABAC
     expires_at TIMESTAMPTZ NOT NULL,
-    
-    -- Standard validation columns
-    version INTEGER NOT NULL DEFAULT 1,
-    last_validation_run TIMESTAMPTZ,
-    validation_status VARCHAR(20) DEFAULT 'PENDING' CHECK (
-        validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR')
-    ),
-    validation_errors JSONB DEFAULT '[]'::jsonb,
-    
+    risk_score INT DEFAULT 0,
+
     created_at TIMESTAMPTZ DEFAULT NOW(),
     last_accessed_at TIMESTAMPTZ DEFAULT NOW(),
     is_active BOOLEAN DEFAULT true
@@ -49,6 +42,7 @@ COMMENT ON COLUMN user_sessions.ip_address IS 'IP address of the client';
 COMMENT ON COLUMN user_sessions.user_agent IS 'Browser/client user agent string';
 COMMENT ON COLUMN user_sessions.device_info IS 'JSONB containing device fingerprinting data for security analysis';
 COMMENT ON COLUMN user_sessions.location_info IS 'JSONB containing geographic and network location data for location-based access control';
+COMMENT ON COLUMN user_sessions.risk_score IS 'Calculated risk score (0-100) based on action, context, and user behavior';
 COMMENT ON COLUMN user_sessions.expires_at IS 'Session expiration timestamp';
 COMMENT ON COLUMN user_sessions.created_at IS 'Session creation timestamp';
 COMMENT ON COLUMN user_sessions.last_accessed_at IS 'Last activity timestamp for session timeout tracking';

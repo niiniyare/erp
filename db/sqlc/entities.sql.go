@@ -174,9 +174,9 @@ WHERE
 `
 
 type CountEntitiesWithFiltersParams struct {
-	Type     any `json:"type"`
-	IsActive any `json:"is_active"`
-	Hidden   any `json:"hidden"`
+	Type     interface{} `json:"type"`
+	IsActive interface{} `json:"is_active"`
+	Hidden   interface{} `json:"hidden"`
 }
 
 func (q *Queries) CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error) {
@@ -947,9 +947,9 @@ WHERE
   AND ancestor_id = $1
 `
 
-func (q *Queries) GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (any, error) {
+func (q *Queries) GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (interface{}, error) {
 	row := q.db.QueryRow(ctx, getEntityDepth, ancestorID)
-	var depth any
+	var depth interface{}
 	err := row.Scan(&depth)
 	return depth, err
 }
@@ -1135,11 +1135,11 @@ WHERE
 `
 
 type GetEntityHierarchyStatsRow struct {
-	TotalEntities        int64   `json:"total_entities"`
-	RootEntities         int64   `json:"root_entities"`
-	MaxDepth             any     `json:"max_depth"`
-	AvgDepth             float64 `json:"avg_depth"`
-	EntitiesWithChildren int64   `json:"entities_with_children"`
+	TotalEntities        int64       `json:"total_entities"`
+	RootEntities         int64       `json:"root_entities"`
+	MaxDepth             interface{} `json:"max_depth"`
+	AvgDepth             float64     `json:"avg_depth"`
+	EntitiesWithChildren int64       `json:"entities_with_children"`
 }
 
 func (q *Queries) GetEntityHierarchyStats(ctx context.Context) (*GetEntityHierarchyStatsRow, error) {
@@ -1165,9 +1165,9 @@ WHERE
   AND hp.descendant_id = $1
 `
 
-func (q *Queries) GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (any, error) {
+func (q *Queries) GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (interface{}, error) {
 	row := q.db.QueryRow(ctx, getEntityLevel, descendantID)
-	var level any
+	var level interface{}
 	err := row.Scan(&level)
 	return level, err
 }
@@ -1751,7 +1751,7 @@ type GetEntityTreeStructureRow struct {
 	UpdatedAt         time.Time    `json:"updated_at"`
 	DeletedAt         sql.NullTime `json:"deleted_at"`
 	Level             int32        `json:"level"`
-	Path              any          `json:"path"`
+	Path              interface{}  `json:"path"`
 	SortPath          string       `json:"sort_path"`
 }
 
@@ -1846,7 +1846,7 @@ type GetEntityWithHierarchyInfoRow struct {
 	CreatedAt         time.Time    `json:"created_at"`
 	UpdatedAt         time.Time    `json:"updated_at"`
 	DeletedAt         sql.NullTime `json:"deleted_at"`
-	Level             any          `json:"level"`
+	Level             interface{}  `json:"level"`
 	ChildCount        int64        `json:"child_count"`
 	ParentName        *string      `json:"parent_name"`
 }
@@ -2557,11 +2557,11 @@ LIMIT
 `
 
 type ListEntitiesWithPaginationParams struct {
-	Type     any   `json:"type"`
-	IsActive any   `json:"is_active"`
-	Hidden   any   `json:"hidden"`
-	Offset   int32 `json:"offset"`
-	Limit    int32 `json:"limit"`
+	Type     interface{} `json:"type"`
+	IsActive interface{} `json:"is_active"`
+	Hidden   interface{} `json:"hidden"`
+	Offset   int32       `json:"offset"`
+	Limit    int32       `json:"limit"`
 }
 
 func (q *Queries) ListEntitiesWithPagination(ctx context.Context, arg ListEntitiesWithPaginationParams) ([]*Entity, error) {

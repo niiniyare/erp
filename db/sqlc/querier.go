@@ -20,7 +20,7 @@ type Querier interface {
 	// Usage: Soft delete or archive old entity states
 	// Use case: Long-term data archival while maintaining referential integrity
 	ArchiveOldEntityStates(ctx context.Context, fiscalYear *int16) error
-	AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (any, error)
+	AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (interface{}, error)
 	BatchSoftDeleteEntities(ctx context.Context, uuids []uuid.UUID) error
 	// ===============================================
 	// Batch Operations
@@ -69,7 +69,7 @@ type Querier interface {
 	CheckTenantExists(ctx context.Context, id uuid.UUID) (bool, error)
 	CheckTenantLimits(ctx context.Context, arg CheckTenantLimitsParams) (bool, error)
 	CheckTenantNameExists(ctx context.Context, name string) (bool, error)
-	CheckUsernameAvailability(ctx context.Context, username *string) (bool, error)
+	CheckUsernameAvailability(ctx context.Context, username string) (bool, error)
 	// Remove duplicate events keeping only the first occurrence
 	CleanupDuplicateEvents(ctx context.Context, arg CleanupDuplicateEventsParams) error
 	CleanupExpiredEvaluations(ctx context.Context) error
@@ -270,11 +270,11 @@ type Querier interface {
 	// 6. PERFORMANCE AND ANALYTICS QUERIES
 	// =====================================================================
 	GetEntityCountByType(ctx context.Context) ([]*GetEntityCountByTypeRow, error)
-	GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (any, error)
+	GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (interface{}, error)
 	GetEntityDescendants(ctx context.Context, ancestorID uuid.UUID) ([]*GetEntityDescendantsRow, error)
 	GetEntityHealthCheck(ctx context.Context) (*GetEntityHealthCheckRow, error)
 	GetEntityHierarchyStats(ctx context.Context) (*GetEntityHierarchyStatsRow, error)
-	GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (any, error)
+	GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (interface{}, error)
 	GetEntityParent(ctx context.Context, descendantID uuid.UUID) (*Entity, error)
 	GetEntityPath(ctx context.Context, descendantID uuid.UUID) ([]*GetEntityPathRow, error)
 	GetEntityRoots(ctx context.Context) ([]*Entity, error)
@@ -408,7 +408,7 @@ type Querier interface {
 	GetHighRiskEvents(ctx context.Context, arg GetHighRiskEventsParams) ([]*GetHighRiskEventsRow, error)
 	// Usage: Gets the highest sequence number for a specific entity/key/fiscal year combination
 	// Use case: Finding the current maximum sequence before manual adjustments
-	GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (any, error)
+	GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (interface{}, error)
 	// Get hourly event rates for capacity planning
 	GetHourlyEventRates(ctx context.Context, arg GetHourlyEventRatesParams) ([]*GetHourlyEventRatesRow, error)
 	GetInconsistentHierarchyPaths(ctx context.Context) ([]*GetInconsistentHierarchyPathsRow, error)
@@ -504,11 +504,11 @@ type Querier interface {
 	GetUserAuditHistory(ctx context.Context, arg GetUserAuditHistoryParams) ([]*GetUserAuditHistoryRow, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
-	GetUserByUsername(ctx context.Context, username *string) (*User, error)
+	GetUserByUsername(ctx context.Context, username string) (*User, error)
 	GetUserEvaluationHistory(ctx context.Context, arg GetUserEvaluationHistoryParams) ([]*PolicyEvaluation, error)
 	GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreference, error)
 	GetUserPasswordByID(ctx context.Context, id uuid.UUID) (*string, error)
-	// Get risk profile for a user
+	// Get comprehensive risk profile for a user
 	GetUserRiskProfile(ctx context.Context, arg GetUserRiskProfileParams) (*GetUserRiskProfileRow, error)
 	// Get audit events for a specific session
 	GetUserSessionEvents(ctx context.Context, sessionID *uuid.UUID) ([]*GetUserSessionEventsRow, error)

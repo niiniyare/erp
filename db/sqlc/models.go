@@ -263,13 +263,9 @@ type Employee struct {
 	// Numeric security clearance level (0=lowest, higher numbers = higher clearance)
 	SecurityLevel *int32 `json:"security_level"`
 	// JSONB containing employment-specific ABAC attributes for access control
-	AccessAttributes  []byte       `json:"access_attributes"`
-	Version           int32        `json:"version"`
-	LastValidationRun sql.NullTime `json:"last_validation_run"`
-	ValidationStatus  *string      `json:"validation_status"`
-	ValidationErrors  []byte       `json:"validation_errors"`
-	CreatedAt         time.Time    `json:"created_at"`
-	UpdatedAt         time.Time    `json:"updated_at"`
+	AccessAttributes []byte    `json:"access_attributes"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 	// Soft delete timestamp - NULL means record is active
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
@@ -497,42 +493,38 @@ type Module struct {
 	// Module category for grouping: CORE, HR, FINANCE, SALES, INVENTORY, etc.
 	Category *string `json:"category"`
 	// Module version for tracking feature updates and compatibility
-	Version           *string      `json:"version"`
-	IsActive          *bool        `json:"is_active"`
-	ValidationVersion int32        `json:"validation_version"`
-	LastValidationRun sql.NullTime `json:"last_validation_run"`
-	ValidationStatus  *string      `json:"validation_status"`
-	ValidationErrors  []byte       `json:"validation_errors"`
-	CreatedAt         sql.NullTime `json:"created_at"`
+	Version   *string      `json:"version"`
+	IsActive  *bool        `json:"is_active"`
+	CreatedAt sql.NullTime `json:"created_at"`
 }
 
 type MvTenantFeatureFlagsCache struct {
-	TenantID          uuid.UUID `json:"tenant_id"`
-	FeatureFlagID     uuid.UUID `json:"feature_flag_id"`
-	FeatureFlagName   string    `json:"feature_flag_name"`
-	FlagType          string    `json:"flag_type"`
-	Enabled           any       `json:"enabled"`
-	Value             []byte    `json:"value"`
-	EvaluationSource  string    `json:"evaluation_source"`
-	DefaultValue      bool      `json:"default_value"`
-	RolloutPercentage *int32    `json:"rollout_percentage"`
-	TargetAudience    []byte    `json:"target_audience"`
-	Metadata          []byte    `json:"metadata"`
-	OverrideEnabled   *bool     `json:"override_enabled"`
-	OverrideValue     []byte    `json:"override_value"`
-	OverrideReason    string    `json:"override_reason"`
-	CacheTimestamp    any       `json:"cache_timestamp"`
-	CacheCreatedAt    any       `json:"cache_created_at"`
+	TenantID          uuid.UUID   `json:"tenant_id"`
+	FeatureFlagID     uuid.UUID   `json:"feature_flag_id"`
+	FeatureFlagName   string      `json:"feature_flag_name"`
+	FlagType          string      `json:"flag_type"`
+	Enabled           interface{} `json:"enabled"`
+	Value             []byte      `json:"value"`
+	EvaluationSource  string      `json:"evaluation_source"`
+	DefaultValue      bool        `json:"default_value"`
+	RolloutPercentage *int32      `json:"rollout_percentage"`
+	TargetAudience    []byte      `json:"target_audience"`
+	Metadata          []byte      `json:"metadata"`
+	OverrideEnabled   *bool       `json:"override_enabled"`
+	OverrideValue     []byte      `json:"override_value"`
+	OverrideReason    string      `json:"override_reason"`
+	CacheTimestamp    interface{} `json:"cache_timestamp"`
+	CacheCreatedAt    interface{} `json:"cache_created_at"`
 }
 
 type MvUserEffectivePermission struct {
-	UserID              uuid.UUID `json:"user_id"`
-	TenantID            uuid.UUID `json:"tenant_id"`
-	ResourceID          uuid.UUID `json:"resource_id"`
-	ActionID            uuid.UUID `json:"action_id"`
-	AllowFlag           any       `json:"allow_flag"`
-	RolePermissionIds   any       `json:"role_permission_ids"`
-	DirectPermissionIds any       `json:"direct_permission_ids"`
+	UserID              uuid.UUID   `json:"user_id"`
+	TenantID            uuid.UUID   `json:"tenant_id"`
+	ResourceID          uuid.UUID   `json:"resource_id"`
+	ActionID            uuid.UUID   `json:"action_id"`
+	AllowFlag           interface{} `json:"allow_flag"`
+	RolePermissionIds   interface{} `json:"role_permission_ids"`
+	DirectPermissionIds interface{} `json:"direct_permission_ids"`
 }
 
 // Stores user notification preferences.
@@ -747,16 +739,12 @@ type Role struct {
 	// JSONB defining which entities this role can access
 	EntityScope []byte `json:"entity_scope"`
 	// JSONB containing time, location, device, and other conditional access rules
-	Conditions        []byte       `json:"conditions"`
-	IsSystemRole      *bool        `json:"is_system_role"`
-	IsActive          *bool        `json:"is_active"`
-	Version           int32        `json:"version"`
-	LastValidationRun sql.NullTime `json:"last_validation_run"`
-	ValidationStatus  *string      `json:"validation_status"`
-	ValidationErrors  []byte       `json:"validation_errors"`
-	CreatedAt         time.Time    `json:"created_at"`
-	UpdatedAt         time.Time    `json:"updated_at"`
-	DeletedAt         sql.NullTime `json:"deleted_at"`
+	Conditions   []byte       `json:"conditions"`
+	IsSystemRole *bool        `json:"is_system_role"`
+	IsActive     *bool        `json:"is_active"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	DeletedAt    sql.NullTime `json:"deleted_at"`
 }
 
 // Maps permissions to roles with optional entity-specific scoping and additional conditions for flexible authorization.
@@ -916,10 +904,10 @@ type User struct {
 	PersonID *uuid.UUID `json:"person_id"`
 	// Optional foreign key to employees table (NULL for non-employee users)
 	EmployeeID *uuid.UUID `json:"employee_id"`
-	// Unique username for login (optional, email can be used instead)
-	Username *string `json:"username"`
 	// Email address for login and communication (must be unique per tenant)
 	Email string `json:"email"`
+	// Unique username for login (optional, email can be used instead)
+	Username string `json:"username"`
 	// Hashed password for authentication
 	PasswordHash *string `json:"password_hash"`
 	// Classification of user account: INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, ADMIN
@@ -945,21 +933,17 @@ type User struct {
 	// JSONB containing ABAC attributes for fine-grained access control
 	UserAttributes []byte `json:"user_attributes"`
 	// JSONB containing user preferences and application settings
-	Settings          []byte       `json:"settings"`
-	Version           int32        `json:"version"`
-	LastValidationRun sql.NullTime `json:"last_validation_run"`
-	ValidationStatus  *string      `json:"validation_status"`
-	ValidationErrors  []byte       `json:"validation_errors"`
-	CreatedAt         time.Time    `json:"created_at"`
-	UpdatedAt         time.Time    `json:"updated_at"`
-	// Soft delete timestamp - NULL means record is active
-	DeletedAt sql.NullTime `json:"deleted_at"`
+	Settings []byte `json:"settings"`
 	// Password strength score (0-100) based on complexity
 	PasswordStrength *int32 `json:"password_strength"`
 	// Flag if password found in breach databases
 	Compromised *bool `json:"compromised"`
 	// Forces password change on next login
-	RotationRequired *bool `json:"rotation_required"`
+	RotationRequired *bool     `json:"rotation_required"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+	// Soft delete timestamp - NULL means record is active
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
 // Partitioned table for user activity tracking and behavioral analytics supporting ABAC evaluation
@@ -1056,19 +1040,15 @@ type UserSession struct {
 	// JSONB containing geographic and network location data for location-based access control
 	LocationInfo []byte `json:"location_info"`
 	// Session expiration timestamp
-	ExpiresAt         time.Time    `json:"expires_at"`
-	Version           int32        `json:"version"`
-	LastValidationRun sql.NullTime `json:"last_validation_run"`
-	ValidationStatus  *string      `json:"validation_status"`
-	ValidationErrors  []byte       `json:"validation_errors"`
+	ExpiresAt time.Time `json:"expires_at"`
+	// Calculated risk score (0-100) based on action, context, and user behavior
+	RiskScore *int32 `json:"risk_score"`
 	// Session creation timestamp
 	CreatedAt sql.NullTime `json:"created_at"`
 	// Last activity timestamp for session timeout tracking
 	LastAccessedAt sql.NullTime `json:"last_accessed_at"`
 	// Whether the session is currently active
 	IsActive *bool `json:"is_active"`
-	// Calculated risk score (0-100) based on action, context, and user behavior
-	RiskScore *int32 `json:"risk_score"`
 }
 
 type VActiveEntity struct {
@@ -1094,7 +1074,7 @@ type VAuditSummaryView struct {
 	EventCount      int64           `json:"event_count"`
 	UniqueUsers     int64           `json:"unique_users"`
 	AvgRiskScore    float64         `json:"avg_risk_score"`
-	MaxRiskScore    any             `json:"max_risk_score"`
+	MaxRiskScore    interface{}     `json:"max_risk_score"`
 	DeniedAttempts  int64           `json:"denied_attempts"`
 	AllowedAttempts int64           `json:"allowed_attempts"`
 }
@@ -1177,29 +1157,29 @@ type VEntityStructure struct {
 
 // Summary view of roles with their permissions, resources, actions, and user assignment counts for role management and analysis.
 type VRolePermissionsSummary struct {
-	TenantID          uuid.UUID  `json:"tenant_id"`
-	RoleID            uuid.UUID  `json:"role_id"`
-	RoleName          string     `json:"role_name"`
-	RoleDisplayName   *string    `json:"role_display_name"`
-	RoleType          *string    `json:"role_type"`
-	HierarchyLevel    *int32     `json:"hierarchy_level"`
-	ModuleID          *uuid.UUID `json:"module_id"`
-	ModuleName        *string    `json:"module_name"`
-	ResourceNames     any        `json:"resource_names"`
-	ActionNames       any        `json:"action_names"`
-	PermissionCount   int64      `json:"permission_count"`
-	AssignedUserCount int64      `json:"assigned_user_count"`
+	TenantID          uuid.UUID   `json:"tenant_id"`
+	RoleID            uuid.UUID   `json:"role_id"`
+	RoleName          string      `json:"role_name"`
+	RoleDisplayName   *string     `json:"role_display_name"`
+	RoleType          *string     `json:"role_type"`
+	HierarchyLevel    *int32      `json:"hierarchy_level"`
+	ModuleID          *uuid.UUID  `json:"module_id"`
+	ModuleName        *string     `json:"module_name"`
+	ResourceNames     interface{} `json:"resource_names"`
+	ActionNames       interface{} `json:"action_names"`
+	PermissionCount   int64       `json:"permission_count"`
+	AssignedUserCount int64       `json:"assigned_user_count"`
 }
 
 // Identifies potential security threats through session anomalies and audit patterns
 type VSecurityThreatDashboard struct {
-	UserID                 uuid.UUID `json:"user_id"`
-	Username               *string   `json:"username"`
-	Email                  string    `json:"email"`
-	HighRiskSessions       int64     `json:"high_risk_sessions"`
-	MaxRiskScore           any       `json:"max_risk_score"`
-	CriticalEvents         int64     `json:"critical_events"`
-	LastSuspiciousActivity any       `json:"last_suspicious_activity"`
+	UserID                 uuid.UUID   `json:"user_id"`
+	Username               string      `json:"username"`
+	Email                  string      `json:"email"`
+	HighRiskSessions       int64       `json:"high_risk_sessions"`
+	MaxRiskScore           interface{} `json:"max_risk_score"`
+	CriticalEvents         int64       `json:"critical_events"`
+	LastSuspiciousActivity interface{} `json:"last_suspicious_activity"`
 }
 
 type VTenantEntitySummary struct {
@@ -1226,16 +1206,16 @@ type VTenantHierarchy struct {
 }
 
 type VTenantResourceUtilization struct {
-	TenantID           uuid.UUID `json:"tenant_id"`
-	TenantName         string    `json:"tenant_name"`
-	TenantStatus       string    `json:"tenant_status"`
-	TotalEntities      int64     `json:"total_entities"`
-	ActiveEntities     int64     `json:"active_entities"`
-	NonDeletedEntities int64     `json:"non_deleted_entities"`
-	SequenceStates     int64     `json:"sequence_states"`
-	DocumentTypes      int64     `json:"document_types"`
-	LastEntityCreated  any       `json:"last_entity_created"`
-	LastEntityUpdated  any       `json:"last_entity_updated"`
+	TenantID           uuid.UUID   `json:"tenant_id"`
+	TenantName         string      `json:"tenant_name"`
+	TenantStatus       string      `json:"tenant_status"`
+	TotalEntities      int64       `json:"total_entities"`
+	ActiveEntities     int64       `json:"active_entities"`
+	NonDeletedEntities int64       `json:"non_deleted_entities"`
+	SequenceStates     int64       `json:"sequence_states"`
+	DocumentTypes      int64       `json:"document_types"`
+	LastEntityCreated  interface{} `json:"last_entity_created"`
+	LastEntityUpdated  interface{} `json:"last_entity_updated"`
 }
 
 // Comprehensive view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.
@@ -1243,7 +1223,7 @@ type VUserCompleteView struct {
 	UserID             uuid.UUID    `json:"user_id"`
 	TenantID           uuid.UUID    `json:"tenant_id"`
 	EntityID           uuid.UUID    `json:"entity_id"`
-	Username           *string      `json:"username"`
+	Username           string       `json:"username"`
 	Email              string       `json:"email"`
 	UserType           string       `json:"user_type"`
 	AccountStatus      *string      `json:"account_status"`
@@ -1261,9 +1241,9 @@ type VUserCompleteView struct {
 	DepartmentID       *uuid.UUID   `json:"department_id"`
 	EmploymentStatus   *string      `json:"employment_status"`
 	SecurityLevel      *int32       `json:"security_level"`
-	CombinedAttributes any          `json:"combined_attributes"`
-	RoleNames          any          `json:"role_names"`
-	RoleIds            any          `json:"role_ids"`
+	CombinedAttributes interface{}  `json:"combined_attributes"`
+	RoleNames          interface{}  `json:"role_names"`
+	RoleIds            interface{}  `json:"role_ids"`
 	ActiveRoleCount    int64        `json:"active_role_count"`
 }
 
