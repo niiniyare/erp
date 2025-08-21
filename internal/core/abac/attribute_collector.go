@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/niiniyare/erp/internal/core/abac/repository"
+	"github.com/niiniyare/erp/internal/shared/convert"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -487,8 +488,14 @@ func (ac *attributeCollector) CollectUserAttributes(ctx context.Context, req *Us
 	executionTime := time.Since(startTime)
 
 	// Calculate summary statistics
-	totalRequested := int32(len(req.RequiredAttributes) + len(req.OptionalAttributes))
-	totalCollected := int32(len(baseResult.CollectedAttributes))
+	totalRequested, err := convert.IntToInt32(len(req.RequiredAttributes) + len(req.OptionalAttributes))
+	if err != nil {
+		totalRequested = 0
+	}
+	totalCollected, err := convert.IntToInt32(len(baseResult.CollectedAttributes))
+	if err != nil {
+		totalCollected = 0
+	}
 
 	summary := UserCollectionSummary{
 		TotalAttributesRequested: totalRequested,
@@ -657,10 +664,22 @@ func (ac *attributeCollector) BatchCollectAttributes(ctx context.Context, req *B
 	executionTime := time.Since(startTime)
 
 	// Calculate batch summary
+	totalRequests, err := convert.IntToInt32(len(req.CollectionRequests))
+	if err != nil {
+		totalRequests = 0
+	}
+	successfulRequests, err := convert.IntToInt32(len(individualResults))
+	if err != nil {
+		successfulRequests = 0
+	}
+	failedRequestsCount, err := convert.IntToInt32(len(failedRequests))
+	if err != nil {
+		failedRequestsCount = 0
+	}
 	summary := BatchCollectionSummary{
-		TotalRequests:      int32(len(req.CollectionRequests)),
-		SuccessfulRequests: int32(len(individualResults)),
-		FailedRequests:     int32(len(failedRequests)),
+		TotalRequests:      totalRequests,
+		SuccessfulRequests: successfulRequests,
+		FailedRequests:     failedRequestsCount,
 	}
 
 	// Calculate aggregated metrics

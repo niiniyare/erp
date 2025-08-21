@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/niiniyare/erp/internal/core/abac/repository"
+	"github.com/niiniyare/erp/internal/shared/convert"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -1339,9 +1340,21 @@ func (ar *attributeResolver) calculateFinalMetrics(result *AttributeResolutionRe
 	}
 
 	// Calculate dependency metrics
-	result.DependencyInfo.TotalDependencies = int32(graph.EdgeCount())
-	result.DependencyInfo.ResolvedDependencies = int32(len(result.ResolvedAttributes))
-	result.DependencyInfo.FailedDependencies = int32(len(result.FailedAttributes))
+	edgeCount, err := convert.IntToInt32(graph.EdgeCount())
+	if err != nil {
+		edgeCount = 0
+	}
+	resolvedDeps, err := convert.IntToInt32(len(result.ResolvedAttributes))
+	if err != nil {
+		resolvedDeps = 0
+	}
+	failedDeps, err := convert.IntToInt32(len(result.FailedAttributes))
+	if err != nil {
+		failedDeps = 0
+	}
+	result.DependencyInfo.TotalDependencies = edgeCount
+	result.DependencyInfo.ResolvedDependencies = resolvedDeps
+	result.DependencyInfo.FailedDependencies = failedDeps
 	result.DependencyInfo.DependencyGraph.HasCycles = graph.HasCycles()
 
 	// Calculate performance metrics
