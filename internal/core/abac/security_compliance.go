@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/niiniyare/erp/internal/core/abac/repository"
+	"github.com/niiniyare/erp/internal/shared/convert"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -344,12 +345,22 @@ func (scm *securityComplianceManager) QueryAuditLog(ctx context.Context, req *Au
 	}
 
 	// Build query filters
+	limit, err := convert.IntToInt32(req.PageSize)
+	if err != nil {
+		return nil, fmt.Errorf("invalid page size: %w", err)
+	}
+	
+	offset, err := convert.IntToInt32(req.Page * req.PageSize)
+	if err != nil {
+		return nil, fmt.Errorf("invalid offset: %w", err)
+	}
+
 	getLogsReq := &repository.GetAuditLogsRequest{
 		StartTime:  req.StartTime,
 		EndTime:    req.EndTime,
 		UserID:     req.ActorID,
-		Limit:      int32(req.PageSize),
-		Offset:     int32(req.Page * req.PageSize),
+		Limit:      limit,
+		Offset:     offset,
 		EntityType: req.ResourceType,
 	}
 	if req.EventType != nil {

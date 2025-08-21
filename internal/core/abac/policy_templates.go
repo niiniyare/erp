@@ -12,6 +12,7 @@ import (
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
+	"github.com/niiniyare/erp/internal/shared/convert"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -384,12 +385,33 @@ func (pm *policyManager) ImportPolicies(ctx context.Context, req *ImportPolicies
 	executionTime := time.Since(startTime)
 
 	// Calculate summary
+	totalPolicies, err := convert.IntToInt32(len(parsedPolicies))
+	if err != nil {
+		return nil, fmt.Errorf("invalid total policies count: %w", err)
+	}
+	successfulImports, err := convert.IntToInt32(len(importedPolicies))
+	if err != nil {
+		return nil, fmt.Errorf("invalid successful imports count: %w", err)
+	}
+	failedImports, err := convert.IntToInt32(len(failedImports))
+	if err != nil {
+		return nil, fmt.Errorf("invalid failed imports count: %w", err)
+	}
+	validatedPolicies, err := convert.IntToInt32(len(validationResults))
+	if err != nil {
+		return nil, fmt.Errorf("invalid validated policies count: %w", err)
+	}
+	warningsCount, err := convert.IntToInt32(len(warnings))
+	if err != nil {
+		return nil, fmt.Errorf("invalid warnings count: %w", err)
+	}
+
 	summary := ImportSummary{
-		TotalPolicies:     int32(len(parsedPolicies)),
-		SuccessfulImports: int32(len(importedPolicies)),
-		FailedImports:     int32(len(failedImports)),
-		ValidatedPolicies: int32(len(validationResults)),
-		WarningsCount:     int32(len(warnings)),
+		TotalPolicies:     totalPolicies,
+		SuccessfulImports: successfulImports,
+		FailedImports:     failedImports,
+		ValidatedPolicies: validatedPolicies,
+		WarningsCount:     warningsCount,
 	}
 
 	// Record metrics
@@ -483,9 +505,18 @@ func (pm *policyManager) ExportPolicies(ctx context.Context, req *ExportPolicies
 		}
 	}
 
+	totalPolicies, err := convert.IntToInt32(len(policiesToExport))
+	if err != nil {
+		return nil, fmt.Errorf("invalid total policies count: %w", err)
+	}
+	exportedPolicies, err := convert.IntToInt32(len(policiesToExport))
+	if err != nil {
+		return nil, fmt.Errorf("invalid exported policies count: %w", err)
+	}
+
 	summary := ExportSummary{
-		TotalPolicies:    int32(len(policiesToExport)),
-		ExportedPolicies: int32(len(policiesToExport)),
+		TotalPolicies:    totalPolicies,
+		ExportedPolicies: exportedPolicies,
 		OutputSize:       outputSize,
 	}
 

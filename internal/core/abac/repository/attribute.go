@@ -13,6 +13,7 @@ import (
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/platform/cache"
+	"github.com/niiniyare/erp/internal/shared/convert"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -274,9 +275,20 @@ func (r *attributeRepository) ListAttributeDefinitions(ctx context.Context, req 
 	ctx, span := r.tracer.StartSpan(ctx, "abac.repository.ListAttributeDefinitions")
 	defer span.End()
 
+	limit, err := convert.IntToInt32(req.Limit)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("invalid limit value: %w", err)
+	}
+	offset, err := convert.IntToInt32(req.Offset)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("invalid offset value: %w", err)
+	}
+
 	params := db.ListAttributeDefinitionsParams{
-		Limit:  int32(req.Limit),
-		Offset: int32(req.Offset),
+		Limit:  limit,
+		Offset: offset,
 	}
 
 	if req.Search != "" {

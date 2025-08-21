@@ -80,6 +80,19 @@ func IntToInt32(v int) (int32, error) {
 	return int32(v), nil
 }
 
+// ---------- INT <-> INT16 ----------
+
+// IntToInt16 converts int → int16 safely.
+func IntToInt16(v int) (int16, error) {
+	if v > math.MaxInt16 {
+		return 0, ErrOverflow
+	}
+	if v < math.MinInt16 {
+		return 0, ErrUnderflow
+	}
+	return int16(v), nil
+}
+
 // ---------- UINT64 <-> INT64 ----------
 
 // Uint64ToInt64 converts uint64 → int64 safely.

@@ -47,6 +47,13 @@ tasks:
     desc: Generate SQLC store code
     cmds:
       - sqlc generate
+  staticcheck:
+    cmds:
+      - staticcheck ./...
+  sec:
+    desc: gosec analyzes Go source code to look for common programming mistakes that can lead to security problems.    
+    cmds:
+     - gosec -quiet -severity="HIGH" ./...
   mock:
     desc: Generate mocks for interfaces
     cmds:

@@ -16,6 +16,7 @@ import (
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/platform/cache"
+	"github.com/niiniyare/erp/internal/shared/convert"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -332,7 +333,13 @@ func (r *attributeDefinitionRepository) ListAttributeDefinitions(ctx context.Con
 	}
 
 	// Convert to SQLC params
-	params := r.toListAttributeDefParams(req)
+	params, err := r.toListAttributeDefParams(req)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "Failed to convert params")
+		r.recordAttributeDefMetrics(ctx, "list", "param_error", time.Since(startTime))
+		return nil, errors.NewBusinessError("ATTRIBUTE_DEF_LIST_FAILED", "Failed to convert request parameters").WithCause(err)
+	}
 
 	// Get from database
 	sqlcAttrDefs, err := r.store.ListAttributeDefinitions(ctx, *params)
@@ -602,10 +609,19 @@ func (r *attributeDefinitionRepository) toAttributeDefUpdateParams(id uuid.UUID,
 }
 
 // toListAttributeDefParams converts ListAttributeDefinitionsRequest to SQLC params
-func (r *attributeDefinitionRepository) toListAttributeDefParams(req *ListAttributeDefinitionsRequest) *db.ListAttributeDefinitionsParams {
+func (r *attributeDefinitionRepository) toListAttributeDefParams(req *ListAttributeDefinitionsRequest) (*db.ListAttributeDefinitionsParams, error) {
+	limit, err := convert.IntToInt32(req.Limit)
+	if err != nil {
+		return nil, fmt.Errorf("invalid limit value: %w", err)
+	}
+	offset, err := convert.IntToInt32(req.Offset)
+	if err != nil {
+		return nil, fmt.Errorf("invalid offset value: %w", err)
+	}
+
 	params := &db.ListAttributeDefinitionsParams{
-		Limit:  int32(req.Limit),
-		Offset: int32(req.Offset),
+		Limit:  limit,
+		Offset: offset,
 	}
 
 	if req.Category != nil {
@@ -615,7 +631,7 @@ func (r *attributeDefinitionRepository) toListAttributeDefParams(req *ListAttrib
 		params.IsActive = *req.IsActive
 	}
 
-	return params
+	return params, nil
 }
 
 // fromSQLCAttributeDefinition converts SQLC attribute definition to domain model

@@ -13,6 +13,7 @@ import (
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/platform/cache"
+	"github.com/niiniyare/erp/internal/shared/convert"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -81,7 +82,10 @@ func (r *policyEvaluationRepository) CacheEvaluationResult(ctx context.Context, 
 		cacheKey = &key
 	}
 
-	evaluationTimeMs := int32(req.EvaluationTimeMS)
+	evaluationTimeMs, err := convert.Int64ToInt32(req.EvaluationTimeMS)
+	if err != nil {
+		return fmt.Errorf("invalid evaluation time: %w", err)
+	}
 	params := db.CacheEvaluationResultParams{
 		UserID:             req.UserID,
 		ResourceType:       req.ResourceType,
@@ -285,12 +289,22 @@ func (r *policyEvaluationRepository) GetUserEvaluationHistory(ctx context.Contex
 		))
 	defer span.End()
 
+	limit, err := convert.IntToInt32(req.Limit)
+	if err != nil {
+		return nil, fmt.Errorf("invalid limit: %w", err)
+	}
+	
+	offset, err := convert.IntToInt32(req.Offset)
+	if err != nil {
+		return nil, fmt.Errorf("invalid offset: %w", err)
+	}
+
 	params := db.GetUserEvaluationHistoryParams{
 		UserID:  req.UserID,
 		Column2: *req.ResourceType,
 		Column3: *req.Action,
-		Limit:   int32(req.Limit),
-		Offset:  int32(req.Offset),
+		Limit:   limit,
+		Offset:  offset,
 	}
 
 	evaluations, err := r.store.GetUserEvaluationHistory(ctx, params)

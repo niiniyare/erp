@@ -10,6 +10,7 @@ import (
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/tenant"
+	"github.com/niiniyare/erp/internal/shared/convert"
 )
 
 // Servicedefines the business logic interface for feature flags
@@ -250,10 +251,20 @@ func (s *service) ListFeatureFlags(ctx context.Context, request *ListFeatureFlag
 
 	offset := (request.Page - 1) * request.PageSize
 
+	limit, err := convert.IntToInt32(request.PageSize)
+	if err != nil {
+		return nil, fmt.Errorf("invalid page size: %w", err)
+	}
+	
+	offsetInt32, err := convert.IntToInt32(offset)
+	if err != nil {
+		return nil, fmt.Errorf("invalid offset: %w", err)
+	}
+
 	flags, err := s.repository.ListFeatureFlags(ctx, ListFeatureFlagsParams{
 		FlagType: request.FlagType,
-		Limit:    int32(request.PageSize),
-		Offset:   int32(offset),
+		Limit:    limit,
+		Offset:   offsetInt32,
 	})
 	if err != nil {
 		return nil, err
