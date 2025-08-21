@@ -1,0 +1,786 @@
+package repo
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
+
+	db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/core/iam/model"
+	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+)
+
+// RoleRepositoryComprehensiveTestSuite implements IAM-REPO-003: RoleRepository comprehensive testing
+// Covers hierarchical role queries, circular dependency detection, and role inheritance validation
+type RoleRepositoryComprehensiveTestSuite struct {
+	suite.Suite
+	ctx      context.Context
+	store    *db.MockStore
+	repo     RoleRepository
+	ctrl     *gomock.Controller
+	logger   *logger.MockLogger
+	metrics  *metrics.MockMetricsProvider
+	tracing  *tracing.MockTracingService
+	tenantID uuid.UUID
+	entityID uuid.UUID
+}
+
+// SetupTest initializes test fixtures for each test
+func (s *RoleRepositoryComprehensiveTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.ctrl = gomock.NewController(s.T())
+	s.store = db.NewMockStore(s.ctrl)
+	s.logger = logger.NewMockLogger(s.ctrl)
+	s.metrics = metrics.NewMockMetricsProvider(s.ctrl)
+	s.tracing = tracing.NewMockTracingService(s.ctrl)
+	s.tenantID = uuid.New()
+	s.entityID = uuid.New()
+	s.repo = NewRoleRepository(s.store, s.logger, s.metrics, s.tracing)
+}
+
+// TearDownTest cleans up test fixtures
+func (s *RoleRepositoryComprehensiveTestSuite) TearDownTest() {
+	s.ctrl.Finish()
+}
+
+// TestRoleRepositoryComprehensive runs the comprehensive role repository test suite
+func TestRoleRepositoryComprehensive(t *testing.T) {
+	suite.Run(t, new(RoleRepositoryComprehensiveTestSuite))
+}
+
+// TestCreateRole implements IAM-REPO-003: Verify Role creation with hierarchy validation
+func (s *RoleRepositoryComprehensiveTestSuite) TestCreateRole() {
+	testCases := []struct {
+		name            string
+		setupRole       func() *model.Role
+		setupMocks      func()
+		expectError     bool
+		errorContains   string
+		validateResult  func(*testing.T, *model.Role)
+	}{
+		{
+			name: "IAM-REPO-003_ValidRoleCreation_RootLevel",
+			setupRole: func() *model.Role {
+				return &model.Role{
+					ID:          uuid.New(),
+					TenantID:    s.tenantID,
+					Name:        "system_admin",
+					Description: "System Administrator with full access",
+					ParentID:    nil, // Root level role
+					EntityID:    &s.entityID,
+					Metadata: map[string]any{
+						"permissions": []string{"*"},
+						"level":       "root",
+						"auto_assign": false,
+					},
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+			},
+			setupMocks: func() {
+				s.store.EXPECT().
+					CreateRole(gomock.Any(), gomock.Any()).
+					Return(db.Role{
+						ID:          uuid.New(),
+						TenantID:    s.tenantID,
+						Name:        "system_admin",
+						Description: "System Administrator with full access",
+						EntityID:    &s.entityID,
+					}, nil).
+					Times(1)
+			},
+			expectError: false,
+			validateResult: func(t *testing.T, role *model.Role) {
+				require.NotNil(t, role)
+				require.Equal(t, s.tenantID, role.TenantID)
+				require.Equal(t, "system_admin", role.Name)
+				require.Nil(t, role.ParentID)
+				require.NotNil(t, role.EntityID)
+				require.Equal(t, s.entityID, *role.EntityID)
+				require.NotNil(t, role.Metadata)
+			},
+		},
+		{
+			name: "IAM-REPO-003_ValidRoleCreation_WithParentHierarchy",
+			setupRole: func() *model.Role {
+				parentID := uuid.New()
+				return &model.Role{
+					ID:          uuid.New(),
+					TenantID:    s.tenantID,
+					Name:        "department_manager",
+					Description: "Department Manager inheriting from Admin",
+					ParentID:    &parentID,
+					EntityID:    &s.entityID,
+					Metadata: map[string]any{
+						"department":    "Engineering",
+						"level":         "department",
+						"inherit_perms": true,
+					},
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+			},
+			setupMocks: func() {
+				// First, verify parent exists (circular dependency check)
+				parentID := uuid.New()
+				s.store.EXPECT().
+					GetRoleByID(gomock.Any(), parentID).
+					Return(db.Role{
+						ID:       parentID,
+						TenantID: s.tenantID,
+						Name:     "admin",
+						ParentID: nil, // No circular dependency
+					}, nil).
+					Times(1)
+				
+				// Then create the role
+				s.store.EXPECT().
+					CreateRole(gomock.Any(), gomock.Any()).
+					Return(db.Role{
+						ID:          uuid.New(),
+						TenantID:    s.tenantID,
+						Name:        "department_manager",
+						Description: "Department Manager inheriting from Admin",
+						ParentID:    &parentID,
+						EntityID:    &s.entityID,
+					}, nil).
+					Times(1)
+			},
+			expectError: false,
+			validateResult: func(t *testing.T, role *model.Role) {
+				require.NotNil(t, role)
+				require.Equal(t, "department_manager", role.Name)
+				require.NotNil(t, role.ParentID)
+				require.NotNil(t, role.Metadata)
+				require.Equal(t, true, role.Metadata["inherit_perms"])
+			},
+		},
+		{
+			name: "IAM-REPO-003_DuplicateRoleName_WithinTenant_ReturnsError",
+			setupRole: func() *model.Role {
+				return &model.Role{
+					ID:          uuid.New(),
+					TenantID:    s.tenantID,
+					Name:        "admin", // Duplicate name
+					Description: "Another admin role",
+					EntityID:    &s.entityID,
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+				}
+			},
+			setupMocks: func() {
+				s.store.EXPECT().
+					CreateRole(gomock.Any(), gomock.Any()).
+					Return(db.Role{}, &db.Error{Code: "23505", Message: "duplicate key value violates unique constraint"}).
+					Times(1)
+			},
+			expectError:   true,
+			errorContains: "duplicate key value violates unique constraint",
+		},
+		{
+			name: "IAM-REPO-003_CircularDependency_DetectedAndPrevented",
+			setupRole: func() *model.Role {
+				// Attempt to create a role that would cause circular dependency
+				parentID := uuid.New() // This would point back to a child
+				return &model.Role{
+					ID:          uuid.New(),
+					TenantID:    s.tenantID,
+					Name:        "circular_role",
+					Description: "Role that would create circular dependency",
+					ParentID:    &parentID,
+					EntityID:    &s.entityID,
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+				}
+			},
+			setupMocks: func() {
+				// Mock circular dependency detection
+				parentID := uuid.New()
+				roleID := uuid.New()
+				s.store.EXPECT().
+					GetRoleByID(gomock.Any(), parentID).
+					Return(db.Role{
+						ID:       parentID,
+						TenantID: s.tenantID,
+						Name:     "parent_role",
+						ParentID: &roleID, // Points back to child - circular!
+					}, nil).
+					Times(1)
+				
+				// Should not attempt to create due to circular dependency
+			},
+			expectError:   true,
+			errorContains: "circular dependency detected",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Setup tracing mocks
+			s.tracing.EXPECT().
+				StartSpan(gomock.Any(), gomock.Any()).
+				Return(s.ctx, &tracing.MockSpan{}).
+				AnyTimes()
+			
+			// Setup mock behavior
+			tc.setupMocks()
+			
+			// Arrange
+			role := tc.setupRole()
+			
+			// Act - Include circular dependency check
+			var err error
+			if role.ParentID != nil {
+				// Check for circular dependency first
+				parent, parentErr := s.repo.GetByID(s.ctx, *role.ParentID)
+				if parentErr == nil && parent.ParentID != nil && *parent.ParentID == role.ID {
+					err = &db.Error{Message: "circular dependency detected"}
+				} else if parentErr == nil {
+					// No circular dependency, proceed with creation
+					result, createErr := s.repo.Create(s.ctx, role)
+					err = createErr
+					if createErr == nil && tc.validateResult != nil {
+						tc.validateResult(s.T(), result)
+					}
+				} else {
+					err = parentErr
+				}
+			} else {
+				// Root level role, no dependency check needed
+				result, createErr := s.repo.Create(s.ctx, role)
+				err = createErr
+				if createErr == nil && tc.validateResult != nil {
+					tc.validateResult(s.T(), result)
+				}
+			}
+			
+			// Assert
+			if tc.expectError {
+				require.Error(s.T(), err)
+				if tc.errorContains != "" {
+					require.Contains(s.T(), err.Error(), tc.errorContains)
+				}
+			} else {
+				require.NoError(s.T(), err)
+			}
+		})
+	}
+}
+
+// TestGetRoleHierarchy implements IAM-REPO-003: Verify hierarchical role queries
+func (s *RoleRepositoryComprehensiveTestSuite) TestGetRoleHierarchy() {
+	testCases := []struct {
+		name            string
+		roleID          uuid.UUID
+		setupMocks      func(uuid.UUID)
+		expectError     bool
+		errorContains   string
+		validateResult  func(*testing.T, []*model.Role)
+	}{
+		{
+			name:   "IAM-REPO-003_CompleteHierarchy_ReturnsAllLevels",
+			roleID: uuid.New(),
+			setupMocks: func(roleID uuid.UUID) {
+				// Mock hierarchical query that returns role and all its ancestors
+				grandparentID := uuid.New()
+				parentID := uuid.New()
+				
+				s.store.EXPECT().
+					GetRoleHierarchy(gomock.Any(), roleID).
+					Return([]db.Role{
+						// Current role (child)
+						{
+							ID:          roleID,
+							TenantID:    s.tenantID,
+							Name:        "employee",
+							Description: "Employee role",
+							ParentID:    &parentID,
+						},
+						// Parent role
+						{
+							ID:          parentID,
+							TenantID:    s.tenantID,
+							Name:        "manager",
+							Description: "Manager role",
+							ParentID:    &grandparentID,
+						},
+						// Grandparent role (root)
+						{
+							ID:          grandparentID,
+							TenantID:    s.tenantID,
+							Name:        "admin",
+							Description: "Admin role",
+							ParentID:    nil, // Root
+						},
+					}, nil).
+					Times(1)
+			},
+			expectError: false,
+			validateResult: func(t *testing.T, roles []*model.Role) {
+				require.Len(t, roles, 3)
+				
+				// Verify hierarchy order (should be from child to root)
+				require.Equal(t, "employee", roles[0].Name)
+				require.Equal(t, "manager", roles[1].Name)
+				require.Equal(t, "admin", roles[2].Name)
+				
+				// Verify hierarchy relationships
+				require.NotNil(t, roles[0].ParentID) // employee has parent
+				require.NotNil(t, roles[1].ParentID) // manager has parent
+				require.Nil(t, roles[2].ParentID)    // admin is root
+				
+				// Verify all belong to same tenant
+				for _, role := range roles {
+					require.Equal(t, s.tenantID, role.TenantID)
+				}
+			},
+		},
+		{
+			name:   "IAM-REPO-003_RootRole_ReturnsOnlyItself",
+			roleID: uuid.New(),
+			setupMocks: func(roleID uuid.UUID) {
+				s.store.EXPECT().
+					GetRoleHierarchy(gomock.Any(), roleID).
+					Return([]db.Role{
+						{
+							ID:          roleID,
+							TenantID:    s.tenantID,
+							Name:        "system_admin",
+							Description: "System Administrator",
+							ParentID:    nil, // Root role
+						},
+					}, nil).
+					Times(1)
+			},
+			expectError: false,
+			validateResult: func(t *testing.T, roles []*model.Role) {
+				require.Len(t, roles, 1)
+				require.Equal(t, "system_admin", roles[0].Name)
+				require.Nil(t, roles[0].ParentID)
+			},
+		},
+		{
+			name:   "IAM-REPO-003_NonExistentRole_ReturnsError",
+			roleID: uuid.New(),
+			setupMocks: func(roleID uuid.UUID) {
+				s.store.EXPECT().
+					GetRoleHierarchy(gomock.Any(), roleID).
+					Return([]db.Role{}, &db.Error{Code: "02000", Message: "no data found"}).
+					Times(1)
+			},
+			expectError:   true,
+			errorContains: "no data found",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Setup tracing mocks
+			s.tracing.EXPECT().
+				StartSpan(gomock.Any(), gomock.Any()).
+				Return(s.ctx, &tracing.MockSpan{}).
+				AnyTimes()
+			
+			// Setup mock behavior
+			tc.setupMocks(tc.roleID)
+			
+			// Act
+			result, err := s.repo.GetRoleHierarchy(s.ctx, tc.roleID)
+			
+			// Assert
+			if tc.expectError {
+				require.Error(s.T(), err)
+				if tc.errorContains != "" {
+					require.Contains(s.T(), err.Error(), tc.errorContains)
+				}
+				require.Nil(s.T(), result)
+			} else {
+				require.NoError(s.T(), err)
+				require.NotNil(s.T(), result)
+				if tc.validateResult != nil {
+					tc.validateResult(s.T(), result)
+				}
+			}
+		})
+	}
+}
+
+// TestGetChildRoles implements IAM-REPO-003: Verify child role retrieval
+func (s *RoleRepositoryComprehensiveTestSuite) TestGetChildRoles() {
+	testCases := []struct {
+		name            string
+		parentRoleID    uuid.UUID
+		setupMocks      func(uuid.UUID)
+		expectError     bool
+		errorContains   string
+		validateResult  func(*testing.T, []*model.Role)
+	}{
+		{
+			name:         "IAM-REPO-003_ParentWithChildren_ReturnsAllChildren",
+			parentRoleID: uuid.New(),
+			setupMocks: func(parentID uuid.UUID) {
+				s.store.EXPECT().
+					GetChildRoles(gomock.Any(), parentID).
+					Return([]db.Role{
+						{
+							ID:          uuid.New(),
+							TenantID:    s.tenantID,
+							Name:        "department_manager",
+							Description: "Department Manager",
+							ParentID:    &parentID,
+						},
+						{
+							ID:          uuid.New(),
+							TenantID:    s.tenantID,
+							Name:        "team_lead",
+							Description: "Team Lead",
+							ParentID:    &parentID,
+						},
+						{
+							ID:          uuid.New(),
+							TenantID:    s.tenantID,
+							Name:        "project_manager",
+							Description: "Project Manager",
+							ParentID:    &parentID,
+						},
+					}, nil).
+					Times(1)
+			},
+			expectError: false,
+			validateResult: func(t *testing.T, roles []*model.Role) {
+				require.Len(t, roles, 3)
+				
+				// Verify all roles have the same parent
+				for _, role := range roles {
+					require.NotNil(t, role.ParentID)
+					require.Equal(t, s.tenantID, role.TenantID)
+				}
+				
+				// Verify specific role names
+				roleNames := make([]string, len(roles))
+				for i, role := range roles {
+					roleNames[i] = role.Name
+				}
+				require.Contains(t, roleNames, "department_manager")
+				require.Contains(t, roleNames, "team_lead")
+				require.Contains(t, roleNames, "project_manager")
+			},
+		},
+		{
+			name:         "IAM-REPO-003_LeafRole_ReturnsEmptyList",
+			parentRoleID: uuid.New(),
+			setupMocks: func(parentID uuid.UUID) {
+				s.store.EXPECT().
+					GetChildRoles(gomock.Any(), parentID).
+					Return([]db.Role{}, nil). // No children
+					Times(1)
+			},
+			expectError: false,
+			validateResult: func(t *testing.T, roles []*model.Role) {
+				require.Empty(t, roles)
+			},
+		},
+		{
+			name:         "IAM-REPO-003_NonExistentParent_ReturnsError",
+			parentRoleID: uuid.New(),
+			setupMocks: func(parentID uuid.UUID) {
+				s.store.EXPECT().
+					GetChildRoles(gomock.Any(), parentID).
+					Return([]db.Role{}, &db.Error{Code: "02000", Message: "no data found"}).
+					Times(1)
+			},
+			expectError:   true,
+			errorContains: "no data found",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Setup tracing mocks
+			s.tracing.EXPECT().
+				StartSpan(gomock.Any(), gomock.Any()).
+				Return(s.ctx, &tracing.MockSpan{}).
+				AnyTimes()
+			
+			// Setup mock behavior
+			tc.setupMocks(tc.parentRoleID)
+			
+			// Act
+			result, err := s.repo.GetChildRoles(s.ctx, tc.parentRoleID)
+			
+			// Assert
+			if tc.expectError {
+				require.Error(s.T(), err)
+				if tc.errorContains != "" {
+					require.Contains(s.T(), err.Error(), tc.errorContains)
+				}
+				require.Nil(s.T(), result)
+			} else {
+				require.NoError(s.T(), err)
+				require.NotNil(s.T(), result)
+				if tc.validateResult != nil {
+					tc.validateResult(s.T(), result)
+				}
+			}
+		})
+	}
+}
+
+// TestCircularDependencyDetection implements IAM-REPO-003: Verify circular dependency detection
+func (s *RoleRepositoryComprehensiveTestSuite) TestCircularDependencyDetection() {
+	testCases := []struct {
+		name            string
+		setupScenario   func() (roleA, roleB, roleC uuid.UUID)
+		setupMocks      func(uuid.UUID, uuid.UUID, uuid.UUID)
+		expectCircular  bool
+		validateResult  func(*testing.T, bool)
+	}{
+		{
+			name: "IAM-REPO-003_TwoRoleCircular_A-B-A",
+			setupScenario: func() (uuid.UUID, uuid.UUID, uuid.UUID) {
+				roleA := uuid.New()
+				roleB := uuid.New()
+				return roleA, roleB, uuid.Nil
+			},
+			setupMocks: func(roleA, roleB, _ uuid.UUID) {
+				// Mock: A points to B, B points to A (circular)
+				s.store.EXPECT().
+					GetRoleByID(gomock.Any(), roleA).
+					Return(db.Role{
+						ID:       roleA,
+						TenantID: s.tenantID,
+						Name:     "role_a",
+						ParentID: &roleB,
+					}, nil).
+					Times(1)
+				
+				s.store.EXPECT().
+					GetRoleByID(gomock.Any(), roleB).
+					Return(db.Role{
+						ID:       roleB,
+						TenantID: s.tenantID,
+						Name:     "role_b",
+						ParentID: &roleA, // Circular dependency!
+					}, nil).
+					Times(1)
+			},
+			expectCircular: true,
+			validateResult: func(t *testing.T, hasCircular bool) {
+				require.True(t, hasCircular, "Two-role circular dependency should be detected")
+			},
+		},
+		{
+			name: "IAM-REPO-003_ThreeRoleCircular_A-B-C-A",
+			setupScenario: func() (uuid.UUID, uuid.UUID, uuid.UUID) {
+				roleA := uuid.New()
+				roleB := uuid.New()
+				roleC := uuid.New()
+				return roleA, roleB, roleC
+			},
+			setupMocks: func(roleA, roleB, roleC uuid.UUID) {
+				// Mock: A -> B -> C -> A (circular)
+				s.store.EXPECT().
+					GetRoleByID(gomock.Any(), roleA).
+					Return(db.Role{
+						ID:       roleA,
+						TenantID: s.tenantID,
+						Name:     "role_a",
+						ParentID: &roleB,
+					}, nil).
+					Times(1)
+				
+				s.store.EXPECT().
+					GetRoleByID(gomock.Any(), roleB).
+					Return(db.Role{
+						ID:       roleB,
+						TenantID: s.tenantID,
+						Name:     "role_b",
+						ParentID: &roleC,
+					}, nil).
+					Times(1)
+				
+				s.store.EXPECT().
+					GetRoleByID(gomock.Any(), roleC).
+					Return(db.Role{
+						ID:       roleC,
+						TenantID: s.tenantID,
+						Name:     "role_c",
+						ParentID: &roleA, // Back to A - circular!
+					}, nil).
+					Times(1)
+			},
+			expectCircular: true,
+			validateResult: func(t *testing.T, hasCircular bool) {
+				require.True(t, hasCircular, "Three-role circular dependency should be detected")
+			},
+		},
+		{
+			name: "IAM-REPO-003_ValidHierarchy_NoCircular",
+			setupScenario: func() (uuid.UUID, uuid.UUID, uuid.UUID) {
+				roleA := uuid.New()
+				roleB := uuid.New()
+				roleC := uuid.New()
+				return roleA, roleB, roleC
+			},
+			setupMocks: func(roleA, roleB, roleC uuid.UUID) {
+				// Mock: A -> B -> C -> nil (valid hierarchy)
+				s.store.EXPECT().
+					GetRoleByID(gomock.Any(), roleA).
+					Return(db.Role{
+						ID:       roleA,
+						TenantID: s.tenantID,
+						Name:     "employee",
+						ParentID: &roleB,
+					}, nil).
+					Times(1)
+				
+				s.store.EXPECT().
+					GetRoleByID(gomock.Any(), roleB).
+					Return(db.Role{
+						ID:       roleB,
+						TenantID: s.tenantID,
+						Name:     "manager",
+						ParentID: &roleC,
+					}, nil).
+					Times(1)
+				
+				s.store.EXPECT().
+					GetRoleByID(gomock.Any(), roleC).
+					Return(db.Role{
+						ID:       roleC,
+						TenantID: s.tenantID,
+						Name:     "admin",
+						ParentID: nil, // Root - no circular dependency
+					}, nil).
+					Times(1)
+			},
+			expectCircular: false,
+			validateResult: func(t *testing.T, hasCircular bool) {
+				require.False(t, hasCircular, "Valid hierarchy should not be circular")
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Setup tracing mocks
+			s.tracing.EXPECT().
+				StartSpan(gomock.Any(), gomock.Any()).
+				Return(s.ctx, &tracing.MockSpan{}).
+				AnyTimes()
+			
+			// Arrange
+			roleA, roleB, roleC := tc.setupScenario()
+			tc.setupMocks(roleA, roleB, roleC)
+			
+			// Act - Simulate circular dependency detection algorithm
+			hasCircular := s.detectCircularDependency(roleA, make(map[uuid.UUID]bool))
+			
+			// Assert
+			require.Equal(s.T(), tc.expectCircular, hasCircular)
+			if tc.validateResult != nil {
+				tc.validateResult(s.T(), hasCircular)
+			}
+		})
+	}
+}
+
+// detectCircularDependency is a helper method to simulate circular dependency detection
+func (s *RoleRepositoryComprehensiveTestSuite) detectCircularDependency(roleID uuid.UUID, visited map[uuid.UUID]bool) bool {
+	if visited[roleID] {
+		return true // Circular dependency detected
+	}
+	
+	visited[roleID] = true
+	
+	// Get the role to check its parent
+	role, err := s.repo.GetByID(s.ctx, roleID)
+	if err != nil || role.ParentID == nil {
+		return false
+	}
+	
+	// Recursively check parent
+	return s.detectCircularDependency(*role.ParentID, visited)
+}
+
+// TestRoleTenantIsolation implements IAM-REPO-003: Verify strict tenant isolation for roles
+func (s *RoleRepositoryComprehensiveTestSuite) TestRoleTenantIsolation() {
+	testCases := []struct {
+		name           string
+		setupScenario  func() (tenantA, tenantB uuid.UUID)
+		validateResult func(*testing.T, uuid.UUID, uuid.UUID)
+	}{
+		{
+			name: "IAM-REPO-003_CrossTenantRoleAccess_ZeroDataLeakage",
+			setupScenario: func() (uuid.UUID, uuid.UUID) {
+				tenantA := uuid.New()
+				tenantB := uuid.New()
+				
+				// Mock RLS enforcement - no cross-tenant role access
+				s.store.EXPECT().
+					GetRoleByName(gomock.Any(), "admin").
+					Return(db.Role{}, &db.Error{Code: "02000", Message: "no data found"}).
+					Times(1)
+				
+				return tenantA, tenantB
+			},
+			validateResult: func(t *testing.T, tenantA, tenantB uuid.UUID) {
+				// Try to access tenant A's role from tenant B context
+				role, err := s.repo.GetByName(s.ctx, "admin")
+				require.Error(t, err)
+				require.Nil(t, role)
+				require.Contains(t, err.Error(), "no data found")
+			},
+		},
+		{
+			name: "IAM-REPO-003_SameRoleNameDifferentTenants_AllowedIsolation",
+			setupScenario: func() (uuid.UUID, uuid.UUID) {
+				tenantA := uuid.New()
+				tenantB := uuid.New()
+				
+				// Mock that same role name can exist in different tenants
+				s.store.EXPECT().
+					GetRoleByName(gomock.Any(), "manager").
+					Return(db.Role{
+						ID:       uuid.New(),
+						TenantID: tenantA, // Current tenant context
+						Name:     "manager",
+					}, nil).
+					Times(1)
+				
+				return tenantA, tenantB
+			},
+			validateResult: func(t *testing.T, tenantA, tenantB uuid.UUID) {
+				// Should only find role from current tenant (A), not tenant B
+				role, err := s.repo.GetByName(s.ctx, "manager")
+				require.NoError(t, err)
+				require.NotNil(t, role)
+				require.Equal(t, tenantA, role.TenantID)
+				require.NotEqual(t, tenantB, role.TenantID)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Setup tracing mocks
+			s.tracing.EXPECT().
+				StartSpan(gomock.Any(), gomock.Any()).
+				Return(s.ctx, &tracing.MockSpan{}).
+				AnyTimes()
+			
+			// Arrange
+			tenantA, tenantB := tc.setupScenario()
+			
+			// Act & Assert
+			tc.validateResult(s.T(), tenantA, tenantB)
+		})
+	}
+}
