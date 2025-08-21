@@ -811,18 +811,15 @@ type TenantConfiguration struct {
 	MaxEntities             int32     `json:"max_entities"`
 	MaxTransactionsPerMonth int32     `json:"max_transactions_per_month"`
 	StorageQuota            int64     `json:"storage_quota"`
-	// JSONB object containing feature flags for module enablement
-	Features []byte `json:"features"`
-	// Array of enabled modules for the tenant
-	ModulesEnabled       []byte `json:"modules_enabled"`
-	AccountingMethod     string `json:"accounting_method"`
-	FiscalYearStartMonth int32  `json:"fiscal_year_start_month"`
-	DefaultCurrency      string `json:"default_currency"`
-	DateFormat           string `json:"date_format"`
-	NumberFormat         string `json:"number_format"`
-	LanguageCode         string `json:"language_code"`
+	AccountingMethod        string    `json:"accounting_method"`
+	FiscalYearStartMonth    int32     `json:"fiscal_year_start_month"`
+	DefaultCurrency         string    `json:"default_currency"`
+	DateFormat              string    `json:"date_format"`
+	NumberFormat            string    `json:"number_format"`
+	LanguageCode            string    `json:"language_code"`
 	// Password complexity requirements
 	PasswordPolicy   []byte `json:"password_policy"`
+	Settings         []byte `json:"settings"`
 	WebhookEndpoints []byte `json:"webhook_endpoints"`
 	// API rate limiting configuration
 	ApiRateLimits []byte    `json:"api_rate_limits"`

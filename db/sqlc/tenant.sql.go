@@ -77,6 +77,35 @@ func (q *Queries) CheckCurrentTenantExists(ctx context.Context) (bool, error) {
 	return exists, err
 }
 
+const checkPasswordPolicyRequirements = `-- name: CheckPasswordPolicyRequirements :one
+SELECT 
+    password_policy->>'require_uppercase' = 'true' as require_uppercase,
+    password_policy->>'require_lowercase' = 'true' as require_lowercase,
+    password_policy->>'require_numbers' = 'true' as require_numbers,
+    password_policy->>'require_symbols' = 'true' as require_symbols
+FROM tenant_configurations 
+WHERE tenant_id = current_tenant_id()
+`
+
+type CheckPasswordPolicyRequirementsRow struct {
+	RequireUppercase bool `json:"require_uppercase"`
+	RequireLowercase bool `json:"require_lowercase"`
+	RequireNumbers   bool `json:"require_numbers"`
+	RequireSymbols   bool `json:"require_symbols"`
+}
+
+func (q *Queries) CheckPasswordPolicyRequirements(ctx context.Context) (*CheckPasswordPolicyRequirementsRow, error) {
+	row := q.db.QueryRow(ctx, checkPasswordPolicyRequirements)
+	var i CheckPasswordPolicyRequirementsRow
+	err := row.Scan(
+		&i.RequireUppercase,
+		&i.RequireLowercase,
+		&i.RequireNumbers,
+		&i.RequireSymbols,
+	)
+	return &i, err
+}
+
 const checkSubdomainExists = `-- name: CheckSubdomainExists :one
 SELECT
   EXISTS(
@@ -414,7 +443,7 @@ INSERT INTO
 VALUES
   ($1, $2)
 RETURNING
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
 `
 
 type CreateTenantConfigurationParams struct {
@@ -462,8 +491,6 @@ func (q *Queries) CreateTenantConfiguration(ctx context.Context, arg CreateTenan
 		&i.MaxEntities,
 		&i.MaxTransactionsPerMonth,
 		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
 		&i.AccountingMethod,
 		&i.FiscalYearStartMonth,
 		&i.DefaultCurrency,
@@ -471,6 +498,7 @@ func (q *Queries) CreateTenantConfiguration(ctx context.Context, arg CreateTenan
 		&i.NumberFormat,
 		&i.LanguageCode,
 		&i.PasswordPolicy,
+		&i.Settings,
 		&i.WebhookEndpoints,
 		&i.ApiRateLimits,
 		&i.CreatedAt,
@@ -851,6 +879,19 @@ func (q *Queries) GetAllTenantsStorageAnalytics(ctx context.Context) ([]*GetAllT
 	return items, nil
 }
 
+const getBooleanSetting = `-- name: GetBooleanSetting :one
+SELECT (settings->>$1::text)::boolean as value 
+FROM tenant_configurations 
+WHERE tenant_id = current_tenant_id()
+`
+
+func (q *Queries) GetBooleanSetting(ctx context.Context, key string) (bool, error) {
+	row := q.db.QueryRow(ctx, getBooleanSetting, key)
+	var value bool
+	err := row.Scan(&value)
+	return value, err
+}
+
 const getCurrentTenant = `-- name: GetCurrentTenant :one
 SELECT
   id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
@@ -1008,6 +1049,47 @@ func (q *Queries) GetCurrentTenantStorageUsage(ctx context.Context) (*GetCurrent
 	return &i, err
 }
 
+const getDefaultSettings = `-- name: GetDefaultSettings :one
+
+SELECT settings FROM tenant_configurations WHERE tenant_id = current_tenant_id()
+`
+
+// =====================================================
+// Settings-specific queries
+// =====================================================
+func (q *Queries) GetDefaultSettings(ctx context.Context) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getDefaultSettings)
+	var settings []byte
+	err := row.Scan(&settings)
+	return settings, err
+}
+
+const getFullPasswordPolicy = `-- name: GetFullPasswordPolicy :one
+SELECT password_policy 
+FROM tenant_configurations 
+WHERE tenant_id = current_tenant_id()
+`
+
+func (q *Queries) GetFullPasswordPolicy(ctx context.Context) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getFullPasswordPolicy)
+	var password_policy []byte
+	err := row.Scan(&password_policy)
+	return password_policy, err
+}
+
+const getIntegerSetting = `-- name: GetIntegerSetting :one
+SELECT (settings->>$1::text)::integer as value 
+FROM tenant_configurations 
+WHERE tenant_id = current_tenant_id()
+`
+
+func (q *Queries) GetIntegerSetting(ctx context.Context, key string) (int32, error) {
+	row := q.db.QueryRow(ctx, getIntegerSetting, key)
+	var value int32
+	err := row.Scan(&value)
+	return value, err
+}
+
 const getLatestTenantUsageStats = `-- name: GetLatestTenantUsageStats :one
 SELECT
   tenant_id, period_start, period_end, active_users, total_entities, total_transactions, storage_used, api_calls, avg_response_time, error_rate, monthly_revenue, created_at
@@ -1037,6 +1119,32 @@ func (q *Queries) GetLatestTenantUsageStats(ctx context.Context) (*TenantUsageSt
 		&i.CreatedAt,
 	)
 	return &i, err
+}
+
+const getPasswordPolicyMinLength = `-- name: GetPasswordPolicyMinLength :one
+SELECT (password_policy->>"min_length")::INT as min_length 
+FROM tenant_configurations 
+WHERE tenant_id = current_tenant_id()
+`
+
+func (q *Queries) GetPasswordPolicyMinLength(ctx context.Context) (int32, error) {
+	row := q.db.QueryRow(ctx, getPasswordPolicyMinLength)
+	var min_length int32
+	err := row.Scan(&min_length)
+	return min_length, err
+}
+
+const getSpecificSetting = `-- name: GetSpecificSetting :one
+SELECT settings->>$1::text as value 
+FROM tenant_configurations 
+WHERE tenant_id = current_tenant_id()
+`
+
+func (q *Queries) GetSpecificSetting(ctx context.Context, key string) (interface{}, error) {
+	row := q.db.QueryRow(ctx, getSpecificSetting, key)
+	var value interface{}
+	err := row.Scan(&value)
+	return value, err
 }
 
 const getTenantByEmail = `-- name: GetTenantByEmail :one
@@ -1191,7 +1299,7 @@ func (q *Queries) GetTenantByUUID(ctx context.Context, subdomain *string) (*Tena
 
 const getTenantConfiguration = `-- name: GetTenantConfiguration :one
 SELECT
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
 FROM
   tenant_configurations
 WHERE
@@ -1207,8 +1315,6 @@ func (q *Queries) GetTenantConfiguration(ctx context.Context) (*TenantConfigurat
 		&i.MaxEntities,
 		&i.MaxTransactionsPerMonth,
 		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
 		&i.AccountingMethod,
 		&i.FiscalYearStartMonth,
 		&i.DefaultCurrency,
@@ -1216,6 +1322,7 @@ func (q *Queries) GetTenantConfiguration(ctx context.Context) (*TenantConfigurat
 		&i.NumberFormat,
 		&i.LanguageCode,
 		&i.PasswordPolicy,
+		&i.Settings,
 		&i.WebhookEndpoints,
 		&i.ApiRateLimits,
 		&i.CreatedAt,
@@ -1983,6 +2090,118 @@ func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTena
 	return &i, err
 }
 
+const updateDefaultSettings = `-- name: UpdateDefaultSettings :exec
+UPDATE tenant_configurations 
+SET settings = $1::jsonb, updated_at = NOW()
+WHERE tenant_id = current_tenant_id()
+`
+
+func (q *Queries) UpdateDefaultSettings(ctx context.Context, settings []byte) error {
+	_, err := q.db.Exec(ctx, updateDefaultSettings, settings)
+	return err
+}
+
+const updatePasswordPolicy = `-- name: UpdatePasswordPolicy :exec
+
+UPDATE tenant_configurations 
+SET 
+    password_policy = jsonb_set(
+        COALESCE(password_policy, '{}'::jsonb),
+        '{min_length}', 
+        to_jsonb($1::int)
+    ),
+    updated_at = NOW()
+WHERE tenant_id = current_tenant_id()
+`
+
+// =====================================================
+// password_policy queries
+// =====================================================
+func (q *Queries) UpdatePasswordPolicy(ctx context.Context, minLength int32) error {
+	_, err := q.db.Exec(ctx, updatePasswordPolicy, minLength)
+	return err
+}
+
+const updatePasswordPolicyFull = `-- name: UpdatePasswordPolicyFull :exec
+UPDATE tenant_configurations 
+SET 
+    password_policy = jsonb_build_object(
+        'min_length', ($1::int),
+        'require_uppercase', ($2::bool),
+        'require_lowercase', ($3::bool),
+        'require_numbers', ($4::bool),
+        'require_symbols', ($5::bool)
+    ),
+    updated_at = NOW()
+WHERE tenant_id = current_tenant_id()
+`
+
+type UpdatePasswordPolicyFullParams struct {
+	MinLength        int32 `json:"min_length"`
+	RequireUppercase bool  `json:"require_uppercase"`
+	RequireLowercase bool  `json:"require_lowercase"`
+	RequireNumbers   bool  `json:"require_numbers"`
+	RequireSymbols   bool  `json:"require_symbols"`
+}
+
+func (q *Queries) UpdatePasswordPolicyFull(ctx context.Context, arg UpdatePasswordPolicyFullParams) error {
+	_, err := q.db.Exec(ctx, updatePasswordPolicyFull,
+		arg.MinLength,
+		arg.RequireUppercase,
+		arg.RequireLowercase,
+		arg.RequireNumbers,
+		arg.RequireSymbols,
+	)
+	return err
+}
+
+const updateSpecificPasswordPolicyField = `-- name: UpdateSpecificPasswordPolicyField :exec
+UPDATE tenant_configurations 
+SET 
+    password_policy = jsonb_set(
+        COALESCE(password_policy, '{}'::jsonb),
+        '{' || $1 || '}', 
+        CASE 
+            WHEN $1::text = 'min_length' THEN to_jsonb($2::int)
+            ELSE to_jsonb($2::bool)
+        END
+    ),
+    updated_at = NOW()
+WHERE tenant_id = current_tenant_id()
+`
+
+type UpdateSpecificPasswordPolicyFieldParams struct {
+	FieldName  string `json:"field_name"`
+	FieldValue int32  `json:"field_value"`
+}
+
+func (q *Queries) UpdateSpecificPasswordPolicyField(ctx context.Context, arg UpdateSpecificPasswordPolicyFieldParams) error {
+	_, err := q.db.Exec(ctx, updateSpecificPasswordPolicyField, arg.FieldName, arg.FieldValue)
+	return err
+}
+
+const updateSpecificSetting = `-- name: UpdateSpecificSetting :exec
+UPDATE tenant_configurations 
+SET 
+    settings = jsonb_set(
+        COALESCE(settings, '{}'::jsonb),
+        '{' || $1 || '}', 
+        to_jsonb($2)
+    ),
+    updated_at = NOW()
+WHERE tenant_id = current_tenant_id()
+`
+
+type UpdateSpecificSettingParams struct {
+	Key   string      `json:"key"`
+	Value interface{} `json:"value"`
+}
+
+func (q *Queries) UpdateSpecificSetting(ctx context.Context, arg UpdateSpecificSettingParams) error {
+	_, err := q.db.Exec(ctx, updateSpecificSetting, arg.Key, arg.Value)
+	return err
+}
+
 const updateTenant = `-- name: UpdateTenant :one
 UPDATE
   tenants
@@ -2144,31 +2363,31 @@ SET
     max_transactions_per_month
   ),
   storage_quota = COALESCE($4, storage_quota),
-  features = COALESCE($5, features),
-  modules_enabled = COALESCE($6, modules_enabled),
+  -- features = COALESCE(sqlc.narg('features'), features),
+  -- modules_enabled = COALESCE(sqlc.narg('modules_enabled'), modules_enabled),
   accounting_method = COALESCE(
-    $7,
+    $5,
     accounting_method
   ),
   fiscal_year_start_month = COALESCE(
-    $8,
+    $6,
     fiscal_year_start_month
   ),
-  default_currency = COALESCE($9, default_currency),
-  date_format = COALESCE($10, date_format),
-  number_format = COALESCE($11, number_format),
-  language_code = COALESCE($12, language_code),
-  password_policy = COALESCE($13, password_policy),
+  default_currency = COALESCE($7, default_currency),
+  date_format = COALESCE($8, date_format),
+  number_format = COALESCE($9, number_format),
+  language_code = COALESCE($10, language_code),
+  password_policy = COALESCE($11, password_policy),
   webhook_endpoints = COALESCE(
-    $14,
+    $12,
     webhook_endpoints
   ),
-  api_rate_limits = COALESCE($15, api_rate_limits),
+  api_rate_limits = COALESCE($13, api_rate_limits),
   updated_at = NOW()
 WHERE
   tenant_id = current_tenant_id()
 RETURNING
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
 `
 
 type UpdateTenantConfigurationParams struct {
@@ -2176,8 +2395,6 @@ type UpdateTenantConfigurationParams struct {
 	MaxEntities             *int32  `json:"max_entities"`
 	MaxTransactionsPerMonth *int32  `json:"max_transactions_per_month"`
 	StorageQuota            *int64  `json:"storage_quota"`
-	Features                []byte  `json:"features"`
-	ModulesEnabled          []byte  `json:"modules_enabled"`
 	AccountingMethod        *string `json:"accounting_method"`
 	FiscalYearStartMonth    *int32  `json:"fiscal_year_start_month"`
 	DefaultCurrency         *string `json:"default_currency"`
@@ -2195,8 +2412,6 @@ func (q *Queries) UpdateTenantConfiguration(ctx context.Context, arg UpdateTenan
 		arg.MaxEntities,
 		arg.MaxTransactionsPerMonth,
 		arg.StorageQuota,
-		arg.Features,
-		arg.ModulesEnabled,
 		arg.AccountingMethod,
 		arg.FiscalYearStartMonth,
 		arg.DefaultCurrency,
@@ -2214,8 +2429,6 @@ func (q *Queries) UpdateTenantConfiguration(ctx context.Context, arg UpdateTenan
 		&i.MaxEntities,
 		&i.MaxTransactionsPerMonth,
 		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
 		&i.AccountingMethod,
 		&i.FiscalYearStartMonth,
 		&i.DefaultCurrency,
@@ -2223,42 +2436,7 @@ func (q *Queries) UpdateTenantConfiguration(ctx context.Context, arg UpdateTenan
 		&i.NumberFormat,
 		&i.LanguageCode,
 		&i.PasswordPolicy,
-		&i.WebhookEndpoints,
-		&i.ApiRateLimits,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
-}
-
-const updateTenantFeatures = `-- name: UpdateTenantFeatures :one
-UPDATE
-  tenant_configurations
-SET
-  features = $1,
-  updated_at = NOW()
-RETURNING
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
-`
-
-func (q *Queries) UpdateTenantFeatures(ctx context.Context, features []byte) (*TenantConfiguration, error) {
-	row := q.db.QueryRow(ctx, updateTenantFeatures, features)
-	var i TenantConfiguration
-	err := row.Scan(
-		&i.TenantID,
-		&i.MaxUsers,
-		&i.MaxEntities,
-		&i.MaxTransactionsPerMonth,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-		&i.AccountingMethod,
-		&i.FiscalYearStartMonth,
-		&i.DefaultCurrency,
-		&i.DateFormat,
-		&i.NumberFormat,
-		&i.LanguageCode,
-		&i.PasswordPolicy,
+		&i.Settings,
 		&i.WebhookEndpoints,
 		&i.ApiRateLimits,
 		&i.CreatedAt,
@@ -2313,6 +2491,7 @@ func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndu
 }
 
 const updateTenantLimits = `-- name: UpdateTenantLimits :one
+
 UPDATE
   tenant_configurations
 SET
@@ -2322,7 +2501,7 @@ SET
   storage_quota = $4,
   updated_at = NOW()
 RETURNING
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
 `
 
 type UpdateTenantLimitsParams struct {
@@ -2332,6 +2511,33 @@ type UpdateTenantLimitsParams struct {
 	StorageQuota            int64 `json:"storage_quota"`
 }
 
+// -- name: UpdateTenantFeatures :one
+// UPDATE
+//
+//	tenant_configurations
+//
+// SET
+//
+//	features = $1,
+//	updated_at = NOW()
+//
+// RETURNING
+//
+//	*;
+//
+// -- name: UpdateTenantModules :one
+// UPDATE
+//
+//	tenant_configurations
+//
+// SET
+//
+//	modules_enabled = $1,
+//	updated_at = NOW()
+//
+// RETURNING
+//
+//	*;
 func (q *Queries) UpdateTenantLimits(ctx context.Context, arg UpdateTenantLimitsParams) (*TenantConfiguration, error) {
 	row := q.db.QueryRow(ctx, updateTenantLimits,
 		arg.MaxUsers,
@@ -2346,8 +2552,6 @@ func (q *Queries) UpdateTenantLimits(ctx context.Context, arg UpdateTenantLimits
 		&i.MaxEntities,
 		&i.MaxTransactionsPerMonth,
 		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
 		&i.AccountingMethod,
 		&i.FiscalYearStartMonth,
 		&i.DefaultCurrency,
@@ -2355,6 +2559,7 @@ func (q *Queries) UpdateTenantLimits(ctx context.Context, arg UpdateTenantLimits
 		&i.NumberFormat,
 		&i.LanguageCode,
 		&i.PasswordPolicy,
+		&i.Settings,
 		&i.WebhookEndpoints,
 		&i.ApiRateLimits,
 		&i.CreatedAt,
@@ -2399,42 +2604,6 @@ func (q *Queries) UpdateTenantMetadata(ctx context.Context, metadata []byte) (*T
 		&i.UpdatedAt,
 		&i.DeletedAt,
 		&i.LastActivityAt,
-	)
-	return &i, err
-}
-
-const updateTenantModules = `-- name: UpdateTenantModules :one
-UPDATE
-  tenant_configurations
-SET
-  modules_enabled = $1,
-  updated_at = NOW()
-RETURNING
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, features, modules_enabled, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, webhook_endpoints, api_rate_limits, created_at, updated_at
-`
-
-func (q *Queries) UpdateTenantModules(ctx context.Context, modulesEnabled []byte) (*TenantConfiguration, error) {
-	row := q.db.QueryRow(ctx, updateTenantModules, modulesEnabled)
-	var i TenantConfiguration
-	err := row.Scan(
-		&i.TenantID,
-		&i.MaxUsers,
-		&i.MaxEntities,
-		&i.MaxTransactionsPerMonth,
-		&i.StorageQuota,
-		&i.Features,
-		&i.ModulesEnabled,
-		&i.AccountingMethod,
-		&i.FiscalYearStartMonth,
-		&i.DefaultCurrency,
-		&i.DateFormat,
-		&i.NumberFormat,
-		&i.LanguageCode,
-		&i.PasswordPolicy,
-		&i.WebhookEndpoints,
-		&i.ApiRateLimits,
-		&i.CreatedAt,
-		&i.UpdatedAt,
 	)
 	return &i, err
 }

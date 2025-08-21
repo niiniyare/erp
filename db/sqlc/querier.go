@@ -65,6 +65,7 @@ type Querier interface {
 	CheckCurrentTenantExists(ctx context.Context) (bool, error)
 	CheckEmailAvailability(ctx context.Context, email string) (bool, error)
 	CheckEmployeeNumberAvailability(ctx context.Context, employeeNumber string) (bool, error)
+	CheckPasswordPolicyRequirements(ctx context.Context) (*CheckPasswordPolicyRequirementsRow, error)
 	CheckSubdomainExists(ctx context.Context, subdomain *string) (bool, error)
 	CheckTenantExists(ctx context.Context, id uuid.UUID) (bool, error)
 	CheckTenantLimits(ctx context.Context, arg CheckTenantLimitsParams) (bool, error)
@@ -237,6 +238,7 @@ type Querier interface {
 	GetAuditStatsBySeverity(ctx context.Context, arg GetAuditStatsBySeverityParams) ([]*GetAuditStatsBySeverityRow, error)
 	// Get audit log storage statistics and metrics
 	GetAuditStorageStats(ctx context.Context) (*GetAuditStorageStatsRow, error)
+	GetBooleanSetting(ctx context.Context, key string) (bool, error)
 	GetCachedEvaluationResult(ctx context.Context, arg GetCachedEvaluationResultParams) (*PolicyEvaluation, error)
 	GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*GetCompleteUserProfileRow, error)
 	// Get events with specific compliance flags
@@ -251,6 +253,10 @@ type Querier interface {
 	GetCurrentTenantRevenueAnalytics(ctx context.Context, arg GetCurrentTenantRevenueAnalyticsParams) (*GetCurrentTenantRevenueAnalyticsRow, error)
 	// Current tenant storage analytics (RLS-aware)
 	GetCurrentTenantStorageUsage(ctx context.Context) (*GetCurrentTenantStorageUsageRow, error)
+	// =====================================================
+	// Settings-specific queries
+	// =====================================================
+	GetDefaultSettings(ctx context.Context) ([]byte, error)
 	// Identify potential duplicate events for cleanup
 	GetDuplicateEventAnalysis(ctx context.Context, arg GetDuplicateEventAnalysisParams) ([]*GetDuplicateEventAnalysisRow, error)
 	// Usage: Identifies potential duplicate sequence configurations
@@ -404,6 +410,7 @@ type Querier interface {
 	GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error)
 	GetFeatureFlagStats(ctx context.Context) (*GetFeatureFlagStatsRow, error)
 	GetFeatureFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error)
+	GetFullPasswordPolicy(ctx context.Context) ([]byte, error)
 	// Get high-risk audit events (risk_score >= threshold)
 	GetHighRiskEvents(ctx context.Context, arg GetHighRiskEventsParams) ([]*GetHighRiskEventsRow, error)
 	// Usage: Gets the highest sequence number for a specific entity/key/fiscal year combination
@@ -412,6 +419,7 @@ type Querier interface {
 	// Get hourly event rates for capacity planning
 	GetHourlyEventRates(ctx context.Context, arg GetHourlyEventRatesParams) ([]*GetHourlyEventRatesRow, error)
 	GetInconsistentHierarchyPaths(ctx context.Context) ([]*GetInconsistentHierarchyPathsRow, error)
+	GetIntegerSetting(ctx context.Context, key string) (int32, error)
 	GetLatestTenantUsageStats(ctx context.Context) (*TenantUsageStat, error)
 	// Ensures positive sequence number
 	// =====================================================================
@@ -425,6 +433,7 @@ type Querier interface {
 	// Use case: Lazy initialization of sequences when first document is created
 	GetOrCreateEntityState(ctx context.Context, arg GetOrCreateEntityStateParams) (*Entitystate, error)
 	GetOrphanedEntities(ctx context.Context) ([]*Entity, error)
+	GetPasswordPolicyMinLength(ctx context.Context) (int32, error)
 	GetPendingAccessRequests(ctx context.Context) ([]*AccessRequest, error)
 	GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error)
 	GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID) ([]*Policy, error)
@@ -470,6 +479,7 @@ type Querier interface {
 	GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error)
 	// Find similar incident patterns for threat intelligence
 	GetSimilarIncidentPatterns(ctx context.Context, arg GetSimilarIncidentPatternsParams) ([]*GetSimilarIncidentPatternsRow, error)
+	GetSpecificSetting(ctx context.Context, key string) (interface{}, error)
 	// Usage: Finds entity states that haven't been updated recently
 	// Use case: Identifying inactive sequences, cleanup candidate identification
 	GetStaleEntityStates(ctx context.Context, updatedAt time.Time) ([]*GetStaleEntityStatesRow, error)
@@ -589,6 +599,7 @@ type Querier interface {
 	UpdateAttributeDefinition(ctx context.Context, arg UpdateAttributeDefinitionParams) (*AttributeDefinition, error)
 	UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (*AttributeValue, error)
 	UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error)
+	UpdateDefaultSettings(ctx context.Context, settings []byte) error
 	UpdateEntity(ctx context.Context, arg UpdateEntityParams) (*Entity, error)
 	// =====================================================================
 	//  NEW SEQUENCE MANAGEMENT QUERIES
@@ -606,16 +617,38 @@ type Querier interface {
 	UpdateEventRiskScore(ctx context.Context, arg UpdateEventRiskScoreParams) error
 	UpdateFeatureFlag(ctx context.Context, arg UpdateFeatureFlagParams) (*FeatureFlag, error)
 	UpdateHierarchyPaths(ctx context.Context, dollar_1 uuid.UUID) error
+	// =====================================================
+	// password_policy queries
+	// =====================================================
+	UpdatePasswordPolicy(ctx context.Context, minLength int32) error
+	UpdatePasswordPolicyFull(ctx context.Context, arg UpdatePasswordPolicyFullParams) error
 	UpdatePolicy(ctx context.Context, arg UpdatePolicyParams) (*Policy, error)
 	UpdatePolicyStatus(ctx context.Context, arg UpdatePolicyStatusParams) error
+	UpdateSpecificPasswordPolicyField(ctx context.Context, arg UpdateSpecificPasswordPolicyFieldParams) error
+	UpdateSpecificSetting(ctx context.Context, arg UpdateSpecificSettingParams) error
 	UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Tenant, error)
 	UpdateTenantComplete(ctx context.Context, arg UpdateTenantCompleteParams) (*Tenant, error)
 	UpdateTenantConfiguration(ctx context.Context, arg UpdateTenantConfigurationParams) (*TenantConfiguration, error)
-	UpdateTenantFeatures(ctx context.Context, features []byte) (*TenantConfiguration, error)
 	UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (*Tenant, error)
+	// -- name: UpdateTenantFeatures :one
+	// UPDATE
+	//   tenant_configurations
+	// SET
+	//   features = $1,
+	//   updated_at = NOW()
+	// RETURNING
+	//   *;
+	//
+	// -- name: UpdateTenantModules :one
+	// UPDATE
+	//   tenant_configurations
+	// SET
+	//   modules_enabled = $1,
+	//   updated_at = NOW()
+	// RETURNING
+	//   *;
 	UpdateTenantLimits(ctx context.Context, arg UpdateTenantLimitsParams) (*TenantConfiguration, error)
 	UpdateTenantMetadata(ctx context.Context, metadata []byte) (*Tenant, error)
-	UpdateTenantModules(ctx context.Context, modulesEnabled []byte) (*TenantConfiguration, error)
 	UpdateTenantName(ctx context.Context, arg UpdateTenantNameParams) (*Tenant, error)
 	UpdateTenantSettings(ctx context.Context, settings []byte) (*Tenant, error)
 	//

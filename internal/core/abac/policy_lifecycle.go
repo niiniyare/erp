@@ -10,6 +10,7 @@ import (
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
+	"github.com/niiniyare/erp/internal/shared/convert"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -383,8 +384,13 @@ func (pm *policyManager) DetectPolicyConflicts(ctx context.Context, req *PolicyC
 		"analysis_depth": req.AnalysisDepth,
 	})
 
+	analyzedPolicies, err := convert.IntToInt32(len(policiesToAnalyze))
+	if err != nil {
+		analyzedPolicies = 0
+	}
+
 	result := &PolicyConflictResult{
-		AnalyzedPolicies:  int32(len(policiesToAnalyze)),
+		AnalyzedPolicies:  analyzedPolicies,
 		ConflictSummary:   conflictSummary,
 		DetectedConflicts: detectedConflicts,
 		ResolutionPlan:    resolutionPlan,
@@ -839,10 +845,24 @@ func (pm *policyManager) analyzeTimelinePatterns(ctx context.Context, policy *mo
 }
 
 func (pm *policyManager) calculateImpactSummary(userImpacts []PolicyUserImpact, resourceImpacts []PolicyResourceImpact, entityImpacts []PolicyEntityImpact) PolicyImpactSummary {
+	usersAffected, err := convert.IntToInt32(len(userImpacts))
+	if err != nil {
+		// Handle or log the error appropriately
+		usersAffected = 0
+	}
+	resourcesAffected, err := convert.IntToInt32(len(resourceImpacts))
+	if err != nil {
+		resourcesAffected = 0
+	}
+	entitiesAffected, err := convert.IntToInt32(len(entityImpacts))
+	if err != nil {
+		entitiesAffected = 0
+	}
+
 	return PolicyImpactSummary{
-		TotalUsersAffected:     int32(len(userImpacts)),
-		TotalResourcesAffected: int32(len(resourceImpacts)),
-		TotalEntitiesAffected:  int32(len(entityImpacts)),
+		TotalUsersAffected:     usersAffected,
+		TotalResourcesAffected: resourcesAffected,
+		TotalEntitiesAffected:  entitiesAffected,
 		OverallSeverity:        "low",
 		AccessibilityChange:    0.0,
 	}
@@ -900,8 +920,12 @@ func (pm *policyManager) hasTargetOverlap(policy1, policy2 *models.Policy) bool 
 }
 
 func (pm *policyManager) calculateConflictSummary(conflicts []PolicyConflictDetail) PolicyConflictSummary {
+	totalConflicts, err := convert.IntToInt32(len(conflicts))
+	if err != nil {
+		totalConflicts = 0
+	}
 	summary := PolicyConflictSummary{
-		TotalConflicts: int32(len(conflicts)),
+		TotalConflicts: totalConflicts,
 	}
 
 	for _, conflict := range conflicts {

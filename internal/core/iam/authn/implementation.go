@@ -178,14 +178,14 @@ func (s *service) ChangePassword(ctx context.Context, req *ChangePasswordRequest
 	}
 
 	// Update password hash
-	// tenantID, err := s.getCurrentTenantID(ctx)
-	// if err != nil {
-	// 	return err
-	// }
+	tenantID, err := s.getCurrentTenantID(ctx)
+	if err != nil {
+		return err
+	}
 
-	// err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, txRepo s.store) error {
-	// return s.repo.Users().UpdatePasswordHash(ctx, req.UserID, newHash)
-	// })
+	err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, txRepo s.store) error {
+		return s.repo.Users().UpdatePasswordHash(ctx, req.UserID, newHash)
+	})
 	err = s.repo.Users().UpdatePasswordHash(ctx, req.UserID, newHash)
 
 	if err != nil {
@@ -228,7 +228,7 @@ func (s *service) getCurrentTenantSlug(ctx context.Context) string {
 }
 
 func (s *service) getTenantCache(ctx context.Context) cache.Service {
-	// Since the cache service doesn't have WithTenantAndNamespace method,
+	//NOTE: Since the cache service doesn't have WithTenantAndNamespace method,
 	// we'll use the cache service directly for now
 	return s.cache
 }
@@ -242,18 +242,18 @@ func (s *service) hashPassword(password string) (string, error) {
 }
 
 func (s *service) verifyPassword(ctx context.Context, userID uuid.UUID, password string) (bool, error) {
-	// Get password hash from database
-	// tenantID, err := s.getCurrentTenantID(ctx)
-	// if err != nil {
-	// 	return false, err
-	// }
+	//TODO: Get password hash from database
+	tenantID, err := s.getCurrentTenantID(ctx)
+	if err != nil {
+		return false, err
+	}
 
 	var hash string
-	// err = s.repo.WithTenant(ctx, tenantID, func(ctx context.Context, txRepo repo.TransactionalRepository) error {
-	hash, err := s.repo.Users().GetPasswordHash(ctx, userID)
-	// 	return err
-	// })
-	//
+	err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, txRepo repo.TransactionalRepository) error {
+		hash, err := s.repo.Users().GetPasswordHash(ctx, userID)
+		return err
+	})
+
 	if err != nil {
 		return false, fmt.Errorf("failed to get password hash: %w", err)
 	}
@@ -333,7 +333,7 @@ func (s *service) auditDataOperation(ctx context.Context, operation string, enti
 func (s *service) EnableMFA(ctx context.Context, req *EnableMFARequest) (*MFASetupResult, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "authn.service.EnableMFA")
 	defer span.End()
-
+	///TODO: check first what is if the tennant is Enable MFA from featureFlagService
 	// Get user
 	user, err := s.GetUser(ctx, req.UserID)
 	if err != nil {
@@ -351,7 +351,7 @@ func (s *service) EnableMFA(ctx context.Context, req *EnableMFARequest) (*MFASet
 		return nil, fmt.Errorf("failed to store MFA secret: %w", err)
 	}
 
-	// Generate QR code (placeholder implementation)
+	//TODO: Generate QR code (placeholder implementation)
 	qrCode := fmt.Sprintf("otpauth://totp/%s:%s?secret=%s&issuer=ERP", "ERP", user.Email, secret)
 
 	// Audit log
@@ -447,7 +447,7 @@ func (s *service) CreateSession(ctx context.Context, req *CreateSessionRequest) 
 	}
 
 	var createdSession *model.Session
-	// Note: Sessions repository is not implemented yet, using placeholder
+	// NOTE: Sessions repository is not implemented yet, using placeholder
 	// createdSession, err = s.repo.Sessions().Create(ctx, session)
 	createdSession = session
 	err = nil
@@ -470,7 +470,7 @@ func (s *service) ValidateSession(ctx context.Context, token string) (*model.Ses
 	ctx, span := s.tracer.StartSpan(ctx, "authn.service.ValidateSession")
 	defer span.End()
 
-	// Note: Sessions repository is not implemented yet, using placeholder
+	// NOTE: Sessions repository is not implemented yet, using placeholder
 	// session, err = s.repo.Sessions().GetByToken(ctx, token)
 	if token == "" {
 		s.metrics.IncrementCounter("authn_session_validations_failed", metrics.Fields{"reason": "invalid_token"})
@@ -486,7 +486,7 @@ func (s *service) InvalidateSession(ctx context.Context, sessionID uuid.UUID) er
 	ctx, span := s.tracer.StartSpan(ctx, "authn.service.InvalidateSession")
 	defer span.End()
 
-	// Note: Sessions repository is not implemented yet, using placeholder
+	// NOTE: Sessions repository is not implemented yet, using placeholder
 	// err = s.repo.Sessions().InvalidateSession(ctx, sessionID)
 	err := error(nil)
 
@@ -508,7 +508,7 @@ func (s *service) InvalidateAllUserSessions(ctx context.Context, userID uuid.UUI
 	ctx, span := s.tracer.StartSpan(ctx, "authn.service.InvalidateAllUserSessions")
 	defer span.End()
 
-	// Note: Sessions repository is not implemented yet, using placeholder
+	// NOTE: Sessions repository is not implemented yet, using placeholder
 	// err = s.repo.Sessions().InvalidateUserSessions(ctx, userID)
 	err := error(nil)
 
@@ -547,7 +547,7 @@ func (s *service) AssignRole(ctx context.Context, req *AssignRoleRequest) error 
 		UpdatedAt: time.Now(),
 	}
 
-	// Note: UserRoles repository is not implemented yet, using placeholder
+	// NOTE: UserRoles repository is not implemented yet, using placeholder
 	// err = s.repo.UserRoles().Assign(ctx, userRole)
 	err = nil
 
@@ -572,7 +572,7 @@ func (s *service) RemoveRole(ctx context.Context, req *RemoveRoleRequest) error 
 	ctx, span := s.tracer.StartSpan(ctx, "authn.service.RemoveRole")
 	defer span.End()
 
-	// Note: UserRoles repository is not implemented yet, using placeholder
+	// NOTE: UserRoles repository is not implemented yet, using placeholder
 	// err = s.repo.UserRoles().Remove(ctx, req.UserID, req.RoleID, req.EntityID)
 	err := error(nil)
 
@@ -605,7 +605,7 @@ func (s *service) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*model.
 		return roles, nil
 	}
 
-	// Note: UserRoles repository is not implemented yet, using placeholder
+	// NOTE: UserRoles repository is not implemented yet, using placeholder
 	// userRoles, err = s.repo.UserRoles().GetUserRoles(ctx, userID)
 	// Convert to Role objects
 	roles = []*model.Role{}
@@ -708,7 +708,7 @@ func (s *service) UpdatePerson(ctx context.Context, req *UpdatePersonRequest) (*
 	if req.PhoneNumber != nil {
 		person.PhoneNumber = req.PhoneNumber
 	}
-	// Note: BirthDate and Address fields would need proper handling
+	// NOTE: BirthDate and Address fields would need proper handling
 	// based on the actual Person struct fields
 	person.UpdatedAt = time.Now()
 
@@ -791,7 +791,7 @@ func (s *service) UpdateEmployee(ctx context.Context, req *UpdateEmployeeRequest
 	if req.EmploymentStatus != nil {
 		employee.EmploymentStatus = model.EmploymentStatus(*req.EmploymentStatus)
 	}
-	// Note: Department and Salary would need proper handling
+	// NOTE: Department and Salary would need proper handling
 	// based on the actual Employee struct fields
 	employee.UpdatedAt = time.Now()
 

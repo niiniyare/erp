@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/shared/convert"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -740,8 +741,11 @@ func (r *repository) GetNextSequence(ctx context.Context, entityID uuid.UUID, ke
 	ctx, span := r.tracing.StartSpan(ctx, "repository.get_next_sequence")
 	defer span.End()
 
-	fiscalYearPtr := new(int16)
-	*fiscalYearPtr = int16(fiscalYear)
+	safeFiscalYear, err := convert.IntToInt16(fiscalYear)
+	if err != nil {
+		return 0, fmt.Errorf("invalid fiscal year: %w", err)
+	}
+	fiscalYearPtr := &safeFiscalYear
 
 	sequence, err := r.store.GetNextSequenceNumber(ctx, db.GetNextSequenceNumberParams{
 		EntityID:   entityID,
@@ -760,10 +764,13 @@ func (r *repository) ResetSequence(ctx context.Context, entityID uuid.UUID, key 
 	ctx, span := r.tracing.StartSpan(ctx, "repository.reset_sequence")
 	defer span.End()
 
-	fiscalYearPtr := new(int16)
-	*fiscalYearPtr = int16(fiscalYear)
+	safeFiscalYear, err := convert.IntToInt16(fiscalYear)
+	if err != nil {
+		return fmt.Errorf("invalid fiscal year: %w", err)
+	}
+	fiscalYearPtr := &safeFiscalYear
 
-	err := r.store.ResetEntityStateSequence(ctx, db.ResetEntityStateSequenceParams{
+	err = r.store.ResetEntityStateSequence(ctx, db.ResetEntityStateSequenceParams{
 		EntityID:   entityID,
 		Key:        key,
 		FiscalYear: fiscalYearPtr,

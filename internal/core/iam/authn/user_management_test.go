@@ -52,18 +52,18 @@ func (s *UserManagementTestSuite) TestCreateUser() {
 				PhoneNumber: stringPtr("+1234567890"),
 			},
 			validateResult: func(t *testing.T, user *model.User) {
-				// Assert user created with correct fields
+				// Require user created with correct fields
 				require.NotNil(t, user)
 				require.NotEqual(t, uuid.Nil, user.ID)
 				require.Equal(t, "test@example.com", user.Email)
-				// Assert password is hashed, not plaintext
+				// Require password is hashed, not plaintext
 				require.NotEqual(t, "SecurePassword123!", user.PasswordHash)
 				require.NotEmpty(t, user.PasswordHash)
-				// Assert default status is ACTIVE
+				// Require default status is ACTIVE
 				require.Equal(t, model.UserAccountStatusActive, user.AccountStatus)
-				// Assert failed_login_attempts = 0
+				// Require failed_login_attempts = 0
 				require.Equal(t, 0, user.FailedLoginCount)
-				// Assert tenant_id is set correctly
+				// Require tenant_id is set correctly
 				require.NotEqual(t, uuid.Nil, user.TenantID)
 			},
 		},

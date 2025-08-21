@@ -14,6 +14,7 @@ import (
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
+	"github.com/niiniyare/erp/internal/shared/convert"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -205,7 +206,7 @@ func (po *performanceOptimizer) GetCachedEvaluation(ctx context.Context, req *Ca
 	defer span.End()
 
 	startTime := time.Now()
-	
+
 	// Generate cache key
 	cacheKey := po.generateCacheKey(req)
 
@@ -353,7 +354,13 @@ func (po *performanceOptimizer) BatchEvaluate(ctx context.Context, req *BatchEva
 	go func() {
 		defer close(jobs)
 		for i, eval := range req.Evaluations {
-			eval.Priority = int32(i) // Use index as processing order
+			priority, err := convert.IntToInt32(i)
+			if err != nil {
+				// Log or handle the error, maybe skip the job
+				po.logger.WarnContext(ctx, "Failed to convert priority for batch evaluation job", logger.Fields{"error": err, "index": i})
+				continue
+			}
+			eval.Priority = priority // Use index as processing order
 			jobs <- eval
 		}
 	}()
@@ -386,13 +393,34 @@ func (po *performanceOptimizer) BatchEvaluate(ctx context.Context, req *BatchEva
 	executionTime := time.Since(startTime)
 
 	// Calculate performance statistics
-	performanceStats := po.calculateBatchPerformanceStats(executionTimes, cacheHits, int32(len(itemResults)), concurrencyLevel, executionTime)
+	totalResults, err := convert.IntToInt32(len(itemResults))
+	if err != nil {
+		totalResults = 0
+	}
+	performanceStats := po.calculateBatchPerformanceStats(executionTimes, cacheHits, totalResults, concurrencyLevel, executionTime)
+
+	totalRequested, err := convert.IntToInt32(len(req.Evaluations))
+	if err != nil {
+		totalRequested = 0
+	}
+	totalProcessed, err := convert.IntToInt32(len(itemResults) + len(failedItems))
+	if err != nil {
+		totalProcessed = 0
+	}
+	totalSuccessful, err := convert.IntToInt32(len(itemResults))
+	if err != nil {
+		totalSuccessful = 0
+	}
+	totalFailed, err := convert.IntToInt32(len(failedItems))
+	if err != nil {
+		totalFailed = 0
+	}
 
 	result := &BatchEvaluationResult{
-		TotalRequested:   int32(len(req.Evaluations)),
-		TotalProcessed:   int32(len(itemResults) + len(failedItems)),
-		TotalSuccessful:  int32(len(itemResults)),
-		TotalFailed:      int32(len(failedItems)),
+		TotalRequested:   totalRequested,
+		TotalProcessed:   totalProcessed,
+		TotalSuccessful:  totalSuccessful,
+		TotalFailed:      totalFailed,
 		TotalCacheHits:   cacheHits,
 		Results:          itemResults,
 		FailedItems:      failedItems,
@@ -897,7 +925,7 @@ func (po *performanceOptimizer) batchEvaluationWorker(
 
 		// Perform evaluation if not cached
 		if !cacheHit {
-			// Simplified evaluation - in real implementation, use actual evaluation engine
+			// TODO:Simplified evaluation - in real implementation, use actual evaluation engine
 			decision = types.PolicyDecisionAllow
 			policyDecisions = []*models.PolicyDecision{}
 
@@ -982,7 +1010,7 @@ func (po *performanceOptimizer) calculateBatchPerformanceStats(
 }
 
 func (po *performanceOptimizer) performPolicyCompilation(ctx context.Context, policy *models.Policy, req *PolicyCompilationRequest) (CompiledCode, []AppliedOptimization, error) {
-	// Simplified compilation implementation
+	// TODO:Simplified compilation implementation
 	compiledCode := CompiledCode{
 		ExecutionPlan: ExecutionPlan{
 			Steps: []ExecutionStep{
@@ -1026,26 +1054,59 @@ func (po *performanceOptimizer) performPolicyCompilation(ctx context.Context, po
 }
 
 func (po *performanceOptimizer) calculatePolicyComplexity(policy *models.Policy) int32 {
-	// Simplified complexity calculation
+	//TODO: Simplified complexity calculation
 	complexity := int32(10) // Base complexity
 
 	// Add complexity for rule structure
-	ruleBytes, _ := json.Marshal(policy.Rule)
-	complexity += int32(len(ruleBytes) / 100)
+	ruleBytes, err := json.Marshal(policy.Rule)
+	if err != nil {
+		po.logger.Warn("Can't Marshal Policy.Rule", logger.Fields{
+			"error": fmt.Sprintf("%v", err),
+		})
+		return 0
+	}
+	ruleComplexity, err := convert.IntToInt32(len(ruleBytes) / 100)
+	if err != nil {
+		po.logger.Warn("Can't convert rule complexity", logger.Fields{
+			"error": fmt.Sprintf("%v", err),
+		})
+	} else {
+		complexity += ruleComplexity
+	}
 
 	// Add complexity for target structure
-	targetBytes, _ := json.Marshal(policy.Target)
-	complexity += int32(len(targetBytes) / 100)
+	targetBytes, err := json.Marshal(policy.Target)
+	if err != nil {
+		po.logger.Warn("Can't Marshal Policy.Target", logger.Fields{
+			"error": fmt.Sprintf("%v", err),
+		})
+		return 0
+	}
+	targetComplexity, err := convert.IntToInt32(len(targetBytes) / 100)
+	if err != nil {
+		po.logger.Warn("Can't convert target complexity", logger.Fields{
+			"error": fmt.Sprintf("%v", err),
+		})
+	} else {
+		complexity += targetComplexity
+	}
 
 	return complexity
 }
 
 func (po *performanceOptimizer) calculateCompiledComplexity(compiled CompiledCode) int32 {
-	// Simplified compiled complexity calculation
-	return int32(len(compiled.ExecutionPlan.Steps) * 5)
+	//TODO: Simplified compiled complexity calculation
+	complexity, err := convert.IntToInt32(len(compiled.ExecutionPlan.Steps) * 5)
+	if err != nil {
+		po.logger.Warn("Can't convert compiled complexity", logger.Fields{
+			"error": fmt.Sprintf("%v", err),
+		})
+		return 0
+	}
+	return complexity
 }
 
-// Placeholder implementations for remaining interface methods
+// TODO: Placeholder implementations for remaining interface methods
 
 type BatchOptimizationRequest struct{}
 type BatchOptimizationResult struct{}

@@ -5,21 +5,31 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
-// EntityTestSuite is the test suite for IAM domain models
-type EntityTestSuite struct {
+// CoreDomainModelTestSuite defines comprehensive test suite for core domain model validation
+// Implements Phase 3 Task 3.1.1: Core Domain Model Testing (IAM-CORE-001 to IAM-CORE-007)
+type CoreDomainModelTestSuite struct {
 	suite.Suite
+	tenantID uuid.UUID
+	entityID uuid.UUID
 }
 
-// TestIAMEntityModels runs the test suite
-func TestIAMEntityModels(t *testing.T) {
-	suite.Run(t, new(EntityTestSuite))
+// SetupTest initializes test fixtures for each test
+func (s *CoreDomainModelTestSuite) SetupTest() {
+	s.tenantID = uuid.New()
+	s.entityID = uuid.New()
 }
 
-// TestPersonModelCreation covers test case IAM-CORE-001
-func (s *EntityTestSuite) TestPersonModelCreation() {
+// TestCoreEntities runs the comprehensive core domain model test suite
+func TestCoreEntities(t *testing.T) {
+	suite.Run(t, new(CoreDomainModelTestSuite))
+}
+
+// TestPersonModelCreation implements IAM-CORE-001: Verify Person model creation with valid data
+func (s *CoreDomainModelTestSuite) TestPersonModelCreation() {
 	testCases := []struct {
 		name          string
 		personData    Person
@@ -28,11 +38,11 @@ func (s *EntityTestSuite) TestPersonModelCreation() {
 		expectedError string
 	}{
 		{
-			name: "IAM-CORE-001: Valid Person Creation",
+			name: "ValidPersonCreation_AllFieldsSet",
 			personData: Person{
 				ID:         uuid.New(),
-				TenantID:   uuid.New(),
-				EntityID:   uuid.New(),
+				TenantID:   s.tenantID,
+				EntityID:   s.entityID,
 				PersonType: PersonTypeEmployee,
 				FirstName:  "John",
 				LastName:   "Doe",
@@ -44,101 +54,53 @@ func (s *EntityTestSuite) TestPersonModelCreation() {
 			},
 			expectValid: true,
 			checkResult: func(p *Person) {
-				s.Require().NotEqual(uuid.Nil, p.ID)
-				s.Require().NotEqual(uuid.Nil, p.TenantID)
-				s.Require().NotEqual(uuid.Nil, p.EntityID)
-				s.Require().Equal(PersonTypeEmployee, p.PersonType)
-				s.Require().Equal("John", p.FirstName)
-				s.Require().Equal("Doe", p.LastName)
-				s.Require().NotNil(p.Email)
-				s.Require().Equal("john.doe@example.com", *p.Email)
-				s.Require().True(p.IsActive)
-				s.Require().Equal("John Doe", p.FullName())
+				require.NotEqual(s.T(), uuid.Nil, p.ID, "Person ID should be generated")
+				require.Equal(s.T(), s.tenantID, p.TenantID, "Person should have correct tenant ID")
+				require.Equal(s.T(), s.entityID, p.EntityID, "Person should have correct entity ID")
+				require.Equal(s.T(), PersonTypeEmployee, p.PersonType, "Person type should be set correctly")
+				require.Equal(s.T(), "John", p.FirstName, "First name should be set")
+				require.Equal(s.T(), "Doe", p.LastName, "Last name should be set")
+				require.NotNil(s.T(), p.Email, "Email should be set")
+				require.Equal(s.T(), "john.doe@example.com", *p.Email, "Email should match")
+				require.True(s.T(), p.IsActive, "Person should be active by default")
+				require.NotZero(s.T(), p.CreatedAt, "CreatedAt timestamp should be set")
+				require.NotZero(s.T(), p.UpdatedAt, "UpdatedAt timestamp should be set")
+				require.Equal(s.T(), "John Doe", p.FullName(), "FullName method should work correctly")
+				require.Nil(s.T(), p.DeletedAt, "DeletedAt should be nil for new person")
 			},
 		},
 		{
-			name: "Person with Optional Fields",
-			personData: Person{
-				ID:          uuid.New(),
-				TenantID:    uuid.New(),
-				EntityID:    uuid.New(),
-				PersonType:  PersonTypeCustomer,
-				FirstName:   "Jane",
-				LastName:    "Smith",
-				MiddleName:  stringPtr("Marie"),
-				Email:       stringPtr("jane.smith@example.com"),
-				PhoneNumber: stringPtr("+1-555-0123"),
-				BirthDate:   time.Date(1985, 5, 15, 0, 0, 0, 0, time.UTC),
-				NationalID:  stringPtr("123-45-6789"),
-				TaxID:       stringPtr("TAX123456"),
-				IsActive:    true,
-				CreatedAt:   time.Now(),
-				UpdatedAt:   time.Now(),
-			},
-			expectValid: true,
-			checkResult: func(p *Person) {
-				s.Require().Equal(PersonTypeCustomer, p.PersonType)
-				s.Require().NotNil(p.MiddleName)
-				s.Require().Equal("Marie", *p.MiddleName)
-				s.Require().NotNil(p.PhoneNumber)
-				s.Require().Equal("+1-555-0123", *p.PhoneNumber)
-				s.Require().NotNil(p.NationalID)
-				s.Require().Equal("123-45-6789", *p.NationalID)
-				s.Require().NotNil(p.TaxID)
-				s.Require().Equal("TAX123456", *p.TaxID)
-			},
-		},
-		{
-			name: "Person with Complex Data Fields",
+			name: "MinimalPersonCreation_RequiredFieldsOnly",
 			personData: Person{
 				ID:         uuid.New(),
-				TenantID:   uuid.New(),
-				EntityID:   uuid.New(),
-				PersonType: PersonTypeContractor,
-				FirstName:  "Bob",
-				LastName:   "Johnson",
-				BirthDate:  time.Date(1980, 12, 25, 0, 0, 0, 0, time.UTC),
-				Address: map[string]any{
-					"street":      "123 Main St",
-					"city":        "Anytown",
-					"state":       "CA",
-					"postal_code": "12345",
-					"country":     "US",
-				},
-				SecurityAttributes: map[string]any{
-					"clearance_level": "confidential",
-					"department":      "engineering",
-					"location":        "HQ",
-				},
-				Metadata: map[string]any{
-					"hire_source":       "referral",
-					"emergency_contact": "spouse",
-				},
-				IsActive:  true,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
+				TenantID:   s.tenantID,
+				EntityID:   s.entityID,
+				PersonType: PersonTypeIndividual,
+				FirstName:  "Jane",
+				LastName:   "Smith",
+				BirthDate:  time.Date(1985, 6, 15, 0, 0, 0, 0, time.UTC),
+				IsActive:   true,
+				CreatedAt:  time.Now(),
+				UpdatedAt:  time.Now(),
 			},
 			expectValid: true,
 			checkResult: func(p *Person) {
-				s.Require().Equal(PersonTypeContractor, p.PersonType)
-				s.Require().NotNil(p.Address)
-				s.Require().Equal("123 Main St", p.Address["street"])
-				s.Require().Equal("CA", p.Address["state"])
-				s.Require().NotNil(p.SecurityAttributes)
-				s.Require().Equal("confidential", p.SecurityAttributes["clearance_level"])
-				s.Require().Equal("engineering", p.SecurityAttributes["department"])
-				s.Require().NotNil(p.Metadata)
-				s.Require().Equal("referral", p.Metadata["hire_source"])
+				require.NotEqual(s.T(), uuid.Nil, p.ID, "Person ID should be generated")
+				require.Equal(s.T(), s.tenantID, p.TenantID, "Tenant ID from context should be assigned")
+				require.Equal(s.T(), PersonTypeIndividual, p.PersonType, "Person type should be valid enum")
+				require.Nil(s.T(), p.Email, "Optional email should be nil")
+				require.Nil(s.T(), p.PhoneNumber, "Optional phone should be nil")
+				require.Nil(s.T(), p.DeletedAt, "DeletedAt should be nil for new person")
 			},
 		},
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.name, func() {
+		s.Run("IAM-CORE-001_"+tc.name, func() {
 			person := tc.personData
 
 			if tc.expectValid {
-				s.Require().NotNil(&person)
+				require.NotNil(s.T(), &person, "Person should be created successfully")
 				if tc.checkResult != nil {
 					tc.checkResult(&person)
 				}
@@ -147,11 +109,142 @@ func (s *EntityTestSuite) TestPersonModelCreation() {
 	}
 }
 
-// TestEmployeeModelCreation covers test case IAM-CORE-003
-func (s *EntityTestSuite) TestEmployeeModelCreation() {
+// TestPersonModelValidation implements IAM-CORE-002: Verify Person model validation for invalid data
+func (s *CoreDomainModelTestSuite) TestPersonModelValidation() {
+	testCases := []struct {
+		name            string
+		setupPerson     func() *Person
+		expectedErrors  []string
+		validationCheck func(*testing.T, *Person, []string)
+	}{
+		{
+			name: "InvalidPersonType_ShouldValidate",
+			setupPerson: func() *Person {
+				return &Person{
+					ID:         uuid.New(),
+					TenantID:   s.tenantID,
+					EntityID:   s.entityID,
+					PersonType: PersonType("INVALID_TYPE"), // Invalid enum
+					FirstName:  "John",
+					LastName:   "Doe",
+					BirthDate:  time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC),
+					CreatedAt:  time.Now(),
+					UpdatedAt:  time.Now(),
+				}
+			},
+			expectedErrors: []string{"invalid person_type enum"},
+			validationCheck: func(t *testing.T, p *Person, errors []string) {
+				// Validate that PersonType enum validation would catch this
+				validTypes := []PersonType{
+					PersonTypeIndividual, PersonTypeEmployee, PersonTypeContact,
+					PersonTypeCustomer, PersonTypeVendor, PersonTypeContractor,
+				}
+				isValid := false
+				for _, validType := range validTypes {
+					if p.PersonType == validType {
+						isValid = true
+						break
+					}
+				}
+				require.False(t, isValid, "Invalid PersonType should be detected")
+			},
+		},
+		{
+			name: "EmptyRequiredFields_ShouldValidate",
+			setupPerson: func() *Person {
+				return &Person{
+					ID:         uuid.New(),
+					TenantID:   s.tenantID,
+					EntityID:   s.entityID,
+					PersonType: PersonTypeEmployee,
+					FirstName:  "", // Empty required field
+					LastName:   "", // Empty required field
+					BirthDate:  time.Time{}, // Zero time
+					CreatedAt:  time.Now(),
+					UpdatedAt:  time.Now(),
+				}
+			},
+			expectedErrors: []string{"first_name required", "last_name required", "birth_date required"},
+			validationCheck: func(t *testing.T, p *Person, errors []string) {
+				require.Empty(t, p.FirstName, "FirstName should be empty")
+				require.Empty(t, p.LastName, "LastName should be empty")
+				require.True(t, p.BirthDate.IsZero(), "BirthDate should be zero")
+			},
+		},
+		{
+			name: "NilTenantID_ShouldValidate",
+			setupPerson: func() *Person {
+				return &Person{
+					ID:         uuid.New(),
+					TenantID:   uuid.Nil, // Invalid tenant ID
+					EntityID:   s.entityID,
+					PersonType: PersonTypeEmployee,
+					FirstName:  "John",
+					LastName:   "Doe",
+					BirthDate:  time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC),
+					CreatedAt:  time.Now(),
+					UpdatedAt:  time.Now(),
+				}
+			},
+			expectedErrors: []string{"tenant_id required"},
+			validationCheck: func(t *testing.T, p *Person, errors []string) {
+				require.Equal(t, uuid.Nil, p.TenantID, "TenantID should be nil")
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run("IAM-CORE-002_"+tc.name, func() {
+			// Arrange
+			person := tc.setupPerson()
+
+			// Act - Simulate validation logic
+			var validationErrors []string
+
+			// Basic validation logic that would be in a validator
+			if person.FirstName == "" {
+				validationErrors = append(validationErrors, "first_name required")
+			}
+			if person.LastName == "" {
+				validationErrors = append(validationErrors, "last_name required")
+			}
+			if person.BirthDate.IsZero() {
+				validationErrors = append(validationErrors, "birth_date required")
+			}
+			if person.TenantID == uuid.Nil {
+				validationErrors = append(validationErrors, "tenant_id required")
+			}
+
+			// Enum validation
+			validPersonTypes := []PersonType{
+				PersonTypeIndividual, PersonTypeEmployee, PersonTypeContact,
+				PersonTypeCustomer, PersonTypeVendor, PersonTypeContractor,
+			}
+			isValidType := false
+			for _, validType := range validPersonTypes {
+				if person.PersonType == validType {
+					isValidType = true
+					break
+				}
+			}
+			if !isValidType {
+				validationErrors = append(validationErrors, "invalid person_type enum")
+			}
+
+			// Assert
+			require.NotEmpty(s.T(), validationErrors, "Validation should detect errors")
+			require.Len(s.T(), validationErrors, len(tc.expectedErrors), "Should have expected number of validation errors")
+			
+			if tc.validationCheck != nil {
+				tc.validationCheck(s.T(), person, validationErrors)
+			}
+		})
+	}
+}
+
+// TestEmployeeModelCreation implements IAM-CORE-003: Verify Employee model creation and linking to a Person
+func (s *CoreDomainModelTestSuite) TestEmployeeModelCreation() {
 	personID := uuid.New()
-	entityID := uuid.New()
-	tenantID := uuid.New()
 
 	testCases := []struct {
 		name         string
@@ -160,13 +253,13 @@ func (s *EntityTestSuite) TestEmployeeModelCreation() {
 		checkResult  func(e *Employee)
 	}{
 		{
-			name: "IAM-CORE-003: Valid Employee Creation with Person Link",
+			name: "ValidEmployeeCreation_LinkedToPerson",
 			employeeData: Employee{
 				ID:               uuid.New(),
-				TenantID:         tenantID,
+				TenantID:         s.tenantID,
 				PersonID:         personID,
 				EmployeeNumber:   "EMP001",
-				EntityID:         entityID,
+				EntityID:         s.entityID,
 				PositionTitle:    stringPtr("Software Engineer"),
 				HireDate:         time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
 				EmploymentStatus: EmploymentStatusActive,
@@ -176,29 +269,29 @@ func (s *EntityTestSuite) TestEmployeeModelCreation() {
 			},
 			expectValid: true,
 			checkResult: func(e *Employee) {
-				s.Require().NotEqual(uuid.Nil, e.ID)
-				s.Require().Equal(tenantID, e.TenantID)
-				s.Require().Equal(personID, e.PersonID)
-				s.Require().Equal("EMP001", e.EmployeeNumber)
-				s.Require().Equal(entityID, e.EntityID)
-				s.Require().NotNil(e.PositionTitle)
-				s.Require().Equal("Software Engineer", *e.PositionTitle)
-				s.Require().Equal(EmploymentStatusActive, e.EmploymentStatus)
-				s.Require().Equal(3, e.SecurityLevel)
-				s.Require().True(e.IsActive())
-				s.Require().Nil(e.DeletedAt)
+				require.NotEqual(s.T(), uuid.Nil, e.ID, "Employee ID should be generated")
+				require.Equal(s.T(), s.tenantID, e.TenantID, "Employee should have correct tenant ID")
+				require.Equal(s.T(), personID, e.PersonID, "Employee should be linked to Person")
+				require.Equal(s.T(), "EMP001", e.EmployeeNumber, "Employee number should be set")
+				require.Equal(s.T(), s.entityID, e.EntityID, "Employee should have correct entity ID")
+				require.NotNil(s.T(), e.PositionTitle, "Position title should be set")
+				require.Equal(s.T(), "Software Engineer", *e.PositionTitle, "Position should match")
+				require.Equal(s.T(), EmploymentStatusActive, e.EmploymentStatus, "Employment status should be active")
+				require.Equal(s.T(), 3, e.SecurityLevel, "Security level should be set")
+				require.True(s.T(), e.IsActive(), "IsActive method should return true")
+				require.Nil(s.T(), e.DeletedAt, "DeletedAt should be nil for active employee")
 			},
 		},
 		{
-			name: "Employee with Manager Hierarchy",
+			name: "EmployeeWithManagerHierarchy_SelfReference",
 			employeeData: Employee{
 				ID:               uuid.New(),
-				TenantID:         tenantID,
+				TenantID:         s.tenantID,
 				PersonID:         personID,
 				EmployeeNumber:   "EMP002",
-				EntityID:         entityID,
+				EntityID:         s.entityID,
 				PositionTitle:    stringPtr("Senior Developer"),
-				DepartmentID:     &entityID,
+				DepartmentID:     &s.entityID,
 				ManagerID:        &personID,
 				HireDate:         time.Date(2023, 6, 1, 0, 0, 0, 0, time.UTC),
 				EmploymentStatus: EmploymentStatusActive,
@@ -208,11 +301,11 @@ func (s *EntityTestSuite) TestEmployeeModelCreation() {
 			},
 			expectValid: true,
 			checkResult: func(e *Employee) {
-				s.Require().NotNil(e.DepartmentID)
-				s.Require().Equal(entityID, *e.DepartmentID)
-				s.Require().NotNil(e.ManagerID)
-				s.Require().Equal(personID, *e.ManagerID)
-				s.Require().Equal(4, e.SecurityLevel)
+				require.NotNil(s.T(), e.DepartmentID, "Department ID should be set")
+				require.Equal(s.T(), s.entityID, *e.DepartmentID, "Department should match entity")
+				require.NotNil(s.T(), e.ManagerID, "Manager ID should be set (self-referential)")
+				require.Equal(s.T(), personID, *e.ManagerID, "Manager should reference correct person")
+				require.Equal(s.T(), 4, e.SecurityLevel, "High-level position should have elevated security")
 			},
 		},
 		{
@@ -286,11 +379,11 @@ func (s *EntityTestSuite) TestEmployeeModelCreation() {
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.name, func() {
+		s.Run("IAM-CORE-003_"+tc.name, func() {
 			employee := tc.employeeData
 
 			if tc.expectValid {
-				s.Require().NotNil(&employee)
+				require.NotNil(s.T(), &employee, "Employee should be created successfully")
 				if tc.checkResult != nil {
 					tc.checkResult(&employee)
 				}

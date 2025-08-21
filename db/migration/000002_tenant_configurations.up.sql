@@ -1,8 +1,47 @@
 -- =====================================================
 -- TENANT CONFIGURATIONS TABLE
 -- =====================================================
--- Stores tenant-specific configuration, limits, and feature flags
+-- =====================================================
+-- NOTE: FOR FUTURE posible changes
+-- =====================================================
+-- This table stores tenant-specific configurations, limits, and feature flags.
+-- ⚠️ IMPORTANT:
+-- During design we considered several approaches for tenant configurations:
+-- 1. **Dedicated Columns (Current Approach)**
+--    - Each configuration (limits, currency, fiscal year, etc.) is represented
+--      as a dedicated column with constraints and defaults.
+--    - ✅ Pros: Strong typing, easy querying, integrity enforced by Postgres.
+--    - ❌ Cons: Schema migrations are required when adding/removing config options.
+-- 2. **Key-Value Table**
+--    - A normalized table: (tenant_id, key, value).
+--    - Value could be TEXT or JSONB.
+--    - ✅ Pros: Flexible, supports dynamic additions without schema changes.
+--    - ❌ Cons: Weaker typing, harder to enforce constraints, requires parsing logic.
+-- 3. **PostgreSQL Composite Type**
+--    - Define a custom type, e.g. (key VARCHAR, value JSONB).
+--    - Store an array of these in a single column (per tenant).
+--    - ✅ Pros: Flexible structure, still uses Postgres typing.
+--    - ❌ Cons: Less standard, more complex queries/updates, potential overuse of JSON.
+-- 4. **Pure JSONB Column**
+--    - Store all tenant configuration in a single JSONB column.
+--    - ✅ Pros: Extremely flexible, supports arbitrary nesting.
+--    - ❌ Cons: No relational constraints, application logic must enforce validity.
+-- 🎯 DECISION:
+-- We chose **Approach #1 (Dedicated Columns)** for core/critical settings
+-- (limits, accounting preferences, localization, security policies, etc.)
+-- because it enforces data integrity and allows direct SQL constraints.
+-- However:
+-- - A `settings JSONB` column is included for flexible, tenant-specific preferences.
+-- - Future developers may extend or migrate towards #2 or #3 if flexibility
+--   becomes more important than strong typing.
+-- ✅ When modifying this table:
+-- - Keep critical, high-value configs as dedicated columns.
+-- - Use `settings` JSONB for experimental, low-risk, or per-tenant overrides.
+-- - Always add `COMMENT ON COLUMN ...` for clarity.
 
+-- =====================================================
+-- Stores tenant-specific configuration, limits, and feature flags
+-- =====================================================
 CREATE TABLE tenant_configurations (
     -- Primary key and tenant reference
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE PRIMARY KEY,
@@ -13,22 +52,9 @@ CREATE TABLE tenant_configurations (
     max_transactions_per_month INT NOT NULL DEFAULT 10000,
     storage_quota BIGINT NOT NULL DEFAULT 1073741824, -- 1GB in bytes
 
-    -- Feature flags for module enablement
-    features JSONB NOT NULL DEFAULT '{
-        "advanced_reporting": false,
-        "multi_currency": false,
-        "project_tracking": true,
-        "inventory_management": true,
-        "payroll": false,
-        "api_access": false
-    }'::jsonb,
-
-    -- Module configuration
-    modules_enabled JSONB NOT NULL DEFAULT '["accounting", "inventory"]'::jsonb,
-
     -- Accounting preferences
-    accounting_method VARCHAR(10) NOT NULL DEFAULT 'accrual'
-        CHECK (accounting_method IN ('accrual', 'cash')),
+    accounting_method VARCHAR(10) NOT NULL DEFAULT 'ACCRUAL'
+        CHECK (accounting_method IN ('ACCRUAL', 'CASH')),
     fiscal_year_start_month INT NOT NULL DEFAULT 1
         CHECK (fiscal_year_start_month BETWEEN 1 AND 12),
     default_currency CHAR(3) NOT NULL DEFAULT 'USD',
@@ -46,6 +72,7 @@ CREATE TABLE tenant_configurations (
         "require_numbers": true,
         "require_symbols": false
     }'::jsonb,
+    settings JSONB DEFAULT '{}'::jsonb,            -- tenant preferences and settings
 
     -- Integration settings
     webhook_endpoints JSONB DEFAULT '[]'::jsonb,
@@ -61,8 +88,6 @@ CREATE TABLE tenant_configurations (
 
 -- Add comments for documentation
 COMMENT ON TABLE tenant_configurations IS 'Tenant-specific configuration settings, feature flags, and resource limits';
-COMMENT ON COLUMN tenant_configurations.features IS 'JSONB object containing feature flags for module enablement';
-COMMENT ON COLUMN tenant_configurations.modules_enabled IS 'Array of enabled modules for the tenant';
 COMMENT ON COLUMN tenant_configurations.password_policy IS 'Password complexity requirements';
 COMMENT ON COLUMN tenant_configurations.api_rate_limits IS 'API rate limiting configuration';
 

@@ -393,7 +393,7 @@ func (pm *policyManager) ImportPolicies(ctx context.Context, req *ImportPolicies
 	if err != nil {
 		return nil, fmt.Errorf("invalid successful imports count: %w", err)
 	}
-	failedImports, err := convert.IntToInt32(len(failedImports))
+	failedImportsCount, err := convert.IntToInt32(len(failedImports))
 	if err != nil {
 		return nil, fmt.Errorf("invalid failed imports count: %w", err)
 	}
@@ -409,7 +409,7 @@ func (pm *policyManager) ImportPolicies(ctx context.Context, req *ImportPolicies
 	summary := ImportSummary{
 		TotalPolicies:     totalPolicies,
 		SuccessfulImports: successfulImports,
-		FailedImports:     failedImports,
+		FailedImports:     failedImportsCount,
 		ValidatedPolicies: validatedPolicies,
 		WarningsCount:     warningsCount,
 	}
@@ -509,14 +509,14 @@ func (pm *policyManager) ExportPolicies(ctx context.Context, req *ExportPolicies
 	if err != nil {
 		return nil, fmt.Errorf("invalid total policies count: %w", err)
 	}
-	exportedPolicies, err := convert.IntToInt32(len(policiesToExport))
+	exportedPoliciesCount, err := convert.IntToInt32(len(policiesToExport))
 	if err != nil {
 		return nil, fmt.Errorf("invalid exported policies count: %w", err)
 	}
 
 	summary := ExportSummary{
 		TotalPolicies:    totalPolicies,
-		ExportedPolicies: exportedPolicies,
+		ExportedPolicies: exportedPoliciesCount,
 		OutputSize:       outputSize,
 	}
 
