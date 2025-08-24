@@ -249,7 +249,7 @@ INSERT INTO
 VALUES
   ($1, $2, $3, $4, $5, $6)
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 `
 
 type CreateTenantParams struct {
@@ -290,11 +290,11 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (*Te
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
@@ -698,7 +698,7 @@ func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([
 
 const getActiveTenants = `-- name: GetActiveTenants :many
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -732,11 +732,11 @@ func (q *Queries) GetActiveTenants(ctx context.Context) ([]*Tenant, error) {
 			&i.TaxID,
 			&i.RegistrationNumber,
 			&i.LegalEntityType,
+			&i.LastActivityAt,
 			&i.Settings,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
-			&i.LastActivityAt,
 		); err != nil {
 			return nil, err
 		}
@@ -894,7 +894,7 @@ func (q *Queries) GetBooleanSetting(ctx context.Context, key string) (bool, erro
 
 const getCurrentTenant = `-- name: GetCurrentTenant :one
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -924,11 +924,11 @@ func (q *Queries) GetCurrentTenant(ctx context.Context) (*Tenant, error) {
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
@@ -1149,7 +1149,7 @@ func (q *Queries) GetSpecificSetting(ctx context.Context, key string) (interface
 
 const getTenantByEmail = `-- name: GetTenantByEmail :one
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1175,18 +1175,18 @@ func (q *Queries) GetTenantByEmail(ctx context.Context, email string) (*Tenant, 
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
 
 const getTenantByID = `-- name: GetTenantByID :one
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1212,18 +1212,18 @@ func (q *Queries) GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, err
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
 
 const getTenantBySlug = `-- name: GetTenantBySlug :one
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1249,18 +1249,18 @@ func (q *Queries) GetTenantBySlug(ctx context.Context, slug string) (*Tenant, er
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
 
 const getTenantByUUID = `-- name: GetTenantByUUID :one
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1288,11 +1288,11 @@ func (q *Queries) GetTenantByUUID(ctx context.Context, subdomain *string) (*Tena
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
@@ -1734,7 +1734,7 @@ func (q *Queries) GetTenantsByTimezone(ctx context.Context) ([]*GetTenantsByTime
 
 const getTenantsCreatedInDateRange = `-- name: GetTenantsCreatedInDateRange :many
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1774,11 +1774,11 @@ func (q *Queries) GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenan
 			&i.TaxID,
 			&i.RegistrationNumber,
 			&i.LegalEntityType,
+			&i.LastActivityAt,
 			&i.Settings,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
-			&i.LastActivityAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1827,7 +1827,7 @@ func (q *Queries) InitializeUsageStats(ctx context.Context, tenantID uuid.UUID) 
 
 const listTenants = `-- name: ListTenants :many
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1867,11 +1867,11 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Te
 			&i.TaxID,
 			&i.RegistrationNumber,
 			&i.LegalEntityType,
+			&i.LastActivityAt,
 			&i.Settings,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
-			&i.LastActivityAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1949,7 +1949,7 @@ func (q *Queries) ResolveSubdomainToID(ctx context.Context, subdomain *string) (
 
 const searchTenantsByName = `-- name: SearchTenantsByName :many
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1991,11 +1991,11 @@ func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNa
 			&i.TaxID,
 			&i.RegistrationNumber,
 			&i.LegalEntityType,
+			&i.LastActivityAt,
 			&i.Settings,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
-			&i.LastActivityAt,
 		); err != nil {
 			return nil, err
 		}
@@ -2048,7 +2048,7 @@ WHERE
   id = current_tenant_id()
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateCurrentTenantParams struct {
@@ -2081,11 +2081,11 @@ func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTena
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
@@ -2215,7 +2215,7 @@ WHERE
   id = $5
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantParams struct {
@@ -2250,11 +2250,11 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Te
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
@@ -2288,7 +2288,7 @@ WHERE
   id = $15
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantCompleteParams struct {
@@ -2343,11 +2343,11 @@ func (q *Queries) UpdateTenantComplete(ctx context.Context, arg UpdateTenantComp
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
@@ -2455,7 +2455,7 @@ WHERE
   id = $1
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantIndustryParams struct {
@@ -2481,11 +2481,11 @@ func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndu
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
@@ -2578,7 +2578,7 @@ WHERE
   id = current_tenant_id()
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) UpdateTenantMetadata(ctx context.Context, metadata []byte) (*Tenant, error) {
@@ -2599,11 +2599,11 @@ func (q *Queries) UpdateTenantMetadata(ctx context.Context, metadata []byte) (*T
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
@@ -2618,7 +2618,7 @@ WHERE
   id = $1
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantNameParams struct {
@@ -2644,11 +2644,11 @@ func (q *Queries) UpdateTenantName(ctx context.Context, arg UpdateTenantNamePara
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
@@ -2663,7 +2663,7 @@ WHERE
   id = current_tenant_id()
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) UpdateTenantSettings(ctx context.Context, settings []byte) (*Tenant, error) {
@@ -2684,11 +2684,11 @@ func (q *Queries) UpdateTenantSettings(ctx context.Context, settings []byte) (*T
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
@@ -2703,7 +2703,7 @@ WHERE
   id = $1
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantStatusParams struct {
@@ -2729,11 +2729,11 @@ func (q *Queries) UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatus
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }
@@ -2748,7 +2748,7 @@ WHERE
   id = $1
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, settings, created_at, updated_at, deleted_at, last_activity_at
+  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantSubdomainParams struct {
@@ -2774,11 +2774,11 @@ func (q *Queries) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSub
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
+		&i.LastActivityAt,
 		&i.Settings,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.LastActivityAt,
 	)
 	return &i, err
 }

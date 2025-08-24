@@ -41,26 +41,6 @@ type AccessRequest struct {
 	UpdatedAt  sql.NullTime `json:"updated_at"`
 }
 
-type Account struct {
-	ID          uuid.UUID        `json:"id"`
-	Created     pgtype.Timestamp `json:"created"`
-	Updated     pgtype.Timestamp `json:"updated"`
-	TenantID    uuid.UUID        `json:"tenant_id"`
-	EntityID    uuid.UUID        `json:"entity_id"`
-	Path        string           `json:"path"`
-	Depth       int32            `json:"depth"`
-	Numchild    int32            `json:"numchild"`
-	AccountCode string           `json:"account_code"`
-	AccountName string           `json:"account_name"`
-	AccountType string           `json:"account_type"`
-	AccountRole *string          `json:"account_role"`
-	BalanceType string           `json:"balance_type"`
-	Locked      bool             `json:"locked"`
-	Active      bool             `json:"active"`
-	CoaID       uuid.UUID        `json:"coa__id"`
-	RoleDefault *bool            `json:"role_default"`
-}
-
 // Defines actions that can be performed on resources with risk assessment and approval workflow requirements.
 type Action struct {
 	ID          uuid.UUID `json:"id"`
@@ -177,59 +157,6 @@ type AuditLog struct {
 	// JSONB containing compliance-related flags (GDPR, SOX, HIPAA, PCI, etc.)
 	ComplianceFlags []byte       `json:"compliance_flags"`
 	CreatedAt       sql.NullTime `json:"created_at"`
-}
-
-type Budget struct {
-	ID              uuid.UUID      `json:"id"`
-	TenantID        uuid.UUID      `json:"tenant_id"`
-	EntityID        uuid.UUID      `json:"entity_id"`
-	ProjectID       *uuid.UUID     `json:"project_id"`
-	Name            string         `json:"name"`
-	BudgetType      string         `json:"budget_type"`
-	FiscalYear      int32          `json:"fiscal_year"`
-	PeriodStart     time.Time      `json:"period_start"`
-	PeriodEnd       time.Time      `json:"period_end"`
-	TotalAmount     pgtype.Numeric `json:"total_amount"`
-	AllocatedAmount pgtype.Numeric `json:"allocated_amount"`
-	SpentAmount     pgtype.Numeric `json:"spent_amount"`
-	Status          *string        `json:"status"`
-	ApprovedBy      *uuid.UUID     `json:"approved_by"`
-	ApprovedAt      sql.NullTime   `json:"approved_at"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
-}
-
-type Chartofaccount struct {
-	ID          uuid.UUID        `json:"id"`
-	TenantID    uuid.UUID        `json:"tenant_id"`
-	EntityID    uuid.UUID        `json:"entity_id"`
-	Module      string           `json:"module"`
-	Slug        string           `json:"slug"`
-	Name        *string          `json:"name"`
-	Created     pgtype.Timestamp `json:"created"`
-	Updated     pgtype.Timestamp `json:"updated"`
-	IsActive    *bool            `json:"is_active"`
-	Description string           `json:"description"`
-	Active      bool             `json:"active"`
-}
-
-type Customer struct {
-	Created        pgtype.Timestamp `json:"created"`
-	Updated        pgtype.Timestamp `json:"updated"`
-	ID             uuid.UUID        `json:"id"`
-	TenantID       uuid.UUID        `json:"tenant_id"`
-	EntityID       uuid.UUID        `json:"entity_id"`
-	CustomerName   string           `json:"customer_name"`
-	CustomerNumber string           `json:"customer_number"`
-	Description    string           `json:"description"`
-	Active         bool             `json:"active"`
-	Hidden         bool             `json:"hidden"`
-	Address        []byte           `json:"address"`
-	Email          *string          `json:"email"`
-	Website        *string          `json:"website"`
-	Phone          *string          `json:"phone"`
-	SalesTaxRate   *float32         `json:"sales_tax_rate"`
-	AdditionalInfo []byte           `json:"additional_info"`
 }
 
 // Employee records extending persons with employment-specific data, organizational hierarchy, and security levels for access control.
@@ -351,6 +278,137 @@ type FeatureFlag struct {
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
+// Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and comprehensive financial reporting requirements.
+type FinanceChartOfAccount struct {
+	ID       uuid.UUID  `json:"id"`
+	TenantID uuid.UUID  `json:"tenant_id"`
+	EntityID *uuid.UUID `json:"entity_id"`
+	// Unique account code within tenant - Used for transaction posting and reporting
+	AccountCode        string     `json:"account_code"`
+	AccountName        string     `json:"account_name"`
+	AccountDescription string     `json:"account_description"`
+	ParentAccountID    *uuid.UUID `json:"parent_account_id"`
+	AccountLevel       int32      `json:"account_level"`
+	// Materialized path for efficient hierarchy queries - Format: /root/parent/child/
+	AccountPath *string `json:"account_path"`
+	// High-level account classification for balance sheet and income statement categorization
+	RootType       string  `json:"root_type"`
+	AccountType    string  `json:"account_type"`
+	AccountSubtype *string `json:"account_subtype"`
+	// Normal balance type - DEBIT for assets/expenses, CREDIT for liabilities/equity/revenue
+	NormalBalance               string         `json:"normal_balance"`
+	IsControlAccount            bool           `json:"is_control_account"`
+	ControlAccountID            *uuid.UUID     `json:"control_account_id"`
+	CurrencyCode                *string        `json:"currency_code"`
+	IsMultiCurrency             *bool          `json:"is_multi_currency"`
+	CurrencyRevaluationRequired *bool          `json:"currency_revaluation_required"`
+	IsActive                    bool           `json:"is_active"`
+	IsSystemAccount             bool           `json:"is_system_account"`
+	AllowManualEntries          bool           `json:"allow_manual_entries"`
+	RequireReference            bool           `json:"require_reference"`
+	CurrentBalance              pgtype.Numeric `json:"current_balance"`
+	YtdBalance                  pgtype.Numeric `json:"ytd_balance"`
+	LastTransactionDate         time.Time      `json:"last_transaction_date"`
+	FinancialStatementLine      *string        `json:"financial_statement_line"`
+	ReportOrder                 *int32         `json:"report_order"`
+	IsBudgetable                *bool          `json:"is_budgetable"`
+	BudgetVarianceThreshold     pgtype.Numeric `json:"budget_variance_threshold"`
+	Version                     int32          `json:"version"`
+	LastValidationRun           sql.NullTime   `json:"last_validation_run"`
+	ValidationStatus            *string        `json:"validation_status"`
+	ValidationErrors            []byte         `json:"validation_errors"`
+	AccountAttributes           []byte         `json:"account_attributes"`
+	CreatedAt                   time.Time      `json:"created_at"`
+	UpdatedAt                   time.Time      `json:"updated_at"`
+	DeletedAt                   sql.NullTime   `json:"deleted_at"`
+	CreatedBy                   *uuid.UUID     `json:"created_by"`
+	UpdatedBy                   *uuid.UUID     `json:"updated_by"`
+}
+
+// Header table for all financial transactions. Contains transaction metadata, approval workflow, and summary amounts.
+type FinanceTransaction struct {
+	ID       uuid.UUID  `json:"id"`
+	TenantID uuid.UUID  `json:"tenant_id"`
+	EntityID *uuid.UUID `json:"entity_id"`
+	// Unique transaction number within tenant - Auto-generated or user-provided
+	TransactionNumber string `json:"transaction_number"`
+	// Type of transaction - determines behavior and validation rules
+	TransactionType string `json:"transaction_type"`
+	// Current status in transaction lifecycle - controls what operations are allowed
+	TransactionStatus string    `json:"transaction_status"`
+	TransactionDate   time.Time `json:"transaction_date"`
+	PostingDate       time.Time `json:"posting_date"`
+	DueDate           time.Time `json:"due_date"`
+	Description       string    `json:"description"`
+	ReferenceNumber   *string   `json:"reference_number"`
+	ExternalReference *string   `json:"external_reference"`
+	CurrencyCode      string    `json:"currency_code"`
+	// Exchange rate from transaction currency to functional currency
+	ExchangeRate pgtype.Numeric `json:"exchange_rate"`
+	// Sum of all debit entries - Must equal total_credit_amount for balanced transactions
+	TotalDebitAmount pgtype.Numeric `json:"total_debit_amount"`
+	// Sum of all credit entries - Must equal total_debit_amount for balanced transactions
+	TotalCreditAmount       pgtype.Numeric `json:"total_credit_amount"`
+	SourceModule            *string        `json:"source_module"`
+	SourceDocumentType      *string        `json:"source_document_type"`
+	SourceDocumentID        *uuid.UUID     `json:"source_document_id"`
+	BatchID                 *uuid.UUID     `json:"batch_id"`
+	ApprovalRequired        *bool          `json:"approval_required"`
+	ApprovalStatus          *string        `json:"approval_status"`
+	ApprovedBy              *uuid.UUID     `json:"approved_by"`
+	ApprovedAt              sql.NullTime   `json:"approved_at"`
+	ApprovalNotes           string         `json:"approval_notes"`
+	IsRecurring             *bool          `json:"is_recurring"`
+	RecurringFrequency      *string        `json:"recurring_frequency"`
+	NextRecurringDate       time.Time      `json:"next_recurring_date"`
+	IsReversed              *bool          `json:"is_reversed"`
+	ReversedByTransactionID *uuid.UUID     `json:"reversed_by_transaction_id"`
+	ReversalReason          string         `json:"reversal_reason"`
+	Version                 int32          `json:"version"`
+	ValidationStatus        *string        `json:"validation_status"`
+	ValidationErrors        []byte         `json:"validation_errors"`
+	TransactionAttributes   []byte         `json:"transaction_attributes"`
+	CreatedAt               time.Time      `json:"created_at"`
+	UpdatedAt               time.Time      `json:"updated_at"`
+	DeletedAt               sql.NullTime   `json:"deleted_at"`
+	CreatedBy               uuid.UUID      `json:"created_by"`
+	UpdatedBy               *uuid.UUID     `json:"updated_by"`
+	PostedBy                *uuid.UUID     `json:"posted_by"`
+	PostedAt                sql.NullTime   `json:"posted_at"`
+}
+
+// Individual journal entries that make up financial transactions. Implements double-entry bookkeeping with debit and credit amounts.
+type FinanceTransactionEntry struct {
+	ID            uuid.UUID `json:"id"`
+	TenantID      uuid.UUID `json:"tenant_id"`
+	TransactionID uuid.UUID `json:"transaction_id"`
+	// Sequential entry number within transaction - Used for ordering and reference
+	EntryNumber int32     `json:"entry_number"`
+	AccountID   uuid.UUID `json:"account_id"`
+	// Debit amount in functional currency - Must be 0 if credit_amount > 0
+	DebitAmount pgtype.Numeric `json:"debit_amount"`
+	// Credit amount in functional currency - Must be 0 if debit_amount > 0
+	CreditAmount     pgtype.Numeric `json:"credit_amount"`
+	Description      string         `json:"description"`
+	Reference        *string        `json:"reference"`
+	CostCenter       *string        `json:"cost_center"`
+	Department       *string        `json:"department"`
+	ProjectID        *uuid.UUID     `json:"project_id"`
+	OriginalCurrency *string        `json:"original_currency"`
+	// Original transaction amount in original currency before conversion
+	OriginalAmount          pgtype.Numeric `json:"original_amount"`
+	ExchangeRate            pgtype.Numeric `json:"exchange_rate"`
+	TaxCode                 *string        `json:"tax_code"`
+	TaxRate                 pgtype.Numeric `json:"tax_rate"`
+	TaxAmount               pgtype.Numeric `json:"tax_amount"`
+	Reconciled              *bool          `json:"reconciled"`
+	ReconciledDate          time.Time      `json:"reconciled_date"`
+	ReconciliationReference *string        `json:"reconciliation_reference"`
+	CreatedAt               time.Time      `json:"created_at"`
+	UpdatedAt               time.Time      `json:"updated_at"`
+	DeletedAt               sql.NullTime   `json:"deleted_at"`
+}
+
 // Closure table for efficient entity hierarchy queries. Stores all ancestor-descendant relationships with depth information. Enables fast retrieval of entity trees, subtrees, and hierarchy levels without recursive queries.
 type HierarchyPath struct {
 	// Tenant identifier - Partitions hierarchy data by tenant for multi-tenancy
@@ -369,118 +427,6 @@ type HierarchyPath struct {
 	ValidationErrors  []byte       `json:"validation_errors"`
 	CreatedAt         time.Time    `json:"created_at"`
 	UpdatedAt         time.Time    `json:"updated_at"`
-}
-
-type InventoryBalance struct {
-	ID                uuid.UUID      `json:"id"`
-	TenantID          uuid.UUID      `json:"tenant_id"`
-	ItemID            uuid.UUID      `json:"item_id"`
-	EntityID          uuid.UUID      `json:"entity_id"`
-	WarehouseID       uuid.UUID      `json:"warehouse_id"`
-	QuantityOnHand    pgtype.Numeric `json:"quantity_on_hand"`
-	QuantityAvailable pgtype.Numeric `json:"quantity_available"`
-	QuantityReserved  pgtype.Numeric `json:"quantity_reserved"`
-	QuantityOnOrder   pgtype.Numeric `json:"quantity_on_order"`
-	AverageCost       pgtype.Numeric `json:"average_cost"`
-	TotalValue        pgtype.Numeric `json:"total_value"`
-	LastMovementDate  time.Time      `json:"last_movement_date"`
-	UpdatedAt         time.Time      `json:"updated_at"`
-}
-
-type InventoryMovement struct {
-	ID              uuid.UUID      `json:"id"`
-	TenantID        uuid.UUID      `json:"tenant_id"`
-	EntityID        uuid.UUID      `json:"entity_id"`
-	ItemID          uuid.UUID      `json:"item_id"`
-	WarehouseID     uuid.UUID      `json:"warehouse_id"`
-	MovementType    string         `json:"movement_type"`
-	ReferenceType   *string        `json:"reference_type"`
-	ReferenceID     *int64         `json:"reference_id"`
-	ReferenceNumber *string        `json:"reference_number"`
-	TransactionDate time.Time      `json:"transaction_date"`
-	Quantity        pgtype.Numeric `json:"quantity"`
-	UnitCost        pgtype.Numeric `json:"unit_cost"`
-	TotalCost       pgtype.Numeric `json:"total_cost"`
-	Reason          string         `json:"reason"`
-	BatchNumber     *string        `json:"batch_number"`
-	SerialNumbers   []string       `json:"serial_numbers"`
-	ExpiryDate      time.Time      `json:"expiry_date"`
-	CreatedBy       *uuid.UUID     `json:"created_by"`
-	CreatedAt       time.Time      `json:"created_at"`
-}
-
-type Item struct {
-	ID                uuid.UUID      `json:"id"`
-	TenantID          uuid.UUID      `json:"tenant_id"`
-	EntityID          uuid.UUID      `json:"entity_id"`
-	ItemCode          string         `json:"item_code"`
-	Name              string         `json:"name"`
-	Description       string         `json:"description"`
-	CategoryID        *uuid.UUID     `json:"category_id"`
-	ItemType          *string        `json:"item_type"`
-	UnitOfMeasure     string         `json:"unit_of_measure"`
-	CostMethod        *string        `json:"cost_method"`
-	StandardCost      pgtype.Numeric `json:"standard_cost"`
-	SellingPrice      pgtype.Numeric `json:"selling_price"`
-	MinimumStockLevel pgtype.Numeric `json:"minimum_stock_level"`
-	MaximumStockLevel pgtype.Numeric `json:"maximum_stock_level"`
-	ReorderPoint      pgtype.Numeric `json:"reorder_point"`
-	ReorderQuantity   pgtype.Numeric `json:"reorder_quantity"`
-	IsActive          *bool          `json:"is_active"`
-	IsSerialized      *bool          `json:"is_serialized"`
-	IsBatchTracked    *bool          `json:"is_batch_tracked"`
-	TaxCategory       *string        `json:"tax_category"`
-	SupplierID        *int32         `json:"supplier_id"`
-	Specifications    []byte         `json:"specifications"`
-	CreatedAt         time.Time      `json:"created_at"`
-	UpdatedAt         time.Time      `json:"updated_at"`
-}
-
-type ItemCategory struct {
-	ID          uuid.UUID  `json:"id"`
-	TenantID    uuid.UUID  `json:"tenant_id"`
-	EntityID    uuid.UUID  `json:"entity_id"`
-	ParentID    *uuid.UUID `json:"parent_id"`
-	Name        string     `json:"name"`
-	Code        *string    `json:"code"`
-	Description string     `json:"description"`
-	IsActive    *bool      `json:"is_active"`
-	CreatedAt   time.Time  `json:"created_at"`
-}
-
-type Journalentry struct {
-	ID             uuid.UUID        `json:"id"`
-	Created        pgtype.Timestamp `json:"created"`
-	Updated        pgtype.Timestamp `json:"updated"`
-	TenantID       uuid.UUID        `json:"tenant_id"`
-	EntityID       uuid.UUID        `json:"entity_id"`
-	PostedBy       *uuid.UUID       `json:"posted_by"`
-	CreatedBy      *uuid.UUID       `json:"created_by"`
-	JeNumber       string           `json:"je_number"`
-	Timestamp      pgtype.Timestamp `json:"timestamp"`
-	Description    *string          `json:"description"`
-	Activity       *string          `json:"activity"`
-	Origin         *string          `json:"origin"`
-	Posted         bool             `json:"posted"`
-	Locked         bool             `json:"locked"`
-	LedgerID       uuid.UUID        `json:"ledger_id"`
-	IsClosingEntry bool             `json:"is_closing_entry"`
-}
-
-type Ledger struct {
-	ID             uuid.UUID        `json:"id"`
-	Created        pgtype.Timestamp `json:"created"`
-	Updated        pgtype.Timestamp `json:"updated"`
-	TenantID       uuid.UUID        `json:"tenant_id"`
-	EntityID       uuid.UUID        `json:"entity_id"`
-	PostedBy       *uuid.UUID       `json:"posted_by"`
-	CreatedBy      *uuid.UUID       `json:"created_by"`
-	Name           *string          `json:"name"`
-	Posted         bool             `json:"posted"`
-	Locked         bool             `json:"locked"`
-	Hidden         bool             `json:"hidden"`
-	AdditionalInfo string           `json:"additional_info"`
-	LedgerXid      *string          `json:"ledger_xid"`
 }
 
 // System modules for organizing permissions and features into logical groups. Enables modular permission management and feature toggles.
@@ -679,24 +625,6 @@ type PolicyEvaluation struct {
 	ExpiresAt        sql.NullTime `json:"expires_at"`
 }
 
-type Project struct {
-	ID               uuid.UUID      `json:"id"`
-	TenantID         uuid.UUID      `json:"tenant_id"`
-	EntityID         uuid.UUID      `json:"entity_id"`
-	Name             string         `json:"name"`
-	Code             *string        `json:"code"`
-	Description      string         `json:"description"`
-	ProjectManagerID *uuid.UUID     `json:"project_manager_id"`
-	StartDate        time.Time      `json:"start_date"`
-	EndDate          time.Time      `json:"end_date"`
-	BudgetAmount     pgtype.Numeric `json:"budget_amount"`
-	ActualCost       pgtype.Numeric `json:"actual_cost"`
-	Status           *string        `json:"status"`
-	Metadata         []byte         `json:"metadata"`
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
-}
-
 // System resources that can be protected by permissions including APIs, UI components, data objects, files, reports, and workflows.
 type Resource struct {
 	ID          uuid.UUID  `json:"id"`
@@ -789,19 +717,19 @@ type Tenant struct {
 	Timezone     string  `json:"timezone"`
 	CurrencyCode string  `json:"currency_code"`
 	// Flexible JSONB storage for additional tenant metadata
-	Metadata           []byte  `json:"metadata"`
-	Industry           *string `json:"industry"`
-	CompanySize        *string `json:"company_size"`
-	TaxID              *string `json:"tax_id"`
-	RegistrationNumber *string `json:"registration_number"`
-	LegalEntityType    *string `json:"legal_entity_type"`
+	Metadata           []byte       `json:"metadata"`
+	Industry           *string      `json:"industry"`
+	CompanySize        *string      `json:"company_size"`
+	TaxID              *string      `json:"tax_id"`
+	RegistrationNumber *string      `json:"registration_number"`
+	LegalEntityType    *string      `json:"legal_entity_type"`
+	LastActivityAt     sql.NullTime `json:"last_activity_at"`
 	// Tenant-specific configuration settings
 	Settings  []byte    `json:"settings"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	// Soft delete timestamp - NULL means active
-	DeletedAt      sql.NullTime `json:"deleted_at"`
-	LastActivityAt sql.NullTime `json:"last_activity_at"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
 // Tenant-specific configuration settings, feature flags, and resource limits
@@ -860,33 +788,6 @@ type TenantUsageStat struct {
 	ErrorRate      pgtype.Numeric `json:"error_rate"`
 	MonthlyRevenue pgtype.Numeric `json:"monthly_revenue"`
 	CreatedAt      time.Time      `json:"created_at"`
-}
-
-type Uom struct {
-	ID                uuid.UUID        `json:"id"`
-	TenantID          uuid.UUID        `json:"tenant_id"`
-	EntityID          uuid.UUID        `json:"entity_id"`
-	UomName           string           `json:"uom_name"`
-	MustBeWholeNumber *bool            `json:"must_be_whole_number"`
-	Enabled           *bool            `json:"enabled"`
-	Symbol            *string          `json:"symbol"`
-	CommonCode        *string          `json:"common_code"`
-	Description       string           `json:"description"`
-	BaseUomID         *uuid.UUID       `json:"base_uom_id"`
-	ConversionFactor  pgtype.Numeric   `json:"conversion_factor"`
-	UomType           *string          `json:"uom_type"`
-	CreatedAt         pgtype.Timestamp `json:"created_at"`
-	UpdatedAt         pgtype.Timestamp `json:"updated_at"`
-}
-
-type UomConversion struct {
-	ID               uuid.UUID        `json:"id"`
-	TenantID         uuid.UUID        `json:"tenant_id"`
-	EntityID         uuid.UUID        `json:"entity_id"`
-	FromUomID        uuid.UUID        `json:"from_uom_id"`
-	ToUomID          uuid.UUID        `json:"to_uom_id"`
-	ConversionFactor pgtype.Numeric   `json:"conversion_factor"`
-	CreatedAt        pgtype.Timestamp `json:"created_at"`
 }
 
 // System user accounts with authentication, authorization, and session management. Can be linked to persons/employees or exist independently for service accounts.
@@ -1242,39 +1143,4 @@ type VUserCompleteView struct {
 	RoleNames          interface{}  `json:"role_names"`
 	RoleIds            interface{}  `json:"role_ids"`
 	ActiveRoleCount    int64        `json:"active_role_count"`
-}
-
-type Vendor struct {
-	Created        pgtype.Timestamp `json:"created"`
-	Updated        pgtype.Timestamp `json:"updated"`
-	Uuid           uuid.UUID        `json:"uuid"`
-	VendorName     string           `json:"vendor_name"`
-	VendorNumber   *string          `json:"vendor_number"`
-	Description    string           `json:"description"`
-	Active         bool             `json:"active"`
-	Hidden         bool             `json:"hidden"`
-	TenantID       uuid.UUID        `json:"tenant_id"`
-	EntityID       uuid.UUID        `json:"entity_id"`
-	Address        []byte           `json:"address"`
-	Contact        []byte           `json:"contact"`
-	AccountNumber  *string          `json:"account_number"`
-	RoutingNumber  *string          `json:"routing_number"`
-	AbaNumber      *string          `json:"aba_number"`
-	SwiftNumber    *string          `json:"swift_number"`
-	TaxIDNumber    *string          `json:"tax_id_number"`
-	AccountType    string           `json:"account_type"`
-	AdditionalInfo []byte           `json:"additional_info"`
-}
-
-type Warehouse struct {
-	ID            uuid.UUID  `json:"id"`
-	TenantID      uuid.UUID  `json:"tenant_id"`
-	EntityID      uuid.UUID  `json:"entity_id"`
-	Code          string     `json:"code"`
-	Name          string     `json:"name"`
-	Address       []byte     `json:"address"`
-	WarehouseType *string    `json:"warehouse_type"`
-	ManagerID     *uuid.UUID `json:"manager_id"`
-	IsActive      *bool      `json:"is_active"`
-	CreatedAt     time.Time  `json:"created_at"`
 }

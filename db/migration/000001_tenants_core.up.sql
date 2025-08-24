@@ -108,7 +108,7 @@ CREATE TABLE tenants (
     registration_number VARCHAR(50),
     legal_entity_type VARCHAR(50),
     -- Tenant-specific settings
-    last_activity_at TIMESTAMPTZ DEFAULT NOW()
+    last_activity_at TIMESTAMPTZ DEFAULT NOW(),
     settings JSONB NOT NULL DEFAULT '{}',
     -- Audit timestamps
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

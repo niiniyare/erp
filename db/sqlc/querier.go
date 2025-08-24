@@ -14,6 +14,7 @@ import (
 )
 
 type Querier interface {
+	ApproveTransaction(ctx context.Context, arg ApproveTransactionParams) (*FinanceTransaction, error)
 	// Archive old audit events before deletion (returns what will be deleted)
 	ArchiveOldAuditEvents(ctx context.Context, arg ArchiveOldAuditEventsParams) ([]*ArchiveOldAuditEventsRow, error)
 	ArchiveOldDeletedEntities(ctx context.Context, deletedAt sql.NullTime) error
@@ -81,13 +82,21 @@ type Querier interface {
 	// =====================================================================
 	CleanupOrphanedHierarchyPaths(ctx context.Context) error
 	CountAccessRequestsByStatus(ctx context.Context, arg CountAccessRequestsByStatusParams) (*CountAccessRequestsByStatusRow, error)
+	CountAccountEntries(ctx context.Context, arg CountAccountEntriesParams) (int64, error)
+	CountAccounts(ctx context.Context, arg CountAccountsParams) (int64, error)
 	CountAttributeDefinitions(ctx context.Context, arg CountAttributeDefinitionsParams) (int64, error)
 	CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error)
 	CountEvaluationsByDecision(ctx context.Context, arg CountEvaluationsByDecisionParams) (*CountEvaluationsByDecisionRow, error)
 	CountFilteredTenants(ctx context.Context, arg CountFilteredTenantsParams) (int64, error)
 	CountPolicies(ctx context.Context, arg CountPoliciesParams) (int64, error)
 	CountTenants(ctx context.Context) (int64, error)
+	CountTransactions(ctx context.Context, arg CountTransactionsParams) (int64, error)
 	CreateAccessRequest(ctx context.Context, arg CreateAccessRequestParams) (*AccessRequest, error)
+	// =====================================================================
+	// FINANCE MODULE - CHART OF ACCOUNTS QUERIES
+	// SQLC queries for chart of accounts with proper tenant isolation
+	// =====================================================================
+	CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceChartOfAccount, error)
 	CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error)
 	// Attribute Definitions CRUD Operations
 	CreateAttributeDefinition(ctx context.Context, arg CreateAttributeDefinitionParams) (*AttributeDefinition, error)
@@ -161,6 +170,16 @@ type Querier interface {
 	// TENANT CONFIGURATIONS QUERIES (RLS-AWARE)
 	// =====================================================
 	CreateTenantConfiguration(ctx context.Context, arg CreateTenantConfigurationParams) (*TenantConfiguration, error)
+	// =====================================================================
+	// FINANCE MODULE - TRANSACTIONS QUERIES
+	// SQLC queries for financial transactions with proper tenant isolation
+	// =====================================================================
+	CreateTransaction(ctx context.Context, arg CreateTransactionParams) (*FinanceTransaction, error)
+	// =====================================================================
+	// FINANCE MODULE - TRANSACTION ENTRIES QUERIES
+	// SQLC queries for journal entries with proper tenant isolation
+	// =====================================================================
+	CreateTransactionEntry(ctx context.Context, arg CreateTransactionEntryParams) (*FinanceTransactionEntry, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
@@ -177,6 +196,8 @@ type Querier interface {
 	// =====================================================
 	DeleteTenantConfiguration(ctx context.Context, arg DeleteTenantConfigurationParams) error
 	DeleteTenantUsageStats(ctx context.Context, periodStart time.Time) error
+	DeleteTransactionEntries(ctx context.Context, transactionID uuid.UUID) error
+	DeleteTransactionEntry(ctx context.Context, id uuid.UUID) error
 	// =====================================================================
 	//  MAINTENANCE & CLEANUP QUERIES
 	// =====================================================================
@@ -189,6 +210,14 @@ type Querier interface {
 	// =====================================================
 	FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]*FilterTenantsRow, error)
 	GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*AccessRequest, error)
+	GetAccountBalance(ctx context.Context, arg GetAccountBalanceParams) (*GetAccountBalanceRow, error)
+	GetAccountByCode(ctx context.Context, accountCode string) (*FinanceChartOfAccount, error)
+	GetAccountByID(ctx context.Context, id uuid.UUID) (*FinanceChartOfAccount, error)
+	GetAccountEntries(ctx context.Context, arg GetAccountEntriesParams) ([]*GetAccountEntriesRow, error)
+	GetAccountHierarchy(ctx context.Context, dollar_1 string) ([]*FinanceChartOfAccount, error)
+	GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) ([]*FinanceChartOfAccount, error)
+	GetAccountsForFinancialStatements(ctx context.Context, arg GetAccountsForFinancialStatementsParams) ([]*GetAccountsForFinancialStatementsRow, error)
+	GetAccountsWithNonZeroBalance(ctx context.Context) ([]*FinanceChartOfAccount, error)
 	GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, error)
 	GetActiveTenants(ctx context.Context) ([]*Tenant, error)
 	// Get administrative actions (events with target_user_id)
@@ -243,6 +272,7 @@ type Querier interface {
 	GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*GetCompleteUserProfileRow, error)
 	// Get events with specific compliance flags
 	GetComplianceEvents(ctx context.Context, arg GetComplianceEventsParams) ([]*GetComplianceEventsRow, error)
+	GetControlAccounts(ctx context.Context) ([]*FinanceChartOfAccount, error)
 	//=====================================================
 	// CURRENT TENANT QUERIES (RLS-Aware)
 	// These queries work within the current tenant context
@@ -340,6 +370,10 @@ type Querier interface {
 	// Usage: Hierarchical view of entity and all its unit sequences
 	// Use case: Complete entity structure analysis, hierarchical reporting
 	GetEntityWithUnitStates(ctx context.Context, entityID uuid.UUID) ([]*GetEntityWithUnitStatesRow, error)
+	GetEntriesByCostCenter(ctx context.Context, arg GetEntriesByCostCenterParams) ([]*GetEntriesByCostCenterRow, error)
+	GetEntriesByDepartment(ctx context.Context, arg GetEntriesByDepartmentParams) ([]*GetEntriesByDepartmentRow, error)
+	GetEntriesByProject(ctx context.Context, arg GetEntriesByProjectParams) ([]*GetEntriesByProjectRow, error)
+	GetEntryTaxSummary(ctx context.Context, arg GetEntryTaxSummaryParams) ([]*GetEntryTaxSummaryRow, error)
 	GetEvaluationCacheStats(ctx context.Context) (*GetEvaluationCacheStatsRow, error)
 	GetEvaluationMetrics(ctx context.Context, arg GetEvaluationMetricsParams) (*GetEvaluationMetricsRow, error)
 	GetEvaluationsByDecision(ctx context.Context, arg GetEvaluationsByDecisionParams) ([]*PolicyEvaluation, error)
@@ -435,6 +469,7 @@ type Querier interface {
 	GetOrphanedEntities(ctx context.Context) ([]*Entity, error)
 	GetPasswordPolicyMinLength(ctx context.Context) (int32, error)
 	GetPendingAccessRequests(ctx context.Context) ([]*AccessRequest, error)
+	GetPendingApprovalTransactions(ctx context.Context, arg GetPendingApprovalTransactionsParams) ([]*FinanceTransaction, error)
 	GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error)
 	GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID) ([]*Policy, error)
 	// -- name: GetPoliciesForEvaluation :many
@@ -470,10 +505,12 @@ type Querier interface {
 	// 4. AUDIT AND MONITORING QUERIES
 	// =====================================================================
 	GetRecentlyModifiedEntities(ctx context.Context, arg GetRecentlyModifiedEntitiesParams) ([]*Entity, error)
+	GetRecurringTransactionsDue(ctx context.Context, nextRecurringDate time.Time) ([]*FinanceTransaction, error)
 	// Find related events by context similarity
 	GetRelatedEventsByContext(ctx context.Context, arg GetRelatedEventsByContextParams) ([]*GetRelatedEventsByContextRow, error)
 	GetRequiredAttributeDefinitions(ctx context.Context) ([]*AttributeDefinition, error)
 	GetResourceEvaluationHistory(ctx context.Context, arg GetResourceEvaluationHistoryParams) ([]*PolicyEvaluation, error)
+	GetRootAccounts(ctx context.Context) ([]*FinanceChartOfAccount, error)
 	// Usage: Identifies missing sequence numbers (gaps in numbering)
 	// Use case: Audit compliance, finding deleted/voided documents, sequence integrity checks
 	GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error)
@@ -506,6 +543,16 @@ type Querier interface {
 	GetTenantsByIndustry(ctx context.Context) ([]*GetTenantsByIndustryRow, error)
 	GetTenantsByTimezone(ctx context.Context) ([]*GetTenantsByTimezoneRow, error)
 	GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]*Tenant, error)
+	GetTransactionByID(ctx context.Context, id uuid.UUID) (*FinanceTransaction, error)
+	GetTransactionByNumber(ctx context.Context, transactionNumber string) (*FinanceTransaction, error)
+	GetTransactionEntriesWithAccounts(ctx context.Context, transactionID uuid.UUID) ([]*GetTransactionEntriesWithAccountsRow, error)
+	GetTransactionEntryByID(ctx context.Context, id uuid.UUID) (*FinanceTransactionEntry, error)
+	GetTransactionSummaryByPeriod(ctx context.Context, arg GetTransactionSummaryByPeriodParams) ([]*GetTransactionSummaryByPeriodRow, error)
+	GetTransactionWithEntries(ctx context.Context, id uuid.UUID) ([]*GetTransactionWithEntriesRow, error)
+	GetTransactionsByBatch(ctx context.Context, batchID *uuid.UUID) ([]*FinanceTransaction, error)
+	GetTransactionsBySourceDocument(ctx context.Context, arg GetTransactionsBySourceDocumentParams) ([]*FinanceTransaction, error)
+	GetTrialBalance(ctx context.Context, arg GetTrialBalanceParams) ([]*GetTrialBalanceRow, error)
+	GetUnreconciledEntries(ctx context.Context, accountID uuid.UUID) ([]*GetUnreconciledEntriesRow, error)
 	GetUnusedEntityCodes(ctx context.Context) ([]*string, error)
 	GetUserAccessRequestHistory(ctx context.Context, arg GetUserAccessRequestHistoryParams) ([]*AccessRequest, error)
 	// Analyze user agent patterns for security insights
@@ -534,6 +581,8 @@ type Querier interface {
 	InvalidateUserEvaluations(ctx context.Context, userID uuid.UUID) error
 	IsEntityAncestor(ctx context.Context, arg IsEntityAncestorParams) (bool, error)
 	ListAccessRequestsByStatus(ctx context.Context, arg ListAccessRequestsByStatusParams) ([]*AccessRequest, error)
+	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceChartOfAccount, error)
+	ListAccountsByParent(ctx context.Context, parentAccountID *uuid.UUID) ([]*FinanceChartOfAccount, error)
 	ListActiveEntities(ctx context.Context) ([]*Entity, error)
 	ListActivePolicies(ctx context.Context) ([]*Policy, error)
 	// Attribute Definition Listing and Filtering
@@ -553,14 +602,19 @@ type Querier interface {
 	ListPoliciesByCategory(ctx context.Context, category *string) ([]*Policy, error)
 	ListPoliciesByEffect(ctx context.Context, effect *string) ([]*Policy, error)
 	ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Tenant, error)
+	ListTransactionEntries(ctx context.Context, transactionID uuid.UUID) ([]*FinanceTransactionEntry, error)
+	ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]*FinanceTransaction, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error)
 	ListVisibleEntities(ctx context.Context) ([]*Entity, error)
+	MarkEntriesReconciled(ctx context.Context, arg MarkEntriesReconciledParams) error
 	// =====================================================================
 	// 3. HIERARCHY BULK OPERATIONS
 	// =====================================================================
 	MoveEntityToNewParent(ctx context.Context, arg MoveEntityToNewParentParams) error
+	PostTransaction(ctx context.Context, arg PostTransactionParams) (*FinanceTransaction, error)
 	ProvisionTenant(ctx context.Context, arg ProvisionTenantParams) (uuid.UUID, error)
 	RebuildHierarchyPaths(ctx context.Context) error
+	RejectTransaction(ctx context.Context, arg RejectTransactionParams) (*FinanceTransaction, error)
 	// Usage: Resets all document sequences to 1 for an entity's fiscal year
 	// Use case: New fiscal year initialization or sequence resets
 	ResetAllEntitySequences(ctx context.Context, arg ResetAllEntitySequencesParams) error
@@ -570,9 +624,12 @@ type Querier interface {
 	// REPOSITORY INTERFACE REQUIRED QUERIES
 	// =====================================================
 	ResolveSubdomainToID(ctx context.Context, subdomain *string) (uuid.UUID, error)
+	RestoreAccount(ctx context.Context, arg RestoreAccountParams) error
 	RestoreEntity(ctx context.Context, argUuid uuid.UUID) error
 	RestoreSoftDeletedUser(ctx context.Context, id uuid.UUID) error
+	ReverseTransaction(ctx context.Context, arg ReverseTransactionParams) (*FinanceTransaction, error)
 	RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) error
+	SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceChartOfAccount, error)
 	// =====================================================================
 	// 2. ENTITY SEARCH AND FILTERING ENHANCEMENTS
 	// =====================================================================
@@ -581,6 +638,7 @@ type Querier interface {
 	SearchFeatureFlags(ctx context.Context, arg SearchFeatureFlagsParams) ([]*FeatureFlag, error)
 	SearchPolicies(ctx context.Context, arg SearchPoliciesParams) ([]*Policy, error)
 	SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]*Tenant, error)
+	SearchTransactions(ctx context.Context, arg SearchTransactionsParams) ([]*FinanceTransaction, error)
 	SearchUsersAdvanced(ctx context.Context, arg SearchUsersAdvancedParams) ([]*User, error)
 	// Usage: Manually sets a specific sequence number (with validation)
 	// Use case: Data migration, manual sequence adjustments, importing from other systems
@@ -589,13 +647,17 @@ type Querier interface {
 	// TENANT CONTEXT AND LIMITS QUERIES
 	// =====================================================
 	SetTenantContext(ctx context.Context, tenantID uuid.UUID) error
+	SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) error
 	SoftDeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	SoftDeletePolicy(ctx context.Context, id uuid.UUID) error
 	SoftDeleteTenant(ctx context.Context, id uuid.UUID) error
+	SoftDeleteTransaction(ctx context.Context, arg SoftDeleteTransactionParams) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	UnlockUser(ctx context.Context, id uuid.UUID) error
 	UpdateAccessRequestStatus(ctx context.Context, arg UpdateAccessRequestStatusParams) (*AccessRequest, error)
+	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceChartOfAccount, error)
+	UpdateAccountBalance(ctx context.Context, arg UpdateAccountBalanceParams) error
 	UpdateAttributeDefinition(ctx context.Context, arg UpdateAttributeDefinitionParams) (*AttributeDefinition, error)
 	UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (*AttributeValue, error)
 	UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error)
@@ -624,6 +686,7 @@ type Querier interface {
 	UpdatePasswordPolicyFull(ctx context.Context, arg UpdatePasswordPolicyFullParams) error
 	UpdatePolicy(ctx context.Context, arg UpdatePolicyParams) (*Policy, error)
 	UpdatePolicyStatus(ctx context.Context, arg UpdatePolicyStatusParams) error
+	UpdateRecurringTransactionNextDate(ctx context.Context, arg UpdateRecurringTransactionNextDateParams) error
 	UpdateSpecificPasswordPolicyField(ctx context.Context, arg UpdateSpecificPasswordPolicyFieldParams) error
 	UpdateSpecificSetting(ctx context.Context, arg UpdateSpecificSettingParams) error
 	UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Tenant, error)
@@ -655,10 +718,13 @@ type Querier interface {
 	UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (*Tenant, error)
 	UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (*Tenant, error)
 	UpdateTenantUsageStats(ctx context.Context, arg UpdateTenantUsageStatsParams) (*TenantUsageStat, error)
+	UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (*FinanceTransaction, error)
+	UpdateTransactionEntry(ctx context.Context, arg UpdateTransactionEntryParams) (*FinanceTransactionEntry, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error)
 	UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	ValidateAccountHierarchy(ctx context.Context, parentAccountID *uuid.UUID) (bool, error)
 	ValidateCurrentTenant(ctx context.Context) error
 	// =====================================================================
 	// 1. ENTITY VALIDATION AND INTEGRITY CHECKS
@@ -673,6 +739,8 @@ type Querier interface {
 	// Usage: Checks for sequence numbering issues across all entities
 	// Use case: Data integrity audits, troubleshooting sequence problems
 	ValidateSequenceIntegrity(ctx context.Context) ([]*ValidateSequenceIntegrityRow, error)
+	ValidateTransactionBalance(ctx context.Context, id uuid.UUID) (*ValidateTransactionBalanceRow, error)
+	ValidateTransactionEntriesBalance(ctx context.Context, transactionID uuid.UUID) (*ValidateTransactionEntriesBalanceRow, error)
 }
 
 var _ Querier = (*Queries)(nil)
