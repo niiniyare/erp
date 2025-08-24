@@ -393,7 +393,7 @@ func (s *CoreDomainModelTestSuite) TestEmployeeModelCreation() {
 }
 
 // TestUserModelCreation covers test case IAM-CORE-004 and IAM-CORE-005
-func (s *EntityTestSuite) TestUserModelCreation() {
+func (s *CoreDomainModelTestSuite) TestUserModelCreation() {
 	tenantID := uuid.New()
 
 	testCases := []struct {
@@ -533,7 +533,7 @@ func (s *EntityTestSuite) TestUserModelCreation() {
 }
 
 // TestRoleModelCreation covers test case IAM-CORE-006
-func (s *EntityTestSuite) TestRoleModelCreation() {
+func (s *CoreDomainModelTestSuite) TestRoleModelCreation() {
 	tenantID := uuid.New()
 	entityID := uuid.New()
 	parentRoleID := uuid.New()

@@ -1,5 +1,5 @@
 // Package finance contains the domain models and business logic for the finance module
-package models
+package domain
 
 import (
 	"fmt"
