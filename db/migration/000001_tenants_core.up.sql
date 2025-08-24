@@ -96,11 +96,11 @@ CREATE TABLE tenants (
     industry VARCHAR(50),  -- For future industry-specific modules
     company_size VARCHAR(20) CHECK (
         company_size IN (
-            'startup',
-            'small',
-            'medium',
-            'large',
-            'enterprise'
+            'Startup',
+            'Small',
+            'Medium',
+            'Large',
+            'Enterprise'
         )
     ),
     -- Compliance and legal information
@@ -108,6 +108,7 @@ CREATE TABLE tenants (
     registration_number VARCHAR(50),
     legal_entity_type VARCHAR(50),
     -- Tenant-specific settings
+    last_activity_at TIMESTAMPTZ DEFAULT NOW()
     settings JSONB NOT NULL DEFAULT '{}',
     -- Audit timestamps
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

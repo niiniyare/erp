@@ -1,1 +1,0 @@
-ALTER TABLE tenants DROP COLUMN last_activity_at;

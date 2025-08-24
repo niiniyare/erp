@@ -168,3 +168,7 @@ CREATE POLICY tenant_isolation_policy ON entities
 CREATE POLICY admin_full_access_policy ON entities
     FOR ALL TO admin_role
     USING (true);
+
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON entities TO application_role;
+

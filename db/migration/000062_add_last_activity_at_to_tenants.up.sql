@@ -1,1 +1,0 @@
-ALTER TABLE tenants ADD COLUMN last_activity_at TIMESTAMPTZ DEFAULT NOW();

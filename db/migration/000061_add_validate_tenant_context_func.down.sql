@@ -1,1 +1,0 @@
-DROP FUNCTION IF EXISTS validate_and_set_tenant_context(UUID);
