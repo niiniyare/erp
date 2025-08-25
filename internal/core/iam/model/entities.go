@@ -149,27 +149,6 @@ func (ur *UserRole) IsExpired() bool {
 	return ur.ExpiresAt != nil && ur.ExpiresAt.Before(time.Now())
 }
 
-// Session represents a user session
-type Session struct {
-	ID        uuid.UUID     `json:"id"`
-	TenantID  uuid.UUID     `json:"tenant_id"`
-	UserID    uuid.UUID     `json:"user_id"`
-	Token     string        `json:"token"`
-	Status    SessionStatus `json:"status"`
-	IPAddress string        `json:"ip_address"`
-	UserAgent string        `json:"user_agent"`
-	ExpiresAt time.Time     `json:"expires_at"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
-}
-
-// IsExpired checks if the session has expired
-func (s *Session) IsExpired() bool {
-	return s.ExpiresAt.Before(time.Now()) || s.Status != SessionStatusActive
-}
-
-// ─── AUTHORIZATION MODELS ────────────────────────────────────────────────────
-
 // Permission represents a permission in the system
 type Permission struct {
 	ID           uuid.UUID      `json:"id"`
@@ -183,12 +162,41 @@ type Permission struct {
 	Metadata     map[string]any `json:"metadata,omitempty"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    *time.Time     `json:"deleted_at,omitempty"`
 }
 
 // IsExpired checks if the permission has expired
 func (p *Permission) IsExpired() bool {
 	return p.ExpiresAt != nil && p.ExpiresAt.Before(time.Now())
 }
+
+// Session represents a user session
+type Session struct {
+	ID             uuid.UUID     `json:"id"`
+	TenantID       uuid.UUID     `json:"tenant_id"`
+	UserID         uuid.UUID     `json:"user_id"`
+	Token          string        `json:"token"`
+	ExpiresAt      time.Time     `json:"expires_at"`
+	IPAddress      string        `json:"ip_address"`
+	UserAgent      string        `json:"user_agent"`
+	Status         SessionStatus `json:"status"`
+	CreatedAt      time.Time     `json:"created_at"`
+	UpdatedAt      time.Time     `json:"updated_at"`
+	LastActivityAt *time.Time    `json:"last_activity_at,omitempty"`
+	InvalidatedAt  *time.Time    `json:"invalidated_at,omitempty"`
+}
+
+// IsExpired checks if the session has expired
+func (s *Session) IsExpired() bool {
+	return time.Now().After(s.ExpiresAt)
+}
+
+// IsActive checks if the session is active and not expired
+func (s *Session) IsActive() bool {
+	return s.Status == SessionStatusActive && !s.IsExpired()
+}
+
+// ─── AUTHORIZATION MODELS ────────────────────────────────────────────────────
 
 // Policy represents an ABAC policy
 type Policy struct {

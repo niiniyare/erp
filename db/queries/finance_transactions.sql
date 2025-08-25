@@ -52,8 +52,8 @@ WHERE transaction_number = $1
 SELECT * FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR transaction_type = $1)
-  AND ($2::text IS NULL OR transaction_status = $2)
+  AND ($1::text IS NULL OR transaction_type = $1::transaction_type_enum)
+  AND ($2::text IS NULL OR transaction_status = $2::transaction_status_enum)
   AND ($3::date IS NULL OR transaction_date >= $3)
   AND ($4::date IS NULL OR transaction_date <= $4)
 ORDER BY transaction_date DESC, created_at DESC
@@ -63,8 +63,8 @@ LIMIT $5 OFFSET $6;
 SELECT COUNT(*) FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR transaction_type = $1)
-  AND ($2::text IS NULL OR transaction_status = $2)
+  AND ($1::text IS NULL OR transaction_type = $1::transaction_type_enum)
+  AND ($2::text IS NULL OR transaction_status = $2::transaction_status_enum)
   AND ($3::date IS NULL OR transaction_date >= $3)
   AND ($4::date IS NULL OR transaction_date <= $4);
 

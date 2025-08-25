@@ -44,7 +44,7 @@ func (s *ComprehensiveTestSuite) TestPersonModelCreation() {
 				nationalID := "123456789"
 				taxID := "TAX123"
 				middleName := "Middle"
-				
+
 				return &Person{
 					ID:          uuid.New(),
 					TenantID:    s.tenantID,
@@ -188,8 +188,8 @@ func (s *ComprehensiveTestSuite) TestPersonModelValidation() {
 					TenantID:   s.tenantID,
 					EntityID:   s.entityID,
 					PersonType: PersonTypeEmployee,
-					FirstName:  "", // Empty required field
-					LastName:   "", // Empty required field
+					FirstName:  "",          // Empty required field
+					LastName:   "",          // Empty required field
 					BirthDate:  time.Time{}, // Zero time
 					CreatedAt:  time.Now(),
 					UpdatedAt:  time.Now(),
@@ -244,7 +244,7 @@ func (s *ComprehensiveTestSuite) TestPersonModelValidation() {
 
 			// Assert
 			require.NotEmpty(s.T(), validationErrors, "Validation should detect errors")
-			
+
 			if tc.validationCheck != nil {
 				tc.validationCheck(s.T(), person, validationErrors)
 			}
@@ -411,18 +411,18 @@ func (s *ComprehensiveTestSuite) TestUserModelCreation() {
 				require.Equal(t, person.ID, *user.PersonID, "PersonID should match")
 				require.NotNil(t, user.EmployeeID, "User should be linked to Employee")
 				require.Equal(t, employee.ID, *user.EmployeeID, "EmployeeID should match")
-				
+
 				// Password hash validation
 				require.NotEmpty(t, user.PasswordHash, "Password hash should be stored")
 				require.NotEqual(t, "plaintext", user.PasswordHash, "Password should be hashed, not plain text")
 				require.Contains(t, user.PasswordHash, "$2a$", "Password should use bcrypt format")
-				
+
 				// Account status validation
 				require.Equal(t, UserAccountStatusActive, user.AccountStatus, "Account status should default to ACTIVE")
 				require.Equal(t, 0, user.FailedLoginCount, "Failed login attempts should default to 0")
 				require.True(t, user.IsActive(), "IsActive method should return true")
 				require.False(t, user.IsLocked(), "IsLocked method should return false")
-				
+
 				// Method tests
 				require.Equal(t, "John Doe", user.FullName(), "FullName method should work")
 			},
@@ -600,7 +600,7 @@ func (s *ComprehensiveTestSuite) TestPermissionModelCreation() {
 				resourceID := uuid.New()
 				entityID := uuid.New()
 				expiresAt := time.Now().Add(24 * time.Hour)
-				
+
 				return &Permission{
 					ID:           uuid.New(),
 					TenantID:     s.tenantID,
@@ -611,9 +611,9 @@ func (s *ComprehensiveTestSuite) TestPermissionModelCreation() {
 					Conditions:   []string{"department=finance", "time_of_day=business_hours"},
 					ExpiresAt:    &expiresAt,
 					Metadata: map[string]any{
-						"risk_level":        "HIGH",
-						"action_category":   "DATA_ACCESS",
-						"requires_approval": true,
+						"risk_level":          "HIGH",
+						"action_category":     "DATA_ACCESS",
+						"requires_approval":   true,
 						"data_classification": "CONFIDENTIAL",
 					},
 					CreatedAt: time.Now(),
@@ -632,7 +632,7 @@ func (s *ComprehensiveTestSuite) TestPermissionModelCreation() {
 				require.Len(t, perm.Conditions, 2, "Should have 2 conditions")
 				require.NotNil(t, perm.ExpiresAt, "Expiration should be set")
 				require.False(t, perm.IsExpired(), "Permission should not be expired")
-				
+
 				// Validate metadata fields that would be enums in actual implementation
 				require.NotNil(t, perm.Metadata, "Metadata should be set")
 				require.Equal(t, "HIGH", perm.Metadata["risk_level"], "Risk level should be set")
@@ -649,7 +649,7 @@ func (s *ComprehensiveTestSuite) TestPermissionModelCreation() {
 
 			// Act & Assert
 			require.NotNil(s.T(), permission, "Permission should be created")
-			
+
 			if tc.validationCheck != nil {
 				tc.validationCheck(s.T(), permission)
 			}

@@ -349,7 +349,7 @@ func (scm *securityComplianceManager) QueryAuditLog(ctx context.Context, req *Au
 	if err != nil {
 		return nil, fmt.Errorf("invalid page size: %w", err)
 	}
-	
+
 	offset, err := convert.IntToInt32(req.Page * req.PageSize)
 	if err != nil {
 		return nil, fmt.Errorf("invalid offset: %w", err)

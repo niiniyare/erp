@@ -33,6 +33,10 @@ type service struct {
 	store              db.Store
 	cache              cache.Service
 
+	// Authentication components
+	jwtManager     *JWTManager
+	sessionManager *SessionManager
+
 	// Shared infrastructure
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
@@ -50,12 +54,21 @@ func NewService(
 	metrics metrics.MetricsProvider,
 	tracer tracing.TracingService,
 ) Service {
+	// NOTE: JWT secrets should come from configuration/environment variables
+	// TODO: Implement proper configuration management for JWT secrets
+	// TODO: Add secret rotation functionality
+	// TODO: Integrate with secrets management system (HashiCorp Vault, etc.)
+	accessSecret := "your-256-bit-access-secret-key-here"   // TODO: Use config
+	refreshSecret := "your-256-bit-refresh-secret-key-here" // TODO: Use config
+
 	return &service{
 		repo:               repo,
 		tenantService:      tenantService,
 		auditService:       auditService,
 		featureFlagService: featureFlagService,
 		cache:              cache,
+		jwtManager:         NewJWTManager(accessSecret, refreshSecret),
+		sessionManager:     NewSessionManager(logger),
 		logger:             logger,
 		metrics:            metrics,
 		tracer:             tracer,
@@ -183,10 +196,9 @@ func (s *service) ChangePassword(ctx context.Context, req *ChangePasswordRequest
 		return err
 	}
 
-	err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, txRepo s.store) error {
+	err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, q db.Querier) error {
 		return s.repo.Users().UpdatePasswordHash(ctx, req.UserID, newHash)
 	})
-	err = s.repo.Users().UpdatePasswordHash(ctx, req.UserID, newHash)
 
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
@@ -249,8 +261,9 @@ func (s *service) verifyPassword(ctx context.Context, userID uuid.UUID, password
 	}
 
 	var hash string
-	err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, txRepo repo.TransactionalRepository) error {
-		hash, err := s.repo.Users().GetPasswordHash(ctx, userID)
+	err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, q db.Querier) error {
+		var err error
+		hash, err = s.repo.Users().GetPasswordHash(ctx, userID)
 		return err
 	})
 
@@ -264,11 +277,20 @@ func (s *service) verifyPassword(ctx context.Context, userID uuid.UUID, password
 }
 
 func (s *service) generateTokens(ctx context.Context, user *model.User) (accessToken, refreshToken string, expiresAt time.Time, err error) {
-	//NOTE: This would integrate with your existing JWT token generation
-	// For now, returning placeholder implementation
-	accessToken = "access_token_" + user.ID.String()
-	refreshToken = "refresh_token_" + user.ID.String()
-	expiresAt = time.Now().Add(time.Hour * 24)
+	// Get user roles for JWT claims
+	// NOTE: Currently using placeholder empty roles array
+	// TODO: Implement proper role retrieval from UserRoles repository
+	// TODO: Add caching for frequently accessed user roles
+	roles := []string{} // Placeholder, should get from s.GetUserRoles(ctx, user.ID)
+
+	// Generate JWT token pair using JWT manager
+	accessToken, refreshToken, expiresAt, err = s.jwtManager.GenerateTokenPair(user, roles)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "Failed to generate JWT tokens",
+			logger.Fields{"error": err.Error(), "user_id": user.ID})
+		return "", "", time.Time{}, fmt.Errorf("failed to generate tokens: %w", err)
+	}
+
 	return accessToken, refreshToken, expiresAt, nil
 }
 
@@ -433,28 +455,25 @@ func (s *service) CreateSession(ctx context.Context, req *CreateSessionRequest) 
 		return nil, err
 	}
 
-	session := &model.Session{
-		ID:        uuid.New(),
-		TenantID:  tenantID,
-		UserID:    req.UserID,
-		Token:     s.generateSessionToken(),
-		ExpiresAt: time.Now().Add(req.ExpirationDuration),
-		IPAddress: req.IPAddress,
-		UserAgent: req.UserAgent,
-		Status:    model.SessionStatusActive,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+	// Use SessionManager to create session
+	session, err := s.sessionManager.CreateSession(ctx, req.UserID, tenantID, tenantID, req.IPAddress, req.UserAgent, req.ExpirationDuration)
+	if err != nil {
+		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
+		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
-	var createdSession *model.Session
 	// NOTE: Sessions repository is not implemented yet, using placeholder
+	// TODO: Implement session persistence through repository
+	// TODO: Add session to cache for faster retrieval
+	// TODO: Implement concurrent session limit enforcement
+	var createdSession *model.Session
 	// createdSession, err = s.repo.Sessions().Create(ctx, session)
 	createdSession = session
 	err = nil
 
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
-		return nil, fmt.Errorf("failed to create session: %w", err)
+		return nil, fmt.Errorf("failed to persist session: %w", err)
 	}
 
 	// Audit log
@@ -810,15 +829,64 @@ func (s *service) UpdateEmployee(ctx context.Context, req *UpdateEmployeeRequest
 	return updatedEmployee, nil
 }
 
-// Additional methods with placeholder implementations
+// Token validation and refresh methods
 func (s *service) ValidateToken(ctx context.Context, token string) (*TokenValidationResult, error) {
-	// Placeholder implementation
-	return &TokenValidationResult{Valid: false}, nil
+	ctx, span := s.tracer.StartSpan(ctx, "authn.service.ValidateToken")
+	defer span.End()
+
+	// Validate access token using JWT manager
+	claims, err := s.jwtManager.ValidateAccessToken(token)
+	if err != nil {
+		s.metrics.IncrementCounter("authn_token_validations_failed", metrics.Fields{"reason": "invalid_token"})
+		return &TokenValidationResult{Valid: false}, nil
+	}
+
+	// Extract claims for response
+	claimsMap := map[string]any{
+		"user_id":     claims.UserID.String(),
+		"tenant_id":   claims.TenantID.String(),
+		"entity_id":   claims.EntityID.String(),
+		"email":       claims.Email,
+		"roles":       claims.Roles,
+		"mfa_enabled": claims.MFAEnabled,
+		"expires_at":  claims.ExpiresAt.Time,
+		"issued_at":   claims.IssuedAt.Time,
+	}
+
+	s.metrics.IncrementCounter("authn_token_validations_successful", nil)
+
+	return &TokenValidationResult{
+		Valid:  true,
+		UserID: claims.UserID,
+		Claims: claimsMap,
+	}, nil
 }
 
 func (s *service) RefreshToken(ctx context.Context, refreshToken string) (*TokenRefreshResult, error) {
-	// Placeholder implementation
-	return &TokenRefreshResult{}, nil
+	ctx, span := s.tracer.StartSpan(ctx, "authn.service.RefreshToken")
+	defer span.End()
+
+	// Generate new access token using JWT manager
+	newAccessToken, expiresAt, err := s.jwtManager.RefreshAccessToken(refreshToken)
+	if err != nil {
+		s.metrics.IncrementCounter("authn_token_refresh_failed", metrics.Fields{"reason": "invalid_refresh_token"})
+		return nil, errors.NewBusinessError("INVALID_REFRESH_TOKEN", "Invalid or expired refresh token")
+	}
+
+	// NOTE: In production, you might want to rotate refresh tokens as well
+	// TODO: Implement refresh token rotation for enhanced security
+	// TODO: Add refresh token blacklisting to prevent reuse of compromised tokens
+	// TODO: Track refresh token usage patterns for security monitoring
+
+	s.metrics.IncrementCounter("authn_token_refresh_successful", nil)
+
+	s.logger.InfoContext(ctx, "Access token refreshed successfully")
+
+	return &TokenRefreshResult{
+		AccessToken:  newAccessToken,
+		RefreshToken: refreshToken, // Currently reusing same refresh token
+		ExpiresAt:    expiresAt,
+	}, nil
 }
 
 func (s *service) Logout(ctx context.Context, userID uuid.UUID) error {

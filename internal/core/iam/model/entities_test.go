@@ -157,8 +157,8 @@ func (s *CoreDomainModelTestSuite) TestPersonModelValidation() {
 					TenantID:   s.tenantID,
 					EntityID:   s.entityID,
 					PersonType: PersonTypeEmployee,
-					FirstName:  "", // Empty required field
-					LastName:   "", // Empty required field
+					FirstName:  "",          // Empty required field
+					LastName:   "",          // Empty required field
 					BirthDate:  time.Time{}, // Zero time
 					CreatedAt:  time.Now(),
 					UpdatedAt:  time.Now(),
@@ -234,7 +234,7 @@ func (s *CoreDomainModelTestSuite) TestPersonModelValidation() {
 			// Assert
 			require.NotEmpty(s.T(), validationErrors, "Validation should detect errors")
 			require.Len(s.T(), validationErrors, len(tc.expectedErrors), "Should have expected number of validation errors")
-			
+
 			if tc.validationCheck != nil {
 				tc.validationCheck(s.T(), person, validationErrors)
 			}
@@ -312,10 +312,10 @@ func (s *CoreDomainModelTestSuite) TestEmployeeModelCreation() {
 			name: "Employee with Complex Salary and Schedule",
 			employeeData: Employee{
 				ID:             uuid.New(),
-				TenantID:       tenantID,
+				TenantID:       s.tenantID,
 				PersonID:       personID,
 				EmployeeNumber: "EMP003",
-				EntityID:       entityID,
+				EntityID:       s.entityID,
 				HireDate:       time.Date(2022, 3, 1, 0, 0, 0, 0, time.UTC),
 				SalaryInfo: map[string]any{
 					"base_salary":    75000,
@@ -357,10 +357,10 @@ func (s *CoreDomainModelTestSuite) TestEmployeeModelCreation() {
 			name: "Terminated Employee",
 			employeeData: Employee{
 				ID:               uuid.New(),
-				TenantID:         tenantID,
+				TenantID:         s.tenantID,
 				PersonID:         personID,
 				EmployeeNumber:   "EMP004",
-				EntityID:         entityID,
+				EntityID:         s.entityID,
 				HireDate:         time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 				TerminationDate:  timePtr(time.Date(2024, 6, 30, 0, 0, 0, 0, time.UTC)),
 				EmploymentStatus: EmploymentStatusTerminated,
@@ -635,7 +635,7 @@ func (s *CoreDomainModelTestSuite) TestRoleModelCreation() {
 }
 
 // TestPermissionModelCreation covers test case IAM-CORE-007
-func (s *EntityTestSuite) TestPermissionModelCreation() {
+func (s *CoreDomainModelTestSuite) TestPermissionModelCreation() {
 	tenantID := uuid.New()
 	resourceID := uuid.New()
 	entityID := uuid.New()

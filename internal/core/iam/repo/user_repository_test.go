@@ -60,12 +60,12 @@ func TestUserRepositoryComprehensive(t *testing.T) {
 // TestCreateUserWithPasswordHashing implements IAM-REPO-002: Verify User creation with proper password hashing
 func (s *UserRepositoryComprehensiveTestSuite) TestCreateUserWithPasswordHashing() {
 	testCases := []struct {
-		name            string
-		setupUser       func() *model.User
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, *model.User)
+		name           string
+		setupUser      func() *model.User
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, *model.User)
 	}{
 		{
 			name: "IAM-REPO-002_ValidUserCreation_WithBcryptPasswordHash",
@@ -207,16 +207,16 @@ func (s *UserRepositoryComprehensiveTestSuite) TestCreateUserWithPasswordHashing
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Arrange
 			user := tc.setupUser()
-			
+
 			// Act
 			result, err := s.repo.Create(s.ctx, user)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -296,13 +296,13 @@ func (s *UserRepositoryComprehensiveTestSuite) TestUpdatePasswordHash() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			err := s.repo.UpdatePasswordHash(s.ctx, tc.userID, tc.newHashValue)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -382,10 +382,10 @@ func (s *UserRepositoryComprehensiveTestSuite) TestAccountStatusManagement() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			var err error
 			switch tc.statusOperation {
@@ -395,7 +395,7 @@ func (s *UserRepositoryComprehensiveTestSuite) TestAccountStatusManagement() {
 			case "unlock":
 				err = s.repo.UnlockAccount(s.ctx, tc.userID)
 			}
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -498,10 +498,10 @@ func (s *UserRepositoryComprehensiveTestSuite) TestMFAOperations() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			var err error
 			var secret string
@@ -518,7 +518,7 @@ func (s *UserRepositoryComprehensiveTestSuite) TestMFAOperations() {
 			case "disable_mfa":
 				err = s.repo.DisableMFA(s.ctx, tc.userID)
 			}
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -584,7 +584,7 @@ func (s *UserRepositoryComprehensiveTestSuite) TestFailedLoginCountManagement() 
 					}).
 					Return(nil).
 					Times(1)
-				
+
 				// Expect automatic account lock
 				s.store.EXPECT().
 					LockUserAccount(gomock.Any(), gomock.Any()).
@@ -602,20 +602,20 @@ func (s *UserRepositoryComprehensiveTestSuite) TestFailedLoginCountManagement() 
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			err := s.repo.UpdateFailedLoginCount(s.ctx, tc.userID, tc.newCount)
-			
+
 			// Handle automatic lock for max attempts
 			if tc.newCount >= 5 {
 				// Simulate automatic lock trigger
 				lockErr := s.repo.LockAccount(s.ctx, tc.userID, nil, "Too many failed login attempts")
 				require.NoError(s.T(), lockErr)
 			}
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -676,13 +676,13 @@ func (s *UserRepositoryComprehensiveTestSuite) TestLastLoginTracking() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			err := s.repo.UpdateLastLogin(s.ctx, tc.userID, tc.loginTime)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -699,17 +699,17 @@ func (s *UserRepositoryComprehensiveTestSuite) TestLastLoginTracking() {
 // TestUserQueryOperations implements IAM-REPO-002: Verify user query operations with tenant isolation
 func (s *UserRepositoryComprehensiveTestSuite) TestUserQueryOperations() {
 	testCases := []struct {
-		name            string
-		queryType       string
-		queryParam      any
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, any)
+		name           string
+		queryType      string
+		queryParam     any
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, any)
 	}{
 		{
-			name:      "IAM-REPO-002_GetByEmail_ReturnsUserSecurely",
-			queryType: "by_email",
+			name:       "IAM-REPO-002_GetByEmail_ReturnsUserSecurely",
+			queryType:  "by_email",
 			queryParam: "test@example.com",
 			setupMocks: func() {
 				s.store.EXPECT().
@@ -734,8 +734,8 @@ func (s *UserRepositoryComprehensiveTestSuite) TestUserQueryOperations() {
 			},
 		},
 		{
-			name:      "IAM-REPO-002_ListByStatus_FiltersCorrectly",
-			queryType: "by_status",
+			name:       "IAM-REPO-002_ListByStatus_FiltersCorrectly",
+			queryType:  "by_status",
 			queryParam: model.UserAccountStatusActive,
 			setupMocks: func() {
 				s.store.EXPECT().
@@ -781,10 +781,10 @@ func (s *UserRepositoryComprehensiveTestSuite) TestUserQueryOperations() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			var result any
 			var err error
@@ -796,7 +796,7 @@ func (s *UserRepositoryComprehensiveTestSuite) TestUserQueryOperations() {
 			case "count":
 				result, err = s.repo.Count(s.ctx)
 			}
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)

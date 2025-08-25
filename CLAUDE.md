@@ -94,6 +94,7 @@ npm run preview         # Preview production build
 - **ABAC Authorization**: Attribute-based access control system
 - **Event-driven**: Uses Temporal for workflow orchestration
 - **API Design**: REST and gRPC APIs generated with Goa framework
+- **Financial Module**: Double-entry bookkeeping with comprehensive accounting features
 
 ### Database Architecture
 - **PostgreSQL**: Primary database with row-level security

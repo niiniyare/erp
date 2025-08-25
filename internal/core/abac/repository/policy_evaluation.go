@@ -100,7 +100,7 @@ func (r *policyEvaluationRepository) CacheEvaluationResult(ctx context.Context, 
 		ExpiresAt:          sql.NullTime{Time: req.ExpiresAt, Valid: !req.ExpiresAt.IsZero()},
 	}
 
-	err := r.store.CacheEvaluationResult(ctx, params)
+	err = r.store.CacheEvaluationResult(ctx, params)
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.Counter("policy_evaluation_repository_cache_failed", "Total failed policy evaluation cache operations").Inc(nil)
@@ -293,7 +293,7 @@ func (r *policyEvaluationRepository) GetUserEvaluationHistory(ctx context.Contex
 	if err != nil {
 		return nil, fmt.Errorf("invalid limit: %w", err)
 	}
-	
+
 	offset, err := convert.IntToInt32(req.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("invalid offset: %w", err)

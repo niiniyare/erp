@@ -768,13 +768,9 @@ func (r *repository) ResetSequence(ctx context.Context, entityID uuid.UUID, key 
 	if err != nil {
 		return fmt.Errorf("invalid fiscal year: %w", err)
 	}
-	fiscalYearPtr := &safeFiscalYear
-
-	err = r.store.ResetEntityStateSequence(ctx, db.ResetEntityStateSequenceParams{
+	err = r.store.ResetAllEntitySequences(ctx, db.ResetAllEntitySequencesParams{
 		EntityID:   entityID,
-		Key:        key,
-		FiscalYear: fiscalYearPtr,
-		Sequence:   1,
+		FiscalYear: &safeFiscalYear,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to reset sequence: %w", err)

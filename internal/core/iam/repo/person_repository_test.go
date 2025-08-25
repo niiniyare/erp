@@ -58,12 +58,12 @@ func TestPersonRepository(t *testing.T) {
 // TestCreatePerson implements IAM-REPO-001: Verify Person creation with tenant isolation
 func (s *PersonRepositoryTestSuite) TestCreatePerson() {
 	testCases := []struct {
-		name            string
-		setupPerson     func() *model.Person
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, *model.Person)
+		name           string
+		setupPerson    func() *model.Person
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, *model.Person)
 	}{
 		{
 			name: "IAM-REPO-001_ValidPersonCreation_AllFieldsSet",
@@ -73,7 +73,7 @@ func (s *PersonRepositoryTestSuite) TestCreatePerson() {
 				nationalID := "123456789"
 				taxID := "TAX123"
 				middleName := "Middle"
-				
+
 				return &model.Person{
 					ID:          uuid.New(),
 					TenantID:    s.tenantID,
@@ -220,16 +220,16 @@ func (s *PersonRepositoryTestSuite) TestCreatePerson() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Arrange
 			person := tc.setupPerson()
-			
+
 			// Act
 			result, err := s.repo.Create(s.ctx, person)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -251,12 +251,12 @@ func (s *PersonRepositoryTestSuite) TestCreatePerson() {
 // TestGetPersonByID implements IAM-REPO-001: Verify Person retrieval with tenant isolation
 func (s *PersonRepositoryTestSuite) TestGetPersonByID() {
 	testCases := []struct {
-		name            string
-		personID        uuid.UUID
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, *model.Person)
+		name           string
+		personID       uuid.UUID
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, *model.Person)
 	}{
 		{
 			name:     "IAM-REPO-001_ExistingPerson_ReturnsPerson",
@@ -318,13 +318,13 @@ func (s *PersonRepositoryTestSuite) TestGetPersonByID() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			result, err := s.repo.GetByID(s.ctx, tc.personID)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -346,12 +346,12 @@ func (s *PersonRepositoryTestSuite) TestGetPersonByID() {
 // TestUpdatePerson implements IAM-REPO-001: Verify Person update operations
 func (s *PersonRepositoryTestSuite) TestUpdatePerson() {
 	testCases := []struct {
-		name            string
-		setupPerson     func() *model.Person
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, *model.Person)
+		name           string
+		setupPerson    func() *model.Person
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, *model.Person)
 	}{
 		{
 			name: "IAM-REPO-001_ValidUpdate_UpdatesRecord",
@@ -418,16 +418,16 @@ func (s *PersonRepositoryTestSuite) TestUpdatePerson() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Arrange
 			person := tc.setupPerson()
-			
+
 			// Act
 			result, err := s.repo.Update(s.ctx, person)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -487,13 +487,13 @@ func (s *PersonRepositoryTestSuite) TestDeletePerson() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			err := s.repo.Delete(s.ctx, tc.personID)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -510,13 +510,13 @@ func (s *PersonRepositoryTestSuite) TestDeletePerson() {
 // TestListPersons implements IAM-REPO-001: Verify Person listing with pagination
 func (s *PersonRepositoryTestSuite) TestListPersons() {
 	testCases := []struct {
-		name            string
-		limit           int
-		offset          int
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, []*model.Person)
+		name           string
+		limit          int
+		offset         int
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, []*model.Person)
 	}{
 		{
 			name:   "IAM-REPO-001_ValidPagination_ReturnsPersons",
@@ -569,13 +569,13 @@ func (s *PersonRepositoryTestSuite) TestListPersons() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			result, err := s.repo.List(s.ctx, tc.limit, tc.offset)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -606,19 +606,19 @@ func (s *PersonRepositoryTestSuite) TestMultiTenantIsolation() {
 			setupScenario: func() (uuid.UUID, uuid.UUID) {
 				tenantA := uuid.New()
 				tenantB := uuid.New()
-				
+
 				// Mock RLS enforcement - no cross-tenant data
 				s.store.EXPECT().
 					GetPersonByID(gomock.Any(), gomock.Any()).
 					Return(db.Person{}, &db.Error{Code: "02000", Message: "no data found"}).
 					Times(1)
-				
+
 				return tenantA, tenantB
 			},
 			validateResult: func(t *testing.T, tenantA, tenantB uuid.UUID) {
 				// Try to access tenant A's person from tenant B context
 				personID := uuid.New()
-				
+
 				// This should fail due to RLS
 				person, err := s.repo.GetByID(s.ctx, personID)
 				require.Error(t, err)
@@ -635,10 +635,10 @@ func (s *PersonRepositoryTestSuite) TestMultiTenantIsolation() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Arrange
 			tenantA, tenantB := tc.setupScenario()
-			
+
 			// Act & Assert
 			tc.validateResult(s.T(), tenantA, tenantB)
 		})

@@ -58,12 +58,12 @@ func TestRoleRepositoryComprehensive(t *testing.T) {
 // TestCreateRole implements IAM-REPO-003: Verify Role creation with hierarchy validation
 func (s *RoleRepositoryComprehensiveTestSuite) TestCreateRole() {
 	testCases := []struct {
-		name            string
-		setupRole       func() *model.Role
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, *model.Role)
+		name           string
+		setupRole      func() *model.Role
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, *model.Role)
 	}{
 		{
 			name: "IAM-REPO-003_ValidRoleCreation_RootLevel",
@@ -139,7 +139,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCreateRole() {
 						ParentID: nil, // No circular dependency
 					}, nil).
 					Times(1)
-				
+
 				// Then create the role
 				s.store.EXPECT().
 					CreateRole(gomock.Any(), gomock.Any()).
@@ -213,7 +213,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCreateRole() {
 						ParentID: &roleID, // Points back to child - circular!
 					}, nil).
 					Times(1)
-				
+
 				// Should not attempt to create due to circular dependency
 			},
 			expectError:   true,
@@ -228,13 +228,13 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCreateRole() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Arrange
 			role := tc.setupRole()
-			
+
 			// Act - Include circular dependency check
 			var err error
 			if role.ParentID != nil {
@@ -260,7 +260,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCreateRole() {
 					tc.validateResult(s.T(), result)
 				}
 			}
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -277,12 +277,12 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCreateRole() {
 // TestGetRoleHierarchy implements IAM-REPO-003: Verify hierarchical role queries
 func (s *RoleRepositoryComprehensiveTestSuite) TestGetRoleHierarchy() {
 	testCases := []struct {
-		name            string
-		roleID          uuid.UUID
-		setupMocks      func(uuid.UUID)
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, []*model.Role)
+		name           string
+		roleID         uuid.UUID
+		setupMocks     func(uuid.UUID)
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, []*model.Role)
 	}{
 		{
 			name:   "IAM-REPO-003_CompleteHierarchy_ReturnsAllLevels",
@@ -291,7 +291,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestGetRoleHierarchy() {
 				// Mock hierarchical query that returns role and all its ancestors
 				grandparentID := uuid.New()
 				parentID := uuid.New()
-				
+
 				s.store.EXPECT().
 					GetRoleHierarchy(gomock.Any(), roleID).
 					Return([]db.Role{
@@ -325,17 +325,17 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestGetRoleHierarchy() {
 			expectError: false,
 			validateResult: func(t *testing.T, roles []*model.Role) {
 				require.Len(t, roles, 3)
-				
+
 				// Verify hierarchy order (should be from child to root)
 				require.Equal(t, "employee", roles[0].Name)
 				require.Equal(t, "manager", roles[1].Name)
 				require.Equal(t, "admin", roles[2].Name)
-				
+
 				// Verify hierarchy relationships
 				require.NotNil(t, roles[0].ParentID) // employee has parent
 				require.NotNil(t, roles[1].ParentID) // manager has parent
 				require.Nil(t, roles[2].ParentID)    // admin is root
-				
+
 				// Verify all belong to same tenant
 				for _, role := range roles {
 					require.Equal(t, s.tenantID, role.TenantID)
@@ -387,13 +387,13 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestGetRoleHierarchy() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks(tc.roleID)
-			
+
 			// Act
 			result, err := s.repo.GetRoleHierarchy(s.ctx, tc.roleID)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -415,12 +415,12 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestGetRoleHierarchy() {
 // TestGetChildRoles implements IAM-REPO-003: Verify child role retrieval
 func (s *RoleRepositoryComprehensiveTestSuite) TestGetChildRoles() {
 	testCases := []struct {
-		name            string
-		parentRoleID    uuid.UUID
-		setupMocks      func(uuid.UUID)
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, []*model.Role)
+		name           string
+		parentRoleID   uuid.UUID
+		setupMocks     func(uuid.UUID)
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, []*model.Role)
 	}{
 		{
 			name:         "IAM-REPO-003_ParentWithChildren_ReturnsAllChildren",
@@ -456,13 +456,13 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestGetChildRoles() {
 			expectError: false,
 			validateResult: func(t *testing.T, roles []*model.Role) {
 				require.Len(t, roles, 3)
-				
+
 				// Verify all roles have the same parent
 				for _, role := range roles {
 					require.NotNil(t, role.ParentID)
 					require.Equal(t, s.tenantID, role.TenantID)
 				}
-				
+
 				// Verify specific role names
 				roleNames := make([]string, len(roles))
 				for i, role := range roles {
@@ -508,13 +508,13 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestGetChildRoles() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks(tc.parentRoleID)
-			
+
 			// Act
 			result, err := s.repo.GetChildRoles(s.ctx, tc.parentRoleID)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -536,11 +536,11 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestGetChildRoles() {
 // TestCircularDependencyDetection implements IAM-REPO-003: Verify circular dependency detection
 func (s *RoleRepositoryComprehensiveTestSuite) TestCircularDependencyDetection() {
 	testCases := []struct {
-		name            string
-		setupScenario   func() (roleA, roleB, roleC uuid.UUID)
-		setupMocks      func(uuid.UUID, uuid.UUID, uuid.UUID)
-		expectCircular  bool
-		validateResult  func(*testing.T, bool)
+		name           string
+		setupScenario  func() (roleA, roleB, roleC uuid.UUID)
+		setupMocks     func(uuid.UUID, uuid.UUID, uuid.UUID)
+		expectCircular bool
+		validateResult func(*testing.T, bool)
 	}{
 		{
 			name: "IAM-REPO-003_TwoRoleCircular_A-B-A",
@@ -560,7 +560,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCircularDependencyDetection()
 						ParentID: &roleB,
 					}, nil).
 					Times(1)
-				
+
 				s.store.EXPECT().
 					GetRoleByID(gomock.Any(), roleB).
 					Return(db.Role{
@@ -595,7 +595,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCircularDependencyDetection()
 						ParentID: &roleB,
 					}, nil).
 					Times(1)
-				
+
 				s.store.EXPECT().
 					GetRoleByID(gomock.Any(), roleB).
 					Return(db.Role{
@@ -605,7 +605,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCircularDependencyDetection()
 						ParentID: &roleC,
 					}, nil).
 					Times(1)
-				
+
 				s.store.EXPECT().
 					GetRoleByID(gomock.Any(), roleC).
 					Return(db.Role{
@@ -640,7 +640,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCircularDependencyDetection()
 						ParentID: &roleB,
 					}, nil).
 					Times(1)
-				
+
 				s.store.EXPECT().
 					GetRoleByID(gomock.Any(), roleB).
 					Return(db.Role{
@@ -650,7 +650,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCircularDependencyDetection()
 						ParentID: &roleC,
 					}, nil).
 					Times(1)
-				
+
 				s.store.EXPECT().
 					GetRoleByID(gomock.Any(), roleC).
 					Return(db.Role{
@@ -675,14 +675,14 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCircularDependencyDetection()
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Arrange
 			roleA, roleB, roleC := tc.setupScenario()
 			tc.setupMocks(roleA, roleB, roleC)
-			
+
 			// Act - Simulate circular dependency detection algorithm
 			hasCircular := s.detectCircularDependency(roleA, make(map[uuid.UUID]bool))
-			
+
 			// Assert
 			require.Equal(s.T(), tc.expectCircular, hasCircular)
 			if tc.validateResult != nil {
@@ -697,15 +697,15 @@ func (s *RoleRepositoryComprehensiveTestSuite) detectCircularDependency(roleID u
 	if visited[roleID] {
 		return true // Circular dependency detected
 	}
-	
+
 	visited[roleID] = true
-	
+
 	// Get the role to check its parent
 	role, err := s.repo.GetByID(s.ctx, roleID)
 	if err != nil || role.ParentID == nil {
 		return false
 	}
-	
+
 	// Recursively check parent
 	return s.detectCircularDependency(*role.ParentID, visited)
 }
@@ -722,13 +722,13 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestRoleTenantIsolation() {
 			setupScenario: func() (uuid.UUID, uuid.UUID) {
 				tenantA := uuid.New()
 				tenantB := uuid.New()
-				
+
 				// Mock RLS enforcement - no cross-tenant role access
 				s.store.EXPECT().
 					GetRoleByName(gomock.Any(), "admin").
 					Return(db.Role{}, &db.Error{Code: "02000", Message: "no data found"}).
 					Times(1)
-				
+
 				return tenantA, tenantB
 			},
 			validateResult: func(t *testing.T, tenantA, tenantB uuid.UUID) {
@@ -744,7 +744,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestRoleTenantIsolation() {
 			setupScenario: func() (uuid.UUID, uuid.UUID) {
 				tenantA := uuid.New()
 				tenantB := uuid.New()
-				
+
 				// Mock that same role name can exist in different tenants
 				s.store.EXPECT().
 					GetRoleByName(gomock.Any(), "manager").
@@ -754,7 +754,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestRoleTenantIsolation() {
 						Name:     "manager",
 					}, nil).
 					Times(1)
-				
+
 				return tenantA, tenantB
 			},
 			validateResult: func(t *testing.T, tenantA, tenantB uuid.UUID) {
@@ -775,10 +775,10 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestRoleTenantIsolation() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Arrange
 			tenantA, tenantB := tc.setupScenario()
-			
+
 			// Act & Assert
 			tc.validateResult(s.T(), tenantA, tenantB)
 		})

@@ -28,7 +28,7 @@ func NewRouter(
 
 	// Add middleware
 	r.Use(gin.Recovery())
-	r.Use(middleware.RequestLogger())
+	r.Use(gin.WrapH(middleware.RequestLogger()))
 	r.Use(middleware.TracingMiddleware(tracing))
 	r.Use(middleware.MetricsMiddleware(metrics))
 

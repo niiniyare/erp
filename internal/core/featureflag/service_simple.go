@@ -255,7 +255,7 @@ func (s *service) ListFeatureFlags(ctx context.Context, request *ListFeatureFlag
 	if err != nil {
 		return nil, fmt.Errorf("invalid page size: %w", err)
 	}
-	
+
 	offsetInt32, err := convert.IntToInt32(offset)
 	if err != nil {
 		return nil, fmt.Errorf("invalid offset: %w", err)

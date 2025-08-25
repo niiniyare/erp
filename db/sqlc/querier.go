@@ -56,6 +56,8 @@ type Querier interface {
 	// BULK OPERATIONS
 	// =====================================================
 	BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error
+	//
+	Bulk_CreateEntityStates(ctx context.Context, arg []Bulk_CreateEntityStatesParams) (int64, error)
 	// Policy Evaluations CRUD Operations and Cache Management for ABAC
 	CacheEvaluationResult(ctx context.Context, arg CacheEvaluationResultParams) error
 	CheckCircularReference(ctx context.Context, arg CheckCircularReferenceParams) (bool, error)
@@ -86,6 +88,8 @@ type Querier interface {
 	CountAccounts(ctx context.Context, arg CountAccountsParams) (int64, error)
 	CountAttributeDefinitions(ctx context.Context, arg CountAttributeDefinitionsParams) (int64, error)
 	CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error)
+	CountEntityStatesByEntity(ctx context.Context, entityID uuid.UUID) (int64, error)
+	CountEntityStatesByKey(ctx context.Context, key string) (int64, error)
 	CountEvaluationsByDecision(ctx context.Context, arg CountEvaluationsByDecisionParams) (*CountEvaluationsByDecisionRow, error)
 	CountFilteredTenants(ctx context.Context, arg CountFilteredTenantsParams) (int64, error)
 	CountPolicies(ctx context.Context, arg CountPoliciesParams) (int64, error)
@@ -110,9 +114,9 @@ type Querier interface {
 	CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (*Employee, error)
 	// Entity CRUD Operations
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (*Entity, error)
-	// ===============================================
-	// Entity State Management
-	// ===============================================
+	// =====================================================================
+	// ENTITYSTATE SQLC QUERIES
+	// =====================================================================
 	CreateEntityState(ctx context.Context, arg CreateEntityStateParams) (*Entitystate, error)
 	// =====================================================================
 	//  SIMPLIFIED FEATURE FLAG QUERIES
@@ -184,7 +188,6 @@ type Querier interface {
 	CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeValue(ctx context.Context, arg DeleteAttributeValueParams) error
-	DeleteEntityState(ctx context.Context, arg DeleteEntityStateParams) error
 	DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error
 	DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID) error
 	// Delete audit events older than specified date (for retention policies)
@@ -319,8 +322,9 @@ type Querier interface {
 	// Use case: Entity overview dashboards, year-over-year comparisons
 	GetEntitySequenceSummary(ctx context.Context, entityID uuid.UUID) ([]*GetEntitySequenceSummaryRow, error)
 	GetEntitySiblings(ctx context.Context, descendantID uuid.UUID) ([]*Entity, error)
-	GetEntityState(ctx context.Context, arg GetEntityStateParams) (*Entitystate, error)
-	GetEntityStateByKey(ctx context.Context, arg GetEntityStateByKeyParams) (*Entitystate, error)
+	GetEntityState(ctx context.Context, argUuid uuid.UUID) (*Entitystate, error)
+	GetEntityStateByEntityAndKey(ctx context.Context, arg GetEntityStateByEntityAndKeyParams) (*Entitystate, error)
+	GetEntityStateByEntityKeyAndFiscalYear(ctx context.Context, arg GetEntityStateByEntityKeyAndFiscalYearParams) (*Entitystate, error)
 	// Usage: Comprehensive health check of entity state configuration
 	// Use case: System health monitoring, pre-deployment validation
 	GetEntityStateHealthCheck(ctx context.Context) ([]*GetEntityStateHealthCheckRow, error)
@@ -351,6 +355,7 @@ type Querier interface {
 	// Use case: Cross-entity reporting, fiscal year analysis, bulk operations
 	// Parameters: $1=fiscal_year, $2=entity_unit_id (nullable for filtering by specific unit)
 	GetEntityStatesByFiscalYear(ctx context.Context, arg GetEntityStatesByFiscalYearParams) ([]*GetEntityStatesByFiscalYearRow, error)
+	GetEntityStatesWithPaging(ctx context.Context, arg GetEntityStatesWithPagingParams) ([]*Entitystate, error)
 	GetEntityStats(ctx context.Context) (*GetEntityStatsRow, error)
 	GetEntitySubtree(ctx context.Context, arg GetEntitySubtreeParams) ([]*GetEntitySubtreeRow, error)
 	GetEntityTreeStructure(ctx context.Context) ([]*GetEntityTreeStructureRow, error)
@@ -455,6 +460,7 @@ type Querier interface {
 	GetInconsistentHierarchyPaths(ctx context.Context) ([]*GetInconsistentHierarchyPathsRow, error)
 	GetIntegerSetting(ctx context.Context, key string) (int32, error)
 	GetLatestTenantUsageStats(ctx context.Context) (*TenantUsageStat, error)
+	GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSequenceByEntityAndKeyParams) (interface{}, error)
 	// Ensures positive sequence number
 	// =====================================================================
 	//  BULK OPERATIONS QUERIES
@@ -462,6 +468,46 @@ type Querier interface {
 	// Usage: Retrieves multiple entity states by document types in one query
 	// Use case: Dashboard displays, bulk document creation, batch processing
 	GetMultipleEntityStates(ctx context.Context, arg GetMultipleEntityStatesParams) ([]*Entitystate, error)
+	// -- name: GetOrCreateEntityState :one
+	// WITH existing AS (
+	//     SELECT *
+	//     FROM entitystate
+	//     WHERE entity_id = sqlc.arg(entity_id)::UUID
+	//       AND key = sqlc.arg(key)::VARCHAR(10)
+	//       AND tenant_id = current_tenant_id()
+	//       AND deleted_at IS NULL
+	//       AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT)
+	// ),
+	// new_record AS (
+	//     INSERT INTO entitystate (
+	//         uuid,
+	//         tenant_id,
+	//         fiscal_year,
+	//         key,
+	//         sequence,
+	//         entity_id,
+	//         entity_unit_id,
+	//         created_at,
+	//         updated_at
+	//     )
+	//     SELECT
+	//         sqlc.arg(uuid)::UUID,
+	//         current_tenant_id(),
+	//         sqlc.narg(fiscal_year)::SMALLINT,
+	//         sqlc.arg(key)::VARCHAR(10),
+	//         sqlc.arg(sequence)::BIGINT,
+	//         sqlc.arg(entity_id)::UUID,
+	//         sqlc.narg(entity_unit_id)::UUID,
+	//         NOW(),
+	//         NOW()
+	//     WHERE NOT EXISTS (SELECT 1 FROM existing)
+	//     RETURNING *
+	// )
+	// SELECT * FROM existing
+	// UNION ALL
+	// SELECT * FROM new_record;
+	//
+	GetNextSequenceAndIncrement(ctx context.Context, arg GetNextSequenceAndIncrementParams) (*GetNextSequenceAndIncrementRow, error)
 	GetNextSequenceNumber(ctx context.Context, arg GetNextSequenceNumberParams) (int64, error)
 	// Usage: Gets existing entity state or creates new one with sequence = 1
 	// Use case: Lazy initialization of sequences when first document is created
@@ -569,10 +615,11 @@ type Querier interface {
 	GetUserRiskProfile(ctx context.Context, arg GetUserRiskProfileParams) (*GetUserRiskProfileRow, error)
 	// Get audit events for a specific session
 	GetUserSessionEvents(ctx context.Context, sessionID *uuid.UUID) ([]*GetUserSessionEventsRow, error)
+	Get_OrCreateEntityState(ctx context.Context, arg Get_OrCreateEntityStateParams) (*Get_OrCreateEntityStateRow, error)
 	HardDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	HardDeletePolicy(ctx context.Context, id uuid.UUID) error
-	IncrementEntityStateSequence(ctx context.Context, arg IncrementEntityStateSequenceParams) (int64, error)
 	IncrementFailedLogins(ctx context.Context, id uuid.UUID) error
+	IncrementSequenceNumber(ctx context.Context, argUuid uuid.UUID) (int64, error)
 	InitializeUsageStats(ctx context.Context, tenantID uuid.UUID) (*TenantUsageStat, error)
 	InvalidateActionEvaluations(ctx context.Context, action string) error
 	InvalidateAllEvaluations(ctx context.Context) error
@@ -595,7 +642,10 @@ type Querier interface {
 	// Find all leaf nodes (entities with no children)
 	ListEntitiesWithNochildren(ctx context.Context) ([]*Entity, error)
 	ListEntitiesWithPagination(ctx context.Context, arg ListEntitiesWithPaginationParams) ([]*Entity, error)
-	ListEntityStates(ctx context.Context, entityID uuid.UUID) ([]*Entitystate, error)
+	ListEntityStatesByEntity(ctx context.Context, entityID uuid.UUID) ([]*Entitystate, error)
+	ListEntityStatesByEntityAndKey(ctx context.Context, arg ListEntityStatesByEntityAndKeyParams) ([]*Entitystate, error)
+	ListEntityStatesByEntityUnit(ctx context.Context, entityUnitID uuid.UUID) ([]*Entitystate, error)
+	ListEntityStatesByFiscalYear(ctx context.Context, fiscalYear int16) ([]*Entitystate, error)
 	ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsParams) ([]*FeatureFlag, error)
 	// Policy Listing and Filtering
 	ListPolicies(ctx context.Context) ([]*Policy, error)
@@ -618,7 +668,7 @@ type Querier interface {
 	// Usage: Resets all document sequences to 1 for an entity's fiscal year
 	// Use case: New fiscal year initialization or sequence resets
 	ResetAllEntitySequences(ctx context.Context, arg ResetAllEntitySequencesParams) error
-	ResetEntityStateSequence(ctx context.Context, arg ResetEntityStateSequenceParams) error
+	ResetSequenceNumber(ctx context.Context, arg ResetSequenceNumberParams) (*Entitystate, error)
 	ResetTenantContext(ctx context.Context) error
 	// =====================================================
 	// REPOSITORY INTERFACE REQUIRED QUERIES
@@ -643,6 +693,7 @@ type Querier interface {
 	// Usage: Manually sets a specific sequence number (with validation)
 	// Use case: Data migration, manual sequence adjustments, importing from other systems
 	SetEntitySequence(ctx context.Context, arg SetEntitySequenceParams) error
+	SetSequenceNumber(ctx context.Context, arg SetSequenceNumberParams) (*Entitystate, error)
 	// =====================================================
 	// TENANT CONTEXT AND LIMITS QUERIES
 	// =====================================================
@@ -650,6 +701,7 @@ type Querier interface {
 	SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) error
 	SoftDeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
+	SoftDeleteEntityState(ctx context.Context, argUuid uuid.UUID) error
 	SoftDeletePolicy(ctx context.Context, id uuid.UUID) error
 	SoftDeleteTenant(ctx context.Context, id uuid.UUID) error
 	SoftDeleteTransaction(ctx context.Context, arg SoftDeleteTransactionParams) error
@@ -669,7 +721,7 @@ type Querier interface {
 	// Usage: Atomically increments sequence number and returns the new value
 	// Use case: Getting next sequence number for document creation (most common operation)
 	UpdateEntitySequence(ctx context.Context, arg UpdateEntitySequenceParams) (int64, error)
-	UpdateEntityStateSequence(ctx context.Context, arg UpdateEntityStateSequenceParams) (*Entitystate, error)
+	UpdateEntityState(ctx context.Context, arg UpdateEntityStateParams) (*Entitystate, error)
 	// Update compliance flags for an audit event
 	UpdateEventComplianceFlags(ctx context.Context, arg UpdateEventComplianceFlagsParams) error
 	// ================================================================================================

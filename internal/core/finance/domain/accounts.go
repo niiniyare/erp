@@ -107,6 +107,7 @@ type CreateAccountRequest struct {
 
 // UpdateAccountRequest represents the request to update an account
 type UpdateAccountRequest struct {
+	AccountCode             *string                `json:"account_code,omitempty" validate:"omitempty,max=20"`
 	AccountName             *string                `json:"account_name,omitempty" validate:"omitempty,max=200"`
 	AccountDescription      *string                `json:"account_description,omitempty" validate:"omitempty,max=1000"`
 	AccountType             *string                `json:"account_type,omitempty" validate:"omitempty,max=100"`

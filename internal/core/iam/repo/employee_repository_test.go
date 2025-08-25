@@ -60,12 +60,12 @@ func TestEmployeeRepository(t *testing.T) {
 // TestCreateEmployee implements IAM-REPO-001: Verify Employee creation with Person linking
 func (s *EmployeeRepositoryTestSuite) TestCreateEmployee() {
 	testCases := []struct {
-		name            string
-		setupEmployee   func() *model.Employee
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, *model.Employee)
+		name           string
+		setupEmployee  func() *model.Employee
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, *model.Employee)
 	}{
 		{
 			name: "IAM-REPO-001_ValidEmployeeCreation_WithPersonLink",
@@ -73,7 +73,7 @@ func (s *EmployeeRepositoryTestSuite) TestCreateEmployee() {
 				positionTitle := "Software Engineer"
 				deptID := uuid.New()
 				managerID := uuid.New()
-				
+
 				return &model.Employee{
 					ID:               uuid.New(),
 					TenantID:         s.tenantID,
@@ -103,7 +103,7 @@ func (s *EmployeeRepositoryTestSuite) TestCreateEmployee() {
 						PersonID:         s.personID,
 						EmployeeNumber:   "EMP001",
 						EntityID:         s.entityID,
-						EmploymentStatus: string(model.EmploymentStatusActive),
+						EmploymentStatus: func() *string { s := string(model.EmploymentStatusActive); return &s }(),
 						SecurityLevel:    2,
 					}, nil).
 					Times(1)
@@ -219,16 +219,16 @@ func (s *EmployeeRepositoryTestSuite) TestCreateEmployee() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Arrange
 			employee := tc.setupEmployee()
-			
+
 			// Act
 			result, err := s.repo.Create(s.ctx, employee)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -250,12 +250,12 @@ func (s *EmployeeRepositoryTestSuite) TestCreateEmployee() {
 // TestGetEmployeeByPersonID implements IAM-REPO-001: Verify Employee retrieval by Person ID
 func (s *EmployeeRepositoryTestSuite) TestGetEmployeeByPersonID() {
 	testCases := []struct {
-		name            string
-		personID        uuid.UUID
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, *model.Employee)
+		name           string
+		personID       uuid.UUID
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, *model.Employee)
 	}{
 		{
 			name:     "IAM-REPO-001_ExistingEmployee_ReturnsEmployee",
@@ -269,7 +269,7 @@ func (s *EmployeeRepositoryTestSuite) TestGetEmployeeByPersonID() {
 						PersonID:         s.personID,
 						EmployeeNumber:   "EMP001",
 						EntityID:         s.entityID,
-						EmploymentStatus: string(model.EmploymentStatusActive),
+						EmploymentStatus: func() *string { s := string(model.EmploymentStatusActive); return &s }(),
 						SecurityLevel:    2,
 					}, nil).
 					Times(1)
@@ -304,13 +304,13 @@ func (s *EmployeeRepositoryTestSuite) TestGetEmployeeByPersonID() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			result, err := s.repo.GetByPersonID(s.ctx, tc.personID)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -332,12 +332,12 @@ func (s *EmployeeRepositoryTestSuite) TestGetEmployeeByPersonID() {
 // TestGetEmployeeByEmployeeNumber implements IAM-REPO-001: Verify Employee retrieval by employee number
 func (s *EmployeeRepositoryTestSuite) TestGetEmployeeByEmployeeNumber() {
 	testCases := []struct {
-		name            string
-		employeeNumber  string
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, *model.Employee)
+		name           string
+		employeeNumber string
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, *model.Employee)
 	}{
 		{
 			name:           "IAM-REPO-001_ExistingEmployeeNumber_ReturnsEmployee",
@@ -351,7 +351,7 @@ func (s *EmployeeRepositoryTestSuite) TestGetEmployeeByEmployeeNumber() {
 						PersonID:         s.personID,
 						EmployeeNumber:   "EMP001",
 						EntityID:         s.entityID,
-						EmploymentStatus: string(model.EmploymentStatusActive),
+						EmploymentStatus: func() *string { s := string(model.EmploymentStatusActive); return &s }(),
 						SecurityLevel:    2,
 					}, nil).
 					Times(1)
@@ -385,13 +385,13 @@ func (s *EmployeeRepositoryTestSuite) TestGetEmployeeByEmployeeNumber() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			result, err := s.repo.GetByEmployeeNumber(s.ctx, tc.employeeNumber)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -413,12 +413,12 @@ func (s *EmployeeRepositoryTestSuite) TestGetEmployeeByEmployeeNumber() {
 // TestListEmployeesByStatus implements IAM-REPO-001: Verify Employee listing by employment status
 func (s *EmployeeRepositoryTestSuite) TestListEmployeesByStatus() {
 	testCases := []struct {
-		name            string
-		status          model.EmploymentStatus
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, []*model.Employee)
+		name           string
+		status         model.EmploymentStatus
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, []*model.Employee)
 	}{
 		{
 			name:   "IAM-REPO-001_ActiveEmployees_ReturnsActiveList",
@@ -432,7 +432,7 @@ func (s *EmployeeRepositoryTestSuite) TestListEmployeesByStatus() {
 							TenantID:         s.tenantID,
 							PersonID:         uuid.New(),
 							EmployeeNumber:   "EMP001",
-							EmploymentStatus: string(model.EmploymentStatusActive),
+							EmploymentStatus: func() *string { s := string(model.EmploymentStatusActive); return &s }(),
 							SecurityLevel:    2,
 						},
 						{
@@ -440,7 +440,7 @@ func (s *EmployeeRepositoryTestSuite) TestListEmployeesByStatus() {
 							TenantID:         s.tenantID,
 							PersonID:         uuid.New(),
 							EmployeeNumber:   "EMP002",
-							EmploymentStatus: string(model.EmploymentStatusActive),
+							EmploymentStatus: func() *string { s := string(model.EmploymentStatusActive); return &s }(),
 							SecurityLevel:    1,
 						},
 					}, nil).
@@ -505,13 +505,13 @@ func (s *EmployeeRepositoryTestSuite) TestListEmployeesByStatus() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			result, err := s.repo.ListByStatus(s.ctx, tc.status)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -533,12 +533,12 @@ func (s *EmployeeRepositoryTestSuite) TestListEmployeesByStatus() {
 // TestUpdateEmployee implements IAM-REPO-001: Verify Employee update operations
 func (s *EmployeeRepositoryTestSuite) TestUpdateEmployee() {
 	testCases := []struct {
-		name            string
-		setupEmployee   func() *model.Employee
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, *model.Employee)
+		name           string
+		setupEmployee  func() *model.Employee
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, *model.Employee)
 	}{
 		{
 			name: "IAM-REPO-001_ValidUpdate_UpdatesEmployeeRecord",
@@ -568,7 +568,7 @@ func (s *EmployeeRepositoryTestSuite) TestUpdateEmployee() {
 						TenantID:         s.tenantID,
 						PersonID:         s.personID,
 						EmployeeNumber:   "EMP001",
-						EmploymentStatus: string(model.EmploymentStatusActive),
+						EmploymentStatus: func() *string { s := string(model.EmploymentStatusActive); return &s }(),
 						SecurityLevel:    3,
 						UpdatedAt:        time.Now(),
 					}, nil).
@@ -610,16 +610,16 @@ func (s *EmployeeRepositoryTestSuite) TestUpdateEmployee() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Arrange
 			employee := tc.setupEmployee()
-			
+
 			// Act
 			result, err := s.repo.Update(s.ctx, employee)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -650,19 +650,19 @@ func (s *EmployeeRepositoryTestSuite) TestEmployeeTenantIsolation() {
 			setupScenario: func() (uuid.UUID, uuid.UUID) {
 				tenantA := uuid.New()
 				tenantB := uuid.New()
-				
+
 				// Mock RLS enforcement - no cross-tenant employee access
 				s.store.EXPECT().
 					GetEmployeeByPersonID(gomock.Any(), gomock.Any()).
 					Return(db.Employee{}, &db.Error{Code: "02000", Message: "no data found"}).
 					Times(1)
-				
+
 				return tenantA, tenantB
 			},
 			validateResult: func(t *testing.T, tenantA, tenantB uuid.UUID) {
 				// Try to access tenant A's employee from tenant B context
 				personID := uuid.New()
-				
+
 				// This should fail due to RLS
 				employee, err := s.repo.GetByPersonID(s.ctx, personID)
 				require.Error(t, err)
@@ -675,7 +675,7 @@ func (s *EmployeeRepositoryTestSuite) TestEmployeeTenantIsolation() {
 			setupScenario: func() (uuid.UUID, uuid.UUID) {
 				tenantA := uuid.New()
 				tenantB := uuid.New()
-				
+
 				// Mock that same employee number can exist in different tenants
 				s.store.EXPECT().
 					GetEmployeeByNumber(gomock.Any(), "EMP001").
@@ -685,7 +685,7 @@ func (s *EmployeeRepositoryTestSuite) TestEmployeeTenantIsolation() {
 						EmployeeNumber: "EMP001",
 					}, nil).
 					Times(1)
-				
+
 				return tenantA, tenantB
 			},
 			validateResult: func(t *testing.T, tenantA, tenantB uuid.UUID) {
@@ -706,10 +706,10 @@ func (s *EmployeeRepositoryTestSuite) TestEmployeeTenantIsolation() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Arrange
 			tenantA, tenantB := tc.setupScenario()
-			
+
 			// Act & Assert
 			tc.validateResult(s.T(), tenantA, tenantB)
 		})

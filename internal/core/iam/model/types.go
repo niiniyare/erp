@@ -140,17 +140,7 @@ const (
 	MFAMethodPush  MFAMethod = "PUSH"
 )
 
-// SessionStatus represents the status of a user session
-type SessionStatus string
-
-const (
-	SessionStatusActive   SessionStatus = "ACTIVE"
-	SessionStatusExpired  SessionStatus = "EXPIRED"
-	SessionStatusRevoked  SessionStatus = "REVOKED"
-	SessionStatusInactive SessionStatus = "INACTIVE"
-)
-
-// PersonType represents the type/classification of a person
+// PersonType represents the type of person in the system
 type PersonType string
 
 const (
@@ -160,6 +150,16 @@ const (
 	PersonTypeCustomer   PersonType = "CUSTOMER"
 	PersonTypeVendor     PersonType = "VENDOR"
 	PersonTypeContractor PersonType = "CONTRACTOR"
+)
+
+// SessionStatus represents the status of a user session
+type SessionStatus string
+
+const (
+	SessionStatusActive   SessionStatus = "ACTIVE"
+	SessionStatusExpired  SessionStatus = "EXPIRED"
+	SessionStatusRevoked  SessionStatus = "REVOKED"
+	SessionStatusInactive SessionStatus = "INACTIVE"
 )
 
 // RoleType represents the type/classification of a role

@@ -89,4 +89,3 @@ func (are *AdvancedRuleEngine) createEnv(attributeCtx *EvaluationAttributeContex
 // 	Valid  bool     `json:"valid"`
 // 	Errors []string `json:"errors,omitempty"`
 // }
-

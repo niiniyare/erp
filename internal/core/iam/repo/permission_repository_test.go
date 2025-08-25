@@ -72,7 +72,7 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 			setupPermission: func() *model.Permission {
 				resourceID := uuid.New()
 				expiresAt := time.Now().Add(24 * time.Hour)
-				
+
 				return &model.Permission{
 					ID:           uuid.New(),
 					TenantID:     s.tenantID,
@@ -121,14 +121,14 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 				require.Equal(t, "read", permission.Action)
 				require.NotNil(t, permission.EntityID)
 				require.Equal(t, s.entityID, *permission.EntityID)
-				
+
 				// Validate conditional access rules
 				require.Len(t, permission.Conditions, 4)
 				require.Contains(t, permission.Conditions, "time_of_day >= 09:00 AND time_of_day <= 17:00")
 				require.Contains(t, permission.Conditions, "ip_address IN ['10.0.0.0/8', '192.168.1.0/24']")
 				require.Contains(t, permission.Conditions, "mfa_verified = true")
 				require.Contains(t, permission.Conditions, "device_trusted = true")
-				
+
 				// Validate risk metadata
 				require.NotNil(t, permission.Metadata)
 				require.Equal(t, "HIGH", permission.Metadata["risk_level"])
@@ -136,12 +136,12 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 				require.Equal(t, true, permission.Metadata["requires_approval"])
 				require.Equal(t, 2, permission.Metadata["approval_levels"])
 				require.Equal(t, "CONFIDENTIAL", permission.Metadata["data_classification"])
-				
+
 				// Validate compliance metadata
 				complianceFrameworks := permission.Metadata["compliance_framework"].([]string)
 				require.Contains(t, complianceFrameworks, "SOX")
 				require.Contains(t, complianceFrameworks, "PCI-DSS")
-				
+
 				// Validate expiration
 				require.NotNil(t, permission.ExpiresAt)
 				require.False(t, permission.IsExpired())
@@ -158,9 +158,9 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 					EntityID:     &s.entityID,
 					Conditions:   []string{"authenticated = true"},
 					Metadata: map[string]any{
-						"risk_level":        "LOW",
-						"action_category":   "PUBLIC_DATA_ACCESS",
-						"requires_approval": false,
+						"risk_level":          "LOW",
+						"action_category":     "PUBLIC_DATA_ACCESS",
+						"requires_approval":   false,
 						"monitoring_required": false,
 					},
 					CreatedAt: time.Now(),
@@ -192,7 +192,7 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 			setupPermission: func() *model.Permission {
 				resourceID := uuid.New()
 				expiresAt := time.Now().Add(1 * time.Hour) // Short expiration for critical
-				
+
 				return &model.Permission{
 					ID:           uuid.New(),
 					TenantID:     s.tenantID,
@@ -210,10 +210,10 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 					},
 					ExpiresAt: &expiresAt,
 					Metadata: map[string]any{
-						"risk_level":             "CRITICAL",
-						"action_category":        "SYSTEM_ADMINISTRATION",
-						"requires_approval":      true,
-						"approval_levels":        3,
+						"risk_level":            "CRITICAL",
+						"action_category":       "SYSTEM_ADMINISTRATION",
+						"requires_approval":     true,
+						"approval_levels":       3,
 						"dual_control_required": true,
 						"change_window_only":    true,
 						"backup_required":       true,
@@ -258,16 +258,16 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Arrange
 			permission := tc.setupPermission()
-			
+
 			// Act
 			result, err := s.repo.Create(s.ctx, permission)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -289,14 +289,14 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 // TestPermissionCheck implements IAM-REPO-004: Verify permission checking with conditional evaluation
 func (s *PermissionRepositoryTestSuite) TestPermissionCheck() {
 	testCases := []struct {
-		name            string
-		userID          uuid.UUID
-		resourceType    string
-		action          string
-		resourceID      *uuid.UUID
-		setupMocks      func()
+		name                string
+		userID              uuid.UUID
+		resourceType        string
+		action              string
+		resourceID          *uuid.UUID
+		setupMocks          func()
 		expectHasPermission bool
-		validateResult  func(*testing.T, bool)
+		validateResult      func(*testing.T, bool)
 	}{
 		{
 			name:         "IAM-REPO-004_ValidPermission_AllConditionsMet_ReturnsTrue",
@@ -399,13 +399,13 @@ func (s *PermissionRepositoryTestSuite) TestPermissionCheck() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			hasPermission, err := s.repo.CheckPermission(s.ctx, tc.userID, tc.resourceType, tc.action, tc.resourceID)
-			
+
 			// Assert
 			require.NoError(s.T(), err)
 			require.Equal(s.T(), tc.expectHasPermission, hasPermission)
@@ -534,10 +534,10 @@ func (s *PermissionRepositoryTestSuite) TestGrantRevokePermission() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			var err error
 			if tc.operation == "grant" {
@@ -545,7 +545,7 @@ func (s *PermissionRepositoryTestSuite) TestGrantRevokePermission() {
 			} else if tc.operation == "revoke" {
 				err = s.repo.RevokePermission(s.ctx, tc.userID, tc.resourceType, tc.action, tc.resourceID, tc.entityID)
 			}
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -562,11 +562,11 @@ func (s *PermissionRepositoryTestSuite) TestGrantRevokePermission() {
 // TestRemoveExpiredPermissions implements IAM-REPO-004: Verify cleanup of expired permissions
 func (s *PermissionRepositoryTestSuite) TestRemoveExpiredPermissions() {
 	testCases := []struct {
-		name            string
-		setupMocks      func()
-		expectError     bool
-		errorContains   string
-		validateResult  func(*testing.T, int)
+		name           string
+		setupMocks     func()
+		expectError    bool
+		errorContains  string
+		validateResult func(*testing.T, int)
 	}{
 		{
 			name: "IAM-REPO-004_CleanupExpiredPermissions_RemovesExpiredOnly",
@@ -618,13 +618,13 @@ func (s *PermissionRepositoryTestSuite) TestRemoveExpiredPermissions() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Setup mock behavior
 			tc.setupMocks()
-			
+
 			// Act
 			err := s.repo.RemoveExpiredPermissions(s.ctx)
-			
+
 			// Assert
 			if tc.expectError {
 				require.Error(s.T(), err)
@@ -654,13 +654,13 @@ func (s *PermissionRepositoryTestSuite) TestPermissionTenantIsolation() {
 			setupScenario: func() (uuid.UUID, uuid.UUID) {
 				tenantA := uuid.New()
 				tenantB := uuid.New()
-				
+
 				// Mock RLS enforcement - no cross-tenant permission access
 				s.store.EXPECT().
 					GetUserPermissions(gomock.Any(), s.userID).
 					Return([]db.Permission{}, nil). // Empty due to RLS
 					Times(1)
-				
+
 				return tenantA, tenantB
 			},
 			validateResult: func(t *testing.T, tenantA, tenantB uuid.UUID) {
@@ -675,13 +675,13 @@ func (s *PermissionRepositoryTestSuite) TestPermissionTenantIsolation() {
 			setupScenario: func() (uuid.UUID, uuid.UUID) {
 				tenantA := uuid.New()
 				tenantB := uuid.New()
-				
+
 				// Mock permission check across tenants returns false
 				s.store.EXPECT().
 					CheckUserPermission(gomock.Any(), gomock.Any()).
 					Return(false, nil). // No permission due to tenant isolation
 					Times(1)
-				
+
 				return tenantA, tenantB
 			},
 			validateResult: func(t *testing.T, tenantA, tenantB uuid.UUID) {
@@ -700,10 +700,10 @@ func (s *PermissionRepositoryTestSuite) TestPermissionTenantIsolation() {
 				StartSpan(gomock.Any(), gomock.Any()).
 				Return(s.ctx, &tracing.MockSpan{}).
 				AnyTimes()
-			
+
 			// Arrange
 			tenantA, tenantB := tc.setupScenario()
-			
+
 			// Act & Assert
 			tc.validateResult(s.T(), tenantA, tenantB)
 		})

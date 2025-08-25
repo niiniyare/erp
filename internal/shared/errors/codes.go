@@ -287,6 +287,12 @@ func (e *BusinessError) WithDetail(key string, value any) *BusinessError {
 	e.Details[key] = value
 	return e
 }
+
+// WithCause adds a cause to the error
+func (e *BusinessError) WithCause(cause error) *BusinessError {
+	e.Err = cause
+	return e
+}
 func (e *BusinessError) WithCategory(category Category) *BusinessError {
 	e.Category = category
 	return e

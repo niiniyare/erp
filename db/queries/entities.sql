@@ -350,120 +350,6 @@ FROM
   hierarchy_cte ON CONFLICT (tenant_id, ancestor_id, descendant_id) DO NOTHING;
 
 -- ===============================================
--- Entity State Management
--- ===============================================
--- name: CreateEntityState :one
-INSERT INTO
-  entitystate (
-    uuid,
-    fiscal_year,
-    KEY,
-    sequence,
-    entity_id,
-    entity_unit_id
-  )
-VALUES
-  ($1, $2, $3, $4, $5, $6)
-RETURNING
-  *;
-
--- name: GetEntityState :one
-SELECT
-  *
-FROM
-  entitystate
-WHERE
-  entity_id = $1
-  AND KEY = $2
-  AND fiscal_year = $3
-  AND tenant_id = current_tenant_id();
-
--- name: GetEntityStateByKey :one
-SELECT
-  *
-FROM
-  entitystate
-WHERE
-  entity_id = $1
-  AND KEY = $2
-  AND tenant_id = current_tenant_id();
-
--- name: UpdateEntityStateSequence :one
-UPDATE
-  entitystate
-SET
-  sequence = $3,
-  updated_at = NOW()
-WHERE
-  entity_id = $1
-  AND KEY = $2
-  AND tenant_id = current_tenant_id()
-RETURNING
-  *;
-
--- name: IncrementEntityStateSequence :one
-UPDATE
-  entitystate
-SET
-  sequence = sequence + 1
-WHERE
-  entity_id = $1
-  AND KEY = $2
-  AND fiscal_year = $3
-  AND tenant_id = current_tenant_id()
-RETURNING
-  sequence;
-
--- name: GetNextSequenceNumber :one
-INSERT INTO
-  entitystate (
-    uuid,
-    fiscal_year,
-    KEY,
-    sequence,
-    entity_id,
-    entity_unit_id
-  )
-VALUES
-  (gen_random_uuid(), $3, $2, 1, $1, $4) ON CONFLICT (entity_id, KEY, fiscal_year) DO
-UPDATE
-SET
-  sequence = entitystate.sequence + 1
-RETURNING
-  sequence;
-
--- name: ListEntityStates :many
-SELECT
-  *
-FROM
-  entitystate
-WHERE
-  entity_id = $1
-ORDER BY
-  KEY,
-  fiscal_year;
-
--- name: DeleteEntityState :exec
-DELETE FROM
-  entitystate
-WHERE
-  tenant_id = current_tenant_id()
-  AND entity_id = $1
-  AND KEY = $2
-  AND fiscal_year = $3;
-
--- name: ResetEntityStateSequence :exec
-UPDATE
-  entitystate
-SET
-  sequence = $3
-WHERE
-  entity_id = $1
-  AND KEY = $2
-  AND fiscal_year = $4
-  AND tenant_id = current_tenant_id();
-
--- ===============================================
 -- Advanced Entity Queries
 -- ===============================================
 -- name: GetEntityWithHierarchyInfo :one
@@ -1222,6 +1108,295 @@ SELECT
       )
   ) AS orphaned_paths;
 
+
+
+
+-- =====================================================================
+-- ENTITYSTATE SQLC QUERIES
+-- =====================================================================
+
+-- name: CreateEntityState :one
+INSERT INTO entitystate (
+    uuid,
+    tenant_id,
+    fiscal_year,
+    key,
+    sequence,
+    entity_id,
+    entity_unit_id,
+    created_at,
+    updated_at
+) VALUES (
+    sqlc.arg(uuid)::UUID,
+    current_tenant_id(),
+    sqlc.narg(fiscal_year)::SMALLINT,
+    sqlc.arg(key)::VARCHAR(10),
+    sqlc.arg(sequence)::BIGINT,
+    sqlc.arg(entity_id)::UUID,
+    sqlc.narg(entity_unit_id)::UUID,
+    NOW(),
+    NOW()
+) RETURNING *;
+
+-- name: GetEntityState :one
+SELECT *
+FROM entitystate
+WHERE uuid = sqlc.arg(uuid)::UUID
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;
+
+-- name: GetEntityStateByEntityAndKey :one
+SELECT *
+FROM entitystate
+WHERE entity_id = sqlc.arg(entity_id)::UUID
+  AND key = sqlc.arg(key)::VARCHAR(10)
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+  AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT);
+
+-- name: GetEntityStateByEntityKeyAndFiscalYear :one
+SELECT *
+FROM entitystate
+WHERE entity_id = sqlc.arg(entity_id)::UUID
+  AND key = sqlc.arg(key)::VARCHAR(10)
+  AND fiscal_year = sqlc.arg(fiscal_year)::SMALLINT
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;
+
+-- name: GetNextSequenceNumber :one
+SELECT sequence
+FROM entitystate
+WHERE entity_id = sqlc.arg(entity_id)::UUID
+  AND key = sqlc.arg(key)::VARCHAR(10)
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+  AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT)
+FOR UPDATE;
+
+-- name: IncrementSequenceNumber :one
+UPDATE entitystate
+SET sequence = sequence + 1,
+    updated_at = NOW()
+WHERE uuid = sqlc.arg(uuid)::UUID
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+RETURNING sequence;
+
+-- name: UpdateEntityState :one
+UPDATE entitystate
+SET fiscal_year = COALESCE(sqlc.narg(fiscal_year)::SMALLINT, fiscal_year),
+    key = COALESCE(sqlc.narg(key)::VARCHAR(10), key),
+    sequence = COALESCE(sqlc.narg(sequence)::BIGINT, sequence),
+    entity_id = COALESCE(sqlc.narg(entity_id)::UUID, entity_id),
+    entity_unit_id = COALESCE(sqlc.narg(entity_unit_id)::UUID, entity_unit_id),
+    updated_at = NOW()
+WHERE uuid = sqlc.arg(uuid)::UUID
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+RETURNING *;
+
+-- name: SetSequenceNumber :one
+UPDATE entitystate
+SET sequence = sqlc.arg(sequence)::BIGINT,
+    updated_at = NOW()
+WHERE entity_id = sqlc.arg(entity_id)::UUID
+  AND key = sqlc.arg(key)::VARCHAR(10)
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+  AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT)
+RETURNING *;
+
+-- name: SoftDeleteEntityState :exec
+UPDATE entitystate
+SET deleted_at = NOW(),
+    updated_at = NOW()
+WHERE uuid = sqlc.arg(uuid)::UUID
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;
+
+-- name: ListEntityStatesByEntity :many
+SELECT *
+FROM entitystate
+WHERE entity_id = sqlc.arg(entity_id)::UUID
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+ORDER BY key, fiscal_year;
+
+-- name: ListEntityStatesByEntityAndKey :many
+SELECT *
+FROM entitystate
+WHERE entity_id = sqlc.arg(entity_id)::UUID
+  AND key = sqlc.arg(key)::VARCHAR(10)
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+ORDER BY fiscal_year;
+
+-- name: ListEntityStatesByFiscalYear :many
+SELECT *
+FROM entitystate
+WHERE fiscal_year = sqlc.arg(fiscal_year)::SMALLINT
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+ORDER BY entity_id, key;
+
+-- name: ListEntityStatesByEntityUnit :many
+SELECT *
+FROM entitystate
+WHERE entity_unit_id = sqlc.arg(entity_unit_id)::UUID
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+ORDER BY entity_id, key, fiscal_year;
+
+
+-- name: Get_OrCreateEntityState :one
+WITH ins AS (
+    INSERT INTO entitystate (
+        uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
+    )
+    VALUES (
+        sqlc.arg(uuid),             -- generate UUID in app layer
+        current_tenant_id(),
+        sqlc.arg(fiscal_year),
+        sqlc.arg(key),
+        1,                          -- start sequence at 1
+        sqlc.arg(entity_id),
+        sqlc.narg(entity_unit_id),
+        NOW(),
+        NOW()
+    )
+    ON CONFLICT (tenant_id, fiscal_year, key, entity_id)
+    DO NOTHING
+    RETURNING *
+)
+SELECT *
+FROM ins
+UNION
+SELECT *
+FROM entitystate
+WHERE tenant_id = current_tenant_id()
+  AND fiscal_year = sqlc.arg(fiscal_year)
+  AND key = sqlc.arg(key)
+  AND entity_id = sqlc.arg(entity_id)
+  AND deleted_at IS NULL
+LIMIT 1;
+-- -- name: GetOrCreateEntityState :one
+-- WITH existing AS (
+--     SELECT *
+--     FROM entitystate
+--     WHERE entity_id = sqlc.arg(entity_id)::UUID
+--       AND key = sqlc.arg(key)::VARCHAR(10)
+--       AND tenant_id = current_tenant_id()
+--       AND deleted_at IS NULL
+--       AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT)
+-- ),
+-- new_record AS (
+--     INSERT INTO entitystate (
+--         uuid,
+--         tenant_id,
+--         fiscal_year,
+--         key,
+--         sequence,
+--         entity_id,
+--         entity_unit_id,
+--         created_at,
+--         updated_at
+--     )
+--     SELECT 
+--         sqlc.arg(uuid)::UUID,
+--         current_tenant_id(),
+--         sqlc.narg(fiscal_year)::SMALLINT,
+--         sqlc.arg(key)::VARCHAR(10),
+--         sqlc.arg(sequence)::BIGINT,
+--         sqlc.arg(entity_id)::UUID,
+--         sqlc.narg(entity_unit_id)::UUID,
+--         NOW(),
+--         NOW()
+--     WHERE NOT EXISTS (SELECT 1 FROM existing)
+--     RETURNING *
+-- )
+-- SELECT * FROM existing
+-- UNION ALL
+-- SELECT * FROM new_record;
+--
+-- name: GetNextSequenceAndIncrement :one
+UPDATE entitystate
+SET sequence = sequence + 1,
+    updated_at = NOW()
+WHERE entity_id = sqlc.arg(entity_id)::UUID
+  AND key = sqlc.arg(key)::VARCHAR(10)
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+  AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT)
+RETURNING sequence - 1 as used_sequence, sequence as next_sequence;
+
+--
+-- name: Bulk_CreateEntityStates :copyfrom
+INSERT INTO entitystate (
+    uuid,
+    tenant_id,
+    fiscal_year,
+    key,
+    sequence,
+    entity_id,
+    entity_unit_id,
+    created_at,
+    updated_at,
+    deleted_at
+) VALUES (
+    sqlc.arg(uuid),
+    sqlc.arg(tenant_id),
+    sqlc.narg(fiscal_year),
+    sqlc.arg(key),
+    sqlc.arg(sequence),
+    sqlc.arg(entity_id),
+    sqlc.narg(entity_unit_id),
+    sqlc.arg(created_at),
+    sqlc.arg(updated_at),
+    sqlc.narg(deleted_at)
+);
+-- name: CountEntityStatesByEntity :one
+SELECT COUNT(*)
+FROM entitystate
+WHERE entity_id = sqlc.arg(entity_id)::UUID
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;
+
+-- name: CountEntityStatesByKey :one
+SELECT COUNT(*)
+FROM entitystate
+WHERE key = sqlc.arg(key)::VARCHAR(10)
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;
+
+-- name: GetMaxSequenceByEntityAndKey :one
+SELECT COALESCE(MAX(sequence), 0) as max_sequence
+FROM entitystate
+WHERE entity_id = sqlc.arg(entity_id)::UUID
+  AND key = sqlc.arg(key)::VARCHAR(10)
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+  AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT);
+
+-- name: ResetSequenceNumber :one
+UPDATE entitystate
+SET sequence = sqlc.arg(sequence)::BIGINT,
+    updated_at = NOW()
+WHERE uuid = sqlc.arg(uuid)::UUID
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+RETURNING *;
+
+-- name: GetEntityStatesWithPaging :many
+SELECT *
+FROM entitystate
+WHERE tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+  AND (sqlc.narg(entity_id) IS NULL OR entity_id = sqlc.narg(entity_id))
+  AND (sqlc.narg(key) IS NULL OR key = sqlc.narg(key))
+  AND (sqlc.narg(fiscal_year) IS NULL OR fiscal_year = sqlc.narg(fiscal_year))
+ORDER BY created_at DESC
+LIMIT sqlc.arg(page_size)
+OFFSET sqlc.arg(page_offset);
 /*
 I'll create comprehensive sqlc functions for your entity management schema. This will include CRUD operations, hierarchy management, and state tracking.I've created a comprehensive set of sqlc functions for your entity management schema. Here's what's included:
 

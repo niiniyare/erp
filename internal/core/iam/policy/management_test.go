@@ -602,12 +602,12 @@ type PolicyService interface {
 // Removed duplicate type declarations - using the ones from service.go
 
 type UpdatePolicyRequestTest struct {
-	Name        *string             `json:"name,omitempty"`
-	Description *string             `json:"description,omitempty"`
-	Target      *model.PolicyTarget `json:"target,omitempty"`
+	Name        *string              `json:"name,omitempty"`
+	Description *string              `json:"description,omitempty"`
+	Target      *model.PolicyTarget  `json:"target,omitempty"`
 	Rules       *[]*model.PolicyRule `json:"rules,omitempty"`
-	Priority    *int32              `json:"priority,omitempty"`
-	Enabled     *bool               `json:"enabled,omitempty"`
+	Priority    *int32               `json:"priority,omitempty"`
+	Enabled     *bool                `json:"enabled,omitempty"`
 }
 
 // Helper functions

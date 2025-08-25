@@ -27,7 +27,7 @@ WHERE id = $1
   AND tenant_id = current_tenant_id()
   AND approval_status = 'PENDING'
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+RETURNING id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency
 `
 
 type ApproveTransactionParams struct {
@@ -44,8 +44,6 @@ func (q *Queries) ApproveTransaction(ctx context.Context, arg ApproveTransaction
 		&i.TenantID,
 		&i.EntityID,
 		&i.TransactionNumber,
-		&i.TransactionType,
-		&i.TransactionStatus,
 		&i.TransactionDate,
 		&i.PostingDate,
 		&i.DueDate,
@@ -61,18 +59,15 @@ func (q *Queries) ApproveTransaction(ctx context.Context, arg ApproveTransaction
 		&i.SourceDocumentID,
 		&i.BatchID,
 		&i.ApprovalRequired,
-		&i.ApprovalStatus,
 		&i.ApprovedBy,
 		&i.ApprovedAt,
 		&i.ApprovalNotes,
 		&i.IsRecurring,
-		&i.RecurringFrequency,
 		&i.NextRecurringDate,
 		&i.IsReversed,
 		&i.ReversedByTransactionID,
 		&i.ReversalReason,
 		&i.Version,
-		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.TransactionAttributes,
 		&i.CreatedAt,
@@ -82,6 +77,11 @@ func (q *Queries) ApproveTransaction(ctx context.Context, arg ApproveTransaction
 		&i.UpdatedBy,
 		&i.PostedBy,
 		&i.PostedAt,
+		&i.TransactionType,
+		&i.TransactionStatus,
+		&i.ApprovalStatus,
+		&i.ValidationStatus,
+		&i.RecurringFrequency,
 	)
 	return &i, err
 }
@@ -90,8 +90,8 @@ const countTransactions = `-- name: CountTransactions :one
 SELECT COUNT(*) FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR transaction_type = $1)
-  AND ($2::text IS NULL OR transaction_status = $2)
+  AND ($1::text IS NULL OR transaction_type = $1::transaction_type_enum)
+  AND ($2::text IS NULL OR transaction_status = $2::transaction_status_enum)
   AND ($3::date IS NULL OR transaction_date >= $3)
   AND ($4::date IS NULL OR transaction_date <= $4)
 `
@@ -147,35 +147,35 @@ INSERT INTO finance_transactions (
 ) VALUES (
     current_tenant_id(),
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
-) RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+) RETURNING id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency
 `
 
 type CreateTransactionParams struct {
-	EntityID              *uuid.UUID     `json:"entity_id"`
-	TransactionNumber     string         `json:"transaction_number"`
-	TransactionType       string         `json:"transaction_type"`
-	TransactionStatus     string         `json:"transaction_status"`
-	TransactionDate       time.Time      `json:"transaction_date"`
-	PostingDate           time.Time      `json:"posting_date"`
-	DueDate               time.Time      `json:"due_date"`
-	Description           string         `json:"description"`
-	ReferenceNumber       *string        `json:"reference_number"`
-	ExternalReference     *string        `json:"external_reference"`
-	CurrencyCode          string         `json:"currency_code"`
-	ExchangeRate          pgtype.Numeric `json:"exchange_rate"`
-	TotalDebitAmount      pgtype.Numeric `json:"total_debit_amount"`
-	TotalCreditAmount     pgtype.Numeric `json:"total_credit_amount"`
-	SourceModule          *string        `json:"source_module"`
-	SourceDocumentType    *string        `json:"source_document_type"`
-	SourceDocumentID      *uuid.UUID     `json:"source_document_id"`
-	BatchID               *uuid.UUID     `json:"batch_id"`
-	ApprovalRequired      *bool          `json:"approval_required"`
-	ApprovalStatus        *string        `json:"approval_status"`
-	IsRecurring           *bool          `json:"is_recurring"`
-	RecurringFrequency    *string        `json:"recurring_frequency"`
-	NextRecurringDate     time.Time      `json:"next_recurring_date"`
-	TransactionAttributes []byte         `json:"transaction_attributes"`
-	CreatedBy             uuid.UUID      `json:"created_by"`
+	EntityID              *uuid.UUID                 `json:"entity_id"`
+	TransactionNumber     string                     `json:"transaction_number"`
+	TransactionType       TransactionTypeEnum        `json:"transaction_type"`
+	TransactionStatus     TransactionStatusEnum      `json:"transaction_status"`
+	TransactionDate       time.Time                  `json:"transaction_date"`
+	PostingDate           time.Time                  `json:"posting_date"`
+	DueDate               time.Time                  `json:"due_date"`
+	Description           string                     `json:"description"`
+	ReferenceNumber       *string                    `json:"reference_number"`
+	ExternalReference     *string                    `json:"external_reference"`
+	CurrencyCode          string                     `json:"currency_code"`
+	ExchangeRate          pgtype.Numeric             `json:"exchange_rate"`
+	TotalDebitAmount      pgtype.Numeric             `json:"total_debit_amount"`
+	TotalCreditAmount     pgtype.Numeric             `json:"total_credit_amount"`
+	SourceModule          *string                    `json:"source_module"`
+	SourceDocumentType    *string                    `json:"source_document_type"`
+	SourceDocumentID      *uuid.UUID                 `json:"source_document_id"`
+	BatchID               *uuid.UUID                 `json:"batch_id"`
+	ApprovalRequired      *bool                      `json:"approval_required"`
+	ApprovalStatus        NullApprovalStatusEnum     `json:"approval_status"`
+	IsRecurring           *bool                      `json:"is_recurring"`
+	RecurringFrequency    NullRecurringFrequencyEnum `json:"recurring_frequency"`
+	NextRecurringDate     time.Time                  `json:"next_recurring_date"`
+	TransactionAttributes []byte                     `json:"transaction_attributes"`
+	CreatedBy             uuid.UUID                  `json:"created_by"`
 }
 
 // =====================================================================
@@ -216,8 +216,6 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.TenantID,
 		&i.EntityID,
 		&i.TransactionNumber,
-		&i.TransactionType,
-		&i.TransactionStatus,
 		&i.TransactionDate,
 		&i.PostingDate,
 		&i.DueDate,
@@ -233,18 +231,15 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.SourceDocumentID,
 		&i.BatchID,
 		&i.ApprovalRequired,
-		&i.ApprovalStatus,
 		&i.ApprovedBy,
 		&i.ApprovedAt,
 		&i.ApprovalNotes,
 		&i.IsRecurring,
-		&i.RecurringFrequency,
 		&i.NextRecurringDate,
 		&i.IsReversed,
 		&i.ReversedByTransactionID,
 		&i.ReversalReason,
 		&i.Version,
-		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.TransactionAttributes,
 		&i.CreatedAt,
@@ -254,12 +249,17 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.UpdatedBy,
 		&i.PostedBy,
 		&i.PostedAt,
+		&i.TransactionType,
+		&i.TransactionStatus,
+		&i.ApprovalStatus,
+		&i.ValidationStatus,
+		&i.RecurringFrequency,
 	)
 	return &i, err
 }
 
 const getPendingApprovalTransactions = `-- name: GetPendingApprovalTransactions :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
+SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND approval_status = 'PENDING'
   AND deleted_at IS NULL
@@ -286,8 +286,6 @@ func (q *Queries) GetPendingApprovalTransactions(ctx context.Context, arg GetPen
 			&i.TenantID,
 			&i.EntityID,
 			&i.TransactionNumber,
-			&i.TransactionType,
-			&i.TransactionStatus,
 			&i.TransactionDate,
 			&i.PostingDate,
 			&i.DueDate,
@@ -303,18 +301,15 @@ func (q *Queries) GetPendingApprovalTransactions(ctx context.Context, arg GetPen
 			&i.SourceDocumentID,
 			&i.BatchID,
 			&i.ApprovalRequired,
-			&i.ApprovalStatus,
 			&i.ApprovedBy,
 			&i.ApprovedAt,
 			&i.ApprovalNotes,
 			&i.IsRecurring,
-			&i.RecurringFrequency,
 			&i.NextRecurringDate,
 			&i.IsReversed,
 			&i.ReversedByTransactionID,
 			&i.ReversalReason,
 			&i.Version,
-			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.TransactionAttributes,
 			&i.CreatedAt,
@@ -324,6 +319,11 @@ func (q *Queries) GetPendingApprovalTransactions(ctx context.Context, arg GetPen
 			&i.UpdatedBy,
 			&i.PostedBy,
 			&i.PostedAt,
+			&i.TransactionType,
+			&i.TransactionStatus,
+			&i.ApprovalStatus,
+			&i.ValidationStatus,
+			&i.RecurringFrequency,
 		); err != nil {
 			return nil, err
 		}
@@ -336,7 +336,7 @@ func (q *Queries) GetPendingApprovalTransactions(ctx context.Context, arg GetPen
 }
 
 const getRecurringTransactionsDue = `-- name: GetRecurringTransactionsDue :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
+SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND is_recurring = true
   AND next_recurring_date <= $1
@@ -359,8 +359,6 @@ func (q *Queries) GetRecurringTransactionsDue(ctx context.Context, nextRecurring
 			&i.TenantID,
 			&i.EntityID,
 			&i.TransactionNumber,
-			&i.TransactionType,
-			&i.TransactionStatus,
 			&i.TransactionDate,
 			&i.PostingDate,
 			&i.DueDate,
@@ -376,18 +374,15 @@ func (q *Queries) GetRecurringTransactionsDue(ctx context.Context, nextRecurring
 			&i.SourceDocumentID,
 			&i.BatchID,
 			&i.ApprovalRequired,
-			&i.ApprovalStatus,
 			&i.ApprovedBy,
 			&i.ApprovedAt,
 			&i.ApprovalNotes,
 			&i.IsRecurring,
-			&i.RecurringFrequency,
 			&i.NextRecurringDate,
 			&i.IsReversed,
 			&i.ReversedByTransactionID,
 			&i.ReversalReason,
 			&i.Version,
-			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.TransactionAttributes,
 			&i.CreatedAt,
@@ -397,6 +392,11 @@ func (q *Queries) GetRecurringTransactionsDue(ctx context.Context, nextRecurring
 			&i.UpdatedBy,
 			&i.PostedBy,
 			&i.PostedAt,
+			&i.TransactionType,
+			&i.TransactionStatus,
+			&i.ApprovalStatus,
+			&i.ValidationStatus,
+			&i.RecurringFrequency,
 		); err != nil {
 			return nil, err
 		}
@@ -409,7 +409,7 @@ func (q *Queries) GetRecurringTransactionsDue(ctx context.Context, nextRecurring
 }
 
 const getTransactionByID = `-- name: GetTransactionByID :one
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
+SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency FROM finance_transactions
 WHERE id = $1 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -423,8 +423,6 @@ func (q *Queries) GetTransactionByID(ctx context.Context, id uuid.UUID) (*Financ
 		&i.TenantID,
 		&i.EntityID,
 		&i.TransactionNumber,
-		&i.TransactionType,
-		&i.TransactionStatus,
 		&i.TransactionDate,
 		&i.PostingDate,
 		&i.DueDate,
@@ -440,18 +438,15 @@ func (q *Queries) GetTransactionByID(ctx context.Context, id uuid.UUID) (*Financ
 		&i.SourceDocumentID,
 		&i.BatchID,
 		&i.ApprovalRequired,
-		&i.ApprovalStatus,
 		&i.ApprovedBy,
 		&i.ApprovedAt,
 		&i.ApprovalNotes,
 		&i.IsRecurring,
-		&i.RecurringFrequency,
 		&i.NextRecurringDate,
 		&i.IsReversed,
 		&i.ReversedByTransactionID,
 		&i.ReversalReason,
 		&i.Version,
-		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.TransactionAttributes,
 		&i.CreatedAt,
@@ -461,12 +456,17 @@ func (q *Queries) GetTransactionByID(ctx context.Context, id uuid.UUID) (*Financ
 		&i.UpdatedBy,
 		&i.PostedBy,
 		&i.PostedAt,
+		&i.TransactionType,
+		&i.TransactionStatus,
+		&i.ApprovalStatus,
+		&i.ValidationStatus,
+		&i.RecurringFrequency,
 	)
 	return &i, err
 }
 
 const getTransactionByNumber = `-- name: GetTransactionByNumber :one
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
+SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency FROM finance_transactions
 WHERE transaction_number = $1 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -480,8 +480,6 @@ func (q *Queries) GetTransactionByNumber(ctx context.Context, transactionNumber 
 		&i.TenantID,
 		&i.EntityID,
 		&i.TransactionNumber,
-		&i.TransactionType,
-		&i.TransactionStatus,
 		&i.TransactionDate,
 		&i.PostingDate,
 		&i.DueDate,
@@ -497,18 +495,15 @@ func (q *Queries) GetTransactionByNumber(ctx context.Context, transactionNumber 
 		&i.SourceDocumentID,
 		&i.BatchID,
 		&i.ApprovalRequired,
-		&i.ApprovalStatus,
 		&i.ApprovedBy,
 		&i.ApprovedAt,
 		&i.ApprovalNotes,
 		&i.IsRecurring,
-		&i.RecurringFrequency,
 		&i.NextRecurringDate,
 		&i.IsReversed,
 		&i.ReversedByTransactionID,
 		&i.ReversalReason,
 		&i.Version,
-		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.TransactionAttributes,
 		&i.CreatedAt,
@@ -518,6 +513,11 @@ func (q *Queries) GetTransactionByNumber(ctx context.Context, transactionNumber 
 		&i.UpdatedBy,
 		&i.PostedBy,
 		&i.PostedAt,
+		&i.TransactionType,
+		&i.TransactionStatus,
+		&i.ApprovalStatus,
+		&i.ValidationStatus,
+		&i.RecurringFrequency,
 	)
 	return &i, err
 }
@@ -544,11 +544,11 @@ type GetTransactionSummaryByPeriodParams struct {
 }
 
 type GetTransactionSummaryByPeriodRow struct {
-	TransactionType   string `json:"transaction_type"`
-	TransactionStatus string `json:"transaction_status"`
-	TransactionCount  int64  `json:"transaction_count"`
-	TotalDebit        int64  `json:"total_debit"`
-	TotalCredit       int64  `json:"total_credit"`
+	TransactionType   TransactionTypeEnum   `json:"transaction_type"`
+	TransactionStatus TransactionStatusEnum `json:"transaction_status"`
+	TransactionCount  int64                 `json:"transaction_count"`
+	TotalDebit        int64                 `json:"total_debit"`
+	TotalCredit       int64                 `json:"total_credit"`
 }
 
 func (q *Queries) GetTransactionSummaryByPeriod(ctx context.Context, arg GetTransactionSummaryByPeriodParams) ([]*GetTransactionSummaryByPeriodRow, error) {
@@ -579,7 +579,7 @@ func (q *Queries) GetTransactionSummaryByPeriod(ctx context.Context, arg GetTran
 
 const getTransactionWithEntries = `-- name: GetTransactionWithEntries :many
 SELECT 
-    t.id, t.tenant_id, t.entity_id, t.transaction_number, t.transaction_type, t.transaction_status, t.transaction_date, t.posting_date, t.due_date, t.description, t.reference_number, t.external_reference, t.currency_code, t.exchange_rate, t.total_debit_amount, t.total_credit_amount, t.source_module, t.source_document_type, t.source_document_id, t.batch_id, t.approval_required, t.approval_status, t.approved_by, t.approved_at, t.approval_notes, t.is_recurring, t.recurring_frequency, t.next_recurring_date, t.is_reversed, t.reversed_by_transaction_id, t.reversal_reason, t.version, t.validation_status, t.validation_errors, t.transaction_attributes, t.created_at, t.updated_at, t.deleted_at, t.created_by, t.updated_by, t.posted_by, t.posted_at,
+    t.id, t.tenant_id, t.entity_id, t.transaction_number, t.transaction_date, t.posting_date, t.due_date, t.description, t.reference_number, t.external_reference, t.currency_code, t.exchange_rate, t.total_debit_amount, t.total_credit_amount, t.source_module, t.source_document_type, t.source_document_id, t.batch_id, t.approval_required, t.approved_by, t.approved_at, t.approval_notes, t.is_recurring, t.next_recurring_date, t.is_reversed, t.reversed_by_transaction_id, t.reversal_reason, t.version, t.validation_errors, t.transaction_attributes, t.created_at, t.updated_at, t.deleted_at, t.created_by, t.updated_by, t.posted_by, t.posted_at, t.transaction_type, t.transaction_status, t.approval_status, t.validation_status, t.recurring_frequency,
     te.id as entry_id,
     te.entry_number,
     te.account_id,
@@ -604,62 +604,62 @@ ORDER BY te.entry_number ASC
 `
 
 type GetTransactionWithEntriesRow struct {
-	ID                      uuid.UUID      `json:"id"`
-	TenantID                uuid.UUID      `json:"tenant_id"`
-	EntityID                *uuid.UUID     `json:"entity_id"`
-	TransactionNumber       string         `json:"transaction_number"`
-	TransactionType         string         `json:"transaction_type"`
-	TransactionStatus       string         `json:"transaction_status"`
-	TransactionDate         time.Time      `json:"transaction_date"`
-	PostingDate             time.Time      `json:"posting_date"`
-	DueDate                 time.Time      `json:"due_date"`
-	Description             string         `json:"description"`
-	ReferenceNumber         *string        `json:"reference_number"`
-	ExternalReference       *string        `json:"external_reference"`
-	CurrencyCode            string         `json:"currency_code"`
-	ExchangeRate            pgtype.Numeric `json:"exchange_rate"`
-	TotalDebitAmount        pgtype.Numeric `json:"total_debit_amount"`
-	TotalCreditAmount       pgtype.Numeric `json:"total_credit_amount"`
-	SourceModule            *string        `json:"source_module"`
-	SourceDocumentType      *string        `json:"source_document_type"`
-	SourceDocumentID        *uuid.UUID     `json:"source_document_id"`
-	BatchID                 *uuid.UUID     `json:"batch_id"`
-	ApprovalRequired        *bool          `json:"approval_required"`
-	ApprovalStatus          *string        `json:"approval_status"`
-	ApprovedBy              *uuid.UUID     `json:"approved_by"`
-	ApprovedAt              sql.NullTime   `json:"approved_at"`
-	ApprovalNotes           string         `json:"approval_notes"`
-	IsRecurring             *bool          `json:"is_recurring"`
-	RecurringFrequency      *string        `json:"recurring_frequency"`
-	NextRecurringDate       time.Time      `json:"next_recurring_date"`
-	IsReversed              *bool          `json:"is_reversed"`
-	ReversedByTransactionID *uuid.UUID     `json:"reversed_by_transaction_id"`
-	ReversalReason          string         `json:"reversal_reason"`
-	Version                 int32          `json:"version"`
-	ValidationStatus        *string        `json:"validation_status"`
-	ValidationErrors        []byte         `json:"validation_errors"`
-	TransactionAttributes   []byte         `json:"transaction_attributes"`
-	CreatedAt               time.Time      `json:"created_at"`
-	UpdatedAt               time.Time      `json:"updated_at"`
-	DeletedAt               sql.NullTime   `json:"deleted_at"`
-	CreatedBy               uuid.UUID      `json:"created_by"`
-	UpdatedBy               *uuid.UUID     `json:"updated_by"`
-	PostedBy                *uuid.UUID     `json:"posted_by"`
-	PostedAt                sql.NullTime   `json:"posted_at"`
-	EntryID                 *uuid.UUID     `json:"entry_id"`
-	EntryNumber             *int32         `json:"entry_number"`
-	AccountID               *uuid.UUID     `json:"account_id"`
-	DebitAmount             pgtype.Numeric `json:"debit_amount"`
-	CreditAmount            pgtype.Numeric `json:"credit_amount"`
-	EntryDescription        string         `json:"entry_description"`
-	EntryReference          *string        `json:"entry_reference"`
-	CostCenter              *string        `json:"cost_center"`
-	Department              *string        `json:"department"`
-	ProjectID               *uuid.UUID     `json:"project_id"`
-	AccountCode             *string        `json:"account_code"`
-	AccountName             *string        `json:"account_name"`
-	RootType                *string        `json:"root_type"`
-	NormalBalance           *string        `json:"normal_balance"`
+	ID                      uuid.UUID                  `json:"id"`
+	TenantID                uuid.UUID                  `json:"tenant_id"`
+	EntityID                *uuid.UUID                 `json:"entity_id"`
+	TransactionNumber       string                     `json:"transaction_number"`
+	TransactionDate         time.Time                  `json:"transaction_date"`
+	PostingDate             time.Time                  `json:"posting_date"`
+	DueDate                 time.Time                  `json:"due_date"`
+	Description             string                     `json:"description"`
+	ReferenceNumber         *string                    `json:"reference_number"`
+	ExternalReference       *string                    `json:"external_reference"`
+	CurrencyCode            string                     `json:"currency_code"`
+	ExchangeRate            pgtype.Numeric             `json:"exchange_rate"`
+	TotalDebitAmount        pgtype.Numeric             `json:"total_debit_amount"`
+	TotalCreditAmount       pgtype.Numeric             `json:"total_credit_amount"`
+	SourceModule            *string                    `json:"source_module"`
+	SourceDocumentType      *string                    `json:"source_document_type"`
+	SourceDocumentID        *uuid.UUID                 `json:"source_document_id"`
+	BatchID                 *uuid.UUID                 `json:"batch_id"`
+	ApprovalRequired        *bool                      `json:"approval_required"`
+	ApprovedBy              *uuid.UUID                 `json:"approved_by"`
+	ApprovedAt              sql.NullTime               `json:"approved_at"`
+	ApprovalNotes           string                     `json:"approval_notes"`
+	IsRecurring             *bool                      `json:"is_recurring"`
+	NextRecurringDate       time.Time                  `json:"next_recurring_date"`
+	IsReversed              *bool                      `json:"is_reversed"`
+	ReversedByTransactionID *uuid.UUID                 `json:"reversed_by_transaction_id"`
+	ReversalReason          string                     `json:"reversal_reason"`
+	Version                 int32                      `json:"version"`
+	ValidationErrors        []byte                     `json:"validation_errors"`
+	TransactionAttributes   []byte                     `json:"transaction_attributes"`
+	CreatedAt               time.Time                  `json:"created_at"`
+	UpdatedAt               time.Time                  `json:"updated_at"`
+	DeletedAt               sql.NullTime               `json:"deleted_at"`
+	CreatedBy               uuid.UUID                  `json:"created_by"`
+	UpdatedBy               *uuid.UUID                 `json:"updated_by"`
+	PostedBy                *uuid.UUID                 `json:"posted_by"`
+	PostedAt                sql.NullTime               `json:"posted_at"`
+	TransactionType         TransactionTypeEnum        `json:"transaction_type"`
+	TransactionStatus       TransactionStatusEnum      `json:"transaction_status"`
+	ApprovalStatus          NullApprovalStatusEnum     `json:"approval_status"`
+	ValidationStatus        NullValidationStatusEnum   `json:"validation_status"`
+	RecurringFrequency      NullRecurringFrequencyEnum `json:"recurring_frequency"`
+	EntryID                 *uuid.UUID                 `json:"entry_id"`
+	EntryNumber             *int32                     `json:"entry_number"`
+	AccountID               *uuid.UUID                 `json:"account_id"`
+	DebitAmount             pgtype.Numeric             `json:"debit_amount"`
+	CreditAmount            pgtype.Numeric             `json:"credit_amount"`
+	EntryDescription        string                     `json:"entry_description"`
+	EntryReference          *string                    `json:"entry_reference"`
+	CostCenter              *string                    `json:"cost_center"`
+	Department              *string                    `json:"department"`
+	ProjectID               *uuid.UUID                 `json:"project_id"`
+	AccountCode             *string                    `json:"account_code"`
+	AccountName             *string                    `json:"account_name"`
+	RootType                NullRootTypeEnum           `json:"root_type"`
+	NormalBalance           NullNormalBalanceEnum      `json:"normal_balance"`
 }
 
 func (q *Queries) GetTransactionWithEntries(ctx context.Context, id uuid.UUID) ([]*GetTransactionWithEntriesRow, error) {
@@ -676,8 +676,6 @@ func (q *Queries) GetTransactionWithEntries(ctx context.Context, id uuid.UUID) (
 			&i.TenantID,
 			&i.EntityID,
 			&i.TransactionNumber,
-			&i.TransactionType,
-			&i.TransactionStatus,
 			&i.TransactionDate,
 			&i.PostingDate,
 			&i.DueDate,
@@ -693,18 +691,15 @@ func (q *Queries) GetTransactionWithEntries(ctx context.Context, id uuid.UUID) (
 			&i.SourceDocumentID,
 			&i.BatchID,
 			&i.ApprovalRequired,
-			&i.ApprovalStatus,
 			&i.ApprovedBy,
 			&i.ApprovedAt,
 			&i.ApprovalNotes,
 			&i.IsRecurring,
-			&i.RecurringFrequency,
 			&i.NextRecurringDate,
 			&i.IsReversed,
 			&i.ReversedByTransactionID,
 			&i.ReversalReason,
 			&i.Version,
-			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.TransactionAttributes,
 			&i.CreatedAt,
@@ -714,6 +709,11 @@ func (q *Queries) GetTransactionWithEntries(ctx context.Context, id uuid.UUID) (
 			&i.UpdatedBy,
 			&i.PostedBy,
 			&i.PostedAt,
+			&i.TransactionType,
+			&i.TransactionStatus,
+			&i.ApprovalStatus,
+			&i.ValidationStatus,
+			&i.RecurringFrequency,
 			&i.EntryID,
 			&i.EntryNumber,
 			&i.AccountID,
@@ -740,7 +740,7 @@ func (q *Queries) GetTransactionWithEntries(ctx context.Context, id uuid.UUID) (
 }
 
 const getTransactionsByBatch = `-- name: GetTransactionsByBatch :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
+SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency FROM finance_transactions
 WHERE batch_id = $1 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -761,8 +761,6 @@ func (q *Queries) GetTransactionsByBatch(ctx context.Context, batchID *uuid.UUID
 			&i.TenantID,
 			&i.EntityID,
 			&i.TransactionNumber,
-			&i.TransactionType,
-			&i.TransactionStatus,
 			&i.TransactionDate,
 			&i.PostingDate,
 			&i.DueDate,
@@ -778,18 +776,15 @@ func (q *Queries) GetTransactionsByBatch(ctx context.Context, batchID *uuid.UUID
 			&i.SourceDocumentID,
 			&i.BatchID,
 			&i.ApprovalRequired,
-			&i.ApprovalStatus,
 			&i.ApprovedBy,
 			&i.ApprovedAt,
 			&i.ApprovalNotes,
 			&i.IsRecurring,
-			&i.RecurringFrequency,
 			&i.NextRecurringDate,
 			&i.IsReversed,
 			&i.ReversedByTransactionID,
 			&i.ReversalReason,
 			&i.Version,
-			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.TransactionAttributes,
 			&i.CreatedAt,
@@ -799,6 +794,11 @@ func (q *Queries) GetTransactionsByBatch(ctx context.Context, batchID *uuid.UUID
 			&i.UpdatedBy,
 			&i.PostedBy,
 			&i.PostedAt,
+			&i.TransactionType,
+			&i.TransactionStatus,
+			&i.ApprovalStatus,
+			&i.ValidationStatus,
+			&i.RecurringFrequency,
 		); err != nil {
 			return nil, err
 		}
@@ -811,7 +811,7 @@ func (q *Queries) GetTransactionsByBatch(ctx context.Context, batchID *uuid.UUID
 }
 
 const getTransactionsBySourceDocument = `-- name: GetTransactionsBySourceDocument :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
+SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency FROM finance_transactions
 WHERE source_document_type = $1 
   AND source_document_id = $2
   AND tenant_id = current_tenant_id()
@@ -838,8 +838,6 @@ func (q *Queries) GetTransactionsBySourceDocument(ctx context.Context, arg GetTr
 			&i.TenantID,
 			&i.EntityID,
 			&i.TransactionNumber,
-			&i.TransactionType,
-			&i.TransactionStatus,
 			&i.TransactionDate,
 			&i.PostingDate,
 			&i.DueDate,
@@ -855,18 +853,15 @@ func (q *Queries) GetTransactionsBySourceDocument(ctx context.Context, arg GetTr
 			&i.SourceDocumentID,
 			&i.BatchID,
 			&i.ApprovalRequired,
-			&i.ApprovalStatus,
 			&i.ApprovedBy,
 			&i.ApprovedAt,
 			&i.ApprovalNotes,
 			&i.IsRecurring,
-			&i.RecurringFrequency,
 			&i.NextRecurringDate,
 			&i.IsReversed,
 			&i.ReversedByTransactionID,
 			&i.ReversalReason,
 			&i.Version,
-			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.TransactionAttributes,
 			&i.CreatedAt,
@@ -876,6 +871,11 @@ func (q *Queries) GetTransactionsBySourceDocument(ctx context.Context, arg GetTr
 			&i.UpdatedBy,
 			&i.PostedBy,
 			&i.PostedAt,
+			&i.TransactionType,
+			&i.TransactionStatus,
+			&i.ApprovalStatus,
+			&i.ValidationStatus,
+			&i.RecurringFrequency,
 		); err != nil {
 			return nil, err
 		}
@@ -888,11 +888,11 @@ func (q *Queries) GetTransactionsBySourceDocument(ctx context.Context, arg GetTr
 }
 
 const listTransactions = `-- name: ListTransactions :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
+SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR transaction_type = $1)
-  AND ($2::text IS NULL OR transaction_status = $2)
+  AND ($1::text IS NULL OR transaction_type = $1::transaction_type_enum)
+  AND ($2::text IS NULL OR transaction_status = $2::transaction_status_enum)
   AND ($3::date IS NULL OR transaction_date >= $3)
   AND ($4::date IS NULL OR transaction_date <= $4)
 ORDER BY transaction_date DESC, created_at DESC
@@ -929,8 +929,6 @@ func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsPara
 			&i.TenantID,
 			&i.EntityID,
 			&i.TransactionNumber,
-			&i.TransactionType,
-			&i.TransactionStatus,
 			&i.TransactionDate,
 			&i.PostingDate,
 			&i.DueDate,
@@ -946,18 +944,15 @@ func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsPara
 			&i.SourceDocumentID,
 			&i.BatchID,
 			&i.ApprovalRequired,
-			&i.ApprovalStatus,
 			&i.ApprovedBy,
 			&i.ApprovedAt,
 			&i.ApprovalNotes,
 			&i.IsRecurring,
-			&i.RecurringFrequency,
 			&i.NextRecurringDate,
 			&i.IsReversed,
 			&i.ReversedByTransactionID,
 			&i.ReversalReason,
 			&i.Version,
-			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.TransactionAttributes,
 			&i.CreatedAt,
@@ -967,6 +962,11 @@ func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsPara
 			&i.UpdatedBy,
 			&i.PostedBy,
 			&i.PostedAt,
+			&i.TransactionType,
+			&i.TransactionStatus,
+			&i.ApprovalStatus,
+			&i.ValidationStatus,
+			&i.RecurringFrequency,
 		); err != nil {
 			return nil, err
 		}
@@ -991,7 +991,7 @@ WHERE id = $1
   AND tenant_id = current_tenant_id()
   AND transaction_status IN ('APPROVED', 'DRAFT')
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+RETURNING id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency
 `
 
 type PostTransactionParams struct {
@@ -1008,8 +1008,6 @@ func (q *Queries) PostTransaction(ctx context.Context, arg PostTransactionParams
 		&i.TenantID,
 		&i.EntityID,
 		&i.TransactionNumber,
-		&i.TransactionType,
-		&i.TransactionStatus,
 		&i.TransactionDate,
 		&i.PostingDate,
 		&i.DueDate,
@@ -1025,18 +1023,15 @@ func (q *Queries) PostTransaction(ctx context.Context, arg PostTransactionParams
 		&i.SourceDocumentID,
 		&i.BatchID,
 		&i.ApprovalRequired,
-		&i.ApprovalStatus,
 		&i.ApprovedBy,
 		&i.ApprovedAt,
 		&i.ApprovalNotes,
 		&i.IsRecurring,
-		&i.RecurringFrequency,
 		&i.NextRecurringDate,
 		&i.IsReversed,
 		&i.ReversedByTransactionID,
 		&i.ReversalReason,
 		&i.Version,
-		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.TransactionAttributes,
 		&i.CreatedAt,
@@ -1046,6 +1041,11 @@ func (q *Queries) PostTransaction(ctx context.Context, arg PostTransactionParams
 		&i.UpdatedBy,
 		&i.PostedBy,
 		&i.PostedAt,
+		&i.TransactionType,
+		&i.TransactionStatus,
+		&i.ApprovalStatus,
+		&i.ValidationStatus,
+		&i.RecurringFrequency,
 	)
 	return &i, err
 }
@@ -1063,7 +1063,7 @@ WHERE id = $1
   AND tenant_id = current_tenant_id()
   AND approval_status = 'PENDING'
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+RETURNING id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency
 `
 
 type RejectTransactionParams struct {
@@ -1080,8 +1080,6 @@ func (q *Queries) RejectTransaction(ctx context.Context, arg RejectTransactionPa
 		&i.TenantID,
 		&i.EntityID,
 		&i.TransactionNumber,
-		&i.TransactionType,
-		&i.TransactionStatus,
 		&i.TransactionDate,
 		&i.PostingDate,
 		&i.DueDate,
@@ -1097,18 +1095,15 @@ func (q *Queries) RejectTransaction(ctx context.Context, arg RejectTransactionPa
 		&i.SourceDocumentID,
 		&i.BatchID,
 		&i.ApprovalRequired,
-		&i.ApprovalStatus,
 		&i.ApprovedBy,
 		&i.ApprovedAt,
 		&i.ApprovalNotes,
 		&i.IsRecurring,
-		&i.RecurringFrequency,
 		&i.NextRecurringDate,
 		&i.IsReversed,
 		&i.ReversedByTransactionID,
 		&i.ReversalReason,
 		&i.Version,
-		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.TransactionAttributes,
 		&i.CreatedAt,
@@ -1118,6 +1113,11 @@ func (q *Queries) RejectTransaction(ctx context.Context, arg RejectTransactionPa
 		&i.UpdatedBy,
 		&i.PostedBy,
 		&i.PostedAt,
+		&i.TransactionType,
+		&i.TransactionStatus,
+		&i.ApprovalStatus,
+		&i.ValidationStatus,
+		&i.RecurringFrequency,
 	)
 	return &i, err
 }
@@ -1135,7 +1135,7 @@ WHERE id = $1
   AND transaction_status = 'POSTED'
   AND is_reversed = false
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+RETURNING id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency
 `
 
 type ReverseTransactionParams struct {
@@ -1158,8 +1158,6 @@ func (q *Queries) ReverseTransaction(ctx context.Context, arg ReverseTransaction
 		&i.TenantID,
 		&i.EntityID,
 		&i.TransactionNumber,
-		&i.TransactionType,
-		&i.TransactionStatus,
 		&i.TransactionDate,
 		&i.PostingDate,
 		&i.DueDate,
@@ -1175,18 +1173,15 @@ func (q *Queries) ReverseTransaction(ctx context.Context, arg ReverseTransaction
 		&i.SourceDocumentID,
 		&i.BatchID,
 		&i.ApprovalRequired,
-		&i.ApprovalStatus,
 		&i.ApprovedBy,
 		&i.ApprovedAt,
 		&i.ApprovalNotes,
 		&i.IsRecurring,
-		&i.RecurringFrequency,
 		&i.NextRecurringDate,
 		&i.IsReversed,
 		&i.ReversedByTransactionID,
 		&i.ReversalReason,
 		&i.Version,
-		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.TransactionAttributes,
 		&i.CreatedAt,
@@ -1196,12 +1191,17 @@ func (q *Queries) ReverseTransaction(ctx context.Context, arg ReverseTransaction
 		&i.UpdatedBy,
 		&i.PostedBy,
 		&i.PostedAt,
+		&i.TransactionType,
+		&i.TransactionStatus,
+		&i.ApprovalStatus,
+		&i.ValidationStatus,
+		&i.RecurringFrequency,
 	)
 	return &i, err
 }
 
 const searchTransactions = `-- name: SearchTransactions :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
+SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND (
@@ -1236,8 +1236,6 @@ func (q *Queries) SearchTransactions(ctx context.Context, arg SearchTransactions
 			&i.TenantID,
 			&i.EntityID,
 			&i.TransactionNumber,
-			&i.TransactionType,
-			&i.TransactionStatus,
 			&i.TransactionDate,
 			&i.PostingDate,
 			&i.DueDate,
@@ -1253,18 +1251,15 @@ func (q *Queries) SearchTransactions(ctx context.Context, arg SearchTransactions
 			&i.SourceDocumentID,
 			&i.BatchID,
 			&i.ApprovalRequired,
-			&i.ApprovalStatus,
 			&i.ApprovedBy,
 			&i.ApprovedAt,
 			&i.ApprovalNotes,
 			&i.IsRecurring,
-			&i.RecurringFrequency,
 			&i.NextRecurringDate,
 			&i.IsReversed,
 			&i.ReversedByTransactionID,
 			&i.ReversalReason,
 			&i.Version,
-			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.TransactionAttributes,
 			&i.CreatedAt,
@@ -1274,6 +1269,11 @@ func (q *Queries) SearchTransactions(ctx context.Context, arg SearchTransactions
 			&i.UpdatedBy,
 			&i.PostedBy,
 			&i.PostedAt,
+			&i.TransactionType,
+			&i.TransactionStatus,
+			&i.ApprovalStatus,
+			&i.ValidationStatus,
+			&i.RecurringFrequency,
 		); err != nil {
 			return nil, err
 		}
@@ -1349,25 +1349,25 @@ SET
 WHERE id = $1 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+RETURNING id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency
 `
 
 type UpdateTransactionParams struct {
-	ID                    uuid.UUID      `json:"id"`
-	TransactionStatus     string         `json:"transaction_status"`
-	PostingDate           time.Time      `json:"posting_date"`
-	DueDate               time.Time      `json:"due_date"`
-	Description           string         `json:"description"`
-	ReferenceNumber       *string        `json:"reference_number"`
-	ExternalReference     *string        `json:"external_reference"`
-	TotalDebitAmount      pgtype.Numeric `json:"total_debit_amount"`
-	TotalCreditAmount     pgtype.Numeric `json:"total_credit_amount"`
-	ApprovalStatus        *string        `json:"approval_status"`
-	ApprovedBy            *uuid.UUID     `json:"approved_by"`
-	ApprovedAt            sql.NullTime   `json:"approved_at"`
-	ApprovalNotes         string         `json:"approval_notes"`
-	TransactionAttributes []byte         `json:"transaction_attributes"`
-	UpdatedBy             *uuid.UUID     `json:"updated_by"`
+	ID                    uuid.UUID              `json:"id"`
+	TransactionStatus     TransactionStatusEnum  `json:"transaction_status"`
+	PostingDate           time.Time              `json:"posting_date"`
+	DueDate               time.Time              `json:"due_date"`
+	Description           string                 `json:"description"`
+	ReferenceNumber       *string                `json:"reference_number"`
+	ExternalReference     *string                `json:"external_reference"`
+	TotalDebitAmount      pgtype.Numeric         `json:"total_debit_amount"`
+	TotalCreditAmount     pgtype.Numeric         `json:"total_credit_amount"`
+	ApprovalStatus        NullApprovalStatusEnum `json:"approval_status"`
+	ApprovedBy            *uuid.UUID             `json:"approved_by"`
+	ApprovedAt            sql.NullTime           `json:"approved_at"`
+	ApprovalNotes         string                 `json:"approval_notes"`
+	TransactionAttributes []byte                 `json:"transaction_attributes"`
+	UpdatedBy             *uuid.UUID             `json:"updated_by"`
 }
 
 func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (*FinanceTransaction, error) {
@@ -1394,8 +1394,6 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 		&i.TenantID,
 		&i.EntityID,
 		&i.TransactionNumber,
-		&i.TransactionType,
-		&i.TransactionStatus,
 		&i.TransactionDate,
 		&i.PostingDate,
 		&i.DueDate,
@@ -1411,18 +1409,15 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 		&i.SourceDocumentID,
 		&i.BatchID,
 		&i.ApprovalRequired,
-		&i.ApprovalStatus,
 		&i.ApprovedBy,
 		&i.ApprovedAt,
 		&i.ApprovalNotes,
 		&i.IsRecurring,
-		&i.RecurringFrequency,
 		&i.NextRecurringDate,
 		&i.IsReversed,
 		&i.ReversedByTransactionID,
 		&i.ReversalReason,
 		&i.Version,
-		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.TransactionAttributes,
 		&i.CreatedAt,
@@ -1432,6 +1427,11 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 		&i.UpdatedBy,
 		&i.PostedBy,
 		&i.PostedAt,
+		&i.TransactionType,
+		&i.TransactionStatus,
+		&i.ApprovalStatus,
+		&i.ValidationStatus,
+		&i.RecurringFrequency,
 	)
 	return &i, err
 }

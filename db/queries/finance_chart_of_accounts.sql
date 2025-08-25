@@ -51,8 +51,8 @@ WHERE account_code = $1
 SELECT * FROM finance_chart_of_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR account_type = $1)
-  AND ($2::text IS NULL OR root_type = $2)
+  AND ($1::text IS NULL OR account_type = $1::account_type_enum)
+  AND ($2::text IS NULL OR root_type = $2::root_type_enum)
   AND ($3::bool IS NULL OR is_active = $3)
 ORDER BY account_code ASC
 LIMIT $4 OFFSET $5;
@@ -61,8 +61,8 @@ LIMIT $4 OFFSET $5;
 SELECT COUNT(*) FROM finance_chart_of_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR account_type = $1)
-  AND ($2::text IS NULL OR root_type = $2)
+  AND ($1::text IS NULL OR account_type = $1::account_type_enum)
+  AND ($2::text IS NULL OR root_type = $2::root_type_enum)
   AND ($3::bool IS NULL OR is_active = $3);
 
 -- name: ListAccountsByParent :many

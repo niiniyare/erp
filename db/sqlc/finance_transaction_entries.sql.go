@@ -234,35 +234,35 @@ type GetAccountEntriesParams struct {
 }
 
 type GetAccountEntriesRow struct {
-	ID                      uuid.UUID      `json:"id"`
-	TenantID                uuid.UUID      `json:"tenant_id"`
-	TransactionID           uuid.UUID      `json:"transaction_id"`
-	EntryNumber             int32          `json:"entry_number"`
-	AccountID               uuid.UUID      `json:"account_id"`
-	DebitAmount             pgtype.Numeric `json:"debit_amount"`
-	CreditAmount            pgtype.Numeric `json:"credit_amount"`
-	Description             string         `json:"description"`
-	Reference               *string        `json:"reference"`
-	CostCenter              *string        `json:"cost_center"`
-	Department              *string        `json:"department"`
-	ProjectID               *uuid.UUID     `json:"project_id"`
-	OriginalCurrency        *string        `json:"original_currency"`
-	OriginalAmount          pgtype.Numeric `json:"original_amount"`
-	ExchangeRate            pgtype.Numeric `json:"exchange_rate"`
-	TaxCode                 *string        `json:"tax_code"`
-	TaxRate                 pgtype.Numeric `json:"tax_rate"`
-	TaxAmount               pgtype.Numeric `json:"tax_amount"`
-	Reconciled              *bool          `json:"reconciled"`
-	ReconciledDate          time.Time      `json:"reconciled_date"`
-	ReconciliationReference *string        `json:"reconciliation_reference"`
-	CreatedAt               time.Time      `json:"created_at"`
-	UpdatedAt               time.Time      `json:"updated_at"`
-	DeletedAt               sql.NullTime   `json:"deleted_at"`
-	TransactionNumber       string         `json:"transaction_number"`
-	TransactionDate         time.Time      `json:"transaction_date"`
-	TransactionType         string         `json:"transaction_type"`
-	TransactionStatus       string         `json:"transaction_status"`
-	TransactionDescription  string         `json:"transaction_description"`
+	ID                      uuid.UUID             `json:"id"`
+	TenantID                uuid.UUID             `json:"tenant_id"`
+	TransactionID           uuid.UUID             `json:"transaction_id"`
+	EntryNumber             int32                 `json:"entry_number"`
+	AccountID               uuid.UUID             `json:"account_id"`
+	DebitAmount             pgtype.Numeric        `json:"debit_amount"`
+	CreditAmount            pgtype.Numeric        `json:"credit_amount"`
+	Description             string                `json:"description"`
+	Reference               *string               `json:"reference"`
+	CostCenter              *string               `json:"cost_center"`
+	Department              *string               `json:"department"`
+	ProjectID               *uuid.UUID            `json:"project_id"`
+	OriginalCurrency        *string               `json:"original_currency"`
+	OriginalAmount          pgtype.Numeric        `json:"original_amount"`
+	ExchangeRate            pgtype.Numeric        `json:"exchange_rate"`
+	TaxCode                 *string               `json:"tax_code"`
+	TaxRate                 pgtype.Numeric        `json:"tax_rate"`
+	TaxAmount               pgtype.Numeric        `json:"tax_amount"`
+	Reconciled              *bool                 `json:"reconciled"`
+	ReconciledDate          time.Time             `json:"reconciled_date"`
+	ReconciliationReference *string               `json:"reconciliation_reference"`
+	CreatedAt               time.Time             `json:"created_at"`
+	UpdatedAt               time.Time             `json:"updated_at"`
+	DeletedAt               sql.NullTime          `json:"deleted_at"`
+	TransactionNumber       string                `json:"transaction_number"`
+	TransactionDate         time.Time             `json:"transaction_date"`
+	TransactionType         TransactionTypeEnum   `json:"transaction_type"`
+	TransactionStatus       TransactionStatusEnum `json:"transaction_status"`
+	TransactionDescription  string                `json:"transaction_description"`
 }
 
 func (q *Queries) GetAccountEntries(ctx context.Context, arg GetAccountEntriesParams) ([]*GetAccountEntriesRow, error) {
@@ -712,35 +712,35 @@ ORDER BY te.entry_number ASC
 `
 
 type GetTransactionEntriesWithAccountsRow struct {
-	ID                      uuid.UUID      `json:"id"`
-	TenantID                uuid.UUID      `json:"tenant_id"`
-	TransactionID           uuid.UUID      `json:"transaction_id"`
-	EntryNumber             int32          `json:"entry_number"`
-	AccountID               uuid.UUID      `json:"account_id"`
-	DebitAmount             pgtype.Numeric `json:"debit_amount"`
-	CreditAmount            pgtype.Numeric `json:"credit_amount"`
-	Description             string         `json:"description"`
-	Reference               *string        `json:"reference"`
-	CostCenter              *string        `json:"cost_center"`
-	Department              *string        `json:"department"`
-	ProjectID               *uuid.UUID     `json:"project_id"`
-	OriginalCurrency        *string        `json:"original_currency"`
-	OriginalAmount          pgtype.Numeric `json:"original_amount"`
-	ExchangeRate            pgtype.Numeric `json:"exchange_rate"`
-	TaxCode                 *string        `json:"tax_code"`
-	TaxRate                 pgtype.Numeric `json:"tax_rate"`
-	TaxAmount               pgtype.Numeric `json:"tax_amount"`
-	Reconciled              *bool          `json:"reconciled"`
-	ReconciledDate          time.Time      `json:"reconciled_date"`
-	ReconciliationReference *string        `json:"reconciliation_reference"`
-	CreatedAt               time.Time      `json:"created_at"`
-	UpdatedAt               time.Time      `json:"updated_at"`
-	DeletedAt               sql.NullTime   `json:"deleted_at"`
-	AccountCode             string         `json:"account_code"`
-	AccountName             string         `json:"account_name"`
-	RootType                string         `json:"root_type"`
-	AccountType             string         `json:"account_type"`
-	NormalBalance           string         `json:"normal_balance"`
+	ID                      uuid.UUID         `json:"id"`
+	TenantID                uuid.UUID         `json:"tenant_id"`
+	TransactionID           uuid.UUID         `json:"transaction_id"`
+	EntryNumber             int32             `json:"entry_number"`
+	AccountID               uuid.UUID         `json:"account_id"`
+	DebitAmount             pgtype.Numeric    `json:"debit_amount"`
+	CreditAmount            pgtype.Numeric    `json:"credit_amount"`
+	Description             string            `json:"description"`
+	Reference               *string           `json:"reference"`
+	CostCenter              *string           `json:"cost_center"`
+	Department              *string           `json:"department"`
+	ProjectID               *uuid.UUID        `json:"project_id"`
+	OriginalCurrency        *string           `json:"original_currency"`
+	OriginalAmount          pgtype.Numeric    `json:"original_amount"`
+	ExchangeRate            pgtype.Numeric    `json:"exchange_rate"`
+	TaxCode                 *string           `json:"tax_code"`
+	TaxRate                 pgtype.Numeric    `json:"tax_rate"`
+	TaxAmount               pgtype.Numeric    `json:"tax_amount"`
+	Reconciled              *bool             `json:"reconciled"`
+	ReconciledDate          time.Time         `json:"reconciled_date"`
+	ReconciliationReference *string           `json:"reconciliation_reference"`
+	CreatedAt               time.Time         `json:"created_at"`
+	UpdatedAt               time.Time         `json:"updated_at"`
+	DeletedAt               sql.NullTime      `json:"deleted_at"`
+	AccountCode             string            `json:"account_code"`
+	AccountName             string            `json:"account_name"`
+	RootType                RootTypeEnum      `json:"root_type"`
+	AccountType             string            `json:"account_type"`
+	NormalBalance           NormalBalanceEnum `json:"normal_balance"`
 }
 
 func (q *Queries) GetTransactionEntriesWithAccounts(ctx context.Context, transactionID uuid.UUID) ([]*GetTransactionEntriesWithAccountsRow, error) {
@@ -867,15 +867,15 @@ type GetTrialBalanceParams struct {
 }
 
 type GetTrialBalanceRow struct {
-	ID            uuid.UUID   `json:"id"`
-	AccountCode   string      `json:"account_code"`
-	AccountName   string      `json:"account_name"`
-	RootType      string      `json:"root_type"`
-	AccountType   string      `json:"account_type"`
-	NormalBalance string      `json:"normal_balance"`
-	TotalDebits   interface{} `json:"total_debits"`
-	TotalCredits  interface{} `json:"total_credits"`
-	NetBalance    interface{} `json:"net_balance"`
+	ID            uuid.UUID         `json:"id"`
+	AccountCode   string            `json:"account_code"`
+	AccountName   string            `json:"account_name"`
+	RootType      RootTypeEnum      `json:"root_type"`
+	AccountType   string            `json:"account_type"`
+	NormalBalance NormalBalanceEnum `json:"normal_balance"`
+	TotalDebits   interface{}       `json:"total_debits"`
+	TotalCredits  interface{}       `json:"total_credits"`
+	NetBalance    interface{}       `json:"net_balance"`
 }
 
 func (q *Queries) GetTrialBalance(ctx context.Context, arg GetTrialBalanceParams) ([]*GetTrialBalanceRow, error) {

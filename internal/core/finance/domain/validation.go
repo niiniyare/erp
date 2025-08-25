@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -260,15 +261,7 @@ func (v *FieldValidator) ValidateEnum(value string, fieldName string, allowedVal
 	}
 
 	if value != "" {
-		found := false
-		for _, allowed := range allowedValues {
-			if value == allowed {
-				found = true
-				break
-			}
-		}
-
-		if !found {
+		if !slices.Contains(allowedValues, value) {
 			errors = append(errors, ValidationError{
 				Field:   fieldName,
 				Message: fmt.Sprintf("%s must be one of: %s", fieldName, strings.Join(allowedValues, ", ")),
@@ -278,10 +271,16 @@ func (v *FieldValidator) ValidateEnum(value string, fieldName string, allowedVal
 	}
 
 	return errors
+
 }
 
 // BusinessRuleValidator provides business-specific validation
 type BusinessRuleValidator struct{}
+
+func NewBusinessRuleValidator() *BusinessRuleValidator {
+	return &BusinessRuleValidator{}
+
+}
 
 // ValidateAccountCode validates account code format and uniqueness constraints
 func (v *BusinessRuleValidator) ValidateAccountCode(code string, tenantID uuid.UUID, entityID *uuid.UUID) []ValidationError {

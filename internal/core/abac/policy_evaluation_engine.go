@@ -39,10 +39,10 @@ func NewEvaluationPerformanceTracker() *EvaluationPerformanceTracker {
 func (ept *EvaluationPerformanceTracker) RecordEvaluation(duration time.Duration, cacheHit bool, success bool) {
 	ept.mu.Lock()
 	defer ept.mu.Unlock()
-	
+
 	ept.evaluationTimes = append(ept.evaluationTimes, duration)
 	ept.totalRequests++
-	
+
 	if !success {
 		ept.errors++
 	}
@@ -391,7 +391,7 @@ func (pee *policyEvaluationEngine) executePolicyEvaluation(
 	// Evaluate the policy rule
 	ruleResults := make([]RuleEvaluationResult, 0, 1)
 	applicableRules := make([]ApplicableRule, 0, 1)
-	
+
 	// Since Policy.Rule is map[string]any, we need to evaluate it differently
 	// For now, simplified evaluation - assume policy allows if target matches
 	ruleResult := &RuleEvaluationResult{
@@ -399,7 +399,7 @@ func (pee *policyEvaluationEngine) executePolicyEvaluation(
 		Decision:   types.PolicyDecisionAllow,
 		Applicable: true,
 	}
-	
+
 	// TODO: Implement proper rule evaluation with RuleEngine interface
 
 	if ruleResult != nil {
