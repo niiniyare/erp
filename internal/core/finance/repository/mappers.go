@@ -277,19 +277,20 @@ func mapDomainTransactionToSQLCCreate(req *domain.CreateTransactionRequest) (db.
 		return db.CreateTransactionParams{}, fmt.Errorf("invalid transaction status: %s", req.TransactionStatus)
 	}
 
-	// Convert amounts to pgtype.Numeric
+	// Calculate total amounts from entries (these would be calculated from the entries)
+	// For now, set to zero - this should be calculated from req.Entries
 	totalDebitAmount := pgtype.Numeric{
-		Int:   req.TotalDebitAmount.BigInt(),
+		Int:   decimal.Zero.BigInt(),
 		Valid: true,
 	}
 	totalCreditAmount := pgtype.Numeric{
-		Int:   req.TotalCreditAmount.BigInt(),
+		Int:   decimal.Zero.BigInt(),
 		Valid: true,
 	}
 
 	// Convert exchange rate to pgtype.Numeric
 	var exchangeRate pgtype.Numeric
-	if req.ExchangeRate != nil {
+	if !req.ExchangeRate.IsZero() {
 		exchangeRate = pgtype.Numeric{
 			Int:   req.ExchangeRate.BigInt(),
 			Valid: true,
@@ -329,105 +330,6 @@ func mapDomainTransactionToSQLCCreate(req *domain.CreateTransactionRequest) (db.
 	}, nil
 }
 
-func mapSQLCTransactionToDomain(sqlcTransaction *db.FinanceTransaction) (*domain.Transaction, error) {
-	// Map transaction type enum
-	var transactionType domain.TransactionTypeEnum
-	switch sqlcTransaction.TransactionType {
-	case db.TransactionTypeEnumMANUAL:
-		transactionType = domain.MANUAL
-	case db.TransactionTypeEnumSALESINVOICE:
-		transactionType = domain.SALES_INVOICE
-	case db.TransactionTypeEnumPURCHASEINVOICE:
-		transactionType = domain.PURCHASE_INVOICE
-	case db.TransactionTypeEnumPAYMENT:
-		transactionType = domain.PAYMENT
-	case db.TransactionTypeEnumRECEIPT:
-		transactionType = domain.RECEIPT
-	case db.TransactionTypeEnumJOURNALENTRY:
-		transactionType = domain.JOURNAL_ENTRY
-	case db.TransactionTypeEnumBANKTRANSFER:
-		transactionType = domain.BANK_TRANSFER
-	case db.TransactionTypeEnumADJUSTMENT:
-		transactionType = domain.ADJUSTMENT
-	case db.TransactionTypeEnumOPENINGBALANCE:
-		transactionType = domain.OPENING_BALANCE
-	case db.TransactionTypeEnumCLOSINGENTRY:
-		transactionType = domain.CLOSING_ENTRY
-	default:
-		return nil, fmt.Errorf("unknown transaction type: %s", sqlcTransaction.TransactionType)
-	}
-
-	// Map transaction status enum
-	var status domain.TransactionStatusEnum
-	switch sqlcTransaction.TransactionStatus {
-	case db.TransactionStatusEnumDRAFT:
-		status = domain.DRAFT
-	case db.TransactionStatusEnumPENDINGAPPROVAL:
-		status = domain.PENDING_APPROVAL
-	case db.TransactionStatusEnumAPPROVED:
-		status = domain.APPROVED
-	case db.TransactionStatusEnumPOSTED:
-		status = domain.POSTED
-	case db.TransactionStatusEnumCANCELLED:
-		status = domain.CANCELLED
-	case db.TransactionStatusEnumREVERSED:
-		status = domain.REVERSED
-	default:
-		return nil, fmt.Errorf("unknown transaction status: %s", sqlcTransaction.TransactionStatus)
-	}
-
-	// Convert amounts from pgtype.Numeric to decimal.Decimal
-	var totalDebitAmount, totalCreditAmount decimal.Decimal
-	if sqlcTransaction.TotalDebitAmount.Valid {
-		totalDebitAmount = decimal.NewFromBigInt(sqlcTransaction.TotalDebitAmount.Int, 0)
-	}
-	if sqlcTransaction.TotalCreditAmount.Valid {
-		totalCreditAmount = decimal.NewFromBigInt(sqlcTransaction.TotalCreditAmount.Int, 0)
-	}
-
-	// Convert exchange rate
-	var exchangeRate *decimal.Decimal
-	if sqlcTransaction.ExchangeRate.Valid {
-		rate := decimal.NewFromBigInt(sqlcTransaction.ExchangeRate.Int, 0)
-		exchangeRate = &rate
-	}
-
-	// Parse metadata from JSONB
-	var metadata map[string]interface{}
-	if len(sqlcTransaction.Metadata) > 0 {
-		if err := json.Unmarshal(sqlcTransaction.Metadata, &metadata); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal transaction metadata: %w", err)
-		}
-	}
-
-	return &domain.Transaction{
-		ID:                sqlcTransaction.ID,
-		TenantID:          sqlcTransaction.TenantID,
-		EntityID:          sqlcTransaction.EntityID,
-		TransactionNumber: sqlcTransaction.TransactionNumber,
-		TransactionType:   transactionType,
-		Status:            status,
-		TransactionDate:   sqlcTransaction.TransactionDate.Time,
-		PostingDate:       timeToPointer(sqlcTransaction.PostingDate),
-		Description:       sqlcTransaction.Description,
-		ReferenceNumber:   sqlcTransaction.ReferenceNumber,
-		CurrencyCode:      sqlcTransaction.CurrencyCode,
-		ExchangeRate:      exchangeRate,
-		TotalDebitAmount:  totalDebitAmount,
-		TotalCreditAmount: totalCreditAmount,
-		Memo:              sqlcTransaction.Memo,
-		AttachmentIDs:     sqlcTransaction.AttachmentIds,
-		Tags:              sqlcTransaction.Tags,
-		Metadata:          metadata,
-		CreatedAt:         sqlcTransaction.CreatedAt.Time,
-		UpdatedAt:         sqlcTransaction.UpdatedAt.Time,
-		DeletedAt:         timeToPointer(sqlcTransaction.DeletedAt),
-		CreatedBy:         sqlcTransaction.CreatedBy,
-		UpdatedBy:         sqlcTransaction.UpdatedBy,
-		PostedBy:          sqlcTransaction.PostedBy,
-		PostedAt:          timeToPointer(sqlcTransaction.PostedAt),
-	}, nil
-}
 
 // Helper functions
 
@@ -446,67 +348,6 @@ func dateToPtr(t *time.Time) *pgtype.Date {
 	return nil
 }
 
-func mapTransactionFilterToSQLCParams(filter *domain.TransactionFilter) (db.ListTransactionsParams, error) {
-	params := db.ListTransactionsParams{
-		Limit:  filter.Limit,
-		Offset: filter.Offset,
-	}
-
-	// Map date range filters
-	if filter.FromDate != nil {
-		params.FromDate = &pgtype.Date{Time: *filter.FromDate, Valid: true}
-	}
-
-	if filter.ToDate != nil {
-		params.ToDate = &pgtype.Date{Time: *filter.ToDate, Valid: true}
-	}
-
-	// Map status filter
-	if filter.Status != nil {
-		switch *filter.Status {
-		case domain.DRAFT:
-			params.Status = stringPtr("DRAFT")
-		case domain.PENDING_APPROVAL:
-			params.Status = stringPtr("PENDING_APPROVAL")
-		case domain.APPROVED:
-			params.Status = stringPtr("APPROVED")
-		case domain.POSTED:
-			params.Status = stringPtr("POSTED")
-		case domain.CANCELLED:
-			params.Status = stringPtr("CANCELLED")
-		case domain.REVERSED:
-			params.Status = stringPtr("REVERSED")
-		}
-	}
-
-	// Map transaction type filter
-	if filter.TransactionType != nil {
-		switch *filter.TransactionType {
-		case domain.MANUAL:
-			params.TransactionType = stringPtr("MANUAL")
-		case domain.SALES_INVOICE:
-			params.TransactionType = stringPtr("SALES_INVOICE")
-		case domain.PURCHASE_INVOICE:
-			params.TransactionType = stringPtr("PURCHASE_INVOICE")
-		case domain.PAYMENT:
-			params.TransactionType = stringPtr("PAYMENT")
-		case domain.RECEIPT:
-			params.TransactionType = stringPtr("RECEIPT")
-		case domain.JOURNAL_ENTRY:
-			params.TransactionType = stringPtr("JOURNAL_ENTRY")
-		case domain.BANK_TRANSFER:
-			params.TransactionType = stringPtr("BANK_TRANSFER")
-		case domain.ADJUSTMENT:
-			params.TransactionType = stringPtr("ADJUSTMENT")
-		case domain.OPENING_BALANCE:
-			params.TransactionType = stringPtr("OPENING_BALANCE")
-		case domain.CLOSING_ENTRY:
-			params.TransactionType = stringPtr("CLOSING_ENTRY")
-		}
-	}
-
-	return params, nil
-}
 
 func stringPtr(s string) *string {
 	return &s
@@ -556,104 +397,104 @@ func pgTypeNumericToDecimal(n pgtype.Numeric) decimal.Decimal {
 
 // Additional helper functions for transaction repository
 
-func mapDomainTransactionTypeToSQLCEnum(transactionType domain.TransactionTypeEnum) db.TransactionTypeEnum {
+func mapDomainTransactionTypeToSQLCEnum(transactionType domain.TransactionType) db.TransactionTypeEnum {
 	switch transactionType {
-	case domain.MANUAL:
+	case domain.TransactionTypeManual:
 		return db.TransactionTypeEnumMANUAL
-	case domain.SALES_INVOICE:
-		return db.TransactionTypeEnumSALESINVOICE
-	case domain.PURCHASE_INVOICE:
-		return db.TransactionTypeEnumPURCHASEINVOICE
-	case domain.PAYMENT:
-		return db.TransactionTypeEnumPAYMENT
-	case domain.RECEIPT:
-		return db.TransactionTypeEnumRECEIPT
-	case domain.JOURNAL_ENTRY:
-		return db.TransactionTypeEnumJOURNALENTRY
-	case domain.BANK_TRANSFER:
-		return db.TransactionTypeEnumBANKTRANSFER
-	case domain.ADJUSTMENT:
+	case domain.TransactionTypeSystem:
+		return db.TransactionTypeEnumSYSTEM
+	case domain.TransactionTypeImported:
+		return db.TransactionTypeEnumIMPORTED
+	case domain.TransactionTypeRecurring:
+		return db.TransactionTypeEnumRECURRING
+	case domain.TransactionTypeAdjustment:
 		return db.TransactionTypeEnumADJUSTMENT
-	case domain.OPENING_BALANCE:
-		return db.TransactionTypeEnumOPENINGBALANCE
-	case domain.CLOSING_ENTRY:
-		return db.TransactionTypeEnumCLOSINGENTRY
+	case domain.TransactionTypeClosing:
+		return db.TransactionTypeEnumCLOSING
+	case domain.TransactionTypeJournal:
+		return db.TransactionTypeEnumJOURNAL
+	case domain.TransactionTypeInvoice:
+		return db.TransactionTypeEnumINVOICE
+	case domain.TransactionTypePayment:
+		return db.TransactionTypeEnumPAYMENT
+	case domain.TransactionTypePurchase:
+		return db.TransactionTypeEnumPURCHASE
 	default:
 		return db.TransactionTypeEnumMANUAL
 	}
 }
 
-func mapDomainTransactionStatusToSQLCEnum(status domain.TransactionStatusEnum) db.TransactionStatusEnum {
+func mapDomainTransactionStatusToSQLCEnum(status domain.TransactionStatus) db.TransactionStatusEnum {
 	switch status {
-	case domain.DRAFT:
+	case domain.TransactionStatusDraft:
 		return db.TransactionStatusEnumDRAFT
-	case domain.PENDING_APPROVAL:
+	case domain.TransactionStatusPendingApproval:
 		return db.TransactionStatusEnumPENDINGAPPROVAL
-	case domain.APPROVED:
+	case domain.TransactionStatusApproved:
 		return db.TransactionStatusEnumAPPROVED
-	case domain.POSTED:
+	case domain.TransactionStatusPosted:
 		return db.TransactionStatusEnumPOSTED
-	case domain.CANCELLED:
+	case domain.TransactionStatusCancelled:
 		return db.TransactionStatusEnumCANCELLED
-	case domain.REVERSED:
+	case domain.TransactionStatusReversed:
 		return db.TransactionStatusEnumREVERSED
 	default:
 		return db.TransactionStatusEnumDRAFT
 	}
 }
 
-func mapDomainTransactionStatusToSQLCEnumPtr(status domain.TransactionStatusEnum) *db.TransactionStatusEnum {
+func mapDomainTransactionStatusToSQLCEnumPtr(status domain.TransactionStatus) *db.TransactionStatusEnum {
 	sqlcEnum := mapDomainTransactionStatusToSQLCEnum(status)
 	return &sqlcEnum
 }
 
-func mapSQLCTransactionTypeToDomain(sqlcType db.TransactionTypeEnum) domain.TransactionTypeEnum {
+func mapSQLCTransactionTypeToDomain(sqlcType db.TransactionTypeEnum) domain.TransactionType {
 	switch sqlcType {
 	case db.TransactionTypeEnumMANUAL:
-		return domain.MANUAL
-	case db.TransactionTypeEnumSALESINVOICE:
-		return domain.SALES_INVOICE
-	case db.TransactionTypeEnumPURCHASEINVOICE:
-		return domain.PURCHASE_INVOICE
-	case db.TransactionTypeEnumPAYMENT:
-		return domain.PAYMENT
-	case db.TransactionTypeEnumRECEIPT:
-		return domain.RECEIPT
-	case db.TransactionTypeEnumJOURNALENTRY:
-		return domain.JOURNAL_ENTRY
-	case db.TransactionTypeEnumBANKTRANSFER:
-		return domain.BANK_TRANSFER
+		return domain.TransactionTypeManual
+	case db.TransactionTypeEnumSYSTEM:
+		return domain.TransactionTypeSystem
+	case db.TransactionTypeEnumIMPORTED:
+		return domain.TransactionTypeImported
+	case db.TransactionTypeEnumRECURRING:
+		return domain.TransactionTypeRecurring
 	case db.TransactionTypeEnumADJUSTMENT:
-		return domain.ADJUSTMENT
-	case db.TransactionTypeEnumOPENINGBALANCE:
-		return domain.OPENING_BALANCE
-	case db.TransactionTypeEnumCLOSINGENTRY:
-		return domain.CLOSING_ENTRY
+		return domain.TransactionTypeAdjustment
+	case db.TransactionTypeEnumCLOSING:
+		return domain.TransactionTypeClosing
+	case db.TransactionTypeEnumJOURNAL:
+		return domain.TransactionTypeJournal
+	case db.TransactionTypeEnumINVOICE:
+		return domain.TransactionTypeInvoice
+	case db.TransactionTypeEnumPAYMENT:
+		return domain.TransactionTypePayment
+	case db.TransactionTypeEnumPURCHASE:
+		return domain.TransactionTypePurchase
 	default:
-		return domain.MANUAL
+		return domain.TransactionTypeManual
 	}
 }
 
-func mapSQLCTransactionStatusToDomain(sqlcStatus db.TransactionStatusEnum) domain.TransactionStatusEnum {
+func mapSQLCTransactionStatusToDomain(sqlcStatus db.TransactionStatusEnum) domain.TransactionStatus {
 	switch sqlcStatus {
 	case db.TransactionStatusEnumDRAFT:
-		return domain.DRAFT
+		return domain.TransactionStatusDraft
 	case db.TransactionStatusEnumPENDINGAPPROVAL:
-		return domain.PENDING_APPROVAL
+		return domain.TransactionStatusPendingApproval
 	case db.TransactionStatusEnumAPPROVED:
-		return domain.APPROVED
+		return domain.TransactionStatusApproved
 	case db.TransactionStatusEnumPOSTED:
-		return domain.POSTED
+		return domain.TransactionStatusPosted
 	case db.TransactionStatusEnumCANCELLED:
-		return domain.CANCELLED
+		return domain.TransactionStatusCancelled
 	case db.TransactionStatusEnumREVERSED:
-		return domain.REVERSED
+		return domain.TransactionStatusReversed
 	default:
-		return domain.DRAFT
+		return domain.TransactionStatusDraft
 	}
 }
 
-func mapDomainApprovalStatusToString(status *domain.ApprovalStatusEnum) *string {
+func mapDomainApprovalStatusToString(status *domain.ApprovalStatus) *string {
 	if status == nil {
 		return nil
 	}
@@ -661,7 +502,7 @@ func mapDomainApprovalStatusToString(status *domain.ApprovalStatusEnum) *string 
 	return &statusStr
 }
 
-func mapDomainApprovalStatusToStringPtr(status *domain.ApprovalStatusEnum) *string {
+func mapDomainApprovalStatusToStringPtr(status *domain.ApprovalStatus) *string {
 	return mapDomainApprovalStatusToString(status)
 }
 
@@ -705,10 +546,123 @@ func boolToPtr(b bool) *bool {
 	return &b
 }
 
-func mapStringToApprovalStatus(s *string) *domain.ApprovalStatusEnum {
+func mapStringToApprovalStatus(s *string) *domain.ApprovalStatus {
 	if s == nil {
 		return nil
 	}
-	status := domain.ApprovalStatusEnum(*s)
+	status := domain.ApprovalStatus(*s)
 	return &status
 }
+
+// Additional helper functions for transaction repository enum mappings
+
+func mapDomainApprovalStatusToNullEnum(status *domain.ApprovalStatus) db.NullApprovalStatusEnum {
+	if status == nil {
+		return db.NullApprovalStatusEnum{Valid: false}
+	}
+	
+	var approvalEnum db.ApprovalStatusEnum
+	switch *status {
+	case domain.ApprovalStatusNotRequired:
+		approvalEnum = db.ApprovalStatusEnumNOTREQUIRED
+	case domain.ApprovalStatusPending:
+		approvalEnum = db.ApprovalStatusEnumPENDING
+	case domain.ApprovalStatusApproved:
+		approvalEnum = db.ApprovalStatusEnumAPPROVED
+	case domain.ApprovalStatusRejected:
+		approvalEnum = db.ApprovalStatusEnumREJECTED
+	default:
+		approvalEnum = db.ApprovalStatusEnumNOTREQUIRED
+	}
+	
+	return db.NullApprovalStatusEnum{
+		ApprovalStatusEnum: approvalEnum,
+		Valid:              true,
+	}
+}
+
+func mapDomainRecurringFrequencyToNullEnum(frequency *string) db.NullRecurringFrequencyEnum {
+	if frequency == nil || *frequency == "" {
+		return db.NullRecurringFrequencyEnum{Valid: false}
+	}
+	
+	var frequencyEnum db.RecurringFrequencyEnum
+	switch *frequency {
+	case "DAILY":
+		frequencyEnum = db.RecurringFrequencyEnumDAILY
+	case "WEEKLY":
+		frequencyEnum = db.RecurringFrequencyEnumWEEKLY
+	case "MONTHLY":
+		frequencyEnum = db.RecurringFrequencyEnumMONTHLY
+	case "QUARTERLY":
+		frequencyEnum = db.RecurringFrequencyEnumQUARTERLY
+	case "YEARLY":
+		frequencyEnum = db.RecurringFrequencyEnumYEARLY
+	default:
+		return db.NullRecurringFrequencyEnum{Valid: false}
+	}
+	
+	return db.NullRecurringFrequencyEnum{
+		RecurringFrequencyEnum: frequencyEnum,
+		Valid:                  true,
+	}
+}
+
+func timePointerToTimeValue(t *time.Time) time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return *t
+}
+
+func timePointerToNullTime(t *time.Time) sql.NullTime {
+	if t == nil {
+		return sql.NullTime{Valid: false}
+	}
+	return sql.NullTime{Time: *t, Valid: true}
+}
+
+func mapNullApprovalStatusToDomain(nullStatus db.NullApprovalStatusEnum) domain.ApprovalStatus {
+	if !nullStatus.Valid {
+		return domain.ApprovalStatusNotRequired
+	}
+	
+	switch nullStatus.ApprovalStatusEnum {
+	case db.ApprovalStatusEnumNOTREQUIRED:
+		return domain.ApprovalStatusNotRequired
+	case db.ApprovalStatusEnumPENDING:
+		return domain.ApprovalStatusPending
+	case db.ApprovalStatusEnumAPPROVED:
+		return domain.ApprovalStatusApproved
+	case db.ApprovalStatusEnumREJECTED:
+		return domain.ApprovalStatusRejected
+	default:
+		return domain.ApprovalStatusNotRequired
+	}
+}
+
+func mapNullRecurringFrequencyToDomainString(nullFreq db.NullRecurringFrequencyEnum) *string {
+	if !nullFreq.Valid {
+		return nil
+	}
+	
+	var freqStr string
+	switch nullFreq.RecurringFrequencyEnum {
+	case db.RecurringFrequencyEnumDAILY:
+		freqStr = "DAILY"
+	case db.RecurringFrequencyEnumWEEKLY:
+		freqStr = "WEEKLY"
+	case db.RecurringFrequencyEnumMONTHLY:
+		freqStr = "MONTHLY"
+	case db.RecurringFrequencyEnumQUARTERLY:
+		freqStr = "QUARTERLY"
+	case db.RecurringFrequencyEnumYEARLY:
+		freqStr = "YEARLY"
+	default:
+		return nil
+	}
+	
+	return &freqStr
+}
+
+

@@ -52,21 +52,17 @@ func (s *AuthzAdapterTestSuite) SetupTest() {
 	s.mockTracer = tracing.NewMockTracingService(s.ctrl)
 	s.mockSpan = tracing.NewMockSpan(s.ctrl)
 
-	// Setup common mock expectations
+	// Default mock expectations
+	s.mockTracer.EXPECT().StartSpan(gomock.Any(), gomock.Any()).Return(context.Background(), s.mockSpan).AnyTimes()
 	s.mockSpan.EXPECT().End().AnyTimes()
-	s.mockTracer.EXPECT().StartSpan(gomock.Any(), gomock.Any()).
-		Return(context.Background(), s.mockSpan).AnyTimes()
-	s.mockMetrics.EXPECT().ObserveHistogram(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	s.mockSpan.EXPECT().SetAttributes(gomock.Any()).AnyTimes()
 	s.mockMetrics.EXPECT().IncrementCounter(gomock.Any(), gomock.Any()).AnyTimes()
+	s.mockMetrics.EXPECT().ObserveHistogram(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	s.mockLogger.EXPECT().InfoContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	s.mockLogger.EXPECT().ErrorContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	s.mockTracer.EXPECT().RecordError(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	s.adapter = NewAdapter(s.mockABAC, s.mockAccess, s.mockLogger, s.mockMetrics, s.mockTracer)
-	s.ctx = context.Background()
-	s.testUserID = uuid.New()
-	s.testEntityID = uuid.New()
-	s.testRequestID = "test-request-id"
-	s.testTimeStamp = time.Now()
 }
 
 func (s *AuthzAdapterTestSuite) TearDownTest() {

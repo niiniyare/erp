@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 
 	"github.com/niiniyare/erp/internal/core/iam/model"
 )
@@ -396,6 +397,7 @@ func (s *PolicyManagementTestSuite) TestPolicyValidation() {
 			name: "ValidSyntax_PassesValidation",
 			spec: "POLICY-001",
 			policy: &model.Policy{
+				Name: "Valid Policy",
 				Rules: []*model.PolicyRule{
 					{
 						Effect: model.PolicyEffectAllow,
@@ -412,6 +414,8 @@ func (s *PolicyManagementTestSuite) TestPolicyValidation() {
 			name: "CircularReferences_ReturnsError",
 			spec: "BOUNDARY-002",
 			policy: &model.Policy{
+				ID:   uuid.New(),
+				Name: "Circular Policy",
 				Rules: []*model.PolicyRule{
 					{
 						Effect: model.PolicyEffectAllow,
@@ -429,24 +433,14 @@ func (s *PolicyManagementTestSuite) TestPolicyValidation() {
 
 	for _, tc := range testCases {
 		s.Run(tc.spec+"_"+tc.name, func() {
-			// FAIL FIRST: Implementation pending
 			// Policy validation implementation now available
-
-			// Execute validation based on type
-			switch tc.validationType {
-			case "syntax_validation":
-				// TODO: Test policy syntax validation
-				// TODO: Test rule structure validation
-				// TODO: Test condition expression validation
-			case "circular_reference":
-				// TODO: Test detection of circular policy references
-			}
+			err := s.service.ValidatePolicy(s.ctx, tc.policy)
 
 			if tc.expectedErr != "" {
-				// TODO: Assert validation error
-				s.T().Fail()
+				require.Error(s.T(), err)
+				require.Contains(s.T(), err.Error(), tc.expectedErr)
 			} else {
-				// TODO: Assert validation passes
+				require.NoError(s.T(), err)
 				if tc.validateResult != nil {
 					tc.validateResult(s.T())
 				}
@@ -596,6 +590,7 @@ type PolicyService interface {
 	GetPolicy(ctx context.Context, policyID uuid.UUID) (*model.Policy, error)
 	UpdatePolicy(ctx context.Context, policyID uuid.UUID, req *UpdatePolicyRequest) (*model.Policy, error)
 	DeletePolicy(ctx context.Context, policyID uuid.UUID) error
+	ValidatePolicy(ctx context.Context, policy *model.Policy) error
 }
 
 // Removed duplicate type declarations - using the ones from service.go
@@ -635,6 +630,35 @@ func createScenarioUUID(scenario string) uuid.UUID {
 		return uuid.MustParse("22222222-2222-2222-2222-222222222222")
 	case "system_policy":
 		return uuid.MustParse("33333333-3333-3333-3333-333333333333")
+	case "policy_in_use_delete":
+		return uuid.MustParse("44444444-4444-4444-4444-444444444444")
+	default:
+		return uuid.New()
+	}
+}
+
+func setupTestPolicy() *CreatePolicyRequest {
+	return &CreatePolicyRequest{
+		Name:        "Test Policy",
+		Description: "A test policy for unit testing",
+		Target: &model.PolicyTarget{
+			Resources: []*model.PolicyResource{{Type: "test_resource"}},
+			Actions:   []string{"read"},
+		},
+		Rules: []*model.PolicyRule{
+			{
+				Effect: model.PolicyEffectAllow,
+				Condition: &model.PolicyCondition{
+					Expression: "user.test == true",
+					Attributes: map[string]any{"test": true},
+				},
+			},
+		},
+		Priority: 1,
+		Enabled:  true,
+	}
+}
+3333333")
 	case "policy_in_use_delete":
 		return uuid.MustParse("44444444-4444-4444-4444-444444444444")
 	default:

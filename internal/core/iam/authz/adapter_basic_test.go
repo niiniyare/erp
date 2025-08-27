@@ -50,6 +50,7 @@ func TestEvaluatePermission_Success(t *testing.T) {
 	// Setup common mock expectations
 	mockSpan := tracing.NewMockSpan(ctrl)
 	mockSpan.EXPECT().End().AnyTimes()
+	mockSpan.EXPECT().SetAttributes(gomock.Any()).AnyTimes()
 	mockTracer.EXPECT().StartSpan(gomock.Any(), gomock.Any()).
 		Return(context.Background(), mockSpan).AnyTimes()
 	mockMetrics.EXPECT().ObserveHistogram(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -117,6 +118,7 @@ func TestEvaluatePermission_Error(t *testing.T) {
 	// Setup common mock expectations
 	mockSpan := tracing.NewMockSpan(ctrl)
 	mockSpan.EXPECT().End().AnyTimes()
+	mockSpan.EXPECT().SetAttributes(gomock.Any()).AnyTimes()
 	mockTracer.EXPECT().StartSpan(gomock.Any(), gomock.Any()).
 		Return(context.Background(), mockSpan).AnyTimes()
 	mockTracer.EXPECT().RecordError(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -164,6 +166,7 @@ func TestGetUserEffectivePermissions_Success(t *testing.T) {
 	// Setup common mock expectations
 	mockSpan := tracing.NewMockSpan(ctrl)
 	mockSpan.EXPECT().End().AnyTimes()
+	mockSpan.EXPECT().SetAttributes(gomock.Any()).AnyTimes()
 	mockTracer.EXPECT().StartSpan(gomock.Any(), gomock.Any()).
 		Return(context.Background(), mockSpan).AnyTimes()
 	mockMetrics.EXPECT().IncrementCounter(gomock.Any(), gomock.Any()).AnyTimes()
@@ -217,6 +220,7 @@ func TestInvalidateUserCache_Success(t *testing.T) {
 	// Setup common mock expectations
 	mockSpan := tracing.NewMockSpan(ctrl)
 	mockSpan.EXPECT().End().AnyTimes()
+	mockSpan.EXPECT().SetAttributes(gomock.Any()).AnyTimes()
 	mockTracer.EXPECT().StartSpan(gomock.Any(), gomock.Any()).
 		Return(context.Background(), mockSpan).AnyTimes()
 	mockMetrics.EXPECT().IncrementCounter(gomock.Any(), gomock.Any()).AnyTimes()

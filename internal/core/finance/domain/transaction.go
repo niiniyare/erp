@@ -86,6 +86,12 @@ type Transaction struct {
 	PostedAt  *time.Time `json:"posted_at,omitempty"` // When transaction was posted
 }
 
+// TransactionWithEntries represents a transaction with its related transaction entries
+type TransactionWithEntries struct {
+	Transaction Transaction        `json:"transaction"`
+	Entries     []TransactionEntry `json:"entries"`
+}
+
 // CreateTransactionRequest represents the request to create a new transaction
 type CreateTransactionRequest struct {
 	EntityID              *uuid.UUID           `json:"entity_id,omitempty"`

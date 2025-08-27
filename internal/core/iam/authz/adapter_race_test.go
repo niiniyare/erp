@@ -55,6 +55,7 @@ func (s *RaceConditionTestSuite) SetupTest() {
 
 	// Setup very permissive mock expectations to avoid race conditions with call counting
 	s.mockSpan.EXPECT().End().AnyTimes()
+	s.mockSpan.EXPECT().SetAttributes(gomock.Any()).AnyTimes()
 	s.mockTracer.EXPECT().StartSpan(gomock.Any(), gomock.Any()).
 		Return(context.Background(), s.mockSpan).AnyTimes()
 	s.mockMetrics.EXPECT().ObserveHistogram(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -701,6 +702,7 @@ func TestRaceDetection(t *testing.T) {
 
 	// Permissive mock setup
 	mockSpan.EXPECT().End().AnyTimes()
+	mockSpan.EXPECT().SetAttributes(gomock.Any()).AnyTimes()
 	mockTracer.EXPECT().StartSpan(gomock.Any(), gomock.Any()).
 		Return(context.Background(), mockSpan).AnyTimes()
 	mockMetrics.EXPECT().ObserveHistogram(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
