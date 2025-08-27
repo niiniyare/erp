@@ -2,6 +2,7 @@ package abac
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -88,22 +89,17 @@ func (s *AttributeServiceTestSuite) TestCreateAttributeDefinition() {
 				IsRequired:   true,
 				DefaultValue: stringPtr("unassigned"),
 				ValidationRules: []AttributeValidationRule{
-					RuleID:      uuid.New(),
-					RuleType:    AttributeRuleTypeLength,
-					RuleName:    "ValidRequest_ReturnsAttributeDefinition",
-					Description: "ValidRequest_ReturnsAttributeDefinition",
-
-					Parameters: map[string]any{
-						"AllowedValues": []any{"engineering", "marketing", "sales", "hr"},
+					{
+						RuleID:      uuid.New(),
+						RuleType:    AttributeRuleTypeLength,
+						RuleName:    "ValidRequest_ReturnsAttributeDefinition",
+						Description: "ValidRequest_ReturnsAttributeDefinition",
+						Parameters: map[string]any{
+							"AllowedValues": []any{"engineering", "marketing", "sales", "hr"},
+						},
+						ErrorMessage: "",
+						IsActive:     true,
 					},
-
-					ErrorMessage: "",
-
-					IsActive: true,
-
-					"AllowedValues": []any{"engineering", "marketing", "sales", "hr"},
-					MinLength:       int32Ptr(1),
-					MaxLength:       int32Ptr(50),
 				},
 				SecuritySettings: AttributeSecuritySettings{
 					EncryptionRequired: false,
@@ -228,7 +224,7 @@ func (s *AttributeServiceTestSuite) TestValidateAttributeValue() {
 			validateResult: func(t *testing.T, result *AttributeValidationResult) {
 				require.NotNil(t, result)
 				require.True(t, result.IsValid)
-				require.Empty(t, result.ValidationErrors)
+				require.Empty(t, result.ValidationResults)
 			},
 		},
 		{
@@ -245,7 +241,7 @@ func (s *AttributeServiceTestSuite) TestValidateAttributeValue() {
 			validateResult: func(t *testing.T, result *AttributeValidationResult) {
 				require.NotNil(t, result)
 				require.False(t, result.IsValid)
-				require.NotEmpty(t, result.ValidationErrors)
+				require.NotEmpty(t, result.ValidationResults)
 			},
 		},
 	}

@@ -284,15 +284,7 @@ func TestAttributeService(t *testing.T) {
 
 }
 
-// Helper functions
-func stringPtr(s string) *string {
-	return &s
-}
-
-func int32Ptr(i int32) *int32 {
-	return &i
-}
-
+// Helper functions (boolPtr only - using shared stringPtr and int32Ptr)
 func boolPtr(b bool) *bool {
 	return &b
 }

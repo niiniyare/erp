@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/http"
+	
 	"github.com/gin-gonic/gin"
 	"github.com/niiniyare/erp/internal/core/access/conditional"
 	"github.com/niiniyare/erp/internal/core/access/request"
@@ -28,7 +30,13 @@ func NewRouter(
 
 	// Add middleware
 	r.Use(gin.Recovery())
-	r.Use(gin.WrapH(middleware.RequestLogger()))
+	// Convert HTTP middleware to Gin middleware
+	httpLogger := middleware.RequestLogger()
+	r.Use(func(c *gin.Context) {
+		httpLogger(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			c.Next()
+		})).ServeHTTP(c.Writer, c.Request)
+	})
 	r.Use(middleware.TracingMiddleware(tracing))
 	r.Use(middleware.MetricsMiddleware(metrics))
 

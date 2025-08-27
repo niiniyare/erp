@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/niiniyare/erp/internal/api/gen/health"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -11,16 +12,24 @@ import (
 )
 
 // HealthGoaHandler implements the GOA health service
+// NOTE: Enhanced with comprehensive dependency health checking
+// TODO: Add external service health checks (notification services, etc.)
 type HealthGoaHandler struct {
-	tracing tracing.TracingService
-	metrics metrics.MetricsProvider
+	healthChecker HealthChecker
+	tracing       tracing.TracingService
+	metrics       metrics.MetricsProvider
 }
 
-// NewHealthGoaHandler creates a new GOA health handler
-func NewHealthGoaHandler(tracing tracing.TracingService, metrics metrics.MetricsProvider) health.Service {
+// NewHealthGoaHandler creates a new GOA health handler with comprehensive health checking
+func NewHealthGoaHandler(
+	healthChecker HealthChecker, 
+	tracing tracing.TracingService, 
+	metrics metrics.MetricsProvider,
+) health.Service {
 	return &HealthGoaHandler{
-		tracing: tracing,
-		metrics: metrics,
+		healthChecker: healthChecker,
+		tracing:       tracing,
+		metrics:       metrics,
 	}
 }
 
@@ -68,7 +77,7 @@ func (h *HealthGoaHandler) Health(ctx context.Context) (*health.HealthStatus, er
 	return healthStatus, nil
 }
 
-// Ready implements the readiness check endpoint
+// Ready implements the readiness check endpoint with comprehensive dependency validation
 func (h *HealthGoaHandler) Ready(ctx context.Context) (*health.ReadinessStatus, error) {
 	// Start tracing span
 	ctx, span := h.tracing.StartSpan(ctx, "health.ready",
@@ -87,31 +96,92 @@ func (h *HealthGoaHandler) Ready(ctx context.Context) (*health.ReadinessStatus, 
 	// Log readiness check request
 	logger.DebugContext(ctx, "Processing readiness check request")
 
-	// TODO: Add actual readiness checks (database, cache, etc.)
-	// For now, we'll return a simple "ready" status matching the Gin handler
+	// Perform comprehensive dependency health checks
+	healthResults := h.healthChecker.CheckDependencies(ctx)
+	
+	// Convert health check results to API response format
 	checks := &health.HealthChecks{
-		Database: "ok",
-		Cache:    "ok",
+		Database: convertHealthStatus(healthResults["database"]),
+		Cache:    convertHealthStatus(healthResults["cache"]),
+	}
+
+	// Determine overall readiness status
+	overallStatus := "ready"
+	hasWarnings := false
+	hasCritical := false
+
+	for component, result := range healthResults {
+		if result.Status == "critical" {
+			hasCritical = true
+			// Add component failure details to span
+			span.SetAttributes(
+				attribute.String(fmt.Sprintf("health.%s.status", component), "critical"),
+				attribute.String(fmt.Sprintf("health.%s.message", component), result.Message),
+			)
+		} else if result.Status == "warning" {
+			hasWarnings = true
+			span.SetAttributes(
+				attribute.String(fmt.Sprintf("health.%s.status", component), "warning"),
+				attribute.String(fmt.Sprintf("health.%s.message", component), result.Message),
+			)
+		}
+	}
+
+	// Set overall status based on critical failures
+	if hasCritical {
+		overallStatus = "not_ready"
+		h.metrics.IncrementCounter("health_checks_total", metrics.Fields{
+			"endpoint": "ready",
+			"status":   "critical",
+		})
+	} else if hasWarnings {
+		overallStatus = "ready_with_warnings"
+		h.metrics.IncrementCounter("health_checks_total", metrics.Fields{
+			"endpoint": "ready",
+			"status":   "warning",
+		})
+	} else {
+		h.metrics.IncrementCounter("health_checks_total", metrics.Fields{
+			"endpoint": "ready",
+			"status":   "success",
+		})
 	}
 
 	readinessStatus := &health.ReadinessStatus{
-		Status: "ready",
+		Status: overallStatus,
 		Checks: checks,
 	}
 
-	// Success metrics
-	h.metrics.IncrementCounter("health_checks_total", metrics.Fields{
-		"endpoint": "ready",
-		"status":   "success",
-	})
-
-	// Log success
-	logger.DebugContext(ctx, "Readiness check completed successfully",
+	// Log readiness check completion
+	logger.InfoContext(ctx, "Readiness check completed",
 		logger.Fields{
 			"status":          readinessStatus.Status,
 			"database_status": checks.Database,
 			"cache_status":    checks.Cache,
+			"has_warnings":    hasWarnings,
+			"has_critical":    hasCritical,
 		})
 
+	// Return appropriate HTTP status based on health
+	if hasCritical {
+		// NOTE: In production, you might want to return an error here to signal unhealthy state
+		// For now, we return success but with "not_ready" status for monitoring
+		logger.WarnContext(ctx, "Service has critical health issues but returning success for monitoring")
+	}
+
 	return readinessStatus, nil
+}
+
+// convertHealthStatus converts internal health check status to API response status
+func convertHealthStatus(result HealthCheckResult) string {
+	switch result.Status {
+	case "ok":
+		return "ok"
+	case "warning":
+		return "degraded"
+	case "critical":
+		return "failed"
+	default:
+		return "unknown"
+	}
 }

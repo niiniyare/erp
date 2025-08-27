@@ -182,7 +182,9 @@ type ValidateMFARequest struct {
 
 type MFAValidationResult struct {
 	Valid       bool      `json:"valid"`
-	ValidatedAt time.Time `json:"validated_at"`
+	Method      string    `json:"method,omitempty"`
+	ValidatedAt time.Time `json:"validated_at,omitempty"`
+	Error       string    `json:"error,omitempty"`
 }
 
 type CreateSessionRequest struct {

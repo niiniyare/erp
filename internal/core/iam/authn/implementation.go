@@ -196,7 +196,7 @@ func (s *service) ChangePassword(ctx context.Context, req *ChangePasswordRequest
 		return err
 	}
 
-	err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, q db.Querier) error {
+	err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, store db.Store) error {
 		return s.repo.Users().UpdatePasswordHash(ctx, req.UserID, newHash)
 	})
 
@@ -261,7 +261,7 @@ func (s *service) verifyPassword(ctx context.Context, userID uuid.UUID, password
 	}
 
 	var hash string
-	err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, q db.Querier) error {
+	err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, store db.Store) error {
 		var err error
 		hash, err = s.repo.Users().GetPasswordHash(ctx, userID)
 		return err

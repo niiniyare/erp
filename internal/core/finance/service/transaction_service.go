@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -87,10 +88,12 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 				"errors":             len(err),
 			})
 
-		return nil, domain.NewValidationError("transaction_validation", "Transaction validation failed", err)
+		return nil, errors.NewBusinessError("TRANSACTION_VALIDATION_FAILED", "Transaction validation failed").
+			WithHTTPStatus(http.StatusBadRequest).
+			WithCategory(errors.CategoryValidation)
 	}
 
-	if err := s.repo.ValidateTransactionNumber(ctx, req.TransactionNumber, nil); err != nil {
+	if unique, err := s.repo.IsTransactionNumberUnique(ctx, req.EntityID, req.TransactionNumber, nil); err != nil || !unique {
 		s.metrics.IncrementCounter("transaction_creation_errors", metrics.Fields{
 			"error_type": "duplicate_number",
 		})
@@ -105,7 +108,21 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 		"transaction_type": string(req.TransactionType),
 	})
 
-	transaction, err := s.repo.Create(ctx, &req)
+	// Convert CreateTransactionRequest to Transaction domain model
+	transaction := &domain.Transaction{
+		ID:                uuid.New(),
+		EntityID:          req.EntityID,
+		TransactionNumber: req.TransactionNumber,
+		TransactionDate:   req.TransactionDate,
+		TransactionType:   req.TransactionType,
+		Description:       req.Description,
+		ReferenceNumber:   req.ReferenceNumber,
+		TransactionStatus: domain.TransactionStatusDraft,
+		ApprovalRequired:  false, // Will be determined by business rules
+		ApprovalStatus:    domain.ApprovalStatusNotRequired,
+	}
+
+	err := s.repo.Create(ctx, transaction)
 	duration := timer.Stop()
 
 	if err != nil {
@@ -155,7 +172,7 @@ func (s *transactionService) GetTransactionByID(ctx context.Context, id uuid.UUI
 		if err == errors.ErrNotFound {
 			logger.WarnContext(ctx, "Transaction not found",
 				logger.Fields{"transaction_id": id.String()})
-			return nil, domain.NewNotFoundError("transaction", id.String())
+			return nil, errors.ErrNotFound
 		}
 
 		logger.ErrorContext(ctx, "Failed to get transaction by ID",
@@ -186,12 +203,12 @@ func (s *transactionService) GetTransactionByNumber(ctx context.Context, number 
 	logger.DebugContext(ctx, "Getting transaction by number",
 		logger.Fields{"transaction_number": number})
 
-	transaction, err := s.repo.GetByNumber(ctx, number)
+	transaction, err := s.repo.GetByNumber(ctx, nil, number)
 	if err != nil {
 		if err == errors.ErrNotFound {
 			logger.WarnContext(ctx, "Transaction not found",
 				logger.Fields{"transaction_number": number})
-			return nil, domain.NewNotFoundError("transaction", number)
+			return nil, errors.ErrNotFound
 		}
 
 		logger.ErrorContext(ctx, "Failed to get transaction by number",
@@ -240,7 +257,9 @@ func (s *transactionService) UpdateTransaction(ctx context.Context, id uuid.UUID
 		logger.WarnContext(ctx, "Cannot update posted transaction",
 			logger.Fields{"transaction_id": id.String()})
 
-		return nil, domain.NewBusinessRuleError("posted_transaction", "Cannot update posted transaction")
+		return nil, errors.NewBusinessError("POSTED_TRANSACTION", "Cannot update posted transaction").
+			WithHTTPStatus(http.StatusConflict).
+			WithCategory(errors.CategoryBusiness)
 	}
 
 	if err := req.Validate(); err != nil {
@@ -254,14 +273,24 @@ func (s *transactionService) UpdateTransaction(ctx context.Context, id uuid.UUID
 				"errors":         len(err),
 			})
 
-		return nil, domain.NewValidationError("transaction_update_validation", "Transaction update validation failed", err)
+		return nil, errors.NewBusinessError("TRANSACTION_UPDATE_VALIDATION_FAILED", "Transaction update validation failed").
+			WithHTTPStatus(http.StatusBadRequest).
+			WithCategory(errors.CategoryValidation)
 	}
 
 	timer := s.metrics.Timer("transaction_update_duration", metrics.Fields{
 		"transaction_type": string(existingTransaction.TransactionType),
 	})
 
-	updatedTransaction, err := s.repo.Update(ctx, id, &req)
+	// Set the ID on the transaction before updating
+	req.ID = id
+	err = s.repo.Update(ctx, &req)
+
+	var updatedTransaction *domain.Transaction
+	if err == nil {
+		// Return the updated transaction
+		updatedTransaction = &req
+	}
 	duration := timer.Stop()
 
 	if err != nil {
@@ -327,7 +356,9 @@ func (s *transactionService) DeleteTransaction(ctx context.Context, id uuid.UUID
 		logger.WarnContext(ctx, "Cannot delete posted transaction",
 			logger.Fields{"transaction_id": id.String()})
 
-		return domain.NewBusinessRuleError("posted_transaction", "Cannot delete posted transaction")
+		return errors.NewBusinessError("TRANSACTION_DELETE_NOT_ALLOWED", "Cannot delete posted transaction").
+			WithHTTPStatus(http.StatusBadRequest).
+			WithCategory(errors.CategoryBusiness)
 	}
 
 	timer := s.metrics.Timer("transaction_deletion_duration", metrics.Fields{
@@ -375,8 +406,8 @@ func (s *transactionService) ListTransactions(ctx context.Context, req *domain.T
 	ctx, span := s.tracing.StartSpan(ctx, "transaction_service.list_transactions",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
-			attribute.Int("limit", req.Limit),
-			attribute.Int("offset", req.Offset),
+			attribute.Int("limit", *req.Limit),
+			attribute.Int("offset", *req.Offset),
 		))
 	defer span.End()
 
@@ -386,17 +417,17 @@ func (s *transactionService) ListTransactions(ctx context.Context, req *domain.T
 			"offset": req.Offset,
 		})
 
-	if req.Limit <= 0 {
-		req.Limit = 50
+	if *req.Limit <= 0 {
+		*req.Limit = 50
 	}
 
-	if req.Limit > 1000 {
-		req.Limit = 1000
+	if *req.Limit > 1000 {
+		*req.Limit = 1000
 	}
 
 	timer := s.metrics.Timer("transaction_list_duration", metrics.Fields{})
 
-	transactions, err := s.repo.List(ctx, &req)
+	transactions, err := s.repo.List(ctx, req)
 	duration := timer.Stop()
 
 	if err != nil {
@@ -454,7 +485,7 @@ func (s *transactionService) PostTransaction(ctx context.Context, id uuid.UUID, 
 				"transaction_status": string(transaction.TransactionStatus),
 			})
 
-		return nil, domain.NewBusinessRuleError("invalid_status", "Transaction must be approved or draft to be posted")
+		return nil, errors.NewBusinessError("invalid_status", "Transaction must be approved or draft to be posted")
 	}
 
 	entries, err := s.entryService.GetEntriesByTransactionID(ctx, id)
@@ -470,7 +501,7 @@ func (s *transactionService) PostTransaction(ctx context.Context, id uuid.UUID, 
 		logger.WarnContext(ctx, "Cannot post transaction without entries",
 			logger.Fields{"transaction_id": id.String()})
 
-		return nil, domain.NewBusinessRuleError("no_entries", "Cannot post transaction without entries")
+		return nil, errors.NewBusinessError("no_entries", "Cannot post transaction without entries")
 	}
 
 	validationErrors, err := s.ValidateTransaction(ctx, transaction, entries)
@@ -489,7 +520,7 @@ func (s *transactionService) PostTransaction(ctx context.Context, id uuid.UUID, 
 				"errors":         len(validationErrors),
 			})
 
-		return nil, domain.NewValidationError("transaction_posting_validation", "Transaction validation failed", validationErrors)
+		return nil, errors.NewBusinessError("transaction_posting_validation", fmt.Sprint("Transaction validation failed: %v", validationErrors))
 	}
 
 	if postingDate == nil {
@@ -578,7 +609,7 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 				"transaction_status": string(transaction.TransactionStatus),
 			})
 
-		return nil, domain.NewBusinessRuleError("not_posted", "Only posted transactions can be reversed")
+		return nil, errors.NewBusinessError("not_posted", "Only posted transactions can be reversed")
 	}
 
 	if transaction.IsReversed {
@@ -589,7 +620,7 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 		logger.WarnContext(ctx, "Transaction is already reversed",
 			logger.Fields{"transaction_id": id.String()})
 
-		return nil, domain.NewBusinessRuleError("already_reversed", "Transaction is already reversed")
+		return nil, errors.NewBusinessError("already_reversed", "Transaction is already reversed")
 	}
 
 	entries, err := s.entryService.GetEntriesByTransactionID(ctx, id)
@@ -684,7 +715,7 @@ func (s *transactionService) ApproveTransaction(ctx context.Context, id uuid.UUI
 				"approval_status":   string(transaction.ApprovalStatus),
 			})
 
-		return nil, domain.NewBusinessRuleError("invalid_status", "Transaction is not pending approval")
+		return nil, errors.NewBusinessError("invalid_status", "Transaction is not pending approval")
 	}
 
 	timer := s.metrics.Timer("transaction_approval_duration", metrics.Fields{
@@ -759,7 +790,7 @@ func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID
 				"approval_status":   string(transaction.ApprovalStatus),
 			})
 
-		return nil, domain.NewBusinessRuleError("invalid_status", "Transaction is not pending approval")
+		return nil, errors.NewBusinessError("invalid_status", "Transaction is not pending approval")
 	}
 
 	timer := s.metrics.Timer("transaction_rejection_duration", metrics.Fields{

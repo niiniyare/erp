@@ -150,7 +150,7 @@ func (j *JWTManager) validateToken(tokenString string, expectedType TokenType, s
 	})
 
 	if err != nil {
-		return nil, errors.NewBusinessError("INVALID_TOKEN", fmt.Sprintf("Invalid token: %v", err))
+		return nil, errors.NewBusinessError("INVALID_TOKEN", "Token validation failed")
 	}
 
 	claims, ok := token.Claims.(*TokenClaims)
@@ -223,14 +223,17 @@ func ExtractClaimsFromToken(tokenString string) (map[string]interface{}, error) 
 	})
 
 	if err != nil {
-		// Try to extract claims even from invalid tokens
-		if ve, ok := err.(*jwt.ValidationError); ok {
-			if ve.Errors&jwt.ValidationErrorMalformed == 0 {
-				// Token is parseable, just invalid
-				return token.Claims.(jwt.MapClaims), nil
+		// Check if it's a malformed token error
+		if err == jwt.ErrTokenMalformed {
+			return nil, fmt.Errorf("malformed token: %w", err)
+		}
+		// For other parsing errors, try to extract claims if token was parsed
+		if token != nil {
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				return claims, nil
 			}
 		}
-		return nil, fmt.Errorf("malformed token: %w", err)
+		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
