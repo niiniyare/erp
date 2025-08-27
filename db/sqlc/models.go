@@ -1344,52 +1344,91 @@ type FinanceChartOfAccount struct {
 
 // Header table for all financial transactions. Contains transaction metadata, approval workflow, and summary amounts.
 type FinanceTransaction struct {
-	ID       uuid.UUID  `json:"id"`
-	TenantID uuid.UUID  `json:"tenant_id"`
+	// Primary key - UUID for the transaction
+	ID uuid.UUID `json:"id"`
+	// Foreign key to tenant - ensures data isolation in multi-tenant environment
+	TenantID uuid.UUID `json:"tenant_id"`
+	// Foreign key to entities table - links transaction to specific business entity/company
 	EntityID *uuid.UUID `json:"entity_id"`
 	// Unique transaction number within tenant - Auto-generated or user-provided
-	TransactionNumber string    `json:"transaction_number"`
-	TransactionDate   time.Time `json:"transaction_date"`
-	PostingDate       time.Time `json:"posting_date"`
-	DueDate           time.Time `json:"due_date"`
-	Description       string    `json:"description"`
-	ReferenceNumber   *string   `json:"reference_number"`
-	ExternalReference *string   `json:"external_reference"`
-	CurrencyCode      string    `json:"currency_code"`
-	// Exchange rate from transaction currency to functional currency
+	TransactionNumber string `json:"transaction_number"`
+	// Date when the transaction occurred - business date for accounting purposes
+	TransactionDate time.Time `json:"transaction_date"`
+	// Date when transaction was posted to the general ledger - required when status is POSTED
+	PostingDate time.Time `json:"posting_date"`
+	// Due date for payment transactions - used for AP/AR and cash management
+	DueDate time.Time `json:"due_date"`
+	// Main description of the transaction - required field for audit trail
+	Description string `json:"description"`
+	// Internal reference number - invoice number, check number, etc.
+	ReferenceNumber *string `json:"reference_number"`
+	// External reference from third-party systems - bank reference, vendor invoice number
+	ExternalReference *string `json:"external_reference"`
+	// Additional notes or memo about the transaction - free text field for additional context
+	Memo string `json:"memo"`
+	// ISO 4217 currency code - defaults to USD but supports multi-currency
+	CurrencyCode string `json:"currency_code"`
+	// Exchange rate from transaction currency to functional currency - defaults to 1.0 for same currency
 	ExchangeRate pgtype.Numeric `json:"exchange_rate"`
 	// Sum of all debit entries - Must equal total_credit_amount for balanced transactions
 	TotalDebitAmount pgtype.Numeric `json:"total_debit_amount"`
 	// Sum of all credit entries - Must equal total_debit_amount for balanced transactions
-	TotalCreditAmount       pgtype.Numeric             `json:"total_credit_amount"`
-	SourceModule            *string                    `json:"source_module"`
-	SourceDocumentType      *string                    `json:"source_document_type"`
-	SourceDocumentID        *uuid.UUID                 `json:"source_document_id"`
-	BatchID                 *uuid.UUID                 `json:"batch_id"`
-	ApprovalRequired        *bool                      `json:"approval_required"`
-	ApprovedBy              *uuid.UUID                 `json:"approved_by"`
-	ApprovedAt              sql.NullTime               `json:"approved_at"`
-	ApprovalNotes           string                     `json:"approval_notes"`
-	IsRecurring             *bool                      `json:"is_recurring"`
-	NextRecurringDate       time.Time                  `json:"next_recurring_date"`
-	IsReversed              *bool                      `json:"is_reversed"`
-	ReversedByTransactionID *uuid.UUID                 `json:"reversed_by_transaction_id"`
-	ReversalReason          string                     `json:"reversal_reason"`
-	Version                 int32                      `json:"version"`
-	ValidationErrors        []byte                     `json:"validation_errors"`
-	TransactionAttributes   []byte                     `json:"transaction_attributes"`
-	CreatedAt               time.Time                  `json:"created_at"`
-	UpdatedAt               time.Time                  `json:"updated_at"`
-	DeletedAt               sql.NullTime               `json:"deleted_at"`
-	CreatedBy               uuid.UUID                  `json:"created_by"`
-	UpdatedBy               *uuid.UUID                 `json:"updated_by"`
-	PostedBy                *uuid.UUID                 `json:"posted_by"`
-	PostedAt                sql.NullTime               `json:"posted_at"`
-	TransactionType         TransactionTypeEnum        `json:"transaction_type"`
-	TransactionStatus       TransactionStatusEnum      `json:"transaction_status"`
-	ApprovalStatus          NullApprovalStatusEnum     `json:"approval_status"`
-	ValidationStatus        NullValidationStatusEnum   `json:"validation_status"`
-	RecurringFrequency      NullRecurringFrequencyEnum `json:"recurring_frequency"`
+	TotalCreditAmount pgtype.Numeric `json:"total_credit_amount"`
+	// Source module that created this transaction - AP, AR, GL, PAYROLL, etc.
+	SourceModule *string `json:"source_module"`
+	// Type of source document - INVOICE, PAYMENT, JOURNAL_ENTRY, etc.
+	SourceDocumentType *string `json:"source_document_type"`
+	// ID of the source document that generated this transaction
+	SourceDocumentID *uuid.UUID `json:"source_document_id"`
+	// Batch ID for grouping related transactions - useful for imports and bulk operations
+	BatchID *uuid.UUID `json:"batch_id"`
+	// Whether this transaction requires approval before posting
+	ApprovalRequired *bool `json:"approval_required"`
+	// User who approved the transaction - required if approval_required is true
+	ApprovedBy *uuid.UUID `json:"approved_by"`
+	// Timestamp when transaction was approved
+	ApprovedAt sql.NullTime `json:"approved_at"`
+	// Notes from the approver - can include reasons for approval or rejection
+	ApprovalNotes string `json:"approval_notes"`
+	// Whether this is a recurring transaction template
+	IsRecurring *bool `json:"is_recurring"`
+	// Next date when this recurring transaction should be generated
+	NextRecurringDate time.Time `json:"next_recurring_date"`
+	// Whether this transaction has been reversed
+	IsReversed *bool `json:"is_reversed"`
+	// ID of the reversing transaction - creates audit trail for reversals
+	ReversedByTransactionID *uuid.UUID `json:"reversed_by_transaction_id"`
+	// Reason for reversing the transaction - required for compliance
+	ReversalReason string `json:"reversal_reason"`
+	// Version number for optimistic locking - prevents concurrent modifications
+	Version int32 `json:"version"`
+	// JSON array of validation errors and warnings - helps with troubleshooting
+	ValidationErrors []byte `json:"validation_errors"`
+	// JSON object for additional transaction attributes - flexible extension point
+	TransactionAttributes []byte `json:"transaction_attributes"`
+	// Array of attachment/document IDs - links to supporting documents
+	AttachmentIds []string `json:"attachment_ids"`
+	// Array of tags for categorization and filtering - max 25 chars each
+	Tags []string `json:"tags"`
+	// Timestamp when record was created - automatic timestamp
+	CreatedAt time.Time `json:"created_at"`
+	// Timestamp when record was last updated - updated by triggers
+	UpdatedAt time.Time `json:"updated_at"`
+	// Soft delete timestamp - NULL means record is active
+	DeletedAt sql.NullTime `json:"deleted_at"`
+	// User who created the transaction - required for audit trail
+	CreatedBy uuid.UUID `json:"created_by"`
+	// User who last updated the transaction
+	UpdatedBy *uuid.UUID `json:"updated_by"`
+	// User who posted the transaction to the general ledger
+	PostedBy *uuid.UUID `json:"posted_by"`
+	// Timestamp when transaction was posted - required when status is POSTED
+	PostedAt           sql.NullTime               `json:"posted_at"`
+	TransactionType    TransactionTypeEnum        `json:"transaction_type"`
+	TransactionStatus  TransactionStatusEnum      `json:"transaction_status"`
+	ApprovalStatus     NullApprovalStatusEnum     `json:"approval_status"`
+	ValidationStatus   NullValidationStatusEnum   `json:"validation_status"`
+	RecurringFrequency NullRecurringFrequencyEnum `json:"recurring_frequency"`
 }
 
 // Individual journal entries that make up financial transactions. Implements double-entry bookkeeping with debit and credit amounts.

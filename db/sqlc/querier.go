@@ -14,6 +14,8 @@ import (
 )
 
 type Querier interface {
+	AddTransactionAttachment(ctx context.Context, arg AddTransactionAttachmentParams) error
+	AddTransactionTag(ctx context.Context, arg AddTransactionTagParams) error
 	ApproveTransaction(ctx context.Context, arg ApproveTransactionParams) (*FinanceTransaction, error)
 	// Archive old audit events before deletion (returns what will be deleted)
 	ArchiveOldAuditEvents(ctx context.Context, arg ArchiveOldAuditEventsParams) ([]*ArchiveOldAuditEventsRow, error)
@@ -44,6 +46,7 @@ type Querier interface {
 	// BULK OPERATIONS
 	// =====================================================
 	BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error
+	BulkUpdateTransactionTags(ctx context.Context, arg BulkUpdateTransactionTagsParams) error
 	// Policy Evaluations CRUD Operations and Cache Management for ABAC
 	CacheEvaluationResult(ctx context.Context, arg CacheEvaluationResultParams) error
 	CheckCircularReference(ctx context.Context, arg CheckCircularReferenceParams) (bool, error)
@@ -171,6 +174,7 @@ type Querier interface {
 	// SQLC queries for journal entries with proper tenant isolation
 	// =====================================================================
 	CreateTransactionEntry(ctx context.Context, arg CreateTransactionEntryParams) (*FinanceTransactionEntry, error)
+	CreateTransactionWithDefaults(ctx context.Context, arg CreateTransactionWithDefaultsParams) (*FinanceTransaction, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
@@ -216,6 +220,7 @@ type Querier interface {
 	GetAllTenantsRevenueAnalytics(ctx context.Context, arg GetAllTenantsRevenueAnalyticsParams) ([]*GetAllTenantsRevenueAnalyticsRow, error)
 	// Admin-level storage analytics (cross-tenant view)
 	GetAllTenantsStorageAnalytics(ctx context.Context) ([]*GetAllTenantsStorageAnalyticsRow, error)
+	GetAllTransactionTags(ctx context.Context) ([]interface{}, error)
 	// Detect anomalous user behavior patterns
 	GetAnomalousUserBehavior(ctx context.Context, arg GetAnomalousUserBehaviorParams) ([]*GetAnomalousUserBehaviorRow, error)
 	GetApplicablePolicies(ctx context.Context, arg GetApplicablePoliciesParams) ([]*Policy, error)
@@ -581,12 +586,13 @@ type Querier interface {
 	GetPolicyByName(ctx context.Context, name string) (*Policy, error)
 	// Get recent security-related events (high risk, denials, critical severity)
 	GetRecentSecurityEvents(ctx context.Context, arg GetRecentSecurityEventsParams) ([]*GetRecentSecurityEventsRow, error)
+	GetRecentTransactions(ctx context.Context, limitCount int32) ([]*FinanceTransaction, error)
 	GetRecentlyDeletedEntities(ctx context.Context, arg GetRecentlyDeletedEntitiesParams) ([]*Entity, error)
 	// =====================================================================
 	// 4. AUDIT AND MONITORING QUERIES
 	// =====================================================================
 	GetRecentlyModifiedEntities(ctx context.Context, arg GetRecentlyModifiedEntitiesParams) ([]*Entity, error)
-	GetRecurringTransactionsDue(ctx context.Context, nextRecurringDate time.Time) ([]*FinanceTransaction, error)
+	GetRecurringTransactionsDue(ctx context.Context, dueDate time.Time) ([]*FinanceTransaction, error)
 	// Find related events by context similarity
 	GetRelatedEventsByContext(ctx context.Context, arg GetRelatedEventsByContextParams) ([]*GetRelatedEventsByContextRow, error)
 	GetRequiredAttributeDefinitions(ctx context.Context) ([]*AttributeDefinition, error)
@@ -624,14 +630,21 @@ type Querier interface {
 	GetTenantsByIndustry(ctx context.Context) ([]*GetTenantsByIndustryRow, error)
 	GetTenantsByTimezone(ctx context.Context) ([]*GetTenantsByTimezoneRow, error)
 	GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]*Tenant, error)
-	GetTransactionByID(ctx context.Context, id uuid.UUID) (*FinanceTransaction, error)
+	GetTransactionActivity(ctx context.Context, arg GetTransactionActivityParams) ([]*GetTransactionActivityRow, error)
+	GetTransactionByID(ctx context.Context, transactionID uuid.UUID) (*FinanceTransaction, error)
 	GetTransactionByNumber(ctx context.Context, transactionNumber string) (*FinanceTransaction, error)
+	GetTransactionCountByTag(ctx context.Context) ([]*GetTransactionCountByTagRow, error)
 	GetTransactionEntriesWithAccounts(ctx context.Context, transactionID uuid.UUID) ([]*GetTransactionEntriesWithAccountsRow, error)
 	GetTransactionEntryByID(ctx context.Context, id uuid.UUID) (*FinanceTransactionEntry, error)
 	GetTransactionSummaryByPeriod(ctx context.Context, arg GetTransactionSummaryByPeriodParams) ([]*GetTransactionSummaryByPeriodRow, error)
-	GetTransactionWithEntries(ctx context.Context, id uuid.UUID) ([]*GetTransactionWithEntriesRow, error)
+	GetTransactionWithEntries(ctx context.Context, transactionID uuid.UUID) ([]*GetTransactionWithEntriesRow, error)
+	GetTransactionsByAttachment(ctx context.Context, attachmentID []string) ([]*FinanceTransaction, error)
+	GetTransactionsByAttribute(ctx context.Context, arg GetTransactionsByAttributeParams) ([]*FinanceTransaction, error)
 	GetTransactionsByBatch(ctx context.Context, batchID *uuid.UUID) ([]*FinanceTransaction, error)
 	GetTransactionsBySourceDocument(ctx context.Context, arg GetTransactionsBySourceDocumentParams) ([]*FinanceTransaction, error)
+	GetTransactionsByTag(ctx context.Context, arg GetTransactionsByTagParams) ([]*FinanceTransaction, error)
+	GetTransactionsByTags(ctx context.Context, arg GetTransactionsByTagsParams) ([]*FinanceTransaction, error)
+	GetTransactionsWithAttachments(ctx context.Context, arg GetTransactionsWithAttachmentsParams) ([]*GetTransactionsWithAttachmentsRow, error)
 	GetTrialBalance(ctx context.Context, arg GetTrialBalanceParams) ([]*GetTrialBalanceRow, error)
 	GetUnreconciledEntries(ctx context.Context, accountID uuid.UUID) ([]*GetUnreconciledEntriesRow, error)
 	GetUnusedEntityCodes(ctx context.Context) ([]*string, error)
@@ -700,6 +713,8 @@ type Querier interface {
 	ProvisionTenant(ctx context.Context, arg ProvisionTenantParams) (uuid.UUID, error)
 	RebuildHierarchyPaths(ctx context.Context) error
 	RejectTransaction(ctx context.Context, arg RejectTransactionParams) (*FinanceTransaction, error)
+	RemoveTransactionAttachment(ctx context.Context, arg RemoveTransactionAttachmentParams) error
+	RemoveTransactionTag(ctx context.Context, arg RemoveTransactionTagParams) error
 	// Usage: Resets all document sequences to 1 for an entity's fiscal year
 	// Use case: New fiscal year initialization or sequence resets
 	ResetAllEntitySequences(ctx context.Context, arg ResetAllEntitySequencesParams) error
@@ -724,6 +739,7 @@ type Querier interface {
 	SearchPolicies(ctx context.Context, arg SearchPoliciesParams) ([]*Policy, error)
 	SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]*Tenant, error)
 	SearchTransactions(ctx context.Context, arg SearchTransactionsParams) ([]*FinanceTransaction, error)
+	SearchTransactionsByMemo(ctx context.Context, arg SearchTransactionsByMemoParams) ([]*FinanceTransaction, error)
 	SearchUsersAdvanced(ctx context.Context, arg SearchUsersAdvancedParams) ([]*User, error)
 	// Usage: Manually sets a specific sequence number (with validation)
 	// Use case: Data migration, manual sequence adjustments, importing from other systems
@@ -806,7 +822,12 @@ type Querier interface {
 	UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (*Tenant, error)
 	UpdateTenantUsageStats(ctx context.Context, arg UpdateTenantUsageStatsParams) (*TenantUsageStat, error)
 	UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (*FinanceTransaction, error)
+	UpdateTransactionAttributes(ctx context.Context, arg UpdateTransactionAttributesParams) error
 	UpdateTransactionEntry(ctx context.Context, arg UpdateTransactionEntryParams) (*FinanceTransactionEntry, error)
+	// =====================================================================
+	// NEW QUERIES FOR ENHANCED FUNCTIONALITY
+	// =====================================================================
+	UpdateTransactionMemo(ctx context.Context, arg UpdateTransactionMemoParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error)
 	UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error)
@@ -826,7 +847,7 @@ type Querier interface {
 	// Usage: Checks for sequence numbering issues across all entities
 	// Use case: Data integrity audits, troubleshooting sequence problems
 	ValidateSequenceIntegrity(ctx context.Context) ([]*ValidateSequenceIntegrityRow, error)
-	ValidateTransactionBalance(ctx context.Context, id uuid.UUID) (*ValidateTransactionBalanceRow, error)
+	ValidateTransactionBalance(ctx context.Context, transactionID uuid.UUID) (*ValidateTransactionBalanceRow, error)
 	ValidateTransactionEntriesBalance(ctx context.Context, transactionID uuid.UUID) (*ValidateTransactionEntriesBalanceRow, error)
 }
 

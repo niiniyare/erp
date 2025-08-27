@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 
-	"github.com/niiniyare/erp/internal/core/finance/domain"
 	db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/core/finance/domain"
 )
 
 // Account Domain to SQLC mappings
@@ -83,14 +83,14 @@ func mapDomainAccountToSQLCCreate(req *domain.CreateAccountRequest) (db.CreateAc
 		CurrencyRevaluationRequired: &req.CurrencyRevaluationRequired,
 		IsActive:                    req.IsActive,
 		// IsSystemAccount not in CreateAccountRequest, default to false
-		IsSystemAccount:             false,
-		AllowManualEntries:          req.AllowManualEntries,
-		RequireReference:            req.RequireReference,
-		FinancialStatementLine:      req.FinancialStatementLine,
-		ReportOrder:                 &req.ReportOrder,
-		IsBudgetable:                &req.IsBudgetable,
-		BudgetVarianceThreshold:     budgetVarianceThreshold,
-		AccountAttributes:           attributes,
+		IsSystemAccount:         false,
+		AllowManualEntries:      req.AllowManualEntries,
+		RequireReference:        req.RequireReference,
+		FinancialStatementLine:  req.FinancialStatementLine,
+		ReportOrder:             &req.ReportOrder,
+		IsBudgetable:            &req.IsBudgetable,
+		BudgetVarianceThreshold: budgetVarianceThreshold,
+		AccountAttributes:       attributes,
 		// CreatedBy not in CreateAccountRequest, will be nil
 	}, nil
 }
@@ -230,8 +230,6 @@ func mapAccountFilterToSQLCParams(filter *domain.AccountFilter) (db.ListAccounts
 }
 
 // Transaction Domain to SQLC mappings
-// TODO: Fix transaction mappings
-/*
 func mapDomainTransactionToSQLCCreate(req *domain.CreateTransactionRequest) (db.CreateTransactionParams, error) {
 	// Map transaction type enum
 	var transactionType db.TransactionTypeEnum
@@ -262,7 +260,7 @@ func mapDomainTransactionToSQLCCreate(req *domain.CreateTransactionRequest) (db.
 
 	// Map transaction status enum
 	var status db.TransactionStatusEnum
-	switch req.Status {
+	switch req.TransactionStatus {
 	case domain.TransactionStatusDraft:
 		status = db.TransactionStatusEnumDRAFT
 	case domain.TransactionStatusPendingApproval:
@@ -276,7 +274,7 @@ func mapDomainTransactionToSQLCCreate(req *domain.CreateTransactionRequest) (db.
 	case domain.TransactionStatusReversed:
 		status = db.TransactionStatusEnumREVERSED
 	default:
-		return db.CreateTransactionParams{}, fmt.Errorf("invalid transaction status: %s", req.Status)
+		return db.CreateTransactionParams{}, fmt.Errorf("invalid transaction status: %s", req.TransactionStatus)
 	}
 
 	// Convert amounts to pgtype.Numeric
@@ -300,9 +298,9 @@ func mapDomainTransactionToSQLCCreate(req *domain.CreateTransactionRequest) (db.
 
 	// Marshal metadata to JSONB
 	var metadata []byte
-	if req.Metadata != nil {
+	if req.TransactionAttributes != nil {
 		var err error
-		metadata, err = json.Marshal(req.Metadata)
+		metadata, err = json.Marshal(req.TransactionAttributes)
 		if err != nil {
 			return db.CreateTransactionParams{}, fmt.Errorf("failed to marshal transaction metadata: %w", err)
 		}
@@ -311,23 +309,23 @@ func mapDomainTransactionToSQLCCreate(req *domain.CreateTransactionRequest) (db.
 	}
 
 	return db.CreateTransactionParams{
-		EntityID:            req.EntityID,
-		TransactionNumber:   req.TransactionNumber,
-		TransactionType:     transactionType,
-		TransactionStatus:   status,
-		TransactionDate:     pgtype.Date{Time: req.TransactionDate, Valid: true},
-		PostingDate:         dateToPtr(req.PostingDate),
-		Description:         req.Description,
-		ReferenceNumber:     req.ReferenceNumber,
-		CurrencyCode:        req.CurrencyCode,
-		ExchangeRate:        exchangeRate,
-		TotalDebitAmount:    totalDebitAmount,
-		TotalCreditAmount:   totalCreditAmount,
-		Memo:                req.Memo,
-		AttachmentIDs:       req.AttachmentIDs,
-		Tags:                req.Tags,
-		Metadata:            metadata,
-		CreatedBy:           req.CreatedBy,
+		EntityID:              req.EntityID,
+		TransactionNumber:     req.TransactionNumber,
+		TransactionType:       transactionType,
+		TransactionStatus:     status,
+		TransactionDate:       req.TransactionDate,
+		PostingDate:           *req.PostingDate,
+		Description:           req.Description,
+		ReferenceNumber:       req.ReferenceNumber,
+		CurrencyCode:          req.CurrencyCode,
+		ExchangeRate:          exchangeRate,
+		TotalDebitAmount:      totalDebitAmount,
+		TotalCreditAmount:     totalCreditAmount,
+		Memo:                  req.Memo,
+		AttachmentIds:         req.AttachmentIds,
+		Tags:                  req.Tags,
+		TransactionAttributes: metadata,
+		CreatedBy:             req.CreatedBy,
 	}, nil
 }
 
@@ -403,31 +401,31 @@ func mapSQLCTransactionToDomain(sqlcTransaction *db.FinanceTransaction) (*domain
 	}
 
 	return &domain.Transaction{
-		ID:                  sqlcTransaction.ID,
-		TenantID:            sqlcTransaction.TenantID,
-		EntityID:            sqlcTransaction.EntityID,
-		TransactionNumber:   sqlcTransaction.TransactionNumber,
-		TransactionType:     transactionType,
-		Status:              status,
-		TransactionDate:     sqlcTransaction.TransactionDate.Time,
-		PostingDate:         timeToPointer(sqlcTransaction.PostingDate),
-		Description:         sqlcTransaction.Description,
-		ReferenceNumber:     sqlcTransaction.ReferenceNumber,
-		CurrencyCode:        sqlcTransaction.CurrencyCode,
-		ExchangeRate:        exchangeRate,
-		TotalDebitAmount:    totalDebitAmount,
-		TotalCreditAmount:   totalCreditAmount,
-		Memo:                sqlcTransaction.Memo,
-		AttachmentIDs:       sqlcTransaction.AttachmentIds,
-		Tags:                sqlcTransaction.Tags,
-		Metadata:            metadata,
-		CreatedAt:           sqlcTransaction.CreatedAt.Time,
-		UpdatedAt:           sqlcTransaction.UpdatedAt.Time,
-		DeletedAt:           timeToPointer(sqlcTransaction.DeletedAt),
-		CreatedBy:           sqlcTransaction.CreatedBy,
-		UpdatedBy:           sqlcTransaction.UpdatedBy,
-		PostedBy:            sqlcTransaction.PostedBy,
-		PostedAt:            timeToPointer(sqlcTransaction.PostedAt),
+		ID:                sqlcTransaction.ID,
+		TenantID:          sqlcTransaction.TenantID,
+		EntityID:          sqlcTransaction.EntityID,
+		TransactionNumber: sqlcTransaction.TransactionNumber,
+		TransactionType:   transactionType,
+		Status:            status,
+		TransactionDate:   sqlcTransaction.TransactionDate.Time,
+		PostingDate:       timeToPointer(sqlcTransaction.PostingDate),
+		Description:       sqlcTransaction.Description,
+		ReferenceNumber:   sqlcTransaction.ReferenceNumber,
+		CurrencyCode:      sqlcTransaction.CurrencyCode,
+		ExchangeRate:      exchangeRate,
+		TotalDebitAmount:  totalDebitAmount,
+		TotalCreditAmount: totalCreditAmount,
+		Memo:              sqlcTransaction.Memo,
+		AttachmentIDs:     sqlcTransaction.AttachmentIds,
+		Tags:              sqlcTransaction.Tags,
+		Metadata:          metadata,
+		CreatedAt:         sqlcTransaction.CreatedAt.Time,
+		UpdatedAt:         sqlcTransaction.UpdatedAt.Time,
+		DeletedAt:         timeToPointer(sqlcTransaction.DeletedAt),
+		CreatedBy:         sqlcTransaction.CreatedBy,
+		UpdatedBy:         sqlcTransaction.UpdatedBy,
+		PostedBy:          sqlcTransaction.PostedBy,
+		PostedAt:          timeToPointer(sqlcTransaction.PostedAt),
 	}, nil
 }
 
@@ -441,52 +439,11 @@ func timeToPointer(t pgtype.Timestamptz) *time.Time {
 }
 
 func dateToPtr(t *time.Time) *pgtype.Date {
+
 	if t != nil {
 		return &pgtype.Date{Time: *t, Valid: true}
 	}
 	return nil
-}
-
-// Filter mappings
-
-func mapAccountFilterToSQLCParams(filter *domain.AccountFilter) (db.ListAccountsParams, error) {
-	params := db.ListAccountsParams{}
-
-	// Handle pagination - convert from *int to int32
-	if filter.Limit != nil {
-		params.Limit = int32(*filter.Limit)
-	} else {
-		params.Limit = 50 // Default limit
-	}
-
-	if filter.Offset != nil {
-		params.Offset = int32(*filter.Offset)
-	}
-
-	// Map root type filter to RootType
-	if filter.RootType != nil {
-		switch *filter.RootType {
-		case domain.RootTypeAsset:
-			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumASSET, Valid: true}
-		case domain.RootTypeLiability:
-			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumLIABILITY, Valid: true}
-		case domain.RootTypeEquity:
-			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumEQUITY, Valid: true}
-		case domain.RootTypeRevenue:
-			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumREVENUE, Valid: true}
-		case domain.RootTypeExpense:
-			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumEXPENSE, Valid: true}
-		}
-	}
-
-	// Map active status to IsActive
-	if filter.IsActive != nil {
-		params.IsActive = *filter.IsActive
-	} else {
-		params.IsActive = true // Default to active accounts
-	}
-
-	return params, nil
 }
 
 func mapTransactionFilterToSQLCParams(filter *domain.TransactionFilter) (db.ListTransactionsParams, error) {
@@ -551,8 +508,6 @@ func mapTransactionFilterToSQLCParams(filter *domain.TransactionFilter) (db.List
 	return params, nil
 }
 
-*/
-
 func stringPtr(s string) *string {
 	return &s
 }
@@ -597,4 +552,163 @@ func pgTypeNumericToDecimal(n pgtype.Numeric) decimal.Decimal {
 		return decimal.NewFromBigInt(n.Int, 0)
 	}
 	return decimal.Zero
+}
+
+// Additional helper functions for transaction repository
+
+func mapDomainTransactionTypeToSQLCEnum(transactionType domain.TransactionTypeEnum) db.TransactionTypeEnum {
+	switch transactionType {
+	case domain.MANUAL:
+		return db.TransactionTypeEnumMANUAL
+	case domain.SALES_INVOICE:
+		return db.TransactionTypeEnumSALESINVOICE
+	case domain.PURCHASE_INVOICE:
+		return db.TransactionTypeEnumPURCHASEINVOICE
+	case domain.PAYMENT:
+		return db.TransactionTypeEnumPAYMENT
+	case domain.RECEIPT:
+		return db.TransactionTypeEnumRECEIPT
+	case domain.JOURNAL_ENTRY:
+		return db.TransactionTypeEnumJOURNALENTRY
+	case domain.BANK_TRANSFER:
+		return db.TransactionTypeEnumBANKTRANSFER
+	case domain.ADJUSTMENT:
+		return db.TransactionTypeEnumADJUSTMENT
+	case domain.OPENING_BALANCE:
+		return db.TransactionTypeEnumOPENINGBALANCE
+	case domain.CLOSING_ENTRY:
+		return db.TransactionTypeEnumCLOSINGENTRY
+	default:
+		return db.TransactionTypeEnumMANUAL
+	}
+}
+
+func mapDomainTransactionStatusToSQLCEnum(status domain.TransactionStatusEnum) db.TransactionStatusEnum {
+	switch status {
+	case domain.DRAFT:
+		return db.TransactionStatusEnumDRAFT
+	case domain.PENDING_APPROVAL:
+		return db.TransactionStatusEnumPENDINGAPPROVAL
+	case domain.APPROVED:
+		return db.TransactionStatusEnumAPPROVED
+	case domain.POSTED:
+		return db.TransactionStatusEnumPOSTED
+	case domain.CANCELLED:
+		return db.TransactionStatusEnumCANCELLED
+	case domain.REVERSED:
+		return db.TransactionStatusEnumREVERSED
+	default:
+		return db.TransactionStatusEnumDRAFT
+	}
+}
+
+func mapDomainTransactionStatusToSQLCEnumPtr(status domain.TransactionStatusEnum) *db.TransactionStatusEnum {
+	sqlcEnum := mapDomainTransactionStatusToSQLCEnum(status)
+	return &sqlcEnum
+}
+
+func mapSQLCTransactionTypeToDomain(sqlcType db.TransactionTypeEnum) domain.TransactionTypeEnum {
+	switch sqlcType {
+	case db.TransactionTypeEnumMANUAL:
+		return domain.MANUAL
+	case db.TransactionTypeEnumSALESINVOICE:
+		return domain.SALES_INVOICE
+	case db.TransactionTypeEnumPURCHASEINVOICE:
+		return domain.PURCHASE_INVOICE
+	case db.TransactionTypeEnumPAYMENT:
+		return domain.PAYMENT
+	case db.TransactionTypeEnumRECEIPT:
+		return domain.RECEIPT
+	case db.TransactionTypeEnumJOURNALENTRY:
+		return domain.JOURNAL_ENTRY
+	case db.TransactionTypeEnumBANKTRANSFER:
+		return domain.BANK_TRANSFER
+	case db.TransactionTypeEnumADJUSTMENT:
+		return domain.ADJUSTMENT
+	case db.TransactionTypeEnumOPENINGBALANCE:
+		return domain.OPENING_BALANCE
+	case db.TransactionTypeEnumCLOSINGENTRY:
+		return domain.CLOSING_ENTRY
+	default:
+		return domain.MANUAL
+	}
+}
+
+func mapSQLCTransactionStatusToDomain(sqlcStatus db.TransactionStatusEnum) domain.TransactionStatusEnum {
+	switch sqlcStatus {
+	case db.TransactionStatusEnumDRAFT:
+		return domain.DRAFT
+	case db.TransactionStatusEnumPENDINGAPPROVAL:
+		return domain.PENDING_APPROVAL
+	case db.TransactionStatusEnumAPPROVED:
+		return domain.APPROVED
+	case db.TransactionStatusEnumPOSTED:
+		return domain.POSTED
+	case db.TransactionStatusEnumCANCELLED:
+		return domain.CANCELLED
+	case db.TransactionStatusEnumREVERSED:
+		return domain.REVERSED
+	default:
+		return domain.DRAFT
+	}
+}
+
+func mapDomainApprovalStatusToString(status *domain.ApprovalStatusEnum) *string {
+	if status == nil {
+		return nil
+	}
+	statusStr := string(*status)
+	return &statusStr
+}
+
+func mapDomainApprovalStatusToStringPtr(status *domain.ApprovalStatusEnum) *string {
+	return mapDomainApprovalStatusToString(status)
+}
+
+func decimalToPgNumeric(d *decimal.Decimal) pgtype.Numeric {
+	if d == nil {
+		return pgtype.Numeric{}
+	}
+	return pgtype.Numeric{
+		Int:   d.BigInt(),
+		Valid: true,
+	}
+}
+
+func pgNumericToDecimal(n pgtype.Numeric) decimal.Decimal {
+	if n.Valid {
+		return decimal.NewFromBigInt(n.Int, 0)
+	}
+	return decimal.Zero
+}
+
+func pgNumericToDecimalPtr(n pgtype.Numeric) *decimal.Decimal {
+	if n.Valid {
+		d := decimal.NewFromBigInt(n.Int, 0)
+		return &d
+	}
+	return nil
+}
+
+func mapAttributesToJSON(attributes map[string]interface{}) []byte {
+	if attributes == nil {
+		return []byte("{}")
+	}
+	data, err := json.Marshal(attributes)
+	if err != nil {
+		return []byte("{}")
+	}
+	return data
+}
+
+func boolToPtr(b bool) *bool {
+	return &b
+}
+
+func mapStringToApprovalStatus(s *string) *domain.ApprovalStatusEnum {
+	if s == nil {
+		return nil
+	}
+	status := domain.ApprovalStatusEnum(*s)
+	return &status
 }

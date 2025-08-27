@@ -188,7 +188,7 @@ type Session struct {
 
 // IsExpired checks if the session has expired
 func (s *Session) IsExpired() bool {
-	return time.Now().After(s.ExpiresAt)
+	return time.Now().After(s.ExpiresAt) || s.Status == SessionStatusRevoked || s.Status == SessionStatusExpired
 }
 
 // IsActive checks if the session is active and not expired

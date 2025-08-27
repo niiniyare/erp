@@ -70,6 +70,8 @@ type Transaction struct {
 
 	// Metadata - flexible attributes for extensions
 	TransactionAttributes map[string]any `json:"transaction_attributes,omitempty"`
+	AttachmentIds         []string       `json:"attachment_ids"`
+	Tags                  []string       `json:"tags"`
 
 	// Transaction entries - the actual accounting entries
 	Entries []TransactionEntry `json:"entries,omitempty"`
@@ -89,6 +91,7 @@ type CreateTransactionRequest struct {
 	EntityID              *uuid.UUID           `json:"entity_id,omitempty"`
 	TransactionNumber     string               `json:"transaction_number" validate:"required,max=50"`
 	TransactionType       TransactionType      `json:"transaction_type" validate:"required"`
+	TransactionStatus     TransactionStatus    `json:"transaction_status"` // Current lifecycle status
 	TransactionDate       time.Time            `json:"transaction_date" validate:"required"`
 	PostingDate           *time.Time           `json:"posting_date,omitempty"`
 	DueDate               *time.Time           `json:"due_date,omitempty"`
@@ -107,6 +110,13 @@ type CreateTransactionRequest struct {
 	NextRecurringDate     *time.Time           `json:"next_recurring_date,omitempty"`
 	TransactionAttributes map[string]any       `json:"transaction_attributes,omitempty"`
 	Entries               []CreateEntryRequest `json:"entries" validate:"required,min=2,dive"`
+	Memo                  string               `json:"memo"`
+	AttachmentIds         []string             `json:"attachment_ids"`
+	Tags                  []string             `json:"tags"`
+	CreatedBy             uuid.UUID            `json:"created_by"`
+	UpdatedBy             *uuid.UUID           `json:"updated_by,omitempty"`
+	PostedBy              *uuid.UUID           `json:"posted_by,omitempty"` // User who posted the transaction
+
 }
 
 // TransactionSummary represents aggregated transaction data for reporting
