@@ -801,14 +801,12 @@ ORDER BY
   hp.depth DESC;
 
 -- name: BulkMoveEntities :exec
-UPDATE
-  entities
+UPDATE entities
 SET
-  parent_id = $2,
+  parent_id = sqlc.arg('parent_id'),
   updated_at = NOW()
-WHERE
-  tenant_id = current_tenant_id()
-  AND uuid = ANY($1::UUID [])
+WHERE tenant_id = current_tenant_id()
+  AND uuid = ANY(sqlc.arg('entity_ids')::UUID[])
   AND deleted_at IS NULL;
 
 -- =====================================================================
@@ -1330,7 +1328,7 @@ WHERE entity_id = sqlc.arg(entity_id)::UUID
 RETURNING sequence - 1 as used_sequence, sequence as next_sequence;
 
 --
--- name: Bulk_CreateEntityStates :copyfrom
+-- name: BulkCreateEntityStates :copyfrom
 INSERT INTO entitystate (
     uuid,
     tenant_id,

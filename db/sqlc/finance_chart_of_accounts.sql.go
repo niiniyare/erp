@@ -15,22 +15,23 @@ import (
 )
 
 const countAccounts = `-- name: CountAccounts :one
-SELECT COUNT(*) FROM finance_chart_of_accounts
+SELECT COUNT(*) 
+FROM finance_chart_of_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR account_type = $1::account_type_enum)
-  AND ($2::text IS NULL OR root_type = $2::root_type_enum)
-  AND ($3::bool IS NULL OR is_active = $3)
+  AND ($1::account_type_enum IS NULL OR account_type = $1::account_type_enum)
+  AND ($2::root_type_enum IS NULL OR root_type = $2::root_type_enum)
+  AND ($3::bool IS NULL OR is_active = $3::bool)
 `
 
 type CountAccountsParams struct {
-	Column1 string `json:"column_1"`
-	Column2 string `json:"column_2"`
-	Column3 bool   `json:"column_3"`
+	AccountType NullAccountTypeEnum `json:"account_type"`
+	RootType    NullRootTypeEnum    `json:"root_type"`
+	IsActive    bool                `json:"is_active"`
 }
 
 func (q *Queries) CountAccounts(ctx context.Context, arg CountAccountsParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countAccounts, arg.Column1, arg.Column2, arg.Column3)
+	row := q.db.QueryRow(ctx, countAccounts, arg.AccountType, arg.RootType, arg.IsActive)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -66,7 +67,30 @@ INSERT INTO finance_chart_of_accounts (
     created_by
 ) VALUES (
     current_tenant_id(),
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
+    $1, 
+    $2, 
+    $3, 
+    $4, 
+    $5, 
+    $6, 
+    $7, 
+    $8, 
+    $9, 
+    $10, 
+    $11, 
+    $12, 
+    $13, 
+    $14, 
+    $15, 
+    $16, 
+    $17, 
+    $18, 
+    $19, 
+    $20, 
+    $21, 
+    $22, 
+    $23, 
+    $24
 ) RETURNING id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status
 `
 
@@ -100,6 +124,7 @@ type CreateAccountParams struct {
 // =====================================================================
 // FINANCE MODULE - CHART OF ACCOUNTS QUERIES
 // SQLC queries for chart of accounts with proper tenant isolation
+// Updated with proper sqlc.narg and sqlc.arg usage
 // =====================================================================
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceChartOfAccount, error) {
 	row := q.db.QueryRow(ctx, createAccount,
@@ -234,8 +259,8 @@ WHERE id = $1
   AND deleted_at IS NULL
 `
 
-func (q *Queries) GetAccountByID(ctx context.Context, id uuid.UUID) (*FinanceChartOfAccount, error) {
-	row := q.db.QueryRow(ctx, getAccountByID, id)
+func (q *Queries) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceChartOfAccount, error) {
+	row := q.db.QueryRow(ctx, getAccountByID, accountID)
 	var i FinanceChartOfAccount
 	err := row.Scan(
 		&i.ID,
@@ -289,8 +314,8 @@ WHERE tenant_id = current_tenant_id()
 ORDER BY account_path ASC
 `
 
-func (q *Queries) GetAccountHierarchy(ctx context.Context, dollar_1 string) ([]*FinanceChartOfAccount, error) {
-	rows, err := q.db.Query(ctx, getAccountHierarchy, dollar_1)
+func (q *Queries) GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceChartOfAccount, error) {
+	rows, err := q.db.Query(ctx, getAccountHierarchy, accountPathPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -435,8 +460,8 @@ ORDER BY a.report_order ASC, a.account_code ASC
 `
 
 type GetAccountsForFinancialStatementsParams struct {
-	Column1     string    `json:"column_1"`
-	PostingDate time.Time `json:"posting_date"`
+	FinancialStatementLine string    `json:"financial_statement_line"`
+	PostingDate            time.Time `json:"posting_date"`
 }
 
 type GetAccountsForFinancialStatementsRow struct {
@@ -483,7 +508,7 @@ type GetAccountsForFinancialStatementsRow struct {
 }
 
 func (q *Queries) GetAccountsForFinancialStatements(ctx context.Context, arg GetAccountsForFinancialStatementsParams) ([]*GetAccountsForFinancialStatementsRow, error) {
-	rows, err := q.db.Query(ctx, getAccountsForFinancialStatements, arg.Column1, arg.PostingDate)
+	rows, err := q.db.Query(ctx, getAccountsForFinancialStatements, arg.FinancialStatementLine, arg.PostingDate)
 	if err != nil {
 		return nil, err
 	}
@@ -748,31 +773,32 @@ func (q *Queries) GetRootAccounts(ctx context.Context) ([]*FinanceChartOfAccount
 }
 
 const listAccounts = `-- name: ListAccounts :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_chart_of_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status 
+FROM finance_chart_of_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR account_type = $1::account_type_enum)
-  AND ($2::text IS NULL OR root_type = $2::root_type_enum)
-  AND ($3::bool IS NULL OR is_active = $3)
+  AND ($1::account_type_enum IS NULL OR account_type = $1::account_type_enum)
+  AND ($2::root_type_enum IS NULL OR root_type = $2::root_type_enum)
+  AND ($3::bool IS NULL OR is_active = $3::bool)
 ORDER BY account_code ASC
-LIMIT $4 OFFSET $5
+LIMIT $5 OFFSET $4
 `
 
 type ListAccountsParams struct {
-	Column1 string `json:"column_1"`
-	Column2 string `json:"column_2"`
-	Column3 bool   `json:"column_3"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
+	AccountType NullAccountTypeEnum `json:"account_type"`
+	RootType    NullRootTypeEnum    `json:"root_type"`
+	IsActive    bool                `json:"is_active"`
+	Offset      int32               `json:"offset"`
+	Limit       int32               `json:"limit"`
 }
 
 func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceChartOfAccount, error) {
 	rows, err := q.db.Query(ctx, listAccounts,
-		arg.Column1,
-		arg.Column2,
-		arg.Column3,
-		arg.Limit,
+		arg.AccountType,
+		arg.RootType,
+		arg.IsActive,
 		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -905,18 +931,18 @@ UPDATE finance_chart_of_accounts
 SET 
     deleted_at = NULL,
     updated_at = NOW(),
-    updated_by = $2
-WHERE id = $1 
+    updated_by = $1
+WHERE id = $2 
   AND tenant_id = current_tenant_id()
 `
 
 type RestoreAccountParams struct {
-	ID        uuid.UUID  `json:"id"`
 	UpdatedBy *uuid.UUID `json:"updated_by"`
+	AccountID uuid.UUID  `json:"account_id"`
 }
 
 func (q *Queries) RestoreAccount(ctx context.Context, arg RestoreAccountParams) error {
-	_, err := q.db.Exec(ctx, restoreAccount, arg.ID, arg.UpdatedBy)
+	_, err := q.db.Exec(ctx, restoreAccount, arg.UpdatedBy, arg.AccountID)
 	return err
 }
 
@@ -932,17 +958,17 @@ WHERE tenant_id = current_tenant_id()
 ORDER BY 
   CASE WHEN account_code ILIKE $1 || '%' THEN 1 ELSE 2 END,
   account_code ASC
-LIMIT $2 OFFSET $3
+LIMIT $3 OFFSET $2
 `
 
 type SearchAccountsParams struct {
-	Column1 string `json:"column_1"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
+	SearchTerm string `json:"search_term"`
+	Offset     int32  `json:"offset"`
+	Limit      int32  `json:"limit"`
 }
 
 func (q *Queries) SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceChartOfAccount, error) {
-	rows, err := q.db.Query(ctx, searchAccounts, arg.Column1, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, searchAccounts, arg.SearchTerm, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -1006,65 +1032,64 @@ UPDATE finance_chart_of_accounts
 SET 
     deleted_at = NOW(),
     updated_at = NOW(),
-    updated_by = $2
-WHERE id = $1 
+    updated_by = $1
+WHERE id = $2 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
 
 type SoftDeleteAccountParams struct {
-	ID        uuid.UUID  `json:"id"`
 	UpdatedBy *uuid.UUID `json:"updated_by"`
+	AccountID uuid.UUID  `json:"account_id"`
 }
 
 func (q *Queries) SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) error {
-	_, err := q.db.Exec(ctx, softDeleteAccount, arg.ID, arg.UpdatedBy)
+	_, err := q.db.Exec(ctx, softDeleteAccount, arg.UpdatedBy, arg.AccountID)
 	return err
 }
 
 const updateAccount = `-- name: UpdateAccount :one
 UPDATE finance_chart_of_accounts
 SET 
-    account_name = COALESCE($2, account_name),
-    account_description = COALESCE($3, account_description),
-    account_type = COALESCE($4, account_type),
-    account_subtype = COALESCE($5, account_subtype),
-    is_active = COALESCE($6, is_active),
-    allow_manual_entries = COALESCE($7, allow_manual_entries),
-    require_reference = COALESCE($8, require_reference),
-    financial_statement_line = COALESCE($9, financial_statement_line),
-    report_order = COALESCE($10, report_order),
-    is_budgetable = COALESCE($11, is_budgetable),
-    budget_variance_threshold = COALESCE($12, budget_variance_threshold),
-    account_attributes = COALESCE($13, account_attributes),
+    account_name = COALESCE($1, account_name),
+    account_description = COALESCE($2, account_description),
+    account_type = COALESCE($3, account_type),
+    account_subtype = COALESCE($4, account_subtype),
+    is_active = COALESCE($5, is_active),
+    allow_manual_entries = COALESCE($6, allow_manual_entries),
+    require_reference = COALESCE($7, require_reference),
+    financial_statement_line = COALESCE($8, financial_statement_line),
+    report_order = COALESCE($9, report_order),
+    is_budgetable = COALESCE($10, is_budgetable),
+    budget_variance_threshold = COALESCE($11, budget_variance_threshold),
+    account_attributes = COALESCE($12, account_attributes),
     updated_at = NOW(),
-    updated_by = $14
-WHERE id = $1 
+    updated_by = $13
+WHERE id = $14 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 RETURNING id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status
 `
 
 type UpdateAccountParams struct {
-	ID                      uuid.UUID      `json:"id"`
-	AccountName             string         `json:"account_name"`
+	AccountName             *string        `json:"account_name"`
 	AccountDescription      string         `json:"account_description"`
-	AccountType             string         `json:"account_type"`
+	AccountType             *string        `json:"account_type"`
 	AccountSubtype          *string        `json:"account_subtype"`
-	IsActive                bool           `json:"is_active"`
-	AllowManualEntries      bool           `json:"allow_manual_entries"`
-	RequireReference        bool           `json:"require_reference"`
+	IsActive                *bool          `json:"is_active"`
+	AllowManualEntries      *bool          `json:"allow_manual_entries"`
+	RequireReference        *bool          `json:"require_reference"`
 	FinancialStatementLine  *string        `json:"financial_statement_line"`
 	ReportOrder             *int32         `json:"report_order"`
 	IsBudgetable            *bool          `json:"is_budgetable"`
 	BudgetVarianceThreshold pgtype.Numeric `json:"budget_variance_threshold"`
 	AccountAttributes       []byte         `json:"account_attributes"`
 	UpdatedBy               *uuid.UUID     `json:"updated_by"`
+	AccountID               uuid.UUID      `json:"account_id"`
 }
 
 func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceChartOfAccount, error) {
 	row := q.db.QueryRow(ctx, updateAccount,
-		arg.ID,
 		arg.AccountName,
 		arg.AccountDescription,
 		arg.AccountType,
@@ -1078,6 +1103,7 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*
 		arg.BudgetVarianceThreshold,
 		arg.AccountAttributes,
 		arg.UpdatedBy,
+		arg.AccountID,
 	)
 	var i FinanceChartOfAccount
 	err := row.Scan(
@@ -1127,28 +1153,28 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*
 const updateAccountBalance = `-- name: UpdateAccountBalance :exec
 UPDATE finance_chart_of_accounts
 SET 
-    current_balance = $2,
-    ytd_balance = $3,
-    last_transaction_date = $4,
+    current_balance = $1,
+    ytd_balance = $2,
+    last_transaction_date = $3,
     updated_at = NOW()
-WHERE id = $1 
+WHERE id = $4 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
 
 type UpdateAccountBalanceParams struct {
-	ID                  uuid.UUID      `json:"id"`
 	CurrentBalance      pgtype.Numeric `json:"current_balance"`
 	YtdBalance          pgtype.Numeric `json:"ytd_balance"`
 	LastTransactionDate time.Time      `json:"last_transaction_date"`
+	AccountID           uuid.UUID      `json:"account_id"`
 }
 
 func (q *Queries) UpdateAccountBalance(ctx context.Context, arg UpdateAccountBalanceParams) error {
 	_, err := q.db.Exec(ctx, updateAccountBalance,
-		arg.ID,
 		arg.CurrentBalance,
 		arg.YtdBalance,
 		arg.LastTransactionDate,
+		arg.AccountID,
 	)
 	return err
 }

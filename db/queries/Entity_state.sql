@@ -39,25 +39,25 @@ $$
 -- SELECT * FROM entitystate
 -- WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
 -- FOR UPDATE;
--- name: BulkCreateEntityStates :exec
--- Usage: Creates multiple entity states in batch for different document types
--- Use case: Initial setup of document sequences for a new entity
--- NOTE: Missing tenant_id assignment and UUID generation - should be addressed
-INSERT INTO
-  entitystate (
-    entity_id,
-    KEY,
-    sequence_number,
-    fiscal_year,
-    tenant_id
-  )
-SELECT
-  $1,
-  unnest($2::VARCHAR []),
-  1,
-  $3,
-  current_tenant_id() ON CONFLICT (entity_id, KEY, fiscal_year) DO NOTHING;
-
+-- -- name: BulkCreateEntityStates :exec
+-- -- Usage: Creates multiple entity states in batch for different document types
+-- -- Use case: Initial setup of document sequences for a new entity
+-- -- NOTE: Missing tenant_id assignment and UUID generation - should be addressed
+-- INSERT INTO
+--   entitystate (
+--     entity_id,
+--     KEY,
+--     sequence_number,
+--     fiscal_year,
+--     tenant_id
+--   )
+-- SELECT
+--   $1,
+--   unnest($2::VARCHAR []),
+--   1,
+--   $3,
+--   current_tenant_id() ON CONFLICT (entity_id, KEY, fiscal_year) DO NOTHING;
+--
 -- name: GetEntityStateHistory :many
 -- Usage: Retrieves entity state history with optional filtering by key and fiscal year
 -- Use case: Audit trails, reporting, and historical sequence analysis
@@ -220,28 +220,28 @@ WHERE
   AND entitystate.fiscal_year = $4
   AND entitystate.tenant_id = current_tenant_id();
 
--- name: BulkCreateEntityStatesFixed :exec
--- Usage: Improved bulk creation with proper tenant_id and UUID handling
--- Use case: Initial entity setup, adding new document types to existing entities
-INSERT INTO
-  entitystate (
-    uuid,
-    tenant_id,
-    entity_id,
-    KEY,
-    fiscal_year,
-    sequence,
-    entity_unit_id
-  )
-SELECT
-  gen_random_uuid(),
-  current_tenant_id(),
-  $1,
-  unnest($2::VARCHAR []),
-  $3,
-  1,
-  $4 ON CONFLICT (tenant_id, entity_id, KEY, fiscal_year) DO NOTHING;
-
+-- -- name: BulkCreateEntityStatesFixed :exec
+-- -- Usage: Improved bulk creation with proper tenant_id and UUID handling
+-- -- Use case: Initial entity setup, adding new document types to existing entities
+-- INSERT INTO
+--   entitystate (
+--     uuid,
+--     tenant_id,
+--     entity_id,
+--     KEY,
+--     fiscal_year,
+--     sequence,
+--     entity_unit_id
+--   )
+-- SELECT
+--   gen_random_uuid(),
+--   current_tenant_id(),
+--   $1,
+--   unnest($2::VARCHAR []),
+--   $3,
+--   1,
+--   $4 ON CONFLICT (tenant_id, entity_id, KEY, fiscal_year) DO NOTHING;
+--
 -- =====================================================================
 --  ANALYTICS & REPORTING QUERIES
 -- =====================================================================

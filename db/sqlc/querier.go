@@ -29,20 +29,8 @@ type Querier interface {
 	BatchUpdateEntityStatus(ctx context.Context, arg BatchUpdateEntityStatusParams) error
 	// Bulk add compliance flags to events matching criteria
 	BulkAddComplianceFlags(ctx context.Context, arg BulkAddComplianceFlagsParams) error
-	// -- name: GetEntityStateWithLocking :one
-	// -- Usage: Retrieves entity state with row-level locking for atomic sequence operations
-	// -- Use case: When you need to get and immediately update a sequence number safely
-	// -- NOTE: Consider adding query timeout handling for deadlock scenarios
-	// SELECT * FROM entitystate
-	// WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
-	// FOR UPDATE;
-	// Usage: Creates multiple entity states in batch for different document types
-	// Use case: Initial setup of document sequences for a new entity
-	// NOTE: Missing tenant_id assignment and UUID generation - should be addressed
-	BulkCreateEntityStates(ctx context.Context, arg BulkCreateEntityStatesParams) error
-	// Usage: Improved bulk creation with proper tenant_id and UUID handling
-	// Use case: Initial entity setup, adding new document types to existing entities
-	BulkCreateEntityStatesFixed(ctx context.Context, arg BulkCreateEntityStatesFixedParams) error
+	//
+	BulkCreateEntityStates(ctx context.Context, arg []BulkCreateEntityStatesParams) (int64, error)
 	// Simplified bulk evaluation based on current schema
 	BulkEvaluateFeatureFlags(ctx context.Context, arg BulkEvaluateFeatureFlagsParams) ([]*BulkEvaluateFeatureFlagsRow, error)
 	BulkMoveEntities(ctx context.Context, arg BulkMoveEntitiesParams) error
@@ -56,8 +44,6 @@ type Querier interface {
 	// BULK OPERATIONS
 	// =====================================================
 	BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTenantStatusParams) error
-	//
-	Bulk_CreateEntityStates(ctx context.Context, arg []Bulk_CreateEntityStatesParams) (int64, error)
 	// Policy Evaluations CRUD Operations and Cache Management for ABAC
 	CacheEvaluationResult(ctx context.Context, arg CacheEvaluationResultParams) error
 	CheckCircularReference(ctx context.Context, arg CheckCircularReferenceParams) (bool, error)
@@ -99,6 +85,7 @@ type Querier interface {
 	// =====================================================================
 	// FINANCE MODULE - CHART OF ACCOUNTS QUERIES
 	// SQLC queries for chart of accounts with proper tenant isolation
+	// Updated with proper sqlc.narg and sqlc.arg usage
 	// =====================================================================
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceChartOfAccount, error)
 	CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error)
@@ -215,9 +202,9 @@ type Querier interface {
 	GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*AccessRequest, error)
 	GetAccountBalance(ctx context.Context, arg GetAccountBalanceParams) (*GetAccountBalanceRow, error)
 	GetAccountByCode(ctx context.Context, accountCode string) (*FinanceChartOfAccount, error)
-	GetAccountByID(ctx context.Context, id uuid.UUID) (*FinanceChartOfAccount, error)
+	GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceChartOfAccount, error)
 	GetAccountEntries(ctx context.Context, arg GetAccountEntriesParams) ([]*GetAccountEntriesRow, error)
-	GetAccountHierarchy(ctx context.Context, dollar_1 string) ([]*FinanceChartOfAccount, error)
+	GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceChartOfAccount, error)
 	GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) ([]*FinanceChartOfAccount, error)
 	GetAccountsForFinancialStatements(ctx context.Context, arg GetAccountsForFinancialStatementsParams) ([]*GetAccountsForFinancialStatementsRow, error)
 	GetAccountsWithNonZeroBalance(ctx context.Context) ([]*FinanceChartOfAccount, error)
@@ -328,10 +315,58 @@ type Querier interface {
 	// Usage: Comprehensive health check of entity state configuration
 	// Use case: System health monitoring, pre-deployment validation
 	GetEntityStateHealthCheck(ctx context.Context) ([]*GetEntityStateHealthCheckRow, error)
+	// -- name: GetEntityStateWithLocking :one
+	// -- Usage: Retrieves entity state with row-level locking for atomic sequence operations
+	// -- Use case: When you need to get and immediately update a sequence number safely
+	// -- NOTE: Consider adding query timeout handling for deadlock scenarios
+	// SELECT * FROM entitystate
+	// WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
+	// FOR UPDATE;
+	// -- name: BulkCreateEntityStates :exec
+	// -- Usage: Creates multiple entity states in batch for different document types
+	// -- Use case: Initial setup of document sequences for a new entity
+	// -- NOTE: Missing tenant_id assignment and UUID generation - should be addressed
+	// INSERT INTO
+	//   entitystate (
+	//     entity_id,
+	//     KEY,
+	//     sequence_number,
+	//     fiscal_year,
+	//     tenant_id
+	//   )
+	// SELECT
+	//   $1,
+	//   unnest($2::VARCHAR []),
+	//   1,
+	//   $3,
+	//   current_tenant_id() ON CONFLICT (entity_id, KEY, fiscal_year) DO NOTHING;
+	//
 	// Usage: Retrieves entity state history with optional filtering by key and fiscal year
 	// Use case: Audit trails, reporting, and historical sequence analysis
 	// NOTE: Consider adding pagination (LIMIT/OFFSET) for large datasets
 	GetEntityStateHistory(ctx context.Context, arg GetEntityStateHistoryParams) ([]*GetEntityStateHistoryRow, error)
+	// -- name: BulkCreateEntityStatesFixed :exec
+	// -- Usage: Improved bulk creation with proper tenant_id and UUID handling
+	// -- Use case: Initial entity setup, adding new document types to existing entities
+	// INSERT INTO
+	//   entitystate (
+	//     uuid,
+	//     tenant_id,
+	//     entity_id,
+	//     KEY,
+	//     fiscal_year,
+	//     sequence,
+	//     entity_unit_id
+	//   )
+	// SELECT
+	//   gen_random_uuid(),
+	//   current_tenant_id(),
+	//   $1,
+	//   unnest($2::VARCHAR []),
+	//   $3,
+	//   1,
+	//   $4 ON CONFLICT (tenant_id, entity_id, KEY, fiscal_year) DO NOTHING;
+	//
 	// =====================================================================
 	//  ANALYTICS & REPORTING QUERIES
 	// =====================================================================

@@ -49,25 +49,27 @@ WHERE transaction_number = $1
   AND deleted_at IS NULL;
 
 -- name: ListTransactions :many
-SELECT * FROM finance_transactions
+SELECT *
+FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR transaction_type = $1::transaction_type_enum)
-  AND ($2::text IS NULL OR transaction_status = $2::transaction_status_enum)
-  AND ($3::date IS NULL OR transaction_date >= $3)
-  AND ($4::date IS NULL OR transaction_date <= $4)
+  AND (sqlc.narg('transaction_type')::transaction_type_enum IS NULL OR transaction_type = sqlc.narg('transaction_type')::transaction_type_enum)
+  AND (sqlc.narg('transaction_status')::transaction_status_enum IS NULL OR transaction_status = sqlc.narg('transaction_status')::transaction_status_enum)
+  AND (sqlc.narg('date_from')::date IS NULL OR transaction_date >= sqlc.narg('date_from')::date)
+  AND (sqlc.narg('date_to')::date IS NULL OR transaction_date <= sqlc.narg('date_to')::date)
 ORDER BY transaction_date DESC, created_at DESC
-LIMIT $5 OFFSET $6;
+LIMIT sqlc.arg('limit')
+OFFSET sqlc.arg('offset');
 
 -- name: CountTransactions :one
-SELECT COUNT(*) FROM finance_transactions
+SELECT COUNT(*)
+FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR transaction_type = $1::transaction_type_enum)
-  AND ($2::text IS NULL OR transaction_status = $2::transaction_status_enum)
-  AND ($3::date IS NULL OR transaction_date >= $3)
-  AND ($4::date IS NULL OR transaction_date <= $4);
-
+  AND (sqlc.narg('transaction_type')::transaction_type_enum IS NULL OR transaction_type = sqlc.narg('transaction_type')::transaction_type_enum)
+  AND (sqlc.narg('transaction_status')::transaction_status_enum IS NULL OR transaction_status = sqlc.narg('transaction_status')::transaction_status_enum)
+  AND (sqlc.narg('date_from')::date IS NULL OR transaction_date >= sqlc.narg('date_from')::date)
+  AND (sqlc.narg('date_to')::date IS NULL OR transaction_date <= sqlc.narg('date_to')::date);
 -- name: GetTransactionWithEntries :many
 SELECT 
     t.*,
@@ -256,16 +258,18 @@ WHERE id = $1
   AND deleted_at IS NULL;
 
 -- name: SearchTransactions :many
-SELECT * FROM finance_transactions
+SELECT *
+FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND (
-    transaction_number ILIKE '%' || $1 || '%' OR
-    description ILIKE '%' || $1 || '%' OR
-    reference_number ILIKE '%' || $1 || '%' OR
-    external_reference ILIKE '%' || $1 || '%'
+    transaction_number ILIKE '%' || sqlc.arg('search') || '%' OR
+    description ILIKE '%' || sqlc.arg('search') || '%' OR
+    reference_number ILIKE '%' || sqlc.arg('search') || '%' OR
+    external_reference ILIKE '%' || sqlc.arg('search') || '%'
   )
 ORDER BY 
-  CASE WHEN transaction_number ILIKE $1 || '%' THEN 1 ELSE 2 END,
+  CASE WHEN transaction_number ILIKE sqlc.arg('search') || '%' THEN 1 ELSE 2 END,
   transaction_date DESC
-LIMIT $2 OFFSET $3;
+LIMIT sqlc.arg('limit')
+OFFSET sqlc.arg('offset');

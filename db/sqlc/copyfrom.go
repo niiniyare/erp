@@ -9,13 +9,13 @@ import (
 	"context"
 )
 
-// iteratorForBulk_CreateEntityStates implements pgx.CopyFromSource.
-type iteratorForBulk_CreateEntityStates struct {
-	rows                 []Bulk_CreateEntityStatesParams
+// iteratorForBulkCreateEntityStates implements pgx.CopyFromSource.
+type iteratorForBulkCreateEntityStates struct {
+	rows                 []BulkCreateEntityStatesParams
 	skippedFirstNextCall bool
 }
 
-func (r *iteratorForBulk_CreateEntityStates) Next() bool {
+func (r *iteratorForBulkCreateEntityStates) Next() bool {
 	if len(r.rows) == 0 {
 		return false
 	}
@@ -27,7 +27,7 @@ func (r *iteratorForBulk_CreateEntityStates) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForBulk_CreateEntityStates) Values() ([]interface{}, error) {
+func (r iteratorForBulkCreateEntityStates) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].Uuid,
 		r.rows[0].TenantID,
@@ -42,10 +42,10 @@ func (r iteratorForBulk_CreateEntityStates) Values() ([]interface{}, error) {
 	}, nil
 }
 
-func (r iteratorForBulk_CreateEntityStates) Err() error {
+func (r iteratorForBulkCreateEntityStates) Err() error {
 	return nil
 }
 
-func (q *Queries) Bulk_CreateEntityStates(ctx context.Context, arg []Bulk_CreateEntityStatesParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"entitystate"}, []string{"uuid", "tenant_id", "fiscal_year", "key", "sequence", "entity_id", "entity_unit_id", "created_at", "updated_at", "deleted_at"}, &iteratorForBulk_CreateEntityStates{rows: arg})
+func (q *Queries) BulkCreateEntityStates(ctx context.Context, arg []BulkCreateEntityStatesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"entitystate"}, []string{"uuid", "tenant_id", "fiscal_year", "key", "sequence", "entity_id", "entity_unit_id", "created_at", "updated_at", "deleted_at"}, &iteratorForBulkCreateEntityStates{rows: arg})
 }

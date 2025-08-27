@@ -87,28 +87,29 @@ func (q *Queries) ApproveTransaction(ctx context.Context, arg ApproveTransaction
 }
 
 const countTransactions = `-- name: CountTransactions :one
-SELECT COUNT(*) FROM finance_transactions
+SELECT COUNT(*)
+FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR transaction_type = $1::transaction_type_enum)
-  AND ($2::text IS NULL OR transaction_status = $2::transaction_status_enum)
-  AND ($3::date IS NULL OR transaction_date >= $3)
-  AND ($4::date IS NULL OR transaction_date <= $4)
+  AND ($1::transaction_type_enum IS NULL OR transaction_type = $1::transaction_type_enum)
+  AND ($2::transaction_status_enum IS NULL OR transaction_status = $2::transaction_status_enum)
+  AND ($3::date IS NULL OR transaction_date >= $3::date)
+  AND ($4::date IS NULL OR transaction_date <= $4::date)
 `
 
 type CountTransactionsParams struct {
-	Column1 string    `json:"column_1"`
-	Column2 string    `json:"column_2"`
-	Column3 time.Time `json:"column_3"`
-	Column4 time.Time `json:"column_4"`
+	TransactionType   NullTransactionTypeEnum   `json:"transaction_type"`
+	TransactionStatus NullTransactionStatusEnum `json:"transaction_status"`
+	DateFrom          time.Time                 `json:"date_from"`
+	DateTo            time.Time                 `json:"date_to"`
 }
 
 func (q *Queries) CountTransactions(ctx context.Context, arg CountTransactionsParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countTransactions,
-		arg.Column1,
-		arg.Column2,
-		arg.Column3,
-		arg.Column4,
+		arg.TransactionType,
+		arg.TransactionStatus,
+		arg.DateFrom,
+		arg.DateTo,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -888,34 +889,36 @@ func (q *Queries) GetTransactionsBySourceDocument(ctx context.Context, arg GetTr
 }
 
 const listTransactions = `-- name: ListTransactions :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency FROM finance_transactions
+SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency
+FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR transaction_type = $1::transaction_type_enum)
-  AND ($2::text IS NULL OR transaction_status = $2::transaction_status_enum)
-  AND ($3::date IS NULL OR transaction_date >= $3)
-  AND ($4::date IS NULL OR transaction_date <= $4)
+  AND ($1::transaction_type_enum IS NULL OR transaction_type = $1::transaction_type_enum)
+  AND ($2::transaction_status_enum IS NULL OR transaction_status = $2::transaction_status_enum)
+  AND ($3::date IS NULL OR transaction_date >= $3::date)
+  AND ($4::date IS NULL OR transaction_date <= $4::date)
 ORDER BY transaction_date DESC, created_at DESC
-LIMIT $5 OFFSET $6
+LIMIT $6
+OFFSET $5
 `
 
 type ListTransactionsParams struct {
-	Column1 string    `json:"column_1"`
-	Column2 string    `json:"column_2"`
-	Column3 time.Time `json:"column_3"`
-	Column4 time.Time `json:"column_4"`
-	Limit   int32     `json:"limit"`
-	Offset  int32     `json:"offset"`
+	TransactionType   NullTransactionTypeEnum   `json:"transaction_type"`
+	TransactionStatus NullTransactionStatusEnum `json:"transaction_status"`
+	DateFrom          time.Time                 `json:"date_from"`
+	DateTo            time.Time                 `json:"date_to"`
+	Offset            int32                     `json:"offset"`
+	Limit             int32                     `json:"limit"`
 }
 
 func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]*FinanceTransaction, error) {
 	rows, err := q.db.Query(ctx, listTransactions,
-		arg.Column1,
-		arg.Column2,
-		arg.Column3,
-		arg.Column4,
-		arg.Limit,
+		arg.TransactionType,
+		arg.TransactionStatus,
+		arg.DateFrom,
+		arg.DateTo,
 		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -1201,7 +1204,8 @@ func (q *Queries) ReverseTransaction(ctx context.Context, arg ReverseTransaction
 }
 
 const searchTransactions = `-- name: SearchTransactions :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency FROM finance_transactions
+SELECT id, tenant_id, entity_id, transaction_number, transaction_date, posting_date, due_date, description, reference_number, external_reference, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approved_by, approved_at, approval_notes, is_recurring, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_errors, transaction_attributes, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at, transaction_type, transaction_status, approval_status, validation_status, recurring_frequency
+FROM finance_transactions
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND (
@@ -1213,17 +1217,18 @@ WHERE tenant_id = current_tenant_id()
 ORDER BY 
   CASE WHEN transaction_number ILIKE $1 || '%' THEN 1 ELSE 2 END,
   transaction_date DESC
-LIMIT $2 OFFSET $3
+LIMIT $3
+OFFSET $2
 `
 
 type SearchTransactionsParams struct {
-	Column1 string `json:"column_1"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
+	Search string `json:"search"`
+	Offset int32  `json:"offset"`
+	Limit  int32  `json:"limit"`
 }
 
 func (q *Queries) SearchTransactions(ctx context.Context, arg SearchTransactionsParams) ([]*FinanceTransaction, error) {
-	rows, err := q.db.Query(ctx, searchTransactions, arg.Column1, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, searchTransactions, arg.Search, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

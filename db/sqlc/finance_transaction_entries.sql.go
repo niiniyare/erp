@@ -15,29 +15,30 @@ import (
 )
 
 const countAccountEntries = `-- name: CountAccountEntries :one
-SELECT COUNT(*) FROM finance_transaction_entries te
+SELECT COUNT(*)
+FROM finance_transaction_entries te
 JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.account_id = $1 
+WHERE te.account_id = $1
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
-  AND ($2::date IS NULL OR t.transaction_date >= $2)
-  AND ($3::date IS NULL OR t.transaction_date <= $3)
-  AND ($4::text IS NULL OR t.transaction_status = $4)
+  AND ($2::date IS NULL OR t.transaction_date >= $2::date)
+  AND ($3::date IS NULL OR t.transaction_date <= $3::date)
+  AND ($4::transaction_status_enum IS NULL OR t.transaction_status = $4::transaction_status_enum)
 `
 
 type CountAccountEntriesParams struct {
-	AccountID uuid.UUID `json:"account_id"`
-	Column2   time.Time `json:"column_2"`
-	Column3   time.Time `json:"column_3"`
-	Column4   string    `json:"column_4"`
+	AccountID         uuid.UUID                 `json:"account_id"`
+	DateFrom          time.Time                 `json:"date_from"`
+	DateTo            time.Time                 `json:"date_to"`
+	TransactionStatus NullTransactionStatusEnum `json:"transaction_status"`
 }
 
 func (q *Queries) CountAccountEntries(ctx context.Context, arg CountAccountEntriesParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countAccountEntries,
 		arg.AccountID,
-		arg.Column2,
-		arg.Column3,
-		arg.Column4,
+		arg.DateFrom,
+		arg.DateTo,
+		arg.TransactionStatus,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -66,7 +67,22 @@ INSERT INTO finance_transaction_entries (
     tax_amount
 ) VALUES (
     current_tenant_id(),
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+    $1, 
+    $2, 
+    $3, 
+    $4, 
+    $5, 
+    $6, 
+    $7, 
+    $8, 
+    $9, 
+    $10, 
+    $11, 
+    $12, 
+    $13, 
+    $14, 
+    $15, 
+    $16
 ) RETURNING id, tenant_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
 `
 
@@ -182,7 +198,7 @@ GROUP BY account_id
 
 type GetAccountBalanceParams struct {
 	AccountID uuid.UUID `json:"account_id"`
-	Column2   time.Time `json:"column_2"`
+	AsOfDate  time.Time `json:"as_of_date"`
 }
 
 type GetAccountBalanceRow struct {
@@ -193,7 +209,7 @@ type GetAccountBalanceRow struct {
 }
 
 func (q *Queries) GetAccountBalance(ctx context.Context, arg GetAccountBalanceParams) (*GetAccountBalanceRow, error) {
-	row := q.db.QueryRow(ctx, getAccountBalance, arg.AccountID, arg.Column2)
+	row := q.db.QueryRow(ctx, getAccountBalance, arg.AccountID, arg.AsOfDate)
 	var i GetAccountBalanceRow
 	err := row.Scan(
 		&i.AccountID,
@@ -211,26 +227,27 @@ SELECT
     t.transaction_date,
     t.transaction_type,
     t.transaction_status,
-    t.description as transaction_description
+    t.description AS transaction_description
 FROM finance_transaction_entries te
 JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.account_id = $1 
+WHERE te.account_id = $1
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
-  AND ($2::date IS NULL OR t.transaction_date >= $2)
-  AND ($3::date IS NULL OR t.transaction_date <= $3)
-  AND ($4::text IS NULL OR t.transaction_status = $4)
+  AND ($2::date IS NULL OR t.transaction_date >= $2::date)
+  AND ($3::date IS NULL OR t.transaction_date <= $3::date)
+  AND ($4::transaction_status_enum IS NULL OR t.transaction_status = $4::transaction_status_enum)
 ORDER BY t.transaction_date DESC, te.entry_number ASC
-LIMIT $5 OFFSET $6
+LIMIT $6
+OFFSET $5
 `
 
 type GetAccountEntriesParams struct {
-	AccountID uuid.UUID `json:"account_id"`
-	Column2   time.Time `json:"column_2"`
-	Column3   time.Time `json:"column_3"`
-	Column4   string    `json:"column_4"`
-	Limit     int32     `json:"limit"`
-	Offset    int32     `json:"offset"`
+	AccountID         uuid.UUID                 `json:"account_id"`
+	DateFrom          time.Time                 `json:"date_from"`
+	DateTo            time.Time                 `json:"date_to"`
+	TransactionStatus NullTransactionStatusEnum `json:"transaction_status"`
+	Offset            int32                     `json:"offset"`
+	Limit             int32                     `json:"limit"`
 }
 
 type GetAccountEntriesRow struct {
@@ -268,11 +285,11 @@ type GetAccountEntriesRow struct {
 func (q *Queries) GetAccountEntries(ctx context.Context, arg GetAccountEntriesParams) ([]*GetAccountEntriesRow, error) {
 	rows, err := q.db.Query(ctx, getAccountEntries,
 		arg.AccountID,
-		arg.Column2,
-		arg.Column3,
-		arg.Column4,
-		arg.Limit,
+		arg.DateFrom,
+		arg.DateTo,
+		arg.TransactionStatus,
 		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -343,8 +360,8 @@ ORDER BY t.transaction_date DESC, te.entry_number ASC
 
 type GetEntriesByCostCenterParams struct {
 	CostCenter *string   `json:"cost_center"`
-	Column2    time.Time `json:"column_2"`
-	Column3    time.Time `json:"column_3"`
+	DateFrom   time.Time `json:"date_from"`
+	DateTo     time.Time `json:"date_to"`
 }
 
 type GetEntriesByCostCenterRow struct {
@@ -379,7 +396,7 @@ type GetEntriesByCostCenterRow struct {
 }
 
 func (q *Queries) GetEntriesByCostCenter(ctx context.Context, arg GetEntriesByCostCenterParams) ([]*GetEntriesByCostCenterRow, error) {
-	rows, err := q.db.Query(ctx, getEntriesByCostCenter, arg.CostCenter, arg.Column2, arg.Column3)
+	rows, err := q.db.Query(ctx, getEntriesByCostCenter, arg.CostCenter, arg.DateFrom, arg.DateTo)
 	if err != nil {
 		return nil, err
 	}
@@ -428,7 +445,7 @@ func (q *Queries) GetEntriesByCostCenter(ctx context.Context, arg GetEntriesByCo
 }
 
 const getEntriesByDepartment = `-- name: GetEntriesByDepartment :many
-SELECT 
+SELECT
     te.id, te.tenant_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
     a.account_code,
     a.account_name,
@@ -437,19 +454,19 @@ SELECT
 FROM finance_transaction_entries te
 JOIN finance_chart_of_accounts a ON te.account_id = a.id
 JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.department = $1 
+WHERE te.department = $1
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND t.transaction_status = 'POSTED'
-  AND ($2::date IS NULL OR t.transaction_date >= $2)
-  AND ($3::date IS NULL OR t.transaction_date <= $3)
+  AND ($2::date IS NULL OR t.transaction_date >= $2::date)
+  AND ($3::date IS NULL OR t.transaction_date <= $3::date)
 ORDER BY t.transaction_date DESC, te.entry_number ASC
 `
 
 type GetEntriesByDepartmentParams struct {
 	Department *string   `json:"department"`
-	Column2    time.Time `json:"column_2"`
-	Column3    time.Time `json:"column_3"`
+	DateFrom   time.Time `json:"date_from"`
+	DateTo     time.Time `json:"date_to"`
 }
 
 type GetEntriesByDepartmentRow struct {
@@ -484,7 +501,7 @@ type GetEntriesByDepartmentRow struct {
 }
 
 func (q *Queries) GetEntriesByDepartment(ctx context.Context, arg GetEntriesByDepartmentParams) ([]*GetEntriesByDepartmentRow, error) {
-	rows, err := q.db.Query(ctx, getEntriesByDepartment, arg.Department, arg.Column2, arg.Column3)
+	rows, err := q.db.Query(ctx, getEntriesByDepartment, arg.Department, arg.DateFrom, arg.DateTo)
 	if err != nil {
 		return nil, err
 	}
@@ -553,8 +570,8 @@ ORDER BY t.transaction_date DESC, te.entry_number ASC
 
 type GetEntriesByProjectParams struct {
 	ProjectID *uuid.UUID `json:"project_id"`
-	Column2   time.Time  `json:"column_2"`
-	Column3   time.Time  `json:"column_3"`
+	DateFrom  time.Time  `json:"date_from"`
+	DateTo    time.Time  `json:"date_to"`
 }
 
 type GetEntriesByProjectRow struct {
@@ -589,7 +606,7 @@ type GetEntriesByProjectRow struct {
 }
 
 func (q *Queries) GetEntriesByProject(ctx context.Context, arg GetEntriesByProjectParams) ([]*GetEntriesByProjectRow, error) {
-	rows, err := q.db.Query(ctx, getEntriesByProject, arg.ProjectID, arg.Column2, arg.Column3)
+	rows, err := q.db.Query(ctx, getEntriesByProject, arg.ProjectID, arg.DateFrom, arg.DateTo)
 	if err != nil {
 		return nil, err
 	}
@@ -657,8 +674,8 @@ ORDER BY te.tax_code, te.tax_rate
 `
 
 type GetEntryTaxSummaryParams struct {
-	TransactionDate   time.Time `json:"transaction_date"`
-	TransactionDate_2 time.Time `json:"transaction_date_2"`
+	DateFrom time.Time `json:"date_from"`
+	DateTo   time.Time `json:"date_to"`
 }
 
 type GetEntryTaxSummaryRow struct {
@@ -670,7 +687,7 @@ type GetEntryTaxSummaryRow struct {
 }
 
 func (q *Queries) GetEntryTaxSummary(ctx context.Context, arg GetEntryTaxSummaryParams) ([]*GetEntryTaxSummaryRow, error) {
-	rows, err := q.db.Query(ctx, getEntryTaxSummary, arg.TransactionDate, arg.TransactionDate_2)
+	rows, err := q.db.Query(ctx, getEntryTaxSummary, arg.DateFrom, arg.DateTo)
 	if err != nil {
 		return nil, err
 	}
@@ -833,37 +850,37 @@ func (q *Queries) GetTransactionEntryByID(ctx context.Context, id uuid.UUID) (*F
 }
 
 const getTrialBalance = `-- name: GetTrialBalance :many
-SELECT 
+SELECT
     a.id,
     a.account_code,
     a.account_name,
     a.root_type,
     a.account_type,
     a.normal_balance,
-    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE 0 END), 0) as total_debits,
-    COALESCE(SUM(CASE WHEN te.credit_amount > 0 THEN te.credit_amount ELSE 0 END), 0) as total_credits,
-    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE -te.credit_amount END), 0) as net_balance
+    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE 0 END), 0) AS total_debits,
+    COALESCE(SUM(CASE WHEN te.credit_amount > 0 THEN te.credit_amount ELSE 0 END), 0) AS total_credits,
+    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE -te.credit_amount END), 0) AS net_balance
 FROM finance_chart_of_accounts a
-LEFT JOIN finance_transaction_entries te ON a.id = te.account_id 
+LEFT JOIN finance_transaction_entries te ON a.id = te.account_id
     AND te.tenant_id = current_tenant_id()
     AND te.deleted_at IS NULL
-LEFT JOIN finance_transactions t ON te.transaction_id = t.id 
+LEFT JOIN finance_transactions t ON te.transaction_id = t.id
     AND t.transaction_status = 'POSTED'
-    AND ($1::date IS NULL OR t.posting_date <= $1)
+    AND ($1::date IS NULL OR t.posting_date <= $1::date)
 WHERE a.tenant_id = current_tenant_id()
   AND a.deleted_at IS NULL
   AND a.is_active = true
 GROUP BY a.id, a.account_code, a.account_name, a.root_type, a.account_type, a.normal_balance
-HAVING 
+HAVING
     COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE 0 END), 0) != 0 OR
     COALESCE(SUM(CASE WHEN te.credit_amount > 0 THEN te.credit_amount ELSE 0 END), 0) != 0 OR
-    $2::boolean = true -- include_zero_balances parameter
+    $2 = true
 ORDER BY a.account_code ASC
 `
 
 type GetTrialBalanceParams struct {
-	Column1 time.Time `json:"column_1"`
-	Column2 bool      `json:"column_2"`
+	AsOfDate            time.Time   `json:"as_of_date"`
+	IncludeZeroBalances interface{} `json:"include_zero_balances"`
 }
 
 type GetTrialBalanceRow struct {
@@ -879,7 +896,7 @@ type GetTrialBalanceRow struct {
 }
 
 func (q *Queries) GetTrialBalance(ctx context.Context, arg GetTrialBalanceParams) ([]*GetTrialBalanceRow, error) {
-	rows, err := q.db.Query(ctx, getTrialBalance, arg.Column1, arg.Column2)
+	rows, err := q.db.Query(ctx, getTrialBalance, arg.AsOfDate, arg.IncludeZeroBalances)
 	if err != nil {
 		return nil, err
 	}
@@ -1061,51 +1078,50 @@ func (q *Queries) ListTransactionEntries(ctx context.Context, transactionID uuid
 
 const markEntriesReconciled = `-- name: MarkEntriesReconciled :exec
 UPDATE finance_transaction_entries
-SET 
+SET
     reconciled = true,
-    reconciled_date = $2,
-    reconciliation_reference = $3,
+    reconciled_date = $1,
+    reconciliation_reference = $2,
     updated_at = NOW()
-WHERE id = ANY($1::uuid[])
+WHERE id = ANY($3::uuid[])
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
 
 type MarkEntriesReconciledParams struct {
-	Column1                 []uuid.UUID `json:"column_1"`
 	ReconciledDate          time.Time   `json:"reconciled_date"`
 	ReconciliationReference *string     `json:"reconciliation_reference"`
+	EntryIds                []uuid.UUID `json:"entry_ids"`
 }
 
 func (q *Queries) MarkEntriesReconciled(ctx context.Context, arg MarkEntriesReconciledParams) error {
-	_, err := q.db.Exec(ctx, markEntriesReconciled, arg.Column1, arg.ReconciledDate, arg.ReconciliationReference)
+	_, err := q.db.Exec(ctx, markEntriesReconciled, arg.ReconciledDate, arg.ReconciliationReference, arg.EntryIds)
 	return err
 }
 
 const updateTransactionEntry = `-- name: UpdateTransactionEntry :one
 UPDATE finance_transaction_entries
 SET 
-    account_id = COALESCE($2, account_id),
-    debit_amount = COALESCE($3, debit_amount),
-    credit_amount = COALESCE($4, credit_amount),
-    description = COALESCE($5, description),
-    reference = COALESCE($6, reference),
-    cost_center = COALESCE($7, cost_center),
-    department = COALESCE($8, department),
-    project_id = COALESCE($9, project_id),
-    tax_code = COALESCE($10, tax_code),
-    tax_rate = COALESCE($11, tax_rate),
-    tax_amount = COALESCE($12, tax_amount),
-    updated_at = NOW()
-WHERE id = $1 
+    account_id    = COALESCE($1, account_id),
+    debit_amount  = COALESCE($2, debit_amount),
+    credit_amount = COALESCE($3, credit_amount),
+    description   = COALESCE($4, description),
+    reference     = COALESCE($5, reference),
+    cost_center   = COALESCE($6, cost_center),
+    department    = COALESCE($7, department),
+    project_id    = COALESCE($8, project_id),
+    tax_code      = COALESCE($9, tax_code),
+    tax_rate      = COALESCE($10, tax_rate),
+    tax_amount    = COALESCE($11, tax_amount),
+    updated_at    = NOW()
+WHERE id = $12
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 RETURNING id, tenant_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
 `
 
 type UpdateTransactionEntryParams struct {
-	ID           uuid.UUID      `json:"id"`
-	AccountID    uuid.UUID      `json:"account_id"`
+	AccountID    *uuid.UUID     `json:"account_id"`
 	DebitAmount  pgtype.Numeric `json:"debit_amount"`
 	CreditAmount pgtype.Numeric `json:"credit_amount"`
 	Description  string         `json:"description"`
@@ -1116,11 +1132,11 @@ type UpdateTransactionEntryParams struct {
 	TaxCode      *string        `json:"tax_code"`
 	TaxRate      pgtype.Numeric `json:"tax_rate"`
 	TaxAmount    pgtype.Numeric `json:"tax_amount"`
+	ID           uuid.UUID      `json:"id"`
 }
 
 func (q *Queries) UpdateTransactionEntry(ctx context.Context, arg UpdateTransactionEntryParams) (*FinanceTransactionEntry, error) {
 	row := q.db.QueryRow(ctx, updateTransactionEntry,
-		arg.ID,
 		arg.AccountID,
 		arg.DebitAmount,
 		arg.CreditAmount,
@@ -1132,6 +1148,7 @@ func (q *Queries) UpdateTransactionEntry(ctx context.Context, arg UpdateTransact
 		arg.TaxCode,
 		arg.TaxRate,
 		arg.TaxAmount,
+		arg.ID,
 	)
 	var i FinanceTransactionEntry
 	err := row.Scan(

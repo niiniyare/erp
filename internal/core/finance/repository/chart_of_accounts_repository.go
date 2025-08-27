@@ -13,9 +13,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 
+	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/finance/domain"
 	"github.com/niiniyare/erp/internal/shared/tracing"
-	db "github.com/niiniyare/erp/db/sqlc"
 )
 
 type chartOfAccountsRepository struct {
@@ -130,21 +130,20 @@ func (r *chartOfAccountsRepository) Update(ctx context.Context, account *domain.
 	ctx, span := r.tracing.StartSpan(ctx, "ChartOfAccountsRepository.Update")
 	defer span.End()
 
-
 	// Map account to SQLC parameters
 	params := db.UpdateAccountParams{
-		ID:                          account.ID,
-		AccountName:                 account.AccountName,
-		AccountDescription:          getStringValue(account.AccountDescription),
-		AccountType:                 account.AccountType,
-		AccountSubtype:              account.AccountSubtype,
-		IsActive:                    account.IsActive,
-		AllowManualEntries:          account.AllowManualEntries,
-		RequireReference:            account.RequireReference,
-		FinancialStatementLine:      account.FinancialStatementLine,
-		ReportOrder:                 &account.ReportOrder,
-		IsBudgetable:                &account.IsBudgetable,
-		UpdatedBy:                   account.UpdatedBy,
+		AccountID:              account.ID,
+		AccountName:            &account.AccountName,
+		AccountDescription:     getStringValue(account.AccountDescription),
+		AccountType:            &account.AccountType,
+		AccountSubtype:         account.AccountSubtype,
+		IsActive:               &account.IsActive,
+		AllowManualEntries:     &account.AllowManualEntries,
+		RequireReference:       &account.RequireReference,
+		FinancialStatementLine: account.FinancialStatementLine,
+		ReportOrder:            &account.ReportOrder,
+		IsBudgetable:           &account.IsBudgetable,
+		UpdatedBy:              account.UpdatedBy,
 	}
 
 	// Handle optional budget variance threshold
@@ -178,7 +177,7 @@ func (r *chartOfAccountsRepository) Delete(ctx context.Context, id uuid.UUID) er
 	defer span.End()
 
 	params := db.SoftDeleteAccountParams{
-		ID:        id,
+		AccountID: id,
 		UpdatedBy: nil, // TODO: Get from context
 	}
 	err := r.store.SoftDeleteAccount(ctx, params)
@@ -233,22 +232,22 @@ func (r *chartOfAccountsRepository) Count(ctx context.Context, filter *domain.Ac
 	if filter.RootType != nil {
 		switch *filter.RootType {
 		case domain.RootTypeAsset:
-			params.Column1 = "ASSET"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumASSET, Valid: true}
 		case domain.RootTypeLiability:
-			params.Column1 = "LIABILITY"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumLIABILITY, Valid: true}
 		case domain.RootTypeEquity:
-			params.Column1 = "EQUITY"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumEQUITY, Valid: true}
 		case domain.RootTypeRevenue:
-			params.Column1 = "REVENUE"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumREVENUE, Valid: true}
 		case domain.RootTypeExpense:
-			params.Column1 = "EXPENSE"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumEXPENSE, Valid: true}
 		}
 	}
 
 	// Note: AccountType filter not available in domain.AccountFilter
 
 	if filter.IsActive != nil {
-		params.Column3 = *filter.IsActive
+		params.IsActive = *filter.IsActive
 	}
 
 	count, err := r.store.CountAccounts(ctx, params)
@@ -423,7 +422,6 @@ func (r *chartOfAccountsRepository) GetTrialBalance(ctx context.Context, entityI
 	// For now, return empty result
 	entries := make([]*domain.TrialBalanceEntry, 0)
 
-
 	return entries, nil
 }
 
@@ -553,14 +551,12 @@ func (r *chartOfAccountsRepository) UpdateBalance(ctx context.Context, accountID
 	return nil
 }
 
-
 func (r *chartOfAccountsRepository) GetChildren(ctx context.Context, accountID uuid.UUID) ([]*domain.ChartOfAccounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "ChartOfAccountsRepository.GetChildren")
 	defer span.End()
 
 	return r.ListByParent(ctx, accountID)
 }
-
 
 // Error mapping helper
 func (r *chartOfAccountsRepository) mapDatabaseError(err error, operation string) error {
@@ -610,3 +606,4 @@ func getStringValue(s *string) string {
 	}
 	return *s
 }
+

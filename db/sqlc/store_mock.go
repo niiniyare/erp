@@ -178,31 +178,18 @@ func (mr *MockStoreMockRecorder) BulkAddComplianceFlags(ctx, arg any) *gomock.Ca
 }
 
 // BulkCreateEntityStates mocks base method.
-func (m *MockStore) BulkCreateEntityStates(ctx context.Context, arg BulkCreateEntityStatesParams) error {
+func (m *MockStore) BulkCreateEntityStates(ctx context.Context, arg []BulkCreateEntityStatesParams) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BulkCreateEntityStates", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // BulkCreateEntityStates indicates an expected call of BulkCreateEntityStates.
 func (mr *MockStoreMockRecorder) BulkCreateEntityStates(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkCreateEntityStates", reflect.TypeOf((*MockStore)(nil).BulkCreateEntityStates), ctx, arg)
-}
-
-// BulkCreateEntityStatesFixed mocks base method.
-func (m *MockStore) BulkCreateEntityStatesFixed(ctx context.Context, arg BulkCreateEntityStatesFixedParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BulkCreateEntityStatesFixed", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// BulkCreateEntityStatesFixed indicates an expected call of BulkCreateEntityStatesFixed.
-func (mr *MockStoreMockRecorder) BulkCreateEntityStatesFixed(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkCreateEntityStatesFixed", reflect.TypeOf((*MockStore)(nil).BulkCreateEntityStatesFixed), ctx, arg)
 }
 
 // BulkEvaluateFeatureFlags mocks base method.
@@ -288,21 +275,6 @@ func (m *MockStore) BulkUpdateTenantStatus(ctx context.Context, arg BulkUpdateTe
 func (mr *MockStoreMockRecorder) BulkUpdateTenantStatus(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkUpdateTenantStatus", reflect.TypeOf((*MockStore)(nil).BulkUpdateTenantStatus), ctx, arg)
-}
-
-// Bulk_CreateEntityStates mocks base method.
-func (m *MockStore) Bulk_CreateEntityStates(ctx context.Context, arg []Bulk_CreateEntityStatesParams) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Bulk_CreateEntityStates", ctx, arg)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Bulk_CreateEntityStates indicates an expected call of Bulk_CreateEntityStates.
-func (mr *MockStoreMockRecorder) Bulk_CreateEntityStates(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bulk_CreateEntityStates", reflect.TypeOf((*MockStore)(nil).Bulk_CreateEntityStates), ctx, arg)
 }
 
 // CacheEvaluationResult mocks base method.
@@ -1305,18 +1277,18 @@ func (mr *MockStoreMockRecorder) GetAccountByCode(ctx, accountCode any) *gomock.
 }
 
 // GetAccountByID mocks base method.
-func (m *MockStore) GetAccountByID(ctx context.Context, id uuid.UUID) (*FinanceChartOfAccount, error) {
+func (m *MockStore) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceChartOfAccount, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccountByID", ctx, id)
+	ret := m.ctrl.Call(m, "GetAccountByID", ctx, accountID)
 	ret0, _ := ret[0].(*FinanceChartOfAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAccountByID indicates an expected call of GetAccountByID.
-func (mr *MockStoreMockRecorder) GetAccountByID(ctx, id any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetAccountByID(ctx, accountID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountByID", reflect.TypeOf((*MockStore)(nil).GetAccountByID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountByID", reflect.TypeOf((*MockStore)(nil).GetAccountByID), ctx, accountID)
 }
 
 // GetAccountEntries mocks base method.
@@ -1335,18 +1307,18 @@ func (mr *MockStoreMockRecorder) GetAccountEntries(ctx, arg any) *gomock.Call {
 }
 
 // GetAccountHierarchy mocks base method.
-func (m *MockStore) GetAccountHierarchy(ctx context.Context, dollar_1 string) ([]*FinanceChartOfAccount, error) {
+func (m *MockStore) GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceChartOfAccount, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccountHierarchy", ctx, dollar_1)
+	ret := m.ctrl.Call(m, "GetAccountHierarchy", ctx, accountPathPrefix)
 	ret0, _ := ret[0].([]*FinanceChartOfAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAccountHierarchy indicates an expected call of GetAccountHierarchy.
-func (mr *MockStoreMockRecorder) GetAccountHierarchy(ctx, dollar_1 any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetAccountHierarchy(ctx, accountPathPrefix any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountHierarchy", reflect.TypeOf((*MockStore)(nil).GetAccountHierarchy), ctx, dollar_1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountHierarchy", reflect.TypeOf((*MockStore)(nil).GetAccountHierarchy), ctx, accountPathPrefix)
 }
 
 // GetAccountsByEntity mocks base method.

@@ -203,27 +203,27 @@ func mapAccountFilterToSQLCParams(filter *domain.AccountFilter) (db.ListAccounts
 		params.Offset = int32(*filter.Offset)
 	}
 
-	// Map root type filter to Column1
+	// Map root type filter to RootType
 	if filter.RootType != nil {
 		switch *filter.RootType {
 		case domain.RootTypeAsset:
-			params.Column1 = "ASSET"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumASSET, Valid: true}
 		case domain.RootTypeLiability:
-			params.Column1 = "LIABILITY"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumLIABILITY, Valid: true}
 		case domain.RootTypeEquity:
-			params.Column1 = "EQUITY"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumEQUITY, Valid: true}
 		case domain.RootTypeRevenue:
-			params.Column1 = "REVENUE"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumREVENUE, Valid: true}
 		case domain.RootTypeExpense:
-			params.Column1 = "EXPENSE"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumEXPENSE, Valid: true}
 		}
 	}
 
-	// Map active status to Column3
+	// Map active status to IsActive
 	if filter.IsActive != nil {
-		params.Column3 = *filter.IsActive
+		params.IsActive = *filter.IsActive
 	} else {
-		params.Column3 = true // Default to active accounts
+		params.IsActive = true // Default to active accounts
 	}
 
 	return params, nil
@@ -463,27 +463,27 @@ func mapAccountFilterToSQLCParams(filter *domain.AccountFilter) (db.ListAccounts
 		params.Offset = int32(*filter.Offset)
 	}
 
-	// Map root type filter to Column1
+	// Map root type filter to RootType
 	if filter.RootType != nil {
 		switch *filter.RootType {
 		case domain.RootTypeAsset:
-			params.Column1 = "ASSET"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumASSET, Valid: true}
 		case domain.RootTypeLiability:
-			params.Column1 = "LIABILITY"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumLIABILITY, Valid: true}
 		case domain.RootTypeEquity:
-			params.Column1 = "EQUITY"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumEQUITY, Valid: true}
 		case domain.RootTypeRevenue:
-			params.Column1 = "REVENUE"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumREVENUE, Valid: true}
 		case domain.RootTypeExpense:
-			params.Column1 = "EXPENSE"
+			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumEXPENSE, Valid: true}
 		}
 	}
 
-	// Map active status to Column3
+	// Map active status to IsActive
 	if filter.IsActive != nil {
-		params.Column3 = *filter.IsActive
+		params.IsActive = *filter.IsActive
 	} else {
-		params.Column3 = true // Default to active accounts
+		params.IsActive = true // Default to active accounts
 	}
 
 	return params, nil

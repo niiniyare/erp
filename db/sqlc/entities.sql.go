@@ -68,29 +68,7 @@ func (q *Queries) BatchUpdateEntityStatus(ctx context.Context, arg BatchUpdateEn
 	return err
 }
 
-const bulkMoveEntities = `-- name: BulkMoveEntities :exec
-UPDATE
-  entities
-SET
-  parent_id = $2,
-  updated_at = NOW()
-WHERE
-  tenant_id = current_tenant_id()
-  AND uuid = ANY($1::UUID [])
-  AND deleted_at IS NULL
-`
-
-type BulkMoveEntitiesParams struct {
-	Column1  []uuid.UUID `json:"column_1"`
-	ParentID *uuid.UUID  `json:"parent_id"`
-}
-
-func (q *Queries) BulkMoveEntities(ctx context.Context, arg BulkMoveEntitiesParams) error {
-	_, err := q.db.Exec(ctx, bulkMoveEntities, arg.Column1, arg.ParentID)
-	return err
-}
-
-type Bulk_CreateEntityStatesParams struct {
+type BulkCreateEntityStatesParams struct {
 	Uuid         uuid.UUID    `json:"uuid"`
 	TenantID     uuid.UUID    `json:"tenant_id"`
 	FiscalYear   *int16       `json:"fiscal_year"`
@@ -101,6 +79,26 @@ type Bulk_CreateEntityStatesParams struct {
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
 	DeletedAt    sql.NullTime `json:"deleted_at"`
+}
+
+const bulkMoveEntities = `-- name: BulkMoveEntities :exec
+UPDATE entities
+SET
+  parent_id = $1,
+  updated_at = NOW()
+WHERE tenant_id = current_tenant_id()
+  AND uuid = ANY($2::UUID[])
+  AND deleted_at IS NULL
+`
+
+type BulkMoveEntitiesParams struct {
+	ParentID  *uuid.UUID  `json:"parent_id"`
+	EntityIds []uuid.UUID `json:"entity_ids"`
+}
+
+func (q *Queries) BulkMoveEntities(ctx context.Context, arg BulkMoveEntitiesParams) error {
+	_, err := q.db.Exec(ctx, bulkMoveEntities, arg.ParentID, arg.EntityIds)
+	return err
 }
 
 const checkCircularReference = `-- name: CheckCircularReference :one

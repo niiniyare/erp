@@ -24,19 +24,33 @@ INSERT INTO finance_transaction_entries (
     tax_amount
 ) VALUES (
     current_tenant_id(),
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+    sqlc.arg('transaction_id'), 
+    sqlc.arg('entry_number'), 
+    sqlc.arg('account_id'), 
+    sqlc.arg('debit_amount'), 
+    sqlc.arg('credit_amount'), 
+    sqlc.arg('description'), 
+    sqlc.narg('reference'), 
+    sqlc.narg('cost_center'), 
+    sqlc.narg('department'), 
+    sqlc.narg('project_id'), 
+    sqlc.narg('original_currency'), 
+    sqlc.arg('original_amount'), 
+    sqlc.arg('exchange_rate'), 
+    sqlc.narg('tax_code'), 
+    sqlc.arg('tax_rate'), 
+    sqlc.arg('tax_amount')
 ) RETURNING *;
-
 
 -- name: GetTransactionEntryByID :one
 SELECT * FROM finance_transaction_entries
-WHERE id = $1 
+WHERE id = sqlc.arg('id') 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
 -- name: ListTransactionEntries :many
 SELECT * FROM finance_transaction_entries
-WHERE transaction_id = $1 
+WHERE transaction_id = sqlc.arg('transaction_id') 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 ORDER BY entry_number ASC;
@@ -51,7 +65,7 @@ SELECT
     a.normal_balance
 FROM finance_transaction_entries te
 JOIN finance_chart_of_accounts a ON te.account_id = a.id
-WHERE te.transaction_id = $1 
+WHERE te.transaction_id = sqlc.arg('transaction_id') 
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
 ORDER BY te.entry_number ASC;
@@ -63,56 +77,58 @@ SELECT
     t.transaction_date,
     t.transaction_type,
     t.transaction_status,
-    t.description as transaction_description
+    t.description AS transaction_description
 FROM finance_transaction_entries te
 JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.account_id = $1 
+WHERE te.account_id = sqlc.arg('account_id')
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
-  AND ($2::date IS NULL OR t.transaction_date >= $2)
-  AND ($3::date IS NULL OR t.transaction_date <= $3)
-  AND ($4::text IS NULL OR t.transaction_status = $4)
+  AND (sqlc.narg('date_from')::date IS NULL OR t.transaction_date >= sqlc.narg('date_from')::date)
+  AND (sqlc.narg('date_to')::date IS NULL OR t.transaction_date <= sqlc.narg('date_to')::date)
+  AND (sqlc.narg('transaction_status')::transaction_status_enum IS NULL OR t.transaction_status = sqlc.narg('transaction_status')::transaction_status_enum)
 ORDER BY t.transaction_date DESC, te.entry_number ASC
-LIMIT $5 OFFSET $6;
+LIMIT sqlc.arg('limit')
+OFFSET sqlc.arg('offset');
 
 -- name: CountAccountEntries :one
-SELECT COUNT(*) FROM finance_transaction_entries te
+SELECT COUNT(*)
+FROM finance_transaction_entries te
 JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.account_id = $1 
+WHERE te.account_id = sqlc.arg('account_id')
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
-  AND ($2::date IS NULL OR t.transaction_date >= $2)
-  AND ($3::date IS NULL OR t.transaction_date <= $3)
-  AND ($4::text IS NULL OR t.transaction_status = $4);
+  AND (sqlc.narg('date_from')::date IS NULL OR t.transaction_date >= sqlc.narg('date_from')::date)
+  AND (sqlc.narg('date_to')::date IS NULL OR t.transaction_date <= sqlc.narg('date_to')::date)
+  AND (sqlc.narg('transaction_status')::transaction_status_enum IS NULL OR t.transaction_status = sqlc.narg('transaction_status')::transaction_status_enum);
 
 -- name: UpdateTransactionEntry :one
 UPDATE finance_transaction_entries
 SET 
-    account_id = COALESCE($2, account_id),
-    debit_amount = COALESCE($3, debit_amount),
-    credit_amount = COALESCE($4, credit_amount),
-    description = COALESCE($5, description),
-    reference = COALESCE($6, reference),
-    cost_center = COALESCE($7, cost_center),
-    department = COALESCE($8, department),
-    project_id = COALESCE($9, project_id),
-    tax_code = COALESCE($10, tax_code),
-    tax_rate = COALESCE($11, tax_rate),
-    tax_amount = COALESCE($12, tax_amount),
-    updated_at = NOW()
-WHERE id = $1 
+    account_id    = COALESCE(sqlc.narg('account_id'), account_id),
+    debit_amount  = COALESCE(sqlc.narg('debit_amount'), debit_amount),
+    credit_amount = COALESCE(sqlc.narg('credit_amount'), credit_amount),
+    description   = COALESCE(sqlc.narg('description'), description),
+    reference     = COALESCE(sqlc.narg('reference'), reference),
+    cost_center   = COALESCE(sqlc.narg('cost_center'), cost_center),
+    department    = COALESCE(sqlc.narg('department'), department),
+    project_id    = COALESCE(sqlc.narg('project_id'), project_id),
+    tax_code      = COALESCE(sqlc.narg('tax_code'), tax_code),
+    tax_rate      = COALESCE(sqlc.narg('tax_rate'), tax_rate),
+    tax_amount    = COALESCE(sqlc.narg('tax_amount'), tax_amount),
+    updated_at    = NOW()
+WHERE id = sqlc.arg('id')
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 RETURNING *;
 
 -- name: DeleteTransactionEntry :exec
 DELETE FROM finance_transaction_entries
-WHERE id = $1 
+WHERE id = sqlc.arg('id') 
   AND tenant_id = current_tenant_id();
 
 -- name: DeleteTransactionEntries :exec
 DELETE FROM finance_transaction_entries
-WHERE transaction_id = $1 
+WHERE transaction_id = sqlc.arg('transaction_id') 
   AND tenant_id = current_tenant_id();
 
 -- name: GetAccountBalance :one
@@ -123,40 +139,12 @@ SELECT
     SUM(CASE WHEN debit_amount > 0 THEN debit_amount ELSE -credit_amount END) as net_balance
 FROM finance_transaction_entries te
 JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.account_id = $1 
+WHERE te.account_id = sqlc.arg('account_id') 
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND t.transaction_status = 'POSTED'
-  AND ($2::date IS NULL OR t.posting_date <= $2)
+  AND (sqlc.narg('as_of_date')::date IS NULL OR t.posting_date <= sqlc.narg('as_of_date'))
 GROUP BY account_id;
-
--- name: GetTrialBalance :many
-SELECT 
-    a.id,
-    a.account_code,
-    a.account_name,
-    a.root_type,
-    a.account_type,
-    a.normal_balance,
-    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE 0 END), 0) as total_debits,
-    COALESCE(SUM(CASE WHEN te.credit_amount > 0 THEN te.credit_amount ELSE 0 END), 0) as total_credits,
-    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE -te.credit_amount END), 0) as net_balance
-FROM finance_chart_of_accounts a
-LEFT JOIN finance_transaction_entries te ON a.id = te.account_id 
-    AND te.tenant_id = current_tenant_id()
-    AND te.deleted_at IS NULL
-LEFT JOIN finance_transactions t ON te.transaction_id = t.id 
-    AND t.transaction_status = 'POSTED'
-    AND ($1::date IS NULL OR t.posting_date <= $1)
-WHERE a.tenant_id = current_tenant_id()
-  AND a.deleted_at IS NULL
-  AND a.is_active = true
-GROUP BY a.id, a.account_code, a.account_name, a.root_type, a.account_type, a.normal_balance
-HAVING 
-    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE 0 END), 0) != 0 OR
-    COALESCE(SUM(CASE WHEN te.credit_amount > 0 THEN te.credit_amount ELSE 0 END), 0) != 0 OR
-    $2::boolean = true -- include_zero_balances parameter
-ORDER BY a.account_code ASC;
 
 -- name: GetEntriesByCostCenter :many
 SELECT 
@@ -168,30 +156,12 @@ SELECT
 FROM finance_transaction_entries te
 JOIN finance_chart_of_accounts a ON te.account_id = a.id
 JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.cost_center = $1 
+WHERE te.cost_center = sqlc.narg('cost_center') 
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND t.transaction_status = 'POSTED'
-  AND ($2::date IS NULL OR t.transaction_date >= $2)
-  AND ($3::date IS NULL OR t.transaction_date <= $3)
-ORDER BY t.transaction_date DESC, te.entry_number ASC;
-
--- name: GetEntriesByDepartment :many
-SELECT 
-    te.*,
-    a.account_code,
-    a.account_name,
-    t.transaction_number,
-    t.transaction_date
-FROM finance_transaction_entries te
-JOIN finance_chart_of_accounts a ON te.account_id = a.id
-JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.department = $1 
-  AND te.tenant_id = current_tenant_id()
-  AND te.deleted_at IS NULL
-  AND t.transaction_status = 'POSTED'
-  AND ($2::date IS NULL OR t.transaction_date >= $2)
-  AND ($3::date IS NULL OR t.transaction_date <= $3)
+  AND (sqlc.narg('date_from')::date IS NULL OR t.transaction_date >= sqlc.narg('date_from'))
+  AND (sqlc.narg('date_to')::date IS NULL OR t.transaction_date <= sqlc.narg('date_to'))
 ORDER BY t.transaction_date DESC, te.entry_number ASC;
 
 -- name: GetEntriesByProject :many
@@ -204,12 +174,12 @@ SELECT
 FROM finance_transaction_entries te
 JOIN finance_chart_of_accounts a ON te.account_id = a.id
 JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.project_id = $1 
+WHERE te.project_id = sqlc.narg('project_id') 
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND t.transaction_status = 'POSTED'
-  AND ($2::date IS NULL OR t.transaction_date >= $2)
-  AND ($3::date IS NULL OR t.transaction_date <= $3)
+  AND (sqlc.narg('date_from')::date IS NULL OR t.transaction_date >= sqlc.narg('date_from'))
+  AND (sqlc.narg('date_to')::date IS NULL OR t.transaction_date <= sqlc.narg('date_to'))
 ORDER BY t.transaction_date DESC, te.entry_number ASC;
 
 -- name: GetUnreconciledEntries :many
@@ -222,23 +192,12 @@ SELECT
 FROM finance_transaction_entries te
 JOIN finance_chart_of_accounts a ON te.account_id = a.id
 JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.account_id = $1 
+WHERE te.account_id = sqlc.arg('account_id') 
   AND te.reconciled = false
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND t.transaction_status = 'POSTED'
 ORDER BY t.transaction_date ASC;
-
--- name: MarkEntriesReconciled :exec
-UPDATE finance_transaction_entries
-SET 
-    reconciled = true,
-    reconciled_date = $2,
-    reconciliation_reference = $3,
-    updated_at = NOW()
-WHERE id = ANY($1::uuid[])
-  AND tenant_id = current_tenant_id()
-  AND deleted_at IS NULL;
 
 -- name: GetEntryTaxSummary :many
 SELECT 
@@ -253,8 +212,8 @@ WHERE te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND te.tax_code IS NOT NULL
   AND t.transaction_status = 'POSTED'
-  AND t.transaction_date >= $1
-  AND t.transaction_date <= $2
+  AND t.transaction_date >= sqlc.arg('date_from')
+  AND t.transaction_date <= sqlc.arg('date_to')
 GROUP BY te.tax_code, te.tax_rate
 ORDER BY te.tax_code, te.tax_rate;
 
@@ -265,7 +224,64 @@ SELECT
     SUM(credit_amount) as total_credits,
     (SUM(debit_amount) = SUM(credit_amount)) as is_balanced
 FROM finance_transaction_entries
-WHERE transaction_id = $1 
+WHERE transaction_id = sqlc.arg('transaction_id') 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 GROUP BY transaction_id;
+
+-- name: GetEntriesByDepartment :many
+SELECT
+    te.*,
+    a.account_code,
+    a.account_name,
+    t.transaction_number,
+    t.transaction_date
+FROM finance_transaction_entries te
+JOIN finance_chart_of_accounts a ON te.account_id = a.id
+JOIN finance_transactions t ON te.transaction_id = t.id
+WHERE te.department = sqlc.narg('department')
+  AND te.tenant_id = current_tenant_id()
+  AND te.deleted_at IS NULL
+  AND t.transaction_status = 'POSTED'
+  AND (sqlc.narg('date_from')::date IS NULL OR t.transaction_date >= sqlc.narg('date_from')::date)
+  AND (sqlc.narg('date_to')::date IS NULL OR t.transaction_date <= sqlc.narg('date_to')::date)
+ORDER BY t.transaction_date DESC, te.entry_number ASC;
+
+-- name: GetTrialBalance :many
+SELECT
+    a.id,
+    a.account_code,
+    a.account_name,
+    a.root_type,
+    a.account_type,
+    a.normal_balance,
+    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE 0 END), 0) AS total_debits,
+    COALESCE(SUM(CASE WHEN te.credit_amount > 0 THEN te.credit_amount ELSE 0 END), 0) AS total_credits,
+    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE -te.credit_amount END), 0) AS net_balance
+FROM finance_chart_of_accounts a
+LEFT JOIN finance_transaction_entries te ON a.id = te.account_id
+    AND te.tenant_id = current_tenant_id()
+    AND te.deleted_at IS NULL
+LEFT JOIN finance_transactions t ON te.transaction_id = t.id
+    AND t.transaction_status = 'POSTED'
+    AND (sqlc.narg('as_of_date')::date IS NULL OR t.posting_date <= sqlc.narg('as_of_date')::date)
+WHERE a.tenant_id = current_tenant_id()
+  AND a.deleted_at IS NULL
+  AND a.is_active = true
+GROUP BY a.id, a.account_code, a.account_name, a.root_type, a.account_type, a.normal_balance
+HAVING
+    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE 0 END), 0) != 0 OR
+    COALESCE(SUM(CASE WHEN te.credit_amount > 0 THEN te.credit_amount ELSE 0 END), 0) != 0 OR
+    sqlc.arg('include_zero_balances') = true
+ORDER BY a.account_code ASC;
+
+-- name: MarkEntriesReconciled :exec
+UPDATE finance_transaction_entries
+SET
+    reconciled = true,
+    reconciled_date = sqlc.arg('reconciled_date'),
+    reconciliation_reference = sqlc.narg('reconciliation_reference'),
+    updated_at = NOW()
+WHERE id = ANY(sqlc.arg('entry_ids')::uuid[])
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;

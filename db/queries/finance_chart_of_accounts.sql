@@ -1,6 +1,7 @@
 -- =====================================================================
 -- FINANCE MODULE - CHART OF ACCOUNTS QUERIES
 -- SQLC queries for chart of accounts with proper tenant isolation
+-- Updated with proper sqlc.narg and sqlc.arg usage
 -- =====================================================================
 
 -- name: CreateAccount :one
@@ -32,42 +33,67 @@ INSERT INTO finance_chart_of_accounts (
     created_by
 ) VALUES (
     current_tenant_id(),
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
+    sqlc.narg('entity_id'), 
+    sqlc.arg('account_code'), 
+    sqlc.arg('account_name'), 
+    sqlc.arg('account_description'), 
+    sqlc.narg('parent_account_id'), 
+    sqlc.arg('root_type'), 
+    sqlc.arg('account_type'), 
+    sqlc.narg('account_subtype'), 
+    sqlc.arg('normal_balance'), 
+    sqlc.arg('is_control_account'), 
+    sqlc.narg('control_account_id'), 
+    sqlc.narg('currency_code'), 
+    sqlc.narg('is_multi_currency'), 
+    sqlc.narg('currency_revaluation_required'), 
+    sqlc.arg('is_active'), 
+    sqlc.arg('is_system_account'), 
+    sqlc.arg('allow_manual_entries'), 
+    sqlc.arg('require_reference'), 
+    sqlc.narg('financial_statement_line'), 
+    sqlc.narg('report_order'), 
+    sqlc.narg('is_budgetable'), 
+    sqlc.arg('budget_variance_threshold'), 
+    sqlc.arg('account_attributes'), 
+    sqlc.narg('created_by')
 ) RETURNING *;
 
 -- name: GetAccountByID :one
 SELECT * FROM finance_chart_of_accounts
-WHERE id = $1 
+WHERE id = sqlc.arg('account_id') 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
 -- name: GetAccountByCode :one
 SELECT * FROM finance_chart_of_accounts
-WHERE account_code = $1 
+WHERE account_code = sqlc.arg('account_code') 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
 -- name: ListAccounts :many
-SELECT * FROM finance_chart_of_accounts
+SELECT * 
+FROM finance_chart_of_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR account_type = $1::account_type_enum)
-  AND ($2::text IS NULL OR root_type = $2::root_type_enum)
-  AND ($3::bool IS NULL OR is_active = $3)
+  AND (sqlc.narg('account_type')::account_type_enum IS NULL OR account_type = sqlc.narg('account_type')::account_type_enum)
+  AND (sqlc.narg('root_type')::root_type_enum IS NULL OR root_type = sqlc.narg('root_type')::root_type_enum)
+  AND (sqlc.narg('is_active')::bool IS NULL OR is_active = sqlc.narg('is_active')::bool)
 ORDER BY account_code ASC
-LIMIT $4 OFFSET $5;
+LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: CountAccounts :one
-SELECT COUNT(*) FROM finance_chart_of_accounts
+SELECT COUNT(*) 
+FROM finance_chart_of_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::text IS NULL OR account_type = $1::account_type_enum)
-  AND ($2::text IS NULL OR root_type = $2::root_type_enum)
-  AND ($3::bool IS NULL OR is_active = $3);
+  AND (sqlc.narg('account_type')::account_type_enum IS NULL OR account_type = sqlc.narg('account_type')::account_type_enum)
+  AND (sqlc.narg('root_type')::root_type_enum IS NULL OR root_type = sqlc.narg('root_type')::root_type_enum)
+  AND (sqlc.narg('is_active')::bool IS NULL OR is_active = sqlc.narg('is_active')::bool);
 
 -- name: ListAccountsByParent :many
 SELECT * FROM finance_chart_of_accounts
-WHERE parent_account_id = $1
+WHERE parent_account_id = sqlc.narg('parent_account_id')
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 ORDER BY account_code ASC;
@@ -76,7 +102,7 @@ ORDER BY account_code ASC;
 SELECT * FROM finance_chart_of_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND account_path LIKE $1 || '%'
+  AND account_path LIKE sqlc.arg('account_path_prefix') || '%'
 ORDER BY account_path ASC;
 
 -- name: GetRootAccounts :many
@@ -89,21 +115,21 @@ ORDER BY account_code ASC;
 -- name: UpdateAccount :one
 UPDATE finance_chart_of_accounts
 SET 
-    account_name = COALESCE($2, account_name),
-    account_description = COALESCE($3, account_description),
-    account_type = COALESCE($4, account_type),
-    account_subtype = COALESCE($5, account_subtype),
-    is_active = COALESCE($6, is_active),
-    allow_manual_entries = COALESCE($7, allow_manual_entries),
-    require_reference = COALESCE($8, require_reference),
-    financial_statement_line = COALESCE($9, financial_statement_line),
-    report_order = COALESCE($10, report_order),
-    is_budgetable = COALESCE($11, is_budgetable),
-    budget_variance_threshold = COALESCE($12, budget_variance_threshold),
-    account_attributes = COALESCE($13, account_attributes),
+    account_name = COALESCE(sqlc.narg('account_name'), account_name),
+    account_description = COALESCE(sqlc.narg('account_description'), account_description),
+    account_type = COALESCE(sqlc.narg('account_type'), account_type),
+    account_subtype = COALESCE(sqlc.narg('account_subtype'), account_subtype),
+    is_active = COALESCE(sqlc.narg('is_active'), is_active),
+    allow_manual_entries = COALESCE(sqlc.narg('allow_manual_entries'), allow_manual_entries),
+    require_reference = COALESCE(sqlc.narg('require_reference'), require_reference),
+    financial_statement_line = COALESCE(sqlc.narg('financial_statement_line'), financial_statement_line),
+    report_order = COALESCE(sqlc.narg('report_order'), report_order),
+    is_budgetable = COALESCE(sqlc.narg('is_budgetable'), is_budgetable),
+    budget_variance_threshold = COALESCE(sqlc.narg('budget_variance_threshold'), budget_variance_threshold),
+    account_attributes = COALESCE(sqlc.narg('account_attributes'), account_attributes),
     updated_at = NOW(),
-    updated_by = $14
-WHERE id = $1 
+    updated_by = sqlc.narg('updated_by')
+WHERE id = sqlc.arg('account_id') 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 RETURNING *;
@@ -111,11 +137,11 @@ RETURNING *;
 -- name: UpdateAccountBalance :exec
 UPDATE finance_chart_of_accounts
 SET 
-    current_balance = $2,
-    ytd_balance = $3,
-    last_transaction_date = $4,
+    current_balance = sqlc.arg('current_balance'),
+    ytd_balance = sqlc.arg('ytd_balance'),
+    last_transaction_date = sqlc.arg('last_transaction_date'),
     updated_at = NOW()
-WHERE id = $1 
+WHERE id = sqlc.arg('account_id') 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
@@ -124,8 +150,8 @@ UPDATE finance_chart_of_accounts
 SET 
     deleted_at = NOW(),
     updated_at = NOW(),
-    updated_by = $2
-WHERE id = $1 
+    updated_by = sqlc.narg('updated_by')
+WHERE id = sqlc.arg('account_id') 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
@@ -134,8 +160,8 @@ UPDATE finance_chart_of_accounts
 SET 
     deleted_at = NULL,
     updated_at = NOW(),
-    updated_by = $2
-WHERE id = $1 
+    updated_by = sqlc.narg('updated_by')
+WHERE id = sqlc.arg('account_id') 
   AND tenant_id = current_tenant_id();
 
 -- name: GetAccountsForFinancialStatements :many
@@ -148,9 +174,9 @@ LEFT JOIN finance_transactions t ON te.transaction_id = t.id
 WHERE a.tenant_id = current_tenant_id()
   AND a.deleted_at IS NULL
   AND a.is_active = true
-  AND ($1::text IS NULL OR a.financial_statement_line = $1)
+  AND (sqlc.narg('financial_statement_line')::text IS NULL OR a.financial_statement_line = sqlc.narg('financial_statement_line'))
   AND (t.transaction_status = 'POSTED' OR t.id IS NULL)
-  AND (t.posting_date <= $2 OR t.posting_date IS NULL)
+  AND (t.posting_date <= sqlc.arg('posting_date') OR t.posting_date IS NULL)
 GROUP BY a.id
 ORDER BY a.report_order ASC, a.account_code ASC;
 
@@ -159,14 +185,14 @@ SELECT * FROM finance_chart_of_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND (
-    account_code ILIKE '%' || $1 || '%' OR
-    account_name ILIKE '%' || $1 || '%' OR
-    account_description ILIKE '%' || $1 || '%'
+    account_code ILIKE '%' || sqlc.arg('search_term') || '%' OR
+    account_name ILIKE '%' || sqlc.arg('search_term') || '%' OR
+    account_description ILIKE '%' || sqlc.arg('search_term') || '%'
   )
 ORDER BY 
-  CASE WHEN account_code ILIKE $1 || '%' THEN 1 ELSE 2 END,
+  CASE WHEN account_code ILIKE sqlc.arg('search_term') || '%' THEN 1 ELSE 2 END,
   account_code ASC
-LIMIT $2 OFFSET $3;
+LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: GetAccountsWithNonZeroBalance :many
 SELECT * FROM finance_chart_of_accounts
@@ -184,7 +210,7 @@ ORDER BY account_code ASC;
 
 -- name: GetAccountsByEntity :many
 SELECT * FROM finance_chart_of_accounts
-WHERE entity_id = $1
+WHERE entity_id = sqlc.narg('entity_id')
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 ORDER BY account_code ASC;
@@ -194,7 +220,7 @@ SELECT
     CASE 
         WHEN EXISTS(
             SELECT 1 FROM finance_chart_of_accounts 
-            WHERE parent_account_id = $1 AND id = $1
+            WHERE parent_account_id = sqlc.narg('parent_account_id') AND id = sqlc.narg('parent_account_id')
         ) THEN false -- Self reference check
         ELSE true
     END as is_valid_hierarchy;

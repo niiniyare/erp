@@ -32,84 +32,6 @@ func (q *Queries) ArchiveOldEntityStates(ctx context.Context, fiscalYear *int16)
 	return err
 }
 
-const bulkCreateEntityStates = `-- name: BulkCreateEntityStates :exec
-INSERT INTO
-  entitystate (
-    entity_id,
-    KEY,
-    sequence_number,
-    fiscal_year,
-    tenant_id
-  )
-SELECT
-  $1,
-  unnest($2::VARCHAR []),
-  1,
-  $3,
-  current_tenant_id() ON CONFLICT (entity_id, KEY, fiscal_year) DO NOTHING
-`
-
-type BulkCreateEntityStatesParams struct {
-	EntityID   uuid.UUID `json:"entity_id"`
-	Column2    []string  `json:"column_2"`
-	FiscalYear *int16    `json:"fiscal_year"`
-}
-
-// -- name: GetEntityStateWithLocking :one
-// -- Usage: Retrieves entity state with row-level locking for atomic sequence operations
-// -- Use case: When you need to get and immediately update a sequence number safely
-// -- NOTE: Consider adding query timeout handling for deadlock scenarios
-// SELECT * FROM entitystate
-// WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
-// FOR UPDATE;
-// Usage: Creates multiple entity states in batch for different document types
-// Use case: Initial setup of document sequences for a new entity
-// NOTE: Missing tenant_id assignment and UUID generation - should be addressed
-func (q *Queries) BulkCreateEntityStates(ctx context.Context, arg BulkCreateEntityStatesParams) error {
-	_, err := q.db.Exec(ctx, bulkCreateEntityStates, arg.EntityID, arg.Column2, arg.FiscalYear)
-	return err
-}
-
-const bulkCreateEntityStatesFixed = `-- name: BulkCreateEntityStatesFixed :exec
-INSERT INTO
-  entitystate (
-    uuid,
-    tenant_id,
-    entity_id,
-    KEY,
-    fiscal_year,
-    sequence,
-    entity_unit_id
-  )
-SELECT
-  gen_random_uuid(),
-  current_tenant_id(),
-  $1,
-  unnest($2::VARCHAR []),
-  $3,
-  1,
-  $4 ON CONFLICT (tenant_id, entity_id, KEY, fiscal_year) DO NOTHING
-`
-
-type BulkCreateEntityStatesFixedParams struct {
-	EntityID     uuid.UUID  `json:"entity_id"`
-	Column2      []string   `json:"column_2"`
-	FiscalYear   *int16     `json:"fiscal_year"`
-	EntityUnitID *uuid.UUID `json:"entity_unit_id"`
-}
-
-// Usage: Improved bulk creation with proper tenant_id and UUID handling
-// Use case: Initial entity setup, adding new document types to existing entities
-func (q *Queries) BulkCreateEntityStatesFixed(ctx context.Context, arg BulkCreateEntityStatesFixedParams) error {
-	_, err := q.db.Exec(ctx, bulkCreateEntityStatesFixed,
-		arg.EntityID,
-		arg.Column2,
-		arg.FiscalYear,
-		arg.EntityUnitID,
-	)
-	return err
-}
-
 const bulkUpdateSequences = `-- name: BulkUpdateSequences :exec
 UPDATE
   entitystate
@@ -388,6 +310,35 @@ type GetEntityStateHistoryRow struct {
 	EntityName   string       `json:"entity_name"`
 }
 
+// -- name: GetEntityStateWithLocking :one
+// -- Usage: Retrieves entity state with row-level locking for atomic sequence operations
+// -- Use case: When you need to get and immediately update a sequence number safely
+// -- NOTE: Consider adding query timeout handling for deadlock scenarios
+// SELECT * FROM entitystate
+// WHERE entity_id = $1 AND key = $2 AND fiscal_year = $3 AND tenant_id = current_tenant_id()
+// FOR UPDATE;
+// -- name: BulkCreateEntityStates :exec
+// -- Usage: Creates multiple entity states in batch for different document types
+// -- Use case: Initial setup of document sequences for a new entity
+// -- NOTE: Missing tenant_id assignment and UUID generation - should be addressed
+// INSERT INTO
+//
+//	entitystate (
+//	  entity_id,
+//	  KEY,
+//	  sequence_number,
+//	  fiscal_year,
+//	  tenant_id
+//	)
+//
+// SELECT
+//
+//	$1,
+//	unnest($2::VARCHAR []),
+//	1,
+//	$3,
+//	current_tenant_id() ON CONFLICT (entity_id, KEY, fiscal_year) DO NOTHING;
+//
 // Usage: Retrieves entity state history with optional filtering by key and fiscal year
 // Use case: Audit trails, reporting, and historical sequence analysis
 // NOTE: Consider adding pagination (LIMIT/OFFSET) for large datasets
@@ -451,6 +402,31 @@ type GetEntityStateStatsRow struct {
 	TotalSequencesUsed int64       `json:"total_sequences_used"`
 }
 
+// -- name: BulkCreateEntityStatesFixed :exec
+// -- Usage: Improved bulk creation with proper tenant_id and UUID handling
+// -- Use case: Initial entity setup, adding new document types to existing entities
+// INSERT INTO
+//
+//	entitystate (
+//	  uuid,
+//	  tenant_id,
+//	  entity_id,
+//	  KEY,
+//	  fiscal_year,
+//	  sequence,
+//	  entity_unit_id
+//	)
+//
+// SELECT
+//
+//	gen_random_uuid(),
+//	current_tenant_id(),
+//	$1,
+//	unnest($2::VARCHAR []),
+//	$3,
+//	1,
+//	$4 ON CONFLICT (tenant_id, entity_id, KEY, fiscal_year) DO NOTHING;
+//
 // =====================================================================
 //
 //	ANALYTICS & REPORTING QUERIES
