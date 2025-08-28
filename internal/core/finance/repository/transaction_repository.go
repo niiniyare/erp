@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -95,54 +94,40 @@ func (r *transactionRepository) GetByID(ctx context.Context, id uuid.UUID) (*dom
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetByID")
 	defer span.End()
 
-	// Get tenant ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
-		return nil, fmt.Errorf("tenant ID not found in context")
+	sqlcTransaction, err := r.store.GetTransactionByID(ctx, id)
+	if err != nil {
+		if err == db.ErrNoRows {
+			return nil, domain.ErrTransactionNotFound
+		}
+		return nil, r.mapDatabaseError(err, "get_transaction_by_id")
 	}
 
-	var transaction *domain.Transaction
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
-		sqlcTransaction, err := s.GetTransactionByID(ctx, id)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				return domain.ErrTransactionNotFound
-			}
-			return r.mapDatabaseError(err, "get_transaction_by_id")
-		}
+	transaction, err := r.mapSQLCTransactionToDomain(sqlcTransaction)
+	if err != nil {
+		return nil, err
+	}
 
-		transaction, err = r.mapSQLCTransactionToDomain(sqlcTransaction)
-		return err
-	})
-
-	return transaction, err
+	return transaction, nil
 }
 
 func (r *transactionRepository) GetByNumber(ctx context.Context, entityID *uuid.UUID, transactionNumber string) (*domain.Transaction, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetByNumber")
 	defer span.End()
 
-	// Get tenant ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
-		return nil, fmt.Errorf("tenant ID not found in context")
+	sqlcTransaction, err := r.store.GetTransactionByNumber(ctx, transactionNumber)
+	if err != nil {
+		if err == db.ErrNoRows {
+			return nil, domain.ErrTransactionNotFound
+		}
+		return nil, r.mapDatabaseError(err, "get_transaction_by_number")
 	}
 
-	var transaction *domain.Transaction
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
-		sqlcTransaction, err := s.GetTransactionByNumber(ctx, transactionNumber)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				return domain.ErrTransactionNotFound
-			}
-			return r.mapDatabaseError(err, "get_transaction_by_number")
-		}
+	transaction, err := r.mapSQLCTransactionToDomain(sqlcTransaction)
+	if err != nil {
+		return nil, err
+	}
 
-		transaction, err = r.mapSQLCTransactionToDomain(sqlcTransaction)
-		return err
-	})
-
-	return transaction, err
+	return transaction, nil
 }
 
 func (r *transactionRepository) Update(ctx context.Context, transaction *domain.Transaction) error {
@@ -214,7 +199,7 @@ func (r *transactionRepository) Delete(ctx context.Context, id uuid.UUID) error 
 			UpdatedBy:     userIDPtr,
 		})
 		if err != nil {
-			if err == sql.ErrNoRows {
+			if err == db.ErrNoRows {
 				return domain.ErrTransactionNotFound
 			}
 			return r.mapDatabaseError(err, "soft_delete_transaction")
@@ -655,7 +640,7 @@ func (r *transactionRepository) Search(ctx context.Context, query string, limit,
 // Error mapping helper
 func (r *transactionRepository) mapDatabaseError(err error, operation string) error {
 	// Convert database-specific errors to domain errors
-	if err == sql.ErrNoRows {
+	if err == db.ErrNoRows {
 		return domain.ErrTransactionNotFound
 	}
 

@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -15,6 +14,7 @@ import (
 
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/finance/domain"
+	"github.com/niiniyare/erp/internal/shared"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
@@ -41,53 +41,62 @@ func (r *chartOfAccountsRepository) Create(ctx context.Context, account *domain.
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.Create")
 	defer span.End()
 
-	// Create a CreateAccountRequest from the domain account
-	req := &domain.CreateAccountRequest{
-		EntityID:                    account.EntityID,
-		AccountCode:                 account.AccountCode,
-		AccountName:                 account.AccountName,
-		AccountDescription:          account.AccountDescription,
-		ParentAccountID:             account.ParentAccountID,
-		RootType:                    account.RootType,
-		AccountType:                 account.AccountType,
-		AccountSubtype:              account.AccountSubtype,
-		NormalBalance:               account.NormalBalance,
-		IsControlAccount:            account.IsControlAccount,
-		ControlAccountID:            account.ControlAccountID,
-		CurrencyCode:                account.CurrencyCode,
-		IsMultiCurrency:             account.IsMultiCurrency,
-		CurrencyRevaluationRequired: account.CurrencyRevaluationRequired,
-		IsActive:                    account.IsActive,
-		AllowManualEntries:          account.AllowManualEntries,
-		RequireReference:            account.RequireReference,
-		FinancialStatementLine:      account.FinancialStatementLine,
-		ReportOrder:                 account.ReportOrder,
-		IsBudgetable:                account.IsBudgetable,
-		BudgetVarianceThreshold:     account.BudgetVarianceThreshold,
-		AccountAttributes:           account.AccountAttributes,
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	// Map domain request to SQLC parameters
-	params, err := mapDomainAccountToSQLCCreate(req)
-	if err != nil {
-		return fmt.Errorf("failed to map create account request: %w", err)
-	}
+	// Use tenant-aware transaction for proper isolation
+	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		// Create a CreateAccountRequest from the domain account
+		req := &domain.CreateAccountRequest{
+			EntityID:                    account.EntityID,
+			AccountCode:                 account.AccountCode,
+			AccountName:                 account.AccountName,
+			AccountDescription:          account.AccountDescription,
+			ParentAccountID:             account.ParentAccountID,
+			RootType:                    account.RootType,
+			AccountType:                 account.AccountType,
+			AccountSubtype:              account.AccountSubtype,
+			NormalBalance:               account.NormalBalance,
+			IsControlAccount:            account.IsControlAccount,
+			ControlAccountID:            account.ControlAccountID,
+			CurrencyCode:                account.CurrencyCode,
+			IsMultiCurrency:             account.IsMultiCurrency,
+			CurrencyRevaluationRequired: account.CurrencyRevaluationRequired,
+			IsActive:                    account.IsActive,
+			AllowManualEntries:          account.AllowManualEntries,
+			RequireReference:            account.RequireReference,
+			FinancialStatementLine:      account.FinancialStatementLine,
+			ReportOrder:                 account.ReportOrder,
+			IsBudgetable:                account.IsBudgetable,
+			BudgetVarianceThreshold:     account.BudgetVarianceThreshold,
+			AccountAttributes:           account.AccountAttributes,
+		}
 
-	// Execute SQLC query
-	sqlcAccount, err := r.store.CreateAccount(ctx, params)
-	if err != nil {
-		return r.mapDatabaseError(err, "create_account")
-	}
+		// Map domain request to SQLC parameters
+		params, err := mapDomainAccountToSQLCCreate(req)
+		if err != nil {
+			return fmt.Errorf("failed to map create account request: %w", err)
+		}
 
-	// Update the account with generated fields
-	account.ID = sqlcAccount.ID
-	account.TenantID = sqlcAccount.TenantID
-	account.AccountLevel = sqlcAccount.AccountLevel
-	account.AccountPath = sqlcAccount.AccountPath
-	account.CreatedAt = sqlcAccount.CreatedAt
-	account.UpdatedAt = sqlcAccount.UpdatedAt
+		// Execute SQLC query within tenant context
+		sqlcAccount, err := s.CreateAccount(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "create_account")
+		}
 
-	return nil
+		// Update the account with generated fields
+		account.ID = sqlcAccount.ID
+		account.TenantID = sqlcAccount.TenantID
+		account.AccountLevel = sqlcAccount.AccountLevel
+		account.AccountPath = sqlcAccount.AccountPath
+		account.CreatedAt = sqlcAccount.CreatedAt
+		account.UpdatedAt = sqlcAccount.UpdatedAt
+
+		return nil
+	})
 }
 
 func (r *chartOfAccountsRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Accounts, error) {
@@ -96,7 +105,7 @@ func (r *chartOfAccountsRepository) GetByID(ctx context.Context, id uuid.UUID) (
 
 	sqlcAccount, err := r.store.GetAccountByID(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, domain.ErrAccountNotFound
 		}
 		return nil, r.mapDatabaseError(err, "get_account_by_id")
@@ -117,7 +126,7 @@ func (r *chartOfAccountsRepository) GetByCode(ctx context.Context, entityID *uui
 	// Note: SQLC GetAccountByCode only takes accountCode string, entityID filtering handled by RLS
 	sqlcAccount, err := r.store.GetAccountByCode(ctx, accountCode)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, domain.ErrAccountNotFound
 		}
 		return nil, r.mapDatabaseError(err, "get_account_by_code")
@@ -135,65 +144,83 @@ func (r *chartOfAccountsRepository) Update(ctx context.Context, account *domain.
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.Update")
 	defer span.End()
 
-	// Map account to SQLC parameters
-	params := db.UpdateAccountParams{
-		AccountID:              account.ID,
-		AccountName:            &account.AccountName,
-		AccountDescription:     getStringValue(account.AccountDescription),
-		AccountType:            &account.AccountType,
-		AccountSubtype:         account.AccountSubtype,
-		IsActive:               &account.IsActive,
-		AllowManualEntries:     &account.AllowManualEntries,
-		RequireReference:       &account.RequireReference,
-		FinancialStatementLine: account.FinancialStatementLine,
-		ReportOrder:            &account.ReportOrder,
-		IsBudgetable:           &account.IsBudgetable,
-		UpdatedBy:              account.UpdatedBy,
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	// Handle optional budget variance threshold
-	if !account.BudgetVarianceThreshold.IsZero() {
-		params.BudgetVarianceThreshold = pgtype.Numeric{
-			Int:   account.BudgetVarianceThreshold.BigInt(),
-			Valid: true,
+	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		// Map account to SQLC parameters
+		params := db.UpdateAccountParams{
+			AccountID:              account.ID,
+			AccountName:            &account.AccountName,
+			AccountDescription:     getStringValue(account.AccountDescription),
+			AccountType:            &account.AccountType,
+			AccountSubtype:         account.AccountSubtype,
+			IsActive:               &account.IsActive,
+			AllowManualEntries:     &account.AllowManualEntries,
+			RequireReference:       &account.RequireReference,
+			FinancialStatementLine: account.FinancialStatementLine,
+			ReportOrder:            &account.ReportOrder,
+			IsBudgetable:           &account.IsBudgetable,
+			UpdatedBy:              account.UpdatedBy,
 		}
-	}
 
-	// Handle optional attributes
-	if account.AccountAttributes != nil {
-		attributes, err := json.Marshal(account.AccountAttributes)
+		// Handle optional budget variance threshold
+		if !account.BudgetVarianceThreshold.IsZero() {
+			params.BudgetVarianceThreshold = pgtype.Numeric{
+				Int:   account.BudgetVarianceThreshold.BigInt(),
+				Valid: true,
+			}
+		}
+
+		// Handle optional attributes
+		if account.AccountAttributes != nil {
+			attributes, err := json.Marshal(account.AccountAttributes)
+			if err != nil {
+				return fmt.Errorf("failed to marshal account attributes: %w", err)
+			}
+			params.AccountAttributes = attributes
+		}
+
+		// Execute SQLC update query within tenant context
+		_, err := s.UpdateAccount(ctx, params)
 		if err != nil {
-			return fmt.Errorf("failed to marshal account attributes: %w", err)
+			return r.mapDatabaseError(err, "update_account")
 		}
-		params.AccountAttributes = attributes
-	}
 
-	// Execute SQLC update query
-	_, err := r.store.UpdateAccount(ctx, params)
-	if err != nil {
-		return r.mapDatabaseError(err, "update_account")
-	}
-
-	return nil
+		return nil
+	})
 }
 
 func (r *chartOfAccountsRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.Delete")
 	defer span.End()
 
-	params := db.SoftDeleteAccountParams{
-		AccountID: id,
-		UpdatedBy: nil, // TODO: Get from context
-	}
-	err := r.store.SoftDeleteAccount(ctx, params)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return domain.ErrAccountNotFound
-		}
-		return r.mapDatabaseError(err, "soft_delete_account")
+	// Get tenant and user ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return nil
+	userID, _ := shared.GetUserID(ctx) // Optional
+
+	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params := db.SoftDeleteAccountParams{
+			AccountID: id,
+			UpdatedBy: userID,
+		}
+		err := s.SoftDeleteAccount(ctx, params)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return domain.ErrAccountNotFound
+			}
+			return r.mapDatabaseError(err, "soft_delete_account")
+		}
+
+		return nil
+	})
 }
 
 // List and Filter Operations
@@ -566,7 +593,7 @@ func (r *chartOfAccountsRepository) GetChildren(ctx context.Context, accountID u
 // Error mapping helper
 func (r *chartOfAccountsRepository) mapDatabaseError(err error, operation string) error {
 	// Convert database-specific errors to domain errors
-	if err == sql.ErrNoRows {
+	if err == db.ErrNoRows {
 		return domain.ErrAccountNotFound
 	}
 

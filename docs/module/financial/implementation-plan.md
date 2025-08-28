@@ -350,9 +350,11 @@
   - [x] Chart of Accounts repository with full CRUD operations
   - [x] Transaction repository with 30+ methods and workflow support
   - [x] Complete domain type mappings and enum conversions
-  - [x] Tenant-aware database transaction patterns
+  - [x] Tenant-aware database transaction patterns (WithTenant for state changes only)
   - [x] Context-based tenant/user ID extraction
   - [x] Comprehensive error handling and distributed tracing
+  - [x] Proper database error handling (using db.ErrNoRows instead of sql.ErrNoRows)
+  - [x] Optimized transaction patterns (WithTenant only for Create/Update/Delete)
 - [x] ✅ Database integration and SQLC parameter mapping validated
 - [ ] 🚧 Comprehensive testing suite implementation
 - [ ] 🚧 Performance benchmarking and optimization
