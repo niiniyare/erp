@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"net/http"
-	
+
 	"github.com/gin-gonic/gin"
 	"github.com/niiniyare/erp/internal/core/access/conditional"
 	"github.com/niiniyare/erp/internal/core/access/request"

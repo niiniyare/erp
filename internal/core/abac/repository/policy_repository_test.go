@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/suite"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/abac/models"
@@ -30,13 +30,13 @@ import (
 // Tests cover: ABAC-REPO-001 through ABAC-REPO-010 with multi-tenant RLS verification
 type PolicyRepositoryTestSuite struct {
 	suite.Suite
-	ctx         context.Context
-	runner      *tenant.DatabaseTestRunner
-	repo        PolicyRepository
+	ctx          context.Context
+	runner       *tenant.DatabaseTestRunner
+	repo         PolicyRepository
 	cacheService cache.Service
-	tenantA     *db.Tenant
-	tenantB     *db.Tenant
-	
+	tenantA      *db.Tenant
+	tenantB      *db.Tenant
+
 	// Test data UUIDs for cleanup
 	createdPolicyIDs []uuid.UUID
 }
@@ -47,13 +47,13 @@ func (s *PolicyRepositoryTestSuite) SetupSuite() {
 	s.runner, err = tenant.NewDatabaseTestRunner()
 	s.Require().NoError(err, "Failed to connect to the database")
 	s.ctx = context.Background()
-	
+
 	// Setup shared infrastructure
 	logger := logger.WithFields(logger.Fields{"component": "policy_repository_test"})
 	metrics := &metrics.MetricsService{}
 	tracer := tracing.NewNoOpTracingService()
 	s.cacheService = cache.NewNoOpCache() // Use no-op cache for testing
-	
+
 	// Create repository instance
 	s.repo = NewPolicyRepository(
 		s.runner.GetStore(),
@@ -62,7 +62,7 @@ func (s *PolicyRepositoryTestSuite) SetupSuite() {
 		metrics,
 		tracer,
 	)
-	
+
 	// Create test tenants
 	s.setupTestTenants()
 	s.createdPolicyIDs = make([]uuid.UUID, 0)
@@ -72,7 +72,7 @@ func (s *PolicyRepositoryTestSuite) SetupSuite() {
 func (s *PolicyRepositoryTestSuite) TearDownSuite() {
 	// Clean up test policies
 	s.cleanupTestData()
-	
+
 	// Clean up test tenants
 	if s.tenantA != nil {
 		superuserStore := db.NewStore(s.runner.GetPool())
@@ -86,7 +86,7 @@ func (s *PolicyRepositoryTestSuite) TearDownSuite() {
 			s.T().Logf("Warning: Failed to cleanup tenant B: %v", err)
 		}
 	}
-	
+
 	s.runner.Close()
 }
 
@@ -104,7 +104,7 @@ func (s *PolicyRepositoryTestSuite) TearDownTest() {
 func (s *PolicyRepositoryTestSuite) setupTestTenants() {
 	superuserStore := db.NewStore(s.runner.GetPool())
 	uniqueID := uuid.New().String()[0:8]
-	
+
 	// Create Tenant A
 	var err error
 	s.tenantA, err = superuserStore.CreateTenant(s.ctx, db.CreateTenantParams{
@@ -114,7 +114,7 @@ func (s *PolicyRepositoryTestSuite) setupTestTenants() {
 		Status: "active",
 	})
 	s.Require().NoError(err, "Failed to create tenant A")
-	
+
 	// Create Tenant B
 	uniqueID2 := uuid.New().String()[0:8]
 	s.tenantB, err = superuserStore.CreateTenant(s.ctx, db.CreateTenantParams{
@@ -202,7 +202,7 @@ func (s *PolicyRepositoryTestSuite) TestCreatePolicy() {
 				},
 				Obligations: map[string]any{
 					"log": map[string]any{
-						"level": "INFO",
+						"level":           "INFO",
 						"include_context": true,
 					},
 				},
@@ -269,13 +269,13 @@ func (s *PolicyRepositoryTestSuite) TestCreatePolicy() {
 			// Execute within tenant context
 			var policy *models.Policy
 			var err error
-			
+
 			execErr := s.runner.GetStore().WithTenant(s.ctx, tc.tenantID, func(ctx context.Context, store db.Store) error {
 				policy, err = s.repo.CreatePolicy(ctx, tc.request)
 				return nil
 			})
 			s.Require().NoError(execErr, "Tenant context execution should not fail")
-			
+
 			// Validate results
 			if tc.expectError != "" {
 				require.Error(s.T(), err)
@@ -420,7 +420,7 @@ func (s *PolicyRepositoryTestSuite) TestUpdatePolicy() {
 				Description: stringPtr("Updated description"),
 				Priority:    int32Ptr(150),
 				Target: map[string]any{
-					"updated": true,
+					"updated":   true,
 					"new_field": "new_value",
 				},
 				Rule: map[string]any{
@@ -439,17 +439,17 @@ func (s *PolicyRepositoryTestSuite) TestUpdatePolicy() {
 				require.Equal(s.T(), int32(150), policy.Priority)
 				require.True(s.T(), policy.IsActive)
 				require.NotEqual(s.T(), originalPolicy.UpdatedAt, policy.UpdatedAt)
-				
+
 				// Validate JSON fields were updated
 				require.Contains(s.T(), policy.Target, "updated")
 				require.Contains(s.T(), policy.Rule, "updated")
 			},
 		},
 		{
-			name:        "UpdatePolicyFromDifferentTenant_NotFound",
-			spec:        "ABAC-REPO-003",
-			tenantID:    s.tenantB.ID, // Different tenant
-			policyID:    originalPolicy.ID,
+			name:     "UpdatePolicyFromDifferentTenant_NotFound",
+			spec:     "ABAC-REPO-003",
+			tenantID: s.tenantB.ID, // Different tenant
+			policyID: originalPolicy.ID,
 			request: &UpdatePolicyRequest{
 				DisplayName: stringPtr("Should Not Update"),
 			},
@@ -561,8 +561,8 @@ func (s *PolicyRepositoryTestSuite) TestDeletePolicy() {
 		{
 			name:     "DeletePolicyFromDifferentTenant_NoEffect",
 			spec:     "ABAC-REPO-004",
-			tenantID: s.tenantA.ID,       // Tenant A context
-			policyID: policyB.ID,         // Policy from Tenant B
+			tenantID: s.tenantA.ID, // Tenant A context
+			policyID: policyB.ID,   // Policy from Tenant B
 			validate: func() {
 				// Policy B should still exist in tenant B context
 				execErr := s.runner.GetStore().WithTenant(s.ctx, s.tenantB.ID, func(ctx context.Context, store db.Store) error {
@@ -637,7 +637,7 @@ func (s *PolicyRepositoryTestSuite) TestListPolicies() {
 	})
 	s.Require().NoError(err)
 
-	// Create 2 policies in tenant B  
+	// Create 2 policies in tenant B
 	err = s.runner.GetStore().WithTenant(s.ctx, s.tenantB.ID, func(ctx context.Context, store db.Store) error {
 		for i := 0; i < 2; i++ {
 			policy, createErr := s.repo.CreatePolicy(ctx, &CreatePolicyRequest{
@@ -675,12 +675,12 @@ func (s *PolicyRepositoryTestSuite) TestListPolicies() {
 			request:  &ListPoliciesRequest{},
 			validate: func(policies []*models.Policy) {
 				require.GreaterOrEqual(s.T(), len(policies), 3)
-				
+
 				// All policies should belong to tenant A
 				for _, policy := range policies {
 					require.Equal(s.T(), s.tenantA.ID, policy.TenantID)
 				}
-				
+
 				// Should contain our created policies
 				foundPolicyNames := make(map[string]bool)
 				for _, policy := range policies {
@@ -699,12 +699,12 @@ func (s *PolicyRepositoryTestSuite) TestListPolicies() {
 			request:  &ListPoliciesRequest{},
 			validate: func(policies []*models.Policy) {
 				require.GreaterOrEqual(s.T(), len(policies), 2)
-				
+
 				// All policies should belong to tenant B
 				for _, policy := range policies {
 					require.Equal(s.T(), s.tenantB.ID, policy.TenantID)
 				}
-				
+
 				// Should contain our created policies
 				foundPolicyNames := make(map[string]bool)
 				for _, policy := range policies {
@@ -725,7 +725,7 @@ func (s *PolicyRepositoryTestSuite) TestListPolicies() {
 				// Tenant A should not see any policies from tenant B
 				for _, policy := range policies {
 					require.Equal(s.T(), s.tenantA.ID, policy.TenantID)
-					
+
 					// Ensure none of the tenant B policy names are present
 					for _, tenantBPolicy := range policiesB {
 						require.NotEqual(s.T(), tenantBPolicy.Name, policy.Name,
@@ -814,12 +814,12 @@ func (s *PolicyRepositoryTestSuite) TestGetPoliciesForEvaluation() {
 			},
 			validate: func(policies []*models.Policy) {
 				require.GreaterOrEqual(s.T(), len(policies), 1)
-				
+
 				// All policies should belong to tenant A
 				for _, policy := range policies {
 					require.Equal(s.T(), s.tenantA.ID, policy.TenantID)
 				}
-				
+
 				// Should contain our evaluation policy
 				found := false
 				for _, policy := range policies {
@@ -879,10 +879,10 @@ func (s *PolicyRepositoryTestSuite) TestGetPoliciesForEvaluation() {
 func (s *PolicyRepositoryTestSuite) TestMultiTenantRLSIntegrity() {
 	s.Run("ABAC-REPO-007_ComprehensiveRLSVerification", func() {
 		// Test comprehensive multi-tenant RLS enforcement
-		
+
 		// 1. Create policies in both tenants
 		var tenantAPolicies, tenantBPolicies []*models.Policy
-		
+
 		// Create policies in tenant A
 		err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 			for i := 0; i < 5; i++ {
@@ -961,7 +961,7 @@ func (s *PolicyRepositoryTestSuite) TestMultiTenantRLSIntegrity() {
 		})
 		s.Require().NoError(err)
 
-		// 3. Verify tenant B can only access its own policies  
+		// 3. Verify tenant B can only access its own policies
 		err = s.runner.GetStore().WithTenant(s.ctx, s.tenantB.ID, func(ctx context.Context, store db.Store) error {
 			// List all policies in tenant B
 			policies, listErr := s.repo.ListPolicies(ctx, &ListPoliciesRequest{})
@@ -1058,9 +1058,9 @@ func (s *PolicyRepositoryTestSuite) TestMultiTenantRLSIntegrity() {
 func (s *PolicyRepositoryTestSuite) TestCacheIntegration() {
 	// NOTE: This test uses a no-op cache, but verifies the integration points
 	// In a real environment with Redis cache, this would test cache hit/miss scenarios
-	
+
 	var testPolicy *models.Policy
-	
+
 	err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 		var createErr error
 		testPolicy, createErr = s.repo.CreatePolicy(ctx, &CreatePolicyRequest{
@@ -1160,7 +1160,7 @@ func (s *PolicyRepositoryTestSuite) TestRepositoryErrorHandling() {
 
 		// 3. Test database constraints (if any)
 		// This depends on the specific database constraints implemented
-		
+
 		s.T().Logf("✅ Error handling scenarios tested successfully")
 	})
 }
@@ -1173,7 +1173,7 @@ func (s *PolicyRepositoryTestSuite) TestRepositoryPerformance() {
 
 		// Create multiple policies and measure time
 		startTime := time.Now()
-		
+
 		err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 			for i := 0; i < policyCount; i++ {
 				policy, createErr := s.repo.CreatePolicy(ctx, &CreatePolicyRequest{
@@ -1203,14 +1203,14 @@ func (s *PolicyRepositoryTestSuite) TestRepositoryPerformance() {
 			return nil
 		})
 		s.Require().NoError(err)
-		
+
 		creationTime := time.Since(startTime)
 		s.T().Logf("Created %d policies in %v (avg: %v per policy)",
 			policyCount, creationTime, creationTime/policyCount)
 
 		// Test retrieval performance
 		startTime = time.Now()
-		
+
 		err = s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 			for _, policy := range createdPolicies[:10] { // Test first 10
 				retrievedPolicy, getErr := s.repo.GetPolicyByID(ctx, policy.ID)
@@ -1223,14 +1223,14 @@ func (s *PolicyRepositoryTestSuite) TestRepositoryPerformance() {
 			return nil
 		})
 		s.Require().NoError(err)
-		
+
 		retrievalTime := time.Since(startTime)
 		s.T().Logf("Retrieved 10 policies in %v (avg: %v per retrieval)",
 			retrievalTime, retrievalTime/10)
 
 		// Test list performance
 		startTime = time.Now()
-		
+
 		err = s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 			policies, listErr := s.repo.ListPolicies(ctx, &ListPoliciesRequest{})
 			if listErr != nil {
@@ -1240,7 +1240,7 @@ func (s *PolicyRepositoryTestSuite) TestRepositoryPerformance() {
 			return nil
 		})
 		s.Require().NoError(err)
-		
+
 		listTime := time.Since(startTime)
 		s.T().Logf("Listed all policies in %v", listTime)
 

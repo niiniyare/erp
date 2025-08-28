@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/suite"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/abac/models"
@@ -27,13 +27,13 @@ import (
 // Tests cover: ABAC-EVAL-REPO-001 through ABAC-EVAL-REPO-008 with multi-tenant RLS verification
 type PolicyEvaluationRepositoryTestSuite struct {
 	suite.Suite
-	ctx         context.Context
-	runner      *tenant.DatabaseTestRunner
-	repo        PolicyEvaluationRepository
+	ctx          context.Context
+	runner       *tenant.DatabaseTestRunner
+	repo         PolicyEvaluationRepository
 	cacheService cache.Service
-	tenantA     *db.Tenant
-	tenantB     *db.Tenant
-	
+	tenantA      *db.Tenant
+	tenantB      *db.Tenant
+
 	// Test data UUIDs for cleanup
 	createdEvaluationIDs []uuid.UUID
 }
@@ -44,13 +44,13 @@ func (s *PolicyEvaluationRepositoryTestSuite) SetupSuite() {
 	s.runner, err = tenant.NewDatabaseTestRunner()
 	s.Require().NoError(err, "Failed to connect to the database")
 	s.ctx = context.Background()
-	
+
 	// Setup shared infrastructure
 	logger := logger.WithFields(logger.Fields{"component": "evaluation_repository_test"})
 	metrics := &metrics.MetricsService{}
 	tracer := tracing.NewNoOpTracingService()
 	s.cacheService = cache.NewNoOpCache()
-	
+
 	// Create repository instance
 	s.repo = NewPolicyEvaluationRepository(
 		s.runner.GetStore(),
@@ -59,7 +59,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) SetupSuite() {
 		metrics,
 		tracer,
 	)
-	
+
 	// Create test tenants
 	s.setupTestTenants()
 	s.createdEvaluationIDs = make([]uuid.UUID, 0)
@@ -69,7 +69,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) SetupSuite() {
 func (s *PolicyEvaluationRepositoryTestSuite) TearDownSuite() {
 	// Clean up test data
 	s.cleanupTestData()
-	
+
 	// Clean up test tenants
 	if s.tenantA != nil {
 		superuserStore := db.NewStore(s.runner.GetPool())
@@ -83,7 +83,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TearDownSuite() {
 			s.T().Logf("Warning: Failed to cleanup tenant B: %v", err)
 		}
 	}
-	
+
 	s.runner.Close()
 }
 
@@ -91,7 +91,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TearDownSuite() {
 func (s *PolicyEvaluationRepositoryTestSuite) setupTestTenants() {
 	superuserStore := db.NewStore(s.runner.GetPool())
 	uniqueID := uuid.New().String()[0:8]
-	
+
 	// Create Tenant A
 	var err error
 	s.tenantA, err = superuserStore.CreateTenant(s.ctx, db.CreateTenantParams{
@@ -101,7 +101,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) setupTestTenants() {
 		Status: "active",
 	})
 	s.Require().NoError(err, "Failed to create tenant A")
-	
+
 	// Create Tenant B
 	uniqueID2 := uuid.New().String()[0:8]
 	s.tenantB, err = superuserStore.CreateTenant(s.ctx, db.CreateTenantParams{
@@ -224,19 +224,19 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestCacheEvaluationResult() {
 	for _, tc := range testCases {
 		s.Run(fmt.Sprintf("%s_%s", tc.spec, tc.name), func() {
 			var err error
-			
+
 			execErr := s.runner.GetStore().WithTenant(s.ctx, tc.tenantID, func(ctx context.Context, store db.Store) error {
 				err = s.repo.CacheEvaluationResult(ctx, tc.request)
 				return nil
 			})
 			s.Require().NoError(execErr, "Tenant context execution should not fail")
-			
+
 			if tc.expectError != "" {
 				require.Error(s.T(), err)
 				require.Contains(s.T(), err.Error(), tc.expectError)
 			} else {
 				require.NoError(s.T(), err)
-				
+
 				// Verify we can retrieve the cached result
 				if tc.validate != nil && tc.request.Result != nil {
 					tc.validate(tc.request.Result)
@@ -252,17 +252,17 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestGetCachedEvaluationResult() {
 	userID := uuid.New()
 	resourceID := uuid.New()
 	contextHash := fmt.Sprintf("get_test_context_%s", uuid.New().String()[0:8])
-	
+
 	cacheRequest := &CacheEvaluationResultRequest{
-		UserID:       userID,
-		ResourceType: "test_document",
-		ResourceID:   &resourceID,
-		Action:       "read",
-		ContextHash:  contextHash,
-		Decision:     types.PolicyDecisionAllow,
+		UserID:             userID,
+		ResourceType:       "test_document",
+		ResourceID:         &resourceID,
+		Action:             "read",
+		ContextHash:        contextHash,
+		Decision:           types.PolicyDecisionAllow,
 		ApplicablePolicies: []uuid.UUID{uuid.New()},
-		EvaluationTimeMS: 20,
-		ExpiresAt:    time.Now().Add(10 * time.Minute),
+		EvaluationTimeMS:   20,
+		ExpiresAt:          time.Now().Add(10 * time.Minute),
 		Result: &models.PolicyEvaluationResult{
 			Decision: types.PolicyDecisionAllow,
 			PolicyDecisions: []*models.PolicyDecision{
@@ -276,7 +276,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestGetCachedEvaluationResult() {
 			CacheHit:       true,
 		},
 	}
-	
+
 	err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 		return s.repo.CacheEvaluationResult(ctx, cacheRequest)
 	})
@@ -380,7 +380,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestInvalidateEvaluationCache() {
 	userID1 := uuid.New()
 	userID2 := uuid.New()
 	policyID := uuid.New()
-	
+
 	// Cache results in tenant A
 	cacheRequests := []*CacheEvaluationResultRequest{
 		{
@@ -400,7 +400,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestInvalidateEvaluationCache() {
 			UserID:             userID2,
 			ResourceType:       "document",
 			Action:             "write",
-			ContextHash:        "invalidation_test_2", 
+			ContextHash:        "invalidation_test_2",
 			Decision:           types.PolicyDecisionDeny,
 			ApplicablePolicies: []uuid.UUID{policyID},
 			EvaluationTimeMS:   18,
@@ -410,7 +410,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestInvalidateEvaluationCache() {
 			},
 		},
 	}
-	
+
 	err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 		for _, req := range cacheRequests {
 			if cacheErr := s.repo.CacheEvaluationResult(ctx, req); cacheErr != nil {
@@ -447,7 +447,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestInvalidateEvaluationCache() {
 						ContextHash:  "invalidation_test_1",
 					})
 					require.Error(s.T(), err, "User1's cached result should be invalidated")
-					
+
 					// User2's result should still exist
 					result, err := s.repo.GetCachedEvaluationResult(ctx, &GetCachedEvaluationResultRequest{
 						UserID:       userID2,
@@ -457,7 +457,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestInvalidateEvaluationCache() {
 					})
 					require.NoError(s.T(), err, "User2's cached result should still exist")
 					require.NotNil(s.T(), result)
-					
+
 					return nil
 				})
 				s.Require().NoError(execErr)
@@ -538,42 +538,42 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestInvalidateEvaluationCache() {
 func (s *PolicyEvaluationRepositoryTestSuite) TestGetUserEvaluationHistory() {
 	// Create evaluation history by caching multiple results for a user
 	testUserID := uuid.New()
-	
+
 	// Cache multiple evaluations for the user
 	err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 		evaluations := []*CacheEvaluationResultRequest{
 			{
-				UserID:       testUserID,
-				ResourceType: "document",
-				Action:       "read",
-				ContextHash:  "history_1",
-				Decision:     types.PolicyDecisionAllow,
+				UserID:           testUserID,
+				ResourceType:     "document",
+				Action:           "read",
+				ContextHash:      "history_1",
+				Decision:         types.PolicyDecisionAllow,
 				EvaluationTimeMS: 20,
-				ExpiresAt:    time.Now().Add(1 * time.Hour),
-				Result: &models.PolicyEvaluationResult{Decision: types.PolicyDecisionAllow},
+				ExpiresAt:        time.Now().Add(1 * time.Hour),
+				Result:           &models.PolicyEvaluationResult{Decision: types.PolicyDecisionAllow},
 			},
 			{
-				UserID:       testUserID,
-				ResourceType: "report",
-				Action:       "write",
-				ContextHash:  "history_2",
-				Decision:     types.PolicyDecisionDeny,
+				UserID:           testUserID,
+				ResourceType:     "report",
+				Action:           "write",
+				ContextHash:      "history_2",
+				Decision:         types.PolicyDecisionDeny,
 				EvaluationTimeMS: 15,
-				ExpiresAt:    time.Now().Add(1 * time.Hour),
-				Result: &models.PolicyEvaluationResult{Decision: types.PolicyDecisionDeny},
+				ExpiresAt:        time.Now().Add(1 * time.Hour),
+				Result:           &models.PolicyEvaluationResult{Decision: types.PolicyDecisionDeny},
 			},
 			{
-				UserID:       testUserID,
-				ResourceType: "document",
-				Action:       "delete",
-				ContextHash:  "history_3",
-				Decision:     types.PolicyDecisionAllow,
+				UserID:           testUserID,
+				ResourceType:     "document",
+				Action:           "delete",
+				ContextHash:      "history_3",
+				Decision:         types.PolicyDecisionAllow,
 				EvaluationTimeMS: 25,
-				ExpiresAt:    time.Now().Add(1 * time.Hour),
-				Result: &models.PolicyEvaluationResult{Decision: types.PolicyDecisionAllow},
+				ExpiresAt:        time.Now().Add(1 * time.Hour),
+				Result:           &models.PolicyEvaluationResult{Decision: types.PolicyDecisionAllow},
 			},
 		}
-		
+
 		for _, eval := range evaluations {
 			if err := s.repo.CacheEvaluationResult(ctx, eval); err != nil {
 				return err
@@ -602,7 +602,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestGetUserEvaluationHistory() {
 			},
 			validate: func(evaluations []*models.PolicyEvaluation) {
 				require.GreaterOrEqual(s.T(), len(evaluations), 3)
-				
+
 				// All evaluations should be for the test user
 				for _, eval := range evaluations {
 					require.Equal(s.T(), testUserID, eval.UserID)
@@ -621,7 +621,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestGetUserEvaluationHistory() {
 			},
 			validate: func(evaluations []*models.PolicyEvaluation) {
 				require.GreaterOrEqual(s.T(), len(evaluations), 2)
-				
+
 				// All evaluations should be for documents
 				for _, eval := range evaluations {
 					require.Equal(s.T(), testUserID, eval.UserID)
@@ -641,7 +641,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestGetUserEvaluationHistory() {
 			},
 			validate: func(evaluations []*models.PolicyEvaluation) {
 				require.GreaterOrEqual(s.T(), len(evaluations), 1)
-				
+
 				// All evaluations should be for read action
 				for _, eval := range evaluations {
 					require.Equal(s.T(), testUserID, eval.UserID)
@@ -704,16 +704,16 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestGetEvaluationMetrics() {
 		decisions := []types.PolicyDecision{
 			types.PolicyDecisionAllow, types.PolicyDecisionDeny, types.PolicyDecisionAllow,
 		}
-		
+
 		for i := 0; i < 9; i++ { // Create 9 evaluations (3x3 grid)
 			err := s.repo.CacheEvaluationResult(ctx, &CacheEvaluationResultRequest{
-				UserID:       users[i%3],
-				ResourceType: resources[i%3],
-				Action:       actions[i%3],
-				ContextHash:  fmt.Sprintf("metrics_test_%d", i),
-				Decision:     decisions[i%3],
+				UserID:           users[i%3],
+				ResourceType:     resources[i%3],
+				Action:           actions[i%3],
+				ContextHash:      fmt.Sprintf("metrics_test_%d", i),
+				Decision:         decisions[i%3],
 				EvaluationTimeMS: int64(10 + (i * 5)), // Varying evaluation times
-				ExpiresAt:    time.Now().Add(1 * time.Hour),
+				ExpiresAt:        time.Now().Add(1 * time.Hour),
 				Result: &models.PolicyEvaluationResult{
 					Decision: decisions[i%3],
 				},
@@ -812,20 +812,20 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestGetEvaluationCacheStats() {
 	// Create cached evaluations to generate stats
 	err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 		decisions := []types.PolicyDecision{
-			types.PolicyDecisionAllow, types.PolicyDecisionDeny, 
+			types.PolicyDecisionAllow, types.PolicyDecisionDeny,
 			types.PolicyDecisionAllow, types.PolicyDecisionAllow,
 		}
 		resources := []string{"document", "report", "document", "spreadsheet"}
-		
+
 		for i, decision := range decisions {
 			err := s.repo.CacheEvaluationResult(ctx, &CacheEvaluationResultRequest{
-				UserID:       uuid.New(),
-				ResourceType: resources[i],
-				Action:       "read",
-				ContextHash:  fmt.Sprintf("stats_test_%d", i),
-				Decision:     decision,
+				UserID:           uuid.New(),
+				ResourceType:     resources[i],
+				Action:           "read",
+				ContextHash:      fmt.Sprintf("stats_test_%d", i),
+				Decision:         decision,
 				EvaluationTimeMS: int64(15 + (i * 3)),
-				ExpiresAt:    time.Now().Add(30 * time.Minute),
+				ExpiresAt:        time.Now().Add(30 * time.Minute),
 				Result: &models.PolicyEvaluationResult{
 					Decision: decision,
 				},
@@ -855,7 +855,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestGetEvaluationCacheStats() {
 				require.GreaterOrEqual(s.T(), stats.AverageEvaluationTime, time.Duration(0))
 				require.NotNil(s.T(), stats.EvaluationsByDecision)
 				require.NotNil(s.T(), stats.EvaluationsByResource)
-				
+
 				// Check that we have decision breakdown
 				total := int64(0)
 				for _, count := range stats.EvaluationsByDecision {
@@ -909,13 +909,13 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestCleanupExpiredEvaluations() {
 	err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 		// Create expired evaluation
 		err := s.repo.CacheEvaluationResult(ctx, &CacheEvaluationResultRequest{
-			UserID:       uuid.New(),
-			ResourceType: "document",
-			Action:       "read",
-			ContextHash:  "expired_test",
-			Decision:     types.PolicyDecisionAllow,
+			UserID:           uuid.New(),
+			ResourceType:     "document",
+			Action:           "read",
+			ContextHash:      "expired_test",
+			Decision:         types.PolicyDecisionAllow,
 			EvaluationTimeMS: 20,
-			ExpiresAt:    time.Now().Add(-1 * time.Hour), // Already expired
+			ExpiresAt:        time.Now().Add(-1 * time.Hour), // Already expired
 			Result: &models.PolicyEvaluationResult{
 				Decision: types.PolicyDecisionAllow,
 			},
@@ -923,16 +923,16 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestCleanupExpiredEvaluations() {
 		if err != nil {
 			return err
 		}
-		
+
 		// Create valid evaluation
 		err = s.repo.CacheEvaluationResult(ctx, &CacheEvaluationResultRequest{
-			UserID:       uuid.New(),
-			ResourceType: "report",
-			Action:       "write",
-			ContextHash:  "valid_test",
-			Decision:     types.PolicyDecisionDeny,
+			UserID:           uuid.New(),
+			ResourceType:     "report",
+			Action:           "write",
+			ContextHash:      "valid_test",
+			Decision:         types.PolicyDecisionDeny,
 			EvaluationTimeMS: 25,
-			ExpiresAt:    time.Now().Add(1 * time.Hour), // Valid for 1 hour
+			ExpiresAt:        time.Now().Add(1 * time.Hour), // Valid for 1 hour
 			Result: &models.PolicyEvaluationResult{
 				Decision: types.PolicyDecisionDeny,
 			},
@@ -956,7 +956,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestCleanupExpiredEvaluations() {
 				// After cleanup, expired evaluations should be removed
 				// but valid ones should remain
 				s.T().Log("Expired evaluations cleanup completed")
-				
+
 				// We could verify by checking cache stats before/after
 				// but this depends on the specific implementation
 			},
@@ -1001,18 +1001,18 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestMultiTenantEvaluationIsolation
 		// Create evaluation cache entries in both tenants
 		tenantAUsers := []uuid.UUID{uuid.New(), uuid.New()}
 		tenantBUsers := []uuid.UUID{uuid.New(), uuid.New()}
-		
+
 		// Create evaluations in tenant A
 		err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 			for i, userID := range tenantAUsers {
 				err := s.repo.CacheEvaluationResult(ctx, &CacheEvaluationResultRequest{
-					UserID:       userID,
-					ResourceType: "tenant_a_document",
-					Action:       "read",
-					ContextHash:  fmt.Sprintf("tenant_a_isolation_%d", i),
-					Decision:     types.PolicyDecisionAllow,
+					UserID:           userID,
+					ResourceType:     "tenant_a_document",
+					Action:           "read",
+					ContextHash:      fmt.Sprintf("tenant_a_isolation_%d", i),
+					Decision:         types.PolicyDecisionAllow,
 					EvaluationTimeMS: 20,
-					ExpiresAt:    time.Now().Add(1 * time.Hour),
+					ExpiresAt:        time.Now().Add(1 * time.Hour),
 					Result: &models.PolicyEvaluationResult{
 						Decision: types.PolicyDecisionAllow,
 					},
@@ -1029,13 +1029,13 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestMultiTenantEvaluationIsolation
 		err = s.runner.GetStore().WithTenant(s.ctx, s.tenantB.ID, func(ctx context.Context, store db.Store) error {
 			for i, userID := range tenantBUsers {
 				err := s.repo.CacheEvaluationResult(ctx, &CacheEvaluationResultRequest{
-					UserID:       userID,
-					ResourceType: "tenant_b_report",
-					Action:       "write",
-					ContextHash:  fmt.Sprintf("tenant_b_isolation_%d", i),
-					Decision:     types.PolicyDecisionDeny,
+					UserID:           userID,
+					ResourceType:     "tenant_b_report",
+					Action:           "write",
+					ContextHash:      fmt.Sprintf("tenant_b_isolation_%d", i),
+					Decision:         types.PolicyDecisionDeny,
 					EvaluationTimeMS: 25,
-					ExpiresAt:    time.Now().Add(1 * time.Hour),
+					ExpiresAt:        time.Now().Add(1 * time.Hour),
 					Result: &models.PolicyEvaluationResult{
 						Decision: types.PolicyDecisionDeny,
 					},
@@ -1074,7 +1074,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestMultiTenantEvaluationIsolation
 				require.Error(s.T(), err, "Should NOT access tenant B evaluation from tenant A context")
 				require.Contains(s.T(), err.Error(), "not found")
 			}
-			
+
 			return nil
 		})
 		s.Require().NoError(err)
@@ -1105,7 +1105,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestMultiTenantEvaluationIsolation
 				require.Error(s.T(), err, "Should NOT access tenant A evaluation from tenant B context")
 				require.Contains(s.T(), err.Error(), "not found")
 			}
-			
+
 			return nil
 		})
 		s.Require().NoError(err)
@@ -1119,7 +1119,7 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestMultiTenantEvaluationIsolation
 				Offset: 0,
 			})
 			require.NoError(s.T(), err)
-			
+
 			// All history entries should be for tenant A users only
 			for _, eval := range history {
 				found := false
@@ -1130,14 +1130,14 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestMultiTenantEvaluationIsolation
 					}
 				}
 				require.True(s.T(), found, "History should only contain tenant A user evaluations")
-				
+
 				// Should not contain any tenant B users
 				for _, tenantBUser := range tenantBUsers {
 					require.NotEqual(s.T(), tenantBUser, eval.UserID,
 						"History should not contain tenant B user evaluations")
 				}
 			}
-			
+
 			return nil
 		})
 		s.Require().NoError(err)

@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/mock/gomock"
 
 	"github.com/niiniyare/erp/internal/core/iam/model"
 )
@@ -616,7 +615,7 @@ func boolPtr(b bool) *bool {
 func setupTestPolicyService(t *testing.T) PolicyService {
 	t.Helper()
 	// Use the new implementation with adapter
-	return &testPolicyService{svc: NewService()}
+	return &testPolicyService{svc: NewPolicyService()}
 }
 
 // Helper function to create UUIDs for specific test scenarios
@@ -630,35 +629,6 @@ func createScenarioUUID(scenario string) uuid.UUID {
 		return uuid.MustParse("22222222-2222-2222-2222-222222222222")
 	case "system_policy":
 		return uuid.MustParse("33333333-3333-3333-3333-333333333333")
-	case "policy_in_use_delete":
-		return uuid.MustParse("44444444-4444-4444-4444-444444444444")
-	default:
-		return uuid.New()
-	}
-}
-
-func setupTestPolicy() *CreatePolicyRequest {
-	return &CreatePolicyRequest{
-		Name:        "Test Policy",
-		Description: "A test policy for unit testing",
-		Target: &model.PolicyTarget{
-			Resources: []*model.PolicyResource{{Type: "test_resource"}},
-			Actions:   []string{"read"},
-		},
-		Rules: []*model.PolicyRule{
-			{
-				Effect: model.PolicyEffectAllow,
-				Condition: &model.PolicyCondition{
-					Expression: "user.test == true",
-					Attributes: map[string]any{"test": true},
-				},
-			},
-		},
-		Priority: 1,
-		Enabled:  true,
-	}
-}
-3333333")
 	case "policy_in_use_delete":
 		return uuid.MustParse("44444444-4444-4444-4444-444444444444")
 	default:

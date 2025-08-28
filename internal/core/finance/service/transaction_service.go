@@ -993,7 +993,7 @@ func (s *transactionService) SearchTransactions(ctx context.Context, query strin
 	// transactions, err := s.repo.Search(ctx, query, limit, offset)
 	// if err != nil {
 	// 	logger.ErrorContext(ctx, "Failed to search transactions",
-	
+
 	// For now, return empty results
 	transactions := []*domain.Transaction{}
 	err := error(nil)
@@ -1038,7 +1038,7 @@ func (s *transactionService) GetTransactionSummary(ctx context.Context, startDat
 	// 			"start_date": startDate.Format("2006-01-02"),
 	// 			"end_date":   endDate.Format("2006-01-02"),
 	// 			"error":      err.Error(),
-	
+
 	// For now, return nil summary to avoid field issues
 	summary := (*domain.TransactionSummary)(nil)
 	err := error(nil)
@@ -1177,19 +1177,19 @@ func (s *transactionService) CreateRecurringTransaction(ctx context.Context, tem
 
 	// Convert CreateTransactionRequest to Transaction domain model
 	newTransaction := &domain.Transaction{
-		ID:                uuid.New(),
-		EntityID:          template.EntityID,
-		TransactionNumber: newTransactionReq.TransactionNumber,
-		TransactionDate:   newTransactionReq.TransactionDate,
-		TransactionType:   newTransactionReq.TransactionType,
-		Description:       newTransactionReq.Description,
-		ReferenceNumber:   newTransactionReq.ReferenceNumber,
-		CurrencyCode:      newTransactionReq.CurrencyCode,
-		ExchangeRate:      newTransactionReq.ExchangeRate,
-		TransactionStatus: domain.TransactionStatusDraft,
-		ApprovalRequired:  newTransactionReq.ApprovalRequired,
-		ApprovalStatus:    domain.ApprovalStatusNotRequired,
-		SourceModule:      newTransactionReq.SourceModule,
+		ID:                 uuid.New(),
+		EntityID:           template.EntityID,
+		TransactionNumber:  newTransactionReq.TransactionNumber,
+		TransactionDate:    newTransactionReq.TransactionDate,
+		TransactionType:    newTransactionReq.TransactionType,
+		Description:        newTransactionReq.Description,
+		ReferenceNumber:    newTransactionReq.ReferenceNumber,
+		CurrencyCode:       newTransactionReq.CurrencyCode,
+		ExchangeRate:       newTransactionReq.ExchangeRate,
+		TransactionStatus:  domain.TransactionStatusDraft,
+		ApprovalRequired:   newTransactionReq.ApprovalRequired,
+		ApprovalStatus:     domain.ApprovalStatusNotRequired,
+		SourceModule:       newTransactionReq.SourceModule,
 		SourceDocumentType: newTransactionReq.SourceDocumentType,
 	}
 
@@ -1257,8 +1257,8 @@ func (s *transactionService) updateAccountBalances(ctx context.Context, entries 
 			continue
 		}
 
-		_ = account.CurrentBalance.Add(balanceChange)  // newBalance - unused
-		_ = account.YTDBalance.Add(balanceChange)      // newYTDBalance - unused
+		_ = account.CurrentBalance.Add(balanceChange) // newBalance - unused
+		_ = account.YTDBalance.Add(balanceChange)     // newYTDBalance - unused
 
 		// TODO: Fix AccountBalance struct definition
 		// balance := domain.AccountBalance{

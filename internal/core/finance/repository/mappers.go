@@ -330,7 +330,6 @@ func mapDomainTransactionToSQLCCreate(req *domain.CreateTransactionRequest) (db.
 	}, nil
 }
 
-
 // Helper functions
 
 func timeToPointer(t pgtype.Timestamptz) *time.Time {
@@ -347,7 +346,6 @@ func dateToPtr(t *time.Time) *pgtype.Date {
 	}
 	return nil
 }
-
 
 func stringPtr(s string) *string {
 	return &s
@@ -554,13 +552,38 @@ func mapStringToApprovalStatus(s *string) *domain.ApprovalStatus {
 	return &status
 }
 
+// Additional helper functions for tests and general usage
+//
+//	func stringPtr(s string) *string {
+//		return &s
+//	}
+func intPtr(i int) *int {
+	return &i
+}
+
+func int32Ptr(i int32) *int32 {
+	return &i
+}
+
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+func getInt32Ptr(i int32) *int32 {
+	return &i
+}
+
+func getBoolPtr(b bool) *bool {
+	return &b
+}
+
 // Additional helper functions for transaction repository enum mappings
 
 func mapDomainApprovalStatusToNullEnum(status *domain.ApprovalStatus) db.NullApprovalStatusEnum {
 	if status == nil {
 		return db.NullApprovalStatusEnum{Valid: false}
 	}
-	
+
 	var approvalEnum db.ApprovalStatusEnum
 	switch *status {
 	case domain.ApprovalStatusNotRequired:
@@ -574,7 +597,7 @@ func mapDomainApprovalStatusToNullEnum(status *domain.ApprovalStatus) db.NullApp
 	default:
 		approvalEnum = db.ApprovalStatusEnumNOTREQUIRED
 	}
-	
+
 	return db.NullApprovalStatusEnum{
 		ApprovalStatusEnum: approvalEnum,
 		Valid:              true,
@@ -585,7 +608,7 @@ func mapDomainRecurringFrequencyToNullEnum(frequency *string) db.NullRecurringFr
 	if frequency == nil || *frequency == "" {
 		return db.NullRecurringFrequencyEnum{Valid: false}
 	}
-	
+
 	var frequencyEnum db.RecurringFrequencyEnum
 	switch *frequency {
 	case "DAILY":
@@ -601,7 +624,7 @@ func mapDomainRecurringFrequencyToNullEnum(frequency *string) db.NullRecurringFr
 	default:
 		return db.NullRecurringFrequencyEnum{Valid: false}
 	}
-	
+
 	return db.NullRecurringFrequencyEnum{
 		RecurringFrequencyEnum: frequencyEnum,
 		Valid:                  true,
@@ -626,7 +649,7 @@ func mapNullApprovalStatusToDomain(nullStatus db.NullApprovalStatusEnum) domain.
 	if !nullStatus.Valid {
 		return domain.ApprovalStatusNotRequired
 	}
-	
+
 	switch nullStatus.ApprovalStatusEnum {
 	case db.ApprovalStatusEnumNOTREQUIRED:
 		return domain.ApprovalStatusNotRequired
@@ -645,7 +668,7 @@ func mapNullRecurringFrequencyToDomainString(nullFreq db.NullRecurringFrequencyE
 	if !nullFreq.Valid {
 		return nil
 	}
-	
+
 	var freqStr string
 	switch nullFreq.RecurringFrequencyEnum {
 	case db.RecurringFrequencyEnumDAILY:
@@ -661,8 +684,6 @@ func mapNullRecurringFrequencyToDomainString(nullFreq db.NullRecurringFrequencyE
 	default:
 		return nil
 	}
-	
+
 	return &freqStr
 }
-
-

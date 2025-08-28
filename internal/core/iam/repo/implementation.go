@@ -53,12 +53,12 @@ func NewIAMRepository(
 	repo.personRepo = NewPersonRepository(store, logger, metrics, tracer)
 	repo.employeeRepo = NewEmployeeRepository(store, logger, metrics, tracer)
 	repo.roleRepo = NewRoleRepository(store, logger, metrics, tracer)
+	repo.permissionRepo = NewPermissionRepository(store, logger, metrics, tracer)
 	// TODO: Implement remaining repository constructors
 	// repo.userRoleRepo = NewUserRoleRepository(store, logger, metrics, tracer)
 	// repo.sessionRepo = NewSessionRepository(store, logger, metrics, tracer)
 	// repo.policyRepo = NewPolicyRepository(store, logger, metrics, tracer)
 	// repo.attributeRepo = NewAttributeRepository(store, logger, metrics, tracer)
-	// repo.permissionRepo = NewPermissionRepository(store, logger, metrics, tracer)
 	// repo.accessReqRepo = NewAccessRequestRepository(store, logger, metrics, tracer)
 	// repo.approvalRepo = NewApprovalWorkflowRepository(store, logger, metrics, tracer)
 	// repo.conditionalRepo = NewConditionalAccessRepository(store, logger, metrics, tracer)
@@ -80,7 +80,7 @@ func (r *iamRepository) Sessions() SessionRepository   { return nil } // TODO: i
 // Authorization repositories
 func (r *iamRepository) Policies() PolicyRepository                     { return nil } // TODO: implement
 func (r *iamRepository) Attributes() AttributeRepository                { return nil } // TODO: implement
-func (r *iamRepository) Permissions() PermissionRepository              { return nil } // TODO: implement
+func (r *iamRepository) Permissions() PermissionRepository              { return r.permissionRepo }
 func (r *iamRepository) AccessRequests() AccessRequestRepository        { return nil } // TODO: implement
 func (r *iamRepository) ApprovalWorkflows() ApprovalWorkflowRepository  { return nil } // TODO: implement
 func (r *iamRepository) ConditionalAccess() ConditionalAccessRepository { return nil } // TODO: implement

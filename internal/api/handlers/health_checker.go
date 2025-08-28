@@ -25,10 +25,10 @@ type HealthChecker interface {
 
 // HealthCheckResult represents the result of a health check
 type HealthCheckResult struct {
-	Status    string        `json:"status"`    // "ok", "warning", "critical"
-	Message   string        `json:"message,omitempty"`
-	Duration  time.Duration `json:"duration"`
-	Timestamp time.Time     `json:"timestamp"`
+	Status    string                 `json:"status"` // "ok", "warning", "critical"
+	Message   string                 `json:"message,omitempty"`
+	Duration  time.Duration          `json:"duration"`
+	Timestamp time.Time              `json:"timestamp"`
 	Details   map[string]interface{} `json:"details,omitempty"`
 }
 
@@ -88,9 +88,9 @@ func (h *healthChecker) CheckDatabase(ctx context.Context) HealthCheckResult {
 		result.Details["error"] = err.Error()
 		result.Details["connection"] = "failed"
 
-		h.metrics.IncrementCounter("health_check_failures", 
+		h.metrics.IncrementCounter("health_check_failures",
 			metrics.Fields{"component": "database", "type": "connection"})
-		h.logger.ErrorContext(ctx, "Database health check failed", 
+		h.logger.ErrorContext(ctx, "Database health check failed",
 			logger.Fields{"error": err.Error(), "duration": duration})
 
 		return result
@@ -108,9 +108,9 @@ func (h *healthChecker) CheckDatabase(ctx context.Context) HealthCheckResult {
 		result.Details["connection"] = "ok"
 		result.Details["query_execution"] = "failed"
 
-		h.metrics.IncrementCounter("health_check_warnings", 
+		h.metrics.IncrementCounter("health_check_warnings",
 			metrics.Fields{"component": "database", "type": "query"})
-		h.logger.WarnContext(ctx, "Database query test failed", 
+		h.logger.WarnContext(ctx, "Database query test failed",
 			logger.Fields{"error": err.Error(), "duration": duration})
 
 		return result
@@ -132,9 +132,9 @@ func (h *healthChecker) CheckDatabase(ctx context.Context) HealthCheckResult {
 		result.Details["query_execution"] = "ok"
 		result.Details["tenant_context"] = "failed"
 
-		h.metrics.IncrementCounter("health_check_warnings", 
+		h.metrics.IncrementCounter("health_check_warnings",
 			metrics.Fields{"component": "database", "type": "tenant_context"})
-		h.logger.WarnContext(ctx, "Database tenant context test failed", 
+		h.logger.WarnContext(ctx, "Database tenant context test failed",
 			logger.Fields{"error": err.Error(), "duration": duration})
 
 		return result
@@ -149,12 +149,12 @@ func (h *healthChecker) CheckDatabase(ctx context.Context) HealthCheckResult {
 	result.Details["query_execution"] = "ok"
 	result.Details["tenant_context"] = "ok"
 
-	h.metrics.IncrementCounter("health_check_success", 
+	h.metrics.IncrementCounter("health_check_success",
 		metrics.Fields{"component": "database"})
-	h.metrics.ObserveHistogram("health_check_duration_seconds", duration.Seconds(), 
+	h.metrics.ObserveHistogram("health_check_duration_seconds", duration.Seconds(),
 		metrics.Fields{"component": "database"})
 
-	h.logger.DebugContext(ctx, "Database health check successful", 
+	h.logger.DebugContext(ctx, "Database health check successful",
 		logger.Fields{"duration": duration})
 
 	return result
@@ -197,9 +197,9 @@ func (h *healthChecker) CheckCache(ctx context.Context) HealthCheckResult {
 		result.Details["connection"] = "failed"
 		result.Details["configured"] = true
 
-		h.metrics.IncrementCounter("health_check_failures", 
+		h.metrics.IncrementCounter("health_check_failures",
 			metrics.Fields{"component": "cache", "type": "connection"})
-		h.logger.ErrorContext(ctx, "Redis health check failed", 
+		h.logger.ErrorContext(ctx, "Redis health check failed",
 			logger.Fields{"error": err.Error(), "duration": duration})
 
 		return result
@@ -214,9 +214,9 @@ func (h *healthChecker) CheckCache(ctx context.Context) HealthCheckResult {
 		result.Details["connection"] = "ok"
 		result.Details["configured"] = true
 
-		h.metrics.IncrementCounter("health_check_warnings", 
+		h.metrics.IncrementCounter("health_check_warnings",
 			metrics.Fields{"component": "cache", "type": "ping_response"})
-		h.logger.WarnContext(ctx, "Redis ping returned unexpected response", 
+		h.logger.WarnContext(ctx, "Redis ping returned unexpected response",
 			logger.Fields{"response": pong, "duration": duration})
 
 		return result
@@ -238,9 +238,9 @@ func (h *healthChecker) CheckCache(ctx context.Context) HealthCheckResult {
 		result.Details["set_operation"] = "failed"
 		result.Details["configured"] = true
 
-		h.metrics.IncrementCounter("health_check_warnings", 
+		h.metrics.IncrementCounter("health_check_warnings",
 			metrics.Fields{"component": "cache", "type": "set_operation"})
-		h.logger.WarnContext(ctx, "Redis SET operation failed", 
+		h.logger.WarnContext(ctx, "Redis SET operation failed",
 			logger.Fields{"error": err.Error(), "duration": duration})
 
 		return result
@@ -259,9 +259,9 @@ func (h *healthChecker) CheckCache(ctx context.Context) HealthCheckResult {
 		result.Details["get_operation"] = "failed"
 		result.Details["configured"] = true
 
-		h.metrics.IncrementCounter("health_check_warnings", 
+		h.metrics.IncrementCounter("health_check_warnings",
 			metrics.Fields{"component": "cache", "type": "get_operation"})
-		h.logger.WarnContext(ctx, "Redis GET operation failed", 
+		h.logger.WarnContext(ctx, "Redis GET operation failed",
 			logger.Fields{"error": err.Error(), "duration": duration})
 
 		return result
@@ -279,9 +279,9 @@ func (h *healthChecker) CheckCache(ctx context.Context) HealthCheckResult {
 		result.Details["get_operation"] = "inconsistent"
 		result.Details["configured"] = true
 
-		h.metrics.IncrementCounter("health_check_warnings", 
+		h.metrics.IncrementCounter("health_check_warnings",
 			metrics.Fields{"component": "cache", "type": "data_consistency"})
-		h.logger.WarnContext(ctx, "Redis data consistency check failed", 
+		h.logger.WarnContext(ctx, "Redis data consistency check failed",
 			logger.Fields{"expected": testValue, "retrieved": retrievedValue, "duration": duration})
 
 		return result
@@ -301,12 +301,12 @@ func (h *healthChecker) CheckCache(ctx context.Context) HealthCheckResult {
 	result.Details["data_consistency"] = "ok"
 	result.Details["configured"] = true
 
-	h.metrics.IncrementCounter("health_check_success", 
+	h.metrics.IncrementCounter("health_check_success",
 		metrics.Fields{"component": "cache"})
-	h.metrics.ObserveHistogram("health_check_duration_seconds", duration.Seconds(), 
+	h.metrics.ObserveHistogram("health_check_duration_seconds", duration.Seconds(),
 		metrics.Fields{"component": "cache"})
 
-	h.logger.DebugContext(ctx, "Redis cache health check successful", 
+	h.logger.DebugContext(ctx, "Redis cache health check successful",
 		logger.Fields{"duration": duration})
 
 	return result
@@ -344,21 +344,21 @@ func (h *healthChecker) CheckDependencies(ctx context.Context) map[string]Health
 	for component, result := range results {
 		if result.Status == "critical" {
 			overallHealthy = false
-			h.logger.ErrorContext(ctx, "Critical health check failure", 
+			h.logger.ErrorContext(ctx, "Critical health check failure",
 				logger.Fields{"component": component, "message": result.Message})
 		} else if result.Status == "warning" {
-			h.logger.WarnContext(ctx, "Health check warning", 
+			h.logger.WarnContext(ctx, "Health check warning",
 				logger.Fields{"component": component, "message": result.Message})
 		}
 	}
 
 	if overallHealthy {
 		h.logger.InfoContext(ctx, "All health checks passed successfully")
-		h.metrics.IncrementCounter("health_check_success", 
+		h.metrics.IncrementCounter("health_check_success",
 			metrics.Fields{"component": "overall"})
 	} else {
 		h.logger.ErrorContext(ctx, "One or more health checks failed")
-		h.metrics.IncrementCounter("health_check_failures", 
+		h.metrics.IncrementCounter("health_check_failures",
 			metrics.Fields{"component": "overall"})
 	}
 

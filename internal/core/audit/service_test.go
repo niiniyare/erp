@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	"github.com/niiniyare/erp/internal/platform/cache"
@@ -74,6 +74,7 @@ func TestRecord(t *testing.T) {
 	})
 
 	// 4. Assertions
-	assert.NoError(t, err)
-	assert.NotNil(t, auditEvent)
+	require.NoError(t, err)
+	// require.Nil(t, auditEvent)
+	require.NotNil(t, auditEvent)
 }

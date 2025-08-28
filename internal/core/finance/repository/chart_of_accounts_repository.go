@@ -30,6 +30,11 @@ func NewChartOfAccountsRepository(store db.Store, tracing tracing.TracingService
 	}
 }
 
+// NewAccountRepository is an alias for NewChartOfAccountsRepository for test compatibility
+func NewAccountRepository(store db.Store, tracing tracing.TracingService) domain.ChartOfAccountsRepository {
+	return NewChartOfAccountsRepository(store, tracing)
+}
+
 // Basic CRUD Operations
 
 func (r *chartOfAccountsRepository) Create(ctx context.Context, account *domain.ChartOfAccounts) error {
@@ -606,4 +611,3 @@ func getStringValue(s *string) string {
 	}
 	return *s
 }
-

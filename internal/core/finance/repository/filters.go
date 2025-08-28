@@ -33,7 +33,7 @@ type AccountFilter struct {
 
 	// Search filters
 	SearchTerm *string `json:"search_term,omitempty"` // Search in account code/name
-	
+
 	// Currency filters
 	CurrencyCode    *string `json:"currency_code,omitempty"`
 	IsMultiCurrency *bool   `json:"is_multi_currency,omitempty"`
@@ -60,7 +60,7 @@ type TransactionFilter struct {
 	AccountID *uuid.UUID `json:"account_id,omitempty"`
 
 	// Search filters
-	SearchTerm      *string `json:"search_term,omitempty"`      // Search in description/reference
+	SearchTerm      *string `json:"search_term,omitempty"` // Search in description/reference
 	ReferenceNumber *string `json:"reference_number,omitempty"`
 
 	// Amount filters

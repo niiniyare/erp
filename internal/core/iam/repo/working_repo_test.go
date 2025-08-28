@@ -12,16 +12,22 @@ import (
 
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/iam/model"
+	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
 // WorkingRepositoryTestSuite tests repository operations with existing SQLC methods
 // Covers IAM-REPO-001 to IAM-REPO-004: Basic repository functionality that's actually implemented
 type WorkingRepositoryTestSuite struct {
 	suite.Suite
-	ctx        context.Context
-	ctrl       *gomock.Controller
-	mockStore  *db.MockStore
-	repository IAMRepository
+	ctx         context.Context
+	ctrl        *gomock.Controller
+	mockStore   *db.MockStore
+	mockLogger  *logger.MockLogger
+	mockMetrics *metrics.MockMetricsProvider
+	mockTracer  *tracing.MockTracingService
+	repository  IAMRepository
 }
 
 // SetupTest initializes test fixtures for each test
@@ -29,13 +35,52 @@ func (s *WorkingRepositoryTestSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.ctrl = gomock.NewController(s.T())
 	s.mockStore = db.NewMockStore(s.ctrl)
-	
-	// Create repository with mocked store
+	s.mockLogger = logger.NewMockLogger(s.ctrl)
+	s.mockMetrics = metrics.NewMockMetricsProvider(s.ctrl)
+	s.mockTracer = tracing.NewMockTracingService(s.ctrl)
+
+	// Set up tracing mocks to prevent panics
+	mockSpan := tracing.NewMockSpan(s.ctrl)
+	mockSpan.EXPECT().End().AnyTimes()
+	s.mockTracer.EXPECT().
+		StartSpan(gomock.Any(), gomock.Any()).
+		Return(s.ctx, mockSpan).
+		AnyTimes()
+
+	// Set up store WithTenant mock to execute the function
+	s.mockStore.EXPECT().
+		WithTenant(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) error) error {
+			// Execute the function with the mock store
+			return fn(ctx, s.mockStore)
+		}).
+		AnyTimes()
+
+	// Set up metrics mocks to prevent panics
+	s.mockMetrics.EXPECT().
+		IncrementCounter(gomock.Any(), gomock.Any()).
+		AnyTimes()
+	s.mockMetrics.EXPECT().
+		ObserveHistogram(gomock.Any(), gomock.Any(), gomock.Any()).
+		AnyTimes()
+	s.mockMetrics.EXPECT().
+		TimerFunc(gomock.Any(), gomock.Any(), gomock.Any()).
+		AnyTimes()
+
+	// Set up logger mocks to prevent panics
+	s.mockLogger.EXPECT().
+		InfoContext(gomock.Any(), gomock.Any(), gomock.Any()).
+		AnyTimes()
+	s.mockLogger.EXPECT().
+		ErrorContext(gomock.Any(), gomock.Any(), gomock.Any()).
+		AnyTimes()
+
+	// Create repository with mocked dependencies
 	s.repository = NewIAMRepository(
 		s.mockStore,
-		nil, // logger not needed for tests
-		nil, // metrics not needed for tests
-		nil, // tracer not needed for tests
+		s.mockLogger,
+		s.mockMetrics,
+		s.mockTracer,
 	)
 }
 
@@ -83,9 +128,9 @@ func (s *WorkingRepositoryTestSuite) TestUserRepositoryBasicOperations() {
 					TenantID: tenantID,
 					Email:    "test@example.com",
 				}
-				
+
 				result, err := s.repository.Users().Create(s.ctx, userToCreate)
-				
+
 				// Assertions
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), result)
@@ -115,7 +160,7 @@ func (s *WorkingRepositoryTestSuite) TestUserRepositoryBasicOperations() {
 
 				// Call repository method
 				result, err := s.repository.Users().GetByID(s.ctx, userID)
-				
+
 				// Assertions
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), result)
@@ -125,7 +170,7 @@ func (s *WorkingRepositoryTestSuite) TestUserRepositoryBasicOperations() {
 		},
 		{
 			name: "GetUserByEmail_ValidEmail_ReturnsUser",
-			spec: "IAM-REPO-001", 
+			spec: "IAM-REPO-001",
 			testFunc: func() {
 				email := "test@example.com"
 				expectedUser := &db.User{
@@ -145,7 +190,7 @@ func (s *WorkingRepositoryTestSuite) TestUserRepositoryBasicOperations() {
 
 				// Call repository method
 				result, err := s.repository.Users().GetByEmail(s.ctx, email)
-				
+
 				// Assertions
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), result)
@@ -196,9 +241,9 @@ func (s *WorkingRepositoryTestSuite) TestPersonRepositoryBasicOperations() {
 					FirstName: "John",
 					LastName:  "Doe",
 				}
-				
+
 				result, err := s.repository.Persons().Create(s.ctx, personToCreate)
-				
+
 				// Assertions
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), result)
@@ -228,7 +273,7 @@ func (s *WorkingRepositoryTestSuite) TestPersonRepositoryBasicOperations() {
 
 				// Call repository method
 				result, err := s.repository.Persons().GetByID(s.ctx, personID)
-				
+
 				// Assertions
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), result)
@@ -281,9 +326,9 @@ func (s *WorkingRepositoryTestSuite) TestEmployeeRepositoryBasicOperations() {
 					EntityID:       entityID,
 					EmployeeNumber: "EMP001",
 				}
-				
+
 				result, err := s.repository.Employees().Create(s.ctx, employeeToCreate)
-				
+
 				// Assertions
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), result)
@@ -312,7 +357,7 @@ func (s *WorkingRepositoryTestSuite) TestEmployeeRepositoryBasicOperations() {
 
 				// Call repository method
 				result, err := s.repository.Employees().GetByID(s.ctx, employeeID)
-				
+
 				// Assertions
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), result)
@@ -343,7 +388,7 @@ func (s *WorkingRepositoryTestSuite) TestTenantIsolationValidation() {
 				tenant1ID := uuid.New()
 				tenant2ID := uuid.New()
 				userID := uuid.New()
-				
+
 				// User belongs to tenant1
 				user := &db.User{
 					ID:       userID,
@@ -358,7 +403,7 @@ func (s *WorkingRepositoryTestSuite) TestTenantIsolationValidation() {
 
 				// Call repository method (this would use tenant context in real implementation)
 				result, err := s.repository.Users().GetByID(s.ctx, userID)
-				
+
 				// Assertions - verify tenant isolation logic would be applied
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), result)
@@ -367,13 +412,13 @@ func (s *WorkingRepositoryTestSuite) TestTenantIsolationValidation() {
 			},
 		},
 		{
-			name: "PersonAccess_CrossTenantPrevention_Verified", 
+			name: "PersonAccess_CrossTenantPrevention_Verified",
 			spec: "IAM-REPO-004",
 			testFunc: func() {
 				tenant1ID := uuid.New()
 				tenant2ID := uuid.New()
 				personID := uuid.New()
-				
+
 				// Person belongs to tenant1
 				person := &db.Person{
 					ID:        personID,
@@ -389,7 +434,7 @@ func (s *WorkingRepositoryTestSuite) TestTenantIsolationValidation() {
 
 				// Call repository method
 				result, err := s.repository.Persons().GetByID(s.ctx, personID)
-				
+
 				// Assertions - verify tenant isolation
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), result)

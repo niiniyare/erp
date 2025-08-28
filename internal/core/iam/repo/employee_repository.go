@@ -109,8 +109,58 @@ func (r *employeeRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.
 	ctx, span := r.tracer.StartSpan(ctx, "employee_repository.GetByID")
 	defer span.End()
 
-	// TODO: Implement when SQLC query is available
-	return nil, fmt.Errorf("GetByID not implemented")
+	// Get current tenant from context
+	tenantID := getTenantIDFromContext(ctx)
+
+	var employee *model.Employee
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, store db.Store) error {
+		sqlcEmployee, err := store.GetEmployeeByID(ctx, id)
+		if err != nil {
+			if err == db.ErrNoRows {
+				return fmt.Errorf("employee not found")
+			}
+			return err
+		}
+
+		// Convert SQLC employee to domain model
+		employee = &model.Employee{
+			ID:              sqlcEmployee.ID,
+			TenantID:        sqlcEmployee.TenantID,
+			PersonID:        sqlcEmployee.PersonID,
+			EmployeeNumber:  sqlcEmployee.EmployeeNumber,
+			EntityID:        sqlcEmployee.EntityID,
+			PositionTitle:   sqlcEmployee.PositionTitle,
+			DepartmentID:    sqlcEmployee.DepartmentID,
+			ManagerID:       sqlcEmployee.ManagerID,
+			HireDate:        sqlcEmployee.HireDate,
+			TerminationDate: &sqlcEmployee.TerminationDate,
+			CreatedAt:       sqlcEmployee.CreatedAt,
+			UpdatedAt:       sqlcEmployee.UpdatedAt,
+		}
+
+		// Handle optional fields
+		if sqlcEmployee.EmploymentStatus != nil {
+			employee.EmploymentStatus = model.EmploymentStatus(*sqlcEmployee.EmploymentStatus)
+		}
+		if sqlcEmployee.SecurityLevel != nil {
+			employee.SecurityLevel = int(*sqlcEmployee.SecurityLevel)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		r.metrics.IncrementCounter("employee_repository_get_error", map[string]any{"error": err.Error()})
+		return nil, err
+	}
+
+	r.metrics.IncrementCounter("employee_repository_get_success", map[string]any{})
+	r.logger.InfoContext(ctx, "Employee retrieved successfully", map[string]any{
+		"employee_id": employee.ID,
+		"tenant_id":   tenantID,
+	})
+
+	return employee, nil
 }
 
 // GetByEmployeeNumber retrieves an employee by employee number

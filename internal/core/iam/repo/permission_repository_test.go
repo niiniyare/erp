@@ -44,8 +44,7 @@ func (s *PermissionRepositoryTestSuite) SetupTest() {
 	s.tenantID = uuid.New()
 	s.entityID = uuid.New()
 	s.userID = uuid.New()
-	//TODO: Implement NewPermissionRepository constructor
-	// s.repo = NewPermissionRepository(s.store, s.logger, s.metrics, s.tracing)
+	s.repo = NewPermissionRepository(s.store, s.logger, s.metrics, s.tracing)
 }
 
 // TearDownTest cleans up test fixtures
@@ -105,7 +104,7 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 			setupMocks: func() {
 				s.store.EXPECT().
 					CreatePolicy(gomock.Any(), gomock.Any()).
-					Return(db.Policy{
+					Return(&db.Policy{
 						ID:       uuid.New(),
 						TenantID: s.tenantID,
 						EntityID: &s.entityID,
@@ -169,7 +168,7 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 			setupMocks: func() {
 				s.store.EXPECT().
 					CreatePolicy(gomock.Any(), gomock.Any()).
-					Return(db.Policy{
+					Return(&db.Policy{
 						ID:       uuid.New(),
 						TenantID: s.tenantID,
 						EntityID: &s.entityID,
@@ -227,7 +226,7 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 			setupMocks: func() {
 				s.store.EXPECT().
 					CreatePolicy(gomock.Any(), gomock.Any()).
-					Return(db.Policy{
+					Return(&db.Policy{
 						ID:       uuid.New(),
 						TenantID: s.tenantID,
 						EntityID: &s.entityID,
@@ -251,9 +250,11 @@ func (s *PermissionRepositoryTestSuite) TestCreatePermission() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			// Setup tracing mocks
+			mockSpan := tracing.NewMockSpan(s.ctrl)
+			mockSpan.EXPECT().End().AnyTimes()
 			s.tracing.EXPECT().
 				StartSpan(gomock.Any(), gomock.Any()).
-				Return(s.ctx, &tracing.MockSpan{}).
+				Return(s.ctx, mockSpan).
 				AnyTimes()
 
 			// Setup mock behavior
@@ -306,7 +307,7 @@ func (s *PermissionRepositoryTestSuite) TestPermissionCheck() {
 				allowEffect := "allow"
 				s.store.EXPECT().
 					GetPoliciesForEvaluation(gomock.Any(), gomock.Any()).
-					Return([]db.GetPoliciesForEvaluationRow{
+					Return([]*db.GetPoliciesForEvaluationRow{
 						{Effect: &allowEffect},
 					}, nil). // Return a policy that allows access
 					Times(1)
@@ -326,7 +327,7 @@ func (s *PermissionRepositoryTestSuite) TestPermissionCheck() {
 				// Mock permission exists but time condition fails
 				s.store.EXPECT().
 					GetPoliciesForEvaluation(gomock.Any(), gomock.Any()).
-					Return([]db.GetPoliciesForEvaluationRow{}, nil). // No applicable policies
+					Return([]*db.GetPoliciesForEvaluationRow{}, nil). // No applicable policies
 					Times(1)
 			},
 			expectHasPermission: false,
@@ -344,7 +345,7 @@ func (s *PermissionRepositoryTestSuite) TestPermissionCheck() {
 				// Mock expired permission
 				s.store.EXPECT().
 					GetPoliciesForEvaluation(gomock.Any(), gomock.Any()).
-					Return([]db.GetPoliciesForEvaluationRow{}, nil). // No applicable policies
+					Return([]*db.GetPoliciesForEvaluationRow{}, nil). // No applicable policies
 					Times(1)
 			},
 			expectHasPermission: false,
@@ -362,7 +363,7 @@ func (s *PermissionRepositoryTestSuite) TestPermissionCheck() {
 				// Mock no permission found
 				s.store.EXPECT().
 					GetPoliciesForEvaluation(gomock.Any(), gomock.Any()).
-					Return([]db.GetPoliciesForEvaluationRow{}, nil). // No policies found
+					Return([]*db.GetPoliciesForEvaluationRow{}, nil). // No policies found
 					Times(1)
 			},
 			expectHasPermission: false,
@@ -375,9 +376,11 @@ func (s *PermissionRepositoryTestSuite) TestPermissionCheck() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			// Setup tracing mocks
+			mockSpan := tracing.NewMockSpan(s.ctrl)
+			mockSpan.EXPECT().End().AnyTimes()
 			s.tracing.EXPECT().
 				StartSpan(gomock.Any(), gomock.Any()).
-				Return(s.ctx, &tracing.MockSpan{}).
+				Return(s.ctx, mockSpan).
 				AnyTimes()
 
 			// Setup mock behavior
@@ -476,16 +479,18 @@ func (s *PermissionRepositoryTestSuite) TestGrantRevokePermission() {
 					Times(1)
 			},
 			expectError:   true,
-			errorContains: "no data found",
+			errorContains: "no rows in result set",
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			// Setup tracing mocks
+			mockSpan := tracing.NewMockSpan(s.ctrl)
+			mockSpan.EXPECT().End().AnyTimes()
 			s.tracing.EXPECT().
 				StartSpan(gomock.Any(), gomock.Any()).
-				Return(s.ctx, &tracing.MockSpan{}).
+				Return(s.ctx, mockSpan).
 				AnyTimes()
 
 			// Setup mock behavior
@@ -550,7 +555,7 @@ func (s *PermissionRepositoryTestSuite) TestPermissionTenantIsolation() {
 				// Mock permission check across tenants returns false
 				s.store.EXPECT().
 					GetPoliciesForEvaluation(gomock.Any(), gomock.Any()).
-					Return([]db.GetPoliciesForEvaluationRow{}, nil). // No permission due to tenant isolation
+					Return([]*db.GetPoliciesForEvaluationRow{}, nil). // No permission due to tenant isolation
 					Times(1)
 
 				return tenantA, tenantB
@@ -567,9 +572,11 @@ func (s *PermissionRepositoryTestSuite) TestPermissionTenantIsolation() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			// Setup tracing mocks
+			mockSpan := tracing.NewMockSpan(s.ctrl)
+			mockSpan.EXPECT().End().AnyTimes()
 			s.tracing.EXPECT().
 				StartSpan(gomock.Any(), gomock.Any()).
-				Return(s.ctx, &tracing.MockSpan{}).
+				Return(s.ctx, mockSpan).
 				AnyTimes()
 
 			// Arrange

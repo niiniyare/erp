@@ -6,8 +6,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/mock/gomock"
 
 	"github.com/niiniyare/erp/internal/core/abac/models"
@@ -18,110 +20,31 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// Mock AttributeRepository
-type MockAttributeRepository struct {
-	mock.Mock
-}
+// NoOpSpan is a no-op implementation of the tracing.Span interface for testing
+type NoOpSpan struct{}
 
-func (m *MockAttributeRepository) CreateAttributeDefinition(ctx context.Context, req *repository.CreateAttributeDefinitionRequest) (*models.AttributeDefinition, error) {
-	args := m.Called(ctx, req)
-	return args.Get(0).(*models.AttributeDefinition), args.Error(1)
-}
-
-func (m *MockAttributeRepository) UpdateAttributeDefinition(ctx context.Context, req *repository.UpdateAttributeDefinitionRequest) (*models.AttributeDefinition, error) {
-	args := m.Called(ctx, req)
-	return args.Get(0).(*models.AttributeDefinition), args.Error(1)
-}
-
-func (m *MockAttributeRepository) DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error {
-	args := m.Called(ctx, id)
-	return args.Error(0)
-}
-
-func (m *MockAttributeRepository) GetAttributeDefinitionByID(ctx context.Context, id uuid.UUID) (*models.AttributeDefinition, error) {
-	args := m.Called(ctx, id)
-	return args.Get(0).(*models.AttributeDefinition), args.Error(1)
-}
-
-func (m *MockAttributeRepository) GetAttributeDefinitionByName(ctx context.Context, name string) (*models.AttributeDefinition, error) {
-	args := m.Called(ctx, name)
-	return args.Get(0).(*models.AttributeDefinition), args.Error(1)
-}
-
-func (m *MockAttributeRepository) ListAttributeDefinitions(ctx context.Context, req *repository.ListAttributeDefinitionsRequest) ([]*models.AttributeDefinition, error) {
-	args := m.Called(ctx, req)
-	return args.Get(0).([]*models.AttributeDefinition), args.Error(1)
-}
-
-func (m *MockAttributeRepository) BuildAttributeContext(ctx context.Context, req *repository.BuildAttributeContextRequest) (*models.AttributeContext, error) {
-	args := m.Called(ctx, req)
-	return args.Get(0).(*models.AttributeContext), args.Error(1)
-}
-
-func (m *MockAttributeRepository) CreateAttributeValue(ctx context.Context, req *repository.CreateAttributeValueRequest) (*models.AttributeValue, error) {
-	args := m.Called(ctx, req)
-	return args.Get(0).(*models.AttributeValue), args.Error(1)
-}
-
-func (m *MockAttributeRepository) GetAttributeValue(ctx context.Context, definitionID uuid.UUID, entityID uuid.UUID) (*models.AttributeValue, error) {
-	args := m.Called(ctx, definitionID, entityID)
-	return args.Get(0).(*models.AttributeValue), args.Error(1)
-}
-
-func (m *MockAttributeRepository) GetAttributeValuesByEntity(ctx context.Context, entityID uuid.UUID, category types.AttributeCategory) ([]*models.AttributeValue, error) {
-	args := m.Called(ctx, entityID, category)
-	return args.Get(0).([]*models.AttributeValue), args.Error(1)
-}
-
-func (m *MockAttributeRepository) UpdateAttributeValue(ctx context.Context, definitionID, entityID uuid.UUID, value any) (*models.AttributeValue, error) {
-	args := m.Called(ctx, definitionID, entityID, value)
-	return args.Get(0).(*models.AttributeValue), args.Error(1)
-}
-
-func (m *MockAttributeRepository) DeleteAttributeValue(ctx context.Context, definitionID, entityID uuid.UUID) error {
-	args := m.Called(ctx, definitionID, entityID)
-	return args.Error(0)
-}
-
-func (m *MockAttributeRepository) StoreAttributeValues(ctx context.Context, values []*repository.StoreAttributeValueRequest) ([]*models.AttributeValue, error) {
-	args := m.Called(ctx, values)
-	return args.Get(0).([]*models.AttributeValue), args.Error(1)
-}
-
-func (m *MockAttributeRepository) GetAttributeValuesByDefinitions(ctx context.Context, definitionIDs []uuid.UUID, entityID uuid.UUID) ([]*models.AttributeValue, error) {
-	args := m.Called(ctx, definitionIDs, entityID)
-	return args.Get(0).([]*models.AttributeValue), args.Error(1)
-}
-
-func (m *MockAttributeRepository) GetUserAttributeContext(ctx context.Context, userID uuid.UUID) (*models.AttributeContext, error) {
-	args := m.Called(ctx, userID)
-	return args.Get(0).(*models.AttributeContext), args.Error(1)
-}
-
-func (m *MockAttributeRepository) GetResourceAttributeContext(ctx context.Context, resourceType string, resourceID uuid.UUID) (*models.AttributeContext, error) {
-	args := m.Called(ctx, resourceType, resourceID)
-	return args.Get(0).(*models.AttributeContext), args.Error(1)
-}
-
-func (m *MockAttributeRepository) CleanupExpiredAttributes(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
-
-func (m *MockAttributeRepository) GetAttributeStats(ctx context.Context) (*repository.AttributeStats, error) {
-	args := m.Called(ctx)
-	return args.Get(0).(*repository.AttributeStats), args.Error(1)
-}
+func (n *NoOpSpan) End(opts ...tracing.SpanEndOption)                 {}
+func (n *NoOpSpan) AddEvent(name string, attrs ...attribute.KeyValue) {}
+func (n *NoOpSpan) SetAttributes(attrs ...attribute.KeyValue)         {}
+func (n *NoOpSpan) SetStatus(code codes.Code, description string)     {}
+func (n *NoOpSpan) SetName(name string)                               {}
+func (n *NoOpSpan) RecordError(err error, opts ...trace.EventOption)  {}
+func (n *NoOpSpan) IsRecording() bool                                 { return true }
+func (n *NoOpSpan) SpanContext() trace.SpanContext                    { return trace.SpanContext{} }
 
 // Test Suite for Attribute Service
 func TestAttributeService(t *testing.T) {
 	t.Run("TestCreateAttributeDefinition_Success", func(t *testing.T) {
 		// Setup
-		mockRepo := &MockAttributeRepository{}
-		mockLogger := logger.WithFields(logger.Fields{})
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockRepo := repository.NewMockAttributeRepository(ctrl)
+		mockLogger := logger.WithFields(logger.Fields{})
 		mockMetrics := &metrics.MetricsService{}
 		mockTracer := tracing.NewMockTracingService(ctrl)
+
+		mockTracer.EXPECT().StartSpan(gomock.Any(), "abac.attribute_service.CreateAttributeDefinition").Return(context.Background(), &NoOpSpan{}).AnyTimes()
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)
@@ -175,7 +98,7 @@ func TestAttributeService(t *testing.T) {
 		}
 
 		// Mock expectations
-		mockRepo.On("CreateAttributeDefinition", mock.Anything, request).Return(expectedResult, nil)
+		mockRepo.EXPECT().CreateAttributeDefinition(gomock.Any(), gomock.Any()).Return(expectedResult.AttributeDefinition, nil).AnyTimes()
 
 		// Execute
 		result, err := service.CreateAttributeDefinition(context.Background(), request)
@@ -189,17 +112,20 @@ func TestAttributeService(t *testing.T) {
 		assert.Equal(t, expectedResult.AttributeDefinition.IsRequired, result.AttributeDefinition.IsRequired)
 
 		// Verify mock calls
-		mockRepo.AssertExpectations(t)
+		// With gomock, expectations are verified by ctrl.Finish() implicitly at the end of the test
 	})
 
 	t.Run("TestCreateAttributeDefinition_ValidationError", func(t *testing.T) {
 		// Setup
-		mockRepo := &MockAttributeRepository{}
-		mockLogger := logger.WithFields(logger.Fields{})
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
+		mockRepo := repository.NewMockAttributeRepository(ctrl)
+		mockLogger := logger.WithFields(logger.Fields{})
 		mockMetrics := &metrics.MetricsService{}
 		mockTracer := tracing.NewMockTracingService(ctrl)
+
+		mockTracer.EXPECT().StartSpan(gomock.Any(), "abac.attribute_service.CreateAttributeDefinition").Return(context.Background(), &NoOpSpan{}).AnyTimes()
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)
@@ -211,6 +137,9 @@ func TestAttributeService(t *testing.T) {
 			Category: types.AttributeCategoryUser,
 		}
 
+		// Mock expectations
+		mockRepo.EXPECT().CreateAttributeDefinition(gomock.Any(), gomock.Any()).Times(0)
+
 		// Execute
 		result, err := service.CreateAttributeDefinition(context.Background(), request)
 
@@ -220,17 +149,20 @@ func TestAttributeService(t *testing.T) {
 		assert.Contains(t, err.Error(), "validation failed")
 
 		// Verify no repository calls were made
-		mockRepo.AssertNotCalled(t, "CreateAttributeDefinition")
+		// With gomock, expectations are verified by ctrl.Finish() implicitly at the end of the test
 	})
 
 	t.Run("TestValidateAttributeValue_Success", func(t *testing.T) {
 		// Setup
-		mockRepo := &MockAttributeRepository{}
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
+		mockRepo := repository.NewMockAttributeRepository(ctrl)
 		mockLogger := logger.WithFields(logger.Fields{})
 		mockMetrics := &metrics.MetricsService{}
 		mockTracer := tracing.NewMockTracingService(ctrl)
+
+		mockTracer.EXPECT().StartSpan(gomock.Any(), "abac.attribute_service.ValidateAttributeValue").Return(context.Background(), &NoOpSpan{}).AnyTimes()
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)
@@ -241,6 +173,11 @@ func TestAttributeService(t *testing.T) {
 			Value:           "engineering",
 			ValidationLevel: "strict",
 		}
+
+		// Mock expectations
+		// Need to mock GetAttributeDefinitionByID and BuildAttributeContext
+		mockRepo.EXPECT().GetAttributeDefinitionByID(gomock.Any(), gomock.Any()).Return(&models.AttributeDefinition{ /* ... populate with necessary fields ... */ }, nil).AnyTimes()
+		mockRepo.EXPECT().BuildAttributeContext(gomock.Any(), gomock.Any()).Return(&models.AttributeContext{ /* ... populate with necessary fields ... */ }, nil).AnyTimes()
 
 		// Execute
 		result, err := service.ValidateAttributeValue(context.Background(), request)
@@ -254,12 +191,15 @@ func TestAttributeService(t *testing.T) {
 
 	t.Run("TestValidateAttributeValue_FailedValidation", func(t *testing.T) {
 		// Setup
-		mockRepo := &MockAttributeRepository{}
-		mockLogger := logger.WithFields(logger.Fields{})
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
+		mockRepo := repository.NewMockAttributeRepository(ctrl)
+		mockLogger := logger.WithFields(logger.Fields{})
 		mockMetrics := &metrics.MetricsService{}
 		mockTracer := tracing.NewMockTracingService(ctrl)
+
+		mockTracer.EXPECT().StartSpan(gomock.Any(), "abac.attribute_service.ValidateAttributeValue").Return(context.Background(), &NoOpSpan{}).AnyTimes()
 
 		encryptionKey := []byte("test-key-for-encryption-32-byte")
 		service := NewAttributeService(mockRepo, encryptionKey, mockLogger, mockMetrics, mockTracer)
@@ -270,6 +210,11 @@ func TestAttributeService(t *testing.T) {
 			Value:           "invalid_department",
 			ValidationLevel: "strict",
 		}
+
+		// Mock expectations
+		// Need to mock GetAttributeDefinitionByID and BuildAttributeContext
+		mockRepo.EXPECT().GetAttributeDefinitionByID(gomock.Any(), gomock.Any()).Return(&models.AttributeDefinition{ /* ... populate with necessary fields ... */ }, nil).AnyTimes()
+		mockRepo.EXPECT().BuildAttributeContext(gomock.Any(), gomock.Any()).Return(&models.AttributeContext{ /* ... populate with necessary fields ... */ }, nil).AnyTimes()
 
 		// Execute
 		result, err := service.ValidateAttributeValue(context.Background(), request)

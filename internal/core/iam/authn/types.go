@@ -89,15 +89,15 @@ type MFAStatisticsRequest struct {
 
 // MFAEnrollmentResult contains enrollment initiation details
 type MFAEnrollmentResult struct {
-	EnrollmentID uuid.UUID  `json:"enrollment_id"`
-	Method       string     `json:"method"`
-	Secret       string     `json:"secret,omitempty"`         // For TOTP
-	QRCodeURL    string     `json:"qr_code_url,omitempty"`    // For TOTP
-	PhoneNumber  *string    `json:"phone_number,omitempty"`   // For SMS
-	Email        *string    `json:"email,omitempty"`          // For Email
-	BackupCodes  []string   `json:"backup_codes,omitempty"`   // Generated backup codes
-	ExpiresAt    time.Time  `json:"expires_at"`
-	Instructions string     `json:"instructions"`
+	EnrollmentID uuid.UUID `json:"enrollment_id"`
+	Method       string    `json:"method"`
+	Secret       string    `json:"secret,omitempty"`       // For TOTP
+	QRCodeURL    string    `json:"qr_code_url,omitempty"`  // For TOTP
+	PhoneNumber  *string   `json:"phone_number,omitempty"` // For SMS
+	Email        *string   `json:"email,omitempty"`        // For Email
+	BackupCodes  []string  `json:"backup_codes,omitempty"` // Generated backup codes
+	ExpiresAt    time.Time `json:"expires_at"`
+	Instructions string    `json:"instructions"`
 }
 
 // MFACompletionResult contains enrollment completion details
@@ -138,14 +138,14 @@ type BackupCodesResult struct {
 
 // MFASettings contains user MFA configuration
 type MFASettings struct {
-	UserID                uuid.UUID    `json:"user_id"`
-	MFAEnabled            bool         `json:"mfa_enabled"`
-	EnrolledMethods       []*MFAMethod `json:"enrolled_methods"`
-	PrimaryMethodID       *uuid.UUID   `json:"primary_method_id,omitempty"`
-	BackupCodesRemaining  int          `json:"backup_codes_remaining"`
-	LastValidationAt      *time.Time   `json:"last_validation_at,omitempty"`
-	RequiredForAccount    bool         `json:"required_for_account"`
-	GracePeriodEndsAt     *time.Time   `json:"grace_period_ends_at,omitempty"`
+	UserID               uuid.UUID    `json:"user_id"`
+	MFAEnabled           bool         `json:"mfa_enabled"`
+	EnrolledMethods      []*MFAMethod `json:"enrolled_methods"`
+	PrimaryMethodID      *uuid.UUID   `json:"primary_method_id,omitempty"`
+	BackupCodesRemaining int          `json:"backup_codes_remaining"`
+	LastValidationAt     *time.Time   `json:"last_validation_at,omitempty"`
+	RequiredForAccount   bool         `json:"required_for_account"`
+	GracePeriodEndsAt    *time.Time   `json:"grace_period_ends_at,omitempty"`
 }
 
 // MFAStatistics contains MFA usage analytics
@@ -167,7 +167,7 @@ type MFAMethod struct {
 	ID           uuid.UUID      `json:"id" db:"id"`
 	UserID       uuid.UUID      `json:"user_id" db:"user_id"`
 	Method       string         `json:"method" db:"method"`
-	Secret       string         `json:"-" db:"secret"`                    // Never expose in JSON
+	Secret       string         `json:"-" db:"secret"` // Never expose in JSON
 	PhoneNumber  *string        `json:"phone_number,omitempty" db:"phone_number"`
 	Email        *string        `json:"email,omitempty" db:"email"`
 	IsActive     bool           `json:"is_active" db:"is_active"`
@@ -186,7 +186,7 @@ type MFAEnrollmentData struct {
 	ID          uuid.UUID      `json:"id" db:"id"`
 	UserID      uuid.UUID      `json:"user_id" db:"user_id"`
 	Method      string         `json:"method" db:"method"`
-	Secret      string         `json:"-" db:"secret"`                  // Never expose in JSON
+	Secret      string         `json:"-" db:"secret"` // Never expose in JSON
 	PhoneNumber *string        `json:"phone_number,omitempty" db:"phone_number"`
 	Email       *string        `json:"email,omitempty" db:"email"`
 	Status      string         `json:"status" db:"status"`

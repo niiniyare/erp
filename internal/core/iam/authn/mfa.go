@@ -49,17 +49,17 @@ type MFAService interface {
 
 // mfaService implements MFAService with comprehensive multi-factor authentication support
 type mfaService struct {
-	userRepo       repo.UserRepository
-	sessionRepo    repo.SessionRepository
-	mfaRepo        MFARepository
+	userRepo        repo.UserRepository
+	sessionRepo     repo.SessionRepository
+	mfaRepo         MFARepository
 	notificationSvc NotificationService
-	
+
 	// Security settings
-	issuerName     string
-	accountName    string
-	secretLength   int
+	issuerName      string
+	accountName     string
+	secretLength    int
 	backupCodeCount int
-	
+
 	// Infrastructure
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
@@ -94,7 +94,7 @@ func NewMFAService(
 
 // BeginMFAEnrollment starts the MFA enrollment process for a user
 func (s *mfaService) BeginMFAEnrollment(ctx context.Context, req *BeginMFAEnrollmentRequest) (*MFAEnrollmentResult, error) {
-	ctx, span := s.tracer.StartSpan(ctx, "mfa.begin_enrollment", 
+	ctx, span := s.tracer.StartSpan(ctx, "mfa.begin_enrollment",
 		tracing.WithAttributes(
 			attribute.String("user_id", req.UserID.String()),
 			attribute.String("method", req.Method),
@@ -127,7 +127,7 @@ func (s *mfaService) BeginMFAEnrollment(ctx context.Context, req *BeginMFAEnroll
 
 	for _, method := range existingMethods {
 		if method.Method == req.Method && method.IsActive {
-			return nil, errors.NewBusinessError("MFA_METHOD_ALREADY_ENROLLED", 
+			return nil, errors.NewBusinessError("MFA_METHOD_ALREADY_ENROLLED",
 				fmt.Sprintf("MFA method %s already enrolled", req.Method))
 		}
 	}
@@ -141,7 +141,7 @@ func (s *mfaService) BeginMFAEnrollment(ctx context.Context, req *BeginMFAEnroll
 	case MFAMethodEmail:
 		return s.beginEmailEnrollment(ctx, req)
 	default:
-		return nil, errors.NewBusinessError("INVALID_MFA_METHOD", 
+		return nil, errors.NewBusinessError("INVALID_MFA_METHOD",
 			fmt.Sprintf("Unsupported MFA method: %s", req.Method))
 	}
 }
@@ -175,12 +175,12 @@ func (s *mfaService) beginTOTPEnrollment(ctx context.Context, req *BeginMFAEnrol
 
 	// Store enrollment data temporarily
 	enrollmentData := &MFAEnrollmentData{
-		UserID:       req.UserID,
-		Method:       MFAMethodTOTP,
-		Secret:       secretString,
-		Status:       MFAEnrollmentStatusPending,
-		ExpiresAt:    time.Now().Add(15 * time.Minute), // 15 minute enrollment window
-		CreatedAt:    time.Now(),
+		UserID:    req.UserID,
+		Method:    MFAMethodTOTP,
+		Secret:    secretString,
+		Status:    MFAEnrollmentStatusPending,
+		ExpiresAt: time.Now().Add(15 * time.Minute), // 15 minute enrollment window
+		CreatedAt: time.Now(),
 		Metadata: map[string]any{
 			"issuer":       s.issuerName,
 			"account_name": user.Email,
@@ -194,11 +194,11 @@ func (s *mfaService) beginTOTPEnrollment(ctx context.Context, req *BeginMFAEnrol
 	// Generate backup codes for TOTP enrollment
 	backupCodes, err := s.generateBackupCodesInternal(ctx, req.UserID, 10)
 	if err != nil {
-		s.logger.WarnContext(ctx, "Failed to generate backup codes during TOTP enrollment", 
+		s.logger.WarnContext(ctx, "Failed to generate backup codes during TOTP enrollment",
 			logger.Fields{"error": err.Error()})
 	}
 
-	s.metrics.IncrementCounter("mfa_enrollment_started", 
+	s.metrics.IncrementCounter("mfa_enrollment_started",
 		metrics.Fields{"method": MFAMethodTOTP})
 
 	return &MFAEnrollmentResult{
@@ -253,12 +253,12 @@ func (s *mfaService) beginSMSEnrollment(ctx context.Context, req *BeginMFAEnroll
 		PhoneNumber: *req.PhoneNumber,
 		Message:     fmt.Sprintf("Your %s verification code is: %s", s.issuerName, verificationCode),
 	}); err != nil {
-		s.logger.ErrorContext(ctx, "Failed to send SMS verification code", 
+		s.logger.ErrorContext(ctx, "Failed to send SMS verification code",
 			logger.Fields{"error": err.Error()})
 		return nil, errors.NewBusinessError("SMS_SEND_FAILED", "Failed to send verification code")
 	}
 
-	s.metrics.IncrementCounter("mfa_enrollment_started", 
+	s.metrics.IncrementCounter("mfa_enrollment_started",
 		metrics.Fields{"method": MFAMethodSMS})
 
 	return &MFAEnrollmentResult{
@@ -309,12 +309,12 @@ func (s *mfaService) beginEmailEnrollment(ctx context.Context, req *BeginMFAEnro
 		Subject: fmt.Sprintf("%s - MFA Setup Verification", s.issuerName),
 		Body:    fmt.Sprintf("Your MFA setup verification code is: %s\n\nThis code expires in 15 minutes.", verificationCode),
 	}); err != nil {
-		s.logger.ErrorContext(ctx, "Failed to send email verification code", 
+		s.logger.ErrorContext(ctx, "Failed to send email verification code",
 			logger.Fields{"error": err.Error()})
 		return nil, errors.NewBusinessError("EMAIL_SEND_FAILED", "Failed to send verification code")
 	}
 
-	s.metrics.IncrementCounter("mfa_enrollment_started", 
+	s.metrics.IncrementCounter("mfa_enrollment_started",
 		metrics.Fields{"method": MFAMethodEmail})
 
 	return &MFAEnrollmentResult{
@@ -379,7 +379,7 @@ func (s *mfaService) CompleteMFAEnrollment(ctx context.Context, req *CompleteMFA
 		if attempts >= maxAttempts {
 			// Too many failed attempts, cancel enrollment
 			s.mfaRepo.DeleteEnrollmentData(ctx, req.EnrollmentID)
-			s.metrics.IncrementCounter("mfa_enrollment_failed", 
+			s.metrics.IncrementCounter("mfa_enrollment_failed",
 				metrics.Fields{"method": enrollmentData.Method, "reason": "max_attempts"})
 			return nil, errors.NewBusinessError("MAX_ATTEMPTS_EXCEEDED", "Maximum verification attempts exceeded")
 		}
@@ -388,25 +388,25 @@ func (s *mfaService) CompleteMFAEnrollment(ctx context.Context, req *CompleteMFA
 		enrollmentData.Metadata["attempts"] = attempts
 		s.mfaRepo.UpdateEnrollmentData(ctx, enrollmentData)
 
-		s.metrics.IncrementCounter("mfa_enrollment_invalid_code", 
+		s.metrics.IncrementCounter("mfa_enrollment_invalid_code",
 			metrics.Fields{"method": enrollmentData.Method})
 		return nil, errors.NewBusinessError("INVALID_VERIFICATION_CODE", "Invalid verification code")
 	}
 
 	// Create MFA method record
 	mfaMethod := &MFAMethod{
-		ID:            uuid.New(),
-		UserID:        enrollmentData.UserID,
-		Method:        enrollmentData.Method,
-		Secret:        enrollmentData.Secret,
-		PhoneNumber:   enrollmentData.PhoneNumber,
-		Email:         enrollmentData.Email,
-		IsActive:      true,
-		IsPrimary:     false, // User can set this later
-		EnrolledAt:    time.Now(),
-		LastUsedAt:    nil,
-		FailureCount:  0,
-		Metadata:      enrollmentData.Metadata,
+		ID:           uuid.New(),
+		UserID:       enrollmentData.UserID,
+		Method:       enrollmentData.Method,
+		Secret:       enrollmentData.Secret,
+		PhoneNumber:  enrollmentData.PhoneNumber,
+		Email:        enrollmentData.Email,
+		IsActive:     true,
+		IsPrimary:    false, // User can set this later
+		EnrolledAt:   time.Now(),
+		LastUsedAt:   nil,
+		FailureCount: 0,
+		Metadata:     enrollmentData.Metadata,
 	}
 
 	// Check if this is the first MFA method (make it primary)
@@ -439,7 +439,7 @@ func (s *mfaService) CompleteMFAEnrollment(ctx context.Context, req *CompleteMFA
 			// Generate new backup codes
 			backupCodes, err = s.generateBackupCodesInternal(ctx, enrollmentData.UserID, s.backupCodeCount)
 			if err != nil {
-				s.logger.WarnContext(ctx, "Failed to generate backup codes", 
+				s.logger.WarnContext(ctx, "Failed to generate backup codes",
 					logger.Fields{"error": err.Error()})
 			}
 		}
@@ -447,17 +447,17 @@ func (s *mfaService) CompleteMFAEnrollment(ctx context.Context, req *CompleteMFA
 
 	// Clean up enrollment data
 	if err := s.mfaRepo.DeleteEnrollmentData(ctx, req.EnrollmentID); err != nil {
-		s.logger.WarnContext(ctx, "Failed to clean up enrollment data", 
+		s.logger.WarnContext(ctx, "Failed to clean up enrollment data",
 			logger.Fields{"error": err.Error()})
 	}
 
 	// Update user MFA status
 	if err := s.userRepo.EnableMFA(ctx, enrollmentData.UserID, model.MFAMethod(enrollmentData.Method)); err != nil {
-		s.logger.WarnContext(ctx, "Failed to update user MFA status", 
+		s.logger.WarnContext(ctx, "Failed to update user MFA status",
 			logger.Fields{"error": err.Error()})
 	}
 
-	s.metrics.IncrementCounter("mfa_enrollment_completed", 
+	s.metrics.IncrementCounter("mfa_enrollment_completed",
 		metrics.Fields{"method": enrollmentData.Method})
 
 	s.logger.InfoContext(ctx, "MFA enrollment completed successfully",
@@ -467,13 +467,13 @@ func (s *mfaService) CompleteMFAEnrollment(ctx context.Context, req *CompleteMFA
 		})
 
 	return &MFACompletionResult{
-		MethodID:     mfaMethod.ID,
-		Method:       mfaMethod.Method,
-		BackupCodes:  backupCodes,
-		IsPrimary:    mfaMethod.IsPrimary,
-		EnrolledAt:   mfaMethod.EnrolledAt,
-		Success:      true,
-		Message:      fmt.Sprintf("MFA method %s enrolled successfully", mfaMethod.Method),
+		MethodID:    mfaMethod.ID,
+		Method:      mfaMethod.Method,
+		BackupCodes: backupCodes,
+		IsPrimary:   mfaMethod.IsPrimary,
+		EnrolledAt:  mfaMethod.EnrolledAt,
+		Success:     true,
+		Message:     fmt.Sprintf("MFA method %s enrolled successfully", mfaMethod.Method),
 	}, nil
 }
 
@@ -493,12 +493,12 @@ func (s *mfaService) CancelMFAEnrollment(ctx context.Context, userID uuid.UUID) 
 
 	for _, enrollment := range enrollments {
 		if err := s.mfaRepo.DeleteEnrollmentData(ctx, enrollment.ID); err != nil {
-			s.logger.WarnContext(ctx, "Failed to delete enrollment data", 
+			s.logger.WarnContext(ctx, "Failed to delete enrollment data",
 				logger.Fields{"enrollment_id": enrollment.ID, "error": err.Error()})
 		}
 	}
 
-	s.metrics.IncrementCounter("mfa_enrollment_cancelled", 
+	s.metrics.IncrementCounter("mfa_enrollment_cancelled",
 		metrics.Fields{"user_id": userID.String()})
 
 	return nil
@@ -535,7 +535,7 @@ func (s *mfaService) ValidateMFACode(ctx context.Context, req *ValidateMFACodeRe
 
 		valid, err := s.validateCodeForMethod(ctx, method, req.Code)
 		if err != nil {
-			s.logger.WarnContext(ctx, "Error validating MFA code", 
+			s.logger.WarnContext(ctx, "Error validating MFA code",
 				logger.Fields{"method": method.Method, "error": err.Error()})
 			continue
 		}
@@ -546,7 +546,7 @@ func (s *mfaService) ValidateMFACode(ctx context.Context, req *ValidateMFACodeRe
 			method.FailureCount = 0
 			s.mfaRepo.UpdateMFAMethod(ctx, method)
 
-			s.metrics.IncrementCounter("mfa_validation_success", 
+			s.metrics.IncrementCounter("mfa_validation_success",
 				metrics.Fields{"method": method.Method})
 
 			return &MFAValidationResult{
@@ -563,7 +563,7 @@ func (s *mfaService) ValidateMFACode(ctx context.Context, req *ValidateMFACodeRe
 
 	// Try backup codes if regular methods fail
 	if s.validateBackupCode(ctx, req.UserID, req.Code) {
-		s.metrics.IncrementCounter("mfa_validation_success", 
+		s.metrics.IncrementCounter("mfa_validation_success",
 			metrics.Fields{"method": "backup_code"})
 
 		return &MFAValidationResult{
@@ -573,7 +573,7 @@ func (s *mfaService) ValidateMFACode(ctx context.Context, req *ValidateMFACodeRe
 		}, nil
 	}
 
-	s.metrics.IncrementCounter("mfa_validation_failed", 
+	s.metrics.IncrementCounter("mfa_validation_failed",
 		metrics.Fields{"user_id": req.UserID.String()})
 
 	return &MFAValidationResult{
@@ -812,13 +812,13 @@ func (s *mfaService) GetMFASettings(ctx context.Context, userID uuid.UUID) (*MFA
 	}
 
 	return &MFASettings{
-		UserID:                userID,
-		MFAEnabled:            len(methods) > 0,
-		EnrolledMethods:       methods,
-		PrimaryMethodID:       s.getPrimaryMethodID(methods),
-		BackupCodesRemaining:  unusedCodes,
-		LastValidationAt:      s.getLastValidationTime(methods),
-		RequiredForAccount:    false, // This would be configurable per tenant/organization
+		UserID:               userID,
+		MFAEnabled:           len(methods) > 0,
+		EnrolledMethods:      methods,
+		PrimaryMethodID:      s.getPrimaryMethodID(methods),
+		BackupCodesRemaining: unusedCodes,
+		LastValidationAt:     s.getLastValidationTime(methods),
+		RequiredForAccount:   false, // This would be configurable per tenant/organization
 	}, nil
 }
 
@@ -832,12 +832,12 @@ func (s *mfaService) UpdateMFASettings(ctx context.Context, req *UpdateMFASettin
 func (s *mfaService) GetMFAStatistics(ctx context.Context, req *MFAStatisticsRequest) (*MFAStatistics, error) {
 	// TODO: Implement comprehensive MFA statistics collection
 	return &MFAStatistics{
-		TotalUsers:           0,
-		MFAEnabledUsers:      0,
-		MethodDistribution:   make(map[string]int),
+		TotalUsers:            0,
+		MFAEnabledUsers:       0,
+		MethodDistribution:    make(map[string]int),
 		ValidationSuccessRate: 0,
-		Period:               req.Period,
-		GeneratedAt:          time.Now(),
+		Period:                req.Period,
+		GeneratedAt:           time.Now(),
 	}, nil
 }
 

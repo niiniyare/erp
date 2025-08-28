@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/suite"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/abac/models"
@@ -27,13 +27,13 @@ import (
 // Tests cover: ABAC-ATTR-REPO-001 through ABAC-ATTR-REPO-008 with multi-tenant RLS verification
 type AttributeRepositoryTestSuite struct {
 	suite.Suite
-	ctx         context.Context
-	runner      *tenant.DatabaseTestRunner
-	repo        AttributeRepository
+	ctx          context.Context
+	runner       *tenant.DatabaseTestRunner
+	repo         AttributeRepository
 	cacheService cache.Service
-	tenantA     *db.Tenant
-	tenantB     *db.Tenant
-	
+	tenantA      *db.Tenant
+	tenantB      *db.Tenant
+
 	// Test data UUIDs for cleanup
 	createdAttributeDefinitionIDs []uuid.UUID
 	createdAttributeValueIDs      []uuid.UUID
@@ -45,13 +45,13 @@ func (s *AttributeRepositoryTestSuite) SetupSuite() {
 	s.runner, err = tenant.NewDatabaseTestRunner()
 	s.Require().NoError(err, "Failed to connect to the database")
 	s.ctx = context.Background()
-	
+
 	// Setup shared infrastructure
 	logger := logger.WithFields(logger.Fields{"component": "attribute_repository_test"})
 	metrics := &metrics.MetricsService{}
 	tracer := tracing.NewNoOpTracingService()
 	s.cacheService = cache.NewNoOpCache()
-	
+
 	// Create repository instance
 	s.repo = NewAttributeRepository(
 		s.runner.GetStore(),
@@ -60,7 +60,7 @@ func (s *AttributeRepositoryTestSuite) SetupSuite() {
 		metrics,
 		tracer,
 	)
-	
+
 	// Create test tenants
 	s.setupTestTenants()
 	s.createdAttributeDefinitionIDs = make([]uuid.UUID, 0)
@@ -71,7 +71,7 @@ func (s *AttributeRepositoryTestSuite) SetupSuite() {
 func (s *AttributeRepositoryTestSuite) TearDownSuite() {
 	// Clean up test data
 	s.cleanupTestData()
-	
+
 	// Clean up test tenants
 	if s.tenantA != nil {
 		superuserStore := db.NewStore(s.runner.GetPool())
@@ -85,7 +85,7 @@ func (s *AttributeRepositoryTestSuite) TearDownSuite() {
 			s.T().Logf("Warning: Failed to cleanup tenant B: %v", err)
 		}
 	}
-	
+
 	s.runner.Close()
 }
 
@@ -93,7 +93,7 @@ func (s *AttributeRepositoryTestSuite) TearDownSuite() {
 func (s *AttributeRepositoryTestSuite) setupTestTenants() {
 	superuserStore := db.NewStore(s.runner.GetPool())
 	uniqueID := uuid.New().String()[0:8]
-	
+
 	// Create Tenant A
 	var err error
 	s.tenantA, err = superuserStore.CreateTenant(s.ctx, db.CreateTenantParams{
@@ -103,7 +103,7 @@ func (s *AttributeRepositoryTestSuite) setupTestTenants() {
 		Status: "active",
 	})
 	s.Require().NoError(err, "Failed to create tenant A")
-	
+
 	// Create Tenant B
 	uniqueID2 := uuid.New().String()[0:8]
 	s.tenantB, err = superuserStore.CreateTenant(s.ctx, db.CreateTenantParams{
@@ -126,7 +126,7 @@ func (s *AttributeRepositoryTestSuite) trackAttributeDefinitionForCleanup(id uui
 	s.createdAttributeDefinitionIDs = append(s.createdAttributeDefinitionIDs, id)
 }
 
-// trackAttributeValueForCleanup adds an attribute value ID to the cleanup list  
+// trackAttributeValueForCleanup adds an attribute value ID to the cleanup list
 func (s *AttributeRepositoryTestSuite) trackAttributeValueForCleanup(id uuid.UUID) {
 	s.createdAttributeValueIDs = append(s.createdAttributeValueIDs, id)
 }
@@ -220,13 +220,13 @@ func (s *AttributeRepositoryTestSuite) TestCreateAttributeDefinition() {
 		s.Run(fmt.Sprintf("%s_%s", tc.spec, tc.name), func() {
 			var definition *models.AttributeDefinition
 			var err error
-			
+
 			execErr := s.runner.GetStore().WithTenant(s.ctx, tc.tenantID, func(ctx context.Context, store db.Store) error {
 				definition, err = s.repo.CreateAttributeDefinition(ctx, tc.request)
 				return nil
 			})
 			s.Require().NoError(execErr, "Tenant context execution should not fail")
-			
+
 			if tc.expectError != "" {
 				require.Error(s.T(), err)
 				require.Contains(s.T(), err.Error(), tc.expectError)
@@ -263,12 +263,12 @@ func (s *AttributeRepositoryTestSuite) TestGetAttributeDefinitionByID() {
 	s.trackAttributeDefinitionForCleanup(defA.ID)
 
 	testCases := []struct {
-		name        string
-		spec        string
-		tenantID    uuid.UUID
+		name         string
+		spec         string
+		tenantID     uuid.UUID
 		definitionID uuid.UUID
-		expectError string
-		validate    func(*models.AttributeDefinition)
+		expectError  string
+		validate     func(*models.AttributeDefinition)
 	}{
 		{
 			name:         "GetExistingAttributeDefinition_Success",
@@ -336,7 +336,7 @@ func (s *AttributeRepositoryTestSuite) TestListAttributeDefinitions() {
 			types.AttributeCategoryResource,
 			types.AttributeCategoryEnvironment,
 		}
-		
+
 		for i, category := range categories {
 			def, createErr := s.repo.CreateAttributeDefinition(ctx, &CreateAttributeDefinitionRequest{
 				Name:        fmt.Sprintf("list_test_a_%d_%s", i, uuid.New().String()[0:8]),
@@ -392,20 +392,20 @@ func (s *AttributeRepositoryTestSuite) TestListAttributeDefinitions() {
 			request:  &ListAttributeDefinitionsRequest{Limit: 100},
 			validate: func(definitions []*models.AttributeDefinition) {
 				require.GreaterOrEqual(s.T(), len(definitions), len(defsA))
-				
+
 				// All definitions should belong to tenant A
 				tenantADefIDs := make(map[uuid.UUID]bool)
 				for _, def := range definitions {
 					require.Equal(s.T(), s.tenantA.ID, def.TenantID)
 					tenantADefIDs[def.ID] = true
 				}
-				
+
 				// Should contain our created definitions
 				for _, expectedDef := range defsA {
 					require.True(s.T(), tenantADefIDs[expectedDef.ID],
 						"Should find definition: %s", expectedDef.Name)
 				}
-				
+
 				// Should not contain tenant B definitions
 				for _, tenantBDef := range defsB {
 					require.False(s.T(), tenantADefIDs[tenantBDef.ID],
@@ -423,7 +423,7 @@ func (s *AttributeRepositoryTestSuite) TestListAttributeDefinitions() {
 			},
 			validate: func(definitions []*models.AttributeDefinition) {
 				require.GreaterOrEqual(s.T(), len(definitions), 1)
-				
+
 				// All should be user category
 				for _, def := range definitions {
 					require.Equal(s.T(), types.AttributeCategoryUser, def.Category)
@@ -441,7 +441,7 @@ func (s *AttributeRepositoryTestSuite) TestListAttributeDefinitions() {
 			},
 			validate: func(definitions []*models.AttributeDefinition) {
 				require.GreaterOrEqual(s.T(), len(definitions), 1)
-				
+
 				// All should be required
 				for _, def := range definitions {
 					require.True(s.T(), def.IsRequired)
@@ -508,13 +508,13 @@ func (s *AttributeRepositoryTestSuite) TestCreateAttributeValue() {
 			spec:     "ABAC-ATTR-REPO-004",
 			tenantID: s.tenantA.ID,
 			request: &CreateAttributeValueRequest{
-				DefinitionID:   definition.ID,
-				EntityID:       uuid.New(),
-				Value:          "engineering",
-				IsEncrypted:    false,
-				Version:        1,
-				EffectiveFrom:  time.Now(),
-				CreatedBy:      uuid.New(),
+				DefinitionID:  definition.ID,
+				EntityID:      uuid.New(),
+				Value:         "engineering",
+				IsEncrypted:   false,
+				Version:       1,
+				EffectiveFrom: time.Now(),
+				CreatedBy:     uuid.New(),
 			},
 			validate: func(value *models.AttributeValue) {
 				require.NotNil(s.T(), value)
@@ -545,13 +545,13 @@ func (s *AttributeRepositoryTestSuite) TestCreateAttributeValue() {
 		s.Run(fmt.Sprintf("%s_%s", tc.spec, tc.name), func() {
 			var value *models.AttributeValue
 			var err error
-			
+
 			execErr := s.runner.GetStore().WithTenant(s.ctx, tc.tenantID, func(ctx context.Context, store db.Store) error {
 				value, err = s.repo.CreateAttributeValue(ctx, tc.request)
 				return nil
 			})
 			s.Require().NoError(execErr)
-			
+
 			if tc.expectError != "" {
 				require.Error(s.T(), err)
 				require.Contains(s.T(), err.Error(), tc.expectError)
@@ -648,7 +648,7 @@ func (s *AttributeRepositoryTestSuite) TestGetAttributeValuesByEntity() {
 			category: types.AttributeCategoryUser,
 			validate: func(values []*models.AttributeValue) {
 				require.GreaterOrEqual(s.T(), len(values), 1)
-				
+
 				// All values should be user category and match entity
 				found := false
 				for _, value := range values {
@@ -669,7 +669,7 @@ func (s *AttributeRepositoryTestSuite) TestGetAttributeValuesByEntity() {
 			category: types.AttributeCategoryResource,
 			validate: func(values []*models.AttributeValue) {
 				require.GreaterOrEqual(s.T(), len(values), 1)
-				
+
 				// All values should be resource category and match entity
 				found := false
 				for _, value := range values {
@@ -730,7 +730,7 @@ func (s *AttributeRepositoryTestSuite) TestMultiTenantAttributeIsolation() {
 	s.Run("ABAC-ATTR-REPO-006_ComprehensiveAttributeRLS", func() {
 		// Create attribute definitions in both tenants
 		var defsA, defsB []*models.AttributeDefinition
-		
+
 		// Create definitions in tenant A
 		err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 			for i := 0; i < 3; i++ {
@@ -853,7 +853,7 @@ func (s *AttributeRepositoryTestSuite) TestAttributeDefinitionByName() {
 	// Create attribute definition with specific name
 	definitionName := fmt.Sprintf("unique_name_test_%s", uuid.New().String()[0:8])
 	var defA *models.AttributeDefinition
-	
+
 	err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 		var createErr error
 		defA, createErr = s.repo.CreateAttributeDefinition(ctx, &CreateAttributeDefinitionRequest{
@@ -938,7 +938,7 @@ func (s *AttributeRepositoryTestSuite) TestAttributePerformance() {
 
 		// Create multiple attribute definitions and measure time
 		startTime := time.Now()
-		
+
 		err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 			categories := []types.AttributeCategory{
 				types.AttributeCategoryUser,
@@ -946,7 +946,7 @@ func (s *AttributeRepositoryTestSuite) TestAttributePerformance() {
 				types.AttributeCategoryEnvironment,
 				types.AttributeCategoryAction,
 			}
-			
+
 			for i := 0; i < definitionCount; i++ {
 				category := categories[i%len(categories)]
 				def, createErr := s.repo.CreateAttributeDefinition(ctx, &CreateAttributeDefinitionRequest{
@@ -966,14 +966,14 @@ func (s *AttributeRepositoryTestSuite) TestAttributePerformance() {
 			return nil
 		})
 		s.Require().NoError(err)
-		
+
 		creationTime := time.Since(startTime)
 		s.T().Logf("Created %d attribute definitions in %v (avg: %v per definition)",
 			definitionCount, creationTime, creationTime/definitionCount)
 
 		// Test retrieval performance
 		startTime = time.Now()
-		
+
 		err = s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 			for _, def := range createdDefinitions[:5] { // Test first 5
 				retrievedDef, getErr := s.repo.GetAttributeDefinitionByID(ctx, def.ID)
@@ -986,14 +986,14 @@ func (s *AttributeRepositoryTestSuite) TestAttributePerformance() {
 			return nil
 		})
 		s.Require().NoError(err)
-		
+
 		retrievalTime := time.Since(startTime)
 		s.T().Logf("Retrieved 5 definitions in %v (avg: %v per retrieval)",
 			retrievalTime, retrievalTime/5)
 
-		// Test list performance  
+		// Test list performance
 		startTime = time.Now()
-		
+
 		err = s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 			definitions, listErr := s.repo.ListAttributeDefinitions(ctx, &ListAttributeDefinitionsRequest{Limit: 100})
 			if listErr != nil {
@@ -1003,7 +1003,7 @@ func (s *AttributeRepositoryTestSuite) TestAttributePerformance() {
 			return nil
 		})
 		s.Require().NoError(err)
-		
+
 		listTime := time.Since(startTime)
 		s.T().Logf("Listed all definitions in %v", listTime)
 

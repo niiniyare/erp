@@ -13,6 +13,9 @@ import (
 	db "github.com/niiniyare/erp/db/sqlc"
 )
 
+// TEST_DATABASE_URL is the default database URL for testing
+var TEST_DATABASE_URL = "postgresql://admin:admin@localhost:5432/ledger?sslmode=disable"
+
 // DatabaseTestRunner provides utilities for running database tests
 type DatabaseTestRunner struct {
 	pool  *pgxpool.Pool
@@ -224,6 +227,30 @@ func (r *DatabaseTestRunner) TestSessionPersistence() error {
 
 	fmt.Println("=== Session persistence test completed successfully! ===")
 	return nil
+}
+
+// GetStore returns the database store for testing
+func (r *DatabaseTestRunner) GetStore() db.Store {
+	return r.store
+}
+
+// GetPool returns the connection pool for testing
+func (r *DatabaseTestRunner) GetPool() *pgxpool.Pool {
+	return r.pool
+}
+
+// CreateTestTenant creates a test tenant for testing purposes
+func (r *DatabaseTestRunner) CreateTestTenant(ctx context.Context, name string) (*db.Tenant, error) {
+	params := db.CreateTenantParams{
+		Name:      name,
+		Slug:      name + "-slug",
+		Email:     name + "@test.com",
+		Subdomain: stringPtr(name + "-sub"),
+		Status:    "active",
+		Industry:  stringPtr("testing"),
+	}
+
+	return r.store.CreateTenant(ctx, params)
 }
 
 // Helper function for string pointers

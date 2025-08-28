@@ -22,8 +22,8 @@ type HealthGoaHandler struct {
 
 // NewHealthGoaHandler creates a new GOA health handler with comprehensive health checking
 func NewHealthGoaHandler(
-	healthChecker HealthChecker, 
-	tracing tracing.TracingService, 
+	healthChecker HealthChecker,
+	tracing tracing.TracingService,
 	metrics metrics.MetricsProvider,
 ) health.Service {
 	return &HealthGoaHandler{
@@ -98,7 +98,7 @@ func (h *HealthGoaHandler) Ready(ctx context.Context) (*health.ReadinessStatus, 
 
 	// Perform comprehensive dependency health checks
 	healthResults := h.healthChecker.CheckDependencies(ctx)
-	
+
 	// Convert health check results to API response format
 	checks := &health.HealthChecks{
 		Database: convertHealthStatus(healthResults["database"]),
