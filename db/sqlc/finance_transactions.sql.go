@@ -1004,7 +1004,7 @@ SELECT
     a.normal_balance
 FROM finance_transactions t
 LEFT JOIN finance_transaction_entries te ON t.id = te.transaction_id
-LEFT JOIN finance_chart_of_accounts a ON te.account_id = a.id
+LEFT JOIN finance_accounts a ON te.account_id = a.id
 WHERE t.id = $1 
   AND t.tenant_id = current_tenant_id()
   AND t.deleted_at IS NULL

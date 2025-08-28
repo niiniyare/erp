@@ -20,13 +20,13 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// ChartOfAccountsRepositoryTestSuite defines comprehensive test suite for chart of accounts repository operations
+// AccountsRepositoryTestSuite defines comprehensive test suite for chart of accounts repository operations
 // Tests cover multi-tenant isolation, CRUD operations, hierarchical operations, and error handling
-type ChartOfAccountsRepositoryTestSuite struct {
+type AccountsRepositoryTestSuite struct {
 	suite.Suite
 	ctx     context.Context
 	runner  *tenant.DatabaseTestRunner
-	repo    domain.ChartOfAccountsRepository
+	repo    domain.AccountsRepository
 	tenantA *db.Tenant
 	tenantB *db.Tenant
 
@@ -35,7 +35,7 @@ type ChartOfAccountsRepositoryTestSuite struct {
 }
 
 // SetupSuite runs once before the entire test suite
-func (s *ChartOfAccountsRepositoryTestSuite) SetupSuite() {
+func (s *AccountsRepositoryTestSuite) SetupSuite() {
 	var err error
 	s.runner, err = tenant.NewDatabaseTestRunner()
 	s.Require().NoError(err, "Failed to connect to the database")
@@ -50,16 +50,16 @@ func (s *ChartOfAccountsRepositoryTestSuite) SetupSuite() {
 
 	// Setup repository
 	traceService := tracing.NewNoOpTracingService()
-	s.repo = NewChartOfAccountsRepository(s.runner.GetStore(), traceService)
+	s.repo = NewAccountsRepository(s.runner.GetStore(), traceService)
 }
 
 // SetupTest runs before each test
-func (s *ChartOfAccountsRepositoryTestSuite) SetupTest() {
+func (s *AccountsRepositoryTestSuite) SetupTest() {
 	s.createdAccountIDs = make([]uuid.UUID, 0)
 }
 
 // TearDownTest runs after each test
-func (s *ChartOfAccountsRepositoryTestSuite) TearDownTest() {
+func (s *AccountsRepositoryTestSuite) TearDownTest() {
 	// Clean up created accounts
 	for _, accountID := range s.createdAccountIDs {
 		// Clean up in both tenant contexts to ensure cleanup
@@ -72,28 +72,28 @@ func (s *ChartOfAccountsRepositoryTestSuite) TearDownTest() {
 }
 
 // TearDownSuite runs once after the entire test suite
-func (s *ChartOfAccountsRepositoryTestSuite) TearDownSuite() {
+func (s *AccountsRepositoryTestSuite) TearDownSuite() {
 	if s.runner != nil {
 		s.runner.Close()
 	}
 }
 
 // Test runner
-func TestChartOfAccountsRepositoryTestSuite(t *testing.T) {
-	suite.Run(t, new(ChartOfAccountsRepositoryTestSuite))
+func TestAccountsRepositoryTestSuite(t *testing.T) {
+	suite.Run(t, new(AccountsRepositoryTestSuite))
 }
 
 // TestCreateAccount tests account creation with various scenarios
-func (s *ChartOfAccountsRepositoryTestSuite) TestCreateAccount() {
+func (s *AccountsRepositoryTestSuite) TestCreateAccount() {
 	testCases := []struct {
 		name        string
-		account     *domain.ChartOfAccounts
+		account     *domain.Accounts
 		expectError bool
 		errorType   string
 	}{
 		{
 			name: "Valid Asset Account Creation",
-			account: &domain.ChartOfAccounts{
+			account: &domain.Accounts{
 				ID:                 uuid.New(),
 				AccountCode:        "1000-TEST-CASH",
 				AccountName:        "Test Cash Account",
@@ -110,7 +110,7 @@ func (s *ChartOfAccountsRepositoryTestSuite) TestCreateAccount() {
 		},
 		{
 			name: "Valid Liability Account Creation",
-			account: &domain.ChartOfAccounts{
+			account: &domain.Accounts{
 				ID:                 uuid.New(),
 				AccountCode:        "2000-TEST-PAYABLE",
 				AccountName:        "Test Accounts Payable",
@@ -126,7 +126,7 @@ func (s *ChartOfAccountsRepositoryTestSuite) TestCreateAccount() {
 		},
 		{
 			name: "Invalid Account - Missing Required Fields",
-			account: &domain.ChartOfAccounts{
+			account: &domain.Accounts{
 				ID:          uuid.New(),
 				AccountCode: "", // Missing required field
 				AccountName: "Test Invalid Account",
@@ -165,11 +165,11 @@ func (s *ChartOfAccountsRepositoryTestSuite) TestCreateAccount() {
 }
 
 // TestGetAccountByID tests account retrieval by ID
-func (s *ChartOfAccountsRepositoryTestSuite) TestGetAccountByID() {
+func (s *AccountsRepositoryTestSuite) TestGetAccountByID() {
 	ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
 
 	// Create test account
-	account := &domain.ChartOfAccounts{
+	account := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "1100-TEST-CHECKING",
 		AccountName:        "Test Checking Account",
@@ -201,11 +201,11 @@ func (s *ChartOfAccountsRepositoryTestSuite) TestGetAccountByID() {
 }
 
 // TestGetAccountByCode tests account retrieval by code
-func (s *ChartOfAccountsRepositoryTestSuite) TestGetAccountByCode() {
+func (s *AccountsRepositoryTestSuite) TestGetAccountByCode() {
 	ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
 
 	// Create test account
-	account := &domain.ChartOfAccounts{
+	account := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "1200-TEST-SAVINGS",
 		AccountName:        "Test Savings Account",
@@ -235,10 +235,10 @@ func (s *ChartOfAccountsRepositoryTestSuite) TestGetAccountByCode() {
 }
 
 // TestTenantIsolation tests that tenant isolation is properly enforced
-func (s *ChartOfAccountsRepositoryTestSuite) TestTenantIsolation() {
+func (s *AccountsRepositoryTestSuite) TestTenantIsolation() {
 	// Create account in tenant A
 	ctxA := shared.WithTenantID(s.ctx, s.tenantA.ID)
-	accountA := &domain.ChartOfAccounts{
+	accountA := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "1300-TENANT-A",
 		AccountName:        "Tenant A Account",
@@ -257,7 +257,7 @@ func (s *ChartOfAccountsRepositoryTestSuite) TestTenantIsolation() {
 
 	// Create account in tenant B with same code (should be allowed due to tenant isolation)
 	ctxB := shared.WithTenantID(s.ctx, s.tenantB.ID)
-	accountB := &domain.ChartOfAccounts{
+	accountB := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "1300-TENANT-A", // Same code but different tenant
 		AccountName:        "Tenant B Account",
@@ -296,11 +296,11 @@ func (s *ChartOfAccountsRepositoryTestSuite) TestTenantIsolation() {
 }
 
 // TestListAccountsWithFiltering tests account listing with various filters
-func (s *ChartOfAccountsRepositoryTestSuite) TestListAccountsWithFiltering() {
+func (s *AccountsRepositoryTestSuite) TestListAccountsWithFiltering() {
 	ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
 
 	// Create multiple test accounts
-	accounts := []*domain.ChartOfAccounts{
+	accounts := []*domain.Accounts{
 		{
 			ID:                 uuid.New(),
 			AccountCode:        "1400-TEST-CASH1",
@@ -376,11 +376,11 @@ func (s *ChartOfAccountsRepositoryTestSuite) TestListAccountsWithFiltering() {
 }
 
 // TestUpdateAccount tests account updates
-func (s *ChartOfAccountsRepositoryTestSuite) TestUpdateAccount() {
+func (s *AccountsRepositoryTestSuite) TestUpdateAccount() {
 	ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
 
 	// Create test account
-	account := &domain.ChartOfAccounts{
+	account := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "1500-TEST-UPDATE",
 		AccountName:        "Original Account Name",
@@ -415,11 +415,11 @@ func (s *ChartOfAccountsRepositoryTestSuite) TestUpdateAccount() {
 }
 
 // TestDeleteAccount tests soft delete functionality
-func (s *ChartOfAccountsRepositoryTestSuite) TestDeleteAccount() {
+func (s *AccountsRepositoryTestSuite) TestDeleteAccount() {
 	ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
 
 	// Create test account
-	account := &domain.ChartOfAccounts{
+	account := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "1600-TEST-DELETE",
 		AccountName:        "Account to Delete",

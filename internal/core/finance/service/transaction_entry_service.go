@@ -32,14 +32,14 @@ type TransactionEntryService interface {
 
 type transactionEntryService struct {
 	repo        domain.TransactionRepository
-	accountRepo domain.ChartOfAccountsRepository
+	accountRepo domain.AccountsRepository
 	tracing     tracing.TracingService
 	metrics     metrics.MetricsProvider
 }
 
 func NewTransactionEntryService(
 	repo domain.TransactionRepository,
-	accountRepo domain.ChartOfAccountsRepository,
+	accountRepo domain.AccountsRepository,
 	tracing tracing.TracingService,
 	metrics metrics.MetricsProvider,
 ) TransactionEntryService {
@@ -176,7 +176,7 @@ func (s *transactionEntryService) CreateEntries(ctx context.Context, entries []*
 	}
 
 	var allErrors []domain.ValidationError
-	accountCache := make(map[uuid.UUID]*domain.ChartOfAccounts)
+	accountCache := make(map[uuid.UUID]*domain.Accounts)
 
 	for i, entry := range entries {
 		if validationErrors := entry.Validate(); len(validationErrors) > 0 {
@@ -187,7 +187,7 @@ func (s *transactionEntryService) CreateEntries(ctx context.Context, entries []*
 			continue
 		}
 
-		var account *domain.ChartOfAccounts
+		var account *domain.Accounts
 		var ok bool
 		if account, ok = accountCache[entry.AccountID]; !ok {
 			var err error

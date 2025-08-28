@@ -496,7 +496,7 @@ func (r *CreateTransactionRequest) Validate() []ValidationError {
 }
 
 // ValidateBusinessRules validates complex business rules that require external data
-func (t *Transaction) ValidateBusinessRules(accounts map[uuid.UUID]*ChartOfAccounts) []ValidationError {
+func (t *Transaction) ValidateBusinessRules(accounts map[uuid.UUID]*Accounts) []ValidationError {
 	var errors []ValidationError
 
 	// Validate that all referenced accounts exist and are active

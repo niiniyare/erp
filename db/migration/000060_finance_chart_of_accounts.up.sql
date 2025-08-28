@@ -4,7 +4,7 @@
 -- =====================================================================
 
 -- Master chart of accounts with hierarchical structure and multi-currency support
-CREATE TABLE finance_chart_of_accounts (
+CREATE TABLE finance_accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,
@@ -15,7 +15,7 @@ CREATE TABLE finance_chart_of_accounts (
     account_description TEXT,
     
     -- Account hierarchy
-    parent_account_id UUID REFERENCES finance_chart_of_accounts(id) ON DELETE RESTRICT,
+    parent_account_id UUID REFERENCES finance_accounts(id) ON DELETE RESTRICT,
     account_level INTEGER NOT NULL DEFAULT 1,
     account_path VARCHAR(500), -- Materialized path for hierarchy queries
     
@@ -29,7 +29,7 @@ CREATE TABLE finance_chart_of_accounts (
     -- Financial attributes
     normal_balance VARCHAR(10) NOT NULL CHECK (normal_balance IN ('DEBIT', 'CREDIT')),
     is_control_account BOOLEAN NOT NULL DEFAULT false,
-    control_account_id UUID REFERENCES finance_chart_of_accounts(id),
+    control_account_id UUID REFERENCES finance_accounts(id),
     
     -- Currency and localization
     currency_code CHAR(3) DEFAULT 'USD',
@@ -79,27 +79,27 @@ CREATE TABLE finance_chart_of_accounts (
 );
 
 -- Table comments
-COMMENT ON TABLE finance_chart_of_accounts IS 
+COMMENT ON TABLE finance_accounts IS 
 'Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and comprehensive financial reporting requirements.';
 
 -- Key column comments
-COMMENT ON COLUMN finance_chart_of_accounts.account_code IS 
+COMMENT ON COLUMN finance_accounts.account_code IS 
 'Unique account code within tenant - Used for transaction posting and reporting';
 
-COMMENT ON COLUMN finance_chart_of_accounts.account_path IS 
+COMMENT ON COLUMN finance_accounts.account_path IS 
 'Materialized path for efficient hierarchy queries - Format: /root/parent/child/';
 
-COMMENT ON COLUMN finance_chart_of_accounts.root_type IS 
+COMMENT ON COLUMN finance_accounts.root_type IS 
 'High-level account classification for balance sheet and income statement categorization';
 
-COMMENT ON COLUMN finance_chart_of_accounts.normal_balance IS 
+COMMENT ON COLUMN finance_accounts.normal_balance IS 
 'Normal balance type - DEBIT for assets/expenses, CREDIT for liabilities/equity/revenue';
 
 -- Enable Row Level Security
-ALTER TABLE finance_chart_of_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE finance_accounts ENABLE ROW LEVEL SECURITY;
 
 -- RLS policy for tenant isolation
-CREATE POLICY tenant_isolation_policy ON finance_chart_of_accounts
+CREATE POLICY tenant_isolation_policy ON finance_accounts
     FOR ALL TO application_role
     USING (
         current_tenant_id() IS NOT NULL 
@@ -111,10 +111,10 @@ CREATE POLICY tenant_isolation_policy ON finance_chart_of_accounts
     );
 
 -- Admin bypass policy
-CREATE POLICY admin_full_access_policy ON finance_chart_of_accounts
+CREATE POLICY admin_full_access_policy ON finance_accounts
     FOR ALL TO admin_role
     USING (true);
 
 -- Grant permissions
-GRANT SELECT, INSERT, UPDATE, DELETE ON finance_chart_of_accounts TO application_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON finance_chart_of_accounts TO admin_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON finance_accounts TO application_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON finance_accounts TO admin_role;

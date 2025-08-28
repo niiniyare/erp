@@ -11,9 +11,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// ChartOfAccounts represents a single account in the chart of accounts
+// Accounts represents a single account in the chart of accounts
 // This is the core entity for the accounting system's account structure
-type ChartOfAccounts struct {
+type Accounts struct {
 	ID       uuid.UUID  `json:"id"`
 	TenantID uuid.UUID  `json:"tenant_id"`
 	EntityID *uuid.UUID `json:"entity_id,omitempty"` // Optional for multi-entity support
@@ -125,7 +125,7 @@ type UpdateAccountRequest struct {
 // AccountBalance represents account balance information at a point in time
 type AccountBalance struct {
 	AccountID    uuid.UUID       `json:"account_id"`
-	Account      ChartOfAccounts `json:"account"`
+	Account      Accounts `json:"account"`
 	TotalDebits  decimal.Decimal `json:"total_debits"`  // Sum of all debit entries
 	TotalCredits decimal.Decimal `json:"total_credits"` // Sum of all credit entries
 	NetBalance   decimal.Decimal `json:"net_balance"`   // Calculated net balance
@@ -134,14 +134,14 @@ type AccountBalance struct {
 
 // TrialBalanceEntry represents a single line in the trial balance report
 type TrialBalanceEntry struct {
-	Account      ChartOfAccounts `json:"account"`
+	Account      Accounts `json:"account"`
 	TotalDebits  decimal.Decimal `json:"total_debits"`
 	TotalCredits decimal.Decimal `json:"total_credits"`
 	NetBalance   decimal.Decimal `json:"net_balance"`
 }
 
 // Validate validates the chart of accounts entity
-func (c *ChartOfAccounts) Validate() []ValidationError {
+func (c *Accounts) Validate() []ValidationError {
 	var errors []ValidationError
 
 	// Validate required fields
@@ -281,7 +281,7 @@ func isValidAccountCode(code string) bool {
 }
 
 // IsDescendantOf checks if this account is a descendant of the specified parent
-func (c *ChartOfAccounts) IsDescendantOf(parentID uuid.UUID) bool {
+func (c *Accounts) IsDescendantOf(parentID uuid.UUID) bool {
 	if c.AccountPath == nil {
 		return false
 	}
@@ -290,7 +290,7 @@ func (c *ChartOfAccounts) IsDescendantOf(parentID uuid.UUID) bool {
 }
 
 // GetEffectiveBalance calculates the effective balance considering normal balance type
-func (c *ChartOfAccounts) GetEffectiveBalance() decimal.Decimal {
+func (c *Accounts) GetEffectiveBalance() decimal.Decimal {
 	if c.NormalBalance == NormalBalanceDebit {
 		return c.CurrentBalance
 	}
@@ -299,12 +299,12 @@ func (c *ChartOfAccounts) GetEffectiveBalance() decimal.Decimal {
 }
 
 // CanAcceptManualEntries determines if manual entries are allowed
-func (c *ChartOfAccounts) CanAcceptManualEntries() bool {
+func (c *Accounts) CanAcceptManualEntries() bool {
 	return c.IsActive && c.AllowManualEntries && !c.IsControlAccount
 }
 
 // CanBeDeactivated checks if the account can be marked as inactive
-func (c *ChartOfAccounts) CanBeDeactivated() bool {
+func (c *Accounts) CanBeDeactivated() bool {
 	// Cannot deactivate if it has a non-zero balance
 	if !c.CurrentBalance.IsZero() {
 		return false
@@ -319,7 +319,7 @@ func (c *ChartOfAccounts) CanBeDeactivated() bool {
 }
 
 // MarshalAccountAttributes marshals account attributes to JSON
-func (c *ChartOfAccounts) MarshalAccountAttributes() ([]byte, error) {
+func (c *Accounts) MarshalAccountAttributes() ([]byte, error) {
 	if c.AccountAttributes == nil {
 		return []byte("{}"), nil
 	}
@@ -327,7 +327,7 @@ func (c *ChartOfAccounts) MarshalAccountAttributes() ([]byte, error) {
 }
 
 // UnmarshalAccountAttributes unmarshals account attributes from JSON
-func (c *ChartOfAccounts) UnmarshalAccountAttributes(data []byte) error {
+func (c *Accounts) UnmarshalAccountAttributes(data []byte) error {
 	if len(data) == 0 {
 		c.AccountAttributes = make(map[string]any)
 		return nil
@@ -340,7 +340,7 @@ func (r *CreateAccountRequest) Validate() []ValidationError {
 	// var errors []ValidationError
 
 	// Create a temporary account for validation
-	account := ChartOfAccounts{
+	account := Accounts{
 		TenantID:                    uuid.New(), // Dummy value for validation
 		EntityID:                    r.EntityID,
 		AccountCode:                 r.AccountCode,
@@ -403,7 +403,7 @@ func (r *UpdateAccountRequest) Validate() []ValidationError {
 }
 
 // ValidateBusinessRules validates complex business rules that require external data
-func (c *ChartOfAccounts) ValidateBusinessRules(parentAccount *ChartOfAccounts, hasChildren bool, hasTransactions bool) []ValidationError {
+func (c *Accounts) ValidateBusinessRules(parentAccount *Accounts, hasChildren bool, hasTransactions bool) []ValidationError {
 	var errors []ValidationError
 
 	// Parent account validations

@@ -13,7 +13,7 @@ CREATE TABLE finance_transaction_entries (
     entry_number INTEGER NOT NULL,
     
     -- Account relationship
-    account_id UUID NOT NULL REFERENCES finance_chart_of_accounts(id) ON DELETE RESTRICT,
+    account_id UUID NOT NULL REFERENCES finance_accounts(id) ON DELETE RESTRICT,
     
     -- Entry amounts
     debit_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,

@@ -39,7 +39,7 @@ type TransactionService interface {
 
 type transactionService struct {
 	repo         domain.TransactionRepository
-	accountRepo  domain.ChartOfAccountsRepository
+	accountRepo  domain.AccountsRepository
 	entryService TransactionEntryService
 	tracing      tracing.TracingService
 	metrics      metrics.MetricsProvider
@@ -47,7 +47,7 @@ type transactionService struct {
 
 func NewTransactionService(
 	repo domain.TransactionRepository,
-	accountRepo domain.ChartOfAccountsRepository,
+	accountRepo domain.AccountsRepository,
 	entryService TransactionEntryService,
 	tracing tracing.TracingService,
 	metrics metrics.MetricsProvider,

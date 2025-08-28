@@ -12,24 +12,24 @@ import (
 // These interfaces are part of the domain layer and define what the domain needs
 // Implementations are in the infrastructure layer, following the Dependency Inversion Principle
 
-// ChartOfAccountsRepository defines the contract for chart of accounts persistence
-type ChartOfAccountsRepository interface {
+// AccountsRepository defines the contract for chart of accounts persistence
+type AccountsRepository interface {
 	// Basic CRUD operations
-	Create(ctx context.Context, account *ChartOfAccounts) error
-	GetByID(ctx context.Context, id uuid.UUID) (*ChartOfAccounts, error)
-	GetByCode(ctx context.Context, entityID *uuid.UUID, accountCode string) (*ChartOfAccounts, error)
-	Update(ctx context.Context, account *ChartOfAccounts) error
+	Create(ctx context.Context, account *Accounts) error
+	GetByID(ctx context.Context, id uuid.UUID) (*Accounts, error)
+	GetByCode(ctx context.Context, entityID *uuid.UUID, accountCode string) (*Accounts, error)
+	Update(ctx context.Context, account *Accounts) error
 	Delete(ctx context.Context, id uuid.UUID) error
 
 	// List and filtering operations
-	List(ctx context.Context, filter *AccountFilter) ([]*ChartOfAccounts, error)
+	List(ctx context.Context, filter *AccountFilter) ([]*Accounts, error)
 	Count(ctx context.Context, filter *AccountFilter) (int64, error)
-	ListByParent(ctx context.Context, parentID uuid.UUID) ([]*ChartOfAccounts, error)
-	ListByRootType(ctx context.Context, rootType RootType) ([]*ChartOfAccounts, error)
+	ListByParent(ctx context.Context, parentID uuid.UUID) ([]*Accounts, error)
+	ListByRootType(ctx context.Context, rootType RootType) ([]*Accounts, error)
 
 	// Hierarchy operations
-	GetAccountHierarchy(ctx context.Context, rootID uuid.UUID) ([]*ChartOfAccounts, error)
-	GetAccountPath(ctx context.Context, accountID uuid.UUID) ([]ChartOfAccounts, error)
+	GetAccountHierarchy(ctx context.Context, rootID uuid.UUID) ([]*Accounts, error)
+	GetAccountPath(ctx context.Context, accountID uuid.UUID) ([]Accounts, error)
 	ValidateHierarchy(ctx context.Context, accountID, parentID uuid.UUID) error
 
 	// Balance operations
@@ -38,16 +38,16 @@ type ChartOfAccountsRepository interface {
 	GetTrialBalance(ctx context.Context, entityID *uuid.UUID, asOfDate *time.Time) ([]*TrialBalanceEntry, error)
 
 	// Business logic queries
-	GetActiveAccounts(ctx context.Context, entityID *uuid.UUID) ([]*ChartOfAccounts, error)
-	GetControlAccounts(ctx context.Context, entityID *uuid.UUID) ([]*ChartOfAccounts, error)
-	GetAccountsByType(ctx context.Context, accountType string, rootType *RootType) ([]*ChartOfAccounts, error)
-	Search(ctx context.Context, query string, limit int) ([]*ChartOfAccounts, error)
+	GetActiveAccounts(ctx context.Context, entityID *uuid.UUID) ([]*Accounts, error)
+	GetControlAccounts(ctx context.Context, entityID *uuid.UUID) ([]*Accounts, error)
+	GetAccountsByType(ctx context.Context, accountType string, rootType *RootType) ([]*Accounts, error)
+	Search(ctx context.Context, query string, limit int) ([]*Accounts, error)
 
 	// Validation helpers
 	ValidateAccountCode(ctx context.Context, code string, excludeID *uuid.UUID) error
 	IsAccountCodeUnique(ctx context.Context, entityID *uuid.UUID, accountCode string, excludeID *uuid.UUID) (bool, error)
 	HasChildren(ctx context.Context, accountID uuid.UUID) (bool, error)
-	GetChildren(ctx context.Context, accountID uuid.UUID) ([]*ChartOfAccounts, error)
+	GetChildren(ctx context.Context, accountID uuid.UUID) ([]*Accounts, error)
 	HasTransactions(ctx context.Context, accountID uuid.UUID) (bool, error)
 	UpdateBalance(ctx context.Context, accountID uuid.UUID, balance AccountBalance) error
 }
@@ -207,7 +207,7 @@ type AuditEntry struct {
 
 // RepositoryManager aggregates all repositories for easier dependency injection
 type RepositoryManager interface {
-	ChartOfAccounts() ChartOfAccountsRepository
+	Accounts() AccountsRepository
 	Transaction() TransactionRepository
 	Audit() AuditRepository
 }
@@ -220,14 +220,14 @@ type UnitOfWork interface {
 	Rollback(ctx context.Context) error
 
 	// Repository access within transaction
-	ChartOfAccounts() ChartOfAccountsRepository
+	Accounts() AccountsRepository
 	Transaction() TransactionRepository
 	Audit() AuditRepository
 }
 
 // Repository factory for creating repository instances
 type RepositoryFactory interface {
-	CreateChartOfAccountsRepository() ChartOfAccountsRepository
+	CreateAccountsRepository() AccountsRepository
 	CreateTransactionRepository() TransactionRepository
 	CreateAuditRepository() AuditRepository
 	CreateUnitOfWork() UnitOfWork

@@ -5,7 +5,7 @@
 -- =====================================================================
 
 -- name: CreateAccount :one
-INSERT INTO finance_chart_of_accounts (
+INSERT INTO finance_accounts (
     tenant_id,
     entity_id,
     account_code,
@@ -60,20 +60,20 @@ INSERT INTO finance_chart_of_accounts (
 ) RETURNING *;
 
 -- name: GetAccountByID :one
-SELECT * FROM finance_chart_of_accounts
+SELECT * FROM finance_accounts
 WHERE id = sqlc.arg('account_id') 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
 -- name: GetAccountByCode :one
-SELECT * FROM finance_chart_of_accounts
+SELECT * FROM finance_accounts
 WHERE account_code = sqlc.arg('account_code') 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
 -- name: ListAccounts :many
 SELECT * 
-FROM finance_chart_of_accounts
+FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND (sqlc.narg('account_type')::account_type_enum IS NULL OR account_type = sqlc.narg('account_type')::account_type_enum)
@@ -84,7 +84,7 @@ LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: CountAccounts :one
 SELECT COUNT(*) 
-FROM finance_chart_of_accounts
+FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND (sqlc.narg('account_type')::account_type_enum IS NULL OR account_type = sqlc.narg('account_type')::account_type_enum)
@@ -92,28 +92,28 @@ WHERE tenant_id = current_tenant_id()
   AND (sqlc.narg('is_active')::bool IS NULL OR is_active = sqlc.narg('is_active')::bool);
 
 -- name: ListAccountsByParent :many
-SELECT * FROM finance_chart_of_accounts
+SELECT * FROM finance_accounts
 WHERE parent_account_id = sqlc.narg('parent_account_id')
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 ORDER BY account_code ASC;
 
 -- name: GetAccountHierarchy :many
-SELECT * FROM finance_chart_of_accounts
+SELECT * FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND account_path LIKE sqlc.arg('account_path_prefix') || '%'
 ORDER BY account_path ASC;
 
 -- name: GetRootAccounts :many
-SELECT * FROM finance_chart_of_accounts
+SELECT * FROM finance_accounts
 WHERE parent_account_id IS NULL
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 ORDER BY account_code ASC;
 
 -- name: UpdateAccount :one
-UPDATE finance_chart_of_accounts
+UPDATE finance_accounts
 SET 
     account_name = COALESCE(sqlc.narg('account_name'), account_name),
     account_description = COALESCE(sqlc.narg('account_description'), account_description),
@@ -135,7 +135,7 @@ WHERE id = sqlc.arg('account_id')
 RETURNING *;
 
 -- name: UpdateAccountBalance :exec
-UPDATE finance_chart_of_accounts
+UPDATE finance_accounts
 SET 
     current_balance = sqlc.arg('current_balance'),
     ytd_balance = sqlc.arg('ytd_balance'),
@@ -146,7 +146,7 @@ WHERE id = sqlc.arg('account_id')
   AND deleted_at IS NULL;
 
 -- name: SoftDeleteAccount :exec
-UPDATE finance_chart_of_accounts
+UPDATE finance_accounts
 SET 
     deleted_at = NOW(),
     updated_at = NOW(),
@@ -156,7 +156,7 @@ WHERE id = sqlc.arg('account_id')
   AND deleted_at IS NULL;
 
 -- name: RestoreAccount :exec
-UPDATE finance_chart_of_accounts
+UPDATE finance_accounts
 SET 
     deleted_at = NULL,
     updated_at = NOW(),
@@ -168,7 +168,7 @@ WHERE id = sqlc.arg('account_id')
 SELECT 
     a.*,
     COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE -te.credit_amount END), 0) as calculated_balance
-FROM finance_chart_of_accounts a
+FROM finance_accounts a
 LEFT JOIN finance_transaction_entries te ON a.id = te.account_id
 LEFT JOIN finance_transactions t ON te.transaction_id = t.id
 WHERE a.tenant_id = current_tenant_id()
@@ -181,7 +181,7 @@ GROUP BY a.id
 ORDER BY a.report_order ASC, a.account_code ASC;
 
 -- name: SearchAccounts :many
-SELECT * FROM finance_chart_of_accounts
+SELECT * FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND (
@@ -195,21 +195,21 @@ ORDER BY
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: GetAccountsWithNonZeroBalance :many
-SELECT * FROM finance_chart_of_accounts
+SELECT * FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND current_balance != 0
 ORDER BY ABS(current_balance) DESC;
 
 -- name: GetControlAccounts :many
-SELECT * FROM finance_chart_of_accounts
+SELECT * FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND is_control_account = true
 ORDER BY account_code ASC;
 
 -- name: GetAccountsByEntity :many
-SELECT * FROM finance_chart_of_accounts
+SELECT * FROM finance_accounts
 WHERE entity_id = sqlc.narg('entity_id')
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -219,7 +219,7 @@ ORDER BY account_code ASC;
 SELECT 
     CASE 
         WHEN EXISTS(
-            SELECT 1 FROM finance_chart_of_accounts 
+            SELECT 1 FROM finance_accounts 
             WHERE parent_account_id = sqlc.narg('parent_account_id') AND id = sqlc.narg('parent_account_id')
         ) THEN false -- Self reference check
         ELSE true

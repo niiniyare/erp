@@ -64,7 +64,7 @@ SELECT
     a.account_type,
     a.normal_balance
 FROM finance_transaction_entries te
-JOIN finance_chart_of_accounts a ON te.account_id = a.id
+JOIN finance_accounts a ON te.account_id = a.id
 WHERE te.transaction_id = sqlc.arg('transaction_id') 
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
@@ -154,7 +154,7 @@ SELECT
     t.transaction_number,
     t.transaction_date
 FROM finance_transaction_entries te
-JOIN finance_chart_of_accounts a ON te.account_id = a.id
+JOIN finance_accounts a ON te.account_id = a.id
 JOIN finance_transactions t ON te.transaction_id = t.id
 WHERE te.cost_center = sqlc.narg('cost_center') 
   AND te.tenant_id = current_tenant_id()
@@ -172,7 +172,7 @@ SELECT
     t.transaction_number,
     t.transaction_date
 FROM finance_transaction_entries te
-JOIN finance_chart_of_accounts a ON te.account_id = a.id
+JOIN finance_accounts a ON te.account_id = a.id
 JOIN finance_transactions t ON te.transaction_id = t.id
 WHERE te.project_id = sqlc.narg('project_id') 
   AND te.tenant_id = current_tenant_id()
@@ -190,7 +190,7 @@ SELECT
     t.transaction_number,
     t.transaction_date
 FROM finance_transaction_entries te
-JOIN finance_chart_of_accounts a ON te.account_id = a.id
+JOIN finance_accounts a ON te.account_id = a.id
 JOIN finance_transactions t ON te.transaction_id = t.id
 WHERE te.account_id = sqlc.arg('account_id') 
   AND te.reconciled = false
@@ -237,7 +237,7 @@ SELECT
     t.transaction_number,
     t.transaction_date
 FROM finance_transaction_entries te
-JOIN finance_chart_of_accounts a ON te.account_id = a.id
+JOIN finance_accounts a ON te.account_id = a.id
 JOIN finance_transactions t ON te.transaction_id = t.id
 WHERE te.department = sqlc.narg('department')
   AND te.tenant_id = current_tenant_id()
@@ -258,7 +258,7 @@ SELECT
     COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE 0 END), 0) AS total_debits,
     COALESCE(SUM(CASE WHEN te.credit_amount > 0 THEN te.credit_amount ELSE 0 END), 0) AS total_credits,
     COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE -te.credit_amount END), 0) AS net_balance
-FROM finance_chart_of_accounts a
+FROM finance_accounts a
 LEFT JOIN finance_transaction_entries te ON a.id = te.account_id
     AND te.tenant_id = current_tenant_id()
     AND te.deleted_at IS NULL

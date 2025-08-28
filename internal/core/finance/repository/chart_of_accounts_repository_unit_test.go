@@ -20,8 +20,8 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// ChartOfAccountsRepositoryUnitTestSuite defines unit test suite using mocks
-type ChartOfAccountsRepositoryUnitTestSuite struct {
+// AccountsRepositoryUnitTestSuite defines unit test suite using mocks
+type AccountsRepositoryUnitTestSuite struct {
 	suite.Suite
 	ctrl       *gomock.Controller
 	mockStore  *db.MockStore
@@ -32,7 +32,7 @@ type ChartOfAccountsRepositoryUnitTestSuite struct {
 }
 
 // SetupTest runs before each test
-func (s *ChartOfAccountsRepositoryUnitTestSuite) SetupTest() {
+func (s *AccountsRepositoryUnitTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.mockStore = db.NewMockStore(s.ctrl)
 	s.mockTracer = tracing.NewMockTracingService(s.ctrl)
@@ -42,18 +42,18 @@ func (s *ChartOfAccountsRepositoryUnitTestSuite) SetupTest() {
 }
 
 // TearDownTest runs after each test
-func (s *ChartOfAccountsRepositoryUnitTestSuite) TearDownTest() {
+func (s *AccountsRepositoryUnitTestSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
 // Test runner
-func TestChartOfAccountsRepositoryUnitTestSuite(t *testing.T) {
-	suite.Run(t, new(ChartOfAccountsRepositoryUnitTestSuite))
+func TestAccountsRepositoryUnitTestSuite(t *testing.T) {
+	suite.Run(t, new(AccountsRepositoryUnitTestSuite))
 }
 
 // TestCreateAccountSuccess tests successful account creation
-func (s *ChartOfAccountsRepositoryUnitTestSuite) TestCreateAccountSuccess() {
-	account := &domain.ChartOfAccounts{
+func (s *AccountsRepositoryUnitTestSuite) TestCreateAccountSuccess() {
+	account := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "1000-CASH",
 		AccountName:        "Cash Account",
@@ -146,8 +146,8 @@ func (s *ChartOfAccountsRepositoryUnitTestSuite) TestCreateAccountSuccess() {
 }
 
 // TestCreateAccountDuplicateCode tests handling of duplicate account codes
-func (s *ChartOfAccountsRepositoryUnitTestSuite) TestCreateAccountDuplicateCode() {
-	account := &domain.ChartOfAccounts{
+func (s *AccountsRepositoryUnitTestSuite) TestCreateAccountDuplicateCode() {
+	account := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "1000-CASH",
 		AccountName:        "Cash Account",
@@ -181,7 +181,7 @@ func (s *ChartOfAccountsRepositoryUnitTestSuite) TestCreateAccountDuplicateCode(
 }
 
 // TestGetByIDSuccess tests successful account retrieval by ID
-func (s *ChartOfAccountsRepositoryUnitTestSuite) TestGetByIDSuccess() {
+func (s *AccountsRepositoryUnitTestSuite) TestGetByIDSuccess() {
 	accountID := uuid.New()
 	expectedAccount := db.FinanceChartOfAccount{
 		ID:                 accountID,
@@ -225,7 +225,7 @@ func (s *ChartOfAccountsRepositoryUnitTestSuite) TestGetByIDSuccess() {
 }
 
 // TestGetByIDNotFound tests handling of non-existent account
-func (s *ChartOfAccountsRepositoryUnitTestSuite) TestGetByIDNotFound() {
+func (s *AccountsRepositoryUnitTestSuite) TestGetByIDNotFound() {
 	accountID := uuid.New()
 
 	s.mockStore.EXPECT().
@@ -250,7 +250,7 @@ func (s *ChartOfAccountsRepositoryUnitTestSuite) TestGetByIDNotFound() {
 }
 
 // TestGetByCodeSuccess tests successful account retrieval by code
-func (s *ChartOfAccountsRepositoryUnitTestSuite) TestGetByCodeSuccess() {
+func (s *AccountsRepositoryUnitTestSuite) TestGetByCodeSuccess() {
 	accountCode := "1000-CASH"
 	expectedAccount := db.FinanceChartOfAccount{
 		ID:            uuid.New(),
@@ -288,8 +288,8 @@ func (s *ChartOfAccountsRepositoryUnitTestSuite) TestGetByCodeSuccess() {
 }
 
 // TestUpdateAccountSuccess tests successful account update
-func (s *ChartOfAccountsRepositoryUnitTestSuite) TestUpdateAccountSuccess() {
-	account := &domain.ChartOfAccounts{
+func (s *AccountsRepositoryUnitTestSuite) TestUpdateAccountSuccess() {
+	account := &domain.Accounts{
 		ID:                 uuid.New(),
 		TenantID:           s.tenantID,
 		AccountCode:        "1000-CASH",
@@ -344,7 +344,7 @@ func (s *ChartOfAccountsRepositoryUnitTestSuite) TestUpdateAccountSuccess() {
 }
 
 // TestDeleteAccountSuccess tests successful account soft delete
-func (s *ChartOfAccountsRepositoryUnitTestSuite) TestDeleteAccountSuccess() {
+func (s *AccountsRepositoryUnitTestSuite) TestDeleteAccountSuccess() {
 	accountID := uuid.New()
 
 	s.mockStore.EXPECT().
@@ -367,7 +367,7 @@ func (s *ChartOfAccountsRepositoryUnitTestSuite) TestDeleteAccountSuccess() {
 }
 
 // TestListAccountsSuccess tests successful account listing
-func (s *ChartOfAccountsRepositoryUnitTestSuite) TestListAccountsSuccess() {
+func (s *AccountsRepositoryUnitTestSuite) TestListAccountsSuccess() {
 	filter := &domain.AccountFilter{
 		RootType: &domain.RootTypeAsset,
 		IsActive: boolPtr(true),

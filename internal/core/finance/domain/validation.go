@@ -435,7 +435,7 @@ func (v *BusinessRuleValidator) ValidateTransactionBalance(entries []Transaction
 }
 
 // ValidateAccountHierarchy validates account hierarchy constraints
-func (v *BusinessRuleValidator) ValidateAccountHierarchy(account *ChartOfAccounts, parentAccount *ChartOfAccounts) []ValidationError {
+func (v *BusinessRuleValidator) ValidateAccountHierarchy(account *Accounts, parentAccount *Accounts) []ValidationError {
 	var errors []ValidationError
 
 	if parentAccount == nil {
@@ -657,7 +657,7 @@ func NewCompoundValidator() *CompoundValidator {
 }
 
 // ValidateAccount performs comprehensive account validation
-func (v *CompoundValidator) ValidateAccount(account *ChartOfAccounts, parentAccount *ChartOfAccounts) *ValidationResult {
+func (v *CompoundValidator) ValidateAccount(account *Accounts, parentAccount *Accounts) *ValidationResult {
 	result := &ValidationResult{IsValid: true}
 
 	// Field-level validation
@@ -809,7 +809,7 @@ func (v *ContextValidator) ValidateTransactionWithContext(transaction *Transacti
 }
 
 // ValidateAccountWithContext validates an account with additional context
-func (v *ContextValidator) ValidateAccountWithContext(account *ChartOfAccounts, parentAccount *ChartOfAccounts, ctx *ValidationContext) *ValidationResult {
+func (v *ContextValidator) ValidateAccountWithContext(account *Accounts, parentAccount *Accounts, ctx *ValidationContext) *ValidationResult {
 	result := v.compoundValidator.ValidateAccount(account, parentAccount)
 
 	// Additional context-based validations can be added here
@@ -1298,7 +1298,7 @@ func (v *BatchValidator) ValidateTransactionBatch(transactions []*Transaction, c
 // }
 //
 // // ValidateAccountHierarchy validates account hierarchy constraints
-// func (v *BusinessRuleValidator) ValidateAccountHierarchy(account *ChartOfAccounts, parentAccount *ChartOfAccounts) []ValidationError {
+// func (v *BusinessRuleValidator) ValidateAccountHierarchy(account *Accounts, parentAccount *Accounts) []ValidationError {
 // 	var errors []ValidationError
 //
 // 	if parentAccount == nil {
@@ -1446,7 +1446,7 @@ func (v *BatchValidator) ValidateTransactionBatch(transactions []*Transaction, c
 // }
 //
 // // ValidateAccount performs comprehensive account validation
-// func (v *CompoundValidator) ValidateAccount(account *ChartOfAccounts, parentAccount *ChartOfAccounts) *ValidationResult {
+// func (v *CompoundValidator) ValidateAccount(account *Accounts, parentAccount *Accounts) *ValidationResult {
 // 	result := &ValidationResult{IsValid: true}
 //
 // 	// Field-level validation

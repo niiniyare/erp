@@ -1,2 +1,2 @@
 -- Drop chart of accounts table
-DROP TABLE IF EXISTS finance_chart_of_accounts CASCADE;
+DROP TABLE IF EXISTS finance_accounts CASCADE;

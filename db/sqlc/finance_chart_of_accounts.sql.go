@@ -16,7 +16,7 @@ import (
 
 const countAccounts = `-- name: CountAccounts :one
 SELECT COUNT(*) 
-FROM finance_chart_of_accounts
+FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND ($1::account_type_enum IS NULL OR account_type = $1::account_type_enum)
@@ -39,7 +39,7 @@ func (q *Queries) CountAccounts(ctx context.Context, arg CountAccountsParams) (i
 
 const createAccount = `-- name: CreateAccount :one
 
-INSERT INTO finance_chart_of_accounts (
+INSERT INTO finance_accounts (
     tenant_id,
     entity_id,
     account_code,
@@ -126,7 +126,7 @@ type CreateAccountParams struct {
 // SQLC queries for chart of accounts with proper tenant isolation
 // Updated with proper sqlc.narg and sqlc.arg usage
 // =====================================================================
-func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceChartOfAccount, error) {
+func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceAccount, error) {
 	row := q.db.QueryRow(ctx, createAccount,
 		arg.EntityID,
 		arg.AccountCode,
@@ -153,7 +153,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (*
 		arg.AccountAttributes,
 		arg.CreatedBy,
 	)
-	var i FinanceChartOfAccount
+	var i FinanceAccount
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
@@ -199,15 +199,15 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (*
 }
 
 const getAccountByCode = `-- name: GetAccountByCode :one
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_chart_of_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
 WHERE account_code = $1 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
 
-func (q *Queries) GetAccountByCode(ctx context.Context, accountCode string) (*FinanceChartOfAccount, error) {
+func (q *Queries) GetAccountByCode(ctx context.Context, accountCode string) (*FinanceAccount, error) {
 	row := q.db.QueryRow(ctx, getAccountByCode, accountCode)
-	var i FinanceChartOfAccount
+	var i FinanceAccount
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
@@ -253,15 +253,15 @@ func (q *Queries) GetAccountByCode(ctx context.Context, accountCode string) (*Fi
 }
 
 const getAccountByID = `-- name: GetAccountByID :one
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_chart_of_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
 WHERE id = $1 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
 
-func (q *Queries) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceChartOfAccount, error) {
+func (q *Queries) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceAccount, error) {
 	row := q.db.QueryRow(ctx, getAccountByID, accountID)
-	var i FinanceChartOfAccount
+	var i FinanceAccount
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
@@ -307,22 +307,22 @@ func (q *Queries) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*Fin
 }
 
 const getAccountHierarchy = `-- name: GetAccountHierarchy :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_chart_of_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND account_path LIKE $1 || '%'
 ORDER BY account_path ASC
 `
 
-func (q *Queries) GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceChartOfAccount, error) {
+func (q *Queries) GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceAccount, error) {
 	rows, err := q.db.Query(ctx, getAccountHierarchy, accountPathPrefix)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*FinanceChartOfAccount{}
+	items := []*FinanceAccount{}
 	for rows.Next() {
-		var i FinanceChartOfAccount
+		var i FinanceAccount
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
@@ -375,22 +375,22 @@ func (q *Queries) GetAccountHierarchy(ctx context.Context, accountPathPrefix str
 }
 
 const getAccountsByEntity = `-- name: GetAccountsByEntity :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_chart_of_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
 WHERE entity_id = $1
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 ORDER BY account_code ASC
 `
 
-func (q *Queries) GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) ([]*FinanceChartOfAccount, error) {
+func (q *Queries) GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error) {
 	rows, err := q.db.Query(ctx, getAccountsByEntity, entityID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*FinanceChartOfAccount{}
+	items := []*FinanceAccount{}
 	for rows.Next() {
-		var i FinanceChartOfAccount
+		var i FinanceAccount
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
@@ -446,7 +446,7 @@ const getAccountsForFinancialStatements = `-- name: GetAccountsForFinancialState
 SELECT 
     a.id, a.tenant_id, a.entity_id, a.account_code, a.account_name, a.account_description, a.parent_account_id, a.account_level, a.account_path, a.account_type, a.account_subtype, a.is_control_account, a.control_account_id, a.currency_code, a.is_multi_currency, a.currency_revaluation_required, a.is_active, a.is_system_account, a.allow_manual_entries, a.require_reference, a.current_balance, a.ytd_balance, a.last_transaction_date, a.financial_statement_line, a.report_order, a.is_budgetable, a.budget_variance_threshold, a.version, a.last_validation_run, a.validation_errors, a.account_attributes, a.created_at, a.updated_at, a.deleted_at, a.created_by, a.updated_by, a.root_type, a.normal_balance, a.validation_status,
     COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE -te.credit_amount END), 0) as calculated_balance
-FROM finance_chart_of_accounts a
+FROM finance_accounts a
 LEFT JOIN finance_transaction_entries te ON a.id = te.account_id
 LEFT JOIN finance_transactions t ON te.transaction_id = t.id
 WHERE a.tenant_id = current_tenant_id()
@@ -569,22 +569,22 @@ func (q *Queries) GetAccountsForFinancialStatements(ctx context.Context, arg Get
 }
 
 const getAccountsWithNonZeroBalance = `-- name: GetAccountsWithNonZeroBalance :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_chart_of_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND current_balance != 0
 ORDER BY ABS(current_balance) DESC
 `
 
-func (q *Queries) GetAccountsWithNonZeroBalance(ctx context.Context) ([]*FinanceChartOfAccount, error) {
+func (q *Queries) GetAccountsWithNonZeroBalance(ctx context.Context) ([]*FinanceAccount, error) {
 	rows, err := q.db.Query(ctx, getAccountsWithNonZeroBalance)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*FinanceChartOfAccount{}
+	items := []*FinanceAccount{}
 	for rows.Next() {
-		var i FinanceChartOfAccount
+		var i FinanceAccount
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
@@ -637,22 +637,22 @@ func (q *Queries) GetAccountsWithNonZeroBalance(ctx context.Context) ([]*Finance
 }
 
 const getControlAccounts = `-- name: GetControlAccounts :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_chart_of_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND is_control_account = true
 ORDER BY account_code ASC
 `
 
-func (q *Queries) GetControlAccounts(ctx context.Context) ([]*FinanceChartOfAccount, error) {
+func (q *Queries) GetControlAccounts(ctx context.Context) ([]*FinanceAccount, error) {
 	rows, err := q.db.Query(ctx, getControlAccounts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*FinanceChartOfAccount{}
+	items := []*FinanceAccount{}
 	for rows.Next() {
-		var i FinanceChartOfAccount
+		var i FinanceAccount
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
@@ -705,22 +705,22 @@ func (q *Queries) GetControlAccounts(ctx context.Context) ([]*FinanceChartOfAcco
 }
 
 const getRootAccounts = `-- name: GetRootAccounts :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_chart_of_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
 WHERE parent_account_id IS NULL
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 ORDER BY account_code ASC
 `
 
-func (q *Queries) GetRootAccounts(ctx context.Context) ([]*FinanceChartOfAccount, error) {
+func (q *Queries) GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error) {
 	rows, err := q.db.Query(ctx, getRootAccounts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*FinanceChartOfAccount{}
+	items := []*FinanceAccount{}
 	for rows.Next() {
-		var i FinanceChartOfAccount
+		var i FinanceAccount
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
@@ -774,7 +774,7 @@ func (q *Queries) GetRootAccounts(ctx context.Context) ([]*FinanceChartOfAccount
 
 const listAccounts = `-- name: ListAccounts :many
 SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status 
-FROM finance_chart_of_accounts
+FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND ($1::account_type_enum IS NULL OR account_type = $1::account_type_enum)
@@ -792,7 +792,7 @@ type ListAccountsParams struct {
 	Limit       int32               `json:"limit"`
 }
 
-func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceChartOfAccount, error) {
+func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceAccount, error) {
 	rows, err := q.db.Query(ctx, listAccounts,
 		arg.AccountType,
 		arg.RootType,
@@ -804,9 +804,9 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*FinanceChartOfAccount{}
+	items := []*FinanceAccount{}
 	for rows.Next() {
-		var i FinanceChartOfAccount
+		var i FinanceAccount
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
@@ -859,22 +859,22 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*
 }
 
 const listAccountsByParent = `-- name: ListAccountsByParent :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_chart_of_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
 WHERE parent_account_id = $1
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 ORDER BY account_code ASC
 `
 
-func (q *Queries) ListAccountsByParent(ctx context.Context, parentAccountID *uuid.UUID) ([]*FinanceChartOfAccount, error) {
+func (q *Queries) ListAccountsByParent(ctx context.Context, parentAccountID *uuid.UUID) ([]*FinanceAccount, error) {
 	rows, err := q.db.Query(ctx, listAccountsByParent, parentAccountID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*FinanceChartOfAccount{}
+	items := []*FinanceAccount{}
 	for rows.Next() {
-		var i FinanceChartOfAccount
+		var i FinanceAccount
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
@@ -927,7 +927,7 @@ func (q *Queries) ListAccountsByParent(ctx context.Context, parentAccountID *uui
 }
 
 const restoreAccount = `-- name: RestoreAccount :exec
-UPDATE finance_chart_of_accounts
+UPDATE finance_accounts
 SET 
     deleted_at = NULL,
     updated_at = NOW(),
@@ -947,7 +947,7 @@ func (q *Queries) RestoreAccount(ctx context.Context, arg RestoreAccountParams) 
 }
 
 const searchAccounts = `-- name: SearchAccounts :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_chart_of_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND (
@@ -967,15 +967,15 @@ type SearchAccountsParams struct {
 	Limit      int32  `json:"limit"`
 }
 
-func (q *Queries) SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceChartOfAccount, error) {
+func (q *Queries) SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceAccount, error) {
 	rows, err := q.db.Query(ctx, searchAccounts, arg.SearchTerm, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*FinanceChartOfAccount{}
+	items := []*FinanceAccount{}
 	for rows.Next() {
-		var i FinanceChartOfAccount
+		var i FinanceAccount
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
@@ -1028,7 +1028,7 @@ func (q *Queries) SearchAccounts(ctx context.Context, arg SearchAccountsParams) 
 }
 
 const softDeleteAccount = `-- name: SoftDeleteAccount :exec
-UPDATE finance_chart_of_accounts
+UPDATE finance_accounts
 SET 
     deleted_at = NOW(),
     updated_at = NOW(),
@@ -1049,7 +1049,7 @@ func (q *Queries) SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountPa
 }
 
 const updateAccount = `-- name: UpdateAccount :one
-UPDATE finance_chart_of_accounts
+UPDATE finance_accounts
 SET 
     account_name = COALESCE($1, account_name),
     account_description = COALESCE($2, account_description),
@@ -1088,7 +1088,7 @@ type UpdateAccountParams struct {
 	AccountID               uuid.UUID      `json:"account_id"`
 }
 
-func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceChartOfAccount, error) {
+func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceAccount, error) {
 	row := q.db.QueryRow(ctx, updateAccount,
 		arg.AccountName,
 		arg.AccountDescription,
@@ -1105,7 +1105,7 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*
 		arg.UpdatedBy,
 		arg.AccountID,
 	)
-	var i FinanceChartOfAccount
+	var i FinanceAccount
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
@@ -1151,7 +1151,7 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*
 }
 
 const updateAccountBalance = `-- name: UpdateAccountBalance :exec
-UPDATE finance_chart_of_accounts
+UPDATE finance_accounts
 SET 
     current_balance = $1,
     ytd_balance = $2,
@@ -1183,7 +1183,7 @@ const validateAccountHierarchy = `-- name: ValidateAccountHierarchy :one
 SELECT 
     CASE 
         WHEN EXISTS(
-            SELECT 1 FROM finance_chart_of_accounts 
+            SELECT 1 FROM finance_accounts 
             WHERE parent_account_id = $1 AND id = $1
         ) THEN false -- Self reference check
         ELSE true

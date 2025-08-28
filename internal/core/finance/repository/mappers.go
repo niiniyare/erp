@@ -95,7 +95,7 @@ func mapDomainAccountToSQLCCreate(req *domain.CreateAccountRequest) (db.CreateAc
 	}, nil
 }
 
-func mapSQLCAccountToDomain(sqlcAccount *db.FinanceChartOfAccount) (*domain.ChartOfAccounts, error) {
+func mapSQLCAccountToDomain(sqlcAccount *db.FinanceChartOfAccount) (*domain.Accounts, error) {
 	// Map root type enum
 	var rootType domain.RootType
 	switch sqlcAccount.RootType {
@@ -148,7 +148,7 @@ func mapSQLCAccountToDomain(sqlcAccount *db.FinanceChartOfAccount) (*domain.Char
 		budgetVarianceThreshold = &threshold
 	}
 
-	return &domain.ChartOfAccounts{
+	return &domain.Accounts{
 		ID:                          sqlcAccount.ID,
 		TenantID:                    sqlcAccount.TenantID,
 		EntityID:                    sqlcAccount.EntityID,

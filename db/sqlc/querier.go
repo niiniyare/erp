@@ -90,7 +90,7 @@ type Querier interface {
 	// SQLC queries for chart of accounts with proper tenant isolation
 	// Updated with proper sqlc.narg and sqlc.arg usage
 	// =====================================================================
-	CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceChartOfAccount, error)
+	CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceAccount, error)
 	CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error)
 	// Attribute Definitions CRUD Operations
 	CreateAttributeDefinition(ctx context.Context, arg CreateAttributeDefinitionParams) (*AttributeDefinition, error)
@@ -205,13 +205,13 @@ type Querier interface {
 	FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]*FilterTenantsRow, error)
 	GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*AccessRequest, error)
 	GetAccountBalance(ctx context.Context, arg GetAccountBalanceParams) (*GetAccountBalanceRow, error)
-	GetAccountByCode(ctx context.Context, accountCode string) (*FinanceChartOfAccount, error)
-	GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceChartOfAccount, error)
+	GetAccountByCode(ctx context.Context, accountCode string) (*FinanceAccount, error)
+	GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceAccount, error)
 	GetAccountEntries(ctx context.Context, arg GetAccountEntriesParams) ([]*GetAccountEntriesRow, error)
-	GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceChartOfAccount, error)
-	GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) ([]*FinanceChartOfAccount, error)
+	GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceAccount, error)
+	GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error)
 	GetAccountsForFinancialStatements(ctx context.Context, arg GetAccountsForFinancialStatementsParams) ([]*GetAccountsForFinancialStatementsRow, error)
-	GetAccountsWithNonZeroBalance(ctx context.Context) ([]*FinanceChartOfAccount, error)
+	GetAccountsWithNonZeroBalance(ctx context.Context) ([]*FinanceAccount, error)
 	GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, error)
 	GetActiveTenants(ctx context.Context) ([]*Tenant, error)
 	// Get administrative actions (events with target_user_id)
@@ -267,7 +267,7 @@ type Querier interface {
 	GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*GetCompleteUserProfileRow, error)
 	// Get events with specific compliance flags
 	GetComplianceEvents(ctx context.Context, arg GetComplianceEventsParams) ([]*GetComplianceEventsRow, error)
-	GetControlAccounts(ctx context.Context) ([]*FinanceChartOfAccount, error)
+	GetControlAccounts(ctx context.Context) ([]*FinanceAccount, error)
 	//=====================================================
 	// CURRENT TENANT QUERIES (RLS-Aware)
 	// These queries work within the current tenant context
@@ -597,7 +597,7 @@ type Querier interface {
 	GetRelatedEventsByContext(ctx context.Context, arg GetRelatedEventsByContextParams) ([]*GetRelatedEventsByContextRow, error)
 	GetRequiredAttributeDefinitions(ctx context.Context) ([]*AttributeDefinition, error)
 	GetResourceEvaluationHistory(ctx context.Context, arg GetResourceEvaluationHistoryParams) ([]*PolicyEvaluation, error)
-	GetRootAccounts(ctx context.Context) ([]*FinanceChartOfAccount, error)
+	GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error)
 	// Usage: Identifies missing sequence numbers (gaps in numbering)
 	// Use case: Audit compliance, finding deleted/voided documents, sequence integrity checks
 	GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error)
@@ -676,8 +676,8 @@ type Querier interface {
 	InvalidateUserEvaluations(ctx context.Context, userID uuid.UUID) error
 	IsEntityAncestor(ctx context.Context, arg IsEntityAncestorParams) (bool, error)
 	ListAccessRequestsByStatus(ctx context.Context, arg ListAccessRequestsByStatusParams) ([]*AccessRequest, error)
-	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceChartOfAccount, error)
-	ListAccountsByParent(ctx context.Context, parentAccountID *uuid.UUID) ([]*FinanceChartOfAccount, error)
+	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceAccount, error)
+	ListAccountsByParent(ctx context.Context, parentAccountID *uuid.UUID) ([]*FinanceAccount, error)
 	ListActiveEntities(ctx context.Context) ([]*Entity, error)
 	ListActivePolicies(ctx context.Context) ([]*Policy, error)
 	// Attribute Definition Listing and Filtering
@@ -729,7 +729,7 @@ type Querier interface {
 	RestoreSoftDeletedUser(ctx context.Context, id uuid.UUID) error
 	ReverseTransaction(ctx context.Context, arg ReverseTransactionParams) (*FinanceTransaction, error)
 	RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) error
-	SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceChartOfAccount, error)
+	SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceAccount, error)
 	// =====================================================================
 	// 2. ENTITY SEARCH AND FILTERING ENHANCEMENTS
 	// =====================================================================
@@ -759,7 +759,7 @@ type Querier interface {
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	UnlockUser(ctx context.Context, id uuid.UUID) error
 	UpdateAccessRequestStatus(ctx context.Context, arg UpdateAccessRequestStatusParams) (*AccessRequest, error)
-	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceChartOfAccount, error)
+	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceAccount, error)
 	UpdateAccountBalance(ctx context.Context, arg UpdateAccountBalanceParams) error
 	UpdateAttributeDefinition(ctx context.Context, arg UpdateAttributeDefinitionParams) (*AttributeDefinition, error)
 	UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (*AttributeValue, error)

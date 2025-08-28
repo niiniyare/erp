@@ -169,8 +169,8 @@ CREATE TYPE payment_method_enum AS ENUM (
 -- STEP 2: Add temporary columns with enum types
 -- =====================================================================
 
--- Add temporary enum columns to finance_chart_of_accounts
-ALTER TABLE finance_chart_of_accounts 
+-- Add temporary enum columns to finance_accounts
+ALTER TABLE finance_accounts 
 ADD COLUMN root_type_new root_type_enum,
 ADD COLUMN normal_balance_new normal_balance_enum,
 ADD COLUMN validation_status_new validation_status_enum;
@@ -187,14 +187,14 @@ ADD COLUMN recurring_frequency_new recurring_frequency_enum;
 -- STEP 3: Migrate data from VARCHAR to enum columns
 -- =====================================================================
 
--- Migrate finance_chart_of_accounts data
-UPDATE finance_chart_of_accounts 
+-- Migrate finance_accounts data
+UPDATE finance_accounts 
 SET root_type_new = root_type::root_type_enum;
 
-UPDATE finance_chart_of_accounts 
+UPDATE finance_accounts 
 SET normal_balance_new = normal_balance::normal_balance_enum;
 
-UPDATE finance_chart_of_accounts 
+UPDATE finance_accounts 
 SET validation_status_new = validation_status::validation_status_enum;
 
 -- Migrate finance_transactions data
@@ -218,23 +218,23 @@ WHERE recurring_frequency IS NOT NULL;
 -- STEP 4: Drop old columns and constraints, rename new columns
 -- =====================================================================
 
--- Update finance_chart_of_accounts
-ALTER TABLE finance_chart_of_accounts 
+-- Update finance_accounts
+ALTER TABLE finance_accounts 
 DROP COLUMN root_type,
 DROP COLUMN normal_balance,
 DROP COLUMN validation_status;
 
-ALTER TABLE finance_chart_of_accounts 
+ALTER TABLE finance_accounts 
 RENAME COLUMN root_type_new TO root_type;
 
-ALTER TABLE finance_chart_of_accounts 
+ALTER TABLE finance_accounts 
 RENAME COLUMN normal_balance_new TO normal_balance;
 
-ALTER TABLE finance_chart_of_accounts 
+ALTER TABLE finance_accounts 
 RENAME COLUMN validation_status_new TO validation_status;
 
 -- Set NOT NULL constraints and defaults
-ALTER TABLE finance_chart_of_accounts 
+ALTER TABLE finance_accounts 
 ALTER COLUMN root_type SET NOT NULL,
 ALTER COLUMN normal_balance SET NOT NULL,
 ALTER COLUMN validation_status SET DEFAULT 'PENDING';

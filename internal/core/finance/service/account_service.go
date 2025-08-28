@@ -14,27 +14,27 @@ import (
 )
 
 type AccountService interface {
-	CreateAccount(ctx context.Context, req domain.CreateAccountRequest) (*domain.ChartOfAccounts, error)
-	GetAccountByID(ctx context.Context, id uuid.UUID) (*domain.ChartOfAccounts, error)
-	GetAccountByCode(ctx context.Context, code string) (*domain.ChartOfAccounts, error)
-	UpdateAccount(ctx context.Context, id uuid.UUID, req domain.UpdateAccountRequest) (*domain.ChartOfAccounts, error)
+	CreateAccount(ctx context.Context, req domain.CreateAccountRequest) (*domain.Accounts, error)
+	GetAccountByID(ctx context.Context, id uuid.UUID) (*domain.Accounts, error)
+	GetAccountByCode(ctx context.Context, code string) (*domain.Accounts, error)
+	UpdateAccount(ctx context.Context, id uuid.UUID, req domain.UpdateAccountRequest) (*domain.Accounts, error)
 	DeleteAccount(ctx context.Context, id uuid.UUID) error
-	ListAccounts(ctx context.Context, filter *domain.AccountFilter) ([]*domain.ChartOfAccounts, error)
-	GetAccountHierarchy(ctx context.Context, rootAccountID uuid.UUID) ([]*domain.ChartOfAccounts, error)
+	ListAccounts(ctx context.Context, filter *domain.AccountFilter) ([]*domain.Accounts, error)
+	GetAccountHierarchy(ctx context.Context, rootAccountID uuid.UUID) ([]*domain.Accounts, error)
 	ValidateAccountCode(ctx context.Context, code string, excludeID *uuid.UUID) error
-	GetAccountsByType(ctx context.Context, accountType string, rootType *domain.RootType) ([]*domain.ChartOfAccounts, error)
-	GetActiveAccounts(ctx context.Context) ([]*domain.ChartOfAccounts, error)
-	SearchAccounts(ctx context.Context, query string, limit int) ([]*domain.ChartOfAccounts, error)
+	GetAccountsByType(ctx context.Context, accountType string, rootType *domain.RootType) ([]*domain.Accounts, error)
+	GetActiveAccounts(ctx context.Context) ([]*domain.Accounts, error)
+	SearchAccounts(ctx context.Context, query string, limit int) ([]*domain.Accounts, error)
 	UpdateAccountBalance(ctx context.Context, accountID uuid.UUID, balance domain.AccountBalance) error
 }
 
 type accountService struct {
-	repo    domain.ChartOfAccountsRepository
+	repo    domain.AccountsRepository
 	tracing tracing.TracingService
 	metrics metrics.MetricsProvider
 }
 
-func NewAccountService(repo domain.ChartOfAccountsRepository, tracing tracing.TracingService, metrics metrics.MetricsProvider) AccountService {
+func NewAccountService(repo domain.AccountsRepository, tracing tracing.TracingService, metrics metrics.MetricsProvider) AccountService {
 	return &accountService{
 		repo:    repo,
 		tracing: tracing,
@@ -42,7 +42,7 @@ func NewAccountService(repo domain.ChartOfAccountsRepository, tracing tracing.Tr
 	}
 }
 
-func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAccountRequest) (*domain.ChartOfAccounts, error) {
+func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAccountRequest) (*domain.Accounts, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "account_service.create_account",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
@@ -107,7 +107,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 	})
 
 	// Create domain account from request
-	account := &domain.ChartOfAccounts{
+	account := &domain.Accounts{
 		EntityID:                    req.EntityID,
 		AccountCode:                 req.AccountCode,
 		AccountName:                 req.AccountName,
@@ -173,7 +173,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 	return createdAccount, nil
 }
 
-func (s *accountService) GetAccountByID(ctx context.Context, id uuid.UUID) (*domain.ChartOfAccounts, error) {
+func (s *accountService) GetAccountByID(ctx context.Context, id uuid.UUID) (*domain.Accounts, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_by_id",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
@@ -209,7 +209,7 @@ func (s *accountService) GetAccountByID(ctx context.Context, id uuid.UUID) (*dom
 	return account, nil
 }
 
-func (s *accountService) GetAccountByCode(ctx context.Context, code string) (*domain.ChartOfAccounts, error) {
+func (s *accountService) GetAccountByCode(ctx context.Context, code string) (*domain.Accounts, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_by_code",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
@@ -246,7 +246,7 @@ func (s *accountService) GetAccountByCode(ctx context.Context, code string) (*do
 	return account, nil
 }
 
-func (s *accountService) UpdateAccount(ctx context.Context, id uuid.UUID, req domain.UpdateAccountRequest) (*domain.ChartOfAccounts, error) {
+func (s *accountService) UpdateAccount(ctx context.Context, id uuid.UUID, req domain.UpdateAccountRequest) (*domain.Accounts, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "account_service.update_account",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
@@ -481,7 +481,7 @@ func (s *accountService) DeleteAccount(ctx context.Context, id uuid.UUID) error 
 	return nil
 }
 
-func (s *accountService) ListAccounts(ctx context.Context, filter *domain.AccountFilter) ([]*domain.ChartOfAccounts, error) {
+func (s *accountService) ListAccounts(ctx context.Context, filter *domain.AccountFilter) ([]*domain.Accounts, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "account_service.list_accounts",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
@@ -538,7 +538,7 @@ func (s *accountService) ListAccounts(ctx context.Context, filter *domain.Accoun
 	return accounts, nil
 }
 
-func (s *accountService) GetAccountHierarchy(ctx context.Context, rootAccountID uuid.UUID) ([]*domain.ChartOfAccounts, error) {
+func (s *accountService) GetAccountHierarchy(ctx context.Context, rootAccountID uuid.UUID) ([]*domain.Accounts, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_hierarchy",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
@@ -579,7 +579,7 @@ func (s *accountService) ValidateAccountCode(ctx context.Context, code string, e
 	return s.repo.ValidateAccountCode(ctx, code, excludeID)
 }
 
-func (s *accountService) GetAccountsByType(ctx context.Context, accountType string, rootType *domain.RootType) ([]*domain.ChartOfAccounts, error) {
+func (s *accountService) GetAccountsByType(ctx context.Context, accountType string, rootType *domain.RootType) ([]*domain.Accounts, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_by_type",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
@@ -609,7 +609,7 @@ func (s *accountService) GetAccountsByType(ctx context.Context, accountType stri
 	return accounts, nil
 }
 
-func (s *accountService) GetActiveAccounts(ctx context.Context) ([]*domain.ChartOfAccounts, error) {
+func (s *accountService) GetActiveAccounts(ctx context.Context) ([]*domain.Accounts, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_active_accounts",
 		tracing.WithSpanKind(tracing.SpanKindInternal))
 	defer span.End()
@@ -629,7 +629,7 @@ func (s *accountService) GetActiveAccounts(ctx context.Context) ([]*domain.Chart
 	return accounts, nil
 }
 
-func (s *accountService) SearchAccounts(ctx context.Context, query string, limit int) ([]*domain.ChartOfAccounts, error) {
+func (s *accountService) SearchAccounts(ctx context.Context, query string, limit int) ([]*domain.Accounts, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "account_service.search_accounts",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(

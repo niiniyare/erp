@@ -47,7 +47,7 @@ type TransactionEntry struct {
 	ReconciliationReference *string    `json:"reconciliation_reference,omitempty"` // Reconciliation batch/reference
 
 	// Related account information (populated in queries for convenience)
-	Account *ChartOfAccounts `json:"account,omitempty"`
+	Account *Accounts `json:"account,omitempty"`
 
 	// Standard audit timestamps
 	CreatedAt time.Time  `json:"created_at"`
@@ -361,7 +361,7 @@ func (r *CreateEntryRequest) Validate() []ValidationError {
 }
 
 // ValidateBusinessRules validates complex business rules that require external data
-func (e *TransactionEntry) ValidateBusinessRules(account *ChartOfAccounts) []ValidationError {
+func (e *TransactionEntry) ValidateBusinessRules(account *Accounts) []ValidationError {
 	var errors []ValidationError
 
 	if account == nil {

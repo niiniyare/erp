@@ -1298,7 +1298,7 @@ type FeatureFlag struct {
 }
 
 // Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and comprehensive financial reporting requirements.
-type FinanceChartOfAccount struct {
+type FinanceAccount struct {
 	ID       uuid.UUID  `json:"id"`
 	TenantID uuid.UUID  `json:"tenant_id"`
 	EntityID *uuid.UUID `json:"entity_id"`

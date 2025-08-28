@@ -10,8 +10,8 @@ BEGIN;
 -- STEP 1: Add temporary VARCHAR columns
 -- =====================================================================
 
--- Add temporary VARCHAR columns to finance_chart_of_accounts
-ALTER TABLE finance_chart_of_accounts 
+-- Add temporary VARCHAR columns to finance_accounts
+ALTER TABLE finance_accounts 
 ADD COLUMN root_type_old VARCHAR(20),
 ADD COLUMN normal_balance_old VARCHAR(10),
 ADD COLUMN validation_status_old VARCHAR(20);
@@ -28,14 +28,14 @@ ADD COLUMN recurring_frequency_old VARCHAR(20);
 -- STEP 2: Migrate data from enum to VARCHAR columns
 -- =====================================================================
 
--- Migrate finance_chart_of_accounts data
-UPDATE finance_chart_of_accounts 
+-- Migrate finance_accounts data
+UPDATE finance_accounts 
 SET root_type_old = root_type::text;
 
-UPDATE finance_chart_of_accounts 
+UPDATE finance_accounts 
 SET normal_balance_old = normal_balance::text;
 
-UPDATE finance_chart_of_accounts 
+UPDATE finance_accounts 
 SET validation_status_old = validation_status::text;
 
 -- Migrate finance_transactions data
@@ -59,19 +59,19 @@ WHERE recurring_frequency IS NOT NULL;
 -- STEP 3: Drop enum columns and rename old columns
 -- =====================================================================
 
--- Update finance_chart_of_accounts
-ALTER TABLE finance_chart_of_accounts 
+-- Update finance_accounts
+ALTER TABLE finance_accounts 
 DROP COLUMN root_type,
 DROP COLUMN normal_balance,
 DROP COLUMN validation_status;
 
-ALTER TABLE finance_chart_of_accounts 
+ALTER TABLE finance_accounts 
 RENAME COLUMN root_type_old TO root_type;
 
-ALTER TABLE finance_chart_of_accounts 
+ALTER TABLE finance_accounts 
 RENAME COLUMN normal_balance_old TO normal_balance;
 
-ALTER TABLE finance_chart_of_accounts 
+ALTER TABLE finance_accounts 
 RENAME COLUMN validation_status_old TO validation_status;
 
 -- Update finance_transactions
@@ -101,20 +101,20 @@ RENAME COLUMN recurring_frequency_old TO recurring_frequency;
 -- STEP 4: Add back CHECK constraints and set NOT NULL/defaults
 -- =====================================================================
 
--- Add CHECK constraints to finance_chart_of_accounts
-ALTER TABLE finance_chart_of_accounts 
+-- Add CHECK constraints to finance_accounts
+ALTER TABLE finance_accounts 
 ALTER COLUMN root_type SET NOT NULL,
-ADD CONSTRAINT finance_chart_of_accounts_root_type_check 
+ADD CONSTRAINT finance_accounts_root_type_check 
     CHECK (root_type IN ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'));
 
-ALTER TABLE finance_chart_of_accounts 
+ALTER TABLE finance_accounts 
 ALTER COLUMN normal_balance SET NOT NULL,
-ADD CONSTRAINT finance_chart_of_accounts_normal_balance_check 
+ADD CONSTRAINT finance_accounts_normal_balance_check 
     CHECK (normal_balance IN ('DEBIT', 'CREDIT'));
 
-ALTER TABLE finance_chart_of_accounts 
+ALTER TABLE finance_accounts 
 ALTER COLUMN validation_status SET DEFAULT 'PENDING',
-ADD CONSTRAINT finance_chart_of_accounts_validation_status_check 
+ADD CONSTRAINT finance_accounts_validation_status_check 
     CHECK (validation_status IN ('PENDING', 'VALID', 'WARNING', 'ERROR'));
 
 -- Add CHECK constraints to finance_transactions

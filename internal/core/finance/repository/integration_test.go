@@ -25,7 +25,7 @@ type FinanceRepositoryIntegrationTestSuite struct {
 	suite.Suite
 	ctx             context.Context
 	runner          *tenant.DatabaseTestRunner
-	accountRepo     domain.ChartOfAccountsRepository
+	accountRepo     domain.AccountsRepository
 	transactionRepo domain.TransactionRepository
 	tenantA         *db.Tenant
 	tenantB         *db.Tenant
@@ -51,7 +51,7 @@ func (s *FinanceRepositoryIntegrationTestSuite) SetupSuite() {
 
 	// Setup repositories
 	traceService := tracing.NewNoOpTracingService()
-	s.accountRepo = NewChartOfAccountsRepository(s.runner.GetStore(), traceService)
+	s.accountRepo = NewAccountsRepository(s.runner.GetStore(), traceService)
 	s.transactionRepo = NewTransactionRepository(s.runner.GetStore(), traceService)
 }
 
@@ -98,7 +98,7 @@ func TestFinanceRepositoryIntegrationTestSuite(t *testing.T) {
 func (s *FinanceRepositoryIntegrationTestSuite) TestCrossRepositoryTenantIsolation() {
 	// Create accounts in both tenants with same code (should be allowed due to tenant isolation)
 	ctxA := shared.WithTenantID(s.ctx, s.tenantA.ID)
-	accountA := &domain.ChartOfAccounts{
+	accountA := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "INTEGRATION-CASH",
 		AccountName:        "Tenant A Cash Account",
@@ -116,7 +116,7 @@ func (s *FinanceRepositoryIntegrationTestSuite) TestCrossRepositoryTenantIsolati
 	s.createdAccountIDs = append(s.createdAccountIDs, accountA.ID)
 
 	ctxB := shared.WithTenantID(s.ctx, s.tenantB.ID)
-	accountB := &domain.ChartOfAccounts{
+	accountB := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "INTEGRATION-CASH", // Same code, different tenant
 		AccountName:        "Tenant B Cash Account",
@@ -210,7 +210,7 @@ func (s *FinanceRepositoryIntegrationTestSuite) TestAccountTransactionRelationsh
 	ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
 
 	// Create test accounts
-	cashAccount := &domain.ChartOfAccounts{
+	cashAccount := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "1000-CASH",
 		AccountName:        "Cash Account",
@@ -227,7 +227,7 @@ func (s *FinanceRepositoryIntegrationTestSuite) TestAccountTransactionRelationsh
 	s.Require().NoError(err)
 	s.createdAccountIDs = append(s.createdAccountIDs, cashAccount.ID)
 
-	revenueAccount := &domain.ChartOfAccounts{
+	revenueAccount := &domain.Accounts{
 		ID:                 uuid.New(),
 		AccountCode:        "4000-REVENUE",
 		AccountName:        "Sales Revenue",
@@ -284,7 +284,7 @@ func (s *FinanceRepositoryIntegrationTestSuite) TestMultiTenantOperationsConsist
 	ctxA := shared.WithTenantID(s.ctx, s.tenantA.ID)
 
 	// Create multiple accounts in tenant A
-	accountsA := []*domain.ChartOfAccounts{
+	accountsA := []*domain.Accounts{
 		{
 			ID:                 uuid.New(),
 			AccountCode:        "1000-CASH-A",
@@ -352,7 +352,7 @@ func (s *FinanceRepositoryIntegrationTestSuite) TestMultiTenantOperationsConsist
 	// Setup similar data in tenant B
 	ctxB := shared.WithTenantID(s.ctx, s.tenantB.ID)
 
-	accountsB := []*domain.ChartOfAccounts{
+	accountsB := []*domain.Accounts{
 		{
 			ID:                 uuid.New(),
 			AccountCode:        "1000-CASH-B",

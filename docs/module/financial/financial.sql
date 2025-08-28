@@ -110,7 +110,7 @@ COMMENT ON TYPE currency_code IS 'Supported currency codes following ISO 4217 st
 -- Dependencies: finance enums, tenants, entities, users tables
 -- =====================================================================
 
-CREATE TABLE finance_chart_of_accounts (
+CREATE TABLE finance_accounts (
     -- Primary identification
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
@@ -146,47 +146,47 @@ CREATE TABLE finance_chart_of_accounts (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_finance_chart_of_accounts_tenant 
-    ON finance_chart_of_accounts(tenant_id);
-CREATE INDEX idx_finance_chart_of_accounts_entity 
-    ON finance_chart_of_accounts(entity_id);
-CREATE INDEX idx_finance_chart_of_accounts_active 
-    ON finance_chart_of_accounts(tenant_id, is_active) 
+CREATE INDEX idx_finance_accounts_tenant 
+    ON finance_accounts(tenant_id);
+CREATE INDEX idx_finance_accounts_entity 
+    ON finance_accounts(entity_id);
+CREATE INDEX idx_finance_accounts_active 
+    ON finance_accounts(tenant_id, is_active) 
     WHERE is_active = true;
 
 -- Row Level Security
-ALTER TABLE finance_chart_of_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE finance_accounts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY finance_chart_of_accounts_tenant_isolation 
-    ON finance_chart_of_accounts
+CREATE POLICY finance_accounts_tenant_isolation 
+    ON finance_accounts
     FOR ALL TO application_role
     USING (tenant_id = current_tenant_id())
     WITH CHECK (tenant_id = current_tenant_id());
 
-CREATE POLICY finance_chart_of_accounts_admin_access 
-    ON finance_chart_of_accounts
+CREATE POLICY finance_accounts_admin_access 
+    ON finance_accounts
     FOR ALL TO admin_role 
     USING (true);
 
 -- Table and column comments
-COMMENT ON TABLE finance_chart_of_accounts IS 
+COMMENT ON TABLE finance_accounts IS 
 'Chart of accounts templates for organizing financial accounts by entity. Each entity can have its own chart of accounts structure.';
 
-COMMENT ON COLUMN finance_chart_of_accounts.id IS 
+COMMENT ON COLUMN finance_accounts.id IS 
 'Unique identifier for the chart of accounts';
-COMMENT ON COLUMN finance_chart_of_accounts.tenant_id IS 
+COMMENT ON COLUMN finance_accounts.tenant_id IS 
 'Reference to tenant - supports multi-tenancy isolation';
-COMMENT ON COLUMN finance_chart_of_accounts.entity_id IS 
+COMMENT ON COLUMN finance_accounts.entity_id IS 
 'Reference to entity (subsidiary/department/region) - enables entity-specific charts';
-COMMENT ON COLUMN finance_chart_of_accounts.code IS 
+COMMENT ON COLUMN finance_accounts.code IS 
 'Short code for chart identification (e.g., "US-GAAP", "IFRS")';
-COMMENT ON COLUMN finance_chart_of_accounts.name IS 
+COMMENT ON COLUMN finance_accounts.name IS 
 'Descriptive name for the chart of accounts';
-COMMENT ON COLUMN finance_chart_of_accounts.base_currency IS 
+COMMENT ON COLUMN finance_accounts.base_currency IS 
 'Primary currency for this chart of accounts';
-COMMENT ON COLUMN finance_chart_of_accounts.fiscal_year_start_month IS 
+COMMENT ON COLUMN finance_accounts.fiscal_year_start_month IS 
 'Month when fiscal year starts (1=January, 4=April, etc.)';
-COMMENT ON COLUMN finance_chart_of_accounts.is_default IS 
+COMMENT ON COLUMN finance_accounts.is_default IS 
 'Indicates if this is the default chart for new accounts';
 
 -- =====================================================================
@@ -204,7 +204,7 @@ CREATE TABLE finance_accounts (
     -- Multi-tenancy and entity hierarchy
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
-    chart_id UUID NOT NULL REFERENCES finance_chart_of_accounts(id) ON DELETE CASCADE,
+    chart_id UUID NOT NULL REFERENCES finance_accounts(id) ON DELETE CASCADE,
     
     -- Account identification
     code VARCHAR(50) NOT NULL,
@@ -1260,8 +1260,8 @@ COMMENT ON FUNCTION generate_document_number(UUID, UUID, VARCHAR, DATE) IS
 'Generate next document number for given tenant, entity, and document type with automatic reset based on configuration';
 
 -- Apply triggers to tables with updated_at column
-CREATE TRIGGER update_finance_chart_of_accounts_updated_at 
-    BEFORE UPDATE ON finance_chart_of_accounts
+CREATE TRIGGER update_finance_accounts_updated_at 
+    BEFORE UPDATE ON finance_accounts
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_finance_accounts_updated_at 
