@@ -209,11 +209,11 @@ func (r *chartOfAccountsRepository) Delete(ctx context.Context, id uuid.UUID) er
 	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
 		params := db.SoftDeleteAccountParams{
 			AccountID: id,
-			UpdatedBy: userID,
+			UpdatedBy: &userID,
 		}
 		err := s.SoftDeleteAccount(ctx, params)
 		if err != nil {
-			if err == sql.ErrNoRows {
+			if err == db.ErrNoRows {
 				return domain.ErrAccountNotFound
 			}
 			return r.mapDatabaseError(err, "soft_delete_account")
