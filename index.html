@@ -206,6 +206,12 @@
     
     <div class="candidates-section">
       <div id="candidates"></div>
+      
+      <div style="margin-top: 20px; text-align: center;">
+        <button id="resetButton" style="background: linear-gradient(135deg, #dc3545, #c82333); padding: 10px 20px; font-size: 0.9rem;">
+          🗑️ Reset All Votes
+        </button>
+      </div>
     </div>
 
     <div id="results">
@@ -226,8 +232,32 @@
       "Rashid Macalin Faarax"
     ];
 
-    const votes = {};
-    candidates.forEach(name => votes[name] = 0);
+    // Initialize votes with persistent data or defaults
+    let votes = {};
+    
+    // Try to load saved data
+    function loadVotes() {
+      try {
+        const saved = window.voteData || '{}';
+        const parsed = typeof saved === 'string' ? JSON.parse(saved) : saved;
+        
+        // Initialize with saved data or zeros
+        candidates.forEach(name => {
+          votes[name] = parsed[name] || 0;
+        });
+      } catch (e) {
+        // If loading fails, initialize with zeros
+        candidates.forEach(name => votes[name] = 0);
+      }
+    }
+    
+    // Save votes to persistent memory
+    function saveVotes() {
+      window.voteData = JSON.stringify(votes);
+    }
+    
+    // Load existing votes on startup
+    loadVotes();
 
     const container = document.getElementById("candidates");
     const resultList = document.getElementById("resultList");
@@ -268,6 +298,7 @@
       button.textContent = "Vote";
       button.onclick = () => {
         votes[name]++;
+        saveVotes(); // Save after each vote
         render();
         
         // Add haptic feedback on mobile
@@ -286,6 +317,20 @@
       div.appendChild(button);
       container.appendChild(div);
     });
+
+    // Add reset functionality
+    document.getElementById('resetButton').onclick = () => {
+      if (confirm('Are you sure you want to reset all votes? This cannot be undone.')) {
+        candidates.forEach(name => votes[name] = 0);
+        saveVotes();
+        render();
+        
+        // Haptic feedback for reset
+        if (navigator.vibrate) {
+          navigator.vibrate([100, 50, 100]);
+        }
+      }
+    };
 
     render();
   </script>
