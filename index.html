@@ -2,54 +2,225 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simple Vote Counter</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 500px;
-      margin: auto;
+    * {
+      box-sizing: border-box;
     }
-    h2 { text-align: center; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 15px;
+      margin: 0;
+      background-color: #f5f5f5;
+      line-height: 1.4;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    h2 { 
+      text-align: center; 
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-size: 1.5rem;
+    }
+    
+    .candidates-section {
+      padding: 20px;
+    }
+    
     .candidate {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 10px 0;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      margin: 12px 0;
+      padding: 16px;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      background: #fff;
+      transition: all 0.2s ease;
     }
-    button {
-      padding: 6px 12px;
+    
+    .candidate:hover {
+      border-color: #007bff;
+      box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+    }
+    
+    .candidate-name {
+      font-weight: 500;
+      font-size: 1rem;
+      color: #333;
+      flex: 1;
+      margin-right: 10px;
+    }
+    
+    .vote-button {
+      padding: 12px 20px;
       border: none;
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      min-width: 80px;
+      touch-action: manipulation;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .vote-button:hover {
+      background: linear-gradient(135deg, #218838, #1ea085);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+    }
+    
+    .vote-button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(40,167,69,0.2);
+    }
+    
+    #results {
+      margin-top: 0;
+      padding: 20px;
+      background: #f8f9fa;
+      border-top: 1px solid #dee2e6;
+    }
+    
+    #results h3 {
+      margin: 0 0 15px 0;
+      color: #495057;
+      font-size: 1.2rem;
+    }
+    
+    #resultList {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 15px 0;
+    }
+    
+    #resultList li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #dee2e6;
+      font-size: 0.95rem;
+    }
+    
+    #resultList li:last-child {
+      border-bottom: none;
+    }
+    
+    .vote-count {
+      font-weight: bold;
+      color: #007bff;
+      background: #e3f2fd;
+      padding: 4px 8px;
+      border-radius: 12px;
+      min-width: 40px;
+      text-align: center;
+    }
+    
+    .total-section {
       background: #007bff;
       color: white;
-      border-radius: 6px;
-      cursor: pointer;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
     }
-    button:hover { background: #0056b3; }
-    #results {
-      margin-top: 20px;
-      padding: 10px;
-      border-top: 2px solid #000;
+    
+    /* Mobile optimizations */
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+      
+      h2 {
+        font-size: 1.3rem;
+        padding: 15px;
+      }
+      
+      .candidates-section {
+        padding: 15px;
+      }
+      
+      .candidate {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+      }
+      
+      .candidate-name {
+        margin-right: 0;
+        font-size: 1.1rem;
+      }
+      
+      .vote-button {
+        width: 100%;
+        padding: 15px;
+        font-size: 1.1rem;
+      }
+      
+      #results {
+        padding: 15px;
+      }
+      
+      #resultList li {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+        padding: 12px 0;
+      }
+    }
+    
+    /* Prevent zoom on iOS */
+    @media screen and (max-width: 480px) {
+      select, textarea, input[type="text"], input[type="password"], 
+      input[type="datetime"], input[type="datetime-local"], 
+      input[type="date"], input[type="month"], input[type="time"], 
+      input[type="week"], input[type="number"], input[type="email"], 
+      input[type="url"], input[type="search"], input[type="tel"], 
+      input[type="color"], button {
+        font-size: 16px;
+      }
     }
   </style>
 </head>
 <body>
-  <h2>Vote Counter</h2>
-  <div id="candidates"></div>
+  <div class="container">
+    <h2>📊 Vote Counter</h2>
+    
+    <div class="candidates-section">
+      <div id="candidates"></div>
+    </div>
 
-  <div id="results">
-    <h3>Results</h3>
-    <ul id="resultList"></ul>
-    <p><strong>Total Votes:</strong> <span id="total">0</span></p>
+    <div id="results">
+      <h3>📈 Results</h3>
+      <ul id="resultList"></ul>
+      <div class="total-section">
+        <strong>Total Votes: <span id="total">0</span></strong>
+      </div>
+    </div>
   </div>
 
   <script>
     const candidates = [
       "Cabdulqadir Firdhiye",
-      "Cabdirisaq Khaliif",
+      "Cabdirisaq Khaliif", 
       "Jamaal Xasan",
       "Maxamud Gurey",
       "Rashid Macalin Faarax"
@@ -65,10 +236,20 @@
     function render() {
       resultList.innerHTML = "";
       let total = 0;
+      
       for (let name of candidates) {
         total += votes[name];
         const li = document.createElement("li");
-        li.textContent = `${name}: ${votes[name]} votes`;
+        
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = name;
+        
+        const countSpan = document.createElement("span");
+        countSpan.className = "vote-count";
+        countSpan.textContent = votes[name];
+        
+        li.appendChild(nameSpan);
+        li.appendChild(countSpan);
         resultList.appendChild(li);
       }
       totalEl.textContent = total;
@@ -78,14 +259,27 @@
       const div = document.createElement("div");
       div.className = "candidate";
 
-      const label = document.createElement("span");
+      const label = document.createElement("div");
+      label.className = "candidate-name";
       label.textContent = name;
 
       const button = document.createElement("button");
+      button.className = "vote-button";
       button.textContent = "Vote";
       button.onclick = () => {
         votes[name]++;
         render();
+        
+        // Add haptic feedback on mobile
+        if (navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+        
+        // Visual feedback
+        button.style.transform = "scale(0.95)";
+        setTimeout(() => {
+          button.style.transform = "";
+        }, 100);
       };
 
       div.appendChild(label);
