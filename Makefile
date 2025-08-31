@@ -76,8 +76,7 @@ fmt: ## Format Go code
 	@go fmt ./...
 
 goa: ## generate 7oa 
-	@goa gen github.com/niiniyare/erp/internal/api/design -o internal/api
-
+	@goa gen github.com/niiniyare/erp/internal/api/design -o internal/api && rm -rf ./internal/api/swagger/openapi && cp -f ./internal/api/gen/http/openapi3.json ./internal/api/swagger
 lint: ## Lint Go code
 	@golangci-lint run ./...
 

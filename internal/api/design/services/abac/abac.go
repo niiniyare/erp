@@ -32,7 +32,7 @@ var _ = Service("abac", func() {
 		})
 		Result(types.PolicyEvaluationResponse)
 		HTTP(func() {
-			POST("/abac/evaluate")
+			POST("/api/v1/abac/evaluate")
 			Response(StatusOK)
 		})
 	})
@@ -50,7 +50,7 @@ var _ = Service("abac", func() {
 		})
 		Result(types.BulkPolicyEvaluationResponse)
 		HTTP(func() {
-			POST("/abac/evaluate-bulk")
+			POST("/api/v1/abac/evaluate-bulk")
 			Response(StatusOK)
 		})
 	})
@@ -67,7 +67,7 @@ var _ = Service("abac", func() {
 		})
 		Result(types.AuthorizationResponse)
 		HTTP(func() {
-			POST("/abac/authorize")
+			POST("/api/v1/abac/authorize")
 			Response(StatusOK)
 		})
 	})
@@ -85,7 +85,7 @@ var _ = Service("abac", func() {
 		})
 		Result(types.PolicyExplanationResponse)
 		HTTP(func() {
-			POST("/abac/explain")
+			POST("/api/v1/abac/explain")
 			Response(StatusOK)
 		})
 	})
@@ -101,7 +101,7 @@ var _ = Service("abac", func() {
 		})
 		Result(types.PolicyDiscoveryResponse)
 		HTTP(func() {
-			POST("/abac/discover-policies")
+			POST("/api/v1/abac/discover-policies")
 			Response(StatusOK)
 		})
 	})
@@ -119,7 +119,7 @@ var _ = Service("abac", func() {
 		})
 		Result(types.AttributeCollectionResponse)
 		HTTP(func() {
-			POST("/abac/collect-attributes")
+			POST("/api/v1/abac/collect-attributes")
 			Response(StatusOK)
 		})
 	})
@@ -133,7 +133,7 @@ var _ = Service("abac", func() {
 		})
 		Result(types.DecisionAuditResponse)
 		HTTP(func() {
-			GET("/abac/audit")
+			GET("/api/v1/abac/audit")
 			Response(StatusOK)
 		})
 	})
@@ -148,7 +148,7 @@ var _ = Service("abac", func() {
 		})
 		Result(types.InvalidateCacheResult)
 		HTTP(func() {
-			POST("/abac/invalidate-cache")
+			POST("/api/v1/abac/invalidate-cache")
 			Response(StatusOK)
 		})
 	})
@@ -160,7 +160,7 @@ var _ = Service("abac", func() {
 		})
 		Result(types.HealthResult)
 		HTTP(func() {
-			GET("/abac/health")
+			GET("/api/v1/abac/health")
 			Response(StatusOK)
 		})
 	})
@@ -172,7 +172,7 @@ var _ = Service("abac", func() {
 		})
 		Result(types.MetricsResult)
 		HTTP(func() {
-			GET("/abac/metrics")
+			GET("/api/v1/abac/metrics")
 			Response(StatusOK)
 		})
 	})

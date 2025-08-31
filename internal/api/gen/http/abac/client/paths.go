@@ -9,50 +9,50 @@ package client
 
 // EvaluateAbacPath returns the URL path to the abac service evaluate HTTP endpoint.
 func EvaluateAbacPath() string {
-	return "/abac/evaluate"
+	return "/api/v1/abac/evaluate"
 }
 
 // EvaluateBulkAbacPath returns the URL path to the abac service evaluate_bulk HTTP endpoint.
 func EvaluateBulkAbacPath() string {
-	return "/abac/evaluate-bulk"
+	return "/api/v1/abac/evaluate-bulk"
 }
 
 // AuthorizeAbacPath returns the URL path to the abac service authorize HTTP endpoint.
 func AuthorizeAbacPath() string {
-	return "/abac/authorize"
+	return "/api/v1/abac/authorize"
 }
 
 // ExplainAbacPath returns the URL path to the abac service explain HTTP endpoint.
 func ExplainAbacPath() string {
-	return "/abac/explain"
+	return "/api/v1/abac/explain"
 }
 
 // DiscoverPoliciesAbacPath returns the URL path to the abac service discover_policies HTTP endpoint.
 func DiscoverPoliciesAbacPath() string {
-	return "/abac/discover-policies"
+	return "/api/v1/abac/discover-policies"
 }
 
 // CollectAttributesAbacPath returns the URL path to the abac service collect_attributes HTTP endpoint.
 func CollectAttributesAbacPath() string {
-	return "/abac/collect-attributes"
+	return "/api/v1/abac/collect-attributes"
 }
 
 // AuditDecisionsAbacPath returns the URL path to the abac service audit_decisions HTTP endpoint.
 func AuditDecisionsAbacPath() string {
-	return "/abac/audit"
+	return "/api/v1/abac/audit"
 }
 
 // InvalidateCacheAbacPath returns the URL path to the abac service invalidate_cache HTTP endpoint.
 func InvalidateCacheAbacPath() string {
-	return "/abac/invalidate-cache"
+	return "/api/v1/abac/invalidate-cache"
 }
 
 // HealthAbacPath returns the URL path to the abac service health HTTP endpoint.
 func HealthAbacPath() string {
-	return "/abac/health"
+	return "/api/v1/abac/health"
 }
 
 // MetricsAbacPath returns the URL path to the abac service metrics HTTP endpoint.
 func MetricsAbacPath() string {
-	return "/abac/metrics"
+	return "/api/v1/abac/metrics"
 }

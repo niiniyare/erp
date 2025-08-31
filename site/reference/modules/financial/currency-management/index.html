@@ -1,0 +1,4429 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../architecture-guide/">
+      
+      
+        <link rel="next" href="../deployment-guide/">
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>Currency Management - Awo ERP Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#awo-erp-currency-management-module" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-header__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Awo ERP Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Currency Management
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../architecture/system-overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../contributing/01-best-practices/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../api-reference/" class="md-tabs__link">
+          
+  
+  
+  Financial Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user/" class="md-tabs__link">
+          
+  
+  
+  Users & IAM Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../audit/audit/" class="md-tabs__link">
+          
+  
+  
+  Audit Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../feature_flag/00_README/" class="md-tabs__link">
+          
+  
+  
+  Feature Flags Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tenant/tenant-management/" class="md-tabs__link">
+          
+  
+  
+  Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Other Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api-source/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-nav__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Awo ERP Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/system-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/abac-design-and-roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/FRAMEWORK_MIGRATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/GIN_HANDLERS_INVENTORY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GIN Handlers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/01-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/database-transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Transactions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/general-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/goa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Goa Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/middleware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Middleware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Observability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/securityHandbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Handbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Layer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/sqlc-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Financial Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Financial Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Currency Management
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Currency Management
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      🌍 Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#currency-configuration-master-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      💱 Currency Configuration &amp; Master Data
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="💱 Currency Configuration &amp; Master Data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#currency-master-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Currency Master Data
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#currency-conversion-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      Currency Conversion Engine
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-currency-transaction-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏛️ Multi-Currency Transaction Processing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🏛️ Multi-Currency Transaction Processing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#currency-transaction-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Currency Transaction Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-currency-revaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automated Currency Revaluation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#currency-risk-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔒 Currency Risk Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔒 Currency Risk Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hedging-and-risk-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hedging and Risk Management
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Task Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integration-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security-compliance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security & Compliance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Users & IAM Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Users & IAM Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/01_identity_model_and_rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity & RBAC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/02_abac_evaluation_lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/03_hybrid_access_control_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hybrid Access Control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/04_architecture_service_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/IAM_MAPPING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Restructuring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/PHASE_3_ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/RELEASE_NOTES_RC1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release Notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_11" id="__nav_5_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    ABAC Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_11">
+            <span class="md-nav__icon md-icon"></span>
+            ABAC Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/administrative_performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Administrative Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/attribute_definitions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Attribute Definitions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/audit_monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit & Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/context_attribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/desing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation_CEL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CEL Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation_expr-lang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expression Language
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/POLICY_SERVICE_ENHANCEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Service Enhancement
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Audit Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Audit Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Feature Flags Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Feature Flags Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/00_README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Onboarding
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/01_introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/02_core_concepts_and_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/03_developer_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/04_admin_api_manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/05_lifecycle_gotchas_and_improvements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lifecycle & Improvements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tenant Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Tenant Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/tenant-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Other Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../airline-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Airline Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../asset-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Asset Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../forecourt-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forecourt Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Financial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../human-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Human Resources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Phases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../inventory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Inventory Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../module-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Module Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../restaurant-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Restaurant Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../retail-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retail Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tax-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tax Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technical-specifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Technical Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflow-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow Engine
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/user-service-abac-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_3" id="__nav_10_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core APIs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            Core APIs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Org Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_4" id="__nav_10_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_4">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Request Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/conditional-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/user-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_5" id="__nav_10_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/manual-curl-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_6" id="__nav_10_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_6">
+            <span class="md-nav__icon md-icon"></span>
+            Utilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/utilities/todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TODO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="awo-erp-currency-management-module">AWO ERP Currency Management Module</h1>
+<p><strong>Version</strong>: 1.0<br />
+<strong>Date</strong>: January 2025<br />
+<strong>Status</strong>: Technical Specification  </p>
+<hr />
+<h2 id="overview">🌍 Overview</h2>
+<p>The Currency Management module provides comprehensive multi-currency support for global business operations. It handles exchange rate management, currency conversion, hedging operations, and compliance with international financial reporting standards.</p>
+<h2 id="currency-configuration-master-data">💱 Currency Configuration &amp; Master Data</h2>
+<h3 id="currency-master-data">Currency Master Data</h3>
+<pre><code class="language-sql">-- Supported currencies with comprehensive details
+CREATE TABLE currencies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+
+    -- Currency identification
+    currency_code CHAR(3) UNIQUE NOT NULL, -- ISO 4217 code (USD, EUR, GBP)
+    currency_name VARCHAR(100) NOT NULL,
+    currency_symbol VARCHAR(10),
+
+    -- Currency formatting
+    decimal_places INTEGER DEFAULT 2,
+    decimal_separator CHAR(1) DEFAULT '.',
+    thousands_separator CHAR(1) DEFAULT ',',
+    symbol_position VARCHAR(10) DEFAULT 'before', -- before, after
+
+    -- Currency attributes
+    is_base_currency BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    is_crypto_currency BOOLEAN DEFAULT false,
+
+    -- Regional information
+    primary_country_code CHAR(2),
+    secondary_countries JSONB, -- Array of country codes where used
+
+    -- Trading characteristics
+    is_freely_convertible BOOLEAN DEFAULT true,
+    trading_start_time TIME DEFAULT '00:00:00',
+    trading_end_time TIME DEFAULT '23:59:59',
+    trading_timezone VARCHAR(50),
+
+    -- Compliance and regulations
+    requires_central_bank_approval BOOLEAN DEFAULT false,
+    exchange_control_restrictions JSONB,
+
+    -- Historical tracking
+    introduced_date DATE,
+    last_revaluation_date DATE,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT valid_symbol_position CHECK (symbol_position IN ('before', 'after'))
+);
+
+-- Exchange rate providers and sources
+CREATE TABLE exchange_rate_providers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+
+    -- Provider identification
+    provider_code VARCHAR(20) UNIQUE NOT NULL,
+    provider_name VARCHAR(255) NOT NULL,
+    provider_type VARCHAR(30) NOT NULL, -- central_bank, commercial_bank, financial_service, manual
+
+    -- API configuration
+    api_endpoint VARCHAR(500),
+    api_key_encrypted VARCHAR(500), -- Encrypted API credentials
+    authentication_method VARCHAR(30), -- api_key, oauth, basic_auth
+
+    -- Data characteristics
+    update_frequency VARCHAR(20) DEFAULT 'daily', -- real_time, hourly, daily, weekly
+    rate_type VARCHAR(20) DEFAULT 'mid', -- bid, ask, mid, official
+    base_currency CHAR(3) DEFAULT 'USD',
+
+    -- Reliability and priority
+    priority_order INTEGER DEFAULT 100, -- Lower = higher priority
+    reliability_score DECIMAL(3,1) DEFAULT 100.0, -- 0-100 reliability rating
+
+    -- Operational settings
+    is_active BOOLEAN DEFAULT true,
+    is_primary BOOLEAN DEFAULT false,
+    last_successful_update TIMESTAMPTZ,
+
+    -- Rate limits and costs
+    daily_request_limit INTEGER,
+    cost_per_request DECIMAL(8,4),
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT valid_provider_type CHECK (provider_type IN ('central_bank', 'commercial_bank', 'financial_service', 'manual')),
+    CONSTRAINT valid_update_frequency CHECK (update_frequency IN ('real_time', 'hourly', 'daily', 'weekly')),
+    CONSTRAINT valid_rate_type CHECK (rate_type IN ('bid', 'ask', 'mid', 'official'))
+);
+
+-- Exchange rates with comprehensive tracking
+CREATE TABLE exchange_rates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+
+    -- Rate identification
+    from_currency CHAR(3) NOT NULL REFERENCES currencies(currency_code),
+    to_currency CHAR(3) NOT NULL REFERENCES currencies(currency_code),
+    rate_date DATE NOT NULL,
+    rate_time TIME DEFAULT CURRENT_TIME,
+
+    -- Rate values
+    exchange_rate DECIMAL(18,8) NOT NULL, -- High precision for crypto and exotic pairs
+    inverse_rate DECIMAL(18,8), -- Calculated inverse rate
+
+    -- Rate types
+    rate_type VARCHAR(20) DEFAULT 'spot', -- spot, forward, budget, historical, average
+    rate_source VARCHAR(30) DEFAULT 'mid', -- bid, ask, mid, official, closing
+
+    -- Rate provider
+    provider_id UUID REFERENCES exchange_rate_providers(id),
+    source_reference VARCHAR(100), -- Provider's reference ID
+
+    -- Rate validity
+    effective_from TIMESTAMPTZ DEFAULT NOW(),
+    effective_to TIMESTAMPTZ,
+
+    -- Rate spreads (for trading)
+    bid_rate DECIMAL(18,8),
+    ask_rate DECIMAL(18,8),
+    spread_percentage DECIMAL(8,6),
+
+    -- Forward rate specific fields
+    forward_points DECIMAL(10,6),
+    maturity_date DATE, -- For forward contracts
+
+    -- Volatility and analytics
+    volatility_measure DECIMAL(8,6),
+    daily_change_percentage DECIMAL(8,4),
+
+    -- Quality indicators
+    confidence_level DECIMAL(5,2) DEFAULT 100.0, -- Confidence in rate accuracy
+    liquidity_indicator VARCHAR(10) DEFAULT 'high', -- high, medium, low
+
+    -- Audit and compliance
+    is_official_rate BOOLEAN DEFAULT false, -- Central bank or official rate
+    regulatory_approved BOOLEAN DEFAULT true,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT valid_rate_type CHECK (rate_type IN ('spot', 'forward', 'budget', 'historical', 'average')),
+    CONSTRAINT valid_rate_source CHECK (rate_source IN ('bid', 'ask', 'mid', 'official', 'closing')),
+    CONSTRAINT valid_liquidity CHECK (liquidity_indicator IN ('high', 'medium', 'low')),
+    CONSTRAINT positive_exchange_rate CHECK (exchange_rate &gt; 0),
+    CONSTRAINT different_currencies CHECK (from_currency != to_currency),
+
+    UNIQUE(from_currency, to_currency, rate_date, rate_type, provider_id)
+);
+
+-- Exchange rate history for analytical purposes
+CREATE TABLE exchange_rate_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+
+    -- Historical rate data
+    from_currency CHAR(3) NOT NULL,
+    to_currency CHAR(3) NOT NULL,
+    rate_period_start DATE NOT NULL,
+    rate_period_end DATE NOT NULL,
+
+    -- Aggregated rates
+    opening_rate DECIMAL(18,8),
+    closing_rate DECIMAL(18,8),
+    high_rate DECIMAL(18,8),
+    low_rate DECIMAL(18,8),
+    average_rate DECIMAL(18,8),
+    weighted_average_rate DECIMAL(18,8),
+
+    -- Volume and activity
+    trading_volume DECIMAL(18,2),
+    number_of_updates INTEGER DEFAULT 0,
+
+    -- Statistical measures
+    standard_deviation DECIMAL(10,8),
+    coefficient_of_variation DECIMAL(8,4),
+
+    -- Trend analysis
+    trend_direction VARCHAR(10), -- up, down, stable
+    momentum_indicator DECIMAL(8,4),
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT valid_trend_direction CHECK (trend_direction IN ('up', 'down', 'stable')),
+    CONSTRAINT valid_period CHECK (rate_period_end &gt;= rate_period_start)
+);
+</code></pre>
+<h3 id="currency-conversion-engine">Currency Conversion Engine</h3>
+<pre><code class="language-typescript">interface CurrencyConversionEngine {
+  convertAmount(request: ConversionRequest): Promise&lt;ConversionResult&gt;;
+  getExchangeRate(fromCurrency: string, toCurrency: string, rateDate?: Date, rateType?: string): Promise&lt;ExchangeRate&gt;;
+  calculateCrossRate(baseCurrency: string, fromCurrency: string, toCurrency: string): Promise&lt;CrossRateResult&gt;;
+  getBulkRates(request: BulkRateRequest): Promise&lt;BulkRateResponse&gt;;
+}
+
+interface ConversionRequest {
+  amount: number;
+  from_currency: string;
+  to_currency: string;
+  rate_date?: Date;
+  rate_type?: 'spot' | 'budget' | 'forward' | 'average';
+  provider_preference?: string[];
+  precision?: number;
+}
+
+interface ConversionResult {
+  original_amount: number;
+  converted_amount: number;
+  exchange_rate: number;
+  inverse_rate: number;
+  from_currency: string;
+  to_currency: string;
+  conversion_date: Date;
+  rate_source: ExchangeRateSource;
+  confidence_level: number;
+  calculation_method: string;
+}
+
+interface ExchangeRateSource {
+  provider_name: string;
+  rate_type: string;
+  rate_time: Date;
+  reliability_score: number;
+}
+
+class CurrencyService implements CurrencyConversionEngine {
+  async convertAmount(request: ConversionRequest): Promise&lt;ConversionResult&gt; {
+    // Validate currencies
+    await this.validateCurrencies(request.from_currency, request.to_currency);
+
+    // Handle same currency conversion
+    if (request.from_currency === request.to_currency) {
+      return this.createSameCurrencyResult(request);
+    }
+
+    // Get exchange rate
+    const exchangeRate = await this.getExchangeRate(
+      request.from_currency,
+      request.to_currency,
+      request.rate_date,
+      request.rate_type
+    );
+
+    // Apply precision settings
+    const precision = request.precision || await this.getCurrencyPrecision(request.to_currency);
+
+    // Perform conversion
+    const convertedAmount = this.applyPrecision(
+      request.amount * exchangeRate.rate,
+      precision
+    );
+
+    return {
+      original_amount: request.amount,
+      converted_amount: convertedAmount,
+      exchange_rate: exchangeRate.rate,
+      inverse_rate: 1 / exchangeRate.rate,
+      from_currency: request.from_currency,
+      to_currency: request.to_currency,
+      conversion_date: exchangeRate.rate_date,
+      rate_source: {
+        provider_name: exchangeRate.provider_name,
+        rate_type: exchangeRate.rate_type,
+        rate_time: exchangeRate.created_at,
+        reliability_score: exchangeRate.reliability_score
+      },
+      confidence_level: exchangeRate.confidence_level,
+      calculation_method: 'direct_conversion'
+    };
+  }
+
+  async getExchangeRate(
+    fromCurrency: string, 
+    toCurrency: string, 
+    rateDate: Date = new Date(),
+    rateType: string = 'spot'
+  ): Promise&lt;ExchangeRate&gt; {
+
+    // Try direct rate first
+    let rate = await this.getDirectRate(fromCurrency, toCurrency, rateDate, rateType);
+
+    if (rate) {
+      return rate;
+    }
+
+    // Try inverse rate
+    rate = await this.getInverseRate(fromCurrency, toCurrency, rateDate, rateType);
+
+    if (rate) {
+      return rate;
+    }
+
+    // Calculate cross rate through base currency
+    const baseCurrency = await this.getBaseCurrency();
+    return await this.calculateCrossRate(baseCurrency, fromCurrency, toCurrency);
+  }
+
+  async calculateCrossRate(
+    baseCurrency: string, 
+    fromCurrency: string, 
+    toCurrency: string
+  ): Promise&lt;CrossRateResult&gt; {
+
+    // Get rates: FROM -&gt; BASE and BASE -&gt; TO
+    const fromToBase = await this.getDirectRate(fromCurrency, baseCurrency);
+    const baseToTo = await this.getDirectRate(baseCurrency, toCurrency);
+
+    if (!fromToBase || !baseToTo) {
+      throw new Error(`Cannot calculate cross rate for ${fromCurrency}/${toCurrency} through ${baseCurrency}`);
+    }
+
+    // Calculate cross rate
+    const crossRate = fromToBase.rate * baseToTo.rate;
+
+    return {
+      from_currency: fromCurrency,
+      to_currency: toCurrency,
+      cross_rate: crossRate,
+      base_currency: baseCurrency,
+      component_rates: [
+        { pair: `${fromCurrency}/${baseCurrency}`, rate: fromToBase.rate },
+        { pair: `${baseCurrency}/${toCurrency}`, rate: baseToTo.rate }
+      ],
+      calculation_date: new Date(),
+      confidence_level: Math.min(fromToBase.confidence_level, baseToTo.confidence_level)
+    };
+  }
+
+  private async getDirectRate(
+    fromCurrency: string, 
+    toCurrency: string, 
+    rateDate: Date = new Date(),
+    rateType: string = 'spot'
+  ): Promise&lt;ExchangeRate | null&gt; {
+
+    const query = `
+      SELECT er.*, erp.provider_name, erp.reliability_score
+      FROM exchange_rates er
+      JOIN exchange_rate_providers erp ON er.provider_id = erp.id
+      WHERE er.from_currency = $1 
+        AND er.to_currency = $2
+        AND er.rate_date &lt;= $3
+        AND er.rate_type = $4
+        AND er.effective_from &lt;= NOW()
+        AND (er.effective_to IS NULL OR er.effective_to &gt;= NOW())
+      ORDER BY er.rate_date DESC, erp.priority_order ASC
+      LIMIT 1
+    `;
+
+    const result = await this.db.query(query, [fromCurrency, toCurrency, rateDate, rateType]);
+    return result.rows[0] || null;
+  }
+
+  private async getInverseRate(
+    fromCurrency: string, 
+    toCurrency: string, 
+    rateDate: Date = new Date(),
+    rateType: string = 'spot'
+  ): Promise&lt;ExchangeRate | null&gt; {
+
+    const directRate = await this.getDirectRate(toCurrency, fromCurrency, rateDate, rateType);
+
+    if (!directRate) {
+      return null;
+    }
+
+    return {
+      ...directRate,
+      from_currency: fromCurrency,
+      to_currency: toCurrency,
+      rate: 1 / directRate.rate,
+      inverse_rate: directRate.rate,
+      calculation_method: 'inverse'
+    };
+  }
+}
+</code></pre>
+<h2 id="multi-currency-transaction-processing">🏛️ Multi-Currency Transaction Processing</h2>
+<h3 id="currency-transaction-management">Currency Transaction Management</h3>
+<pre><code class="language-sql">-- Currency-aware transactions
+CREATE TABLE currency_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+
+    -- Transaction identification
+    transaction_id UUID NOT NULL REFERENCES finance_transactions(id),
+    line_number INTEGER NOT NULL DEFAULT 1,
+
+    -- Currency details
+    transaction_currency CHAR(3) NOT NULL REFERENCES currencies(currency_code),
+    functional_currency CHAR(3) NOT NULL REFERENCES currencies(currency_code), -- Company's reporting currency
+
+    -- Original amounts
+    transaction_amount DECIMAL(15,2) NOT NULL,
+
+    -- Converted amounts
+    functional_amount DECIMAL(15,2) NOT NULL, -- Amount in functional currency
+    exchange_rate DECIMAL(18,8) NOT NULL,
+    rate_date DATE NOT NULL,
+    rate_type VARCHAR(20) DEFAULT 'spot',
+
+    -- Exchange differences
+    realized_gain_loss DECIMAL(15,2) DEFAULT 0, -- Realized when payment occurs
+    unrealized_gain_loss DECIMAL(15,2) DEFAULT 0, -- Mark-to-market revaluation
+
+    -- Rate tracking
+    original_exchange_rate DECIMAL(18,8), -- Rate at transaction date
+    payment_exchange_rate DECIMAL(18,8), -- Rate at payment date
+    revaluation_exchange_rate DECIMAL(18,8), -- Rate at revaluation date
+
+    -- Currency hedging
+    is_hedged BOOLEAN DEFAULT false,
+    hedge_contract_id UUID REFERENCES hedge_contracts(id),
+    hedge_effectiveness_percentage DECIMAL(5,2),
+
+    -- Revaluation tracking
+    last_revaluation_date DATE,
+    revaluation_frequency VARCHAR(20) DEFAULT 'monthly', -- daily, weekly, monthly, quarterly
+
+    -- GL impact
+    gain_loss_account_id UUID REFERENCES accounts(id),
+    unrealized_gain_loss_account_id UUID REFERENCES accounts(id),
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT valid_rate_type CHECK (rate_type IN ('spot', 'forward', 'budget', 'average')),
+    CONSTRAINT valid_revaluation_frequency CHECK (revaluation_frequency IN ('daily', 'weekly', 'monthly', 'quarterly')),
+    CONSTRAINT positive_exchange_rate CHECK (exchange_rate &gt; 0),
+
+    UNIQUE(transaction_id, line_number)
+);
+
+-- Currency revaluation history
+CREATE TABLE currency_revaluations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+
+    -- Revaluation identification
+    revaluation_date DATE NOT NULL,
+    revaluation_batch_id UUID NOT NULL,
+
+    -- Currency scope
+    currency_code CHAR(3) NOT NULL REFERENCES currencies(currency_code),
+    functional_currency CHAR(3) NOT NULL REFERENCES currencies(currency_code),
+
+    -- Revaluation parameters
+    revaluation_rate DECIMAL(18,8) NOT NULL,
+    previous_rate DECIMAL(18,8) NOT NULL,
+    rate_change_percentage DECIMAL(8,4),
+
+    -- Account balances
+    original_functional_balance DECIMAL(15,2),
+    revalued_functional_balance DECIMAL(15,2),
+    revaluation_adjustment DECIMAL(15,2),
+
+    -- Impact summary
+    total_gain_loss DECIMAL(15,2),
+    unrealized_gain_loss DECIMAL(15,2),
+
+    -- Affected accounts
+    affected_account_count INTEGER DEFAULT 0,
+    affected_transaction_count INTEGER DEFAULT 0,
+
+    -- GL posting
+    journal_entry_id UUID REFERENCES finance_journal_entries(id),
+    posted_to_gl BOOLEAN DEFAULT false,
+
+    -- Process metadata
+    revaluation_method VARCHAR(30) DEFAULT 'current_rate', -- current_rate, temporal, monetary_nonmonetary
+    processed_by UUID REFERENCES users(id),
+    processing_duration_ms INTEGER,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT valid_revaluation_method CHECK (revaluation_method IN ('current_rate', 'temporal', 'monetary_nonmonetary'))
+);
+</code></pre>
+<h3 id="automated-currency-revaluation">Automated Currency Revaluation</h3>
+<pre><code class="language-typescript">interface CurrencyRevaluationEngine {
+  performRevaluation(request: RevaluationRequest): Promise&lt;RevaluationResult&gt;;
+  calculateUnrealizedGainLoss(currency: string, asOfDate: Date): Promise&lt;GainLossCalculation&gt;;
+  schedulePeriodicRevaluations(tenantId: string): Promise&lt;ScheduleResult&gt;;
+  generateRevaluationReport(revaluationId: string): Promise&lt;RevaluationReport&gt;;
+}
+
+interface RevaluationRequest {
+  tenant_id: string;
+  revaluation_date: Date;
+  currencies: string[]; // Empty array = all currencies
+  revaluation_method: 'current_rate' | 'temporal' | 'monetary_nonmonetary';
+  rate_source?: string;
+  accounts_filter?: AccountFilter;
+  dry_run?: boolean;
+}
+
+interface RevaluationResult {
+  revaluation_batch_id: string;
+  processed_currencies: string[];
+  total_gain_loss: number;
+  unrealized_gain_loss: number;
+  affected_accounts: number;
+  affected_transactions: number;
+  journal_entries_created: string[];
+  processing_summary: ProcessingSummary;
+  warnings: string[];
+  errors: string[];
+}
+
+class CurrencyRevaluationService implements CurrencyRevaluationEngine {
+  async performRevaluation(request: RevaluationRequest): Promise&lt;RevaluationResult&gt; {
+    const batchId = this.generateBatchId();
+    const result: RevaluationResult = {
+      revaluation_batch_id: batchId,
+      processed_currencies: [],
+      total_gain_loss: 0,
+      unrealized_gain_loss: 0,
+      affected_accounts: 0,
+      affected_transactions: 0,
+      journal_entries_created: [],
+      processing_summary: {
+        start_time: new Date(),
+        end_time: null,
+        duration_ms: 0
+      },
+      warnings: [],
+      errors: []
+    };
+
+    try {
+      // Get currencies to revalue
+      const currencies = request.currencies.length &gt; 0 
+        ? request.currencies 
+        : await this.getActiveCurrencies(request.tenant_id);
+
+      // Get functional currency
+      const functionalCurrency = await this.getFunctionalCurrency(request.tenant_id);
+
+      for (const currency of currencies) {
+        if (currency === functionalCurrency) {
+          continue; // Skip functional currency
+        }
+
+        try {
+          const currencyResult = await this.revalueCurrency(
+            request.tenant_id,
+            currency,
+            functionalCurrency,
+            request.revaluation_date,
+            request.revaluation_method,
+            batchId,
+            request.dry_run
+          );
+
+          result.processed_currencies.push(currency);
+          result.total_gain_loss += currencyResult.total_gain_loss;
+          result.unrealized_gain_loss += currencyResult.unrealized_gain_loss;
+          result.affected_accounts += currencyResult.affected_accounts;
+          result.affected_transactions += currencyResult.affected_transactions;
+
+          if (currencyResult.journal_entry_id &amp;&amp; !request.dry_run) {
+            result.journal_entries_created.push(currencyResult.journal_entry_id);
+          }
+
+          if (currencyResult.warnings.length &gt; 0) {
+            result.warnings.push(...currencyResult.warnings.map(w =&gt; `${currency}: ${w}`));
+          }
+
+        } catch (error) {
+          result.errors.push(`Failed to revalue ${currency}: ${error.message}`);
+          continue;
+        }
+      }
+
+      result.processing_summary.end_time = new Date();
+      result.processing_summary.duration_ms = 
+        result.processing_summary.end_time.getTime() - result.processing_summary.start_time.getTime();
+
+      return result;
+
+    } catch (error) {
+      result.errors.push(`Revaluation failed: ${error.message}`);
+      return result;
+    }
+  }
+
+  private async revalueCurrency(
+    tenantId: string,
+    currency: string,
+    functionalCurrency: string,
+    revaluationDate: Date,
+    method: string,
+    batchId: string,
+    dryRun: boolean = false
+  ): Promise&lt;CurrencyRevaluationResult&gt; {
+
+    // Get current exchange rate
+    const currentRate = await this.currencyService.getExchangeRate(
+      currency, 
+      functionalCurrency, 
+      revaluationDate
+    );
+
+    // Get previous revaluation rate
+    const previousRate = await this.getPreviousRevaluationRate(
+      tenantId, 
+      currency, 
+      functionalCurrency
+    );
+
+    // Get all open balances in this currency
+    const openBalances = await this.getOpenCurrencyBalances(
+      tenantId, 
+      currency, 
+      revaluationDate
+    );
+
+    let totalGainLoss = 0;
+    let affectedAccounts = 0;
+    let affectedTransactions = 0;
+    const revaluationEntries: RevaluationEntry[] = [];
+
+    for (const balance of openBalances) {
+      // Calculate revaluation adjustment
+      const originalFunctionalAmount = balance.transaction_amount * balance.original_rate;
+      const revaluedFunctionalAmount = balance.transaction_amount * currentRate.rate;
+      const adjustment = revaluedFunctionalAmount - originalFunctionalAmount;
+
+      if (Math.abs(adjustment) &gt; 0.01) { // Only process significant adjustments
+        totalGainLoss += adjustment;
+        affectedTransactions++;
+
+        revaluationEntries.push({
+          transaction_id: balance.transaction_id,
+          account_id: balance.account_id,
+          currency: currency,
+          transaction_amount: balance.transaction_amount,
+          original_rate: balance.original_rate,
+          revaluation_rate: currentRate.rate,
+          adjustment_amount: adjustment,
+          adjustment_type: adjustment &gt;= 0 ? 'gain' : 'loss'
+        });
+      }
+    }
+
+    // Group adjustments by account
+    const accountAdjustments = this.groupAdjustmentsByAccount(revaluationEntries);
+    affectedAccounts = Object.keys(accountAdjustments).length;
+
+    let journalEntryId: string | null = null;
+
+    if (!dryRun &amp;&amp; totalGainLoss !== 0) {
+      // Create revaluation journal entry
+      journalEntryId = await this.createRevaluationJournalEntry(
+        tenantId,
+        currency,
+        functionalCurrency,
+        revaluationDate,
+        accountAdjustments,
+        totalGainLoss,
+        batchId
+      );
+
+      // Update currency transaction records
+      await this.updateCurrencyTransactionRates(revaluationEntries, currentRate.rate);
+    }
+
+    // Record revaluation history
+    if (!dryRun) {
+      await this.recordRevaluationHistory({
+        tenant_id: tenantId,
+        revaluation_date: revaluationDate,
+        revaluation_batch_id: batchId,
+        currency_code: currency,
+        functional_currency: functionalCurrency,
+        revaluation_rate: currentRate.rate,
+        previous_rate: previousRate,
+        total_gain_loss: totalGainLoss,
+        affected_account_count: affectedAccounts,
+        affected_transaction_count: affectedTransactions,
+        journal_entry_id: journalEntryId
+      });
+    }
+
+    return {
+      currency: currency,
+      total_gain_loss: totalGainLoss,
+      unrealized_gain_loss: totalGainLoss, // All unrealized for open positions
+      affected_accounts: affectedAccounts,
+      affected_transactions: affectedTransactions,
+      journal_entry_id: journalEntryId,
+      warnings: []
+    };
+  }
+
+  private async createRevaluationJournalEntry(
+    tenantId: string,
+    currency: string,
+    functionalCurrency: string,
+    revaluationDate: Date,
+    accountAdjustments: Record&lt;string, number&gt;,
+    totalGainLoss: number,
+    batchId: string
+  ): Promise&lt;string&gt; {
+
+    const journalEntries: JournalEntryLine[] = [];
+
+    // Create adjustment entries for each affected account
+    for (const [accountId, adjustment] of Object.entries(accountAdjustments)) {
+      if (adjustment &gt;= 0) {
+        // Gain - debit the original account
+        journalEntries.push({
+          account_id: accountId,
+          debit_amount: Math.abs(adjustment),
+          credit_amount: 0,
+          description: `Currency revaluation gain - ${currency}`
+        });
+      } else {
+        // Loss - credit the original account
+        journalEntries.push({
+          account_id: accountId,
+          debit_amount: 0,
+          credit_amount: Math.abs(adjustment),
+          description: `Currency revaluation loss - ${currency}`
+        });
+      }
+    }
+
+    // Create offsetting entry to unrealized gain/loss account
+    const unrealizedGLAccount = await this.getUnrealizedGainLossAccount(tenantId);
+
+    if (totalGainLoss &gt;= 0) {
+      // Net gain - credit unrealized gain account
+      journalEntries.push({
+        account_id: unrealizedGLAccount,
+        debit_amount: 0,
+        credit_amount: totalGainLoss,
+        description: `Unrealized currency gain - ${currency} revaluation`
+      });
+    } else {
+      // Net loss - debit unrealized loss account
+      journalEntries.push({
+        account_id: unrealizedGLAccount,
+        debit_amount: Math.abs(totalGainLoss),
+        credit_amount: 0,
+        description: `Unrealized currency loss - ${currency} revaluation`
+      });
+    }
+
+    // Create journal entry
+    const journalEntry = await this.journalService.createJournalEntry({
+      tenant_id: tenantId,
+      entry_date: revaluationDate,
+      reference: `CRV-${batchId}-${currency}`,
+      description: `Currency revaluation - ${currency}`,
+      entries: journalEntries,
+      entry_type: 'currency_revaluation',
+      source_module: 'currency_management'
+    });
+
+    return journalEntry.id;
+  }
+}
+</code></pre>
+<h2 id="currency-risk-management">🔒 Currency Risk Management</h2>
+<h3 id="hedging-and-risk-management">Hedging and Risk Management</h3>
+<pre><code class="language-sql">-- Foreign exchange hedge contracts
+CREATE TABLE fx_hedge_contracts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+
+    -- Contract identification
+    contract_number VARCHAR(50) UNIQUE NOT NULL,
+    contract_type VARCHAR(30) NOT NULL, -- forward, option, swap, collar
+
+    -- Counterparty
+    bank_counterparty_id UUID REFERENCES vendors(id),
+    counterparty_name VARCHAR(255),
+
+    -- Currency details
+    base_currency CHAR(3) NOT NULL REFERENCES currencies(currency_code),
+    quote_currency CHAR(3) NOT NULL REFERENCES currencies(currency_code),
+
+    -- Contract terms
+    notional_amount DECIMAL(18,2) NOT NULL,
+    contract_rate DECIMAL(18,8) NOT NULL,
+
+    -- Contract dates
+    trade_date DATE NOT NULL,
+    value_date DATE NOT NULL, -- Settlement date
+    maturity_date DATE NOT NULL,
+
+    -- Option-specific fields
+    option_type VARCHAR(10), -- call, put
+    strike_rate DECIMAL(18,8),
+    premium_amount DECIMAL(15,2),
+    premium_currency CHAR(3) REFERENCES currencies(currency_code),
+
+    -- Collar-specific fields
+    cap_rate DECIMAL(18,8), -- Upper bound
+    floor_rate DECIMAL(18,8), -- Lower bound
+
+    -- Hedge accounting
+    hedge_designation VARCHAR(30), -- cash_flow, fair_value, net_investment
+    hedged_item_type VARCHAR(50), -- forecast_transaction, commitment, recognized_asset, net_investment
+    hedge_effectiveness_method VARCHAR(30), -- dollar_offset, regression, critical_terms
+
+    -- Risk metrics
+    delta DECIMAL(8,6), -- Price sensitivity
+    gamma DECIMAL(8,6), -- Delta sensitivity  
+    vega DECIMAL(8,6), -- Volatility sensitivity
+    theta DECIMAL(8,6), -- Time decay
+
+    -- Current valuation
+    mark_to_market_value DECIMAL(15,2) DEFAULT 0,
+    unrealized_gain_loss DECIMAL(15,2) DEFAULT 0,
+    last_valuation_date DATE,
+
+    -- Settlement
+    settlement_amount DECIMAL(15,2),
+    settlement_date DATE,
+    settlement_status VARCHAR(20) DEFAULT 'open', -- open, partially_settled, fully_settled, expired
+
+    -- Status
+    contract_status VARCHAR(20) DEFAULT 'active', -- active, matured, cancelled, terminated
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by UUID REFERENCES users(id),
+
+    CONSTRAINT valid_contract_type CHECK (contract_type IN ('forward', 'option', 'swap', 'collar')),
+    CONSTRAINT valid_option_type CHECK (option_type IS NULL OR option_type IN ('call', 'put')),
+    CONSTRAINT valid_hedge_designation CHECK (hedge_designation IN ('cash_flow', 'fair_value', 'net_investment')),
+    CONSTRAINT valid_settlement_status CHECK (settlement_status IN ('open', 'partially_settled', 'fully_settled', 'expired')),
+    CONSTRAINT valid_contract_status CHECK (contract_status IN ('active', 'matured', 'cancelled', 'terminated')),
+    CONSTRAINT positive_notional CHECK (notional_amount &gt; 0),
+    CONSTRAINT different_hedge_currencies CHECK (base_currency != quote_currency)
+);
+
+-- Currency exposure analysis
+CREATE TABLE currency_exposures (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+
+    -- Exposure identification
+    currency_code CHAR(3) NOT NULL REFERENCES currencies(currency_code),
+    functional_currency CHAR(3) NOT NULL REFERENCES currencies(currency_code),
+    exposure_date DATE NOT NULL,
+
+    -- Exposure types
+    transaction_exposure DECIMAL(18,2) DEFAULT 0, -- Existing receivables/payables
+    translation_exposure DECIMAL(18,2) DEFAULT 0, -- Foreign subsidiary assets/liabilities  
+    economic_exposure DECIMAL(18,2) DEFAULT 0, -- Future cash flows
+
+    -- Net exposure
+    gross_exposure DECIMAL(18,2) DEFAULT 0,
+    hedged_amount DECIMAL(18,2) DEFAULT 0,
+    net_exposure DECIMAL(18,2) DEFAULT 0,
+
+    -- Risk metrics
+    value_at_risk DECIMAL(15,2), -- VaR at 95% confidence
+    expected_shortfall DECIMAL(15,2), -- Expected loss beyond VaR
+    volatility DECIMAL(8,6), -- Historical volatility
+
+    -- Breakdown by time horizon
+    exposure_0_30_days DECIMAL(18,2) DEFAULT 0,
+    exposure_31_90_days DECIMAL(18,2) DEFAULT 0,
+    exposure_91_180_days DECIMAL(18,2) DEFAULT 0,
+    exposure_181_365_days DECIMAL(18,2) DEFAULT 0,
+    exposure_over_1_year DECIMAL(18,2) DEFAULT 0,
+
+    -- Sensitivity analysis
+    sensitivity_1_percent DECIMAL(15,2), -- P&amp;L impact of 1% currency move
+    sensitivity_5_percent DECIMAL(15,2),
+    sensitivity_10_percent DECIMAL(15,2),
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    UNIQUE(tenant_id, currency_code, exposure_date)
+);
+</code></pre>
+<p>This comprehensive currency management module provides enterprise-level multi-currency capabilities with sophisticated risk management, automated revaluation, and compliance features essential for global financial operations.</p>
+<p><function_calls>
+<invoke name="TodoWrite">
+<parameter name="todos">[{"id": "analyze-current-schema", "content": "Analyze current financial.sql schema and identify core vs extended modules", "status": "completed", "priority": "high"}, {"id": "restructure-architecture", "content": "Design modular architecture with Finance, Buy, Sell, and misc modules", "status": "completed", "priority": "high"}, {"id": "update-documentation", "content": "Update financial documentation to reflect new modular structure", "status": "in_progress", "priority": "high"}, {"id": "create-currency-docs", "content": "Create comprehensive currency management documentation", "status": "completed", "priority": "medium"}]</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="../../../../javascripts/search-analytics.js"></script>
+      
+        <script src="../../../../javascripts/contextual-help.js"></script>
+      
+    
+  </body>
+</html>

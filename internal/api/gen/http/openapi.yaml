@@ -13,7 +13,7 @@ produces:
     - application/xml
     - application/gob
 paths:
-    /abac/audit:
+    /api/v1/abac/audit:
         get:
             tags:
                 - abac
@@ -40,7 +40,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /abac/authorize:
+    /api/v1/abac/authorize:
         post:
             tags:
                 - abac
@@ -67,7 +67,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /abac/collect-attributes:
+    /api/v1/abac/collect-attributes:
         post:
             tags:
                 - abac
@@ -94,7 +94,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /abac/discover-policies:
+    /api/v1/abac/discover-policies:
         post:
             tags:
                 - abac
@@ -121,7 +121,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /abac/evaluate:
+    /api/v1/abac/evaluate:
         post:
             tags:
                 - abac
@@ -148,7 +148,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /abac/evaluate-bulk:
+    /api/v1/abac/evaluate-bulk:
         post:
             tags:
                 - abac
@@ -175,7 +175,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /abac/explain:
+    /api/v1/abac/explain:
         post:
             tags:
                 - abac
@@ -202,7 +202,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /abac/health:
+    /api/v1/abac/health:
         get:
             tags:
                 - abac
@@ -224,7 +224,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /abac/invalidate-cache:
+    /api/v1/abac/invalidate-cache:
         post:
             tags:
                 - abac
@@ -251,7 +251,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /abac/metrics:
+    /api/v1/abac/metrics:
         get:
             tags:
                 - abac

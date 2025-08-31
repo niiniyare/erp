@@ -1,0 +1,4986 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../../architecture/GIN_HANDLERS_INVENTORY/">
+      
+      
+        <link rel="next" href="../architecture/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>Best Practices - Awo ERP Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#best-practices-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Awo ERP Documentation" class="md-header__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Awo ERP Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Best Practices
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/01-developer-quick-start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/system-overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/modules/financial/api-reference/" class="md-tabs__link">
+          
+  
+  
+  Financial Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/modules/user/" class="md-tabs__link">
+          
+  
+  
+  Users & IAM Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/modules/audit/audit/" class="md-tabs__link">
+          
+  
+  
+  Audit Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/modules/feature_flag/00_README/" class="md-tabs__link">
+          
+  
+  
+  Feature Flags Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/modules/tenant/tenant-management/" class="md-tabs__link">
+          
+  
+  
+  Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/modules/Architecture/" class="md-tabs__link">
+          
+  
+  
+  Other Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/api-source/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Awo ERP Documentation" class="md-nav__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Awo ERP Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/01-developer-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/system-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/abac-design-and-roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/FRAMEWORK_MIGRATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/GIN_HANDLERS_INVENTORY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GIN Handlers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏗️ Architecture Best Practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🏗️ Architecture Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-dependency-direction-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Dependency Direction Rules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Dependency Direction Rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#correct-dependency-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Correct Dependency Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-dependency-direction" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❌ Wrong Dependency Direction
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-layer-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Layer Isolation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Layer Isolation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-layer-responsibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Layer Responsibilities
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-layer-responsibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Layer Responsibilities
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-conversion-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔄 Model Conversion Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔄 Model Conversion Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-conversion-at-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Conversion at Boundaries
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Conversion at Boundaries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#repository-layer-conversions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Repository Layer Conversions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conversion-helper-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conversion Helper Functions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-model-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❌ Wrong Model Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔒 Error Handling Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔒 Error Handling Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-domain-error-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Domain Error Types
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Domain Error Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#define-domain-specific-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Define Domain-Specific Errors
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-error-wrapping-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Error Wrapping Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Error Wrapping Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#repository-layer-error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Repository Layer Error Handling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-layer-error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Layer Error Handling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-layer-error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Layer Error Handling
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caching-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚀 Caching Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚀 Caching Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-cache-aside-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Cache-Aside Pattern
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Cache-Aside Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#service-layer-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Layer Caching
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-cache-invalidation" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Cache Invalidation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Cache Invalidation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#write-through-cache-invalidation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Write-Through Cache Invalidation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-cache-keys-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Cache Keys Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Cache Keys Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#consistent-cache-key-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consistent Cache Key Patterns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transaction-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔄 Transaction Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔄 Transaction Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-service-level-transactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Service-Level Transactions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Service-Level Transactions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-storewithtx-for-complex-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Store.WithTx for Complex Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#repository-transaction-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Repository Transaction Support
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observability-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      📊 Observability Best Practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📊 Observability Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-structured-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Structured Logging
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Structured Logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#consistent-field-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consistent Field Names
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-distributed-tracing" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Distributed Tracing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Distributed Tracing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#span-naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Span Naming Conventions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-metrics-collection" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Metrics Collection
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Metrics Collection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#business-and-technical-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Business and Technical Metrics
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧪 Testing Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🧪 Testing Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-repository-testing-with-test-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Repository Testing with Test Database
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Repository Testing with Test Database">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#repository-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Repository Integration Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-service-testing-with-mocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Service Testing with Mocks
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Service Testing with Mocks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#service-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Unit Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-handler-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Handler Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Handler Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#http-handler-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      HTTP Handler Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔐 Security Best Practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔐 Security Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-input-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Input Validation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Input Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-layer-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Layer Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-sql-injection-prevention" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. SQL Injection Prevention
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. SQL Injection Prevention">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#always-use-parameterized-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Always Use Parameterized Queries
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      📈 Performance Best Practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📈 Performance Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-database-query-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Database Query Optimization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Database Query Optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#efficient-query-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Efficient Query Patterns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-caching-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Caching Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Caching Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-level-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Level Caching
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-anti-patterns-to-avoid" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚨 Common Anti-Patterns to Avoid
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚨 Common Anti-Patterns to Avoid">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-architecture-violations" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Architecture Violations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-error-handling-anti-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Error Handling Anti-Patterns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-performance-anti-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Performance Anti-Patterns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../database-transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Transactions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../goa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Goa Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../middleware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Middleware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Observability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../securityHandbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Handbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Layer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sqlc-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Financial Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Financial Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/currency-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Currency Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Task Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/integration-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/security-compliance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security & Compliance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/testing-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Users & IAM Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Users & IAM Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/01_identity_model_and_rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity & RBAC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/02_abac_evaluation_lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/03_hybrid_access_control_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hybrid Access Control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/04_architecture_service_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/IAM_MAPPING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Restructuring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/PHASE_3_ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/RELEASE_NOTES_RC1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release Notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_11" id="__nav_5_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    ABAC Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_11">
+            <span class="md-nav__icon md-icon"></span>
+            ABAC Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/administrative_performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Administrative Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/attribute_definitions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Attribute Definitions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/audit_monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit & Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/context_attribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/desing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/policy_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/policy_evaluation_CEL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CEL Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/policy_evaluation_expr-lang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expression Language
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/POLICY_SERVICE_ENHANCEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Service Enhancement
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Audit Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Audit Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/audit/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/audit/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Feature Flags Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Feature Flags Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/00_README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Onboarding
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/onboarding/01_introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/onboarding/02_core_concepts_and_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/onboarding/03_developer_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/onboarding/04_admin_api_manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/onboarding/05_lifecycle_gotchas_and_improvements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lifecycle & Improvements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tenant Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Tenant Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/tenant/tenant-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/tenant/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Other Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/airline-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Airline Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/asset-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Asset Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/forecourt-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forecourt Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Financial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/human-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Human Resources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/implementation-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Phases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/inventory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Inventory Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/module-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Module Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/project-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/restaurant-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Restaurant Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/retail-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retail Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/tax-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tax Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/technical-specifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Technical Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/workflow-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow Engine
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/user-service-abac-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_3" id="__nav_10_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core APIs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            Core APIs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/auth/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/entities/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/organizations/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Org Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/users/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_4" id="__nav_10_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_4">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/access-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/access-requests/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Request Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/conditional-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/user-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_5" id="__nav_10_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/testing/manual/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/testing/manual/manual-curl-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_6" id="__nav_10_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_6">
+            <span class="md-nav__icon md-icon"></span>
+            Utilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/utilities/todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TODO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="best-practices-guide">Best Practices Guide</h1>
+<p>Essential development guidelines and patterns for building maintainable, scalable features in our ERP system.</p>
+<h2 id="architecture-best-practices">🏗️ Architecture Best Practices</h2>
+<h3 id="1-dependency-direction-rules">1. Dependency Direction Rules</h3>
+<h4 id="correct-dependency-flow">✅ <strong>Correct Dependency Flow</strong></h4>
+<pre><code class="language-go">// Higher layers can import lower layers
+package handlers
+
+import (
+    &quot;internal/core/tenant&quot;        // ✅ API → Core
+    &quot;internal/shared/logger&quot;      // ✅ API → Shared
+)
+
+// Core layer depends on interfaces, not implementations
+package tenant
+
+type Repository interface {
+    Create(ctx context.Context, tenant *Tenant) error
+}
+
+type Service struct {
+    repo Repository  // ✅ Depends on interface
+}
+</code></pre>
+<h4 id="wrong-dependency-direction">❌ <strong>Wrong Dependency Direction</strong></h4>
+<pre><code class="language-go">// DON'T: Lower layers importing higher layers
+package tenant
+
+import (
+    &quot;internal/api/handlers&quot;  // ❌ Core → API (WRONG!)
+)
+
+// DON'T: Core depending on infrastructure implementations
+package tenant
+
+import (
+    &quot;internal/platform/db&quot;  // ❌ Core → Infrastructure (WRONG!)
+)
+
+type Service struct {
+    store db.Store  // ❌ Direct dependency on implementation
+}
+</code></pre>
+<h3 id="2-layer-isolation">2. Layer Isolation</h3>
+<h4 id="api-layer-responsibilities"><strong>API Layer Responsibilities</strong></h4>
+<pre><code class="language-go">// ✅ API layer handles HTTP concerns only
+func (h *TenantHandler) CreateTenant(c *gin.Context) {
+    // ✅ Parse request
+    var req CreateTenantRequest
+    if err := c.ShouldBindJSON(&amp;req); err != nil {
+        c.JSON(400, gin.H{&quot;error&quot;: err.Error()})
+        return
+    }
+
+    // ✅ Call service layer
+    tenant, err := h.service.CreateTenant(c.Request.Context(), req)
+
+    // ✅ Handle errors and format response
+    if err != nil {
+        handleError(c, err)
+        return
+    }
+
+    c.JSON(201, tenant)
+}
+
+// ❌ DON'T put business logic in handlers
+func (h *TenantHandler) CreateTenant(c *gin.Context) {
+    // ❌ Business validation in API layer
+    if len(req.Name) &lt; 3 {
+        c.JSON(400, gin.H{&quot;error&quot;: &quot;Name too short&quot;})
+        return
+    }
+
+    // ❌ Direct database access from API layer
+    _, err := h.db.Exec(&quot;INSERT INTO tenants...&quot;)
+}
+</code></pre>
+<h4 id="service-layer-responsibilities"><strong>Service Layer Responsibilities</strong></h4>
+<pre><code class="language-go">// ✅ Service layer handles business logic
+func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*Tenant, error) {
+    // ✅ Business validation
+    if err := s.validateCreateRequest(req); err != nil {
+        return nil, err
+    }
+
+    // ✅ Business rules
+    tenant := &amp;Tenant{
+        ID:     uuid.New(),
+        Status: StatusActive,  // Business rule
+        // ... other business logic
+    }
+
+    // ✅ Use repository interface
+    return s.repo.Create(ctx, tenant)
+}
+
+// ❌ DON'T put HTTP concerns in service
+func (s *service) CreateTenant(ctx context.Context, req *http.Request) (*gin.Context, error) {
+    // ❌ HTTP request/response handling in service
+}
+
+// ❌ DON'T put database queries in service
+func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*Tenant, error) {
+    // ❌ Direct SQL in service layer
+    _, err := s.db.Exec(&quot;INSERT INTO tenants...&quot;)
+}
+</code></pre>
+<h2 id="model-conversion-patterns">🔄 Model Conversion Patterns</h2>
+<h3 id="1-conversion-at-boundaries">1. <strong>Conversion at Boundaries</strong></h3>
+<h4 id="repository-layer-conversions">Repository Layer Conversions</h4>
+<pre><code class="language-go">// ✅ Convert domain models to database parameters
+func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
+    // Convert domain → SQLC params
+    params := db.CreateTenantParams{
+        ID:           tenant.ID,
+        Name:         tenant.Name,
+        Status:       string(tenant.Status),  // Enum conversion
+        Metadata:     marshalJSON(tenant.Metadata),  // JSON conversion
+        CreatedAt:    tenant.CreatedAt,
+    }
+
+    _, err := r.store.CreateTenant(ctx, params)
+    return err
+}
+
+// ✅ Convert database models to domain models
+func (r *repository) GetByID(ctx context.Context, id uuid.UUID) (*Tenant, error) {
+    sqlcTenant, err := r.store.GetTenantByID(ctx, id)
+    if err != nil {
+        return nil, err
+    }
+
+    // Convert SQLC → domain
+    return FromSQLCTenant(sqlcTenant)
+}
+</code></pre>
+<h4 id="conversion-helper-functions">Conversion Helper Functions</h4>
+<pre><code class="language-go">// ✅ Centralized conversion logic
+func FromSQLCTenant(sqlcTenant db.Tenant) (*Tenant, error) {
+    // Handle JSONB fields safely
+    var metadata map[string]interface{}
+    if len(sqlcTenant.Metadata) &gt; 0 {
+        if err := json.Unmarshal(sqlcTenant.Metadata, &amp;metadata); err != nil {
+            return nil, fmt.Errorf(&quot;failed to unmarshal metadata: %w&quot;, err)
+        }
+    }
+
+    // Handle nullable fields
+    var deletedAt *time.Time
+    if sqlcTenant.DeletedAt.Valid {
+        deletedAt = &amp;sqlcTenant.DeletedAt.Time
+    }
+
+    return &amp;Tenant{
+        ID:        sqlcTenant.ID,
+        Name:      sqlcTenant.Name,
+        Status:    Status(sqlcTenant.Status),  // Type conversion
+        Metadata:  metadata,
+        DeletedAt: deletedAt,
+        // ... other fields
+    }, nil
+}
+
+func ToSQLCCreateParams(tenant *Tenant) (db.CreateTenantParams, error) {
+    metadataBytes, err := json.Marshal(tenant.Metadata)
+    if err != nil {
+        return db.CreateTenantParams{}, fmt.Errorf(&quot;failed to marshal metadata: %w&quot;, err)
+    }
+
+    return db.CreateTenantParams{
+        ID:       tenant.ID,
+        Name:     tenant.Name,
+        Status:   string(tenant.Status),
+        Metadata: metadataBytes,
+        // ... other fields
+    }, nil
+}
+</code></pre>
+<h4 id="wrong-model-usage">❌ <strong>Wrong Model Usage</strong></h4>
+<pre><code class="language-go">// ❌ DON'T use database models in service layer
+func (s *service) CreateTenant(req CreateTenantRequest) (*db.Tenant, error) {
+    // ❌ Returning database model from service
+}
+
+// ❌ DON'T use domain models in SQLC calls
+func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
+    // ❌ Passing domain model directly to SQLC
+    _, err := r.store.CreateTenant(ctx, tenant)  // Won't compile!
+}
+</code></pre>
+<h2 id="error-handling-patterns">🔒 Error Handling Patterns</h2>
+<h3 id="1-domain-error-types">1. <strong>Domain Error Types</strong></h3>
+<h4 id="define-domain-specific-errors">Define Domain-Specific Errors</h4>
+<pre><code class="language-go">// internal/shared/errors/errors.go
+package errors
+
+import &quot;errors&quot;
+
+// Domain errors
+var (
+    ErrTenantNotFound          = errors.New(&quot;tenant not found&quot;)
+    ErrSubdomainAlreadyExists  = errors.New(&quot;subdomain already exists&quot;)
+    ErrInvalidTenantStatus     = errors.New(&quot;invalid tenant status&quot;)
+    ErrTenantInactive          = errors.New(&quot;tenant is inactive&quot;)
+)
+
+// Validation errors with details
+type ValidationError struct {
+    Field   string `json:&quot;field&quot;`
+    Message string `json:&quot;message&quot;`
+}
+
+func (e ValidationError) Error() string {
+    return fmt.Sprintf(&quot;validation failed for field '%s': %s&quot;, e.Field, e.Message)
+}
+
+func NewValidationError(field, message string) error {
+    return ValidationError{Field: field, Message: message}
+}
+</code></pre>
+<h3 id="2-error-wrapping-strategy">2. <strong>Error Wrapping Strategy</strong></h3>
+<h4 id="repository-layer-error-handling">Repository Layer Error Handling</h4>
+<pre><code class="language-go">// ✅ Convert database errors to domain errors
+func (r *repository) GetByID(ctx context.Context, id uuid.UUID) (*Tenant, error) {
+    sqlcTenant, err := r.store.GetTenantByID(ctx, id)
+    if err != nil {
+        // Convert specific database errors to domain errors
+        if err.Error() == &quot;no rows in result set&quot; {
+            return nil, errors.ErrTenantNotFound  // Domain error
+        }
+
+        // Wrap infrastructure errors with context
+        return nil, fmt.Errorf(&quot;failed to get tenant from database: %w&quot;, err)
+    }
+
+    return FromSQLCTenant(sqlcTenant)
+}
+</code></pre>
+<h4 id="service-layer-error-handling">Service Layer Error Handling</h4>
+<pre><code class="language-go">// ✅ Let domain errors bubble up, wrap infrastructure errors
+func (s *service) GetTenant(ctx context.Context, id uuid.UUID) (*Tenant, error) {
+    tenant, err := s.repo.GetByID(ctx, id)
+    if err != nil {
+        // Let domain errors pass through
+        if errors.Is(err, errors.ErrTenantNotFound) {
+            return nil, err
+        }
+
+        // Wrap infrastructure errors with service context
+        return nil, fmt.Errorf(&quot;service: failed to get tenant: %w&quot;, err)
+    }
+
+    return tenant, nil
+}
+</code></pre>
+<h4 id="api-layer-error-handling">API Layer Error Handling</h4>
+<pre><code class="language-go">// ✅ Convert domain errors to appropriate HTTP responses
+func (h *TenantHandler) GetTenant(c *gin.Context) {
+    tenant, err := h.service.GetTenant(c.Request.Context(), id)
+    if err != nil {
+        switch {
+        case errors.Is(err, errors.ErrTenantNotFound):
+            c.JSON(http.StatusNotFound, gin.H{
+                &quot;error&quot;: &quot;Tenant not found&quot;,
+                &quot;code&quot;:  &quot;TENANT_NOT_FOUND&quot;,
+            })
+        case errors.Is(err, errors.ErrValidation):
+            c.JSON(http.StatusBadRequest, gin.H{
+                &quot;error&quot;: &quot;Validation failed&quot;,
+                &quot;code&quot;:  &quot;VALIDATION_ERROR&quot;,
+            })
+        default:
+            h.logger.ErrorContext(ctx, &quot;Internal server error&quot;, logger.Fields{
+                &quot;error&quot;: err.Error(),
+            })
+            c.JSON(http.StatusInternalServerError, gin.H{
+                &quot;error&quot;: &quot;Internal server error&quot;,
+                &quot;code&quot;:  &quot;INTERNAL_ERROR&quot;,
+            })
+        }
+        return
+    }
+
+    c.JSON(http.StatusOK, tenant)
+}
+</code></pre>
+<h2 id="caching-patterns">🚀 Caching Patterns</h2>
+<h3 id="1-cache-aside-pattern">1. <strong>Cache-Aside Pattern</strong></h3>
+<h4 id="service-layer-caching">Service Layer Caching</h4>
+<pre><code class="language-go">// ✅ Implement cache-aside pattern in service layer
+func (s *service) GetTenantBySubdomain(ctx context.Context, subdomain string) (*Tenant, error) {
+    // 1. Check cache first
+    cacheKey := fmt.Sprintf(&quot;tenant:subdomain:%s&quot;, subdomain)
+    var tenant Tenant
+
+    if err := s.cache.Get(ctx, cacheKey, &amp;tenant); err == nil {
+        // Cache hit - log and return
+        s.logger.DebugContext(ctx, &quot;Cache hit for tenant subdomain&quot;, logger.Fields{
+            &quot;subdomain&quot;: subdomain,
+        })
+        return &amp;tenant, nil
+    }
+
+    // 2. Cache miss - get from repository
+    s.logger.DebugContext(ctx, &quot;Cache miss for tenant subdomain&quot;, logger.Fields{
+        &quot;subdomain&quot;: subdomain,
+    })
+
+    dbTenant, err := s.repo.GetBySubdomain(ctx, subdomain)
+    if err != nil {
+        return nil, err
+    }
+
+    // 3. Store in cache for future requests
+    if err := s.cache.Set(ctx, cacheKey, dbTenant, 30*time.Minute); err != nil {
+        // Log cache error but don't fail the operation
+        s.logger.WarnContext(ctx, &quot;Failed to cache tenant&quot;, logger.Fields{
+            &quot;subdomain&quot;: subdomain,
+            &quot;error&quot;:     err.Error(),
+        })
+    }
+
+    return dbTenant, nil
+}
+</code></pre>
+<h3 id="2-cache-invalidation">2. <strong>Cache Invalidation</strong></h3>
+<h4 id="write-through-cache-invalidation">Write-Through Cache Invalidation</h4>
+<pre><code class="language-go">// ✅ Invalidate cache on updates
+func (s *service) UpdateTenant(ctx context.Context, id uuid.UUID, req UpdateTenantRequest) (*Tenant, error) {
+    // 1. Get existing tenant for cache invalidation
+    existing, err := s.repo.GetByID(ctx, id)
+    if err != nil {
+        return nil, err
+    }
+
+    // 2. Update in repository
+    updated, err := s.repo.Update(ctx, id, req)
+    if err != nil {
+        return nil, err
+    }
+
+    // 3. Invalidate relevant cache entries
+    s.invalidateTenantCache(ctx, existing)
+
+    return updated, nil
+}
+
+func (s *service) invalidateTenantCache(ctx context.Context, tenant *Tenant) {
+    // Invalidate ID-based cache
+    idCacheKey := fmt.Sprintf(&quot;tenant:id:%s&quot;, tenant.ID.String())
+    if err := s.cache.Delete(ctx, idCacheKey); err != nil {
+        s.logger.WarnContext(ctx, &quot;Failed to invalidate tenant ID cache&quot;, logger.Fields{
+            &quot;cache_key&quot;: idCacheKey,
+            &quot;error&quot;:     err.Error(),
+        })
+    }
+
+    // Invalidate subdomain-based cache
+    if tenant.Subdomain != nil {
+        subdomainCacheKey := fmt.Sprintf(&quot;tenant:subdomain:%s&quot;, *tenant.Subdomain)
+        if err := s.cache.Delete(ctx, subdomainCacheKey); err != nil {
+            s.logger.WarnContext(ctx, &quot;Failed to invalidate tenant subdomain cache&quot;, logger.Fields{
+                &quot;cache_key&quot;: subdomainCacheKey,
+                &quot;error&quot;:     err.Error(),
+            })
+        }
+    }
+}
+</code></pre>
+<h3 id="3-cache-keys-strategy">3. <strong>Cache Keys Strategy</strong></h3>
+<h4 id="consistent-cache-key-patterns">Consistent Cache Key Patterns</h4>
+<pre><code class="language-go">// ✅ Use consistent, hierarchical cache key patterns
+const (
+    CacheKeyTenantByID        = &quot;tenant:id:%s&quot;
+    CacheKeyTenantBySubdomain = &quot;tenant:subdomain:%s&quot;
+    CacheKeyUsersByTenant     = &quot;users:tenant:%s&quot;
+    CacheKeyTenantSettings    = &quot;tenant:settings:%s&quot;
+)
+
+// ✅ Cache key builder functions
+func buildTenantCacheKey(id uuid.UUID) string {
+    return fmt.Sprintf(CacheKeyTenantByID, id.String())
+}
+
+func buildSubdomainCacheKey(subdomain string) string {
+    return fmt.Sprintf(CacheKeyTenantBySubdomain, subdomain)
+}
+
+// ✅ Cache TTL constants
+const (
+    CacheTTLTenantShort  = 15 * time.Minute  // Frequently changing data
+    CacheTTLTenantMedium = 1 * time.Hour     // Moderately stable data
+    CacheTTLTenantLong   = 24 * time.Hour    // Stable data
+)
+</code></pre>
+<h2 id="transaction-patterns">🔄 Transaction Patterns</h2>
+<h3 id="1-service-level-transactions">1. <strong>Service-Level Transactions</strong></h3>
+<h4 id="using-storewithtx-for-complex-operations">Using Store.WithTx for Complex Operations</h4>
+<pre><code class="language-go">// ✅ Service layer orchestrates transactions
+func (s *service) CreateTenantWithUser(ctx context.Context, req CreateTenantWithUserRequest) (*TenantWithUser, error) {
+    var result *TenantWithUser
+
+    // Use repository's transaction method
+    err := s.tenantRepo.WithTransaction(ctx, func(ctx context.Context, repos TransactionalRepositories) error {
+        // 1. Create tenant
+        tenant := &amp;Tenant{
+            ID:   uuid.New(),
+            Name: req.TenantName,
+            // ... other fields
+        }
+
+        if err := repos.TenantRepo.Create(ctx, tenant); err != nil {
+            return fmt.Errorf(&quot;failed to create tenant: %w&quot;, err)
+        }
+
+        // 2. Create admin user
+        user := &amp;User{
+            ID:       uuid.New(),
+            TenantID: tenant.ID,
+            Email:    req.AdminEmail,
+            Role:     RoleAdmin,
+            // ... other fields
+        }
+
+        if err := repos.UserRepo.Create(ctx, user); err != nil {
+            return fmt.Errorf(&quot;failed to create admin user: %w&quot;, err)
+        }
+
+        // 3. Create default settings
+        settings := &amp;TenantSettings{
+            TenantID: tenant.ID,
+            Theme:    &quot;default&quot;,
+            // ... other settings
+        }
+
+        if err := repos.SettingsRepo.Create(ctx, settings); err != nil {
+            return fmt.Errorf(&quot;failed to create tenant settings: %w&quot;, err)
+        }
+
+        result = &amp;TenantWithUser{
+            Tenant: tenant,
+            User:   user,
+        }
+
+        return nil  // Commit transaction
+    })
+
+    if err != nil {
+        return nil, fmt.Errorf(&quot;failed to create tenant with user: %w&quot;, err)
+    }
+
+    return result, nil
+}
+</code></pre>
+<h4 id="repository-transaction-support">Repository Transaction Support</h4>
+<pre><code class="language-go">// ✅ Repository supports transactions
+type TransactionalRepositories struct {
+    TenantRepo   Repository
+    UserRepo     user.Repository
+    SettingsRepo settings.Repository
+}
+
+func (r *repository) WithTransaction(ctx context.Context, fn func(context.Context, TransactionalRepositories) error) error {
+    return r.store.WithTx(ctx, func(ctx context.Context, tx db.Store) error {
+        repos := TransactionalRepositories{
+            TenantRepo:   NewRepository(tx, r.logger, r.tracing, r.metrics),
+            UserRepo:     user.NewRepository(tx, r.logger, r.tracing, r.metrics),
+            SettingsRepo: settings.NewRepository(tx, r.logger, r.tracing, r.metrics),
+        }
+
+        return fn(ctx, repos)
+    })
+}
+</code></pre>
+<h2 id="observability-best-practices">📊 Observability Best Practices</h2>
+<h3 id="1-structured-logging">1. <strong>Structured Logging</strong></h3>
+<h4 id="consistent-field-names">Consistent Field Names</h4>
+<pre><code class="language-go">// ✅ Use standardized field names across the application
+const (
+    LogFieldTenantID   = &quot;tenant_id&quot;
+    LogFieldUserID     = &quot;user_id&quot;
+    LogFieldOperation  = &quot;operation&quot;
+    LogFieldDuration   = &quot;duration_ms&quot;
+    LogFieldErrorType  = &quot;error_type&quot;
+    LogFieldRequestID  = &quot;request_id&quot;
+)
+
+// ✅ Consistent logging patterns
+func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*Tenant, error) {
+    logger.InfoContext(ctx, &quot;Starting tenant creation&quot;, logger.Fields{
+        LogFieldOperation:  &quot;create_tenant&quot;,
+        LogFieldTenantName: req.Name,
+    })
+
+    // ... business logic
+
+    logger.InfoContext(ctx, &quot;Tenant created successfully&quot;, logger.Fields{
+        LogFieldOperation: &quot;create_tenant&quot;,
+        LogFieldTenantID:  tenant.ID.String(),
+        LogFieldDuration:  duration.Milliseconds(),
+    })
+
+    return tenant, nil
+}
+</code></pre>
+<h3 id="2-distributed-tracing">2. <strong>Distributed Tracing</strong></h3>
+<h4 id="span-naming-conventions">Span Naming Conventions</h4>
+<pre><code class="language-go">// ✅ Use consistent span naming patterns
+const (
+    SpanHTTPPrefix       = &quot;http.&quot;
+    SpanServicePrefix    = &quot;service.&quot;
+    SpanRepositoryPrefix = &quot;repository.&quot;
+    SpanDatabasePrefix   = &quot;db.&quot;
+)
+
+// ✅ Comprehensive span attributes
+func (h *TenantHandler) CreateTenant(c *gin.Context) {
+    ctx, span := h.tracing.StartSpan(ctx, &quot;http.create_tenant&quot;,
+        tracing.WithSpanKind(tracing.SpanKindServer),
+        tracing.WithAttributes(
+            attribute.String(&quot;http.method&quot;, c.Request.Method),
+            attribute.String(&quot;http.route&quot;, &quot;/api/v1/tenants&quot;),
+            attribute.String(&quot;http.url&quot;, c.Request.URL.String()),
+            attribute.String(&quot;user_agent&quot;, c.Request.UserAgent()),
+        ))
+    defer span.End()
+
+    // Add business context as operation progresses
+    span.SetAttributes(
+        attribute.String(&quot;tenant.name&quot;, req.Name),
+        attribute.String(&quot;tenant.slug&quot;, req.Slug),
+    )
+
+    // ... handle request
+}
+</code></pre>
+<h3 id="3-metrics-collection">3. <strong>Metrics Collection</strong></h3>
+<h4 id="business-and-technical-metrics">Business and Technical Metrics</h4>
+<pre><code class="language-go">// ✅ Collect both business and technical metrics
+func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*Tenant, error) {
+    // Technical metrics
+    timer := s.metrics.Timer(&quot;tenant_operation_duration&quot;, metrics.Fields{
+        &quot;operation&quot;: &quot;create&quot;,
+    })
+    defer timer.Stop()
+
+    // Business logic...
+
+    if err != nil {
+        // Error metrics with classification
+        s.metrics.IncrementCounter(&quot;tenant_operations_total&quot;, metrics.Fields{
+            &quot;operation&quot;:  &quot;create&quot;,
+            &quot;status&quot;:     &quot;error&quot;,
+            &quot;error_type&quot;: classifyError(err),
+        })
+        return nil, err
+    }
+
+    // Success metrics
+    s.metrics.IncrementCounter(&quot;tenant_operations_total&quot;, metrics.Fields{
+        &quot;operation&quot;: &quot;create&quot;,
+        &quot;status&quot;:    &quot;success&quot;,
+    })
+
+    // Business metrics
+    s.metrics.IncrementCounter(&quot;tenants_created_total&quot;, metrics.Fields{})
+    s.metrics.SetGauge(&quot;active_tenants_count&quot;, float64(activeCount), metrics.Fields{})
+
+    return tenant, nil
+}
+</code></pre>
+<h2 id="testing-patterns">🧪 Testing Patterns</h2>
+<h3 id="1-repository-testing-with-test-database">1. <strong>Repository Testing with Test Database</strong></h3>
+<h4 id="repository-integration-tests">Repository Integration Tests</h4>
+<pre><code class="language-go">// ✅ Test repository with real database
+func TestRepository_Create(t *testing.T) {
+    // Setup test database
+    testDB := setupTestDB(t)
+    defer testDB.Close()
+
+    store := db.NewStore(testDB)
+    repo := NewRepository(store, logger.NewTestLogger(), tracing.NewNoopTracer(), metrics.NewNoopMetrics())
+
+    // Test data
+    tenant := &amp;Tenant{
+        ID:           uuid.New(),
+        Name:         &quot;Test Tenant&quot;,
+        Slug:         &quot;test-tenant&quot;,
+        Email:        &quot;test@example.com&quot;,
+        Status:       StatusActive,
+        CreatedAt:    time.Now(),
+        UpdatedAt:    time.Now(),
+    }
+
+    // Execute and verify
+    err := repo.Create(context.Background(), tenant)
+    require.NoError(t, err)
+
+    // Verify persistence
+    found, err := repo.GetByID(context.Background(), tenant.ID)
+    require.NoError(t, err)
+    assert.Equal(t, tenant.Name, found.Name)
+    assert.Equal(t, tenant.Status, found.Status)
+}
+</code></pre>
+<h3 id="2-service-testing-with-mocks">2. <strong>Service Testing with Mocks</strong></h3>
+<h4 id="service-unit-tests">Service Unit Tests</h4>
+<pre><code class="language-go">// ✅ Test service layer with mocked dependencies
+func TestService_CreateTenant(t *testing.T) {
+    mockRepo := new(mocks.MockRepository)
+    mockCache := new(mocks.MockCache)
+    service := NewService(mockRepo, mockCache, logger.NewTestLogger(), tracing.NewNoopTracer(), metrics.NewNoopMetrics())
+
+    // Setup expectations
+    mockRepo.On(&quot;Exists&quot;, mock.Anything, &quot;test-subdomain&quot;).Return(false, nil)
+    mockRepo.On(&quot;Create&quot;, mock.Anything, mock.AnythingOfType(&quot;*tenant.Tenant&quot;)).Return(nil)
+    mockCache.On(&quot;Set&quot;, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+    // Test request
+    req := CreateTenantRequest{
+        Name:      &quot;Test Tenant&quot;,
+        Slug:      &quot;test-tenant&quot;,
+        Email:     &quot;test@example.com&quot;,
+        Subdomain: stringPtr(&quot;test-subdomain&quot;),
+    }
+
+    // Execute
+    tenant, err := service.CreateTenant(context.Background(), req)
+
+    // Verify
+    require.NoError(t, err)
+    assert.Equal(t, req.Name, tenant.Name)
+    assert.Equal(t, StatusActive, tenant.Status)
+
+    mockRepo.AssertExpectations(t)
+    mockCache.AssertExpectations(t)
+}
+
+func stringPtr(s string) *string {
+    return &amp;s
+}
+</code></pre>
+<h3 id="3-handler-testing">3. <strong>Handler Testing</strong></h3>
+<h4 id="http-handler-tests">HTTP Handler Tests</h4>
+<pre><code class="language-go">// ✅ Test handlers with mock service
+func TestTenantHandler_CreateTenant(t *testing.T) {
+    mockService := new(mocks.MockService)
+    handler := NewTenantHandler(mockService, logger.NewTestLogger(), tracing.NewNoopTracer(), metrics.NewNoopMetrics())
+
+    // Setup router
+    router := gin.New()
+    router.POST(&quot;/tenants&quot;, handler.CreateTenant)
+
+    // Expected response
+    expectedTenant := &amp;Tenant{
+        ID:   uuid.New(),
+        Name: &quot;Test Tenant&quot;,
+        Slug: &quot;test-tenant&quot;,
+    }
+
+    mockService.On(&quot;CreateTenant&quot;, mock.Anything, mock.AnythingOfType(&quot;tenant.CreateTenantRequest&quot;)).
+        Return(expectedTenant, nil)
+
+    // Test request
+    requestBody := `{
+        &quot;name&quot;: &quot;Test Tenant&quot;,
+        &quot;slug&quot;: &quot;test-tenant&quot;,
+        &quot;email&quot;: &quot;test@example.com&quot;
+    }`
+
+    req, _ := http.NewRequest(&quot;POST&quot;, &quot;/tenants&quot;, strings.NewReader(requestBody))
+    req.Header.Set(&quot;Content-Type&quot;, &quot;application/json&quot;)
+
+    w := httptest.NewRecorder()
+    router.ServeHTTP(w, req)
+
+    // Verify response
+    assert.Equal(t, http.StatusCreated, w.Code)
+
+    var response Tenant
+    err := json.Unmarshal(w.Body.Bytes(), &amp;response)
+    require.NoError(t, err)
+    assert.Equal(t, expectedTenant.Name, response.Name)
+
+    mockService.AssertExpectations(t)
+}
+</code></pre>
+<h2 id="security-best-practices">🔐 Security Best Practices</h2>
+<h3 id="1-input-validation">1. <strong>Input Validation</strong></h3>
+<h4 id="api-layer-validation">API Layer Validation</h4>
+<pre><code class="language-go">// ✅ Validate and sanitize input at API boundary
+type CreateTenantRequest struct {
+    Name      string                 `json:&quot;name&quot; binding:&quot;required,min=3,max=100&quot;`
+    Slug      string                 `json:&quot;slug&quot; binding:&quot;required,min=3,max=50,alphanum&quot;`
+    Email     string                 `json:&quot;email&quot; binding:&quot;required,email&quot;`
+    Subdomain *string                `json:&quot;subdomain,omitempty&quot; binding:&quot;omitempty,min=3,max=63,alphanum&quot;`
+    Metadata  map[string]interface{} `json:&quot;metadata,omitempty&quot;`
+}
+
+// ✅ Additional validation in service layer
+func (s *service) validateCreateRequest(req CreateTenantRequest) error {
+    // Business-specific validation
+    if req.Subdomain != nil {
+        if !isValidSubdomain(*req.Subdomain) {
+            return errors.NewValidationError(&quot;subdomain&quot;, &quot;Invalid subdomain format&quot;)
+        }
+
+        if isReservedSubdomain(*req.Subdomain) {
+            return errors.NewValidationError(&quot;subdomain&quot;, &quot;Subdomain is reserved&quot;)
+        }
+    }
+
+    return nil
+}
+</code></pre>
+<h3 id="2-sql-injection-prevention">2. <strong>SQL Injection Prevention</strong></h3>
+<h4 id="always-use-parameterized-queries">Always Use Parameterized Queries</h4>
+<pre><code class="language-go">// ✅ SQLC generates safe parameterized queries
+-- name: GetTenantBySubdomain :one
+SELECT * FROM tenants 
+WHERE subdomain = $1 AND deleted_at IS NULL;
+
+// Generated safe code:
+func (q *Queries) GetTenantBySubdomain(ctx context.Context, subdomain string) (Tenant, error) {
+    // Parameterized query - safe from SQL injection
+}
+
+// ❌ DON'T build dynamic SQL strings
+func (r *repository) GetBySubdomain(ctx context.Context, subdomain string) (*Tenant, error) {
+    // ❌ Vulnerable to SQL injection
+    query := fmt.Sprintf(&quot;SELECT * FROM tenants WHERE subdomain = '%s'&quot;, subdomain)
+    // ... execute query
+}
+</code></pre>
+<h2 id="performance-best-practices">📈 Performance Best Practices</h2>
+<h3 id="1-database-query-optimization">1. <strong>Database Query Optimization</strong></h3>
+<h4 id="efficient-query-patterns">Efficient Query Patterns</h4>
+<pre><code class="language-go">// ✅ Use appropriate indexes
+CREATE INDEX CONCURRENTLY idx_tenants_subdomain 
+ON tenants(subdomain) 
+WHERE deleted_at IS NULL;
+
+// ✅ Select only needed fields
+-- name: GetTenantBasicInfo :one
+SELECT id, name, slug, status FROM tenants
+WHERE id = $1 AND deleted_at IS NULL;
+
+// ✅ Use proper pagination
+-- name: ListTenants :many
+SELECT * FROM tenants
+WHERE deleted_at IS NULL
+  AND ($1::text IS NULL OR name ILIKE '%' || $1 || '%')
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
+</code></pre>
+<h3 id="2-caching-strategy">2. <strong>Caching Strategy</strong></h3>
+<h4 id="multi-level-caching">Multi-Level Caching</h4>
+<pre><code class="language-go">// ✅ Cache at appropriate levels
+func (s *service) GetTenant(ctx context.Context, id uuid.UUID) (*Tenant, error) {
+    // L1: In-memory cache (short TTL)
+    if tenant := s.memoryCache.Get(id); tenant != nil {
+        return tenant, nil
+    }
+
+    // L2: Redis cache (longer TTL)
+    cacheKey := buildTenantCacheKey(id)
+    var tenant Tenant
+    if err := s.cache.Get(ctx, cacheKey, &amp;tenant); err == nil {
+        s.memoryCache.Set(id, &amp;tenant, 5*time.Minute)
+        return &amp;tenant, nil
+    }
+
+    // L3: Database
+    dbTenant, err := s.repo.GetByID(ctx, id)
+    if err != nil {
+        return nil, err
+    }
+
+    // Cache for future requests
+    s.cache.Set(ctx, cacheKey, dbTenant, 30*time.Minute)
+    s.memoryCache.Set(id, dbTenant, 5*time.Minute)
+
+    return dbTenant, nil
+}
+</code></pre>
+<h2 id="common-anti-patterns-to-avoid">🚨 Common Anti-Patterns to Avoid</h2>
+<h3 id="1-architecture-violations">1. <strong>Architecture Violations</strong></h3>
+<pre><code class="language-go">// ❌ DON'T: Service importing handler
+package tenant
+import &quot;internal/api/handlers&quot;  // WRONG!
+
+// ❌ DON'T: Handler containing business logic
+func (h *Handler) CreateTenant(c *gin.Context) {
+    if len(req.Name) &lt; 3 {  // Business logic in handler
+        // WRONG!
+    }
+}
+
+// ❌ DON'T: Repository containing business logic
+func (r *Repository) Create(ctx context.Context, tenant *Tenant) error {
+    if tenant.Status == StatusInactive {  // Business logic in repository
+        return errors.New(&quot;cannot create inactive tenant&quot;)  // WRONG!
+    }
+}
+</code></pre>
+<h3 id="2-error-handling-anti-patterns">2. <strong>Error Handling Anti-Patterns</strong></h3>
+<pre><code class="language-go">// ❌ DON'T: Swallow errors
+func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*Tenant, error) {
+    _, err := s.repo.Create(ctx, tenant)
+    if err != nil {
+        // Silently ignoring error - WRONG!
+        return nil, nil
+    }
+}
+
+// ❌ DON'T: Generic error messages
+func (h *Handler) CreateTenant(c *gin.Context) {
+    _, err := h.service.CreateTenant(ctx, req)
+    if err != nil {
+        c.JSON(500, gin.H{&quot;error&quot;: &quot;Something went wrong&quot;})  // Not helpful - WRONG!
+    }
+}
+</code></pre>
+<h3 id="3-performance-anti-patterns">3. <strong>Performance Anti-Patterns</strong></h3>
+<pre><code class="language-go">// ❌ DON'T: N+1 query problems
+func (s *service) GetTenantsWithUsers(ctx context.Context) ([]*TenantWithUsers, error) {
+    tenants, err := s.repo.List(ctx, filter)
+    if err != nil {
+        return nil, err
+    }
+
+    for _, tenant := range tenants {
+        // N+1 problem - one query per tenant
+        users, _ := s.userRepo.GetByTenantID(ctx, tenant.ID)  // WRONG!
+        tenant.Users = users
+    }
+}
+
+// ✅ DO: Use proper joins or batch queries
+func (s *service) GetTenantsWithUsers(ctx context.Context) ([]*TenantWithUsers, error) {
+    return s.repo.GetTenantsWithUsers(ctx, filter)  // Single query with JOIN
+}
+</code></pre>
+<hr />
+<p>📚 <strong>Next Steps</strong>:
+- <a href="../error-handling/">Error Handling</a> - Comprehensive error handling strategies
+- <a href="../code-examples/">Code Examples</a> - See these patterns in action
+- <a href="../architecture/">Architecture Overview</a> - Review architectural principles</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="../../javascripts/search-analytics.js"></script>
+      
+        <script src="../../javascripts/contextual-help.js"></script>
+      
+    
+  </body>
+</html>

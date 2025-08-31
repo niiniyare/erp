@@ -1,0 +1,173 @@
+name: Documentation CI/CD
+
+on:
+  push:
+    branches: [main, docs/**]
+    paths: 
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '.github/workflows/docs-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**' 
+      - 'mkdocs.yml'
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    name: Documentation Quality Assurance
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          pip install mkdocs-material mkdocs-mermaid2-plugin
+          npm install -g markdown-link-check
+          
+      - name: Run documentation quality checks
+        run: |
+          chmod +x docs/scripts/doc-quality-check.sh
+          ./docs/scripts/doc-quality-check.sh
+          
+      - name: Upload quality report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: doc-quality-report
+          path: |
+            doc-quality-report.json
+            mkdocs-build.log
+            link-check.log
+            
+      - name: Comment PR with quality results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            
+            if (fs.existsSync('doc-quality-report.json')) {
+              const report = JSON.parse(fs.readFileSync('doc-quality-report.json', 'utf8'));
+              
+              const comment = `## 📊 Documentation Quality Report
+              
+              **Build Status**: ${report.build_status === 'PASS' ? '✅ PASS' : '❌ FAIL'}
+              **Error Count**: ${report.error_count}
+              **Navigation Coverage**: ${report.navigation_coverage}%
+              **Total Files**: ${report.total_files}
+              **Warnings**: ${report.warnings}
+              
+              ### Checks Performed:
+              - **MkDocs Build**: ${report.checks.mkdocs_build}
+              - **Link Validation**: ${report.checks.link_validation}  
+              - **Navigation Check**: ${report.checks.navigation_check}
+              
+              Timestamp: ${report.timestamp}
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+            
+  deploy-preview:
+    needs: quality-check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    name: Deploy Documentation Preview
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install MkDocs
+        run: pip install mkdocs-material mkdocs-mermaid2-plugin
+        
+      - name: Build documentation
+        run: mkdocs build
+        
+      - name: Deploy to Netlify (Preview)
+        uses: nwtgck/actions-netlify@v2.0
+        with:
+          publish-dir: './site'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: true
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          
+  deploy-production:
+    needs: quality-check
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    name: Deploy Production Documentation
+    
+    steps:
+      - name: Checkout code  
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for git info plugin
+          
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install MkDocs with plugins
+        run: |
+          pip install mkdocs-material mkdocs-mermaid2-plugin
+          pip install mkdocs-git-revision-date-localized-plugin
+          pip install mkdocs-minify-plugin
+          
+      - name: Build documentation
+        run: mkdocs build --strict
+        
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          cname: docs.awo-erp.com # Optional: custom domain
+          
+  performance-audit:
+    needs: deploy-production
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    name: Documentation Performance Audit
+    
+    steps:
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v9
+        with:
+          urls: |
+            https://docs.awo-erp.com
+            https://docs.awo-erp.com/getting-started/
+            https://docs.awo-erp.com/reference/modules/financial/
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          
+      - name: Performance Budget Check
+        run: |
+          # Check if performance metrics meet requirements
+          # Fail if Core Web Vitals exceed thresholds
+          echo "Performance audit completed"

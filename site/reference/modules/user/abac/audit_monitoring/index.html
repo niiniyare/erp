@@ -1,0 +1,5081 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../attribute_definitions/">
+      
+      
+        <link rel="next" href="../context_attribute/">
+      
+      
+      <link rel="icon" href="../../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>Audit & Monitoring - Awo ERP Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#audit-monitoring-api" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../../.." title="Awo ERP Documentation" class="md-header__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Awo ERP Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Audit & Monitoring
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../../getting-started/01-developer-quick-start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../../architecture/system-overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../../contributing/01-best-practices/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../financial/api-reference/" class="md-tabs__link">
+          
+  
+  
+  Financial Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  Users & IAM Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../audit/audit/" class="md-tabs__link">
+          
+  
+  
+  Audit Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../feature_flag/00_README/" class="md-tabs__link">
+          
+  
+  
+  Feature Flags Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../tenant/tenant-management/" class="md-tabs__link">
+          
+  
+  
+  Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Other Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../api-source/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../../.." title="Awo ERP Documentation" class="md-nav__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Awo ERP Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting-started/01-developer-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../architecture/system-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../architecture/abac-design-and-roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../architecture/FRAMEWORK_MIGRATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../architecture/GIN_HANDLERS_INVENTORY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GIN Handlers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/01-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/database-transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Transactions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/general-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/goa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Goa Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/middleware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Middleware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Observability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/securityHandbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Handbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Layer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/sqlc-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Financial Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Financial Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../financial/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../financial/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../financial/currency-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Currency Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../financial/deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../financial/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Task Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../financial/integration-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../financial/security-compliance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security & Compliance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../financial/testing-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Users & IAM Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Users & IAM Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01_identity_model_and_rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity & RBAC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02_abac_evaluation_lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03_hybrid_access_control_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hybrid Access Control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04_architecture_service_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../IAM_MAPPING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Restructuring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../PHASE_3_ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../RELEASE_NOTES_RC1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release Notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_11" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5_11" id="__nav_5_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    ABAC Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5_11">
+            <span class="md-nav__icon md-icon"></span>
+            ABAC Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../administrative_performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Administrative Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../attribute_definitions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Attribute Definitions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Audit & Monitoring
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit & Monitoring
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#business-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      Business Value
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compliance-standards-supported" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compliance Standards Supported
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Endpoints
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#audit-log-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Audit Log Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Audit Log Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query-audit-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query Audit Logs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-audit-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Export Audit Logs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-event-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Event Monitoring
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security Event Monitoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-security-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get Security Events
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-behavior-analytics" class="md-nav__link">
+    <span class="md-ellipsis">
+      User Behavior Analytics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User Behavior Analytics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-user-behavior-analytics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get User Behavior Analytics
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compliance-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compliance Reporting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Compliance Reporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generate-compliance-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generate Compliance Report
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gdpr-data-subject-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      GDPR Data Subject Request
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#goa-dsl-implementation-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Goa DSL Implementation Notes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Goa DSL Implementation Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#service-definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Definition
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Definitions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-privacy-middleware" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security &amp; Privacy Middleware
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-scalability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance &amp; Scalability
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context_attribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../desing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy_evaluation_CEL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CEL Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy_evaluation_expr-lang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expression Language
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../POLICY_SERVICE_ENHANCEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Service Enhancement
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Audit Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Audit Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../audit/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../audit/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Feature Flags Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Feature Flags Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../feature_flag/00_README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../feature_flag/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../feature_flag/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Onboarding
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../feature_flag/onboarding/01_introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../feature_flag/onboarding/02_core_concepts_and_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../feature_flag/onboarding/03_developer_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../feature_flag/onboarding/04_admin_api_manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../feature_flag/onboarding/05_lifecycle_gotchas_and_improvements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lifecycle & Improvements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tenant Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Tenant Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tenant/tenant-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tenant/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Other Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../airline-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Airline Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../asset-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Asset Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../forecourt-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forecourt Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../financial-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Financial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../human-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Human Resources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Phases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../inventory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Inventory Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../module-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Module Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../project-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../restaurant-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Restaurant Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../retail-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retail Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tax-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tax Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technical-specifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Technical Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../workflow-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow Engine
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/user-service-abac-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_3" id="__nav_10_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core APIs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            Core APIs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/core-apis/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/core-apis/auth/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/core-apis/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/core-apis/entities/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/core-apis/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/core-apis/organizations/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Org Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/core-apis/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/core-apis/users/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_4" id="__nav_10_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_4">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/workflows/access-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/workflows/access-requests/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Request Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/workflows/conditional-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/workflows/user-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_5" id="__nav_10_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/testing/manual/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/testing/manual/manual-curl-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_6" id="__nav_10_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_6">
+            <span class="md-nav__icon md-icon"></span>
+            Utilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../api-source/utilities/todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TODO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="audit-monitoring-api">Audit &amp; Monitoring API</h1>
+<h2 id="overview">Overview</h2>
+<p>The Audit &amp; Monitoring API provides comprehensive audit trails, compliance reporting, and security monitoring for regulatory requirements. This service ensures complete visibility into access decisions, user behaviors, and system security events.</p>
+<p><strong>Goa Service</strong>: <code>audit-monitoring</code><br />
+<strong>Base Path</strong>: <code>/api/v1/audit</code></p>
+<h2 id="business-value">Business Value</h2>
+<ul>
+<li><strong>Regulatory Compliance</strong>: Complete audit trails for SOX, GDPR, HIPAA, PCI compliance</li>
+<li><strong>Security Intelligence</strong>: Real-time threat detection and behavioral analytics</li>
+<li><strong>Operational Insights</strong>: Performance monitoring and system optimization data</li>
+<li><strong>Risk Management</strong>: Proactive identification and mitigation of security risks</li>
+</ul>
+<h2 id="compliance-standards-supported">Compliance Standards Supported</h2>
+<ul>
+<li><strong>SOX</strong>: Financial data access and change management</li>
+<li><strong>GDPR</strong>: Data processing and user consent tracking</li>
+<li><strong>HIPAA</strong>: Healthcare data access and privacy controls</li>
+<li><strong>PCI DSS</strong>: Payment card data protection</li>
+<li><strong>ISO 27001</strong>: Information security management</li>
+</ul>
+<h2 id="api-endpoints">API Endpoints</h2>
+<h3 id="audit-log-management">Audit Log Management</h3>
+<h4 id="query-audit-logs">Query Audit Logs</h4>
+<p><strong>Action</strong>: <code>QueryAuditLogs</code></p>
+<pre><code class="language-yaml">GET /logs?start_time=2025-01-15T00:00:00Z&amp;end_time=2025-01-15T23:59:59Z&amp;event_category=ACCESS&amp;page=1&amp;limit=100
+Authorization: Bearer &lt;jwt_token&gt;
+X-Tenant-ID: &lt;tenant_uuid&gt;
+
+Query Parameters:
+- start_time: string (ISO 8601, required) - Start time for log query
+- end_time: string (ISO 8601, required) - End time for log query
+- event_category: ACCESS, ADMIN, DATA, AUTH, SYSTEM, COMPLIANCE
+- event_type: string - Specific event type filter
+- user_id: string - Filter by specific user
+- resource_id: string - Filter by specific resource
+- decision: ALLOW, DENY, PENDING_APPROVAL, ERROR
+- severity: LOW, INFO, WARN, HIGH, CRITICAL
+- risk_score_min: integer (0-100) - Minimum risk score
+- risk_score_max: integer (0-100) - Maximum risk score
+- compliance_flags: string - Comma-separated compliance flags
+- correlation_id: string - Request correlation ID
+- source_system: string - Originating system
+- page: integer (default: 1)
+- limit: integer (default: 100, max: 1000)
+- sort: timestamp, risk_score, user_id, resource_id (default: timestamp)
+- order: asc, desc (default: desc)
+
+Response: 200 OK
+{
+  &quot;query_id&quot;: &quot;query_550e8400-e29b-41d4-a716-446655440000&quot;,
+  &quot;executed_at&quot;: &quot;2025-01-15T14:30:00Z&quot;,
+  &quot;query_parameters&quot;: {
+    &quot;start_time&quot;: &quot;2025-01-15T00:00:00Z&quot;,
+    &quot;end_time&quot;: &quot;2025-01-15T23:59:59Z&quot;,
+    &quot;event_category&quot;: &quot;ACCESS&quot;,
+    &quot;filters_applied&quot;: 3
+  },
+  &quot;audit_logs&quot;: [
+    {
+      &quot;id&quot;: &quot;audit_550e8400-e29b-41d4-a716-446655440000&quot;,
+      &quot;event_type&quot;: &quot;POLICY_EVALUATION&quot;,
+      &quot;event_category&quot;: &quot;ACCESS&quot;,
+      &quot;severity&quot;: &quot;INFO&quot;,
+      &quot;timestamp&quot;: &quot;2025-01-15T14:30:00.123Z&quot;,
+      &quot;correlation_id&quot;: &quot;corr_xyz789&quot;,
+      &quot;user_context&quot;: {
+        &quot;user_id&quot;: &quot;user_123&quot;,
+        &quot;username&quot;: &quot;john.analyst&quot;,
+        &quot;department&quot;: &quot;finance&quot;,
+        &quot;session_id&quot;: &quot;session_abc123&quot;,
+        &quot;ip_address&quot;: &quot;192.168.1.100&quot;,
+        &quot;user_agent&quot;: &quot;Mozilla/5.0...&quot;,
+        &quot;location&quot;: &quot;corporate_network&quot;
+      },
+      &quot;resource_context&quot;: {
+        &quot;resource_id&quot;: &quot;resource_789&quot;,
+        &quot;resource_type&quot;: &quot;financial_report&quot;,
+        &quot;classification&quot;: &quot;confidential&quot;,
+        &quot;owner&quot;: &quot;finance_team&quot;
+      },
+      &quot;action_context&quot;: {
+        &quot;action&quot;: &quot;read&quot;,
+        &quot;risk_level&quot;: &quot;medium&quot;,
+        &quot;compliance_required&quot;: true
+      },
+      &quot;decision_details&quot;: {
+        &quot;decision&quot;: &quot;ALLOW&quot;,
+        &quot;evaluation_time_ms&quot;: 15.2,
+        &quot;policies_evaluated&quot;: [
+          {
+            &quot;policy_id&quot;: &quot;policy_550e8400-e29b-41d4-a716-446655440001&quot;,
+            &quot;policy_name&quot;: &quot;financial_data_access_policy&quot;,
+            &quot;effect&quot;: &quot;ALLOW&quot;,
+            &quot;matched&quot;: true,
+            &quot;evaluation_result&quot;: &quot;SATISFIED&quot;
+          }
+        ],
+        &quot;pdp_instance&quot;: &quot;pdp-cluster-01&quot;
+      },
+      &quot;obligations_executed&quot;: [
+        {
+          &quot;type&quot;: &quot;LOG_ACCESS&quot;,
+          &quot;status&quot;: &quot;executed&quot;,
+          &quot;execution_time_ms&quot;: 2.1,
+          &quot;parameters&quot;: {
+            &quot;level&quot;: &quot;HIGH&quot;,
+            &quot;retention_days&quot;: 2555
+          }
+        }
+      ],
+      &quot;risk_assessment&quot;: {
+        &quot;risk_score&quot;: 25,
+        &quot;risk_factors&quot;: [
+          {
+            &quot;factor&quot;: &quot;high_value_resource&quot;,
+            &quot;score&quot;: 15,
+            &quot;weight&quot;: 0.3
+          },
+          {
+            &quot;factor&quot;: &quot;sensitive_action&quot;,
+            &quot;score&quot;: 10,
+            &quot;weight&quot;: 0.2
+          }
+        ],
+        &quot;risk_level&quot;: &quot;medium&quot;
+      },
+      &quot;compliance_context&quot;: {
+        &quot;compliance_flags&quot;: [&quot;SOX&quot;, &quot;PCI&quot;],
+        &quot;legal_basis&quot;: &quot;legitimate_business_interest&quot;,
+        &quot;data_subject_consent&quot;: &quot;not_required&quot;,
+        &quot;retention_policy&quot;: &quot;financial_records_7_years&quot;
+      },
+      &quot;system_context&quot;: {
+        &quot;tenant_id&quot;: &quot;tenant_123&quot;,
+        &quot;source_system&quot;: &quot;web_portal&quot;,
+        &quot;api_version&quot;: &quot;v1&quot;,
+        &quot;request_size_bytes&quot;: 1024,
+        &quot;response_size_bytes&quot;: 2048
+      }
+    }
+  ],
+  &quot;pagination&quot;: {
+    &quot;page&quot;: 1,
+    &quot;limit&quot;: 100,
+    &quot;total&quot;: 15647,
+    &quot;total_pages&quot;: 157,
+    &quot;has_next&quot;: true,
+    &quot;has_previous&quot;: false
+  },
+  &quot;summary&quot;: {
+    &quot;total_events&quot;: 15647,
+    &quot;allow_decisions&quot;: 13234,
+    &quot;deny_decisions&quot;: 2413,
+    &quot;pending_approvals&quot;: 134,
+    &quot;errors&quot;: 66,
+    &quot;unique_users&quot;: 1547,
+    &quot;unique_resources&quot;: 8923,
+    &quot;avg_risk_score&quot;: 23.5,
+    &quot;high_risk_events&quot;: 234,
+    &quot;compliance_events&quot;: {
+      &quot;SOX&quot;: 8234,
+      &quot;GDPR&quot;: 4567,
+      &quot;HIPAA&quot;: 2134,
+      &quot;PCI&quot;: 1234
+    }
+  },
+  &quot;performance&quot;: {
+    &quot;query_execution_time_ms&quot;: 1234.5,
+    &quot;records_scanned&quot;: 156789,
+    &quot;index_usage&quot;: &quot;optimal&quot;,
+    &quot;cache_hit_rate&quot;: 0.78
+  }
+}
+</code></pre>
+<h4 id="export-audit-logs">Export Audit Logs</h4>
+<p><strong>Action</strong>: <code>ExportAuditLogs</code></p>
+<pre><code class="language-yaml">POST /logs/export
+Content-Type: application/json
+Authorization: Bearer &lt;jwt_token&gt;
+X-Tenant-ID: &lt;tenant_uuid&gt;
+
+Request Body:
+{
+  &quot;export_request&quot;: {
+    &quot;name&quot;: &quot;Q4_2024_Financial_Access_Audit&quot;,
+    &quot;description&quot;: &quot;Quarterly audit of financial data access for SOX compliance&quot;,
+    &quot;time_range&quot;: {
+      &quot;start&quot;: &quot;2024-10-01T00:00:00Z&quot;,
+      &quot;end&quot;: &quot;2024-12-31T23:59:59Z&quot;
+    },
+    &quot;filters&quot;: {
+      &quot;event_categories&quot;: [&quot;ACCESS&quot;, &quot;ADMIN&quot;],
+      &quot;compliance_flags&quot;: [&quot;SOX&quot;],
+      &quot;resource_classifications&quot;: [&quot;financial&quot;, &quot;confidential&quot;],
+      &quot;min_risk_score&quot;: 50,
+      &quot;include_decisions&quot;: [&quot;ALLOW&quot;, &quot;DENY&quot;]
+    },
+    &quot;format&quot;: &quot;csv&quot;,
+    &quot;compression&quot;: &quot;gzip&quot;,
+    &quot;include_sensitive_data&quot;: false,
+    &quot;anonymize_users&quot;: false
+  },
+  &quot;delivery&quot;: {
+    &quot;method&quot;: &quot;secure_download&quot;,
+    &quot;notification_email&quot;: &quot;compliance@company.com&quot;,
+    &quot;retention_days&quot;: 30,
+    &quot;encryption_required&quot;: true
+  },
+  &quot;compliance_context&quot;: {
+    &quot;audit_purpose&quot;: &quot;SOX_quarterly_review&quot;,
+    &quot;auditor&quot;: &quot;external_auditor_xyz&quot;,
+    &quot;case_reference&quot;: &quot;SOX-2024-Q4-001&quot;,
+    &quot;legal_basis&quot;: &quot;regulatory_compliance&quot;
+  }
+}
+
+Response: 202 Accepted
+{
+  &quot;export_id&quot;: &quot;export_550e8400-e29b-41d4-a716-446655440000&quot;,
+  &quot;status&quot;: &quot;processing&quot;,
+  &quot;created_at&quot;: &quot;2025-01-15T14:30:00Z&quot;,
+  &quot;estimated_completion&quot;: &quot;2025-01-15T14:45:00Z&quot;,
+  &quot;export_details&quot;: {
+    &quot;name&quot;: &quot;Q4_2024_Financial_Access_Audit&quot;,
+    &quot;format&quot;: &quot;csv&quot;,
+    &quot;compression&quot;: &quot;gzip&quot;,
+    &quot;encryption&quot;: &quot;AES-256&quot;
+  },
+  &quot;estimated_records&quot;: 25678,
+  &quot;estimated_size_mb&quot;: 45.7,
+  &quot;compliance_tracking&quot;: {
+    &quot;audit_purpose&quot;: &quot;SOX_quarterly_review&quot;,
+    &quot;retention_period&quot;: &quot;30_days&quot;,
+    &quot;auto_delete_at&quot;: &quot;2025-02-14T14:30:00Z&quot;
+  },
+  &quot;download_info&quot;: {
+    &quot;will_be_available_at&quot;: &quot;https://secure-exports.company.com/exports/export_550e8400-e29b-41d4-a716-446655440000&quot;,
+    &quot;access_token_required&quot;: true,
+    &quot;expires_at&quot;: &quot;2025-02-14T14:30:00Z&quot;
+  }
+}
+</code></pre>
+<h3 id="security-event-monitoring">Security Event Monitoring</h3>
+<h4 id="get-security-events">Get Security Events</h4>
+<p><strong>Action</strong>: <code>GetSecurityEvents</code></p>
+<pre><code class="language-yaml">GET /security-events?severity=HIGH,CRITICAL&amp;start_time=2025-01-15T00:00:00Z&amp;status=open,investigating
+Authorization: Bearer &lt;jwt_token&gt;
+X-Tenant-ID: &lt;tenant_uuid&gt;
+
+Query Parameters:
+- severity: LOW, INFO, WARN, HIGH, CRITICAL
+- start_time: string (ISO 8601)
+- end_time: string (ISO 8601)
+- status: open, investigating, resolved, closed
+- event_type: string - Specific security event type
+- user_id: string - Filter by user
+- analyst_assigned: string - Filter by assigned analyst
+- page: integer (default: 1)
+- limit: integer (default: 50, max: 500)
+
+Response: 200 OK
+{
+  &quot;query_executed_at&quot;: &quot;2025-01-15T14:30:00Z&quot;,
+  &quot;security_events&quot;: [
+    {
+      &quot;id&quot;: &quot;sec_event_550e8400-e29b-41d4-a716-446655440001&quot;,
+      &quot;event_type&quot;: &quot;SUSPICIOUS_ACCESS_PATTERN&quot;,
+      &quot;severity&quot;: &quot;HIGH&quot;,
+      &quot;status&quot;: &quot;investigating&quot;,
+      &quot;created_at&quot;: &quot;2025-01-15T14:45:00Z&quot;,
+      &quot;updated_at&quot;: &quot;2025-01-15T15:15:00Z&quot;,
+      &quot;detection_method&quot;: &quot;behavioral_analytics&quot;,
+      &quot;confidence_score&quot;: 0.87,
+      &quot;subject_context&quot;: {
+        &quot;user_id&quot;: &quot;user_456&quot;,
+        &quot;username&quot;: &quot;jane.contractor&quot;,
+        &quot;department&quot;: &quot;external&quot;,
+        &quot;employment_type&quot;: &quot;contractor&quot;,
+        &quot;last_login&quot;: &quot;2025-01-15T08:30:00Z&quot;
+      },
+      &quot;event_details&quot;: {
+        &quot;description&quot;: &quot;User accessing resources outside normal patterns&quot;,
+        &quot;detection_rules&quot;: [
+          &quot;unusual_time_access&quot;,
+          &quot;different_location_access&quot;,
+          &quot;bulk_resource_access&quot;,
+          &quot;escalated_permission_usage&quot;
+        ],
+        &quot;indicators&quot;: [
+          {
+            &quot;type&quot;: &quot;temporal_anomaly&quot;,
+            &quot;description&quot;: &quot;Access at 02:30 AM (usual: 09:00-17:00)&quot;,
+            &quot;severity&quot;: &quot;medium&quot;,
+            &quot;confidence&quot;: 0.92
+          },
+          {
+            &quot;type&quot;: &quot;geographic_anomaly&quot;,
+            &quot;description&quot;: &quot;Access from new country (Romania)&quot;,
+            &quot;severity&quot;: &quot;high&quot;,
+            &quot;confidence&quot;: 0.95
+          },
+          {
+            &quot;type&quot;: &quot;volume_anomaly&quot;,
+            &quot;description&quot;: &quot;45 resources accessed in 10 minutes (usual: 3-5)&quot;,
+            &quot;severity&quot;: &quot;high&quot;,
+            &quot;confidence&quot;: 0.89
+          }
+        ],
+        &quot;affected_resources&quot;: [
+          {
+            &quot;resource_id&quot;: &quot;resource_sensitive_001&quot;,
+            &quot;classification&quot;: &quot;confidential&quot;,
+            &quot;access_count&quot;: 12
+          },
+          {
+            &quot;resource_id&quot;: &quot;resource_sensitive_002&quot;, 
+            &quot;classification&quot;: &quot;restricted&quot;,
+            &quot;access_count&quot;: 8
+          }
+        ]
+      },
+      &quot;risk_assessment&quot;: {
+        &quot;risk_score&quot;: 85,
+        &quot;risk_level&quot;: &quot;high&quot;,
+        &quot;potential_impact&quot;: &quot;data_exfiltration&quot;,
+        &quot;business_impact&quot;: &quot;high&quot;,
+        &quot;technical_impact&quot;: &quot;medium&quot;
+      },
+      &quot;automated_response&quot;: {
+        &quot;actions_taken&quot;: [
+          &quot;session_flagged&quot;,
+          &quot;manager_notified&quot;,
+          &quot;security_team_alerted&quot;,
+          &quot;enhanced_monitoring_enabled&quot;
+        ],
+        &quot;additional_monitoring&quot;: true,
+        &quot;access_restrictions&quot;: [
+          &quot;bulk_download_blocked&quot;,
+          &quot;export_disabled&quot;
+        ]
+      },
+      &quot;investigation&quot;: {
+        &quot;status&quot;: &quot;investigating&quot;,
+        &quot;assigned_analyst&quot;: &quot;security_analyst_01&quot;,
+        &quot;assigned_at&quot;: &quot;2025-01-15T15:00:00Z&quot;,
+        &quot;priority&quot;: &quot;high&quot;,
+        &quot;estimated_resolution&quot;: &quot;2025-01-15T18:00:00Z&quot;,
+        &quot;investigation_notes&quot;: [
+          {
+            &quot;timestamp&quot;: &quot;2025-01-15T15:15:00Z&quot;,
+            &quot;analyst&quot;: &quot;security_analyst_01&quot;,
+            &quot;note&quot;: &quot;Reviewing user travel patterns and VPN logs&quot;
+          }
+        ]
+      },
+      &quot;timeline&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;2025-01-15T02:30:00Z&quot;,
+          &quot;event&quot;: &quot;Anomalous login detected&quot;,
+          &quot;details&quot;: &quot;Login from new location (Romania)&quot;
+        },
+        {
+          &quot;timestamp&quot;: &quot;2025-01-15T02:35:00Z&quot;,
+          &quot;event&quot;: &quot;Bulk resource access initiated&quot;,
+          &quot;details&quot;: &quot;45 sensitive documents accessed rapidly&quot;
+        },
+        {
+          &quot;timestamp&quot;: &quot;2025-01-15T02:45:00Z&quot;,
+          &quot;event&quot;: &quot;Security alert triggered&quot;,
+          &quot;details&quot;: &quot;Behavioral analytics threshold exceeded&quot;
+        }
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;sec_event_550e8400-e29b-41d4-a716-446655440002&quot;,
+      &quot;event_type&quot;: &quot;REPEATED_ACCESS_DENIALS&quot;,
+      &quot;severity&quot;: &quot;CRITICAL&quot;,
+      &quot;status&quot;: &quot;open&quot;,
+      &quot;created_at&quot;: &quot;2025-01-15T13:30:00Z&quot;,
+      &quot;detection_method&quot;: &quot;rule_based&quot;,
+      &quot;confidence_score&quot;: 0.98,
+      &quot;subject_context&quot;: {
+        &quot;user_id&quot;: &quot;user_789&quot;,
+        &quot;username&quot;: &quot;bob.former_employee&quot;,
+        &quot;employment_status&quot;: &quot;terminated&quot;,
+        &quot;termination_date&quot;: &quot;2025-01-10T00:00:00Z&quot;
+      },
+      &quot;event_details&quot;: {
+        &quot;description&quot;: &quot;Multiple failed access attempts to classified resources&quot;,
+        &quot;attempt_count&quot;: 23,
+        &quot;success_count&quot;: 0,
+        &quot;time_span_minutes&quot;: 15,
+        &quot;indicators&quot;: [
+          {
+            &quot;type&quot;: &quot;credential_stuffing&quot;,
+            &quot;description&quot;: &quot;Multiple password attempts detected&quot;,
+            &quot;severity&quot;: &quot;critical&quot;,
+            &quot;confidence&quot;: 0.96
+          },
+          {
+            &quot;type&quot;: &quot;privilege_escalation&quot;,
+            &quot;description&quot;: &quot;Attempts to access resources above clearance&quot;,
+            &quot;severity&quot;: &quot;critical&quot;,
+            &quot;confidence&quot;: 0.94
+          }
+        ],
+        &quot;targeted_resources&quot;: [
+          {
+            &quot;resource_id&quot;: &quot;classified_project_alpha&quot;,
+            &quot;classification&quot;: &quot;top_secret&quot;,
+            &quot;attempt_count&quot;: 8
+          },
+          {
+            &quot;resource_id&quot;: &quot;financial_projections_2025&quot;,
+            &quot;classification&quot;: &quot;confidential&quot;,
+            &quot;attempt_count&quot;: 15
+          }
+        ]
+      },
+      &quot;risk_assessment&quot;: {
+        &quot;risk_score&quot;: 98,
+        &quot;risk_level&quot;: &quot;critical&quot;,
+        &quot;potential_impact&quot;: &quot;data_breach&quot;,
+        &quot;business_impact&quot;: &quot;critical&quot;,
+        &quot;technical_impact&quot;: &quot;high&quot;
+      },
+      &quot;automated_response&quot;: {
+        &quot;actions_taken&quot;: [
+          &quot;account_locked&quot;,
+          &quot;ip_address_blocked&quot;,
+          &quot;incident_created&quot;,
+          &quot;security_team_alerted&quot;,
+          &quot;law_enforcement_notified&quot;
+        ],
+        &quot;escalation_level&quot;: &quot;immediate&quot;,
+        &quot;incident_id&quot;: &quot;INC-2025-001&quot;
+      },
+      &quot;investigation&quot;: {
+        &quot;status&quot;: &quot;assigned&quot;,
+        &quot;assigned_analyst&quot;: &quot;security_manager_01&quot;,
+        &quot;priority&quot;: &quot;critical&quot;,
+        &quot;escalated&quot;: true,
+        &quot;law_enforcement_involved&quot;: true
+      }
+    }
+  ],
+  &quot;summary&quot;: {
+    &quot;total_events&quot;: 2,
+    &quot;by_severity&quot;: {
+      &quot;critical&quot;: 1,
+      &quot;high&quot;: 1,
+      &quot;medium&quot;: 0,
+      &quot;low&quot;: 0
+    },
+    &quot;by_status&quot;: {
+      &quot;open&quot;: 1,
+      &quot;investigating&quot;: 1,
+      &quot;resolved&quot;: 0
+    },
+    &quot;avg_risk_score&quot;: 91.5,
+    &quot;events_last_24h&quot;: 15,
+    &quot;trend&quot;: &quot;increasing&quot;
+  }
+}
+</code></pre>
+<h3 id="user-behavior-analytics">User Behavior Analytics</h3>
+<h4 id="get-user-behavior-analytics">Get User Behavior Analytics</h4>
+<p><strong>Action</strong>: <code>GetUserBehaviorAnalytics</code></p>
+<pre><code class="language-yaml">GET /analytics/user-behavior/{user_id}?period=30d&amp;include_predictions=true&amp;include_risk_factors=true
+Authorization: Bearer &lt;jwt_token&gt;
+X-Tenant-ID: &lt;tenant_uuid&gt;
+
+Path Parameters:
+- user_id: string (required)
+
+Query Parameters:
+- period: 1d, 7d, 30d, 90d (default: 30d)
+- include_predictions: boolean (default: false)
+- include_risk_factors: boolean (default: true)
+- include_peer_comparison: boolean (default: false)
+- detail_level: summary, detailed, comprehensive (default: detailed)
+
+Response: 200 OK
+{
+  &quot;user_id&quot;: &quot;user_123&quot;,
+  &quot;username&quot;: &quot;john.analyst&quot;,
+  &quot;analysis_period&quot;: &quot;30d&quot;,
+  &quot;generated_at&quot;: &quot;2025-01-15T15:00:00Z&quot;,
+  &quot;analysis_version&quot;: &quot;2.1.5&quot;,
+  &quot;baseline_behavior&quot;: {
+    &quot;typical_access_patterns&quot;: {
+      &quot;work_hours&quot;: {
+        &quot;start_time&quot;: &quot;09:15&quot;,
+        &quot;end_time&quot;: &quot;17:30&quot;,
+        &quot;time_zone&quot;: &quot;PST&quot;,
+        &quot;consistency_score&quot;: 0.89
+      },
+      &quot;peak_activity_hours&quot;: [9, 10, 11, 14, 15, 16],
+      &quot;weekend_activity&quot;: &quot;minimal&quot;,
+      &quot;holiday_activity&quot;: &quot;none&quot;
+    },
+    &quot;resource_access_patterns&quot;: {
+      &quot;most_accessed_resources&quot;: [
+        {
+          &quot;resource_type&quot;: &quot;financial_reports&quot;,
+          &quot;access_frequency&quot;: &quot;daily&quot;,
+          &quot;typical_actions&quot;: [&quot;read&quot;, &quot;export&quot;],
+          &quot;avg_session_duration_minutes&quot;: 23,
+          &quot;consistency_score&quot;: 0.94
+        },
+        {
+          &quot;resource_type&quot;: &quot;budget_documents&quot;,
+          &quot;access_frequency&quot;: &quot;weekly&quot;,
+          &quot;typical_actions&quot;: [&quot;read&quot;, &quot;update&quot;],
+          &quot;avg_session_duration_minutes&quot;: 45,
+          &quot;consistency_score&quot;: 0.87
+        }
+      ],
+      &quot;resource_diversity_score&quot;: 0.67,
+      &quot;exploration_tendency&quot;: &quot;low&quot;
+    },
+    &quot;location_patterns&quot;: {
+      &quot;primary_locations&quot;: [&quot;corporate_office&quot;, &quot;home_vpn&quot;],
+      &quot;location_consistency&quot;: 0.92,
+      &quot;travel_frequency&quot;: &quot;low&quot;,
+      &quot;unusual_locations&quot;: []
+    },
+    &quot;device_patterns&quot;: {
+      &quot;primary_devices&quot;: [&quot;desktop_corp_001&quot;, &quot;laptop_corp_456&quot;],
+      &quot;device_consistency&quot;: 0.95,
+      &quot;new_device_frequency&quot;: &quot;very_low&quot;,
+      &quot;device_security_score&quot;: 0.98
+    },
+    &quot;session_patterns&quot;: {
+      &quot;avg_session_duration_minutes&quot;: 342,
+      &quot;sessions_per_day&quot;: 1.2,
+      &quot;multi_session_tendency&quot;: &quot;low&quot;,
+      &quot;session_overlap&quot;: &quot;rare&quot;
+    }
+  },
+  &quot;recent_anomalies&quot;: [
+    {
+      &quot;detected_at&quot;: &quot;2025-01-14T02:30:00Z&quot;,
+      &quot;type&quot;: &quot;unusual_time_access&quot;,
+      &quot;severity&quot;: &quot;medium&quot;,
+      &quot;description&quot;: &quot;Access attempted at 02:30 AM (typical: 09:15-17:30)&quot;,
+      &quot;risk_score&quot;: 65,
+      &quot;investigation_status&quot;: &quot;resolved&quot;,
+      &quot;resolution&quot;: &quot;Legitimate emergency access confirmed&quot;,
+      &quot;context&quot;: {
+        &quot;business_justification&quot;: &quot;Emergency financial report for board meeting&quot;,
+        &quot;manager_approval&quot;: &quot;mgr_456&quot;,
+        &quot;duration_minutes&quot;: 45
+      }
+    },
+    {
+      &quot;detected_at&quot;: &quot;2025-01-13T14:30:00Z&quot;,
+      &quot;type&quot;: &quot;new_resource_type_access&quot;,
+      &quot;severity&quot;: &quot;low&quot;,
+      &quot;description&quot;: &quot;First access to HR documents (typically accesses financial docs)&quot;,
+      &quot;risk_score&quot;: 25,
+      &quot;investigation_status&quot;: &quot;cleared&quot;,
+      &quot;context&quot;: {
+        &quot;business_reason&quot;: &quot;Cross-department collaboration project&quot;,
+        &quot;project_id&quot;: &quot;PROJ-2025-001&quot;
+      }
+    }
+  ],
+  &quot;risk_profile&quot;: {
+    &quot;overall_risk_score&quot;: 22,
+    &quot;risk_level&quot;: &quot;low&quot;,
+    &quot;risk_trend&quot;: &quot;stable&quot;,
+    &quot;last_risk_assessment&quot;: &quot;2025-01-15T12:00:00Z&quot;,
+    &quot;risk_factors&quot;: {
+      &quot;access_pattern_consistency&quot;: {
+        &quot;score&quot;: 0.89,
+        &quot;weight&quot;: 0.25,
+        &quot;impact&quot;: &quot;positive&quot;
+      },
+      &quot;location_variance&quot;: {
+        &quot;score&quot;: 0.08,
+        &quot;weight&quot;: 0.20,
+        &quot;impact&quot;: &quot;positive&quot;
+      },
+      &quot;device_consistency&quot;: {
+        &quot;score&quot;: 0.95,
+        &quot;weight&quot;: 0.15,
+        &quot;impact&quot;: &quot;positive&quot;
+      },
+      &quot;time_pattern_regularity&quot;: {
+        &quot;score&quot;: 0.87,
+        &quot;weight&quot;: 0.20,
+        &quot;impact&quot;: &quot;positive&quot;
+      },
+      &quot;privilege_usage&quot;: {
+        &quot;score&quot;: 0.76,
+        &quot;weight&quot;: 0.20,
+        &quot;impact&quot;: &quot;neutral&quot;
+      }
+    },
+    &quot;behavioral_indicators&quot;: {
+      &quot;insider_threat_score&quot;: 0.05,
+      &quot;account_compromise_score&quot;: 0.12,
+      &quot;privilege_abuse_score&quot;: 0.08,
+      &quot;data_exfiltration_score&quot;: 0.03
+    }
+  },
+  &quot;productivity_metrics&quot;: {
+    &quot;documents_accessed&quot;: 1247,
+    &quot;documents_created&quot;: 89,
+    &quot;documents_modified&quot;: 156,
+    &quot;transactions_processed&quot;: 2345,
+    &quot;approvals_completed&quot;: 67,
+    &quot;collaboration_score&quot;: 0.78,
+    &quot;feature_adoption_rate&quot;: 0.85,
+    &quot;efficiency_score&quot;: 0.82
+  },
+  &quot;predictions&quot;: {
+    &quot;likely_next_resources&quot;: [
+      {
+        &quot;resource_type&quot;: &quot;quarterly_reports&quot;,
+        &quot;probability&quot;: 0.78,
+        &quot;reason&quot;: &quot;End of quarter approaching&quot;,
+        &quot;typical_access_time&quot;: &quot;morning&quot;
+      },
+      {
+        &quot;resource_type&quot;: &quot;budget_planning_docs&quot;,
+        &quot;probability&quot;: 0.65,
+        &quot;reason&quot;: &quot;Budget cycle preparation&quot;,
+        &quot;typical_access_time&quot;: &quot;afternoon&quot;
+      }
+    ],
+    &quot;potential_risk_factors&quot;: [
+      {
+        &quot;factor&quot;: &quot;increased_weekend_access&quot;,
+        &quot;probability&quot;: 0.15,
+        &quot;risk_impact&quot;: &quot;low&quot;,
+        &quot;mitigation&quot;: &quot;additional_monitoring&quot;
+      },
+      {
+        &quot;factor&quot;: &quot;travel_related_access&quot;,
+        &quot;probability&quot;: 0.08,
+        &quot;risk_impact&quot;: &quot;medium&quot;,
+        &quot;mitigation&quot;: &quot;location_verification&quot;
+      }
+    ],
+    &quot;optimal_access_times&quot;: [
+      {&quot;hour&quot;: 10, &quot;efficiency&quot;: 0.94},
+      {&quot;hour&quot;: 14, &quot;efficiency&quot;: 0.91},
+      {&quot;hour&quot;: 15, &quot;efficiency&quot;: 0.88}
+    ]
+  },
+  &quot;peer_comparison&quot;: {
+    &quot;peer_group&quot;: &quot;finance_analysts&quot;,
+    &quot;peer_group_size&quot;: 45,
+    &quot;risk_score_percentile&quot;: 15,
+    &quot;activity_level_percentile&quot;: 67,
+    &quot;security_score_percentile&quot;: 89,
+    &quot;productivity_percentile&quot;: 78
+  },
+  &quot;recommendations&quot;: [
+    &quot;User exhibits excellent security behavior patterns&quot;,
+    &quot;Consider for advanced security training program&quot;,
+    &quot;Monitor upcoming travel for location-based access&quot;,
+    &quot;Review quarterly access patterns for optimization&quot;
+  ]
+}
+</code></pre>
+<h3 id="compliance-reporting">Compliance Reporting</h3>
+<h4 id="generate-compliance-report">Generate Compliance Report</h4>
+<p><strong>Action</strong>: <code>GenerateComplianceReport</code></p>
+<pre><code class="language-yaml">POST /compliance/reports
+Content-Type: application/json
+Authorization: Bearer &lt;jwt_token&gt;
+X-Tenant-ID: &lt;tenant_uuid&gt;
+
+Request Body:
+{
+  &quot;report_request&quot;: {
+    &quot;name&quot;: &quot;SOX_Q4_2024_Access_Controls_Review&quot;,
+    &quot;description&quot;: &quot;Quarterly SOX compliance review of access controls and financial data protection&quot;,
+    &quot;compliance_standard&quot;: &quot;SOX&quot;,
+    &quot;report_type&quot;: &quot;access_controls_review&quot;,
+    &quot;time_period&quot;: {
+      &quot;start&quot;: &quot;2024-10-01T00:00:00Z&quot;,
+      &quot;end&quot;: &quot;2024-12-31T23:59:59Z&quot;,
+      &quot;fiscal_quarter&quot;: &quot;Q4_2024&quot;
+    },
+    &quot;scope&quot;: {
+      &quot;include_financial_systems&quot;: true,
+      &quot;include_user_access_reviews&quot;: true,
+      &quot;include_privileged_access&quot;: true,
+      &quot;include_system_changes&quot;: true,
+      &quot;data_classifications&quot;: [&quot;financial&quot;, &quot;confidential&quot;, &quot;restricted&quot;],
+      &quot;business_units&quot;: [&quot;finance&quot;, &quot;accounting&quot;, &quot;treasury&quot;]
+    },
+    &quot;report_sections&quot;: [
+      &quot;executive_summary&quot;,
+      &quot;access_control_effectiveness&quot;,
+      &quot;user_access_reviews&quot;, 
+      &quot;privileged_access_management&quot;,
+      &quot;segregation_of_duties&quot;,
+      &quot;system_changes_log&quot;,
+      &quot;exception_management&quot;,
+      &quot;recommendations&quot;
+    ]
+  },
+  &quot;output_options&quot;: {
+    &quot;format&quot;: &quot;pdf&quot;,
+    &quot;include_raw_data&quot;: false,
+    &quot;include_charts&quot;: true,
+    &quot;include_recommendations&quot;: true,
+    &quot;confidentiality_level&quot;: &quot;confidential&quot;
+  },
+  &quot;delivery&quot;: {
+    &quot;method&quot;: &quot;secure_portal&quot;,
+    &quot;recipients&quot;: [
+      &quot;cfo@company.com&quot;,
+      &quot;compliance@company.com&quot;, 
+      &quot;audit@company.com&quot;
+    ],
+    &quot;external_auditor_access&quot;: true
+  }
+}
+
+Response: 202 Accepted
+{
+  &quot;report_id&quot;: &quot;report_550e8400-e29b-41d4-a716-446655440000&quot;,
+  &quot;status&quot;: &quot;processing&quot;,
+  &quot;created_at&quot;: &quot;2025-01-15T15:00:00Z&quot;,
+  &quot;estimated_completion&quot;: &quot;2025-01-15T15:30:00Z&quot;,
+  &quot;report_details&quot;: {
+    &quot;name&quot;: &quot;SOX_Q4_2024_Access_Controls_Review&quot;,
+    &quot;compliance_standard&quot;: &quot;SOX&quot;,
+    &quot;time_period&quot;: &quot;Q4_2024&quot;,
+    &quot;estimated_pages&quot;: 45,
+    &quot;format&quot;: &quot;pdf&quot;
+  },
+  &quot;data_collection&quot;: {
+    &quot;estimated_records&quot;: 156789,
+    &quot;data_sources&quot;: [
+      &quot;audit_logs&quot;,
+      &quot;access_reviews&quot;,
+      &quot;policy_evaluations&quot;,
+      &quot;user_provisioning&quot;,
+      &quot;system_changes&quot;
+    ],
+    &quot;processing_stages&quot;: [
+      &quot;data_extraction&quot;,
+      &quot;compliance_analysis&quot;, 
+      &quot;exception_identification&quot;,
+      &quot;report_generation&quot;
+    ]
+  },
+  &quot;compliance_tracking&quot;: {
+    &quot;report_purpose&quot;: &quot;sox_quarterly_review&quot;,
+    &quot;retention_period&quot;: &quot;7_years&quot;,
+    &quot;access_controls&quot;: &quot;executive_only&quot;,
+    &quot;audit_trail&quot;: &quot;complete&quot;
+  }
+}
+</code></pre>
+<h4 id="gdpr-data-subject-request">GDPR Data Subject Request</h4>
+<p><strong>Action</strong>: <code>ProcessGDPRRequest</code></p>
+<pre><code class="language-yaml">POST /compliance/gdpr/data-subject-request
+Content-Type: application/json
+Authorization: Bearer &lt;jwt_token&gt;
+X-Tenant-ID: &lt;tenant_uuid&gt;
+
+Request Body:
+{
+  &quot;request_details&quot;: {
+    &quot;request_type&quot;: &quot;data_export&quot;,
+    &quot;data_subject_id&quot;: &quot;user_123&quot;,
+    &quot;data_subject_email&quot;: &quot;john.analyst@company.com&quot;,
+    &quot;requester_relationship&quot;: &quot;self&quot;,
+    &quot;legal_basis&quot;: &quot;data_subject_right&quot;,
+    &quot;request_date&quot;: &quot;2025-01-15T15:00:00Z&quot;
+  },
+  &quot;scope&quot;: {
+    &quot;time_range&quot;: {
+      &quot;start&quot;: &quot;2020-01-01T00:00:00Z&quot;,
+      &quot;end&quot;: &quot;2025-01-15T23:59:59Z&quot;
+    },
+    &quot;data_categories&quot;: [
+      &quot;personal_identifiers&quot;,
+      &quot;authentication_data&quot;,
+      &quot;access_logs&quot;,
+      &quot;behavioral_analytics&quot;,
+      &quot;consent_records&quot;
+    ],
+    &quot;exclude_categories&quot;: [
+      &quot;aggregated_analytics&quot;,
+      &quot;system_logs_without_personal_data&quot;
+    ]
+  },
+  &quot;output_preferences&quot;: {
+    &quot;format&quot;: &quot;json&quot;,
+    &quot;structured_data&quot;: true,
+    &quot;include_metadata&quot;: true,
+    &quot;anonymize_third_parties&quot;: true,
+    &quot;encryption_required&quot;: true
+  },
+  &quot;verification&quot;: {
+    &quot;identity_verified&quot;: true,
+    &quot;verification_method&quot;: &quot;multi_factor_authentication&quot;,
+    &quot;verification_timestamp&quot;: &quot;2025-01-15T14:50:00Z&quot;
+  }
+}
+
+Response: 202 Accepted
+{
+  &quot;request_id&quot;: &quot;gdpr_req_550e8400-e29b-41d4-a716-446655440000&quot;,
+  &quot;status&quot;: &quot;processing&quot;,
+  &quot;created_at&quot;: &quot;2025-01-15T15:00:00Z&quot;,
+  &quot;estimated_completion&quot;: &quot;2025-01-16T15:00:00Z&quot;,
+  &quot;legal_timeline&quot;: {
+    &quot;response_deadline&quot;: &quot;2025-02-14T15:00:00Z&quot;,
+    &quot;days_remaining&quot;: 30,
+    &quot;complexity_assessment&quot;: &quot;standard&quot;
+  },
+  &quot;data_collection&quot;: {
+    &quot;estimated_records&quot;: 45678,
+    &quot;data_categories_found&quot;: [
+      &quot;personal_identifiers&quot;,
+      &quot;access_logs&quot;, 
+      &quot;behavioral_analytics&quot;,
+      &quot;consent_records&quot;
+    ],
+    &quot;processing_notes&quot;: [
+      &quot;Comprehensive audit log analysis in progress&quot;,
+      &quot;Behavioral analytics data anonymization required&quot;,
+      &quot;Third-party data references being identified&quot;
+    ]
+  },
+  &quot;compliance_tracking&quot;: {
+    &quot;gdpr_article&quot;: &quot;Article_15_Right_of_Access&quot;,
+    &quot;legal_basis_processing&quot;: &quot;Article_6_1_b_Contract&quot;,
+    &quot;retention_justification&quot;: &quot;Business_Operations&quot;,
+    &quot;data_controller&quot;: &quot;company_legal_entity&quot;,
+    &quot;contact_dpo&quot;: &quot;dpo@company.com&quot;
+  },
+  &quot;delivery_information&quot;: {
+    &quot;delivery_method&quot;: &quot;secure_download&quot;,
+    &quot;encryption&quot;: &quot;AES_256_GCM&quot;,
+    &quot;access_control&quot;: &quot;authenticated_download&quot;,
+    &quot;retention_period&quot;: &quot;90_days&quot;
+  }
+}
+</code></pre>
+<h2 id="goa-dsl-implementation-notes">Goa DSL Implementation Notes</h2>
+<h3 id="service-definition">Service Definition</h3>
+<pre><code class="language-go">var _ = Service(&quot;audit-monitoring&quot;, func() {
+    Description(&quot;Audit and Monitoring Service for Compliance and Security&quot;)
+
+    HTTP(func() {
+        Path(&quot;/api/v1/audit&quot;)
+        Header(&quot;X-Tenant-ID&quot;, String, &quot;Tenant identifier&quot;, func() {
+            Example(&quot;550e8400-e29b-41d4-a716-446655440000&quot;)
+        })
+    })
+
+    JWT(func() {
+        Description(&quot;JWT authentication&quot;)
+        Scope(&quot;audit:read&quot;, &quot;Read audit logs&quot;)
+        Scope(&quot;audit:export&quot;, &quot;Export audit data&quot;)
+        Scope(&quot;security:read&quot;, &quot;Read security events&quot;)
+        Scope(&quot;compliance:read&quot;, &quot;Read compliance data&quot;)
+        Scope(&quot;compliance:export&quot;, &quot;Export compliance reports&quot;)
+        Scope(&quot;analytics:read&quot;, &quot;Read user analytics&quot;)
+    })
+})
+</code></pre>
+<h3 id="type-definitions">Type Definitions</h3>
+<pre><code class="language-go">var AuditLogEntry = Type(&quot;AuditLogEntry&quot;, func() {
+    Attribute(&quot;id&quot;, String, &quot;Unique audit log entry identifier&quot;, func() {
+        Format(FormatUUID)
+    })
+    Attribute(&quot;event_type&quot;, String, &quot;Type of event&quot;)
+    Attribute(&quot;event_category&quot;, String, &quot;Event category&quot;, func() {
+        Enum(&quot;ACCESS&quot;, &quot;ADMIN&quot;, &quot;DATA&quot;, &quot;AUTH&quot;, &quot;SYSTEM&quot;, &quot;COMPLIANCE&quot;)
+    })
+    Attribute(&quot;severity&quot;, String, &quot;Event severity&quot;, func() {
+        Enum(&quot;LOW&quot;, &quot;INFO&quot;, &quot;WARN&quot;, &quot;HIGH&quot;, &quot;CRITICAL&quot;)
+    })
+    Attribute(&quot;timestamp&quot;, String, &quot;Event timestamp&quot;, func() {
+        Format(FormatDateTime)
+    })
+    Attribute(&quot;correlation_id&quot;, String, &quot;Request correlation ID&quot;)
+    Attribute(&quot;user_context&quot;, UserContext, &quot;User-related context&quot;)
+    Attribute(&quot;resource_context&quot;, ResourceContext, &quot;Resource-related context&quot;)
+    Attribute(&quot;decision_details&quot;, DecisionDetails, &quot;Decision information&quot;)
+    Attribute(&quot;risk_assessment&quot;, RiskAssessment, &quot;Risk analysis&quot;)
+    Attribute(&quot;compliance_context&quot;, ComplianceContext, &quot;Compliance information&quot;)
+
+    Required(&quot;id&quot;, &quot;event_type&quot;, &quot;event_category&quot;, &quot;severity&quot;, &quot;timestamp&quot;)
+})
+
+var SecurityEvent = Type(&quot;SecurityEvent&quot;, func() {
+    Attribute(&quot;id&quot;, String, &quot;Security event identifier&quot;, func() {
+        Format(FormatUUID)
+    })
+    Attribute(&quot;event_type&quot;, String, &quot;Security event type&quot;)
+    Attribute(&quot;severity&quot;, String, &quot;Event severity&quot;, func() {
+        Enum(&quot;LOW&quot;, &quot;INFO&quot;, &quot;WARN&quot;, &quot;HIGH&quot;, &quot;CRITICAL&quot;)
+    })
+    Attribute(&quot;status&quot;, String, &quot;Investigation status&quot;, func() {
+        Enum(&quot;open&quot;, &quot;investigating&quot;, &quot;resolved&quot;, &quot;closed&quot;)
+    })
+    Attribute(&quot;created_at&quot;, String, &quot;Event creation time&quot;, func() {
+        Format(FormatDateTime)
+    })
+    Attribute(&quot;detection_method&quot;, String, &quot;How the event was detected&quot;)
+    Attribute(&quot;confidence_score&quot;, Float64, &quot;Detection confidence (0-1)&quot;)
+    Attribute(&quot;subject_context&quot;, SubjectContext, &quot;Subject information&quot;)
+    Attribute(&quot;event_details&quot;, SecurityEventDetails, &quot;Detailed event information&quot;)
+    Attribute(&quot;risk_assessment&quot;, RiskAssessment, &quot;Risk evaluation&quot;)
+    Attribute(&quot;automated_response&quot;, AutomatedResponse, &quot;Automated actions taken&quot;)
+    Attribute(&quot;investigation&quot;, Investigation, &quot;Investigation details&quot;)
+
+    Required(&quot;id&quot;, &quot;event_type&quot;, &quot;severity&quot;, &quot;status&quot;, &quot;created_at&quot;)
+})
+
+var UserBehaviorAnalytics = Type(&quot;UserBehaviorAnalytics&quot;, func() {
+    Attribute(&quot;user_id&quot;, String, &quot;User identifier&quot;)
+    Attribute(&quot;analysis_period&quot;, String, &quot;Analysis time period&quot;)
+    Attribute(&quot;generated_at&quot;, String, &quot;Report generation time&quot;, func() {
+        Format(FormatDateTime)
+    })
+    Attribute(&quot;baseline_behavior&quot;, BaselineBehavior, &quot;Normal behavior patterns&quot;)
+    Attribute(&quot;recent_anomalies&quot;, ArrayOf(BehaviorAnomaly), &quot;Recent anomalous behavior&quot;)
+    Attribute(&quot;risk_profile&quot;, RiskProfile, &quot;User risk assessment&quot;)
+    Attribute(&quot;productivity_metrics&quot;, ProductivityMetrics, &quot;User productivity data&quot;)
+    Attribute(&quot;predictions&quot;, BehaviorPredictions, &quot;Predicted future behavior&quot;)
+
+    Required(&quot;user_id&quot;, &quot;analysis_period&quot;, &quot;generated_at&quot;, &quot;baseline_behavior&quot;, &quot;risk_profile&quot;)
+})
+</code></pre>
+<h3 id="security-privacy-middleware">Security &amp; Privacy Middleware</h3>
+<pre><code class="language-go">// Data privacy middleware for GDPR compliance
+func DataPrivacyMiddleware() func(endpoint.Endpoint) endpoint.Endpoint {
+    return func(next endpoint.Endpoint) endpoint.Endpoint {
+        return func(ctx context.Context, request interface{}) (interface{}, error) {
+            // Implement data minimization
+            // Apply anonymization where required
+            // Log data access for audit trail
+
+            response, err := next(ctx, request)
+
+            // Apply privacy filters to response
+            return applyPrivacyFilters(response), err
+        }
+    }
+}
+
+// Audit trail middleware
+func AuditTrailMiddleware() func(endpoint.Endpoint) endpoint.Endpoint {
+    return func(next endpoint.Endpoint) endpoint.Endpoint {
+        return func(ctx context.Context, request interface{}) (interface{}, error) {
+            // Log request details
+            auditCtx := createAuditContext(ctx, request)
+
+            response, err := next(auditCtx, request)
+
+            // Log response and any errors
+            logAuditEvent(auditCtx, response, err)
+
+            return response, err
+        }
+    }
+}
+</code></pre>
+<h3 id="performance-scalability">Performance &amp; Scalability</h3>
+<ul>
+<li><strong>Time-series Database</strong>: Optimized storage for audit logs with time-based partitioning</li>
+<li><strong>Real-time Analytics</strong>: Stream processing for immediate security event detection</li>
+<li><strong>Data Retention</strong>: Automated lifecycle management based on compliance requirements</li>
+<li><strong>Search Optimization</strong>: Full-text search with intelligent indexing</li>
+<li><strong>Export Performance</strong>: Asynchronous large data exports with progress tracking</li>
+</ul>
+<!-- ## 📊 5. Audit & Monitoring API ->
+<!-- *Business Value:* audit trails, compliance reporting, and security monitoring for regulatory requirements. -->
+<!---->
+<!-- ```json  -->
+<!-- # Audit & Monitoring API ->
+<!---->
+<!-- ## Query Audit Logs ->
+<!-- GET /audit/logs?start_time=2025-01-15T00:00:00Z&end_time=2025-01-15T23:59:59Z&event_category=ACCESS&page=1&limit=100 -->
+<!---->
+<!-- Query Parameters: -->
+<!-- - start_time: ISO 8601 timestamp (required) -->
+<!-- - end_time: ISO 8601 timestamp (required)  -->
+<!-- - event_category: ACCESS, ADMIN, DATA, AUTH, SYSTEM, COMPLIANCE -->
+<!-- - event_type: specific event type filter -->
+<!-- - user_id: filter by specific user -->
+<!-- - resource_id: filter by specific resource -->
+<!-- - decision: ALLOW, DENY, PENDING_APPROVAL -->
+<!-- - severity: LOW, INFO, WARN, HIGH, CRITICAL -->
+<!-- - risk_score_min: minimum risk score (0-100) -->
+<!-- - risk_score_max: maximum risk score (0-100) -->
+<!-- - compliance_flags: GDPR, SOX, HIPAA, PCI -->
+<!-- - page: pagination page number -->
+<!-- - limit: results per page (max 1000) -->
+<!---->
+<!-- Response: 200 OK -->
+<!-- { -->
+<!--   "audit_logs": [ -->
+<!--     { -->
+<!--       "id": "audit_550e8400-e29b-41d4-a716-446655440000", -->
+<!--       "event_type": "POLICY_EVALUATION", -->
+<!--       "event_category": "ACCESS", -->
+<!--       "severity": "INFO", -->
+<!--       "timestamp": "2025-01-15T14:30:00.123Z", -->
+<!--       "user_id": "user_123", -->
+<!--       "target_user_id": null, -->
+<!--       "resource_id": "resource_789", -->
+<!--       "action": "read", -->
+<!--       "decision": "ALLOW", -->
+<!--       "policies_evaluated": [ -->
+<!--         { -->
+<!--           "policy_id": "550e8400-e29b-41d4-a716-446655440001", -->
+<!--           "policy_name": "financial_data_access_policy", -->
+<!--           "effect": "ALLOW", -->
+<!--           "matched": true -->
+<!--         } -->
+<!--       ], -->
+<!--       "evaluation_context": { -->
+<!--         "session_id": "session_abc123", -->
+<!--         "ip_address": "192.168.1.100", -->
+<!--         "user_agent": "Mozilla/5.0...", -->
+<!--         "location": "corporate_network", -->
+<!--         "mfa_verified": true -->
+<!--       }, -->
+<!--       "risk_score": 15, -->
+<!--       "compliance_flags": ["SOX", "PCI"], -->
+<!--       "evaluation_time_ms": 15.2, -->
+<!--       "obligations_executed": [ -->
+<!--         { -->
+<!--           "type": "LOG_ACCESS", -->
+<!--           "status": "executed", -->
+<!--           "execution_time_ms": 2.1 -->
+<!--         } -->
+<!--       ] -->
+<!--     } -->
+<!--   ], -->
+<!--   "pagination": { -->
+<!--     "page": 1, -->
+<!--     "limit": 100, -->
+<!--     "total": 15647, -->
+<!--     "total_pages": 157, -->
+<!--     "has_next": true -->
+<!--   }, -->
+<!--   "summary": { -->
+<!--     "total_events": 15647, -->
+<!--     "allow_decisions": 13234, -->
+<!--     "deny_decisions": 2413, -->
+<!--     "avg_risk_score": 23.5, -->
+<!--     "high_risk_events": 234 -->
+<!--   } -->
+<!-- } -->
+<!---->
+<!-- ## Get Security Events ->
+<!-- GET /audit/security-events?severity=HIGH,CRITICAL&start_time=2025-01-15T00:00:00Z -->
+<!---->
+<!-- Response: 200 OK -->
+<!-- { -->
+<!--   "security_events": [ -->
+<!--     { -->
+<!--       "id": "sec_event_001", -->
+<!--       "event_type": "SUSPICIOUS_ACCESS_PATTERN", -->
+<!--       "severity": "HIGH", -->
+<!--       "timestamp": "2025-01-15T14:45:00Z", -->
+<!--       "user_id": "user_456", -->
+<!--       "description": "User accessing resources outside normal patterns", -->
+<!--       "indicators": [ -->
+<!--         "unusual_time_access", -->
+<!--         "different_location", -->
+<!--         "bulk_resource_access" -->
+<!--       ], -->
+<!--       "risk_score": 75, -->
+<!--       "automated_response": { -->
+<!--         "actions_taken": ["session_flagged", "manager_notified"], -->
+<!--         "additional_monitoring": true -->
+<!--       }, -->
+<!--       "investigation_status": "open", -->
+<!--       "analyst_assigned": "security_analyst_01" -->
+<!--     }, -->
+<!--     { -->
+<!--       "id": "sec_event_002", -->
+<!--       "event_type": "REPEATED_ACCESS_DENIALS", -->
+<!--       "severity": "CRITICAL", -->
+<!--       "timestamp": "2025-01-15T13:30:00Z", -->
+<!--       "user_id": "user_789", -->
+<!--       "description": "Multiple failed access attempts to classified resources", -->
+<!--       "indicators": [ -->
+<!--         "escalating_resource_sensitivity", -->
+<!--         "rapid_successive_attempts", -->
+<!--         "privilege_escalation_attempt" -->
+<!--       ], -->
+<!--       "risk_score": 95, -->
+<!--       "automated_response": { -->
+<!--         "actions_taken": ["account_locked", "incident_created", "security_team_alerted"], -->
+<!--         "escalation_level": "immediate" -->
+<!--       }, -->
+<!--       "investigation_status": "assigned", -->
+<!--       "incident_id": "INC-2025-001" -->
+<!--     } -->
+<!--   ], -->
+<!--   "total_events": 2, -->
+<!--   "critical_count": 1, -->
+<!--   "high_count": 1 -->
+<!-- } -->
+<!---->
+<!-- ## Generate Access Analytics Report ->
+<!-- POST /audit/reports/access-analytics -->
+<!-- Content-Type: application/json -->
+<!---->
+<!-- Request Body: -->
+<!-- { -->
+<!--   "report_type": "comprehensive", -->
+<!--   "time_range": { -->
+<!--     "start": "2025-01-01T00:00:00Z", -->
+<!--     "end": "2025-01-15T23:59:59Z" -->
+<!--   }, -->
+<!--   "dimensions": [ -->
+<!--     "user_department", -->
+<!--     "resource_type",  -->
+<!--     "time_of_day", -->
+<!--     "decision_outcome" -->
+<!--   ], -->
+<!--   "metrics": [ -->
+<!--     "access_count", -->
+<!--     "unique_users", -->
+<!--     "unique_resources", -->
+<!--     "avg_evaluation_time", -->
+<!--     "risk_score_distribution" -->
+<!--   ], -->
+<!--   "filters": { -->
+<!--     "min_risk_score": 50, -->
+<!--     "compliance_flags": ["SOX", "GDPR"] -->
+<!--   }, -->
+<!--   "format": "json" -->
+<!-- } -->
+<!---->
+<!-- Response: 200 OK -->
+<!-- { -->
+<!--   "report_id": "report_550e8400-e29b-41d4-a716-446655440000", -->
+<!--   "generated_at": "2025-01-15T15:00:00Z", -->
+<!--   "time_range": { -->
+<!--     "start": "2025-01-01T00:00:00Z", -->
+<!--     "end": "2025-01-15T23:59:59Z" -->
+<!--   }, -->
+<!--   "summary": { -->
+<!--     "total_access_attempts": 156743, -->
+<!--     "successful_access": 143821, -->
+<!--     "denied_access": 12922, -->
+<!--     "approval_required": 2134, -->
+<!--     "unique_users": 1547, -->
+<!--     "unique_resources": 8923, -->
+<!--     "avg_evaluation_time_ms": 18.7 -->
+<!--   }, -->
+<!--   "by_department": [ -->
+<!--     { -->
+<!--       "department": "finance", -->
+<!--       "access_count": 45234, -->
+<!--       "success_rate": 0.94, -->
+<!--       "avg_risk_score": 28.5, -->
+<!--       "top_resources": ["financial_reports", "budget_documents"] -->
+<!--     }, -->
+<!--     { -->
+<!--       "department": "hr",  -->
+<!--       "access_count": 23456, -->
+<!--       "success_rate": 0.89, -->
+<!--       "avg_risk_score": 22.1, -->
+<!--       "top_resources": ["employee_records", "payroll_data"] -->
+<!--     } -->
+<!--   ], -->
+<!--   "by_time_of_day": [ -->
+<!--     { -->
+<!--       "hour": 9, -->
+<!--       "access_count": 12456, -->
+<!--       "success_rate": 0.95 -->
+<!--     }, -->
+<!--     { -->
+<!--       "hour": 14, -->
+<!--       "access_count": 15678, -->
+<!--       "success_rate": 0.93 -->
+<!--     } -->
+<!--   ], -->
+<!--   "risk_analysis": { -->
+<!--     "high_risk_users": [ -->
+<!--       { -->
+<!--         "user_id": "user_789", -->
+<!--         "access_count": 234, -->
+<!--         "avg_risk_score": 78.5, -->
+<!--         "anomaly_count": 12 -->
+<!--       } -->
+<!--     ], -->
+<!--     "sensitive_resources": [ -->
+<!--       { -->
+<!--         "resource_id": "classified_doc_001", -->
+<!--         "access_attempts": 89, -->
+<!--         "denial_rate": 0.67, -->
+<!--         "requires_investigation": true -->
+<!--       } -->
+<!--     ] -->
+<!--   }, -->
+<!--   "compliance_summary": { -->
+<!--     "sox_covered_events": 23456, -->
+<!--     "gdpr_covered_events": 34567, -->
+<!--     "retention_compliant": true, -->
+<!--     "data_subject_requests": 12 -->
+<!--   } -->
+<!-- } -->
+<!---->
+<!-- ## Get User Behavior Analytics ->
+<!-- GET /audit/analytics/user-behavior/{user_id}?period=30d&include_predictions=true -->
+<!---->
+<!-- Response: 200 OK -->
+<!-- { -->
+<!--   "user_id": "user_123", -->
+<!--   "analysis_period": "30d", -->
+<!--   "generated_at": "2025-01-15T15:00:00Z", -->
+<!--   "baseline_behavior": { -->
+<!--     "typical_hours": [9, 10, 11, 13, 14, 15, 16, 17], -->
+<!--     "common_resources": [ -->
+<!--       { -->
+<!--         "resource_type": "financial_reports", -->
+<!--         "access_frequency": "daily", -->
+<!--         "typical_actions": ["read", "export"] -->
+<!--       } -->
+<!--     ], -->
+<!--     "usual_locations": ["corporate_network", "home_vpn"], -->
+<!--     "session_patterns": { -->
+<!--       "avg_duration_minutes": 342, -->
+<!--       "typical_start_time": "09:15", -->
+<!--       "typical_end_time": "17:30" -->
+<!--     } -->
+<!--   }, -->
+<!--   "recent_anomalies": [ -->
+<!--     { -->
+<!--       "date": "2025-01-14", -->
+<!--       "type": "unusual_time_access", -->
+<!--       "description": "Access attempted at 02:30 AM", -->
+<!--       "risk_score": 65, -->
+<!--       "investigation_needed": true -->
+<!--     }, -->
+<!--     { -->
+<!--       "date": "2025-01-13", -->
+<!--       "type": "new_resource_type", -->
+<!--       "description": "First access to HR documents", -->
+<!--       "risk_score": 45, -->
+<!--       "context": "Cross-department collaboration project" -->
+<!--     } -->
+<!--   ], -->
+<!--   "risk_profile": { -->
+<!--     "overall_risk_score": 25, -->
+<!--     "risk_trend": "stable", -->
+<!--     "factors": { -->
+<!--       "access_pattern_consistency": 0.89, -->
+<!--       "location_variance": 0.12, -->
+<!--       "device_consistency": 0.95, -->
+<!--       "time_pattern_regularity": 0.87 -->
+<!--     } -->
+<!--   }, -->
+<!--   "predictions": { -->
+<!--     "likely_next_resources": [ -->
+<!--       { -->
+<!--         "resource_type": "quarterly_reports", -->
+<!--         "probability": 0.78, -->
+<!--         "reason": "End of quarter approaching" -->
+<!--       } -->
+<!--     ], -->
+<!--     "risk_factors": [ -->
+<!--       { -->
+<!--         "factor": "increased_weekend_access", -->
+<!--         "probability": 0.23, -->
+<!--         "mitigation": "additional_monitoring" -->
+<!--       } -->
+<!--     ] -->
+<!--   } -->
+<!-- } -->
+<!---->
+<!-- ## Compliance Data Export ->
+<!-- POST /audit/compliance/export -->
+<!-- Content-Type: application/json -->
+<!---->
+<!-- Request Body: -->
+<!-- { -->
+<!--   "compliance_standard": "GDPR", -->
+<!--   "data_subject_id": "user_123", -->
+<!--   "request_type": "data_export", -->
+<!--   "time_range": { -->
+<!--     "start": "2024-01-01T00:00:00Z", -->
+<!--     "end": "2025-01-15T23:59:59Z" -->
+<!--   }, -->
+<!--   "include_logs": true, -->
+<!--   "include_decisions": true, -->
+<!--   "include_attributes": true, -->
+<!--   "format": "json", -->
+<!--   "encryption_required": true -->
+<!-- } -->
+<!---->
+<!-- Response: 202 Accepted -->
+<!-- { -->
+<!--   "export_id": "export_550e8400-e29b-41d4-a716-446655440000", -->
+<!--   "status": "processing", -->
+<!--   "estimated_completion": "2025-01-15T15:30:00Z", -->
+<!--   "compliance_standard": "GDPR", -->
+<!--   "data_subject_id": "user_123", -->
+<!--   "legal_basis": "data_subject_request", -->
+<!--   "retention_policy": "30_days", -->
+<!--   "download_will_be_available_at": "https://secure.company.com/exports/export_550e8400-e29b-41d4-a716-446655440000" -->
+<!-- } -->
+<!---->
+<!-- ## Get Export Status ->
+<!-- GET /audit/compliance/exports/{export_id} -->
+<!---->
+<!-- Response: 200 OK -->
+<!-- { -->
+<!--   "export_id": "export_550e8400-e29b-41d4-a716-446655440000", -->
+<!--   "status": "completed", -->
+<!--   "completed_at": "2025-01-15T15:25:00Z", -->
+<!--   "file_info": { -->
+<!--     "size_bytes": 2457892, -->
+<!--     "encrypted": true, -->
+<!--     "format": "json", -->
+<!--     "checksum": "sha256:abc123def456..." -->
+<!--   }, -->
+<!--   "data_summary": { -->
+<!--     "audit_entries": 1547, -->
+<!--     "policy_evaluations": 3428, -->
+<!--     "attribute_records": 156, -->
+<!--     "time_span_days": 380 -->
+<!--   }, -->
+<!--   "download_url": "https://secure.company.com/exports/export_550e8400-e29b-41d4-a716-446655440000", -->
+<!--   "expires_at": "2025-02-14T15:25:00Z" -->
+<!-- } -->
+<!---->
+<!-- ## Real-time Monitoring Dashboard Data ->
+<!-- GET /audit/monitoring/dashboard?refresh=30s -->
+<!---->
+<!-- Response: 200 OK -->
+<!-- { -->
+<!--   "timestamp": "2025-01-15T15:30:00Z", -->
+<!--   "system_health": { -->
+<!--     "status": "healthy", -->
+<!--     "active_sessions": 1247, -->
+<!--     "evaluations_per_second": 156.7, -->
+<!--     "avg_response_time_ms": 18.3, -->
+<!--     "cache_hit_rate": 0.94, -->
+<!--     "error_rate": 0.002 -->
+<!--   }, -->
+<!--   "security_metrics": { -->
+<!--     "active_threats": 0, -->
+<!--     "denied_access_last_hour": 123, -->
+<!--     "high_risk_sessions": 5, -->
+<!--     "failed_authentications": 23, -->
+<!--     "anomalies_detected": 3 -->
+<!--   }, -->
+<!--   "policy_metrics": { -->
+<!--     "active_policies": 89, -->
+<!--     "policy_evaluations_last_hour": 12456, -->
+<!--     "most_triggered_policy": { -->
+<!--       "id": "550e8400-e29b-41d4-a716-446655440001", -->
+<!--       "name": "financial_data_access_policy", -->
+<!--       "trigger_count": 2345 -->
+<!--     }, -->
+<!--     "recent_policy_changes": 2 -->
+<!--   }, -->
+<!--   "compliance_status": { -->
+<!--     "gdpr_compliant": true, -->
+<!--     "sox_compliant": true, -->
+<!--     "audit_trail_intact": true, -->
+<!--     "data_retention_compliant": true, -->
+<!--     "outstanding_data_requests": 3 -->
+<!--   }, -->
+<!--   "alerts": [ -->
+<!--     { -->
+<!--       "id": "alert_001", -->
+<!--       "level": "warning", -->
+<!--       "message": "Unusual access pattern detected for user_456", -->
+<!--       "timestamp": "2025-01-15T15:25:00Z" -->
+<!--     } -->
+<!--   ] -->
+<!-- } -->
+<!---->
+<!-- ## Create Custom Audit Query ->
+<!-- POST /audit/queries/custom -->
+<!-- Content-Type: application/json -->
+<!---->
+<!-- Request Body: -->
+<!-- { -->
+<!--   "name": "High Risk Financial Access", -->
+<!--   "description": "Track high-risk access to financial resources", -->
+<!--   "query": { -->
+<!--     "filters": { -->
+<!--       "and": [ -->
+<!--         {"resource.classification": {"equals": "financial"}}, -->
+<!--         {"risk_score": {"gte": 70}}, -->
+<!--         {"decision": {"equals": "ALLOW"}} -->
+<!--       ] -->
+<!--     }, -->
+<!--     "time_range": { -->
+<!--       "start": "2025-01-15T00:00:00Z", -->
+<!--       "end": "2025-01-15T23:59:59Z" -->
+<!--     }, -->
+<!--     "group_by": ["user_id", "resource_type"], -->
+<!--     "sort": [{"risk_score": "desc"}], -->
+<!--     "limit": 100 -->
+<!--   }, -->
+<!--   "schedule": { -->
+<!--     "enabled": true, -->
+<!--     "frequency": "daily", -->
+<!--     "time": "09:00", -->
+<!--     "recipients": ["security@company.com"] -->
+<!--   } -->
+<!-- } -->
+<!---->
+<!-- Response: 201 Created -->
+<!-- { -->
+<!--   "query_id": "query_550e8400-e29b-41d4-a716-446655440000", -->
+<!--   "name": "High Risk Financial Access", -->
+<!--   "created_at": "2025-01-15T15:30:00Z", -->
+<!--   "next_execution": "2025-01-16T09:00:00Z", -->
+<!--   "estimated_results": 45 -->
+<!-- } -->
+<!-- ``` -->
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="../../../../../javascripts/search-analytics.js"></script>
+      
+        <script src="../../../../../javascripts/contextual-help.js"></script>
+      
+    
+  </body>
+</html>

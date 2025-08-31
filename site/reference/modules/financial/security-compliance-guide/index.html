@@ -1,0 +1,4871 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../integration-guide/">
+      
+      
+        <link rel="next" href="../testing-strategy/">
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>Security & Compliance - Awo ERP Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#awo-erp-financial-module-security-compliance-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-header__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Awo ERP Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Security & Compliance
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../architecture/system-overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../contributing/01-best-practices/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../api-reference/" class="md-tabs__link">
+          
+  
+  
+  Financial Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user/" class="md-tabs__link">
+          
+  
+  
+  Users & IAM Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../audit/audit/" class="md-tabs__link">
+          
+  
+  
+  Audit Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../feature_flag/00_README/" class="md-tabs__link">
+          
+  
+  
+  Feature Flags Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tenant/tenant-management/" class="md-tabs__link">
+          
+  
+  
+  Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Other Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api-source/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-nav__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Awo ERP Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/system-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/abac-design-and-roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/FRAMEWORK_MIGRATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/GIN_HANDLERS_INVENTORY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GIN Handlers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/01-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/database-transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Transactions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/general-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/goa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Goa Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/middleware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Middleware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Observability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/securityHandbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Handbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Layer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/sqlc-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Financial Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Financial Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../currency-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Currency Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Task Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integration-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Security & Compliance
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security & Compliance
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Table of Contents
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Architecture Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security Architecture Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#defense-in-depth-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Defense in Depth Strategy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Principles
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security Principles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-zero-trust-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Zero Trust Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-principle-of-least-privilege" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Principle of Least Privilege
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-defense-against-financial-fraud" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Defense Against Financial Fraud
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#abac-integration-for-financial-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      ABAC Integration for Financial Operations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ABAC Integration for Financial Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#financial-policy-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      Financial Policy Framework
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Financial Policy Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#account-management-policies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Account Management Policies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transaction-authorization-policies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transaction Authorization Policies
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-risk-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dynamic Risk Assessment
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dynamic Risk Assessment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#risk-context-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Risk Context Provider
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#policy-evaluation-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      Policy Evaluation Engine
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Policy Evaluation Engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#custom-financial-condition-evaluators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Financial Condition Evaluators
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-compliance-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      Audit &amp; Compliance Framework
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Audit &amp; Compliance Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#comprehensive-audit-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comprehensive Audit Logging
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Comprehensive Audit Logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#financial-audit-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      Financial Audit Service
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compliance-monitoring-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compliance Monitoring &amp; Reporting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Compliance Monitoring &amp; Reporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sox-compliance-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      SOX Compliance Service
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-trail-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Audit Trail Integrity
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Audit Trail Integrity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#immutable-audit-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      Immutable Audit Chain
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Users & IAM Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Users & IAM Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/01_identity_model_and_rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity & RBAC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/02_abac_evaluation_lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/03_hybrid_access_control_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hybrid Access Control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/04_architecture_service_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/IAM_MAPPING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Restructuring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/PHASE_3_ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/RELEASE_NOTES_RC1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release Notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_11" id="__nav_5_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    ABAC Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_11">
+            <span class="md-nav__icon md-icon"></span>
+            ABAC Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/administrative_performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Administrative Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/attribute_definitions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Attribute Definitions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/audit_monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit & Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/context_attribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/desing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation_CEL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CEL Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation_expr-lang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expression Language
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/POLICY_SERVICE_ENHANCEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Service Enhancement
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Audit Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Audit Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Feature Flags Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Feature Flags Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/00_README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Onboarding
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/01_introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/02_core_concepts_and_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/03_developer_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/04_admin_api_manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/05_lifecycle_gotchas_and_improvements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lifecycle & Improvements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tenant Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Tenant Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/tenant-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Other Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../airline-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Airline Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../asset-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Asset Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../forecourt-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forecourt Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Financial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../human-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Human Resources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Phases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../inventory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Inventory Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../module-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Module Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../restaurant-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Restaurant Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../retail-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retail Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tax-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tax Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technical-specifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Technical Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflow-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow Engine
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/user-service-abac-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_3" id="__nav_10_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core APIs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            Core APIs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Org Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_4" id="__nav_10_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_4">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Request Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/conditional-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/user-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_5" id="__nav_10_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/manual-curl-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_6" id="__nav_10_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_6">
+            <span class="md-nav__icon md-icon"></span>
+            Utilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/utilities/todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TODO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="awo-erp-financial-module-security-compliance-guide">AWO ERP Financial Module - Security &amp; Compliance Guide</h1>
+<p><strong>Version</strong>: 1.0<br />
+<strong>Date</strong>: January 2025<br />
+<strong>Classification</strong>: Internal Technical Documentation  </p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#security-architecture-overview">Security Architecture Overview</a></li>
+<li><a href="#abac-integration-for-financial-operations">ABAC Integration for Financial Operations</a></li>
+<li><a href="#audit-compliance-framework">Audit &amp; Compliance Framework</a></li>
+<li><a href="#data-protection-privacy">Data Protection &amp; Privacy</a></li>
+<li><a href="#regulatory-compliance">Regulatory Compliance</a></li>
+<li><a href="#security-controls-monitoring">Security Controls &amp; Monitoring</a></li>
+<li><a href="#threat-modeling-risk-assessment">Threat Modeling &amp; Risk Assessment</a></li>
+<li><a href="#security-testing-validation">Security Testing &amp; Validation</a></li>
+<li><a href="#incident-response-recovery">Incident Response &amp; Recovery</a></li>
+<li><a href="#security-best-practices">Security Best Practices</a></li>
+</ol>
+<hr />
+<h2 id="security-architecture-overview">Security Architecture Overview</h2>
+<h3 id="defense-in-depth-strategy"><strong>Defense in Depth Strategy</strong></h3>
+<p>The AWO ERP Financial Module implements a comprehensive defense-in-depth security architecture that protects financial data at multiple layers:</p>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                    Application Security Layer                   │
+│  • Input validation and sanitization                           │
+│  • Business logic authorization                                │
+│  • Rate limiting and DDoS protection                          │
+│  • Session management and timeout                             │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  ABAC Authorization Layer                       │
+│  • Attribute-based access control                             │
+│  • Context-aware decision making                              │
+│  • Policy evaluation engine                                   │
+│  • Real-time risk assessment                                  │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   Data Access Security Layer                   │
+│  • Row-level security (RLS)                                   │
+│  • Column-level encryption                                    │
+│  • Database audit trails                                      │
+│  • Connection security and pooling                            │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                 Infrastructure Security Layer                  │
+│  • Network segmentation and firewalls                         │
+│  • TLS encryption in transit                                  │
+│  • Key management and rotation                                │
+│  • Infrastructure monitoring                                  │
+└─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="security-principles"><strong>Security Principles</strong></h3>
+<h4 id="1-zero-trust-architecture"><strong>1. Zero Trust Architecture</strong></h4>
+<pre><code class="language-go">// Every request must be authenticated and authorized
+func (s *FinancialService) ProcessTransaction(ctx context.Context, req TransactionRequest) error {
+    // 1. Authentication verification
+    userID, err := s.auth.ValidateToken(ctx, req.Token)
+    if err != nil {
+        return errors.Unauthorized(&quot;invalid authentication&quot;)
+    }
+
+    // 2. Tenant context validation
+    tenantID, err := s.tenant.ValidateContext(ctx, req.TenantID)
+    if err != nil {
+        return errors.Forbidden(&quot;invalid tenant context&quot;)
+    }
+
+    // 3. ABAC authorization
+    authorized, err := s.abac.Authorize(ctx, abac.Request{
+        Subject:  abac.UserSubject(userID),
+        Resource: abac.TransactionResource(req.Type),
+        Action:   &quot;create&quot;,
+        Context:  abac.TenantContext(tenantID),
+        Attributes: map[string]interface{}{
+            &quot;transaction_amount&quot;: req.Amount,
+            &quot;transaction_type&quot;:   req.Type,
+            &quot;risk_level&quot;:         s.calculateRiskLevel(req),
+        },
+    })
+    if err != nil || !authorized {
+        return errors.Forbidden(&quot;insufficient permissions&quot;)
+    }
+
+    // 4. Business logic execution with audit
+    return s.executeTransaction(ctx, req, userID, tenantID)
+}
+</code></pre>
+<h4 id="2-principle-of-least-privilege"><strong>2. Principle of Least Privilege</strong></h4>
+<pre><code class="language-go">// Financial ABAC policies implement granular permissions
+var FinancialPolicies = []abac.Policy{
+    {
+        ID: &quot;transaction-create-basic&quot;,
+        Subjects: []abac.Condition{
+            abac.RoleCondition(&quot;accountant&quot;),
+            abac.DepartmentCondition(&quot;finance&quot;),
+        },
+        Resources: []abac.Condition{
+            abac.ResourceTypeCondition(&quot;transaction&quot;),
+        },
+        Actions: []abac.Condition{
+            abac.ActionCondition(&quot;create&quot;),
+        },
+        Context: []abac.Condition{
+            abac.TenantCondition(),
+            abac.AmountCondition(&quot;&lt;=&quot;, 10000), // Limit based on amount
+            abac.TimeCondition(&quot;business_hours&quot;),
+            abac.LocationCondition(&quot;authorized_location&quot;),
+        },
+        Effect: abac.EffectAllow,
+    },
+}
+</code></pre>
+<h4 id="3-defense-against-financial-fraud"><strong>3. Defense Against Financial Fraud</strong></h4>
+<pre><code class="language-go">// @internal/core/finance/security/fraud_detection.go
+
+type FraudDetectionService struct {
+    riskEngine    RiskEngine
+    anomalyDetector AnomalyDetector
+    audit         audit.Service
+    alerting      AlertingService
+}
+
+func (s *FraudDetectionService) EvaluateTransaction(ctx context.Context, transaction *Transaction) (*RiskAssessment, error) {
+    assessment := &amp;RiskAssessment{
+        TransactionID: transaction.ID,
+        TenantID:      transaction.TenantID,
+        EvaluatedAt:   time.Now(),
+        RiskScore:     0,
+        RiskFactors:   []RiskFactor{},
+    }
+
+    // Amount-based risk assessment
+    if transaction.TotalAmount.GreaterThan(decimal.NewFromInt(100000)) {
+        assessment.RiskScore += 50
+        assessment.RiskFactors = append(assessment.RiskFactors, RiskFactor{
+            Type:        &quot;high_amount&quot;,
+            Description: &quot;Transaction amount exceeds normal threshold&quot;,
+            Score:       50,
+        })
+    }
+
+    // Time-based anomaly detection
+    if s.isAfterHours(transaction.CreatedAt) {
+        assessment.RiskScore += 25
+        assessment.RiskFactors = append(assessment.RiskFactors, RiskFactor{
+            Type:        &quot;after_hours&quot;,
+            Description: &quot;Transaction created outside business hours&quot;,
+            Score:       25,
+        })
+    }
+
+    // User behavior analysis
+    userPattern, err := s.anomalyDetector.AnalyzeUserBehavior(ctx, transaction.CreatedBy)
+    if err != nil {
+        return nil, err
+    }
+
+    if userPattern.IsAnomalous {
+        assessment.RiskScore += userPattern.AnomalyScore
+        assessment.RiskFactors = append(assessment.RiskFactors, RiskFactor{
+            Type:        &quot;behavioral_anomaly&quot;,
+            Description: userPattern.Description,
+            Score:       userPattern.AnomalyScore,
+        })
+    }
+
+    // Velocity checks - rapid successive transactions
+    recentCount, err := s.getRecentTransactionCount(ctx, transaction.CreatedBy, time.Hour)
+    if err != nil {
+        return nil, err
+    }
+
+    if recentCount &gt; 10 {
+        assessment.RiskScore += 30
+        assessment.RiskFactors = append(assessment.RiskFactors, RiskFactor{
+            Type:        &quot;high_velocity&quot;,
+            Description: fmt.Sprintf(&quot;User created %d transactions in the last hour&quot;, recentCount),
+            Score:       30,
+        })
+    }
+
+    // Determine risk level
+    assessment.RiskLevel = s.categorizeRisk(assessment.RiskScore)
+
+    // Trigger alerts for high-risk transactions
+    if assessment.RiskLevel &gt;= RiskLevelHigh {
+        go s.triggerSecurityAlert(ctx, transaction, assessment)
+    }
+
+    return assessment, nil
+}
+
+func (s *FraudDetectionService) triggerSecurityAlert(ctx context.Context, transaction *Transaction, assessment *RiskAssessment) {
+    alert := SecurityAlert{
+        ID:            uuid.New(),
+        Type:          &quot;high_risk_transaction&quot;,
+        Severity:      &quot;high&quot;,
+        TenantID:      transaction.TenantID,
+        TransactionID: transaction.ID,
+        RiskScore:     assessment.RiskScore,
+        RiskFactors:   assessment.RiskFactors,
+        CreatedAt:     time.Now(),
+        RequiresReview: true,
+    }
+
+    // Send to security operations center
+    if err := s.alerting.SendAlert(ctx, alert); err != nil {
+        // Log but don't fail the transaction
+        log.Error(&quot;Failed to send security alert&quot;, &quot;error&quot;, err, &quot;alert_id&quot;, alert.ID)
+    }
+
+    // Create audit entry
+    s.audit.LogSecurityEvent(ctx, audit.Event{
+        Type:        &quot;security.high_risk_transaction&quot;,
+        TenantID:    transaction.TenantID,
+        UserID:      transaction.CreatedBy,
+        ResourceID:  string(transaction.ID),
+        RiskScore:   audit.RiskCritical,
+        Data: map[string]interface{}{
+            &quot;risk_assessment&quot;: assessment,
+            &quot;alert_id&quot;:        alert.ID,
+        },
+        Timestamp: time.Now(),
+    })
+}
+</code></pre>
+<hr />
+<h2 id="abac-integration-for-financial-operations">ABAC Integration for Financial Operations</h2>
+<h3 id="financial-policy-framework"><strong>Financial Policy Framework</strong></h3>
+<h4 id="account-management-policies"><strong>Account Management Policies</strong></h4>
+<pre><code class="language-go">// @internal/core/finance/policies/account_policies.go
+
+var AccountManagementPolicies = []abac.Policy{
+    {
+        ID:          &quot;account-create-standard&quot;,
+        Name:        &quot;Standard Account Creation&quot;,
+        Description: &quot;Allows accountants to create standard accounts during business hours&quot;,
+        Effect:      abac.EffectAllow,
+        Version:     &quot;1.0&quot;,
+
+        Subjects: []abac.Condition{
+            abac.RoleCondition(&quot;accountant&quot;, &quot;senior_accountant&quot;),
+            abac.DepartmentCondition(&quot;finance&quot;, &quot;accounting&quot;),
+            abac.NOT(abac.UserStatusCondition(&quot;suspended&quot;, &quot;terminated&quot;)),
+        },
+
+        Resources: []abac.Condition{
+            abac.ResourceTypeCondition(&quot;account&quot;),
+            abac.NOT(abac.AccountTypeCondition(&quot;bank&quot;, &quot;cash&quot;)), // Exclude sensitive accounts
+        },
+
+        Actions: []abac.Condition{
+            abac.ActionCondition(&quot;create&quot;, &quot;update&quot;),
+        },
+
+        Context: []abac.Condition{
+            abac.TenantCondition(),
+            abac.TimeCondition(&quot;business_hours&quot;),
+            abac.LocationCondition(&quot;office_network&quot;, &quot;vpn_network&quot;),
+            abac.NOT(abac.DateCondition(&quot;fiscal_year_end&quot;)), // Restrict during year-end
+        },
+
+        Obligations: []abac.Obligation{
+            {
+                Type: &quot;audit_enhanced&quot;,
+                Config: map[string]interface{}{
+                    &quot;audit_level&quot;: &quot;detailed&quot;,
+                    &quot;real_time&quot;:   true,
+                },
+            },
+        },
+    },
+
+    {
+        ID:          &quot;account-create-sensitive&quot;,
+        Name:        &quot;Sensitive Account Creation&quot;,
+        Description: &quot;Strict controls for bank and cash account creation&quot;,
+        Effect:      abac.EffectAllow,
+        Version:     &quot;1.0&quot;,
+
+        Subjects: []abac.Condition{
+            abac.RoleCondition(&quot;finance_manager&quot;, &quot;controller&quot;, &quot;cfo&quot;),
+            abac.CertificationCondition(&quot;financial_controls_certified&quot;),
+            abac.MFACondition(&quot;required&quot;),
+        },
+
+        Resources: []abac.Condition{
+            abac.ResourceTypeCondition(&quot;account&quot;),
+            abac.AccountTypeCondition(&quot;bank&quot;, &quot;cash&quot;),
+        },
+
+        Actions: []abac.Condition{
+            abac.ActionCondition(&quot;create&quot;, &quot;update&quot;),
+        },
+
+        Context: []abac.Condition{
+            abac.TenantCondition(),
+            abac.TimeCondition(&quot;business_hours&quot;),
+            abac.LocationCondition(&quot;secure_office&quot;),
+            abac.ApprovalCondition(&quot;dual_approval_required&quot;),
+            abac.ComplianceCondition(&quot;sox_environment&quot;),
+        },
+
+        Obligations: []abac.Obligation{
+            {
+                Type: &quot;notification&quot;,
+                Config: map[string]interface{}{
+                    &quot;notify_roles&quot;: []string{&quot;cfo&quot;, &quot;auditor&quot;},
+                    &quot;priority&quot;:     &quot;high&quot;,
+                    &quot;immediate&quot;:    true,
+                },
+            },
+            {
+                Type: &quot;approval_required&quot;,
+                Config: map[string]interface{}{
+                    &quot;approval_type&quot;: &quot;dual_authorization&quot;,
+                    &quot;approver_roles&quot;: []string{&quot;cfo&quot;, &quot;controller&quot;},
+                    &quot;timeout_hours&quot;: 24,
+                },
+            },
+        },
+    },
+}
+</code></pre>
+<h4 id="transaction-authorization-policies"><strong>Transaction Authorization Policies</strong></h4>
+<pre><code class="language-go">// Transaction policies with dynamic risk assessment
+var TransactionAuthorizationPolicies = []abac.Policy{
+    {
+        ID:   &quot;transaction-post-risk-based&quot;,
+        Name: &quot;Risk-Based Transaction Posting&quot;,
+        Description: &quot;Transaction posting authorization based on risk assessment&quot;,
+        Effect: abac.EffectAllow,
+        Version: &quot;1.0&quot;,
+
+        Subjects: []abac.Condition{
+            abac.OR(
+                // Low risk: accountants can post small transactions
+                abac.AND(
+                    abac.RoleCondition(&quot;accountant&quot;),
+                    abac.AmountCondition(&quot;&lt;=&quot;, 5000),
+                    abac.RiskCondition(&quot;&lt;=&quot;, &quot;low&quot;),
+                ),
+                // Medium risk: senior accountants
+                abac.AND(
+                    abac.RoleCondition(&quot;senior_accountant&quot;, &quot;finance_manager&quot;),
+                    abac.AmountCondition(&quot;&lt;=&quot;, 50000),
+                    abac.RiskCondition(&quot;&lt;=&quot;, &quot;medium&quot;),
+                ),
+                // High risk: only senior management
+                abac.AND(
+                    abac.RoleCondition(&quot;controller&quot;, &quot;cfo&quot;),
+                    abac.RiskCondition(&quot;&lt;=&quot;, &quot;high&quot;),
+                    abac.ApprovalCondition(&quot;executive_approval&quot;),
+                ),
+            ),
+        },
+
+        Resources: []abac.Condition{
+            abac.ResourceTypeCondition(&quot;transaction&quot;),
+        },
+
+        Actions: []abac.Condition{
+            abac.ActionCondition(&quot;post&quot;),
+        },
+
+        Context: []abac.Condition{
+            abac.TenantCondition(),
+            abac.TimeCondition(&quot;business_hours&quot;),
+            abac.NOT(abac.UserCondition(&quot;same_as_creator&quot;)), // Segregation of duties
+            abac.ComplianceCondition(&quot;internal_controls_active&quot;),
+        },
+
+        Obligations: []abac.Obligation{
+            {
+                Type: &quot;segregation_of_duties&quot;,
+                Config: map[string]interface{}{
+                    &quot;require_different_user&quot;: true,
+                    &quot;minimum_separation_hours&quot;: 1,
+                },
+            },
+            {
+                Type: &quot;dual_authorization&quot;,
+                Config: map[string]interface{}{
+                    &quot;required_for_amounts_over&quot;: 25000,
+                    &quot;timeout_hours&quot;: 48,
+                },
+            },
+        },
+    },
+}
+</code></pre>
+<h3 id="dynamic-risk-assessment"><strong>Dynamic Risk Assessment</strong></h3>
+<h4 id="risk-context-provider"><strong>Risk Context Provider</strong></h4>
+<pre><code class="language-go">// @internal/core/finance/abac/risk_context_provider.go
+
+type FinancialRiskContextProvider struct {
+    fraudDetection FraudDetectionService
+    userAnalytics  UserAnalyticsService
+    transactionRepo TransactionRepository
+}
+
+func (p *FinancialRiskContextProvider) EnrichContext(ctx context.Context, request abac.Request) (map[string]interface{}, error) {
+    enrichedContext := make(map[string]interface{})
+
+    // Basic context from request
+    for k, v := range request.Context {
+        enrichedContext[k] = v
+    }
+
+    // Add risk assessment if transaction-related
+    if request.Resource.Type == &quot;transaction&quot; {
+        riskAssessment, err := p.assessTransactionRisk(ctx, request)
+        if err != nil {
+            return enrichedContext, err
+        }
+
+        enrichedContext[&quot;risk_level&quot;] = riskAssessment.RiskLevel
+        enrichedContext[&quot;risk_score&quot;] = riskAssessment.RiskScore
+        enrichedContext[&quot;risk_factors&quot;] = riskAssessment.RiskFactors
+    }
+
+    // Add user behavior context
+    if userID, ok := request.Subject.Attributes[&quot;user_id&quot;].(string); ok {
+        behaviorProfile, err := p.userAnalytics.GetBehaviorProfile(ctx, userID)
+        if err == nil {
+            enrichedContext[&quot;user_behavior_score&quot;] = behaviorProfile.TrustScore
+            enrichedContext[&quot;recent_anomalies&quot;] = behaviorProfile.RecentAnomalies
+            enrichedContext[&quot;access_patterns&quot;] = behaviorProfile.AccessPatterns
+        }
+    }
+
+    // Add temporal context
+    now := time.Now()
+    enrichedContext[&quot;hour_of_day&quot;] = now.Hour()
+    enrichedContext[&quot;day_of_week&quot;] = now.Weekday().String()
+    enrichedContext[&quot;is_business_hours&quot;] = p.isBusinessHours(now)
+    enrichedContext[&quot;is_weekend&quot;] = now.Weekday() == time.Saturday || now.Weekday() == time.Sunday
+
+    // Add compliance context
+    enrichedContext[&quot;sox_period&quot;] = p.isSOXReportingPeriod(now)
+    enrichedContext[&quot;audit_period&quot;] = p.isAuditPeriod(now)
+    enrichedContext[&quot;fiscal_year_end&quot;] = p.isFiscalYearEnd(now)
+
+    return enrichedContext, nil
+}
+
+func (p *FinancialRiskContextProvider) assessTransactionRisk(ctx context.Context, request abac.Request) (*RiskAssessment, error) {
+    // Extract transaction details from request
+    amount, _ := request.Resource.Attributes[&quot;amount&quot;].(decimal.Decimal)
+    transactionType, _ := request.Resource.Attributes[&quot;type&quot;].(string)
+
+    // Create mock transaction for risk assessment
+    mockTransaction := &amp;Transaction{
+        TotalAmount: amount,
+        Type:        TransactionType(transactionType),
+        CreatedAt:   time.Now(),
+        CreatedBy:   identity.UserID(request.Subject.ID),
+    }
+
+    return p.fraudDetection.EvaluateTransaction(ctx, mockTransaction)
+}
+</code></pre>
+<h3 id="policy-evaluation-engine"><strong>Policy Evaluation Engine</strong></h3>
+<h4 id="custom-financial-condition-evaluators"><strong>Custom Financial Condition Evaluators</strong></h4>
+<pre><code class="language-go">// @internal/core/finance/abac/condition_evaluators.go
+
+// Amount condition evaluator for financial policies
+func AmountConditionEvaluator(condition abac.Condition, context abac.EvaluationContext) (bool, error) {
+    operator, ok := condition.Config[&quot;operator&quot;].(string)
+    if !ok {
+        return false, fmt.Errorf(&quot;amount condition missing operator&quot;)
+    }
+
+    thresholdStr, ok := condition.Config[&quot;threshold&quot;].(string)
+    if !ok {
+        return false, fmt.Errorf(&quot;amount condition missing threshold&quot;)
+    }
+
+    threshold, err := decimal.NewFromString(thresholdStr)
+    if err != nil {
+        return false, fmt.Errorf(&quot;invalid threshold amount: %w&quot;, err)
+    }
+
+    // Get amount from resource attributes
+    amountAttr, exists := context.Resource.Attributes[&quot;amount&quot;]
+    if !exists {
+        return false, fmt.Errorf(&quot;amount not found in resource attributes&quot;)
+    }
+
+    amount, ok := amountAttr.(decimal.Decimal)
+    if !ok {
+        // Try to parse from string or float
+        if amountStr, ok := amountAttr.(string); ok {
+            amount, err = decimal.NewFromString(amountStr)
+            if err != nil {
+                return false, fmt.Errorf(&quot;invalid amount format: %w&quot;, err)
+            }
+        } else if amountFloat, ok := amountAttr.(float64); ok {
+            amount = decimal.NewFromFloat(amountFloat)
+        } else {
+            return false, fmt.Errorf(&quot;unsupported amount type&quot;)
+        }
+    }
+
+    // Evaluate condition
+    switch operator {
+    case &quot;&lt;=&quot;:
+        return amount.LessThanOrEqual(threshold), nil
+    case &quot;&lt;&quot;:
+        return amount.LessThan(threshold), nil
+    case &quot;&gt;=&quot;:
+        return amount.GreaterThanOrEqual(threshold), nil
+    case &quot;&gt;&quot;:
+        return amount.GreaterThan(threshold), nil
+    case &quot;=&quot;:
+        return amount.Equal(threshold), nil
+    case &quot;!=&quot;:
+        return !amount.Equal(threshold), nil
+    default:
+        return false, fmt.Errorf(&quot;unsupported operator: %s&quot;, operator)
+    }
+}
+
+// Risk level condition evaluator
+func RiskConditionEvaluator(condition abac.Condition, context abac.EvaluationContext) (bool, error) {
+    operator, ok := condition.Config[&quot;operator&quot;].(string)
+    if !ok {
+        return false, fmt.Errorf(&quot;risk condition missing operator&quot;)
+    }
+
+    thresholdStr, ok := condition.Config[&quot;threshold&quot;].(string)
+    if !ok {
+        return false, fmt.Errorf(&quot;risk condition missing threshold&quot;)
+    }
+
+    // Get risk level from context
+    riskLevelAttr, exists := context.Environment[&quot;risk_level&quot;]
+    if !exists {
+        return false, fmt.Errorf(&quot;risk level not found in context&quot;)
+    }
+
+    riskLevel, ok := riskLevelAttr.(string)
+    if !ok {
+        return false, fmt.Errorf(&quot;invalid risk level type&quot;)
+    }
+
+    // Convert risk levels to numeric values for comparison
+    riskValues := map[string]int{
+        &quot;low&quot;:      1,
+        &quot;medium&quot;:   2,
+        &quot;high&quot;:     3,
+        &quot;critical&quot;: 4,
+    }
+
+    currentRisk, ok := riskValues[riskLevel]
+    if !ok {
+        return false, fmt.Errorf(&quot;unknown risk level: %s&quot;, riskLevel)
+    }
+
+    thresholdRisk, ok := riskValues[thresholdStr]
+    if !ok {
+        return false, fmt.Errorf(&quot;unknown threshold risk level: %s&quot;, thresholdStr)
+    }
+
+    // Evaluate condition
+    switch operator {
+    case &quot;&lt;=&quot;:
+        return currentRisk &lt;= thresholdRisk, nil
+    case &quot;&lt;&quot;:
+        return currentRisk &lt; thresholdRisk, nil
+    case &quot;&gt;=&quot;:
+        return currentRisk &gt;= thresholdRisk, nil
+    case &quot;&gt;&quot;:
+        return currentRisk &gt; thresholdRisk, nil
+    case &quot;=&quot;:
+        return currentRisk == thresholdRisk, nil
+    case &quot;!=&quot;:
+        return currentRisk != thresholdRisk, nil
+    default:
+        return false, fmt.Errorf(&quot;unsupported operator: %s&quot;, operator)
+    }
+}
+
+// Segregation of duties evaluator
+func SegregationOfDutiesEvaluator(condition abac.Condition, context abac.EvaluationContext) (bool, error) {
+    requireDifferentUser, ok := condition.Config[&quot;require_different_user&quot;].(bool)
+    if !ok || !requireDifferentUser {
+        return true, nil // No segregation requirement
+    }
+
+    // Get current user ID
+    currentUserID, ok := context.Subject.Attributes[&quot;user_id&quot;].(string)
+    if !ok {
+        return false, fmt.Errorf(&quot;user ID not found in subject&quot;)
+    }
+
+    // Get resource creator ID
+    creatorID, exists := context.Resource.Attributes[&quot;created_by&quot;]
+    if !exists {
+        return true, nil // No creator information, allow
+    }
+
+    creatorIDStr, ok := creatorID.(string)
+    if !ok {
+        return false, fmt.Errorf(&quot;invalid creator ID type&quot;)
+    }
+
+    // Users must be different
+    return currentUserID != creatorIDStr, nil
+}
+
+// Business hours evaluator
+func BusinessHoursEvaluator(condition abac.Condition, context abac.EvaluationContext) (bool, error) {
+    requiredCondition, ok := condition.Config[&quot;required&quot;].(string)
+    if !ok {
+        requiredCondition = &quot;business_hours&quot;
+    }
+
+    // Get current time
+    now := time.Now()
+
+    switch requiredCondition {
+    case &quot;business_hours&quot;:
+        return isBusinessHours(now), nil
+    case &quot;after_hours&quot;:
+        return !isBusinessHours(now), nil
+    case &quot;weekend&quot;:
+        return now.Weekday() == time.Saturday || now.Weekday() == time.Sunday, nil
+    case &quot;weekday&quot;:
+        return now.Weekday() != time.Saturday &amp;&amp; now.Weekday() != time.Sunday, nil
+    default:
+        return false, fmt.Errorf(&quot;unknown time condition: %s&quot;, requiredCondition)
+    }
+}
+
+func isBusinessHours(t time.Time) bool {
+    hour := t.Hour()
+    weekday := t.Weekday()
+
+    // Monday to Friday, 8 AM to 6 PM
+    return weekday &gt;= time.Monday &amp;&amp; weekday &lt;= time.Friday &amp;&amp; hour &gt;= 8 &amp;&amp; hour &lt; 18
+}
+</code></pre>
+<hr />
+<h2 id="audit-compliance-framework">Audit &amp; Compliance Framework</h2>
+<h3 id="comprehensive-audit-logging"><strong>Comprehensive Audit Logging</strong></h3>
+<h4 id="financial-audit-service"><strong>Financial Audit Service</strong></h4>
+<pre><code class="language-go">// @internal/core/finance/audit/financial_audit_service.go
+
+type FinancialAuditService struct {
+    baseAudit    audit.Service
+    storage      AuditStorageService
+    compliance   ComplianceService
+    alerting     AlertingService
+    encryption   EncryptionService
+}
+
+func (s *FinancialAuditService) LogFinancialEvent(ctx context.Context, event FinancialAuditEvent) error {
+    // Enrich event with compliance context
+    enrichedEvent := s.enrichEventForCompliance(event)
+
+    // Encrypt sensitive financial data
+    if err := s.encryptSensitiveData(&amp;enrichedEvent); err != nil {
+        return fmt.Errorf(&quot;failed to encrypt audit data: %w&quot;, err)
+    }
+
+    // Store in immutable audit log
+    if err := s.storage.Store(ctx, enrichedEvent); err != nil {
+        return fmt.Errorf(&quot;failed to store audit event: %w&quot;, err)
+    }
+
+    // Check for compliance violations
+    if violations := s.compliance.CheckViolations(enrichedEvent); len(violations) &gt; 0 {
+        s.handleComplianceViolations(ctx, enrichedEvent, violations)
+    }
+
+    // Real-time monitoring for high-risk events
+    if enrichedEvent.RiskScore &gt;= audit.RiskHigh {
+        go s.triggerRealTimeAlert(ctx, enrichedEvent)
+    }
+
+    return nil
+}
+
+type FinancialAuditEvent struct {
+    // Core audit fields
+    ID           string                 `json:&quot;id&quot;`
+    Type         string                 `json:&quot;type&quot;`
+    TenantID     string                 `json:&quot;tenant_id&quot;`
+    UserID       string                 `json:&quot;user_id&quot;`
+    ResourceID   string                 `json:&quot;resource_id&quot;`
+    ResourceType string                 `json:&quot;resource_type&quot;`
+    Action       string                 `json:&quot;action&quot;`
+    Timestamp    time.Time              `json:&quot;timestamp&quot;`
+
+    // Financial-specific fields
+    Amount       *decimal.Decimal       `json:&quot;amount,omitempty&quot;`
+    Currency     string                 `json:&quot;currency,omitempty&quot;`
+    AccountCodes []string               `json:&quot;account_codes,omitempty&quot;`
+
+    // Compliance fields
+    ComplianceFrameworks []string       `json:&quot;compliance_frameworks&quot;`
+    RetentionPeriod      time.Duration  `json:&quot;retention_period&quot;`
+    DataClassification   string         `json:&quot;data_classification&quot;`
+
+    // Risk assessment
+    RiskScore    audit.RiskLevel        `json:&quot;risk_score&quot;`
+    RiskFactors  []RiskFactor          `json:&quot;risk_factors,omitempty&quot;`
+
+    // Context and metadata
+    SessionID    string                 `json:&quot;session_id,omitempty&quot;`
+    IPAddress    string                 `json:&quot;ip_address,omitempty&quot;`
+    UserAgent    string                 `json:&quot;user_agent,omitempty&quot;`
+    Location     *GeographicLocation    `json:&quot;location,omitempty&quot;`
+
+    // Audit trail integrity
+    PreviousEventHash string           `json:&quot;previous_event_hash&quot;`
+    EventHash         string           `json:&quot;event_hash&quot;`
+    DigitalSignature  string           `json:&quot;digital_signature&quot;`
+
+    // Sensitive data (encrypted)
+    EncryptedData map[string]interface{} `json:&quot;encrypted_data,omitempty&quot;`
+}
+
+func (s *FinancialAuditService) LogAccountOperation(ctx context.Context, operation AccountOperation) error {
+    event := FinancialAuditEvent{
+        ID:           uuid.New().String(),
+        Type:         fmt.Sprintf(&quot;finance.account.%s&quot;, operation.Type),
+        TenantID:     operation.TenantID.String(),
+        UserID:       operation.UserID.String(),
+        ResourceID:   operation.AccountID.String(),
+        ResourceType: &quot;account&quot;,
+        Action:       operation.Type,
+        Timestamp:    time.Now(),
+
+        AccountCodes:         []string{string(operation.AccountCode)},
+        ComplianceFrameworks: []string{&quot;SOX&quot;, &quot;GAAP&quot;, &quot;IFRS&quot;},
+        RetentionPeriod:      7 * 365 * 24 * time.Hour, // 7 years for SOX
+        DataClassification:   &quot;financial_confidential&quot;,
+        RiskScore:           s.assessAccountOperationRisk(operation),
+
+        SessionID: extractSessionID(ctx),
+        IPAddress: extractIPAddress(ctx),
+        UserAgent: extractUserAgent(ctx),
+        Location:  extractLocation(ctx),
+    }
+
+    // Add operation-specific data
+    event.EncryptedData = map[string]interface{}{
+        &quot;account_name&quot;:        operation.AccountName,
+        &quot;account_type&quot;:        operation.AccountType,
+        &quot;previous_values&quot;:     operation.PreviousValues,
+        &quot;new_values&quot;:          operation.NewValues,
+        &quot;business_justification&quot;: operation.Justification,
+    }
+
+    return s.LogFinancialEvent(ctx, event)
+}
+
+func (s *FinancialAuditService) LogTransactionEvent(ctx context.Context, transaction *Transaction, eventType string) error {
+    event := FinancialAuditEvent{
+        ID:           uuid.New().String(),
+        Type:         fmt.Sprintf(&quot;finance.transaction.%s&quot;, eventType),
+        TenantID:     transaction.TenantID.String(),
+        UserID:       transaction.CreatedBy.String(),
+        ResourceID:   transaction.ID.String(),
+        ResourceType: &quot;transaction&quot;,
+        Action:       eventType,
+        Timestamp:    time.Now(),
+
+        Amount:               &amp;transaction.TotalAmount,
+        Currency:             string(transaction.Currency),
+        ComplianceFrameworks: []string{&quot;SOX&quot;, &quot;GAAP&quot;, &quot;SARBANES_OXLEY&quot;},
+        RetentionPeriod:      7 * 365 * 24 * time.Hour,
+        DataClassification:   &quot;financial_confidential&quot;,
+        RiskScore:           s.assessTransactionRisk(transaction),
+
+        SessionID: extractSessionID(ctx),
+        IPAddress: extractIPAddress(ctx),
+        UserAgent: extractUserAgent(ctx),
+    }
+
+    // Extract account codes from entries
+    accountCodes := make([]string, len(transaction.Entries))
+    for i, entry := range transaction.Entries {
+        accountCodes[i] = string(entry.AccountID)
+    }
+    event.AccountCodes = accountCodes
+
+    // Encrypt transaction details
+    event.EncryptedData = map[string]interface{}{
+        &quot;transaction_number&quot;: transaction.Number,
+        &quot;transaction_type&quot;:   transaction.Type,
+        &quot;posting_date&quot;:       transaction.PostingDate,
+        &quot;due_date&quot;:           transaction.DueDate,
+        &quot;exchange_rate&quot;:      transaction.ExchangeRate,
+        &quot;reference_number&quot;:   transaction.ReferenceNumber,
+        &quot;description&quot;:        transaction.Description,
+        &quot;entries&quot;:            s.encryptTransactionEntries(transaction.Entries),
+    }
+
+    // Add segregation of duties information
+    if eventType == &quot;posted&quot; &amp;&amp; transaction.ApprovedBy != nil {
+        event.EncryptedData[&quot;posted_by&quot;] = transaction.ApprovedBy.String()
+        event.EncryptedData[&quot;segregation_of_duties&quot;] = transaction.CreatedBy.String() != transaction.ApprovedBy.String()
+    }
+
+    return s.LogFinancialEvent(ctx, event)
+}
+
+func (s *FinancialAuditService) enrichEventForCompliance(event FinancialAuditEvent) FinancialAuditEvent {
+    // Add compliance-specific enrichment
+    event.PreviousEventHash = s.getLastEventHash(event.TenantID)
+    event.EventHash = s.calculateEventHash(event)
+    event.DigitalSignature = s.signEvent(event)
+
+    // Enrich with regulatory context
+    if s.isSOXApplicable(event.TenantID) {
+        event.ComplianceFrameworks = append(event.ComplianceFrameworks, &quot;SOX&quot;)
+    }
+
+    if s.isGDPRApplicable(event.TenantID) {
+        event.ComplianceFrameworks = append(event.ComplianceFrameworks, &quot;GDPR&quot;)
+    }
+
+    return event
+}
+</code></pre>
+<h3 id="compliance-monitoring-reporting"><strong>Compliance Monitoring &amp; Reporting</strong></h3>
+<h4 id="sox-compliance-service"><strong>SOX Compliance Service</strong></h4>
+<pre><code class="language-go">// @internal/core/finance/compliance/sox_compliance.go
+
+type SOXComplianceService struct {
+    audit           audit.Service
+    policyEngine    PolicyEngine
+    controlTesting  ControlTestingService
+    reportGenerator ReportGenerator
+}
+
+// SOX Section 404 - Internal Controls Assessment
+func (s *SOXComplianceService) AssessInternalControls(ctx context.Context, tenantID tenant.ID, period Period) (*SOXAssessment, error) {
+    assessment := &amp;SOXAssessment{
+        TenantID:      tenantID,
+        Period:        period,
+        AssessmentDate: time.Now(),
+        Controls:      []ControlAssessment{},
+        Deficiencies:  []ControlDeficiency{},
+        Status:        &quot;in_progress&quot;,
+    }
+
+    // Assess key financial controls
+    controls := []string{
+        &quot;segregation_of_duties&quot;,
+        &quot;authorization_limits&quot;,
+        &quot;transaction_approval_workflow&quot;,
+        &quot;account_reconciliation&quot;,
+        &quot;journal_entry_controls&quot;,
+        &quot;financial_reporting_controls&quot;,
+    }
+
+    for _, controlName := range controls {
+        controlAssessment, err := s.assessControl(ctx, tenantID, controlName, period)
+        if err != nil {
+            return nil, fmt.Errorf(&quot;failed to assess control %s: %w&quot;, controlName, err)
+        }
+
+        assessment.Controls = append(assessment.Controls, *controlAssessment)
+
+        if controlAssessment.Effectiveness != &quot;effective&quot; {
+            assessment.Deficiencies = append(assessment.Deficiencies, ControlDeficiency{
+                ControlName:     controlName,
+                DeficiencyType:  controlAssessment.DeficiencyType,
+                Severity:        controlAssessment.Severity,
+                Description:     controlAssessment.Description,
+                RemediationPlan: controlAssessment.RemediationPlan,
+            })
+        }
+    }
+
+    // Determine overall assessment
+    assessment.Status = s.determineOverallAssessment(assessment.Controls)
+
+    return assessment, nil
+}
+
+func (s *SOXComplianceService) assessControl(ctx context.Context, tenantID tenant.ID, controlName string, period Period) (*ControlAssessment, error) {
+    switch controlName {
+    case &quot;segregation_of_duties&quot;:
+        return s.assessSegregationOfDuties(ctx, tenantID, period)
+    case &quot;authorization_limits&quot;:
+        return s.assessAuthorizationLimits(ctx, tenantID, period)
+    case &quot;transaction_approval_workflow&quot;:
+        return s.assessApprovalWorkflows(ctx, tenantID, period)
+    default:
+        return nil, fmt.Errorf(&quot;unknown control: %s&quot;, controlName)
+    }
+}
+
+func (s *SOXComplianceService) assessSegregationOfDuties(ctx context.Context, tenantID tenant.ID, period Period) (*ControlAssessment, error) {
+    assessment := &amp;ControlAssessment{
+        ControlName:   &quot;segregation_of_duties&quot;,
+        TestDate:      time.Now(),
+        Effectiveness: &quot;effective&quot;,
+    }
+
+    // Query transactions where creator and approver are the same
+    violationQuery := `
+        SELECT COUNT(*) as violation_count
+        FROM finance_transactions 
+        WHERE tenant_id = $1 
+        AND posting_date BETWEEN $2 AND $3
+        AND created_by = approved_by
+        AND status = 'posted'
+        AND total_amount &gt; 1000 -- Significant amounts
+    `
+
+    var violationCount int
+    err := s.audit.QueryDB(ctx, violationQuery, &amp;violationCount, tenantID, period.StartDate, period.EndDate)
+    if err != nil {
+        return nil, err
+    }
+
+    if violationCount &gt; 0 {
+        assessment.Effectiveness = &quot;ineffective&quot;
+        assessment.DeficiencyType = &quot;material_weakness&quot;
+        assessment.Severity = &quot;high&quot;
+        assessment.Description = fmt.Sprintf(&quot;Found %d transactions where the same person created and approved the transaction&quot;, violationCount)
+        assessment.RemediationPlan = &quot;Implement automated controls to prevent same-person approval for transactions over $1,000&quot;
+    }
+
+    // Test authorization matrix compliance
+    matrixViolations, err := s.testAuthorizationMatrix(ctx, tenantID, period)
+    if err != nil {
+        return nil, err
+    }
+
+    if len(matrixViolations) &gt; 0 {
+        if assessment.Effectiveness == &quot;effective&quot; {
+            assessment.Effectiveness = &quot;deficient&quot;
+            assessment.DeficiencyType = &quot;significant_deficiency&quot;
+            assessment.Severity = &quot;medium&quot;
+        }
+        assessment.Description += fmt.Sprintf(&quot;; Found %d authorization matrix violations&quot;, len(matrixViolations))
+    }
+
+    return assessment, nil
+}
+
+// GDPR Compliance for Financial Data
+func (s *SOXComplianceService) AssessGDPRCompliance(ctx context.Context, tenantID tenant.ID) (*GDPRAssessment, error) {
+    assessment := &amp;GDPRAssessment{
+        TenantID:       tenantID,
+        AssessmentDate: time.Now(),
+        DataCategories: []DataCategoryAssessment{},
+        Rights:         []DataSubjectRightAssessment{},
+    }
+
+    // Assess financial data categories
+    categories := []string{
+        &quot;financial_transactions&quot;,
+        &quot;account_balances&quot;,
+        &quot;payment_information&quot;,
+        &quot;bank_account_details&quot;,
+        &quot;credit_information&quot;,
+    }
+
+    for _, category := range categories {
+        categoryAssessment := s.assessDataCategory(ctx, tenantID, category)
+        assessment.DataCategories = append(assessment.DataCategories, categoryAssessment)
+    }
+
+    // Assess data subject rights implementation
+    rights := []string{
+        &quot;right_to_access&quot;,
+        &quot;right_to_rectification&quot;,
+        &quot;right_to_erasure&quot;,
+        &quot;right_to_portability&quot;,
+        &quot;right_to_restrict_processing&quot;,
+    }
+
+    for _, right := range rights {
+        rightAssessment := s.assessDataSubjectRight(ctx, tenantID, right)
+        assessment.Rights = append(assessment.Rights, rightAssessment)
+    }
+
+    return assessment, nil
+}
+</code></pre>
+<h3 id="audit-trail-integrity"><strong>Audit Trail Integrity</strong></h3>
+<h4 id="immutable-audit-chain"><strong>Immutable Audit Chain</strong></h4>
+<pre><code class="language-go">// @internal/core/finance/audit/audit_chain.go
+
+type AuditChain struct {
+    storage    AuditStorageService
+    crypto     CryptographicService
+    blockchain BlockchainService // Optional: for ultimate immutability
+}
+
+type AuditBlock struct {
+    Index         uint64                 `json:&quot;index&quot;`
+    TenantID      string                 `json:&quot;tenant_id&quot;`
+    Timestamp     time.Time              `json:&quot;timestamp&quot;`
+    Events        []FinancialAuditEvent  `json:&quot;events&quot;`
+    PreviousHash  string                 `json:&quot;previous_hash&quot;`
+    MerkleRoot    string                 `json:&quot;merkle_root&quot;`
+    Hash          string                 `json:&quot;hash&quot;`
+    Signature     string                 `json:&quot;signature&quot;`
+}
+
+func (c *AuditChain) AddEvent(ctx context.Context, event FinancialAuditEvent) error {
+    // Get the latest block for this tenant
+    latestBlock, err := c.storage.GetLatestBlock(ctx, event.TenantID)
+    if err != nil &amp;&amp; !errors.IsNotFound(err) {
+        return fmt.Errorf(&quot;failed to get latest block: %w&quot;, err)
+    }
+
+    var newBlock *AuditBlock
+
+    if latestBlock == nil {
+        // Genesis block for this tenant
+        newBlock = &amp;AuditBlock{
+            Index:        0,
+            TenantID:     event.TenantID,
+            Timestamp:    time.Now(),
+            Events:       []FinancialAuditEvent{event},
+            PreviousHash: &quot;0&quot;, // Genesis block
+        }
+    } else {
+        // Check if we should create a new block (time-based or event count)
+        if c.shouldCreateNewBlock(latestBlock) {
+            newBlock = &amp;AuditBlock{
+                Index:        latestBlock.Index + 1,
+                TenantID:     event.TenantID,
+                Timestamp:    time.Now(),
+                Events:       []FinancialAuditEvent{event},
+                PreviousHash: latestBlock.Hash,
+            }
+        } else {
+            // Add to existing block
+            latestBlock.Events = append(latestBlock.Events, event)
+            newBlock = latestBlock
+        }
+    }
+
+    // Calculate Merkle root of all events
+    newBlock.MerkleRoot = c.calculateMerkleRoot(newBlock.Events)
+
+    // Calculate block hash
+    newBlock.Hash = c.calculateBlockHash(newBlock)
+
+    // Sign the block
+    newBlock.Signature = c.crypto.SignBlock(newBlock)
+
+    // Store the block
+    if err := c.storage.StoreBlock(ctx, newBlock); err != nil {
+        return fmt.Errorf(&quot;failed to store audit block: %w&quot;, err)
+    }
+
+    // Optionally commit to blockchain for ultimate immutability
+    if c.blockchain != nil {
+        go func() {
+            if err := c.blockchain.CommitBlock(context.Background(), newBlock); err != nil {
+                // Log error but don't fail the operation
+                log.Error(&quot;Failed to commit block to blockchain&quot;, &quot;error&quot;, err, &quot;block_hash&quot;, newBlock.Hash)
+            }
+        }()
+    }
+
+    return nil
+}
+
+func (c *AuditChain) VerifyIntegrity(ctx context.Context, tenantID string, fromTime, toTime time.Time) (*IntegrityReport, error) {
+    blocks, err := c.storage.GetBlocksInRange(ctx, tenantID, fromTime, toTime)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;failed to get blocks: %w&quot;, err)
+    }
+
+    report := &amp;IntegrityReport{
+        TenantID:      tenantID,
+        StartTime:     fromTime,
+        EndTime:       toTime,
+        TotalBlocks:   len(blocks),
+        TotalEvents:   0,
+        Violations:    []IntegrityViolation{},
+        IsValid:       true,
+    }
+
+    for i, block := range blocks {
+        // Count events
+        report.TotalEvents += len(block.Events)
+
+        // Verify block hash
+        calculatedHash := c.calculateBlockHash(block)
+        if calculatedHash != block.Hash {
+            report.IsValid = false
+            report.Violations = append(report.Violations, IntegrityViolation{
+                Type:        &quot;hash_mismatch&quot;,
+                BlockIndex:  block.Index,
+                Description: fmt.Sprintf(&quot;Block hash mismatch: expected %s, got %s&quot;, calculatedHash, block.Hash),
+            })
+        }
+
+        // Verify signature
+        if !c.crypto.VerifyBlockSignature(block) {
+            report.IsValid = false
+            report.Violations = append(report.Violations, IntegrityViolation{
+                Type:        &quot;signature_invalid&quot;,
+                BlockIndex:  block.Index,
+                Description: &quot;Block signature verification failed&quot;,
+            })
+        }
+
+        // Verify chain integrity
+        if i &gt; 0 &amp;&amp; block.PreviousHash != blocks[i-1].Hash {
+            report.IsValid = false
+            report.Violations = append(report.Violations, IntegrityViolation{
+                Type:        &quot;chain_broken&quot;,
+                BlockIndex:  block.Index,
+                Description: &quot;Previous hash doesn't match preceding block&quot;,
+            })
+        }
+
+        // Verify Merkle root
+        calculatedMerkleRoot := c.calculateMerkleRoot(block.Events)
+        if calculatedMerkleRoot != block.MerkleRoot {
+            report.IsValid = false
+            report.Violations = append(report.Violations, IntegrityViolation{
+                Type:        &quot;merkle_mismatch&quot;,
+                BlockIndex:  block.Index,
+                Description: &quot;Merkle root verification failed&quot;,
+            })
+        }
+    }
+
+    return report, nil
+}
+
+func (c *AuditChain) calculateMerkleRoot(events []FinancialAuditEvent) string {
+    if len(events) == 0 {
+        return &quot;&quot;
+    }
+
+    // Create leaf hashes
+    hashes := make([]string, len(events))
+    for i, event := range events {
+        hashes[i] = c.crypto.HashEvent(event)
+    }
+
+    // Build Merkle tree
+    for len(hashes) &gt; 1 {
+        var newLevel []string
+        for i := 0; i &lt; len(hashes); i += 2 {
+            if i+1 &lt; len(hashes) {
+                combined := hashes[i] + hashes[i+1]
+                newLevel = append(newLevel, c.crypto.Hash(combined))
+            } else {
+                newLevel = append(newLevel, hashes[i])
+            }
+        }
+        hashes = newLevel
+    }
+
+    return hashes[0]
+}
+</code></pre>
+<p>This security and compliance guide demonstrates the sophisticated approach to protecting financial data in the AWO ERP system. The framework ensures that all financial operations are properly authorized, comprehensively audited, and compliant with major regulatory requirements while maintaining the highest levels of data integrity and security.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="../../../../javascripts/search-analytics.js"></script>
+      
+        <script src="../../../../javascripts/contextual-help.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,5188 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../02_abac_evaluation_lifecycle/">
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>Identity & RBAC - Awo ERP Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#user-management-permissions" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-header__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Awo ERP Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Identity & RBAC
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../architecture/system-overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../contributing/01-best-practices/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../financial/api-reference/" class="md-tabs__link">
+          
+  
+  
+  Financial Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Users & IAM Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../audit/audit/" class="md-tabs__link">
+          
+  
+  
+  Audit Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../feature_flag/00_README/" class="md-tabs__link">
+          
+  
+  
+  Feature Flags Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tenant/tenant-management/" class="md-tabs__link">
+          
+  
+  
+  Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Other Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api-source/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-nav__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Awo ERP Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/system-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/abac-design-and-roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/FRAMEWORK_MIGRATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/GIN_HANDLERS_INVENTORY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GIN Handlers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/01-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/database-transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Transactions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/general-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/goa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Goa Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/middleware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Middleware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Observability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/securityHandbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Handbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Layer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/sqlc-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Financial Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Financial Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/currency-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Currency Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Task Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/integration-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/security-compliance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security & Compliance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/testing-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Users & IAM Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Users & IAM Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Identity & RBAC
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity & RBAC
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      👥 Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#identity-management-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏗️ Identity Management Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🏗️ Identity Management Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#person-employee-user-separation-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      Person-Employee-User Separation Pattern
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Person-Employee-User Separation Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-persons-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Persons Table
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-employees-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Employees Table
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-users-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Users Table
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Session Management
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#abac-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      🎯 ABAC System
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🎯 ABAC System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#attribute-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Attribute Definitions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#abac-policies" class="md-nav__link">
+    <span class="md-ellipsis">
+      ABAC Policies
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ABAC Policies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database structure
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#policy-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Policy Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Policy Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#time-based-access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time-Based Access Control
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#location-based-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      Location-Based Security
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hierarchical-access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hierarchical Access Control
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comprehensive-audit-compliance" class="md-nav__link">
+    <span class="md-ellipsis">
+      📊 Comprehensive Audit &amp; Compliance
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📊 Comprehensive Audit &amp; Compliance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#audit-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Audit Logging
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#access-request-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Access Request Workflow
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentication-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔑 Authentication &amp; Security
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔑 Authentication &amp; Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-factor-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Factor Authentication
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-session-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Session Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#password-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      Password Security
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-lifecycle-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      👥 User Lifecycle Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="👥 User Lifecycle Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#onboarding-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Onboarding Workflow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-offboarding-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Offboarding Process
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-analytics-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      📈 User Analytics &amp; Monitoring
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📈 User Analytics &amp; Monitoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#advanced-user-activity-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced User Activity Tracking
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#behavioral-analytics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Behavioral Analytics
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-permission-management-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔧 Advanced Permission Management API
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔧 Advanced Permission Management API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#comprehensive-user-management-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comprehensive User Management Endpoints
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-optimization-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚀 Performance Optimization Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚀 Performance Optimization Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intelligent-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Intelligent Caching
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#utility-views-for-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Utility Views for Performance
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-system-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      💡 Key System Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="💡 Key System Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#row-level-security-rls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Row Level Security (RLS)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-abac-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced ABAC Engine
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compliance-ready" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compliance Ready
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enterprise-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enterprise Scale
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02_abac_evaluation_lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03_hybrid_access_control_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hybrid Access Control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_architecture_service_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../IAM_MAPPING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Restructuring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PHASE_3_ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RELEASE_NOTES_RC1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release Notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_11" id="__nav_5_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    ABAC Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_11">
+            <span class="md-nav__icon md-icon"></span>
+            ABAC Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/administrative_performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Administrative Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/attribute_definitions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Attribute Definitions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/audit_monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit & Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/context_attribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/desing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/policy_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/policy_evaluation_CEL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CEL Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/policy_evaluation_expr-lang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expression Language
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/POLICY_SERVICE_ENHANCEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Service Enhancement
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Audit Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Audit Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Feature Flags Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Feature Flags Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/00_README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Onboarding
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/01_introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/02_core_concepts_and_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/03_developer_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/04_admin_api_manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/05_lifecycle_gotchas_and_improvements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lifecycle & Improvements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tenant Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Tenant Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/tenant-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Other Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../airline-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Airline Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../asset-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Asset Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../forecourt-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forecourt Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Financial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../human-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Human Resources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Phases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../inventory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Inventory Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../module-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Module Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../restaurant-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Restaurant Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../retail-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retail Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tax-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tax Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technical-specifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Technical Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflow-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow Engine
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/user-service-abac-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_3" id="__nav_10_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core APIs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            Core APIs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Org Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_4" id="__nav_10_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_4">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Request Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/conditional-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/user-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_5" id="__nav_10_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/manual-curl-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_6" id="__nav_10_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_6">
+            <span class="md-nav__icon md-icon"></span>
+            Utilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/utilities/todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TODO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="user-management-permissions">User Management &amp; Permissions</h1>
+<h2 id="overview">👥 Overview</h2>
+<p>The ERP system implements a comprehensive identity and access management framework based on a sophisticated <strong>Person-Employee-User separation pattern</strong> with advanced <strong>Role-Based Access Control (RBAC)</strong> and <strong>Attribute-Based Access Control (ABAC)</strong>. The system provides enterprise-grade security with tenant isolation, row-level security, and comprehensive audit logging while maintaining usability for administrators and end users.</p>
+<h2 id="identity-management-architecture">🏗️ Identity Management Architecture</h2>
+<h3 id="person-employee-user-separation-pattern">Person-Employee-User Separation Pattern</h3>
+<p>The system employs a three-tier identity model that separates concerns and provides maximum flexibility:</p>
+<h4 id="1-persons-table">1. Persons Table</h4>
+<p>Stores generic person entities representing individuals across various contexts.</p>
+<pre><code class="language-sql">CREATE TABLE persons (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
+    person_type VARCHAR(20) NOT NULL 
+        CHECK (person_type IN ('INDIVIDUAL', 'EMPLOYEE', 'CONTACT', 'CUSTOMER', 'VENDOR', 'CONTRACTOR')),
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    middle_name VARCHAR(100),
+    email VARCHAR(255),
+    phone VARCHAR(20),
+    birth_date DATE,
+    national_id VARCHAR(50),
+    tax_id VARCHAR(50),
+    address JSONB DEFAULT '{}'::jsonb,
+    security_attributes JSONB DEFAULT '{}'::jsonb, -- ABAC attributes
+    metadata JSONB DEFAULT '{}'::jsonb,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ -- Soft delete support
+);
+</code></pre>
+<p><strong>Key Features:</strong>
+- <strong>Multi-purpose identity</strong>: Supports employees, customers, vendors, contractors
+- <strong>ABAC integration</strong>: Security attributes for fine-grained access control
+- <strong>Tenant isolation</strong>: Built-in multi-tenancy with Row Level Security (RLS)
+- <strong>Soft delete</strong>: Maintains data integrity while allowing deactivation
+- <strong>Flexible metadata</strong>: JSONB storage for extensible person data</p>
+<h4 id="2-employees-table">2. Employees Table</h4>
+<p>Extends persons with employment-specific data and organizational hierarchy.</p>
+<pre><code class="language-sql">CREATE TABLE employees (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    person_id UUID NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+    employee_number VARCHAR(50) NOT NULL,
+    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
+    position_title VARCHAR(100),
+    department_id UUID REFERENCES entities(uuid),
+    manager_id UUID REFERENCES employees(id), -- Self-referential hierarchy
+    hire_date DATE NOT NULL,
+    termination_date DATE,
+    salary_info JSONB DEFAULT '{}'::jsonb, -- Encrypted salary data
+    employment_status VARCHAR(20) DEFAULT 'ACTIVE',
+    work_schedule JSONB DEFAULT '{}'::jsonb,
+    security_level INTEGER DEFAULT 0, -- Numeric clearance level
+    access_attributes JSONB DEFAULT '{}'::jsonb, -- ABAC attributes
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+</code></pre>
+<p><strong>Key Features:</strong>
+- <strong>Organizational hierarchy</strong>: Self-referential manager relationships
+- <strong>Security levels</strong>: Numeric clearance for access control (0=lowest)
+- <strong>Employment tracking</strong>: Status, schedules, salary information
+- <strong>ABAC attributes</strong>: Employment-specific access control data</p>
+<h4 id="3-users-table">3. Users Table</h4>
+<p>System access accounts with authentication data and security controls.</p>
+<pre><code class="language-sql">CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
+    person_id UUID REFERENCES persons(id) ON DELETE SET NULL,
+    employee_id UUID REFERENCES employees(id) ON DELETE SET NULL,
+    username VARCHAR(100),
+    email VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255),
+    user_type VARCHAR(20) NOT NULL DEFAULT 'INTERNAL',
+    account_status VARCHAR(20) DEFAULT 'ACTIVE',
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    last_login_at TIMESTAMPTZ,
+    password_changed_at TIMESTAMPTZ DEFAULT NOW(),
+    failed_login_attempts INTEGER DEFAULT 0,
+    lockout_until TIMESTAMPTZ,
+    session_timeout_minutes INTEGER DEFAULT 480, -- 8 hours
+    mfa_enabled BOOLEAN DEFAULT false,
+    mfa_secret VARCHAR(255),
+    user_attributes JSONB DEFAULT '{}'::jsonb, -- ABAC attributes
+    settings JSONB DEFAULT '{}'::jsonb, -- User preferences
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+</code></pre>
+<p><strong>Key Features:</strong>
+- <strong>Flexible linking</strong>: Can link to persons/employees or exist independently
+- <strong>Multiple user types</strong>: INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, ADMIN
+- <strong>Security controls</strong>: Account lockout, session timeouts, MFA support
+- <strong>Service accounts</strong>: API and system users without person association</p>
+<h3 id="session-management">Session Management</h3>
+<pre><code class="language-sql">CREATE TABLE user_sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_token VARCHAR(255) UNIQUE NOT NULL,
+    refresh_token VARCHAR(255),
+    ip_address INET,
+    user_agent TEXT,
+    device_info JSONB DEFAULT '{}'::jsonb, -- Device fingerprinting
+    location_info JSONB DEFAULT '{}'::jsonb, -- Geographic context
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    last_accessed_at TIMESTAMPTZ DEFAULT NOW(),
+    is_active BOOLEAN DEFAULT true
+);
+</code></pre>
+<p><strong>Features:</strong>
+- <strong>Device fingerprinting</strong>: Security context for ABAC evaluation
+- <strong>Location tracking</strong>: Geographic and network location for access control
+- <strong>Security monitoring</strong>: IP tracking and session analytics</p>
+<!-- ## 🔐 RBAC System ->
+<!---->
+<!-- ### Module-Based Organization ->
+<!---->
+<!-- The system organizes functionality into modules for scalable permission management: -->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE modules ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -->
+<!--     name VARCHAR(50) NOT NULL, -->
+<!--     display_name VARCHAR(100), -->
+<!--     description TEXT, -->
+<!--     category VARCHAR(50), -- 'CORE', 'HR', 'FINANCE', 'SALES', etc. -->
+<!--     version VARCHAR(20), -->
+<!--     is_active BOOLEAN DEFAULT true, -->
+<!--     created_at TIMESTAMPTZ DEFAULT NOW() -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Standard Module Categories:** -->
+<!-- - **CORE**: System administration and basic functionality -->
+<!-- - **HR**: Human resources management -->
+<!-- - **FINANCE**: Financial operations and accounting -->
+<!-- - **SALES**: Sales and customer management -->
+<!-- - **INVENTORY**: Warehouse and inventory management -->
+<!-- - **PROJECT**: Project management and tracking -->
+<!---->
+<!-- ### Resource Definition ->
+<!---->
+<!-- Resources represent system objects that can be protected: -->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE resources ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -->
+<!--     module_id UUID NOT NULL REFERENCES modules(id) ON DELETE CASCADE, -->
+<!--     entity_id UUID REFERENCES entities(uuid), -->
+<!--     name VARCHAR(100) NOT NULL, -->
+<!--     display_name VARCHAR(150), -->
+<!--     description TEXT, -->
+<!--     resource_type VARCHAR(50) NOT NULL  -->
+<!--         CHECK (resource_type IN ('API', 'UI', 'DATA', 'FILE', 'REPORT', 'WORKFLOW', 'FUNCTION')), -->
+<!--     parent_resource_id UUID REFERENCES resources(id), -->
+<!--     path VARCHAR(500), -- URL path, API endpoint, file path -->
+<!--     resource_attributes JSONB DEFAULT '{}'::jsonb, -- ABAC attributes -->
+<!--     is_active BOOLEAN DEFAULT true, -->
+<!--     created_at TIMESTAMPTZ DEFAULT NOW(), -->
+<!--     deleted_at TIMESTAMPTZ -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Resource Types:** -->
+<!-- - **API**: REST endpoints and GraphQL operations -->
+<!-- - **UI**: User interface components and pages -->
+<!-- - **DATA**: Database tables and data objects -->
+<!-- - **FILE**: Documents and file system resources -->
+<!-- - **REPORT**: Generated reports and analytics -->
+<!-- - **WORKFLOW**: Business process workflows -->
+<!-- - **FUNCTION**: System functions and procedures -->
+<!---->
+<!-- ### Action Definition ->
+<!---->
+<!-- Actions define what operations can be performed on resources: -->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE actions ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -->
+<!--     name VARCHAR(100) NOT NULL, -->
+<!--     display_name VARCHAR(150), -->
+<!--     description TEXT, -->
+<!--     action_type VARCHAR(50) NOT NULL  -->
+<!--         CHECK (action_type IN ('CREATE', 'READ', 'UPDATE', 'DELETE', 'EXECUTE', 'APPROVE', 'REJECT', 'EXPORT', 'IMPORT')), -->
+<!--     action_category VARCHAR(50) DEFAULT 'STANDARD' -->
+<!--         CHECK (action_category IN ('STANDARD', 'ADMINISTRATIVE', 'SENSITIVE', 'BULK', 'SYSTEM')), -->
+<!--     risk_level VARCHAR(20) DEFAULT 'LOW' -->
+<!--         CHECK (risk_level IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')), -->
+<!--     requires_approval BOOLEAN DEFAULT false, -->
+<!--     is_active BOOLEAN DEFAULT true, -->
+<!--     created_at TIMESTAMPTZ DEFAULT NOW() -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Risk-Based Actions:** -->
+<!-- - **LOW**: Standard CRUD operations -->
+<!-- - **MEDIUM**: Bulk operations and data exports -->
+<!-- - **HIGH**: Administrative functions and approvals -->
+<!-- - **CRITICAL**: System configuration and security changes -->
+<!---->
+<!-- ### Role Management ->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE roles ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -->
+<!--     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT, -->
+<!--     name VARCHAR(50) NOT NULL, -->
+<!--     display_name VARCHAR(100), -->
+<!--     description TEXT, -->
+<!--     module_id UUID REFERENCES modules(id), -- Module association -->
+<!--     role_type VARCHAR(20) DEFAULT 'CUSTOM' -->
+<!--         CHECK (role_type IN ('SYSTEM', 'TENANT', 'ENTITY', 'CUSTOM', 'FUNCTIONAL')), -->
+<!--     parent_role_id UUID REFERENCES roles(id), -- Role hierarchy -->
+<!--     level INTEGER DEFAULT 0, -- Calculated hierarchy level -->
+<!--     permissions JSONB NOT NULL DEFAULT '{}'::jsonb, -- Cached permissions -->
+<!--     entity_scope JSONB DEFAULT '{}'::jsonb, -- Entity access rules -->
+<!--     conditions JSONB DEFAULT '{}'::jsonb, -- Conditional access -->
+<!--     is_system_role BOOLEAN DEFAULT false, -->
+<!--     is_active BOOLEAN DEFAULT true, -->
+<!--     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -->
+<!--     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -->
+<!--     deleted_at TIMESTAMPTZ -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Role Hierarchy Features:** -->
+<!-- - **Inheritance**: Child roles inherit parent permissions -->
+<!-- - **Scoping**: Entity-specific role assignments -->
+<!-- - **Conditions**: Time, location, and device restrictions -->
+<!-- - **Performance optimization**: Cached permission calculations -->
+<!---->
+<!-- ### Granular Permissions ->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE permissions ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -->
+<!--     resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE, -->
+<!--     action_id UUID NOT NULL REFERENCES actions(id) ON DELETE CASCADE, -->
+<!--     name VARCHAR(200) NOT NULL, -->
+<!--     display_name VARCHAR(250), -->
+<!--     description TEXT, -->
+<!--     effect VARCHAR(20) DEFAULT 'ALLOW' CHECK (effect IN ('ALLOW', 'DENY')), -->
+<!--     conditions JSONB DEFAULT '{}'::jsonb, -- ABAC conditions -->
+<!--     data_filters JSONB DEFAULT '{}'::jsonb, -- Row-level security -->
+<!--     field_restrictions JSONB DEFAULT '{}'::jsonb, -- Column restrictions -->
+<!--     is_active BOOLEAN DEFAULT true, -->
+<!--     created_at TIMESTAMPTZ DEFAULT NOW() -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Advanced Permission Features:** -->
+<!-- - **ALLOW/DENY effects**: Explicit permission grants and denials -->
+<!-- - **Data filters**: Row-level security with dynamic conditions -->
+<!-- - **Field restrictions**: Column-level access control -->
+<!-- - **ABAC integration**: Attribute-based conditional access -->
+<!---->
+<!-- ### User Role Assignments ->
+<!---->
+<!-- ```sql -->
+<!-- CREATE TABLE user_roles ( -->
+<!--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -->
+<!--     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -->
+<!--     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE, -->
+<!--     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT, -->
+<!--     assignment_type VARCHAR(20) DEFAULT 'DIRECT' -->
+<!--         CHECK (assignment_type IN ('DIRECT', 'INHERITED', 'DELEGATED', 'TEMPORARY')), -->
+<!--     delegated_by UUID REFERENCES users(id), -->
+<!--     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -->
+<!--     assigned_by UUID REFERENCES users(id), -->
+<!--     expires_at TIMESTAMPTZ, -- Temporary assignments -->
+<!--     conditions JSONB DEFAULT '{}'::jsonb, -- Conditional access -->
+<!--     is_active BOOLEAN DEFAULT true -->
+<!-- ); -->
+<!-- ``` -->
+<!---->
+<!-- **Assignment Types:** -->
+<!-- - **DIRECT**: Explicitly assigned by administrator -->
+<!-- - **INHERITED**: Inherited from organizational hierarchy -->
+<!-- - **DELEGATED**: Temporarily delegated by another user -->
+<!-- - **TEMPORARY**: Time-limited assignments with auto-expiration -->
+
+<h2 id="abac-system">🎯 ABAC System</h2>
+<p>we need to dissect the complexities, implementation challenges, and nuanced interactions that lie beneath the elegant flow diagram. Let's excavate the layers:</p>
+<p><strong>1. "Conditional": Beyond Simple IF-THEN - The Engine's Intricacies</strong>
+    *   <strong>Attribute Provenance &amp; Trust:</strong> Where do attributes <em>really</em> come from? How is their integrity and timeliness guaranteed? A <code>user.clearance = "Top Secret"</code> is useless if the HR system feeding it has a 24-hour delay or is compromised. ABAC relies on a <strong>Trusted Attribute Ecosystem</strong> (Identity Providers, HR Systems, CMDBs, Environmental Sensors, etc.) with defined SLAs and verification mechanisms (e.g., digital signatures).
+    *   <strong>Policy Complexity &amp; Conflict Resolution:</strong> What happens when multiple policies apply?
+        *   <code>Policy A:</code> <code>IF user.role=="Doctor" THEN PERMIT access_to(patient_record)</code>
+        *   <code>Policy B:</code> <code>IF patient.opt_out == true AND user.department != "Billing" THEN DENY access_to(patient_record)</code>
+        *   Does a Doctor (<code>Policy A: PERMIT</code>) get access if the patient opted out (<code>Policy B: DENY</code>)? ABAC requires a <strong>Combining Algorithm</strong> (e.g., Deny-overrides, Permit-overrides, First-applicable) defined at a policy <em>set</em> level. This becomes critical and complex at scale.
+    *   <strong>Dynamic Attribute Evaluation Cost:</strong> Evaluating <code>current_time BETWEEN 9:00 AND 17:00</code> is cheap. Evaluating <code>user.must_comply_with_region(resource.geo_location)</code> might involve complex geofencing lookups or API calls. The <strong>Policy Decision Point (PDP)</strong> must balance decision accuracy with latency. Caching strategies and pre-fetching become essential.
+    *   <strong>Partial Evaluation &amp; Missing Attributes:</strong> What if a required attribute (<code>contractor_project_id</code>) is missing? Does the PDP default to <code>DENY</code> (<code>Fail-Secure</code>), request the attribute (causing latency), or use a default value? Handling incomplete attribute sets is a major design consideration.</p>
+<p><strong>2. "Permission": The Ephemeral Nature of Authorization</strong>
+    *   <strong>Beyond Binary (PERMIT/DENY):</strong> While the core decision is binary, real-world ABAC systems often return richer <strong>Obligations</strong> and <strong>Advice</strong> alongside the decision:
+        *   <code>PERMIT WITH OBLIGATION log_access(reason="Sensitive Data", level=HIGH)</code>
+        *   <code>DENY WITH ADVICE redirect_to(approval_portal)</code>
+        *   The <strong>Policy Enforcement Point (PEP)</strong> must understand and enforce these extensions.
+    *   <strong>Decision Caching &amp; Staleness:</strong> Can a <code>PERMIT</code> decision be cached? For how long? If the user's <code>employment_status</code> changes from "Active" to "Terminated" 5 seconds after a cached <code>PERMIT</code>, the system is vulnerable. Defining <strong>Attribute Freshness Requirements</strong> and <strong>Cache Invalidation Strategies</strong> per policy/attribute is critical for security and performance.</p>
+<p><strong>3. "Approval": Integrating External Workflows - The Hidden Chasm</strong>
+    *   <strong>State Management &amp; Idempotency:</strong> How does the PDP track an outstanding approval request? What happens if the same request is intercepted again before approval is granted/denied? The approval mechanism needs robust <strong>Correlation IDs</strong> and state management to avoid duplicate requests or race conditions.
+    *   <strong>Attribute Generation vs. Decision Delegation:</strong> Is the approval workflow simply generating a new attribute (<code>approval.status = GRANTED</code>), or is it making a <em>de facto</em> access decision itself? True ABAC keeps the decision logic within the PDP using attributes. The approval service should be an <em>attribute provider</em>, not a mini-PDP. This distinction impacts auditability and policy coherence.
+    *   <strong>Escalation &amp; Timeouts:</strong> What if the manager doesn't approve within 24 hours? Does the request expire (<code>DENY</code>), escalate to <em>their</em> manager, or remain pending indefinitely? Approval workflows add significant process complexity to the core ABAC engine.</p>
+<p><strong>4. "Execution": PEP - The Gatekeeper's Burden</strong>
+    *   <strong>Policy Information Point (PIP) Integration:</strong> The PEP often needs to collect resource/environment attributes <em>itself</em> (e.g., <code>file.sensitivity_level</code>, <code>current_device.security_posture</code>) before sending the request to the PDP. This requires the PEP to integrate with various <strong>Policy Information Points (PIPs)</strong>.
+    *   <strong>Handling Obligations:</strong> Enforcing <code>log_access</code> or <code>transform_data</code> obligations requires the PEP to have additional capabilities beyond simple allow/deny. It becomes a policy <em>enforcement and execution</em> point.
+    *   <strong>Stateful Operations:</strong> How does the PEP handle long-running actions (e.g., "Open a document for editing")? Does the initial <code>PERMIT</code> cover the entire session, or must the PEP continuously re-authorize? Session management intertwined with ABAC is complex.</p>
+<p><strong>5. "Request": Context is King - The Unspoken Complexity</strong>
+    *   <strong>Action Granularity:</strong> Is the request <code>"Read Document X"</code> or <code>"Copy Paragraph from Document X to Document Y"</code>? The finer the action granularity, the more precise (and complex) the policies need to be. Defining the actionable verbs is fundamental.
+    *   <strong>Implicit Context:</strong> What contextual attributes are <em>assumed</em>? (e.g., Is the user on a corporate-managed device? On the corporate network? Using MFA?). Capturing and verifying this implicit context reliably is challenging but essential for policies like <code>IF user.location == "OFFICE_NETWORK" THEN PERMIT</code>.</p>
+<p><strong>The Deeper ABAC Flow (Reality Check):</strong></p>
+<ol>
+<li><strong>Request:</strong> User/System attempts action <code>A</code> on Resource <code>R</code>.</li>
+<li><strong>PEP Intercept:</strong> Captures <em>known</em> Subject (<code>S</code>), Resource (<code>R</code>), Action (<code>A</code>). Identifies <em>needed</em> Env/Res attributes.</li>
+<li><strong>PIP Queries (PEP/PDP):</strong> PEP/PDP queries various PIPs to gather attributes <code>S.attr1</code>, <code>S.attr2</code>, <code>R.attr3</code>, <code>ENV.attr4</code>, <code>ENV.attr5</code>. <em>(Latency, Errors Possible)</em></li>
+<li><strong>Policy Retrieval (PDP):</strong> PDP finds <em>all</em> policies applicable to <code>S</code>, <code>R</code>, <code>A</code>, <code>ENV</code>. <em>(Complexity)</em></li>
+<li><strong>Policy Evaluation (PDP):</strong><ul>
+<li>Evaluate conditions using gathered attributes.</li>
+<li><strong>IF</strong> an <code>approval_required</code> condition triggers:<ul>
+<li>Suspend evaluation. Initiate approval workflow with correlation ID <code>CID</code>.</li>
+<li>Approval workflow runs (generates <code>approval.status(CID)=GRANTED/DENIED</code> as a <em>new attribute</em>). <em>(Significant Delay, State Management)</em></li>
+<li>PDP re-triggered or polls for <code>approval.status(CID)</code>.</li>
+<li>PDP resumes evaluation with new attribute.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Conflict Resolution (PDP):</strong> Applies Combining Algorithm to all applicable policy outcomes. <em>(Critical Security Logic)</em></li>
+<li><strong>Decision + Obligations (PDP):</strong> Returns <code>PERMIT</code>/<code>DENY</code> + any Obligations/Advice.</li>
+<li><strong>PEP Execution:</strong><ul>
+<li>Enforces <code>PERMIT</code>/<code>DENY</code>.</li>
+<li>Executes Obligations (e.g., logs, transforms data, triggers alerts).</li>
+<li><strong>Potentially:</strong> Manages session state for ongoing access.</li>
+</ul>
+</li>
+</ol>
+<p><strong>The Core Challenge: Managing Emergent Complexity</strong></p>
+<p>ABAC's power (dynamic, attribute-based decisions) is also its Achilles' heel. The interactions between:</p>
+<ul>
+<li>A distributed, real-time attribute fabric</li>
+<li>Complex, potentially conflicting policy sets</li>
+<li>External workflows (approvals)</li>
+<li>Obligation enforcement</li>
+<li>Performance demands</li>
+</ul>
+<p>...create a system where the behavior can become emergent and hard to predict. Rigorous <strong>Policy Analysis Tools</strong> (simulation, "what-if" testing), <strong>Attribute Governance</strong>, and <strong>Comprehensive Auditing</strong> are not just nice-to-haves; they are essential for secure and manageable ABAC implementations.</p>
+<p><strong>In essence:</strong> ABAC is not just a set of components; it's a complex, dynamic <strong>authorization ecosystem</strong>. Understanding the deep interplay of "Request," "Conditional" (attributes + policies + combining logic), "Permission" (decision + obligations), "Approval" (external workflow integration), and "Execution" (PEP capabilities + obligation handling), along with the underlying challenges of attribute trust, performance, and complexity management, is crucial for moving beyond theory into practical, secure deployment.</p>
+<h3 id="attribute-definitions">Attribute Definitions</h3>
+<p>Standardized attributes for consistent ABAC evaluation:</p>
+<pre><code class="language-sql">CREATE TABLE attribute_definitions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    display_name VARCHAR(150),
+    description TEXT,
+    data_type VARCHAR(50) NOT NULL 
+        CHECK (data_type IN ('STRING', 'NUMBER', 'BOOLEAN', 'DATE', 'TIME', 'JSON', 'ARRAY', 'ENUM')),
+    category VARCHAR(50) NOT NULL 
+        CHECK (category IN ('USER', 'RESOURCE', 'ENVIRONMENT', 'ACTION', 'ENTITY', 'SESSION')),
+    is_required BOOLEAN DEFAULT false,
+    is_sensitive BOOLEAN DEFAULT false, -- PII protection
+    default_value TEXT,
+    allowed_values JSONB, -- For enum types
+    validation_rules JSONB DEFAULT '{}'::jsonb,
+    encryption_required BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+</code></pre>
+<h3 id="abac-policies">ABAC Policies</h3>
+<h4 id="database-structure">Database structure</h4>
+<p>Advanced policy engine with rule-based evaluation:</p>
+<pre><code class="language-sql">CREATE TABLE policies (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    entity_id UUID REFERENCES entities(uuid),
+    name VARCHAR(150) NOT NULL,
+    display_name VARCHAR(200),
+    description TEXT,
+    policy_type VARCHAR(50) DEFAULT 'ABAC' 
+        CHECK (policy_type IN ('ABAC', 'RBAC', 'HYBRID', 'TIME_BASED', 'LOCATION_BASED')),
+    effect VARCHAR(20) DEFAULT 'ALLOW' CHECK (effect IN ('ALLOW', 'DENY')),
+    priority INTEGER DEFAULT 100, -- Conflict resolution
+    category VARCHAR(50) DEFAULT 'ACCESS'
+        CHECK (category IN ('ACCESS', 'DATA_FILTER', 'FIELD_MASK', 'AUDIT', 'COMPLIANCE')),
+    target JSONB NOT NULL, -- When policy applies
+    rule JSONB NOT NULL, -- Policy logic
+    obligations JSONB DEFAULT '{}'::jsonb, -- Required actions
+    advice JSONB DEFAULT '{}'::jsonb, -- Optional actions
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by UUID REFERENCES users(id),
+    deleted_at TIMESTAMPTZ
+);
+</code></pre>
+<h3 id="policy-examples">Policy Examples</h3>
+<h4 id="time-based-access-control">Time-Based Access Control</h4>
+<pre><code class="language-go">type TimeBasedPolicy struct {
+    Name       string            `json:&quot;name&quot;`
+    PolicyType string            `json:&quot;policy_type&quot;`
+    Effect     string            `json:&quot;effect&quot;`
+    Target     PolicyTarget      `json:&quot;target&quot;`
+    Rule       PolicyRule        `json:&quot;rule&quot;`
+}
+
+type PolicyTarget struct {
+    Users     map[string]any{} `json:&quot;users&quot;`
+    Resources map[string]any{} `json:&quot;resources&quot;`
+    Actions   []string               `json:&quot;actions&quot;`
+}
+
+type PolicyRule struct {
+    And []map[string]any{} `json:&quot;and,omitempty&quot;`
+    Or  []map[string]any{} `json:&quot;or,omitempty&quot;`
+}
+
+// Example: Business hours access policy
+businessHoursPolicy := TimeBasedPolicy{
+    Name:       &quot;business_hours_access&quot;,
+    PolicyType: &quot;TIME_BASED&quot;,
+    Effect:     &quot;ALLOW&quot;,
+    Target: PolicyTarget{
+        Users:     map[string]any{}{&quot;department&quot;: &quot;finance&quot;},
+        Resources: map[string]any{}{&quot;type&quot;: &quot;financial_reports&quot;},
+        Actions:   []string{&quot;read&quot;, &quot;export&quot;},
+    },
+    Rule: PolicyRule{
+        And: []map[string]any{}{
+            {&quot;time_of_day&quot;: map[string][]string{&quot;between&quot;: {&quot;09:00&quot;, &quot;17:00&quot;}}},
+            {&quot;day_of_week&quot;: map[string][]int{&quot;in&quot;: {1, 2, 3, 4, 5}}},
+        },
+    },
+}
+</code></pre>
+<h4 id="location-based-security">Location-Based Security</h4>
+<pre><code class="language-go">type LocationBasedPolicy struct {
+    Name       string       `json:&quot;name&quot;`
+    PolicyType string       `json:&quot;policy_type&quot;`
+    Effect     string       `json:&quot;effect&quot;`
+    Target     PolicyTarget `json:&quot;target&quot;`
+    Rule       PolicyRule   `json:&quot;rule&quot;`
+}
+
+// Example: Secure facility access policy
+secureAccessPolicy := LocationBasedPolicy{
+    Name:       &quot;secure_facility_access&quot;,
+    PolicyType: &quot;LOCATION_BASED&quot;,
+    Effect:     &quot;ALLOW&quot;,
+    Target: PolicyTarget{
+        Resources: map[string]any{}{&quot;classification&quot;: &quot;confidential&quot;},
+    },
+    Rule: PolicyRule{
+        Or: []map[string]any{}{
+            {&quot;location&quot;: map[string]string{&quot;within&quot;: &quot;secure_facility&quot;}},
+            {&quot;vpn_connection&quot;: true},
+        },
+    },
+}
+</code></pre>
+<h4 id="hierarchical-access-control">Hierarchical Access Control</h4>
+<pre><code class="language-go">type HierarchicalPolicy struct {
+    Name       string       `json:&quot;name&quot;`
+    PolicyType string       `json:&quot;policy_type&quot;`
+    Effect     string       `json:&quot;effect&quot;`
+    Target     PolicyTarget `json:&quot;target&quot;`
+    Rule       PolicyRule   `json:&quot;rule&quot;`
+}
+
+// Example: Manager employee data access policy
+managerAccessPolicy := HierarchicalPolicy{
+    Name:       &quot;manager_employee_data&quot;,
+    PolicyType: &quot;ABAC&quot;,
+    Effect:     &quot;ALLOW&quot;,
+    Target: PolicyTarget{
+        Resources: map[string]any{}{&quot;type&quot;: &quot;employee_record&quot;},
+        Actions:   []string{&quot;read&quot;, &quot;update&quot;},
+    },
+    Rule: PolicyRule{
+        Or: []map[string]any{}{
+            {&quot;user.id&quot;: &quot;resource.employee_id&quot;},
+            {&quot;user.manager_id&quot;: &quot;resource.manager_id&quot;},
+            {&quot;user.security_level&quot;: map[string]int{&quot;gte&quot;: 8}},
+        },
+    },
+}
+</code></pre>
+<h2 id="comprehensive-audit-compliance">📊 Comprehensive Audit &amp; Compliance</h2>
+<h3 id="audit-logging">Audit Logging</h3>
+<pre><code class="language-sql">CREATE TABLE audit_log (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    event_type VARCHAR(50) NOT NULL,
+    event_category VARCHAR(50) DEFAULT 'ACCESS'
+        CHECK (event_category IN ('ACCESS', 'ADMIN', 'DATA', 'AUTH', 'SYSTEM', 'COMPLIANCE')),
+    severity VARCHAR(20) DEFAULT 'INFO'
+        CHECK (severity IN ('LOW', 'INFO', 'WARN', 'HIGH', 'CRITICAL')),
+    user_id UUID REFERENCES users(id),
+    target_user_id UUID REFERENCES users(id),
+    entity_id UUID REFERENCES entities(uuid),
+    resource_id UUID REFERENCES resources(id),
+    action_id UUID REFERENCES actions(id),
+    role_id UUID REFERENCES roles(id),
+    permission_id UUID REFERENCES permissions(id),
+    decision VARCHAR(20), -- ALLOW/DENY
+    reason TEXT,
+    risk_score INTEGER DEFAULT 0, -- 0-100 risk calculation
+    context JSONB DEFAULT '{}'::jsonb,
+    ip_address INET,
+    user_agent TEXT,
+    session_id UUID REFERENCES user_sessions(id),
+    compliance_flags JSONB DEFAULT '{}'::jsonb, -- GDPR, SOX, HIPAA, etc.
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+</code></pre>
+<p><strong>Compliance Features:</strong>
+- <strong>Risk scoring</strong>: Automated risk assessment (0-100)
+- <strong>Compliance flags</strong>: GDPR, SOX, HIPAA, PCI tracking
+- <strong>Complete context</strong>: Session, location, device information
+- <strong>Regulatory support</strong>: Immutable audit trail</p>
+<h3 id="access-request-workflow">Access Request Workflow</h3>
+<pre><code class="language-sql">CREATE TABLE access_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    requester_id UUID NOT NULL REFERENCES users(id),
+    target_user_id UUID REFERENCES users(id),
+    entity_id UUID NOT NULL REFERENCES entities(uuid),
+    request_type VARCHAR(20) NOT NULL
+        CHECK (request_type IN ('ROLE_ASSIGNMENT', 'PERMISSION_GRANT', 'RESOURCE_ACCESS', 'ELEVATION')),
+    role_id UUID REFERENCES roles(id),
+    permission_id UUID REFERENCES permissions(id),
+    resource_id UUID REFERENCES resources(id),
+    justification TEXT NOT NULL,
+    business_reason VARCHAR(500),
+    duration_hours INTEGER, -- Temporary access
+    approval_status VARCHAR(20) DEFAULT 'PENDING'
+        CHECK (approval_status IN ('PENDING', 'APPROVED', 'REJECTED', 'EXPIRED', 'REVOKED')),
+    approved_by UUID REFERENCES users(id),
+    approved_at TIMESTAMPTZ,
+    approval_comments TEXT,
+    expires_at TIMESTAMPTZ,
+    auto_revoke BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+</code></pre>
+<h2 id="authentication-security">🔑 Authentication &amp; Security</h2>
+<h3 id="multi-factor-authentication">Multi-Factor Authentication</h3>
+<p>MFA implementation with multiple methods:</p>
+<pre><code class="language-go">type MFAConfiguration struct {
+    Enabled            bool           `json:&quot;enabled&quot;`
+    RequiredForRoles   []string       `json:&quot;required_for_roles&quot;`
+    Methods            []MFAMethod    `json:&quot;methods&quot;`
+    BackupCodesCount   int            `json:&quot;backup_codes_count&quot;`
+    GracePeriodDays    int            `json:&quot;grace_period_days&quot;`
+    RiskBasedTriggers  []RiskTrigger  `json:&quot;risk_based_triggers&quot;`
+}
+
+type MFAMethod struct {
+    Type          string                 `json:&quot;type&quot;` // totp, sms, email, hardware_token
+    Enabled       bool                   `json:&quot;enabled&quot;`
+    Configuration map[string]any{} `json:&quot;configuration&quot;`
+}
+
+type RiskTrigger struct {
+    Condition              string `json:&quot;condition&quot;` // new_device, unusual_location, high_risk_action
+    ForceMFA              bool   `json:&quot;force_mfa&quot;`
+    AdditionalVerification bool   `json:&quot;additional_verification&quot;`
+}
+</code></pre>
+<h3 id="advanced-session-management">Advanced Session Management</h3>
+<pre><code class="language-go">type SessionConfiguration struct {
+    MaxConcurrentSessions     int  `json:&quot;max_concurrent_sessions&quot;`
+    SessionTimeoutMinutes     int  `json:&quot;session_timeout_minutes&quot;`
+    IdleTimeoutMinutes        int  `json:&quot;idle_timeout_minutes&quot;`
+    RememberMeDays           int  `json:&quot;remember_me_days&quot;`
+    RequireReauthForSensitive bool `json:&quot;require_reauth_for_sensitive&quot;`
+    IPBinding                bool `json:&quot;ip_binding&quot;`
+    DeviceTracking           bool `json:&quot;device_tracking&quot;`
+    LocationTracking         bool `json:&quot;location_tracking&quot;`
+    RiskBasedTimeout         bool `json:&quot;risk_based_timeout&quot;`
+}
+</code></pre>
+<h3 id="password-security">Password Security</h3>
+<pre><code class="language-go">type PasswordPolicy struct {
+    MinLength               int            `json:&quot;min_length&quot;`
+    MaxLength               int            `json:&quot;max_length&quot;`
+    RequireUppercase        bool           `json:&quot;require_uppercase&quot;`
+    RequireLowercase        bool           `json:&quot;require_lowercase&quot;`
+    RequireNumbers          bool           `json:&quot;require_numbers&quot;`
+    RequireSymbols          bool           `json:&quot;require_symbols&quot;`
+    MinSymbols              int            `json:&quot;min_symbols&quot;`
+    MaxAgeDays              int            `json:&quot;max_age_days&quot;`
+    HistoryCount            int            `json:&quot;history_count&quot;`
+    LockoutAttempts         int            `json:&quot;lockout_attempts&quot;`
+    LockoutDurationMinutes  int            `json:&quot;lockout_duration_minutes&quot;`
+    ComplexityScoreMin      int            `json:&quot;complexity_score_min&quot;`
+    BreachDetection         bool           `json:&quot;breach_detection&quot;`
+    CustomRules             []PasswordRule `json:&quot;custom_rules&quot;`
+}
+
+type PasswordRule struct {
+    Name        string `json:&quot;name&quot;`
+    Pattern     string `json:&quot;pattern&quot;`
+    Description string `json:&quot;description&quot;`
+    Required    bool   `json:&quot;required&quot;`
+}
+</code></pre>
+<h2 id="user-lifecycle-management">👥 User Lifecycle Management</h2>
+<h3 id="onboarding-workflow">Onboarding Workflow</h3>
+<pre><code class="language-yaml">user_onboarding:
+  invitation_process:
+    1. admin_sends_invitation:
+        - validate_email_format
+        - check_existing_users_across_types
+        - generate_secure_invitation_token
+        - create_pending_person_record
+        - send_invitation_email_with_expiry
+        - log_invitation_audit_event
+
+    2. user_accepts_invitation:
+        - validate_invitation_token_and_expiry
+        - collect_comprehensive_user_information
+        - create_person_record_if_needed
+        - create_employee_record_if_applicable
+        - create_user_account_with_security_attributes
+        - set_initial_password_with_policy_validation
+        - verify_email_address_with_token
+
+    3. initial_setup:
+        - assign_default_roles_based_on_position
+        - set_entity_and_department_associations
+        - configure_security_attributes_for_abac
+        - setup_mfa_based_on_risk_profile
+        - initialize_user_preferences
+        - send_welcome_email_with_resources
+
+    4. first_login:
+        - force_password_change_if_temporary
+        - complete_profile_setup_wizard
+        - accept_terms_of_service_with_version_tracking
+        - configure_notification_preferences
+        - setup_security_questions_if_required
+        - start_guided_tour_based_on_role
+        - trigger_manager_notification
+</code></pre>
+<h3 id="advanced-offboarding-process">Advanced Offboarding Process</h3>
+<pre><code class="language-go">
+// Event type constants (replacing TS union types)
+const (
+    EventTypeEmploymentTerminated = &quot;employment_terminated&quot;
+    EventTypeResignationSubmitted = &quot;resignation_submitted&quot;
+    EventTypeContractExpired      = &quot;contract_expired&quot;
+    EventTypeSecurityViolation    = &quot;security_violation&quot;
+)
+
+// Step type constants
+const (
+    StepTypeAutomatic       = &quot;automatic&quot;
+    StepTypeManual         = &quot;manual&quot;
+    StepTypeApprovalRequired = &quot;approval_required&quot;
+)
+
+// Action type constants
+const (
+    ActionTypeRevokeAllAccess     = &quot;revoke_all_access&quot;
+    ActionTypeTransferOwnership   = &quot;transfer_ownership&quot;
+    ActionTypeArchivePersonalData = &quot;archive_personal_data&quot;
+)
+
+// Compliance flag constants
+const (
+    ComplianceSOX          = &quot;SOX&quot;
+    ComplianceGDPR         = &quot;GDPR&quot;
+    ComplianceCCPA         = &quot;CCPA&quot;
+    ComplianceDataRetention = &quot;DATA_RETENTION&quot;
+)
+
+// Core structs
+type OffboardingProcess struct {
+    TriggerEvents          []TriggerEvent           `json:&quot;trigger_events&quot;`
+    Steps                  []OffboardingStep        `json:&quot;steps&quot;`
+    DataRetentionPolicy    DataRetentionPolicy      `json:&quot;data_retention_policy&quot;`
+    AccessRevocation       AccessRevocationPolicy   `json:&quot;access_revocation&quot;`
+    ComplianceRequirements []ComplianceRequirement  `json:&quot;compliance_requirements&quot;`
+}
+
+type TriggerEvent struct {
+    EventType              string   `json:&quot;event_type&quot;`
+    AutoTrigger            bool     `json:&quot;auto_trigger&quot;`
+    GracePeriodHours       int      `json:&quot;grace_period_hours&quot;`
+    NotificationRecipients []string `json:&quot;notification_recipients&quot;`
+}
+
+type OffboardingStep struct {
+    Name            string              `json:&quot;name&quot;`
+    Type            string              `json:&quot;type&quot;`
+    Assignee        *string             `json:&quot;assignee,omitempty&quot;` // pointer for optional field
+    SLAHours        int                 `json:&quot;sla_hours&quot;`
+    Dependencies    []string            `json:&quot;dependencies&quot;`
+    Actions         []OffboardingAction `json:&quot;actions&quot;`
+    ComplianceFlags []string            `json:&quot;compliance_flags&quot;`
+}
+
+type OffboardingAction struct {
+    ActionType       string                 `json:&quot;action_type&quot;`
+    Parameters       map[string]any{} `json:&quot;parameters&quot;`
+    AuditTrail       bool                   `json:&quot;audit_trail&quot;`
+    RollbackPossible bool                   `json:&quot;rollback_possible&quot;`
+}
+
+type DataRetentionPolicy struct {
+    PersonalData    string `json:&quot;personal_data&quot;`
+    WorkDocuments   string `json:&quot;work_documents&quot;`
+    AuditLogs       string `json:&quot;audit_logs&quot;`
+}
+
+type AccessRevocationPolicy struct {
+    ImmediateRevocation   []string `json:&quot;immediate_revocation&quot;`
+    DelayedRevocation     []string `json:&quot;delayed_revocation&quot;`
+    ManagerReviewRequired []string `json:&quot;manager_review_required&quot;`
+}
+
+type ComplianceRequirement struct {
+    Standard string   `json:&quot;standard&quot;`
+    Actions  []string `json:&quot;actions&quot;`
+    Timeline string   `json:&quot;timeline&quot;`
+}
+
+// Helper function to create string pointer (idiomatic Go pattern for optional strings)
+func stringPtr(s string) *string {
+    return &amp;s
+}
+
+// GetComprehensiveOffboarding returns the comprehensive offboarding process
+// This replaces the const object literal in TypeScript
+func GetComprehensiveOffboarding() OffboardingProcess {
+    return OffboardingProcess{
+        TriggerEvents: []TriggerEvent{
+            {
+                EventType:              EventTypeEmploymentTerminated,
+                AutoTrigger:            true,
+                GracePeriodHours:       0,
+                NotificationRecipients: []string{&quot;hr_team&quot;, &quot;security_team&quot;, &quot;manager&quot;},
+            },
+        },
+
+        Steps: []OffboardingStep{
+            {
+                Name:         &quot;immediate_access_revocation&quot;,
+                Type:         StepTypeAutomatic,
+                Assignee:     nil, // explicitly nil for optional field
+                SLAHours:     0,
+                Dependencies: []string{}, // empty slice instead of null
+                Actions: []OffboardingAction{
+                    {
+                        ActionType: ActionTypeRevokeAllAccess,
+                        Parameters: map[string]any{}{
+                            &quot;disable_login&quot;:               true,
+                            &quot;revoke_all_tokens&quot;:          true,
+                            &quot;disable_api_access&quot;:         true,
+                            &quot;revoke_delegated_permissions&quot;: true,
+                        },
+                        AuditTrail:       true,
+                        RollbackPossible: true,
+                    },
+                },
+                ComplianceFlags: []string{ComplianceSOX, ComplianceGDPR},
+            },
+
+            {
+                Name:         &quot;data_ownership_transfer&quot;,
+                Type:         StepTypeManual,
+                Assignee:     stringPtr(&quot;manager&quot;), // using helper function
+                SLAHours:     24,
+                Dependencies: []string{&quot;immediate_access_revocation&quot;},
+                Actions: []OffboardingAction{
+                    {
+                        ActionType: ActionTypeTransferOwnership,
+                        Parameters: map[string]any{}{
+                            &quot;transfer_to&quot;:         &quot;manager&quot;,
+                            &quot;include_documents&quot;:   true,
+                            &quot;include_projects&quot;:    true,
+                            &quot;notify_stakeholders&quot;: true,
+                        },
+                        AuditTrail:       true,
+                        RollbackPossible: true,
+                    },
+                },
+                ComplianceFlags: []string{ComplianceDataRetention},
+            },
+
+            {
+                Name:         &quot;compliance_data_handling&quot;,
+                Type:         StepTypeAutomatic,
+                Assignee:     nil,
+                SLAHours:     72,
+                Dependencies: []string{&quot;data_ownership_transfer&quot;},
+                Actions: []OffboardingAction{
+                    {
+                        ActionType: ActionTypeArchivePersonalData,
+                        Parameters: map[string]any{}{
+                            &quot;retention_policy&quot;:     &quot;employee_data_retention&quot;,
+                            &quot;anonymize_analytics&quot;:  true,
+                            &quot;preserve_audit_trail&quot;: true,
+                        },
+                        AuditTrail:       true,
+                        RollbackPossible: false,
+                    },
+                },
+                ComplianceFlags: []string{ComplianceGDPR, ComplianceCCPA},
+            },
+        },
+
+        // You would typically set these fields as well in a complete implementation
+        DataRetentionPolicy: DataRetentionPolicy{
+            PersonalData:  &quot;30_days&quot;,
+            WorkDocuments: &quot;7_years&quot;,
+            AuditLogs:     &quot;permanent&quot;,
+        },
+
+        AccessRevocation: AccessRevocationPolicy{
+            ImmediateRevocation:   []string{&quot;system_access&quot;, &quot;email_access&quot;, &quot;vpn_access&quot;},
+            DelayedRevocation:     []string{&quot;building_access&quot;, &quot;company_devices&quot;},
+            ManagerReviewRequired: []string{&quot;project_ownership&quot;, &quot;client_relationships&quot;},
+        },
+
+        ComplianceRequirements: []ComplianceRequirement{
+            {
+                Standard: ComplianceGDPR,
+                Actions:  []string{&quot;data_inventory&quot;, &quot;consent_withdrawal&quot;, &quot;data_deletion&quot;},
+                Timeline: &quot;30_days&quot;,
+            },
+            {
+                Standard: ComplianceSOX,
+                Actions:  []string{&quot;access_certification&quot;, &quot;financial_data_protection&quot;},
+                Timeline: &quot;immediate&quot;,
+            },
+        },
+    }
+}
+
+// Alternative constructor pattern (common in Go)
+func NewOffboardingProcess() *OffboardingProcess {
+    process := GetComprehensiveOffboarding()
+    return &amp;process
+}
+
+// Validation methods (idiomatic Go pattern)
+func (p *OffboardingProcess) Validate() error {
+    if len(p.TriggerEvents) == 0 {
+        return fmt.Errorf(&quot;at least one trigger event is required&quot;)
+    }
+
+    if len(p.Steps) == 0 {
+        return fmt.Errorf(&quot;at least one step is required&quot;)
+    }
+
+    // Validate each step
+    for i, step := range p.Steps {
+        if err := step.Validate(); err != nil {
+            return fmt.Errorf(&quot;step %d validation failed: %w&quot;, i, err)
+        }
+    }
+
+    return nil
+}
+
+func (s *OffboardingStep) Validate() error {
+    if s.Name == &quot;&quot; {
+        return fmt.Errorf(&quot;step name is required&quot;)
+    }
+
+    if s.Type != StepTypeAutomatic &amp;&amp; s.Type != StepTypeManual &amp;&amp; s.Type != StepTypeApprovalRequired {
+        return fmt.Errorf(&quot;invalid step type: %s&quot;, s.Type)
+    }
+
+    if s.Type == StepTypeManual &amp;&amp; s.Assignee == nil {
+        return fmt.Errorf(&quot;manual steps require an assignee&quot;)
+    }
+
+    return nil
+}
+
+// Method to check if a step depends on another step
+func (s *OffboardingStep) DependsOn(stepName string) bool {
+    for _, dep := range s.Dependencies {
+        if dep == stepName {
+            return true
+        }
+    }
+    return false
+}
+
+// Method to add compliance flag
+func (s *OffboardingStep) AddComplianceFlag(flag string) {
+    // Check if flag already exists to avoid duplicates
+    for _, existing := range s.ComplianceFlags {
+        if existing == flag {
+            return
+        }
+    }
+    s.ComplianceFlags = append(s.ComplianceFlags, flag)
+}
+</code></pre>
+<h2 id="user-analytics-monitoring">📈 User Analytics &amp; Monitoring</h2>
+<h3 id="advanced-user-activity-tracking">Advanced User Activity Tracking</h3>
+<pre><code class="language-sql">-- Partitioned audit table for performance
+CREATE TABLE user_activities (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    session_id UUID REFERENCES user_sessions(id),
+
+    -- Activity classification
+    activity_type VARCHAR(50) NOT NULL,
+    module VARCHAR(50),
+    resource_type VARCHAR(50),
+    resource_id UUID,
+    action_performed VARCHAR(50),
+
+    -- Security context
+    ip_address INET,
+    user_agent TEXT,
+    device_fingerprint VARCHAR(255),
+    location_data JSONB,
+
+    -- Performance metrics
+    request_method VARCHAR(10),
+    request_path TEXT,
+    request_params JSONB,
+    response_status INTEGER,
+    response_time_ms INTEGER,
+
+    -- Risk assessment
+    risk_indicators JSONB DEFAULT '{}'::jsonb,
+    anomaly_score DECIMAL(5,2) DEFAULT 0.00,
+
+    -- Metadata
+    timestamp TIMESTAMPTZ DEFAULT NOW(),
+    additional_data JSONB DEFAULT '{}'::jsonb
+) PARTITION BY RANGE (timestamp);
+</code></pre>
+<h3 id="behavioral-analytics">Behavioral Analytics</h3>
+<pre><code class="language-go">type DateRange struct {
+    Start time.Time `json:&quot;start&quot;`
+    End   time.Time `json:&quot;end&quot;`
+}
+
+type ResourceUsage struct {
+    ResourceName string `json:&quot;resource_name&quot;`
+    AccessCount  int    `json:&quot;access_count&quot;`
+    LastAccessed time.Time `json:&quot;last_accessed&quot;`
+}
+
+type DeviceType struct {
+    Type  string `json:&quot;type&quot;`
+    Count int    `json:&quot;count&quot;`
+}
+
+type Anomaly struct {
+    Type        string    `json:&quot;type&quot;`
+    Severity    string    `json:&quot;severity&quot;`
+    Description string    `json:&quot;description&quot;`
+    DetectedAt  time.Time `json:&quot;detected_at&quot;`
+    Score       float64   `json:&quot;score&quot;`
+}
+
+type SecurityAction struct {
+    Action      string `json:&quot;action&quot;`
+    Priority    string `json:&quot;priority&quot;`
+    Description string `json:&quot;description&quot;`
+    Automated   bool   `json:&quot;automated&quot;`
+}
+
+type UserBehaviorAnalytics struct {
+    UserID         string    `json:&quot;user_id&quot;`
+    TenantID       string    `json:&quot;tenant_id&quot;`
+    AnalysisPeriod DateRange `json:&quot;analysis_period&quot;`
+
+    ActivityPatterns struct {
+        PeakUsageHours        []int           `json:&quot;peak_usage_hours&quot;`
+        CommonLocations       []string        `json:&quot;common_locations&quot;`
+        TypicalSessionDuration int            `json:&quot;typical_session_duration&quot;`
+        FrequentResources     []ResourceUsage `json:&quot;frequent_resources&quot;`
+        DevicePreferences     []DeviceType    `json:&quot;device_preferences&quot;`
+    } `json:&quot;activity_patterns&quot;`
+
+    ProductivityMetrics struct {
+        DocumentsCreated       int     `json:&quot;documents_created&quot;`
+        TransactionsProcessed  int     `json:&quot;transactions_processed&quot;`
+        ApprovalsCompleted     int     `json:&quot;approvals_completed&quot;`
+        CollaborationScore     float64 `json:&quot;collaboration_score&quot;`
+        FeatureAdoptionRate    float64 `json:&quot;feature_adoption_rate&quot;`
+    } `json:&quot;productivity_metrics&quot;`
+
+    SecurityProfile struct {
+        LoginPatternConsistency float64 `json:&quot;login_pattern_consistency&quot;`
+        LocationVariance        float64 `json:&quot;location_variance&quot;`
+        DeviceConsistency       float64 `json:&quot;device_consistency&quot;`
+        PermissionUsageRate     float64 `json:&quot;permission_usage_rate&quot;`
+        PolicyViolationCount    int     `json:&quot;policy_violation_count&quot;`
+    } `json:&quot;security_profile&quot;`
+
+    RiskAssessment struct {
+        OverallRiskScore      int              `json:&quot;overall_risk_score&quot;`
+        BehavioralAnomalies   []Anomaly        `json:&quot;behavioral_anomalies&quot;`
+        RecommendedActions    []SecurityAction `json:&quot;recommended_actions&quot;`
+    } `json:&quot;risk_assessment&quot;`
+}
+</code></pre>
+<h2 id="advanced-permission-management-api">🔧 Advanced Permission Management API</h2>
+<h3 id="comprehensive-user-management-endpoints">Comprehensive User Management Endpoints</h3>
+<pre><code class="language-go">package handlers
+
+import (
+    &quot;encoding/json&quot;
+    &quot;net/http&quot;
+    &quot;time&quot;
+
+    &quot;github.com/gorilla/mux&quot;
+    &quot;github.com/google/uuid&quot;
+)
+
+// Request/Response structures
+type PersonRequest struct {
+    FirstName          string                 `json:&quot;first_name&quot; validate:&quot;required&quot;`
+    LastName           string                 `json:&quot;last_name&quot; validate:&quot;required&quot;`
+    MiddleName         *string                `json:&quot;middle_name,omitempty&quot;`
+    Email              *string                `json:&quot;email,omitempty&quot;`
+    Phone              *string                `json:&quot;phone,omitempty&quot;`
+    PersonType         string                 `json:&quot;person_type&quot; validate:&quot;required&quot;`
+    SecurityAttributes map[string]any{} `json:&quot;security_attributes,omitempty&quot;`
+    Metadata           map[string]any{} `json:&quot;metadata,omitempty&quot;`
+}
+
+type EmployeeRequest struct {
+    PersonID         uuid.UUID              `json:&quot;person_id&quot; validate:&quot;required&quot;`
+    EmployeeNumber   string                 `json:&quot;employee_number&quot; validate:&quot;required&quot;`
+    PositionTitle    *string                `json:&quot;position_title,omitempty&quot;`
+    DepartmentID     *uuid.UUID             `json:&quot;department_id,omitempty&quot;`
+    ManagerID        *uuid.UUID             `json:&quot;manager_id,omitempty&quot;`
+    HireDate         time.Time              `json:&quot;hire_date&quot; validate:&quot;required&quot;`
+    SecurityLevel    int                    `json:&quot;security_level&quot;`
+    AccessAttributes map[string]any{} `json:&quot;access_attributes,omitempty&quot;`
+}
+
+type UserRequest struct {
+    Username       *string                `json:&quot;username,omitempty&quot;`
+    Email          string                 `json:&quot;email&quot; validate:&quot;required,email&quot;`
+    UserType       string                 `json:&quot;user_type&quot; validate:&quot;required&quot;`
+    PersonID       *uuid.UUID             `json:&quot;person_id,omitempty&quot;`
+    EmployeeID     *uuid.UUID             `json:&quot;employee_id,omitempty&quot;`
+    UserAttributes map[string]any{} `json:&quot;user_attributes,omitempty&quot;`
+    Settings       map[string]any{} `json:&quot;settings,omitempty&quot;`
+}
+
+type RoleRequest struct {
+    Name         string                 `json:&quot;name&quot; validate:&quot;required&quot;`
+    DisplayName  *string                `json:&quot;display_name,omitempty&quot;`
+    Description  *string                `json:&quot;description,omitempty&quot;`
+    RoleType     string                 `json:&quot;role_type&quot;`
+    ModuleID     *uuid.UUID             `json:&quot;module_id,omitempty&quot;`
+    ParentRoleID *uuid.UUID             `json:&quot;parent_role_id,omitempty&quot;`
+    EntityScope  map[string]any{} `json:&quot;entity_scope,omitempty&quot;`
+    Conditions   map[string]any{} `json:&quot;conditions,omitempty&quot;`
+}
+
+type PermissionEvaluationRequest struct {
+    UserID       uuid.UUID              `json:&quot;user_id&quot; validate:&quot;required&quot;`
+    ResourceName string                 `json:&quot;resource_name&quot; validate:&quot;required&quot;`
+    ActionName   string                 `json:&quot;action_name&quot; validate:&quot;required&quot;`
+    EntityID     *uuid.UUID             `json:&quot;entity_id,omitempty&quot;`
+    Context      map[string]any{} `json:&quot;context,omitempty&quot;`
+}
+
+type PermissionEvaluationResponse struct {
+    Allowed           bool     `json:&quot;allowed&quot;`
+    PolicyDecisions   []string `json:&quot;policy_decisions&quot;`
+    EffectiveRoles    []string `json:&quot;effective_roles&quot;`
+    EvaluationTimeMS  int      `json:&quot;evaluation_time_ms&quot;`
+    CacheHit          bool     `json:&quot;cache_hit&quot;`
+}
+
+type AccessRequestRequest struct {
+    TargetUserID     *uuid.UUID `json:&quot;target_user_id,omitempty&quot;`
+    RequestType      string     `json:&quot;request_type&quot; validate:&quot;required&quot;`
+    RoleID           *uuid.UUID `json:&quot;role_id,omitempty&quot;`
+    PermissionID     *uuid.UUID `json:&quot;permission_id,omitempty&quot;`
+    ResourceID       *uuid.UUID `json:&quot;resource_id,omitempty&quot;`
+    Justification    string     `json:&quot;justification&quot; validate:&quot;required&quot;`
+    BusinessReason   *string    `json:&quot;business_reason,omitempty&quot;`
+    DurationHours    *int       `json:&quot;duration_hours,omitempty&quot;`
+}
+
+// API Handler Interface
+type UserManagementAPI interface {
+    // Person Management
+    ListPersons(w http.ResponseWriter, r *http.Request)      // GET /api/v1/persons
+    CreatePerson(w http.ResponseWriter, r *http.Request)     // POST /api/v1/persons
+    GetPerson(w http.ResponseWriter, r *http.Request)        // GET /api/v1/persons/{person_id}
+    UpdatePerson(w http.ResponseWriter, r *http.Request)     // PUT /api/v1/persons/{person_id}
+    DeletePerson(w http.ResponseWriter, r *http.Request)     // DELETE /api/v1/persons/{person_id}
+
+    // Employee Management
+    ListEmployees(w http.ResponseWriter, r *http.Request)              // GET /api/v1/employees
+    CreateEmployee(w http.ResponseWriter, r *http.Request)             // POST /api/v1/employees
+    GetEmployee(w http.ResponseWriter, r *http.Request)                // GET /api/v1/employees/{employee_id}
+    UpdateEmployee(w http.ResponseWriter, r *http.Request)             // PUT /api/v1/employees/{employee_id}
+    GetEmployeeSubordinates(w http.ResponseWriter, r *http.Request)    // GET /api/v1/employees/{employee_id}/subordinates
+
+    // User CRUD Operations
+    ListUsers(w http.ResponseWriter, r *http.Request)        // GET /api/v1/users
+    CreateUser(w http.ResponseWriter, r *http.Request)       // POST /api/v1/users
+    GetUser(w http.ResponseWriter, r *http.Request)          // GET /api/v1/users/{user_id}
+    UpdateUser(w http.ResponseWriter, r *http.Request)       // PUT /api/v1/users/{user_id}
+    DeactivateUser(w http.ResponseWriter, r *http.Request)   // DELETE /api/v1/users/{user_id}
+
+    // Advanced Role Management
+    ListRoles(w http.ResponseWriter, r *http.Request)                // GET /api/v1/roles
+    CreateRole(w http.ResponseWriter, r *http.Request)               // POST /api/v1/roles
+    GetRole(w http.ResponseWriter, r *http.Request)                  // GET /api/v1/roles/{role_id}
+    UpdateRole(w http.ResponseWriter, r *http.Request)               // PUT /api/v1/roles/{role_id}
+    GetRoleInheritance(w http.ResponseWriter, r *http.Request)       // GET /api/v1/roles/{role_id}/inheritance
+
+    // Permission Evaluation
+    EvaluatePermission(w http.ResponseWriter, r *http.Request)        // POST /api/v1/permissions/evaluate
+    GetUserEffectivePermissions(w http.ResponseWriter, r *http.Request) // GET /api/v1/users/{user_id}/effective-permissions
+    BulkEvaluatePermissions(w http.ResponseWriter, r *http.Request)   // POST /api/v1/permissions/bulk-evaluate
+
+    // ABAC Policy Management
+    ListPolicies(w http.ResponseWriter, r *http.Request)     // GET /api/v1/policies
+    CreatePolicy(w http.ResponseWriter, r *http.Request)     // POST /api/v1/policies
+    TestPolicy(w http.ResponseWriter, r *http.Request)       // POST /api/v1/policies/test
+    GetPolicyImpact(w http.ResponseWriter, r *http.Request)  // GET /api/v1/policies/{policy_id}/impact
+
+    // Access Request Workflow
+    SubmitAccessRequest(w http.ResponseWriter, r *http.Request)      // POST /api/v1/access-requests
+    ListAccessRequests(w http.ResponseWriter, r *http.Request)       // GET /api/v1/access-requests
+    ApproveAccessRequest(w http.ResponseWriter, r *http.Request)     // POST /api/v1/access-requests/{request_id}/approve
+    RejectAccessRequest(w http.ResponseWriter, r *http.Request)      // POST /api/v1/access-requests/{request_id}/reject
+
+    // Advanced Authentication
+    Login(w http.ResponseWriter, r *http.Request)                    // POST /api/v1/auth/login
+    StepUpAuthentication(w http.ResponseWriter, r *http.Request)     // POST /api/v1/auth/step-up
+    AssessLoginRisk(w http.ResponseWriter, r *http.Request)          // POST /api/v1/auth/risk-assessment
+
+    // Comprehensive Audit &amp; Analytics
+    QueryActivityLogs(w http.ResponseWriter, r *http.Request)        // GET /api/v1/audit/activities
+    GetSecurityEvents(w http.ResponseWriter, r *http.Request)        // GET /api/v1/audit/security-events
+    GetUserBehaviorAnalytics(w http.ResponseWriter, r *http.Request) // GET /api/v1/analytics/user-behavior
+    AnalyzeAccessPatterns(w http.ResponseWriter, r *http.Request)    // GET /api/v1/analytics/access-patterns
+    GenerateRiskAssessment(w http.ResponseWriter, r *http.Request)   // POST /api/v1/analytics/risk-assessment
+
+    // Compliance &amp; Reporting
+    GetGDPRData(w http.ResponseWriter, r *http.Request)              // GET /api/v1/compliance/gdpr-data
+    ExportUserData(w http.ResponseWriter, r *http.Request)           // POST /api/v1/compliance/data-export
+    ProcessRightToBeForgotten(w http.ResponseWriter, r *http.Request) // POST /api/v1/compliance/right-to-be-forgotten
+    GenerateAccessReview(w http.ResponseWriter, r *http.Request)     // GET /api/v1/reports/access-review
+}
+
+// Example handler implementation
+type UserManagementHandler struct {
+    userService       UserService
+    permissionService PermissionService
+    auditService      AuditService
+}
+
+func (h *UserManagementHandler) EvaluatePermission(w http.ResponseWriter, r *http.Request) {
+    var req PermissionEvaluationRequest
+    if err := json.NewDecoder(r.Body).Decode(&amp;req); err != nil {
+        http.Error(w, &quot;Invalid request body&quot;, http.StatusBadRequest)
+        return
+    }
+
+    startTime := time.Now()
+
+    // Evaluate permission using ABAC engine
+    result, err := h.permissionService.EvaluatePermission(r.Context(), req)
+    if err != nil {
+        http.Error(w, &quot;Permission evaluation failed&quot;, http.StatusInternalServerError)
+        return
+    }
+
+    evaluationTime := int(time.Since(startTime).Milliseconds())
+
+    response := PermissionEvaluationResponse{
+        Allowed:          result.Allowed,
+        PolicyDecisions:  result.PolicyDecisions,
+        EffectiveRoles:   result.EffectiveRoles,
+        EvaluationTimeMS: evaluationTime,
+        CacheHit:         result.CacheHit,
+    }
+
+    w.Header().Set(&quot;Content-Type&quot;, &quot;application/json&quot;)
+    json.NewEncoder(w).Encode(response)
+
+    // Audit the permission check
+    h.auditService.LogPermissionEvaluation(r.Context(), req, response)
+}
+
+// Router setup example
+func SetupUserManagementRoutes(r *mux.Router, handler UserManagementAPI) {
+    // Person Management
+    r.HandleFunc(&quot;/api/v1/persons&quot;, handler.ListPersons).Methods(&quot;GET&quot;)
+    r.HandleFunc(&quot;/api/v1/persons&quot;, handler.CreatePerson).Methods(&quot;POST&quot;)
+    r.HandleFunc(&quot;/api/v1/persons/{person_id}&quot;, handler.GetPerson).Methods(&quot;GET&quot;)
+    r.HandleFunc(&quot;/api/v1/persons/{person_id}&quot;, handler.UpdatePerson).Methods(&quot;PUT&quot;)
+    r.HandleFunc(&quot;/api/v1/persons/{person_id}&quot;, handler.DeletePerson).Methods(&quot;DELETE&quot;)
+
+    // Employee Management
+    r.HandleFunc(&quot;/api/v1/employees&quot;, handler.ListEmployees).Methods(&quot;GET&quot;)
+    r.HandleFunc(&quot;/api/v1/employees&quot;, handler.CreateEmployee).Methods(&quot;POST&quot;)
+    r.HandleFunc(&quot;/api/v1/employees/{employee_id}&quot;, handler.GetEmployee).Methods(&quot;GET&quot;)
+    r.HandleFunc(&quot;/api/v1/employees/{employee_id}&quot;, handler.UpdateEmployee).Methods(&quot;PUT&quot;)
+    r.HandleFunc(&quot;/api/v1/employees/{employee_id}/subordinates&quot;, handler.GetEmployeeSubordinates).Methods(&quot;GET&quot;)
+
+    // User CRUD Operations
+    r.HandleFunc(&quot;/api/v1/users&quot;, handler.ListUsers).Methods(&quot;GET&quot;)
+    r.HandleFunc(&quot;/api/v1/users&quot;, handler.CreateUser).Methods(&quot;POST&quot;)
+    r.HandleFunc(&quot;/api/v1/users/{user_id}&quot;, handler.GetUser).Methods(&quot;GET&quot;)
+    r.HandleFunc(&quot;/api/v1/users/{user_id}&quot;, handler.UpdateUser).Methods(&quot;PUT&quot;)
+    r.HandleFunc(&quot;/api/v1/users/{user_id}&quot;, handler.DeactivateUser).Methods(&quot;DELETE&quot;)
+
+    // Permission Evaluation
+    r.HandleFunc(&quot;/api/v1/permissions/evaluate&quot;, handler.EvaluatePermission).Methods(&quot;POST&quot;)
+    r.HandleFunc(&quot;/api/v1/users/{user_id}/effective-permissions&quot;, handler.GetUserEffectivePermissions).Methods(&quot;GET&quot;)
+    r.HandleFunc(&quot;/api/v1/permissions/bulk-evaluate&quot;, handler.BulkEvaluatePermissions).Methods(&quot;POST&quot;)
+
+    // Access Request Workflow
+    r.HandleFunc(&quot;/api/v1/access-requests&quot;, handler.SubmitAccessRequest).Methods(&quot;POST&quot;)
+    r.HandleFunc(&quot;/api/v1/access-requests&quot;, handler.ListAccessRequests).Methods(&quot;GET&quot;)
+    r.HandleFunc(&quot;/api/v1/access-requests/{request_id}/approve&quot;, handler.ApproveAccessRequest).Methods(&quot;POST&quot;)
+    r.HandleFunc(&quot;/api/v1/access-requests/{request_id}/reject&quot;, handler.RejectAccessRequest).Methods(&quot;POST&quot;)
+
+    // Analytics and Reporting
+    r.HandleFunc(&quot;/api/v1/analytics/user-behavior&quot;, handler.GetUserBehaviorAnalytics).Methods(&quot;GET&quot;)
+    r.HandleFunc(&quot;/api/v1/analytics/access-patterns&quot;, handler.AnalyzeAccessPatterns).Methods(&quot;GET&quot;)
+    r.HandleFunc(&quot;/api/v1/analytics/risk-assessment&quot;, handler.GenerateRiskAssessment).Methods(&quot;POST&quot;)
+
+    // Compliance
+    r.HandleFunc(&quot;/api/v1/compliance/gdpr-data&quot;, handler.GetGDPRData).Methods(&quot;GET&quot;)
+    r.HandleFunc(&quot;/api/v1/compliance/data-export&quot;, handler.ExportUserData).Methods(&quot;POST&quot;)
+    r.HandleFunc(&quot;/api/v1/reports/access-review&quot;, handler.GenerateAccessReview).Methods(&quot;GET&quot;)
+}
+</code></pre>
+<h2 id="performance-optimization-features">🚀 Performance Optimization Features</h2>
+<h3 id="intelligent-caching">Intelligent Caching</h3>
+<pre><code class="language-sql">-- Policy evaluation cache for performance
+CREATE TABLE policy_evaluations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id),
+    resource_id UUID NOT NULL REFERENCES resources(id),
+    action_id UUID NOT NULL REFERENCES actions(id),
+    context_hash VARCHAR(64) NOT NULL, -- SHA-256 of evaluation context
+    decision VARCHAR(20) NOT NULL CHECK (decision IN ('ALLOW', 'DENY', 'NOT_APPLICABLE')),
+    applicable_policies UUID[] DEFAULT '{}', -- Policy IDs that fired
+    evaluation_time_ms INTEGER, -- Performance metric
+    evaluated_at TIMESTAMPTZ DEFAULT NOW(),
+    expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '1 hour')
+);
+</code></pre>
+<h3 id="utility-views-for-performance">Utility Views for Performance</h3>
+<pre><code class="language-sql">-- Comprehensive user view with aggregated data
+CREATE VIEW user_complete_view AS
+SELECT 
+    u.id as user_id,
+    u.tenant_id,
+    u.username,
+    u.email,
+    u.user_type,
+    u.account_status,
+    p.first_name,
+    p.last_name,
+    e.employee_number,
+    e.security_level,
+    -- Combined ABAC attributes
+    COALESCE(p.security_attributes, '{}'::jsonb) || 
+    COALESCE(e.access_attributes, '{}'::jsonb) || 
+    COALESCE(u.user_attributes, '{}'::jsonb) as combined_attributes,
+    -- Role aggregations
+    array_agg(DISTINCT r.name ORDER BY r.name) as role_names,
+    count(DISTINCT ur.id) FILTER (WHERE ur.is_active = true) as active_role_count
+FROM users u
+LEFT JOIN persons p ON u.person_id = p.id
+LEFT JOIN employees e ON u.employee_id = e.id
+LEFT JOIN user_roles ur ON u.id = ur.user_id AND ur.is_active = true
+LEFT JOIN roles r ON ur.role_id = r.id AND r.is_active = true
+WHERE u.deleted_at IS NULL
+GROUP BY u.id, u.tenant_id, u.username, u.email, u.user_type, 
+         u.account_status, p.first_name, p.last_name, e.employee_number, 
+         e.security_level, p.security_attributes, e.access_attributes, u.user_attributes;
+</code></pre>
+<h2 id="key-system-features">💡 Key System Features</h2>
+<h3 id="row-level-security-rls">Row Level Security (RLS)</h3>
+<ul>
+<li><strong>Automatic tenant isolation</strong>: All tables enforce tenant-based access</li>
+<li><strong>Performance optimized</strong>: Efficient policy evaluation with indexes</li>
+<li><strong>Flexible scoping</strong>: Entity and department-level isolation</li>
+</ul>
+<h3 id="advanced-abac-engine">Advanced ABAC Engine</h3>
+<ul>
+<li><strong>Real-time evaluation</strong>: Sub-millisecond policy decisions with caching</li>
+<li><strong>Rich context</strong>: User, resource, environment, and session attributes</li>
+<li><strong>Policy conflicts</strong>: Priority-based resolution with explicit DENY support</li>
+</ul>
+<h3 id="compliance-ready">Compliance Ready</h3>
+<ul>
+<li><strong>Audit completeness</strong>: Immutable audit trail with risk scoring</li>
+<li><strong>Regulatory support</strong>: GDPR, SOX, HIPAA, PCI compliance features</li>
+<li><strong>Data governance</strong>: Retention policies and automated cleanup</li>
+</ul>
+<h3 id="enterprise-scale">Enterprise Scale</h3>
+<ul>
+<li><strong>UUID primary keys</strong>: Distributed system friendly</li>
+<li><strong>Partitioned tables</strong>: Time-based partitioning for large datasets</li>
+<li><strong>Optimized indexes</strong>: JSONB GIN indexes for ABAC attributes</li>
+<li><strong>Maintenance functions</strong>: Automated cleanup and cache invalidation</li>
+</ul>
+<p>This user management and permissions system provides enterprise-grade security, scalability, and compliance while maintaining flexibility for complex organizational structures and access patterns.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="../../../../javascripts/search-analytics.js"></script>
+      
+        <script src="../../../../javascripts/contextual-help.js"></script>
+      
+    
+  </body>
+</html>

@@ -58,16 +58,16 @@ func New(
 ) *Server {
 	return &Server{
 		Mounts: []*MountPoint{
-			{"Evaluate", "POST", "/abac/evaluate"},
-			{"EvaluateBulk", "POST", "/abac/evaluate-bulk"},
-			{"Authorize", "POST", "/abac/authorize"},
-			{"Explain", "POST", "/abac/explain"},
-			{"DiscoverPolicies", "POST", "/abac/discover-policies"},
-			{"CollectAttributes", "POST", "/abac/collect-attributes"},
-			{"AuditDecisions", "GET", "/abac/audit"},
-			{"InvalidateCache", "POST", "/abac/invalidate-cache"},
-			{"Health", "GET", "/abac/health"},
-			{"Metrics", "GET", "/abac/metrics"},
+			{"Evaluate", "POST", "/api/v1/abac/evaluate"},
+			{"EvaluateBulk", "POST", "/api/v1/abac/evaluate-bulk"},
+			{"Authorize", "POST", "/api/v1/abac/authorize"},
+			{"Explain", "POST", "/api/v1/abac/explain"},
+			{"DiscoverPolicies", "POST", "/api/v1/abac/discover-policies"},
+			{"CollectAttributes", "POST", "/api/v1/abac/collect-attributes"},
+			{"AuditDecisions", "GET", "/api/v1/abac/audit"},
+			{"InvalidateCache", "POST", "/api/v1/abac/invalidate-cache"},
+			{"Health", "GET", "/api/v1/abac/health"},
+			{"Metrics", "GET", "/api/v1/abac/metrics"},
 		},
 		Evaluate:          NewEvaluateHandler(e.Evaluate, mux, decoder, encoder, errhandler, formatter),
 		EvaluateBulk:      NewEvaluateBulkHandler(e.EvaluateBulk, mux, decoder, encoder, errhandler, formatter),
@@ -130,7 +130,7 @@ func MountEvaluateHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("POST", "/abac/evaluate", f)
+	mux.Handle("POST", "/api/v1/abac/evaluate", f)
 }
 
 // NewEvaluateHandler creates a HTTP handler which loads the HTTP request and
@@ -183,7 +183,7 @@ func MountEvaluateBulkHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("POST", "/abac/evaluate-bulk", f)
+	mux.Handle("POST", "/api/v1/abac/evaluate-bulk", f)
 }
 
 // NewEvaluateBulkHandler creates a HTTP handler which loads the HTTP request
@@ -236,7 +236,7 @@ func MountAuthorizeHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("POST", "/abac/authorize", f)
+	mux.Handle("POST", "/api/v1/abac/authorize", f)
 }
 
 // NewAuthorizeHandler creates a HTTP handler which loads the HTTP request and
@@ -289,7 +289,7 @@ func MountExplainHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("POST", "/abac/explain", f)
+	mux.Handle("POST", "/api/v1/abac/explain", f)
 }
 
 // NewExplainHandler creates a HTTP handler which loads the HTTP request and
@@ -342,7 +342,7 @@ func MountDiscoverPoliciesHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("POST", "/abac/discover-policies", f)
+	mux.Handle("POST", "/api/v1/abac/discover-policies", f)
 }
 
 // NewDiscoverPoliciesHandler creates a HTTP handler which loads the HTTP
@@ -395,7 +395,7 @@ func MountCollectAttributesHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("POST", "/abac/collect-attributes", f)
+	mux.Handle("POST", "/api/v1/abac/collect-attributes", f)
 }
 
 // NewCollectAttributesHandler creates a HTTP handler which loads the HTTP
@@ -448,7 +448,7 @@ func MountAuditDecisionsHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("GET", "/abac/audit", f)
+	mux.Handle("GET", "/api/v1/abac/audit", f)
 }
 
 // NewAuditDecisionsHandler creates a HTTP handler which loads the HTTP request
@@ -501,7 +501,7 @@ func MountInvalidateCacheHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("POST", "/abac/invalidate-cache", f)
+	mux.Handle("POST", "/api/v1/abac/invalidate-cache", f)
 }
 
 // NewInvalidateCacheHandler creates a HTTP handler which loads the HTTP
@@ -554,7 +554,7 @@ func MountHealthHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("GET", "/abac/health", f)
+	mux.Handle("GET", "/api/v1/abac/health", f)
 }
 
 // NewHealthHandler creates a HTTP handler which loads the HTTP request and
@@ -607,7 +607,7 @@ func MountMetricsHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("GET", "/abac/metrics", f)
+	mux.Handle("GET", "/api/v1/abac/metrics", f)
 }
 
 // NewMetricsHandler creates a HTTP handler which loads the HTTP request and

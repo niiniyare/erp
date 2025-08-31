@@ -1,0 +1,4835 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../tax-management/">
+      
+      
+        <link rel="next" href="../workflow-engine/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>Technical Specifications - Awo ERP Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#technical-specifications" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Awo ERP Documentation" class="md-header__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Awo ERP Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Technical Specifications
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../getting-started/01-developer-quick-start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture/system-overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../contributing/01-best-practices/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../financial/api-reference/" class="md-tabs__link">
+          
+  
+  
+  Financial Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../user/" class="md-tabs__link">
+          
+  
+  
+  Users & IAM Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../audit/audit/" class="md-tabs__link">
+          
+  
+  
+  Audit Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../feature_flag/00_README/" class="md-tabs__link">
+          
+  
+  
+  Feature Flags Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tenant/tenant-management/" class="md-tabs__link">
+          
+  
+  
+  Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Other Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api-source/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Awo ERP Documentation" class="md-nav__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Awo ERP Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/01-developer-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/system-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/abac-design-and-roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/FRAMEWORK_MIGRATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/GIN_HANDLERS_INVENTORY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GIN Handlers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/01-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/database-transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Transactions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/general-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/goa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Goa Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/middleware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Middleware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Observability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/securityHandbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Handbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Layer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/sqlc-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Financial Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Financial Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../financial/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../financial/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../financial/currency-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Currency Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../financial/deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../financial/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Task Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../financial/integration-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../financial/security-compliance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security & Compliance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../financial/testing-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Users & IAM Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Users & IAM Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/01_identity_model_and_rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity & RBAC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/02_abac_evaluation_lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/03_hybrid_access_control_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hybrid Access Control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/04_architecture_service_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/IAM_MAPPING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Restructuring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/PHASE_3_ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/RELEASE_NOTES_RC1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release Notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_11" id="__nav_5_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    ABAC Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_11">
+            <span class="md-nav__icon md-icon"></span>
+            ABAC Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/abac/administrative_performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Administrative Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/abac/attribute_definitions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Attribute Definitions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/abac/audit_monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit & Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/abac/context_attribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/abac/desing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/abac/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/abac/policy_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/abac/policy_evaluation_CEL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CEL Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/abac/policy_evaluation_expr-lang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expression Language
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/abac/POLICY_SERVICE_ENHANCEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Service Enhancement
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Audit Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Audit Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../audit/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../audit/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Feature Flags Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Feature Flags Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feature_flag/00_README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feature_flag/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feature_flag/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Onboarding
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feature_flag/onboarding/01_introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feature_flag/onboarding/02_core_concepts_and_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feature_flag/onboarding/03_developer_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feature_flag/onboarding/04_admin_api_manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feature_flag/onboarding/05_lifecycle_gotchas_and_improvements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lifecycle & Improvements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tenant Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Tenant Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tenant/tenant-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tenant/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Other Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../airline-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Airline Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../asset-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Asset Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../forecourt-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forecourt Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../financial-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Financial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../human-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Human Resources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../implementation-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Phases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../inventory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Inventory Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../module-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Module Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../restaurant-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Restaurant Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../retail-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retail Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tax-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tax Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Technical Specifications
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Technical Specifications
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏗️ Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technology-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      💻 Technology Stack
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="💻 Technology Stack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend-technologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Backend Technologies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-technologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Frontend Technologies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructure-devops" class="md-nav__link">
+    <span class="md-ellipsis">
+      Infrastructure &amp; DevOps
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      🗄️ Database Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🗄️ Database Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-tenant-database-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Tenant Database Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Multi-Tenant Database Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tenant-isolation-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tenant Isolation Strategy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-connection-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Connection Management
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-performance-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Performance Optimization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database Performance Optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#indexing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Indexing Strategy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partitioning-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Partitioning Strategy
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-backup-and-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Backup and Recovery
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔌 API Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔌 API Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restful-api-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      RESTful API Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RESTful API Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-structure-and-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Structure and Conventions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-response-envelopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Response Envelopes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-security-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Security Implementation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graphql-api-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      GraphQL API Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GraphQL API Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#schema-definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      Schema Definition
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graphql-resolver-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      GraphQL Resolver Implementation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-driven-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔄 Event-Driven Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔄 Event-Driven Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event-sourcing-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Event Sourcing Implementation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Event Sourcing Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event-store-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Event Store Design
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#message-queue-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Message Queue Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Message Queue Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kafka-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kafka Integration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔐 Security Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔐 Security Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#authentication-authorization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication &amp; Authorization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Authentication &amp; Authorization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#oauth-20-oidc-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      OAuth 2.0 / OIDC Implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#role-based-access-control-rbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      Role-Based Access Control (RBAC)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Encryption
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Encryption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#encryption-at-rest" class="md-nav__link">
+    <span class="md-ellipsis">
+      Encryption at Rest
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflow-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow Engine
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/user-service-abac-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_3" id="__nav_10_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core APIs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            Core APIs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/auth/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/entities/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/organizations/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Org Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/users/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_4" id="__nav_10_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_4">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/workflows/access-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/workflows/access-requests/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Request Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/workflows/conditional-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/workflows/user-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_5" id="__nav_10_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/testing/manual/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/testing/manual/manual-curl-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_6" id="__nav_10_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_6">
+            <span class="md-nav__icon md-icon"></span>
+            Utilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/utilities/todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TODO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="technical-specifications">Technical Specifications</h1>
+<h2 id="overview">🏗️ Overview</h2>
+<p>This document provides comprehensive technical specifications for the ERP system, including detailed architecture designs, database schemas, API specifications, integration patterns, and deployment configurations. It serves as the definitive technical reference for development, deployment, and maintenance teams.</p>
+<h2 id="technology-stack">💻 Technology Stack</h2>
+<h3 id="backend-technologies">Backend Technologies</h3>
+<pre><code class="language-yaml">backend_stack:
+  runtime_environment:
+    language: &quot;Go 1.21+&quot;
+    alternative: &quot;Node.js 18+ (TypeScript)&quot;
+    container_runtime: &quot;Docker 24+&quot;
+    orchestration: &quot;Kubernetes 1.28+&quot;
+
+  web_framework:
+    primary: &quot;Gin (Go) / Fiber (Go)&quot;
+    alternative: &quot;Express.js (Node.js)&quot;
+    features:
+      - high_performance_routing
+      - middleware_support
+      - json_serialization
+      - websocket_support
+
+  databases:
+    primary: &quot;PostgreSQL 15+&quot;
+    cache: &quot;Redis 7+&quot;
+    search: &quot;Elasticsearch 8+&quot;
+    time_series: &quot;InfluxDB 2.0+&quot;
+    document_store: &quot;MongoDB 6+&quot; # For audit logs and flexible schemas
+
+  message_queues:
+    primary: &quot;Apache Kafka&quot;
+    alternative: &quot;RabbitMQ&quot;
+    use_cases:
+      - event_streaming
+      - async_processing
+      - inter_service_communication
+
+  storage:
+    object_storage: &quot;MinIO / AWS S3&quot;
+    file_system: &quot;Persistent Volumes&quot;
+    backup_storage: &quot;AWS S3 / Azure Blob&quot;
+</code></pre>
+<h3 id="frontend-technologies">Frontend Technologies</h3>
+<pre><code class="language-yaml">frontend_stack:
+  web_application:
+    framework: &quot;React 18+&quot;
+    language: &quot;TypeScript 5+&quot;
+    bundler: &quot;Vite 4+&quot;
+    routing: &quot;React Router 6+&quot;
+
+  state_management:
+    global_state: &quot;Zustand / Redux Toolkit&quot;
+    server_state: &quot;TanStack Query (React Query)&quot;
+    form_state: &quot;React Hook Form&quot;
+
+  ui_framework:
+    component_library: &quot;Ant Design / Mantine&quot;
+    styling: &quot;Tailwind CSS 3+&quot;
+    icons: &quot;Lucide React&quot;
+    charts: &quot;Recharts / Chart.js&quot;
+
+  mobile_applications:
+    framework: &quot;React Native 0.72+&quot;
+    alternative: &quot;Flutter 3.10+&quot;
+    navigation: &quot;React Navigation 6+&quot;
+    state_management: &quot;Zustand&quot;
+</code></pre>
+<h3 id="infrastructure-devops">Infrastructure &amp; DevOps</h3>
+<pre><code class="language-yaml">infrastructure:
+  cloud_platforms:
+    primary: &quot;Kubernetes (Cloud Agnostic)&quot;
+    supported_clouds:
+      - &quot;AWS EKS&quot;
+      - &quot;Azure AKS&quot; 
+      - &quot;Google GKE&quot;
+      - &quot;On-premise&quot;
+
+  container_orchestration:
+    platform: &quot;Kubernetes 1.28+&quot;
+    service_mesh: &quot;Istio 1.19+&quot;
+    ingress: &quot;NGINX Ingress Controller&quot;
+    secrets_management: &quot;Sealed Secrets / External Secrets&quot;
+
+  monitoring_observability:
+    metrics: &quot;Prometheus + Grafana&quot;
+    logging: &quot;ELK Stack (Elasticsearch, Logstash, Kibana)&quot;
+    tracing: &quot;Jaeger&quot;
+    apm: &quot;New Relic / Datadog&quot;
+    uptime_monitoring: &quot;UptimeRobot&quot;
+
+  ci_cd:
+    version_control: &quot;Git (GitHub/GitLab)&quot;
+    ci_cd_pipeline: &quot;GitHub Actions / GitLab CI&quot;
+    artifact_registry: &quot;Docker Hub / AWS ECR&quot;
+    deployment: &quot;ArgoCD / Flux&quot;
+</code></pre>
+<h2 id="database-architecture">🗄️ Database Architecture</h2>
+<h3 id="multi-tenant-database-design">Multi-Tenant Database Design</h3>
+<h4 id="tenant-isolation-strategy">Tenant Isolation Strategy</h4>
+<pre><code class="language-sql">-- Schema-per-tenant approach for data isolation
+CREATE SCHEMA IF NOT EXISTS tenant_${TENANT_ID};
+
+-- Row-level security for shared tables
+CREATE POLICY tenant_isolation ON shared_table_name
+    FOR ALL TO application_role
+    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+
+-- Hybrid approach: Core tables shared, business tables isolated
+CREATE TABLE tenants (
+    id UUID PRIMARY KEY,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    -- Shared across all tenants
+);
+
+-- Tenant-specific tables in dedicated schemas
+CREATE TABLE tenant_${TENANT_ID}.sales_orders (
+    id UUID PRIMARY KEY,
+    order_number VARCHAR(50) NOT NULL,
+    -- Tenant-isolated data
+);
+</code></pre>
+<h4 id="database-connection-management">Database Connection Management</h4>
+<pre><code class="language-go">// Database connection pool management
+type DatabaseManager struct {
+    pools map[string]*sql.DB // tenant_id -&gt; connection pool
+    mutex sync.RWMutex
+}
+
+func (dm *DatabaseManager) GetTenantDB(tenantID string) (*sql.DB, error) {
+    dm.mutex.RLock()
+    if pool, exists := dm.pools[tenantID]; exists {
+        dm.mutex.RUnlock()
+        return pool, nil
+    }
+    dm.mutex.RUnlock()
+
+    dm.mutex.Lock()
+    defer dm.mutex.Unlock()
+
+    // Double-check pattern
+    if pool, exists := dm.pools[tenantID]; exists {
+        return pool, nil
+    }
+
+    // Create new connection pool for tenant
+    config := dm.getTenantDBConfig(tenantID)
+    pool, err := sql.Open(&quot;postgres&quot;, config.ConnectionString)
+    if err != nil {
+        return nil, err
+    }
+
+    // Configure connection pool
+    pool.SetMaxOpenConns(config.MaxOpenConns)
+    pool.SetMaxIdleConns(config.MaxIdleConns)
+    pool.SetConnMaxLifetime(config.ConnMaxLifetime)
+
+    dm.pools[tenantID] = pool
+    return pool, nil
+}
+</code></pre>
+<h3 id="database-performance-optimization">Database Performance Optimization</h3>
+<h4 id="indexing-strategy">Indexing Strategy</h4>
+<pre><code class="language-sql">-- Composite indexes for common query patterns
+CREATE INDEX CONCURRENTLY idx_sales_orders_tenant_date_status 
+ON sales_orders(tenant_id, order_date DESC, status) 
+WHERE status IN ('pending', 'confirmed', 'shipped');
+
+-- Partial indexes for filtered queries
+CREATE INDEX CONCURRENTLY idx_active_employees 
+ON employees(tenant_id, department_id, hire_date) 
+WHERE status = 'active';
+
+-- Covering indexes for frequently accessed columns
+CREATE INDEX CONCURRENTLY idx_inventory_items_covering 
+ON inventory_items(tenant_id, item_code) 
+INCLUDE (item_name, category_id, current_stock);
+
+-- Function-based indexes for computed values
+CREATE INDEX CONCURRENTLY idx_orders_total_amount_range
+ON sales_orders(tenant_id, (CASE 
+    WHEN total_amount &lt; 100 THEN 'small'
+    WHEN total_amount &lt; 1000 THEN 'medium'
+    ELSE 'large'
+END));
+</code></pre>
+<h4 id="partitioning-strategy">Partitioning Strategy</h4>
+<pre><code class="language-sql">-- Time-based partitioning for large transactional tables
+CREATE TABLE audit_logs (
+    id UUID DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    event_timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    event_type VARCHAR(50) NOT NULL,
+    event_data JSONB,
+    PRIMARY KEY (id, event_timestamp)
+) PARTITION BY RANGE (event_timestamp);
+
+-- Create monthly partitions
+CREATE TABLE audit_logs_y2025m01 PARTITION OF audit_logs
+    FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
+
+CREATE TABLE audit_logs_y2025m02 PARTITION OF audit_logs
+    FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
+
+-- Automated partition management
+CREATE OR REPLACE FUNCTION create_monthly_partition(table_name TEXT, start_date DATE)
+RETURNS VOID AS $$
+DECLARE
+    partition_name TEXT;
+    end_date DATE;
+BEGIN
+    partition_name := table_name || '_y' || EXTRACT(year FROM start_date) || 'm' || 
+                     LPAD(EXTRACT(month FROM start_date)::TEXT, 2, '0');
+    end_date := start_date + INTERVAL '1 month';
+
+    EXECUTE format('CREATE TABLE %I PARTITION OF %I FOR VALUES FROM (%L) TO (%L)',
+                   partition_name, table_name, start_date, end_date);
+
+    EXECUTE format('CREATE INDEX ON %I (tenant_id, event_timestamp DESC)', partition_name);
+END;
+$$ LANGUAGE plpgsql;
+</code></pre>
+<h3 id="database-backup-and-recovery">Database Backup and Recovery</h3>
+<pre><code class="language-yaml">backup_strategy:
+  continuous_backup:
+    tool: &quot;WAL-E / pgBackRest&quot;
+    frequency: &quot;continuous_wal_streaming&quot;
+    retention: &quot;30_days&quot;
+    encryption: &quot;AES-256&quot;
+
+  point_in_time_recovery:
+    granularity: &quot;second_level&quot;
+    retention: &quot;7_days&quot;
+    automated_testing: &quot;daily&quot;
+
+  cross_region_replication:
+    read_replicas: 2
+    geographic_distribution: true
+    failover_automation: true
+
+  backup_verification:
+    automated_restore_testing: &quot;weekly&quot;
+    data_integrity_checks: &quot;daily&quot;
+    recovery_time_objective: &quot;15_minutes&quot;
+    recovery_point_objective: &quot;1_minute&quot;
+</code></pre>
+<h2 id="api-architecture">🔌 API Architecture</h2>
+<h3 id="restful-api-design">RESTful API Design</h3>
+<h4 id="api-structure-and-conventions">API Structure and Conventions</h4>
+<pre><code class="language-yaml">api_conventions:
+  base_url: &quot;https://api.awo.com/v1&quot;
+
+  url_patterns:
+    tenants: &quot;/tenants/{tenant_id}&quot;
+    resources: &quot;/tenants/{tenant_id}/{resource}&quot;
+    sub_resources: &quot;/tenants/{tenant_id}/{resource}/{id}/{sub_resource}&quot;
+
+  http_methods:
+    GET: &quot;retrieve_resources&quot;
+    POST: &quot;create_resources&quot;
+    PUT: &quot;update_entire_resource&quot;
+    PATCH: &quot;partial_update&quot;
+    DELETE: &quot;remove_resource&quot;
+
+  status_codes:
+    success: [200, 201, 202, 204]
+    client_errors: [400, 401, 403, 404, 409, 422]
+    server_errors: [500, 502, 503, 504]
+
+  response_format:
+    success: &quot;data_envelope&quot;
+    error: &quot;error_envelope_with_details&quot;
+    pagination: &quot;cursor_based_pagination&quot;
+</code></pre>
+<h4 id="api-response-envelopes">API Response Envelopes</h4>
+<pre><code class="language-typescript">// Standard API Response Format
+interface APIResponse&lt;T&gt; {
+  success: boolean;
+  data?: T;
+  error?: APIError;
+  meta?: ResponseMeta;
+}
+
+interface APIError {
+  code: string;
+  message: string;
+  details?: Record&lt;string, any&gt;;
+  trace_id?: string;
+}
+
+interface ResponseMeta {
+  pagination?: PaginationMeta;
+  rate_limit?: RateLimitMeta;
+  cache?: CacheMeta;
+  request_id: string;
+  timestamp: string;
+}
+
+interface PaginationMeta {
+  current_page: number;
+  per_page: number;
+  total_count: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+  next_cursor?: string;
+  previous_cursor?: string;
+}
+
+// Example API Response
+const salesOrderResponse: APIResponse&lt;SalesOrder[]&gt; = {
+  success: true,
+  data: [
+    {
+      id: &quot;uuid&quot;,
+      order_number: &quot;SO-2025-001&quot;,
+      customer_id: &quot;uuid&quot;,
+      total_amount: 1500.00,
+      status: &quot;confirmed&quot;
+    }
+  ],
+  meta: {
+    pagination: {
+      current_page: 1,
+      per_page: 50,
+      total_count: 250,
+      total_pages: 5,
+      has_next: true,
+      has_previous: false
+    },
+    request_id: &quot;req_abc123&quot;,
+    timestamp: &quot;2025-01-15T10:30:00Z&quot;
+  }
+};
+</code></pre>
+<h4 id="api-security-implementation">API Security Implementation</h4>
+<pre><code class="language-go">// JWT Authentication Middleware
+func JWTAuthMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        tokenString := extractTokenFromHeader(c.GetHeader(&quot;Authorization&quot;))
+        if tokenString == &quot;&quot; {
+            c.JSON(401, gin.H{&quot;error&quot;: &quot;Authorization header required&quot;})
+            c.Abort()
+            return
+        }
+
+        claims, err := validateJWT(tokenString)
+        if err != nil {
+            c.JSON(401, gin.H{&quot;error&quot;: &quot;Invalid token&quot;})
+            c.Abort()
+            return
+        }
+
+        // Set user context
+        c.Set(&quot;user_id&quot;, claims.UserID)
+        c.Set(&quot;tenant_id&quot;, claims.TenantID)
+        c.Set(&quot;permissions&quot;, claims.Permissions)
+
+        c.Next()
+    }
+}
+
+// Rate Limiting Middleware
+func RateLimitMiddleware(limiter *rate.Limiter) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        clientIP := c.ClientIP()
+        userID := c.GetString(&quot;user_id&quot;)
+
+        // Create rate limit key (per user or per IP)
+        key := fmt.Sprintf(&quot;rate_limit:%s:%s&quot;, clientIP, userID)
+
+        if !limiter.Allow(key) {
+            c.Header(&quot;X-RateLimit-Limit&quot;, &quot;100&quot;)
+            c.Header(&quot;X-RateLimit-Remaining&quot;, &quot;0&quot;)
+            c.Header(&quot;X-RateLimit-Reset&quot;, strconv.Itoa(int(time.Now().Add(time.Hour).Unix())))
+
+            c.JSON(429, gin.H{
+                &quot;error&quot;: &quot;Rate limit exceeded&quot;,
+                &quot;retry_after&quot;: 3600
+            })
+            c.Abort()
+            return
+        }
+
+        c.Next()
+    }
+}
+
+// Permission-based Authorization
+func RequirePermissions(permissions ...string) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        userPermissions := c.GetStringSlice(&quot;permissions&quot;)
+
+        for _, required := range permissions {
+            if !contains(userPermissions, required) {
+                c.JSON(403, gin.H{
+                    &quot;error&quot;: &quot;Insufficient permissions&quot;,
+                    &quot;required&quot;: required
+                })
+                c.Abort()
+                return
+            }
+        }
+
+        c.Next()
+    }
+}
+</code></pre>
+<h3 id="graphql-api-design">GraphQL API Design</h3>
+<h4 id="schema-definition">Schema Definition</h4>
+<pre><code class="language-graphql"># Core GraphQL Schema
+scalar DateTime
+scalar UUID
+scalar JSON
+
+type Query {
+  # Tenant operations
+  tenant(id: UUID!): Tenant
+
+  # Sales operations
+  salesOrders(
+    filter: SalesOrderFilter
+    pagination: PaginationInput
+  ): SalesOrderConnection!
+
+  salesOrder(id: UUID!): SalesOrder
+
+  # Inventory operations
+  inventoryItems(
+    filter: InventoryItemFilter
+    pagination: PaginationInput
+  ): InventoryItemConnection!
+
+  # Financial operations
+  accounts(filter: AccountFilter): [Account!]!
+  journalEntries(
+    filter: JournalEntryFilter
+    pagination: PaginationInput
+  ): JournalEntryConnection!
+}
+
+type Mutation {
+  # Sales operations
+  createSalesOrder(input: CreateSalesOrderInput!): SalesOrderPayload!
+  updateSalesOrder(id: UUID!, input: UpdateSalesOrderInput!): SalesOrderPayload!
+
+  # Inventory operations
+  createStockTransaction(input: CreateStockTransactionInput!): StockTransactionPayload!
+
+  # Financial operations
+  createJournalEntry(input: CreateJournalEntryInput!): JournalEntryPayload!
+}
+
+type Subscription {
+  # Real-time updates
+  salesOrderUpdates(tenantId: UUID!): SalesOrder!
+  inventoryLevelChanges(itemId: UUID!): InventoryLevel!
+  systemNotifications(userId: UUID!): Notification!
+}
+
+# Type definitions
+type SalesOrder {
+  id: UUID!
+  orderNumber: String!
+  customer: Customer!
+  orderDate: DateTime!
+  status: SalesOrderStatus!
+  totalAmount: Float!
+  lineItems: [SalesOrderLineItem!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type SalesOrderConnection {
+  edges: [SalesOrderEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+enum SalesOrderStatus {
+  DRAFT
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+input SalesOrderFilter {
+  status: SalesOrderStatus
+  customerId: UUID
+  dateRange: DateRangeInput
+  amountRange: AmountRangeInput
+}
+</code></pre>
+<h4 id="graphql-resolver-implementation">GraphQL Resolver Implementation</h4>
+<pre><code class="language-go">// GraphQL Resolver Structure
+type Resolver struct {
+    DB       *database.DB
+    Services *services.Services
+}
+
+type QueryResolver struct{ *Resolver }
+type MutationResolver struct{ *Resolver }
+type SubscriptionResolver struct{ *Resolver }
+
+// Sales Order Resolver
+func (r *QueryResolver) SalesOrders(ctx context.Context, filter *model.SalesOrderFilter, pagination *model.PaginationInput) (*model.SalesOrderConnection, error) {
+    tenantID := auth.GetTenantIDFromContext(ctx)
+
+    // Build query with filters
+    query := r.DB.WithTenant(tenantID).Model(&amp;models.SalesOrder{})
+
+    if filter != nil {
+        if filter.Status != nil {
+            query = query.Where(&quot;status = ?&quot;, *filter.Status)
+        }
+        if filter.CustomerID != nil {
+            query = query.Where(&quot;customer_id = ?&quot;, *filter.CustomerID)
+        }
+        if filter.DateRange != nil {
+            query = query.Where(&quot;order_date BETWEEN ? AND ?&quot;, filter.DateRange.Start, filter.DateRange.End)
+        }
+    }
+
+    // Apply pagination
+    var totalCount int64
+    query.Count(&amp;totalCount)
+
+    offset := 0
+    limit := 50
+    if pagination != nil {
+        if pagination.Offset != nil {
+            offset = *pagination.Offset
+        }
+        if pagination.Limit != nil {
+            limit = *pagination.Limit
+        }
+    }
+
+    var salesOrders []models.SalesOrder
+    err := query.Offset(offset).Limit(limit).Find(&amp;salesOrders).Error
+    if err != nil {
+        return nil, err
+    }
+
+    // Convert to GraphQL types
+    edges := make([]*model.SalesOrderEdge, len(salesOrders))
+    for i, order := range salesOrders {
+        edges[i] = &amp;model.SalesOrderEdge{
+            Node:   convertSalesOrderToGraphQL(order),
+            Cursor: encodeCursor(order.ID),
+        }
+    }
+
+    return &amp;model.SalesOrderConnection{
+        Edges: edges,
+        PageInfo: &amp;model.PageInfo{
+            HasNextPage:     offset+limit &lt; int(totalCount),
+            HasPreviousPage: offset &gt; 0,
+            TotalCount:      int(totalCount),
+        },
+        TotalCount: int(totalCount),
+    }, nil
+}
+
+// Real-time subscriptions using WebSocket
+func (r *SubscriptionResolver) SalesOrderUpdates(ctx context.Context, tenantID string) (&lt;-chan *model.SalesOrder, error) {
+    ch := make(chan *model.SalesOrder)
+
+    // Subscribe to Redis pub/sub for sales order updates
+    subscriber := r.Services.Redis.Subscribe(ctx, fmt.Sprintf(&quot;sales_orders:%s&quot;, tenantID))
+
+    go func() {
+        defer close(ch)
+        defer subscriber.Close()
+
+        for {
+            select {
+            case msg := &lt;-subscriber.Channel():
+                var order model.SalesOrder
+                if err := json.Unmarshal([]byte(msg.Payload), &amp;order); err == nil {
+                    ch &lt;- &amp;order
+                }
+            case &lt;-ctx.Done():
+                return
+            }
+        }
+    }()
+
+    return ch, nil
+}
+</code></pre>
+<h2 id="event-driven-architecture">🔄 Event-Driven Architecture</h2>
+<h3 id="event-sourcing-implementation">Event Sourcing Implementation</h3>
+<h4 id="event-store-design">Event Store Design</h4>
+<pre><code class="language-go">// Event Store Interface
+type EventStore interface {
+    SaveEvents(aggregateID string, events []Event, expectedVersion int) error
+    GetEvents(aggregateID string, fromVersion int) ([]Event, error)
+    GetSnapshot(aggregateID string) (*Snapshot, error)
+    SaveSnapshot(snapshot Snapshot) error
+}
+
+// Event Structure
+type Event struct {
+    ID            string                 `json:&quot;id&quot;`
+    AggregateID   string                 `json:&quot;aggregate_id&quot;`
+    AggregateType string                 `json:&quot;aggregate_type&quot;`
+    EventType     string                 `json:&quot;event_type&quot;`
+    EventVersion  int                    `json:&quot;event_version&quot;`
+    Data          map[string]interface{} `json:&quot;data&quot;`
+    Metadata      map[string]interface{} `json:&quot;metadata&quot;`
+    Timestamp     time.Time              `json:&quot;timestamp&quot;`
+    UserID        string                 `json:&quot;user_id&quot;`
+    TenantID      string                 `json:&quot;tenant_id&quot;`
+}
+
+// Aggregate Root
+type AggregateRoot struct {
+    ID            string
+    Version       int
+    Changes       []Event
+    TenantID      string
+}
+
+func (ar *AggregateRoot) ApplyEvent(event Event) {
+    ar.Changes = append(ar.Changes, event)
+    ar.Version++
+}
+
+func (ar *AggregateRoot) GetUncommittedEvents() []Event {
+    return ar.Changes
+}
+
+func (ar *AggregateRoot) ClearChanges() {
+    ar.Changes = []Event{}
+}
+
+// Sales Order Aggregate Example
+type SalesOrderAggregate struct {
+    AggregateRoot
+    OrderNumber   string
+    CustomerID    string
+    Status        string
+    TotalAmount   decimal.Decimal
+    LineItems     []SalesOrderLineItem
+}
+
+func (so *SalesOrderAggregate) CreateOrder(orderNumber, customerID string, lineItems []SalesOrderLineItem) error {
+    if so.ID != &quot;&quot; {
+        return errors.New(&quot;sales order already exists&quot;)
+    }
+
+    // Business logic validation
+    if len(lineItems) == 0 {
+        return errors.New(&quot;sales order must have at least one line item&quot;)
+    }
+
+    // Calculate total
+    totalAmount := decimal.Zero
+    for _, item := range lineItems {
+        totalAmount = totalAmount.Add(item.LineTotal)
+    }
+
+    // Raise domain event
+    event := Event{
+        ID:            uuid.New().String(),
+        AggregateID:   uuid.New().String(),
+        AggregateType: &quot;SalesOrder&quot;,
+        EventType:     &quot;SalesOrderCreated&quot;,
+        EventVersion:  1,
+        Data: map[string]interface{}{
+            &quot;order_number&quot;:  orderNumber,
+            &quot;customer_id&quot;:   customerID,
+            &quot;line_items&quot;:    lineItems,
+            &quot;total_amount&quot;:  totalAmount,
+            &quot;status&quot;:        &quot;draft&quot;,
+        },
+        Timestamp: time.Now(),
+        TenantID:  so.TenantID,
+    }
+
+    so.ApplyEvent(event)
+    so.apply(event) // Apply to current state
+
+    return nil
+}
+
+func (so *SalesOrderAggregate) apply(event Event) {
+    switch event.EventType {
+    case &quot;SalesOrderCreated&quot;:
+        so.ID = event.AggregateID
+        so.OrderNumber = event.Data[&quot;order_number&quot;].(string)
+        so.CustomerID = event.Data[&quot;customer_id&quot;].(string)
+        so.Status = event.Data[&quot;status&quot;].(string)
+        so.TotalAmount = event.Data[&quot;total_amount&quot;].(decimal.Decimal)
+        // ... apply other fields
+    case &quot;SalesOrderStatusChanged&quot;:
+        so.Status = event.Data[&quot;new_status&quot;].(string)
+    // ... handle other events
+    }
+}
+</code></pre>
+<h3 id="message-queue-integration">Message Queue Integration</h3>
+<h4 id="kafka-integration">Kafka Integration</h4>
+<pre><code class="language-go">// Kafka Producer Configuration
+type KafkaProducer struct {
+    producer sarama.SyncProducer
+    config   *KafkaConfig
+}
+
+type KafkaConfig struct {
+    Brokers               []string
+    RetryMax              int
+    RequiredAcks          sarama.RequiredAcks
+    CompressionType       sarama.CompressionCodec
+    FlushFrequency        time.Duration
+    BatchSize             int
+}
+
+func NewKafkaProducer(config *KafkaConfig) (*KafkaProducer, error) {
+    saramaConfig := sarama.NewConfig()
+    saramaConfig.Producer.RequiredAcks = config.RequiredAcks
+    saramaConfig.Producer.Compression = config.CompressionType
+    saramaConfig.Producer.Flush.Frequency = config.FlushFrequency
+    saramaConfig.Producer.Flush.Messages = config.BatchSize
+    saramaConfig.Producer.Return.Successes = true
+    saramaConfig.Producer.Return.Errors = true
+    saramaConfig.Producer.Retry.Max = config.RetryMax
+
+    producer, err := sarama.NewSyncProducer(config.Brokers, saramaConfig)
+    if err != nil {
+        return nil, err
+    }
+
+    return &amp;KafkaProducer{
+        producer: producer,
+        config:   config,
+    }, nil
+}
+
+func (kp *KafkaProducer) PublishEvent(topic string, event Event) error {
+    eventBytes, err := json.Marshal(event)
+    if err != nil {
+        return err
+    }
+
+    message := &amp;sarama.ProducerMessage{
+        Topic:     topic,
+        Key:       sarama.StringEncoder(event.AggregateID),
+        Value:     sarama.ByteEncoder(eventBytes),
+        Headers: []sarama.RecordHeader{
+            {
+                Key:   []byte(&quot;tenant_id&quot;),
+                Value: []byte(event.TenantID),
+            },
+            {
+                Key:   []byte(&quot;event_type&quot;),
+                Value: []byte(event.EventType),
+            },
+        },
+        Timestamp: event.Timestamp,
+    }
+
+    partition, offset, err := kp.producer.SendMessage(message)
+    if err != nil {
+        return err
+    }
+
+    log.Printf(&quot;Event published to topic %s, partition %d, offset %d&quot;, topic, partition, offset)
+    return nil
+}
+
+// Kafka Consumer for Event Processing
+type EventConsumer struct {
+    consumer sarama.ConsumerGroup
+    handlers map[string]EventHandler
+}
+
+type EventHandler interface {
+    Handle(ctx context.Context, event Event) error
+}
+
+func (ec *EventConsumer) Setup(sarama.ConsumerGroupSession) error   { return nil }
+func (ec *EventConsumer) Cleanup(sarama.ConsumerGroupSession) error { return nil }
+
+func (ec *EventConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+    for {
+        select {
+        case message := &lt;-claim.Messages():
+            var event Event
+            if err := json.Unmarshal(message.Value, &amp;event); err != nil {
+                log.Printf(&quot;Error unmarshaling event: %v&quot;, err)
+                continue
+            }
+
+            handler, exists := ec.handlers[event.EventType]
+            if !exists {
+                log.Printf(&quot;No handler found for event type: %s&quot;, event.EventType)
+                session.MarkMessage(message, &quot;&quot;)
+                continue
+            }
+
+            ctx := context.WithValue(context.Background(), &quot;tenant_id&quot;, event.TenantID)
+            if err := handler.Handle(ctx, event); err != nil {
+                log.Printf(&quot;Error handling event: %v&quot;, err)
+                // Implement retry logic or dead letter queue
+                continue
+            }
+
+            session.MarkMessage(message, &quot;&quot;)
+
+        case &lt;-session.Context().Done():
+            return nil
+        }
+    }
+}
+</code></pre>
+<h2 id="security-architecture">🔐 Security Architecture</h2>
+<h3 id="authentication-authorization">Authentication &amp; Authorization</h3>
+<h4 id="oauth-20-oidc-implementation">OAuth 2.0 / OIDC Implementation</h4>
+<pre><code class="language-yaml">auth_configuration:
+  oauth2_settings:
+    authorization_server: &quot;https://auth.awo.com&quot;
+    client_id: &quot;erp_client_web&quot;
+    client_secret: &quot;${OAUTH_CLIENT_SECRET}&quot;
+    scopes: [&quot;openid&quot;, &quot;profile&quot;, &quot;email&quot;, &quot;erp:read&quot;, &quot;erp:write&quot;]
+
+  jwt_configuration:
+    issuer: &quot;https://auth.awo.com&quot;
+    audience: &quot;erp-api&quot;
+    algorithm: &quot;RS256&quot;
+    public_key_url: &quot;https://auth.awo.com/.well-known/jwks.json&quot;
+    token_expiry: &quot;1h&quot;
+    refresh_token_expiry: &quot;7d&quot;
+
+  session_management:
+    session_store: &quot;redis&quot;
+    session_timeout: &quot;8h&quot;
+    max_concurrent_sessions: 5
+    session_binding: &quot;ip_and_user_agent&quot;
+</code></pre>
+<h4 id="role-based-access-control-rbac">Role-Based Access Control (RBAC)</h4>
+<pre><code class="language-go">// RBAC Implementation
+type Permission struct {
+    ID       string `json:&quot;id&quot;`
+    Resource string `json:&quot;resource&quot;` // e.g., &quot;sales_orders&quot;
+    Action   string `json:&quot;action&quot;`   // e.g., &quot;read&quot;, &quot;write&quot;, &quot;delete&quot;
+    Scope    string `json:&quot;scope&quot;`    // e.g., &quot;tenant&quot;, &quot;organization&quot;, &quot;own&quot;
+}
+
+type Role struct {
+    ID          string       `json:&quot;id&quot;`
+    Name        string       `json:&quot;name&quot;`
+    Description string       `json:&quot;description&quot;`
+    Permissions []Permission `json:&quot;permissions&quot;`
+    TenantID    string       `json:&quot;tenant_id&quot;`
+}
+
+type RBACManager struct {
+    cache      cache.Cache
+    repository RoleRepository
+}
+
+func (rbac *RBACManager) CheckPermission(userID, tenantID, resource, action string) (bool, error) {
+    // Get user roles from cache or database
+    cacheKey := fmt.Sprintf(&quot;user_roles:%s:%s&quot;, tenantID, userID)
+    roles, err := rbac.getUserRoles(cacheKey, userID, tenantID)
+    if err != nil {
+        return false, err
+    }
+
+    // Check if any role has the required permission
+    for _, role := range roles {
+        for _, permission := range role.Permissions {
+            if rbac.matchesPermission(permission, resource, action) {
+                return true, nil
+            }
+        }
+    }
+
+    return false, nil
+}
+
+func (rbac *RBACManager) matchesPermission(permission Permission, resource, action string) bool {
+    // Exact match
+    if permission.Resource == resource &amp;&amp; permission.Action == action {
+        return true
+    }
+
+    // Wildcard matches
+    if permission.Resource == &quot;*&quot; || permission.Action == &quot;*&quot; {
+        return true
+    }
+
+    // Hierarchical resource matching (e.g., &quot;sales:*&quot; matches &quot;sales:orders&quot;)
+    if strings.HasSuffix(permission.Resource, &quot;:*&quot;) {
+        prefix := strings.TrimSuffix(permission.Resource, &quot;:*&quot;)
+        return strings.HasPrefix(resource, prefix+&quot;:&quot;)
+    }
+
+    return false
+}
+
+// Middleware for API endpoint protection
+func RequirePermission(resource, action string) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        userID := c.GetString(&quot;user_id&quot;)
+        tenantID := c.GetString(&quot;tenant_id&quot;)
+
+        rbacManager := c.MustGet(&quot;rbac&quot;).(*RBACManager)
+
+        hasPermission, err := rbacManager.CheckPermission(userID, tenantID, resource, action)
+        if err != nil {
+            c.JSON(500, gin.H{&quot;error&quot;: &quot;Authorization check failed&quot;})
+            c.Abort()
+            return
+        }
+
+        if !hasPermission {
+            c.JSON(403, gin.H{
+                &quot;error&quot;: &quot;Forbidden&quot;,
+                &quot;message&quot;: fmt.Sprintf(&quot;Missing permission: %s:%s&quot;, resource, action),
+            })
+            c.Abort()
+            return
+        }
+
+        c.Next()
+    }
+}
+</code></pre>
+<h3 id="data-encryption">Data Encryption</h3>
+<h4 id="encryption-at-rest">Encryption at Rest</h4>
+<pre><code class="language-go">// Database Field Encryption
+type EncryptedField struct {
+    Value     []byte `gorm:&quot;column:encrypted_value&quot;`
+    KeyID     string `gorm:&quot;column:key_id&quot;`
+    Algorithm string `gorm:&quot;column:algorithm&quot;`
+}
+
+type EncryptionService struct {
+    keys map[string][]byte // Key ID -&gt; Encryption Key
+    aead cipher.AEAD
+}
+
+func NewEncryptionService() (*EncryptionService, error) {
+    // Load encryption keys from secure key management service
+    keys := make(map[string][]byte)
+
+    // Example: Load from environment or external key service
+    masterKey := os.Getenv(&quot;MASTER_ENCRYPTION_KEY&quot;)
+    if masterKey == &quot;&quot; {
+        return nil, errors.New(&quot;master encryption key not found&quot;)
+    }
+
+    key, err := hex.DecodeString(masterKey)
+    if err != nil {
+        return nil, err
+    }
+
+    block, err := aes.NewCipher(key)
+    if err != nil {
+        return nil, err
+    }
+
+    aead, err := cipher.NewGCM(block)
+    if err != nil {
+        return nil, err
+    }
+
+    keys[&quot;default&quot;] = key
+
+    return &amp;EncryptionService{
+        keys: keys,
+        aead: aead,
+    }, nil
+}
+
+func (es *EncryptionService) Encrypt(plaintext string, keyID string) (*EncryptedField, error) {
+    if keyID == &quot;&quot; {
+        keyID = &quot;default&quot;
+    }
+
+    nonce := make([]byte, es.aead.NonceSize())
+    if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+        return nil, err
+    }
+
+    ciphertext := es.aead.Seal(nil, nonce, []byte(plaintext), nil)
+
+    // Prepend nonce to ciphertext
+    encrypted := append(nonce, ciphertext...)
+
+    return &amp;EncryptedField{
+        Value:     encrypted,
+        KeyID:     keyID,
+        Algorithm: &quot;AES-256-GCM&quot;,
+    }, nil
+}
+
+func (es *EncryptionService) Decrypt(field *EncryptedField) (string, error) {
+    if len(field.Value) &lt; es.aead.NonceSize() {
+        return &quot;&quot;, errors.New(&quot;invalid encrypted data&quot;)
+    }
+
+    nonce := field.Value[:es.aead.NonceSize()]
+    ciphertext := field.Value[es.aead.NonceSize():]
+
+    plaintext, err := es.aead.Open(nil, nonce, ciphertext, nil)
+    if err != nil {
+        return &quot;&quot;, err
+    }
+
+    return string(plaintext), nil
+}
+
+// GORM Hook for automatic encryption
+func (ef *EncryptedField) BeforeCreate(tx *gorm.DB) error {
+    // Encryption happens in application layer before saving
+    return nil
+}
+
+func (ef *EncryptedField) AfterFind(tx *gorm.DB) error {
+    // Decryption happens after loading from database
+    return nil
+}
+</code></pre>
+<p>This comprehensive technical specification provides the foundation for building a robust, scalable, and secure ERP system that can handle enterprise-level requirements while maintaining high performance and reliability.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="../../../javascripts/search-analytics.js"></script>
+      
+        <script src="../../../javascripts/contextual-help.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,5212 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../TASK/">
+      
+      
+        <link rel="next" href="../security-compliance-guide/">
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>Integration Guide - Awo ERP Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#awo-erp-financial-module-integration-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-header__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Awo ERP Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Integration Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../architecture/system-overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../contributing/01-best-practices/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../api-reference/" class="md-tabs__link">
+          
+  
+  
+  Financial Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user/" class="md-tabs__link">
+          
+  
+  
+  Users & IAM Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../audit/audit/" class="md-tabs__link">
+          
+  
+  
+  Audit Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../feature_flag/00_README/" class="md-tabs__link">
+          
+  
+  
+  Feature Flags Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tenant/tenant-management/" class="md-tabs__link">
+          
+  
+  
+  Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Other Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api-source/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-nav__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Awo ERP Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/system-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/abac-design-and-roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/FRAMEWORK_MIGRATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/GIN_HANDLERS_INVENTORY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GIN Handlers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/01-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/database-transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Transactions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/general-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/goa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Goa Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/middleware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Middleware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Observability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/securityHandbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Handbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Layer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/sqlc-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Financial Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Financial Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../currency-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Currency Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Task Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Table of Contents
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-layer-integration-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Layer Integration Strategy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Patterns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#erp-module-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      ERP Module Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ERP Module Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sales-module-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sales Module Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sales Module Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sales-order-to-invoice-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sales Order to Invoice Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#revenue-recognition-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Revenue Recognition Integration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#purchasing-module-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Purchasing Module Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Purchasing Module Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#purchase-order-to-invoice-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Purchase Order to Invoice Flow
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inventory-module-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inventory Module Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Inventory Module Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inventory-valuation-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inventory Valuation Updates
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#external-system-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      External System Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="External System Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#banking-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Banking Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Banking Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bank-statement-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bank Statement Import
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#payment-gateway-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Payment Gateway Integration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tax-service-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tax Service Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tax Service Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#real-time-tax-calculation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real-time Tax Calculation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-driven-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Event-Driven Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Event-Driven Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event-bus-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Event Bus Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#financial-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Financial Events
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Synchronization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Synchronization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#master-data-synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Master Data Synchronization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chart-of-accounts-synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Chart of Accounts Synchronization
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-integration-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Integration Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Integration Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#retry-and-circuit-breaker-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retry and Circuit Breaker Pattern
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#webhook-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Webhook Management
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Workflow Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#temporal-workflow-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Temporal Workflow Integration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-time-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real-time Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real-time Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#websocket-integration-for-real-time-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      WebSocket Integration for Real-time Updates
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integration-test-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Test Framework
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-integration-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Integration Issues
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting Integration Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-integration-problems" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Integration Problems
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Integration Problems">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event-processing-delays" class="md-nav__link">
+    <span class="md-ellipsis">
+      Event Processing Delays
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-deadlocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Deadlocks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-integration-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Integration Failures
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security-compliance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security & Compliance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Users & IAM Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Users & IAM Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/01_identity_model_and_rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity & RBAC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/02_abac_evaluation_lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/03_hybrid_access_control_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hybrid Access Control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/04_architecture_service_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/IAM_MAPPING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Restructuring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/PHASE_3_ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/RELEASE_NOTES_RC1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release Notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_11" id="__nav_5_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    ABAC Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_11">
+            <span class="md-nav__icon md-icon"></span>
+            ABAC Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/administrative_performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Administrative Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/attribute_definitions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Attribute Definitions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/audit_monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit & Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/context_attribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/desing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation_CEL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CEL Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation_expr-lang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expression Language
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/POLICY_SERVICE_ENHANCEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Service Enhancement
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Audit Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Audit Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Feature Flags Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Feature Flags Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/00_README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Onboarding
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/01_introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/02_core_concepts_and_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/03_developer_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/04_admin_api_manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/05_lifecycle_gotchas_and_improvements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lifecycle & Improvements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tenant Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Tenant Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/tenant-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Other Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../airline-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Airline Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../asset-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Asset Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../forecourt-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forecourt Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Financial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../human-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Human Resources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Phases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../inventory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Inventory Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../module-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Module Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../restaurant-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Restaurant Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../retail-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retail Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tax-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tax Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technical-specifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Technical Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflow-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow Engine
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/user-service-abac-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_3" id="__nav_10_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core APIs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            Core APIs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Org Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_4" id="__nav_10_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_4">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Request Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/conditional-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/user-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_5" id="__nav_10_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/manual-curl-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_6" id="__nav_10_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_6">
+            <span class="md-nav__icon md-icon"></span>
+            Utilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/utilities/todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TODO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="awo-erp-financial-module-integration-guide">AWO ERP Financial Module - Integration Guide</h1>
+<p><strong>Version</strong>: 1.0<br />
+<strong>Date</strong>: January 2025<br />
+<strong>Status</strong>: Technical Integration Manual  </p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#integration-architecture">Integration Architecture</a></li>
+<li><a href="#erp-module-integration">ERP Module Integration</a></li>
+<li><a href="#external-system-integration">External System Integration</a></li>
+<li><a href="#event-driven-integration">Event-Driven Integration</a></li>
+<li><a href="#data-synchronization">Data Synchronization</a></li>
+<li><a href="#api-integration-patterns">API Integration Patterns</a></li>
+<li><a href="#workflow-integration">Workflow Integration</a></li>
+<li><a href="#real-time-integration">Real-time Integration</a></li>
+<li><a href="#integration-testing">Integration Testing</a></li>
+<li><a href="#troubleshooting-integration-issues">Troubleshooting Integration Issues</a></li>
+</ol>
+<hr />
+<h2 id="integration-architecture">Integration Architecture</h2>
+<h3 id="multi-layer-integration-strategy"><strong>Multi-Layer Integration Strategy</strong></h3>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                    External Systems Layer                      │
+│  Banks, Payment Gateways, Tax Services, Accounting Software   │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Integration Gateway                         │
+│  API Management, Protocol Translation, Security, Rate Limiting │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Event Bus Layer                          │
+│   Redis Streams, Event Routing, Dead Letter Queue            │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   Financial Module Core                       │
+│     Account Management, Transactions, Reporting               │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  Internal ERP Modules                         │
+│  Sales, Purchasing, Inventory, HR, CRM, Project Management    │
+└─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="integration-patterns"><strong>Integration Patterns</strong></h3>
+<pre><code class="language-yaml">Pattern Types:
+  Event-Driven: Asynchronous communication via event streams
+  Request-Response: Synchronous API calls for immediate data
+  Batch Processing: Scheduled data transfers and reconciliation
+  Real-time Streaming: Continuous data flow for real-time updates
+
+Communication Protocols:
+  Internal: gRPC, Redis Streams, Message Queues
+  External: REST APIs, SOAP, EDI, SFTP, WebHooks
+
+Data Formats:
+  JSON: Primary format for API communication
+  XML: Legacy system integration
+  CSV: Batch file transfers
+  EDI: B2B financial transactions
+</code></pre>
+<hr />
+<h2 id="erp-module-integration">ERP Module Integration</h2>
+<h3 id="sales-module-integration"><strong>Sales Module Integration</strong></h3>
+<h4 id="sales-order-to-invoice-flow"><strong>Sales Order to Invoice Flow</strong></h4>
+<pre><code class="language-go">// Event-driven integration for sales invoice creation
+package integration
+
+import (
+    &quot;context&quot;
+    &quot;encoding/json&quot;
+
+    &quot;github.com/niiniyare/erp/internal/core/finance/domain&quot;
+    &quot;github.com/niiniyare/erp/internal/core/sales/events&quot;
+)
+
+type SalesIntegrationHandler struct {
+    financialService FinancialService
+    eventBus        EventBus
+}
+
+// Handle sales order fulfillment
+func (h *SalesIntegrationHandler) HandleSalesOrderFulfilled(ctx context.Context, event events.SalesOrderFulfilled) error {
+    // Create sales invoice from fulfilled sales order
+    invoice := &amp;domain.SalesInvoice{
+        TenantID:         event.TenantID,
+        CustomerID:       event.CustomerID,
+        SalesOrderID:     event.SalesOrderID,
+        InvoiceDate:      event.FulfillmentDate,
+        DueDate:          calculateDueDate(event.FulfillmentDate, event.PaymentTerms),
+        Currency:         event.Currency,
+        ExchangeRate:     event.ExchangeRate,
+        LineItems:        convertOrderItems(event.LineItems),
+        TaxCalculations:  calculateTaxes(event.LineItems, event.TaxJurisdiction),
+        TotalAmount:      event.TotalAmount,
+        Status:          domain.InvoiceStatusDraft,
+    }
+
+    // Create invoice through financial service
+    createdInvoice, err := h.financialService.CreateSalesInvoice(ctx, invoice)
+    if err != nil {
+        return err
+    }
+
+    // Publish invoice created event
+    return h.eventBus.Publish(ctx, events.SalesInvoiceCreated{
+        TenantID:      event.TenantID,
+        InvoiceID:     createdInvoice.ID,
+        SalesOrderID:  event.SalesOrderID,
+        CustomerID:    event.CustomerID,
+        Amount:        createdInvoice.TotalAmount,
+        CreatedAt:     createdInvoice.CreatedAt,
+    })
+}
+
+// Handle payment received from sales
+func (h *SalesIntegrationHandler) HandlePaymentReceived(ctx context.Context, event events.PaymentReceived) error {
+    // Apply payment to outstanding invoices
+    payment := &amp;domain.CustomerPayment{
+        TenantID:       event.TenantID,
+        CustomerID:     event.CustomerID,
+        PaymentDate:    event.PaymentDate,
+        Amount:         event.Amount,
+        Currency:       event.Currency,
+        PaymentMethod:  event.PaymentMethod,
+        Reference:      event.Reference,
+        BankAccountID:  event.BankAccountID,
+    }
+
+    return h.financialService.ProcessCustomerPayment(ctx, payment)
+}
+</code></pre>
+<h4 id="revenue-recognition-integration"><strong>Revenue Recognition Integration</strong></h4>
+<pre><code class="language-go">// Revenue recognition based on sales fulfillment
+func (h *SalesIntegrationHandler) HandleRevenueRecognition(ctx context.Context, event events.RevenueRecognitionRequired) error {
+    // Create journal entry for revenue recognition
+    transaction := &amp;domain.Transaction{
+        TenantID:        event.TenantID,
+        TransactionType: domain.TransactionTypeRevenueRecognition,
+        Date:           event.RecognitionDate,
+        Reference:      fmt.Sprintf(&quot;REV-REC-%s&quot;, event.SalesOrderID),
+        Description:    fmt.Sprintf(&quot;Revenue recognition for SO %s&quot;, event.SalesOrderNumber),
+        Currency:       event.Currency,
+        Entries: []domain.TransactionEntry{
+            {
+                AccountID:    event.RevenueAccountID,
+                CreditAmount: event.RevenueAmount,
+                Description:  &quot;Revenue recognition&quot;,
+                CostCenter:   event.CostCenter,
+                Department:   event.Department,
+            },
+            {
+                AccountID:   event.DeferredRevenueAccountID,
+                DebitAmount: event.RevenueAmount,
+                Description: &quot;Deferred revenue reduction&quot;,
+            },
+        },
+    }
+
+    return h.financialService.CreateTransaction(ctx, transaction)
+}
+</code></pre>
+<h3 id="purchasing-module-integration"><strong>Purchasing Module Integration</strong></h3>
+<h4 id="purchase-order-to-invoice-flow"><strong>Purchase Order to Invoice Flow</strong></h4>
+<pre><code class="language-go">// Purchase invoice creation and three-way matching
+func (h *PurchasingIntegrationHandler) HandleGoodsReceived(ctx context.Context, event events.GoodsReceived) error {
+    // Trigger three-way matching process
+    matchingRequest := &amp;domain.ThreeWayMatchingRequest{
+        TenantID:        event.TenantID,
+        PurchaseOrderID: event.PurchaseOrderID,
+        ReceiptID:       event.ReceiptID,
+        VendorID:        event.VendorID,
+        ReceivedItems:   event.ReceivedItems,
+        ReceivedDate:    event.ReceivedDate,
+    }
+
+    result, err := h.financialService.ProcessThreeWayMatching(ctx, matchingRequest)
+    if err != nil {
+        return err
+    }
+
+    // If matching is successful, create accrual entry
+    if result.Status == domain.MatchingStatusMatched {
+        return h.createAccrualEntry(ctx, event)
+    }
+
+    // If exceptions exist, route for approval
+    if result.Status == domain.MatchingStatusException {
+        return h.routeForApproval(ctx, event, result.Exceptions)
+    }
+
+    return nil
+}
+
+func (h *PurchasingIntegrationHandler) createAccrualEntry(ctx context.Context, event events.GoodsReceived) error {
+    transaction := &amp;domain.Transaction{
+        TenantID:        event.TenantID,
+        TransactionType: domain.TransactionTypeAccrual,
+        Date:           event.ReceivedDate,
+        Reference:      fmt.Sprintf(&quot;ACCRUAL-%s&quot;, event.PurchaseOrderID),
+        Description:    fmt.Sprintf(&quot;Goods received accrual for PO %s&quot;, event.PurchaseOrderNumber),
+        Currency:       event.Currency,
+        Entries:        h.buildAccrualEntries(event),
+    }
+
+    return h.financialService.CreateTransaction(ctx, transaction)
+}
+</code></pre>
+<h3 id="inventory-module-integration"><strong>Inventory Module Integration</strong></h3>
+<h4 id="inventory-valuation-updates"><strong>Inventory Valuation Updates</strong></h4>
+<pre><code class="language-go">// Real-time inventory valuation updates
+func (h *InventoryIntegrationHandler) HandleInventoryMovement(ctx context.Context, event events.InventoryMovement) error {
+    // Calculate inventory valuation impact
+    valuationUpdate := &amp;domain.InventoryValuationUpdate{
+        TenantID:     event.TenantID,
+        ProductID:    event.ProductID,
+        MovementType: event.MovementType,
+        Quantity:     event.Quantity,
+        UnitCost:     event.UnitCost,
+        MovementDate: event.MovementDate,
+        LocationID:   event.LocationID,
+    }
+
+    // Update inventory accounts based on movement type
+    switch event.MovementType {
+    case &quot;receipt&quot;:
+        return h.processInventoryReceipt(ctx, valuationUpdate)
+    case &quot;issue&quot;:
+        return h.processInventoryIssue(ctx, valuationUpdate)
+    case &quot;adjustment&quot;:
+        return h.processInventoryAdjustment(ctx, valuationUpdate)
+    case &quot;transfer&quot;:
+        return h.processInventoryTransfer(ctx, valuationUpdate)
+    }
+
+    return nil
+}
+
+func (h *InventoryIntegrationHandler) processInventoryReceipt(ctx context.Context, update *domain.InventoryValuationUpdate) error {
+    totalValue := update.Quantity * update.UnitCost
+
+    transaction := &amp;domain.Transaction{
+        TenantID:        update.TenantID,
+        TransactionType: domain.TransactionTypeInventoryReceipt,
+        Date:           update.MovementDate,
+        Reference:      fmt.Sprintf(&quot;INV-RCPT-%s&quot;, update.ProductID),
+        Description:    &quot;Inventory receipt valuation&quot;,
+        Currency:       &quot;USD&quot;, // Or get from product/location
+        Entries: []domain.TransactionEntry{
+            {
+                AccountID:   h.getInventoryAccount(update.ProductID),
+                DebitAmount: totalValue,
+                Description: fmt.Sprintf(&quot;Inventory receipt - %s&quot;, update.ProductID),
+                CostCenter:  h.getCostCenter(update.LocationID),
+            },
+            {
+                AccountID:    h.getInventoryReceiptAccount(),
+                CreditAmount: totalValue,
+                Description:  &quot;Inventory receipt offset&quot;,
+            },
+        },
+    }
+
+    return h.financialService.CreateTransaction(ctx, transaction)
+}
+</code></pre>
+<hr />
+<h2 id="external-system-integration">External System Integration</h2>
+<h3 id="banking-integration"><strong>Banking Integration</strong></h3>
+<h4 id="bank-statement-import"><strong>Bank Statement Import</strong></h4>
+<pre><code class="language-go">// Automated bank statement processing
+package external
+
+import (
+    &quot;encoding/csv&quot;
+    &quot;time&quot;
+)
+
+type BankStatementImporter struct {
+    bankService    BankService
+    reconciler     ReconciliationService
+    notifier       NotificationService
+}
+
+// Import bank statement from SFTP
+func (b *BankStatementImporter) ImportDailyStatements(ctx context.Context) error {
+    // Connect to bank SFTP server
+    sftpClient, err := b.connectToBank()
+    if err != nil {
+        return err
+    }
+    defer sftpClient.Close()
+
+    // Download new statement files
+    files, err := sftpClient.ListFiles(&quot;/statements/&quot;)
+    if err != nil {
+        return err
+    }
+
+    for _, file := range files {
+        if b.isNewStatement(file.Name) {
+            err := b.processStatementFile(ctx, file)
+            if err != nil {
+                b.notifier.SendAlert(ctx, &quot;Statement Import Failed&quot;, err.Error())
+                continue
+            }
+        }
+    }
+
+    return nil
+}
+
+func (b *BankStatementImporter) processStatementFile(ctx context.Context, file StatementFile) error {
+    // Parse statement file
+    transactions, err := b.parseStatementFile(file)
+    if err != nil {
+        return err
+    }
+
+    // Import transactions
+    for _, txn := range transactions {
+        bankTransaction := &amp;domain.BankTransaction{
+            BankAccountID:   txn.AccountNumber,
+            TransactionDate: txn.Date,
+            Amount:          txn.Amount,
+            Description:     txn.Description,
+            Reference:       txn.Reference,
+            Type:           txn.Type,
+        }
+
+        // Create bank transaction record
+        _, err := b.bankService.CreateBankTransaction(ctx, bankTransaction)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Trigger automatic reconciliation
+    return b.reconciler.StartAutoReconciliation(ctx, file.AccountNumber, file.StatementDate)
+}
+</code></pre>
+<h4 id="payment-gateway-integration"><strong>Payment Gateway Integration</strong></h4>
+<pre><code class="language-go">// Payment processing integration
+type PaymentGatewayIntegrator struct {
+    gateway        PaymentGateway
+    financialSvc   FinancialService
+    cryptoService  CryptoService
+}
+
+// Process payment through gateway
+func (p *PaymentGatewayIntegrator) ProcessPayment(ctx context.Context, payment *domain.PaymentRequest) (*domain.PaymentResult, error) {
+    // Encrypt sensitive payment data
+    encryptedData, err := p.cryptoService.Encrypt(payment.PaymentDetails)
+    if err != nil {
+        return nil, err
+    }
+
+    // Call payment gateway
+    gatewayRequest := &amp;PaymentGatewayRequest{
+        MerchantID:     p.gateway.MerchantID,
+        Amount:         payment.Amount,
+        Currency:       payment.Currency,
+        PaymentMethod:  payment.PaymentMethod,
+        EncryptedData:  encryptedData,
+        CallbackURL:    p.gateway.CallbackURL,
+        Reference:      payment.Reference,
+    }
+
+    response, err := p.gateway.ProcessPayment(ctx, gatewayRequest)
+    if err != nil {
+        return nil, err
+    }
+
+    // Record payment transaction
+    if response.Status == &quot;approved&quot; {
+        return p.recordSuccessfulPayment(ctx, payment, response)
+    }
+
+    return p.recordFailedPayment(ctx, payment, response)
+}
+
+// Handle payment gateway webhook
+func (p *PaymentGatewayIntegrator) HandleWebhook(ctx context.Context, webhook *PaymentWebhook) error {
+    // Verify webhook signature
+    if !p.verifyWebhookSignature(webhook) {
+        return errors.New(&quot;invalid webhook signature&quot;)
+    }
+
+    switch webhook.EventType {
+    case &quot;payment.completed&quot;:
+        return p.handlePaymentCompleted(ctx, webhook)
+    case &quot;payment.failed&quot;:
+        return p.handlePaymentFailed(ctx, webhook)
+    case &quot;refund.processed&quot;:
+        return p.handleRefundProcessed(ctx, webhook)
+    }
+
+    return nil
+}
+</code></pre>
+<h3 id="tax-service-integration"><strong>Tax Service Integration</strong></h3>
+<h4 id="real-time-tax-calculation"><strong>Real-time Tax Calculation</strong></h4>
+<pre><code class="language-go">// Tax calculation service integration
+type TaxServiceIntegrator struct {
+    taxService     ExternalTaxService
+    configService  ConfigService
+}
+
+func (t *TaxServiceIntegrator) CalculateTax(ctx context.Context, request *domain.TaxCalculationRequest) (*domain.TaxCalculationResult, error) {
+    // Get tax configuration for tenant/jurisdiction
+    config, err := t.configService.GetTaxConfig(ctx, request.TenantID, request.Jurisdiction)
+    if err != nil {
+        return nil, err
+    }
+
+    // Prepare tax service request
+    taxRequest := &amp;ExternalTaxRequest{
+        APIKey:           config.APIKey,
+        TransactionDate:  request.TransactionDate,
+        CustomerAddress:  request.CustomerAddress,
+        VendorAddress:    request.VendorAddress,
+        LineItems:        t.convertLineItems(request.LineItems),
+        TransactionType:  request.TransactionType,
+        CurrencyCode:     request.Currency,
+    }
+
+    // Call external tax service
+    response, err := t.taxService.CalculateTax(ctx, taxRequest)
+    if err != nil {
+        // Fallback to internal tax calculation
+        return t.calculateTaxFallback(ctx, request)
+    }
+
+    // Convert response to domain model
+    return &amp;domain.TaxCalculationResult{
+        TotalTax:     response.TotalTax,
+        TaxBreakdown: t.convertTaxBreakdown(response.TaxDetails),
+        Jurisdiction: response.Jurisdiction,
+        TaxRate:      response.EffectiveRate,
+    }, nil
+}
+</code></pre>
+<hr />
+<h2 id="event-driven-integration">Event-Driven Integration</h2>
+<h3 id="event-bus-configuration"><strong>Event Bus Configuration</strong></h3>
+<pre><code class="language-go">// Redis Streams-based event bus
+package events
+
+import (
+    &quot;context&quot;
+    &quot;encoding/json&quot;
+    &quot;fmt&quot;
+
+    &quot;github.com/go-redis/redis/v8&quot;
+)
+
+type EventBus struct {
+    client   *redis.Client
+    handlers map[string][]EventHandler
+}
+
+type Event interface {
+    EventType() string
+    TenantID() string
+    Timestamp() time.Time
+}
+
+type EventHandler interface {
+    Handle(ctx context.Context, event Event) error
+}
+
+// Publish event to stream
+func (e *EventBus) Publish(ctx context.Context, event Event) error {
+    streamKey := fmt.Sprintf(&quot;events:%s&quot;, event.EventType())
+
+    data, err := json.Marshal(event)
+    if err != nil {
+        return err
+    }
+
+    return e.client.XAdd(ctx, &amp;redis.XAddArgs{
+        Stream: streamKey,
+        Values: map[string]interface{}{
+            &quot;tenant_id&quot;: event.TenantID(),
+            &quot;event_type&quot;: event.EventType(),
+            &quot;data&quot;: string(data),
+            &quot;timestamp&quot;: event.Timestamp().Unix(),
+        },
+    }).Err()
+}
+
+// Subscribe to event stream
+func (e *EventBus) Subscribe(ctx context.Context, eventType string, consumerGroup string) error {
+    streamKey := fmt.Sprintf(&quot;events:%s&quot;, eventType)
+
+    // Create consumer group if not exists
+    e.client.XGroupCreateMkStream(ctx, streamKey, consumerGroup, &quot;0&quot;)
+
+    for {
+        select {
+        case &lt;-ctx.Done():
+            return ctx.Err()
+        default:
+            // Read from stream
+            streams, err := e.client.XReadGroup(ctx, &amp;redis.XReadGroupArgs{
+                Group:    consumerGroup,
+                Consumer: &quot;financial-service&quot;,
+                Streams:  []string{streamKey, &quot;&gt;&quot;},
+                Count:    10,
+                Block:    time.Second,
+            }).Result()
+
+            if err != nil {
+                continue
+            }
+
+            // Process messages
+            for _, stream := range streams {
+                for _, message := range stream.Messages {
+                    err := e.processMessage(ctx, eventType, message)
+                    if err != nil {
+                        // Handle error, possibly move to dead letter queue
+                        continue
+                    }
+
+                    // Acknowledge message
+                    e.client.XAck(ctx, streamKey, consumerGroup, message.ID)
+                }
+            }
+        }
+    }
+}
+</code></pre>
+<h3 id="financial-events"><strong>Financial Events</strong></h3>
+<pre><code class="language-go">// Financial domain events
+package financial_events
+
+// Account events
+type AccountCreated struct {
+    TenantID    string    `json:&quot;tenant_id&quot;`
+    AccountID   string    `json:&quot;account_id&quot;`
+    AccountCode string    `json:&quot;account_code&quot;`
+    AccountName string    `json:&quot;account_name&quot;`
+    AccountType string    `json:&quot;account_type&quot;`
+    CreatedAt   time.Time `json:&quot;created_at&quot;`
+}
+
+func (e AccountCreated) EventType() string { return &quot;financial.account.created&quot; }
+func (e AccountCreated) TenantID() string  { return e.TenantID }
+func (e AccountCreated) Timestamp() time.Time { return e.CreatedAt }
+
+// Transaction events
+type TransactionPosted struct {
+    TenantID        string              `json:&quot;tenant_id&quot;`
+    TransactionID   string              `json:&quot;transaction_id&quot;`
+    TransactionType string              `json:&quot;transaction_type&quot;`
+    Amount          decimal.Decimal     `json:&quot;amount&quot;`
+    Currency        string              `json:&quot;currency&quot;`
+    Entries         []TransactionEntry  `json:&quot;entries&quot;`
+    PostedAt        time.Time           `json:&quot;posted_at&quot;`
+}
+
+func (e TransactionPosted) EventType() string { return &quot;financial.transaction.posted&quot; }
+func (e TransactionPosted) TenantID() string  { return e.TenantID }
+func (e TransactionPosted) Timestamp() time.Time { return e.PostedAt }
+
+// Invoice events
+type InvoiceCreated struct {
+    TenantID    string          `json:&quot;tenant_id&quot;`
+    InvoiceID   string          `json:&quot;invoice_id&quot;`
+    CustomerID  string          `json:&quot;customer_id&quot;`
+    Amount      decimal.Decimal `json:&quot;amount&quot;`
+    Currency    string          `json:&quot;currency&quot;`
+    DueDate     time.Time       `json:&quot;due_date&quot;`
+    CreatedAt   time.Time       `json:&quot;created_at&quot;`
+}
+
+func (e InvoiceCreated) EventType() string { return &quot;financial.invoice.created&quot; }
+func (e InvoiceCreated) TenantID() string  { return e.TenantID }
+func (e InvoiceCreated) Timestamp() time.Time { return e.CreatedAt }
+</code></pre>
+<hr />
+<h2 id="data-synchronization">Data Synchronization</h2>
+<h3 id="master-data-synchronization"><strong>Master Data Synchronization</strong></h3>
+<pre><code class="language-go">// Customer master data synchronization
+type CustomerSyncService struct {
+    crmService      CRMService
+    financialSvc    FinancialService
+    syncRepository  SyncRepository
+}
+
+func (c *CustomerSyncService) SyncCustomerData(ctx context.Context) error {
+    // Get last sync timestamp
+    lastSync, err := c.syncRepository.GetLastSyncTime(ctx, &quot;customer_sync&quot;)
+    if err != nil {
+        return err
+    }
+
+    // Fetch updated customers from CRM
+    customers, err := c.crmService.GetUpdatedCustomers(ctx, lastSync)
+    if err != nil {
+        return err
+    }
+
+    // Process each customer
+    for _, customer := range customers {
+        err := c.processCustomerUpdate(ctx, customer)
+        if err != nil {
+            // Log error but continue processing
+            log.Printf(&quot;Failed to sync customer %s: %v&quot;, customer.ID, err)
+            continue
+        }
+    }
+
+    // Update sync timestamp
+    return c.syncRepository.UpdateSyncTime(ctx, &quot;customer_sync&quot;, time.Now())
+}
+
+func (c *CustomerSyncService) processCustomerUpdate(ctx context.Context, customer *CRMCustomer) error {
+    // Check if customer exists in financial system
+    existing, err := c.financialSvc.GetCustomer(ctx, customer.ID)
+    if err != nil &amp;&amp; !errors.Is(err, ErrCustomerNotFound) {
+        return err
+    }
+
+    financialCustomer := &amp;domain.Customer{
+        ID:              customer.ID,
+        TenantID:        customer.TenantID,
+        CustomerCode:    customer.Code,
+        Name:            customer.Name,
+        Email:           customer.Email,
+        Phone:           customer.Phone,
+        BillingAddress:  convertAddress(customer.BillingAddress),
+        ShippingAddress: convertAddress(customer.ShippingAddress),
+        PaymentTerms:    convertPaymentTerms(customer.PaymentTerms),
+        CreditLimit:     customer.CreditLimit,
+        Currency:        customer.Currency,
+        TaxID:           customer.TaxID,
+        IsActive:        customer.IsActive,
+    }
+
+    if existing == nil {
+        // Create new customer
+        return c.financialSvc.CreateCustomer(ctx, financialCustomer)
+    } else {
+        // Update existing customer
+        return c.financialSvc.UpdateCustomer(ctx, financialCustomer)
+    }
+}
+</code></pre>
+<h3 id="chart-of-accounts-synchronization"><strong>Chart of Accounts Synchronization</strong></h3>
+<pre><code class="language-go">// Multi-tenant chart of accounts management
+type ChartOfAccountsSync struct {
+    templateService TemplateService
+    accountService  AccountService
+}
+
+func (c *ChartOfAccountsSync) SyncTenantAccounts(ctx context.Context, tenantID string) error {
+    // Get tenant's chart of accounts template
+    template, err := c.templateService.GetChartTemplate(ctx, tenantID)
+    if err != nil {
+        return err
+    }
+
+    // Get existing accounts
+    existingAccounts, err := c.accountService.GetAccounts(ctx, tenantID)
+    if err != nil {
+        return err
+    }
+
+    existingMap := make(map[string]*domain.Account)
+    for _, account := range existingAccounts {
+        existingMap[account.Code] = account
+    }
+
+    // Sync template accounts
+    for _, templateAccount := range template.Accounts {
+        if existing, exists := existingMap[templateAccount.Code]; exists {
+            // Update if template is newer
+            if templateAccount.Version &gt; existing.TemplateVersion {
+                err := c.updateAccountFromTemplate(ctx, existing, templateAccount)
+                if err != nil {
+                    return err
+                }
+            }
+        } else {
+            // Create new account from template
+            err := c.createAccountFromTemplate(ctx, tenantID, templateAccount)
+            if err != nil {
+                return err
+            }
+        }
+    }
+
+    return nil
+}
+</code></pre>
+<hr />
+<h2 id="api-integration-patterns">API Integration Patterns</h2>
+<h3 id="retry-and-circuit-breaker-pattern"><strong>Retry and Circuit Breaker Pattern</strong></h3>
+<pre><code class="language-go">// Resilient external API integration
+package integration
+
+import (
+    &quot;context&quot;
+    &quot;time&quot;
+
+    &quot;github.com/sony/gobreaker&quot;
+)
+
+type ResilientAPIClient struct {
+    client         HTTPClient
+    circuitBreaker *gobreaker.CircuitBreaker
+    retryConfig    RetryConfig
+}
+
+type RetryConfig struct {
+    MaxAttempts int
+    BaseDelay   time.Duration
+    MaxDelay    time.Duration
+    Multiplier  float64
+}
+
+func NewResilientAPIClient(client HTTPClient) *ResilientAPIClient {
+    cb := gobreaker.NewCircuitBreaker(gobreaker.Settings{
+        Name:        &quot;external-api&quot;,
+        MaxRequests: 3,
+        Interval:    60 * time.Second,
+        Timeout:     30 * time.Second,
+        ReadyToTrip: func(counts gobreaker.Counts) bool {
+            return counts.ConsecutiveFailures &gt; 5
+        },
+    })
+
+    return &amp;ResilientAPIClient{
+        client:         client,
+        circuitBreaker: cb,
+        retryConfig: RetryConfig{
+            MaxAttempts: 3,
+            BaseDelay:   100 * time.Millisecond,
+            MaxDelay:    5 * time.Second,
+            Multiplier:  2.0,
+        },
+    }
+}
+
+func (r *ResilientAPIClient) CallAPI(ctx context.Context, request APIRequest) (APIResponse, error) {
+    operation := func() (interface{}, error) {
+        return r.callWithRetry(ctx, request)
+    }
+
+    result, err := r.circuitBreaker.Execute(operation)
+    if err != nil {
+        return APIResponse{}, err
+    }
+
+    return result.(APIResponse), nil
+}
+
+func (r *ResilientAPIClient) callWithRetry(ctx context.Context, request APIRequest) (APIResponse, error) {
+    var lastErr error
+    delay := r.retryConfig.BaseDelay
+
+    for attempt := 0; attempt &lt; r.retryConfig.MaxAttempts; attempt++ {
+        if attempt &gt; 0 {
+            select {
+            case &lt;-ctx.Done():
+                return APIResponse{}, ctx.Err()
+            case &lt;-time.After(delay):
+                // Continue with retry
+            }
+
+            // Exponential backoff with jitter
+            delay = time.Duration(float64(delay) * r.retryConfig.Multiplier)
+            if delay &gt; r.retryConfig.MaxDelay {
+                delay = r.retryConfig.MaxDelay
+            }
+        }
+
+        response, err := r.client.Call(ctx, request)
+        if err == nil {
+            return response, nil
+        }
+
+        // Check if error is retryable
+        if !isRetryableError(err) {
+            return APIResponse{}, err
+        }
+
+        lastErr = err
+    }
+
+    return APIResponse{}, lastErr
+}
+</code></pre>
+<h3 id="webhook-management"><strong>Webhook Management</strong></h3>
+<pre><code class="language-go">// Webhook receiver and processor
+type WebhookManager struct {
+    processors map[string]WebhookProcessor
+    validator  WebhookValidator
+    queue      WebhookQueue
+}
+
+type WebhookData struct {
+    Source    string                 `json:&quot;source&quot;`
+    EventType string                 `json:&quot;event_type&quot;`
+    Data      map[string]interface{} `json:&quot;data&quot;`
+    Signature string                 `json:&quot;signature&quot;`
+    Timestamp time.Time              `json:&quot;timestamp&quot;`
+}
+
+// Receive webhook from external system
+func (w *WebhookManager) ReceiveWebhook(ctx context.Context, webhook *WebhookData) error {
+    // Validate webhook signature
+    if !w.validator.ValidateSignature(webhook) {
+        return errors.New(&quot;invalid webhook signature&quot;)
+    }
+
+    // Check timestamp to prevent replay attacks
+    if time.Since(webhook.Timestamp) &gt; 5*time.Minute {
+        return errors.New(&quot;webhook timestamp too old&quot;)
+    }
+
+    // Queue webhook for async processing
+    return w.queue.Enqueue(ctx, webhook)
+}
+
+// Process webhooks asynchronously
+func (w *WebhookManager) ProcessWebhooks(ctx context.Context) error {
+    for {
+        select {
+        case &lt;-ctx.Done():
+            return ctx.Err()
+        default:
+            webhook, err := w.queue.Dequeue(ctx)
+            if err != nil {
+                time.Sleep(time.Second)
+                continue
+            }
+
+            err = w.processWebhook(ctx, webhook)
+            if err != nil {
+                // Handle failed webhook processing
+                w.handleWebhookError(ctx, webhook, err)
+            }
+        }
+    }
+}
+
+func (w *WebhookManager) processWebhook(ctx context.Context, webhook *WebhookData) error {
+    processor, exists := w.processors[webhook.Source]
+    if !exists {
+        return fmt.Errorf(&quot;no processor for webhook source: %s&quot;, webhook.Source)
+    }
+
+    return processor.Process(ctx, webhook)
+}
+</code></pre>
+<hr />
+<h2 id="workflow-integration">Workflow Integration</h2>
+<h3 id="temporal-workflow-integration"><strong>Temporal Workflow Integration</strong></h3>
+<pre><code class="language-go">// Temporal workflow for financial processes
+package workflows
+
+import (
+    &quot;time&quot;
+
+    &quot;go.temporal.io/sdk/workflow&quot;
+)
+
+// Invoice approval workflow
+func InvoiceApprovalWorkflow(ctx workflow.Context, request InvoiceApprovalRequest) error {
+    logger := workflow.GetLogger(ctx)
+    logger.Info(&quot;Starting invoice approval workflow&quot;, &quot;invoice_id&quot;, request.InvoiceID)
+
+    // Step 1: Validate invoice
+    var validationResult ValidationResult
+    err := workflow.ExecuteActivity(ctx, 
+        workflow.ActivityOptions{
+            StartToCloseTimeout: 30 * time.Second,
+        }, 
+        ValidateInvoiceActivity, request.InvoiceID).Get(ctx, &amp;validationResult)
+
+    if err != nil {
+        return err
+    }
+
+    if !validationResult.IsValid {
+        return workflow.NewApplicationError(&quot;invoice validation failed&quot;, &quot;VALIDATION_ERROR&quot;)
+    }
+
+    // Step 2: Route for approval based on amount
+    var approvalResult ApprovalResult
+    if request.Amount.GreaterThan(decimal.NewFromFloat(10000)) {
+        // High value - requires multiple approvals
+        err = workflow.ExecuteChildWorkflow(ctx,
+            workflow.ChildWorkflowOptions{
+                WorkflowID: fmt.Sprintf(&quot;multi-approval-%s&quot;, request.InvoiceID),
+            },
+            MultiLevelApprovalWorkflow, request).Get(ctx, &amp;approvalResult)
+    } else {
+        // Standard approval
+        err = workflow.ExecuteActivity(ctx,
+            workflow.ActivityOptions{
+                StartToCloseTimeout: 5 * time.Minute,
+                HeartbeatTimeout:    30 * time.Second,
+            },
+            SingleApprovalActivity, request).Get(ctx, &amp;approvalResult)
+    }
+
+    if err != nil {
+        return err
+    }
+
+    // Step 3: Process approval result
+    if approvalResult.Approved {
+        // Create payment if approved
+        var paymentResult PaymentResult
+        err = workflow.ExecuteActivity(ctx,
+            workflow.ActivityOptions{
+                StartToCloseTimeout: 2 * time.Minute,
+                RetryPolicy: &amp;temporal.RetryPolicy{
+                    MaximumAttempts: 3,
+                },
+            },
+            CreatePaymentActivity, request.InvoiceID).Get(ctx, &amp;paymentResult)
+
+        if err != nil {
+            return err
+        }
+
+        logger.Info(&quot;Invoice approved and payment created&quot;, 
+            &quot;invoice_id&quot;, request.InvoiceID,
+            &quot;payment_id&quot;, paymentResult.PaymentID)
+    } else {
+        // Handle rejection
+        err = workflow.ExecuteActivity(ctx,
+            workflow.ActivityOptions{
+                StartToCloseTimeout: 30 * time.Second,
+            },
+            RejectInvoiceActivity, 
+            RejectInvoiceRequest{
+                InvoiceID: request.InvoiceID,
+                Reason:    approvalResult.RejectionReason,
+            }).Get(ctx, nil)
+
+        if err != nil {
+            return err
+        }
+
+        logger.Info(&quot;Invoice rejected&quot;, 
+            &quot;invoice_id&quot;, request.InvoiceID,
+            &quot;reason&quot;, approvalResult.RejectionReason)
+    }
+
+    return nil
+}
+
+// Activities
+func ValidateInvoiceActivity(ctx context.Context, invoiceID string) (ValidationResult, error) {
+    // Implement invoice validation logic
+    return ValidationResult{IsValid: true}, nil
+}
+
+func SingleApprovalActivity(ctx context.Context, request InvoiceApprovalRequest) (ApprovalResult, error) {
+    // Implement single approval logic
+    return ApprovalResult{Approved: true}, nil
+}
+
+func CreatePaymentActivity(ctx context.Context, invoiceID string) (PaymentResult, error) {
+    // Implement payment creation logic
+    return PaymentResult{PaymentID: &quot;pay-123&quot;}, nil
+}
+</code></pre>
+<hr />
+<h2 id="real-time-integration">Real-time Integration</h2>
+<h3 id="websocket-integration-for-real-time-updates"><strong>WebSocket Integration for Real-time Updates</strong></h3>
+<pre><code class="language-go">// Real-time financial data streaming
+package realtime
+
+import (
+    &quot;context&quot;
+    &quot;encoding/json&quot;
+    &quot;net/http&quot;
+
+    &quot;github.com/gorilla/websocket&quot;
+)
+
+type FinancialDataStreamer struct {
+    connections map[string]*websocket.Conn
+    eventBus    EventBus
+    upgrader    websocket.Upgrader
+}
+
+type StreamMessage struct {
+    Type      string      `json:&quot;type&quot;`
+    TenantID  string      `json:&quot;tenant_id&quot;`
+    Data      interface{} `json:&quot;data&quot;`
+    Timestamp time.Time   `json:&quot;timestamp&quot;`
+}
+
+// WebSocket endpoint for real-time updates
+func (f *FinancialDataStreamer) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+    // Upgrade connection
+    conn, err := f.upgrader.Upgrade(w, r, nil)
+    if err != nil {
+        return
+    }
+    defer conn.Close()
+
+    // Authenticate and get tenant ID
+    tenantID, err := f.authenticateConnection(r)
+    if err != nil {
+        conn.WriteMessage(websocket.CloseMessage, []byte(&quot;Authentication failed&quot;))
+        return
+    }
+
+    // Store connection
+    connectionID := fmt.Sprintf(&quot;%s-%d&quot;, tenantID, time.Now().Unix())
+    f.connections[connectionID] = conn
+    defer delete(f.connections, connectionID)
+
+    // Listen for events
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+
+    go f.streamEvents(ctx, tenantID, conn)
+
+    // Keep connection alive
+    for {
+        _, _, err := conn.ReadMessage()
+        if err != nil {
+            break
+        }
+    }
+}
+
+func (f *FinancialDataStreamer) streamEvents(ctx context.Context, tenantID string, conn *websocket.Conn) {
+    // Subscribe to tenant-specific events
+    eventChan := f.eventBus.Subscribe(ctx, tenantID, []string{
+        &quot;financial.transaction.posted&quot;,
+        &quot;financial.invoice.created&quot;,
+        &quot;financial.payment.received&quot;,
+        &quot;financial.balance.updated&quot;,
+    })
+
+    for {
+        select {
+        case &lt;-ctx.Done():
+            return
+        case event := &lt;-eventChan:
+            message := StreamMessage{
+                Type:      event.EventType(),
+                TenantID:  tenantID,
+                Data:      event,
+                Timestamp: time.Now(),
+            }
+
+            data, err := json.Marshal(message)
+            if err != nil {
+                continue
+            }
+
+            err = conn.WriteMessage(websocket.TextMessage, data)
+            if err != nil {
+                return
+            }
+        }
+    }
+}
+
+// Broadcast balance updates to connected clients
+func (f *FinancialDataStreamer) BroadcastBalanceUpdate(ctx context.Context, tenantID string, balanceUpdate BalanceUpdate) {
+    message := StreamMessage{
+        Type:      &quot;balance_update&quot;,
+        TenantID:  tenantID,
+        Data:      balanceUpdate,
+        Timestamp: time.Now(),
+    }
+
+    data, _ := json.Marshal(message)
+
+    for connectionID, conn := range f.connections {
+        if strings.HasPrefix(connectionID, tenantID) {
+            conn.WriteMessage(websocket.TextMessage, data)
+        }
+    }
+}
+</code></pre>
+<hr />
+<h2 id="integration-testing">Integration Testing</h2>
+<h3 id="integration-test-framework"><strong>Integration Test Framework</strong></h3>
+<pre><code class="language-go">// Integration testing for financial module
+package integration_test
+
+import (
+    &quot;context&quot;
+    &quot;testing&quot;
+    &quot;time&quot;
+
+    &quot;github.com/stretchr/testify/assert&quot;
+    &quot;github.com/stretchr/testify/suite&quot;
+)
+
+type FinancialIntegrationTestSuite struct {
+    suite.Suite
+    testDB          *sql.DB
+    testRedis       *redis.Client
+    financialSvc    FinancialService
+    salesSvc        SalesService
+    eventBus        EventBus
+    testTenantID    string
+}
+
+func (s *FinancialIntegrationTestSuite) SetupSuite() {
+    // Setup test database
+    s.testDB = setupTestDatabase()
+    s.testRedis = setupTestRedis()
+
+    // Initialize services
+    s.financialSvc = NewFinancialService(s.testDB, s.testRedis)
+    s.salesSvc = NewSalesService(s.testDB, s.testRedis)
+    s.eventBus = NewEventBus(s.testRedis)
+
+    // Create test tenant
+    s.testTenantID = &quot;test-tenant-123&quot;
+    s.setupTestTenant()
+}
+
+func (s *FinancialIntegrationTestSuite) TestSalesOrderToInvoiceFlow() {
+    ctx := context.Background()
+
+    // Create test customer
+    customer := &amp;domain.Customer{
+        TenantID:     s.testTenantID,
+        CustomerCode: &quot;CUST-001&quot;,
+        Name:         &quot;Test Customer&quot;,
+        Currency:     &quot;USD&quot;,
+    }
+
+    createdCustomer, err := s.financialSvc.CreateCustomer(ctx, customer)
+    s.Require().NoError(err)
+
+    // Create sales order
+    salesOrder := &amp;domain.SalesOrder{
+        TenantID:   s.testTenantID,
+        CustomerID: createdCustomer.ID,
+        OrderDate:  time.Now(),
+        LineItems: []domain.SalesOrderLineItem{
+            {
+                ProductID:   &quot;prod-001&quot;,
+                Quantity:    decimal.NewFromFloat(10),
+                UnitPrice:   decimal.NewFromFloat(100),
+                LineAmount:  decimal.NewFromFloat(1000),
+            },
+        },
+        TotalAmount: decimal.NewFromFloat(1000),
+        Status:      &quot;confirmed&quot;,
+    }
+
+    createdOrder, err := s.salesSvc.CreateSalesOrder(ctx, salesOrder)
+    s.Require().NoError(err)
+
+    // Fulfill sales order (this should trigger invoice creation)
+    err = s.salesSvc.FulfillSalesOrder(ctx, createdOrder.ID)
+    s.Require().NoError(err)
+
+    // Wait for event processing
+    time.Sleep(100 * time.Millisecond)
+
+    // Verify invoice was created
+    invoices, err := s.financialSvc.GetInvoicesBySalesOrder(ctx, createdOrder.ID)
+    s.Require().NoError(err)
+    s.Assert().Len(invoices, 1)
+
+    invoice := invoices[0]
+    s.Assert().Equal(createdCustomer.ID, invoice.CustomerID)
+    s.Assert().Equal(createdOrder.TotalAmount, invoice.TotalAmount)
+    s.Assert().Equal(&quot;draft&quot;, invoice.Status)
+
+    // Verify accounting entries were created
+    transactions, err := s.financialSvc.GetTransactionsByInvoice(ctx, invoice.ID)
+    s.Require().NoError(err)
+    s.Assert().Len(transactions, 1)
+
+    transaction := transactions[0]
+    s.Assert().Equal(2, len(transaction.Entries)) // AR debit + Revenue credit
+
+    // Verify AR debit entry
+    arEntry := findEntryByAccountType(transaction.Entries, &quot;receivable&quot;)
+    s.Assert().NotNil(arEntry)
+    s.Assert().Equal(invoice.TotalAmount, arEntry.DebitAmount)
+
+    // Verify Revenue credit entry
+    revenueEntry := findEntryByAccountType(transaction.Entries, &quot;revenue&quot;)
+    s.Assert().NotNil(revenueEntry)
+    s.Assert().Equal(invoice.TotalAmount, revenueEntry.CreditAmount)
+}
+
+func (s *FinancialIntegrationTestSuite) TestPaymentProcessingFlow() {
+    ctx := context.Background()
+
+    // Create invoice first
+    invoice := s.createTestInvoice(ctx)
+
+    // Process payment
+    payment := &amp;domain.CustomerPayment{
+        TenantID:       s.testTenantID,
+        CustomerID:     invoice.CustomerID,
+        PaymentDate:    time.Now(),
+        Amount:         invoice.TotalAmount,
+        Currency:       invoice.Currency,
+        PaymentMethod:  &quot;bank_transfer&quot;,
+        Reference:      &quot;TEST-PAY-001&quot;,
+        InvoiceIDs:     []string{invoice.ID},
+    }
+
+    processedPayment, err := s.financialSvc.ProcessCustomerPayment(ctx, payment)
+    s.Require().NoError(err)
+
+    // Verify payment allocation
+    s.Assert().Equal(&quot;completed&quot;, processedPayment.Status)
+
+    // Verify invoice status updated
+    updatedInvoice, err := s.financialSvc.GetInvoice(ctx, invoice.ID)
+    s.Require().NoError(err)
+    s.Assert().Equal(&quot;paid&quot;, updatedInvoice.Status)
+    s.Assert().Equal(decimal.Zero, updatedInvoice.OutstandingAmount)
+
+    // Verify accounting entries
+    transactions, err := s.financialSvc.GetTransactionsByPayment(ctx, processedPayment.ID)
+    s.Require().NoError(err)
+    s.Assert().Len(transactions, 1)
+
+    transaction := transactions[0]
+    s.Assert().Equal(2, len(transaction.Entries)) // Cash debit + AR credit
+}
+
+func TestFinancialIntegrationSuite(t *testing.T) {
+    suite.Run(t, new(FinancialIntegrationTestSuite))
+}
+</code></pre>
+<hr />
+<h2 id="troubleshooting-integration-issues">Troubleshooting Integration Issues</h2>
+<h3 id="common-integration-problems"><strong>Common Integration Problems</strong></h3>
+<h4 id="event-processing-delays"><strong>Event Processing Delays</strong></h4>
+<pre><code class="language-bash"># Check Redis Streams lag
+redis-cli XINFO STREAM events:financial.transaction.posted
+
+# Monitor consumer group processing
+redis-cli XINFO GROUPS events:financial.transaction.posted
+
+# Check for failed messages
+redis-cli XPENDING events:financial.transaction.posted financial-service
+
+# Replay failed messages
+redis-cli XCLAIM events:financial.transaction.posted financial-service consumer1 60000 &lt;message-id&gt;
+</code></pre>
+<h4 id="database-deadlocks"><strong>Database Deadlocks</strong></h4>
+<pre><code class="language-sql">-- Monitor deadlock information
+SELECT 
+    blocked_locks.pid AS blocked_pid,
+    blocked_activity.usename AS blocked_user,
+    blocking_locks.pid AS blocking_pid,
+    blocking_activity.usename AS blocking_user,
+    blocked_activity.query AS blocked_statement,
+    blocking_activity.query AS current_statement_in_blocking_process
+FROM pg_catalog.pg_locks blocked_locks
+JOIN pg_catalog.pg_stat_activity blocked_activity ON blocked_activity.pid = blocked_locks.pid
+JOIN pg_catalog.pg_locks blocking_locks ON blocking_locks.locktype = blocked_locks.locktype
+JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+WHERE NOT blocked_locks.granted;
+
+-- Check for long-running transactions
+SELECT 
+    pid,
+    now() - pg_stat_activity.query_start AS duration,
+    query
+FROM pg_stat_activity
+WHERE (now() - pg_stat_activity.query_start) &gt; interval '5 minutes'
+AND state = 'active';
+</code></pre>
+<h4 id="api-integration-failures"><strong>API Integration Failures</strong></h4>
+<pre><code class="language-go">// Health check for external APIs
+func (h *HealthChecker) CheckExternalAPIs(ctx context.Context) map[string]HealthStatus {
+    results := make(map[string]HealthStatus)
+
+    // Check payment gateway
+    results[&quot;payment_gateway&quot;] = h.checkPaymentGateway(ctx)
+
+    // Check tax service
+    results[&quot;tax_service&quot;] = h.checkTaxService(ctx)
+
+    // Check bank APIs
+    results[&quot;bank_api&quot;] = h.checkBankAPI(ctx)
+
+    return results
+}
+
+func (h *HealthChecker) checkPaymentGateway(ctx context.Context) HealthStatus {
+    ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+    defer cancel()
+
+    _, err := h.paymentGateway.HealthCheck(ctx)
+    if err != nil {
+        return HealthStatus{
+            Status:  &quot;unhealthy&quot;,
+            Message: err.Error(),
+        }
+    }
+
+    return HealthStatus{
+        Status:  &quot;healthy&quot;,
+        Message: &quot;Payment gateway responding normally&quot;,
+    }
+}
+</code></pre>
+<hr />
+<p><strong>Document Control</strong>
+- <strong>Version</strong>: 1.0
+- <strong>Last Updated</strong>: January 2025
+- <strong>Next Review</strong>: Monthly during development
+- <strong>Approval Required</strong>: Integration Architect, Technical Lead</p>
+<p><strong>Related Documents</strong>
+- Financial Implementation Plan (@docs/module/financial/financial-implementation-plan.md)
+- API Reference Guide (@docs/module/financial/financial-api-reference.md)
+- Deployment Guide (@docs/module/financial/financial-deployment-guide.md)</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="../../../../javascripts/search-analytics.js"></script>
+      
+        <script src="../../../../javascripts/contextual-help.js"></script>
+      
+    
+  </body>
+</html>

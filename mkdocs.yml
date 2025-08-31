@@ -1,0 +1,155 @@
+site_name: Awo ERP Documentation
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+  language: en
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+      primary: indigo
+      accent: indigo
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+      primary: indigo
+      accent: indigo
+
+plugins:
+  - search:
+      lang: en
+      separator: '[\s\-,.]+' 
+
+extra_javascript:
+  - javascripts/search-enhancements.js
+  - javascripts/search-analytics.js
+  - javascripts/contextual-help.js
+
+nav:
+  - 'Getting Started': 'getting-started/01-developer-quick-start.md'
+  - 'Architecture':
+    - 'System Overview': 'architecture/system-overview.md'
+    - 'ABAC Design': 'architecture/abac-design-and-roadmap.md'
+    - 'Migration Plan': 'architecture/FRAMEWORK_MIGRATION_PLAN.md'
+    - 'GIN Handlers': 'architecture/GIN_HANDLERS_INVENTORY.md'
+  - 'Contributing':
+    - 'Best Practices': 'contributing/01-best-practices.md'
+    - 'Architecture': 'contributing/architecture.md'
+    - 'Code Examples': 'contributing/code-examples.md'
+    - 'Database Transactions': 'contributing/database-transactions.md'
+    - 'Data Flow': 'contributing/data-flow.md'
+    - 'Error Handling': 'contributing/error-handling.md'
+    - 'General Testing': 'contributing/general-testing.md'
+    - 'Goa Framework': 'contributing/goa.md'
+    - 'Middleware': 'contributing/middleware.md'
+    - 'Observability': 'contributing/observability.md'
+    - 'Security Handbook': 'contributing/securityHandbook.md'
+    - 'Service Layer': 'contributing/service.md'
+    - 'SQLC Integration': 'contributing/sqlc-integration.md'
+  - 'Financial Module':
+    - 'API Reference': 'reference/modules/financial/api-reference.md'
+    - 'Architecture Guide': 'reference/modules/financial/architecture-guide.md'
+    - 'Currency Management': 'reference/modules/financial/currency-management.md'
+    - 'Deployment Guide': 'reference/modules/financial/deployment-guide.md'
+    - 'Implementation Task Plan': 'reference/modules/financial/TASK.md'
+    - 'Integration Guide': 'reference/modules/financial/integration-guide.md'
+    - 'Security & Compliance': 'reference/modules/financial/security-compliance-guide.md'
+    - 'Testing Strategy': 'reference/modules/financial/testing-strategy.md'
+  - 'Users & IAM Module':
+    - 'Overview': 'reference/modules/user/README.md'
+    - 'Identity & RBAC': 'reference/modules/user/01_identity_model_and_rbac.md'
+    - 'ABAC Evaluation': 'reference/modules/user/02_abac_evaluation_lifecycle.md'
+    - 'Hybrid Access Control': 'reference/modules/user/03_hybrid_access_control_strategy.md'
+    - 'Service Integration': 'reference/modules/user/04_architecture_service_integration.md'
+    - 'IAM Mapping': 'reference/modules/user/IAM_MAPPING.md'
+    - 'IAM Restructuring': 'reference/modules/user/TASK.md'
+    - 'Phase 3 Roadmap': 'reference/modules/user/PHASE_3_ROADMAP.md'
+    - 'Release Notes': 'reference/modules/user/RELEASE_NOTES_RC1.md'
+    - 'Test Cases': 'reference/modules/user/test_cases.md'
+    - 'ABAC Framework':
+      - 'Administrative Performance': 'reference/modules/user/abac/administrative_performance.md'
+      - 'Attribute Definitions': 'reference/modules/user/abac/attribute_definitions.md'
+      - 'Audit & Monitoring': 'reference/modules/user/abac/audit_monitoring.md'
+      - 'Context Attributes': 'reference/modules/user/abac/context_attribute.md'
+      - 'Design': 'reference/modules/user/abac/desing.md'
+      - 'Policy Management': 'reference/modules/user/abac/policy.md'
+      - 'Policy Evaluation': 'reference/modules/user/abac/policy_evaluation.md'
+      - 'CEL Policy Evaluation': 'reference/modules/user/abac/policy_evaluation_CEL.md'
+      - 'Expression Language': 'reference/modules/user/abac/policy_evaluation_expr-lang.md'
+      - 'Policy Service Enhancement': 'reference/modules/user/abac/POLICY_SERVICE_ENHANCEMENT.md'
+  - 'Audit Module':
+    - 'Overview': 'reference/modules/audit/audit.md'
+    - 'Test Cases': 'reference/modules/audit/test_cases.md'
+  - 'Feature Flags Module':
+    - 'Overview': 'reference/modules/feature_flag/00_README.md'
+    - 'Features': 'reference/modules/feature_flag/TASK.md'
+    - 'Test Cases': 'reference/modules/feature_flag/test_cases.md'
+    - 'Onboarding':
+      - 'Introduction': 'reference/modules/feature_flag/onboarding/01_introduction.md'
+      - 'Core Concepts': 'reference/modules/feature_flag/onboarding/02_core_concepts_and_architecture.md'
+      - 'Developer Quickstart': 'reference/modules/feature_flag/onboarding/03_developer_quickstart.md'
+      - 'Admin API Manual': 'reference/modules/feature_flag/onboarding/04_admin_api_manual.md'
+      - 'Lifecycle & Improvements': 'reference/modules/feature_flag/onboarding/05_lifecycle_gotchas_and_improvements.md'
+  - 'Tenant Module':
+    - 'Management': 'reference/modules/tenant/tenant-management.md'
+    - 'Testing': 'reference/modules/tenant/testing.md'
+  - 'Other Modules':
+    - 'System Architecture': 'reference/modules/Architecture.md'
+    - 'Airline Module': 'reference/modules/airline-module.md'
+    - 'Asset Management': 'reference/modules/asset-management.md'
+    - 'Forecourt Module': 'reference/modules/forecourt-module.md'
+    - 'General Financial': 'reference/modules/financial-management.md'
+    - 'Human Resources': 'reference/modules/human-resources.md'
+    - 'Implementation Phases': 'reference/modules/implementation-phases.md'
+    - 'Inventory Management': 'reference/modules/inventory-management.md'
+    - 'Module Configuration': 'reference/modules/module-configuration.md'
+    - 'Project Management': 'reference/modules/project-management.md'
+    - 'Restaurant Module': 'reference/modules/restaurant-module.md'
+    - 'Retail Module': 'reference/modules/retail-module.md'
+    - 'Tax Management': 'reference/modules/tax-management.md'
+    - 'Technical Specifications': 'reference/modules/technical-specifications.md'
+    - 'Workflow Engine': 'reference/modules/workflow-engine.md'
+  - 'API Reference':
+    - 'Overview': 'reference/api/index.md'
+    - '🚀 Interactive API Explorer': 'reference/api/swagger-ui.md'
+    - 'Authentication': 'reference/api/auth/index.md'
+    - 'Users Management': 'reference/api/users/index.md'
+    - 'Organizations': 'reference/api/organizations/index.md'
+    - 'ABAC Authorization': 'reference/api/abac/index.md'
+    - 'Tutorials':
+      - 'Complete Integration Guide': 'reference/api/tutorials/api-integration.md'
+    - 'Legacy API Source': 'reference/api-source/README.md'
+    - 'User Service Integration': 'reference/api-source/user-service-abac-integration.md'
+    - 'Core APIs':
+      - 'Authentication': 'reference/api-source/core-apis/auth/README.md'
+      - 'Auth Examples': 'reference/api-source/core-apis/auth/curl-examples.md'
+      - 'Entities': 'reference/api-source/core-apis/entities/README.md'
+      - 'Entity Examples': 'reference/api-source/core-apis/entities/curl-examples.md'
+      - 'Organizations': 'reference/api-source/core-apis/organizations/README.md'
+      - 'Org Examples': 'reference/api-source/core-apis/organizations/curl-examples.md'
+      - 'Tenants': 'reference/api-source/core-apis/tenants/README.md'
+      - 'Tenant Examples': 'reference/api-source/core-apis/tenants/curl-examples.md'
+      - 'Users API': 'reference/api-source/core-apis/users/README.md'
+      - 'Users Examples': 'reference/api-source/core-apis/users/curl-examples.md'
+    - 'Workflows':
+      - 'Access Requests': 'reference/api-source/workflows/access-requests/README.md'
+      - 'Access Request Examples': 'reference/api-source/workflows/access-requests/curl-examples.md'
+      - 'Conditional Access': 'reference/api-source/workflows/conditional-access/README.md'
+      - 'User Analytics': 'reference/api-source/workflows/user-analytics/README.md'
+    - 'Testing':
+      - 'Getting Started': 'reference/api-source/testing/manual/getting-started.md'
+      - 'Manual Tests': 'reference/api-source/testing/manual/manual-curl-tests.md'
+    - 'Utilities':
+      - 'TODO': 'reference/api-source/utilities/todo.md'

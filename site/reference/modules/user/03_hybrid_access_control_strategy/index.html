@@ -1,0 +1,5871 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../02_abac_evaluation_lifecycle/">
+      
+      
+        <link rel="next" href="../04_architecture_service_integration/">
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>Hybrid Access Control - Awo ERP Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#rbac-integration-with-abac-centric-erp-system" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-header__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Awo ERP Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Hybrid Access Control
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../architecture/system-overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../contributing/01-best-practices/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../financial/api-reference/" class="md-tabs__link">
+          
+  
+  
+  Financial Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Users & IAM Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../audit/audit/" class="md-tabs__link">
+          
+  
+  
+  Audit Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../feature_flag/00_README/" class="md-tabs__link">
+          
+  
+  
+  Feature Flags Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tenant/tenant-management/" class="md-tabs__link">
+          
+  
+  
+  Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Architecture/" class="md-tabs__link">
+          
+  
+  
+  Other Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api-source/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-nav__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Awo ERP Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/system-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/abac-design-and-roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/FRAMEWORK_MIGRATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/GIN_HANDLERS_INVENTORY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GIN Handlers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/01-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/database-transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Transactions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/general-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/goa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Goa Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/middleware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Middleware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Observability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/securityHandbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Handbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Layer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/sqlc-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Financial Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Financial Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/currency-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Currency Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Task Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/integration-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/security-compliance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security & Compliance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/testing-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Users & IAM Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Users & IAM Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_identity_model_and_rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity & RBAC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02_abac_evaluation_lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Hybrid Access Control
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hybrid Access Control
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#identity-foundation-with-advanced-rbac-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏗️ Identity Foundation with Advanced RBAC Layer
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🏗️ Identity Foundation with Advanced RBAC Layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optimized-database-schema-with-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optimized Database Schema with Performance
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-hybrid-rbac-abac-service-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔄 Advanced Hybrid RBAC-ABAC Service Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔄 Advanced Hybrid RBAC-ABAC Service Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#service-with-circuit-breaker-and-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service with Circuit Breaker and Monitoring
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-permission-evaluation-with-parallel-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Permission Evaluation with Parallel Processing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-role-management-with-delegation-and-approval-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      🛠️ Advanced Role Management with Delegation and Approval Workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🛠️ Advanced Role Management with Delegation and Approval Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#role-management-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      Role Management Service
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-performance-optimizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚀 Advanced Performance Optimizations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚀 Advanced Performance Optimizations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intelligent-multi-level-caching-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Intelligent Multi-Level Caching Strategy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-query-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Query Optimization
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-security-and-compliance-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔒 Advanced Security and Compliance Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔒 Advanced Security and Compliance Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zero-trust-security-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Zero-Trust Security Implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-and-compliance-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      Audit and Compliance System
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-administrative-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      🎛️ Advanced Administrative Interface
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🎛️ Advanced Administrative Interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intelligent-role-mining-and-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Intelligent Role Mining and Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-role-visualization-and-analytics-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Role Visualization and Analytics Dashboard
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-migration-and-deployment-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔄 Advanced Migration and Deployment Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔄 Advanced Migration and Deployment Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#intelligent-migration-orchestrator" class="md-nav__link">
+    <span class="md-ellipsis">
+      Intelligent Migration Orchestrator
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-deployment-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      🎯 Production Deployment Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🎯 Production Deployment Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kubernetes-deployment-with-high-availability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kubernetes Deployment with High Availability
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#production-configuration-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      Production Configuration Template
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices-summary-and-implementation-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏆 Best Practices Summary and Implementation Guidelines
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🏆 Best Practices Summary and Implementation Guidelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#implementation-roadmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Roadmap
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#critical-success-factors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Critical Success Factors
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_architecture_service_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../IAM_MAPPING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Restructuring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PHASE_3_ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RELEASE_NOTES_RC1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release Notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_11" id="__nav_5_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    ABAC Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_11">
+            <span class="md-nav__icon md-icon"></span>
+            ABAC Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/administrative_performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Administrative Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/attribute_definitions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Attribute Definitions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/audit_monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit & Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/context_attribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/desing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/policy_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/policy_evaluation_CEL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CEL Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/policy_evaluation_expr-lang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expression Language
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../abac/POLICY_SERVICE_ENHANCEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Service Enhancement
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Audit Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Audit Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Feature Flags Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Feature Flags Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/00_README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Onboarding
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/01_introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/02_core_concepts_and_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/03_developer_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/04_admin_api_manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature_flag/onboarding/05_lifecycle_gotchas_and_improvements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lifecycle & Improvements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tenant Module
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Tenant Module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/tenant-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Other Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../airline-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Airline Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../asset-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Asset Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../forecourt-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forecourt Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Financial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../human-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Human Resources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Phases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../inventory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Inventory Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../module-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Module Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../restaurant-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Restaurant Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../retail-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retail Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tax-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tax Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technical-specifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Technical Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflow-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow Engine
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/user-service-abac-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_3" id="__nav_10_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core APIs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_3">
+            <span class="md-nav__icon md-icon"></span>
+            Core APIs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Org Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_4" id="__nav_10_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_4">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Request Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/conditional-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/user-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_5" id="__nav_10_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_5">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/manual-curl-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_6" id="__nav_10_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_6">
+            <span class="md-nav__icon md-icon"></span>
+            Utilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/utilities/todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TODO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="rbac-integration-with-abac-centric-erp-system">RBAC Integration with ABAC-Centric ERP System</h1>
+<h2 id="identity-foundation-with-advanced-rbac-layer">🏗️ Identity Foundation with Advanced RBAC Layer</h2>
+<h3 id="optimized-database-schema-with-performance">Optimized Database Schema with Performance</h3>
+<pre><code class="language-sql">--  ROLES table with better indexing and constraints
+CREATE TABLE roles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    name VARCHAR(100) NOT NULL,
+    display_name VARCHAR(150),
+    description TEXT,
+    role_type role_type_enum NOT NULL DEFAULT 'FUNCTIONAL', -- Use enum for better performance
+    security_level INTEGER NOT NULL DEFAULT 0 CHECK (security_level BETWEEN 0 AND 10),
+    role_attributes JSONB DEFAULT '{}'::jsonb,
+    parent_role_id UUID REFERENCES roles(id),
+    effective_from TIMESTAMPTZ DEFAULT NOW(),
+    effective_until TIMESTAMPTZ,
+    is_active BOOLEAN DEFAULT true,
+    version INTEGER DEFAULT 1, -- For optimistic locking
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by UUID NOT NULL REFERENCES users(id),
+    UNIQUE(tenant_id, name),
+    CONSTRAINT no_self_parent CHECK (id != parent_role_id)
+);
+
+-- Create enum for role types
+CREATE TYPE role_type_enum AS ENUM ('FUNCTIONAL', 'ORGANIZATIONAL', 'SYSTEM', 'TEMPORARY', 'EMERGENCY');
+
+--  PERMISSIONS with better categorization
+CREATE TABLE permissions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    category VARCHAR(50) NOT NULL, -- NEW: Group related permissions
+    name VARCHAR(100) NOT NULL,
+    resource_type VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    description TEXT,
+    risk_level INTEGER NOT NULL DEFAULT 1 CHECK (risk_level BETWEEN 1 AND 5),
+    compliance_flags JSONB DEFAULT '{}'::jsonb,
+    dependencies JSONB DEFAULT '[]'::jsonb, -- NEW: Permission dependencies
+    mutual_exclusions JSONB DEFAULT '[]'::jsonb, -- NEW: Conflicting permissions
+    auto_revoke_after INTERVAL, -- NEW: Auto-expiration
+    requires_approval BOOLEAN DEFAULT false, -- NEW: Approval workflow flag
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by UUID NOT NULL REFERENCES users(id),
+    UNIQUE(tenant_id, name),
+    UNIQUE(tenant_id, resource_type, action)
+);
+
+--  ROLE_PERMISSIONS with conditional logic
+CREATE TABLE role_permissions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
+    granted_at TIMESTAMPTZ DEFAULT NOW(),
+    granted_by UUID NOT NULL REFERENCES users(id),
+    effective_from TIMESTAMPTZ DEFAULT NOW(),
+    effective_until TIMESTAMPTZ,
+    conditions JSONB DEFAULT '{}'::jsonb,
+    delegation_allowed BOOLEAN DEFAULT false, -- NEW: Can this permission be delegated
+    emergency_override BOOLEAN DEFAULT false, -- NEW: Emergency access flag
+    approval_required BOOLEAN DEFAULT false, -- NEW: Requires runtime approval
+    usage_limit INTEGER, -- NEW: Max usage count
+    usage_count INTEGER DEFAULT 0, -- NEW: Current usage tracking
+    last_used_at TIMESTAMPTZ,
+    UNIQUE(role_id, permission_id)
+);
+
+--  USER_ROLES with temporal and conditional constraints
+CREATE TABLE user_roles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    assigned_at TIMESTAMPTZ DEFAULT NOW(),
+    assigned_by UUID NOT NULL REFERENCES users(id),
+    effective_from TIMESTAMPTZ DEFAULT NOW(),
+    effective_until TIMESTAMPTZ,
+    activation_conditions JSONB DEFAULT '{}'::jsonb,
+    context_attributes JSONB DEFAULT '{}'::jsonb,
+    delegation_chain JSONB DEFAULT '[]'::jsonb, -- NEW: Track delegation history
+    assignment_reason TEXT, -- NEW: Audit trail
+    approval_workflow_id UUID, -- NEW: Link to approval process
+    is_active BOOLEAN DEFAULT true,
+    is_delegated BOOLEAN DEFAULT false, -- NEW: Distinguish delegated roles
+    original_assignee_id UUID REFERENCES users(id), -- NEW: For delegated roles
+    max_delegations INTEGER DEFAULT 0, -- NEW: Delegation limit
+    current_delegations INTEGER DEFAULT 0, -- NEW: Current delegation count
+    UNIQUE(user_id, role_id, effective_from), -- Allow temporal role assignments
+    CONSTRAINT valid_delegation CHECK (
+        (is_delegated = false AND original_assignee_id IS NULL) OR
+        (is_delegated = true AND original_assignee_id IS NOT NULL)
+    )
+);
+
+-- NEW: Role delegation tracking
+CREATE TABLE role_delegations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    original_user_role_id UUID NOT NULL REFERENCES user_roles(id),
+    delegator_id UUID NOT NULL REFERENCES users(id),
+    delegate_id UUID NOT NULL REFERENCES users(id),
+    role_id UUID NOT NULL REFERENCES roles(id),
+    delegated_at TIMESTAMPTZ DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    delegation_reason TEXT,
+    conditions JSONB DEFAULT '{}'::jsonb,
+    can_redelegate BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    revoked_at TIMESTAMPTZ,
+    revoked_by UUID REFERENCES users(id),
+    revocation_reason TEXT
+);
+
+-- Performance indexes
+CREATE INDEX CONCURRENTLY idx_roles_tenant_active ON roles(tenant_id, is_active) WHERE is_active = true;
+CREATE INDEX CONCURRENTLY idx_roles_hierarchy ON roles(parent_role_id) WHERE parent_role_id IS NOT NULL;
+CREATE INDEX CONCURRENTLY idx_permissions_category_risk ON permissions(category, risk_level);
+CREATE INDEX CONCURRENTLY idx_user_roles_active_user ON user_roles(user_id, is_active) WHERE is_active = true;
+CREATE INDEX CONCURRENTLY idx_user_roles_temporal ON user_roles(effective_from, effective_until);
+CREATE INDEX CONCURRENTLY idx_role_permissions_role ON role_permissions(role_id);
+CREATE INDEX CONCURRENTLY idx_delegations_active ON role_delegations(delegate_id, is_active) WHERE is_active = true;
+
+-- GIN indexes for JSONB fields
+CREATE INDEX CONCURRENTLY idx_roles_attributes_gin ON roles USING GIN(role_attributes);
+CREATE INDEX CONCURRENTLY idx_role_permissions_conditions_gin ON role_permissions USING GIN(conditions);
+CREATE INDEX CONCURRENTLY idx_user_roles_activation_gin ON user_roles USING GIN(activation_conditions);
+</code></pre>
+<h2 id="advanced-hybrid-rbac-abac-service-architecture">🔄 Advanced Hybrid RBAC-ABAC Service Architecture</h2>
+<h3 id="service-with-circuit-breaker-and-monitoring">Service with Circuit Breaker and Monitoring</h3>
+<pre><code class="language-go">type ABACService struct {
+    // Core services
+    identityService   identity.Service
+    accessService     access.Service
+    policyRepository  PolicyRepository
+    rbacService       RBACService
+    roleRepository    RoleRepository
+
+    //  components
+    attributeCache    AttributeCache
+    decisionCache     DecisionCache
+    auditService      AuditService
+
+    // NEW: Reliability and monitoring
+    circuitBreaker    *CircuitBreaker
+    metrics          MetricsCollector
+    healthChecker    HealthChecker
+
+    // NEW: Advanced features
+    delegationService DelegationService
+    approvalService   ApprovalService
+    emergencyAccess   EmergencyAccessService
+
+    // Configuration
+    config           *ABACConfig
+    logger           Logger
+}
+
+type ABACConfig struct {
+    CacheConfig struct {
+        RoleCacheTTL        time.Duration `yaml:&quot;role_cache_ttl&quot;`
+        PermissionCacheTTL  time.Duration `yaml:&quot;permission_cache_ttl&quot;`
+        DecisionCacheTTL    time.Duration `yaml:&quot;decision_cache_ttl&quot;`
+        MaxCacheSize        int           `yaml:&quot;max_cache_size&quot;`
+    } `yaml:&quot;cache&quot;`
+
+    PerformanceConfig struct {
+        MaxEvaluationTime   time.Duration `yaml:&quot;max_evaluation_time&quot;`
+        EnableParallelEval  bool          `yaml:&quot;enable_parallel_evaluation&quot;`
+        RBACTimeoutMs       int           `yaml:&quot;rbac_timeout_ms&quot;`
+        ABACTimeoutMs       int           `yaml:&quot;abac_timeout_ms&quot;`
+    } `yaml:&quot;performance&quot;`
+
+    SecurityConfig struct {
+        RequireSecondFactor        bool          `yaml:&quot;require_second_factor&quot;`
+        HighRiskPermissionThreshold int          `yaml:&quot;high_risk_threshold&quot;`
+        EmergencyAccessEnabled     bool          `yaml:&quot;emergency_access_enabled&quot;`
+        AuditAllDecisions         bool          `yaml:&quot;audit_all_decisions&quot;`
+    } `yaml:&quot;security&quot;`
+}
+
+type RBACService interface {
+    // Core role operations
+    GetUserRoles(ctx context.Context, userID string, timestamp ...time.Time) ([]Role, error)
+    GetRolePermissions(ctx context.Context, roleIDs []string) ([]Permission, error)
+    GetEffectivePermissions(ctx context.Context, userID string, context map[string]any{}) ([]Permission, error)
+
+    // NEW: Advanced role operations
+    GetRoleHierarchy(ctx context.Context, roleID string) (*RoleHierarchy, error)
+    GetDelegatedRoles(ctx context.Context, userID string) ([]DelegatedRole, error)
+    ValidateRoleConstraints(ctx context.Context, userID string, roleID string) error
+
+    // NEW: Temporal and conditional operations
+    EvaluateRoleActivation(ctx context.Context, userID string, role Role, context map[string]any{}) (*RoleActivationResult, error)
+    GetTemporalRoleAssignments(ctx context.Context, userID string, timeRange TimeRange) ([]TemporalRoleAssignment, error)
+
+    // NEW: Emergency and delegation
+    RequestEmergencyAccess(ctx context.Context, req *EmergencyAccessRequest) (*EmergencyAccessResponse, error)
+    DelegateRole(ctx context.Context, req *RoleDelegationRequest) (*RoleDelegationResponse, error)
+
+    // Health and monitoring
+    HealthCheck(ctx context.Context) error
+    GetMetrics(ctx context.Context) (*RBACMetrics, error)
+}
+
+type Role struct {
+    ID                 string                 `json:&quot;id&quot;`
+    Name               string                 `json:&quot;name&quot;`
+    DisplayName        string                 `json:&quot;display_name&quot;`
+    RoleType           string                 `json:&quot;role_type&quot;`
+    Category           string                 `json:&quot;category&quot;`
+    SecurityLevel      int                    `json:&quot;security_level&quot;`
+    RoleAttributes     map[string]any{} `json:&quot;role_attributes&quot;`
+    ParentRoleID       *string                `json:&quot;parent_role_id&quot;`
+    ActivationRules    []ABACRule             `json:&quot;activation_rules&quot;`
+
+    // NEW:  metadata
+    Version            int                    `json:&quot;version&quot;`
+    EffectiveFrom      time.Time              `json:&quot;effective_from&quot;`
+    EffectiveUntil     *time.Time             `json:&quot;effective_until,omitempty&quot;`
+    Dependencies       []string               `json:&quot;dependencies&quot;`
+    ConflictingRoles   []string               `json:&quot;conflicting_roles&quot;`
+
+    // NEW: Advanced properties
+    RequiresApproval   bool                   `json:&quot;requires_approval&quot;`
+    IsDelegatable      bool                   `json:&quot;is_delegatable&quot;`
+    MaxDelegations     int                    `json:&quot;max_delegations&quot;`
+    EmergencyOverride  bool                   `json:&quot;emergency_override&quot;`
+}
+
+type Permission struct {
+    ID                 string                 `json:&quot;id&quot;`
+    Category           string                 `json:&quot;category&quot;`
+    Name               string                 `json:&quot;name&quot;`
+    ResourceType       string                 `json:&quot;resource_type&quot;`
+    Action             string                 `json:&quot;action&quot;`
+    RiskLevel          int                    `json:&quot;risk_level&quot;`
+    Conditions         []ABACRule             `json:&quot;conditions&quot;`
+
+    // NEW:  metadata
+    Dependencies       []string               `json:&quot;dependencies&quot;`
+    MutualExclusions   []string               `json:&quot;mutual_exclusions&quot;`
+    AutoRevokeAfter    *time.Duration         `json:&quot;auto_revoke_after,omitempty&quot;`
+    RequiresApproval   bool                   `json:&quot;requires_approval&quot;`
+
+    // NEW: Usage tracking
+    UsageLimit         *int                   `json:&quot;usage_limit,omitempty&quot;`
+    UsageCount         int                    `json:&quot;usage_count&quot;`
+    LastUsedAt         *time.Time             `json:&quot;last_used_at,omitempty&quot;`
+}
+
+type RoleActivationResult struct {
+    IsActive           bool                   `json:&quot;is_active&quot;`
+    Reason             string                 `json:&quot;reason&quot;`
+    ActivatedAt        time.Time              `json:&quot;activated_at&quot;`
+    ExpiresAt          *time.Time             `json:&quot;expires_at,omitempty&quot;`
+    Conditions         []string               `json:&quot;conditions&quot;`
+    Constraints        map[string]any{} `json:&quot;constraints&quot;`
+    RequiresApproval   bool                   `json:&quot;requires_approval&quot;`
+    ApprovalStatus     string                 `json:&quot;approval_status,omitempty&quot;`
+}
+</code></pre>
+<h3 id="advanced-permission-evaluation-with-parallel-processing">Advanced Permission Evaluation with Parallel Processing</h3>
+<pre><code class="language-go">func (s *ABACService) EvaluatePermission(ctx context.Context, req *PermissionEvaluationRequest) (*PermissionEvaluationResponse, error) {
+    start := time.Now()
+    evaluationID := uuid.New().String()
+
+    // Add timeout to context
+    ctx, cancel := context.WithTimeout(ctx, s.config.PerformanceConfig.MaxEvaluationTime)
+    defer cancel()
+
+    //  request validation
+    if err := s.validateEvaluationRequest(req); err != nil {
+        return nil, fmt.Errorf(&quot;invalid request: %w&quot;, err)
+    }
+
+    // Circuit breaker check
+    if !s.circuitBreaker.CanExecute() {
+        return &amp;PermissionEvaluationResponse{
+            Decision:       PolicyDecisionDeny,
+            DecisionSource: &quot;CIRCUIT_BREAKER&quot;,
+            Reason:         &quot;Service temporarily unavailable&quot;,
+            EvaluationID:   evaluationID,
+            EvaluationTime: time.Since(start),
+        }, nil
+    }
+
+    // Check cache with  key
+    cacheKey := s.buildCacheKey(req)
+    if cached := s.decisionCache.Get(cacheKey); cached != nil {
+        cached.CacheHit = true
+        cached.EvaluationTime = time.Since(start)
+        return cached, nil
+    }
+
+    // Collect attributes with parallel processing
+    attributes, err := s.collectAttributesParallel(ctx, req)
+    if err != nil {
+        s.circuitBreaker.RecordError()
+        return nil, fmt.Errorf(&quot;attribute collection failed: %w&quot;, err)
+    }
+
+    //  security checks
+    if err := s.performSecurityChecks(ctx, req, attributes); err != nil {
+        response := &amp;PermissionEvaluationResponse{
+            Decision:       PolicyDecisionDeny,
+            DecisionSource: &quot;SECURITY_CHECK&quot;,
+            Reason:         err.Error(),
+            EvaluationID:   evaluationID,
+            EvaluationTime: time.Since(start),
+        }
+        s.auditService.LogSecurityViolation(ctx, req, response, err)
+        return response, nil
+    }
+
+    var rbacDecision *RBACDecision
+    var abacDecision *ABACDecision
+
+    // Parallel RBAC and ABAC evaluation if enabled
+    if s.config.PerformanceConfig.EnableParallelEval {
+        rbacDecision, abacDecision, err = s.evaluateParallel(ctx, req, attributes)
+    } else {
+        // Sequential evaluation (RBAC first for early exit)
+        rbacDecision, err = s.evaluateRBACPermissions(ctx, req, attributes)
+        if err != nil {
+            s.circuitBreaker.RecordError()
+            return nil, fmt.Errorf(&quot;RBAC evaluation failed: %w&quot;, err)
+        }
+
+        // Skip ABAC if RBAC denies and no emergency override
+        if rbacDecision.Decision == PolicyDecisionDeny &amp;&amp; !rbacDecision.EmergencyOverride {
+            response := &amp;PermissionEvaluationResponse{
+                Decision:       PolicyDecisionDeny,
+                DecisionSource: &quot;RBAC&quot;,
+                Reason:         rbacDecision.Reason,
+                RBACDecision:   rbacDecision,
+                Attributes:     attributes,
+                EvaluationID:   evaluationID,
+                EvaluationTime: time.Since(start),
+            }
+            s.cacheDecision(cacheKey, response)
+            s.auditService.LogEvaluation(ctx, req, response)
+            return response, nil
+        }
+
+        abacDecision, err = s.evaluateABACPolicies(ctx, req, attributes)
+    }
+
+    if err != nil {
+        s.circuitBreaker.RecordError()
+        return nil, fmt.Errorf(&quot;policy evaluation failed: %w&quot;, err)
+    }
+
+    //  decision combination with conflict resolution
+    finalDecision := s.combineDecisions(rbacDecision, abacDecision, req)
+
+    // Post-processing for high-risk permissions
+    if finalDecision.Decision == PolicyDecisionAllow &amp;&amp; s.isHighRiskPermission(req) {
+        finalDecision = s.applyHighRiskControls(ctx, finalDecision, req, attributes)
+    }
+
+    response := &amp;PermissionEvaluationResponse{
+        Decision:          finalDecision.Decision,
+        DecisionSource:    finalDecision.Source,
+        Reason:           finalDecision.Reason,
+        RBACDecision:     rbacDecision,
+        ABACDecision:     abacDecision,
+        Attributes:       attributes,
+        EvaluationID:     evaluationID,
+        EvaluationTime:   time.Since(start),
+        RequiresApproval: finalDecision.RequiresApproval,
+        ApprovalWorkflow: finalDecision.ApprovalWorkflow,
+        Constraints:      finalDecision.Constraints,
+        CacheHit:         false,
+    }
+
+    // Success - record in circuit breaker
+    s.circuitBreaker.RecordSuccess()
+
+    // Cache with appropriate TTL
+    s.cacheDecision(cacheKey, response)
+
+    //  audit logging
+    s.auditService.LogEvaluation(ctx, req, response)
+
+    // Update metrics
+    s.metrics.RecordPermissionEvaluation(req.Action, response.Decision, time.Since(start))
+
+    return response, nil
+}
+
+func (s *ABACService) evaluateParallel(ctx context.Context, req *PermissionEvaluationRequest, attributes map[string]any{}) (*RBACDecision, *ABACDecision, error) {
+    type rbacResult struct {
+        decision *RBACDecision
+        err      error
+    }
+
+    type abacResult struct {
+        decision *ABACDecision
+        err      error
+    }
+
+    rbacChan := make(chan rbacResult, 1)
+    abacChan := make(chan abacResult, 1)
+
+    // Start RBAC evaluation
+    go func() {
+        rbacCtx, cancel := context.WithTimeout(ctx, time.Duration(s.config.PerformanceConfig.RBACTimeoutMs)*time.Millisecond)
+        defer cancel()
+
+        decision, err := s.evaluateRBACPermissions(rbacCtx, req, attributes)
+        rbacChan &lt;- rbacResult{decision: decision, err: err}
+    }()
+
+    // Start ABAC evaluation
+    go func() {
+        abacCtx, cancel := context.WithTimeout(ctx, time.Duration(s.config.PerformanceConfig.ABACTimeoutMs)*time.Millisecond)
+        defer cancel()
+
+        decision, err := s.evaluateABACPolicies(abacCtx, req, attributes)
+        abacChan &lt;- abacResult{decision: decision, err: err}
+    }()
+
+    // Wait for both results
+    var rbacRes rbacResult
+    var abacRes abacResult
+
+    for i := 0; i &lt; 2; i++ {
+        select {
+        case rbacRes = &lt;-rbacChan:
+        case abacRes = &lt;-abacChan:
+        case &lt;-ctx.Done():
+            return nil, nil, ctx.Err()
+        }
+    }
+
+    if rbacRes.err != nil {
+        return nil, nil, fmt.Errorf(&quot;RBAC evaluation failed: %w&quot;, rbacRes.err)
+    }
+
+    if abacRes.err != nil {
+        return nil, nil, fmt.Errorf(&quot;ABAC evaluation failed: %w&quot;, abacRes.err)
+    }
+
+    return rbacRes.decision, abacRes.decision, nil
+}
+</code></pre>
+<h2 id="advanced-role-management-with-delegation-and-approval-workflows">🛠️ Advanced Role Management with Delegation and Approval Workflows</h2>
+<h3 id="role-management-service">Role Management Service</h3>
+<pre><code class="language-go">type RoleManagementService struct {
+    roleRepository     RoleRepository
+    permissionRepo     PermissionRepository
+    abacService       *ABACService
+    auditService      AuditService
+
+    // NEW: Advanced services
+    delegationService  DelegationService
+    approvalService    ApprovalWorkflowService
+    conflictResolver   RoleConflictResolver
+    complianceChecker  ComplianceChecker
+
+    // Configuration
+    config            *RoleManagementConfig
+    logger            Logger
+}
+
+type RoleManagementConfig struct {
+    MaxRolesPerUser          int           `yaml:&quot;max_roles_per_user&quot;`
+    DefaultRoleExpiration    time.Duration `yaml:&quot;default_role_expiration&quot;`
+    RequireApprovalThreshold int           `yaml:&quot;require_approval_threshold&quot;`
+    MaxDelegationChain       int           `yaml:&quot;max_delegation_chain&quot;`
+    EmergencyAccessDuration  time.Duration `yaml:&quot;emergency_access_duration&quot;`
+}
+
+func (s *RoleManagementService) AssignRoleToUser(ctx context.Context, req *RoleAssignmentRequest) (*RoleAssignmentResponse, error) {
+    assignmentID := uuid.New().String()
+
+    //  authorization check with delegation awareness
+    decision, err := s.abacService.EvaluatePermission(ctx, &amp;PermissionEvaluationRequest{
+        UserID:       auth.GetUserIDFromContext(ctx),
+        ResourceType: &quot;user_role_assignment&quot;,
+        Action:       &quot;create&quot;,
+        Context: map[string]any{}{
+            &quot;target_user_id&quot;:     req.UserID,
+            &quot;role_id&quot;:           req.RoleID,
+            &quot;assignment_type&quot;:    req.AssignmentType,
+            &quot;security_level&quot;:     req.SecurityLevel,
+            &quot;delegation_depth&quot;:   req.DelegationDepth,
+        },
+    })
+
+    if err != nil || decision.Decision != PolicyDecisionAllow {
+        return nil, fmt.Errorf(&quot;insufficient permissions to assign role: %s&quot;, decision.Reason)
+    }
+
+    // Get role and validate constraints
+    role, err := s.roleRepository.GetByID(ctx, req.RoleID)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;role not found: %w&quot;, err)
+    }
+
+    // pre-assignment validation
+    if err := s.validateRoleAssignment(ctx, req, role); err != nil {
+        return nil, fmt.Errorf(&quot;role assignment validation failed: %w&quot;, err)
+    }
+
+    // Check for role conflicts
+    conflicts, err := s.conflictResolver.CheckRoleConflicts(ctx, req.UserID, role.ID)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;conflict check failed: %w&quot;, err)
+    }
+
+    if len(conflicts) &gt; 0 {
+        if req.ForceAssignment {
+            s.auditService.LogRoleConflictOverride(ctx, req.UserID, role.ID, conflicts)
+        } else {
+            return &amp;RoleAssignmentResponse{
+                Success:  false,
+                Conflicts: conflicts,
+                RequiresConfirmation: true,
+            }, nil
+        }
+    }
+
+    // Determine if approval is required
+    requiresApproval := s.requiresApproval(role, req)
+
+    var approvalWorkflowID string
+    if requiresApproval {
+        workflow, err := s.approvalService.StartRoleAssignmentWorkflow(ctx, &amp;RoleAssignmentApprovalRequest{
+            AssignmentRequest: req,
+            Role:             role,
+            RequestedBy:      auth.GetUserIDFromContext(ctx),
+        })
+        if err != nil {
+            return nil, fmt.Errorf(&quot;failed to start approval workflow: %w&quot;, err)
+        }
+        approvalWorkflowID = workflow.ID
+    }
+
+    // Create role assignment
+    assignment := &amp;UserRoleAssignment{
+        ID:               assignmentID,
+        UserID:           req.UserID,
+        RoleID:           req.RoleID,
+        AssignedBy:       auth.GetUserIDFromContext(ctx),
+        EffectiveFrom:    req.EffectiveFrom,
+        EffectiveUntil:   req.EffectiveUntil,
+        ActivationConditions: req.ActivationConditions,
+        ContextAttributes:    req.ContextAttributes,
+        AssignmentReason:     req.Reason,
+        ApprovalWorkflowID:  approvalWorkflowID,
+        IsDelegated:         req.IsDelegated,
+        OriginalAssigneeID:  req.OriginalAssigneeID,
+        DelegationChain:     req.DelegationChain,
+        Status:              s.determineInitialStatus(requiresApproval),
+    }
+
+    if err := s.roleRepository.AssignToUser(ctx, assignment); err != nil {
+        return nil, fmt.Errorf(&quot;failed to create role assignment: %w&quot;, err)
+    }
+
+    // Update delegation counters if applicable
+    if req.IsDelegated {
+        if err := s.delegationService.UpdateDelegationCounters(ctx, req.OriginalAssigneeID, req.RoleID, 1); err != nil {
+            s.logger.Error(&quot;Failed to update delegation counters&quot;, &quot;error&quot;, err)
+        }
+    }
+
+    // Invalidate caches
+    s.abacService.InvalidateUserCache(req.UserID)
+    if req.IsDelegated &amp;&amp; req.OriginalAssigneeID != nil {
+        s.abacService.InvalidateUserCache(*req.OriginalAssigneeID)
+    }
+
+    // audit logging
+    s.auditService.LogRoleAssignment(ctx, assignment)
+
+    return &amp;RoleAssignmentResponse{
+        Success:            true,
+        AssignmentID:       assignmentID,
+        RequiresApproval:   requiresApproval,
+        ApprovalWorkflowID: approvalWorkflowID,
+        EffectiveFrom:      assignment.EffectiveFrom,
+        EffectiveUntil:     assignment.EffectiveUntil,
+    }, nil
+}
+
+func (s *RoleManagementService) DelegateRole(ctx context.Context, req *RoleDelegationRequest) (*RoleDelegationResponse, error) {
+    delegatorID := auth.GetUserIDFromContext(ctx)
+
+    // Validate delegation permissions
+    decision, err := s.abacService.EvaluatePermission(ctx, &amp;PermissionEvaluationRequest{
+        UserID:       delegatorID,
+        ResourceType: &quot;role_delegation&quot;,
+        Action:       &quot;create&quot;,
+        Context: map[string]any{}{
+            &quot;role_id&quot;:       req.RoleID,
+            &quot;delegate_id&quot;:   req.DelegateID,
+            &quot;duration&quot;:      req.Duration.String(),
+        },
+    })
+
+    if err != nil || decision.Decision != PolicyDecisionAllow {
+        return nil, fmt.Errorf(&quot;insufficient permissions to delegate role&quot;)
+    }
+
+    // Get delegator's role assignment
+    assignment, err := s.roleRepository.GetUserRoleAssignment(ctx, delegatorID, req.RoleID)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;role assignment not found: %w&quot;, err)
+    }
+
+    // Validate delegation constraints
+    if err := s.validateDelegation(ctx, assignment, req); err != nil {
+        return nil, fmt.Errorf(&quot;delegation validation failed: %w&quot;, err)
+    }
+
+    // Create delegation record
+    delegation := &amp;RoleDelegation{
+        ID:                   uuid.New().String(),
+        OriginalUserRoleID:   assignment.ID,
+        DelegatorID:          delegatorID,
+        DelegateID:           req.DelegateID,
+        RoleID:               req.RoleID,
+        DelegatedAt:          time.Now(),
+        ExpiresAt:            time.Now().Add(req.Duration),
+        DelegationReason:     req.Reason,
+        Conditions:           req.Conditions,
+        CanRedelegate:        req.CanRedelegate,
+        IsActive:             true,
+    }
+
+    if err := s.delegationService.CreateDelegation(ctx, delegation); err != nil {
+        return nil, fmt.Errorf(&quot;failed to create delegation: %w&quot;, err)
+    }
+
+    // Create corresponding user role assignment for delegate
+    delegatedAssignment := &amp;UserRoleAssignment{
+        ID:                  uuid.New().String(),
+        UserID:              req.DelegateID,
+        RoleID:              req.RoleID,
+        AssignedBy:          delegatorID,
+        EffectiveFrom:       time.Now(),
+        EffectiveUntil:      &amp;delegation.ExpiresAt,
+        ActivationConditions: req.Conditions,
+        IsDelegated:         true,
+        OriginalAssigneeID:  &amp;delegatorID,
+        DelegationChain:     s.buildDelegationChain(assignment.DelegationChain, delegatorID),
+        Status:              &quot;ACTIVE&quot;,
+    }
+
+    if err := s.roleRepository.AssignToUser(ctx, delegatedAssignment); err != nil {
+        return nil, fmt.Errorf(&quot;failed to assign delegated role: %w&quot;, err)
+    }
+
+    // Update counters and cache
+    s.abacService.InvalidateUserCache(req.DelegateID)
+    s.abacService.InvalidateUserCache(delegatorID)
+
+    s.auditService.LogRoleDelegation(ctx, delegation)
+
+    return &amp;RoleDelegationResponse{
+        DelegationID: delegation.ID,
+        ExpiresAt:    delegation.ExpiresAt,
+        Success:      true,
+    }, nil
+}
+
+func (s *RoleManagementService) RequestEmergencyAccess(ctx context.Context, req *EmergencyAccessRequest) (*EmergencyAccessResponse, error) {
+    userID := auth.GetUserIDFromContext(ctx)
+    emergencyID := uuid.New().String()
+
+    // Validate emergency access is enabled
+    if !s.config.EmergencyAccessEnabled {
+        return nil, fmt.Errorf(&quot;emergency access is disabled&quot;)
+    }
+
+    // Check if user has emergency access privileges
+    decision, err := s.abacService.EvaluatePermission(ctx, &amp;PermissionEvaluationRequest{
+        UserID:       userID,
+        ResourceType: &quot;emergency_access&quot;,
+        Action:       &quot;request&quot;,
+        Context: map[string]any{}{
+            &quot;requested_role_id&quot;: req.RoleID,
+            &quot;justification&quot;:     req.Justification,
+            &quot;severity&quot;:          req.Severity,
+        },
+    })
+
+    if err != nil || decision.Decision != PolicyDecisionAllow {
+        return nil, fmt.Errorf(&quot;insufficient privileges for emergency access&quot;)
+    }
+
+    // Get requested role and validate emergency override capability
+    role, err := s.roleRepository.GetByID(ctx, req.RoleID)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;role not found: %w&quot;, err)
+    }
+
+    if !role.EmergencyOverride {
+        return nil, fmt.Errorf(&quot;role does not support emergency access&quot;)
+    }
+
+    // Create emergency access record
+    emergency := &amp;EmergencyAccess{
+        ID:            emergencyID,
+        UserID:        userID,
+        RoleID:        req.RoleID,
+        RequestedAt:   time.Now(),
+        ExpiresAt:     time.Now().Add(s.config.EmergencyAccessDuration),
+        Justification: req.Justification,
+        Severity:      req.Severity,
+        Status:        &quot;ACTIVE&quot;,
+        ApprovedBy:    &quot;SYSTEM&quot;, // Emergency access is auto-approved but logged
+    }
+
+    if err := s.emergencyService.CreateEmergencyAccess(ctx, emergency); err != nil {
+        return nil, fmt.Errorf(&quot;failed to create emergency access: %w&quot;, err)
+    }
+
+    // Create temporary role assignment
+    emergencyAssignment := &amp;UserRoleAssignment{
+        ID:             uuid.New().String(),
+        UserID:         userID,
+        RoleID:         req.RoleID,
+        AssignedBy:     userID,
+        EffectiveFrom:  time.Now(),
+        EffectiveUntil: &amp;emergency.ExpiresAt,
+        AssignmentReason: fmt.Sprintf(&quot;EMERGENCY_ACCESS: %s&quot;, req.Justification),
+        IsEmergency:    true,
+        EmergencyID:    &amp;emergencyID,
+        Status:         &quot;ACTIVE&quot;,
+    }
+
+    if err := s.roleRepository.AssignToUser(ctx, emergencyAssignment); err != nil {
+        return nil, fmt.Errorf(&quot;failed to assign emergency role: %w&quot;, err)
+    }
+
+    // Invalidate cache and notify
+    s.abacService.InvalidateUserCache(userID)
+    s.notificationService.NotifyEmergencyAccess(ctx, emergency)
+
+    // Critical audit logging
+    s.auditService.LogEmergencyAccess(ctx, emergency)
+
+    return &amp;EmergencyAccessResponse{
+        EmergencyID: emergencyID,
+        ExpiresAt:   emergency.ExpiresAt,
+        Success:     true,
+    }, nil
+}
+</code></pre>
+<h2 id="advanced-performance-optimizations">🚀 Advanced Performance Optimizations</h2>
+<h3 id="intelligent-multi-level-caching-strategy">Intelligent Multi-Level Caching Strategy</h3>
+<pre><code class="language-go">type HybridCacheManager struct {
+    // L1 Cache - In-memory, fastest access
+    l1Cache struct {
+        roles       *cache.Cache // User active roles
+        permissions *cache.Cache // Role permissions  
+        decisions   *cache.Cache // Recent decisions
+    }
+
+    // L2 Cache - Redis, shared across instances
+    l2Cache struct {
+        client      redis.Client
+        keyPrefix   string
+        defaultTTL  time.Duration
+    }
+
+    // L3 Cache - Database materialized views
+    l3Cache struct {
+        db *sql.DB
+    }
+
+    // Cache warming and invalidation
+    warmer          *CacheWarmer
+    invalidator     *SmartInvalidator
+
+    // Metrics and monitoring
+    metrics         CacheMetrics
+    hitRateTracker  *HitRateTracker
+}
+
+func (c *HybridCacheManager) GetUserRoles(ctx context.Context, userID string) ([]Role, error) {
+    cacheKey := fmt.Sprintf(&quot;user_roles:%s&quot;, userID)
+
+    // L1 Cache check
+    if roles := c.l1Cache.roles.Get(cacheKey); roles != nil {
+        c.metrics.RecordHit(&quot;L1&quot;, &quot;user_roles&quot;)
+        return roles.([]Role), nil
+    }
+
+    // L2 Cache check
+    if roles, err := c.getFromL2Cache(ctx, cacheKey); err == nil &amp;&amp; roles != nil {
+        c.metrics.RecordHit(&quot;L2&quot;, &quot;user_roles&quot;)
+        // Backfill L1
+        c.l1Cache.roles.Set(cacheKey, roles, cache.DefaultExpiration)
+        return roles.([]Role), nil
+    }
+
+    // L3 Cache (materialized view)
+    roles, err := c.getFromMaterializedView(ctx, userID)
+    if err != nil {
+        c.metrics.RecordMiss(&quot;L3&quot;, &quot;user_roles&quot;)
+        return nil, err
+    }
+
+    // Backfill all cache levels
+    c.l1Cache.roles.Set(cacheKey, roles, 5*time.Minute)
+    c.setL2Cache(ctx, cacheKey, roles, 15*time.Minute)
+    c.metrics.RecordMiss(&quot;L1&quot;, &quot;user_roles&quot;)
+
+    return roles, nil
+}
+
+func (c *HybridCacheManager) SmartInvalidate(event InvalidationEvent) {
+    switch event.Type {
+    case &quot;USER_ROLE_CHANGED&quot;:
+        userID := event.EntityID
+        // Invalidate user-specific caches
+        c.l1Cache.roles.Delete(fmt.Sprintf(&quot;user_roles:%s&quot;, userID))
+        c.l1Cache.permissions.Delete(fmt.Sprintf(&quot;user_permissions:%s&quot;, userID))
+        c.l1Cache.decisions.DeletePrefix(fmt.Sprintf(&quot;decision:%s:&quot;, userID))
+
+        // L2 cache invalidation
+        c.l2Cache.client.Del(ctx, fmt.Sprintf(&quot;%suser_roles:%s&quot;, c.l2Cache.keyPrefix, userID))
+
+        // Queue materialized view refresh
+        c.invalidator.QueueViewRefresh(&quot;user_effective_permissions&quot;, userID)
+
+    case &quot;ROLE_PERMISSIONS_CHANGED&quot;:
+        roleID := event.EntityID
+        // Find all users with this role
+        affectedUsers := c.getUsersWithRole(roleID)
+
+        for _, userID := range affectedUsers {
+            c.SmartInvalidate(InvalidationEvent{
+                Type:     &quot;USER_ROLE_CHANGED&quot;,
+                EntityID: userID,
+            })
+        }
+
+    case &quot;POLICY_CHANGED&quot;:
+        // More aggressive invalidation for policy changes
+        c.l1Cache.decisions.Flush()
+        c.l2Cache.client.FlushDB(ctx)
+        c.invalidator.QueueFullViewRefresh(&quot;user_effective_permissions&quot;)
+    }
+}
+
+// Predictive cache warming based on usage patterns
+type CacheWarmer struct {
+    usageAnalyzer   *UsagePatternAnalyzer
+    scheduler       *cron.Cron
+    preloadQueue    chan PreloadRequest
+}
+
+func (w *CacheWarmer) StartPredictiveWarming() {
+    // Analyze usage patterns every hour
+    w.scheduler.AddFunc(&quot;0 * * * *&quot;, func() {
+        patterns := w.usageAnalyzer.GetPredictedUsage(time.Hour)
+
+        for _, pattern := range patterns {
+            w.preloadQueue &lt;- PreloadRequest{
+                UserID:      pattern.UserID,
+                Resources:   pattern.LikelyResources,
+                Probability: pattern.Probability,
+            }
+        }
+    })
+
+    // Process preload requests
+    go w.processPreloadQueue()
+}
+</code></pre>
+<h3 id="database-query-optimization">Database Query Optimization</h3>
+<pre><code class="language-sql">-- Advanced materialized view with incremental refresh
+CREATE MATERIALIZED VIEW user_effective_permissions_v2 AS
+WITH RECURSIVE role_hierarchy AS (
+    -- Base case: direct roles
+    SELECT 
+        ur.user_id,
+        ur.role_id,
+        r.name as role_name,
+        r.security_level,
+        0 as hierarchy_level,
+        ARRAY[r.id] as role_path
+    FROM user_roles ur
+    JOIN roles r ON ur.role_id = r.id
+    WHERE ur.is_active = true 
+      AND ur.effective_from &lt;= NOW()
+      AND (ur.effective_until IS NULL OR ur.effective_until &gt; NOW())
+      AND r.is_active = true
+
+    UNION ALL
+
+    -- Recursive case: inherited roles
+    SELECT 
+        rh.user_id,
+        pr.id as role_id,
+        pr.name as role_name,
+        pr.security_level,
+        rh.hierarchy_level + 1,
+        rh.role_path || pr.id
+    FROM role_hierarchy rh
+    JOIN roles cr ON rh.role_id = cr.id
+    JOIN roles pr ON cr.parent_role_id = pr.id
+    WHERE rh.hierarchy_level &lt; 5 -- Prevent infinite recursion
+      AND NOT pr.id = ANY(rh.role_path) -- Prevent cycles
+      AND pr.is_active = true
+),
+permission_grants AS (
+    SELECT DISTINCT
+        rh.user_id,
+        p.id as permission_id,
+        p.category,
+        p.name as permission_name,
+        p.resource_type,
+        p.action,
+        p.risk_level,
+        rh.role_name,
+        rh.hierarchy_level,
+        rp.conditions,
+        CASE 
+            WHEN rp.effective_until IS NOT NULL AND rp.effective_until &lt;= NOW() THEN false
+            WHEN p.auto_revoke_after IS NOT NULL AND rp.granted_at + p.auto_revoke_after &lt;= NOW() THEN false
+            ELSE true
+        END as is_currently_valid
+    FROM role_hierarchy rh
+    JOIN role_permissions rp ON rh.role_id = rp.role_id
+    JOIN permissions p ON rp.permission_id = p.id
+    WHERE rp.effective_from &lt;= NOW()
+      AND (rp.effective_until IS NULL OR rp.effective_until &gt; NOW())
+)
+SELECT 
+    user_id,
+    permission_id,
+    category,
+    permission_name,
+    resource_type,
+    action,
+    risk_level,
+    array_agg(DISTINCT role_name) as granting_roles,
+    min(hierarchy_level) as min_hierarchy_level,
+    bool_and(is_currently_valid) as is_valid,
+    json_agg(DISTINCT conditions) FILTER (WHERE conditions != '{}') as all_conditions,
+    count(*) as grant_count,
+    max(case when hierarchy_level = 0 then 1 else 0 end) as has_direct_grant
+FROM permission_grants
+GROUP BY user_id, permission_id, category, permission_name, resource_type, action, risk_level;
+
+-- Indexes for optimal performance
+CREATE UNIQUE INDEX idx_user_effective_permissions_v2_unique 
+ON user_effective_permissions_v2(user_id, permission_id);
+
+CREATE INDEX idx_user_effective_permissions_v2_user_resource 
+ON user_effective_permissions_v2(user_id, resource_type, action);
+
+CREATE INDEX idx_user_effective_permissions_v2_risk 
+ON user_effective_permissions_v2(risk_level, is_valid) WHERE risk_level &gt;= 4;
+
+-- Incremental refresh function
+CREATE OR REPLACE FUNCTION refresh_user_permissions_incremental(affected_user_ids UUID[])
+RETURNS void AS $
+BEGIN
+    -- Delete affected user permissions
+    DELETE FROM user_effective_permissions_v2 
+    WHERE user_id = ANY(affected_user_ids);
+
+    -- Recompute for affected users only
+    INSERT INTO user_effective_permissions_v2
+    SELECT * FROM user_effective_permissions_v2_computation
+    WHERE user_id = ANY(affected_user_ids);
+
+    -- Update refresh timestamp
+    INSERT INTO materialized_view_refresh_log (view_name, refresh_type, affected_rows, refreshed_at)
+    VALUES ('user_effective_permissions_v2', 'INCREMENTAL', array_length(affected_user_ids, 1), NOW());
+END;
+$ LANGUAGE plpgsql;
+</code></pre>
+<h2 id="advanced-security-and-compliance-features">🔒 Advanced Security and Compliance Features</h2>
+<h3 id="zero-trust-security-implementation">Zero-Trust Security Implementation</h3>
+<pre><code class="language-go">type ZeroTrustSecurityService struct {
+    riskScorer          RiskScorer
+    deviceFingerprinter DeviceFingerprinter
+    behaviorAnalyzer    BehaviorAnalyzer
+    threatDetector      ThreatDetector
+    complianceChecker   ComplianceChecker
+
+    config             ZeroTrustConfig
+}
+
+type ZeroTrustConfig struct {
+    RequireDeviceRegistration bool          `yaml:&quot;require_device_registration&quot;`
+    MaxRiskScore             float64        `yaml:&quot;max_risk_score&quot;`
+    BehaviorAnalysisEnabled  bool          `yaml:&quot;behavior_analysis_enabled&quot;`
+    ContinuousAuthInterval   time.Duration  `yaml:&quot;continuous_auth_interval&quot;`
+    SensitiveActionThreshold int           `yaml:&quot;sensitive_action_threshold&quot;`
+}
+
+func (zts *ZeroTrustSecurityService) ValidateSecurityContext(ctx context.Context, req *PermissionEvaluationRequest) (*SecurityValidationResult, error) {
+    result := &amp;SecurityValidationResult{
+        IsValid:      true,
+        RiskScore:    0.0,
+        Violations:   []string{},
+        Requirements: []string{},
+    }
+
+    // Device validation
+    if zts.config.RequireDeviceRegistration {
+        device, err := zts.deviceFingerprinter.GetDevice(ctx, req.DeviceID)
+        if err != nil || device == nil {
+            result.IsValid = false
+            result.Violations = append(result.Violations, &quot;Unregistered device&quot;)
+            result.Requirements = append(result.Requirements, &quot;Device registration required&quot;)
+        } else if !device.IsTrusted {
+            result.RiskScore += 0.3
+            result.Requirements = append(result.Requirements, &quot;Device trust verification&quot;)
+        }
+    }
+
+    // Geographic risk assessment
+    location := req.Context[&quot;environment.location&quot;].(map[string]any{})
+    geoRisk := zts.riskScorer.AssessGeographicRisk(location)
+    result.RiskScore += geoRisk
+
+    if geoRisk &gt; 0.5 {
+        result.Requirements = append(result.Requirements, &quot;Additional authentication for high-risk location&quot;)
+    }
+
+    // Behavioral analysis
+    if zts.config.BehaviorAnalysisEnabled {
+        behaviorRisk, err := zts.behaviorAnalyzer.AnalyzeUserBehavior(ctx, req.UserID, req)
+        if err == nil {
+            result.RiskScore += behaviorRisk
+
+            if behaviorRisk &gt; 0.4 {
+                result.Requirements = append(result.Requirements, &quot;Behavioral anomaly detected - additional verification required&quot;)
+            }
+        }
+    }
+
+    // Time-based risk (off-hours access)
+    timeRisk := zts.riskScorer.AssessTimeRisk(req.Context)
+    result.RiskScore += timeRisk
+
+    // Permission sensitivity analysis
+    permissionRisk := zts.riskScorer.AssessPermissionRisk(req.ResourceType, req.Action)
+    result.RiskScore += permissionRisk
+
+    // Threat detection
+    threats, err := zts.threatDetector.DetectThreats(ctx, req)
+    if err == nil &amp;&amp; len(threats) &gt; 0 {
+        result.RiskScore += 0.8
+        for _, threat := range threats {
+            result.Violations = append(result.Violations, fmt.Sprintf(&quot;Threat detected: %s&quot;, threat.Type))
+        }
+    }
+
+    // Final risk assessment
+    if result.RiskScore &gt; zts.config.MaxRiskScore {
+        result.IsValid = false
+        result.Requirements = append(result.Requirements, &quot;Risk score exceeded threshold - step-up authentication required&quot;)
+    }
+
+    return result, nil
+}
+
+// Continuous monitoring and adaptive authentication
+func (zts *ZeroTrustSecurityService) StartContinuousMonitoring(ctx context.Context, userID string) {
+    ticker := time.NewTicker(zts.config.ContinuousAuthInterval)
+    defer ticker.Stop()
+
+    for {
+        select {
+        case &lt;-ticker.C:
+            session := zts.getActiveSession(userID)
+            if session == nil {
+                return // Session ended
+            }
+
+            // Continuous risk assessment
+            currentRisk := zts.assessCurrentRisk(ctx, session)
+
+            if currentRisk &gt; zts.config.MaxRiskScore {
+                // Trigger step-up authentication or session termination
+                zts.handleHighRiskSession(ctx, session, currentRisk)
+            }
+
+        case &lt;-ctx.Done():
+            return
+        }
+    }
+}
+</code></pre>
+<h3 id="audit-and-compliance-system">Audit and Compliance System</h3>
+<pre><code class="language-go">type AuditService struct {
+    auditRepository    AuditRepository
+    complianceChecker  ComplianceChecker
+    reportGenerator    ReportGenerator
+    alertManager       AlertManager
+
+    // Real-time audit streaming
+    auditStream        AuditEventStream
+
+    config            AuditConfig
+}
+
+type AuditConfig struct {
+    RetentionPeriod       time.Duration `yaml:&quot;retention_period&quot;`
+    EnableRealTimeAlerts  bool          `yaml:&quot;enable_real_time_alerts&quot;`
+    ComplianceFrameworks  []string      `yaml:&quot;compliance_frameworks&quot;`
+    SensitiveDataTracking bool          `yaml:&quot;sensitive_data_tracking&quot;`
+    ExportFormats         []string      `yaml:&quot;export_formats&quot;`
+}
+
+func (as *AuditService) LogPermissionEvaluation(ctx context.Context, req *PermissionEvaluationRequest, response *PermissionEvaluationResponse) {
+    auditEvent := &amp;AuditEvent{
+        ID:          uuid.New().String(),
+        Timestamp:   time.Now(),
+        EventType:   &quot;PERMISSION_EVALUATION&quot;,
+        UserID:      req.UserID,
+        SessionID:   req.SessionID,
+
+        // Request details
+        Resource:    req.ResourceType,
+        Action:      req.Action,
+        Context:     req.Context,
+
+        // Response details
+        Decision:    string(response.Decision),
+        DecisionSource: response.DecisionSource,
+        Reason:      response.Reason,
+
+        // Security context
+        IPAddress:   req.IPAddress,
+        UserAgent:   req.UserAgent,
+        DeviceID:    req.DeviceID,
+        Location:    req.Location,
+
+        // Performance metrics
+        EvaluationTime: response.EvaluationTime,
+        CacheHit:      response.CacheHit,
+
+        // Compliance flags
+        RiskLevel:     as.calculateRiskLevel(req, response),
+        ComplianceFlags: as.getComplianceFlags(req, response),
+
+        // Detailed context for forensics
+        RBACDecision: response.RBACDecision,
+        ABACDecision: response.ABACDecision,
+        Attributes:   response.Attributes,
+    }
+
+    // Enrich with additional metadata
+    as.enrichAuditEvent(ctx, auditEvent)
+
+    // Store audit event
+    if err := as.auditRepository.Store(ctx, auditEvent); err != nil {
+        as.alertManager.Alert(&quot;AUDIT_STORAGE_FAILURE&quot;, fmt.Sprintf(&quot;Failed to store audit event: %v&quot;, err))
+    }
+
+    // Real-time compliance checking
+    violations := as.complianceChecker.CheckCompliance(auditEvent)
+    if len(violations) &gt; 0 {
+        as.handleComplianceViolations(ctx, auditEvent, violations)
+    }
+
+    // Stream to real-time monitoring
+    if as.config.EnableRealTimeAlerts {
+        as.auditStream.Publish(auditEvent)
+    }
+
+    // Check for suspicious patterns
+    as.detectSuspiciousPatterns(ctx, auditEvent)
+}
+
+func (as *AuditService) GenerateComplianceReport(ctx context.Context, req *ComplianceReportRequest) (*ComplianceReport, error) {
+    report := &amp;ComplianceReport{
+        ID:           uuid.New().String(),
+        Framework:    req.Framework,
+        Period:       req.Period,
+        GeneratedAt:  time.Now(),
+        GeneratedBy:  req.RequestedBy,
+    }
+
+    switch req.Framework {
+    case &quot;SOX&quot;:
+        report.Sections = as.generateSOXReport(ctx, req.Period)
+    case &quot;GDPR&quot;:
+        report.Sections = as.generateGDPRReport(ctx, req.Period)
+    case &quot;HIPAA&quot;:
+        report.Sections = as.generateHIPAAReport(ctx, req.Period)
+    case &quot;SOC2&quot;:
+        report.Sections = as.generateSOC2Report(ctx, req.Period)
+    default:
+        return nil, fmt.Errorf(&quot;unsupported compliance framework: %s&quot;, req.Framework)
+    }
+
+    // Calculate compliance score
+    report.ComplianceScore = as.calculateComplianceScore(report.Sections)
+
+    // Identify areas of concern
+    report.Recommendations = as.generateRecommendations(report.Sections)
+
+    // Store report
+    if err := as.auditRepository.StoreReport(ctx, report); err != nil {
+        return nil, fmt.Errorf(&quot;failed to store compliance report: %w&quot;, err)
+    }
+
+    return report, nil
+}
+
+func (as *AuditService) detectSuspiciousPatterns(ctx context.Context, event *AuditEvent) {
+    // Pattern 1: Unusual access patterns
+    recentEvents := as.getUserRecentEvents(event.UserID, 1*time.Hour)
+
+    if as.isUnusualAccessPattern(recentEvents) {
+        as.alertManager.Alert(&quot;SUSPICIOUS_ACCESS_PATTERN&quot;, 
+            fmt.Sprintf(&quot;User %s showing unusual access patterns&quot;, event.UserID))
+    }
+
+    // Pattern 2: Privilege escalation attempts
+    if as.isPotentialPrivilegeEscalation(event, recentEvents) {
+        as.alertManager.Alert(&quot;PRIVILEGE_ESCALATION_ATTEMPT&quot;,
+            fmt.Sprintf(&quot;Potential privilege escalation by user %s&quot;, event.UserID))
+    }
+
+    // Pattern 3: Data exfiltration indicators
+    if as.isDataExfiltrationIndicator(event, recentEvents) {
+        as.alertManager.Alert(&quot;DATA_EXFILTRATION_INDICATOR&quot;,
+            fmt.Sprintf(&quot;Potential data exfiltration by user %s&quot;, event.UserID))
+    }
+
+    // Pattern 4: After-hours sensitive operations
+    if as.isAfterHoursSensitiveOperation(event) {
+        as.alertManager.Alert(&quot;AFTER_HOURS_SENSITIVE_OPERATION&quot;,
+            fmt.Sprintf(&quot;After-hours sensitive operation by user %s&quot;, event.UserID))
+    }
+}
+</code></pre>
+<h2 id="advanced-administrative-interface">🎛️ Advanced Administrative Interface</h2>
+<h3 id="intelligent-role-mining-and-optimization">Intelligent Role Mining and Optimization</h3>
+<pre><code class="language-go">type RoleMiningService struct {
+    analysisEngine    AnalysisEngine
+    patternDetector   PatternDetector
+    optimizationEngine OptimizationEngine
+    roleRepository    RoleRepository
+    auditService      AuditService
+
+    config           RoleMiningConfig
+}
+
+type RoleMiningConfig struct {
+    MinimumSupport      float64 `yaml:&quot;minimum_support&quot;`
+    MinimumConfidence   float64 `yaml:&quot;minimum_confidence&quot;`
+    MaxRoleComplexity   int     `yaml:&quot;max_role_complexity&quot;`
+    OptimizationEnabled bool    `yaml:&quot;optimization_enabled&quot;`
+}
+
+func (rms *RoleMiningService) AnalyzeCurrentRoleStructure(ctx context.Context, tenantID string) (*RoleAnalysisReport, error) {
+    // Collect current role assignments and usage patterns
+    assignments, err := rms.roleRepository.GetAllAssignments(ctx, tenantID)
+    if err != nil {
+        return nil, err
+    }
+
+    usagePatterns, err := rms.analysisEngine.AnalyzeUsagePatterns(ctx, assignments, 90*24*time.Hour)
+    if err != nil {
+        return nil, err
+    }
+
+    report := &amp;RoleAnalysisReport{
+        TenantID:      tenantID,
+        AnalyzedAt:    time.Now(),
+        TotalRoles:    len(assignments),
+        TotalUsers:    len(rms.getUniqueUsers(assignments)),
+    }
+
+    // Identify redundant roles
+    redundantRoles := rms.findRedundantRoles(assignments)
+    report.RedundantRoles = redundantRoles
+
+    // Identify overprivileged users
+    overprivilegedUsers := rms.findOverprivilegedUsers(assignments, usagePatterns)
+    report.OverprivilegedUsers = overprivilegedUsers
+
+    // Identify underprivileged users (frequent access denials)
+    underprivilegedUsers := rms.findUnderprivilegedUsers(ctx, tenantID)
+    report.UnderprivilegedUsers = underprivilegedUsers
+
+    // Suggest role consolidation opportunities
+    consolidationOpportunities := rms.findConsolidationOpportunities(assignments)
+    report.ConsolidationOpportunities = consolidationOpportunities
+
+    // Suggest new roles based on common permission patterns
+    suggestedRoles := rms.suggestNewRoles(assignments, usagePatterns)
+    report.SuggestedRoles = suggestedRoles
+
+    // Calculate role complexity metrics
+    report.ComplexityMetrics = rms.calculateComplexityMetrics(assignments)
+
+    return report, nil
+}
+
+func (rms *RoleMiningService) OptimizeRoleStructure(ctx context.Context, report *RoleAnalysisReport, options *OptimizationOptions) (*RoleOptimizationPlan, error) {
+    plan := &amp;RoleOptimizationPlan{
+        ID:          uuid.New().String(),
+        TenantID:    report.TenantID,
+        CreatedAt:   time.Now(),
+        Status:      &quot;DRAFT&quot;,
+    }
+
+    // Generate optimization steps
+    var steps []OptimizationStep
+
+    // Step 1: Remove redundant roles
+    if options.RemoveRedundantRoles {
+        for _, redundantRole := range report.RedundantRoles {
+            steps = append(steps, OptimizationStep{
+                Type:        &quot;REMOVE_ROLE&quot;,
+                Description: fmt.Sprintf(&quot;Remove redundant role: %s&quot;, redundantRole.Name),
+                RoleID:      redundantRole.ID,
+                Impact:      rms.calculateRemovalImpact(redundantRole),
+                Risk:        &quot;LOW&quot;,
+            })
+        }
+    }
+
+    // Step 2: Consolidate similar roles
+    if options.ConsolidateRoles {
+        for _, opportunity := range report.ConsolidationOpportunities {
+            steps = append(steps, OptimizationStep{
+                Type:        &quot;CONSOLIDATE_ROLES&quot;,
+                Description: fmt.Sprintf(&quot;Consolidate roles: %v&quot;, opportunity.RoleNames),
+                RoleIDs:     opportunity.RoleIDs,
+                NewRole:     opportunity.SuggestedRole,
+                Impact:      rms.calculateConsolidationImpact(opportunity),
+                Risk:        &quot;MEDIUM&quot;,
+            })
+        }
+    }
+
+    // Step 3: Create suggested roles
+    if options.CreateSuggestedRoles {
+        for _, suggestedRole := range report.SuggestedRoles {
+            steps = append(steps, OptimizationStep{
+                Type:        &quot;CREATE_ROLE&quot;,
+                Description: fmt.Sprintf(&quot;Create new role: %s&quot;, suggestedRole.Name),
+                NewRole:     suggestedRole,
+                Impact:      rms.calculateCreationImpact(suggestedRole),
+                Risk:        &quot;LOW&quot;,
+            })
+        }
+    }
+
+    // Step 4: Address overprivileged users
+    if options.ReduceOverprivilege {
+        for _, user := range report.OverprivilegedUsers {
+            steps = append(steps, OptimizationStep{
+                Type:        &quot;REDUCE_PRIVILEGES&quot;,
+                Description: fmt.Sprintf(&quot;Reduce privileges for user: %s&quot;, user.UserID),
+                UserID:      user.UserID,
+                RolesToRemove: user.UnusedRoles,
+                Impact:      rms.calculatePrivilegeReductionImpact(user),
+                Risk:        &quot;HIGH&quot;,
+            })
+        }
+    }
+
+    plan.Steps = steps
+    plan.EstimatedImpact = rms.calculateOverallImpact(steps)
+
+    // Store optimization plan
+    if err := rms.roleRepository.StoreOptimizationPlan(ctx, plan); err != nil {
+        return nil, err
+    }
+
+    return plan, nil
+}
+
+func (rms *RoleMiningService) ExecuteOptimizationPlan(ctx context.Context, planID string, dryRun bool) (*OptimizationExecutionResult, error) {
+    plan, err := rms.roleRepository.GetOptimizationPlan(ctx, planID)
+    if err != nil {
+        return nil, err
+    }
+
+    result := &amp;OptimizationExecutionResult{
+        PlanID:     planID,
+        StartedAt:  time.Now(),
+        DryRun:     dryRun,
+        Steps:      []StepExecutionResult{},
+    }
+
+    // Execute steps in order
+    for i, step := range plan.Steps {
+        stepResult := StepExecutionResult{
+            StepIndex:  i,
+            StepType:   step.Type,
+            StartedAt:  time.Now(),
+        }
+
+        if !dryRun {
+            err := rms.executeOptimizationStep(ctx, step)
+            if err != nil {
+                stepResult.Success = false
+                stepResult.Error = err.Error()
+                result.Steps = append(result.Steps, stepResult)
+                break // Stop on first error
+            }
+        }
+
+        stepResult.Success = true
+        stepResult.CompletedAt = time.Now()
+        result.Steps = append(result.Steps, stepResult)
+    }
+
+    result.CompletedAt = time.Now()
+    result.Success = len(result.Steps) == len(plan.Steps) &amp;&amp; 
+                    allStepsSuccessful(result.Steps)
+
+    // Update plan status
+    if !dryRun {
+        newStatus := &quot;COMPLETED&quot;
+        if !result.Success {
+            newStatus = &quot;FAILED&quot;
+        }
+        rms.roleRepository.UpdateOptimizationPlanStatus(ctx, planID, newStatus)
+    }
+
+    // Audit the optimization execution
+    rms.auditService.LogRoleOptimization(ctx, plan, result)
+
+    return result, nil
+}
+</code></pre>
+<h3 id="advanced-role-visualization-and-analytics-dashboard">Advanced Role Visualization and Analytics Dashboard</h3>
+<pre><code class="language-go">type RoleAnalyticsDashboard struct {
+    metricsCollector  MetricsCollector
+    visualizer        RoleVisualizer
+    trendAnalyzer     TrendAnalyzer
+    riskAnalyzer      RiskAnalyzer
+
+    config           DashboardConfig
+}
+
+type DashboardConfig struct {
+    RefreshInterval     time.Duration `yaml:&quot;refresh_interval&quot;`
+    HistoricalDataDays  int          `yaml:&quot;historical_data_days&quot;`
+    AlertThresholds     struct {
+        HighRiskRoles       int `yaml:&quot;high_risk_roles&quot;`
+        UnusedRoles         int `yaml:&quot;unused_roles&quot;`
+        OverprivilegedUsers int `yaml:&quot;overprivileged_users&quot;`
+    } `yaml:&quot;alert_thresholds&quot;`
+}
+
+func (rad *RoleAnalyticsDashboard) GetDashboardData(ctx context.Context, tenantID string, timeRange TimeRange) (*DashboardData, error) {
+    data := &amp;DashboardData{
+        TenantID:    tenantID,
+        TimeRange:   timeRange,
+        GeneratedAt: time.Now(),
+    }
+
+    // Collect core metrics
+    coreMetrics, err := rad.metricsCollector.GetCoreMetrics(ctx, tenantID, timeRange)
+    if err != nil {
+        return nil, err
+    }
+    data.CoreMetrics = coreMetrics
+
+    // Role distribution analysis
+    roleDistribution, err := rad.metricsCollector.GetRoleDistribution(ctx, tenantID)
+    if err != nil {
+        return nil, err
+    }
+    data.RoleDistribution = roleDistribution
+
+    // Permission usage heatmap
+    permissionHeatmap, err := rad.metricsCollector.GetPermissionUsageHeatmap(ctx, tenantID, timeRange)
+    if err != nil {
+        return nil, err
+    }
+    data.PermissionHeatmap = permissionHeatmap
+
+    // Risk assessment
+    riskAssessment, err := rad.riskAnalyzer.AssessOrganizationalRisk(ctx, tenantID)
+    if err != nil {
+        return nil, err
+    }
+    data.RiskAssessment = riskAssessment
+
+    // Trend analysis
+    trends, err := rad.trendAnalyzer.AnalyzeTrends(ctx, tenantID, timeRange)
+    if err != nil {
+        return nil, err
+    }
+    data.Trends = trends
+
+    // Role network visualization data
+    networkData, err := rad.visualizer.GenerateRoleNetworkData(ctx, tenantID)
+    if err != nil {
+        return nil, err
+    }
+    data.RoleNetwork = networkData
+
+    // Compliance dashboard
+    complianceData, err := rad.getComplianceDashboard(ctx, tenantID, timeRange)
+    if err != nil {
+        return nil, err
+    }
+    data.Compliance = complianceData
+
+    return data, nil
+}
+
+type DashboardData struct {
+    TenantID          string                    `json:&quot;tenant_id&quot;`
+    TimeRange         TimeRange                 `json:&quot;time_range&quot;`
+    GeneratedAt       time.Time                 `json:&quot;generated_at&quot;`
+    CoreMetrics       *CoreMetrics              `json:&quot;core_metrics&quot;`
+    RoleDistribution  *RoleDistribution         `json:&quot;role_distribution&quot;`
+    PermissionHeatmap *PermissionHeatmap        `json:&quot;permission_heatmap&quot;`
+    RiskAssessment    *OrganizationalRisk       `json:&quot;risk_assessment&quot;`
+    Trends            *TrendAnalysis            `json:&quot;trends&quot;`
+    RoleNetwork       *RoleNetworkVisualization `json:&quot;role_network&quot;`
+    Compliance        *ComplianceDashboard      `json:&quot;compliance&quot;`
+}
+
+type CoreMetrics struct {
+    TotalUsers               int                    `json:&quot;total_users&quot;`
+    TotalRoles               int                    `json:&quot;total_roles&quot;`
+    TotalPermissions         int                    `json:&quot;total_permissions&quot;`
+    ActiveSessions           int                    `json:&quot;active_sessions&quot;`
+
+    // Usage metrics
+    DailyPermissionChecks    int                    `json:&quot;daily_permission_checks&quot;`
+    CacheHitRate             float64                `json:&quot;cache_hit_rate&quot;`
+    AverageEvaluationTime    time.Duration          `json:&quot;average_evaluation_time&quot;`
+
+    // Security metrics
+    FailedAccessAttempts     int                    `json:&quot;failed_access_attempts&quot;`
+    SecurityAlerts           int                    `json:&quot;security_alerts&quot;`
+    EmergencyAccessCount     int                    `json:&quot;emergency_access_count&quot;`
+
+    // Efficiency metrics
+    UnusedRoles              []UnusedRole           `json:&quot;unused_roles&quot;`
+    OverprivilegedUsers      []OverprivilegedUser   `json:&quot;overprivileged_users&quot;`
+    RoleComplexityScore      float64                `json:&quot;role_complexity_score&quot;`
+
+    // Temporal metrics
+    PeakUsageHours           []int                  `json:&quot;peak_usage_hours&quot;`
+    WeekendActivityLevel     float64                `json:&quot;weekend_activity_level&quot;`
+}
+
+type RoleNetworkVisualization struct {
+    Nodes []RoleNode `json:&quot;nodes&quot;`
+    Edges []RoleEdge `json:&quot;edges&quot;`
+
+    // Network analysis metrics
+    Centrality      map[string]float64 `json:&quot;centrality&quot;`
+    Communities     [][]string         `json:&quot;communities&quot;`
+    CriticalPaths   [][]string         `json:&quot;critical_paths&quot;`
+}
+
+type RoleNode struct {
+    ID              string                 `json:&quot;id&quot;`
+    Name            string                 `json:&quot;name&quot;`
+    Type            string                 `json:&quot;type&quot;`
+    Size            int                    `json:&quot;size&quot;` // Based on number of users
+    RiskLevel       int                    `json:&quot;risk_level&quot;`
+    Permissions     int                    `json:&quot;permissions&quot;`
+    Attributes      map[string]any{} `json:&quot;attributes&quot;`
+
+    // Visual properties
+    Color           string                 `json:&quot;color&quot;`
+    BorderColor     string                 `json:&quot;border_color&quot;`
+    BorderWidth     int                    `json:&quot;border_width&quot;`
+}
+
+type RoleEdge struct {
+    Source     string  `json:&quot;source&quot;`
+    Target     string  `json:&quot;target&quot;`
+    Type       string  `json:&quot;type&quot;` // &quot;INHERITANCE&quot;, &quot;DELEGATION&quot;, &quot;CONFLICT&quot;
+    Weight     float64 `json:&quot;weight&quot;`
+
+    // Visual properties
+    Color      string  `json:&quot;color&quot;`
+    Width      int     `json:&quot;width&quot;`
+    Style      string  `json:&quot;style&quot;` // &quot;solid&quot;, &quot;dashed&quot;, &quot;dotted&quot;
+}
+</code></pre>
+<h2 id="advanced-migration-and-deployment-strategy">🔄 Advanced Migration and Deployment Strategy</h2>
+<h3 id="intelligent-migration-orchestrator">Intelligent Migration Orchestrator</h3>
+<pre><code class="language-go">type MigrationOrchestrator struct {
+    phaseManager      PhaseManager
+    validator         MigrationValidator
+    rollbackManager   RollbackManager
+    progressTracker   ProgressTracker
+    riskAssessor      RiskAssessor
+
+    config           MigrationConfig
+}
+
+type MigrationConfig struct {
+    MaxParallelOperations int           `yaml:&quot;max_parallel_operations&quot;`
+    ValidationEnabled     bool          `yaml:&quot;validation_enabled&quot;`
+    AutoRollbackEnabled   bool          `yaml:&quot;auto_rollback_enabled&quot;`
+    ProgressCheckpoints   []string      `yaml:&quot;progress_checkpoints&quot;`
+    RiskThreshold         float64       `yaml:&quot;risk_threshold&quot;`
+    BackupStrategy        string        `yaml:&quot;backup_strategy&quot;`
+}
+
+func (mo *MigrationOrchestrator) ExecuteMigration(ctx context.Context, plan *MigrationPlan) (*MigrationResult, error) {
+    result := &amp;MigrationResult{
+        PlanID:     plan.ID,
+        StartedAt:  time.Now(),
+        Status:     &quot;RUNNING&quot;,
+        Phases:     []PhaseResult{},
+    }
+
+    // Pre-migration validation
+    if mo.config.ValidationEnabled {
+        if err := mo.validator.ValidatePremigration(ctx, plan); err != nil {
+            return &amp;MigrationResult{
+                PlanID:  plan.ID,
+                Status:  &quot;VALIDATION_FAILED&quot;,
+                Error:   err.Error(),
+            }, err
+        }
+    }
+
+    // Create backup before migration
+    backupID, err := mo.createMigrationBackup(ctx, plan)
+    if err != nil {
+        return nil, fmt.Errorf(&quot;backup creation failed: %w&quot;, err)
+    }
+    result.BackupID = backupID
+
+    // Execute phases sequentially
+    for i, phase := range plan.Phases {
+        phaseResult := PhaseResult{
+            PhaseIndex: i,
+            PhaseName:  phase.Name,
+            StartedAt:  time.Now(),
+            Steps:      []StepResult{},
+        }
+
+        // Risk assessment before each phase
+        risk := mo.riskAssessor.AssessPhaseRisk(ctx, phase, result)
+        if risk &gt; mo.config.RiskThreshold {
+            phaseResult.Status = &quot;SKIPPED_HIGH_RISK&quot;
+            phaseResult.Risk = risk
+            result.Phases = append(result.Phases, phaseResult)
+            break
+        }
+
+        // Execute phase steps
+        success := true
+        for j, step := range phase.Steps {
+            stepResult := StepResult{
+                StepIndex: j,
+                StepName:  step.Name,
+                StartedAt: time.Now(),
+            }
+
+            err := mo.executeStep(ctx, step)
+            if err != nil {
+                stepResult.Success = false
+                stepResult.Error = err.Error()
+                stepResult.CompletedAt = time.Now()
+                phaseResult.Steps = append(phaseResult.Steps, stepResult)
+                success = false
+                break
+            }
+
+            stepResult.Success = true
+            stepResult.CompletedAt = time.Now()
+            phaseResult.Steps = append(phaseResult.Steps, stepResult)
+
+            // Update progress
+            mo.progressTracker.UpdateProgress(plan.ID, float64(i*len(phase.Steps)+j+1)/float64(mo.getTotalSteps(plan)))
+        }
+
+        phaseResult.Success = success
+        phaseResult.CompletedAt = time.Now()
+        result.Phases = append(result.Phases, phaseResult)
+
+        if !success {
+            // Auto-rollback if enabled
+            if mo.config.AutoRollbackEnabled {
+                mo.executeRollback(ctx, plan, result, backupID)
+                result.Status = &quot;ROLLED_BACK&quot;
+            } else {
+                result.Status = &quot;FAILED&quot;
+            }
+            break
+        }
+
+        // Post-phase validation
+        if mo.config.ValidationEnabled {
+            if err := mo.validator.ValidatePhase(ctx, phase, result); err != nil {
+                phaseResult.ValidationError = err.Error()
+                if mo.config.AutoRollbackEnabled {
+                    mo.executeRollback(ctx, plan, result, backupID)
+                    result.Status = &quot;VALIDATION_FAILED_ROLLED_BACK&quot;
+                } else {
+                    result.Status = &quot;VALIDATION_FAILED&quot;
+                }
+                break
+            }
+        }
+    }
+
+    if result.Status == &quot;RUNNING&quot; {
+        result.Status = &quot;COMPLETED&quot;
+    }
+
+    result.CompletedAt = time.Now()
+    result.Duration = result.CompletedAt.Sub(result.StartedAt)
+
+    // Post-migration validation
+    if result.Status == &quot;COMPLETED&quot; &amp;&amp; mo.config.ValidationEnabled {
+        if err := mo.validator.ValidatePostmigration(ctx, plan, result); err != nil {
+            result.PostMigrationValidationError = err.Error()
+            if mo.config.AutoRollbackEnabled {
+                mo.executeRollback(ctx, plan, result, backupID)
+                result.Status = &quot;POST_VALIDATION_FAILED_ROLLED_BACK&quot;
+            }
+        }
+    }
+
+    return result, nil
+}
+
+//  RBAC-to-ABAC attribute mapping
+func (mo *MigrationOrchestrator) executeRoleToAttributeMapping(ctx context.Context, step *MigrationStep) error {
+    mappingRules := step.Parameters[&quot;mapping_rules&quot;].([]AttributeMappingRule)
+
+    for _, rule := range mappingRules {
+        // Get users with the source role
+        users, err := mo.roleRepository.GetUsersWithRole(ctx, rule.SourceRoleID)
+        if err != nil {
+            return fmt.Errorf(&quot;failed to get users for role %s: %w&quot;, rule.SourceRoleID, err)
+        }
+
+        for _, user := range users {
+            // Apply attribute mapping
+            attributes := make(map[string]any{})
+
+            // Map role attributes to user attributes
+            for sourceAttr, targetAttr := range rule.AttributeMapping {
+                if value, exists := rule.DefaultValues[sourceAttr]; exists {
+                    attributes[targetAttr] = value
+                } else if userValue := mo.getUserAttributeValue(user, sourceAttr); userValue != nil {
+                    attributes[targetAttr] = userValue
+                }
+            }
+
+            // Apply conditional mappings
+            for _, condition := range rule.ConditionalMappings {
+                if mo.evaluateCondition(user, condition.Condition) {
+                    for key, value := range condition.Attributes {
+                        attributes[key] = value
+                    }
+                }
+            }
+
+            // Update user attributes
+            if err := mo.identityService.UpdateUserAttributes(ctx, user.ID, attributes); err != nil {
+                return fmt.Errorf(&quot;failed to update attributes for user %s: %w&quot;, user.ID, err)
+            }
+        }
+    }
+
+    return nil
+}
+
+type AttributeMappingRule struct {
+    SourceRoleID        string                        `json:&quot;source_role_id&quot;`
+    AttributeMapping    map[string]string             `json:&quot;attribute_mapping&quot;`
+    DefaultValues       map[string]any{}        `json:&quot;default_values&quot;`
+    ConditionalMappings []ConditionalAttributeMapping `json:&quot;conditional_mappings&quot;`
+}
+
+type ConditionalAttributeMapping struct {
+    Condition  map[string]any{} `json:&quot;condition&quot;`
+    Attributes map[string]any{} `json:&quot;attributes&quot;`
+}
+</code></pre>
+<h2 id="production-deployment-architecture">🎯 Production Deployment Architecture</h2>
+<h3 id="kubernetes-deployment-with-high-availability">Kubernetes Deployment with High Availability</h3>
+<pre><code class="language-yaml"># RBAC-ABAC Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rbac-abac-service
+  namespace: identity-platform
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: rbac-abac-service
+  template:
+    metadata:
+      labels:
+        app: rbac-abac-service
+        version: v2.0
+    spec:
+      serviceAccountName: rbac-abac-service
+      containers:
+      - name: rbac-abac-service
+        image: myregistry/rbac-abac-service:v2.0.1
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        - containerPort: 8081
+          name: health
+
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: cache-credentials
+              key: url
+        - name: LOG_LEVEL
+          value: &quot;INFO&quot;
+        - name: ENVIRONMENT
+          value: &quot;production&quot;
+
+        resources:
+          requests:
+            memory: &quot;512Mi&quot;
+            cpu: &quot;500m&quot;
+          limits:
+            memory: &quot;1Gi&quot;
+            cpu: &quot;1000m&quot;
+
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/cache
+
+      volumes:
+      - name: config
+        configMap:
+          name: rbac-abac-config
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir:
+          sizeLimit: 1Gi
+
+---
+# Service for load balancing
+apiVersion: v1
+kind: Service
+metadata:
+  name: rbac-abac-service
+  namespace: identity-platform
+spec:
+  selector:
+    app: rbac-abac-service
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: rbac-abac-service-hpa
+  namespace: identity-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rbac-abac-service
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Pods
+    pods:
+      metric:
+        name: permission_evaluations_per_second
+      target:
+        type: AverageValue
+        averageValue: &quot;1000&quot;
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: rbac-abac-service-pdb
+  namespace: identity-platform
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: rbac-abac-service
+</code></pre>
+<h3 id="production-configuration-template">Production Configuration Template</h3>
+<pre><code class="language-yaml"># Production RBAC-ABAC Configuration
+service:
+  name: &quot;rbac-abac-service&quot;
+  version: &quot;2.0.1&quot;
+  environment: &quot;production&quot;
+  port: 8080
+  metrics_port: 9090
+  health_port: 8081
+
+database:
+  host: ${DATABASE_HOST}
+  port: ${DATABASE_PORT:5432}
+  name: ${DATABASE_NAME}
+  username: ${DATABASE_USERNAME}
+  password: ${DATABASE_PASSWORD}
+  ssl_mode: &quot;require&quot;
+  max_open_conns: 25
+  max_idle_conns: 10
+  conn_max_lifetime: &quot;1h&quot;
+
+  # Connection pooling
+  pool:
+    max_size: 25
+    min_size: 5
+    health_check_period: &quot;30s&quot;
+
+cache:
+  redis:
+    addresses: 
+      - ${REDIS_HOST_1}:${REDIS_PORT_1:6379}
+      - ${REDIS_HOST_2}:${REDIS_PORT_2:6379}
+      - ${REDIS_HOST_3}:${REDIS_PORT_3:6379}
+    password: ${REDIS_PASSWORD}
+    db: 0
+    sentinel_master_name: &quot;mymaster&quot;
+
+  local:
+    max_size: &quot;500MB&quot;
+    default_ttl: &quot;5m&quot;
+
+  strategy:
+    l1_cache_ttl: &quot;1m&quot;
+    l2_cache_ttl: &quot;15m&quot;
+    decision_cache_ttl: &quot;30s&quot;
+    role_cache_ttl: &quot;10m&quot;
+
+rbac:
+  max_roles_per_user: 20
+  default_role_expiration: &quot;8760h&quot; # 1 year
+  require_approval_threshold: 4
+  max_delegation_chain: 3
+  emergency_access_duration: &quot;4h&quot;
+  enable_role_mining: true
+
+abac:
+  policy_evaluation_timeout: &quot;500ms&quot;
+  attribute_collection_timeout: &quot;200ms&quot;
+  enable_parallel_evaluation: true
+  max_policy_complexity: 100
+  cache_negative_decisions: true
+
+security:
+  require_second_factor: true
+  high_risk_threshold: 4
+  emergency_access_enabled: true
+  audit_all_decisions: true
+  zero_trust_enabled: true
+
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 1000
+    burst_size: 100
+
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_time: &quot;30s&quot;
+    timeout: &quot;10s&quot;
+
+monitoring:
+  metrics:
+    enabled: true
+    path: &quot;/metrics&quot;
+    include_sensitive: false
+
+  tracing:
+    enabled: true
+    jaeger_endpoint: ${JAEGER_ENDPOINT}
+    sample_rate: 0.1
+
+  logging:
+    level: &quot;INFO&quot;
+    format: &quot;json&quot;
+    output: &quot;stdout&quot;
+
+  health_checks:
+    database_timeout: &quot;5s&quot;
+    cache_timeout: &quot;2s&quot;
+
+audit:
+  enabled: true
+  retention_period: &quot;2190h&quot; # 3 months
+  export_formats: [&quot;json&quot;, &quot;csv&quot;]
+  compliance_frameworks: [&quot;SOX&quot;, &quot;GDPR&quot;, &quot;SOC2&quot;]
+  sensitive_data_tracking: true
+  real_time_alerts: true
+
+compliance:
+  gdpr:
+    enabled: true
+    data_retention_days: 1095 # 3 years
+    anonymization_enabled: true
+
+  sox:
+    enabled: true
+    segregation_of_duties: true
+    change_approval_required: true
+
+  hipaa:
+    enabled: false
+
+performance:
+  max_evaluation_time: &quot;1s&quot;
+  enable_parallel_evaluation: true
+  rbac_timeout_ms: 200
+  abac_timeout_ms: 300
+
+  optimization:
+    enable_query_optimization: true
+    enable_index_hints: true
+    batch_size: 1000
+</code></pre>
+<h2 id="best-practices-summary-and-implementation-guidelines">🏆 Best Practices Summary and Implementation Guidelines</h2>
+<h3 id="implementation-roadmap">Implementation Roadmap</h3>
+<pre><code class="language-markdown">## Phase 1: Foundation (Weeks 1-4)
+- [ ] Deploy  database schema with proper indexing
+- [ ] Implement core RBAC service with basic role management
+- [ ] Set up multi-level caching infrastructure
+- [ ] Deploy monitoring and logging framework
+- [ ] Establish CI/CD pipeline with automated testing
+
+## Phase 2: Core Integration (Weeks 5-8)
+- [ ] Integrate RBAC with existing ABAC service
+- [ ] Implement parallel evaluation engine
+- [ ] Deploy role mining and analytics service
+- [ ] Set up zero-trust security components
+- [ ] Implement audit system
+
+## Phase 3: Advanced Features (Weeks 9-12)
+- [ ] Deploy delegation and approval workflows
+- [ ] Implement emergency access system
+- [ ] Set up compliance reporting framework
+- [ ] Deploy role optimization engine
+- [ ] Implement predictive caching and warming
+
+## Phase 4: Production Hardening (Weeks 13-16)
+- [ ] Complete security testing and penetration testing
+- [ ] Performance testing and optimization
+- [ ] Disaster recovery and backup testing
+- [ ] User training and documentation
+- [ ] Go-live preparation and monitoring setup
+</code></pre>
+<h3 id="critical-success-factors">Critical Success Factors</h3>
+<ol>
+<li><strong>Performance First</strong>: Always prioritize performance in design decisions</li>
+<li>Use RBAC for quick filtering, ABAC for context</li>
+<li>Implement intelligent caching at multiple levels</li>
+<li>
+<p>Monitor and optimize query performance continuously</p>
+</li>
+<li>
+<p><strong>Security by Design</strong>: Build security into every component</p>
+</li>
+<li>Implement zero-trust principles</li>
+<li>Use audit logging</li>
+<li>
+<p>Regular security assessments and updates</p>
+</li>
+<li>
+<p><strong>Operational Excellence</strong>: Design for maintainability and monitoring</p>
+</li>
+<li>metrics and alerting</li>
+<li>Automated deployment and rollback capabilities</li>
+<li>
+<p>Clear documentation and runbooks</p>
+</li>
+<li>
+<p><strong>Compliance Ready</strong>: Ensure regulatory compliance from day one</p>
+</li>
+<li>Built-in compliance reporting</li>
+<li>Data retention and privacy controls</li>
+<li>Regular compliance audits and validation</li>
+</ol>
+<p>This  RBAC-ABAC hybrid system provides enterprise-grade identity and access management with the flexibility of attribute-based policies and the performance and manageability of role-based access control. The system is designed for high availability, scalability, and security while maintaining the contextual intelligence that makes ABAC powerful for complex enterprise scenarios.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="../../../../javascripts/search-analytics.js"></script>
+      
+        <script src="../../../../javascripts/contextual-help.js"></script>
+      
+    
+  </body>
+</html>
