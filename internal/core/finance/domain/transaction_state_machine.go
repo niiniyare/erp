@@ -456,4 +456,3 @@ type TransactionWorkflowStatus struct {
 	ValidationStatus ValidationStatus    `json:"validation_status"`
 	ValidationErrors []ValidationError   `json:"validation_errors,omitempty"`
 }
-

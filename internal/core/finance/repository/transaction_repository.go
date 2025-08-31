@@ -143,8 +143,8 @@ func (r *transactionRepository) Update(ctx context.Context, transaction *domain.
 	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
 		// Map transaction to SQLC parameters
 		params := db.UpdateTransactionParams{
-			TransactionID: transaction.ID,
-			TransactionStatus: mapDomainTransactionStatusToSQLCEnumPtr(transaction.TransactionStatus),
+			TransactionID:         transaction.ID,
+			TransactionStatus:     mapDomainTransactionStatusToSQLCEnumPtr(transaction.TransactionStatus),
 			PostingDate:           timePointerToTimeValue(transaction.PostingDate),
 			DueDate:               timePointerToTimeValue(transaction.DueDate),
 			Description:           transaction.Description,

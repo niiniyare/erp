@@ -62,12 +62,12 @@ func (h *FinanceHandler) CreateTransaction(ctx context.Context, payload *goaFina
 	if payload.CurrencyCode != "" {
 		currencyCode = payload.CurrencyCode
 	}
-	
+
 	transactionNumber := ""
 	if payload.TransactionNumber != nil {
 		transactionNumber = *payload.TransactionNumber
 	}
-	
+
 	req := domain.CreateTransactionRequest{
 		EntityID:          entityID,
 		TransactionNumber: transactionNumber,
@@ -177,7 +177,7 @@ func (h *FinanceHandler) ListTransactions(ctx context.Context, payload *goaFinan
 
 	limitInt := int(payload.Limit)
 	offsetInt := int(payload.Offset)
-	
+
 	filter := &domain.TransactionFilter{
 		SearchTerm: payload.Search,
 		Limit:      &limitInt,
@@ -206,7 +206,7 @@ func (h *FinanceHandler) ListTransactions(ctx context.Context, payload *goaFinan
 
 	if payload.DateFrom != nil || payload.DateTo != nil {
 		dateRange := &domain.DateRange{}
-		
+
 		if payload.DateFrom != nil {
 			dateFrom, err := time.Parse("2006-01-02", *payload.DateFrom)
 			if err != nil {
@@ -226,7 +226,7 @@ func (h *FinanceHandler) ListTransactions(ctx context.Context, payload *goaFinan
 			}
 			dateRange.EndDate = &dateTo
 		}
-		
+
 		filter.DateRange = dateRange
 	}
 
@@ -261,7 +261,7 @@ func (h *FinanceHandler) ListTransactions(ctx context.Context, payload *goaFinan
 
 	limit := payload.Limit
 	offset := payload.Offset
-	
+
 	return &goaFinance.TransactionListResult{
 		Transactions: results,
 		TotalCount:   int64(len(results)),
@@ -294,10 +294,10 @@ func (h *FinanceHandler) PostTransaction(ctx context.Context, payload *goaFinanc
 
 	logger.InfoContext(ctx, "Processing transaction posting request",
 		logger.Fields{
-			"transaction_id":           id.String(),
-			"posting_date":             postingDate,
-			"validate_before_posting":  payload.ValidateBeforePosting,
-			"force_post":               payload.ForcePost,
+			"transaction_id":          id.String(),
+			"posting_date":            postingDate,
+			"validate_before_posting": payload.ValidateBeforePosting,
+			"force_post":              payload.ForcePost,
 		})
 
 	transaction, err := h.financeServices.Transaction.PostTransaction(ctx, id, postingDate)
@@ -423,7 +423,7 @@ func (h *FinanceHandler) ValidateTransaction(ctx context.Context, payload *goaFi
 	if validationLevel == "" {
 		validationLevel = "STRICT"
 	}
-	
+
 	return &goaFinance.ValidationResult{
 		IsValid:         true,
 		IsBalanced:      true,

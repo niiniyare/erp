@@ -17,28 +17,28 @@ import (
 type TransactionWorkflowEngine interface {
 	// SubmitForApproval submits a transaction for approval workflow
 	SubmitForApproval(ctx context.Context, req SubmitApprovalRequest) (*ApprovalWorkflowResult, error)
-	
+
 	// ApproveTransaction approves a transaction in the workflow
 	ApproveTransaction(ctx context.Context, req ApprovalRequest) (*ApprovalResult, error)
-	
+
 	// RejectTransaction rejects a transaction in the workflow
 	RejectTransaction(ctx context.Context, req RejectionRequest) (*RejectionResult, error)
-	
+
 	// RequestMoreInformation requests more information for a transaction
 	RequestMoreInformation(ctx context.Context, req InfoRequest) (*InfoRequestResult, error)
-	
+
 	// UpdateTransactionInfo updates transaction information in response to requests
 	UpdateTransactionInfo(ctx context.Context, req UpdateInfoRequest) (*UpdateInfoResult, error)
-	
+
 	// GetApprovalHistory gets the full approval history for a transaction
 	GetApprovalHistory(ctx context.Context, transactionID uuid.UUID) (*ApprovalHistoryResult, error)
-	
+
 	// GetPendingApprovals gets pending approvals for a user or role
 	GetPendingApprovals(ctx context.Context, req PendingApprovalsRequest) (*PendingApprovalsResult, error)
-	
+
 	// EscalateApproval escalates approval to next level or administrator
 	EscalateApproval(ctx context.Context, req EscalationRequest) (*EscalationResult, error)
-	
+
 	// ValidateApprovalAuthority validates if a user can approve a transaction
 	ValidateApprovalAuthority(ctx context.Context, req AuthorityValidationRequest) (*AuthorityValidationResult, error)
 }
@@ -52,28 +52,28 @@ type SubmitApprovalRequest struct {
 	Priority          Priority     `json:"priority"`
 	Comments          string       `json:"comments,omitempty"`
 	RequiredApprovers []uuid.UUID  `json:"required_approvers,omitempty"`
-	DueDate          *time.Time    `json:"due_date,omitempty"`
+	DueDate           *time.Time   `json:"due_date,omitempty"`
 }
 
 // ApprovalRequest represents a request to approve a transaction
 type ApprovalRequest struct {
-	TransactionID     uuid.UUID         `json:"transaction_id"`
-	ApprovedBy        uuid.UUID         `json:"approved_by"`
-	ApprovalLevel     int32             `json:"approval_level"`
-	ApprovalComments  string            `json:"approval_comments,omitempty"`
-	ApprovalAction    ApprovalAction    `json:"approval_action"`
-	ConditionalTerms  []string          `json:"conditional_terms,omitempty"`
-	EffectiveDate     *time.Time        `json:"effective_date,omitempty"`
+	TransactionID    uuid.UUID      `json:"transaction_id"`
+	ApprovedBy       uuid.UUID      `json:"approved_by"`
+	ApprovalLevel    int32          `json:"approval_level"`
+	ApprovalComments string         `json:"approval_comments,omitempty"`
+	ApprovalAction   ApprovalAction `json:"approval_action"`
+	ConditionalTerms []string       `json:"conditional_terms,omitempty"`
+	EffectiveDate    *time.Time     `json:"effective_date,omitempty"`
 }
 
 // RejectionRequest represents a request to reject a transaction
 type RejectionRequest struct {
-	TransactionID       uuid.UUID        `json:"transaction_id"`
-	RejectedBy          uuid.UUID        `json:"rejected_by"`
-	RejectionReason     RejectionReason  `json:"rejection_reason"`
-	RejectionComments   string           `json:"rejection_comments"`
-	SuggestedChanges    []string         `json:"suggested_changes,omitempty"`
-	AllowResubmission   bool             `json:"allow_resubmission"`
+	TransactionID     uuid.UUID       `json:"transaction_id"`
+	RejectedBy        uuid.UUID       `json:"rejected_by"`
+	RejectionReason   RejectionReason `json:"rejection_reason"`
+	RejectionComments string          `json:"rejection_comments"`
+	SuggestedChanges  []string        `json:"suggested_changes,omitempty"`
+	AllowResubmission bool            `json:"allow_resubmission"`
 }
 
 // InfoRequest represents a request for more information
@@ -82,58 +82,58 @@ type InfoRequest struct {
 	RequestedBy         uuid.UUID  `json:"requested_by"`
 	InformationRequired []string   `json:"information_required"`
 	RequestComments     string     `json:"request_comments"`
-	DueDate            *time.Time  `json:"due_date,omitempty"`
+	DueDate             *time.Time `json:"due_date,omitempty"`
 }
 
 // UpdateInfoRequest represents an update to transaction information
 type UpdateInfoRequest struct {
-	TransactionID       uuid.UUID                  `json:"transaction_id"`
-	UpdatedBy           uuid.UUID                  `json:"updated_by"`
-	InformationUpdates  []InformationUpdate        `json:"information_updates"`
-	UpdateComments      string                     `json:"update_comments,omitempty"`
-	SupportingDocuments []SupportingDocument       `json:"supporting_documents,omitempty"`
+	TransactionID       uuid.UUID            `json:"transaction_id"`
+	UpdatedBy           uuid.UUID            `json:"updated_by"`
+	InformationUpdates  []InformationUpdate  `json:"information_updates"`
+	UpdateComments      string               `json:"update_comments,omitempty"`
+	SupportingDocuments []SupportingDocument `json:"supporting_documents,omitempty"`
 }
 
 // PendingApprovalsRequest represents a request for pending approvals
 type PendingApprovalsRequest struct {
-	UserID            *uuid.UUID   `json:"user_id,omitempty"`
-	RoleID            *uuid.UUID   `json:"role_id,omitempty"`
-	ApprovalTypes     []ApprovalType `json:"approval_types,omitempty"`
-	Priority          *Priority    `json:"priority,omitempty"`
-	OlderThan         *time.Time   `json:"older_than,omitempty"`
-	Limit             int32        `json:"limit"`
-	Offset            int32        `json:"offset"`
+	UserID        *uuid.UUID     `json:"user_id,omitempty"`
+	RoleID        *uuid.UUID     `json:"role_id,omitempty"`
+	ApprovalTypes []ApprovalType `json:"approval_types,omitempty"`
+	Priority      *Priority      `json:"priority,omitempty"`
+	OlderThan     *time.Time     `json:"older_than,omitempty"`
+	Limit         int32          `json:"limit"`
+	Offset        int32          `json:"offset"`
 }
 
 // EscalationRequest represents a request to escalate approval
 type EscalationRequest struct {
-	TransactionID     uuid.UUID         `json:"transaction_id"`
-	EscalatedBy       uuid.UUID         `json:"escalated_by"`
-	EscalationReason  EscalationReason  `json:"escalation_reason"`
-	EscalationLevel   int32             `json:"escalation_level"`
-	EscalationComment string            `json:"escalation_comment,omitempty"`
-	UrgentFlag        bool              `json:"urgent_flag"`
+	TransactionID     uuid.UUID        `json:"transaction_id"`
+	EscalatedBy       uuid.UUID        `json:"escalated_by"`
+	EscalationReason  EscalationReason `json:"escalation_reason"`
+	EscalationLevel   int32            `json:"escalation_level"`
+	EscalationComment string           `json:"escalation_comment,omitempty"`
+	UrgentFlag        bool             `json:"urgent_flag"`
 }
 
 // AuthorityValidationRequest represents a request to validate approval authority
 type AuthorityValidationRequest struct {
-	UserID          uuid.UUID    `json:"user_id"`
-	TransactionID   uuid.UUID    `json:"transaction_id"`
-	ApprovalLevel   int32        `json:"approval_level"`
-	ApprovalType    ApprovalType `json:"approval_type"`
+	UserID        uuid.UUID    `json:"user_id"`
+	TransactionID uuid.UUID    `json:"transaction_id"`
+	ApprovalLevel int32        `json:"approval_level"`
+	ApprovalType  ApprovalType `json:"approval_type"`
 }
 
 // ApprovalType represents the type of approval required
 type ApprovalType string
 
 const (
-	ApprovalTypeFinancial    ApprovalType = "FINANCIAL"
-	ApprovalTypeBudgetary    ApprovalType = "BUDGETARY"
-	ApprovalTypeCompliance   ApprovalType = "COMPLIANCE"
-	ApprovalTypeManagerial   ApprovalType = "MANAGERIAL"
-	ApprovalTypeExecutive    ApprovalType = "EXECUTIVE"
-	ApprovalTypeTechnical    ApprovalType = "TECHNICAL"
-	ApprovalTypeAudit        ApprovalType = "AUDIT"
+	ApprovalTypeFinancial  ApprovalType = "FINANCIAL"
+	ApprovalTypeBudgetary  ApprovalType = "BUDGETARY"
+	ApprovalTypeCompliance ApprovalType = "COMPLIANCE"
+	ApprovalTypeManagerial ApprovalType = "MANAGERIAL"
+	ApprovalTypeExecutive  ApprovalType = "EXECUTIVE"
+	ApprovalTypeTechnical  ApprovalType = "TECHNICAL"
+	ApprovalTypeAudit      ApprovalType = "AUDIT"
 )
 
 // Priority represents the priority level of approval
@@ -163,11 +163,11 @@ type RejectionReason string
 const (
 	RejectionReasonInsufficientDocumentation RejectionReason = "INSUFFICIENT_DOCUMENTATION"
 	RejectionReasonBudgetConstraints         RejectionReason = "BUDGET_CONSTRAINTS"
-	RejectionReasonPolicyViolation          RejectionReason = "POLICY_VIOLATION"
-	RejectionReasonComplianceIssue          RejectionReason = "COMPLIANCE_ISSUE"
-	RejectionReasonIncorrectInformation     RejectionReason = "INCORRECT_INFORMATION"
-	RejectionReasonDuplicateRequest         RejectionReason = "DUPLICATE_REQUEST"
-	RejectionReasonOther                    RejectionReason = "OTHER"
+	RejectionReasonPolicyViolation           RejectionReason = "POLICY_VIOLATION"
+	RejectionReasonComplianceIssue           RejectionReason = "COMPLIANCE_ISSUE"
+	RejectionReasonIncorrectInformation      RejectionReason = "INCORRECT_INFORMATION"
+	RejectionReasonDuplicateRequest          RejectionReason = "DUPLICATE_REQUEST"
+	RejectionReasonOther                     RejectionReason = "OTHER"
 )
 
 // EscalationReason represents the reason for escalation
@@ -184,10 +184,10 @@ const (
 
 // InformationUpdate represents an update to requested information
 type InformationUpdate struct {
-	Field         string `json:"field"`
-	OldValue      string `json:"old_value,omitempty"`
-	NewValue      string `json:"new_value"`
-	UpdateReason  string `json:"update_reason,omitempty"`
+	Field        string `json:"field"`
+	OldValue     string `json:"old_value,omitempty"`
+	NewValue     string `json:"new_value"`
+	UpdateReason string `json:"update_reason,omitempty"`
 }
 
 // SupportingDocument represents a supporting document
@@ -202,15 +202,15 @@ type SupportingDocument struct {
 
 // ApprovalWorkflowResult represents the result of submitting for approval
 type ApprovalWorkflowResult struct {
-	WorkflowID          uuid.UUID         `json:"workflow_id"`
-	TransactionID       uuid.UUID         `json:"transaction_id"`
-	WorkflowStatus      WorkflowStatus    `json:"workflow_status"`
-	ApprovalLevel       int32             `json:"approval_level"`
-	RequiredApprovers   []ApproverInfo    `json:"required_approvers"`
-	EstimatedCompletion *time.Time        `json:"estimated_completion,omitempty"`
-	WorkflowSteps       []WorkflowStep    `json:"workflow_steps"`
-	Success             bool              `json:"success"`
-	Errors              []string          `json:"errors,omitempty"`
+	WorkflowID          uuid.UUID      `json:"workflow_id"`
+	TransactionID       uuid.UUID      `json:"transaction_id"`
+	WorkflowStatus      WorkflowStatus `json:"workflow_status"`
+	ApprovalLevel       int32          `json:"approval_level"`
+	RequiredApprovers   []ApproverInfo `json:"required_approvers"`
+	EstimatedCompletion *time.Time     `json:"estimated_completion,omitempty"`
+	WorkflowSteps       []WorkflowStep `json:"workflow_steps"`
+	Success             bool           `json:"success"`
+	Errors              []string       `json:"errors,omitempty"`
 }
 
 // ApprovalResult represents the result of an approval action
@@ -228,45 +228,45 @@ type ApprovalResult struct {
 
 // RejectionResult represents the result of a rejection action
 type RejectionResult struct {
-	TransactionID       uuid.UUID         `json:"transaction_id"`
-	RejectionID         uuid.UUID         `json:"rejection_id"`
-	RejectionStatus     RejectionStatus   `json:"rejection_status"`
-	WorkflowStatus      WorkflowStatus    `json:"workflow_status"`
-	ResubmissionAllowed bool              `json:"resubmission_allowed"`
-	Success             bool              `json:"success"`
-	Errors              []string          `json:"errors,omitempty"`
+	TransactionID       uuid.UUID       `json:"transaction_id"`
+	RejectionID         uuid.UUID       `json:"rejection_id"`
+	RejectionStatus     RejectionStatus `json:"rejection_status"`
+	WorkflowStatus      WorkflowStatus  `json:"workflow_status"`
+	ResubmissionAllowed bool            `json:"resubmission_allowed"`
+	Success             bool            `json:"success"`
+	Errors              []string        `json:"errors,omitempty"`
 }
 
 // InfoRequestResult represents the result of requesting information
 type InfoRequestResult struct {
-	TransactionID   uuid.UUID `json:"transaction_id"`
-	InfoRequestID   uuid.UUID `json:"info_request_id"`
+	TransactionID   uuid.UUID     `json:"transaction_id"`
+	InfoRequestID   uuid.UUID     `json:"info_request_id"`
 	RequestStatus   RequestStatus `json:"request_status"`
-	ResponseDueDate *time.Time `json:"response_due_date,omitempty"`
-	Success         bool       `json:"success"`
-	Errors          []string   `json:"errors,omitempty"`
+	ResponseDueDate *time.Time    `json:"response_due_date,omitempty"`
+	Success         bool          `json:"success"`
+	Errors          []string      `json:"errors,omitempty"`
 }
 
 // UpdateInfoResult represents the result of updating information
 type UpdateInfoResult struct {
-	TransactionID         uuid.UUID         `json:"transaction_id"`
-	UpdateID              uuid.UUID         `json:"update_id"`
-	UpdateStatus          UpdateStatus      `json:"update_status"`
-	WorkflowReactivated   bool              `json:"workflow_reactivated"`
-	NextAction            *NextAction       `json:"next_action,omitempty"`
-	Success               bool              `json:"success"`
-	Errors                []string          `json:"errors,omitempty"`
+	TransactionID       uuid.UUID    `json:"transaction_id"`
+	UpdateID            uuid.UUID    `json:"update_id"`
+	UpdateStatus        UpdateStatus `json:"update_status"`
+	WorkflowReactivated bool         `json:"workflow_reactivated"`
+	NextAction          *NextAction  `json:"next_action,omitempty"`
+	Success             bool         `json:"success"`
+	Errors              []string     `json:"errors,omitempty"`
 }
 
 // ApprovalHistoryResult represents the approval history for a transaction
 type ApprovalHistoryResult struct {
-	TransactionID     uuid.UUID           `json:"transaction_id"`
-	WorkflowID        uuid.UUID           `json:"workflow_id"`
-	ApprovalHistory   []ApprovalRecord    `json:"approval_history"`
-	CurrentStatus     WorkflowStatus      `json:"current_status"`
-	CurrentLevel      int32               `json:"current_level"`
-	TotalLevelsRequired int32             `json:"total_levels_required"`
-	WorkflowDuration  time.Duration       `json:"workflow_duration"`
+	TransactionID       uuid.UUID        `json:"transaction_id"`
+	WorkflowID          uuid.UUID        `json:"workflow_id"`
+	ApprovalHistory     []ApprovalRecord `json:"approval_history"`
+	CurrentStatus       WorkflowStatus   `json:"current_status"`
+	CurrentLevel        int32            `json:"current_level"`
+	TotalLevelsRequired int32            `json:"total_levels_required"`
+	WorkflowDuration    time.Duration    `json:"workflow_duration"`
 }
 
 // PendingApprovalsResult represents pending approvals for a user
@@ -290,11 +290,11 @@ type EscalationResult struct {
 
 // AuthorityValidationResult represents the result of validating approval authority
 type AuthorityValidationResult struct {
-	HasAuthority      bool              `json:"has_authority"`
-	AuthorityLevel    int32             `json:"authority_level"`
-	AuthorityTypes    []ApprovalType    `json:"authority_types"`
-	ValidationReasons []string          `json:"validation_reasons,omitempty"`
-	Restrictions      []string          `json:"restrictions,omitempty"`
+	HasAuthority      bool           `json:"has_authority"`
+	AuthorityLevel    int32          `json:"authority_level"`
+	AuthorityTypes    []ApprovalType `json:"authority_types"`
+	ValidationReasons []string       `json:"validation_reasons,omitempty"`
+	Restrictions      []string       `json:"restrictions,omitempty"`
 }
 
 // Supporting types
@@ -314,21 +314,21 @@ const (
 type ApprovalStatus string
 
 const (
-	ApprovalStatusPending         ApprovalStatus = "PENDING"
-	ApprovalStatusApproved        ApprovalStatus = "APPROVED"
-	ApprovalStatusRejected        ApprovalStatus = "REJECTED"
-	ApprovalStatusConditional     ApprovalStatus = "CONDITIONAL"
-	ApprovalStatusDelegated       ApprovalStatus = "DELEGATED"
-	ApprovalStatusEscalated       ApprovalStatus = "ESCALATED"
-	ApprovalStatusInfoRequested   ApprovalStatus = "INFO_REQUESTED"
+	ApprovalStatusPending       ApprovalStatus = "PENDING"
+	ApprovalStatusApproved      ApprovalStatus = "APPROVED"
+	ApprovalStatusRejected      ApprovalStatus = "REJECTED"
+	ApprovalStatusConditional   ApprovalStatus = "CONDITIONAL"
+	ApprovalStatusDelegated     ApprovalStatus = "DELEGATED"
+	ApprovalStatusEscalated     ApprovalStatus = "ESCALATED"
+	ApprovalStatusInfoRequested ApprovalStatus = "INFO_REQUESTED"
 )
 
 type RejectionStatus string
 
 const (
-	RejectionStatusRejected        RejectionStatus = "REJECTED"
+	RejectionStatusRejected            RejectionStatus = "REJECTED"
 	RejectionStatusResubmissionAllowed RejectionStatus = "RESUBMISSION_ALLOWED"
-	RejectionStatusFinalRejection  RejectionStatus = "FINAL_REJECTION"
+	RejectionStatusFinalRejection      RejectionStatus = "FINAL_REJECTION"
 )
 
 type RequestStatus string
@@ -357,48 +357,48 @@ type ApproverInfo struct {
 }
 
 type WorkflowStep struct {
-	StepID          uuid.UUID      `json:"step_id"`
-	StepNumber      int32          `json:"step_number"`
-	StepName        string         `json:"step_name"`
-	StepType        string         `json:"step_type"`
-	Status          WorkflowStatus `json:"status"`
-	Approvers       []ApproverInfo `json:"approvers"`
-	CompletedAt     *time.Time     `json:"completed_at,omitempty"`
-	EstimatedTime   time.Duration  `json:"estimated_time"`
+	StepID        uuid.UUID      `json:"step_id"`
+	StepNumber    int32          `json:"step_number"`
+	StepName      string         `json:"step_name"`
+	StepType      string         `json:"step_type"`
+	Status        WorkflowStatus `json:"status"`
+	Approvers     []ApproverInfo `json:"approvers"`
+	CompletedAt   *time.Time     `json:"completed_at,omitempty"`
+	EstimatedTime time.Duration  `json:"estimated_time"`
 }
 
 type FinalDecision struct {
-	Decision      string     `json:"decision"`
-	DecisionDate  time.Time  `json:"decision_date"`
-	DecisionBy    uuid.UUID  `json:"decision_by"`
-	DecisionNotes string     `json:"decision_notes,omitempty"`
+	Decision      string    `json:"decision"`
+	DecisionDate  time.Time `json:"decision_date"`
+	DecisionBy    uuid.UUID `json:"decision_by"`
+	DecisionNotes string    `json:"decision_notes,omitempty"`
 }
 
 type ApprovalRecord struct {
-	ApprovalID      uuid.UUID      `json:"approval_id"`
-	ApproverID      uuid.UUID      `json:"approver_id"`
-	ApproverName    string         `json:"approver_name"`
-	ApprovalLevel   int32          `json:"approval_level"`
-	ApprovalAction  ApprovalAction `json:"approval_action"`
-	ApprovalStatus  ApprovalStatus `json:"approval_status"`
-	ApprovalDate    time.Time      `json:"approval_date"`
-	Comments        string         `json:"comments,omitempty"`
-	TimeToDecision  time.Duration  `json:"time_to_decision"`
+	ApprovalID     uuid.UUID      `json:"approval_id"`
+	ApproverID     uuid.UUID      `json:"approver_id"`
+	ApproverName   string         `json:"approver_name"`
+	ApprovalLevel  int32          `json:"approval_level"`
+	ApprovalAction ApprovalAction `json:"approval_action"`
+	ApprovalStatus ApprovalStatus `json:"approval_status"`
+	ApprovalDate   time.Time      `json:"approval_date"`
+	Comments       string         `json:"comments,omitempty"`
+	TimeToDecision time.Duration  `json:"time_to_decision"`
 }
 
 type PendingApproval struct {
-	TransactionID   uuid.UUID    `json:"transaction_id"`
-	TransactionNumber string     `json:"transaction_number"`
-	TransactionDescription string `json:"transaction_description"`
-	Amount          string       `json:"amount"`
-	Currency        string       `json:"currency"`
-	SubmittedBy     uuid.UUID    `json:"submitted_by"`
-	SubmittedAt     time.Time    `json:"submitted_at"`
-	ApprovalType    ApprovalType `json:"approval_type"`
-	Priority        Priority     `json:"priority"`
-	DueDate         *time.Time   `json:"due_date,omitempty"`
-	IsOverdue       bool         `json:"is_overdue"`
-	DaysWaiting     int32        `json:"days_waiting"`
+	TransactionID          uuid.UUID    `json:"transaction_id"`
+	TransactionNumber      string       `json:"transaction_number"`
+	TransactionDescription string       `json:"transaction_description"`
+	Amount                 string       `json:"amount"`
+	Currency               string       `json:"currency"`
+	SubmittedBy            uuid.UUID    `json:"submitted_by"`
+	SubmittedAt            time.Time    `json:"submitted_at"`
+	ApprovalType           ApprovalType `json:"approval_type"`
+	Priority               Priority     `json:"priority"`
+	DueDate                *time.Time   `json:"due_date,omitempty"`
+	IsOverdue              bool         `json:"is_overdue"`
+	DaysWaiting            int32        `json:"days_waiting"`
 }
 
 type NextAction struct {
@@ -441,7 +441,7 @@ func (e *transactionWorkflowEngine) SubmitForApproval(ctx context.Context, req S
 		RequiredApprovers: []ApproverInfo{},
 		WorkflowSteps:     []WorkflowStep{},
 		Success:           false,
-		Errors:           []string{},
+		Errors:            []string{},
 	}
 
 	span.SetAttributes(
@@ -459,7 +459,7 @@ func (e *transactionWorkflowEngine) SubmitForApproval(ctx context.Context, req S
 	}
 
 	// 2. Validate transaction is in correct state for approval
-	if transaction.TransactionStatus != domain.TransactionStatusDraft && 
+	if transaction.TransactionStatus != domain.TransactionStatusDraft &&
 		transaction.TransactionStatus != domain.TransactionStatusPendingApproval {
 		result.Errors = append(result.Errors, fmt.Sprintf("Transaction is not in a state that can be submitted for approval: %s", transaction.TransactionStatus))
 		return result, fmt.Errorf("transaction cannot be submitted for approval")
@@ -573,7 +573,7 @@ func (e *transactionWorkflowEngine) ApproveTransaction(ctx context.Context, req 
 
 	// 5. Determine if workflow is complete or needs next level
 	isComplete, nextLevel, nextApprovers := e.determineWorkflowProgress(ctx, transaction, req.ApprovalLevel)
-	
+
 	result.WorkflowComplete = isComplete
 	if !isComplete {
 		result.NextApprovalLevel = &nextLevel
@@ -646,7 +646,7 @@ func (e *transactionWorkflowEngine) RejectTransaction(ctx context.Context, req R
 	// Update transaction status
 	transaction.TransactionStatus = domain.TransactionStatusRejected
 	transaction.ApprovalStatus = domain.ApprovalStatusRejected
-	
+
 	err = e.transactionRepository.Update(ctx, transaction)
 	if err != nil {
 		result.Errors = append(result.Errors, fmt.Sprintf("Failed to update transaction: %v", err))
@@ -704,13 +704,13 @@ func (e *transactionWorkflowEngine) GetApprovalHistory(ctx context.Context, tran
 	defer span.End()
 
 	result := &ApprovalHistoryResult{
-		TransactionID:         transactionID,
-		WorkflowID:            uuid.New(), // Would be loaded from database
-		ApprovalHistory:       []ApprovalRecord{},
-		CurrentStatus:         WorkflowStatusPending,
-		CurrentLevel:          1,
-		TotalLevelsRequired:   1,
-		WorkflowDuration:      time.Duration(0),
+		TransactionID:       transactionID,
+		WorkflowID:          uuid.New(), // Would be loaded from database
+		ApprovalHistory:     []ApprovalRecord{},
+		CurrentStatus:       WorkflowStatusPending,
+		CurrentLevel:        1,
+		TotalLevelsRequired: 1,
+		WorkflowDuration:    time.Duration(0),
 	}
 
 	// TODO: Implement approval history loading from database
@@ -731,7 +731,7 @@ func (e *transactionWorkflowEngine) GetPendingApprovals(ctx context.Context, req
 
 	// TODO: Implement pending approvals loading from database
 	// This would typically involve querying pending transactions and matching with user roles/permissions
-	
+
 	return result, nil
 }
 
@@ -779,7 +779,7 @@ func (e *transactionWorkflowEngine) ValidateApprovalAuthority(ctx context.Contex
 func (e *transactionWorkflowEngine) determineApprovalWorkflow(ctx context.Context, transaction *domain.Transaction, approvalType ApprovalType, priority Priority) ([]WorkflowStep, error) {
 	// Simplified workflow determination
 	// In production, this would be more complex based on transaction amount, type, etc.
-	
+
 	steps := []WorkflowStep{
 		{
 			StepID:        uuid.New(),
@@ -818,20 +818,20 @@ func (e *transactionWorkflowEngine) extractApproversFromSteps(steps []WorkflowSt
 
 func (e *transactionWorkflowEngine) determineWorkflowProgress(ctx context.Context, transaction *domain.Transaction, currentLevel int32) (bool, int32, []ApproverInfo) {
 	// Simplified logic - in production this would check actual workflow configuration
-	
+
 	// For now, assume single level approval for most transactions
 	maxLevels := int32(1)
-	
+
 	// High value transactions need 2 levels
 	if transaction.TotalDebitAmount.GreaterThan(decimal.NewFromInt(10000)) {
 		maxLevels = 2
 	}
-	
+
 	isComplete := currentLevel >= maxLevels
 	nextLevel := currentLevel + 1
-	
+
 	// TODO: Load next approvers from configuration
 	var nextApprovers []ApproverInfo
-	
+
 	return isComplete, nextLevel, nextApprovers
 }

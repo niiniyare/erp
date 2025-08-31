@@ -80,18 +80,18 @@ func ParseNormalBalance(s string) (NormalBalance, error) {
 type TransactionType string
 
 const (
-	TransactionTypeManual        TransactionType = "MANUAL"         // User-created transactions
-	TransactionTypeSystem        TransactionType = "SYSTEM"         // System-generated transactions
-	TransactionTypeImported      TransactionType = "IMPORTED"       // Imported from external systems
-	TransactionTypeRecurring     TransactionType = "RECURRING"      // Auto-generated recurring transactions
-	TransactionTypeAdjustment    TransactionType = "ADJUSTMENT"     // Correcting/adjusting entries
-	TransactionTypeClosing       TransactionType = "CLOSING"        // Period-end closing entries
-	TransactionTypeJournal       TransactionType = "JOURNAL"
-	TransactionTypeJournalEntry  TransactionType = "JOURNAL_ENTRY"  // Journal entry transactions
-	TransactionTypeOpening       TransactionType = "OPENING"        // Opening balance transactions
-	TransactionTypeInvoice       TransactionType = "INVOICE"
-	TransactionTypePayment       TransactionType = "PAYMENT"
-	TransactionTypePurchase      TransactionType = "PURCHASE"
+	TransactionTypeManual       TransactionType = "MANUAL"     // User-created transactions
+	TransactionTypeSystem       TransactionType = "SYSTEM"     // System-generated transactions
+	TransactionTypeImported     TransactionType = "IMPORTED"   // Imported from external systems
+	TransactionTypeRecurring    TransactionType = "RECURRING"  // Auto-generated recurring transactions
+	TransactionTypeAdjustment   TransactionType = "ADJUSTMENT" // Correcting/adjusting entries
+	TransactionTypeClosing      TransactionType = "CLOSING"    // Period-end closing entries
+	TransactionTypeJournal      TransactionType = "JOURNAL"
+	TransactionTypeJournalEntry TransactionType = "JOURNAL_ENTRY" // Journal entry transactions
+	TransactionTypeOpening      TransactionType = "OPENING"       // Opening balance transactions
+	TransactionTypeInvoice      TransactionType = "INVOICE"
+	TransactionTypePayment      TransactionType = "PAYMENT"
+	TransactionTypePurchase     TransactionType = "PURCHASE"
 )
 
 // IsValid validates if the TransactionType is one of the defined constants
@@ -191,17 +191,17 @@ func ParseTransactionStatus(s string) (TransactionStatus, error) {
 type ApprovalStatus string
 
 const (
-	ApprovalStatusNotRequired        ApprovalStatus = "NOT_REQUIRED"        // No approval needed
-	ApprovalStatusPending            ApprovalStatus = "PENDING"             // Waiting for approval
-	ApprovalStatusApproved           ApprovalStatus = "APPROVED"            // Approved by authorized user
-	ApprovalStatusRejected           ApprovalStatus = "REJECTED"            // Rejected by approver
-	ApprovalStatusPartiallyApproved  ApprovalStatus = "PARTIALLY_APPROVED"  // Partially approved (multi-level approval)
+	ApprovalStatusNotRequired       ApprovalStatus = "NOT_REQUIRED"       // No approval needed
+	ApprovalStatusPending           ApprovalStatus = "PENDING"            // Waiting for approval
+	ApprovalStatusApproved          ApprovalStatus = "APPROVED"           // Approved by authorized user
+	ApprovalStatusRejected          ApprovalStatus = "REJECTED"           // Rejected by approver
+	ApprovalStatusPartiallyApproved ApprovalStatus = "PARTIALLY_APPROVED" // Partially approved (multi-level approval)
 )
 
 // IsValid validates if the ApprovalStatus is one of the defined constants
 func (as ApprovalStatus) IsValid() bool {
 	switch as {
-	case ApprovalStatusNotRequired, ApprovalStatusPending, ApprovalStatusApproved, 
+	case ApprovalStatusNotRequired, ApprovalStatusPending, ApprovalStatusApproved,
 		ApprovalStatusRejected, ApprovalStatusPartiallyApproved:
 		return true
 	default:

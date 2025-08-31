@@ -18,33 +18,33 @@ import (
 type DoubleEntryValidator interface {
 	// ValidateTransaction validates a complete transaction for double-entry compliance
 	ValidateTransaction(ctx context.Context, transaction *domain.Transaction, accounts map[uuid.UUID]*domain.Accounts) *ValidationResult
-	
+
 	// ValidateEntries validates transaction entries for double-entry rules
 	ValidateEntries(ctx context.Context, entries []domain.TransactionEntry, accounts map[uuid.UUID]*domain.Accounts) *ValidationResult
-	
+
 	// ValidateBalance validates that debits equal credits
 	ValidateBalance(ctx context.Context, transaction *domain.Transaction) *ValidationResult
-	
+
 	// ValidateAccountCompatibility validates entries against account types
 	ValidateAccountCompatibility(ctx context.Context, entries []domain.TransactionEntry, accounts map[uuid.UUID]*domain.Accounts) *ValidationResult
-	
+
 	// ValidateCurrencyConsistency validates multi-currency transaction rules
 	ValidateCurrencyConsistency(ctx context.Context, transaction *domain.Transaction, accounts map[uuid.UUID]*domain.Accounts) *ValidationResult
-	
+
 	// ValidateBusinessRules validates complex business rules
 	ValidateBusinessRules(ctx context.Context, transaction *domain.Transaction, accounts map[uuid.UUID]*domain.Accounts) *ValidationResult
 }
 
 // ValidationResult represents the result of double-entry validation
 type ValidationResult struct {
-	IsValid          bool                       `json:"is_valid"`
-	ValidationLevel  ValidationLevel            `json:"validation_level"`
-	Errors           []ValidationError          `json:"errors,omitempty"`
-	Warnings         []ValidationWarning        `json:"warnings,omitempty"`
-	BusinessRules    []BusinessRuleResult       `json:"business_rules,omitempty"`
-	BalanceCheck     *BalanceValidationResult   `json:"balance_check,omitempty"`
-	CurrencyCheck    *CurrencyValidationResult  `json:"currency_check,omitempty"`
-	AccountCheck     *AccountValidationResult   `json:"account_check,omitempty"`
+	IsValid         bool                      `json:"is_valid"`
+	ValidationLevel ValidationLevel           `json:"validation_level"`
+	Errors          []ValidationError         `json:"errors,omitempty"`
+	Warnings        []ValidationWarning       `json:"warnings,omitempty"`
+	BusinessRules   []BusinessRuleResult      `json:"business_rules,omitempty"`
+	BalanceCheck    *BalanceValidationResult  `json:"balance_check,omitempty"`
+	CurrencyCheck   *CurrencyValidationResult `json:"currency_check,omitempty"`
+	AccountCheck    *AccountValidationResult  `json:"account_check,omitempty"`
 }
 
 // ValidationLevel represents the severity of validation issues
@@ -59,12 +59,12 @@ const (
 
 // ValidationError represents a validation error
 type ValidationError struct {
-	Field       string `json:"field"`
-	Message     string `json:"message"`
-	Code        string `json:"code"`
-	Severity    string `json:"severity"`
-	Value       any    `json:"value,omitempty"`
-	ExpectedValue any  `json:"expected_value,omitempty"`
+	Field         string `json:"field"`
+	Message       string `json:"message"`
+	Code          string `json:"code"`
+	Severity      string `json:"severity"`
+	Value         any    `json:"value,omitempty"`
+	ExpectedValue any    `json:"expected_value,omitempty"`
 }
 
 // ValidationWarning represents a validation warning
@@ -77,38 +77,38 @@ type ValidationWarning struct {
 
 // BusinessRuleResult represents the result of a business rule validation
 type BusinessRuleResult struct {
-	RuleID      string `json:"rule_id"`
-	RuleName    string `json:"rule_name"`
-	Passed      bool   `json:"passed"`
-	Message     string `json:"message,omitempty"`
-	Severity    string `json:"severity"`
+	RuleID   string `json:"rule_id"`
+	RuleName string `json:"rule_name"`
+	Passed   bool   `json:"passed"`
+	Message  string `json:"message,omitempty"`
+	Severity string `json:"severity"`
 }
 
 // BalanceValidationResult represents balance validation details
 type BalanceValidationResult struct {
-	TotalDebits   decimal.Decimal `json:"total_debits"`
-	TotalCredits  decimal.Decimal `json:"total_credits"`
-	Difference    decimal.Decimal `json:"difference"`
-	IsBalanced    bool           `json:"is_balanced"`
-	Tolerance     decimal.Decimal `json:"tolerance"`
+	TotalDebits  decimal.Decimal `json:"total_debits"`
+	TotalCredits decimal.Decimal `json:"total_credits"`
+	Difference   decimal.Decimal `json:"difference"`
+	IsBalanced   bool            `json:"is_balanced"`
+	Tolerance    decimal.Decimal `json:"tolerance"`
 }
 
 // CurrencyValidationResult represents currency validation details
 type CurrencyValidationResult struct {
-	BaseCurrency       string          `json:"base_currency"`
-	MultiCurrency      bool            `json:"multi_currency"`
-	CurrenciesUsed     []string        `json:"currencies_used"`
-	ExchangeRateValid  bool            `json:"exchange_rate_valid"`
-	ConversionAccurate bool            `json:"conversion_accurate"`
+	BaseCurrency       string   `json:"base_currency"`
+	MultiCurrency      bool     `json:"multi_currency"`
+	CurrenciesUsed     []string `json:"currencies_used"`
+	ExchangeRateValid  bool     `json:"exchange_rate_valid"`
+	ConversionAccurate bool     `json:"conversion_accurate"`
 }
 
 // AccountValidationResult represents account validation details
 type AccountValidationResult struct {
-	AccountsValidated int                    `json:"accounts_validated"`
-	InactiveAccounts  []uuid.UUID            `json:"inactive_accounts,omitempty"`
-	MissingAccounts   []uuid.UUID            `json:"missing_accounts,omitempty"`
-	AccountTypes      map[string]int         `json:"account_types"`
-	NormalBalances    map[string]int         `json:"normal_balances"`
+	AccountsValidated int            `json:"accounts_validated"`
+	InactiveAccounts  []uuid.UUID    `json:"inactive_accounts,omitempty"`
+	MissingAccounts   []uuid.UUID    `json:"missing_accounts,omitempty"`
+	AccountTypes      map[string]int `json:"account_types"`
+	NormalBalances    map[string]int `json:"normal_balances"`
 }
 
 // doubleEntryValidator implements DoubleEntryValidator

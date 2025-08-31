@@ -18,22 +18,22 @@ import (
 type ExchangeRateEngine interface {
 	// GetExchangeRate retrieves the exchange rate between two currencies
 	GetExchangeRate(ctx context.Context, req GetExchangeRateRequest) (*ExchangeRateResult, error)
-	
+
 	// ConvertAmount converts an amount from one currency to another
 	ConvertAmount(ctx context.Context, req ConvertAmountRequest) (*ConvertAmountResult, error)
-	
+
 	// ValidateMultiCurrencyTransaction validates multi-currency transaction requirements
 	ValidateMultiCurrencyTransaction(ctx context.Context, transaction *domain.Transaction) (*MultiCurrencyValidationResult, error)
-	
+
 	// UpdateExchangeRate updates or creates an exchange rate
 	UpdateExchangeRate(ctx context.Context, req UpdateExchangeRateRequest) (*UpdateExchangeRateResult, error)
-	
+
 	// GetHistoricalRate retrieves historical exchange rate for a specific date
 	GetHistoricalRate(ctx context.Context, req HistoricalRateRequest) (*ExchangeRateResult, error)
-	
+
 	// GetCurrencyPairRates gets all available rates for a currency pair
 	GetCurrencyPairRates(ctx context.Context, req CurrencyPairRatesRequest) (*CurrencyPairRatesResult, error)
-	
+
 	// RefreshRates refreshes exchange rates from external sources
 	RefreshRates(ctx context.Context, req RefreshRatesRequest) (*RefreshRatesResult, error)
 }
@@ -48,13 +48,13 @@ type GetExchangeRateRequest struct {
 
 // ConvertAmountRequest represents a request to convert amount between currencies
 type ConvertAmountRequest struct {
-	Amount       decimal.Decimal `json:"amount"`
-	FromCurrency string          `json:"from_currency"`
-	ToCurrency   string          `json:"to_currency"`
-	RateDate     *time.Time      `json:"rate_date,omitempty"`
-	RateType     RateType        `json:"rate_type"`
-	RoundingMode RoundingMode    `json:"rounding_mode"`
-	DecimalPlaces int32          `json:"decimal_places"`
+	Amount        decimal.Decimal `json:"amount"`
+	FromCurrency  string          `json:"from_currency"`
+	ToCurrency    string          `json:"to_currency"`
+	RateDate      *time.Time      `json:"rate_date,omitempty"`
+	RateType      RateType        `json:"rate_type"`
+	RoundingMode  RoundingMode    `json:"rounding_mode"`
+	DecimalPlaces int32           `json:"decimal_places"`
 }
 
 // UpdateExchangeRateRequest represents a request to update exchange rate
@@ -98,12 +98,12 @@ type RefreshRatesRequest struct {
 type RateType string
 
 const (
-	RateTypeSpot     RateType = "SPOT"     // Current market rate
-	RateTypeAverage  RateType = "AVERAGE"  // Daily average rate
-	RateTypeClosing  RateType = "CLOSING"  // End of day rate
-	RateTypeOpening  RateType = "OPENING"  // Start of day rate
-	RateTypeBuying   RateType = "BUYING"   // Bank buying rate
-	RateTypeSelling  RateType = "SELLING"  // Bank selling rate
+	RateTypeSpot    RateType = "SPOT"    // Current market rate
+	RateTypeAverage RateType = "AVERAGE" // Daily average rate
+	RateTypeClosing RateType = "CLOSING" // End of day rate
+	RateTypeOpening RateType = "OPENING" // Start of day rate
+	RateTypeBuying  RateType = "BUYING"  // Bank buying rate
+	RateTypeSelling RateType = "SELLING" // Bank selling rate
 )
 
 // RoundingMode represents how to round converted amounts
@@ -124,78 +124,78 @@ type CurrencyPair struct {
 
 // ExchangeRateResult represents the result of getting exchange rate
 type ExchangeRateResult struct {
-	FromCurrency  string          `json:"from_currency"`
-	ToCurrency    string          `json:"to_currency"`
-	Rate          decimal.Decimal `json:"rate"`
-	InverseRate   decimal.Decimal `json:"inverse_rate"`
-	RateDate      time.Time       `json:"rate_date"`
-	RateType      RateType        `json:"rate_type"`
-	Source        string          `json:"source"`
-	IsEstimated   bool            `json:"is_estimated"`   // If rate was estimated/calculated
-	LastUpdated   time.Time       `json:"last_updated"`
+	FromCurrency string          `json:"from_currency"`
+	ToCurrency   string          `json:"to_currency"`
+	Rate         decimal.Decimal `json:"rate"`
+	InverseRate  decimal.Decimal `json:"inverse_rate"`
+	RateDate     time.Time       `json:"rate_date"`
+	RateType     RateType        `json:"rate_type"`
+	Source       string          `json:"source"`
+	IsEstimated  bool            `json:"is_estimated"` // If rate was estimated/calculated
+	LastUpdated  time.Time       `json:"last_updated"`
 }
 
 // ConvertAmountResult represents the result of amount conversion
 type ConvertAmountResult struct {
-	OriginalAmount    decimal.Decimal      `json:"original_amount"`
-	ConvertedAmount   decimal.Decimal      `json:"converted_amount"`
-	FromCurrency      string               `json:"from_currency"`
-	ToCurrency        string               `json:"to_currency"`
-	ExchangeRate      *ExchangeRateResult  `json:"exchange_rate"`
-	ConversionDetails *ConversionDetails   `json:"conversion_details"`
+	OriginalAmount    decimal.Decimal     `json:"original_amount"`
+	ConvertedAmount   decimal.Decimal     `json:"converted_amount"`
+	FromCurrency      string              `json:"from_currency"`
+	ToCurrency        string              `json:"to_currency"`
+	ExchangeRate      *ExchangeRateResult `json:"exchange_rate"`
+	ConversionDetails *ConversionDetails  `json:"conversion_details"`
 }
 
 // ConversionDetails provides details about the conversion calculation
 type ConversionDetails struct {
-	RateUsed         decimal.Decimal `json:"rate_used"`
-	RoundingApplied  bool            `json:"rounding_applied"`
-	RoundingMode     RoundingMode    `json:"rounding_mode"`
-	DecimalPlaces    int32           `json:"decimal_places"`
-	RawAmount        decimal.Decimal `json:"raw_amount"`        // Before rounding
-	ConversionTime   time.Time       `json:"conversion_time"`
+	RateUsed        decimal.Decimal `json:"rate_used"`
+	RoundingApplied bool            `json:"rounding_applied"`
+	RoundingMode    RoundingMode    `json:"rounding_mode"`
+	DecimalPlaces   int32           `json:"decimal_places"`
+	RawAmount       decimal.Decimal `json:"raw_amount"` // Before rounding
+	ConversionTime  time.Time       `json:"conversion_time"`
 }
 
 // UpdateExchangeRateResult represents the result of updating exchange rate
 type UpdateExchangeRateResult struct {
-	Success         bool                `json:"success"`
-	ExchangeRate    *ExchangeRateResult `json:"exchange_rate,omitempty"`
-	PreviousRate    *ExchangeRateResult `json:"previous_rate,omitempty"`
-	PercentChange   decimal.Decimal     `json:"percent_change"`
-	UpdatedAt       time.Time           `json:"updated_at"`
-	Errors          []string            `json:"errors,omitempty"`
+	Success       bool                `json:"success"`
+	ExchangeRate  *ExchangeRateResult `json:"exchange_rate,omitempty"`
+	PreviousRate  *ExchangeRateResult `json:"previous_rate,omitempty"`
+	PercentChange decimal.Decimal     `json:"percent_change"`
+	UpdatedAt     time.Time           `json:"updated_at"`
+	Errors        []string            `json:"errors,omitempty"`
 }
 
 // CurrencyPairRatesResult represents historical rates for a currency pair
 type CurrencyPairRatesResult struct {
-	FromCurrency   string                `json:"from_currency"`
-	ToCurrency     string                `json:"to_currency"`
-	Rates          []ExchangeRateResult  `json:"rates"`
-	DateRange      DateRange             `json:"date_range"`
-	RateType       RateType              `json:"rate_type"`
-	TotalRecords   int32                 `json:"total_records"`
+	FromCurrency string               `json:"from_currency"`
+	ToCurrency   string               `json:"to_currency"`
+	Rates        []ExchangeRateResult `json:"rates"`
+	DateRange    DateRange            `json:"date_range"`
+	RateType     RateType             `json:"rate_type"`
+	TotalRecords int32                `json:"total_records"`
 }
 
 // RefreshRatesResult represents the result of refreshing rates
 type RefreshRatesResult struct {
-	TotalPairsProcessed   int32                    `json:"total_pairs_processed"`
-	SuccessfulUpdates     int32                    `json:"successful_updates"`
-	FailedUpdates         int32                    `json:"failed_updates"`
-	UpdatedRates          []ExchangeRateResult     `json:"updated_rates"`
-	FailedPairs           []CurrencyPairError      `json:"failed_pairs,omitempty"`
-	RefreshTime           time.Time                `json:"refresh_time"`
-	ProcessingTime        time.Duration            `json:"processing_time"`
+	TotalPairsProcessed int32                `json:"total_pairs_processed"`
+	SuccessfulUpdates   int32                `json:"successful_updates"`
+	FailedUpdates       int32                `json:"failed_updates"`
+	UpdatedRates        []ExchangeRateResult `json:"updated_rates"`
+	FailedPairs         []CurrencyPairError  `json:"failed_pairs,omitempty"`
+	RefreshTime         time.Time            `json:"refresh_time"`
+	ProcessingTime      time.Duration        `json:"processing_time"`
 }
 
 // MultiCurrencyValidationResult represents validation results for multi-currency transactions
 type MultiCurrencyValidationResult struct {
-	IsValid              bool                     `json:"is_valid"`
-	BaseCurrency         string                   `json:"base_currency"`
-	ForeignCurrencies    []string                 `json:"foreign_currencies"`
-	MissingRates         []CurrencyPair           `json:"missing_rates,omitempty"`
-	OutdatedRates        []OutdatedRate           `json:"outdated_rates,omitempty"`
-	ConversionErrors     []ConversionError        `json:"conversion_errors,omitempty"`
-	TotalConvertedAmount decimal.Decimal          `json:"total_converted_amount"`
-	ConversionDetails    []EntryConversionDetail  `json:"conversion_details"`
+	IsValid              bool                    `json:"is_valid"`
+	BaseCurrency         string                  `json:"base_currency"`
+	ForeignCurrencies    []string                `json:"foreign_currencies"`
+	MissingRates         []CurrencyPair          `json:"missing_rates,omitempty"`
+	OutdatedRates        []OutdatedRate          `json:"outdated_rates,omitempty"`
+	ConversionErrors     []ConversionError       `json:"conversion_errors,omitempty"`
+	TotalConvertedAmount decimal.Decimal         `json:"total_converted_amount"`
+	ConversionDetails    []EntryConversionDetail `json:"conversion_details"`
 }
 
 // DateRange represents a date range
@@ -213,49 +213,49 @@ type CurrencyPairError struct {
 
 // OutdatedRate represents an outdated exchange rate
 type OutdatedRate struct {
-	CurrencyPair CurrencyPair `json:"currency_pair"`
-	RateDate     time.Time    `json:"rate_date"`
-	DaysOld      int32        `json:"days_old"`
+	CurrencyPair CurrencyPair    `json:"currency_pair"`
+	RateDate     time.Time       `json:"rate_date"`
+	DaysOld      int32           `json:"days_old"`
 	Rate         decimal.Decimal `json:"rate"`
 }
 
 // ConversionError represents a conversion error
 type ConversionError struct {
-	EntryIndex    int32       `json:"entry_index"`
-	CurrencyPair  CurrencyPair `json:"currency_pair"`
-	Error         string      `json:"error"`
-	ErrorCode     string      `json:"error_code"`
+	EntryIndex   int32        `json:"entry_index"`
+	CurrencyPair CurrencyPair `json:"currency_pair"`
+	Error        string       `json:"error"`
+	ErrorCode    string       `json:"error_code"`
 }
 
 // EntryConversionDetail represents conversion details for a transaction entry
 type EntryConversionDetail struct {
-	EntryID              uuid.UUID           `json:"entry_id"`
-	OriginalAmount       decimal.Decimal     `json:"original_amount"`
-	OriginalCurrency     string              `json:"original_currency"`
-	ConvertedAmount      decimal.Decimal     `json:"converted_amount"`
-	BaseCurrency         string              `json:"base_currency"`
-	ExchangeRate         decimal.Decimal     `json:"exchange_rate"`
-	ConversionTimestamp  time.Time           `json:"conversion_timestamp"`
+	EntryID             uuid.UUID       `json:"entry_id"`
+	OriginalAmount      decimal.Decimal `json:"original_amount"`
+	OriginalCurrency    string          `json:"original_currency"`
+	ConvertedAmount     decimal.Decimal `json:"converted_amount"`
+	BaseCurrency        string          `json:"base_currency"`
+	ExchangeRate        decimal.Decimal `json:"exchange_rate"`
+	ConversionTimestamp time.Time       `json:"conversion_timestamp"`
 }
 
 // exchangeRateEngine implements ExchangeRateEngine
 type exchangeRateEngine struct {
-	tracing          tracing.TracingService
-	rateCache        *RateCache
-	externalProvider ExternalRateProvider
+	tracing              tracing.TracingService
+	rateCache            *RateCache
+	externalProvider     ExternalRateProvider
 	defaultDecimalPlaces int32
 	defaultRoundingMode  RoundingMode
-	maxRateAge          time.Duration
+	maxRateAge           time.Duration
 }
 
 // ExchangeRateEngineDeps represents dependencies for the exchange rate engine
 type ExchangeRateEngineDeps struct {
-	Tracing                 tracing.TracingService
-	ExternalProvider        ExternalRateProvider
-	DefaultDecimalPlaces    *int32
-	DefaultRoundingMode     *RoundingMode
-	MaxRateAge             *time.Duration
-	CacheTTL               *time.Duration
+	Tracing              tracing.TracingService
+	ExternalProvider     ExternalRateProvider
+	DefaultDecimalPlaces *int32
+	DefaultRoundingMode  *RoundingMode
+	MaxRateAge           *time.Duration
+	CacheTTL             *time.Duration
 }
 
 // ExternalRateProvider interface for external rate providers
@@ -300,11 +300,11 @@ func NewExchangeRateEngine(deps ExchangeRateEngineDeps) ExchangeRateEngine {
 
 	return &exchangeRateEngine{
 		tracing:              deps.Tracing,
-		rateCache:           NewRateCache(cacheTTL),
-		externalProvider:    deps.ExternalProvider,
+		rateCache:            NewRateCache(cacheTTL),
+		externalProvider:     deps.ExternalProvider,
 		defaultDecimalPlaces: decimalPlaces,
 		defaultRoundingMode:  roundingMode,
-		maxRateAge:          maxAge,
+		maxRateAge:           maxAge,
 	}
 }
 
@@ -411,7 +411,7 @@ func (e *exchangeRateEngine) ConvertAmount(ctx context.Context, req ConvertAmoun
 
 	// Calculate converted amount
 	rawAmount := req.Amount.Mul(exchangeRate.Rate)
-	
+
 	// Apply rounding
 	roundedAmount := e.applyRounding(rawAmount, req.RoundingMode, req.DecimalPlaces)
 
@@ -535,13 +535,13 @@ func (e *exchangeRateEngine) ValidateMultiCurrencyTransaction(ctx context.Contex
 
 			result.TotalConvertedAmount = result.TotalConvertedAmount.Add(convertResult.ConvertedAmount)
 			result.ConversionDetails = append(result.ConversionDetails, EntryConversionDetail{
-				EntryID:              entry.ID,
-				OriginalAmount:       convertReq.Amount,
-				OriginalCurrency:     *entry.OriginalCurrency,
-				ConvertedAmount:      convertResult.ConvertedAmount,
-				BaseCurrency:         transaction.CurrencyCode,
-				ExchangeRate:         convertResult.ExchangeRate.Rate,
-				ConversionTimestamp:  time.Now(),
+				EntryID:             entry.ID,
+				OriginalAmount:      convertReq.Amount,
+				OriginalCurrency:    *entry.OriginalCurrency,
+				ConvertedAmount:     convertResult.ConvertedAmount,
+				BaseCurrency:        transaction.CurrencyCode,
+				ExchangeRate:        convertResult.ExchangeRate.Rate,
+				ConversionTimestamp: time.Now(),
 			})
 		} else {
 			// Add base currency entries

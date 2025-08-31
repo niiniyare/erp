@@ -17,19 +17,19 @@ import (
 type TransactionReversalEngine interface {
 	// CreateReversalTransaction creates a reversal transaction for a posted transaction
 	CreateReversalTransaction(ctx context.Context, req CreateReversalRequest) (*ReversalTransactionResult, error)
-	
+
 	// ProcessCompleteReversal processes a complete reversal (original + reversal transactions)
 	ProcessCompleteReversal(ctx context.Context, req CompleteReversalRequest) (*CompleteReversalResult, error)
-	
+
 	// ValidateReversalEligibility validates if a transaction can be reversed
 	ValidateReversalEligibility(ctx context.Context, transactionID uuid.UUID) (*ReversalValidationResult, error)
-	
+
 	// GetReversalHistory gets the reversal history for a transaction
 	GetReversalHistory(ctx context.Context, transactionID uuid.UUID) (*ReversalHistoryResult, error)
-	
+
 	// CreateCorrectionEntry creates a correction entry for partial corrections
 	CreateCorrectionEntry(ctx context.Context, req CorrectionEntryRequest) (*CorrectionEntryResult, error)
-	
+
 	// BatchReverseTransactions reverses multiple transactions in a batch
 	BatchReverseTransactions(ctx context.Context, req BatchReversalRequest) (*BatchReversalResult, error)
 }
@@ -42,17 +42,17 @@ type CreateReversalRequest struct {
 	ReversalDate          *time.Time   `json:"reversal_date,omitempty"` // If nil, uses current date
 	ReversalType          ReversalType `json:"reversal_type"`
 	CustomReversalNumber  *string      `json:"custom_reversal_number,omitempty"`
-	AutoPost              bool         `json:"auto_post"`               // Automatically post the reversal
-	CopyOriginalMetadata  bool         `json:"copy_original_metadata"`  // Copy metadata from original
+	AutoPost              bool         `json:"auto_post"`              // Automatically post the reversal
+	CopyOriginalMetadata  bool         `json:"copy_original_metadata"` // Copy metadata from original
 }
 
 // CompleteReversalRequest represents a request for complete reversal processing
 type CompleteReversalRequest struct {
-	OriginalTransactionID uuid.UUID `json:"original_transaction_id"`
-	ReversedBy            uuid.UUID `json:"reversed_by"`
-	ReversalReason        string    `json:"reversal_reason"`
+	OriginalTransactionID uuid.UUID  `json:"original_transaction_id"`
+	ReversedBy            uuid.UUID  `json:"reversed_by"`
+	ReversalReason        string     `json:"reversal_reason"`
 	ReversalDate          *time.Time `json:"reversal_date,omitempty"`
-	AutoPost              bool      `json:"auto_post"`
+	AutoPost              bool       `json:"auto_post"`
 }
 
 // CorrectionEntryRequest represents a request to create a correction entry
@@ -67,12 +67,12 @@ type CorrectionEntryRequest struct {
 
 // BatchReversalRequest represents a batch reversal request
 type BatchReversalRequest struct {
-	TransactionIDs []uuid.UUID `json:"transaction_ids"`
-	ReversedBy     uuid.UUID   `json:"reversed_by"`
-	ReversalReason string      `json:"reversal_reason"`
-	ReversalDate   *time.Time  `json:"reversal_date,omitempty"`
-	ContinueOnError bool       `json:"continue_on_error"`
-	AutoPost        bool       `json:"auto_post"`
+	TransactionIDs  []uuid.UUID `json:"transaction_ids"`
+	ReversedBy      uuid.UUID   `json:"reversed_by"`
+	ReversalReason  string      `json:"reversal_reason"`
+	ReversalDate    *time.Time  `json:"reversal_date,omitempty"`
+	ContinueOnError bool        `json:"continue_on_error"`
+	AutoPost        bool        `json:"auto_post"`
 }
 
 // ReversalType represents the type of reversal
@@ -105,51 +105,51 @@ const (
 
 // ReversalTransactionResult represents the result of creating a reversal transaction
 type ReversalTransactionResult struct {
-	ReversalTransaction   *domain.Transaction `json:"reversal_transaction"`
-	OriginalTransaction   *domain.Transaction `json:"original_transaction"`
-	Success               bool                `json:"success"`
-	PostingResult         *PostTransactionResult `json:"posting_result,omitempty"`
-	ValidationResult      *ReversalValidationResult `json:"validation_result,omitempty"`
-	Errors                []string            `json:"errors,omitempty"`
-	Warnings              []string            `json:"warnings,omitempty"`
+	ReversalTransaction *domain.Transaction       `json:"reversal_transaction"`
+	OriginalTransaction *domain.Transaction       `json:"original_transaction"`
+	Success             bool                      `json:"success"`
+	PostingResult       *PostTransactionResult    `json:"posting_result,omitempty"`
+	ValidationResult    *ReversalValidationResult `json:"validation_result,omitempty"`
+	Errors              []string                  `json:"errors,omitempty"`
+	Warnings            []string                  `json:"warnings,omitempty"`
 }
 
 // CompleteReversalResult represents the result of complete reversal processing
 type CompleteReversalResult struct {
-	OriginalTransactionID   uuid.UUID               `json:"original_transaction_id"`
-	ReversalTransactionID   uuid.UUID               `json:"reversal_transaction_id"`
-	Success                 bool                    `json:"success"`
-	ProcessingTime          time.Duration           `json:"processing_time"`
-	BalanceUpdates          []AccountBalanceUpdate  `json:"balance_updates"`
-	ReversalTransaction     *domain.Transaction     `json:"reversal_transaction"`
-	Errors                  []string                `json:"errors,omitempty"`
-	Warnings                []string                `json:"warnings,omitempty"`
+	OriginalTransactionID uuid.UUID              `json:"original_transaction_id"`
+	ReversalTransactionID uuid.UUID              `json:"reversal_transaction_id"`
+	Success               bool                   `json:"success"`
+	ProcessingTime        time.Duration          `json:"processing_time"`
+	BalanceUpdates        []AccountBalanceUpdate `json:"balance_updates"`
+	ReversalTransaction   *domain.Transaction    `json:"reversal_transaction"`
+	Errors                []string               `json:"errors,omitempty"`
+	Warnings              []string               `json:"warnings,omitempty"`
 }
 
 // CorrectionEntryResult represents the result of creating correction entries
 type CorrectionEntryResult struct {
-	CorrectionTransaction *domain.Transaction     `json:"correction_transaction"`
-	Success               bool                    `json:"success"`
-	PostingResult         *PostTransactionResult  `json:"posting_result,omitempty"`
-	Errors                []string                `json:"errors,omitempty"`
+	CorrectionTransaction *domain.Transaction    `json:"correction_transaction"`
+	Success               bool                   `json:"success"`
+	PostingResult         *PostTransactionResult `json:"posting_result,omitempty"`
+	Errors                []string               `json:"errors,omitempty"`
 }
 
 // BatchReversalResult represents the result of batch reversal
 type BatchReversalResult struct {
-	TotalTransactions     int                      `json:"total_transactions"`
-	SuccessfulReversals   int                      `json:"successful_reversals"`
-	FailedReversals       int                      `json:"failed_reversals"`
-	Results               []ReversalTransactionResult `json:"results"`
-	ProcessingTime        time.Duration            `json:"processing_time"`
+	TotalTransactions   int                         `json:"total_transactions"`
+	SuccessfulReversals int                         `json:"successful_reversals"`
+	FailedReversals     int                         `json:"failed_reversals"`
+	Results             []ReversalTransactionResult `json:"results"`
+	ProcessingTime      time.Duration               `json:"processing_time"`
 }
 
 // ReversalValidationResult represents validation results for reversal
 type ReversalValidationResult struct {
-	CanReverse           bool                `json:"can_reverse"`
-	ValidationLevel      ValidationLevel     `json:"validation_level"`
-	Errors               []ValidationError   `json:"errors,omitempty"`
-	Warnings             []ValidationWarning `json:"warnings,omitempty"`
-	ReversalConstraints  []ReversalConstraint `json:"reversal_constraints,omitempty"`
+	CanReverse          bool                 `json:"can_reverse"`
+	ValidationLevel     ValidationLevel      `json:"validation_level"`
+	Errors              []ValidationError    `json:"errors,omitempty"`
+	Warnings            []ValidationWarning  `json:"warnings,omitempty"`
+	ReversalConstraints []ReversalConstraint `json:"reversal_constraints,omitempty"`
 }
 
 // ReversalConstraint represents a constraint that affects reversal eligibility
@@ -163,40 +163,40 @@ type ReversalConstraint struct {
 type ReversalConstraintType string
 
 const (
-	ReversalConstraintPeriodClosed     ReversalConstraintType = "PERIOD_CLOSED"
-	ReversalConstraintAlreadyReversed  ReversalConstraintType = "ALREADY_REVERSED"
-	ReversalConstraintNotPosted        ReversalConstraintType = "NOT_POSTED"
-	ReversalConstraintHasReversals     ReversalConstraintType = "HAS_REVERSALS"
-	ReversalConstraintTimeLimit        ReversalConstraintType = "TIME_LIMIT"
+	ReversalConstraintPeriodClosed    ReversalConstraintType = "PERIOD_CLOSED"
+	ReversalConstraintAlreadyReversed ReversalConstraintType = "ALREADY_REVERSED"
+	ReversalConstraintNotPosted       ReversalConstraintType = "NOT_POSTED"
+	ReversalConstraintHasReversals    ReversalConstraintType = "HAS_REVERSALS"
+	ReversalConstraintTimeLimit       ReversalConstraintType = "TIME_LIMIT"
 )
 
 // ReversalHistoryResult represents reversal history for a transaction
 type ReversalHistoryResult struct {
-	TransactionID   uuid.UUID         `json:"transaction_id"`
-	ReversalChain   []ReversalRecord  `json:"reversal_chain"`
-	HasReversals    bool              `json:"has_reversals"`
-	IsReversed      bool              `json:"is_reversed"`
-	NetEffect       []AccountBalanceUpdate `json:"net_effect"`
+	TransactionID uuid.UUID              `json:"transaction_id"`
+	ReversalChain []ReversalRecord       `json:"reversal_chain"`
+	HasReversals  bool                   `json:"has_reversals"`
+	IsReversed    bool                   `json:"is_reversed"`
+	NetEffect     []AccountBalanceUpdate `json:"net_effect"`
 }
 
 // ReversalRecord represents a single reversal record
 type ReversalRecord struct {
-	ReversalID          uuid.UUID    `json:"reversal_id"`
-	ReversalTransactionID uuid.UUID  `json:"reversal_transaction_id"`
-	ReversalDate        time.Time    `json:"reversal_date"`
-	ReversedBy          uuid.UUID    `json:"reversed_by"`
-	ReversalReason      string       `json:"reversal_reason"`
-	ReversalType        ReversalType `json:"reversal_type"`
-	Status              string       `json:"status"`
+	ReversalID            uuid.UUID    `json:"reversal_id"`
+	ReversalTransactionID uuid.UUID    `json:"reversal_transaction_id"`
+	ReversalDate          time.Time    `json:"reversal_date"`
+	ReversedBy            uuid.UUID    `json:"reversed_by"`
+	ReversalReason        string       `json:"reversal_reason"`
+	ReversalType          ReversalType `json:"reversal_type"`
+	Status                string       `json:"status"`
 }
 
 // transactionReversalEngine implements TransactionReversalEngine
 type transactionReversalEngine struct {
-	transactionRepository   domain.TransactionRepository
-	numberingService       TransactionNumberingService
-	postingEngine          TransactionPostingEngine
-	validator              DoubleEntryValidator
-	tracing                tracing.TracingService
+	transactionRepository domain.TransactionRepository
+	numberingService      TransactionNumberingService
+	postingEngine         TransactionPostingEngine
+	validator             DoubleEntryValidator
+	tracing               tracing.TracingService
 }
 
 // TransactionReversalEngineDeps represents dependencies for the reversal engine
@@ -214,8 +214,8 @@ func NewTransactionReversalEngine(deps TransactionReversalEngineDeps) Transactio
 		transactionRepository: deps.TransactionRepository,
 		numberingService:      deps.NumberingService,
 		postingEngine:         deps.PostingEngine,
-		validator:            deps.Validator,
-		tracing:              deps.Tracing,
+		validator:             deps.Validator,
+		tracing:               deps.Tracing,
 	}
 }
 
@@ -327,10 +327,10 @@ func (e *transactionReversalEngine) ProcessCompleteReversal(ctx context.Context,
 
 	result := &CompleteReversalResult{
 		OriginalTransactionID: req.OriginalTransactionID,
-		Success:              false,
-		BalanceUpdates:       []AccountBalanceUpdate{},
-		Errors:               []string{},
-		Warnings:             []string{},
+		Success:               false,
+		BalanceUpdates:        []AccountBalanceUpdate{},
+		Errors:                []string{},
+		Warnings:              []string{},
 	}
 
 	// 1. Create reversal transaction
@@ -523,21 +523,21 @@ func (e *transactionReversalEngine) CreateCorrectionEntry(ctx context.Context, r
 
 	// Create correction transaction
 	correctionTransaction := &domain.Transaction{
-		ID:               uuid.New(),
-		TenantID:         originalTransaction.TenantID,
-		EntityID:         originalTransaction.EntityID,
-		TransactionType:  domain.TransactionTypeAdjustment,
+		ID:                uuid.New(),
+		TenantID:          originalTransaction.TenantID,
+		EntityID:          originalTransaction.EntityID,
+		TransactionType:   domain.TransactionTypeAdjustment,
 		TransactionStatus: domain.TransactionStatusDraft,
-		TransactionDate:  time.Now(),
-		Description:      fmt.Sprintf("Correction for %s - %s", originalTransaction.TransactionNumber, req.CorrectionReason),
-		CurrencyCode:     originalTransaction.CurrencyCode,
-		ExchangeRate:     originalTransaction.ExchangeRate,
-		ApprovalRequired: true,
-		ApprovalStatus:   domain.ApprovalStatusPending,
-		ValidationStatus: domain.ValidationStatusPending,
-		CreatedBy:        req.CorrectedBy,
-		CreatedAt:        time.Now(),
-		UpdatedAt:        time.Now(),
+		TransactionDate:   time.Now(),
+		Description:       fmt.Sprintf("Correction for %s - %s", originalTransaction.TransactionNumber, req.CorrectionReason),
+		CurrencyCode:      originalTransaction.CurrencyCode,
+		ExchangeRate:      originalTransaction.ExchangeRate,
+		ApprovalRequired:  true,
+		ApprovalStatus:    domain.ApprovalStatusPending,
+		ValidationStatus:  domain.ValidationStatusPending,
+		CreatedBy:         req.CorrectedBy,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
 	}
 
 	// Generate transaction number

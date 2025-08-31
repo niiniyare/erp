@@ -7,7 +7,7 @@ import (
 // Account-related types
 var CreateAccountPayload = Type("CreateAccountPayload", func() {
 	Description("Payload for creating a new account")
-	
+
 	Attribute("entity_id", String, "Entity ID (optional)", func() {
 		Format(FormatUUID)
 	})
@@ -24,7 +24,7 @@ var CreateAccountPayload = Type("CreateAccountPayload", func() {
 	Attribute("account_description", String, "Account description (optional)", func() {
 		MaxLength(1000)
 	})
-	
+
 	// Hierarchy and grouping
 	Attribute("parent_account_id", String, "Parent account ID for hierarchy (optional)", func() {
 		Format(FormatUUID)
@@ -35,7 +35,7 @@ var CreateAccountPayload = Type("CreateAccountPayload", func() {
 	Attribute("account_header_id", String, "Account header ID for grouping (optional)", func() {
 		Format(FormatUUID)
 	})
-	
+
 	// Classification
 	Attribute("root_type", String, "Root account type", func() {
 		Enum("ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE")
@@ -57,18 +57,18 @@ var CreateAccountPayload = Type("CreateAccountPayload", func() {
 		Enum("DEBIT", "CREDIT")
 		Example("DEBIT")
 	})
-	
+
 	// Currency settings
 	Attribute("currency_code", String, "Primary currency code (optional)", func() {
 		Pattern("^[A-Z]{3}$")
 		Example("USD")
 	})
-	
+
 	// Operational settings
 	Attribute("is_active", Boolean, "Whether account is active", func() {
 		Default(true)
 	})
-	
+
 	// Reporting and display
 	Attribute("display_order", Int32, "Display order in UI/reports", func() {
 		Minimum(0)
@@ -84,13 +84,13 @@ var CreateAccountPayload = Type("CreateAccountPayload", func() {
 		Enum("OPERATING", "INVESTING", "FINANCING")
 		Example("OPERATING")
 	})
-	
+
 	Required("account_code", "account_name", "root_type", "normal_balance")
 })
 
 var UpdateAccountPayload = Type("UpdateAccountPayload", func() {
 	Description("Payload for updating an account")
-	
+
 	Attribute("id", String, "Account ID", func() {
 		Format(FormatUUID)
 	})
@@ -99,7 +99,7 @@ var UpdateAccountPayload = Type("UpdateAccountPayload", func() {
 		MaxLength(255)
 	})
 	Attribute("account_description", String, "Account description")
-	
+
 	// Grouping and hierarchy (limited updates for data integrity)
 	Attribute("account_group_id", String, "Account group ID (optional)", func() {
 		Format(FormatUUID)
@@ -107,7 +107,7 @@ var UpdateAccountPayload = Type("UpdateAccountPayload", func() {
 	Attribute("account_header_id", String, "Account header ID (optional)", func() {
 		Format(FormatUUID)
 	})
-	
+
 	// Classification updates
 	Attribute("account_category", String, "Account category for grouping (optional)", func() {
 		MaxLength(100)
@@ -115,12 +115,12 @@ var UpdateAccountPayload = Type("UpdateAccountPayload", func() {
 	Attribute("sub_category", String, "Sub-category within main category (optional)", func() {
 		MaxLength(100)
 	})
-	
+
 	// Operational settings
 	Attribute("is_active", Boolean, "Whether account is active")
 	Attribute("allow_manual_entries", Boolean, "Allow manual journal entries")
 	Attribute("require_reference", Boolean, "Require reference for entries")
-	
+
 	// Reporting and display
 	Attribute("display_order", Int32, "Display order in UI/reports", func() {
 		Minimum(0)
@@ -132,13 +132,13 @@ var UpdateAccountPayload = Type("UpdateAccountPayload", func() {
 	Attribute("cash_flow_type", String, "Cash flow statement classification (optional)", func() {
 		Enum("OPERATING", "INVESTING", "FINANCING")
 	})
-	
+
 	Required("id")
 })
 
 var AccountResult = Type("AccountResult", func() {
 	Description("Account information")
-	
+
 	Attribute("id", String, "Account ID", func() {
 		Format(FormatUUID)
 	})
@@ -151,7 +151,7 @@ var AccountResult = Type("AccountResult", func() {
 	Attribute("account_code", String, "Account code")
 	Attribute("account_name", String, "Account name")
 	Attribute("account_description", String, "Account description")
-	
+
 	// Hierarchy and grouping
 	Attribute("parent_account_id", String, "Parent account ID", func() {
 		Format(FormatUUID)
@@ -166,7 +166,7 @@ var AccountResult = Type("AccountResult", func() {
 	Attribute("account_header_id", String, "Account header ID", func() {
 		Format(FormatUUID)
 	})
-	
+
 	// Classification
 	Attribute("root_type", String, "Root account type")
 	Attribute("account_type", String, "Account type")
@@ -174,20 +174,20 @@ var AccountResult = Type("AccountResult", func() {
 	Attribute("account_category", String, "Account category for grouping")
 	Attribute("sub_category", String, "Sub-category within main category")
 	Attribute("normal_balance", String, "Normal balance side")
-	
+
 	// Operational settings
 	Attribute("is_active", Boolean, "Whether account is active")
 	Attribute("is_system_account", Boolean, "Whether this is a system account")
 	Attribute("allow_manual_entries", Boolean, "Whether manual entries are allowed")
 	Attribute("require_reference", Boolean, "Whether reference is required")
-	
+
 	// Balance tracking
 	Attribute("current_balance", String, "Current account balance")
 	Attribute("ytd_balance", String, "Year-to-date balance")
 	Attribute("last_transaction_date", String, "Last transaction date", func() {
 		Format(FormatDateTime)
 	})
-	
+
 	// Reporting and display
 	Attribute("financial_statement_line", String, "Financial statement line grouping")
 	Attribute("report_order", Int32, "Sort order in reports")
@@ -195,15 +195,15 @@ var AccountResult = Type("AccountResult", func() {
 	Attribute("show_in_reports", Boolean, "Whether to include in standard reports")
 	Attribute("consolidation_account", String, "Consolidation mapping for multi-entity")
 	Attribute("cash_flow_type", String, "Cash flow statement classification")
-	
+
 	// Currency and localization
 	Attribute("currency_code", String, "Primary currency code")
 	Attribute("is_multi_currency", Boolean, "Whether account accepts multiple currencies")
-	
+
 	// Budgeting
 	Attribute("is_budgetable", Boolean, "Whether account can have budgets")
 	Attribute("budget_variance_threshold", String, "Budget variance alert threshold")
-	
+
 	// Audit fields
 	Attribute("version", Int32, "Version for optimistic locking")
 	Attribute("validation_status", String, "Current validation status")
@@ -216,13 +216,13 @@ var AccountResult = Type("AccountResult", func() {
 	Attribute("updated_at", String, "Last update timestamp", func() {
 		Format(FormatDateTime)
 	})
-	
+
 	Required("id", "account_code", "account_name", "root_type", "account_type", "normal_balance", "is_active")
 })
 
 var ListAccountsPayload = Type("ListAccountsPayload", func() {
 	Description("Payload for listing accounts with filters")
-	
+
 	Attribute("root_type", String, "Filter by root type", func() {
 		Enum("ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE")
 	})
@@ -245,28 +245,28 @@ var ListAccountsPayload = Type("ListAccountsPayload", func() {
 
 var AccountListResult = Type("AccountListResult", func() {
 	Description("List of accounts with pagination info")
-	
+
 	Attribute("accounts", ArrayOf(AccountResult), "List of accounts")
 	Attribute("total_count", Int64, "Total number of accounts")
 	Attribute("limit", Int32, "Results limit used")
 	Attribute("offset", Int32, "Results offset used")
-	
+
 	Required("accounts", "total_count", "limit", "offset")
 })
 
 var AccountHierarchyResult = Type("AccountHierarchyResult", func() {
 	Description("Hierarchical account structure")
-	
+
 	Attribute("accounts", ArrayOf(AccountResult), "Accounts in hierarchical order")
 	Attribute("total_count", Int32, "Total number of accounts in hierarchy")
-	
+
 	Required("accounts", "total_count")
 })
 
 // Transaction-related types
 var CreateTransactionPayload = Type("CreateTransactionPayload", func() {
 	Description("Payload for creating a new transaction")
-	
+
 	Attribute("entity_id", String, "Entity ID (optional)", func() {
 		Format(FormatUUID)
 	})
@@ -292,13 +292,13 @@ var CreateTransactionPayload = Type("CreateTransactionPayload", func() {
 	Attribute("entries", ArrayOf(TransactionEntryPayload), "Transaction entries", func() {
 		MinLength(2) // At least 2 entries for double-entry
 	})
-	
+
 	Required("transaction_type", "transaction_date", "description", "entries")
 })
 
 var TransactionEntryPayload = Type("TransactionEntryPayload", func() {
 	Description("Transaction entry for double-entry bookkeeping")
-	
+
 	Attribute("account_id", String, "Account ID", func() {
 		Format(FormatUUID)
 	})
@@ -320,13 +320,13 @@ var TransactionEntryPayload = Type("TransactionEntryPayload", func() {
 	})
 	Attribute("tax_code", String, "Tax code (optional)")
 	Attribute("tax_rate", String, "Tax rate (decimal, optional)")
-	
+
 	Required("account_id", "description")
 })
 
 var PostTransactionPayload = Type("PostTransactionPayload", func() {
 	Description("Payload for posting a transaction")
-	
+
 	Attribute("id", String, "Transaction ID", func() {
 		Format(FormatUUID)
 	})
@@ -339,13 +339,13 @@ var PostTransactionPayload = Type("PostTransactionPayload", func() {
 	Attribute("force_post", Boolean, "Force post despite warnings", func() {
 		Default(false)
 	})
-	
+
 	Required("id")
 })
 
 var ReverseTransactionPayload = Type("ReverseTransactionPayload", func() {
 	Description("Payload for reversing a transaction")
-	
+
 	Attribute("id", String, "Transaction ID", func() {
 		Format(FormatUUID)
 	})
@@ -357,26 +357,26 @@ var ReverseTransactionPayload = Type("ReverseTransactionPayload", func() {
 	Attribute("reversal_date", String, "Reversal date (optional, defaults to today)", func() {
 		Format(FormatDate)
 	})
-	
+
 	Required("id", "reason")
 })
 
 var ApproveTransactionPayload = Type("ApproveTransactionPayload", func() {
 	Description("Payload for approving a transaction")
-	
+
 	Attribute("id", String, "Transaction ID", func() {
 		Format(FormatUUID)
 	})
 	Attribute("notes", String, "Approval notes (optional)", func() {
 		MaxLength(1000)
 	})
-	
+
 	Required("id")
 })
 
 var TransactionResult = Type("TransactionResult", func() {
 	Description("Transaction information")
-	
+
 	Attribute("id", String, "Transaction ID", func() {
 		Format(FormatUUID)
 	})
@@ -409,24 +409,24 @@ var TransactionResult = Type("TransactionResult", func() {
 	Attribute("updated_at", String, "Last update timestamp", func() {
 		Format(FormatDateTime)
 	})
-	
+
 	Required("id", "transaction_number", "transaction_type", "transaction_status", "transaction_date", "description")
 })
 
 var TransactionWithEntriesResult = Type("TransactionWithEntriesResult", func() {
 	Description("Transaction with its entries")
-	
+
 	Attribute("transaction", TransactionResult, "Transaction details")
 	Attribute("entries", ArrayOf(TransactionEntryResult), "Transaction entries")
 	Attribute("is_balanced", Boolean, "Whether transaction is balanced")
 	Attribute("validation_errors", ArrayOf(ValidationErrorResult), "Validation errors if any")
-	
+
 	Required("transaction", "entries", "is_balanced")
 })
 
 var TransactionEntryResult = Type("TransactionEntryResult", func() {
 	Description("Transaction entry information")
-	
+
 	Attribute("id", String, "Entry ID", func() {
 		Format(FormatUUID)
 	})
@@ -449,13 +449,13 @@ var TransactionEntryResult = Type("TransactionEntryResult", func() {
 	Attribute("tax_rate", String, "Tax rate")
 	Attribute("tax_amount", String, "Tax amount")
 	Attribute("reconciled", Boolean, "Whether entry is reconciled")
-	
+
 	Required("id", "entry_number", "account_id", "account_code", "account_name", "description")
 })
 
 var ListTransactionsPayload = Type("ListTransactionsPayload", func() {
 	Description("Payload for listing transactions")
-	
+
 	Attribute("status", String, "Filter by transaction status", func() {
 		Enum("DRAFT", "PENDING_APPROVAL", "APPROVED", "POSTED", "CANCELLED", "REVERSED")
 	})
@@ -485,19 +485,19 @@ var ListTransactionsPayload = Type("ListTransactionsPayload", func() {
 
 var TransactionListResult = Type("TransactionListResult", func() {
 	Description("List of transactions with pagination")
-	
+
 	Attribute("transactions", ArrayOf(TransactionResult), "List of transactions")
 	Attribute("total_count", Int64, "Total number of transactions")
 	Attribute("limit", Int32, "Results limit used")
 	Attribute("offset", Int32, "Results offset used")
-	
+
 	Required("transactions", "total_count", "limit", "offset")
 })
 
 // Financial Reporting types
 var TrialBalancePayload = Type("TrialBalancePayload", func() {
 	Description("Payload for trial balance report")
-	
+
 	Attribute("as_of_date", String, "Balance as of date (optional, defaults to today)", func() {
 		Format(FormatDate)
 		Example("2025-08-31")
@@ -509,7 +509,7 @@ var TrialBalancePayload = Type("TrialBalancePayload", func() {
 
 var TrialBalanceResult = Type("TrialBalanceResult", func() {
 	Description("Trial balance report")
-	
+
 	Attribute("as_of_date", String, "Report date", func() {
 		Format(FormatDate)
 	})
@@ -520,13 +520,13 @@ var TrialBalanceResult = Type("TrialBalanceResult", func() {
 	Attribute("generated_at", String, "Report generation timestamp", func() {
 		Format(FormatDateTime)
 	})
-	
+
 	Required("as_of_date", "accounts", "total_debits", "total_credits", "is_balanced", "generated_at")
 })
 
 var TrialBalanceEntry = Type("TrialBalanceEntry", func() {
 	Description("Trial balance account entry")
-	
+
 	Attribute("account_id", String, "Account ID", func() {
 		Format(FormatUUID)
 	})
@@ -538,13 +538,13 @@ var TrialBalanceEntry = Type("TrialBalanceEntry", func() {
 	Attribute("total_debits", String, "Total debit amount")
 	Attribute("total_credits", String, "Total credit amount")
 	Attribute("net_balance", String, "Net balance amount")
-	
+
 	Required("account_id", "account_code", "account_name", "root_type", "total_debits", "total_credits", "net_balance")
 })
 
 var AccountBalanceResult = Type("AccountBalanceResult", func() {
 	Description("Account balance information")
-	
+
 	Attribute("account_id", String, "Account ID", func() {
 		Format(FormatUUID)
 	})
@@ -559,26 +559,26 @@ var AccountBalanceResult = Type("AccountBalanceResult", func() {
 	Attribute("last_transaction_date", String, "Date of last transaction", func() {
 		Format(FormatDate)
 	})
-	
+
 	Required("account_id", "account_code", "account_name", "current_balance", "total_debits", "total_credits", "as_of_date")
 })
 
 // Validation types
 var ValidateTransactionPayload = Type("ValidateTransactionPayload", func() {
 	Description("Payload for transaction validation")
-	
+
 	Attribute("transaction", CreateTransactionPayload, "Transaction to validate")
 	Attribute("validation_level", String, "Validation level", func() {
 		Enum("BASIC", "STRICT", "COMPLETE")
 		Default("STRICT")
 	})
-	
+
 	Required("transaction")
 })
 
 var ValidationResult = Type("ValidationResult", func() {
 	Description("Transaction validation result")
-	
+
 	Attribute("is_valid", Boolean, "Whether transaction is valid")
 	Attribute("is_balanced", Boolean, "Whether debits equal credits")
 	Attribute("total_debits", String, "Total debit amount")
@@ -587,29 +587,29 @@ var ValidationResult = Type("ValidationResult", func() {
 	Attribute("errors", ArrayOf(ValidationErrorResult), "Validation errors")
 	Attribute("warnings", ArrayOf(ValidationWarningResult), "Validation warnings")
 	Attribute("validation_level", String, "Validation level used")
-	
+
 	Required("is_valid", "is_balanced", "total_debits", "total_credits", "validation_level")
 })
 
 var ValidationErrorResult = Type("ValidationErrorResult", func() {
 	Description("Validation error details")
-	
+
 	Attribute("field", String, "Field that failed validation")
 	Attribute("message", String, "Error message")
 	Attribute("code", String, "Error code")
 	Attribute("severity", String, "Error severity", func() {
 		Enum("ERROR", "WARNING", "INFO")
 	})
-	
+
 	Required("field", "message", "code", "severity")
 })
 
 var ValidationWarningResult = Type("ValidationWarningResult", func() {
 	Description("Validation warning details")
-	
+
 	Attribute("field", String, "Field with warning")
 	Attribute("message", String, "Warning message")
 	Attribute("code", String, "Warning code")
-	
+
 	Required("field", "message", "code")
 })

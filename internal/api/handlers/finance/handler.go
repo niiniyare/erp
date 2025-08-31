@@ -2,7 +2,7 @@ package finance
 
 import (
 	"errors"
-	
+
 	goaFinance "github.com/niiniyare/erp/internal/api/gen/finance"
 	"github.com/niiniyare/erp/internal/core/finance/service"
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"

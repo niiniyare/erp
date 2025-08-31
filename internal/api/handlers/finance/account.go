@@ -73,7 +73,7 @@ func (h *FinanceHandler) CreateAccount(ctx context.Context, payload *goaFinance.
 	if payload.AccountType != nil {
 		accountType = *payload.AccountType
 	}
-	
+
 	req := domain.CreateAccountRequest{
 		EntityID:           entityID,
 		AccountCode:        payload.AccountCode,
@@ -214,7 +214,7 @@ func (h *FinanceHandler) ListAccounts(ctx context.Context, payload *goaFinance.L
 	offsetInt := int(payload.Offset)
 	limit := &limitInt
 	offset := &offsetInt
-	
+
 	filter := &domain.AccountFilter{
 		IsActive:   payload.IsActive,
 		SearchTerm: payload.Search,
@@ -266,7 +266,7 @@ func (h *FinanceHandler) ListAccounts(ctx context.Context, payload *goaFinance.L
 	var resultLimit, resultOffset int32 = 50, 0
 	resultLimit = payload.Limit
 	resultOffset = payload.Offset
-	
+
 	return &goaFinance.AccountListResult{
 		Accounts:   results,
 		TotalCount: int64(len(results)),
@@ -380,8 +380,8 @@ func (h *FinanceHandler) GetAccountHierarchy(ctx context.Context, payload *goaFi
 
 	logger.InfoContext(ctx, "Account hierarchy retrieved successfully",
 		logger.Fields{
-			"root_id":      rootID.String(),
-			"total_count":  len(results),
+			"root_id":     rootID.String(),
+			"total_count": len(results),
 		})
 
 	return &goaFinance.AccountHierarchyResult{
@@ -476,7 +476,7 @@ func (h *FinanceHandler) convertAccountToResult(account *domain.Accounts) *goaFi
 	if account.ParentAccountID != nil {
 		result.ParentAccountID = stringPtr(account.ParentAccountID.String())
 	}
-	
+
 	result.AccountLevel = &account.AccountLevel
 
 	if account.AccountPath != nil {

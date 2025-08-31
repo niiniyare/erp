@@ -19,83 +19,83 @@ import (
 type TransactionNumberingService interface {
 	// GenerateTransactionNumber generates a unique transaction number
 	GenerateTransactionNumber(ctx context.Context, req GenerateNumberRequest) (string, error)
-	
+
 	// ReserveTransactionNumber reserves a transaction number for later use
 	ReserveTransactionNumber(ctx context.Context, req GenerateNumberRequest) (string, error)
-	
+
 	// ConfirmTransactionNumber confirms usage of a reserved number
 	ConfirmTransactionNumber(ctx context.Context, number string) error
-	
+
 	// ReleaseTransactionNumber releases a reserved number back to the pool
 	ReleaseTransactionNumber(ctx context.Context, number string) error
-	
+
 	// GetNextNumber gets the next number without generating (for preview)
 	GetNextNumber(ctx context.Context, req GenerateNumberRequest) (string, error)
-	
+
 	// ValidateTransactionNumber validates a transaction number format
 	ValidateTransactionNumber(ctx context.Context, number string, transactionType domain.TransactionType) error
 }
 
 // GenerateNumberRequest represents a request to generate a transaction number
 type GenerateNumberRequest struct {
-	TenantID        uuid.UUID                  `json:"tenant_id"`
-	EntityID        *uuid.UUID                 `json:"entity_id,omitempty"`
-	TransactionType domain.TransactionType     `json:"transaction_type"`
-	TransactionDate time.Time                  `json:"transaction_date"`
-	Series          *string                    `json:"series,omitempty"`     // Optional custom series
-	CustomPrefix    *string                    `json:"custom_prefix,omitempty"`
-	CustomSuffix    *string                    `json:"custom_suffix,omitempty"`
+	TenantID        uuid.UUID              `json:"tenant_id"`
+	EntityID        *uuid.UUID             `json:"entity_id,omitempty"`
+	TransactionType domain.TransactionType `json:"transaction_type"`
+	TransactionDate time.Time              `json:"transaction_date"`
+	Series          *string                `json:"series,omitempty"` // Optional custom series
+	CustomPrefix    *string                `json:"custom_prefix,omitempty"`
+	CustomSuffix    *string                `json:"custom_suffix,omitempty"`
 }
 
 // NumberingRule defines how transaction numbers are generated
 type NumberingRule struct {
-	ID              uuid.UUID                  `json:"id"`
-	TenantID        uuid.UUID                  `json:"tenant_id"`
-	EntityID        *uuid.UUID                 `json:"entity_id,omitempty"`
-	TransactionType domain.TransactionType     `json:"transaction_type"`
-	Series          string                     `json:"series"`          // Series identifier (e.g., "MAIN", "ADJ")
-	Prefix          string                     `json:"prefix"`          // Fixed prefix (e.g., "TXN", "JE")
-	DateFormat      *string                    `json:"date_format,omitempty"` // Date format in number (e.g., "YYYY", "YYYYMM")
-	NumberLength    int                        `json:"number_length"`   // Length of numeric portion
-	Suffix          *string                    `json:"suffix,omitempty"`
-	ResetFrequency  ResetFrequency             `json:"reset_frequency"` // When to reset sequence
-	StartingNumber  int64                      `json:"starting_number"` // Starting sequence number
-	CurrentNumber   int64                      `json:"current_number"`  // Current sequence number
-	IsActive        bool                       `json:"is_active"`
-	CreatedAt       time.Time                  `json:"created_at"`
-	UpdatedAt       time.Time                  `json:"updated_at"`
+	ID              uuid.UUID              `json:"id"`
+	TenantID        uuid.UUID              `json:"tenant_id"`
+	EntityID        *uuid.UUID             `json:"entity_id,omitempty"`
+	TransactionType domain.TransactionType `json:"transaction_type"`
+	Series          string                 `json:"series"`                // Series identifier (e.g., "MAIN", "ADJ")
+	Prefix          string                 `json:"prefix"`                // Fixed prefix (e.g., "TXN", "JE")
+	DateFormat      *string                `json:"date_format,omitempty"` // Date format in number (e.g., "YYYY", "YYYYMM")
+	NumberLength    int                    `json:"number_length"`         // Length of numeric portion
+	Suffix          *string                `json:"suffix,omitempty"`
+	ResetFrequency  ResetFrequency         `json:"reset_frequency"` // When to reset sequence
+	StartingNumber  int64                  `json:"starting_number"` // Starting sequence number
+	CurrentNumber   int64                  `json:"current_number"`  // Current sequence number
+	IsActive        bool                   `json:"is_active"`
+	CreatedAt       time.Time              `json:"created_at"`
+	UpdatedAt       time.Time              `json:"updated_at"`
 }
 
 // ResetFrequency defines when sequence numbers reset
 type ResetFrequency string
 
 const (
-	ResetFrequencyNever     ResetFrequency = "NEVER"      // Never reset
-	ResetFrequencyDaily     ResetFrequency = "DAILY"      // Reset daily
-	ResetFrequencyMonthly   ResetFrequency = "MONTHLY"    // Reset monthly  
-	ResetFrequencyYearly    ResetFrequency = "YEARLY"     // Reset yearly
-	ResetFrequencyQuarterly ResetFrequency = "QUARTERLY"  // Reset quarterly
+	ResetFrequencyNever     ResetFrequency = "NEVER"     // Never reset
+	ResetFrequencyDaily     ResetFrequency = "DAILY"     // Reset daily
+	ResetFrequencyMonthly   ResetFrequency = "MONTHLY"   // Reset monthly
+	ResetFrequencyYearly    ResetFrequency = "YEARLY"    // Reset yearly
+	ResetFrequencyQuarterly ResetFrequency = "QUARTERLY" // Reset quarterly
 )
 
 // NumberReservation tracks reserved transaction numbers
 type NumberReservation struct {
-	ID              uuid.UUID     `json:"id"`
-	TenantID        uuid.UUID     `json:"tenant_id"`
-	TransactionNumber string      `json:"transaction_number"`
-	ReservedBy      uuid.UUID     `json:"reserved_by"`
-	ReservedAt      time.Time     `json:"reserved_at"`
-	ExpiresAt       time.Time     `json:"expires_at"`
-	IsConfirmed     bool          `json:"is_confirmed"`
-	ConfirmedAt     *time.Time    `json:"confirmed_at,omitempty"`
+	ID                uuid.UUID  `json:"id"`
+	TenantID          uuid.UUID  `json:"tenant_id"`
+	TransactionNumber string     `json:"transaction_number"`
+	ReservedBy        uuid.UUID  `json:"reserved_by"`
+	ReservedAt        time.Time  `json:"reserved_at"`
+	ExpiresAt         time.Time  `json:"expires_at"`
+	IsConfirmed       bool       `json:"is_confirmed"`
+	ConfirmedAt       *time.Time `json:"confirmed_at,omitempty"`
 }
 
 // transactionNumberingService implements TransactionNumberingService
 type transactionNumberingService struct {
 	// Note: In a full implementation, this would use a repository for persistent storage
-	rules       map[string]*NumberingRule // In-memory storage for demo
+	rules        map[string]*NumberingRule // In-memory storage for demo
 	reservations map[string]*NumberReservation
-	mutex       sync.RWMutex
-	tracing     tracing.TracingService
+	mutex        sync.RWMutex
+	tracing      tracing.TracingService
 }
 
 // Dependencies for TransactionNumberingService
@@ -113,10 +113,10 @@ func NewTransactionNumberingService(deps TransactionNumberingServiceDeps) Transa
 		reservations: make(map[string]*NumberReservation),
 		tracing:      deps.Tracing,
 	}
-	
+
 	// Initialize default rules (in production, these would be loaded from database)
 	service.initializeDefaultRules()
-	
+
 	return service
 }
 
@@ -141,7 +141,7 @@ func (s *transactionNumberingService) initializeDefaultRules() {
 		{
 			ID:              uuid.New(),
 			TransactionType: domain.TransactionTypeJournalEntry,
-			Series:          "MAIN", 
+			Series:          "MAIN",
 			Prefix:          "JE",
 			DateFormat:      stringPtr("YYYY"),
 			NumberLength:    6,
@@ -310,7 +310,7 @@ func (s *transactionNumberingService) ReleaseTransactionNumber(ctx context.Conte
 
 	// Decrement the sequence number if this was the last generated number
 	// Note: This is a simplified approach. In production, you'd want more sophisticated gap handling
-	
+
 	return nil
 }
 
@@ -382,7 +382,7 @@ func (s *transactionNumberingService) getNumberingRule(req GenerateNumberRequest
 	}
 
 	key := s.getRuleKey(req.TenantID, req.EntityID, req.TransactionType, series)
-	
+
 	if rule, exists := s.rules[key]; exists {
 		return rule, nil
 	}
@@ -401,7 +401,7 @@ func (s *transactionNumberingService) getRuleKey(tenantID uuid.UUID, entityID *u
 
 func (s *transactionNumberingService) createDefaultRule(req GenerateNumberRequest, series string) *NumberingRule {
 	prefix := s.getDefaultPrefix(req.TransactionType)
-	
+
 	rule := &NumberingRule{
 		ID:              uuid.New(),
 		TenantID:        req.TenantID,

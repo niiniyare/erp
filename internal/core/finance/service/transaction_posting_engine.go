@@ -17,19 +17,19 @@ import (
 type TransactionPostingEngine interface {
 	// PostTransaction posts a transaction to the ledger with account balance updates
 	PostTransaction(ctx context.Context, req PostTransactionRequest) (*PostTransactionResult, error)
-	
+
 	// UnpostTransaction reverses a posted transaction (for corrections)
 	UnpostTransaction(ctx context.Context, req UnpostTransactionRequest) (*UnpostTransactionResult, error)
-	
+
 	// ValidatePostingRequirements validates if a transaction can be posted
 	ValidatePostingRequirements(ctx context.Context, transaction *domain.Transaction, accounts map[uuid.UUID]*domain.Accounts) *PostingValidationResult
-	
+
 	// PreviewPostingImpact previews the impact of posting without actually posting
 	PreviewPostingImpact(ctx context.Context, transaction *domain.Transaction, accounts map[uuid.UUID]*domain.Accounts) (*PostingImpactPreview, error)
-	
+
 	// RecalculateAccountBalances recalculates account balances after posting
 	RecalculateAccountBalances(ctx context.Context, accountIDs []uuid.UUID) (*BalanceRecalculationResult, error)
-	
+
 	// BatchPostTransactions posts multiple transactions in a single batch
 	BatchPostTransactions(ctx context.Context, req BatchPostRequest) (*BatchPostResult, error)
 }
@@ -61,62 +61,62 @@ type BatchPostRequest struct {
 
 // PostTransactionResult represents the result of posting a transaction
 type PostTransactionResult struct {
-	TransactionID    uuid.UUID                   `json:"transaction_id"`
-	Success          bool                        `json:"success"`
-	PostedAt         time.Time                   `json:"posted_at"`
-	PostedBy         uuid.UUID                   `json:"posted_by"`
-	BalanceUpdates   []AccountBalanceUpdate      `json:"balance_updates"`
-	ValidationResult *PostingValidationResult    `json:"validation_result,omitempty"`
-	Errors           []string                    `json:"errors,omitempty"`
-	Warnings         []string                    `json:"warnings,omitempty"`
+	TransactionID    uuid.UUID                `json:"transaction_id"`
+	Success          bool                     `json:"success"`
+	PostedAt         time.Time                `json:"posted_at"`
+	PostedBy         uuid.UUID                `json:"posted_by"`
+	BalanceUpdates   []AccountBalanceUpdate   `json:"balance_updates"`
+	ValidationResult *PostingValidationResult `json:"validation_result,omitempty"`
+	Errors           []string                 `json:"errors,omitempty"`
+	Warnings         []string                 `json:"warnings,omitempty"`
 }
 
 // UnpostTransactionResult represents the result of unposting a transaction
 type UnpostTransactionResult struct {
-	TransactionID    uuid.UUID              `json:"transaction_id"`
-	Success          bool                   `json:"success"`
-	UnpostedAt       time.Time              `json:"unposted_at"`
-	UnpostedBy       uuid.UUID              `json:"unposted_by"`
-	BalanceUpdates   []AccountBalanceUpdate `json:"balance_updates"`
-	Errors           []string               `json:"errors,omitempty"`
+	TransactionID  uuid.UUID              `json:"transaction_id"`
+	Success        bool                   `json:"success"`
+	UnpostedAt     time.Time              `json:"unposted_at"`
+	UnpostedBy     uuid.UUID              `json:"unposted_by"`
+	BalanceUpdates []AccountBalanceUpdate `json:"balance_updates"`
+	Errors         []string               `json:"errors,omitempty"`
 }
 
 // BatchPostResult represents the result of batch posting
 type BatchPostResult struct {
-	TotalTransactions     int                      `json:"total_transactions"`
-	SuccessfulPosts      int                      `json:"successful_posts"`
-	FailedPosts          int                      `json:"failed_posts"`
-	Results              []PostTransactionResult  `json:"results"`
-	BatchBalanceUpdates  []AccountBalanceUpdate   `json:"batch_balance_updates"`
-	ProcessingTime       time.Duration            `json:"processing_time"`
+	TotalTransactions   int                     `json:"total_transactions"`
+	SuccessfulPosts     int                     `json:"successful_posts"`
+	FailedPosts         int                     `json:"failed_posts"`
+	Results             []PostTransactionResult `json:"results"`
+	BatchBalanceUpdates []AccountBalanceUpdate  `json:"batch_balance_updates"`
+	ProcessingTime      time.Duration           `json:"processing_time"`
 }
 
 // PostingValidationResult represents validation results for posting
 type PostingValidationResult struct {
-	CanPost          bool                `json:"can_post"`
-	ValidationLevel  ValidationLevel     `json:"validation_level"`
-	Errors           []ValidationError   `json:"errors,omitempty"`
-	Warnings         []ValidationWarning `json:"warnings,omitempty"`
-	BusinessRules    []BusinessRuleResult `json:"business_rules,omitempty"`
+	CanPost          bool                  `json:"can_post"`
+	ValidationLevel  ValidationLevel       `json:"validation_level"`
+	Errors           []ValidationError     `json:"errors,omitempty"`
+	Warnings         []ValidationWarning   `json:"warnings,omitempty"`
+	BusinessRules    []BusinessRuleResult  `json:"business_rules,omitempty"`
 	AccountingPeriod *AccountingPeriodInfo `json:"accounting_period,omitempty"`
 }
 
 // PostingImpactPreview shows the impact of posting without actually posting
 type PostingImpactPreview struct {
-	TransactionID           uuid.UUID              `json:"transaction_id"`
-	ExpectedBalanceChanges  []AccountBalanceUpdate `json:"expected_balance_changes"`
-	AffectedAccounts        []uuid.UUID            `json:"affected_accounts"`
-	EstimatedProcessingTime time.Duration          `json:"estimated_processing_time"`
+	TransactionID           uuid.UUID                `json:"transaction_id"`
+	ExpectedBalanceChanges  []AccountBalanceUpdate   `json:"expected_balance_changes"`
+	AffectedAccounts        []uuid.UUID              `json:"affected_accounts"`
+	EstimatedProcessingTime time.Duration            `json:"estimated_processing_time"`
 	ValidationResult        *PostingValidationResult `json:"validation_result"`
 }
 
 // AccountBalanceUpdate represents a balance change for an account
 type AccountBalanceUpdate struct {
-	AccountID       uuid.UUID       `json:"account_id"`
-	AccountName     string          `json:"account_name"`
-	PreviousBalance decimal.Decimal `json:"previous_balance"`
-	BalanceChange   decimal.Decimal `json:"balance_change"`
-	NewBalance      decimal.Decimal `json:"new_balance"`
+	AccountID       uuid.UUID         `json:"account_id"`
+	AccountName     string            `json:"account_name"`
+	PreviousBalance decimal.Decimal   `json:"previous_balance"`
+	BalanceChange   decimal.Decimal   `json:"balance_change"`
+	NewBalance      decimal.Decimal   `json:"new_balance"`
 	UpdateType      BalanceUpdateType `json:"update_type"`
 }
 
@@ -138,27 +138,27 @@ type BalanceRecalculationResult struct {
 
 // AccountingPeriodInfo represents information about the accounting period
 type AccountingPeriodInfo struct {
-	PeriodID    uuid.UUID  `json:"period_id"`
-	PeriodName  string     `json:"period_name"`
-	StartDate   time.Time  `json:"start_date"`
-	EndDate     time.Time  `json:"end_date"`
-	IsClosed    bool       `json:"is_closed"`
-	ClosedDate  *time.Time `json:"closed_date,omitempty"`
+	PeriodID   uuid.UUID  `json:"period_id"`
+	PeriodName string     `json:"period_name"`
+	StartDate  time.Time  `json:"start_date"`
+	EndDate    time.Time  `json:"end_date"`
+	IsClosed   bool       `json:"is_closed"`
+	ClosedDate *time.Time `json:"closed_date,omitempty"`
 }
 
 // transactionPostingEngine implements TransactionPostingEngine
 type transactionPostingEngine struct {
-	accountRepository       domain.AccountsRepository
-	transactionRepository  domain.TransactionRepository
-	validator              DoubleEntryValidator
-	stateMachine           func(*domain.Transaction) *domain.TransactionStateMachine
-	workflowEngine         func(*domain.Transaction) *domain.TransactionWorkflowEngine
-	tracing                tracing.TracingService
+	accountRepository     domain.AccountsRepository
+	transactionRepository domain.TransactionRepository
+	validator             DoubleEntryValidator
+	stateMachine          func(*domain.Transaction) *domain.TransactionStateMachine
+	workflowEngine        func(*domain.Transaction) *domain.TransactionWorkflowEngine
+	tracing               tracing.TracingService
 }
 
 // TransactionPostingEngineDeps represents dependencies for the posting engine
 type TransactionPostingEngineDeps struct {
-	AccountRepository      domain.AccountsRepository
+	AccountRepository     domain.AccountsRepository
 	TransactionRepository domain.TransactionRepository
 	Validator             DoubleEntryValidator
 	Tracing               tracing.TracingService
@@ -169,8 +169,8 @@ func NewTransactionPostingEngine(deps TransactionPostingEngineDeps) TransactionP
 	return &transactionPostingEngine{
 		accountRepository:     deps.AccountRepository,
 		transactionRepository: deps.TransactionRepository,
-		validator:            deps.Validator,
-		tracing:             deps.Tracing,
+		validator:             deps.Validator,
+		tracing:               deps.Tracing,
 		stateMachine: func(t *domain.Transaction) *domain.TransactionStateMachine {
 			return domain.NewTransactionStateMachine(t)
 		},
@@ -187,12 +187,12 @@ func (e *transactionPostingEngine) PostTransaction(ctx context.Context, req Post
 
 	startTime := time.Now()
 	result := &PostTransactionResult{
-		TransactionID: req.TransactionID,
-		Success:       false,
-		PostedBy:      req.PostedBy,
+		TransactionID:  req.TransactionID,
+		Success:        false,
+		PostedBy:       req.PostedBy,
 		BalanceUpdates: []AccountBalanceUpdate{},
-		Errors:        []string{},
-		Warnings:      []string{},
+		Errors:         []string{},
+		Warnings:       []string{},
 	}
 
 	span.SetAttributes(
@@ -287,12 +287,12 @@ func (e *transactionPostingEngine) UnpostTransaction(ctx context.Context, req Un
 	defer span.End()
 
 	result := &UnpostTransactionResult{
-		TransactionID: req.TransactionID,
-		Success:       false,
-		UnpostedBy:    req.UnpostedBy,
-		UnpostedAt:    time.Now(),
+		TransactionID:  req.TransactionID,
+		Success:        false,
+		UnpostedBy:     req.UnpostedBy,
+		UnpostedAt:     time.Now(),
 		BalanceUpdates: []AccountBalanceUpdate{},
-		Errors:        []string{},
+		Errors:         []string{},
 	}
 
 	// 1. Retrieve the transaction
@@ -363,7 +363,7 @@ func (e *transactionPostingEngine) ValidatePostingRequirements(ctx context.Conte
 	if !validationResult.IsValid {
 		result.CanPost = false
 	}
-	
+
 	result.Errors = append(result.Errors, validationResult.Errors...)
 	result.Warnings = append(result.Warnings, validationResult.Warnings...)
 	result.BusinessRules = append(result.BusinessRules, validationResult.BusinessRules...)
@@ -492,7 +492,7 @@ func (e *transactionPostingEngine) RecalculateAccountBalances(ctx context.Contex
 	result := &BalanceRecalculationResult{
 		AccountsRecalculated: 0,
 		BalanceUpdates:       []AccountBalanceUpdate{},
-		Errors:              []string{},
+		Errors:               []string{},
 	}
 
 	// This is a simplified implementation
@@ -515,7 +515,7 @@ func (e *transactionPostingEngine) RecalculateAccountBalances(ctx context.Contex
 			AccountID:       accountID,
 			AccountName:     account.AccountName,
 			PreviousBalance: account.CurrentBalance,
-			BalanceChange:   decimal.Zero, // Would be calculated
+			BalanceChange:   decimal.Zero,           // Would be calculated
 			NewBalance:      account.CurrentBalance, // Would be recalculated
 			UpdateType:      BalanceUpdateTypeDebit,
 		}
@@ -536,9 +536,9 @@ func (e *transactionPostingEngine) BatchPostTransactions(ctx context.Context, re
 
 	result := &BatchPostResult{
 		TotalTransactions:   len(req.TransactionIDs),
-		SuccessfulPosts:    0,
-		FailedPosts:        0,
-		Results:            []PostTransactionResult{},
+		SuccessfulPosts:     0,
+		FailedPosts:         0,
+		Results:             []PostTransactionResult{},
 		BatchBalanceUpdates: []AccountBalanceUpdate{},
 	}
 
@@ -555,7 +555,7 @@ func (e *transactionPostingEngine) BatchPostTransactions(ctx context.Context, re
 
 		postResult, err := e.PostTransaction(ctx, postReq)
 		result.Results = append(result.Results, *postResult)
-		
+
 		if err != nil && !req.ContinueOnError {
 			break // Stop on first error if not continuing
 		}

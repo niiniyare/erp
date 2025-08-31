@@ -52,13 +52,11 @@
 
 ## 📋 Detailed Implementation Plan
 
+### Phase 1: Foundation Infrastructure (Weeks 1-3) - 🚧 In Progress (94% Complete)
 
-Phase 1: Foundation Infrastructure (Weeks 1-3) - 🚧 In Progress (94% Complete)
+#### Week 1: Database Schema & Core Types
 
-### Week 1: Database Schema & Core Types
-
-
-Day 1-2: Core Enums and Types 🔥
+##### Day 1-2: Core Enums and Types 🔥
 
 **File**: `@db/migration/067_finance_enums.up.sql`
 - [x] Create `account_type_enum`
@@ -72,9 +70,7 @@ Day 1-2: Core Enums and Types 🔥
 - [x] Enable Row-Level Security (RLS) on all new tables
 - [x] Add comments to all enums
 
-
-
-Day 3-5: Core Financial Tables 🔥
+##### Day 3-5: Core Financial Tables 🔥
 
 **File**: `@db/migration/068_finance_core_tables.up.sql`
 - [x] Create `finance_chart_of_accounts` table
@@ -87,15 +83,15 @@ Day 3-5: Core Financial Tables 🔥
 - [x] Create database functions for balance calculations
 - [x] Add triggers for maintaining data integrity
 
+---
 
-### Week 2: SQLC Integration & Domain Models
+#### Week 2: SQLC Integration & Domain Models
 
-
-Day 1-3: SQLC Query Definitions 🔥
+##### Day 1-3: SQLC Query Definitions 🔥
 
 **Files**: `@db/queries/finance_chart_of_accounts.sql`, `@db/queries/finance_transactions.sql`, `@db/queries/finance_transaction_entries.sql`
 
-**Chart of Accounts Queries**:
+###### Chart of Accounts Queries:
 - [x] Create `GetAccountByID`
 - [x] Create `GetAccountByCode`
 - [x] Create `ListAccounts`
@@ -109,7 +105,7 @@ Day 1-3: SQLC Query Definitions 🔥
 - [x] Create `GetAccountsForFinancialStatements`
 - [x] Add account code uniqueness validation query
 
-**Transaction Queries**:
+###### Transaction Queries:
 - [x] Create `CreateTransaction`
 - [x] Create `GetTransactionByID`
 - [x] Create `GetTransactionByNumber`
@@ -122,7 +118,7 @@ Day 1-3: SQLC Query Definitions 🔥
 - [x] Create `SearchTransactions`
 - [x] Create `GetTransactionSummaryByPeriod`
 
-**Transaction Entry Queries**:
+###### Transaction Entry Queries:
 - [x] Create `CreateTransactionEntry`
 - [x] Create `GetTransactionEntries`
 - [x] Create `UpdateTransactionEntry`
@@ -130,13 +126,11 @@ Day 1-3: SQLC Query Definitions 🔥
 - [x] Create `GetEntriesByAccountID`
 - [x] Create reconciliation update queries
 
-
-
-Day 4-5: Domain Models & Value Objects 🔥
+##### Day 4-5: Domain Models & Value Objects 🔥
 
 **File**: `@internal/core/finance/domain/`
 
-**Chart of Accounts Entity** (`accounts.go`):
+###### Chart of Accounts Entity (`accounts.go`):
 - [x] Define `Accounts` struct
 - [x] Implement validation
 - [x] Add account code format validation
@@ -147,7 +141,7 @@ Day 4-5: Domain Models & Value Objects 🔥
 - [x] Implement account balance tracking
 - [x] Add audit trail support
 
-**Transaction Entity** (`transaction.go`):
+###### Transaction Entity (`transaction.go`):
 - [x] Define `FinancialTransaction` aggregate root
 - [x] Implement transaction numbering
 - [x] Add transaction type and status management
@@ -158,7 +152,7 @@ Day 4-5: Domain Models & Value Objects 🔥
 - [x] Implement recurring transaction support
 - [x] Add audit trail and change tracking
 
-**Transaction Entry Entity** (`transaction_entry.go`):
+###### Transaction Entry Entity (`transaction_entry.go`):
 - [x] Define `TransactionEntry` value object
 - [x] Implement double-entry validation
 - [x] Add account reference validation
@@ -169,7 +163,7 @@ Day 4-5: Domain Models & Value Objects 🔥
 - [x] Implement validation
 - [x] Add helper methods for calculations
 
-**Domain Types & Enums** (`types.go`, `constant.go`):
+###### Domain Types & Enums (`types.go`, `constant.go`):
 - [x] Define all financial enums
 - [x] Implement enum validation methods
 - [x] Define transaction status enums with state machine
@@ -177,7 +171,7 @@ Day 4-5: Domain Models & Value Objects 🔥
 - [x] Define recurring frequency enums
 - [x] Implement normal balance enums
 
-**Domain Errors** (`errors.go`):
+###### Domain Errors (`errors.go`):
 - [x] Define error types
 - [x] Implement `ValidationError`
 - [x] Add `BusinessRuleError`
@@ -185,22 +179,22 @@ Day 4-5: Domain Models & Value Objects 🔥
 - [x] Implement error context
 - [x] Add error codes
 
-**Validation Framework** (`validation.go`):
+###### Validation Framework (`validation.go`):
 - [x] Implement `ValidationError` structure
 - [x] Add validation helper functions
 - [x] Implement business rule validation framework
 - [x] Add cross-field validation support
 - [x] Implement validation result aggregation
 
+---
 
-### Week 3: Service Layer & Repository
+#### Week 3: Service Layer & Repository
 
-
-Day 1-3: Financial Service Layer Implementation 🔥 ✅
+##### Day 1-3: Financial Service Layer Implementation 🔥 ✅
 
 **File**: `@internal/core/finance/service/`
 
-**Account Service** (`account_service.go`):
+###### Account Service (`account_service.go`):
 - [x] Implement `AccountService` interface
 - [x] Add `CreateAccount`
 - [x] Implement `GetAccountByID` and `GetAccountByCode`
@@ -214,7 +208,7 @@ Day 1-3: Financial Service Layer Implementation 🔥 ✅
 - [x] Integrate distributed tracing and metrics
 - [x] Implement business rule validation
 
-**Transaction Service** (`transaction_service.go`):
+###### Transaction Service (`transaction_service.go`):
 - [x] Implement `TransactionService` interface
 - [x] Add `CreateTransaction`
 - [x] Implement `GetTransactionByID` and `GetTransactionByNumber`
@@ -231,7 +225,7 @@ Day 1-3: Financial Service Layer Implementation 🔥 ✅
 - [x] Add error handling
 - [x] Integrate authorization checks
 
-**Transaction Entry Service** (`transaction_entry_service.go`):
+###### Transaction Entry Service (`transaction_entry_service.go`):
 - [x] Implement `TransactionEntryService` interface
 - [x] Add `CreateEntry` and `CreateEntries`
 - [x] Implement `GetEntryByID` and `GetEntriesByTransactionID`
@@ -246,7 +240,7 @@ Day 1-3: Financial Service Layer Implementation 🔥 ✅
 - [x] Add bulk operations support
 - [x] Integrate performance monitoring
 
-**Service Factory & Dependency Injection** (`service.go`):
+###### Service Factory & Dependency Injection (`service.go`):
 - [x] Implement `Services` aggregator
 - [x] Add `Dependencies` structure
 - [x] Create `NewServices` factory method
@@ -254,11 +248,9 @@ Day 1-3: Financial Service Layer Implementation 🔥 ✅
 - [x] Add service lifecycle management
 - [x] Integrate with tracing and metrics providers
 
+##### Day 4-5: Repository Implementation & Testing 🔥 ✅
 
-
-Day 4-5: Repository Implementation & Testing 🔥 ✅
-
-**Repository Interfaces** (`@internal/core/finance/domain/repository.go`):
+###### Repository Interfaces (`@internal/core/finance/domain/repository.go`):
 - [x] Define `AccountRepository` interface
 - [x] Define `TransactionRepository` interface
 - [x] Define `TransactionEntryRepository` interface
@@ -266,7 +258,7 @@ Day 4-5: Repository Implementation & Testing 🔥 ✅
 - [x] Define query parameter structures
 - [x] Add repository result types
 
-**Chart of Accounts Repository Implementation** (`@internal/core/finance/repository/`):
+###### Chart of Accounts Repository Implementation (`@internal/core/finance/repository/`):
 - [x] Define `AccountRepository` interface
 - [x] Implement `SQLCAccountRepository` struct with tenant-aware patterns
 - [x] Implement `GetByID` method with context-based tenant isolation
@@ -282,7 +274,7 @@ Day 4-5: Repository Implementation & Testing 🔥 ✅
 - [x] Add distributed tracing integration (OpenTelemetry)
 - [x] Implement audit logging and change tracking
 
-**Transaction Repository Implementation** (`@internal/core/finance/repository/`):
+###### Transaction Repository Implementation (`@internal/core/finance/repository/`):
 - [x] Define `TransactionRepository` interface (30+ methods)
 - [x] Implement `SQLCTransactionRepository` with full CRUD operations
 - [x] Implement core methods: `Create`, `GetByID`, `GetByNumber`, `Update`, `Delete`
@@ -298,7 +290,7 @@ Day 4-5: Repository Implementation & Testing 🔥 ✅
 - [x] Add distributed tracing integration
 - [x] Create stub implementations for advanced features (marked with TODOs)
 
-**Caching Layer** (`cache.go`):
+###### Caching Layer (`cache.go`):
 - [ ] Implement Redis-based account cache
 - [ ] Add cache warming strategies
 - [ ] Implement cache invalidation logic
@@ -308,7 +300,7 @@ Day 4-5: Repository Implementation & Testing 🔥 ✅
 - [ ] Add cache serialization/deserialization
 - [ ] Implement cache partitioning by tenant
 
-**Repository Integration & Validation** (`@internal/core/finance/repository/`):
+###### Repository Integration & Validation (`@internal/core/finance/repository/`):
 - [x] Verify all repository implementations compile successfully
 - [x] Validate interface compliance (all methods implemented)
 - [x] Test integration with existing ERP codebase
@@ -317,7 +309,7 @@ Day 4-5: Repository Implementation & Testing 🔥 ✅
 - [x] Confirm distributed tracing integration
 - [x] Test SQLC parameter mapping and type conversions
 
-**Testing** (`@internal/core/finance/repository/*_test.go`):
+###### Testing (`@internal/core/finance/repository/*_test.go`):
 - [ ] Set up test database
 - [ ] Create test data fixtures
 - [ ] Test account creation (valid/invalid)
@@ -335,8 +327,9 @@ Day 4-5: Repository Implementation & Testing 🔥 ✅
 - [ ] Verify RLS policy enforcement
 - [ ] Test migration up/down scenarios
 
+---
 
-#### Phase 1 Completion Checklist:
+##### Phase 1 Completion Checklist:
 - [x] ✅ Core database enums and types created
 - [x] ✅ Core financial tables implemented
 - [x] ✅ SQLC queries defined
@@ -360,7 +353,7 @@ Day 4-5: Repository Implementation & Testing 🔥 ✅
 - [ ] 🚧 Performance benchmarking and optimization
 - [ ] 🚧 Security review and validation
 
-#### 🎉 Major Milestone: Repository Layer Complete
+##### 🎉 Major Milestone: Repository Layer Complete
 
 **What was accomplished:**
 - **Chart of Accounts Repository**: Full implementation with 14 core methods including hierarchical operations
@@ -384,29 +377,30 @@ Day 4-5: Repository Implementation & Testing 🔥 ✅
 
 **Next Priority**: Unit testing and performance optimization
 
+---
+---
 
+### Phase 2: Core Transaction Engine (Weeks 4-6) - ⏳ Not Started (0% Complete)
 
-
-Phase 2: Core Transaction Engine (Weeks 4-6) - ⏳ Not Started (0% Complete)
 <!-- All content for Phase 2 is collapsed here -->
 
+---
 
+### Phase 3: Security & Compliance Integration (Weeks 7-8) - ⏳ Not Started (0% Complete)
 
-Phase 3: Security & Compliance Integration (Weeks 7-8) - ⏳ Not Started (0% Complete)
 <!-- All content for Phase 3 is collapsed here -->
 
+---
 
+### Phase 4: API Layer Implementation (Weeks 9-10) - 🚧 In Progress (92% Complete)
 
-Phase 4: API Layer Implementation (Weeks 9-10) - 🚧 In Progress (92% Complete)
+#### Week 1: Goa API Design & Generation
 
-### Week 1: Goa API Design & Generation
-
-
-Day 1-3: API Design Specifications 🔥 ✅
+##### Day 1-3: API Design Specifications 🔥 ✅
 
 **Files**: `@internal/api/design/services/finance/`
 
-**Finance Service Design** (`finance.go`):
+###### Finance Service Design (`finance.go`):
 - [x] Define finance service with 15+ endpoints
 - [x] Add account management methods (Create, Get, List, Update, Delete)
 - [x] Add transaction processing methods (Create, Post, Reverse, Approve)
@@ -417,7 +411,7 @@ Day 1-3: API Design Specifications 🔥 ✅
 - [x] Include pagination and filtering parameters
 - [x] Add validation requirements and business rules
 
-**API Type Definitions** (`types.go`):
+###### API Type Definitions (`types.go`):
 - [x] Define `CreateAccountPayload` with full validation
 - [x] Define `AccountResult` with complete account information
 - [x] Define `CreateTransactionPayload` with entry support
@@ -427,7 +421,7 @@ Day 1-3: API Design Specifications 🔥 ✅
 - [x] Include pagination and filtering payload types
 - [x] Add search-specific payload types
 
-**Search Capabilities**:
+###### Search Capabilities:
 - [x] Account search by ID (`GET /{id}`)
 - [x] Account search by code (`GET /accounts/by-code/{account_code}`)
 - [x] Account search by name (`GET /accounts/by-name?account_name=...`)
@@ -435,11 +429,9 @@ Day 1-3: API Design Specifications 🔥 ✅
 - [x] Transaction search by number (`GET /transactions/by-number/{transaction_number}`)
 - [x] General search functionality in list endpoints
 
+##### Day 4-5: Goa Code Generation & Handler Implementation 🔥 ✅
 
-
-Day 4-5: Goa Code Generation & Handler Implementation 🔥 ✅
-
-**Goa Code Generation**:
+###### Goa Code Generation:
 - [x] Update design.go to include finance service import
 - [x] Fix import issues and compilation errors
 - [x] Generate complete Goa service interfaces
@@ -447,7 +439,7 @@ Day 4-5: Goa Code Generation & Handler Implementation 🔥 ✅
 - [x] Generate OpenAPI specifications
 - [x] Validate generated code compilation
 
-**Modular Handler Implementation** (`@internal/api/handlers/finance/`):
+###### Modular Handler Implementation (`@internal/api/handlers/finance/`):
 - [x] Create `handler.go` - Main service interface implementation
 - [x] Create `account.go` - Account management handlers with logging
 - [x] Create `transaction.go` - Transaction processing handlers with full workflow support
@@ -458,7 +450,7 @@ Day 4-5: Goa Code Generation & Handler Implementation 🔥 ✅
 - [x] Add input validation and UUID parsing
 - [x] Implement domain-to-API type conversions
 
-**Handler Features Implemented**:
+###### Handler Features Implemented:
 - [x] Full Goa service interface compliance (15 methods)
 - [x] Context-aware logging with structured fields
 - [x] error handling with business error mapping
@@ -468,13 +460,13 @@ Day 4-5: Goa Code Generation & Handler Implementation 🔥 ✅
 - [x] Search functionality for accounts and transactions
 - [x] Domain model to API response conversions
 
+---
 
-### Week 2: API Integration & Documentation
+#### Week 2: API Integration & Documentation
 
+##### Day 1-2: API Documentation & Reference 🔥 ✅
 
-Day 1-2: API Documentation & Reference 🔥 ✅
-
-**API Reference Guide** (`@docs/module/financial/api-reference.md`):
+###### API Reference Guide (`@docs/module/financial/api-reference.md`):
 - [x] Update account management API documentation
 - [x] Add transaction processing API documentation  
 - [x] Include search endpoint documentation
@@ -484,7 +476,7 @@ Day 1-2: API Documentation & Reference 🔥 ✅
 - [x] Add authentication and authorization requirements
 - [x] Document pagination and filtering parameters
 
-**Documentation Features**:
+###### Documentation Features:
 - [x] Complete endpoint specifications with HTTP methods
 - [x] Detailed request body examples for all operations
 - [x] Response structure documentation
@@ -492,11 +484,9 @@ Day 1-2: API Documentation & Reference 🔥 ✅
 - [x] Search capabilities documentation
 - [x] Business rule explanations (e.g., segregation of duties)
 
+##### Day 3-5: Service Integration & Testing 🚧
 
-
-Day 3-5: Service Integration & Testing 🚧
-
-**Remaining Tasks**:
+###### Remaining Tasks:
 - [ ] Wire finance handlers into main application router
 - [ ] Integrate with existing ABAC middleware
 - [ ] Add JWT authentication integration
@@ -506,8 +496,9 @@ Day 3-5: Service Integration & Testing 🚧
 - [ ] Performance test API endpoints
 - [ ] Security review of API surface
 
+---
 
-#### Phase 4 Completion Status:
+##### Phase 4 Completion Status:
 - [x] ✅ API design specifications completed
 - [x] ✅ Goa code generation and compilation successful  
 - [x] ✅ Modular handler implementation with logging
@@ -516,7 +507,7 @@ Day 3-5: Service Integration & Testing 🚧
 - [ ] 🚧 Service integration and routing (pending)
 - [ ] 🚧 Integration testing and validation (pending)
 
-#### 🎉 Major Milestone: API Layer 92% Complete
+##### 🎉 Major Milestone: API Layer 92% Complete
 
 **What was accomplished:**
 - **API Design**: Complete Goa service specification with 15+ endpoints
@@ -534,75 +525,74 @@ Day 3-5: Service Integration & Testing 🚧
 
 **Next Priority**: Service integration and routing setup
 
+---
+---
 
+### Phase 5: Accounts Receivable (Weeks 11-13) - ⏳ Not Started (0% Complete)
 
-
-Phase 5: Accounts Receivable (Weeks 11-13) - ⏳ Not Started (0% Complete)
 <!-- All content for Phase 5 is collapsed here -->
 
+---
 
+### Phase 6: Accounts Payable (Weeks 14-16) - ⏳ Not Started (0% Complete)
 
-Phase 6: Accounts Payable (Weeks 14-16) - ⏳ Not Started (0% Complete)
 <!-- All content for Phase 6 is collapsed here -->
 
+---
 
+### Phase 7: Cash Management (Weeks 17-18) - ⏳ Not Started (0% Complete)
 
-Phase 7: Cash Management (Weeks 17-18) - ⏳ Not Started (0% Complete)
 <!-- All content for Phase 7 is collapsed here -->
 
+---
 
+### Phase 8: Financial Reporting (Weeks 19-20) - ⏳ Not Started (0% Complete)
 
-Phase 8: Financial Reporting (Weeks 19-20) - ⏳ Not Started (0% Complete)
 <!-- All content for Phase 8 is collapsed here -->
 
+---
 
+### Phase 9: Integration Testing (Week 19) - ⏳ Not Started (0% Complete)
 
-Phase 9: Integration Testing (Week 19) - ⏳ Not Started (0% Complete)
 <!-- All content for Phase 9 is collapsed here -->
 
+---
 
+### Phase 10: Performance Optimization (Week 20) - ⏳ Not Started (0% Complete)
 
-Phase 10: Performance Optimization (Week 20) - ⏳ Not Started (0% Complete)
 <!-- All content for Phase 10 is collapsed here -->
-
 
 ---
 
 ## 📋 Quality Assurance, Success & Deployment
 
+### 🔍 Quality Assurance Checklist
 
-🔍 Quality Assurance Checklist
 <!-- Content for QA Checklist is collapsed here -->
 
+### 🎯 Success Metrics & KPIs
 
-
-🎯 Success Metrics & KPIs
 <!-- Content for Success Metrics & KPIs is collapsed here -->
 
+### 🚀 Deployment Checklist
 
-
-🚀 Deployment Checklist
 <!-- Content for Deployment Checklist is collapsed here -->
 
+### 📚 Documentation Requirements
 
-
-📚 Documentation Requirements
 <!-- Content for Documentation Requirements is collapsed here -->
 
+### 🎯 Final Acceptance Criteria
 
-
-🎯 Final Acceptance Criteria
 <!-- Content for Final Acceptance Criteria is collapsed here -->
-
 
 ---
 
 ## 📈 Post-Implementation
 
+### Go-Live Support & Ongoing Maintenance
 
-Go-Live Support & Ongoing Maintenance
 <!-- Content for Post-Implementation is collapsed here -->
-
 
 ---
 
