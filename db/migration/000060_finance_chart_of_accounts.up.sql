@@ -13,12 +13,28 @@ CREATE TABLE finance_accounts (
     account_code VARCHAR(20) NOT NULL,
     account_name VARCHAR(255) NOT NULL,
     account_description TEXT,
-    
+   
+    -- account grouping
+    account_group_id UUID REFERENCES finance_account_groups(id) ON DELETE SET NULL,
+    account_header_id UUID REFERENCES finance_account_groups(id) ON DELETE SET NULL,
+
     -- Account hierarchy
     parent_account_id UUID REFERENCES finance_accounts(id) ON DELETE RESTRICT,
     account_level INTEGER NOT NULL DEFAULT 1,
     account_path VARCHAR(500), -- Materialized path for hierarchy queries
-    
+    account_category VARCHAR(50),
+    sub_category VARCHAR(50),
+
+    -- display and reporting
+   display_order INTEGER DEFAULT 999,
+   show_in_reports BOOLEAN DEFAULT true,
+   consolidation_account VARCHAR(50),
+ 
+    -- cash flow classification
+    cash_flow_type VARCHAR(20) CHECK (
+        cash_flow_type IS NULL OR 
+        cash_flow_type IN ('OPERATING', 'INVESTING', 'FINANCING')),
+
     -- Account classification  
     root_type VARCHAR(20) NOT NULL CHECK (
         root_type IN ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE')
@@ -94,6 +110,20 @@ COMMENT ON COLUMN finance_accounts.root_type IS
 
 COMMENT ON COLUMN finance_accounts.normal_balance IS 
 'Normal balance type - DEBIT for assets/expenses, CREDIT for liabilities/equity/revenue';
+
+COMMENT ON COLUMN finance_accounts.account_group_id IS 
+'Link to account group for organizational structure and reporting';
+
+COMMENT ON COLUMN finance_accounts.account_header_id IS 
+'Link to account header for financial statement presentation';
+
+COMMENT ON COLUMN finance_accounts.account_category IS 
+'Detailed category within account type (e.g., CURRENT_ASSETS, FIXED_ASSETS)';
+
+COMMENT ON COLUMN finance_accounts.cash_flow_type IS 
+'Cash flow statement classification for proper statement presentation';
+
+
 
 -- Enable Row Level Security
 ALTER TABLE finance_accounts ENABLE ROW LEVEL SECURITY;

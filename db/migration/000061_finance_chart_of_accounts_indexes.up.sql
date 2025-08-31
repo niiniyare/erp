@@ -50,3 +50,13 @@ CREATE INDEX idx_chart_of_accounts_active
 -- JSON attribute search
 CREATE INDEX idx_chart_of_accounts_attributes_gin 
     ON finance_accounts USING gin(account_attributes);
+
+
+CREATE INDEX idx_accounts_header_relationship 
+    ON finance_accounts(tenant_id, account_header_id, account_category) 
+    WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_accounts_cash_flow_type 
+    ON finance_accounts(tenant_id, cash_flow_type, account_type) 
+    WHERE cash_flow_type IS NOT NULL AND deleted_at IS NULL;
+
