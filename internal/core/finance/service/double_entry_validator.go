@@ -3,15 +3,14 @@ package service
 import (
 	"context"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
@@ -151,9 +150,9 @@ func (v *doubleEntryValidator) ValidateTransaction(ctx context.Context, transact
 	}
 
 	span.SetAttributes(
-		shared.StringAttribute("transaction_id", transaction.ID.String()),
-		shared.StringAttribute("transaction_type", string(transaction.TransactionType)),
-		shared.Int64Attribute("entry_count", int64(len(transaction.Entries))),
+		attribute.String("transaction_id", transaction.ID.String()),
+		attribute.String("transaction_type", string(transaction.TransactionType)),
+		attribute.Int64("entry_count", int64(len(transaction.Entries))),
 	)
 
 	// 1. Validate basic transaction structure
@@ -301,10 +300,10 @@ func (v *doubleEntryValidator) ValidateBalance(ctx context.Context, transaction 
 	}
 
 	span.SetAttributes(
-		shared.StringAttribute("total_debits", totalDebits.String()),
-		shared.StringAttribute("total_credits", totalCredits.String()),
-		shared.StringAttribute("difference", difference.String()),
-		shared.BoolAttribute("is_balanced", balanceCheck.IsBalanced),
+		attribute.String("total_debits", totalDebits.String()),
+		attribute.String("total_credits", totalCredits.String()),
+		attribute.String("difference", difference.String()),
+		attribute.Bool("is_balanced", balanceCheck.IsBalanced),
 	)
 
 	return result
@@ -441,7 +440,7 @@ func (v *doubleEntryValidator) ValidateCurrencyConsistency(ctx context.Context, 
 	for i, entry := range transaction.Entries {
 		if entry.OriginalCurrency != nil {
 			// Validate exchange rate for entry
-			if entry.ExchangeRate == nil || entry.ExchangeRate.LessThanOrEqual(decimal.Zero) {
+			if entry.ExchangeRate.LessThanOrEqual(decimal.Zero) {
 				result.Errors = append(result.Errors, ValidationError{
 					Field:    fmt.Sprintf("entries[%d].exchange_rate", i),
 					Message:  "Entry exchange rate must be greater than zero for multi-currency entries",
@@ -451,7 +450,7 @@ func (v *doubleEntryValidator) ValidateCurrencyConsistency(ctx context.Context, 
 			}
 
 			// Validate original amount
-			if entry.OriginalAmount == nil || entry.OriginalAmount.LessThanOrEqual(decimal.Zero) {
+			if entry.OriginalAmount.LessThanOrEqual(decimal.Zero) {
 				result.Errors = append(result.Errors, ValidationError{
 					Field:    fmt.Sprintf("entries[%d].original_amount", i),
 					Message:  "Original amount must be provided for multi-currency entries",

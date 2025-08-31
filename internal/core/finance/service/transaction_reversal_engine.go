@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
@@ -231,9 +231,9 @@ func (e *transactionReversalEngine) CreateReversalTransaction(ctx context.Contex
 	}
 
 	span.SetAttributes(
-		shared.StringAttribute("original_transaction_id", req.OriginalTransactionID.String()),
-		shared.StringAttribute("reversed_by", req.ReversedBy.String()),
-		shared.StringAttribute("reversal_type", string(req.ReversalType)),
+		attribute.String("original_transaction_id", req.OriginalTransactionID.String()),
+		attribute.String("reversed_by", req.ReversedBy.String()),
+		attribute.String("reversal_type", string(req.ReversalType)),
 	)
 
 	// 1. Load and validate the original transaction
@@ -310,9 +310,9 @@ func (e *transactionReversalEngine) CreateReversalTransaction(ctx context.Contex
 	result.Success = true
 
 	span.SetAttributes(
-		shared.StringAttribute("reversal_transaction_id", reversalTransaction.ID.String()),
-		shared.BoolAttribute("auto_posted", req.AutoPost),
-		shared.BoolAttribute("success", result.Success),
+		attribute.String("reversal_transaction_id", reversalTransaction.ID.String()),
+		attribute.Bool("auto_posted", req.AutoPost),
+		attribute.Bool("success", result.Success),
 	)
 
 	return result, nil
@@ -665,10 +665,10 @@ func (e *transactionReversalEngine) BatchReverseTransactions(ctx context.Context
 	result.ProcessingTime = time.Since(startTime)
 
 	span.SetAttributes(
-		shared.Int64Attribute("total_transactions", int64(result.TotalTransactions)),
-		shared.Int64Attribute("successful_reversals", int64(result.SuccessfulReversals)),
-		shared.Int64Attribute("failed_reversals", int64(result.FailedReversals)),
-		shared.DurationAttribute("processing_time", result.ProcessingTime),
+		attribute.Int64("total_transactions", int64(result.TotalTransactions)),
+		attribute.Int64("successful_reversals", int64(result.SuccessfulReversals)),
+		attribute.Int64("failed_reversals", int64(result.FailedReversals)),
+		attribute.String("processing_time", result.ProcessingTime.String()),
 	)
 
 	return result, nil

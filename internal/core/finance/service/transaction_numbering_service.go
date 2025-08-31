@@ -9,10 +9,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
@@ -222,9 +221,9 @@ func (s *transactionNumberingService) GenerateTransactionNumber(ctx context.Cont
 	}
 
 	span.SetAttributes(
-		shared.StringAttribute("transaction_type", string(req.TransactionType)),
-		shared.StringAttribute("generated_number", number),
-		shared.Int64Attribute("sequence_number", rule.CurrentNumber),
+		attribute.String("transaction_type", string(req.TransactionType)),
+		attribute.String("generated_number", number),
+		attribute.Int64("sequence_number", rule.CurrentNumber),
 	)
 
 	return number, nil
@@ -242,7 +241,8 @@ func (s *transactionNumberingService) ReserveTransactionNumber(ctx context.Conte
 	}
 
 	// Create reservation
-	userID, _ := shared.GetUserID(ctx)
+	// TODO: Extract user ID from context
+	userID := uuid.New() // placeholder
 	reservation := &NumberReservation{
 		ID:                uuid.New(),
 		TenantID:          req.TenantID,

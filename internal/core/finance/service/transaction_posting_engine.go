@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
@@ -196,9 +196,9 @@ func (e *transactionPostingEngine) PostTransaction(ctx context.Context, req Post
 	}
 
 	span.SetAttributes(
-		shared.StringAttribute("transaction_id", req.TransactionID.String()),
-		shared.StringAttribute("posted_by", req.PostedBy.String()),
-		shared.BoolAttribute("force_post", req.ForcePost),
+		attribute.String("transaction_id", req.TransactionID.String()),
+		attribute.String("posted_by", req.PostedBy.String()),
+		attribute.Bool("force_post", req.ForcePost),
 	)
 
 	// 1. Retrieve the transaction
@@ -240,7 +240,6 @@ func (e *transactionPostingEngine) PostTransaction(ctx context.Context, req Post
 	}
 
 	// 4. Update transaction status to posted using state machine
-	stateMachine := e.stateMachine(transaction)
 	workflowEngine := e.workflowEngine(transaction)
 
 	err = workflowEngine.Post(req.PostedBy)
@@ -274,9 +273,9 @@ func (e *transactionPostingEngine) PostTransaction(ctx context.Context, req Post
 	result.PostedAt = postingDate
 
 	span.SetAttributes(
-		shared.BoolAttribute("success", result.Success),
-		shared.Int64Attribute("balance_updates_count", int64(len(result.BalanceUpdates))),
-		shared.DurationAttribute("processing_time", time.Since(startTime)),
+		attribute.Bool("success", result.Success),
+		attribute.Int64("balance_updates_count", int64(len(result.BalanceUpdates))),
+		attribute.String("processing_time", time.Since(startTime).String()),
 	)
 
 	return result, nil
@@ -556,6 +555,10 @@ func (e *transactionPostingEngine) BatchPostTransactions(ctx context.Context, re
 
 		postResult, err := e.PostTransaction(ctx, postReq)
 		result.Results = append(result.Results, *postResult)
+		
+		if err != nil && !req.ContinueOnError {
+			break // Stop on first error if not continuing
+		}
 
 		if postResult.Success {
 			result.SuccessfulPosts++
@@ -573,10 +576,10 @@ func (e *transactionPostingEngine) BatchPostTransactions(ctx context.Context, re
 	result.ProcessingTime = time.Since(startTime)
 
 	span.SetAttributes(
-		shared.Int64Attribute("total_transactions", int64(result.TotalTransactions)),
-		shared.Int64Attribute("successful_posts", int64(result.SuccessfulPosts)),
-		shared.Int64Attribute("failed_posts", int64(result.FailedPosts)),
-		shared.DurationAttribute("processing_time", result.ProcessingTime),
+		attribute.Int64("total_transactions", int64(result.TotalTransactions)),
+		attribute.Int64("successful_posts", int64(result.SuccessfulPosts)),
+		attribute.Int64("failed_posts", int64(result.FailedPosts)),
+		attribute.String("processing_time", result.ProcessingTime.String()),
 	)
 
 	return result, nil

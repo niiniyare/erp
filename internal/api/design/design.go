@@ -5,6 +5,7 @@ import (
 	_ "github.com/niiniyare/erp/internal/api/design/services/access_request"
 	_ "github.com/niiniyare/erp/internal/api/design/services/auth"
 	_ "github.com/niiniyare/erp/internal/api/design/services/featureflag"
+	_ "github.com/niiniyare/erp/internal/api/design/services/finance"
 	_ "github.com/niiniyare/erp/internal/api/design/services/health"
 	_ "github.com/niiniyare/erp/internal/api/design/services/organization"
 	_ "github.com/niiniyare/erp/internal/api/design/services/tenant"

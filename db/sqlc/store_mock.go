@@ -748,10 +748,10 @@ func (mr *MockStoreMockRecorder) CreateAccessRequest(ctx, arg any) *gomock.Call 
 }
 
 // CreateAccount mocks base method.
-func (m *MockStore) CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceChartOfAccount, error) {
+func (m *MockStore) CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateAccount", ctx, arg)
-	ret0, _ := ret[0].(*FinanceChartOfAccount)
+	ret0, _ := ret[0].(*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1319,10 +1319,10 @@ func (mr *MockStoreMockRecorder) GetAccountBalance(ctx, arg any) *gomock.Call {
 }
 
 // GetAccountByCode mocks base method.
-func (m *MockStore) GetAccountByCode(ctx context.Context, accountCode string) (*FinanceChartOfAccount, error) {
+func (m *MockStore) GetAccountByCode(ctx context.Context, accountCode string) (*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccountByCode", ctx, accountCode)
-	ret0, _ := ret[0].(*FinanceChartOfAccount)
+	ret0, _ := ret[0].(*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1334,10 +1334,10 @@ func (mr *MockStoreMockRecorder) GetAccountByCode(ctx, accountCode any) *gomock.
 }
 
 // GetAccountByID mocks base method.
-func (m *MockStore) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceChartOfAccount, error) {
+func (m *MockStore) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccountByID", ctx, accountID)
-	ret0, _ := ret[0].(*FinanceChartOfAccount)
+	ret0, _ := ret[0].(*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1364,10 +1364,10 @@ func (mr *MockStoreMockRecorder) GetAccountEntries(ctx, arg any) *gomock.Call {
 }
 
 // GetAccountHierarchy mocks base method.
-func (m *MockStore) GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceChartOfAccount, error) {
+func (m *MockStore) GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccountHierarchy", ctx, accountPathPrefix)
-	ret0, _ := ret[0].([]*FinanceChartOfAccount)
+	ret0, _ := ret[0].([]*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1379,10 +1379,10 @@ func (mr *MockStoreMockRecorder) GetAccountHierarchy(ctx, accountPathPrefix any)
 }
 
 // GetAccountsByEntity mocks base method.
-func (m *MockStore) GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) ([]*FinanceChartOfAccount, error) {
+func (m *MockStore) GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccountsByEntity", ctx, entityID)
-	ret0, _ := ret[0].([]*FinanceChartOfAccount)
+	ret0, _ := ret[0].([]*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1409,10 +1409,10 @@ func (mr *MockStoreMockRecorder) GetAccountsForFinancialStatements(ctx, arg any)
 }
 
 // GetAccountsWithNonZeroBalance mocks base method.
-func (m *MockStore) GetAccountsWithNonZeroBalance(ctx context.Context) ([]*FinanceChartOfAccount, error) {
+func (m *MockStore) GetAccountsWithNonZeroBalance(ctx context.Context) ([]*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccountsWithNonZeroBalance", ctx)
-	ret0, _ := ret[0].([]*FinanceChartOfAccount)
+	ret0, _ := ret[0].([]*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1829,10 +1829,10 @@ func (mr *MockStoreMockRecorder) GetComplianceEvents(ctx, arg any) *gomock.Call 
 }
 
 // GetControlAccounts mocks base method.
-func (m *MockStore) GetControlAccounts(ctx context.Context) ([]*FinanceChartOfAccount, error) {
+func (m *MockStore) GetControlAccounts(ctx context.Context) ([]*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetControlAccounts", ctx)
-	ret0, _ := ret[0].([]*FinanceChartOfAccount)
+	ret0, _ := ret[0].([]*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -3208,10 +3208,10 @@ func (mr *MockStoreMockRecorder) GetResourceEvaluationHistory(ctx, arg any) *gom
 }
 
 // GetRootAccounts mocks base method.
-func (m *MockStore) GetRootAccounts(ctx context.Context) ([]*FinanceChartOfAccount, error) {
+func (m *MockStore) GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRootAccounts", ctx)
-	ret0, _ := ret[0].([]*FinanceChartOfAccount)
+	ret0, _ := ret[0].([]*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -4145,10 +4145,10 @@ func (mr *MockStoreMockRecorder) ListAccessRequestsByStatus(ctx, arg any) *gomoc
 }
 
 // ListAccounts mocks base method.
-func (m *MockStore) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceChartOfAccount, error) {
+func (m *MockStore) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListAccounts", ctx, arg)
-	ret0, _ := ret[0].([]*FinanceChartOfAccount)
+	ret0, _ := ret[0].([]*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -4160,10 +4160,10 @@ func (mr *MockStoreMockRecorder) ListAccounts(ctx, arg any) *gomock.Call {
 }
 
 // ListAccountsByParent mocks base method.
-func (m *MockStore) ListAccountsByParent(ctx context.Context, parentAccountID *uuid.UUID) ([]*FinanceChartOfAccount, error) {
+func (m *MockStore) ListAccountsByParent(ctx context.Context, parentAccountID *uuid.UUID) ([]*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListAccountsByParent", ctx, parentAccountID)
-	ret0, _ := ret[0].([]*FinanceChartOfAccount)
+	ret0, _ := ret[0].([]*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -4749,10 +4749,10 @@ func (mr *MockStoreMockRecorder) RevokeUserRole(ctx, arg any) *gomock.Call {
 }
 
 // SearchAccounts mocks base method.
-func (m *MockStore) SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceChartOfAccount, error) {
+func (m *MockStore) SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchAccounts", ctx, arg)
-	ret0, _ := ret[0].([]*FinanceChartOfAccount)
+	ret0, _ := ret[0].([]*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -5068,10 +5068,10 @@ func (mr *MockStoreMockRecorder) UpdateAccessRequestStatus(ctx, arg any) *gomock
 }
 
 // UpdateAccount mocks base method.
-func (m *MockStore) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceChartOfAccount, error) {
+func (m *MockStore) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateAccount", ctx, arg)
-	ret0, _ := ret[0].(*FinanceChartOfAccount)
+	ret0, _ := ret[0].(*FinanceAccount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

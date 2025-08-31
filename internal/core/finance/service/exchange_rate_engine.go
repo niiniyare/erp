@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
@@ -322,9 +322,9 @@ func (e *exchangeRateEngine) GetExchangeRate(ctx context.Context, req GetExchang
 	defer span.End()
 
 	span.SetAttributes(
-		shared.StringAttribute("from_currency", req.FromCurrency),
-		shared.StringAttribute("to_currency", req.ToCurrency),
-		shared.StringAttribute("rate_type", string(req.RateType)),
+		attribute.String("from_currency", req.FromCurrency),
+		attribute.String("to_currency", req.ToCurrency),
+		attribute.String("rate_type", string(req.RateType)),
 	)
 
 	// Handle same currency case
@@ -350,7 +350,7 @@ func (e *exchangeRateEngine) GetExchangeRate(ctx context.Context, req GetExchang
 	// Try cache first
 	cacheKey := e.buildCacheKey(req.FromCurrency, req.ToCurrency, req.RateType, req.RateDate)
 	if cachedRate := e.rateCache.Get(cacheKey); cachedRate != nil {
-		span.SetAttributes(shared.BoolAttribute("cache_hit", true))
+		span.SetAttributes(attribute.Bool("cache_hit", true))
 		return cachedRate, nil
 	}
 
@@ -434,9 +434,9 @@ func (e *exchangeRateEngine) ConvertAmount(ctx context.Context, req ConvertAmoun
 	}
 
 	span.SetAttributes(
-		shared.StringAttribute("original_amount", req.Amount.String()),
-		shared.StringAttribute("converted_amount", roundedAmount.String()),
-		shared.StringAttribute("rate", exchangeRate.Rate.String()),
+		attribute.String("original_amount", req.Amount.String()),
+		attribute.String("converted_amount", roundedAmount.String()),
+		attribute.String("rate", exchangeRate.Rate.String()),
 	)
 
 	return result, nil
@@ -602,10 +602,10 @@ func (e *exchangeRateEngine) UpdateExchangeRate(ctx context.Context, req UpdateE
 	}
 
 	span.SetAttributes(
-		shared.StringAttribute("from_currency", req.FromCurrency),
-		shared.StringAttribute("to_currency", req.ToCurrency),
-		shared.StringAttribute("new_rate", req.Rate.String()),
-		shared.StringAttribute("percent_change", percentChange.String()),
+		attribute.String("from_currency", req.FromCurrency),
+		attribute.String("to_currency", req.ToCurrency),
+		attribute.String("new_rate", req.Rate.String()),
+		attribute.String("percent_change", percentChange.String()),
 	)
 
 	return result, nil
@@ -709,10 +709,10 @@ func (e *exchangeRateEngine) RefreshRates(ctx context.Context, req RefreshRatesR
 	result.ProcessingTime = time.Since(startTime)
 
 	span.SetAttributes(
-		shared.Int64Attribute("total_pairs", int64(result.TotalPairsProcessed)),
-		shared.Int64Attribute("successful_updates", int64(result.SuccessfulUpdates)),
-		shared.Int64Attribute("failed_updates", int64(result.FailedUpdates)),
-		shared.DurationAttribute("processing_time", result.ProcessingTime),
+		attribute.Int64("total_pairs", int64(result.TotalPairsProcessed)),
+		attribute.Int64("successful_updates", int64(result.SuccessfulUpdates)),
+		attribute.Int64("failed_updates", int64(result.FailedUpdates)),
+		attribute.String("processing_time", result.ProcessingTime.String()),
 	)
 
 	return result, nil

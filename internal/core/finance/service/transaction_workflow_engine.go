@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
@@ -444,10 +445,10 @@ func (e *transactionWorkflowEngine) SubmitForApproval(ctx context.Context, req S
 	}
 
 	span.SetAttributes(
-		shared.StringAttribute("transaction_id", req.TransactionID.String()),
-		shared.StringAttribute("submitted_by", req.SubmittedBy.String()),
-		shared.StringAttribute("approval_type", string(req.ApprovalType)),
-		shared.StringAttribute("priority", string(req.Priority)),
+		attribute.String("transaction_id", req.TransactionID.String()),
+		attribute.String("submitted_by", req.SubmittedBy.String()),
+		attribute.String("approval_type", string(req.ApprovalType)),
+		attribute.String("priority", string(req.Priority)),
 	)
 
 	// 1. Load and validate transaction
@@ -458,7 +459,8 @@ func (e *transactionWorkflowEngine) SubmitForApproval(ctx context.Context, req S
 	}
 
 	// 2. Validate transaction is in correct state for approval
-	if !transaction.CanBeSubmittedForApproval() {
+	if transaction.TransactionStatus != domain.TransactionStatusDraft && 
+		transaction.TransactionStatus != domain.TransactionStatusPendingApproval {
 		result.Errors = append(result.Errors, fmt.Sprintf("Transaction is not in a state that can be submitted for approval: %s", transaction.TransactionStatus))
 		return result, fmt.Errorf("transaction cannot be submitted for approval")
 	}
@@ -501,9 +503,9 @@ func (e *transactionWorkflowEngine) SubmitForApproval(ctx context.Context, req S
 	result.WorkflowStatus = WorkflowStatusInProgress
 
 	span.SetAttributes(
-		shared.StringAttribute("workflow_id", result.WorkflowID.String()),
-		shared.BoolAttribute("success", result.Success),
-		shared.Int64Attribute("approval_levels", int64(len(workflowSteps))),
+		attribute.String("workflow_id", result.WorkflowID.String()),
+		attribute.Bool("success", result.Success),
+		attribute.Int64("approval_levels", int64(len(workflowSteps))),
 	)
 
 	return result, nil
@@ -524,10 +526,10 @@ func (e *transactionWorkflowEngine) ApproveTransaction(ctx context.Context, req 
 	}
 
 	span.SetAttributes(
-		shared.StringAttribute("transaction_id", req.TransactionID.String()),
-		shared.StringAttribute("approved_by", req.ApprovedBy.String()),
-		shared.Int64Attribute("approval_level", int64(req.ApprovalLevel)),
-		shared.StringAttribute("approval_action", string(req.ApprovalAction)),
+		attribute.String("transaction_id", req.TransactionID.String()),
+		attribute.String("approved_by", req.ApprovedBy.String()),
+		attribute.Int64("approval_level", int64(req.ApprovalLevel)),
+		attribute.String("approval_action", string(req.ApprovalAction)),
 	)
 
 	// 1. Load and validate transaction
@@ -611,9 +613,9 @@ func (e *transactionWorkflowEngine) ApproveTransaction(ctx context.Context, req 
 	result.Success = true
 
 	span.SetAttributes(
-		shared.StringAttribute("approval_id", result.ApprovalID.String()),
-		shared.BoolAttribute("workflow_complete", result.WorkflowComplete),
-		shared.BoolAttribute("success", result.Success),
+		attribute.String("approval_id", result.ApprovalID.String()),
+		attribute.Bool("workflow_complete", result.WorkflowComplete),
+		attribute.Bool("success", result.Success),
 	)
 
 	return result, nil

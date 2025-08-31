@@ -177,7 +177,7 @@ func (tsm *TransactionStateMachine) TransitionTo(transition StateTransition) err
 	}
 
 	// Perform the transition
-	oldStatus := tsm.transaction.TransactionStatus
+	_ = tsm.transaction.TransactionStatus
 	tsm.transaction.TransactionStatus = transition.ToStatus
 	tsm.transaction.UpdatedAt = transition.TransitionAt
 	tsm.transaction.UpdatedBy = &transition.TransitionBy
@@ -198,12 +198,8 @@ func (tsm *TransactionStateMachine) TransitionTo(transition StateTransition) err
 			tsm.transaction.ApprovalNotes = transition.Notes
 		}
 		if transition.ReasonCode != nil {
-			tsm.transaction.RejectionReason = &RejectionReason{
-				Code:        *transition.ReasonCode,
-				Description: *transition.Notes,
-				RejectedBy:  transition.TransitionBy,
-				RejectedAt:  transition.TransitionAt,
-			}
+			rejectionReason := RejectionReason(*transition.ReasonCode)
+			tsm.transaction.RejectionReason = &rejectionReason
 		}
 
 	case TransactionStatusPosted:
@@ -438,25 +434,26 @@ func (twe *TransactionWorkflowEngine) GetWorkflowStatus() TransactionWorkflowSta
 	t := twe.stateMachine.transaction
 
 	return TransactionWorkflowStatus{
-		TransactionID:     t.ID,
-		CurrentStatus:     t.TransactionStatus,
-		ApprovalStatus:    t.ApprovalStatus,
-		ApprovalRequired:  t.ApprovalRequired,
-		IsReversed:        t.IsReversed,
-		ValidTransitions:  twe.stateMachine.GetValidTransitions(),
-		ValidationStatus:  t.ValidationStatus,
-		ValidationErrors:  t.ValidationErrors,
+		TransactionID:    t.ID,
+		CurrentStatus:    t.TransactionStatus,
+		ApprovalStatus:   t.ApprovalStatus,
+		ApprovalRequired: t.ApprovalRequired,
+		IsReversed:       t.IsReversed,
+		ValidTransitions: twe.stateMachine.GetValidTransitions(),
+		ValidationStatus: t.ValidationStatus,
+		ValidationErrors: t.ValidationErrors,
 	}
 }
 
 // TransactionWorkflowStatus represents the current workflow state
 type TransactionWorkflowStatus struct {
-	TransactionID     uuid.UUID           `json:"transaction_id"`
-	CurrentStatus     TransactionStatus   `json:"current_status"`
-	ApprovalStatus    ApprovalStatus      `json:"approval_status"`
-	ApprovalRequired  bool                `json:"approval_required"`
-	IsReversed        bool                `json:"is_reversed"`
-	ValidTransitions  []TransactionStatus `json:"valid_transitions"`
-	ValidationStatus  ValidationStatus    `json:"validation_status"`
-	ValidationErrors  []ValidationError   `json:"validation_errors,omitempty"`
+	TransactionID    uuid.UUID           `json:"transaction_id"`
+	CurrentStatus    TransactionStatus   `json:"current_status"`
+	ApprovalStatus   ApprovalStatus      `json:"approval_status"`
+	ApprovalRequired bool                `json:"approval_required"`
+	IsReversed       bool                `json:"is_reversed"`
+	ValidTransitions []TransactionStatus `json:"valid_transitions"`
+	ValidationStatus ValidationStatus    `json:"validation_status"`
+	ValidationErrors []ValidationError   `json:"validation_errors,omitempty"`
 }
+

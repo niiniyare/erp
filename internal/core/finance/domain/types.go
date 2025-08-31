@@ -33,6 +33,15 @@ func (rt RootType) String() string {
 	return string(rt)
 }
 
+// ParseRootType parses a string into a RootType and validates it
+func ParseRootType(s string) (RootType, error) {
+	rt := RootType(s)
+	if !rt.IsValid() {
+		return "", fmt.Errorf("invalid root type: %s", s)
+	}
+	return rt, nil
+}
+
 // NormalBalance represents the normal balance type for accounts
 // This determines which side (debit/credit) increases the account balance
 type NormalBalance string
@@ -57,28 +66,41 @@ func (nb NormalBalance) String() string {
 	return string(nb)
 }
 
+// ParseNormalBalance parses a string into a NormalBalance and validates it
+func ParseNormalBalance(s string) (NormalBalance, error) {
+	nb := NormalBalance(s)
+	if !nb.IsValid() {
+		return "", fmt.Errorf("invalid normal balance: %s", s)
+	}
+	return nb, nil
+}
+
 // TransactionType represents the type of financial transaction
 // This helps categorize transactions by their source and purpose
 type TransactionType string
 
 const (
-	TransactionTypeManual     TransactionType = "MANUAL"     // User-created transactions
-	TransactionTypeSystem     TransactionType = "SYSTEM"     // System-generated transactions
-	TransactionTypeImported   TransactionType = "IMPORTED"   // Imported from external systems
-	TransactionTypeRecurring  TransactionType = "RECURRING"  // Auto-generated recurring transactions
-	TransactionTypeAdjustment TransactionType = "ADJUSTMENT" // Correcting/adjusting entries
-	TransactionTypeClosing    TransactionType = "CLOSING"    // Period-end closing entries
-	TransactionTypeJournal    TransactionType = "JOURNAL"
-	TransactionTypeInvoice    TransactionType = "INVOICE"
-	TransactionTypePayment    TransactionType = "PAYMENT"
-	TransactionTypePurchase   TransactionType = "PURCHASE"
+	TransactionTypeManual        TransactionType = "MANUAL"         // User-created transactions
+	TransactionTypeSystem        TransactionType = "SYSTEM"         // System-generated transactions
+	TransactionTypeImported      TransactionType = "IMPORTED"       // Imported from external systems
+	TransactionTypeRecurring     TransactionType = "RECURRING"      // Auto-generated recurring transactions
+	TransactionTypeAdjustment    TransactionType = "ADJUSTMENT"     // Correcting/adjusting entries
+	TransactionTypeClosing       TransactionType = "CLOSING"        // Period-end closing entries
+	TransactionTypeJournal       TransactionType = "JOURNAL"
+	TransactionTypeJournalEntry  TransactionType = "JOURNAL_ENTRY"  // Journal entry transactions
+	TransactionTypeOpening       TransactionType = "OPENING"        // Opening balance transactions
+	TransactionTypeInvoice       TransactionType = "INVOICE"
+	TransactionTypePayment       TransactionType = "PAYMENT"
+	TransactionTypePurchase      TransactionType = "PURCHASE"
 )
 
 // IsValid validates if the TransactionType is one of the defined constants
 func (tt TransactionType) IsValid() bool {
 	switch tt {
 	case TransactionTypeManual, TransactionTypeSystem, TransactionTypeImported,
-		TransactionTypeRecurring, TransactionTypeAdjustment, TransactionTypeClosing:
+		TransactionTypeRecurring, TransactionTypeAdjustment, TransactionTypeClosing,
+		TransactionTypeJournal, TransactionTypeJournalEntry, TransactionTypeOpening,
+		TransactionTypeInvoice, TransactionTypePayment, TransactionTypePurchase:
 		return true
 	default:
 		return false
@@ -100,6 +122,16 @@ func (tt TransactionType) String() string {
 	return string(tt)
 }
 
+// ParseTransactionType converts a string to a valid TransactionType
+// Returns an error if the string is not a valid transaction type
+func ParseTransactionType(s string) (TransactionType, error) {
+	tt := TransactionType(s)
+	if !tt.IsValid() {
+		return "", fmt.Errorf("invalid transaction type: %s", s)
+	}
+	return tt, nil
+}
+
 // TransactionStatus represents the current status of a transaction
 // This tracks the transaction through its lifecycle
 type TransactionStatus string
@@ -111,13 +143,14 @@ const (
 	TransactionStatusPosted          TransactionStatus = "POSTED"           // Posted to ledger, affects balances
 	TransactionStatusCancelled       TransactionStatus = "CANCELLED"        // Cancelled before posting
 	TransactionStatusReversed        TransactionStatus = "REVERSED"         // Posted but later reversed
+	TransactionStatusRejected        TransactionStatus = "REJECTED"         // Rejected during approval
 )
 
 // IsValid validates if the TransactionStatus is one of the defined constants
 func (ts TransactionStatus) IsValid() bool {
 	switch ts {
 	case TransactionStatusDraft, TransactionStatusPendingApproval, TransactionStatusApproved,
-		TransactionStatusPosted, TransactionStatusCancelled, TransactionStatusReversed:
+		TransactionStatusPosted, TransactionStatusCancelled, TransactionStatusReversed, TransactionStatusRejected:
 		return true
 	default:
 		return false
@@ -144,20 +177,32 @@ func (ts TransactionStatus) String() string {
 	return string(ts)
 }
 
+// ParseTransactionStatus converts a string to a valid TransactionStatus
+// Returns an error if the string is not a valid transaction status
+func ParseTransactionStatus(s string) (TransactionStatus, error) {
+	ts := TransactionStatus(s)
+	if !ts.IsValid() {
+		return "", fmt.Errorf("invalid transaction status: %s", s)
+	}
+	return ts, nil
+}
+
 // ApprovalStatus represents the approval status of a transaction
 type ApprovalStatus string
 
 const (
-	ApprovalStatusNotRequired ApprovalStatus = "NOT_REQUIRED" // No approval needed
-	ApprovalStatusPending     ApprovalStatus = "PENDING"      // Waiting for approval
-	ApprovalStatusApproved    ApprovalStatus = "APPROVED"     // Approved by authorized user
-	ApprovalStatusRejected    ApprovalStatus = "REJECTED"     // Rejected by approver
+	ApprovalStatusNotRequired        ApprovalStatus = "NOT_REQUIRED"        // No approval needed
+	ApprovalStatusPending            ApprovalStatus = "PENDING"             // Waiting for approval
+	ApprovalStatusApproved           ApprovalStatus = "APPROVED"            // Approved by authorized user
+	ApprovalStatusRejected           ApprovalStatus = "REJECTED"            // Rejected by approver
+	ApprovalStatusPartiallyApproved  ApprovalStatus = "PARTIALLY_APPROVED"  // Partially approved (multi-level approval)
 )
 
 // IsValid validates if the ApprovalStatus is one of the defined constants
 func (as ApprovalStatus) IsValid() bool {
 	switch as {
-	case ApprovalStatusNotRequired, ApprovalStatusPending, ApprovalStatusApproved, ApprovalStatusRejected:
+	case ApprovalStatusNotRequired, ApprovalStatusPending, ApprovalStatusApproved, 
+		ApprovalStatusRejected, ApprovalStatusPartiallyApproved:
 		return true
 	default:
 		return false
