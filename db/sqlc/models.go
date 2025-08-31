@@ -6,1030 +6,12 @@ package db
 
 import (
 	"database/sql"
-	"database/sql/driver"
-	"fmt"
 	"net/netip"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
-
-// Detailed account classifications within each root type following standard chart of accounts structure
-type AccountTypeEnum string
-
-const (
-	AccountTypeEnumBANK                    AccountTypeEnum = "BANK"
-	AccountTypeEnumCASH                    AccountTypeEnum = "CASH"
-	AccountTypeEnumPETTYCASH               AccountTypeEnum = "PETTY_CASH"
-	AccountTypeEnumACCOUNTSRECEIVABLE      AccountTypeEnum = "ACCOUNTS_RECEIVABLE"
-	AccountTypeEnumOTHERRECEIVABLE         AccountTypeEnum = "OTHER_RECEIVABLE"
-	AccountTypeEnumINVENTORY               AccountTypeEnum = "INVENTORY"
-	AccountTypeEnumPREPAIDEXPENSES         AccountTypeEnum = "PREPAID_EXPENSES"
-	AccountTypeEnumFIXEDASSETS             AccountTypeEnum = "FIXED_ASSETS"
-	AccountTypeEnumACCUMULATEDDEPRECIATION AccountTypeEnum = "ACCUMULATED_DEPRECIATION"
-	AccountTypeEnumINTANGIBLEASSETS        AccountTypeEnum = "INTANGIBLE_ASSETS"
-	AccountTypeEnumINVESTMENTS             AccountTypeEnum = "INVESTMENTS"
-	AccountTypeEnumOTHERCURRENTASSETS      AccountTypeEnum = "OTHER_CURRENT_ASSETS"
-	AccountTypeEnumOTHERASSETS             AccountTypeEnum = "OTHER_ASSETS"
-	AccountTypeEnumACCOUNTSPAYABLE         AccountTypeEnum = "ACCOUNTS_PAYABLE"
-	AccountTypeEnumOTHERPAYABLE            AccountTypeEnum = "OTHER_PAYABLE"
-	AccountTypeEnumACCRUEDEXPENSES         AccountTypeEnum = "ACCRUED_EXPENSES"
-	AccountTypeEnumSHORTTERMDEBT           AccountTypeEnum = "SHORT_TERM_DEBT"
-	AccountTypeEnumLONGTERMDEBT            AccountTypeEnum = "LONG_TERM_DEBT"
-	AccountTypeEnumDEFERREDREVENUE         AccountTypeEnum = "DEFERRED_REVENUE"
-	AccountTypeEnumTAXPAYABLE              AccountTypeEnum = "TAX_PAYABLE"
-	AccountTypeEnumOTHERCURRENTLIABILITIES AccountTypeEnum = "OTHER_CURRENT_LIABILITIES"
-	AccountTypeEnumOTHERLIABILITIES        AccountTypeEnum = "OTHER_LIABILITIES"
-	AccountTypeEnumOWNERSEQUITY            AccountTypeEnum = "OWNERS_EQUITY"
-	AccountTypeEnumRETAINEDEARNINGS        AccountTypeEnum = "RETAINED_EARNINGS"
-	AccountTypeEnumCOMMONSTOCK             AccountTypeEnum = "COMMON_STOCK"
-	AccountTypeEnumPREFERREDSTOCK          AccountTypeEnum = "PREFERRED_STOCK"
-	AccountTypeEnumADDITIONALPAIDINCAPITAL AccountTypeEnum = "ADDITIONAL_PAID_IN_CAPITAL"
-	AccountTypeEnumTREASURYSTOCK           AccountTypeEnum = "TREASURY_STOCK"
-	AccountTypeEnumOTHEREQUITY             AccountTypeEnum = "OTHER_EQUITY"
-	AccountTypeEnumOPERATINGREVENUE        AccountTypeEnum = "OPERATING_REVENUE"
-	AccountTypeEnumSERVICEREVENUE          AccountTypeEnum = "SERVICE_REVENUE"
-	AccountTypeEnumPRODUCTREVENUE          AccountTypeEnum = "PRODUCT_REVENUE"
-	AccountTypeEnumINTERESTINCOME          AccountTypeEnum = "INTEREST_INCOME"
-	AccountTypeEnumDIVIDENDINCOME          AccountTypeEnum = "DIVIDEND_INCOME"
-	AccountTypeEnumGAINONSALE              AccountTypeEnum = "GAIN_ON_SALE"
-	AccountTypeEnumOTHERINCOME             AccountTypeEnum = "OTHER_INCOME"
-	AccountTypeEnumCOSTOFGOODSSOLD         AccountTypeEnum = "COST_OF_GOODS_SOLD"
-	AccountTypeEnumSALARIESWAGES           AccountTypeEnum = "SALARIES_WAGES"
-	AccountTypeEnumBENEFITS                AccountTypeEnum = "BENEFITS"
-	AccountTypeEnumRENTEXPENSE             AccountTypeEnum = "RENT_EXPENSE"
-	AccountTypeEnumUTILITIES               AccountTypeEnum = "UTILITIES"
-	AccountTypeEnumOFFICEEXPENSES          AccountTypeEnum = "OFFICE_EXPENSES"
-	AccountTypeEnumPROFESSIONALFEES        AccountTypeEnum = "PROFESSIONAL_FEES"
-	AccountTypeEnumMARKETINGADVERTISING    AccountTypeEnum = "MARKETING_ADVERTISING"
-	AccountTypeEnumTRAVELEXPENSES          AccountTypeEnum = "TRAVEL_EXPENSES"
-	AccountTypeEnumDEPRECIATIONEXPENSE     AccountTypeEnum = "DEPRECIATION_EXPENSE"
-	AccountTypeEnumINTERESTEXPENSE         AccountTypeEnum = "INTEREST_EXPENSE"
-	AccountTypeEnumTAXEXPENSE              AccountTypeEnum = "TAX_EXPENSE"
-	AccountTypeEnumOTHEREXPENSES           AccountTypeEnum = "OTHER_EXPENSES"
-)
-
-func (e *AccountTypeEnum) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = AccountTypeEnum(s)
-	case string:
-		*e = AccountTypeEnum(s)
-	default:
-		return fmt.Errorf("unsupported scan type for AccountTypeEnum: %T", src)
-	}
-	return nil
-}
-
-type NullAccountTypeEnum struct {
-	AccountTypeEnum AccountTypeEnum `json:"account_type_enum"`
-	Valid           bool            `json:"valid"` // Valid is true if AccountTypeEnum is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullAccountTypeEnum) Scan(value interface{}) error {
-	if value == nil {
-		ns.AccountTypeEnum, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.AccountTypeEnum.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullAccountTypeEnum) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.AccountTypeEnum), nil
-}
-
-func (e AccountTypeEnum) Valid() bool {
-	switch e {
-	case AccountTypeEnumBANK,
-		AccountTypeEnumCASH,
-		AccountTypeEnumPETTYCASH,
-		AccountTypeEnumACCOUNTSRECEIVABLE,
-		AccountTypeEnumOTHERRECEIVABLE,
-		AccountTypeEnumINVENTORY,
-		AccountTypeEnumPREPAIDEXPENSES,
-		AccountTypeEnumFIXEDASSETS,
-		AccountTypeEnumACCUMULATEDDEPRECIATION,
-		AccountTypeEnumINTANGIBLEASSETS,
-		AccountTypeEnumINVESTMENTS,
-		AccountTypeEnumOTHERCURRENTASSETS,
-		AccountTypeEnumOTHERASSETS,
-		AccountTypeEnumACCOUNTSPAYABLE,
-		AccountTypeEnumOTHERPAYABLE,
-		AccountTypeEnumACCRUEDEXPENSES,
-		AccountTypeEnumSHORTTERMDEBT,
-		AccountTypeEnumLONGTERMDEBT,
-		AccountTypeEnumDEFERREDREVENUE,
-		AccountTypeEnumTAXPAYABLE,
-		AccountTypeEnumOTHERCURRENTLIABILITIES,
-		AccountTypeEnumOTHERLIABILITIES,
-		AccountTypeEnumOWNERSEQUITY,
-		AccountTypeEnumRETAINEDEARNINGS,
-		AccountTypeEnumCOMMONSTOCK,
-		AccountTypeEnumPREFERREDSTOCK,
-		AccountTypeEnumADDITIONALPAIDINCAPITAL,
-		AccountTypeEnumTREASURYSTOCK,
-		AccountTypeEnumOTHEREQUITY,
-		AccountTypeEnumOPERATINGREVENUE,
-		AccountTypeEnumSERVICEREVENUE,
-		AccountTypeEnumPRODUCTREVENUE,
-		AccountTypeEnumINTERESTINCOME,
-		AccountTypeEnumDIVIDENDINCOME,
-		AccountTypeEnumGAINONSALE,
-		AccountTypeEnumOTHERINCOME,
-		AccountTypeEnumCOSTOFGOODSSOLD,
-		AccountTypeEnumSALARIESWAGES,
-		AccountTypeEnumBENEFITS,
-		AccountTypeEnumRENTEXPENSE,
-		AccountTypeEnumUTILITIES,
-		AccountTypeEnumOFFICEEXPENSES,
-		AccountTypeEnumPROFESSIONALFEES,
-		AccountTypeEnumMARKETINGADVERTISING,
-		AccountTypeEnumTRAVELEXPENSES,
-		AccountTypeEnumDEPRECIATIONEXPENSE,
-		AccountTypeEnumINTERESTEXPENSE,
-		AccountTypeEnumTAXEXPENSE,
-		AccountTypeEnumOTHEREXPENSES:
-		return true
-	}
-	return false
-}
-
-func AllAccountTypeEnumValues() []AccountTypeEnum {
-	return []AccountTypeEnum{
-		AccountTypeEnumBANK,
-		AccountTypeEnumCASH,
-		AccountTypeEnumPETTYCASH,
-		AccountTypeEnumACCOUNTSRECEIVABLE,
-		AccountTypeEnumOTHERRECEIVABLE,
-		AccountTypeEnumINVENTORY,
-		AccountTypeEnumPREPAIDEXPENSES,
-		AccountTypeEnumFIXEDASSETS,
-		AccountTypeEnumACCUMULATEDDEPRECIATION,
-		AccountTypeEnumINTANGIBLEASSETS,
-		AccountTypeEnumINVESTMENTS,
-		AccountTypeEnumOTHERCURRENTASSETS,
-		AccountTypeEnumOTHERASSETS,
-		AccountTypeEnumACCOUNTSPAYABLE,
-		AccountTypeEnumOTHERPAYABLE,
-		AccountTypeEnumACCRUEDEXPENSES,
-		AccountTypeEnumSHORTTERMDEBT,
-		AccountTypeEnumLONGTERMDEBT,
-		AccountTypeEnumDEFERREDREVENUE,
-		AccountTypeEnumTAXPAYABLE,
-		AccountTypeEnumOTHERCURRENTLIABILITIES,
-		AccountTypeEnumOTHERLIABILITIES,
-		AccountTypeEnumOWNERSEQUITY,
-		AccountTypeEnumRETAINEDEARNINGS,
-		AccountTypeEnumCOMMONSTOCK,
-		AccountTypeEnumPREFERREDSTOCK,
-		AccountTypeEnumADDITIONALPAIDINCAPITAL,
-		AccountTypeEnumTREASURYSTOCK,
-		AccountTypeEnumOTHEREQUITY,
-		AccountTypeEnumOPERATINGREVENUE,
-		AccountTypeEnumSERVICEREVENUE,
-		AccountTypeEnumPRODUCTREVENUE,
-		AccountTypeEnumINTERESTINCOME,
-		AccountTypeEnumDIVIDENDINCOME,
-		AccountTypeEnumGAINONSALE,
-		AccountTypeEnumOTHERINCOME,
-		AccountTypeEnumCOSTOFGOODSSOLD,
-		AccountTypeEnumSALARIESWAGES,
-		AccountTypeEnumBENEFITS,
-		AccountTypeEnumRENTEXPENSE,
-		AccountTypeEnumUTILITIES,
-		AccountTypeEnumOFFICEEXPENSES,
-		AccountTypeEnumPROFESSIONALFEES,
-		AccountTypeEnumMARKETINGADVERTISING,
-		AccountTypeEnumTRAVELEXPENSES,
-		AccountTypeEnumDEPRECIATIONEXPENSE,
-		AccountTypeEnumINTERESTEXPENSE,
-		AccountTypeEnumTAXEXPENSE,
-		AccountTypeEnumOTHEREXPENSES,
-	}
-}
-
-// Workflow approval states for transactions requiring authorization
-type ApprovalStatusEnum string
-
-const (
-	ApprovalStatusEnumNOTREQUIRED ApprovalStatusEnum = "NOT_REQUIRED"
-	ApprovalStatusEnumPENDING     ApprovalStatusEnum = "PENDING"
-	ApprovalStatusEnumAPPROVED    ApprovalStatusEnum = "APPROVED"
-	ApprovalStatusEnumREJECTED    ApprovalStatusEnum = "REJECTED"
-)
-
-func (e *ApprovalStatusEnum) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = ApprovalStatusEnum(s)
-	case string:
-		*e = ApprovalStatusEnum(s)
-	default:
-		return fmt.Errorf("unsupported scan type for ApprovalStatusEnum: %T", src)
-	}
-	return nil
-}
-
-type NullApprovalStatusEnum struct {
-	ApprovalStatusEnum ApprovalStatusEnum `json:"approval_status_enum"`
-	Valid              bool               `json:"valid"` // Valid is true if ApprovalStatusEnum is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullApprovalStatusEnum) Scan(value interface{}) error {
-	if value == nil {
-		ns.ApprovalStatusEnum, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.ApprovalStatusEnum.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullApprovalStatusEnum) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.ApprovalStatusEnum), nil
-}
-
-func (e ApprovalStatusEnum) Valid() bool {
-	switch e {
-	case ApprovalStatusEnumNOTREQUIRED,
-		ApprovalStatusEnumPENDING,
-		ApprovalStatusEnumAPPROVED,
-		ApprovalStatusEnumREJECTED:
-		return true
-	}
-	return false
-}
-
-func AllApprovalStatusEnumValues() []ApprovalStatusEnum {
-	return []ApprovalStatusEnum{
-		ApprovalStatusEnumNOTREQUIRED,
-		ApprovalStatusEnumPENDING,
-		ApprovalStatusEnumAPPROVED,
-		ApprovalStatusEnumREJECTED,
-	}
-}
-
-// ISO 4217 standard currency codes for multi-currency financial operations
-type CurrencyCodeEnum string
-
-const (
-	CurrencyCodeEnumUSD CurrencyCodeEnum = "USD"
-	CurrencyCodeEnumEUR CurrencyCodeEnum = "EUR"
-	CurrencyCodeEnumGBP CurrencyCodeEnum = "GBP"
-	CurrencyCodeEnumJPY CurrencyCodeEnum = "JPY"
-	CurrencyCodeEnumCAD CurrencyCodeEnum = "CAD"
-	CurrencyCodeEnumAUD CurrencyCodeEnum = "AUD"
-	CurrencyCodeEnumCHF CurrencyCodeEnum = "CHF"
-	CurrencyCodeEnumCNY CurrencyCodeEnum = "CNY"
-	CurrencyCodeEnumSEK CurrencyCodeEnum = "SEK"
-	CurrencyCodeEnumNOK CurrencyCodeEnum = "NOK"
-	CurrencyCodeEnumDKK CurrencyCodeEnum = "DKK"
-	CurrencyCodeEnumPLN CurrencyCodeEnum = "PLN"
-	CurrencyCodeEnumCZK CurrencyCodeEnum = "CZK"
-	CurrencyCodeEnumHUF CurrencyCodeEnum = "HUF"
-	CurrencyCodeEnumRUB CurrencyCodeEnum = "RUB"
-	CurrencyCodeEnumINR CurrencyCodeEnum = "INR"
-	CurrencyCodeEnumBRL CurrencyCodeEnum = "BRL"
-	CurrencyCodeEnumMXN CurrencyCodeEnum = "MXN"
-	CurrencyCodeEnumZAR CurrencyCodeEnum = "ZAR"
-	CurrencyCodeEnumKRW CurrencyCodeEnum = "KRW"
-	CurrencyCodeEnumSGD CurrencyCodeEnum = "SGD"
-	CurrencyCodeEnumHKD CurrencyCodeEnum = "HKD"
-	CurrencyCodeEnumNZD CurrencyCodeEnum = "NZD"
-	CurrencyCodeEnumTRY CurrencyCodeEnum = "TRY"
-	CurrencyCodeEnumAED CurrencyCodeEnum = "AED"
-	CurrencyCodeEnumSAR CurrencyCodeEnum = "SAR"
-	CurrencyCodeEnumQAR CurrencyCodeEnum = "QAR"
-	CurrencyCodeEnumKWD CurrencyCodeEnum = "KWD"
-	CurrencyCodeEnumBHD CurrencyCodeEnum = "BHD"
-	CurrencyCodeEnumOMR CurrencyCodeEnum = "OMR"
-	CurrencyCodeEnumJOD CurrencyCodeEnum = "JOD"
-	CurrencyCodeEnumLBP CurrencyCodeEnum = "LBP"
-	CurrencyCodeEnumEGP CurrencyCodeEnum = "EGP"
-	CurrencyCodeEnumMAD CurrencyCodeEnum = "MAD"
-	CurrencyCodeEnumTND CurrencyCodeEnum = "TND"
-	CurrencyCodeEnumDZD CurrencyCodeEnum = "DZD"
-	CurrencyCodeEnumLYD CurrencyCodeEnum = "LYD"
-	CurrencyCodeEnumSDG CurrencyCodeEnum = "SDG"
-	CurrencyCodeEnumETB CurrencyCodeEnum = "ETB"
-	CurrencyCodeEnumKES CurrencyCodeEnum = "KES"
-	CurrencyCodeEnumUGX CurrencyCodeEnum = "UGX"
-	CurrencyCodeEnumTZS CurrencyCodeEnum = "TZS"
-	CurrencyCodeEnumRWF CurrencyCodeEnum = "RWF"
-	CurrencyCodeEnumBIF CurrencyCodeEnum = "BIF"
-	CurrencyCodeEnumDJF CurrencyCodeEnum = "DJF"
-	CurrencyCodeEnumSOS CurrencyCodeEnum = "SOS"
-	CurrencyCodeEnumMGA CurrencyCodeEnum = "MGA"
-	CurrencyCodeEnumMUR CurrencyCodeEnum = "MUR"
-	CurrencyCodeEnumSCR CurrencyCodeEnum = "SCR"
-	CurrencyCodeEnumMZN CurrencyCodeEnum = "MZN"
-	CurrencyCodeEnumZWL CurrencyCodeEnum = "ZWL"
-	CurrencyCodeEnumBWP CurrencyCodeEnum = "BWP"
-	CurrencyCodeEnumSZL CurrencyCodeEnum = "SZL"
-	CurrencyCodeEnumLSL CurrencyCodeEnum = "LSL"
-	CurrencyCodeEnumNAD CurrencyCodeEnum = "NAD"
-	CurrencyCodeEnumAOA CurrencyCodeEnum = "AOA"
-	CurrencyCodeEnumZMW CurrencyCodeEnum = "ZMW"
-	CurrencyCodeEnumMWK CurrencyCodeEnum = "MWK"
-	CurrencyCodeEnumGMD CurrencyCodeEnum = "GMD"
-	CurrencyCodeEnumGHS CurrencyCodeEnum = "GHS"
-	CurrencyCodeEnumNGN CurrencyCodeEnum = "NGN"
-	CurrencyCodeEnumXOF CurrencyCodeEnum = "XOF"
-	CurrencyCodeEnumXAF CurrencyCodeEnum = "XAF"
-)
-
-func (e *CurrencyCodeEnum) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = CurrencyCodeEnum(s)
-	case string:
-		*e = CurrencyCodeEnum(s)
-	default:
-		return fmt.Errorf("unsupported scan type for CurrencyCodeEnum: %T", src)
-	}
-	return nil
-}
-
-type NullCurrencyCodeEnum struct {
-	CurrencyCodeEnum CurrencyCodeEnum `json:"currency_code_enum"`
-	Valid            bool             `json:"valid"` // Valid is true if CurrencyCodeEnum is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullCurrencyCodeEnum) Scan(value interface{}) error {
-	if value == nil {
-		ns.CurrencyCodeEnum, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.CurrencyCodeEnum.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullCurrencyCodeEnum) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.CurrencyCodeEnum), nil
-}
-
-func (e CurrencyCodeEnum) Valid() bool {
-	switch e {
-	case CurrencyCodeEnumUSD,
-		CurrencyCodeEnumEUR,
-		CurrencyCodeEnumGBP,
-		CurrencyCodeEnumJPY,
-		CurrencyCodeEnumCAD,
-		CurrencyCodeEnumAUD,
-		CurrencyCodeEnumCHF,
-		CurrencyCodeEnumCNY,
-		CurrencyCodeEnumSEK,
-		CurrencyCodeEnumNOK,
-		CurrencyCodeEnumDKK,
-		CurrencyCodeEnumPLN,
-		CurrencyCodeEnumCZK,
-		CurrencyCodeEnumHUF,
-		CurrencyCodeEnumRUB,
-		CurrencyCodeEnumINR,
-		CurrencyCodeEnumBRL,
-		CurrencyCodeEnumMXN,
-		CurrencyCodeEnumZAR,
-		CurrencyCodeEnumKRW,
-		CurrencyCodeEnumSGD,
-		CurrencyCodeEnumHKD,
-		CurrencyCodeEnumNZD,
-		CurrencyCodeEnumTRY,
-		CurrencyCodeEnumAED,
-		CurrencyCodeEnumSAR,
-		CurrencyCodeEnumQAR,
-		CurrencyCodeEnumKWD,
-		CurrencyCodeEnumBHD,
-		CurrencyCodeEnumOMR,
-		CurrencyCodeEnumJOD,
-		CurrencyCodeEnumLBP,
-		CurrencyCodeEnumEGP,
-		CurrencyCodeEnumMAD,
-		CurrencyCodeEnumTND,
-		CurrencyCodeEnumDZD,
-		CurrencyCodeEnumLYD,
-		CurrencyCodeEnumSDG,
-		CurrencyCodeEnumETB,
-		CurrencyCodeEnumKES,
-		CurrencyCodeEnumUGX,
-		CurrencyCodeEnumTZS,
-		CurrencyCodeEnumRWF,
-		CurrencyCodeEnumBIF,
-		CurrencyCodeEnumDJF,
-		CurrencyCodeEnumSOS,
-		CurrencyCodeEnumMGA,
-		CurrencyCodeEnumMUR,
-		CurrencyCodeEnumSCR,
-		CurrencyCodeEnumMZN,
-		CurrencyCodeEnumZWL,
-		CurrencyCodeEnumBWP,
-		CurrencyCodeEnumSZL,
-		CurrencyCodeEnumLSL,
-		CurrencyCodeEnumNAD,
-		CurrencyCodeEnumAOA,
-		CurrencyCodeEnumZMW,
-		CurrencyCodeEnumMWK,
-		CurrencyCodeEnumGMD,
-		CurrencyCodeEnumGHS,
-		CurrencyCodeEnumNGN,
-		CurrencyCodeEnumXOF,
-		CurrencyCodeEnumXAF:
-		return true
-	}
-	return false
-}
-
-func AllCurrencyCodeEnumValues() []CurrencyCodeEnum {
-	return []CurrencyCodeEnum{
-		CurrencyCodeEnumUSD,
-		CurrencyCodeEnumEUR,
-		CurrencyCodeEnumGBP,
-		CurrencyCodeEnumJPY,
-		CurrencyCodeEnumCAD,
-		CurrencyCodeEnumAUD,
-		CurrencyCodeEnumCHF,
-		CurrencyCodeEnumCNY,
-		CurrencyCodeEnumSEK,
-		CurrencyCodeEnumNOK,
-		CurrencyCodeEnumDKK,
-		CurrencyCodeEnumPLN,
-		CurrencyCodeEnumCZK,
-		CurrencyCodeEnumHUF,
-		CurrencyCodeEnumRUB,
-		CurrencyCodeEnumINR,
-		CurrencyCodeEnumBRL,
-		CurrencyCodeEnumMXN,
-		CurrencyCodeEnumZAR,
-		CurrencyCodeEnumKRW,
-		CurrencyCodeEnumSGD,
-		CurrencyCodeEnumHKD,
-		CurrencyCodeEnumNZD,
-		CurrencyCodeEnumTRY,
-		CurrencyCodeEnumAED,
-		CurrencyCodeEnumSAR,
-		CurrencyCodeEnumQAR,
-		CurrencyCodeEnumKWD,
-		CurrencyCodeEnumBHD,
-		CurrencyCodeEnumOMR,
-		CurrencyCodeEnumJOD,
-		CurrencyCodeEnumLBP,
-		CurrencyCodeEnumEGP,
-		CurrencyCodeEnumMAD,
-		CurrencyCodeEnumTND,
-		CurrencyCodeEnumDZD,
-		CurrencyCodeEnumLYD,
-		CurrencyCodeEnumSDG,
-		CurrencyCodeEnumETB,
-		CurrencyCodeEnumKES,
-		CurrencyCodeEnumUGX,
-		CurrencyCodeEnumTZS,
-		CurrencyCodeEnumRWF,
-		CurrencyCodeEnumBIF,
-		CurrencyCodeEnumDJF,
-		CurrencyCodeEnumSOS,
-		CurrencyCodeEnumMGA,
-		CurrencyCodeEnumMUR,
-		CurrencyCodeEnumSCR,
-		CurrencyCodeEnumMZN,
-		CurrencyCodeEnumZWL,
-		CurrencyCodeEnumBWP,
-		CurrencyCodeEnumSZL,
-		CurrencyCodeEnumLSL,
-		CurrencyCodeEnumNAD,
-		CurrencyCodeEnumAOA,
-		CurrencyCodeEnumZMW,
-		CurrencyCodeEnumMWK,
-		CurrencyCodeEnumGMD,
-		CurrencyCodeEnumGHS,
-		CurrencyCodeEnumNGN,
-		CurrencyCodeEnumXOF,
-		CurrencyCodeEnumXAF,
-	}
-}
-
-// Determines which side of the accounting equation increases account balance
-type NormalBalanceEnum string
-
-const (
-	NormalBalanceEnumDEBIT  NormalBalanceEnum = "DEBIT"
-	NormalBalanceEnumCREDIT NormalBalanceEnum = "CREDIT"
-)
-
-func (e *NormalBalanceEnum) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = NormalBalanceEnum(s)
-	case string:
-		*e = NormalBalanceEnum(s)
-	default:
-		return fmt.Errorf("unsupported scan type for NormalBalanceEnum: %T", src)
-	}
-	return nil
-}
-
-type NullNormalBalanceEnum struct {
-	NormalBalanceEnum NormalBalanceEnum `json:"normal_balance_enum"`
-	Valid             bool              `json:"valid"` // Valid is true if NormalBalanceEnum is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullNormalBalanceEnum) Scan(value interface{}) error {
-	if value == nil {
-		ns.NormalBalanceEnum, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.NormalBalanceEnum.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullNormalBalanceEnum) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.NormalBalanceEnum), nil
-}
-
-func (e NormalBalanceEnum) Valid() bool {
-	switch e {
-	case NormalBalanceEnumDEBIT,
-		NormalBalanceEnumCREDIT:
-		return true
-	}
-	return false
-}
-
-func AllNormalBalanceEnumValues() []NormalBalanceEnum {
-	return []NormalBalanceEnum{
-		NormalBalanceEnumDEBIT,
-		NormalBalanceEnumCREDIT,
-	}
-}
-
-// Supported payment mechanisms for receivables and payables processing
-type PaymentMethodEnum string
-
-const (
-	PaymentMethodEnumCASH           PaymentMethodEnum = "CASH"
-	PaymentMethodEnumCHECK          PaymentMethodEnum = "CHECK"
-	PaymentMethodEnumCREDITCARD     PaymentMethodEnum = "CREDIT_CARD"
-	PaymentMethodEnumDEBITCARD      PaymentMethodEnum = "DEBIT_CARD"
-	PaymentMethodEnumBANKTRANSFER   PaymentMethodEnum = "BANK_TRANSFER"
-	PaymentMethodEnumWIRETRANSFER   PaymentMethodEnum = "WIRE_TRANSFER"
-	PaymentMethodEnumACH            PaymentMethodEnum = "ACH"
-	PaymentMethodEnumPAYPAL         PaymentMethodEnum = "PAYPAL"
-	PaymentMethodEnumSTRIPE         PaymentMethodEnum = "STRIPE"
-	PaymentMethodEnumSQUARE         PaymentMethodEnum = "SQUARE"
-	PaymentMethodEnumMOBILEMONEY    PaymentMethodEnum = "MOBILE_MONEY"
-	PaymentMethodEnumCRYPTOCURRENCY PaymentMethodEnum = "CRYPTOCURRENCY"
-	PaymentMethodEnumOTHER          PaymentMethodEnum = "OTHER"
-)
-
-func (e *PaymentMethodEnum) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = PaymentMethodEnum(s)
-	case string:
-		*e = PaymentMethodEnum(s)
-	default:
-		return fmt.Errorf("unsupported scan type for PaymentMethodEnum: %T", src)
-	}
-	return nil
-}
-
-type NullPaymentMethodEnum struct {
-	PaymentMethodEnum PaymentMethodEnum `json:"payment_method_enum"`
-	Valid             bool              `json:"valid"` // Valid is true if PaymentMethodEnum is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullPaymentMethodEnum) Scan(value interface{}) error {
-	if value == nil {
-		ns.PaymentMethodEnum, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.PaymentMethodEnum.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullPaymentMethodEnum) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.PaymentMethodEnum), nil
-}
-
-func (e PaymentMethodEnum) Valid() bool {
-	switch e {
-	case PaymentMethodEnumCASH,
-		PaymentMethodEnumCHECK,
-		PaymentMethodEnumCREDITCARD,
-		PaymentMethodEnumDEBITCARD,
-		PaymentMethodEnumBANKTRANSFER,
-		PaymentMethodEnumWIRETRANSFER,
-		PaymentMethodEnumACH,
-		PaymentMethodEnumPAYPAL,
-		PaymentMethodEnumSTRIPE,
-		PaymentMethodEnumSQUARE,
-		PaymentMethodEnumMOBILEMONEY,
-		PaymentMethodEnumCRYPTOCURRENCY,
-		PaymentMethodEnumOTHER:
-		return true
-	}
-	return false
-}
-
-func AllPaymentMethodEnumValues() []PaymentMethodEnum {
-	return []PaymentMethodEnum{
-		PaymentMethodEnumCASH,
-		PaymentMethodEnumCHECK,
-		PaymentMethodEnumCREDITCARD,
-		PaymentMethodEnumDEBITCARD,
-		PaymentMethodEnumBANKTRANSFER,
-		PaymentMethodEnumWIRETRANSFER,
-		PaymentMethodEnumACH,
-		PaymentMethodEnumPAYPAL,
-		PaymentMethodEnumSTRIPE,
-		PaymentMethodEnumSQUARE,
-		PaymentMethodEnumMOBILEMONEY,
-		PaymentMethodEnumCRYPTOCURRENCY,
-		PaymentMethodEnumOTHER,
-	}
-}
-
-// Frequency patterns for recurring financial transactions
-type RecurringFrequencyEnum string
-
-const (
-	RecurringFrequencyEnumDAILY     RecurringFrequencyEnum = "DAILY"
-	RecurringFrequencyEnumWEEKLY    RecurringFrequencyEnum = "WEEKLY"
-	RecurringFrequencyEnumMONTHLY   RecurringFrequencyEnum = "MONTHLY"
-	RecurringFrequencyEnumQUARTERLY RecurringFrequencyEnum = "QUARTERLY"
-	RecurringFrequencyEnumYEARLY    RecurringFrequencyEnum = "YEARLY"
-)
-
-func (e *RecurringFrequencyEnum) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = RecurringFrequencyEnum(s)
-	case string:
-		*e = RecurringFrequencyEnum(s)
-	default:
-		return fmt.Errorf("unsupported scan type for RecurringFrequencyEnum: %T", src)
-	}
-	return nil
-}
-
-type NullRecurringFrequencyEnum struct {
-	RecurringFrequencyEnum RecurringFrequencyEnum `json:"recurring_frequency_enum"`
-	Valid                  bool                   `json:"valid"` // Valid is true if RecurringFrequencyEnum is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullRecurringFrequencyEnum) Scan(value interface{}) error {
-	if value == nil {
-		ns.RecurringFrequencyEnum, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.RecurringFrequencyEnum.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullRecurringFrequencyEnum) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.RecurringFrequencyEnum), nil
-}
-
-func (e RecurringFrequencyEnum) Valid() bool {
-	switch e {
-	case RecurringFrequencyEnumDAILY,
-		RecurringFrequencyEnumWEEKLY,
-		RecurringFrequencyEnumMONTHLY,
-		RecurringFrequencyEnumQUARTERLY,
-		RecurringFrequencyEnumYEARLY:
-		return true
-	}
-	return false
-}
-
-func AllRecurringFrequencyEnumValues() []RecurringFrequencyEnum {
-	return []RecurringFrequencyEnum{
-		RecurringFrequencyEnumDAILY,
-		RecurringFrequencyEnumWEEKLY,
-		RecurringFrequencyEnumMONTHLY,
-		RecurringFrequencyEnumQUARTERLY,
-		RecurringFrequencyEnumYEARLY,
-	}
-}
-
-// Primary account classifications following the fundamental accounting equation: Assets = Liabilities + Equity
-type RootTypeEnum string
-
-const (
-	RootTypeEnumASSET     RootTypeEnum = "ASSET"
-	RootTypeEnumLIABILITY RootTypeEnum = "LIABILITY"
-	RootTypeEnumEQUITY    RootTypeEnum = "EQUITY"
-	RootTypeEnumREVENUE   RootTypeEnum = "REVENUE"
-	RootTypeEnumEXPENSE   RootTypeEnum = "EXPENSE"
-)
-
-func (e *RootTypeEnum) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = RootTypeEnum(s)
-	case string:
-		*e = RootTypeEnum(s)
-	default:
-		return fmt.Errorf("unsupported scan type for RootTypeEnum: %T", src)
-	}
-	return nil
-}
-
-type NullRootTypeEnum struct {
-	RootTypeEnum RootTypeEnum `json:"root_type_enum"`
-	Valid        bool         `json:"valid"` // Valid is true if RootTypeEnum is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullRootTypeEnum) Scan(value interface{}) error {
-	if value == nil {
-		ns.RootTypeEnum, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.RootTypeEnum.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullRootTypeEnum) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.RootTypeEnum), nil
-}
-
-func (e RootTypeEnum) Valid() bool {
-	switch e {
-	case RootTypeEnumASSET,
-		RootTypeEnumLIABILITY,
-		RootTypeEnumEQUITY,
-		RootTypeEnumREVENUE,
-		RootTypeEnumEXPENSE:
-		return true
-	}
-	return false
-}
-
-func AllRootTypeEnumValues() []RootTypeEnum {
-	return []RootTypeEnum{
-		RootTypeEnumASSET,
-		RootTypeEnumLIABILITY,
-		RootTypeEnumEQUITY,
-		RootTypeEnumREVENUE,
-		RootTypeEnumEXPENSE,
-	}
-}
-
-// Transaction lifecycle states from draft creation through final posting
-type TransactionStatusEnum string
-
-const (
-	TransactionStatusEnumDRAFT           TransactionStatusEnum = "DRAFT"
-	TransactionStatusEnumPENDINGAPPROVAL TransactionStatusEnum = "PENDING_APPROVAL"
-	TransactionStatusEnumAPPROVED        TransactionStatusEnum = "APPROVED"
-	TransactionStatusEnumPOSTED          TransactionStatusEnum = "POSTED"
-	TransactionStatusEnumCANCELLED       TransactionStatusEnum = "CANCELLED"
-	TransactionStatusEnumREVERSED        TransactionStatusEnum = "REVERSED"
-)
-
-func (e *TransactionStatusEnum) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = TransactionStatusEnum(s)
-	case string:
-		*e = TransactionStatusEnum(s)
-	default:
-		return fmt.Errorf("unsupported scan type for TransactionStatusEnum: %T", src)
-	}
-	return nil
-}
-
-type NullTransactionStatusEnum struct {
-	TransactionStatusEnum TransactionStatusEnum `json:"transaction_status_enum"`
-	Valid                 bool                  `json:"valid"` // Valid is true if TransactionStatusEnum is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullTransactionStatusEnum) Scan(value interface{}) error {
-	if value == nil {
-		ns.TransactionStatusEnum, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.TransactionStatusEnum.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullTransactionStatusEnum) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.TransactionStatusEnum), nil
-}
-
-func (e TransactionStatusEnum) Valid() bool {
-	switch e {
-	case TransactionStatusEnumDRAFT,
-		TransactionStatusEnumPENDINGAPPROVAL,
-		TransactionStatusEnumAPPROVED,
-		TransactionStatusEnumPOSTED,
-		TransactionStatusEnumCANCELLED,
-		TransactionStatusEnumREVERSED:
-		return true
-	}
-	return false
-}
-
-func AllTransactionStatusEnumValues() []TransactionStatusEnum {
-	return []TransactionStatusEnum{
-		TransactionStatusEnumDRAFT,
-		TransactionStatusEnumPENDINGAPPROVAL,
-		TransactionStatusEnumAPPROVED,
-		TransactionStatusEnumPOSTED,
-		TransactionStatusEnumCANCELLED,
-		TransactionStatusEnumREVERSED,
-	}
-}
-
-// Transaction categorization by source and business purpose for audit trail and reporting
-type TransactionTypeEnum string
-
-const (
-	TransactionTypeEnumMANUAL     TransactionTypeEnum = "MANUAL"
-	TransactionTypeEnumSYSTEM     TransactionTypeEnum = "SYSTEM"
-	TransactionTypeEnumIMPORTED   TransactionTypeEnum = "IMPORTED"
-	TransactionTypeEnumRECURRING  TransactionTypeEnum = "RECURRING"
-	TransactionTypeEnumADJUSTMENT TransactionTypeEnum = "ADJUSTMENT"
-	TransactionTypeEnumCLOSING    TransactionTypeEnum = "CLOSING"
-	TransactionTypeEnumJOURNAL    TransactionTypeEnum = "JOURNAL"
-	TransactionTypeEnumINVOICE    TransactionTypeEnum = "INVOICE"
-	TransactionTypeEnumPAYMENT    TransactionTypeEnum = "PAYMENT"
-	TransactionTypeEnumPURCHASE   TransactionTypeEnum = "PURCHASE"
-	TransactionTypeEnumREVERSAL   TransactionTypeEnum = "REVERSAL"
-)
-
-func (e *TransactionTypeEnum) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = TransactionTypeEnum(s)
-	case string:
-		*e = TransactionTypeEnum(s)
-	default:
-		return fmt.Errorf("unsupported scan type for TransactionTypeEnum: %T", src)
-	}
-	return nil
-}
-
-type NullTransactionTypeEnum struct {
-	TransactionTypeEnum TransactionTypeEnum `json:"transaction_type_enum"`
-	Valid               bool                `json:"valid"` // Valid is true if TransactionTypeEnum is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullTransactionTypeEnum) Scan(value interface{}) error {
-	if value == nil {
-		ns.TransactionTypeEnum, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.TransactionTypeEnum.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullTransactionTypeEnum) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.TransactionTypeEnum), nil
-}
-
-func (e TransactionTypeEnum) Valid() bool {
-	switch e {
-	case TransactionTypeEnumMANUAL,
-		TransactionTypeEnumSYSTEM,
-		TransactionTypeEnumIMPORTED,
-		TransactionTypeEnumRECURRING,
-		TransactionTypeEnumADJUSTMENT,
-		TransactionTypeEnumCLOSING,
-		TransactionTypeEnumJOURNAL,
-		TransactionTypeEnumINVOICE,
-		TransactionTypeEnumPAYMENT,
-		TransactionTypeEnumPURCHASE,
-		TransactionTypeEnumREVERSAL:
-		return true
-	}
-	return false
-}
-
-func AllTransactionTypeEnumValues() []TransactionTypeEnum {
-	return []TransactionTypeEnum{
-		TransactionTypeEnumMANUAL,
-		TransactionTypeEnumSYSTEM,
-		TransactionTypeEnumIMPORTED,
-		TransactionTypeEnumRECURRING,
-		TransactionTypeEnumADJUSTMENT,
-		TransactionTypeEnumCLOSING,
-		TransactionTypeEnumJOURNAL,
-		TransactionTypeEnumINVOICE,
-		TransactionTypeEnumPAYMENT,
-		TransactionTypeEnumPURCHASE,
-		TransactionTypeEnumREVERSAL,
-	}
-}
-
-// Data validation states ensuring financial data integrity
-type ValidationStatusEnum string
-
-const (
-	ValidationStatusEnumPENDING ValidationStatusEnum = "PENDING"
-	ValidationStatusEnumVALID   ValidationStatusEnum = "VALID"
-	ValidationStatusEnumWARNING ValidationStatusEnum = "WARNING"
-	ValidationStatusEnumERROR   ValidationStatusEnum = "ERROR"
-)
-
-func (e *ValidationStatusEnum) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = ValidationStatusEnum(s)
-	case string:
-		*e = ValidationStatusEnum(s)
-	default:
-		return fmt.Errorf("unsupported scan type for ValidationStatusEnum: %T", src)
-	}
-	return nil
-}
-
-type NullValidationStatusEnum struct {
-	ValidationStatusEnum ValidationStatusEnum `json:"validation_status_enum"`
-	Valid                bool                 `json:"valid"` // Valid is true if ValidationStatusEnum is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullValidationStatusEnum) Scan(value interface{}) error {
-	if value == nil {
-		ns.ValidationStatusEnum, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.ValidationStatusEnum.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullValidationStatusEnum) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.ValidationStatusEnum), nil
-}
-
-func (e ValidationStatusEnum) Valid() bool {
-	switch e {
-	case ValidationStatusEnumPENDING,
-		ValidationStatusEnumVALID,
-		ValidationStatusEnumWARNING,
-		ValidationStatusEnumERROR:
-		return true
-	}
-	return false
-}
-
-func AllValidationStatusEnumValues() []ValidationStatusEnum {
-	return []ValidationStatusEnum{
-		ValidationStatusEnumPENDING,
-		ValidationStatusEnumVALID,
-		ValidationStatusEnumWARNING,
-		ValidationStatusEnumERROR,
-	}
-}
 
 // Access request approval workflow with business justification, lifecycle management, and automatic revocation for governance and compliance.
 type AccessRequest struct {
@@ -1303,43 +285,134 @@ type FinanceAccount struct {
 	TenantID uuid.UUID  `json:"tenant_id"`
 	EntityID *uuid.UUID `json:"entity_id"`
 	// Unique account code within tenant - Used for transaction posting and reporting
-	AccountCode        string     `json:"account_code"`
-	AccountName        string     `json:"account_name"`
-	AccountDescription string     `json:"account_description"`
-	ParentAccountID    *uuid.UUID `json:"parent_account_id"`
-	AccountLevel       int32      `json:"account_level"`
+	AccountCode        string `json:"account_code"`
+	AccountName        string `json:"account_name"`
+	AccountDescription string `json:"account_description"`
+	// Link to account group for organizational structure and reporting
+	AccountGroupID *uuid.UUID `json:"account_group_id"`
+	// Link to account header for financial statement presentation
+	AccountHeaderID *uuid.UUID `json:"account_header_id"`
+	ParentAccountID *uuid.UUID `json:"parent_account_id"`
+	AccountLevel    int32      `json:"account_level"`
 	// Materialized path for efficient hierarchy queries - Format: /root/parent/child/
-	AccountPath                 *string                  `json:"account_path"`
-	AccountType                 string                   `json:"account_type"`
-	AccountSubtype              *string                  `json:"account_subtype"`
-	IsControlAccount            bool                     `json:"is_control_account"`
-	ControlAccountID            *uuid.UUID               `json:"control_account_id"`
-	CurrencyCode                *string                  `json:"currency_code"`
-	IsMultiCurrency             *bool                    `json:"is_multi_currency"`
-	CurrencyRevaluationRequired *bool                    `json:"currency_revaluation_required"`
-	IsActive                    bool                     `json:"is_active"`
-	IsSystemAccount             bool                     `json:"is_system_account"`
-	AllowManualEntries          bool                     `json:"allow_manual_entries"`
-	RequireReference            bool                     `json:"require_reference"`
-	CurrentBalance              pgtype.Numeric           `json:"current_balance"`
-	YtdBalance                  pgtype.Numeric           `json:"ytd_balance"`
-	LastTransactionDate         time.Time                `json:"last_transaction_date"`
-	FinancialStatementLine      *string                  `json:"financial_statement_line"`
-	ReportOrder                 *int32                   `json:"report_order"`
-	IsBudgetable                *bool                    `json:"is_budgetable"`
-	BudgetVarianceThreshold     pgtype.Numeric           `json:"budget_variance_threshold"`
-	Version                     int32                    `json:"version"`
-	LastValidationRun           sql.NullTime             `json:"last_validation_run"`
-	ValidationErrors            []byte                   `json:"validation_errors"`
-	AccountAttributes           []byte                   `json:"account_attributes"`
-	CreatedAt                   time.Time                `json:"created_at"`
-	UpdatedAt                   time.Time                `json:"updated_at"`
-	DeletedAt                   sql.NullTime             `json:"deleted_at"`
-	CreatedBy                   *uuid.UUID               `json:"created_by"`
-	UpdatedBy                   *uuid.UUID               `json:"updated_by"`
-	RootType                    RootTypeEnum             `json:"root_type"`
-	NormalBalance               NormalBalanceEnum        `json:"normal_balance"`
-	ValidationStatus            NullValidationStatusEnum `json:"validation_status"`
+	AccountPath *string `json:"account_path"`
+	// Detailed category within account type (e.g., CURRENT_ASSETS, FIXED_ASSETS)
+	AccountCategory      *string `json:"account_category"`
+	SubCategory          *string `json:"sub_category"`
+	DisplayOrder         *int32  `json:"display_order"`
+	ShowInReports        *bool   `json:"show_in_reports"`
+	ConsolidationAccount *string `json:"consolidation_account"`
+	// Cash flow statement classification for proper statement presentation
+	CashFlowType *string `json:"cash_flow_type"`
+	// High-level account classification for balance sheet and income statement categorization
+	RootType       string  `json:"root_type"`
+	AccountType    string  `json:"account_type"`
+	AccountSubtype *string `json:"account_subtype"`
+	// Normal balance type - DEBIT for assets/expenses, CREDIT for liabilities/equity/revenue
+	NormalBalance               string         `json:"normal_balance"`
+	IsControlAccount            bool           `json:"is_control_account"`
+	ControlAccountID            *uuid.UUID     `json:"control_account_id"`
+	CurrencyCode                *string        `json:"currency_code"`
+	IsMultiCurrency             *bool          `json:"is_multi_currency"`
+	CurrencyRevaluationRequired *bool          `json:"currency_revaluation_required"`
+	IsActive                    bool           `json:"is_active"`
+	IsSystemAccount             bool           `json:"is_system_account"`
+	AllowManualEntries          bool           `json:"allow_manual_entries"`
+	RequireReference            bool           `json:"require_reference"`
+	CurrentBalance              pgtype.Numeric `json:"current_balance"`
+	YtdBalance                  pgtype.Numeric `json:"ytd_balance"`
+	LastTransactionDate         time.Time      `json:"last_transaction_date"`
+	FinancialStatementLine      *string        `json:"financial_statement_line"`
+	ReportOrder                 *int32         `json:"report_order"`
+	IsBudgetable                *bool          `json:"is_budgetable"`
+	BudgetVarianceThreshold     pgtype.Numeric `json:"budget_variance_threshold"`
+	Version                     int32          `json:"version"`
+	LastValidationRun           sql.NullTime   `json:"last_validation_run"`
+	ValidationStatus            *string        `json:"validation_status"`
+	ValidationErrors            []byte         `json:"validation_errors"`
+	AccountAttributes           []byte         `json:"account_attributes"`
+	CreatedAt                   time.Time      `json:"created_at"`
+	UpdatedAt                   time.Time      `json:"updated_at"`
+	DeletedAt                   sql.NullTime   `json:"deleted_at"`
+	CreatedBy                   *uuid.UUID     `json:"created_by"`
+	UpdatedBy                   *uuid.UUID     `json:"updated_by"`
+	HasChildren                 *bool          `json:"has_children"`
+	IsLeafAccount               *bool          `json:"is_leaf_account"`
+}
+
+// Historical account balance tracking for audit and reporting purposes
+type FinanceAccountBalance struct {
+	ID             uuid.UUID      `json:"id"`
+	TenantID       uuid.UUID      `json:"tenant_id"`
+	AccountID      uuid.UUID      `json:"account_id"`
+	BalanceDate    time.Time      `json:"balance_date"`
+	OpeningBalance pgtype.Numeric `json:"opening_balance"`
+	ClosingBalance pgtype.Numeric `json:"closing_balance"`
+	PeriodDebits   pgtype.Numeric `json:"period_debits"`
+	PeriodCredits  pgtype.Numeric `json:"period_credits"`
+	FiscalYear     int32          `json:"fiscal_year"`
+	FiscalPeriod   int32          `json:"fiscal_period"`
+	CreatedAt      time.Time      `json:"created_at"`
+	CreatedBy      *uuid.UUID     `json:"created_by"`
+}
+
+// Account groups and headers for organizing chart of accounts into logical reporting structures
+type FinanceAccountGroup struct {
+	ID                        uuid.UUID    `json:"id"`
+	TenantID                  uuid.UUID    `json:"tenant_id"`
+	EntityID                  *uuid.UUID   `json:"entity_id"`
+	GroupCode                 string       `json:"group_code"`
+	GroupName                 string       `json:"group_name"`
+	GroupDescription          string       `json:"group_description"`
+	ParentGroupID             *uuid.UUID   `json:"parent_group_id"`
+	GroupLevel                int32        `json:"group_level"`
+	GroupPath                 *string      `json:"group_path"`
+	RootType                  string       `json:"root_type"`
+	GroupCategory             *string      `json:"group_category"`
+	FinancialStatementSection *string      `json:"financial_statement_section"`
+	StatementOrder            *int32       `json:"statement_order"`
+	ShowInSummary             *bool        `json:"show_in_summary"`
+	ConsolidationMethod       *string      `json:"consolidation_method"`
+	DisplayFormat             *string      `json:"display_format"`
+	IndentLevel               *int32       `json:"indent_level"`
+	ShowTotals                *bool        `json:"show_totals"`
+	BoldDisplay               *bool        `json:"bold_display"`
+	IsActive                  bool         `json:"is_active"`
+	IsSystemGroup             bool         `json:"is_system_group"`
+	AllowDirectPosting        *bool        `json:"allow_direct_posting"`
+	BudgetCategory            *string      `json:"budget_category"`
+	VarianceAnalysisGroup     *string      `json:"variance_analysis_group"`
+	CashFlowCategory          *string      `json:"cash_flow_category"`
+	GroupAttributes           []byte       `json:"group_attributes"`
+	CreatedAt                 time.Time    `json:"created_at"`
+	UpdatedAt                 time.Time    `json:"updated_at"`
+	DeletedAt                 sql.NullTime `json:"deleted_at"`
+	CreatedBy                 *uuid.UUID   `json:"created_by"`
+	UpdatedBy                 *uuid.UUID   `json:"updated_by"`
+}
+
+// Configurable validation rules for accounts and transactions - enables business rule enforcement
+type FinanceAccountValidationRule struct {
+	ID                       uuid.UUID      `json:"id"`
+	TenantID                 uuid.UUID      `json:"tenant_id"`
+	RuleName                 string         `json:"rule_name"`
+	RuleDescription          string         `json:"rule_description"`
+	AccountType              *string        `json:"account_type"`
+	RootType                 *string        `json:"root_type"`
+	AccountPattern           *string        `json:"account_pattern"`
+	MinAmount                pgtype.Numeric `json:"min_amount"`
+	MaxAmount                pgtype.Numeric `json:"max_amount"`
+	RequiredReference        *bool          `json:"required_reference"`
+	AllowedTransactionTypes  []string       `json:"allowed_transaction_types"`
+	RequiredCostCenter       *bool          `json:"required_cost_center"`
+	IsActive                 *bool          `json:"is_active"`
+	RuleSeverity             *string        `json:"rule_severity"`
+	CustomValidationFunction *string        `json:"custom_validation_function"`
+	ValidationParameters     []byte         `json:"validation_parameters"`
+	CreatedAt                time.Time      `json:"created_at"`
+	UpdatedAt                time.Time      `json:"updated_at"`
+	CreatedBy                *uuid.UUID     `json:"created_by"`
+	UpdatedBy                *uuid.UUID     `json:"updated_by"`
 }
 
 // Header table for all financial transactions. Contains transaction metadata, approval workflow, and summary amounts.
@@ -1352,6 +425,10 @@ type FinanceTransaction struct {
 	EntityID *uuid.UUID `json:"entity_id"`
 	// Unique transaction number within tenant - Auto-generated or user-provided
 	TransactionNumber string `json:"transaction_number"`
+	// Type of transaction - determines behavior and validation rules
+	TransactionType string `json:"transaction_type"`
+	// Current status in transaction lifecycle - controls what operations are allowed
+	TransactionStatus string `json:"transaction_status"`
 	// Date when the transaction occurred - business date for accounting purposes
 	TransactionDate time.Time `json:"transaction_date"`
 	// Date when transaction was posted to the general ledger - required when status is POSTED
@@ -1384,6 +461,8 @@ type FinanceTransaction struct {
 	BatchID *uuid.UUID `json:"batch_id"`
 	// Whether this transaction requires approval before posting
 	ApprovalRequired *bool `json:"approval_required"`
+	// Current approval status - tracks approval workflow progress
+	ApprovalStatus *string `json:"approval_status"`
 	// User who approved the transaction - required if approval_required is true
 	ApprovedBy *uuid.UUID `json:"approved_by"`
 	// Timestamp when transaction was approved
@@ -1392,6 +471,8 @@ type FinanceTransaction struct {
 	ApprovalNotes string `json:"approval_notes"`
 	// Whether this is a recurring transaction template
 	IsRecurring *bool `json:"is_recurring"`
+	// Frequency for recurring transactions - DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY
+	RecurringFrequency *string `json:"recurring_frequency"`
 	// Next date when this recurring transaction should be generated
 	NextRecurringDate time.Time `json:"next_recurring_date"`
 	// Whether this transaction has been reversed
@@ -1402,6 +483,8 @@ type FinanceTransaction struct {
 	ReversalReason string `json:"reversal_reason"`
 	// Version number for optimistic locking - prevents concurrent modifications
 	Version int32 `json:"version"`
+	// Status of transaction validation - PENDING, VALID, WARNING, ERROR
+	ValidationStatus *string `json:"validation_status"`
 	// JSON array of validation errors and warnings - helps with troubleshooting
 	ValidationErrors []byte `json:"validation_errors"`
 	// JSON object for additional transaction attributes - flexible extension point
@@ -1423,12 +506,7 @@ type FinanceTransaction struct {
 	// User who posted the transaction to the general ledger
 	PostedBy *uuid.UUID `json:"posted_by"`
 	// Timestamp when transaction was posted - required when status is POSTED
-	PostedAt           sql.NullTime               `json:"posted_at"`
-	TransactionType    TransactionTypeEnum        `json:"transaction_type"`
-	TransactionStatus  TransactionStatusEnum      `json:"transaction_status"`
-	ApprovalStatus     NullApprovalStatusEnum     `json:"approval_status"`
-	ValidationStatus   NullValidationStatusEnum   `json:"validation_status"`
-	RecurringFrequency NullRecurringFrequencyEnum `json:"recurring_frequency"`
+	PostedAt sql.NullTime `json:"posted_at"`
 }
 
 // Individual journal entries that make up financial transactions. Implements double-entry bookkeeping with debit and credit amounts.
@@ -2031,6 +1109,40 @@ type VAuditSummaryView struct {
 	AllowedAttempts int64           `json:"allowed_attempts"`
 }
 
+// Complete chart of accounts with full group and header hierarchy for reporting
+type VChartOfAccountsComplete struct {
+	AccountID                 uuid.UUID      `json:"account_id"`
+	TenantID                  uuid.UUID      `json:"tenant_id"`
+	AccountCode               string         `json:"account_code"`
+	AccountName               string         `json:"account_name"`
+	AccountDescription        string         `json:"account_description"`
+	RootType                  string         `json:"root_type"`
+	AccountType               string         `json:"account_type"`
+	AccountSubtype            *string        `json:"account_subtype"`
+	AccountCategory           *string        `json:"account_category"`
+	NormalBalance             string         `json:"normal_balance"`
+	CurrentBalance            pgtype.Numeric `json:"current_balance"`
+	IsActive                  bool           `json:"is_active"`
+	IsLeafAccount             bool           `json:"is_leaf_account"`
+	ParentAccountID           *uuid.UUID     `json:"parent_account_id"`
+	AccountLevel              int32          `json:"account_level"`
+	AccountPath               *string        `json:"account_path"`
+	GroupID                   *uuid.UUID     `json:"group_id"`
+	GroupCode                 *string        `json:"group_code"`
+	GroupName                 *string        `json:"group_name"`
+	GroupCategory             *string        `json:"group_category"`
+	GroupPath                 *string        `json:"group_path"`
+	HeaderID                  *uuid.UUID     `json:"header_id"`
+	HeaderCode                *string        `json:"header_code"`
+	HeaderName                *string        `json:"header_name"`
+	FinancialStatementSection *string        `json:"financial_statement_section"`
+	HeaderOrder               *int32         `json:"header_order"`
+	DisplayOrder              int32          `json:"display_order"`
+	StatementSection          *string        `json:"statement_section"`
+	CashFlowClassification    *string        `json:"cash_flow_classification"`
+	IncludeInReports          bool           `json:"include_in_reports"`
+}
+
 type VCompanyStructure struct {
 	TenantName        string    `json:"tenant_name"`
 	CompanyID         uuid.UUID `json:"company_id"`
@@ -2105,6 +1217,117 @@ type VEntityStructure struct {
 	Regional     string    `json:"regional"`
 	CompanyID    uuid.UUID `json:"company_id"`
 	Company      string    `json:"company"`
+}
+
+// Account activity summary for monitoring and analysis
+type VFinanceAccountActivity struct {
+	TenantID            uuid.UUID      `json:"tenant_id"`
+	AccountID           uuid.UUID      `json:"account_id"`
+	AccountCode         string         `json:"account_code"`
+	AccountName         string         `json:"account_name"`
+	CurrentBalance      pgtype.Numeric `json:"current_balance"`
+	LastTransactionDate time.Time      `json:"last_transaction_date"`
+	TotalEntries        int64          `json:"total_entries"`
+	EntriesLast30Days   int64          `json:"entries_last_30_days"`
+	DebitsLast30Days    int64          `json:"debits_last_30_days"`
+	CreditsLast30Days   int64          `json:"credits_last_30_days"`
+}
+
+// Hierarchical view of chart of accounts with computed paths and levels
+type VFinanceAccountsHierarchy struct {
+	ID              uuid.UUID      `json:"id"`
+	TenantID        uuid.UUID      `json:"tenant_id"`
+	AccountCode     string         `json:"account_code"`
+	AccountName     string         `json:"account_name"`
+	ParentAccountID *uuid.UUID     `json:"parent_account_id"`
+	RootType        string         `json:"root_type"`
+	AccountType     string         `json:"account_type"`
+	NormalBalance   string         `json:"normal_balance"`
+	CurrentBalance  pgtype.Numeric `json:"current_balance"`
+	Level           int32          `json:"level"`
+	FullPath        string         `json:"full_path"`
+	FullName        string         `json:"full_name"`
+	ChildCount      int64          `json:"child_count"`
+}
+
+// Complete account view with group and header information for reporting
+type VFinanceAccountsWithGroup struct {
+	ID                        uuid.UUID      `json:"id"`
+	TenantID                  uuid.UUID      `json:"tenant_id"`
+	AccountCode               string         `json:"account_code"`
+	AccountName               string         `json:"account_name"`
+	AccountDescription        string         `json:"account_description"`
+	RootType                  string         `json:"root_type"`
+	AccountType               string         `json:"account_type"`
+	AccountCategory           *string        `json:"account_category"`
+	NormalBalance             string         `json:"normal_balance"`
+	CurrentBalance            pgtype.Numeric `json:"current_balance"`
+	IsActive                  bool           `json:"is_active"`
+	GroupCode                 *string        `json:"group_code"`
+	GroupName                 *string        `json:"group_name"`
+	GroupCategory             *string        `json:"group_category"`
+	HeaderCode                *string        `json:"header_code"`
+	HeaderName                *string        `json:"header_name"`
+	FinancialStatementSection *string        `json:"financial_statement_section"`
+	ParentAccountID           *uuid.UUID     `json:"parent_account_id"`
+	AccountLevel              int32          `json:"account_level"`
+	HasChildren               bool           `json:"has_children"`
+	IsLeafAccount             bool           `json:"is_leaf_account"`
+	EffectiveDisplayOrder     int32          `json:"effective_display_order"`
+	CashFlowType              *string        `json:"cash_flow_type"`
+	ShowInReports             *bool          `json:"show_in_reports"`
+}
+
+// Summary view of transactions with entry counts and reconciliation status
+type VFinanceTransactionSummary struct {
+	ID                   uuid.UUID      `json:"id"`
+	TenantID             uuid.UUID      `json:"tenant_id"`
+	TransactionNumber    string         `json:"transaction_number"`
+	TransactionDate      time.Time      `json:"transaction_date"`
+	Description          string         `json:"description"`
+	TransactionStatus    string         `json:"transaction_status"`
+	CurrencyCode         string         `json:"currency_code"`
+	TotalDebitAmount     pgtype.Numeric `json:"total_debit_amount"`
+	TotalCreditAmount    pgtype.Numeric `json:"total_credit_amount"`
+	EntryCount           int64          `json:"entry_count"`
+	UniqueAccounts       int64          `json:"unique_accounts"`
+	AllEntriesReconciled bool           `json:"all_entries_reconciled"`
+	AccountCodes         []byte         `json:"account_codes"`
+}
+
+// Pre-aggregated data for building financial statements with grouping and totals
+type VFinancialStatementBuilder struct {
+	TenantID            uuid.UUID      `json:"tenant_id"`
+	StatementSection    *string        `json:"statement_section"`
+	HeaderCode          *string        `json:"header_code"`
+	HeaderName          *string        `json:"header_name"`
+	HeaderOrder         *int32         `json:"header_order"`
+	GroupCode           *string        `json:"group_code"`
+	GroupName           *string        `json:"group_name"`
+	GroupCategory       *string        `json:"group_category"`
+	AccountCount        int64          `json:"account_count"`
+	GroupBalance        int64          `json:"group_balance"`
+	ActiveBalance       int64          `json:"active_balance"`
+	RunningTotal        int64          `json:"running_total"`
+	PercentageOfSection pgtype.Numeric `json:"percentage_of_section"`
+}
+
+// Financial statement structure with account groups, hierarchies, and balances
+type VFinancialStatementStructure struct {
+	ID                        uuid.UUID   `json:"id"`
+	TenantID                  uuid.UUID   `json:"tenant_id"`
+	GroupCode                 string      `json:"group_code"`
+	GroupName                 string      `json:"group_name"`
+	RootType                  string      `json:"root_type"`
+	FinancialStatementSection *string     `json:"financial_statement_section"`
+	StatementOrder            *int32      `json:"statement_order"`
+	GroupLevel                int32       `json:"group_level"`
+	ParentGroupID             *uuid.UUID  `json:"parent_group_id"`
+	ShowInSummary             *bool       `json:"show_in_summary"`
+	GroupPath                 *string     `json:"group_path"`
+	AccountCount              int64       `json:"account_count"`
+	ActiveAccountCount        int64       `json:"active_account_count"`
+	GroupBalance              interface{} `json:"group_balance"`
 }
 
 // Summary view of roles with their permissions, resources, actions, and user assignment counts for role management and analysis.

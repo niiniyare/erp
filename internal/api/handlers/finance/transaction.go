@@ -259,13 +259,8 @@ func (h *FinanceHandler) ListTransactions(ctx context.Context, payload *goaFinan
 			"offset":      payload.Offset,
 		})
 
-	var limit, offset int32 = 50, 0
-	if payload.Limit != nil {
-		limit = *payload.Limit
-	}
-	if payload.Offset != nil {
-		offset = *payload.Offset
-	}
+	limit := payload.Limit
+	offset := payload.Offset
 	
 	return &goaFinance.TransactionListResult{
 		Transactions: results,
@@ -424,9 +419,9 @@ func (h *FinanceHandler) ValidateTransaction(ctx context.Context, payload *goaFi
 			"is_balanced": true,
 		})
 
-	validationLevel := "STRICT"
-	if payload.ValidationLevel != nil {
-		validationLevel = *payload.ValidationLevel
+	validationLevel := payload.ValidationLevel
+	if validationLevel == "" {
+		validationLevel = "STRICT"
 	}
 	
 	return &goaFinance.ValidationResult{
@@ -446,47 +441,33 @@ func (h *FinanceHandler) convertTransactionToResult(transaction *domain.Transact
 		TransactionStatus: string(transaction.TransactionStatus),
 		TransactionDate:   transaction.TransactionDate.Format("2006-01-02"),
 		Description:       transaction.Description,
-		CreatedAt:         transaction.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:         transaction.UpdatedAt.Format(time.RFC3339),
+		CreatedAt:         stringPtr(transaction.CreatedAt.Format(time.RFC3339)),
+		UpdatedAt:         stringPtr(transaction.UpdatedAt.Format(time.RFC3339)),
 	}
 
-	if transaction.TenantID != nil {
-		result.TenantID = transaction.TenantID.String()
-	}
+	result.TenantID = stringPtr(transaction.TenantID.String())
 
 	if transaction.EntityID != nil {
-		result.EntityID = transaction.EntityID.String()
+		result.EntityID = stringPtr(transaction.EntityID.String())
 	}
 
 	if transaction.PostingDate != nil {
-		result.PostingDate = transaction.PostingDate.Format("2006-01-02")
+		result.PostingDate = stringPtr(transaction.PostingDate.Format("2006-01-02"))
 	}
 
 	if transaction.ReferenceNumber != nil {
-		result.ReferenceNumber = *transaction.ReferenceNumber
+		result.ReferenceNumber = stringPtr(*transaction.ReferenceNumber)
 	}
 
-	if transaction.CurrencyCode != nil {
-		result.CurrencyCode = *transaction.CurrencyCode
-	}
+	result.CurrencyCode = stringPtr(transaction.CurrencyCode)
 
-	if transaction.ExchangeRate != nil {
-		result.ExchangeRate = transaction.ExchangeRate.String()
-	}
+	result.ExchangeRate = stringPtr(transaction.ExchangeRate.String())
+	result.TotalDebitAmount = stringPtr(transaction.TotalDebitAmount.String())
+	result.TotalCreditAmount = stringPtr(transaction.TotalCreditAmount.String())
 
-	if transaction.TotalDebitAmount != nil {
-		result.TotalDebitAmount = transaction.TotalDebitAmount.String()
-	}
+	result.ApprovalStatus = stringPtr(string(transaction.ApprovalStatus))
 
-	if transaction.TotalCreditAmount != nil {
-		result.TotalCreditAmount = transaction.TotalCreditAmount.String()
-	}
-
-	if transaction.ApprovalStatus != nil {
-		result.ApprovalStatus = string(*transaction.ApprovalStatus)
-	}
-
-	result.ApprovalRequired = transaction.ApprovalRequired != nil && *transaction.ApprovalRequired
+	result.ApprovalRequired = &transaction.ApprovalRequired
 
 	return result
 }

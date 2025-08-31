@@ -26,6 +26,7 @@ SELECT
     -- Hierarchy information
     a.parent_account_id,
     a.account_level,
+
     -- Compute hierarchy flags dynamically (will be faster once trigger-maintained columns exist)
     EXISTS (
         SELECT 1 FROM finance_accounts children 
@@ -200,12 +201,13 @@ SELECT
     a.normal_balance,
     a.current_balance,
     a.is_active,
+    -- a.is_leaf_account,
     NOT EXISTS (
         SELECT 1 FROM finance_accounts children 
         WHERE children.parent_account_id = a.id 
         AND children.deleted_at IS NULL
     ) as is_leaf_account,
-    
+
     -- Account hierarchy
     a.parent_account_id,
     a.account_level,

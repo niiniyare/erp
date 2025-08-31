@@ -8,7 +8,6 @@ import (
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
 func (h *FinanceHandler) GetTrialBalance(ctx context.Context, payload *goaFinance.TrialBalancePayload) (*goaFinance.TrialBalanceResult, error) {

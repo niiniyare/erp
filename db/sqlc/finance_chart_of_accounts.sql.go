@@ -25,9 +25,9 @@ WHERE tenant_id = current_tenant_id()
 `
 
 type CountAccountsParams struct {
-	AccountType NullAccountTypeEnum `json:"account_type"`
-	RootType    NullRootTypeEnum    `json:"root_type"`
-	IsActive    bool                `json:"is_active"`
+	AccountType interface{} `json:"account_type"`
+	RootType    interface{} `json:"root_type"`
+	IsActive    bool        `json:"is_active"`
 }
 
 func (q *Queries) CountAccounts(ctx context.Context, arg CountAccountsParams) (int64, error) {
@@ -91,34 +91,34 @@ INSERT INTO finance_accounts (
     $22, 
     $23, 
     $24
-) RETURNING id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status
+) RETURNING id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account
 `
 
 type CreateAccountParams struct {
-	EntityID                    *uuid.UUID        `json:"entity_id"`
-	AccountCode                 string            `json:"account_code"`
-	AccountName                 string            `json:"account_name"`
-	AccountDescription          string            `json:"account_description"`
-	ParentAccountID             *uuid.UUID        `json:"parent_account_id"`
-	RootType                    RootTypeEnum      `json:"root_type"`
-	AccountType                 string            `json:"account_type"`
-	AccountSubtype              *string           `json:"account_subtype"`
-	NormalBalance               NormalBalanceEnum `json:"normal_balance"`
-	IsControlAccount            bool              `json:"is_control_account"`
-	ControlAccountID            *uuid.UUID        `json:"control_account_id"`
-	CurrencyCode                *string           `json:"currency_code"`
-	IsMultiCurrency             *bool             `json:"is_multi_currency"`
-	CurrencyRevaluationRequired *bool             `json:"currency_revaluation_required"`
-	IsActive                    bool              `json:"is_active"`
-	IsSystemAccount             bool              `json:"is_system_account"`
-	AllowManualEntries          bool              `json:"allow_manual_entries"`
-	RequireReference            bool              `json:"require_reference"`
-	FinancialStatementLine      *string           `json:"financial_statement_line"`
-	ReportOrder                 *int32            `json:"report_order"`
-	IsBudgetable                *bool             `json:"is_budgetable"`
-	BudgetVarianceThreshold     pgtype.Numeric    `json:"budget_variance_threshold"`
-	AccountAttributes           []byte            `json:"account_attributes"`
-	CreatedBy                   *uuid.UUID        `json:"created_by"`
+	EntityID                    *uuid.UUID     `json:"entity_id"`
+	AccountCode                 string         `json:"account_code"`
+	AccountName                 string         `json:"account_name"`
+	AccountDescription          string         `json:"account_description"`
+	ParentAccountID             *uuid.UUID     `json:"parent_account_id"`
+	RootType                    string         `json:"root_type"`
+	AccountType                 string         `json:"account_type"`
+	AccountSubtype              *string        `json:"account_subtype"`
+	NormalBalance               string         `json:"normal_balance"`
+	IsControlAccount            bool           `json:"is_control_account"`
+	ControlAccountID            *uuid.UUID     `json:"control_account_id"`
+	CurrencyCode                *string        `json:"currency_code"`
+	IsMultiCurrency             *bool          `json:"is_multi_currency"`
+	CurrencyRevaluationRequired *bool          `json:"currency_revaluation_required"`
+	IsActive                    bool           `json:"is_active"`
+	IsSystemAccount             bool           `json:"is_system_account"`
+	AllowManualEntries          bool           `json:"allow_manual_entries"`
+	RequireReference            bool           `json:"require_reference"`
+	FinancialStatementLine      *string        `json:"financial_statement_line"`
+	ReportOrder                 *int32         `json:"report_order"`
+	IsBudgetable                *bool          `json:"is_budgetable"`
+	BudgetVarianceThreshold     pgtype.Numeric `json:"budget_variance_threshold"`
+	AccountAttributes           []byte         `json:"account_attributes"`
+	CreatedBy                   *uuid.UUID     `json:"created_by"`
 }
 
 // =====================================================================
@@ -161,11 +161,21 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (*
 		&i.AccountCode,
 		&i.AccountName,
 		&i.AccountDescription,
+		&i.AccountGroupID,
+		&i.AccountHeaderID,
 		&i.ParentAccountID,
 		&i.AccountLevel,
 		&i.AccountPath,
+		&i.AccountCategory,
+		&i.SubCategory,
+		&i.DisplayOrder,
+		&i.ShowInReports,
+		&i.ConsolidationAccount,
+		&i.CashFlowType,
+		&i.RootType,
 		&i.AccountType,
 		&i.AccountSubtype,
+		&i.NormalBalance,
 		&i.IsControlAccount,
 		&i.ControlAccountID,
 		&i.CurrencyCode,
@@ -184,6 +194,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (*
 		&i.BudgetVarianceThreshold,
 		&i.Version,
 		&i.LastValidationRun,
+		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.AccountAttributes,
 		&i.CreatedAt,
@@ -191,15 +202,14 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (*
 		&i.DeletedAt,
 		&i.CreatedBy,
 		&i.UpdatedBy,
-		&i.RootType,
-		&i.NormalBalance,
-		&i.ValidationStatus,
+		&i.HasChildren,
+		&i.IsLeafAccount,
 	)
 	return &i, err
 }
 
 const getAccountByCode = `-- name: GetAccountByCode :one
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account FROM finance_accounts
 WHERE account_code = $1 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -215,11 +225,21 @@ func (q *Queries) GetAccountByCode(ctx context.Context, accountCode string) (*Fi
 		&i.AccountCode,
 		&i.AccountName,
 		&i.AccountDescription,
+		&i.AccountGroupID,
+		&i.AccountHeaderID,
 		&i.ParentAccountID,
 		&i.AccountLevel,
 		&i.AccountPath,
+		&i.AccountCategory,
+		&i.SubCategory,
+		&i.DisplayOrder,
+		&i.ShowInReports,
+		&i.ConsolidationAccount,
+		&i.CashFlowType,
+		&i.RootType,
 		&i.AccountType,
 		&i.AccountSubtype,
+		&i.NormalBalance,
 		&i.IsControlAccount,
 		&i.ControlAccountID,
 		&i.CurrencyCode,
@@ -238,6 +258,7 @@ func (q *Queries) GetAccountByCode(ctx context.Context, accountCode string) (*Fi
 		&i.BudgetVarianceThreshold,
 		&i.Version,
 		&i.LastValidationRun,
+		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.AccountAttributes,
 		&i.CreatedAt,
@@ -245,15 +266,14 @@ func (q *Queries) GetAccountByCode(ctx context.Context, accountCode string) (*Fi
 		&i.DeletedAt,
 		&i.CreatedBy,
 		&i.UpdatedBy,
-		&i.RootType,
-		&i.NormalBalance,
-		&i.ValidationStatus,
+		&i.HasChildren,
+		&i.IsLeafAccount,
 	)
 	return &i, err
 }
 
 const getAccountByID = `-- name: GetAccountByID :one
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account FROM finance_accounts
 WHERE id = $1 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -269,11 +289,21 @@ func (q *Queries) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*Fin
 		&i.AccountCode,
 		&i.AccountName,
 		&i.AccountDescription,
+		&i.AccountGroupID,
+		&i.AccountHeaderID,
 		&i.ParentAccountID,
 		&i.AccountLevel,
 		&i.AccountPath,
+		&i.AccountCategory,
+		&i.SubCategory,
+		&i.DisplayOrder,
+		&i.ShowInReports,
+		&i.ConsolidationAccount,
+		&i.CashFlowType,
+		&i.RootType,
 		&i.AccountType,
 		&i.AccountSubtype,
+		&i.NormalBalance,
 		&i.IsControlAccount,
 		&i.ControlAccountID,
 		&i.CurrencyCode,
@@ -292,6 +322,7 @@ func (q *Queries) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*Fin
 		&i.BudgetVarianceThreshold,
 		&i.Version,
 		&i.LastValidationRun,
+		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.AccountAttributes,
 		&i.CreatedAt,
@@ -299,15 +330,14 @@ func (q *Queries) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*Fin
 		&i.DeletedAt,
 		&i.CreatedBy,
 		&i.UpdatedBy,
-		&i.RootType,
-		&i.NormalBalance,
-		&i.ValidationStatus,
+		&i.HasChildren,
+		&i.IsLeafAccount,
 	)
 	return &i, err
 }
 
 const getAccountHierarchy = `-- name: GetAccountHierarchy :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND account_path LIKE $1 || '%'
@@ -330,11 +360,21 @@ func (q *Queries) GetAccountHierarchy(ctx context.Context, accountPathPrefix str
 			&i.AccountCode,
 			&i.AccountName,
 			&i.AccountDescription,
+			&i.AccountGroupID,
+			&i.AccountHeaderID,
 			&i.ParentAccountID,
 			&i.AccountLevel,
 			&i.AccountPath,
+			&i.AccountCategory,
+			&i.SubCategory,
+			&i.DisplayOrder,
+			&i.ShowInReports,
+			&i.ConsolidationAccount,
+			&i.CashFlowType,
+			&i.RootType,
 			&i.AccountType,
 			&i.AccountSubtype,
+			&i.NormalBalance,
 			&i.IsControlAccount,
 			&i.ControlAccountID,
 			&i.CurrencyCode,
@@ -353,6 +393,7 @@ func (q *Queries) GetAccountHierarchy(ctx context.Context, accountPathPrefix str
 			&i.BudgetVarianceThreshold,
 			&i.Version,
 			&i.LastValidationRun,
+			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.AccountAttributes,
 			&i.CreatedAt,
@@ -360,9 +401,8 @@ func (q *Queries) GetAccountHierarchy(ctx context.Context, accountPathPrefix str
 			&i.DeletedAt,
 			&i.CreatedBy,
 			&i.UpdatedBy,
-			&i.RootType,
-			&i.NormalBalance,
-			&i.ValidationStatus,
+			&i.HasChildren,
+			&i.IsLeafAccount,
 		); err != nil {
 			return nil, err
 		}
@@ -375,7 +415,7 @@ func (q *Queries) GetAccountHierarchy(ctx context.Context, accountPathPrefix str
 }
 
 const getAccountsByEntity = `-- name: GetAccountsByEntity :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account FROM finance_accounts
 WHERE entity_id = $1
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -398,11 +438,21 @@ func (q *Queries) GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) 
 			&i.AccountCode,
 			&i.AccountName,
 			&i.AccountDescription,
+			&i.AccountGroupID,
+			&i.AccountHeaderID,
 			&i.ParentAccountID,
 			&i.AccountLevel,
 			&i.AccountPath,
+			&i.AccountCategory,
+			&i.SubCategory,
+			&i.DisplayOrder,
+			&i.ShowInReports,
+			&i.ConsolidationAccount,
+			&i.CashFlowType,
+			&i.RootType,
 			&i.AccountType,
 			&i.AccountSubtype,
+			&i.NormalBalance,
 			&i.IsControlAccount,
 			&i.ControlAccountID,
 			&i.CurrencyCode,
@@ -421,6 +471,7 @@ func (q *Queries) GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) 
 			&i.BudgetVarianceThreshold,
 			&i.Version,
 			&i.LastValidationRun,
+			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.AccountAttributes,
 			&i.CreatedAt,
@@ -428,9 +479,8 @@ func (q *Queries) GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) 
 			&i.DeletedAt,
 			&i.CreatedBy,
 			&i.UpdatedBy,
-			&i.RootType,
-			&i.NormalBalance,
-			&i.ValidationStatus,
+			&i.HasChildren,
+			&i.IsLeafAccount,
 		); err != nil {
 			return nil, err
 		}
@@ -444,7 +494,7 @@ func (q *Queries) GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) 
 
 const getAccountsForFinancialStatements = `-- name: GetAccountsForFinancialStatements :many
 SELECT 
-    a.id, a.tenant_id, a.entity_id, a.account_code, a.account_name, a.account_description, a.parent_account_id, a.account_level, a.account_path, a.account_type, a.account_subtype, a.is_control_account, a.control_account_id, a.currency_code, a.is_multi_currency, a.currency_revaluation_required, a.is_active, a.is_system_account, a.allow_manual_entries, a.require_reference, a.current_balance, a.ytd_balance, a.last_transaction_date, a.financial_statement_line, a.report_order, a.is_budgetable, a.budget_variance_threshold, a.version, a.last_validation_run, a.validation_errors, a.account_attributes, a.created_at, a.updated_at, a.deleted_at, a.created_by, a.updated_by, a.root_type, a.normal_balance, a.validation_status,
+    a.id, a.tenant_id, a.entity_id, a.account_code, a.account_name, a.account_description, a.account_group_id, a.account_header_id, a.parent_account_id, a.account_level, a.account_path, a.account_category, a.sub_category, a.display_order, a.show_in_reports, a.consolidation_account, a.cash_flow_type, a.root_type, a.account_type, a.account_subtype, a.normal_balance, a.is_control_account, a.control_account_id, a.currency_code, a.is_multi_currency, a.currency_revaluation_required, a.is_active, a.is_system_account, a.allow_manual_entries, a.require_reference, a.current_balance, a.ytd_balance, a.last_transaction_date, a.financial_statement_line, a.report_order, a.is_budgetable, a.budget_variance_threshold, a.version, a.last_validation_run, a.validation_status, a.validation_errors, a.account_attributes, a.created_at, a.updated_at, a.deleted_at, a.created_by, a.updated_by, a.has_children, a.is_leaf_account,
     COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE -te.credit_amount END), 0) as calculated_balance
 FROM finance_accounts a
 LEFT JOIN finance_transaction_entries te ON a.id = te.account_id
@@ -465,46 +515,56 @@ type GetAccountsForFinancialStatementsParams struct {
 }
 
 type GetAccountsForFinancialStatementsRow struct {
-	ID                          uuid.UUID                `json:"id"`
-	TenantID                    uuid.UUID                `json:"tenant_id"`
-	EntityID                    *uuid.UUID               `json:"entity_id"`
-	AccountCode                 string                   `json:"account_code"`
-	AccountName                 string                   `json:"account_name"`
-	AccountDescription          string                   `json:"account_description"`
-	ParentAccountID             *uuid.UUID               `json:"parent_account_id"`
-	AccountLevel                int32                    `json:"account_level"`
-	AccountPath                 *string                  `json:"account_path"`
-	AccountType                 string                   `json:"account_type"`
-	AccountSubtype              *string                  `json:"account_subtype"`
-	IsControlAccount            bool                     `json:"is_control_account"`
-	ControlAccountID            *uuid.UUID               `json:"control_account_id"`
-	CurrencyCode                *string                  `json:"currency_code"`
-	IsMultiCurrency             *bool                    `json:"is_multi_currency"`
-	CurrencyRevaluationRequired *bool                    `json:"currency_revaluation_required"`
-	IsActive                    bool                     `json:"is_active"`
-	IsSystemAccount             bool                     `json:"is_system_account"`
-	AllowManualEntries          bool                     `json:"allow_manual_entries"`
-	RequireReference            bool                     `json:"require_reference"`
-	CurrentBalance              pgtype.Numeric           `json:"current_balance"`
-	YtdBalance                  pgtype.Numeric           `json:"ytd_balance"`
-	LastTransactionDate         time.Time                `json:"last_transaction_date"`
-	FinancialStatementLine      *string                  `json:"financial_statement_line"`
-	ReportOrder                 *int32                   `json:"report_order"`
-	IsBudgetable                *bool                    `json:"is_budgetable"`
-	BudgetVarianceThreshold     pgtype.Numeric           `json:"budget_variance_threshold"`
-	Version                     int32                    `json:"version"`
-	LastValidationRun           sql.NullTime             `json:"last_validation_run"`
-	ValidationErrors            []byte                   `json:"validation_errors"`
-	AccountAttributes           []byte                   `json:"account_attributes"`
-	CreatedAt                   time.Time                `json:"created_at"`
-	UpdatedAt                   time.Time                `json:"updated_at"`
-	DeletedAt                   sql.NullTime             `json:"deleted_at"`
-	CreatedBy                   *uuid.UUID               `json:"created_by"`
-	UpdatedBy                   *uuid.UUID               `json:"updated_by"`
-	RootType                    RootTypeEnum             `json:"root_type"`
-	NormalBalance               NormalBalanceEnum        `json:"normal_balance"`
-	ValidationStatus            NullValidationStatusEnum `json:"validation_status"`
-	CalculatedBalance           interface{}              `json:"calculated_balance"`
+	ID                          uuid.UUID      `json:"id"`
+	TenantID                    uuid.UUID      `json:"tenant_id"`
+	EntityID                    *uuid.UUID     `json:"entity_id"`
+	AccountCode                 string         `json:"account_code"`
+	AccountName                 string         `json:"account_name"`
+	AccountDescription          string         `json:"account_description"`
+	AccountGroupID              *uuid.UUID     `json:"account_group_id"`
+	AccountHeaderID             *uuid.UUID     `json:"account_header_id"`
+	ParentAccountID             *uuid.UUID     `json:"parent_account_id"`
+	AccountLevel                int32          `json:"account_level"`
+	AccountPath                 *string        `json:"account_path"`
+	AccountCategory             *string        `json:"account_category"`
+	SubCategory                 *string        `json:"sub_category"`
+	DisplayOrder                *int32         `json:"display_order"`
+	ShowInReports               *bool          `json:"show_in_reports"`
+	ConsolidationAccount        *string        `json:"consolidation_account"`
+	CashFlowType                *string        `json:"cash_flow_type"`
+	RootType                    string         `json:"root_type"`
+	AccountType                 string         `json:"account_type"`
+	AccountSubtype              *string        `json:"account_subtype"`
+	NormalBalance               string         `json:"normal_balance"`
+	IsControlAccount            bool           `json:"is_control_account"`
+	ControlAccountID            *uuid.UUID     `json:"control_account_id"`
+	CurrencyCode                *string        `json:"currency_code"`
+	IsMultiCurrency             *bool          `json:"is_multi_currency"`
+	CurrencyRevaluationRequired *bool          `json:"currency_revaluation_required"`
+	IsActive                    bool           `json:"is_active"`
+	IsSystemAccount             bool           `json:"is_system_account"`
+	AllowManualEntries          bool           `json:"allow_manual_entries"`
+	RequireReference            bool           `json:"require_reference"`
+	CurrentBalance              pgtype.Numeric `json:"current_balance"`
+	YtdBalance                  pgtype.Numeric `json:"ytd_balance"`
+	LastTransactionDate         time.Time      `json:"last_transaction_date"`
+	FinancialStatementLine      *string        `json:"financial_statement_line"`
+	ReportOrder                 *int32         `json:"report_order"`
+	IsBudgetable                *bool          `json:"is_budgetable"`
+	BudgetVarianceThreshold     pgtype.Numeric `json:"budget_variance_threshold"`
+	Version                     int32          `json:"version"`
+	LastValidationRun           sql.NullTime   `json:"last_validation_run"`
+	ValidationStatus            *string        `json:"validation_status"`
+	ValidationErrors            []byte         `json:"validation_errors"`
+	AccountAttributes           []byte         `json:"account_attributes"`
+	CreatedAt                   time.Time      `json:"created_at"`
+	UpdatedAt                   time.Time      `json:"updated_at"`
+	DeletedAt                   sql.NullTime   `json:"deleted_at"`
+	CreatedBy                   *uuid.UUID     `json:"created_by"`
+	UpdatedBy                   *uuid.UUID     `json:"updated_by"`
+	HasChildren                 *bool          `json:"has_children"`
+	IsLeafAccount               *bool          `json:"is_leaf_account"`
+	CalculatedBalance           interface{}    `json:"calculated_balance"`
 }
 
 func (q *Queries) GetAccountsForFinancialStatements(ctx context.Context, arg GetAccountsForFinancialStatementsParams) ([]*GetAccountsForFinancialStatementsRow, error) {
@@ -523,11 +583,21 @@ func (q *Queries) GetAccountsForFinancialStatements(ctx context.Context, arg Get
 			&i.AccountCode,
 			&i.AccountName,
 			&i.AccountDescription,
+			&i.AccountGroupID,
+			&i.AccountHeaderID,
 			&i.ParentAccountID,
 			&i.AccountLevel,
 			&i.AccountPath,
+			&i.AccountCategory,
+			&i.SubCategory,
+			&i.DisplayOrder,
+			&i.ShowInReports,
+			&i.ConsolidationAccount,
+			&i.CashFlowType,
+			&i.RootType,
 			&i.AccountType,
 			&i.AccountSubtype,
+			&i.NormalBalance,
 			&i.IsControlAccount,
 			&i.ControlAccountID,
 			&i.CurrencyCode,
@@ -546,6 +616,7 @@ func (q *Queries) GetAccountsForFinancialStatements(ctx context.Context, arg Get
 			&i.BudgetVarianceThreshold,
 			&i.Version,
 			&i.LastValidationRun,
+			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.AccountAttributes,
 			&i.CreatedAt,
@@ -553,9 +624,8 @@ func (q *Queries) GetAccountsForFinancialStatements(ctx context.Context, arg Get
 			&i.DeletedAt,
 			&i.CreatedBy,
 			&i.UpdatedBy,
-			&i.RootType,
-			&i.NormalBalance,
-			&i.ValidationStatus,
+			&i.HasChildren,
+			&i.IsLeafAccount,
 			&i.CalculatedBalance,
 		); err != nil {
 			return nil, err
@@ -569,7 +639,7 @@ func (q *Queries) GetAccountsForFinancialStatements(ctx context.Context, arg Get
 }
 
 const getAccountsWithNonZeroBalance = `-- name: GetAccountsWithNonZeroBalance :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND current_balance != 0
@@ -592,11 +662,21 @@ func (q *Queries) GetAccountsWithNonZeroBalance(ctx context.Context) ([]*Finance
 			&i.AccountCode,
 			&i.AccountName,
 			&i.AccountDescription,
+			&i.AccountGroupID,
+			&i.AccountHeaderID,
 			&i.ParentAccountID,
 			&i.AccountLevel,
 			&i.AccountPath,
+			&i.AccountCategory,
+			&i.SubCategory,
+			&i.DisplayOrder,
+			&i.ShowInReports,
+			&i.ConsolidationAccount,
+			&i.CashFlowType,
+			&i.RootType,
 			&i.AccountType,
 			&i.AccountSubtype,
+			&i.NormalBalance,
 			&i.IsControlAccount,
 			&i.ControlAccountID,
 			&i.CurrencyCode,
@@ -615,6 +695,7 @@ func (q *Queries) GetAccountsWithNonZeroBalance(ctx context.Context) ([]*Finance
 			&i.BudgetVarianceThreshold,
 			&i.Version,
 			&i.LastValidationRun,
+			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.AccountAttributes,
 			&i.CreatedAt,
@@ -622,9 +703,8 @@ func (q *Queries) GetAccountsWithNonZeroBalance(ctx context.Context) ([]*Finance
 			&i.DeletedAt,
 			&i.CreatedBy,
 			&i.UpdatedBy,
-			&i.RootType,
-			&i.NormalBalance,
-			&i.ValidationStatus,
+			&i.HasChildren,
+			&i.IsLeafAccount,
 		); err != nil {
 			return nil, err
 		}
@@ -637,7 +717,7 @@ func (q *Queries) GetAccountsWithNonZeroBalance(ctx context.Context) ([]*Finance
 }
 
 const getControlAccounts = `-- name: GetControlAccounts :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND is_control_account = true
@@ -660,11 +740,21 @@ func (q *Queries) GetControlAccounts(ctx context.Context) ([]*FinanceAccount, er
 			&i.AccountCode,
 			&i.AccountName,
 			&i.AccountDescription,
+			&i.AccountGroupID,
+			&i.AccountHeaderID,
 			&i.ParentAccountID,
 			&i.AccountLevel,
 			&i.AccountPath,
+			&i.AccountCategory,
+			&i.SubCategory,
+			&i.DisplayOrder,
+			&i.ShowInReports,
+			&i.ConsolidationAccount,
+			&i.CashFlowType,
+			&i.RootType,
 			&i.AccountType,
 			&i.AccountSubtype,
+			&i.NormalBalance,
 			&i.IsControlAccount,
 			&i.ControlAccountID,
 			&i.CurrencyCode,
@@ -683,6 +773,7 @@ func (q *Queries) GetControlAccounts(ctx context.Context) ([]*FinanceAccount, er
 			&i.BudgetVarianceThreshold,
 			&i.Version,
 			&i.LastValidationRun,
+			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.AccountAttributes,
 			&i.CreatedAt,
@@ -690,9 +781,8 @@ func (q *Queries) GetControlAccounts(ctx context.Context) ([]*FinanceAccount, er
 			&i.DeletedAt,
 			&i.CreatedBy,
 			&i.UpdatedBy,
-			&i.RootType,
-			&i.NormalBalance,
-			&i.ValidationStatus,
+			&i.HasChildren,
+			&i.IsLeafAccount,
 		); err != nil {
 			return nil, err
 		}
@@ -705,7 +795,7 @@ func (q *Queries) GetControlAccounts(ctx context.Context) ([]*FinanceAccount, er
 }
 
 const getRootAccounts = `-- name: GetRootAccounts :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account FROM finance_accounts
 WHERE parent_account_id IS NULL
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -728,11 +818,21 @@ func (q *Queries) GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error
 			&i.AccountCode,
 			&i.AccountName,
 			&i.AccountDescription,
+			&i.AccountGroupID,
+			&i.AccountHeaderID,
 			&i.ParentAccountID,
 			&i.AccountLevel,
 			&i.AccountPath,
+			&i.AccountCategory,
+			&i.SubCategory,
+			&i.DisplayOrder,
+			&i.ShowInReports,
+			&i.ConsolidationAccount,
+			&i.CashFlowType,
+			&i.RootType,
 			&i.AccountType,
 			&i.AccountSubtype,
+			&i.NormalBalance,
 			&i.IsControlAccount,
 			&i.ControlAccountID,
 			&i.CurrencyCode,
@@ -751,6 +851,7 @@ func (q *Queries) GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error
 			&i.BudgetVarianceThreshold,
 			&i.Version,
 			&i.LastValidationRun,
+			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.AccountAttributes,
 			&i.CreatedAt,
@@ -758,9 +859,8 @@ func (q *Queries) GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error
 			&i.DeletedAt,
 			&i.CreatedBy,
 			&i.UpdatedBy,
-			&i.RootType,
-			&i.NormalBalance,
-			&i.ValidationStatus,
+			&i.HasChildren,
+			&i.IsLeafAccount,
 		); err != nil {
 			return nil, err
 		}
@@ -773,7 +873,7 @@ func (q *Queries) GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error
 }
 
 const listAccounts = `-- name: ListAccounts :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status 
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account 
 FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -785,11 +885,11 @@ LIMIT $5 OFFSET $4
 `
 
 type ListAccountsParams struct {
-	AccountType NullAccountTypeEnum `json:"account_type"`
-	RootType    NullRootTypeEnum    `json:"root_type"`
-	IsActive    bool                `json:"is_active"`
-	Offset      int32               `json:"offset"`
-	Limit       int32               `json:"limit"`
+	AccountType interface{} `json:"account_type"`
+	RootType    interface{} `json:"root_type"`
+	IsActive    bool        `json:"is_active"`
+	Offset      int32       `json:"offset"`
+	Limit       int32       `json:"limit"`
 }
 
 func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceAccount, error) {
@@ -814,11 +914,21 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*
 			&i.AccountCode,
 			&i.AccountName,
 			&i.AccountDescription,
+			&i.AccountGroupID,
+			&i.AccountHeaderID,
 			&i.ParentAccountID,
 			&i.AccountLevel,
 			&i.AccountPath,
+			&i.AccountCategory,
+			&i.SubCategory,
+			&i.DisplayOrder,
+			&i.ShowInReports,
+			&i.ConsolidationAccount,
+			&i.CashFlowType,
+			&i.RootType,
 			&i.AccountType,
 			&i.AccountSubtype,
+			&i.NormalBalance,
 			&i.IsControlAccount,
 			&i.ControlAccountID,
 			&i.CurrencyCode,
@@ -837,6 +947,7 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*
 			&i.BudgetVarianceThreshold,
 			&i.Version,
 			&i.LastValidationRun,
+			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.AccountAttributes,
 			&i.CreatedAt,
@@ -844,9 +955,8 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*
 			&i.DeletedAt,
 			&i.CreatedBy,
 			&i.UpdatedBy,
-			&i.RootType,
-			&i.NormalBalance,
-			&i.ValidationStatus,
+			&i.HasChildren,
+			&i.IsLeafAccount,
 		); err != nil {
 			return nil, err
 		}
@@ -859,7 +969,7 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*
 }
 
 const listAccountsByParent = `-- name: ListAccountsByParent :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account FROM finance_accounts
 WHERE parent_account_id = $1
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -882,11 +992,21 @@ func (q *Queries) ListAccountsByParent(ctx context.Context, parentAccountID *uui
 			&i.AccountCode,
 			&i.AccountName,
 			&i.AccountDescription,
+			&i.AccountGroupID,
+			&i.AccountHeaderID,
 			&i.ParentAccountID,
 			&i.AccountLevel,
 			&i.AccountPath,
+			&i.AccountCategory,
+			&i.SubCategory,
+			&i.DisplayOrder,
+			&i.ShowInReports,
+			&i.ConsolidationAccount,
+			&i.CashFlowType,
+			&i.RootType,
 			&i.AccountType,
 			&i.AccountSubtype,
+			&i.NormalBalance,
 			&i.IsControlAccount,
 			&i.ControlAccountID,
 			&i.CurrencyCode,
@@ -905,6 +1025,7 @@ func (q *Queries) ListAccountsByParent(ctx context.Context, parentAccountID *uui
 			&i.BudgetVarianceThreshold,
 			&i.Version,
 			&i.LastValidationRun,
+			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.AccountAttributes,
 			&i.CreatedAt,
@@ -912,9 +1033,8 @@ func (q *Queries) ListAccountsByParent(ctx context.Context, parentAccountID *uui
 			&i.DeletedAt,
 			&i.CreatedBy,
 			&i.UpdatedBy,
-			&i.RootType,
-			&i.NormalBalance,
-			&i.ValidationStatus,
+			&i.HasChildren,
+			&i.IsLeafAccount,
 		); err != nil {
 			return nil, err
 		}
@@ -947,7 +1067,7 @@ func (q *Queries) RestoreAccount(ctx context.Context, arg RestoreAccountParams) 
 }
 
 const searchAccounts = `-- name: SearchAccounts :many
-SELECT id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status FROM finance_accounts
+SELECT id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account FROM finance_accounts
 WHERE tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND (
@@ -983,11 +1103,21 @@ func (q *Queries) SearchAccounts(ctx context.Context, arg SearchAccountsParams) 
 			&i.AccountCode,
 			&i.AccountName,
 			&i.AccountDescription,
+			&i.AccountGroupID,
+			&i.AccountHeaderID,
 			&i.ParentAccountID,
 			&i.AccountLevel,
 			&i.AccountPath,
+			&i.AccountCategory,
+			&i.SubCategory,
+			&i.DisplayOrder,
+			&i.ShowInReports,
+			&i.ConsolidationAccount,
+			&i.CashFlowType,
+			&i.RootType,
 			&i.AccountType,
 			&i.AccountSubtype,
+			&i.NormalBalance,
 			&i.IsControlAccount,
 			&i.ControlAccountID,
 			&i.CurrencyCode,
@@ -1006,6 +1136,7 @@ func (q *Queries) SearchAccounts(ctx context.Context, arg SearchAccountsParams) 
 			&i.BudgetVarianceThreshold,
 			&i.Version,
 			&i.LastValidationRun,
+			&i.ValidationStatus,
 			&i.ValidationErrors,
 			&i.AccountAttributes,
 			&i.CreatedAt,
@@ -1013,9 +1144,8 @@ func (q *Queries) SearchAccounts(ctx context.Context, arg SearchAccountsParams) 
 			&i.DeletedAt,
 			&i.CreatedBy,
 			&i.UpdatedBy,
-			&i.RootType,
-			&i.NormalBalance,
-			&i.ValidationStatus,
+			&i.HasChildren,
+			&i.IsLeafAccount,
 		); err != nil {
 			return nil, err
 		}
@@ -1068,7 +1198,7 @@ SET
 WHERE id = $14 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, account_code, account_name, account_description, parent_account_id, account_level, account_path, account_type, account_subtype, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, root_type, normal_balance, validation_status
+RETURNING id, tenant_id, entity_id, account_code, account_name, account_description, account_group_id, account_header_id, parent_account_id, account_level, account_path, account_category, sub_category, display_order, show_in_reports, consolidation_account, cash_flow_type, root_type, account_type, account_subtype, normal_balance, is_control_account, control_account_id, currency_code, is_multi_currency, currency_revaluation_required, is_active, is_system_account, allow_manual_entries, require_reference, current_balance, ytd_balance, last_transaction_date, financial_statement_line, report_order, is_budgetable, budget_variance_threshold, version, last_validation_run, validation_status, validation_errors, account_attributes, created_at, updated_at, deleted_at, created_by, updated_by, has_children, is_leaf_account
 `
 
 type UpdateAccountParams struct {
@@ -1113,11 +1243,21 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*
 		&i.AccountCode,
 		&i.AccountName,
 		&i.AccountDescription,
+		&i.AccountGroupID,
+		&i.AccountHeaderID,
 		&i.ParentAccountID,
 		&i.AccountLevel,
 		&i.AccountPath,
+		&i.AccountCategory,
+		&i.SubCategory,
+		&i.DisplayOrder,
+		&i.ShowInReports,
+		&i.ConsolidationAccount,
+		&i.CashFlowType,
+		&i.RootType,
 		&i.AccountType,
 		&i.AccountSubtype,
+		&i.NormalBalance,
 		&i.IsControlAccount,
 		&i.ControlAccountID,
 		&i.CurrencyCode,
@@ -1136,6 +1276,7 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*
 		&i.BudgetVarianceThreshold,
 		&i.Version,
 		&i.LastValidationRun,
+		&i.ValidationStatus,
 		&i.ValidationErrors,
 		&i.AccountAttributes,
 		&i.CreatedAt,
@@ -1143,9 +1284,8 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*
 		&i.DeletedAt,
 		&i.CreatedBy,
 		&i.UpdatedBy,
-		&i.RootType,
-		&i.NormalBalance,
-		&i.ValidationStatus,
+		&i.HasChildren,
+		&i.IsLeafAccount,
 	)
 	return &i, err
 }
