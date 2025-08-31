@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Enable Row Level Security globally
 SET
-    row_security = ON;
+  row_security = ON;
 
 -- =====================================================
 -- ROLES AND PERMISSIONS
@@ -19,12 +19,12 @@ DO
 $$
 BEGIN
 IF NOT EXISTS (
-    SELECT
-        1
-    FROM
-        pg_roles
-    WHERE
-        rolname = 'application_role'
+  SELECT
+    1
+  FROM
+    pg_roles
+  WHERE
+    rolname = 'application_role'
 ) THEN CREATE ROLE application_role;
 
 END IF;
@@ -38,12 +38,12 @@ DO
 $$
 BEGIN
 IF NOT EXISTS (
-    SELECT
-        1
-    FROM
-        pg_roles
-    WHERE
-        rolname = 'admin_role'
+  SELECT
+    1
+  FROM
+    pg_roles
+  WHERE
+    rolname = 'admin_role'
 ) THEN CREATE ROLE admin_role;
 
 END IF;
@@ -56,12 +56,12 @@ DO
 $$
 BEGIN
 IF NOT EXISTS (
-    SELECT
-        1
-    FROM
-        pg_roles
-    WHERE
-        rolname = 'readonly_role'
+  SELECT
+    1
+  FROM
+    pg_roles
+  WHERE
+    rolname = 'readonly_role'
 ) THEN CREATE ROLE readonly_role;
 
 END IF;
@@ -79,41 +79,41 @@ $$
 -- Primary table for multi-tenant SaaS architecture
 -- Stores tenant information, business details, and configuration
 CREATE TABLE tenants (
-    -- Primary identifiers
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    slug VARCHAR(50) NOT NULL,
-    name VARCHAR(255) UNIQUE NOT NULL,
-    -- Contact and access information
-    email VARCHAR(255) NOT NULL,
-    subdomain VARCHAR(63) UNIQUE,
-    -- Status and operational settings
-    STATUS VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (STATUS IN ('active', 'suspended', 'pending')),
-    timezone VARCHAR(50) NOT NULL DEFAULT 'UTC',
-    currency_code CHAR(3) NOT NULL DEFAULT 'USD',
-    -- Flexible metadata storage
-    metadata JSONB DEFAULT '{}',
-    -- Business classification
-    industry VARCHAR(50),  -- For future industry-specific modules
-    company_size VARCHAR(20) CHECK (
-        company_size IN (
-            'Startup',
-            'Small',
-            'Medium',
-            'Large',
-            'Enterprise'
-        )
-    ),
-    -- Compliance and legal information
-    tax_id VARCHAR(50),
-    registration_number VARCHAR(50),
-    legal_entity_type VARCHAR(50),
-    -- Tenant-specific settings
-    last_activity_at TIMESTAMPTZ DEFAULT NOW(),
-    settings JSONB NOT NULL DEFAULT '{}',
-    -- Audit timestamps
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ -- Soft delete support
+  -- Primary identifiers
+  id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  slug VARCHAR(50) NOT NULL,
+  name VARCHAR(255) UNIQUE NOT NULL,
+  -- Contact and access information
+  email VARCHAR(255) NOT NULL,
+  subdomain VARCHAR(63) UNIQUE,
+  -- Status and operational settings
+  STATUS VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (STATUS IN ('active', 'suspended', 'pending')),
+  timezone VARCHAR(50) NOT NULL DEFAULT 'UTC',
+  currency_code CHAR(3) NOT NULL DEFAULT 'USD',
+  -- Flexible metadata storage
+  metadata JSONB DEFAULT '{}',
+  -- Business classification
+  industry VARCHAR(50),  -- For future industry-specific modules
+  company_size VARCHAR(20) CHECK (
+    company_size IN (
+      'Startup',
+      'Small',
+      'Medium',
+      'Large',
+      'Enterprise'
+    )
+  ),
+  -- Compliance and legal information
+  tax_id VARCHAR(50),
+  registration_number VARCHAR(50),
+  legal_entity_type VARCHAR(50),
+  -- Tenant-specific settings
+  last_activity_at TIMESTAMPTZ DEFAULT NOW(),
+  settings JSONB NOT NULL DEFAULT '{}',
+  -- Audit timestamps
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ -- Soft delete support
 );
 
 -- Create indexes for performance
@@ -123,11 +123,11 @@ CREATE INDEX idx_tenants_status ON tenants(STATUS);
 
 CREATE INDEX idx_tenants_subdomain ON tenants(subdomain)
 WHERE
-    subdomain IS NOT NULL;
+  subdomain IS NOT NULL;
 
 CREATE INDEX idx_tenants_deleted_at ON tenants(deleted_at)
 WHERE
-    deleted_at IS NOT NULL;
+  deleted_at IS NOT NULL;
 
 -- Add comments for documentation
 COMMENT ON TABLE tenants IS 'Core tenant management table for multi-tenant SaaS architecture';
@@ -155,14 +155,14 @@ $$
 BEGIN
 -- Validate tenant exists and is active
 IF NOT EXISTS (
-    SELECT
-        1
-    FROM
-        tenants
-    WHERE
-        id = tenant_id
-        AND STATUS = 'active'
-        AND deleted_at IS NULL
+  SELECT
+    1
+  FROM
+    tenants
+  WHERE
+    id = tenant_id
+    AND STATUS = 'active'
+    AND deleted_at IS NULL
 ) THEN RAISE EXCEPTION 'Invalid or inactive tenant: %',
 tenant_id;
 
@@ -193,11 +193,11 @@ $$
 BEGIN
 -- Return current tenant ID from session variable, default to NULL if not set
 RETURN COALESCE(
-    nullif(
-        current_setting('app.current_tenant_id', FALSE),
-        ''
-    ),
-    NULL
+  nullif(
+    current_setting('app.current_tenant_id', FALSE),
+    ''
+  ),
+  NULL
 )::UUID;
 
 EXCEPTION
@@ -221,11 +221,14 @@ COMMENT ON FUNCTION current_tenant_id() IS 'Retrieves the current tenant ID from
 -- -----------------------------------------------------
 -- Enable Row Level Security on tenants table
 ALTER TABLE
-    tenants ENABLE ROW LEVEL SECURITY;
+  tenants ENABLE ROW LEVEL SECURITY;
 
 -- Create policy for tenant isolation
 -- Only allow access to tenant data based on current session context
-CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USING (id = current_tenant_id() OR current_tenant_id() IS NULL);
+CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USING (
+  id = current_tenant_id()
+  OR current_tenant_id() IS NULL
+);
 
 -- Add policy comment
 COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
@@ -241,7 +244,7 @@ INSERT
 ,
 UPDATE
 ,
-    DELETE ON tenants TO application_role;
+  DELETE ON tenants TO application_role;
 
 -- Grant execute permissions on functions
 GRANT EXECUTE ON FUNCTION set_tenant_context(UUID) TO application_role;
@@ -277,7 +280,7 @@ COMMENT ON FUNCTION update_updated_at_column() IS 'Generic trigger function to u
 -- Trigger for tenants table
 CREATE TRIGGER update_tenants_updated_at BEFORE
 UPDATE
-    ON tenants FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  ON tenants FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- -----------------------------------------------------
 -- SLUG GENERATION TRIGGER
@@ -287,7 +290,7 @@ OR REPLACE FUNCTION generate_slug_from_name() RETURNS TRIGGER AS
 $$
 BEGIN
 IF NEW.slug IS NULL THEN NEW.slug := lower(
-    regexp_replace(NEW.name, '[^a-zA-Z0-9]+', '-', 'g')
+  regexp_replace(NEW.name, '[^a-zA-Z0-9]+', '-', 'g')
 );
 
 END IF;
@@ -301,4 +304,4 @@ LANGUAGE plpgsql;
 
 CREATE TRIGGER tenant_slug_trigger BEFORE
 INSERT
-    ON tenants FOR EACH ROW EXECUTE FUNCTION generate_slug_from_name();
+  ON tenants FOR EACH ROW EXECUTE FUNCTION generate_slug_from_name();

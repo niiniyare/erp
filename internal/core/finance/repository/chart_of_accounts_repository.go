@@ -264,15 +264,20 @@ func (r *chartOfAccountsRepository) Count(ctx context.Context, filter *domain.Ac
 	if filter.RootType != nil {
 		switch *filter.RootType {
 		case domain.RootTypeAsset:
-			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumASSET, Valid: true}
+			rootTypeStr := "ASSET"
+			params.RootType = &rootTypeStr
 		case domain.RootTypeLiability:
-			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumLIABILITY, Valid: true}
+			rootTypeStr := "LIABILITY"
+			params.RootType = &rootTypeStr
 		case domain.RootTypeEquity:
-			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumEQUITY, Valid: true}
+			rootTypeStr := "EQUITY"
+			params.RootType = &rootTypeStr
 		case domain.RootTypeRevenue:
-			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumREVENUE, Valid: true}
+			rootTypeStr := "REVENUE"
+			params.RootType = &rootTypeStr
 		case domain.RootTypeExpense:
-			params.RootType = db.NullRootTypeEnum{RootTypeEnum: db.RootTypeEnumEXPENSE, Valid: true}
+			rootTypeStr := "EXPENSE"
+			params.RootType = &rootTypeStr
 		}
 	}
 
@@ -476,8 +481,8 @@ func (r *chartOfAccountsRepository) GetControlAccounts(ctx context.Context, enti
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetControlAccounts")
 	defer span.End()
 
-	// Note: GetControlAccounts doesn't take entityID parameter, uses tenant context
-	sqlcAccounts, err := r.store.GetControlAccounts(ctx)
+	// Pass entityID parameter to GetControlAccounts
+	sqlcAccounts, err := r.store.GetControlAccounts(ctx, entityID)
 	if err != nil {
 		return nil, r.mapDatabaseError(err, "get_control_accounts")
 	}
@@ -614,17 +619,17 @@ func (r *chartOfAccountsRepository) mapDatabaseError(err error, operation string
 }
 
 // Helper function to map SQLC root type enum to domain
-func mapSQLCRootTypeToDomain(sqlcRootType db.RootTypeEnum) domain.RootType {
+func mapSQLCRootTypeToDomain(sqlcRootType string) domain.RootType {
 	switch sqlcRootType {
-	case db.RootTypeEnumASSET:
+	case "ASSET":
 		return domain.RootTypeAsset
-	case db.RootTypeEnumLIABILITY:
+	case "LIABILITY":
 		return domain.RootTypeLiability
-	case db.RootTypeEnumEQUITY:
+	case "EQUITY":
 		return domain.RootTypeEquity
-	case db.RootTypeEnumREVENUE:
+	case "REVENUE":
 		return domain.RootTypeRevenue
-	case db.RootTypeEnumEXPENSE:
+	case "EXPENSE":
 		return domain.RootTypeExpense
 	default:
 		return domain.RootTypeAsset // fallback

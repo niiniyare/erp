@@ -1,7 +1,6 @@
 -- =====================================================================
 -- ENTITIES VIEWS - Reporting and analytical views for entity management
 -- =====================================================================
-
 /*
  * Entity Hierarchy View
  * 
@@ -17,9 +16,8 @@
  * - Filters by current tenant context
  * - Includes soft delete filtering
  */
-CREATE VIEW v_tenant_hierarchy AS
-WITH RECURSIVE org_chart AS (
-  SELECT 
+CREATE VIEW v_tenant_hierarchy AS WITH RECURSIVE org_chart AS (
+  SELECT
     e.uuid AS entity_id,
     e.name,
     e.type,
@@ -27,13 +25,14 @@ WITH RECURSIVE org_chart AS (
     e.tenant_id,
     e.name::TEXT AS path,
     0 AS depth
-  FROM entities e
-  WHERE e.parent_id IS NULL
+  FROM
+    entities e
+  WHERE
+    e.parent_id IS NULL
     AND e.deleted_at IS NULL
-  
-  UNION ALL
-  
-  SELECT 
+  UNION
+  ALL
+  SELECT
     e.uuid AS entity_id,
     e.name,
     e.type,
@@ -41,20 +40,22 @@ WITH RECURSIVE org_chart AS (
     e.tenant_id,
     (oc.path || ' > ' || e.name)::TEXT,
     oc.depth + 1
-  FROM entities e
-  JOIN org_chart oc ON e.parent_id = oc.entity_id
-  WHERE e.deleted_at IS NULL
+  FROM
+    entities e
+    JOIN org_chart oc ON e.parent_id = oc.entity_id
+  WHERE
+    e.deleted_at IS NULL
 )
-SELECT 
+SELECT
   t.name AS tenant_name,
   oc.entity_id,
   oc.name AS entity_name,
   oc.type AS entity_type,
   oc.path AS full_path,
   oc.depth
-FROM org_chart oc
-JOIN tenants t ON oc.tenant_id = t.id;
-
+FROM
+  org_chart oc
+  JOIN tenants t ON oc.tenant_id = t.id;
 
 /*
  * Entity Hierarchy Structure View
@@ -81,17 +82,21 @@ SELECT
   r.name AS regional,
   c.uuid AS company_id,
   c.name AS company
-FROM entities cc
-JOIN entities d ON cc.parent_id = d.uuid AND d.type = 'DEPARTMENT'
-JOIN entities r ON d.parent_id = r.uuid AND r.type IN ('REGION', 'REGIONAL')
-JOIN entities c ON r.parent_id = c.uuid AND c.type = 'COMPANY'
-JOIN tenants t ON cc.tenant_id = t.id
-WHERE cc.type = 'COST_CENTER'
+FROM
+  entities cc
+  JOIN entities d ON cc.parent_id = d.uuid
+  AND d.type = 'DEPARTMENT'
+  JOIN entities r ON d.parent_id = r.uuid
+  AND r.type IN ('REGION', 'REGIONAL')
+  JOIN entities c ON r.parent_id = c.uuid
+  AND c.type = 'COMPANY'
+  JOIN tenants t ON cc.tenant_id = t.id
+WHERE
+  cc.type = 'COST_CENTER'
   AND cc.deleted_at IS NULL
   AND d.deleted_at IS NULL
   AND r.deleted_at IS NULL
   AND c.deleted_at IS NULL;
-
 
 /*
  * Cost Center Basic Information View
@@ -121,12 +126,14 @@ SELECT
   c.name AS company,
   cc.is_active AS cost_center_active,
   cc.created_at AS cost_center_created
-FROM entities cc
-JOIN entities d ON cc.parent_id = d.uuid
-JOIN entities r ON d.parent_id = r.uuid
-JOIN entities c ON r.parent_id = c.uuid
-JOIN tenants t ON cc.tenant_id = t.id
-WHERE cc.type = 'COST_CENTER'
+FROM
+  entities cc
+  JOIN entities d ON cc.parent_id = d.uuid
+  JOIN entities r ON d.parent_id = r.uuid
+  JOIN entities c ON r.parent_id = c.uuid
+  JOIN tenants t ON cc.tenant_id = t.id
+WHERE
+  cc.type = 'COST_CENTER'
   AND d.type = 'DEPARTMENT'
   AND r.type IN ('REGION', 'REGIONAL')
   AND c.type = 'COMPANY'
@@ -134,7 +141,6 @@ WHERE cc.type = 'COST_CENTER'
   AND d.deleted_at IS NULL
   AND r.deleted_at IS NULL
   AND c.deleted_at IS NULL;
-
 
 /*
  * Department Summary View
@@ -163,24 +169,33 @@ SELECT
   COUNT(DISTINCT cc.uuid) AS cost_center_count,
   d.is_active AS department_active,
   d.created_at AS department_created
-FROM entities d
-JOIN entities r ON d.parent_id = r.uuid
-JOIN entities c ON r.parent_id = c.uuid
-JOIN tenants t ON d.tenant_id = t.id
-LEFT JOIN entities cc ON cc.parent_id = d.uuid 
+FROM
+  entities d
+  JOIN entities r ON d.parent_id = r.uuid
+  JOIN entities c ON r.parent_id = c.uuid
+  JOIN tenants t ON d.tenant_id = t.id
+  LEFT JOIN entities cc ON cc.parent_id = d.uuid
   AND cc.type = 'COST_CENTER'
   AND cc.deleted_at IS NULL
-WHERE d.type = 'DEPARTMENT'
+WHERE
+  d.type = 'DEPARTMENT'
   AND r.type IN ('REGION', 'REGIONAL')
   AND c.type = 'COMPANY'
   AND d.deleted_at IS NULL
   AND r.deleted_at IS NULL
   AND c.deleted_at IS NULL
-GROUP BY 
-  t.id, t.name,
-  d.uuid, d.name, d.code, d.is_active, d.created_at,
-  r.uuid, r.name,
-  c.uuid, c.name;
+GROUP BY
+  t.id,
+  t.name,
+  d.uuid,
+  d.name,
+  d.code,
+  d.is_active,
+  d.created_at,
+  r.uuid,
+  r.name,
+  c.uuid,
+  c.name;
 
 /*
  * Company Structure View
@@ -208,14 +223,15 @@ SELECT
   e.type AS entity_type,
   e.code AS entity_code,
   hp.depth AS levels_from_company
-FROM entities c
-JOIN hierarchy_paths hp ON c.uuid = hp.ancestor_id
-JOIN entities e ON hp.descendant_id = e.uuid
-JOIN tenants t ON c.tenant_id = t.id
-WHERE c.type = 'COMPANY'
+FROM
+  entities c
+  JOIN hierarchy_paths hp ON c.uuid = hp.ancestor_id
+  JOIN entities e ON hp.descendant_id = e.uuid
+  JOIN tenants t ON c.tenant_id = t.id
+WHERE
+  c.type = 'COMPANY'
   AND c.deleted_at IS NULL
   AND e.deleted_at IS NULL;
-
 
 /*
  * Tenant Entity Summary View
@@ -237,16 +253,41 @@ SELECT
   t.name AS tenant_name,
   t.status AS tenant_status,
   COUNT(DISTINCT e.uuid) AS total_entities,
-  COUNT(DISTINCT e.uuid) FILTER (WHERE e.type = 'COMPANY') AS company_count,
-  COUNT(DISTINCT e.uuid) FILTER (WHERE e.type IN ('REGION', 'REGIONAL')) AS regional_count,
-  COUNT(DISTINCT e.uuid) FILTER (WHERE e.type = 'DEPARTMENT') AS department_count,
-  COUNT(DISTINCT e.uuid) FILTER (WHERE e.type = 'COST_CENTER') AS cost_center_count,
-  COUNT(DISTINCT e.uuid) FILTER (WHERE e.type = 'PROJECT') AS project_count,
-  COUNT(DISTINCT e.uuid) FILTER (WHERE e.is_active = true) AS active_entities,
-  COUNT(DISTINCT e.uuid) FILTER (WHERE e.deleted_at IS NULL) AS non_deleted_entities
-FROM tenants t
-LEFT JOIN entities e ON e.tenant_id = t.id
-GROUP BY t.id, t.name, t.status;
+  COUNT(DISTINCT e.uuid) FILTER (
+    WHERE
+      e.type = 'COMPANY'
+  ) AS company_count,
+  COUNT(DISTINCT e.uuid) FILTER (
+    WHERE
+      e.type IN ('REGION', 'REGIONAL')
+  ) AS regional_count,
+  COUNT(DISTINCT e.uuid) FILTER (
+    WHERE
+      e.type = 'DEPARTMENT'
+  ) AS department_count,
+  COUNT(DISTINCT e.uuid) FILTER (
+    WHERE
+      e.type = 'COST_CENTER'
+  ) AS cost_center_count,
+  COUNT(DISTINCT e.uuid) FILTER (
+    WHERE
+      e.type = 'PROJECT'
+  ) AS project_count,
+  COUNT(DISTINCT e.uuid) FILTER (
+    WHERE
+      e.is_active = TRUE
+  ) AS active_entities,
+  COUNT(DISTINCT e.uuid) FILTER (
+    WHERE
+      e.deleted_at IS NULL
+  ) AS non_deleted_entities
+FROM
+  tenants t
+  LEFT JOIN entities e ON e.tenant_id = t.id
+GROUP BY
+  t.id,
+  t.name,
+  t.status;
 
 /*
  * Active Entities Report View
@@ -275,42 +316,61 @@ SELECT
   e.is_active,
   e.created_at,
   e.updated_at
-FROM entities e
-JOIN tenants t ON e.tenant_id = t.id
-LEFT JOIN entities c ON (
-  CASE 
-    WHEN e.type = 'COMPANY' THEN e.uuid = c.uuid
-    ELSE EXISTS (
-      SELECT 1 FROM hierarchy_paths hp 
-      WHERE hp.descendant_id = e.uuid 
-        AND hp.ancestor_id = c.uuid 
-        AND c.type = 'COMPANY'
-    )
-  END
-)
-LEFT JOIN entities r ON (
-  CASE 
-    WHEN e.type IN ('REGION', 'REGIONAL') THEN e.uuid = r.uuid
-    ELSE EXISTS (
-      SELECT 1 FROM hierarchy_paths hp 
-      WHERE hp.descendant_id = e.uuid 
-        AND hp.ancestor_id = r.uuid 
-        AND r.type IN ('REGION', 'REGIONAL')
-    )
-  END
-)
-LEFT JOIN entities d ON (
-  CASE 
-    WHEN e.type = 'DEPARTMENT' THEN e.uuid = d.uuid
-    ELSE e.parent_id = d.uuid AND d.type = 'DEPARTMENT'
-  END
-)
-WHERE e.deleted_at IS NULL
-  AND e.is_active = true
-  AND (c.deleted_at IS NULL OR c.uuid IS NULL)
-  AND (r.deleted_at IS NULL OR r.uuid IS NULL)
-  AND (d.deleted_at IS NULL OR d.uuid IS NULL);
-
+FROM
+  entities e
+  JOIN tenants t ON e.tenant_id = t.id
+  LEFT JOIN entities c ON (
+    CASE
+      WHEN e.type = 'COMPANY' THEN e.uuid = c.uuid
+      ELSE EXISTS (
+        SELECT
+          1
+        FROM
+          hierarchy_paths hp
+        WHERE
+          hp.descendant_id = e.uuid
+          AND hp.ancestor_id = c.uuid
+          AND c.type = 'COMPANY'
+      )
+    END
+  )
+  LEFT JOIN entities r ON (
+    CASE
+      WHEN e.type IN ('REGION', 'REGIONAL') THEN e.uuid = r.uuid
+      ELSE EXISTS (
+        SELECT
+          1
+        FROM
+          hierarchy_paths hp
+        WHERE
+          hp.descendant_id = e.uuid
+          AND hp.ancestor_id = r.uuid
+          AND r.type IN ('REGION', 'REGIONAL')
+      )
+    END
+  )
+  LEFT JOIN entities d ON (
+    CASE
+      WHEN e.type = 'DEPARTMENT' THEN e.uuid = d.uuid
+      ELSE e.parent_id = d.uuid
+      AND d.type = 'DEPARTMENT'
+    END
+  )
+WHERE
+  e.deleted_at IS NULL
+  AND e.is_active = TRUE
+  AND (
+    c.deleted_at IS NULL
+    OR c.uuid IS NULL
+  )
+  AND (
+    r.deleted_at IS NULL
+    OR r.uuid IS NULL
+  )
+  AND (
+    d.deleted_at IS NULL
+    OR d.uuid IS NULL
+  );
 
 /*
  * Entity Change Log View
@@ -336,15 +396,16 @@ SELECT
   e.created_at,
   e.updated_at,
   e.deleted_at,
-  CASE 
+  CASE
     WHEN e.deleted_at IS NOT NULL THEN 'DELETED'
     WHEN e.updated_at > e.created_at + INTERVAL '1 minute' THEN 'MODIFIED'
     ELSE 'CREATED'
   END AS change_type
-FROM entities e
-JOIN tenants t ON e.tenant_id = t.id
-ORDER BY e.updated_at DESC;
-
+FROM
+  entities e
+  JOIN tenants t ON e.tenant_id = t.id
+ORDER BY
+  e.updated_at DESC;
 
 /*
  * Entity Hierarchy Paths View
@@ -371,14 +432,18 @@ SELECT
   d.name AS descendant_name,
   d.type AS descendant_type,
   hp.depth
-FROM hierarchy_paths hp
-JOIN entities a ON hp.ancestor_id = a.uuid
-JOIN entities d ON hp.descendant_id = d.uuid
-JOIN tenants t ON hp.tenant_id = t.id
-WHERE a.deleted_at IS NULL
+FROM
+  hierarchy_paths hp
+  JOIN entities a ON hp.ancestor_id = a.uuid
+  JOIN entities d ON hp.descendant_id = d.uuid
+  JOIN tenants t ON hp.tenant_id = t.id
+WHERE
+  a.deleted_at IS NULL
   AND d.deleted_at IS NULL
-ORDER BY hp.depth, a.name, d.name;
-
+ORDER BY
+  hp.depth,
+  a.name,
+  d.name;
 
 /*
  * Tenant Resource Utilization View
@@ -401,14 +466,23 @@ SELECT
   t.name AS tenant_name,
   t.status AS tenant_status,
   COUNT(DISTINCT e.uuid) AS total_entities,
-  COUNT(DISTINCT e.uuid) FILTER (WHERE e.is_active = true) AS active_entities,
-  COUNT(DISTINCT e.uuid) FILTER (WHERE e.deleted_at IS NULL) AS non_deleted_entities,
+  COUNT(DISTINCT e.uuid) FILTER (
+    WHERE
+      e.is_active = TRUE
+  ) AS active_entities,
+  COUNT(DISTINCT e.uuid) FILTER (
+    WHERE
+      e.deleted_at IS NULL
+  ) AS non_deleted_entities,
   COUNT(DISTINCT es.uuid) AS sequence_states,
   COUNT(DISTINCT es.key) AS document_types,
   MAX(e.created_at) AS last_entity_created,
   MAX(e.updated_at) AS last_entity_updated
-FROM tenants t
-LEFT JOIN entities e ON e.tenant_id = t.id
-LEFT JOIN entitystate es ON es.tenant_id = t.id
-GROUP BY t.id, t.name, t.status;
-
+FROM
+  tenants t
+  LEFT JOIN entities e ON e.tenant_id = t.id
+  LEFT JOIN entitystate es ON es.tenant_id = t.id
+GROUP BY
+  t.id,
+  t.name,
+  t.status;

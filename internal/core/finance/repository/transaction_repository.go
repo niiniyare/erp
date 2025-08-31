@@ -144,10 +144,7 @@ func (r *transactionRepository) Update(ctx context.Context, transaction *domain.
 		// Map transaction to SQLC parameters
 		params := db.UpdateTransactionParams{
 			TransactionID: transaction.ID,
-			TransactionStatus: db.NullTransactionStatusEnum{
-				TransactionStatusEnum: mapDomainTransactionStatusToSQLCEnum(transaction.TransactionStatus),
-				Valid:                 true,
-			},
+			TransactionStatus: mapDomainTransactionStatusToSQLCEnumPtr(transaction.TransactionStatus),
 			PostingDate:           timePointerToTimeValue(transaction.PostingDate),
 			DueDate:               timePointerToTimeValue(transaction.DueDate),
 			Description:           transaction.Description,

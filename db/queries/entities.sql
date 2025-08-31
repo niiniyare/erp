@@ -801,12 +801,14 @@ ORDER BY
   hp.depth DESC;
 
 -- name: BulkMoveEntities :exec
-UPDATE entities
+UPDATE
+  entities
 SET
   parent_id = sqlc.arg('parent_id'),
   updated_at = NOW()
-WHERE tenant_id = current_tenant_id()
-  AND uuid = ANY(sqlc.arg('entity_ids')::UUID[])
+WHERE
+  tenant_id = current_tenant_id()
+  AND uuid = ANY(sqlc.arg('entity_ids')::UUID [])
   AND deleted_at IS NULL;
 
 -- =====================================================================
@@ -1106,177 +1108,250 @@ SELECT
       )
   ) AS orphaned_paths;
 
-
-
-
 -- =====================================================================
 -- ENTITYSTATE SQLC QUERIES
 -- =====================================================================
-
 -- name: CreateEntityState :one
-INSERT INTO entitystate (
+INSERT INTO
+  entitystate (
     uuid,
     tenant_id,
     fiscal_year,
-    key,
+    KEY,
     sequence,
     entity_id,
     entity_unit_id,
     created_at,
     updated_at
-) VALUES (
+  )
+VALUES
+  (
     sqlc.arg(uuid)::UUID,
     current_tenant_id(),
     sqlc.narg(fiscal_year)::SMALLINT,
-    sqlc.arg(key)::VARCHAR(10),
+    sqlc.arg(KEY)::VARCHAR(10),
     sqlc.arg(sequence)::BIGINT,
     sqlc.arg(entity_id)::UUID,
     sqlc.narg(entity_unit_id)::UUID,
     NOW(),
     NOW()
-) RETURNING *;
+  )
+RETURNING
+  *;
 
 -- name: GetEntityState :one
-SELECT *
-FROM entitystate
-WHERE uuid = sqlc.arg(uuid)::UUID
+SELECT
+  *
+FROM
+  entitystate
+WHERE
+  uuid = sqlc.arg(uuid)::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
 -- name: GetEntityStateByEntityAndKey :one
-SELECT *
-FROM entitystate
-WHERE entity_id = sqlc.arg(entity_id)::UUID
-  AND key = sqlc.arg(key)::VARCHAR(10)
+SELECT
+  *
+FROM
+  entitystate
+WHERE
+  entity_id = sqlc.arg(entity_id)::UUID
+  AND KEY = sqlc.arg(KEY)::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT);
+  AND (
+    sqlc.narg(fiscal_year)::SMALLINT IS NULL
+    OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT
+  );
 
 -- name: GetEntityStateByEntityKeyAndFiscalYear :one
-SELECT *
-FROM entitystate
-WHERE entity_id = sqlc.arg(entity_id)::UUID
-  AND key = sqlc.arg(key)::VARCHAR(10)
+SELECT
+  *
+FROM
+  entitystate
+WHERE
+  entity_id = sqlc.arg(entity_id)::UUID
+  AND KEY = sqlc.arg(KEY)::VARCHAR(10)
   AND fiscal_year = sqlc.arg(fiscal_year)::SMALLINT
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
 -- name: GetNextSequenceNumber :one
-SELECT sequence
-FROM entitystate
-WHERE entity_id = sqlc.arg(entity_id)::UUID
-  AND key = sqlc.arg(key)::VARCHAR(10)
+SELECT
+  sequence
+FROM
+  entitystate
+WHERE
+  entity_id = sqlc.arg(entity_id)::UUID
+  AND KEY = sqlc.arg(KEY)::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT)
-FOR UPDATE;
+  AND (
+    sqlc.narg(fiscal_year)::SMALLINT IS NULL
+    OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT
+  ) FOR
+UPDATE
+;
 
 -- name: IncrementSequenceNumber :one
-UPDATE entitystate
-SET sequence = sequence + 1,
-    updated_at = NOW()
-WHERE uuid = sqlc.arg(uuid)::UUID
+UPDATE
+  entitystate
+SET
+  sequence = sequence + 1,
+  updated_at = NOW()
+WHERE
+  uuid = sqlc.arg(uuid)::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-RETURNING sequence;
+RETURNING
+  sequence;
 
 -- name: UpdateEntityState :one
-UPDATE entitystate
-SET fiscal_year = COALESCE(sqlc.narg(fiscal_year)::SMALLINT, fiscal_year),
-    key = COALESCE(sqlc.narg(key)::VARCHAR(10), key),
-    sequence = COALESCE(sqlc.narg(sequence)::BIGINT, sequence),
-    entity_id = COALESCE(sqlc.narg(entity_id)::UUID, entity_id),
-    entity_unit_id = COALESCE(sqlc.narg(entity_unit_id)::UUID, entity_unit_id),
-    updated_at = NOW()
-WHERE uuid = sqlc.arg(uuid)::UUID
+UPDATE
+  entitystate
+SET
+  fiscal_year = COALESCE(sqlc.narg(fiscal_year)::SMALLINT, fiscal_year),
+  KEY = COALESCE(sqlc.narg(KEY)::VARCHAR(10), KEY),
+  sequence = COALESCE(sqlc.narg(sequence)::BIGINT, sequence),
+  entity_id = COALESCE(sqlc.narg(entity_id)::UUID, entity_id),
+  entity_unit_id = COALESCE(sqlc.narg(entity_unit_id)::UUID, entity_unit_id),
+  updated_at = NOW()
+WHERE
+  uuid = sqlc.arg(uuid)::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-RETURNING *;
+RETURNING
+  *;
 
 -- name: SetSequenceNumber :one
-UPDATE entitystate
-SET sequence = sqlc.arg(sequence)::BIGINT,
-    updated_at = NOW()
-WHERE entity_id = sqlc.arg(entity_id)::UUID
-  AND key = sqlc.arg(key)::VARCHAR(10)
+UPDATE
+  entitystate
+SET
+  sequence = sqlc.arg(sequence)::BIGINT,
+  updated_at = NOW()
+WHERE
+  entity_id = sqlc.arg(entity_id)::UUID
+  AND KEY = sqlc.arg(KEY)::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT)
-RETURNING *;
+  AND (
+    sqlc.narg(fiscal_year)::SMALLINT IS NULL
+    OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT
+  )
+RETURNING
+  *;
 
 -- name: SoftDeleteEntityState :exec
-UPDATE entitystate
-SET deleted_at = NOW(),
-    updated_at = NOW()
-WHERE uuid = sqlc.arg(uuid)::UUID
+UPDATE
+  entitystate
+SET
+  deleted_at = NOW(),
+  updated_at = NOW()
+WHERE
+  uuid = sqlc.arg(uuid)::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
 -- name: ListEntityStatesByEntity :many
-SELECT *
-FROM entitystate
-WHERE entity_id = sqlc.arg(entity_id)::UUID
+SELECT
+  *
+FROM
+  entitystate
+WHERE
+  entity_id = sqlc.arg(entity_id)::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-ORDER BY key, fiscal_year;
+ORDER BY
+  KEY,
+  fiscal_year;
 
 -- name: ListEntityStatesByEntityAndKey :many
-SELECT *
-FROM entitystate
-WHERE entity_id = sqlc.arg(entity_id)::UUID
-  AND key = sqlc.arg(key)::VARCHAR(10)
+SELECT
+  *
+FROM
+  entitystate
+WHERE
+  entity_id = sqlc.arg(entity_id)::UUID
+  AND KEY = sqlc.arg(KEY)::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-ORDER BY fiscal_year;
+ORDER BY
+  fiscal_year;
 
 -- name: ListEntityStatesByFiscalYear :many
-SELECT *
-FROM entitystate
-WHERE fiscal_year = sqlc.arg(fiscal_year)::SMALLINT
+SELECT
+  *
+FROM
+  entitystate
+WHERE
+  fiscal_year = sqlc.arg(fiscal_year)::SMALLINT
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-ORDER BY entity_id, key;
+ORDER BY
+  entity_id,
+  KEY;
 
 -- name: ListEntityStatesByEntityUnit :many
-SELECT *
-FROM entitystate
-WHERE entity_unit_id = sqlc.arg(entity_unit_id)::UUID
+SELECT
+  *
+FROM
+  entitystate
+WHERE
+  entity_unit_id = sqlc.arg(entity_unit_id)::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-ORDER BY entity_id, key, fiscal_year;
-
+ORDER BY
+  entity_id,
+  KEY,
+  fiscal_year;
 
 -- name: Get_OrCreateEntityState :one
 WITH ins AS (
-    INSERT INTO entitystate (
-        uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
+  INSERT INTO
+    entitystate (
+      uuid,
+      tenant_id,
+      fiscal_year,
+      KEY,
+      sequence,
+      entity_id,
+      entity_unit_id,
+      created_at,
+      updated_at
     )
-    VALUES (
-        sqlc.arg(uuid),             -- generate UUID in app layer
-        current_tenant_id(),
-        sqlc.arg(fiscal_year),
-        sqlc.arg(key),
-        1,                          -- start sequence at 1
-        sqlc.arg(entity_id),
-        sqlc.narg(entity_unit_id),
-        NOW(),
-        NOW()
-    )
-    ON CONFLICT (tenant_id, fiscal_year, key, entity_id)
-    DO NOTHING
-    RETURNING *
+  VALUES
+    (
+      sqlc.arg(uuid),  -- generate UUID in app layer
+      current_tenant_id(),
+      sqlc.arg(fiscal_year),
+      sqlc.arg(KEY),
+      1,  -- start sequence at 1
+      sqlc.arg(entity_id),
+      sqlc.narg(entity_unit_id),
+      NOW(),
+      NOW()
+    ) ON CONFLICT (tenant_id, fiscal_year, KEY, entity_id) DO NOTHING
+  RETURNING
+    *
 )
-SELECT *
-FROM ins
+SELECT
+  *
+FROM
+  ins
 UNION
-SELECT *
-FROM entitystate
-WHERE tenant_id = current_tenant_id()
+SELECT
+  *
+FROM
+  entitystate
+WHERE
+  tenant_id = current_tenant_id()
   AND fiscal_year = sqlc.arg(fiscal_year)
-  AND key = sqlc.arg(key)
+  AND KEY = sqlc.arg(KEY)
   AND entity_id = sqlc.arg(entity_id)
   AND deleted_at IS NULL
-LIMIT 1;
+LIMIT
+  1;
+
 -- -- name: GetOrCreateEntityState :one
 -- WITH existing AS (
 --     SELECT *
@@ -1299,7 +1374,7 @@ LIMIT 1;
 --         created_at,
 --         updated_at
 --     )
---     SELECT 
+--     SELECT
 --         sqlc.arg(uuid)::UUID,
 --         current_tenant_id(),
 --         sqlc.narg(fiscal_year)::SMALLINT,
@@ -1317,84 +1392,126 @@ LIMIT 1;
 -- SELECT * FROM new_record;
 --
 -- name: GetNextSequenceAndIncrement :one
-UPDATE entitystate
-SET sequence = sequence + 1,
-    updated_at = NOW()
-WHERE entity_id = sqlc.arg(entity_id)::UUID
-  AND key = sqlc.arg(key)::VARCHAR(10)
+UPDATE
+  entitystate
+SET
+  sequence = sequence + 1,
+  updated_at = NOW()
+WHERE
+  entity_id = sqlc.arg(entity_id)::UUID
+  AND KEY = sqlc.arg(KEY)::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT)
-RETURNING sequence - 1 as used_sequence, sequence as next_sequence;
+  AND (
+    sqlc.narg(fiscal_year)::SMALLINT IS NULL
+    OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT
+  )
+RETURNING
+  sequence - 1 AS used_sequence,
+  sequence AS next_sequence;
 
 --
 -- name: BulkCreateEntityStates :copyfrom
-INSERT INTO entitystate (
+INSERT INTO
+  entitystate (
     uuid,
     tenant_id,
     fiscal_year,
-    key,
+    KEY,
     sequence,
     entity_id,
     entity_unit_id,
     created_at,
     updated_at,
     deleted_at
-) VALUES (
+  )
+VALUES
+  (
     sqlc.arg(uuid),
     sqlc.arg(tenant_id),
     sqlc.narg(fiscal_year),
-    sqlc.arg(key),
+    sqlc.arg(KEY),
     sqlc.arg(sequence),
     sqlc.arg(entity_id),
     sqlc.narg(entity_unit_id),
     sqlc.arg(created_at),
     sqlc.arg(updated_at),
     sqlc.narg(deleted_at)
-);
+  );
+
 -- name: CountEntityStatesByEntity :one
-SELECT COUNT(*)
-FROM entitystate
-WHERE entity_id = sqlc.arg(entity_id)::UUID
+SELECT
+  COUNT(*)
+FROM
+  entitystate
+WHERE
+  entity_id = sqlc.arg(entity_id)::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
 -- name: CountEntityStatesByKey :one
-SELECT COUNT(*)
-FROM entitystate
-WHERE key = sqlc.arg(key)::VARCHAR(10)
+SELECT
+  COUNT(*)
+FROM
+  entitystate
+WHERE
+  KEY = sqlc.arg(KEY)::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL;
 
 -- name: GetMaxSequenceByEntityAndKey :one
-SELECT COALESCE(MAX(sequence), 0) as max_sequence
-FROM entitystate
-WHERE entity_id = sqlc.arg(entity_id)::UUID
-  AND key = sqlc.arg(key)::VARCHAR(10)
+SELECT
+  COALESCE(MAX(sequence), 0) AS max_sequence
+FROM
+  entitystate
+WHERE
+  entity_id = sqlc.arg(entity_id)::UUID
+  AND KEY = sqlc.arg(KEY)::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND (sqlc.narg(fiscal_year)::SMALLINT IS NULL OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT);
+  AND (
+    sqlc.narg(fiscal_year)::SMALLINT IS NULL
+    OR fiscal_year = sqlc.narg(fiscal_year)::SMALLINT
+  );
 
 -- name: ResetSequenceNumber :one
-UPDATE entitystate
-SET sequence = sqlc.arg(sequence)::BIGINT,
-    updated_at = NOW()
-WHERE uuid = sqlc.arg(uuid)::UUID
+UPDATE
+  entitystate
+SET
+  sequence = sqlc.arg(sequence)::BIGINT,
+  updated_at = NOW()
+WHERE
+  uuid = sqlc.arg(uuid)::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-RETURNING *;
+RETURNING
+  *;
 
 -- name: GetEntityStatesWithPaging :many
-SELECT *
-FROM entitystate
-WHERE tenant_id = current_tenant_id()
+SELECT
+  *
+FROM
+  entitystate
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND (sqlc.narg(entity_id) IS NULL OR entity_id = sqlc.narg(entity_id))
-  AND (sqlc.narg(key) IS NULL OR key = sqlc.narg(key))
-  AND (sqlc.narg(fiscal_year) IS NULL OR fiscal_year = sqlc.narg(fiscal_year))
-ORDER BY created_at DESC
-LIMIT sqlc.arg(page_size)
-OFFSET sqlc.arg(page_offset);
+  AND (
+    sqlc.narg(entity_id) IS NULL
+    OR entity_id = sqlc.narg(entity_id)
+  )
+  AND (
+    sqlc.narg(KEY) IS NULL
+    OR KEY = sqlc.narg(KEY)
+  )
+  AND (
+    sqlc.narg(fiscal_year) IS NULL
+    OR fiscal_year = sqlc.narg(fiscal_year)
+  )
+ORDER BY
+  created_at DESC
+LIMIT
+  sqlc.arg(page_size) OFFSET sqlc.arg(page_offset);
+
 /*
 I'll create comprehensive sqlc functions for your entity management schema. This will include CRUD operations, hierarchy management, and state tracking.I've created a comprehensive set of sqlc functions for your entity management schema. Here's what's included:
 

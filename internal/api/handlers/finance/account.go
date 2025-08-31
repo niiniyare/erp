@@ -472,17 +472,88 @@ func (h *FinanceHandler) convertAccountToResult(account *domain.Accounts) *goaFi
 		result.AccountDescription = stringPtr(*account.AccountDescription)
 	}
 
+	// Hierarchy and grouping
 	if account.ParentAccountID != nil {
 		result.ParentAccountID = stringPtr(account.ParentAccountID.String())
 	}
-
+	
 	result.AccountLevel = &account.AccountLevel
 
 	if account.AccountPath != nil {
 		result.AccountPath = stringPtr(*account.AccountPath)
 	}
 
+	// New hierarchy fields
+	if account.AccountGroupID != nil {
+		result.AccountGroupID = stringPtr(account.AccountGroupID.String())
+	}
+
+	if account.AccountHeaderID != nil {
+		result.AccountHeaderID = stringPtr(account.AccountHeaderID.String())
+	}
+
+	result.HasChildren = &account.HasChildren
+	result.IsLeafAccount = &account.IsLeafAccount
+
+	// Classification fields
+	if account.AccountSubtype != nil {
+		result.AccountSubtype = stringPtr(*account.AccountSubtype)
+	}
+
+	if account.AccountCategory != nil {
+		result.AccountCategory = stringPtr(*account.AccountCategory)
+	}
+
+	if account.SubCategory != nil {
+		result.SubCategory = stringPtr(*account.SubCategory)
+	}
+
+	// Operational settings
+	result.IsSystemAccount = &account.IsSystemAccount
+	result.AllowManualEntries = &account.AllowManualEntries
+	result.RequireReference = &account.RequireReference
+
+	// Reporting fields
+	if account.FinancialStatementLine != nil {
+		result.FinancialStatementLine = stringPtr(*account.FinancialStatementLine)
+	}
+
+	result.ReportOrder = &account.ReportOrder
+	result.DisplayOrder = &account.DisplayOrder
+	result.ShowInReports = &account.ShowInReports
+
+	if account.ConsolidationAccount != nil {
+		result.ConsolidationAccount = stringPtr(*account.ConsolidationAccount)
+	}
+
+	if account.CashFlowType != nil {
+		result.CashFlowType = stringPtr(*account.CashFlowType)
+	}
+
+	// Balance tracking
 	result.YtdBalance = stringPtr(account.YTDBalance.String())
+
+	if account.LastTransactionDate != nil {
+		result.LastTransactionDate = stringPtr(account.LastTransactionDate.Format(time.RFC3339))
+	}
+
+	// Currency settings
+	if account.CurrencyCode != nil {
+		result.CurrencyCode = stringPtr(*account.CurrencyCode)
+	}
+	result.IsMultiCurrency = &account.IsMultiCurrency
+
+	// Budgeting
+	result.IsBudgetable = &account.IsBudgetable
+	result.BudgetVarianceThreshold = stringPtr(account.BudgetVarianceThreshold.String())
+
+	// Audit fields
+	result.Version = &account.Version
+	result.ValidationStatus = stringPtr(string(account.ValidationStatus))
+
+	if account.LastValidationRun != nil {
+		result.LastValidationRun = stringPtr(account.LastValidationRun.Format(time.RFC3339))
+	}
 
 	return result
 }

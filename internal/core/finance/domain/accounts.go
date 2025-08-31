@@ -27,11 +27,19 @@ type Accounts struct {
 	ParentAccountID *uuid.UUID `json:"parent_account_id,omitempty"` // Reference to parent account
 	AccountLevel    int32      `json:"account_level"`               // Depth in hierarchy (0 = root level)
 	AccountPath     *string    `json:"account_path,omitempty"`      // Materialized path (e.g., "/1000/1100/")
+	HasChildren     bool       `json:"has_children"`                // Whether account has child accounts
+	IsLeafAccount   bool       `json:"is_leaf_account"`             // Whether account is a leaf node
+
+	// Account grouping and organization
+	AccountGroupID   *uuid.UUID `json:"account_group_id,omitempty"`   // Reference to account group
+	AccountHeaderID  *uuid.UUID `json:"account_header_id,omitempty"`  // Reference to account header
 
 	// Account classification following standard accounting taxonomy
-	RootType       RootType `json:"root_type"`                 // Primary classification
-	AccountType    string   `json:"account_type"`              // Secondary classification
-	AccountSubtype *string  `json:"account_subtype,omitempty"` // Tertiary classification
+	RootType        RootType `json:"root_type"`                  // Primary classification
+	AccountType     string   `json:"account_type"`               // Secondary classification
+	AccountSubtype  *string  `json:"account_subtype,omitempty"`  // Tertiary classification
+	AccountCategory *string  `json:"account_category,omitempty"` // Account category for grouping
+	SubCategory     *string  `json:"sub_category,omitempty"`     // Sub-category within main category
 
 	// Financial attributes
 	NormalBalance    NormalBalance `json:"normal_balance"`               // Debit or Credit normal balance
@@ -57,6 +65,10 @@ type Accounts struct {
 	// Reporting and analysis
 	FinancialStatementLine *string `json:"financial_statement_line,omitempty"` // Report grouping
 	ReportOrder            int32   `json:"report_order"`                       // Sort order in reports
+	DisplayOrder           int32   `json:"display_order"`                      // Display order in UI/reports
+	ShowInReports          bool    `json:"show_in_reports"`                    // Whether to include in standard reports
+	ConsolidationAccount   *string `json:"consolidation_account,omitempty"`    // Consolidation mapping for multi-entity
+	CashFlowType           *string `json:"cash_flow_type,omitempty"`           // Cash flow statement classification
 
 	// Budgeting capabilities
 	IsBudgetable            bool            `json:"is_budgetable"`             // Can have budget allocated
@@ -85,23 +97,47 @@ type CreateAccountRequest struct {
 	AccountCode                 string                 `json:"account_code" validate:"required,max=20"`
 	AccountName                 string                 `json:"account_name" validate:"required,max=200"`
 	AccountDescription          *string                `json:"account_description,omitempty" validate:"omitempty,max=1000"`
+	
+	// Hierarchy and grouping
 	ParentAccountID             *uuid.UUID             `json:"parent_account_id,omitempty"`
+	AccountGroupID              *uuid.UUID             `json:"account_group_id,omitempty"`
+	AccountHeaderID             *uuid.UUID             `json:"account_header_id,omitempty"`
+	
+	// Classification
 	RootType                    RootType               `json:"root_type" validate:"required"`
 	AccountType                 string                 `json:"account_type" validate:"required,max=100"`
 	AccountSubtype              *string                `json:"account_subtype,omitempty" validate:"omitempty,max=100"`
+	AccountCategory             *string                `json:"account_category,omitempty" validate:"omitempty,max=100"`
+	SubCategory                 *string                `json:"sub_category,omitempty" validate:"omitempty,max=100"`
 	NormalBalance               NormalBalance          `json:"normal_balance" validate:"required"`
+	
+	// Control and relationships
 	IsControlAccount            bool                   `json:"is_control_account"`
 	ControlAccountID            *uuid.UUID             `json:"control_account_id,omitempty"`
+	
+	// Currency settings
 	CurrencyCode                *string                `json:"currency_code,omitempty" validate:"omitempty,len=3"`
 	IsMultiCurrency             bool                   `json:"is_multi_currency"`
 	CurrencyRevaluationRequired bool                   `json:"currency_revaluation_required"`
+	
+	// Operational settings
 	IsActive                    bool                   `json:"is_active"`
 	AllowManualEntries          bool                   `json:"allow_manual_entries"`
 	RequireReference            bool                   `json:"require_reference"`
+	
+	// Reporting and display
 	FinancialStatementLine      *string                `json:"financial_statement_line,omitempty" validate:"omitempty,max=100"`
 	ReportOrder                 int32                  `json:"report_order" validate:"min=0"`
+	DisplayOrder                int32                  `json:"display_order" validate:"min=0"`
+	ShowInReports               bool                   `json:"show_in_reports"`
+	ConsolidationAccount        *string                `json:"consolidation_account,omitempty" validate:"omitempty,max=100"`
+	CashFlowType                *string                `json:"cash_flow_type,omitempty" validate:"omitempty,max=50"`
+	
+	// Budgeting
 	IsBudgetable                bool                   `json:"is_budgetable"`
 	BudgetVarianceThreshold     decimal.Decimal        `json:"budget_variance_threshold" validate:"min=0,max=100"`
+	
+	// Extensions
 	AccountAttributes           map[string]interface{} `json:"account_attributes,omitempty"`
 }
 
@@ -110,15 +146,35 @@ type UpdateAccountRequest struct {
 	AccountCode             *string                `json:"account_code,omitempty" validate:"omitempty,max=20"`
 	AccountName             *string                `json:"account_name,omitempty" validate:"omitempty,max=200"`
 	AccountDescription      *string                `json:"account_description,omitempty" validate:"omitempty,max=1000"`
+	
+	// Grouping and hierarchy (limited updates for data integrity)
+	AccountGroupID          *uuid.UUID             `json:"account_group_id,omitempty"`
+	AccountHeaderID         *uuid.UUID             `json:"account_header_id,omitempty"`
+	
+	// Classification updates
 	AccountType             *string                `json:"account_type,omitempty" validate:"omitempty,max=100"`
 	AccountSubtype          *string                `json:"account_subtype,omitempty" validate:"omitempty,max=100"`
+	AccountCategory         *string                `json:"account_category,omitempty" validate:"omitempty,max=100"`
+	SubCategory             *string                `json:"sub_category,omitempty" validate:"omitempty,max=100"`
+	
+	// Operational settings
 	IsActive                *bool                  `json:"is_active,omitempty"`
 	AllowManualEntries      *bool                  `json:"allow_manual_entries,omitempty"`
 	RequireReference        *bool                  `json:"require_reference,omitempty"`
+	
+	// Reporting and display
 	FinancialStatementLine  *string                `json:"financial_statement_line,omitempty" validate:"omitempty,max=100"`
 	ReportOrder             *int32                 `json:"report_order,omitempty" validate:"omitempty,min=0"`
+	DisplayOrder            *int32                 `json:"display_order,omitempty" validate:"omitempty,min=0"`
+	ShowInReports           *bool                  `json:"show_in_reports,omitempty"`
+	ConsolidationAccount    *string                `json:"consolidation_account,omitempty" validate:"omitempty,max=100"`
+	CashFlowType            *string                `json:"cash_flow_type,omitempty" validate:"omitempty,max=50"`
+	
+	// Budgeting
 	IsBudgetable            *bool                  `json:"is_budgetable,omitempty"`
 	BudgetVarianceThreshold *decimal.Decimal       `json:"budget_variance_threshold,omitempty" validate:"omitempty,min=0,max=100"`
+	
+	// Extensions
 	AccountAttributes       map[string]interface{} `json:"account_attributes,omitempty"`
 }
 
@@ -347,9 +403,13 @@ func (r *CreateAccountRequest) Validate() []ValidationError {
 		AccountName:                 r.AccountName,
 		AccountDescription:          r.AccountDescription,
 		ParentAccountID:             r.ParentAccountID,
+		AccountGroupID:              r.AccountGroupID,
+		AccountHeaderID:             r.AccountHeaderID,
 		RootType:                    r.RootType,
 		AccountType:                 r.AccountType,
 		AccountSubtype:              r.AccountSubtype,
+		AccountCategory:             r.AccountCategory,
+		SubCategory:                 r.SubCategory,
 		NormalBalance:               r.NormalBalance,
 		IsControlAccount:            r.IsControlAccount,
 		ControlAccountID:            r.ControlAccountID,
@@ -361,6 +421,10 @@ func (r *CreateAccountRequest) Validate() []ValidationError {
 		RequireReference:            r.RequireReference,
 		FinancialStatementLine:      r.FinancialStatementLine,
 		ReportOrder:                 r.ReportOrder,
+		DisplayOrder:                r.DisplayOrder,
+		ShowInReports:               r.ShowInReports,
+		ConsolidationAccount:        r.ConsolidationAccount,
+		CashFlowType:                r.CashFlowType,
 		IsBudgetable:                r.IsBudgetable,
 		BudgetVarianceThreshold:     r.BudgetVarianceThreshold,
 		AccountAttributes:           r.AccountAttributes,

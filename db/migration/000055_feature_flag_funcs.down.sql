@@ -1,9 +1,7 @@
 -- Rollback the feature flag evaluation functions
-
 -- This migration file is mostly commented out functions,
 -- so there's nothing to rollback in the current implementation.
 -- If functions were actually created, they would be dropped here.
-
 -- Example of what would be here if functions were created:
 -- DROP FUNCTION IF EXISTS evaluate_feature_flag_fast(VARCHAR);
 -- DROP FUNCTION IF EXISTS evaluate_all_feature_flags();

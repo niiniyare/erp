@@ -115,7 +115,6 @@ RETURNING
 --   updated_at = NOW()
 -- RETURNING
 --   *;
-
 -- name: UpdateTenantLimits :one
 UPDATE
   tenant_configurations
@@ -984,98 +983,135 @@ WHERE
 -- =====================================================
 -- password_policy queries
 -- =====================================================
-
 -- name: UpdatePasswordPolicy :exec
-UPDATE tenant_configurations 
-SET 
-    password_policy = jsonb_set(
-        COALESCE(password_policy, '{}'::jsonb),
-        '{min_length}', 
-        to_jsonb(sqlc.arg('min_length')::int)
-    ),
-    updated_at = NOW()
-WHERE tenant_id = current_tenant_id();
+UPDATE
+  tenant_configurations
+SET
+  password_policy = jsonb_set(
+    COALESCE(password_policy, '{}'::jsonb),
+    '{min_length}',
+    to_jsonb(sqlc.arg('min_length')::int)
+  ),
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id();
 
 -- name: GetPasswordPolicyMinLength :one
-SELECT (password_policy->>"min_length")::INT as min_length 
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id();
+SELECT
+  (password_policy ->> "min_length")::INT AS min_length
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id();
 
 -- name: GetFullPasswordPolicy :one
-SELECT password_policy 
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id();
+SELECT
+  password_policy
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id();
 
 -- name: UpdatePasswordPolicyFull :exec
-UPDATE tenant_configurations 
-SET 
-    password_policy = jsonb_build_object(
-        'min_length', (sqlc.arg('min_length')::int),
-        'require_uppercase', (sqlc.arg('require_uppercase')::bool),
-        'require_lowercase', (sqlc.arg('require_lowercase')::bool),
-        'require_numbers', (sqlc.arg('require_numbers')::bool),
-        'require_symbols', (sqlc.arg('require_symbols')::bool)
-    ),
-    updated_at = NOW()
-WHERE tenant_id = current_tenant_id();
+UPDATE
+  tenant_configurations
+SET
+  password_policy = jsonb_build_object(
+    'min_length',
+    (sqlc.arg('min_length')::int),
+    'require_uppercase',
+    (sqlc.arg('require_uppercase')::bool),
+    'require_lowercase',
+    (sqlc.arg('require_lowercase')::bool),
+    'require_numbers',
+    (sqlc.arg('require_numbers')::bool),
+    'require_symbols',
+    (sqlc.arg('require_symbols')::bool)
+  ),
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id();
 
 -- name: CheckPasswordPolicyRequirements :one
-SELECT 
-    password_policy->>'require_uppercase' = 'true' as require_uppercase,
-    password_policy->>'require_lowercase' = 'true' as require_lowercase,
-    password_policy->>'require_numbers' = 'true' as require_numbers,
-    password_policy->>'require_symbols' = 'true' as require_symbols
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id();
+SELECT
+  password_policy ->> 'require_uppercase' = 'true' AS require_uppercase,
+  password_policy ->> 'require_lowercase' = 'true' AS require_lowercase,
+  password_policy ->> 'require_numbers' = 'true' AS require_numbers,
+  password_policy ->> 'require_symbols' = 'true' AS require_symbols
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id();
 
 -- name: UpdateSpecificPasswordPolicyField :exec
-UPDATE tenant_configurations 
-SET 
-    password_policy = jsonb_set(
-        COALESCE(password_policy, '{}'::jsonb),
-        '{' || sqlc.arg('field_name') || '}', 
-        CASE 
-            WHEN sqlc.arg('field_name')::text = 'min_length' THEN to_jsonb(sqlc.arg('field_value')::int)
-            ELSE to_jsonb(sqlc.arg('field_value')::bool)
-        END
-    ),
-    updated_at = NOW()
-WHERE tenant_id = current_tenant_id();
+UPDATE
+  tenant_configurations
+SET
+  password_policy = jsonb_set(
+    COALESCE(password_policy, '{}'::jsonb),
+    '{' || sqlc.arg('field_name') || '}',
+    CASE
+      WHEN sqlc.arg('field_name')::text = 'min_length' THEN to_jsonb(sqlc.arg('field_value')::int)
+      ELSE to_jsonb(sqlc.arg('field_value')::bool)
+    END
+  ),
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id();
 
 -- =====================================================
 -- Settings-specific queries
 -- =====================================================
-
 -- name: GetDefaultSettings :one
-SELECT settings FROM tenant_configurations WHERE tenant_id = current_tenant_id();
+SELECT
+  settings
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id();
 
 -- name: UpdateDefaultSettings :exec
-UPDATE tenant_configurations 
-SET settings = sqlc.arg('settings')::jsonb, updated_at = NOW()
-WHERE tenant_id = current_tenant_id();
+UPDATE
+  tenant_configurations
+SET
+  settings = sqlc.arg('settings')::jsonb,
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id();
 
 -- name: GetSpecificSetting :one
-SELECT settings->>sqlc.arg('key')::text as value 
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id();
+SELECT
+  settings ->> sqlc.arg('key')::text AS value
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id();
 
 -- name: UpdateSpecificSetting :exec
-UPDATE tenant_configurations 
-SET 
-    settings = jsonb_set(
-        COALESCE(settings, '{}'::jsonb),
-        '{' || sqlc.arg('key') || '}', 
-        to_jsonb(sqlc.arg('value'))
-    ),
-    updated_at = NOW()
-WHERE tenant_id = current_tenant_id();
+UPDATE
+  tenant_configurations
+SET
+  settings = jsonb_set(
+    COALESCE(settings, '{}'::jsonb),
+    '{' || sqlc.arg('key') || '}',
+    to_jsonb(sqlc.arg('value'))
+  ),
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id();
 
 -- name: GetBooleanSetting :one
-SELECT (settings->>sqlc.arg('key')::text)::boolean as value 
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id();
+SELECT
+  (settings ->> sqlc.arg('key')::text)::boolean AS value
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id();
 
 -- name: GetIntegerSetting :one
-SELECT (settings->>sqlc.arg('key')::text)::integer as value 
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id();
+SELECT
+  (settings ->> sqlc.arg('key')::text)::integer AS value
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id();

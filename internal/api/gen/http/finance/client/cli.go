@@ -25,7 +25,7 @@ func BuildCreateAccountPayload(financeCreateAccountBody string) (*finance.Create
 	{
 		err = json.Unmarshal([]byte(financeCreateAccountBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"account_code\": \"1100\",\n      \"account_description\": \"g5w\",\n      \"account_name\": \"Cash - Operating Account\",\n      \"account_subtype\": \"Molestias ipsum suscipit repudiandae.\",\n      \"account_type\": \"BANK\",\n      \"currency_code\": \"USD\",\n      \"entity_id\": \"ba989479-93f8-4ed9-8040-05064f715cec\",\n      \"is_active\": false,\n      \"normal_balance\": \"DEBIT\",\n      \"parent_account_id\": \"8a8c8511-6cf9-471a-b642-46ccc7b122ef\",\n      \"root_type\": \"ASSET\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"account_category\": \"Current Assets\",\n      \"account_code\": \"1100\",\n      \"account_description\": \"mll\",\n      \"account_group_id\": \"17859a53-5d5e-4a08-a0f9-e26562d3c338\",\n      \"account_header_id\": \"86a87f59-09e1-40ce-be4f-ee64541a390e\",\n      \"account_name\": \"Cash - Operating Account\",\n      \"account_subtype\": \"Qui delectus.\",\n      \"account_type\": \"BANK\",\n      \"cash_flow_type\": \"OPERATING\",\n      \"consolidation_account\": \"kqa\",\n      \"currency_code\": \"USD\",\n      \"display_order\": 1469364543,\n      \"entity_id\": \"d1c73250-8813-497f-bad5-3d4b9bac2fa5\",\n      \"is_active\": true,\n      \"normal_balance\": \"DEBIT\",\n      \"parent_account_id\": \"01f99fd9-2885-418b-bd33-b653c5ba0814\",\n      \"root_type\": \"ASSET\",\n      \"show_in_reports\": false,\n      \"sub_category\": \"Cash and Equivalents\"\n   }'")
 		}
 		if body.EntityID != nil {
 			err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
@@ -50,8 +50,24 @@ func BuildCreateAccountPayload(financeCreateAccountBody string) (*finance.Create
 		if body.ParentAccountID != nil {
 			err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
 		}
+		if body.AccountGroupID != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("body.account_group_id", *body.AccountGroupID, goa.FormatUUID))
+		}
+		if body.AccountHeaderID != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("body.account_header_id", *body.AccountHeaderID, goa.FormatUUID))
+		}
 		if !(body.RootType == "ASSET" || body.RootType == "LIABILITY" || body.RootType == "EQUITY" || body.RootType == "REVENUE" || body.RootType == "EXPENSE") {
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.root_type", body.RootType, []any{"ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"}))
+		}
+		if body.AccountCategory != nil {
+			if utf8.RuneCountInString(*body.AccountCategory) > 100 {
+				err = goa.MergeErrors(err, goa.InvalidLengthError("body.account_category", *body.AccountCategory, utf8.RuneCountInString(*body.AccountCategory), 100, false))
+			}
+		}
+		if body.SubCategory != nil {
+			if utf8.RuneCountInString(*body.SubCategory) > 100 {
+				err = goa.MergeErrors(err, goa.InvalidLengthError("body.sub_category", *body.SubCategory, utf8.RuneCountInString(*body.SubCategory), 100, false))
+			}
 		}
 		if !(body.NormalBalance == "DEBIT" || body.NormalBalance == "CREDIT") {
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.normal_balance", body.NormalBalance, []any{"DEBIT", "CREDIT"}))
@@ -59,27 +75,60 @@ func BuildCreateAccountPayload(financeCreateAccountBody string) (*finance.Create
 		if body.CurrencyCode != nil {
 			err = goa.MergeErrors(err, goa.ValidatePattern("body.currency_code", *body.CurrencyCode, "^[A-Z]{3}$"))
 		}
+		if body.DisplayOrder < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.display_order", body.DisplayOrder, 0, true))
+		}
+		if body.ConsolidationAccount != nil {
+			if utf8.RuneCountInString(*body.ConsolidationAccount) > 100 {
+				err = goa.MergeErrors(err, goa.InvalidLengthError("body.consolidation_account", *body.ConsolidationAccount, utf8.RuneCountInString(*body.ConsolidationAccount), 100, false))
+			}
+		}
+		if body.CashFlowType != nil {
+			if !(*body.CashFlowType == "OPERATING" || *body.CashFlowType == "INVESTING" || *body.CashFlowType == "FINANCING") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.cash_flow_type", *body.CashFlowType, []any{"OPERATING", "INVESTING", "FINANCING"}))
+			}
+		}
 		if err != nil {
 			return nil, err
 		}
 	}
 	v := &finance.CreateAccountPayload{
-		EntityID:           body.EntityID,
-		AccountCode:        body.AccountCode,
-		AccountName:        body.AccountName,
-		AccountDescription: body.AccountDescription,
-		ParentAccountID:    body.ParentAccountID,
-		RootType:           body.RootType,
-		AccountType:        body.AccountType,
-		AccountSubtype:     body.AccountSubtype,
-		NormalBalance:      body.NormalBalance,
-		CurrencyCode:       body.CurrencyCode,
-		IsActive:           body.IsActive,
+		EntityID:             body.EntityID,
+		AccountCode:          body.AccountCode,
+		AccountName:          body.AccountName,
+		AccountDescription:   body.AccountDescription,
+		ParentAccountID:      body.ParentAccountID,
+		AccountGroupID:       body.AccountGroupID,
+		AccountHeaderID:      body.AccountHeaderID,
+		RootType:             body.RootType,
+		AccountType:          body.AccountType,
+		AccountSubtype:       body.AccountSubtype,
+		AccountCategory:      body.AccountCategory,
+		SubCategory:          body.SubCategory,
+		NormalBalance:        body.NormalBalance,
+		CurrencyCode:         body.CurrencyCode,
+		IsActive:             body.IsActive,
+		DisplayOrder:         body.DisplayOrder,
+		ShowInReports:        body.ShowInReports,
+		ConsolidationAccount: body.ConsolidationAccount,
+		CashFlowType:         body.CashFlowType,
 	}
 	{
 		var zero bool
 		if v.IsActive == zero {
 			v.IsActive = true
+		}
+	}
+	{
+		var zero int32
+		if v.DisplayOrder == zero {
+			v.DisplayOrder = 0
+		}
+	}
+	{
+		var zero bool
+		if v.ShowInReports == zero {
+			v.ShowInReports = true
 		}
 	}
 
@@ -236,7 +285,7 @@ func BuildUpdateAccountPayload(financeUpdateAccountBody string, financeUpdateAcc
 	{
 		err = json.Unmarshal([]byte(financeUpdateAccountBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"account_description\": \"Numquam reprehenderit qui ut voluptatem.\",\n      \"account_name\": \"rnj\",\n      \"allow_manual_entries\": true,\n      \"is_active\": true,\n      \"require_reference\": false\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"account_category\": \"r4t\",\n      \"account_description\": \"Quod et.\",\n      \"account_group_id\": \"37fe2608-0603-4041-93da-e62ae2c194ef\",\n      \"account_header_id\": \"408ab5b4-23d9-40bb-86de-e813afce6ee1\",\n      \"account_name\": \"g4l\",\n      \"allow_manual_entries\": false,\n      \"cash_flow_type\": \"INVESTING\",\n      \"consolidation_account\": \"0wa\",\n      \"display_order\": 981280541,\n      \"is_active\": false,\n      \"require_reference\": false,\n      \"show_in_reports\": false,\n      \"sub_category\": \"gqc\"\n   }'")
 		}
 		if body.AccountName != nil {
 			if utf8.RuneCountInString(*body.AccountName) < 1 {
@@ -246,6 +295,37 @@ func BuildUpdateAccountPayload(financeUpdateAccountBody string, financeUpdateAcc
 		if body.AccountName != nil {
 			if utf8.RuneCountInString(*body.AccountName) > 255 {
 				err = goa.MergeErrors(err, goa.InvalidLengthError("body.account_name", *body.AccountName, utf8.RuneCountInString(*body.AccountName), 255, false))
+			}
+		}
+		if body.AccountGroupID != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("body.account_group_id", *body.AccountGroupID, goa.FormatUUID))
+		}
+		if body.AccountHeaderID != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("body.account_header_id", *body.AccountHeaderID, goa.FormatUUID))
+		}
+		if body.AccountCategory != nil {
+			if utf8.RuneCountInString(*body.AccountCategory) > 100 {
+				err = goa.MergeErrors(err, goa.InvalidLengthError("body.account_category", *body.AccountCategory, utf8.RuneCountInString(*body.AccountCategory), 100, false))
+			}
+		}
+		if body.SubCategory != nil {
+			if utf8.RuneCountInString(*body.SubCategory) > 100 {
+				err = goa.MergeErrors(err, goa.InvalidLengthError("body.sub_category", *body.SubCategory, utf8.RuneCountInString(*body.SubCategory), 100, false))
+			}
+		}
+		if body.DisplayOrder != nil {
+			if *body.DisplayOrder < 0 {
+				err = goa.MergeErrors(err, goa.InvalidRangeError("body.display_order", *body.DisplayOrder, 0, true))
+			}
+		}
+		if body.ConsolidationAccount != nil {
+			if utf8.RuneCountInString(*body.ConsolidationAccount) > 100 {
+				err = goa.MergeErrors(err, goa.InvalidLengthError("body.consolidation_account", *body.ConsolidationAccount, utf8.RuneCountInString(*body.ConsolidationAccount), 100, false))
+			}
+		}
+		if body.CashFlowType != nil {
+			if !(*body.CashFlowType == "OPERATING" || *body.CashFlowType == "INVESTING" || *body.CashFlowType == "FINANCING") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.cash_flow_type", *body.CashFlowType, []any{"OPERATING", "INVESTING", "FINANCING"}))
 			}
 		}
 		if err != nil {
@@ -261,11 +341,19 @@ func BuildUpdateAccountPayload(financeUpdateAccountBody string, financeUpdateAcc
 		}
 	}
 	v := &finance.UpdateAccountPayload{
-		AccountName:        body.AccountName,
-		AccountDescription: body.AccountDescription,
-		IsActive:           body.IsActive,
-		AllowManualEntries: body.AllowManualEntries,
-		RequireReference:   body.RequireReference,
+		AccountName:          body.AccountName,
+		AccountDescription:   body.AccountDescription,
+		AccountGroupID:       body.AccountGroupID,
+		AccountHeaderID:      body.AccountHeaderID,
+		AccountCategory:      body.AccountCategory,
+		SubCategory:          body.SubCategory,
+		IsActive:             body.IsActive,
+		AllowManualEntries:   body.AllowManualEntries,
+		RequireReference:     body.RequireReference,
+		DisplayOrder:         body.DisplayOrder,
+		ShowInReports:        body.ShowInReports,
+		ConsolidationAccount: body.ConsolidationAccount,
+		CashFlowType:         body.CashFlowType,
 	}
 	v.ID = id
 
@@ -347,7 +435,7 @@ func BuildCreateTransactionPayload(financeCreateTransactionBody string) (*financ
 	{
 		err = json.Unmarshal([]byte(financeCreateTransactionBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"currency_code\": \"XVO\",\n      \"description\": \"Monthly rent payment\",\n      \"entity_id\": \"48f869c0-b33c-4df9-bbc5-738ae1c105ab\",\n      \"entries\": [\n         {\n            \"account_id\": \"bba346b6-e0b0-4b9c-b8f3-bfa1548eca2b\",\n            \"cost_center\": \"Asperiores perferendis velit.\",\n            \"credit_amount\": \"1500.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Excepturi qui fugiat.\",\n            \"description\": \"xd\",\n            \"project_id\": \"27682520-07f3-4c0a-a5fd-5d4f49be9355\",\n            \"reference\": \"Eveniet ut eos sunt sequi voluptate occaecati.\",\n            \"tax_code\": \"Nisi dolorem voluptas perferendis sed vero eius.\",\n            \"tax_rate\": \"Et nihil labore vitae sit labore.\"\n         },\n         {\n            \"account_id\": \"bba346b6-e0b0-4b9c-b8f3-bfa1548eca2b\",\n            \"cost_center\": \"Asperiores perferendis velit.\",\n            \"credit_amount\": \"1500.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Excepturi qui fugiat.\",\n            \"description\": \"xd\",\n            \"project_id\": \"27682520-07f3-4c0a-a5fd-5d4f49be9355\",\n            \"reference\": \"Eveniet ut eos sunt sequi voluptate occaecati.\",\n            \"tax_code\": \"Nisi dolorem voluptas perferendis sed vero eius.\",\n            \"tax_rate\": \"Et nihil labore vitae sit labore.\"\n         },\n         {\n            \"account_id\": \"bba346b6-e0b0-4b9c-b8f3-bfa1548eca2b\",\n            \"cost_center\": \"Asperiores perferendis velit.\",\n            \"credit_amount\": \"1500.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Excepturi qui fugiat.\",\n            \"description\": \"xd\",\n            \"project_id\": \"27682520-07f3-4c0a-a5fd-5d4f49be9355\",\n            \"reference\": \"Eveniet ut eos sunt sequi voluptate occaecati.\",\n            \"tax_code\": \"Nisi dolorem voluptas perferendis sed vero eius.\",\n            \"tax_rate\": \"Et nihil labore vitae sit labore.\"\n         }\n      ],\n      \"reference_number\": \"Tenetur quo.\",\n      \"transaction_date\": \"2025-08-31\",\n      \"transaction_number\": \"Occaecati ut.\",\n      \"transaction_type\": \"JOURNAL_ENTRY\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"currency_code\": \"MBO\",\n      \"description\": \"Monthly rent payment\",\n      \"entity_id\": \"7c47039d-6355-4f14-a44d-19437f2cb7a7\",\n      \"entries\": [\n         {\n            \"account_id\": \"9908230a-60c6-4ef3-bb98-0db6140396eb\",\n            \"cost_center\": \"Et minus earum corrupti voluptatem voluptatem.\",\n            \"credit_amount\": \"1500.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Est et itaque temporibus est et aliquid.\",\n            \"description\": \"0\",\n            \"project_id\": \"a0f22374-8944-4197-a03f-605beaf8acd1\",\n            \"reference\": \"Vel nostrum quia sint aut ut.\",\n            \"tax_code\": \"Distinctio in beatae ea non.\",\n            \"tax_rate\": \"Omnis fuga laborum eum occaecati.\"\n         },\n         {\n            \"account_id\": \"9908230a-60c6-4ef3-bb98-0db6140396eb\",\n            \"cost_center\": \"Et minus earum corrupti voluptatem voluptatem.\",\n            \"credit_amount\": \"1500.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Est et itaque temporibus est et aliquid.\",\n            \"description\": \"0\",\n            \"project_id\": \"a0f22374-8944-4197-a03f-605beaf8acd1\",\n            \"reference\": \"Vel nostrum quia sint aut ut.\",\n            \"tax_code\": \"Distinctio in beatae ea non.\",\n            \"tax_rate\": \"Omnis fuga laborum eum occaecati.\"\n         },\n         {\n            \"account_id\": \"9908230a-60c6-4ef3-bb98-0db6140396eb\",\n            \"cost_center\": \"Et minus earum corrupti voluptatem voluptatem.\",\n            \"credit_amount\": \"1500.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Est et itaque temporibus est et aliquid.\",\n            \"description\": \"0\",\n            \"project_id\": \"a0f22374-8944-4197-a03f-605beaf8acd1\",\n            \"reference\": \"Vel nostrum quia sint aut ut.\",\n            \"tax_code\": \"Distinctio in beatae ea non.\",\n            \"tax_rate\": \"Omnis fuga laborum eum occaecati.\"\n         }\n      ],\n      \"reference_number\": \"Dolorum nostrum corporis ut molestias.\",\n      \"transaction_date\": \"2025-08-31\",\n      \"transaction_number\": \"Blanditiis aperiam voluptatum expedita illum nostrum.\",\n      \"transaction_type\": \"JOURNAL_ENTRY\"\n   }'")
 		}
 		if body.Entries == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("entries", "body"))
@@ -560,7 +648,7 @@ func BuildPostTransactionPayload(financePostTransactionBody string, financePostT
 	{
 		err = json.Unmarshal([]byte(financePostTransactionBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"force_post\": false,\n      \"posting_date\": \"1991-06-22\",\n      \"validate_before_posting\": false\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"force_post\": true,\n      \"posting_date\": \"1982-10-02\",\n      \"validate_before_posting\": false\n   }'")
 		}
 		if body.PostingDate != nil {
 			err = goa.MergeErrors(err, goa.ValidateFormat("body.posting_date", *body.PostingDate, goa.FormatDate))
@@ -607,7 +695,7 @@ func BuildReverseTransactionPayload(financeReverseTransactionBody string, financ
 	{
 		err = json.Unmarshal([]byte(financeReverseTransactionBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"reason\": \"Incorrect entry - duplicate payment\",\n      \"reversal_date\": \"2002-12-17\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"reason\": \"Incorrect entry - duplicate payment\",\n      \"reversal_date\": \"1986-09-22\"\n   }'")
 		}
 		if utf8.RuneCountInString(body.Reason) < 1 {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 1, true))
@@ -647,7 +735,7 @@ func BuildApproveTransactionPayload(financeApproveTransactionBody string, financ
 	{
 		err = json.Unmarshal([]byte(financeApproveTransactionBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"notes\": \"x3w\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"notes\": \"h0o\"\n   }'")
 		}
 		if body.Notes != nil {
 			if utf8.RuneCountInString(*body.Notes) > 1000 {
@@ -682,7 +770,7 @@ func BuildValidateTransactionPayload(financeValidateTransactionBody string) (*fi
 	{
 		err = json.Unmarshal([]byte(financeValidateTransactionBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"transaction\": {\n         \"currency_code\": \"AQI\",\n         \"description\": \"Monthly rent payment\",\n         \"entity_id\": \"4ca0139e-4980-42c3-a928-60ff61c974f7\",\n         \"entries\": [\n            {\n               \"account_id\": \"bba346b6-e0b0-4b9c-b8f3-bfa1548eca2b\",\n               \"cost_center\": \"Asperiores perferendis velit.\",\n               \"credit_amount\": \"1500.00\",\n               \"debit_amount\": \"1500.00\",\n               \"department\": \"Excepturi qui fugiat.\",\n               \"description\": \"xd\",\n               \"project_id\": \"27682520-07f3-4c0a-a5fd-5d4f49be9355\",\n               \"reference\": \"Eveniet ut eos sunt sequi voluptate occaecati.\",\n               \"tax_code\": \"Nisi dolorem voluptas perferendis sed vero eius.\",\n               \"tax_rate\": \"Et nihil labore vitae sit labore.\"\n            },\n            {\n               \"account_id\": \"bba346b6-e0b0-4b9c-b8f3-bfa1548eca2b\",\n               \"cost_center\": \"Asperiores perferendis velit.\",\n               \"credit_amount\": \"1500.00\",\n               \"debit_amount\": \"1500.00\",\n               \"department\": \"Excepturi qui fugiat.\",\n               \"description\": \"xd\",\n               \"project_id\": \"27682520-07f3-4c0a-a5fd-5d4f49be9355\",\n               \"reference\": \"Eveniet ut eos sunt sequi voluptate occaecati.\",\n               \"tax_code\": \"Nisi dolorem voluptas perferendis sed vero eius.\",\n               \"tax_rate\": \"Et nihil labore vitae sit labore.\"\n            }\n         ],\n         \"reference_number\": \"Deleniti nostrum ut modi.\",\n         \"transaction_date\": \"2025-08-31\",\n         \"transaction_number\": \"Perspiciatis expedita expedita nobis consequatur ut id.\",\n         \"transaction_type\": \"JOURNAL_ENTRY\"\n      },\n      \"validation_level\": \"STRICT\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"transaction\": {\n         \"currency_code\": \"TZC\",\n         \"description\": \"Monthly rent payment\",\n         \"entity_id\": \"59d6823f-4fbd-4c89-9413-f9ecaff6d1a0\",\n         \"entries\": [\n            {\n               \"account_id\": \"9908230a-60c6-4ef3-bb98-0db6140396eb\",\n               \"cost_center\": \"Et minus earum corrupti voluptatem voluptatem.\",\n               \"credit_amount\": \"1500.00\",\n               \"debit_amount\": \"1500.00\",\n               \"department\": \"Est et itaque temporibus est et aliquid.\",\n               \"description\": \"0\",\n               \"project_id\": \"a0f22374-8944-4197-a03f-605beaf8acd1\",\n               \"reference\": \"Vel nostrum quia sint aut ut.\",\n               \"tax_code\": \"Distinctio in beatae ea non.\",\n               \"tax_rate\": \"Omnis fuga laborum eum occaecati.\"\n            },\n            {\n               \"account_id\": \"9908230a-60c6-4ef3-bb98-0db6140396eb\",\n               \"cost_center\": \"Et minus earum corrupti voluptatem voluptatem.\",\n               \"credit_amount\": \"1500.00\",\n               \"debit_amount\": \"1500.00\",\n               \"department\": \"Est et itaque temporibus est et aliquid.\",\n               \"description\": \"0\",\n               \"project_id\": \"a0f22374-8944-4197-a03f-605beaf8acd1\",\n               \"reference\": \"Vel nostrum quia sint aut ut.\",\n               \"tax_code\": \"Distinctio in beatae ea non.\",\n               \"tax_rate\": \"Omnis fuga laborum eum occaecati.\"\n            },\n            {\n               \"account_id\": \"9908230a-60c6-4ef3-bb98-0db6140396eb\",\n               \"cost_center\": \"Et minus earum corrupti voluptatem voluptatem.\",\n               \"credit_amount\": \"1500.00\",\n               \"debit_amount\": \"1500.00\",\n               \"department\": \"Est et itaque temporibus est et aliquid.\",\n               \"description\": \"0\",\n               \"project_id\": \"a0f22374-8944-4197-a03f-605beaf8acd1\",\n               \"reference\": \"Vel nostrum quia sint aut ut.\",\n               \"tax_code\": \"Distinctio in beatae ea non.\",\n               \"tax_rate\": \"Omnis fuga laborum eum occaecati.\"\n            }\n         ],\n         \"reference_number\": \"Natus amet delectus fuga.\",\n         \"transaction_date\": \"2025-08-31\",\n         \"transaction_number\": \"Non dolor voluptas est.\",\n         \"transaction_type\": \"JOURNAL_ENTRY\"\n      },\n      \"validation_level\": \"STRICT\"\n   }'")
 		}
 		if body.Transaction == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("transaction", "body"))

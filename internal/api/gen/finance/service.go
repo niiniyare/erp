@@ -132,18 +132,66 @@ type AccountResult struct {
 	AccountLevel *int32
 	// Hierarchy path
 	AccountPath *string
+	// Whether account has child accounts
+	HasChildren *bool
+	// Whether account is a leaf node
+	IsLeafAccount *bool
+	// Account group ID
+	AccountGroupID *string
+	// Account header ID
+	AccountHeaderID *string
 	// Root account type
 	RootType string
 	// Account type
 	AccountType string
+	// Account subtype
+	AccountSubtype *string
+	// Account category for grouping
+	AccountCategory *string
+	// Sub-category within main category
+	SubCategory *string
 	// Normal balance side
 	NormalBalance string
+	// Whether account is active
+	IsActive bool
+	// Whether this is a system account
+	IsSystemAccount *bool
+	// Whether manual entries are allowed
+	AllowManualEntries *bool
+	// Whether reference is required
+	RequireReference *bool
 	// Current account balance
 	CurrentBalance *string
 	// Year-to-date balance
 	YtdBalance *string
-	// Whether account is active
-	IsActive bool
+	// Last transaction date
+	LastTransactionDate *string
+	// Financial statement line grouping
+	FinancialStatementLine *string
+	// Sort order in reports
+	ReportOrder *int32
+	// Display order in UI/reports
+	DisplayOrder *int32
+	// Whether to include in standard reports
+	ShowInReports *bool
+	// Consolidation mapping for multi-entity
+	ConsolidationAccount *string
+	// Cash flow statement classification
+	CashFlowType *string
+	// Primary currency code
+	CurrencyCode *string
+	// Whether account accepts multiple currencies
+	IsMultiCurrency *bool
+	// Whether account can have budgets
+	IsBudgetable *bool
+	// Budget variance alert threshold
+	BudgetVarianceThreshold *string
+	// Version for optimistic locking
+	Version *int32
+	// Current validation status
+	ValidationStatus *string
+	// Last validation timestamp
+	LastValidationRun *string
 	// Creation timestamp
 	CreatedAt *string
 	// Last update timestamp
@@ -172,18 +220,34 @@ type CreateAccountPayload struct {
 	AccountDescription *string
 	// Parent account ID for hierarchy (optional)
 	ParentAccountID *string
+	// Account group ID for organization (optional)
+	AccountGroupID *string
+	// Account header ID for grouping (optional)
+	AccountHeaderID *string
 	// Root account type
 	RootType string
 	// Detailed account type
 	AccountType *string
 	// Account subtype (optional)
 	AccountSubtype *string
+	// Account category for grouping (optional)
+	AccountCategory *string
+	// Sub-category within main category (optional)
+	SubCategory *string
 	// Normal balance side
 	NormalBalance string
 	// Primary currency code (optional)
 	CurrencyCode *string
 	// Whether account is active
 	IsActive bool
+	// Display order in UI/reports
+	DisplayOrder int32
+	// Whether to include in standard reports
+	ShowInReports bool
+	// Consolidation mapping for multi-entity (optional)
+	ConsolidationAccount *string
+	// Cash flow statement classification (optional)
+	CashFlowType *string
 }
 
 // CreateTransactionPayload is the payload type of the finance service
@@ -513,12 +577,28 @@ type UpdateAccountPayload struct {
 	AccountName *string
 	// Account description
 	AccountDescription *string
+	// Account group ID (optional)
+	AccountGroupID *string
+	// Account header ID (optional)
+	AccountHeaderID *string
+	// Account category for grouping (optional)
+	AccountCategory *string
+	// Sub-category within main category (optional)
+	SubCategory *string
 	// Whether account is active
 	IsActive *bool
 	// Allow manual journal entries
 	AllowManualEntries *bool
 	// Require reference for entries
 	RequireReference *bool
+	// Display order in UI/reports
+	DisplayOrder *int32
+	// Whether to include in standard reports
+	ShowInReports *bool
+	// Consolidation mapping for multi-entity (optional)
+	ConsolidationAccount *string
+	// Cash flow statement classification (optional)
+	CashFlowType *string
 }
 
 // ValidateTransactionPayload is the payload type of the finance service

@@ -14,6 +14,7 @@ import (
 )
 
 type Querier interface {
+	ActivateAccountValidationRule(ctx context.Context, arg ActivateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
 	AddTransactionAttachment(ctx context.Context, arg AddTransactionAttachmentParams) error
 	AddTransactionTag(ctx context.Context, arg AddTransactionTagParams) error
 	ApproveTransaction(ctx context.Context, arg ApproveTransactionParams) (*FinanceTransaction, error)
@@ -73,7 +74,10 @@ type Querier interface {
 	// =====================================================================
 	CleanupOrphanedHierarchyPaths(ctx context.Context) error
 	CountAccessRequestsByStatus(ctx context.Context, arg CountAccessRequestsByStatusParams) (*CountAccessRequestsByStatusRow, error)
+	CountAccountBalances(ctx context.Context, arg CountAccountBalancesParams) (int64, error)
 	CountAccountEntries(ctx context.Context, arg CountAccountEntriesParams) (int64, error)
+	CountAccountGroups(ctx context.Context, arg CountAccountGroupsParams) (int64, error)
+	CountAccountValidationRules(ctx context.Context, arg CountAccountValidationRulesParams) (int64, error)
 	CountAccounts(ctx context.Context, arg CountAccountsParams) (int64, error)
 	CountAttributeDefinitions(ctx context.Context, arg CountAttributeDefinitionsParams) (int64, error)
 	CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error)
@@ -91,6 +95,9 @@ type Querier interface {
 	// Updated with proper sqlc.narg and sqlc.arg usage
 	// =====================================================================
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceAccount, error)
+	CreateAccountBalance(ctx context.Context, arg CreateAccountBalanceParams) (*FinanceAccountBalance, error)
+	CreateAccountGroup(ctx context.Context, arg CreateAccountGroupParams) (*FinanceAccountGroup, error)
+	CreateAccountValidationRule(ctx context.Context, arg CreateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
 	CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error)
 	// Attribute Definitions CRUD Operations
 	CreateAttributeDefinition(ctx context.Context, arg CreateAttributeDefinitionParams) (*AttributeDefinition, error)
@@ -177,6 +184,10 @@ type Querier interface {
 	CreateTransactionWithDefaults(ctx context.Context, arg CreateTransactionWithDefaultsParams) (*FinanceTransaction, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error)
+	DeactivateAccountValidationRule(ctx context.Context, arg DeactivateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
+	DeleteAccountBalance(ctx context.Context, id uuid.UUID) error
+	DeleteAccountGroup(ctx context.Context, id uuid.UUID) error
+	DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeValue(ctx context.Context, arg DeleteAttributeValueParams) error
 	DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error
@@ -204,16 +215,26 @@ type Querier interface {
 	// =====================================================
 	FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]*FilterTenantsRow, error)
 	GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*AccessRequest, error)
-	GetAccountBalance(ctx context.Context, arg GetAccountBalanceParams) (*GetAccountBalanceRow, error)
+	GetAccountBalance(ctx context.Context, id uuid.UUID) (*FinanceAccountBalance, error)
+	GetAccountBalanceByDate(ctx context.Context, arg GetAccountBalanceByDateParams) (*FinanceAccountBalance, error)
+	GetAccountBalanceHistory(ctx context.Context, arg GetAccountBalanceHistoryParams) ([]*FinanceAccountBalance, error)
 	GetAccountByCode(ctx context.Context, accountCode string) (*FinanceAccount, error)
 	GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceAccount, error)
 	GetAccountEntries(ctx context.Context, arg GetAccountEntriesParams) ([]*GetAccountEntriesRow, error)
+	GetAccountGroup(ctx context.Context, id uuid.UUID) (*FinanceAccountGroup, error)
+	GetAccountGroupByCode(ctx context.Context, groupCode string) (*FinanceAccountGroup, error)
+	GetAccountGroupChildren(ctx context.Context, arg GetAccountGroupChildrenParams) ([]*FinanceAccountGroup, error)
+	GetAccountGroupHierarchy(ctx context.Context, arg GetAccountGroupHierarchyParams) ([]*FinanceAccountGroup, error)
+	GetAccountGroupsByRootType(ctx context.Context, arg GetAccountGroupsByRootTypeParams) ([]*FinanceAccountGroup, error)
 	GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceAccount, error)
+	GetAccountTransactionBalance(ctx context.Context, arg GetAccountTransactionBalanceParams) (*GetAccountTransactionBalanceRow, error)
+	GetAccountValidationRule(ctx context.Context, id uuid.UUID) (*FinanceAccountValidationRule, error)
 	GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error)
 	GetAccountsForFinancialStatements(ctx context.Context, arg GetAccountsForFinancialStatementsParams) ([]*GetAccountsForFinancialStatementsRow, error)
-	GetAccountsWithNonZeroBalance(ctx context.Context) ([]*FinanceAccount, error)
+	GetAccountsWithNonZeroBalance(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error)
 	GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, error)
 	GetActiveTenants(ctx context.Context) ([]*Tenant, error)
+	GetActiveValidationRules(ctx context.Context) ([]*FinanceAccountValidationRule, error)
 	// Get administrative actions (events with target_user_id)
 	GetAdminActions(ctx context.Context, arg GetAdminActionsParams) ([]*GetAdminActionsRow, error)
 	// Admin-level revenue analytics (cross-tenant view)
@@ -262,12 +283,16 @@ type Querier interface {
 	GetAuditStatsBySeverity(ctx context.Context, arg GetAuditStatsBySeverityParams) ([]*GetAuditStatsBySeverityRow, error)
 	// Get audit log storage statistics and metrics
 	GetAuditStorageStats(ctx context.Context) (*GetAuditStorageStatsRow, error)
+	GetBalanceTrend(ctx context.Context, arg GetBalanceTrendParams) ([]*GetBalanceTrendRow, error)
+	GetBalancesByFiscalPeriod(ctx context.Context, arg GetBalancesByFiscalPeriodParams) ([]*GetBalancesByFiscalPeriodRow, error)
+	GetBalancesByYear(ctx context.Context, arg GetBalancesByYearParams) ([]*FinanceAccountBalance, error)
+	GetBalancesForTrialBalance(ctx context.Context, arg GetBalancesForTrialBalanceParams) ([]*GetBalancesForTrialBalanceRow, error)
 	GetBooleanSetting(ctx context.Context, key string) (bool, error)
 	GetCachedEvaluationResult(ctx context.Context, arg GetCachedEvaluationResultParams) (*PolicyEvaluation, error)
 	GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*GetCompleteUserProfileRow, error)
 	// Get events with specific compliance flags
 	GetComplianceEvents(ctx context.Context, arg GetComplianceEventsParams) ([]*GetComplianceEventsRow, error)
-	GetControlAccounts(ctx context.Context) ([]*FinanceAccount, error)
+	GetControlAccounts(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error)
 	//=====================================================
 	// CURRENT TENANT QUERIES (RLS-Aware)
 	// These queries work within the current tenant context
@@ -490,6 +515,8 @@ type Querier interface {
 	GetFeatureFlagStats(ctx context.Context) (*GetFeatureFlagStatsRow, error)
 	GetFeatureFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error)
 	GetFullPasswordPolicy(ctx context.Context) ([]byte, error)
+	GetGroupsByCategory(ctx context.Context, arg GetGroupsByCategoryParams) ([]*FinanceAccountGroup, error)
+	GetGroupsByStatementSection(ctx context.Context, arg GetGroupsByStatementSectionParams) ([]*FinanceAccountGroup, error)
 	// Get high-risk audit events (risk_score >= threshold)
 	GetHighRiskEvents(ctx context.Context, arg GetHighRiskEventsParams) ([]*GetHighRiskEventsRow, error)
 	// Usage: Gets the highest sequence number for a specific entity/key/fiscal year combination
@@ -499,6 +526,7 @@ type Querier interface {
 	GetHourlyEventRates(ctx context.Context, arg GetHourlyEventRatesParams) ([]*GetHourlyEventRatesRow, error)
 	GetInconsistentHierarchyPaths(ctx context.Context) ([]*GetInconsistentHierarchyPathsRow, error)
 	GetIntegerSetting(ctx context.Context, key string) (int32, error)
+	GetLatestAccountBalance(ctx context.Context, accountID uuid.UUID) (*FinanceAccountBalance, error)
 	GetLatestTenantUsageStats(ctx context.Context) (*TenantUsageStat, error)
 	GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSequenceByEntityAndKeyParams) (interface{}, error)
 	// Ensures positive sequence number
@@ -556,6 +584,7 @@ type Querier interface {
 	GetPasswordPolicyMinLength(ctx context.Context) (int32, error)
 	GetPendingAccessRequests(ctx context.Context) ([]*AccessRequest, error)
 	GetPendingApprovalTransactions(ctx context.Context, arg GetPendingApprovalTransactionsParams) ([]*FinanceTransaction, error)
+	GetPeriodEndBalances(ctx context.Context, arg GetPeriodEndBalancesParams) ([]*FinanceAccountBalance, error)
 	GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error)
 	GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID) ([]*Policy, error)
 	// -- name: GetPoliciesForEvaluation :many
@@ -663,6 +692,7 @@ type Querier interface {
 	GetUserRiskProfile(ctx context.Context, arg GetUserRiskProfileParams) (*GetUserRiskProfileRow, error)
 	// Get audit events for a specific session
 	GetUserSessionEvents(ctx context.Context, sessionID *uuid.UUID) ([]*GetUserSessionEventsRow, error)
+	GetValidationRulesByAccountType(ctx context.Context, accountType *string) ([]*FinanceAccountValidationRule, error)
 	Get_OrCreateEntityState(ctx context.Context, arg Get_OrCreateEntityStateParams) (*Get_OrCreateEntityStateRow, error)
 	HardDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	HardDeletePolicy(ctx context.Context, id uuid.UUID) error
@@ -676,6 +706,9 @@ type Querier interface {
 	InvalidateUserEvaluations(ctx context.Context, userID uuid.UUID) error
 	IsEntityAncestor(ctx context.Context, arg IsEntityAncestorParams) (bool, error)
 	ListAccessRequestsByStatus(ctx context.Context, arg ListAccessRequestsByStatusParams) ([]*AccessRequest, error)
+	ListAccountBalances(ctx context.Context, arg ListAccountBalancesParams) ([]*FinanceAccountBalance, error)
+	ListAccountGroups(ctx context.Context, arg ListAccountGroupsParams) ([]*FinanceAccountGroup, error)
+	ListAccountValidationRules(ctx context.Context, arg ListAccountValidationRulesParams) ([]*FinanceAccountValidationRule, error)
 	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceAccount, error)
 	ListAccountsByParent(ctx context.Context, parentAccountID *uuid.UUID) ([]*FinanceAccount, error)
 	ListActiveEntities(ctx context.Context) ([]*Entity, error)
@@ -712,6 +745,7 @@ type Querier interface {
 	PostTransaction(ctx context.Context, arg PostTransactionParams) (*FinanceTransaction, error)
 	ProvisionTenant(ctx context.Context, arg ProvisionTenantParams) (uuid.UUID, error)
 	RebuildHierarchyPaths(ctx context.Context) error
+	RecalculateClosingBalance(ctx context.Context, id uuid.UUID) (*FinanceAccountBalance, error)
 	RejectTransaction(ctx context.Context, arg RejectTransactionParams) (*FinanceTransaction, error)
 	RemoveTransactionAttachment(ctx context.Context, arg RemoveTransactionAttachmentParams) error
 	RemoveTransactionTag(ctx context.Context, arg RemoveTransactionTagParams) error
@@ -729,6 +763,7 @@ type Querier interface {
 	RestoreSoftDeletedUser(ctx context.Context, id uuid.UUID) error
 	ReverseTransaction(ctx context.Context, arg ReverseTransactionParams) (*FinanceTransaction, error)
 	RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) error
+	SearchAccountGroups(ctx context.Context, arg SearchAccountGroupsParams) ([]*FinanceAccountGroup, error)
 	SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceAccount, error)
 	// =====================================================================
 	// 2. ENTITY SEARCH AND FILTERING ENHANCEMENTS
@@ -760,7 +795,10 @@ type Querier interface {
 	UnlockUser(ctx context.Context, id uuid.UUID) error
 	UpdateAccessRequestStatus(ctx context.Context, arg UpdateAccessRequestStatusParams) (*AccessRequest, error)
 	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceAccount, error)
-	UpdateAccountBalance(ctx context.Context, arg UpdateAccountBalanceParams) error
+	UpdateAccountBalance(ctx context.Context, arg UpdateAccountBalanceParams) (*FinanceAccountBalance, error)
+	UpdateAccountCurrentBalance(ctx context.Context, arg UpdateAccountCurrentBalanceParams) error
+	UpdateAccountGroup(ctx context.Context, arg UpdateAccountGroupParams) (*FinanceAccountGroup, error)
+	UpdateAccountValidationRule(ctx context.Context, arg UpdateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
 	UpdateAttributeDefinition(ctx context.Context, arg UpdateAttributeDefinitionParams) (*AttributeDefinition, error)
 	UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (*AttributeValue, error)
 	UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error)
@@ -781,12 +819,14 @@ type Querier interface {
 	// Update risk score for an audit event
 	UpdateEventRiskScore(ctx context.Context, arg UpdateEventRiskScoreParams) error
 	UpdateFeatureFlag(ctx context.Context, arg UpdateFeatureFlagParams) (*FeatureFlag, error)
+	UpdateGroupHierarchyPath(ctx context.Context, arg UpdateGroupHierarchyPathParams) (*FinanceAccountGroup, error)
 	UpdateHierarchyPaths(ctx context.Context, dollar_1 uuid.UUID) error
 	// =====================================================
 	// password_policy queries
 	// =====================================================
 	UpdatePasswordPolicy(ctx context.Context, minLength int32) error
 	UpdatePasswordPolicyFull(ctx context.Context, arg UpdatePasswordPolicyFullParams) error
+	UpdatePeriodDebitsCredits(ctx context.Context, arg UpdatePeriodDebitsCreditsParams) (*FinanceAccountBalance, error)
 	UpdatePolicy(ctx context.Context, arg UpdatePolicyParams) (*Policy, error)
 	UpdatePolicyStatus(ctx context.Context, arg UpdatePolicyStatusParams) error
 	UpdateRecurringTransactionNextDate(ctx context.Context, arg UpdateRecurringTransactionNextDateParams) error
@@ -832,6 +872,7 @@ type Querier interface {
 	UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	UpsertAccountBalance(ctx context.Context, arg UpsertAccountBalanceParams) (*FinanceAccountBalance, error)
 	ValidateAccountHierarchy(ctx context.Context, parentAccountID *uuid.UUID) (bool, error)
 	ValidateCurrentTenant(ctx context.Context) error
 	// =====================================================================

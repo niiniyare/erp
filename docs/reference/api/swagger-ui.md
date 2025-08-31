@@ -4,12 +4,18 @@
 
 The AWO ERP system provides a comprehensive REST API with 50+ endpoints across multiple domains. All APIs are auto-documented using OpenAPI 3.0 specifications generated directly from the Go codebase.
 
-### Access the Interactive API Documentation
+### Access the API Documentation
 
 <div style="text-align: center; margin: 2rem 0;">
-  <a href="http://localhost:8080/swagger/" target="_blank" class="md-button md-button--primary">
-    🚀 Open Interactive API Explorer
+  <a href="../../../internal/api/swagger/index.html" target="_blank" class="md-button md-button--primary">
+    📖 Browse Static API Documentation
   </a>
+  <br><br>
+  <small>
+    <strong>Live Interactive Explorer:</strong> 
+    <a href="http://localhost:8080/swagger-ui/" target="_blank">http://localhost:8080/swagger-ui/</a> 
+    (requires server)
+  </small>
 </div>
 
 ### API Categories
@@ -96,8 +102,12 @@ Authorization: Bearer <your-jwt-token>
 
 Direct access to machine-readable API specifications:
 
-- **OpenAPI 3.0**: [http://localhost:8080/swagger/openapi3.json](http://localhost:8080/swagger/openapi3.json)
-- **OpenAPI 2.0**: [http://localhost:8080/swagger/openapi.json](http://localhost:8080/swagger/openapi.json)
+- **OpenAPI 3.0**: [`openapi3.json`](../../../internal/api/swagger/openapi3.json) (484KB with 50+ endpoints)
+- **OpenAPI 2.0**: [`openapi.json`](../../../internal/api/swagger/openapi.json) (legacy format)
+
+**Live Endpoints (when server running):**
+- **OpenAPI 3.0**: [http://localhost:8080/swagger-ui/openapi3.json](http://localhost:8080/swagger-ui/openapi3.json)
+- **OpenAPI 2.0**: [http://localhost:8080/swagger-ui/openapi.json](http://localhost:8080/swagger-ui/openapi.json)
 
 ### Response Formats
 
@@ -147,8 +157,8 @@ API rate limits are enforced per user/tenant:
 ## Getting Started
 
 1. **Obtain JWT Token**: Use the `/api/v1/auth/login` endpoint
-2. **Explore APIs**: Visit the [Interactive API Explorer](http://localhost:8080/swagger/)
-3. **Test Endpoints**: Use the built-in "Try it out" functionality
-4. **Review Examples**: Check the practical examples in each section
+2. **Browse Static Docs**: Open the [Static API Documentation](../../../internal/api/swagger/index.html)
+3. **Explore Live APIs**: Visit [Interactive Explorer](http://localhost:8080/swagger-ui/) (when server running)
+4. **Review Examples**: Check the practical examples in each API section
 
-For detailed implementation guides, see the [API Integration Tutorial](../tutorials/api-integration.md).
+For detailed implementation guides, see the [API Integration Tutorial](tutorials/api-integration.md).

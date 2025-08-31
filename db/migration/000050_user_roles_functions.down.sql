@@ -1,2 +1,3 @@
 DROP FUNCTION IF EXISTS assign_user_role(UUID, UUID, UUID, UUID);
+
 DROP FUNCTION IF EXISTS revoke_user_role(UUID, UUID, UUID);

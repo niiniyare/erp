@@ -23,7 +23,7 @@ func BuildBulkEnablePayload(adminFeatureflagBulkEnableBody string, adminFeaturef
 	{
 		err = json.Unmarshal([]byte(adminFeatureflagBulkEnableBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"flag_names\": [\n         \"Eum quae repudiandae ratione natus laborum.\",\n         \"Molestias vitae soluta quos mollitia dolor consequatur.\",\n         \"Sunt nihil minima necessitatibus.\",\n         \"Consequuntur eos nemo eius perspiciatis earum.\"\n      ],\n      \"reason\": \"Laudantium qui aut iure.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"flag_names\": [\n         \"Explicabo aut sunt.\",\n         \"Eius ullam ipsa doloremque.\",\n         \"Est excepturi doloribus qui vero quaerat.\",\n         \"Quisquam temporibus magnam.\"\n      ],\n      \"reason\": \"Officia at nulla.\"\n   }'")
 		}
 		if body.FlagNames == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("flag_names", "body"))
@@ -65,7 +65,7 @@ func BuildBulkDisablePayload(adminFeatureflagBulkDisableBody string, adminFeatur
 	{
 		err = json.Unmarshal([]byte(adminFeatureflagBulkDisableBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"flag_names\": [\n         \"Laudantium sapiente rerum soluta et.\",\n         \"Enim numquam ut id laudantium et libero.\",\n         \"Reiciendis sit voluptatem.\"\n      ],\n      \"reason\": \"Et architecto omnis ipsam necessitatibus exercitationem.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"flag_names\": [\n         \"Quasi molestiae veniam ab porro delectus.\",\n         \"Esse maiores ipsa aut magni.\",\n         \"Quod non quae aut.\"\n      ],\n      \"reason\": \"Ipsam temporibus nihil dolores distinctio.\"\n   }'")
 		}
 		if body.FlagNames == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("flag_names", "body"))

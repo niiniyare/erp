@@ -36,10 +36,10 @@ Visit the [Swagger UI](swagger-ui.md) for hands-on API exploration and testing.
 | **[Authentication](auth/)** | `/api/v1/auth/*` | 4 | User login, token management, sessions |
 | **[Users](users/)** | `/api/v1/users/*` | 8 | User management and profiles |
 | **[Organizations](organizations/)** | `/api/v1/organizations/*` | 6 | Organization hierarchy management |  
-| **[Tenants](tenants/)** | `/api/v1/tenants/*` | 6 | Multi-tenant administration |
-| **[Access Requests](access-requests/)** | `/api/v1/access-requests/*` | 6 | Workflow and approval management |
-| **[Analytics](analytics/)** | `/api/v1/analytics/*` | 8 | User behavior and insights |
-| **[Feature Flags](feature-flags/)** | `/api/v1/feature-flags/*` | 6 | Dynamic feature management |
+| **Tenants** | `/api/v1/tenants/*` | 6 | Multi-tenant administration |
+| **Access Requests** | `/api/v1/access-requests/*` | 6 | Workflow and approval management |
+| **Analytics** | `/api/v1/analytics/*` | 8 | User behavior and insights |
+| **Feature Flags** | `/api/v1/feature-flags/*` | 6 | Dynamic feature management |
 
 ## Standards & Conventions
 
@@ -168,4 +168,4 @@ For local development, the API server runs on `http://localhost:8080` with:
 - **Integration Guides**: Step-by-step implementation tutorials
 - **Code Examples**: Practical usage patterns and best practices
 
-Need help? Check the [troubleshooting guide](../troubleshooting/) or review the [API integration tutorial](../tutorials/api-integration.md).
+Need help? Check the [troubleshooting guide](../../contributing/01-best-practices.md) or review the [API integration tutorial](tutorials/api-integration.md).

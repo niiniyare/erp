@@ -24,9 +24,19 @@ var CreateAccountPayload = Type("CreateAccountPayload", func() {
 	Attribute("account_description", String, "Account description (optional)", func() {
 		MaxLength(1000)
 	})
+	
+	// Hierarchy and grouping
 	Attribute("parent_account_id", String, "Parent account ID for hierarchy (optional)", func() {
 		Format(FormatUUID)
 	})
+	Attribute("account_group_id", String, "Account group ID for organization (optional)", func() {
+		Format(FormatUUID)
+	})
+	Attribute("account_header_id", String, "Account header ID for grouping (optional)", func() {
+		Format(FormatUUID)
+	})
+	
+	// Classification
 	Attribute("root_type", String, "Root account type", func() {
 		Enum("ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE")
 		Example("ASSET")
@@ -35,16 +45,44 @@ var CreateAccountPayload = Type("CreateAccountPayload", func() {
 		Example("BANK")
 	})
 	Attribute("account_subtype", String, "Account subtype (optional)")
+	Attribute("account_category", String, "Account category for grouping (optional)", func() {
+		MaxLength(100)
+		Example("Current Assets")
+	})
+	Attribute("sub_category", String, "Sub-category within main category (optional)", func() {
+		MaxLength(100)
+		Example("Cash and Equivalents")
+	})
 	Attribute("normal_balance", String, "Normal balance side", func() {
 		Enum("DEBIT", "CREDIT")
 		Example("DEBIT")
 	})
+	
+	// Currency settings
 	Attribute("currency_code", String, "Primary currency code (optional)", func() {
 		Pattern("^[A-Z]{3}$")
 		Example("USD")
 	})
+	
+	// Operational settings
 	Attribute("is_active", Boolean, "Whether account is active", func() {
 		Default(true)
+	})
+	
+	// Reporting and display
+	Attribute("display_order", Int32, "Display order in UI/reports", func() {
+		Minimum(0)
+		Default(0)
+	})
+	Attribute("show_in_reports", Boolean, "Whether to include in standard reports", func() {
+		Default(true)
+	})
+	Attribute("consolidation_account", String, "Consolidation mapping for multi-entity (optional)", func() {
+		MaxLength(100)
+	})
+	Attribute("cash_flow_type", String, "Cash flow statement classification (optional)", func() {
+		Enum("OPERATING", "INVESTING", "FINANCING")
+		Example("OPERATING")
 	})
 	
 	Required("account_code", "account_name", "root_type", "normal_balance")
@@ -61,9 +99,39 @@ var UpdateAccountPayload = Type("UpdateAccountPayload", func() {
 		MaxLength(255)
 	})
 	Attribute("account_description", String, "Account description")
+	
+	// Grouping and hierarchy (limited updates for data integrity)
+	Attribute("account_group_id", String, "Account group ID (optional)", func() {
+		Format(FormatUUID)
+	})
+	Attribute("account_header_id", String, "Account header ID (optional)", func() {
+		Format(FormatUUID)
+	})
+	
+	// Classification updates
+	Attribute("account_category", String, "Account category for grouping (optional)", func() {
+		MaxLength(100)
+	})
+	Attribute("sub_category", String, "Sub-category within main category (optional)", func() {
+		MaxLength(100)
+	})
+	
+	// Operational settings
 	Attribute("is_active", Boolean, "Whether account is active")
 	Attribute("allow_manual_entries", Boolean, "Allow manual journal entries")
 	Attribute("require_reference", Boolean, "Require reference for entries")
+	
+	// Reporting and display
+	Attribute("display_order", Int32, "Display order in UI/reports", func() {
+		Minimum(0)
+	})
+	Attribute("show_in_reports", Boolean, "Whether to include in standard reports")
+	Attribute("consolidation_account", String, "Consolidation mapping for multi-entity (optional)", func() {
+		MaxLength(100)
+	})
+	Attribute("cash_flow_type", String, "Cash flow statement classification (optional)", func() {
+		Enum("OPERATING", "INVESTING", "FINANCING")
+	})
 	
 	Required("id")
 })
@@ -83,17 +151,65 @@ var AccountResult = Type("AccountResult", func() {
 	Attribute("account_code", String, "Account code")
 	Attribute("account_name", String, "Account name")
 	Attribute("account_description", String, "Account description")
+	
+	// Hierarchy and grouping
 	Attribute("parent_account_id", String, "Parent account ID", func() {
 		Format(FormatUUID)
 	})
 	Attribute("account_level", Int32, "Hierarchy level")
 	Attribute("account_path", String, "Hierarchy path")
+	Attribute("has_children", Boolean, "Whether account has child accounts")
+	Attribute("is_leaf_account", Boolean, "Whether account is a leaf node")
+	Attribute("account_group_id", String, "Account group ID", func() {
+		Format(FormatUUID)
+	})
+	Attribute("account_header_id", String, "Account header ID", func() {
+		Format(FormatUUID)
+	})
+	
+	// Classification
 	Attribute("root_type", String, "Root account type")
 	Attribute("account_type", String, "Account type")
+	Attribute("account_subtype", String, "Account subtype")
+	Attribute("account_category", String, "Account category for grouping")
+	Attribute("sub_category", String, "Sub-category within main category")
 	Attribute("normal_balance", String, "Normal balance side")
+	
+	// Operational settings
+	Attribute("is_active", Boolean, "Whether account is active")
+	Attribute("is_system_account", Boolean, "Whether this is a system account")
+	Attribute("allow_manual_entries", Boolean, "Whether manual entries are allowed")
+	Attribute("require_reference", Boolean, "Whether reference is required")
+	
+	// Balance tracking
 	Attribute("current_balance", String, "Current account balance")
 	Attribute("ytd_balance", String, "Year-to-date balance")
-	Attribute("is_active", Boolean, "Whether account is active")
+	Attribute("last_transaction_date", String, "Last transaction date", func() {
+		Format(FormatDateTime)
+	})
+	
+	// Reporting and display
+	Attribute("financial_statement_line", String, "Financial statement line grouping")
+	Attribute("report_order", Int32, "Sort order in reports")
+	Attribute("display_order", Int32, "Display order in UI/reports")
+	Attribute("show_in_reports", Boolean, "Whether to include in standard reports")
+	Attribute("consolidation_account", String, "Consolidation mapping for multi-entity")
+	Attribute("cash_flow_type", String, "Cash flow statement classification")
+	
+	// Currency and localization
+	Attribute("currency_code", String, "Primary currency code")
+	Attribute("is_multi_currency", Boolean, "Whether account accepts multiple currencies")
+	
+	// Budgeting
+	Attribute("is_budgetable", Boolean, "Whether account can have budgets")
+	Attribute("budget_variance_threshold", String, "Budget variance alert threshold")
+	
+	// Audit fields
+	Attribute("version", Int32, "Version for optimistic locking")
+	Attribute("validation_status", String, "Current validation status")
+	Attribute("last_validation_run", String, "Last validation timestamp", func() {
+		Format(FormatDateTime)
+	})
 	Attribute("created_at", String, "Creation timestamp", func() {
 		Format(FormatDateTime)
 	})

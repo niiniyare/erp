@@ -83,7 +83,7 @@ INSERT INTO finance_transaction_entries (
     $14, 
     $15, 
     $16
-) RETURNING id, tenant_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
+) RETURNING id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
 `
 
 type CreateTransactionEntryParams struct {
@@ -132,6 +132,7 @@ func (q *Queries) CreateTransactionEntry(ctx context.Context, arg CreateTransact
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
+		&i.EntityID,
 		&i.TransactionID,
 		&i.EntryNumber,
 		&i.AccountID,
@@ -180,49 +181,9 @@ func (q *Queries) DeleteTransactionEntry(ctx context.Context, id uuid.UUID) erro
 	return err
 }
 
-const getAccountBalance = `-- name: GetAccountBalance :one
-SELECT 
-    account_id,
-    SUM(CASE WHEN debit_amount > 0 THEN debit_amount ELSE 0 END) as total_debits,
-    SUM(CASE WHEN credit_amount > 0 THEN credit_amount ELSE 0 END) as total_credits,
-    SUM(CASE WHEN debit_amount > 0 THEN debit_amount ELSE -credit_amount END) as net_balance
-FROM finance_transaction_entries te
-JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.account_id = $1 
-  AND te.tenant_id = current_tenant_id()
-  AND te.deleted_at IS NULL
-  AND t.transaction_status = 'POSTED'
-  AND ($2::date IS NULL OR t.posting_date <= $2)
-GROUP BY account_id
-`
-
-type GetAccountBalanceParams struct {
-	AccountID uuid.UUID `json:"account_id"`
-	AsOfDate  time.Time `json:"as_of_date"`
-}
-
-type GetAccountBalanceRow struct {
-	AccountID    uuid.UUID `json:"account_id"`
-	TotalDebits  int64     `json:"total_debits"`
-	TotalCredits int64     `json:"total_credits"`
-	NetBalance   int64     `json:"net_balance"`
-}
-
-func (q *Queries) GetAccountBalance(ctx context.Context, arg GetAccountBalanceParams) (*GetAccountBalanceRow, error) {
-	row := q.db.QueryRow(ctx, getAccountBalance, arg.AccountID, arg.AsOfDate)
-	var i GetAccountBalanceRow
-	err := row.Scan(
-		&i.AccountID,
-		&i.TotalDebits,
-		&i.TotalCredits,
-		&i.NetBalance,
-	)
-	return &i, err
-}
-
 const getAccountEntries = `-- name: GetAccountEntries :many
 SELECT 
-    te.id, te.tenant_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
     t.transaction_number,
     t.transaction_date,
     t.transaction_type,
@@ -253,6 +214,7 @@ type GetAccountEntriesParams struct {
 type GetAccountEntriesRow struct {
 	ID                      uuid.UUID      `json:"id"`
 	TenantID                uuid.UUID      `json:"tenant_id"`
+	EntityID                *uuid.UUID     `json:"entity_id"`
 	TransactionID           uuid.UUID      `json:"transaction_id"`
 	EntryNumber             int32          `json:"entry_number"`
 	AccountID               uuid.UUID      `json:"account_id"`
@@ -301,6 +263,7 @@ func (q *Queries) GetAccountEntries(ctx context.Context, arg GetAccountEntriesPa
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
+			&i.EntityID,
 			&i.TransactionID,
 			&i.EntryNumber,
 			&i.AccountID,
@@ -339,9 +302,49 @@ func (q *Queries) GetAccountEntries(ctx context.Context, arg GetAccountEntriesPa
 	return items, nil
 }
 
+const getAccountTransactionBalance = `-- name: GetAccountTransactionBalance :one
+SELECT 
+    account_id,
+    SUM(CASE WHEN debit_amount > 0 THEN debit_amount ELSE 0 END) as total_debits,
+    SUM(CASE WHEN credit_amount > 0 THEN credit_amount ELSE 0 END) as total_credits,
+    SUM(CASE WHEN debit_amount > 0 THEN debit_amount ELSE -credit_amount END) as net_balance
+FROM finance_transaction_entries te
+JOIN finance_transactions t ON te.transaction_id = t.id
+WHERE te.account_id = $1 
+  AND te.tenant_id = current_tenant_id()
+  AND te.deleted_at IS NULL
+  AND t.transaction_status = 'POSTED'
+  AND ($2::date IS NULL OR t.posting_date <= $2)
+GROUP BY account_id
+`
+
+type GetAccountTransactionBalanceParams struct {
+	AccountID uuid.UUID `json:"account_id"`
+	AsOfDate  time.Time `json:"as_of_date"`
+}
+
+type GetAccountTransactionBalanceRow struct {
+	AccountID    uuid.UUID `json:"account_id"`
+	TotalDebits  int64     `json:"total_debits"`
+	TotalCredits int64     `json:"total_credits"`
+	NetBalance   int64     `json:"net_balance"`
+}
+
+func (q *Queries) GetAccountTransactionBalance(ctx context.Context, arg GetAccountTransactionBalanceParams) (*GetAccountTransactionBalanceRow, error) {
+	row := q.db.QueryRow(ctx, getAccountTransactionBalance, arg.AccountID, arg.AsOfDate)
+	var i GetAccountTransactionBalanceRow
+	err := row.Scan(
+		&i.AccountID,
+		&i.TotalDebits,
+		&i.TotalCredits,
+		&i.NetBalance,
+	)
+	return &i, err
+}
+
 const getEntriesByCostCenter = `-- name: GetEntriesByCostCenter :many
 SELECT 
-    te.id, te.tenant_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
     a.account_code,
     a.account_name,
     t.transaction_number,
@@ -367,6 +370,7 @@ type GetEntriesByCostCenterParams struct {
 type GetEntriesByCostCenterRow struct {
 	ID                      uuid.UUID      `json:"id"`
 	TenantID                uuid.UUID      `json:"tenant_id"`
+	EntityID                *uuid.UUID     `json:"entity_id"`
 	TransactionID           uuid.UUID      `json:"transaction_id"`
 	EntryNumber             int32          `json:"entry_number"`
 	AccountID               uuid.UUID      `json:"account_id"`
@@ -407,6 +411,7 @@ func (q *Queries) GetEntriesByCostCenter(ctx context.Context, arg GetEntriesByCo
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
+			&i.EntityID,
 			&i.TransactionID,
 			&i.EntryNumber,
 			&i.AccountID,
@@ -446,7 +451,7 @@ func (q *Queries) GetEntriesByCostCenter(ctx context.Context, arg GetEntriesByCo
 
 const getEntriesByDepartment = `-- name: GetEntriesByDepartment :many
 SELECT
-    te.id, te.tenant_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
     a.account_code,
     a.account_name,
     t.transaction_number,
@@ -472,6 +477,7 @@ type GetEntriesByDepartmentParams struct {
 type GetEntriesByDepartmentRow struct {
 	ID                      uuid.UUID      `json:"id"`
 	TenantID                uuid.UUID      `json:"tenant_id"`
+	EntityID                *uuid.UUID     `json:"entity_id"`
 	TransactionID           uuid.UUID      `json:"transaction_id"`
 	EntryNumber             int32          `json:"entry_number"`
 	AccountID               uuid.UUID      `json:"account_id"`
@@ -512,6 +518,7 @@ func (q *Queries) GetEntriesByDepartment(ctx context.Context, arg GetEntriesByDe
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
+			&i.EntityID,
 			&i.TransactionID,
 			&i.EntryNumber,
 			&i.AccountID,
@@ -551,7 +558,7 @@ func (q *Queries) GetEntriesByDepartment(ctx context.Context, arg GetEntriesByDe
 
 const getEntriesByProject = `-- name: GetEntriesByProject :many
 SELECT 
-    te.id, te.tenant_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
     a.account_code,
     a.account_name,
     t.transaction_number,
@@ -577,6 +584,7 @@ type GetEntriesByProjectParams struct {
 type GetEntriesByProjectRow struct {
 	ID                      uuid.UUID      `json:"id"`
 	TenantID                uuid.UUID      `json:"tenant_id"`
+	EntityID                *uuid.UUID     `json:"entity_id"`
 	TransactionID           uuid.UUID      `json:"transaction_id"`
 	EntryNumber             int32          `json:"entry_number"`
 	AccountID               uuid.UUID      `json:"account_id"`
@@ -617,6 +625,7 @@ func (q *Queries) GetEntriesByProject(ctx context.Context, arg GetEntriesByProje
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
+			&i.EntityID,
 			&i.TransactionID,
 			&i.EntryNumber,
 			&i.AccountID,
@@ -714,7 +723,7 @@ func (q *Queries) GetEntryTaxSummary(ctx context.Context, arg GetEntryTaxSummary
 
 const getTransactionEntriesWithAccounts = `-- name: GetTransactionEntriesWithAccounts :many
 SELECT 
-    te.id, te.tenant_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
     a.account_code,
     a.account_name,
     a.root_type,
@@ -731,6 +740,7 @@ ORDER BY te.entry_number ASC
 type GetTransactionEntriesWithAccountsRow struct {
 	ID                      uuid.UUID      `json:"id"`
 	TenantID                uuid.UUID      `json:"tenant_id"`
+	EntityID                *uuid.UUID     `json:"entity_id"`
 	TransactionID           uuid.UUID      `json:"transaction_id"`
 	EntryNumber             int32          `json:"entry_number"`
 	AccountID               uuid.UUID      `json:"account_id"`
@@ -772,6 +782,7 @@ func (q *Queries) GetTransactionEntriesWithAccounts(ctx context.Context, transac
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
+			&i.EntityID,
 			&i.TransactionID,
 			&i.EntryNumber,
 			&i.AccountID,
@@ -811,7 +822,7 @@ func (q *Queries) GetTransactionEntriesWithAccounts(ctx context.Context, transac
 }
 
 const getTransactionEntryByID = `-- name: GetTransactionEntryByID :one
-SELECT id, tenant_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at FROM finance_transaction_entries
+SELECT id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at FROM finance_transaction_entries
 WHERE id = $1 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -823,6 +834,7 @@ func (q *Queries) GetTransactionEntryByID(ctx context.Context, id uuid.UUID) (*F
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
+		&i.EntityID,
 		&i.TransactionID,
 		&i.EntryNumber,
 		&i.AccountID,
@@ -927,7 +939,7 @@ func (q *Queries) GetTrialBalance(ctx context.Context, arg GetTrialBalanceParams
 
 const getUnreconciledEntries = `-- name: GetUnreconciledEntries :many
 SELECT 
-    te.id, te.tenant_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
     a.account_code,
     a.account_name,
     t.transaction_number,
@@ -946,6 +958,7 @@ ORDER BY t.transaction_date ASC
 type GetUnreconciledEntriesRow struct {
 	ID                      uuid.UUID      `json:"id"`
 	TenantID                uuid.UUID      `json:"tenant_id"`
+	EntityID                *uuid.UUID     `json:"entity_id"`
 	TransactionID           uuid.UUID      `json:"transaction_id"`
 	EntryNumber             int32          `json:"entry_number"`
 	AccountID               uuid.UUID      `json:"account_id"`
@@ -986,6 +999,7 @@ func (q *Queries) GetUnreconciledEntries(ctx context.Context, accountID uuid.UUI
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
+			&i.EntityID,
 			&i.TransactionID,
 			&i.EntryNumber,
 			&i.AccountID,
@@ -1024,7 +1038,7 @@ func (q *Queries) GetUnreconciledEntries(ctx context.Context, accountID uuid.UUI
 }
 
 const listTransactionEntries = `-- name: ListTransactionEntries :many
-SELECT id, tenant_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at FROM finance_transaction_entries
+SELECT id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at FROM finance_transaction_entries
 WHERE transaction_id = $1 
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -1043,6 +1057,7 @@ func (q *Queries) ListTransactionEntries(ctx context.Context, transactionID uuid
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
+			&i.EntityID,
 			&i.TransactionID,
 			&i.EntryNumber,
 			&i.AccountID,
@@ -1117,7 +1132,7 @@ SET
 WHERE id = $12
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-RETURNING id, tenant_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
+RETURNING id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
 `
 
 type UpdateTransactionEntryParams struct {
@@ -1154,6 +1169,7 @@ func (q *Queries) UpdateTransactionEntry(ctx context.Context, arg UpdateTransact
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
+		&i.EntityID,
 		&i.TransactionID,
 		&i.EntryNumber,
 		&i.AccountID,

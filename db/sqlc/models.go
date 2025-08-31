@@ -261,12 +261,13 @@ type Entitystate struct {
 
 // Master feature flags configuration table with tenant isolation
 type FeatureFlag struct {
-	ID           uuid.UUID `json:"id"`
-	TenantID     uuid.UUID `json:"tenant_id"`
-	Name         string    `json:"name"`
-	Description  string    `json:"description"`
-	FlagType     string    `json:"flag_type"`
-	DefaultValue bool      `json:"default_value"`
+	ID           uuid.UUID  `json:"id"`
+	TenantID     uuid.UUID  `json:"tenant_id"`
+	EntityID     *uuid.UUID `json:"entity_id"`
+	Name         string     `json:"name"`
+	Description  string     `json:"description"`
+	FlagType     string     `json:"flag_type"`
+	DefaultValue bool       `json:"default_value"`
 	// Percentage of tenants that should have this feature enabled (0-100)
 	RolloutPercentage *int32 `json:"rollout_percentage"`
 	// Advanced targeting rules (company_size, industry, etc.)
@@ -345,6 +346,7 @@ type FinanceAccountBalance struct {
 	ID             uuid.UUID      `json:"id"`
 	TenantID       uuid.UUID      `json:"tenant_id"`
 	AccountID      uuid.UUID      `json:"account_id"`
+	EntityID       *uuid.UUID     `json:"entity_id"`
 	BalanceDate    time.Time      `json:"balance_date"`
 	OpeningBalance pgtype.Numeric `json:"opening_balance"`
 	ClosingBalance pgtype.Numeric `json:"closing_balance"`
@@ -511,9 +513,10 @@ type FinanceTransaction struct {
 
 // Individual journal entries that make up financial transactions. Implements double-entry bookkeeping with debit and credit amounts.
 type FinanceTransactionEntry struct {
-	ID            uuid.UUID `json:"id"`
-	TenantID      uuid.UUID `json:"tenant_id"`
-	TransactionID uuid.UUID `json:"transaction_id"`
+	ID            uuid.UUID  `json:"id"`
+	TenantID      uuid.UUID  `json:"tenant_id"`
+	EntityID      *uuid.UUID `json:"entity_id"`
+	TransactionID uuid.UUID  `json:"transaction_id"`
 	// Sequential entry number within transaction - Used for ordering and reference
 	EntryNumber int32     `json:"entry_number"`
 	AccountID   uuid.UUID `json:"account_id"`
@@ -889,9 +892,10 @@ type TenantConfiguration struct {
 
 // Tenant-specific feature flag overrides with audit trail
 type TenantFeatureOverride struct {
-	ID            uuid.UUID `json:"id"`
-	TenantID      uuid.UUID `json:"tenant_id"`
-	FeatureFlagID uuid.UUID `json:"feature_flag_id"`
+	ID            uuid.UUID  `json:"id"`
+	TenantID      uuid.UUID  `json:"tenant_id"`
+	EntityID      *uuid.UUID `json:"entity_id"`
+	FeatureFlagID uuid.UUID  `json:"feature_flag_id"`
 	// Denormalized feature flag name for faster lookups
 	FeatureFlagName string `json:"feature_flag_name"`
 	Enabled         bool   `json:"enabled"`
@@ -983,7 +987,8 @@ type UserActivity struct {
 	// Reference to the user who performed the activity
 	UserID uuid.UUID `json:"user_id"`
 	// Tenant isolation for multi-tenant architecture
-	TenantID uuid.UUID `json:"tenant_id"`
+	TenantID uuid.UUID  `json:"tenant_id"`
+	EntityID *uuid.UUID `json:"entity_id"`
 	// Reference to the user session when activity occurred
 	SessionID *uuid.UUID `json:"session_id"`
 	// Classification of the activity (login, access, modification, etc.)

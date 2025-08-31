@@ -1,7 +1,6 @@
 -- =====================================================
 -- PERMISSIONS AND GRANTS
 -- =====================================================
-
 -- Grant execute permissions on functions to application role
 -- -- GRANT EXECUTE ON FUNCTION set_audit_context(UUID, UUID) TO application_role;
 -- GRANT EXECUTE ON FUNCTION evaluate_feature_flag(VARCHAR) TO application_role;
@@ -70,8 +69,8 @@
 --     -- Get feature flag configuration for current tenant
 --     SELECT * INTO v_feature_flag
 --     FROM feature_flags ff
---     WHERE ff.name = flag_name 
---       AND ff.tenant_id = v_tenant_id 
+--     WHERE ff.name = flag_name
+--       AND ff.tenant_id = v_tenant_id
 --       AND ff.deleted_at IS NULL;
 --
 --     IF v_feature_flag.id IS NULL THEN
@@ -81,7 +80,7 @@
 --     -- Check for tenant-specific override
 --     SELECT * INTO v_override
 --     FROM tenant_feature_overrides tfo
---     WHERE tfo.tenant_id = v_tenant_id 
+--     WHERE tfo.tenant_id = v_tenant_id
 --       AND tfo.feature_flag_id = v_feature_flag.id;
 --
 --     -- Determine effective value
@@ -158,7 +157,7 @@
 --     -- Count flags for audit logging
 --     SELECT COUNT(*) INTO v_flag_count
 --     FROM feature_flags ff
---     WHERE ff.tenant_id = v_tenant_id 
+--     WHERE ff.tenant_id = v_tenant_id
 --       AND ff.deleted_at IS NULL;
 --
 --     -- Log bulk evaluation
@@ -191,14 +190,14 @@
 --     -- Return evaluated flags
 --     RETURN QUERY
 --     WITH feature_evaluation AS (
---         SELECT 
+--         SELECT
 --             ff.name,
 --             ff.flag_type,
 --             ff.default_value,
 --             ff.rollout_percentage,
 --             tfo.enabled as override_enabled,
 --             tfo.value as override_value,
---             CASE 
+--             CASE
 --                 -- Override exists, use it
 --                 WHEN tfo.enabled IS NOT NULL THEN tfo.enabled
 --                 -- Percentage rollout check
@@ -208,18 +207,18 @@
 --                 ELSE ff.default_value
 --             END as effective_enabled,
 --             COALESCE(tfo.value, '{}') as effective_value,
---             CASE 
+--             CASE
 --                 WHEN tfo.enabled IS NOT NULL THEN 'override'
 --                 WHEN ff.rollout_percentage IS NOT NULL AND ff.rollout_percentage > 0 THEN 'rollout'
 --                 ELSE 'default'
 --             END as evaluation_source
 --         FROM feature_flags ff
---         LEFT JOIN tenant_feature_overrides tfo ON ff.id = tfo.feature_flag_id 
+--         LEFT JOIN tenant_feature_overrides tfo ON ff.id = tfo.feature_flag_id
 --             AND tfo.tenant_id = v_tenant_id
---         WHERE ff.tenant_id = v_tenant_id 
+--         WHERE ff.tenant_id = v_tenant_id
 --           AND ff.deleted_at IS NULL
 --     )
---     SELECT 
+--     SELECT
 --         fe.name::VARCHAR,
 --         fe.effective_enabled,
 --         fe.effective_value,
@@ -249,8 +248,8 @@
 --     END IF;
 --
 --     -- Single query to get evaluation result
---     SELECT 
---         CASE 
+--     SELECT
+--         CASE
 --             -- Override exists, use it
 --             WHEN tfo.enabled IS NOT NULL THEN tfo.enabled
 --             -- Percentage rollout check
@@ -262,19 +261,18 @@
 --         COALESCE(tfo.value, '{}') as flag_value
 --     INTO v_result
 --     FROM feature_flags ff
---     LEFT JOIN tenant_feature_overrides tfo ON ff.id = tfo.feature_flag_id 
+--     LEFT JOIN tenant_feature_overrides tfo ON ff.id = tfo.feature_flag_id
 --         AND tfo.tenant_id = v_tenant_id
---     WHERE ff.name = flag_name 
---       AND ff.tenant_id = v_tenant_id 
+--     WHERE ff.name = flag_name
+--       AND ff.tenant_id = v_tenant_id
 --       AND ff.deleted_at IS NULL;
---     
+--
 --     IF v_result IS NULL THEN
 --         RAISE EXCEPTION 'Feature flag not found: %', flag_name;
 --     END IF;
---     
+--
 --     RETURN QUERY SELECT v_result.flag_enabled, v_result.flag_value;
 -- END;
 -- $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- =====================================================
 --

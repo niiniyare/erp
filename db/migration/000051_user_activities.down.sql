@@ -2,9 +2,9 @@
 -- ROLLBACK USER ACTIVITIES TABLE MIGRATION
 -- =====================================================
 -- Drops user activities table and related objects
-
 -- Drop utility functions
 DROP FUNCTION IF EXISTS create_monthly_user_activities_partition(DATE);
+
 DROP FUNCTION IF EXISTS drop_old_user_activities_partitions(INTEGER);
 
 -- Drop all user activities partitions

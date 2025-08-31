@@ -27,18 +27,34 @@ type CreateAccountRequestBody struct {
 	AccountDescription *string `form:"account_description,omitempty" json:"account_description,omitempty" xml:"account_description,omitempty"`
 	// Parent account ID for hierarchy (optional)
 	ParentAccountID *string `form:"parent_account_id,omitempty" json:"parent_account_id,omitempty" xml:"parent_account_id,omitempty"`
+	// Account group ID for organization (optional)
+	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
+	// Account header ID for grouping (optional)
+	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
 	// Detailed account type
 	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
 	// Account subtype (optional)
 	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
+	// Account category for grouping (optional)
+	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
+	// Sub-category within main category (optional)
+	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
 	// Primary currency code (optional)
 	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
 	// Whether account is active
 	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
+	// Display order in UI/reports
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Whether to include in standard reports
+	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
+	// Consolidation mapping for multi-entity (optional)
+	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
+	// Cash flow statement classification (optional)
+	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
 }
 
 // UpdateAccountRequestBody is the type of the "finance" service
@@ -48,12 +64,28 @@ type UpdateAccountRequestBody struct {
 	AccountName *string `form:"account_name,omitempty" json:"account_name,omitempty" xml:"account_name,omitempty"`
 	// Account description
 	AccountDescription *string `form:"account_description,omitempty" json:"account_description,omitempty" xml:"account_description,omitempty"`
+	// Account group ID (optional)
+	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
+	// Account header ID (optional)
+	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
+	// Account category for grouping (optional)
+	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
+	// Sub-category within main category (optional)
+	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Whether account is active
 	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
 	// Allow manual journal entries
 	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
 	// Require reference for entries
 	RequireReference *bool `form:"require_reference,omitempty" json:"require_reference,omitempty" xml:"require_reference,omitempty"`
+	// Display order in UI/reports
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Whether to include in standard reports
+	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
+	// Consolidation mapping for multi-entity (optional)
+	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
+	// Cash flow statement classification (optional)
+	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
 }
 
 // CreateTransactionRequestBody is the type of the "finance" service
@@ -134,18 +166,66 @@ type CreateAccountResponseBody struct {
 	AccountLevel *int32 `form:"account_level,omitempty" json:"account_level,omitempty" xml:"account_level,omitempty"`
 	// Hierarchy path
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
+	// Whether account has child accounts
+	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
+	// Whether account is a leaf node
+	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
+	// Account group ID
+	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
+	// Account header ID
+	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType string `form:"root_type" json:"root_type" xml:"root_type"`
 	// Account type
 	AccountType string `form:"account_type" json:"account_type" xml:"account_type"`
+	// Account subtype
+	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
+	// Account category for grouping
+	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
+	// Sub-category within main category
+	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance string `form:"normal_balance" json:"normal_balance" xml:"normal_balance"`
+	// Whether account is active
+	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Whether this is a system account
+	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
+	// Whether manual entries are allowed
+	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
+	// Whether reference is required
+	RequireReference *bool `form:"require_reference,omitempty" json:"require_reference,omitempty" xml:"require_reference,omitempty"`
 	// Current account balance
 	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
 	// Year-to-date balance
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
-	// Whether account is active
-	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Last transaction date
+	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
+	// Financial statement line grouping
+	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
+	// Sort order in reports
+	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
+	// Display order in UI/reports
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Whether to include in standard reports
+	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
+	// Consolidation mapping for multi-entity
+	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
+	// Cash flow statement classification
+	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
+	// Primary currency code
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Whether account accepts multiple currencies
+	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
+	// Whether account can have budgets
+	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
+	// Budget variance alert threshold
+	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
+	// Version for optimistic locking
+	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
+	// Current validation status
+	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
+	// Last validation timestamp
+	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
@@ -173,18 +253,66 @@ type GetAccountResponseBody struct {
 	AccountLevel *int32 `form:"account_level,omitempty" json:"account_level,omitempty" xml:"account_level,omitempty"`
 	// Hierarchy path
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
+	// Whether account has child accounts
+	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
+	// Whether account is a leaf node
+	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
+	// Account group ID
+	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
+	// Account header ID
+	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType string `form:"root_type" json:"root_type" xml:"root_type"`
 	// Account type
 	AccountType string `form:"account_type" json:"account_type" xml:"account_type"`
+	// Account subtype
+	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
+	// Account category for grouping
+	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
+	// Sub-category within main category
+	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance string `form:"normal_balance" json:"normal_balance" xml:"normal_balance"`
+	// Whether account is active
+	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Whether this is a system account
+	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
+	// Whether manual entries are allowed
+	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
+	// Whether reference is required
+	RequireReference *bool `form:"require_reference,omitempty" json:"require_reference,omitempty" xml:"require_reference,omitempty"`
 	// Current account balance
 	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
 	// Year-to-date balance
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
-	// Whether account is active
-	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Last transaction date
+	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
+	// Financial statement line grouping
+	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
+	// Sort order in reports
+	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
+	// Display order in UI/reports
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Whether to include in standard reports
+	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
+	// Consolidation mapping for multi-entity
+	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
+	// Cash flow statement classification
+	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
+	// Primary currency code
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Whether account accepts multiple currencies
+	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
+	// Whether account can have budgets
+	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
+	// Budget variance alert threshold
+	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
+	// Version for optimistic locking
+	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
+	// Current validation status
+	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
+	// Last validation timestamp
+	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
@@ -212,18 +340,66 @@ type GetAccountByCodeResponseBody struct {
 	AccountLevel *int32 `form:"account_level,omitempty" json:"account_level,omitempty" xml:"account_level,omitempty"`
 	// Hierarchy path
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
+	// Whether account has child accounts
+	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
+	// Whether account is a leaf node
+	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
+	// Account group ID
+	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
+	// Account header ID
+	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType string `form:"root_type" json:"root_type" xml:"root_type"`
 	// Account type
 	AccountType string `form:"account_type" json:"account_type" xml:"account_type"`
+	// Account subtype
+	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
+	// Account category for grouping
+	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
+	// Sub-category within main category
+	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance string `form:"normal_balance" json:"normal_balance" xml:"normal_balance"`
+	// Whether account is active
+	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Whether this is a system account
+	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
+	// Whether manual entries are allowed
+	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
+	// Whether reference is required
+	RequireReference *bool `form:"require_reference,omitempty" json:"require_reference,omitempty" xml:"require_reference,omitempty"`
 	// Current account balance
 	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
 	// Year-to-date balance
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
-	// Whether account is active
-	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Last transaction date
+	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
+	// Financial statement line grouping
+	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
+	// Sort order in reports
+	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
+	// Display order in UI/reports
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Whether to include in standard reports
+	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
+	// Consolidation mapping for multi-entity
+	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
+	// Cash flow statement classification
+	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
+	// Primary currency code
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Whether account accepts multiple currencies
+	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
+	// Whether account can have budgets
+	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
+	// Budget variance alert threshold
+	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
+	// Version for optimistic locking
+	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
+	// Current validation status
+	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
+	// Last validation timestamp
+	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
@@ -251,18 +427,66 @@ type GetAccountByNameResponseBody struct {
 	AccountLevel *int32 `form:"account_level,omitempty" json:"account_level,omitempty" xml:"account_level,omitempty"`
 	// Hierarchy path
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
+	// Whether account has child accounts
+	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
+	// Whether account is a leaf node
+	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
+	// Account group ID
+	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
+	// Account header ID
+	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType string `form:"root_type" json:"root_type" xml:"root_type"`
 	// Account type
 	AccountType string `form:"account_type" json:"account_type" xml:"account_type"`
+	// Account subtype
+	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
+	// Account category for grouping
+	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
+	// Sub-category within main category
+	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance string `form:"normal_balance" json:"normal_balance" xml:"normal_balance"`
+	// Whether account is active
+	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Whether this is a system account
+	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
+	// Whether manual entries are allowed
+	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
+	// Whether reference is required
+	RequireReference *bool `form:"require_reference,omitempty" json:"require_reference,omitempty" xml:"require_reference,omitempty"`
 	// Current account balance
 	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
 	// Year-to-date balance
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
-	// Whether account is active
-	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Last transaction date
+	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
+	// Financial statement line grouping
+	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
+	// Sort order in reports
+	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
+	// Display order in UI/reports
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Whether to include in standard reports
+	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
+	// Consolidation mapping for multi-entity
+	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
+	// Cash flow statement classification
+	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
+	// Primary currency code
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Whether account accepts multiple currencies
+	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
+	// Whether account can have budgets
+	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
+	// Budget variance alert threshold
+	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
+	// Version for optimistic locking
+	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
+	// Current validation status
+	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
+	// Last validation timestamp
+	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
@@ -303,18 +527,66 @@ type UpdateAccountResponseBody struct {
 	AccountLevel *int32 `form:"account_level,omitempty" json:"account_level,omitempty" xml:"account_level,omitempty"`
 	// Hierarchy path
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
+	// Whether account has child accounts
+	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
+	// Whether account is a leaf node
+	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
+	// Account group ID
+	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
+	// Account header ID
+	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType string `form:"root_type" json:"root_type" xml:"root_type"`
 	// Account type
 	AccountType string `form:"account_type" json:"account_type" xml:"account_type"`
+	// Account subtype
+	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
+	// Account category for grouping
+	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
+	// Sub-category within main category
+	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance string `form:"normal_balance" json:"normal_balance" xml:"normal_balance"`
+	// Whether account is active
+	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Whether this is a system account
+	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
+	// Whether manual entries are allowed
+	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
+	// Whether reference is required
+	RequireReference *bool `form:"require_reference,omitempty" json:"require_reference,omitempty" xml:"require_reference,omitempty"`
 	// Current account balance
 	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
 	// Year-to-date balance
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
-	// Whether account is active
-	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Last transaction date
+	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
+	// Financial statement line grouping
+	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
+	// Sort order in reports
+	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
+	// Display order in UI/reports
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Whether to include in standard reports
+	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
+	// Consolidation mapping for multi-entity
+	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
+	// Cash flow statement classification
+	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
+	// Primary currency code
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Whether account accepts multiple currencies
+	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
+	// Whether account can have budgets
+	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
+	// Budget variance alert threshold
+	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
+	// Version for optimistic locking
+	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
+	// Current validation status
+	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
+	// Last validation timestamp
+	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
@@ -612,18 +884,66 @@ type AccountResultResponseBody struct {
 	AccountLevel *int32 `form:"account_level,omitempty" json:"account_level,omitempty" xml:"account_level,omitempty"`
 	// Hierarchy path
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
+	// Whether account has child accounts
+	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
+	// Whether account is a leaf node
+	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
+	// Account group ID
+	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
+	// Account header ID
+	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType string `form:"root_type" json:"root_type" xml:"root_type"`
 	// Account type
 	AccountType string `form:"account_type" json:"account_type" xml:"account_type"`
+	// Account subtype
+	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
+	// Account category for grouping
+	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
+	// Sub-category within main category
+	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance string `form:"normal_balance" json:"normal_balance" xml:"normal_balance"`
+	// Whether account is active
+	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Whether this is a system account
+	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
+	// Whether manual entries are allowed
+	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
+	// Whether reference is required
+	RequireReference *bool `form:"require_reference,omitempty" json:"require_reference,omitempty" xml:"require_reference,omitempty"`
 	// Current account balance
 	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
 	// Year-to-date balance
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
-	// Whether account is active
-	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+	// Last transaction date
+	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
+	// Financial statement line grouping
+	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
+	// Sort order in reports
+	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
+	// Display order in UI/reports
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Whether to include in standard reports
+	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
+	// Consolidation mapping for multi-entity
+	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
+	// Cash flow statement classification
+	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
+	// Primary currency code
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Whether account accepts multiple currencies
+	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
+	// Whether account can have budgets
+	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
+	// Budget variance alert threshold
+	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
+	// Version for optimistic locking
+	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
+	// Current validation status
+	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
+	// Last validation timestamp
+	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
@@ -805,23 +1125,47 @@ type CreateTransactionPayloadRequestBody struct {
 // of the "createAccount" endpoint of the "finance" service.
 func NewCreateAccountResponseBody(res *finance.AccountResult) *CreateAccountResponseBody {
 	body := &CreateAccountResponseBody{
-		ID:                 res.ID,
-		TenantID:           res.TenantID,
-		EntityID:           res.EntityID,
-		AccountCode:        res.AccountCode,
-		AccountName:        res.AccountName,
-		AccountDescription: res.AccountDescription,
-		ParentAccountID:    res.ParentAccountID,
-		AccountLevel:       res.AccountLevel,
-		AccountPath:        res.AccountPath,
-		RootType:           res.RootType,
-		AccountType:        res.AccountType,
-		NormalBalance:      res.NormalBalance,
-		CurrentBalance:     res.CurrentBalance,
-		YtdBalance:         res.YtdBalance,
-		IsActive:           res.IsActive,
-		CreatedAt:          res.CreatedAt,
-		UpdatedAt:          res.UpdatedAt,
+		ID:                      res.ID,
+		TenantID:                res.TenantID,
+		EntityID:                res.EntityID,
+		AccountCode:             res.AccountCode,
+		AccountName:             res.AccountName,
+		AccountDescription:      res.AccountDescription,
+		ParentAccountID:         res.ParentAccountID,
+		AccountLevel:            res.AccountLevel,
+		AccountPath:             res.AccountPath,
+		HasChildren:             res.HasChildren,
+		IsLeafAccount:           res.IsLeafAccount,
+		AccountGroupID:          res.AccountGroupID,
+		AccountHeaderID:         res.AccountHeaderID,
+		RootType:                res.RootType,
+		AccountType:             res.AccountType,
+		AccountSubtype:          res.AccountSubtype,
+		AccountCategory:         res.AccountCategory,
+		SubCategory:             res.SubCategory,
+		NormalBalance:           res.NormalBalance,
+		IsActive:                res.IsActive,
+		IsSystemAccount:         res.IsSystemAccount,
+		AllowManualEntries:      res.AllowManualEntries,
+		RequireReference:        res.RequireReference,
+		CurrentBalance:          res.CurrentBalance,
+		YtdBalance:              res.YtdBalance,
+		LastTransactionDate:     res.LastTransactionDate,
+		FinancialStatementLine:  res.FinancialStatementLine,
+		ReportOrder:             res.ReportOrder,
+		DisplayOrder:            res.DisplayOrder,
+		ShowInReports:           res.ShowInReports,
+		ConsolidationAccount:    res.ConsolidationAccount,
+		CashFlowType:            res.CashFlowType,
+		CurrencyCode:            res.CurrencyCode,
+		IsMultiCurrency:         res.IsMultiCurrency,
+		IsBudgetable:            res.IsBudgetable,
+		BudgetVarianceThreshold: res.BudgetVarianceThreshold,
+		Version:                 res.Version,
+		ValidationStatus:        res.ValidationStatus,
+		LastValidationRun:       res.LastValidationRun,
+		CreatedAt:               res.CreatedAt,
+		UpdatedAt:               res.UpdatedAt,
 	}
 	return body
 }
@@ -830,23 +1174,47 @@ func NewCreateAccountResponseBody(res *finance.AccountResult) *CreateAccountResp
 // the "getAccount" endpoint of the "finance" service.
 func NewGetAccountResponseBody(res *finance.AccountResult) *GetAccountResponseBody {
 	body := &GetAccountResponseBody{
-		ID:                 res.ID,
-		TenantID:           res.TenantID,
-		EntityID:           res.EntityID,
-		AccountCode:        res.AccountCode,
-		AccountName:        res.AccountName,
-		AccountDescription: res.AccountDescription,
-		ParentAccountID:    res.ParentAccountID,
-		AccountLevel:       res.AccountLevel,
-		AccountPath:        res.AccountPath,
-		RootType:           res.RootType,
-		AccountType:        res.AccountType,
-		NormalBalance:      res.NormalBalance,
-		CurrentBalance:     res.CurrentBalance,
-		YtdBalance:         res.YtdBalance,
-		IsActive:           res.IsActive,
-		CreatedAt:          res.CreatedAt,
-		UpdatedAt:          res.UpdatedAt,
+		ID:                      res.ID,
+		TenantID:                res.TenantID,
+		EntityID:                res.EntityID,
+		AccountCode:             res.AccountCode,
+		AccountName:             res.AccountName,
+		AccountDescription:      res.AccountDescription,
+		ParentAccountID:         res.ParentAccountID,
+		AccountLevel:            res.AccountLevel,
+		AccountPath:             res.AccountPath,
+		HasChildren:             res.HasChildren,
+		IsLeafAccount:           res.IsLeafAccount,
+		AccountGroupID:          res.AccountGroupID,
+		AccountHeaderID:         res.AccountHeaderID,
+		RootType:                res.RootType,
+		AccountType:             res.AccountType,
+		AccountSubtype:          res.AccountSubtype,
+		AccountCategory:         res.AccountCategory,
+		SubCategory:             res.SubCategory,
+		NormalBalance:           res.NormalBalance,
+		IsActive:                res.IsActive,
+		IsSystemAccount:         res.IsSystemAccount,
+		AllowManualEntries:      res.AllowManualEntries,
+		RequireReference:        res.RequireReference,
+		CurrentBalance:          res.CurrentBalance,
+		YtdBalance:              res.YtdBalance,
+		LastTransactionDate:     res.LastTransactionDate,
+		FinancialStatementLine:  res.FinancialStatementLine,
+		ReportOrder:             res.ReportOrder,
+		DisplayOrder:            res.DisplayOrder,
+		ShowInReports:           res.ShowInReports,
+		ConsolidationAccount:    res.ConsolidationAccount,
+		CashFlowType:            res.CashFlowType,
+		CurrencyCode:            res.CurrencyCode,
+		IsMultiCurrency:         res.IsMultiCurrency,
+		IsBudgetable:            res.IsBudgetable,
+		BudgetVarianceThreshold: res.BudgetVarianceThreshold,
+		Version:                 res.Version,
+		ValidationStatus:        res.ValidationStatus,
+		LastValidationRun:       res.LastValidationRun,
+		CreatedAt:               res.CreatedAt,
+		UpdatedAt:               res.UpdatedAt,
 	}
 	return body
 }
@@ -855,23 +1223,47 @@ func NewGetAccountResponseBody(res *finance.AccountResult) *GetAccountResponseBo
 // result of the "getAccountByCode" endpoint of the "finance" service.
 func NewGetAccountByCodeResponseBody(res *finance.AccountResult) *GetAccountByCodeResponseBody {
 	body := &GetAccountByCodeResponseBody{
-		ID:                 res.ID,
-		TenantID:           res.TenantID,
-		EntityID:           res.EntityID,
-		AccountCode:        res.AccountCode,
-		AccountName:        res.AccountName,
-		AccountDescription: res.AccountDescription,
-		ParentAccountID:    res.ParentAccountID,
-		AccountLevel:       res.AccountLevel,
-		AccountPath:        res.AccountPath,
-		RootType:           res.RootType,
-		AccountType:        res.AccountType,
-		NormalBalance:      res.NormalBalance,
-		CurrentBalance:     res.CurrentBalance,
-		YtdBalance:         res.YtdBalance,
-		IsActive:           res.IsActive,
-		CreatedAt:          res.CreatedAt,
-		UpdatedAt:          res.UpdatedAt,
+		ID:                      res.ID,
+		TenantID:                res.TenantID,
+		EntityID:                res.EntityID,
+		AccountCode:             res.AccountCode,
+		AccountName:             res.AccountName,
+		AccountDescription:      res.AccountDescription,
+		ParentAccountID:         res.ParentAccountID,
+		AccountLevel:            res.AccountLevel,
+		AccountPath:             res.AccountPath,
+		HasChildren:             res.HasChildren,
+		IsLeafAccount:           res.IsLeafAccount,
+		AccountGroupID:          res.AccountGroupID,
+		AccountHeaderID:         res.AccountHeaderID,
+		RootType:                res.RootType,
+		AccountType:             res.AccountType,
+		AccountSubtype:          res.AccountSubtype,
+		AccountCategory:         res.AccountCategory,
+		SubCategory:             res.SubCategory,
+		NormalBalance:           res.NormalBalance,
+		IsActive:                res.IsActive,
+		IsSystemAccount:         res.IsSystemAccount,
+		AllowManualEntries:      res.AllowManualEntries,
+		RequireReference:        res.RequireReference,
+		CurrentBalance:          res.CurrentBalance,
+		YtdBalance:              res.YtdBalance,
+		LastTransactionDate:     res.LastTransactionDate,
+		FinancialStatementLine:  res.FinancialStatementLine,
+		ReportOrder:             res.ReportOrder,
+		DisplayOrder:            res.DisplayOrder,
+		ShowInReports:           res.ShowInReports,
+		ConsolidationAccount:    res.ConsolidationAccount,
+		CashFlowType:            res.CashFlowType,
+		CurrencyCode:            res.CurrencyCode,
+		IsMultiCurrency:         res.IsMultiCurrency,
+		IsBudgetable:            res.IsBudgetable,
+		BudgetVarianceThreshold: res.BudgetVarianceThreshold,
+		Version:                 res.Version,
+		ValidationStatus:        res.ValidationStatus,
+		LastValidationRun:       res.LastValidationRun,
+		CreatedAt:               res.CreatedAt,
+		UpdatedAt:               res.UpdatedAt,
 	}
 	return body
 }
@@ -880,23 +1272,47 @@ func NewGetAccountByCodeResponseBody(res *finance.AccountResult) *GetAccountByCo
 // result of the "getAccountByName" endpoint of the "finance" service.
 func NewGetAccountByNameResponseBody(res *finance.AccountResult) *GetAccountByNameResponseBody {
 	body := &GetAccountByNameResponseBody{
-		ID:                 res.ID,
-		TenantID:           res.TenantID,
-		EntityID:           res.EntityID,
-		AccountCode:        res.AccountCode,
-		AccountName:        res.AccountName,
-		AccountDescription: res.AccountDescription,
-		ParentAccountID:    res.ParentAccountID,
-		AccountLevel:       res.AccountLevel,
-		AccountPath:        res.AccountPath,
-		RootType:           res.RootType,
-		AccountType:        res.AccountType,
-		NormalBalance:      res.NormalBalance,
-		CurrentBalance:     res.CurrentBalance,
-		YtdBalance:         res.YtdBalance,
-		IsActive:           res.IsActive,
-		CreatedAt:          res.CreatedAt,
-		UpdatedAt:          res.UpdatedAt,
+		ID:                      res.ID,
+		TenantID:                res.TenantID,
+		EntityID:                res.EntityID,
+		AccountCode:             res.AccountCode,
+		AccountName:             res.AccountName,
+		AccountDescription:      res.AccountDescription,
+		ParentAccountID:         res.ParentAccountID,
+		AccountLevel:            res.AccountLevel,
+		AccountPath:             res.AccountPath,
+		HasChildren:             res.HasChildren,
+		IsLeafAccount:           res.IsLeafAccount,
+		AccountGroupID:          res.AccountGroupID,
+		AccountHeaderID:         res.AccountHeaderID,
+		RootType:                res.RootType,
+		AccountType:             res.AccountType,
+		AccountSubtype:          res.AccountSubtype,
+		AccountCategory:         res.AccountCategory,
+		SubCategory:             res.SubCategory,
+		NormalBalance:           res.NormalBalance,
+		IsActive:                res.IsActive,
+		IsSystemAccount:         res.IsSystemAccount,
+		AllowManualEntries:      res.AllowManualEntries,
+		RequireReference:        res.RequireReference,
+		CurrentBalance:          res.CurrentBalance,
+		YtdBalance:              res.YtdBalance,
+		LastTransactionDate:     res.LastTransactionDate,
+		FinancialStatementLine:  res.FinancialStatementLine,
+		ReportOrder:             res.ReportOrder,
+		DisplayOrder:            res.DisplayOrder,
+		ShowInReports:           res.ShowInReports,
+		ConsolidationAccount:    res.ConsolidationAccount,
+		CashFlowType:            res.CashFlowType,
+		CurrencyCode:            res.CurrencyCode,
+		IsMultiCurrency:         res.IsMultiCurrency,
+		IsBudgetable:            res.IsBudgetable,
+		BudgetVarianceThreshold: res.BudgetVarianceThreshold,
+		Version:                 res.Version,
+		ValidationStatus:        res.ValidationStatus,
+		LastValidationRun:       res.LastValidationRun,
+		CreatedAt:               res.CreatedAt,
+		UpdatedAt:               res.UpdatedAt,
 	}
 	return body
 }
@@ -924,23 +1340,47 @@ func NewListAccountsResponseBody(res *finance.AccountListResult) *ListAccountsRe
 // of the "updateAccount" endpoint of the "finance" service.
 func NewUpdateAccountResponseBody(res *finance.AccountResult) *UpdateAccountResponseBody {
 	body := &UpdateAccountResponseBody{
-		ID:                 res.ID,
-		TenantID:           res.TenantID,
-		EntityID:           res.EntityID,
-		AccountCode:        res.AccountCode,
-		AccountName:        res.AccountName,
-		AccountDescription: res.AccountDescription,
-		ParentAccountID:    res.ParentAccountID,
-		AccountLevel:       res.AccountLevel,
-		AccountPath:        res.AccountPath,
-		RootType:           res.RootType,
-		AccountType:        res.AccountType,
-		NormalBalance:      res.NormalBalance,
-		CurrentBalance:     res.CurrentBalance,
-		YtdBalance:         res.YtdBalance,
-		IsActive:           res.IsActive,
-		CreatedAt:          res.CreatedAt,
-		UpdatedAt:          res.UpdatedAt,
+		ID:                      res.ID,
+		TenantID:                res.TenantID,
+		EntityID:                res.EntityID,
+		AccountCode:             res.AccountCode,
+		AccountName:             res.AccountName,
+		AccountDescription:      res.AccountDescription,
+		ParentAccountID:         res.ParentAccountID,
+		AccountLevel:            res.AccountLevel,
+		AccountPath:             res.AccountPath,
+		HasChildren:             res.HasChildren,
+		IsLeafAccount:           res.IsLeafAccount,
+		AccountGroupID:          res.AccountGroupID,
+		AccountHeaderID:         res.AccountHeaderID,
+		RootType:                res.RootType,
+		AccountType:             res.AccountType,
+		AccountSubtype:          res.AccountSubtype,
+		AccountCategory:         res.AccountCategory,
+		SubCategory:             res.SubCategory,
+		NormalBalance:           res.NormalBalance,
+		IsActive:                res.IsActive,
+		IsSystemAccount:         res.IsSystemAccount,
+		AllowManualEntries:      res.AllowManualEntries,
+		RequireReference:        res.RequireReference,
+		CurrentBalance:          res.CurrentBalance,
+		YtdBalance:              res.YtdBalance,
+		LastTransactionDate:     res.LastTransactionDate,
+		FinancialStatementLine:  res.FinancialStatementLine,
+		ReportOrder:             res.ReportOrder,
+		DisplayOrder:            res.DisplayOrder,
+		ShowInReports:           res.ShowInReports,
+		ConsolidationAccount:    res.ConsolidationAccount,
+		CashFlowType:            res.CashFlowType,
+		CurrencyCode:            res.CurrencyCode,
+		IsMultiCurrency:         res.IsMultiCurrency,
+		IsBudgetable:            res.IsBudgetable,
+		BudgetVarianceThreshold: res.BudgetVarianceThreshold,
+		Version:                 res.Version,
+		ValidationStatus:        res.ValidationStatus,
+		LastValidationRun:       res.LastValidationRun,
+		CreatedAt:               res.CreatedAt,
+		UpdatedAt:               res.UpdatedAt,
 	}
 	return body
 }
@@ -1204,22 +1644,40 @@ func NewGetTrialBalanceResponseBody(res *finance.TrialBalanceResult) *GetTrialBa
 // payload.
 func NewCreateAccountPayload(body *CreateAccountRequestBody) *finance.CreateAccountPayload {
 	v := &finance.CreateAccountPayload{
-		EntityID:           body.EntityID,
-		AccountCode:        *body.AccountCode,
-		AccountName:        *body.AccountName,
-		AccountDescription: body.AccountDescription,
-		ParentAccountID:    body.ParentAccountID,
-		RootType:           *body.RootType,
-		AccountType:        body.AccountType,
-		AccountSubtype:     body.AccountSubtype,
-		NormalBalance:      *body.NormalBalance,
-		CurrencyCode:       body.CurrencyCode,
+		EntityID:             body.EntityID,
+		AccountCode:          *body.AccountCode,
+		AccountName:          *body.AccountName,
+		AccountDescription:   body.AccountDescription,
+		ParentAccountID:      body.ParentAccountID,
+		AccountGroupID:       body.AccountGroupID,
+		AccountHeaderID:      body.AccountHeaderID,
+		RootType:             *body.RootType,
+		AccountType:          body.AccountType,
+		AccountSubtype:       body.AccountSubtype,
+		AccountCategory:      body.AccountCategory,
+		SubCategory:          body.SubCategory,
+		NormalBalance:        *body.NormalBalance,
+		CurrencyCode:         body.CurrencyCode,
+		ConsolidationAccount: body.ConsolidationAccount,
+		CashFlowType:         body.CashFlowType,
 	}
 	if body.IsActive != nil {
 		v.IsActive = *body.IsActive
 	}
+	if body.DisplayOrder != nil {
+		v.DisplayOrder = *body.DisplayOrder
+	}
+	if body.ShowInReports != nil {
+		v.ShowInReports = *body.ShowInReports
+	}
 	if body.IsActive == nil {
 		v.IsActive = true
+	}
+	if body.DisplayOrder == nil {
+		v.DisplayOrder = 0
+	}
+	if body.ShowInReports == nil {
+		v.ShowInReports = true
 	}
 
 	return v
@@ -1270,11 +1728,19 @@ func NewListAccountsPayload(rootType *string, accountType *string, isActive *boo
 // payload.
 func NewUpdateAccountPayload(body *UpdateAccountRequestBody, id string) *finance.UpdateAccountPayload {
 	v := &finance.UpdateAccountPayload{
-		AccountName:        body.AccountName,
-		AccountDescription: body.AccountDescription,
-		IsActive:           body.IsActive,
-		AllowManualEntries: body.AllowManualEntries,
-		RequireReference:   body.RequireReference,
+		AccountName:          body.AccountName,
+		AccountDescription:   body.AccountDescription,
+		AccountGroupID:       body.AccountGroupID,
+		AccountHeaderID:      body.AccountHeaderID,
+		AccountCategory:      body.AccountCategory,
+		SubCategory:          body.SubCategory,
+		IsActive:             body.IsActive,
+		AllowManualEntries:   body.AllowManualEntries,
+		RequireReference:     body.RequireReference,
+		DisplayOrder:         body.DisplayOrder,
+		ShowInReports:        body.ShowInReports,
+		ConsolidationAccount: body.ConsolidationAccount,
+		CashFlowType:         body.CashFlowType,
 	}
 	v.ID = id
 
@@ -1485,9 +1951,25 @@ func ValidateCreateAccountRequestBody(body *CreateAccountRequestBody) (err error
 	if body.ParentAccountID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
 	}
+	if body.AccountGroupID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_group_id", *body.AccountGroupID, goa.FormatUUID))
+	}
+	if body.AccountHeaderID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_header_id", *body.AccountHeaderID, goa.FormatUUID))
+	}
 	if body.RootType != nil {
 		if !(*body.RootType == "ASSET" || *body.RootType == "LIABILITY" || *body.RootType == "EQUITY" || *body.RootType == "REVENUE" || *body.RootType == "EXPENSE") {
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.root_type", *body.RootType, []any{"ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"}))
+		}
+	}
+	if body.AccountCategory != nil {
+		if utf8.RuneCountInString(*body.AccountCategory) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.account_category", *body.AccountCategory, utf8.RuneCountInString(*body.AccountCategory), 100, false))
+		}
+	}
+	if body.SubCategory != nil {
+		if utf8.RuneCountInString(*body.SubCategory) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.sub_category", *body.SubCategory, utf8.RuneCountInString(*body.SubCategory), 100, false))
 		}
 	}
 	if body.NormalBalance != nil {
@@ -1497,6 +1979,21 @@ func ValidateCreateAccountRequestBody(body *CreateAccountRequestBody) (err error
 	}
 	if body.CurrencyCode != nil {
 		err = goa.MergeErrors(err, goa.ValidatePattern("body.currency_code", *body.CurrencyCode, "^[A-Z]{3}$"))
+	}
+	if body.DisplayOrder != nil {
+		if *body.DisplayOrder < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.display_order", *body.DisplayOrder, 0, true))
+		}
+	}
+	if body.ConsolidationAccount != nil {
+		if utf8.RuneCountInString(*body.ConsolidationAccount) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.consolidation_account", *body.ConsolidationAccount, utf8.RuneCountInString(*body.ConsolidationAccount), 100, false))
+		}
+	}
+	if body.CashFlowType != nil {
+		if !(*body.CashFlowType == "OPERATING" || *body.CashFlowType == "INVESTING" || *body.CashFlowType == "FINANCING") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.cash_flow_type", *body.CashFlowType, []any{"OPERATING", "INVESTING", "FINANCING"}))
+		}
 	}
 	return
 }
@@ -1512,6 +2009,37 @@ func ValidateUpdateAccountRequestBody(body *UpdateAccountRequestBody) (err error
 	if body.AccountName != nil {
 		if utf8.RuneCountInString(*body.AccountName) > 255 {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.account_name", *body.AccountName, utf8.RuneCountInString(*body.AccountName), 255, false))
+		}
+	}
+	if body.AccountGroupID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_group_id", *body.AccountGroupID, goa.FormatUUID))
+	}
+	if body.AccountHeaderID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_header_id", *body.AccountHeaderID, goa.FormatUUID))
+	}
+	if body.AccountCategory != nil {
+		if utf8.RuneCountInString(*body.AccountCategory) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.account_category", *body.AccountCategory, utf8.RuneCountInString(*body.AccountCategory), 100, false))
+		}
+	}
+	if body.SubCategory != nil {
+		if utf8.RuneCountInString(*body.SubCategory) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.sub_category", *body.SubCategory, utf8.RuneCountInString(*body.SubCategory), 100, false))
+		}
+	}
+	if body.DisplayOrder != nil {
+		if *body.DisplayOrder < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.display_order", *body.DisplayOrder, 0, true))
+		}
+	}
+	if body.ConsolidationAccount != nil {
+		if utf8.RuneCountInString(*body.ConsolidationAccount) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.consolidation_account", *body.ConsolidationAccount, utf8.RuneCountInString(*body.ConsolidationAccount), 100, false))
+		}
+	}
+	if body.CashFlowType != nil {
+		if !(*body.CashFlowType == "OPERATING" || *body.CashFlowType == "INVESTING" || *body.CashFlowType == "FINANCING") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.cash_flow_type", *body.CashFlowType, []any{"OPERATING", "INVESTING", "FINANCING"}))
 		}
 	}
 	return

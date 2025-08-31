@@ -120,7 +120,7 @@ VALUES
     $7
   )
 RETURNING
-  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 `
 
 type CreateFeatureFlagParams struct {
@@ -153,6 +153,7 @@ func (q *Queries) CreateFeatureFlag(ctx context.Context, arg CreateFeatureFlagPa
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
+		&i.EntityID,
 		&i.Name,
 		&i.Description,
 		&i.FlagType,
@@ -186,7 +187,7 @@ func (q *Queries) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
 
 const getActiveFeatureFlags = `-- name: GetActiveFeatureFlags :many
 SELECT
-  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 FROM
   feature_flags
 WHERE
@@ -209,6 +210,7 @@ func (q *Queries) GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, er
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
+			&i.EntityID,
 			&i.Name,
 			&i.Description,
 			&i.FlagType,
@@ -232,7 +234,7 @@ func (q *Queries) GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, er
 
 const getFeatureFlagByID = `-- name: GetFeatureFlagByID :one
 SELECT
-  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 FROM
   feature_flags
 WHERE
@@ -247,6 +249,7 @@ func (q *Queries) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*Featur
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
+		&i.EntityID,
 		&i.Name,
 		&i.Description,
 		&i.FlagType,
@@ -263,7 +266,7 @@ func (q *Queries) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*Featur
 
 const getFeatureFlagByName = `-- name: GetFeatureFlagByName :one
 SELECT
-  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 FROM
   feature_flags
 WHERE
@@ -278,6 +281,7 @@ func (q *Queries) GetFeatureFlagByName(ctx context.Context, name string) (*Featu
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
+		&i.EntityID,
 		&i.Name,
 		&i.Description,
 		&i.FlagType,
@@ -332,7 +336,7 @@ func (q *Queries) GetFeatureFlagStats(ctx context.Context) (*GetFeatureFlagStats
 
 const getFeatureFlagsByType = `-- name: GetFeatureFlagsByType :many
 SELECT
-  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 FROM
   feature_flags
 WHERE
@@ -355,6 +359,7 @@ func (q *Queries) GetFeatureFlagsByType(ctx context.Context, flagType string) ([
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
+			&i.EntityID,
 			&i.Name,
 			&i.Description,
 			&i.FlagType,
@@ -378,7 +383,7 @@ func (q *Queries) GetFeatureFlagsByType(ctx context.Context, flagType string) ([
 
 const listFeatureFlags = `-- name: ListFeatureFlags :many
 SELECT
-  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 FROM
   feature_flags
 WHERE
@@ -412,6 +417,7 @@ func (q *Queries) ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsPara
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
+			&i.EntityID,
 			&i.Name,
 			&i.Description,
 			&i.FlagType,
@@ -435,7 +441,7 @@ func (q *Queries) ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsPara
 
 const searchFeatureFlags = `-- name: SearchFeatureFlags :many
 SELECT
-  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 FROM
   feature_flags
 WHERE
@@ -469,6 +475,7 @@ func (q *Queries) SearchFeatureFlags(ctx context.Context, arg SearchFeatureFlags
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
+			&i.EntityID,
 			&i.Name,
 			&i.Description,
 			&i.FlagType,
@@ -507,7 +514,7 @@ WHERE
   AND id = $1
   AND deleted_at IS NULL
 RETURNING
-  id, tenant_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
 `
 
 type UpdateFeatureFlagParams struct {
@@ -536,6 +543,7 @@ func (q *Queries) UpdateFeatureFlag(ctx context.Context, arg UpdateFeatureFlagPa
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
+		&i.EntityID,
 		&i.Name,
 		&i.Description,
 		&i.FlagType,

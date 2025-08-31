@@ -32,7 +32,16 @@ plugins:
       lang: en
       separator: '[\s\-,.]+' 
 
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
 extra_javascript:
+  - https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js
+  - javascripts/mermaid-config.js
   - javascripts/search-enhancements.js
   - javascripts/search-analytics.js
   - javascripts/contextual-help.js
@@ -46,6 +55,8 @@ nav:
     - 'GIN Handlers': 'architecture/GIN_HANDLERS_INVENTORY.md'
   - 'Contributing':
     - 'Best Practices': 'contributing/01-best-practices.md'
+    - 'Documentation Guide': 'contributing/documentation-guide.md'
+    - 'Mermaid Diagrams': 'contributing/mermaid-diagrams-guide.md'
     - 'Architecture': 'contributing/architecture.md'
     - 'Code Examples': 'contributing/code-examples.md'
     - 'Database Transactions': 'contributing/database-transactions.md'
