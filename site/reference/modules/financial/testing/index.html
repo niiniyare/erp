@@ -9,6 +9,10 @@
       
       
       
+        <link rel="prev" href="../PRD/">
+      
+      
+        <link rel="next" href="../api-reference/">
       
       
       <link rel="icon" href="../../../../assets/images/favicon.png">
@@ -16,7 +20,7 @@
     
     
       
-        <title>Financial Module - Testing Strategy & Test Cases - Awo ERP Documentation</title>
+        <title>Testing Strategy - Awo ERP Documentation</title>
       
     
     
@@ -102,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Financial Module - Testing Strategy &amp; Test Cases
+              Testing Strategy
             
           </span>
         </div>
@@ -260,11 +264,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../api-reference/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -691,6 +697,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../contributing/documentation-structure-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Structure Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../contributing/mermaid-diagrams-guide/" class="md-nav__link">
         
   
@@ -994,26 +1023,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1026,12 +1060,918 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Financial Module
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PRD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Product Requirements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Table of Contents
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-coverage-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Coverage Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Coverage Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quality-gates-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quality Gates Status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Framework
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#financial-domain-model-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Financial Domain Model Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Financial Domain Model Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#account-entity-validation-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Account Entity Validation Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Account Entity Validation Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-valid-account-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Valid Account Creation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-chart-of-accounts-business-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Chart of Accounts Business Rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-account-code-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Account Code Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transaction-entity-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transaction Entity Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transaction Entity Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-double-entry-balance-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Double-Entry Balance Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-transaction-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Transaction State Machine
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-transaction-entry-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Transaction Entry Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#service-layer-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Layer Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Service Layer Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#financial-service-operation-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Financial Service Operation Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Financial Service Operation Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-account-service-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Account Service Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-transaction-service-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Transaction Service Workflow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-validation-service-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Validation Service Rules
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repository-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Repository Integration Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Repository Integration Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-operations-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Operations Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database Operations Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-account-repository-crud" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Account Repository CRUD
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-transaction-repository-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Transaction Repository Operations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sqlc-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      SQLC Integration Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SQLC Integration Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-generated-query-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Generated Query Performance
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Integration Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Integration Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rest-api-endpoint-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      REST API Endpoint Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="REST API Endpoint Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-account-management-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Account Management API
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-transaction-processing-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Transaction Processing API
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-financial-reporting-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Financial Reporting API
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#financial-business-rule-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Financial Business Rule Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Financial Business Rule Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#double-entry-bookkeeping-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Double-Entry Bookkeeping Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Double-Entry Bookkeeping Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-fundamental-accounting-equation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Fundamental Accounting Equation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-account-balance-calculations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Account Balance Calculations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#financial-workflow-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Financial Workflow Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Financial Workflow Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-month-end-closing-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Month-End Closing Process
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-currency-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Currency Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Multi-Currency Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exchange-rate-management-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exchange Rate Management Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exchange Rate Management Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-currency-conversion-accuracy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Currency Conversion Accuracy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-multi-currency-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Multi-Currency Reporting
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-tenancy-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-tenancy Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Multi-tenancy Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tenant-data-isolation-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tenant Data Isolation Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tenant Data Isolation Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-financial-data-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Financial Data Isolation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-tenant-context-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Tenant Context Security
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-authorization-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security &amp; Authorization Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security &amp; Authorization Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#abac-financial-policy-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      ABAC Financial Policy Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ABAC Financial Policy Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-financial-authorization-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Financial Authorization Rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-segregation-of-duties-enforcement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Segregation of Duties Enforcement
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-load-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance &amp; Load Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance &amp; Load Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#transaction-volume-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transaction Volume Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transaction Volume Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-high-volume-transaction-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: High-Volume Transaction Processing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-concurrent-user-load" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Concurrent User Load
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#financial-calculation-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Financial Calculation Performance
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Financial Calculation Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-balance-calculation-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Balance Calculation Performance
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compliance-audit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compliance &amp; Audit Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Compliance &amp; Audit Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#regulatory-compliance-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Regulatory Compliance Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Regulatory Compliance Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-sox-compliance-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: SOX Compliance Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-audit-trail-completeness" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Audit Trail Completeness
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#end-to-end-financial-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      End-to-End Financial Workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="End-to-End Financial Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#complete-financial-cycle-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Complete Financial Cycle Tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Complete Financial Cycle Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-case-complete-accounting-cycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Complete Accounting Cycle
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-case-multi-currency-business-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Case: Multi-Currency Business Scenario
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-data-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test Data Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Data Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#financial-test-data-builders" class="md-nav__link">
+    <span class="md-ellipsis">
+      Financial Test Data Builders
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#standard-financial-test-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Standard Financial Test Data
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quality-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quality Gates
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quality Gates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automated-quality-checks-cicd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automated Quality Checks (CI/CD)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-merge-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pre-merge Checklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-release-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pre-release Checklist
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
             
               
                 
@@ -1069,6 +2009,29 @@
   
   <span class="md-ellipsis">
     Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Task Plan
     
   </span>
   
@@ -1132,29 +2095,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../TASK/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Implementation Task Plan
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../integration-guide/" class="md-nav__link">
         
   
@@ -1184,29 +2124,6 @@
   
   <span class="md-ellipsis">
     Security & Compliance
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../testing-strategy/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Testing Strategy
     
   </span>
   
