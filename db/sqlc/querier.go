@@ -79,6 +79,7 @@ type Querier interface {
 	CountAccountGroups(ctx context.Context, arg CountAccountGroupsParams) (int64, error)
 	CountAccountValidationRules(ctx context.Context, arg CountAccountValidationRulesParams) (int64, error)
 	CountAccounts(ctx context.Context, arg CountAccountsParams) (int64, error)
+	CountAccountsWithGroups(ctx context.Context, arg CountAccountsWithGroupsParams) (int64, error)
 	CountAttributeDefinitions(ctx context.Context, arg CountAttributeDefinitionsParams) (int64, error)
 	CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error)
 	CountEntityStatesByEntity(ctx context.Context, entityID uuid.UUID) (int64, error)
@@ -215,23 +216,60 @@ type Querier interface {
 	// =====================================================
 	FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]*FilterTenantsRow, error)
 	GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*AccessRequest, error)
+	// =====================================================================
+	// ACCOUNT ACTIVITY VIEW QUERIES
+	// =====================================================================
+	GetAccountActivity(ctx context.Context, arg GetAccountActivityParams) ([]*VFinanceAccountActivity, error)
 	GetAccountBalance(ctx context.Context, id uuid.UUID) (*FinanceAccountBalance, error)
 	GetAccountBalanceByDate(ctx context.Context, arg GetAccountBalanceByDateParams) (*FinanceAccountBalance, error)
 	GetAccountBalanceHistory(ctx context.Context, arg GetAccountBalanceHistoryParams) ([]*FinanceAccountBalance, error)
+	GetAccountBalancesList(ctx context.Context, arg GetAccountBalancesListParams) ([]*GetAccountBalancesListRow, error)
 	GetAccountByCode(ctx context.Context, accountCode string) (*FinanceAccount, error)
+	GetAccountByCodeWithGroups(ctx context.Context, accountCode string) (*VFinanceAccountsWithGroup, error)
 	GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceAccount, error)
+	GetAccountChildren(ctx context.Context, parentAccountID *uuid.UUID) ([]*VFinanceAccountsHierarchy, error)
 	GetAccountEntries(ctx context.Context, arg GetAccountEntriesParams) ([]*GetAccountEntriesRow, error)
 	GetAccountGroup(ctx context.Context, id uuid.UUID) (*FinanceAccountGroup, error)
 	GetAccountGroupByCode(ctx context.Context, groupCode string) (*FinanceAccountGroup, error)
 	GetAccountGroupChildren(ctx context.Context, arg GetAccountGroupChildrenParams) ([]*FinanceAccountGroup, error)
 	GetAccountGroupHierarchy(ctx context.Context, arg GetAccountGroupHierarchyParams) ([]*FinanceAccountGroup, error)
+	GetAccountGroupSummary(ctx context.Context, entityID *uuid.UUID) ([]*GetAccountGroupSummaryRow, error)
 	GetAccountGroupsByRootType(ctx context.Context, arg GetAccountGroupsByRootTypeParams) ([]*FinanceAccountGroup, error)
 	GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceAccount, error)
+	GetAccountHierarchyByLevel(ctx context.Context, arg GetAccountHierarchyByLevelParams) ([]*VFinanceAccountsHierarchy, error)
+	// =====================================================================
+	// HIERARCHY AND REPORTING QUERIES
+	// =====================================================================
+	GetAccountHierarchyComplete(ctx context.Context, arg GetAccountHierarchyCompleteParams) ([]*GetAccountHierarchyCompleteRow, error)
+	// =====================================================================
+	// ACCOUNT HIERARCHY VIEW QUERIES
+	// =====================================================================
+	GetAccountHierarchyView(ctx context.Context, arg GetAccountHierarchyViewParams) ([]*VFinanceAccountsHierarchy, error)
+	GetAccountReportingInfo(ctx context.Context, accountID uuid.UUID) (*VChartOfAccountsComplete, error)
 	GetAccountTransactionBalance(ctx context.Context, arg GetAccountTransactionBalanceParams) (*GetAccountTransactionBalanceRow, error)
+	// =====================================================================
+	// PERFORMANCE AND ANALYTICS QUERIES
+	// =====================================================================
+	GetAccountUtilizationStats(ctx context.Context, entityID *uuid.UUID) ([]*GetAccountUtilizationStatsRow, error)
 	GetAccountValidationRule(ctx context.Context, id uuid.UUID) (*FinanceAccountValidationRule, error)
+	GetAccountWithChildren(ctx context.Context, accountID uuid.UUID) ([]*VFinanceAccountsHierarchy, error)
+	// =====================================================================
+	// FINANCE MODULE - ENHANCED QUERIES USING VIEWS (NON-DUPLICATE)
+	// SQLC queries leveraging v_finance_accounts_with_groups and v_chart_of_accounts_complete
+	// These are unique queries not present in finance_accounts.sql
+	// =====================================================================
+	GetAccountWithGroupInfo(ctx context.Context, accountID uuid.UUID) (*VFinanceAccountsWithGroup, error)
+	GetAccountWithGroupsByCode(ctx context.Context, accountCode string) (*VFinanceAccountsWithGroup, error)
+	GetAccountWithGroupsByID(ctx context.Context, accountID uuid.UUID) (*VFinanceAccountsWithGroup, error)
 	GetAccountsByEntity(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error)
+	GetAccountsByFinancialStatement(ctx context.Context, arg GetAccountsByFinancialStatementParams) ([]*VFinanceAccountsWithGroup, error)
+	GetAccountsByGroupCode(ctx context.Context, arg GetAccountsByGroupCodeParams) ([]*VChartOfAccountsComplete, error)
+	GetAccountsByHeaderCode(ctx context.Context, arg GetAccountsByHeaderCodeParams) ([]*VChartOfAccountsComplete, error)
+	GetAccountsByStatement(ctx context.Context, arg GetAccountsByStatementParams) ([]*VChartOfAccountsComplete, error)
 	GetAccountsForFinancialStatements(ctx context.Context, arg GetAccountsForFinancialStatementsParams) ([]*GetAccountsForFinancialStatementsRow, error)
+	GetAccountsRequiringAttention(ctx context.Context, entityID *uuid.UUID) ([]*GetAccountsRequiringAttentionRow, error)
 	GetAccountsWithNonZeroBalance(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error)
+	GetActiveAccounts(ctx context.Context, entityID *uuid.UUID) ([]*VFinanceAccountActivity, error)
 	GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, error)
 	GetActiveTenants(ctx context.Context) ([]*Tenant, error)
 	GetActiveValidationRules(ctx context.Context) ([]*FinanceAccountValidationRule, error)
@@ -283,12 +321,18 @@ type Querier interface {
 	GetAuditStatsBySeverity(ctx context.Context, arg GetAuditStatsBySeverityParams) ([]*GetAuditStatsBySeverityRow, error)
 	// Get audit log storage statistics and metrics
 	GetAuditStorageStats(ctx context.Context) (*GetAuditStorageStatsRow, error)
+	GetBalanceSheetData(ctx context.Context, entityID *uuid.UUID) ([]*VFinancialStatementBuilder, error)
 	GetBalanceTrend(ctx context.Context, arg GetBalanceTrendParams) ([]*GetBalanceTrendRow, error)
 	GetBalancesByFiscalPeriod(ctx context.Context, arg GetBalancesByFiscalPeriodParams) ([]*GetBalancesByFiscalPeriodRow, error)
 	GetBalancesByYear(ctx context.Context, arg GetBalancesByYearParams) ([]*FinanceAccountBalance, error)
 	GetBalancesForTrialBalance(ctx context.Context, arg GetBalancesForTrialBalanceParams) ([]*GetBalancesForTrialBalanceRow, error)
 	GetBooleanSetting(ctx context.Context, key string) (bool, error)
 	GetCachedEvaluationResult(ctx context.Context, arg GetCachedEvaluationResultParams) (*PolicyEvaluation, error)
+	GetCashFlowAccountsList(ctx context.Context, entityID *uuid.UUID) ([]*GetCashFlowAccountsListRow, error)
+	// =====================================================================
+	// ENHANCED QUERIES USING v_chart_of_accounts_complete VIEW
+	// =====================================================================
+	GetChartOfAccountsComplete(ctx context.Context, arg GetChartOfAccountsCompleteParams) ([]*VChartOfAccountsComplete, error)
 	GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*GetCompleteUserProfileRow, error)
 	// Get events with specific compliance flags
 	GetComplianceEvents(ctx context.Context, arg GetComplianceEventsParams) ([]*GetComplianceEventsRow, error)
@@ -514,9 +558,18 @@ type Querier interface {
 	GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error)
 	GetFeatureFlagStats(ctx context.Context) (*GetFeatureFlagStatsRow, error)
 	GetFeatureFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error)
+	// =====================================================================
+	// FINANCE MODULE - REPORTING QUERIES USING VIEWS
+	// SQLC queries leveraging v_financial_statement_builder and other reporting views
+	// =====================================================================
+	GetFinancialStatementBuilder(ctx context.Context, arg GetFinancialStatementBuilderParams) ([]*VFinancialStatementBuilder, error)
+	GetFinancialStatementData(ctx context.Context, arg GetFinancialStatementDataParams) ([]*GetFinancialStatementDataRow, error)
+	GetFinancialStatementStructure(ctx context.Context, arg GetFinancialStatementStructureParams) ([]*VFinancialStatementStructure, error)
 	GetFullPasswordPolicy(ctx context.Context) ([]byte, error)
+	GetGroupBalanceSummary(ctx context.Context, arg GetGroupBalanceSummaryParams) ([]*GetGroupBalanceSummaryRow, error)
 	GetGroupsByCategory(ctx context.Context, arg GetGroupsByCategoryParams) ([]*FinanceAccountGroup, error)
 	GetGroupsByStatementSection(ctx context.Context, arg GetGroupsByStatementSectionParams) ([]*FinanceAccountGroup, error)
+	GetHighActivityAccounts(ctx context.Context, arg GetHighActivityAccountsParams) ([]*GetHighActivityAccountsRow, error)
 	// Get high-risk audit events (risk_score >= threshold)
 	GetHighRiskEvents(ctx context.Context, arg GetHighRiskEventsParams) ([]*GetHighRiskEventsRow, error)
 	// Usage: Gets the highest sequence number for a specific entity/key/fiscal year combination
@@ -524,10 +577,13 @@ type Querier interface {
 	GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (interface{}, error)
 	// Get hourly event rates for capacity planning
 	GetHourlyEventRates(ctx context.Context, arg GetHourlyEventRatesParams) ([]*GetHourlyEventRatesRow, error)
+	GetInactiveAccounts(ctx context.Context, arg GetInactiveAccountsParams) ([]*GetInactiveAccountsRow, error)
+	GetIncomeStatementData(ctx context.Context, entityID *uuid.UUID) ([]*VFinancialStatementBuilder, error)
 	GetInconsistentHierarchyPaths(ctx context.Context) ([]*GetInconsistentHierarchyPathsRow, error)
 	GetIntegerSetting(ctx context.Context, key string) (int32, error)
 	GetLatestAccountBalance(ctx context.Context, accountID uuid.UUID) (*FinanceAccountBalance, error)
 	GetLatestTenantUsageStats(ctx context.Context) (*TenantUsageStat, error)
+	GetLeafAccountsWithGroups(ctx context.Context, arg GetLeafAccountsWithGroupsParams) ([]*VFinanceAccountsWithGroup, error)
 	GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSequenceByEntityAndKeyParams) (interface{}, error)
 	// Ensures positive sequence number
 	// =====================================================================
@@ -627,6 +683,7 @@ type Querier interface {
 	GetRequiredAttributeDefinitions(ctx context.Context) ([]*AttributeDefinition, error)
 	GetResourceEvaluationHistory(ctx context.Context, arg GetResourceEvaluationHistoryParams) ([]*PolicyEvaluation, error)
 	GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error)
+	GetRootAccountsView(ctx context.Context, arg GetRootAccountsViewParams) ([]*VFinanceAccountsHierarchy, error)
 	// Usage: Identifies missing sequence numbers (gaps in numbering)
 	// Use case: Audit compliance, finding deleted/voided documents, sequence integrity checks
 	GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error)
@@ -659,14 +716,20 @@ type Querier interface {
 	GetTenantsByIndustry(ctx context.Context) ([]*GetTenantsByIndustryRow, error)
 	GetTenantsByTimezone(ctx context.Context) ([]*GetTenantsByTimezoneRow, error)
 	GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]*Tenant, error)
+	GetTopAccountsByBalance(ctx context.Context, arg GetTopAccountsByBalanceParams) ([]*GetTopAccountsByBalanceRow, error)
 	GetTransactionActivity(ctx context.Context, arg GetTransactionActivityParams) ([]*GetTransactionActivityRow, error)
 	GetTransactionByID(ctx context.Context, transactionID uuid.UUID) (*FinanceTransaction, error)
 	GetTransactionByNumber(ctx context.Context, transactionNumber string) (*FinanceTransaction, error)
 	GetTransactionCountByTag(ctx context.Context) ([]*GetTransactionCountByTagRow, error)
 	GetTransactionEntriesWithAccounts(ctx context.Context, transactionID uuid.UUID) ([]*GetTransactionEntriesWithAccountsRow, error)
 	GetTransactionEntryByID(ctx context.Context, id uuid.UUID) (*FinanceTransactionEntry, error)
+	// =====================================================================
+	// TRANSACTION SUMMARY VIEW QUERIES
+	// =====================================================================
+	GetTransactionSummary(ctx context.Context, arg GetTransactionSummaryParams) ([]*VFinanceTransactionSummary, error)
 	GetTransactionSummaryByPeriod(ctx context.Context, arg GetTransactionSummaryByPeriodParams) ([]*GetTransactionSummaryByPeriodRow, error)
 	GetTransactionWithEntries(ctx context.Context, transactionID uuid.UUID) ([]*GetTransactionWithEntriesRow, error)
+	GetTransactionsByAccount(ctx context.Context, arg GetTransactionsByAccountParams) ([]*VFinanceTransactionSummary, error)
 	GetTransactionsByAttachment(ctx context.Context, attachmentID []string) ([]*FinanceTransaction, error)
 	GetTransactionsByAttribute(ctx context.Context, arg GetTransactionsByAttributeParams) ([]*FinanceTransaction, error)
 	GetTransactionsByBatch(ctx context.Context, batchID *uuid.UUID) ([]*FinanceTransaction, error)
@@ -675,7 +738,9 @@ type Querier interface {
 	GetTransactionsByTags(ctx context.Context, arg GetTransactionsByTagsParams) ([]*FinanceTransaction, error)
 	GetTransactionsWithAttachments(ctx context.Context, arg GetTransactionsWithAttachmentsParams) ([]*GetTransactionsWithAttachmentsRow, error)
 	GetTrialBalance(ctx context.Context, arg GetTrialBalanceParams) ([]*GetTrialBalanceRow, error)
+	GetTrialBalanceData(ctx context.Context, arg GetTrialBalanceDataParams) ([]*GetTrialBalanceDataRow, error)
 	GetUnreconciledEntries(ctx context.Context, accountID uuid.UUID) ([]*GetUnreconciledEntriesRow, error)
+	GetUnreconciledTransactions(ctx context.Context, entityID *uuid.UUID) ([]*VFinanceTransactionSummary, error)
 	GetUnusedEntityCodes(ctx context.Context) ([]*string, error)
 	GetUserAccessRequestHistory(ctx context.Context, arg GetUserAccessRequestHistoryParams) ([]*AccessRequest, error)
 	// Analyze user agent patterns for security insights
@@ -711,6 +776,7 @@ type Querier interface {
 	ListAccountValidationRules(ctx context.Context, arg ListAccountValidationRulesParams) ([]*FinanceAccountValidationRule, error)
 	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceAccount, error)
 	ListAccountsByParent(ctx context.Context, parentAccountID *uuid.UUID) ([]*FinanceAccount, error)
+	ListAccountsWithGroups(ctx context.Context, arg ListAccountsWithGroupsParams) ([]*VFinanceAccountsWithGroup, error)
 	ListActiveEntities(ctx context.Context) ([]*Entity, error)
 	ListActivePolicies(ctx context.Context) ([]*Policy, error)
 	// Attribute Definition Listing and Filtering
@@ -765,6 +831,7 @@ type Querier interface {
 	RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) error
 	SearchAccountGroups(ctx context.Context, arg SearchAccountGroupsParams) ([]*FinanceAccountGroup, error)
 	SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceAccount, error)
+	SearchAccountsWithGroupInfo(ctx context.Context, arg SearchAccountsWithGroupInfoParams) ([]*VFinanceAccountsWithGroup, error)
 	// =====================================================================
 	// 2. ENTITY SEARCH AND FILTERING ENHANCEMENTS
 	// =====================================================================

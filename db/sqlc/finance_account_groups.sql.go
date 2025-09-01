@@ -12,11 +12,24 @@ import (
 )
 
 const countAccountGroups = `-- name: CountAccountGroups :one
-SELECT count(*) FROM finance_account_groups 
-WHERE tenant_id = current_tenant_id()
-AND ($1::uuid IS NULL OR entity_id = $1)
-AND ($2::text IS NULL OR root_type = $2)
-AND ($3::text IS NULL OR group_category = $3)
+SELECT
+  count(*)
+FROM
+  finance_account_groups
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::uuid IS NULL
+    OR entity_id = $1
+  )
+  AND (
+    $2::text IS NULL
+    OR root_type = $2
+  )
+  AND (
+    $3::text IS NULL
+    OR group_category = $3
+  )
 `
 
 type CountAccountGroupsParams struct {
@@ -33,13 +46,38 @@ func (q *Queries) CountAccountGroups(ctx context.Context, arg CountAccountGroups
 }
 
 const createAccountGroup = `-- name: CreateAccountGroup :one
-INSERT INTO finance_account_groups (
-    tenant_id, entity_id, group_code, group_name, group_description,
-    parent_group_id, group_level, group_path, root_type,
-    group_category, financial_statement_section, created_by
-) VALUES (
-    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-) RETURNING id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+INSERT INTO
+  finance_account_groups (
+    tenant_id,
+    entity_id,
+    group_code,
+    group_name,
+    group_description,
+    parent_group_id,
+    group_level,
+    group_path,
+    root_type,
+    group_category,
+    financial_statement_section,
+    created_by
+  )
+VALUES
+  (
+    current_tenant_id(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10,
+    $11
+  )
+RETURNING
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type CreateAccountGroupParams struct {
@@ -108,8 +146,11 @@ func (q *Queries) CreateAccountGroup(ctx context.Context, arg CreateAccountGroup
 }
 
 const deleteAccountGroup = `-- name: DeleteAccountGroup :exec
-DELETE FROM finance_account_groups 
-WHERE id = $1 AND tenant_id = current_tenant_id()
+DELETE FROM
+  finance_account_groups
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
 `
 
 func (q *Queries) DeleteAccountGroup(ctx context.Context, id uuid.UUID) error {
@@ -118,8 +159,13 @@ func (q *Queries) DeleteAccountGroup(ctx context.Context, id uuid.UUID) error {
 }
 
 const getAccountGroup = `-- name: GetAccountGroup :one
-SELECT id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by FROM finance_account_groups 
-WHERE id = $1 AND tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+FROM
+  finance_account_groups
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
 `
 
 func (q *Queries) GetAccountGroup(ctx context.Context, id uuid.UUID) (*FinanceAccountGroup, error) {
@@ -162,8 +208,13 @@ func (q *Queries) GetAccountGroup(ctx context.Context, id uuid.UUID) (*FinanceAc
 }
 
 const getAccountGroupByCode = `-- name: GetAccountGroupByCode :one
-SELECT id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by FROM finance_account_groups 
-WHERE group_code = $1 AND tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+FROM
+  finance_account_groups
+WHERE
+  group_code = $1
+  AND tenant_id = current_tenant_id()
 `
 
 func (q *Queries) GetAccountGroupByCode(ctx context.Context, groupCode string) (*FinanceAccountGroup, error) {
@@ -206,11 +257,19 @@ func (q *Queries) GetAccountGroupByCode(ctx context.Context, groupCode string) (
 }
 
 const getAccountGroupChildren = `-- name: GetAccountGroupChildren :many
-SELECT id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by FROM finance_account_groups 
-WHERE tenant_id = current_tenant_id()
-AND ($1::uuid IS NULL OR entity_id = $1)
-AND parent_group_id = $2
-ORDER BY group_name
+SELECT
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+FROM
+  finance_account_groups
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::uuid IS NULL
+    OR entity_id = $1
+  )
+  AND parent_group_id = $2
+ORDER BY
+  group_name
 `
 
 type GetAccountGroupChildrenParams struct {
@@ -271,11 +330,24 @@ func (q *Queries) GetAccountGroupChildren(ctx context.Context, arg GetAccountGro
 }
 
 const getAccountGroupHierarchy = `-- name: GetAccountGroupHierarchy :many
-SELECT id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by FROM finance_account_groups 
-WHERE tenant_id = current_tenant_id()
-AND ($1::uuid IS NULL OR entity_id = $1)
-AND ($2::uuid IS NULL OR id = $2 OR group_path LIKE '%/' || $2::text || '/%')
-ORDER BY group_level, group_name
+SELECT
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+FROM
+  finance_account_groups
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::uuid IS NULL
+    OR entity_id = $1
+  )
+  AND (
+    $2::uuid IS NULL
+    OR id = $2
+    OR group_path LIKE '%/' || $2::text || '/%'
+  )
+ORDER BY
+  group_level,
+  group_name
 `
 
 type GetAccountGroupHierarchyParams struct {
@@ -336,11 +408,20 @@ func (q *Queries) GetAccountGroupHierarchy(ctx context.Context, arg GetAccountGr
 }
 
 const getAccountGroupsByRootType = `-- name: GetAccountGroupsByRootType :many
-SELECT id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by FROM finance_account_groups 
-WHERE tenant_id = current_tenant_id()
-AND ($1::uuid IS NULL OR entity_id = $1)
-AND root_type = $2
-ORDER BY group_level, group_name
+SELECT
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+FROM
+  finance_account_groups
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::uuid IS NULL
+    OR entity_id = $1
+  )
+  AND root_type = $2
+ORDER BY
+  group_level,
+  group_name
 `
 
 type GetAccountGroupsByRootTypeParams struct {
@@ -401,11 +482,19 @@ func (q *Queries) GetAccountGroupsByRootType(ctx context.Context, arg GetAccount
 }
 
 const getGroupsByCategory = `-- name: GetGroupsByCategory :many
-SELECT id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by FROM finance_account_groups 
-WHERE tenant_id = current_tenant_id()
-AND ($1::uuid IS NULL OR entity_id = $1)
-AND group_category = $2
-ORDER BY group_name
+SELECT
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+FROM
+  finance_account_groups
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::uuid IS NULL
+    OR entity_id = $1
+  )
+  AND group_category = $2
+ORDER BY
+  group_name
 `
 
 type GetGroupsByCategoryParams struct {
@@ -466,11 +555,20 @@ func (q *Queries) GetGroupsByCategory(ctx context.Context, arg GetGroupsByCatego
 }
 
 const getGroupsByStatementSection = `-- name: GetGroupsByStatementSection :many
-SELECT id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by FROM finance_account_groups 
-WHERE tenant_id = current_tenant_id()
-AND ($1::uuid IS NULL OR entity_id = $1)
-AND financial_statement_section = $2
-ORDER BY statement_order, group_name
+SELECT
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+FROM
+  finance_account_groups
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::uuid IS NULL
+    OR entity_id = $1
+  )
+  AND financial_statement_section = $2
+ORDER BY
+  statement_order,
+  group_name
 `
 
 type GetGroupsByStatementSectionParams struct {
@@ -531,13 +629,29 @@ func (q *Queries) GetGroupsByStatementSection(ctx context.Context, arg GetGroups
 }
 
 const listAccountGroups = `-- name: ListAccountGroups :many
-SELECT id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by FROM finance_account_groups 
-WHERE tenant_id = current_tenant_id()
-AND ($1::uuid IS NULL OR entity_id = $1)
-AND ($2::text IS NULL OR root_type = $2)
-AND ($3::text IS NULL OR group_category = $3)
-ORDER BY group_level, group_name
-LIMIT $4 OFFSET $5
+SELECT
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+FROM
+  finance_account_groups
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::uuid IS NULL
+    OR entity_id = $1
+  )
+  AND (
+    $2::text IS NULL
+    OR root_type = $2
+  )
+  AND (
+    $3::text IS NULL
+    OR group_category = $3
+  )
+ORDER BY
+  group_level,
+  group_name
+LIMIT
+  $4 OFFSET $5
 `
 
 type ListAccountGroupsParams struct {
@@ -607,16 +721,25 @@ func (q *Queries) ListAccountGroups(ctx context.Context, arg ListAccountGroupsPa
 }
 
 const searchAccountGroups = `-- name: SearchAccountGroups :many
-SELECT id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by FROM finance_account_groups 
-WHERE tenant_id = current_tenant_id()
-AND ($1::uuid IS NULL OR entity_id = $1)
-AND (
-    group_code ILIKE '%' || $2 || '%' OR 
-    group_name ILIKE '%' || $2 || '%' OR 
-    group_description ILIKE '%' || $2 || '%'
-)
-ORDER BY group_name
-LIMIT $3 OFFSET $4
+SELECT
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+FROM
+  finance_account_groups
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::uuid IS NULL
+    OR entity_id = $1
+  )
+  AND (
+    group_code ILIKE '%' || $2 || '%'
+    OR group_name ILIKE '%' || $2 || '%'
+    OR group_description ILIKE '%' || $2 || '%'
+  )
+ORDER BY
+  group_name
+LIMIT
+  $3 OFFSET $4
 `
 
 type SearchAccountGroupsParams struct {
@@ -684,15 +807,19 @@ func (q *Queries) SearchAccountGroups(ctx context.Context, arg SearchAccountGrou
 }
 
 const updateAccountGroup = `-- name: UpdateAccountGroup :one
-UPDATE finance_account_groups 
-SET 
-    group_name = COALESCE($2, group_name),
-    group_description = COALESCE($3, group_description),
-    updated_at = now(),
-    updated_by = $4,
-    version = version + 1
-WHERE id = $1 AND tenant_id = current_tenant_id()
-RETURNING id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+UPDATE
+  finance_account_groups
+SET
+  group_name = COALESCE($2, group_name),
+  group_description = COALESCE($3, group_description),
+  updated_at = NOW(),
+  updated_by = $4,
+  version = version + 1
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+RETURNING
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type UpdateAccountGroupParams struct {
@@ -747,13 +874,17 @@ func (q *Queries) UpdateAccountGroup(ctx context.Context, arg UpdateAccountGroup
 }
 
 const updateGroupHierarchyPath = `-- name: UpdateGroupHierarchyPath :one
-UPDATE finance_account_groups 
-SET 
-    group_path = $2,
-    updated_at = now(),
-    version = version + 1
-WHERE id = $1 AND tenant_id = current_tenant_id()
-RETURNING id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
+UPDATE
+  finance_account_groups
+SET
+  group_path = $2,
+  updated_at = NOW(),
+  version = version + 1
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+RETURNING
+  id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type UpdateGroupHierarchyPathParams struct {

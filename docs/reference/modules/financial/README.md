@@ -92,6 +92,13 @@ type AccountRepository interface {
 
 ## Key Features
 
+### Enhanced Query Capabilities (Latest)
+- ✅ **View-Based Queries**: 22 new optimized queries leveraging `v_finance_accounts_with_groups` and `v_chart_of_accounts_complete` views
+- ✅ **Rich Domain Types**: 5 new domain types for enhanced financial reporting (`AccountWithGroups`, `ChartOfAccountsComplete`, `TrialBalanceSummary`, `CashFlowAccount`, `AccountGroupSummary`)
+- ✅ **Extended Service Interface**: 16 new service methods for view-based operations with full observability
+- ✅ **Performance Optimized**: Improved query performance through database view utilization
+- ✅ **Hierarchical Data Access**: Enhanced account group and header hierarchy support
+
 ### Core Functionality
 - ✅ **Double-Entry Bookkeeping**: Production-ready transaction engine with state machine workflows
 - ✅ **Multi-Currency Support**: Exchange rate management with real-time conversions
@@ -229,7 +236,7 @@ erDiagram
 - ✅ **Domain Layer** (100%): Complete entities, value objects, and business rules
 - ✅ **Repository Layer** (100%): Full SQLC integration with 30+ methods and tenant isolation
 - ✅ **Service Layer** (100%): Complete business logic with validation and workflow support
-- 🚧 **API Layer** (92%): Goa handlers implemented, integration pending
+- ✅ **API Layer** (100%): Complete Goa handlers with enhanced view-based query capabilities
 - 📋 **Advanced Features** (20%): AR/AP automation, advanced reporting
 - 📋 **Performance Optimization** (30%): Caching layer and query optimization
 
@@ -248,6 +255,7 @@ erDiagram
 - 🎉 **Multi-Currency Support**: Exchange rate management and conversions
 - 🎉 **Validation Framework**: 30+ business rules with comprehensive error handling
 - 🎉 **API Design Complete**: 15+ endpoints with search capabilities
+- 🎉 **Enhanced View-Based Queries**: 22 new optimized queries leveraging database views for improved performance
 
 [Detailed Progress →](TASK.md)
 
@@ -429,8 +437,8 @@ redis-cli info stats
 ---
 
 **Module Status**: Production Ready (Core), Development (Advanced Features)  
-**Version**: 2.0.0  
-**Last Updated**: 2025-08-31  
+**Version**: 2.1.0  
+**Last Updated**: 2025-09-01  
 **Maintainer**: Financial Systems Team
 
-**Current Phase**: API Integration (92% complete) - Next: Service routing and integration testing
+**Current Phase**: Enhanced Query Capabilities Complete - Next: Advanced Features (AR/AP automation)

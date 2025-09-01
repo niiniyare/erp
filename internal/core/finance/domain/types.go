@@ -325,5 +325,59 @@ func (ve ValidationError) Error() string {
 	return ve.Message
 }
 
+// StatementSection represents financial statement sections
+type StatementSection string
+
+const (
+	StatementSectionAssets        StatementSection = "ASSETS"
+	StatementSectionLiabilities   StatementSection = "LIABILITIES"
+	StatementSectionEquity        StatementSection = "EQUITY"
+	StatementSectionRevenue       StatementSection = "REVENUE"
+	StatementSectionExpenses      StatementSection = "EXPENSES"
+	StatementSectionOtherIncome   StatementSection = "OTHER_INCOME"
+	StatementSectionOtherExpenses StatementSection = "OTHER_EXPENSES"
+)
+
+// IsValid validates if the StatementSection is one of the defined constants
+func (ss StatementSection) IsValid() bool {
+	switch ss {
+	case StatementSectionAssets, StatementSectionLiabilities, StatementSectionEquity,
+		StatementSectionRevenue, StatementSectionExpenses, StatementSectionOtherIncome,
+		StatementSectionOtherExpenses:
+		return true
+	default:
+		return false
+	}
+}
+
+// String returns the string representation of StatementSection
+func (ss StatementSection) String() string {
+	return string(ss)
+}
+
+// CashFlowClassification represents cash flow statement classifications
+type CashFlowClassification string
+
+const (
+	CashFlowOperating CashFlowClassification = "OPERATING"
+	CashFlowInvesting CashFlowClassification = "INVESTING"
+	CashFlowFinancing CashFlowClassification = "FINANCING"
+)
+
+// IsValid validates if the CashFlowClassification is one of the defined constants
+func (cfc CashFlowClassification) IsValid() bool {
+	switch cfc {
+	case CashFlowOperating, CashFlowInvesting, CashFlowFinancing:
+		return true
+	default:
+		return false
+	}
+}
+
+// String returns the string representation of CashFlowClassification
+func (cfc CashFlowClassification) String() string {
+	return string(cfc)
+}
+
 // TODO: Add severity levels to ValidationError (ERROR, WARNING, INFO)
 // TODO: Add support for nested field paths (e.g., "entries[0].amount")

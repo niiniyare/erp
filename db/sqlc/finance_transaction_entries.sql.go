@@ -15,15 +15,27 @@ import (
 )
 
 const countAccountEntries = `-- name: CountAccountEntries :one
-SELECT COUNT(*)
-FROM finance_transaction_entries te
-JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.account_id = $1
+SELECT
+  COUNT(*)
+FROM
+  finance_transaction_entries te
+  JOIN finance_transactions t ON te.transaction_id = t.id
+WHERE
+  te.account_id = $1
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
-  AND ($2::date IS NULL OR t.transaction_date >= $2::date)
-  AND ($3::date IS NULL OR t.transaction_date <= $3::date)
-  AND ($4::transaction_status_enum IS NULL OR t.transaction_status = $4::transaction_status_enum)
+  AND (
+    $2::date IS NULL
+    OR t.transaction_date >= $2::date
+  )
+  AND (
+    $3::date IS NULL
+    OR t.transaction_date <= $3::date
+  )
+  AND (
+    $4::transaction_status_enum IS NULL
+    OR t.transaction_status = $4::transaction_status_enum
+  )
 `
 
 type CountAccountEntriesParams struct {
@@ -46,8 +58,8 @@ func (q *Queries) CountAccountEntries(ctx context.Context, arg CountAccountEntri
 }
 
 const createTransactionEntry = `-- name: CreateTransactionEntry :one
-
-INSERT INTO finance_transaction_entries (
+INSERT INTO
+  finance_transaction_entries (
     tenant_id,
     transaction_id,
     entry_number,
@@ -65,25 +77,29 @@ INSERT INTO finance_transaction_entries (
     tax_code,
     tax_rate,
     tax_amount
-) VALUES (
+  )
+VALUES
+  (
     current_tenant_id(),
-    $1, 
-    $2, 
-    $3, 
-    $4, 
-    $5, 
-    $6, 
-    $7, 
-    $8, 
-    $9, 
-    $10, 
-    $11, 
-    $12, 
-    $13, 
-    $14, 
-    $15, 
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10,
+    $11,
+    $12,
+    $13,
+    $14,
+    $15,
     $16
-) RETURNING id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
+  )
+RETURNING
+  id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
 `
 
 type CreateTransactionEntryParams struct {
@@ -160,8 +176,10 @@ func (q *Queries) CreateTransactionEntry(ctx context.Context, arg CreateTransact
 }
 
 const deleteTransactionEntries = `-- name: DeleteTransactionEntries :exec
-DELETE FROM finance_transaction_entries
-WHERE transaction_id = $1 
+DELETE FROM
+  finance_transaction_entries
+WHERE
+  transaction_id = $1
   AND tenant_id = current_tenant_id()
 `
 
@@ -171,8 +189,10 @@ func (q *Queries) DeleteTransactionEntries(ctx context.Context, transactionID uu
 }
 
 const deleteTransactionEntry = `-- name: DeleteTransactionEntry :exec
-DELETE FROM finance_transaction_entries
-WHERE id = $1 
+DELETE FROM
+  finance_transaction_entries
+WHERE
+  id = $1
   AND tenant_id = current_tenant_id()
 `
 
@@ -182,24 +202,37 @@ func (q *Queries) DeleteTransactionEntry(ctx context.Context, id uuid.UUID) erro
 }
 
 const getAccountEntries = `-- name: GetAccountEntries :many
-SELECT 
-    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
-    t.transaction_number,
-    t.transaction_date,
-    t.transaction_type,
-    t.transaction_status,
-    t.description AS transaction_description
-FROM finance_transaction_entries te
-JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.account_id = $1
+SELECT
+  te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+  t.transaction_number,
+  t.transaction_date,
+  t.transaction_type,
+  t.transaction_status,
+  t.description AS transaction_description
+FROM
+  finance_transaction_entries te
+  JOIN finance_transactions t ON te.transaction_id = t.id
+WHERE
+  te.account_id = $1
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
-  AND ($2::date IS NULL OR t.transaction_date >= $2::date)
-  AND ($3::date IS NULL OR t.transaction_date <= $3::date)
-  AND ($4::transaction_status_enum IS NULL OR t.transaction_status = $4::transaction_status_enum)
-ORDER BY t.transaction_date DESC, te.entry_number ASC
-LIMIT $6
-OFFSET $5
+  AND (
+    $2::date IS NULL
+    OR t.transaction_date >= $2::date
+  )
+  AND (
+    $3::date IS NULL
+    OR t.transaction_date <= $3::date
+  )
+  AND (
+    $4::transaction_status_enum IS NULL
+    OR t.transaction_status = $4::transaction_status_enum
+  )
+ORDER BY
+  t.transaction_date DESC,
+  te.entry_number ASC
+LIMIT
+  $6 OFFSET $5
 `
 
 type GetAccountEntriesParams struct {
@@ -303,19 +336,40 @@ func (q *Queries) GetAccountEntries(ctx context.Context, arg GetAccountEntriesPa
 }
 
 const getAccountTransactionBalance = `-- name: GetAccountTransactionBalance :one
-SELECT 
-    account_id,
-    SUM(CASE WHEN debit_amount > 0 THEN debit_amount ELSE 0 END) as total_debits,
-    SUM(CASE WHEN credit_amount > 0 THEN credit_amount ELSE 0 END) as total_credits,
-    SUM(CASE WHEN debit_amount > 0 THEN debit_amount ELSE -credit_amount END) as net_balance
-FROM finance_transaction_entries te
-JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.account_id = $1 
+SELECT
+  account_id,
+  SUM(
+    CASE
+      WHEN debit_amount > 0 THEN debit_amount
+      ELSE 0
+    END
+  ) AS total_debits,
+  SUM(
+    CASE
+      WHEN credit_amount > 0 THEN credit_amount
+      ELSE 0
+    END
+  ) AS total_credits,
+  SUM(
+    CASE
+      WHEN debit_amount > 0 THEN debit_amount
+      ELSE - credit_amount
+    END
+  ) AS net_balance
+FROM
+  finance_transaction_entries te
+  JOIN finance_transactions t ON te.transaction_id = t.id
+WHERE
+  te.account_id = $1
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND t.transaction_status = 'POSTED'
-  AND ($2::date IS NULL OR t.posting_date <= $2)
-GROUP BY account_id
+  AND (
+    $2::date IS NULL
+    OR t.posting_date <= $2
+  )
+GROUP BY
+  account_id
 `
 
 type GetAccountTransactionBalanceParams struct {
@@ -343,22 +397,32 @@ func (q *Queries) GetAccountTransactionBalance(ctx context.Context, arg GetAccou
 }
 
 const getEntriesByCostCenter = `-- name: GetEntriesByCostCenter :many
-SELECT 
-    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
-    a.account_code,
-    a.account_name,
-    t.transaction_number,
-    t.transaction_date
-FROM finance_transaction_entries te
-JOIN finance_accounts a ON te.account_id = a.id
-JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.cost_center = $1 
+SELECT
+  te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+  a.account_code,
+  a.account_name,
+  t.transaction_number,
+  t.transaction_date
+FROM
+  finance_transaction_entries te
+  JOIN finance_accounts a ON te.account_id = a.id
+  JOIN finance_transactions t ON te.transaction_id = t.id
+WHERE
+  te.cost_center = $1
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND t.transaction_status = 'POSTED'
-  AND ($2::date IS NULL OR t.transaction_date >= $2)
-  AND ($3::date IS NULL OR t.transaction_date <= $3)
-ORDER BY t.transaction_date DESC, te.entry_number ASC
+  AND (
+    $2::date IS NULL
+    OR t.transaction_date >= $2
+  )
+  AND (
+    $3::date IS NULL
+    OR t.transaction_date <= $3
+  )
+ORDER BY
+  t.transaction_date DESC,
+  te.entry_number ASC
 `
 
 type GetEntriesByCostCenterParams struct {
@@ -451,21 +515,31 @@ func (q *Queries) GetEntriesByCostCenter(ctx context.Context, arg GetEntriesByCo
 
 const getEntriesByDepartment = `-- name: GetEntriesByDepartment :many
 SELECT
-    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
-    a.account_code,
-    a.account_name,
-    t.transaction_number,
-    t.transaction_date
-FROM finance_transaction_entries te
-JOIN finance_accounts a ON te.account_id = a.id
-JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.department = $1
+  te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+  a.account_code,
+  a.account_name,
+  t.transaction_number,
+  t.transaction_date
+FROM
+  finance_transaction_entries te
+  JOIN finance_accounts a ON te.account_id = a.id
+  JOIN finance_transactions t ON te.transaction_id = t.id
+WHERE
+  te.department = $1
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND t.transaction_status = 'POSTED'
-  AND ($2::date IS NULL OR t.transaction_date >= $2::date)
-  AND ($3::date IS NULL OR t.transaction_date <= $3::date)
-ORDER BY t.transaction_date DESC, te.entry_number ASC
+  AND (
+    $2::date IS NULL
+    OR t.transaction_date >= $2::date
+  )
+  AND (
+    $3::date IS NULL
+    OR t.transaction_date <= $3::date
+  )
+ORDER BY
+  t.transaction_date DESC,
+  te.entry_number ASC
 `
 
 type GetEntriesByDepartmentParams struct {
@@ -557,22 +631,32 @@ func (q *Queries) GetEntriesByDepartment(ctx context.Context, arg GetEntriesByDe
 }
 
 const getEntriesByProject = `-- name: GetEntriesByProject :many
-SELECT 
-    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
-    a.account_code,
-    a.account_name,
-    t.transaction_number,
-    t.transaction_date
-FROM finance_transaction_entries te
-JOIN finance_accounts a ON te.account_id = a.id
-JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.project_id = $1 
+SELECT
+  te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+  a.account_code,
+  a.account_name,
+  t.transaction_number,
+  t.transaction_date
+FROM
+  finance_transaction_entries te
+  JOIN finance_accounts a ON te.account_id = a.id
+  JOIN finance_transactions t ON te.transaction_id = t.id
+WHERE
+  te.project_id = $1
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND t.transaction_status = 'POSTED'
-  AND ($2::date IS NULL OR t.transaction_date >= $2)
-  AND ($3::date IS NULL OR t.transaction_date <= $3)
-ORDER BY t.transaction_date DESC, te.entry_number ASC
+  AND (
+    $2::date IS NULL
+    OR t.transaction_date >= $2
+  )
+  AND (
+    $3::date IS NULL
+    OR t.transaction_date <= $3
+  )
+ORDER BY
+  t.transaction_date DESC,
+  te.entry_number ASC
 `
 
 type GetEntriesByProjectParams struct {
@@ -664,22 +748,28 @@ func (q *Queries) GetEntriesByProject(ctx context.Context, arg GetEntriesByProje
 }
 
 const getEntryTaxSummary = `-- name: GetEntryTaxSummary :many
-SELECT 
-    te.tax_code,
-    te.tax_rate,
-    COUNT(*) as entry_count,
-    SUM(te.debit_amount + te.credit_amount) as taxable_amount,
-    SUM(te.tax_amount) as total_tax
-FROM finance_transaction_entries te
-JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.tenant_id = current_tenant_id()
+SELECT
+  te.tax_code,
+  te.tax_rate,
+  COUNT(*) AS entry_count,
+  SUM(te.debit_amount + te.credit_amount) AS taxable_amount,
+  SUM(te.tax_amount) AS total_tax
+FROM
+  finance_transaction_entries te
+  JOIN finance_transactions t ON te.transaction_id = t.id
+WHERE
+  te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND te.tax_code IS NOT NULL
   AND t.transaction_status = 'POSTED'
   AND t.transaction_date >= $1
   AND t.transaction_date <= $2
-GROUP BY te.tax_code, te.tax_rate
-ORDER BY te.tax_code, te.tax_rate
+GROUP BY
+  te.tax_code,
+  te.tax_rate
+ORDER BY
+  te.tax_code,
+  te.tax_rate
 `
 
 type GetEntryTaxSummaryParams struct {
@@ -722,19 +812,22 @@ func (q *Queries) GetEntryTaxSummary(ctx context.Context, arg GetEntryTaxSummary
 }
 
 const getTransactionEntriesWithAccounts = `-- name: GetTransactionEntriesWithAccounts :many
-SELECT 
-    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
-    a.account_code,
-    a.account_name,
-    a.root_type,
-    a.account_type,
-    a.normal_balance
-FROM finance_transaction_entries te
-JOIN finance_accounts a ON te.account_id = a.id
-WHERE te.transaction_id = $1 
+SELECT
+  te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+  a.account_code,
+  a.account_name,
+  a.root_type,
+  a.account_type,
+  a.normal_balance
+FROM
+  finance_transaction_entries te
+  JOIN finance_accounts a ON te.account_id = a.id
+WHERE
+  te.transaction_id = $1
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
-ORDER BY te.entry_number ASC
+ORDER BY
+  te.entry_number ASC
 `
 
 type GetTransactionEntriesWithAccountsRow struct {
@@ -822,8 +915,12 @@ func (q *Queries) GetTransactionEntriesWithAccounts(ctx context.Context, transac
 }
 
 const getTransactionEntryByID = `-- name: GetTransactionEntryByID :one
-SELECT id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at FROM finance_transaction_entries
-WHERE id = $1 
+SELECT
+  id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
+FROM
+  finance_transaction_entries
+WHERE
+  id = $1
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -863,31 +960,83 @@ func (q *Queries) GetTransactionEntryByID(ctx context.Context, id uuid.UUID) (*F
 
 const getTrialBalance = `-- name: GetTrialBalance :many
 SELECT
-    a.id,
-    a.account_code,
-    a.account_name,
-    a.root_type,
-    a.account_type,
-    a.normal_balance,
-    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE 0 END), 0) AS total_debits,
-    COALESCE(SUM(CASE WHEN te.credit_amount > 0 THEN te.credit_amount ELSE 0 END), 0) AS total_credits,
-    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE -te.credit_amount END), 0) AS net_balance
-FROM finance_accounts a
-LEFT JOIN finance_transaction_entries te ON a.id = te.account_id
-    AND te.tenant_id = current_tenant_id()
-    AND te.deleted_at IS NULL
-LEFT JOIN finance_transactions t ON te.transaction_id = t.id
-    AND t.transaction_status = 'POSTED'
-    AND ($1::date IS NULL OR t.posting_date <= $1::date)
-WHERE a.tenant_id = current_tenant_id()
+  a.id,
+  a.account_code,
+  a.account_name,
+  a.root_type,
+  a.account_type,
+  a.normal_balance,
+  COALESCE(
+    SUM(
+      CASE
+        WHEN te.debit_amount > 0 THEN te.debit_amount
+        ELSE 0
+      END
+    ),
+    0
+  ) AS total_debits,
+  COALESCE(
+    SUM(
+      CASE
+        WHEN te.credit_amount > 0 THEN te.credit_amount
+        ELSE 0
+      END
+    ),
+    0
+  ) AS total_credits,
+  COALESCE(
+    SUM(
+      CASE
+        WHEN te.debit_amount > 0 THEN te.debit_amount
+        ELSE - te.credit_amount
+      END
+    ),
+    0
+  ) AS net_balance
+FROM
+  finance_accounts a
+  LEFT JOIN finance_transaction_entries te ON a.id = te.account_id
+  AND te.tenant_id = current_tenant_id()
+  AND te.deleted_at IS NULL
+  LEFT JOIN finance_transactions t ON te.transaction_id = t.id
+  AND t.transaction_status = 'POSTED'
+  AND (
+    $1::date IS NULL
+    OR t.posting_date <= $1::date
+  )
+WHERE
+  a.tenant_id = current_tenant_id()
   AND a.deleted_at IS NULL
-  AND a.is_active = true
-GROUP BY a.id, a.account_code, a.account_name, a.root_type, a.account_type, a.normal_balance
+  AND a.is_active = TRUE
+GROUP BY
+  a.id,
+  a.account_code,
+  a.account_name,
+  a.root_type,
+  a.account_type,
+  a.normal_balance
 HAVING
-    COALESCE(SUM(CASE WHEN te.debit_amount > 0 THEN te.debit_amount ELSE 0 END), 0) != 0 OR
-    COALESCE(SUM(CASE WHEN te.credit_amount > 0 THEN te.credit_amount ELSE 0 END), 0) != 0 OR
-    $2 = true
-ORDER BY a.account_code ASC
+  COALESCE(
+    SUM(
+      CASE
+        WHEN te.debit_amount > 0 THEN te.debit_amount
+        ELSE 0
+      END
+    ),
+    0
+  ) != 0
+  OR COALESCE(
+    SUM(
+      CASE
+        WHEN te.credit_amount > 0 THEN te.credit_amount
+        ELSE 0
+      END
+    ),
+    0
+  ) != 0
+  OR $2 = TRUE
+ORDER BY
+  a.account_code ASC
 `
 
 type GetTrialBalanceParams struct {
@@ -938,21 +1087,24 @@ func (q *Queries) GetTrialBalance(ctx context.Context, arg GetTrialBalanceParams
 }
 
 const getUnreconciledEntries = `-- name: GetUnreconciledEntries :many
-SELECT 
-    te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
-    a.account_code,
-    a.account_name,
-    t.transaction_number,
-    t.transaction_date
-FROM finance_transaction_entries te
-JOIN finance_accounts a ON te.account_id = a.id
-JOIN finance_transactions t ON te.transaction_id = t.id
-WHERE te.account_id = $1 
+SELECT
+  te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at,
+  a.account_code,
+  a.account_name,
+  t.transaction_number,
+  t.transaction_date
+FROM
+  finance_transaction_entries te
+  JOIN finance_accounts a ON te.account_id = a.id
+  JOIN finance_transactions t ON te.transaction_id = t.id
+WHERE
+  te.account_id = $1
   AND te.reconciled = false
   AND te.tenant_id = current_tenant_id()
   AND te.deleted_at IS NULL
   AND t.transaction_status = 'POSTED'
-ORDER BY t.transaction_date ASC
+ORDER BY
+  t.transaction_date ASC
 `
 
 type GetUnreconciledEntriesRow struct {
@@ -1038,11 +1190,16 @@ func (q *Queries) GetUnreconciledEntries(ctx context.Context, accountID uuid.UUI
 }
 
 const listTransactionEntries = `-- name: ListTransactionEntries :many
-SELECT id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at FROM finance_transaction_entries
-WHERE transaction_id = $1 
+SELECT
+  id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
+FROM
+  finance_transaction_entries
+WHERE
+  transaction_id = $1
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-ORDER BY entry_number ASC
+ORDER BY
+  entry_number ASC
 `
 
 func (q *Queries) ListTransactionEntries(ctx context.Context, transactionID uuid.UUID) ([]*FinanceTransactionEntry, error) {
@@ -1092,13 +1249,15 @@ func (q *Queries) ListTransactionEntries(ctx context.Context, transactionID uuid
 }
 
 const markEntriesReconciled = `-- name: MarkEntriesReconciled :exec
-UPDATE finance_transaction_entries
+UPDATE
+  finance_transaction_entries
 SET
-    reconciled = true,
-    reconciled_date = $1,
-    reconciliation_reference = $2,
-    updated_at = NOW()
-WHERE id = ANY($3::uuid[])
+  reconciled = TRUE,
+  reconciled_date = $1,
+  reconciliation_reference = $2,
+  updated_at = NOW()
+WHERE
+  id = ANY($3::uuid [])
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -1115,24 +1274,27 @@ func (q *Queries) MarkEntriesReconciled(ctx context.Context, arg MarkEntriesReco
 }
 
 const updateTransactionEntry = `-- name: UpdateTransactionEntry :one
-UPDATE finance_transaction_entries
-SET 
-    account_id    = COALESCE($1, account_id),
-    debit_amount  = COALESCE($2, debit_amount),
-    credit_amount = COALESCE($3, credit_amount),
-    description   = COALESCE($4, description),
-    reference     = COALESCE($5, reference),
-    cost_center   = COALESCE($6, cost_center),
-    department    = COALESCE($7, department),
-    project_id    = COALESCE($8, project_id),
-    tax_code      = COALESCE($9, tax_code),
-    tax_rate      = COALESCE($10, tax_rate),
-    tax_amount    = COALESCE($11, tax_amount),
-    updated_at    = NOW()
-WHERE id = $12
+UPDATE
+  finance_transaction_entries
+SET
+  account_id = COALESCE($1, account_id),
+  debit_amount = COALESCE($2, debit_amount),
+  credit_amount = COALESCE($3, credit_amount),
+  description = COALESCE($4, description),
+  reference = COALESCE($5, reference),
+  cost_center = COALESCE($6, cost_center),
+  department = COALESCE($7, department),
+  project_id = COALESCE($8, project_id),
+  tax_code = COALESCE($9, tax_code),
+  tax_rate = COALESCE($10, tax_rate),
+  tax_amount = COALESCE($11, tax_amount),
+  updated_at = NOW()
+WHERE
+  id = $12
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
+RETURNING
+  id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
 `
 
 type UpdateTransactionEntryParams struct {
@@ -1197,16 +1359,19 @@ func (q *Queries) UpdateTransactionEntry(ctx context.Context, arg UpdateTransact
 }
 
 const validateTransactionEntriesBalance = `-- name: ValidateTransactionEntriesBalance :one
-SELECT 
-    transaction_id,
-    SUM(debit_amount) as total_debits,
-    SUM(credit_amount) as total_credits,
-    (SUM(debit_amount) = SUM(credit_amount)) as is_balanced
-FROM finance_transaction_entries
-WHERE transaction_id = $1 
+SELECT
+  transaction_id,
+  SUM(debit_amount) AS total_debits,
+  SUM(credit_amount) AS total_credits,
+  (SUM(debit_amount) = SUM(credit_amount)) AS is_balanced
+FROM
+  finance_transaction_entries
+WHERE
+  transaction_id = $1
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-GROUP BY transaction_id
+GROUP BY
+  transaction_id
 `
 
 type ValidateTransactionEntriesBalanceRow struct {

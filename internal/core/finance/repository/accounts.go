@@ -636,6 +636,437 @@ func mapSQLCRootTypeToDomain(sqlcRootType string) domain.RootType {
 	}
 }
 
+// Enhanced view-based operations
+
+func (r *chartOfAccountsRepository) GetAccountWithGroups(ctx context.Context, id uuid.UUID) (*domain.AccountWithGroups, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountWithGroups")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result *domain.AccountWithGroups
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		sqlcAccount, err := s.GetAccountWithGroupsByID(ctx, id)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_account_with_groups")
+		}
+
+		result, err = mapSQLCAccountWithGroupsToDomain(*sqlcAccount)
+		return err
+	})
+
+	return result, err
+}
+
+func (r *chartOfAccountsRepository) GetAccountWithGroupsByCode(ctx context.Context, code string) (*domain.AccountWithGroups, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountWithGroupsByCode")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result *domain.AccountWithGroups
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		sqlcAccount, err := s.GetAccountWithGroupsByCode(ctx, code)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_account_with_groups_by_code")
+		}
+
+		result, err = mapSQLCAccountWithGroupsToDomain(*sqlcAccount)
+		return err
+	})
+
+	return result, err
+}
+
+func (r *chartOfAccountsRepository) ListAccountsWithGroups(ctx context.Context, filter *domain.AccountFilter) ([]*domain.AccountWithGroups, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.ListAccountsWithGroups")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.AccountWithGroups
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params, err := mapAccountFilterToSQLCWithGroups(filter)
+		if err != nil {
+			return err
+		}
+
+		sqlcAccounts, err := s.ListAccountsWithGroups(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "list_accounts_with_groups")
+		}
+
+		result = make([]*domain.AccountWithGroups, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i], err = mapSQLCAccountWithGroupsToDomain(*sqlcAccount)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+func (r *chartOfAccountsRepository) SearchAccountsWithGroups(ctx context.Context, query string, limit int) ([]*domain.AccountWithGroups, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.SearchAccountsWithGroups")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.AccountWithGroups
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params := db.SearchAccountsWithGroupInfoParams{
+			SearchTerm: query,
+			Limit:      int32(limit),
+			Offset:     0,
+		}
+
+		sqlcAccounts, err := s.SearchAccountsWithGroupInfo(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "search_accounts_with_groups")
+		}
+
+		result = make([]*domain.AccountWithGroups, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i], err = mapSQLCAccountWithGroupsToDomain(*sqlcAccount)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+func (r *chartOfAccountsRepository) GetLeafAccountsOnly(ctx context.Context, rootType *string) ([]*domain.AccountWithGroups, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetLeafAccountsOnly")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.AccountWithGroups
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		var rootTypeStr string
+		if rootType != nil {
+			rootTypeStr = *rootType
+		}
+		params := db.GetLeafAccountsWithGroupsParams{
+			EntityID: nil, // Will be set by tenant context
+			RootType: rootTypeStr,
+		}
+
+		sqlcAccounts, err := s.GetLeafAccountsWithGroups(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_leaf_accounts_only")
+		}
+
+		result = make([]*domain.AccountWithGroups, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i], err = mapSQLCAccountWithGroupsToDomain(*sqlcAccount)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+// Complete chart of accounts operations
+
+func (r *chartOfAccountsRepository) GetCompleteChartOfAccounts(ctx context.Context, filter *domain.ChartOfAccountsFilter) ([]*domain.ChartOfAccountsComplete, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetCompleteChartOfAccounts")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.ChartOfAccountsComplete
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params, err := mapChartOfAccountsFilterToSQLC(filter)
+		if err != nil {
+			return err
+		}
+
+		sqlcAccounts, err := s.GetChartOfAccountsComplete(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_complete_chart_of_accounts")
+		}
+
+		result = make([]*domain.ChartOfAccountsComplete, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCChartOfAccountsCompleteToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+func (r *chartOfAccountsRepository) GetAccountForReporting(ctx context.Context, accountID uuid.UUID) (*domain.ChartOfAccountsComplete, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountForReporting")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result *domain.ChartOfAccountsComplete
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		sqlcAccount, err := s.GetAccountReportingInfo(ctx, accountID)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_account_for_reporting")
+		}
+
+		result = mapSQLCChartOfAccountsCompleteToDomain(*sqlcAccount)
+		return nil
+	})
+
+	return result, err
+}
+
+func (r *chartOfAccountsRepository) GetAccountsByStatementSection(ctx context.Context, section string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountsByStatementSection")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.ChartOfAccountsComplete
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params := db.GetAccountsByStatementParams{
+			StatementSection: &section,
+			EntityID:         entityID,
+		}
+
+		sqlcAccounts, err := s.GetAccountsByStatement(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_accounts_by_statement_section")
+		}
+
+		result = make([]*domain.ChartOfAccountsComplete, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCChartOfAccountsCompleteToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+func (r *chartOfAccountsRepository) GetAccountsByGroup(ctx context.Context, groupCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountsByGroup")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.ChartOfAccountsComplete
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params := db.GetAccountsByGroupCodeParams{
+			GroupCode: &groupCode,
+			EntityID:  entityID,
+		}
+
+		sqlcAccounts, err := s.GetAccountsByGroupCode(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_accounts_by_group")
+		}
+
+		result = make([]*domain.ChartOfAccountsComplete, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCChartOfAccountsCompleteToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+func (r *chartOfAccountsRepository) GetAccountsByHeader(ctx context.Context, headerCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountsByHeader")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.ChartOfAccountsComplete
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params := db.GetAccountsByHeaderCodeParams{
+			HeaderCode: &headerCode,
+			EntityID:   entityID,
+		}
+
+		sqlcAccounts, err := s.GetAccountsByHeaderCode(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_accounts_by_header")
+		}
+
+		result = make([]*domain.ChartOfAccountsComplete, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCChartOfAccountsCompleteToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+// Financial reporting operations
+
+func (r *chartOfAccountsRepository) GetTrialBalanceAccounts(ctx context.Context, entityID *uuid.UUID, nonZeroOnly bool) ([]*domain.TrialBalanceSummary, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetTrialBalanceAccounts")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.TrialBalanceSummary
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params := db.GetTrialBalanceDataParams{
+			EntityID:    entityID,
+			NonZeroOnly: nonZeroOnly,
+		}
+
+		sqlcAccounts, err := s.GetTrialBalanceData(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_trial_balance_accounts")
+		}
+
+		result = make([]*domain.TrialBalanceSummary, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCTrialBalanceSummaryToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+func (r *chartOfAccountsRepository) GetAccountsWithBalances(ctx context.Context, filter *domain.BalanceFilter) ([]*domain.ChartOfAccountsComplete, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountsWithBalances")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.ChartOfAccountsComplete
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params, err := mapBalanceFilterToSQLC(filter)
+		if err != nil {
+			return err
+		}
+
+		sqlcAccounts, err := s.GetAccountBalancesList(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_accounts_with_balances")
+		}
+
+		result = make([]*domain.ChartOfAccountsComplete, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCAccountBalanceRowToChartOfAccountsComplete(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+func (r *chartOfAccountsRepository) GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*domain.CashFlowAccount, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetCashFlowAccounts")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.CashFlowAccount
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		sqlcAccounts, err := s.GetCashFlowAccountsList(ctx, entityID)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_cash_flow_accounts")
+		}
+
+		result = make([]*domain.CashFlowAccount, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCCashFlowAccountToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+func (r *chartOfAccountsRepository) GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*domain.AccountGroupSummary, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountSummaryByGroup")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.AccountGroupSummary
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		sqlcAccounts, err := s.GetAccountGroupSummary(ctx, entityID)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_account_summary_by_group")
+		}
+
+		result = make([]*domain.AccountGroupSummary, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCAccountGroupSummaryToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
 // Helper functions
 func getStringValue(s *string) string {
 	if s == nil {

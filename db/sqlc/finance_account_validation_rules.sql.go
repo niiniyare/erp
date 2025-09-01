@@ -12,13 +12,17 @@ import (
 )
 
 const activateAccountValidationRule = `-- name: ActivateAccountValidationRule :one
-UPDATE finance_account_validation_rules 
-SET 
-    is_active = true,
-    updated_at = now(),
-    updated_by = $2
-WHERE id = $1 AND tenant_id = current_tenant_id()
-RETURNING id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
+UPDATE
+  finance_account_validation_rules
+SET
+  is_active = TRUE,
+  updated_at = NOW(),
+  updated_by = $2
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+RETURNING
+  id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
 `
 
 type ActivateAccountValidationRuleParams struct {
@@ -55,11 +59,24 @@ func (q *Queries) ActivateAccountValidationRule(ctx context.Context, arg Activat
 }
 
 const countAccountValidationRules = `-- name: CountAccountValidationRules :one
-SELECT count(*) FROM finance_account_validation_rules 
-WHERE tenant_id = current_tenant_id()
-AND ($1::text IS NULL OR account_type = $1)
-AND ($2::text IS NULL OR rule_severity = $2)
-AND ($3::boolean IS NULL OR is_active = $3)
+SELECT
+  count(*)
+FROM
+  finance_account_validation_rules
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::text IS NULL
+    OR account_type = $1
+  )
+  AND (
+    $2::text IS NULL
+    OR rule_severity = $2
+  )
+  AND (
+    $3::boolean IS NULL
+    OR is_active = $3
+  )
 `
 
 type CountAccountValidationRulesParams struct {
@@ -76,13 +93,32 @@ func (q *Queries) CountAccountValidationRules(ctx context.Context, arg CountAcco
 }
 
 const createAccountValidationRule = `-- name: CreateAccountValidationRule :one
-INSERT INTO finance_account_validation_rules (
-    tenant_id, rule_name, rule_description, account_type, 
-    root_type, validation_parameters, rule_severity, is_active, 
+INSERT INTO
+  finance_account_validation_rules (
+    tenant_id,
+    rule_name,
+    rule_description,
+    account_type,
+    root_type,
+    validation_parameters,
+    rule_severity,
+    is_active,
     created_by
-) VALUES (
-    current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
+  )
+VALUES
+  (
+    current_tenant_id(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8
+  )
+RETURNING
+  id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
 `
 
 type CreateAccountValidationRuleParams struct {
@@ -134,13 +170,17 @@ func (q *Queries) CreateAccountValidationRule(ctx context.Context, arg CreateAcc
 }
 
 const deactivateAccountValidationRule = `-- name: DeactivateAccountValidationRule :one
-UPDATE finance_account_validation_rules 
-SET 
-    is_active = false,
-    updated_at = now(),
-    updated_by = $2
-WHERE id = $1 AND tenant_id = current_tenant_id()
-RETURNING id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
+UPDATE
+  finance_account_validation_rules
+SET
+  is_active = false,
+  updated_at = NOW(),
+  updated_by = $2
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+RETURNING
+  id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
 `
 
 type DeactivateAccountValidationRuleParams struct {
@@ -177,8 +217,11 @@ func (q *Queries) DeactivateAccountValidationRule(ctx context.Context, arg Deact
 }
 
 const deleteAccountValidationRule = `-- name: DeleteAccountValidationRule :exec
-DELETE FROM finance_account_validation_rules 
-WHERE id = $1 AND tenant_id = current_tenant_id()
+DELETE FROM
+  finance_account_validation_rules
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
 `
 
 func (q *Queries) DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error {
@@ -187,8 +230,13 @@ func (q *Queries) DeleteAccountValidationRule(ctx context.Context, id uuid.UUID)
 }
 
 const getAccountValidationRule = `-- name: GetAccountValidationRule :one
-SELECT id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by FROM finance_account_validation_rules 
-WHERE id = $1 AND tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
+FROM
+  finance_account_validation_rules
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
 `
 
 func (q *Queries) GetAccountValidationRule(ctx context.Context, id uuid.UUID) (*FinanceAccountValidationRule, error) {
@@ -220,10 +268,15 @@ func (q *Queries) GetAccountValidationRule(ctx context.Context, id uuid.UUID) (*
 }
 
 const getActiveValidationRules = `-- name: GetActiveValidationRules :many
-SELECT id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by FROM finance_account_validation_rules 
-WHERE tenant_id = current_tenant_id()
-AND is_active = true
-ORDER BY rule_name
+SELECT
+  id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
+FROM
+  finance_account_validation_rules
+WHERE
+  tenant_id = current_tenant_id()
+  AND is_active = TRUE
+ORDER BY
+  rule_name
 `
 
 func (q *Queries) GetActiveValidationRules(ctx context.Context) ([]*FinanceAccountValidationRule, error) {
@@ -268,10 +321,15 @@ func (q *Queries) GetActiveValidationRules(ctx context.Context) ([]*FinanceAccou
 }
 
 const getValidationRulesByAccountType = `-- name: GetValidationRulesByAccountType :many
-SELECT id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by FROM finance_account_validation_rules 
-WHERE tenant_id = current_tenant_id()
-AND account_type = $1
-ORDER BY rule_name
+SELECT
+  id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
+FROM
+  finance_account_validation_rules
+WHERE
+  tenant_id = current_tenant_id()
+  AND account_type = $1
+ORDER BY
+  rule_name
 `
 
 func (q *Queries) GetValidationRulesByAccountType(ctx context.Context, accountType *string) ([]*FinanceAccountValidationRule, error) {
@@ -316,13 +374,28 @@ func (q *Queries) GetValidationRulesByAccountType(ctx context.Context, accountTy
 }
 
 const listAccountValidationRules = `-- name: ListAccountValidationRules :many
-SELECT id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by FROM finance_account_validation_rules 
-WHERE tenant_id = current_tenant_id()
-AND ($1::text IS NULL OR account_type = $1)
-AND ($2::text IS NULL OR rule_severity = $2)
-AND ($3::boolean IS NULL OR is_active = $3)
-ORDER BY rule_name
-LIMIT $4 OFFSET $5
+SELECT
+  id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
+FROM
+  finance_account_validation_rules
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::text IS NULL
+    OR account_type = $1
+  )
+  AND (
+    $2::text IS NULL
+    OR rule_severity = $2
+  )
+  AND (
+    $3::boolean IS NULL
+    OR is_active = $3
+  )
+ORDER BY
+  rule_name
+LIMIT
+  $4 OFFSET $5
 `
 
 type ListAccountValidationRulesParams struct {
@@ -381,17 +454,21 @@ func (q *Queries) ListAccountValidationRules(ctx context.Context, arg ListAccoun
 }
 
 const updateAccountValidationRule = `-- name: UpdateAccountValidationRule :one
-UPDATE finance_account_validation_rules 
-SET 
-    rule_name = COALESCE($2, rule_name),
-    rule_description = COALESCE($3, rule_description),
-    validation_parameters = COALESCE($4, validation_parameters),
-    rule_severity = COALESCE($5, rule_severity),
-    is_active = COALESCE($6, is_active),
-    updated_at = now(),
-    updated_by = $7
-WHERE id = $1 AND tenant_id = current_tenant_id()
-RETURNING id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
+UPDATE
+  finance_account_validation_rules
+SET
+  rule_name = COALESCE($2, rule_name),
+  rule_description = COALESCE($3, rule_description),
+  validation_parameters = COALESCE($4, validation_parameters),
+  rule_severity = COALESCE($5, rule_severity),
+  is_active = COALESCE($6, is_active),
+  updated_at = NOW(),
+  updated_by = $7
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+RETURNING
+  id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateAccountValidationRuleParams struct {

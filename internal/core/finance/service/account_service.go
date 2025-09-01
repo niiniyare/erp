@@ -14,6 +14,7 @@ import (
 )
 
 type AccountService interface {
+	// Core account operations
 	CreateAccount(ctx context.Context, req domain.CreateAccountRequest) (*domain.Accounts, error)
 	GetAccountByID(ctx context.Context, id uuid.UUID) (*domain.Accounts, error)
 	GetAccountByCode(ctx context.Context, code string) (*domain.Accounts, error)
@@ -26,6 +27,26 @@ type AccountService interface {
 	GetActiveAccounts(ctx context.Context) ([]*domain.Accounts, error)
 	SearchAccounts(ctx context.Context, query string, limit int) ([]*domain.Accounts, error)
 	UpdateAccountBalance(ctx context.Context, accountID uuid.UUID, balance domain.AccountBalance) error
+
+	// Enhanced view-based operations
+	GetAccountWithGroups(ctx context.Context, id uuid.UUID) (*domain.AccountWithGroups, error)
+	GetAccountWithGroupsByCode(ctx context.Context, code string) (*domain.AccountWithGroups, error)
+	ListAccountsWithGroups(ctx context.Context, filter *domain.AccountFilter) ([]*domain.AccountWithGroups, error)
+	SearchAccountsWithGroups(ctx context.Context, query string, limit int) ([]*domain.AccountWithGroups, error)
+	GetLeafAccountsOnly(ctx context.Context, rootType *string) ([]*domain.AccountWithGroups, error)
+
+	// Complete chart of accounts operations
+	GetCompleteChartOfAccounts(ctx context.Context, filter *domain.ChartOfAccountsFilter) ([]*domain.ChartOfAccountsComplete, error)
+	GetAccountForReporting(ctx context.Context, accountID uuid.UUID) (*domain.ChartOfAccountsComplete, error)
+	GetAccountsByStatementSection(ctx context.Context, section string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error)
+	GetAccountsByGroup(ctx context.Context, groupCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error)
+	GetAccountsByHeader(ctx context.Context, headerCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error)
+
+	// Financial reporting operations
+	GetTrialBalanceAccounts(ctx context.Context, entityID *uuid.UUID, nonZeroOnly bool) ([]*domain.TrialBalanceSummary, error)
+	GetAccountsWithBalances(ctx context.Context, filter *domain.BalanceFilter) ([]*domain.ChartOfAccountsComplete, error)
+	GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*domain.CashFlowAccount, error)
+	GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*domain.AccountGroupSummary, error)
 }
 
 type accountService struct {
@@ -702,10 +723,332 @@ func (s *accountService) UpdateAccountBalance(ctx context.Context, accountID uui
 	return nil
 }
 
-// Helper function
+// Enhanced view-based operations
+func (s *accountService) GetAccountWithGroups(ctx context.Context, id uuid.UUID) (*domain.AccountWithGroups, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_with_groups",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("account.id", id.String()),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting account with groups by ID",
+		logger.Fields{"account_id": id.String()})
+
+	// TODO: Implement repository method GetAccountWithGroups
+	// This should use the GetAccountWithGroupsByID query
+	account, err := s.repo.GetAccountWithGroups(ctx, id)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get account with groups",
+			logger.Fields{
+				"account_id": id.String(),
+				"error":      err.Error(),
+			})
+		return nil, fmt.Errorf("failed to get account with groups: %w", err)
+	}
+
+	logger.DebugContext(ctx, "Account with groups retrieved successfully",
+		logger.Fields{
+			"account_id":   account.ID.String(),
+			"account_code": account.AccountCode,
+			"group_name":   getStringValue(account.GroupName),
+		})
+
+	return account, nil
+}
+
+func (s *accountService) GetAccountWithGroupsByCode(ctx context.Context, code string) (*domain.AccountWithGroups, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_with_groups_by_code",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("account.code", code),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting account with groups by code",
+		logger.Fields{"account_code": code})
+
+	// TODO: Implement repository method GetAccountWithGroupsByCode
+	account, err := s.repo.GetAccountWithGroupsByCode(ctx, code)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get account with groups by code",
+			logger.Fields{
+				"account_code": code,
+				"error":        err.Error(),
+			})
+		return nil, fmt.Errorf("failed to get account with groups by code: %w", err)
+	}
+
+	return account, nil
+}
+
+func (s *accountService) ListAccountsWithGroups(ctx context.Context, filter *domain.AccountFilter) ([]*domain.AccountWithGroups, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.list_accounts_with_groups",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Listing accounts with groups")
+
+	if filter.Limit == nil || *filter.Limit <= 0 {
+		limit := 50
+		filter.Limit = &limit
+	}
+
+	if *filter.Limit > 1000 {
+		limit := 1000
+		filter.Limit = &limit
+	}
+
+	// TODO: Implement repository method ListAccountsWithGroups
+	accounts, err := s.repo.ListAccountsWithGroups(ctx, filter)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to list accounts with groups",
+			logger.Fields{"error": err.Error()})
+		return nil, fmt.Errorf("failed to list accounts with groups: %w", err)
+	}
+
+	logger.DebugContext(ctx, "Accounts with groups listed successfully",
+		logger.Fields{"count": len(accounts)})
+
+	return accounts, nil
+}
+
+func (s *accountService) SearchAccountsWithGroups(ctx context.Context, query string, limit int) ([]*domain.AccountWithGroups, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.search_accounts_with_groups",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("search.query", query),
+			attribute.Int("search.limit", limit),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Searching accounts with groups",
+		logger.Fields{"query": query, "limit": limit})
+
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 200 {
+		limit = 200
+	}
+
+	// TODO: Implement repository method SearchAccountsWithGroups
+	accounts, err := s.repo.SearchAccountsWithGroups(ctx, query, limit)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to search accounts with groups",
+			logger.Fields{"query": query, "error": err.Error()})
+		return nil, fmt.Errorf("failed to search accounts with groups: %w", err)
+	}
+
+	return accounts, nil
+}
+
+func (s *accountService) GetLeafAccountsOnly(ctx context.Context, rootType *string) ([]*domain.AccountWithGroups, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_leaf_accounts_only",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting leaf accounts only",
+		logger.Fields{"root_type": getStringValue(rootType)})
+
+	// TODO: Implement repository method GetLeafAccountsOnly
+	accounts, err := s.repo.GetLeafAccountsOnly(ctx, rootType)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get leaf accounts",
+			logger.Fields{"error": err.Error()})
+		return nil, fmt.Errorf("failed to get leaf accounts: %w", err)
+	}
+
+	return accounts, nil
+}
+
+// Complete chart of accounts operations
+func (s *accountService) GetCompleteChartOfAccounts(ctx context.Context, filter *domain.ChartOfAccountsFilter) ([]*domain.ChartOfAccountsComplete, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_complete_chart_of_accounts",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting complete chart of accounts")
+
+	if err := filter.Validate(); err != nil && len(err) > 0 {
+		logger.WarnContext(ctx, "Invalid chart of accounts filter",
+			logger.Fields{"errors": len(err)})
+		return nil, fmt.Errorf("invalid filter: %v", err)
+	}
+
+	if filter.Limit == nil || *filter.Limit <= 0 {
+		limit := 100
+		filter.Limit = &limit
+	}
+
+	// TODO: Implement repository method GetCompleteChartOfAccounts
+	accounts, err := s.repo.GetCompleteChartOfAccounts(ctx, filter)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get complete chart of accounts",
+			logger.Fields{"error": err.Error()})
+		return nil, fmt.Errorf("failed to get complete chart of accounts: %w", err)
+	}
+
+	return accounts, nil
+}
+
+func (s *accountService) GetAccountForReporting(ctx context.Context, accountID uuid.UUID) (*domain.ChartOfAccountsComplete, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_for_reporting",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("account.id", accountID.String()),
+		))
+	defer span.End()
+
+	// TODO: Implement repository method GetAccountForReporting
+	account, err := s.repo.GetAccountForReporting(ctx, accountID)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get account for reporting",
+			logger.Fields{"account_id": accountID.String(), "error": err.Error()})
+		return nil, fmt.Errorf("failed to get account for reporting: %w", err)
+	}
+
+	return account, nil
+}
+
+func (s *accountService) GetAccountsByStatementSection(ctx context.Context, section string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_by_statement_section",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("statement.section", section),
+		))
+	defer span.End()
+
+	// TODO: Implement repository method GetAccountsByStatementSection
+	accounts, err := s.repo.GetAccountsByStatementSection(ctx, section, entityID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get accounts by statement section: %w", err)
+	}
+
+	return accounts, nil
+}
+
+func (s *accountService) GetAccountsByGroup(ctx context.Context, groupCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_by_group",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("group.code", groupCode),
+		))
+	defer span.End()
+
+	// TODO: Implement repository method GetAccountsByGroup
+	accounts, err := s.repo.GetAccountsByGroup(ctx, groupCode, entityID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get accounts by group: %w", err)
+	}
+
+	return accounts, nil
+}
+
+func (s *accountService) GetAccountsByHeader(ctx context.Context, headerCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_by_header",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("header.code", headerCode),
+		))
+	defer span.End()
+
+	// TODO: Implement repository method GetAccountsByHeader
+	accounts, err := s.repo.GetAccountsByHeader(ctx, headerCode, entityID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get accounts by header: %w", err)
+	}
+
+	return accounts, nil
+}
+
+// Financial reporting operations
+func (s *accountService) GetTrialBalanceAccounts(ctx context.Context, entityID *uuid.UUID, nonZeroOnly bool) ([]*domain.TrialBalanceSummary, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_trial_balance_accounts",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting trial balance accounts",
+		logger.Fields{"non_zero_only": nonZeroOnly})
+
+	// TODO: Implement repository method GetTrialBalanceAccounts
+	accounts, err := s.repo.GetTrialBalanceAccounts(ctx, entityID, nonZeroOnly)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get trial balance accounts",
+			logger.Fields{"error": err.Error()})
+		return nil, fmt.Errorf("failed to get trial balance accounts: %w", err)
+	}
+
+	return accounts, nil
+}
+
+func (s *accountService) GetAccountsWithBalances(ctx context.Context, filter *domain.BalanceFilter) ([]*domain.ChartOfAccountsComplete, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_with_balances",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	if err := filter.Validate(); err != nil && len(err) > 0 {
+		logger.WarnContext(ctx, "Invalid balance filter",
+			logger.Fields{"errors": len(err)})
+		return nil, fmt.Errorf("invalid filter: %v", err)
+	}
+
+	// TODO: Implement repository method GetAccountsWithBalances
+	accounts, err := s.repo.GetAccountsWithBalances(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get accounts with balances: %w", err)
+	}
+
+	return accounts, nil
+}
+
+func (s *accountService) GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*domain.CashFlowAccount, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_cash_flow_accounts",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting cash flow accounts")
+
+	// TODO: Implement repository method GetCashFlowAccounts
+	accounts, err := s.repo.GetCashFlowAccounts(ctx, entityID)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get cash flow accounts",
+			logger.Fields{"error": err.Error()})
+		return nil, fmt.Errorf("failed to get cash flow accounts: %w", err)
+	}
+
+	return accounts, nil
+}
+
+func (s *accountService) GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*domain.AccountGroupSummary, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_summary_by_group",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting account summary by group")
+
+	// TODO: Implement repository method GetAccountSummaryByGroup
+	summary, err := s.repo.GetAccountSummaryByGroup(ctx, entityID)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get account summary by group",
+			logger.Fields{"error": err.Error()})
+		return nil, fmt.Errorf("failed to get account summary by group: %w", err)
+	}
+
+	return summary, nil
+}
+
+// Helper functions
 func getIntValue(i *int) int {
 	if i == nil {
 		return 0
 	}
 	return *i
+}
+
+func getStringValue(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

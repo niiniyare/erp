@@ -1,7 +1,7 @@
 # Financial Module - API Reference
 
-**Version**: 2.0  
-**Date**: August 31, 2025  
+**Version**: 2.1  
+**Date**: September 1, 2025  
 **Status**: Production  
 **OpenAPI Version**: 3.0.3
 
@@ -33,13 +33,14 @@ The Financial Module API provides comprehensive double-entry bookkeeping, transa
    - [Account Management](#account-management)
    - [Transaction Processing](#transaction-processing)
    - [Financial Reporting](#financial-reporting)
-4. [Search Endpoints](#search-endpoints)
-5. [Data Models](#data-models)
-6. [Error Handling](#error-handling)
-7. [Rate Limiting](#rate-limiting)
-8. [Code Examples](#code-examples)
-9. [Testing](#testing)
-10. [Changelog](#changelog)
+4. [Enhanced Query Endpoints](#enhanced-query-endpoints)
+5. [Search Endpoints](#search-endpoints)
+6. [Data Models](#data-models)
+7. [Error Handling](#error-handling)
+8. [Rate Limiting](#rate-limiting)
+9. [Code Examples](#code-examples)
+10. [Testing](#testing)
+11. [Changelog](#changelog)
 
 ---
 
@@ -734,6 +735,207 @@ Generate trial balance report showing account balances.
   "total_credits": "50000.00",
   "is_balanced": true,
   "generated_at": "2025-08-31T10:30:00Z"
+}
+```
+
+---
+
+## Enhanced Query Endpoints
+
+### Accounts with Groups
+Get accounts with hierarchical group information for enhanced reporting.
+
+**Endpoint**: `GET /api/v1/finance/accounts/with-groups`
+
+**Query Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `entity_id` | uuid | Yes | Entity ID for tenant scoping |
+| `root_type` | string | No | Filter by root type (ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE) |
+| `account_type` | string | No | Filter by account type |
+| `is_active` | boolean | No | Filter by active status (default: true) |
+| `is_leaf_only` | boolean | No | Return only leaf accounts (default: false) |
+| `limit` | integer | No | Page size (default: 50, max: 200) |
+| `offset` | integer | No | Page offset (default: 0) |
+
+**Response** (200 OK):
+```json
+{
+  "accounts": [
+    {
+      "id": "uuid",
+      "account_code": "1100",
+      "account_name": "Cash",
+      "account_description": "Cash accounts",
+      "root_type": "ASSET",
+      "account_type": "BANK", 
+      "account_category": "CURRENT_ASSETS",
+      "normal_balance": "DEBIT",
+      "current_balance": "5000.00",
+      "is_active": true,
+      "group_code": "CA",
+      "group_name": "Current Assets",
+      "group_category": "ASSET",
+      "header_code": "A",
+      "effective_display_order": 1
+    }
+  ],
+  "pagination": {
+    "total": 150,
+    "limit": 50,
+    "offset": 0,
+    "has_more": true
+  }
+}
+```
+
+### Complete Chart of Accounts
+Get comprehensive chart of accounts with full hierarchy and reporting structure.
+
+**Endpoint**: `GET /api/v1/finance/accounts/chart-complete`
+
+**Query Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `entity_id` | uuid | Yes | Entity ID for tenant scoping |
+| `statement_section` | string | No | Filter by statement section |
+| `include_inactive` | boolean | No | Include inactive accounts (default: false) |
+| `include_in_reports` | boolean | No | Filter by reporting status (default: true) |
+
+**Response** (200 OK):
+```json
+{
+  "chart_of_accounts": [
+    {
+      "account_id": "uuid",
+      "account_code": "1100",
+      "account_name": "Cash",
+      "root_type": "ASSET",
+      "account_type": "BANK",
+      "normal_balance": "DEBIT",
+      "current_balance": "5000.00",
+      "group_code": "CA",
+      "group_name": "Current Assets",
+      "group_category": "ASSET",
+      "header_code": "A",
+      "header_name": "Assets",
+      "statement_section": "ASSETS",
+      "cash_flow_classification": "OPERATING",
+      "display_order": 1,
+      "include_in_reports": true,
+      "is_active": true,
+      "is_leaf_account": true
+    }
+  ],
+  "metadata": {
+    "total_accounts": 250,
+    "active_accounts": 200,
+    "reporting_accounts": 180
+  }
+}
+```
+
+### Trial Balance Summary
+Get trial balance data with enhanced grouping and categorization.
+
+**Endpoint**: `GET /api/v1/finance/reports/trial-balance-summary`
+
+**Query Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `entity_id` | uuid | Yes | Entity ID for tenant scoping |
+| `as_of_date` | date | No | Balance as of date (default: current date) |
+| `group_by` | string | No | Group by ROOT_TYPE, GROUP, or STATEMENT_SECTION |
+| `include_zero_balances` | boolean | No | Include zero balance accounts (default: false) |
+
+**Response** (200 OK):
+```json
+{
+  "summary": [
+    {
+      "account_id": "uuid",
+      "account_code": "1100",
+      "account_name": "Cash",
+      "root_type": "ASSET",
+      "normal_balance": "DEBIT",
+      "current_balance": "5000.00",
+      "group_name": "Current Assets",
+      "statement_section": "ASSETS"
+    }
+  ],
+  "totals": {
+    "total_debits": "25000.00",
+    "total_credits": "25000.00",
+    "is_balanced": true
+  },
+  "generated_at": "2025-09-01T10:30:00Z"
+}
+```
+
+### Cash Flow Accounts
+Get accounts classified for cash flow statement reporting.
+
+**Endpoint**: `GET /api/v1/finance/accounts/cash-flow`
+
+**Query Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `entity_id` | uuid | Yes | Entity ID for tenant scoping |
+| `classification` | string | No | Filter by OPERATING, INVESTING, or FINANCING |
+| `non_zero_only` | boolean | No | Include only non-zero balances (default: true) |
+
+**Response** (200 OK):
+```json
+{
+  "accounts": [
+    {
+      "account_id": "uuid",
+      "account_code": "1100",
+      "account_name": "Cash",
+      "current_balance": "5000.00",
+      "cash_flow_classification": "OPERATING",
+      "group_name": "Current Assets"
+    }
+  ],
+  "classifications": {
+    "OPERATING": "15000.00",
+    "INVESTING": "-5000.00", 
+    "FINANCING": "10000.00"
+  }
+}
+```
+
+### Account Group Summary
+Get summary statistics by account groups for management reporting.
+
+**Endpoint**: `GET /api/v1/finance/accounts/group-summary`
+
+**Query Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `entity_id` | uuid | Yes | Entity ID for tenant scoping |
+| `group_category` | string | No | Filter by group category |
+
+**Response** (200 OK):
+```json
+{
+  "groups": [
+    {
+      "group_code": "CA",
+      "group_name": "Current Assets",
+      "group_category": "ASSET",
+      "statement_section": "ASSETS",
+      "account_count": 25,
+      "active_account_count": 20,
+      "total_balance": "50000.00",
+      "active_balance": "45000.00"
+    }
+  ],
+  "totals": {
+    "total_groups": 15,
+    "total_accounts": 200,
+    "total_balance": "250000.00"
+  }
 }
 ```
 

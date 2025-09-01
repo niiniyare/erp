@@ -514,5 +514,173 @@ func (c *Accounts) ValidateBusinessRules(parentAccount *Accounts, hasChildren bo
 // TODO: Implement account code generation based on configurable patterns
 // TODO: Add support for account aliases for different languages/regions
 // TODO: Implement account archival instead of soft delete for better audit trail
+// AccountWithGroups represents an account with its group and header information from views
+
+type AccountWithGroups struct {
+	// All fields from Accounts
+	Accounts
+
+	// Additional fields from v_finance_accounts_with_groups
+	GroupCode             *string `json:"group_code,omitempty"`
+	GroupName             *string `json:"group_name,omitempty"`
+	GroupCategory         *string `json:"group_category,omitempty"`
+	HeaderCode            *string `json:"header_code,omitempty"`
+	HeaderName            *string `json:"header_name,omitempty"`
+	EffectiveDisplayOrder int32   `json:"effective_display_order"`
+}
+
+// ChartOfAccountsComplete represents the complete chart of accounts view data
+type ChartOfAccountsComplete struct {
+	// Core account information
+	AccountID   uuid.UUID `json:"account_id"`
+	AccountCode string    `json:"account_code"`
+	AccountName string    `json:"account_name"`
+
+	// Account classification
+	RootType      string `json:"root_type"`
+	AccountType   string `json:"account_type"`
+	NormalBalance string `json:"normal_balance"`
+
+	// Balance information
+	CurrentBalance decimal.Decimal `json:"current_balance"`
+
+	// Group and header information
+	GroupCode     *string `json:"group_code,omitempty"`
+	GroupName     *string `json:"group_name,omitempty"`
+	GroupCategory *string `json:"group_category,omitempty"`
+	HeaderCode    *string `json:"header_code,omitempty"`
+	HeaderName    *string `json:"header_name,omitempty"`
+
+	// Financial statement information
+	StatementSection       *string `json:"statement_section,omitempty"`
+	CashFlowClassification *string `json:"cash_flow_classification,omitempty"`
+
+	// Display and reporting
+	DisplayOrder     int32 `json:"display_order"`
+	IncludeInReports bool  `json:"include_in_reports"`
+	IsActive         bool  `json:"is_active"`
+	IsLeafAccount    bool  `json:"is_leaf_account"`
+
+	// Audit information
+	TenantID  uuid.UUID `json:"tenant_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// TrialBalanceSummary represents trial balance data from views
+type TrialBalanceSummary struct {
+	AccountID        uuid.UUID       `json:"account_id"`
+	AccountCode      string          `json:"account_code"`
+	AccountName      string          `json:"account_name"`
+	RootType         string          `json:"root_type"`
+	NormalBalance    string          `json:"normal_balance"`
+	CurrentBalance   decimal.Decimal `json:"current_balance"`
+	GroupName        *string         `json:"group_name,omitempty"`
+	StatementSection *string         `json:"statement_section,omitempty"`
+}
+
+// CashFlowAccount represents cash flow account information from views
+type CashFlowAccount struct {
+	AccountID              uuid.UUID       `json:"account_id"`
+	AccountCode            string          `json:"account_code"`
+	AccountName            string          `json:"account_name"`
+	CurrentBalance         decimal.Decimal `json:"current_balance"`
+	CashFlowClassification *string         `json:"cash_flow_classification,omitempty"`
+	GroupName              *string         `json:"group_name,omitempty"`
+}
+
+// AccountGroupSummary represents grouped account summary data
+type AccountGroupSummary struct {
+	GroupCode          string          `json:"group_code"`
+	GroupName          string          `json:"group_name"`
+	GroupCategory      *string         `json:"group_category,omitempty"`
+	StatementSection   *string         `json:"statement_section,omitempty"`
+	AccountCount       int64           `json:"account_count"`
+	ActiveAccountCount int64           `json:"active_account_count"`
+	TotalBalance       decimal.Decimal `json:"total_balance"`
+	ActiveBalance      decimal.Decimal `json:"active_balance"`
+}
+
+// ChartOfAccountsFilter represents filtering options for complete chart of accounts
+type ChartOfAccountsFilter struct {
+	EntityID         *uuid.UUID        `json:"entity_id,omitempty"`
+	StatementSection *StatementSection `json:"statement_section,omitempty"`
+	IncludeInactive  *bool             `json:"include_inactive,omitempty"`
+	IncludeInReports *bool             `json:"include_in_reports,omitempty"`
+	Limit            *int              `json:"limit,omitempty"`
+	Offset           *int              `json:"offset,omitempty"`
+}
+
+// BalanceFilter represents filtering options for accounts with balances
+type BalanceFilter struct {
+	EntityID    *uuid.UUID `json:"entity_id,omitempty"`
+	NonZeroOnly *bool      `json:"non_zero_only,omitempty"`
+	RootType    *RootType  `json:"root_type,omitempty"`
+	Limit       *int       `json:"limit,omitempty"`
+	Offset      *int       `json:"offset,omitempty"`
+}
+
+// Validate validates the ChartOfAccountsFilter
+func (f *ChartOfAccountsFilter) Validate() []ValidationError {
+	var errors []ValidationError
+
+	if f.StatementSection != nil && !f.StatementSection.IsValid() {
+		errors = append(errors, ValidationError{
+			Field:   "statement_section",
+			Message: "Invalid statement section",
+			Code:    "INVALID_VALUE",
+		})
+	}
+
+	if f.Limit != nil && *f.Limit < 0 {
+		errors = append(errors, ValidationError{
+			Field:   "limit",
+			Message: "Limit must be non-negative",
+			Code:    "INVALID_VALUE",
+		})
+	}
+
+	if f.Offset != nil && *f.Offset < 0 {
+		errors = append(errors, ValidationError{
+			Field:   "offset",
+			Message: "Offset must be non-negative",
+			Code:    "INVALID_VALUE",
+		})
+	}
+
+	return errors
+}
+
+// Validate validates the BalanceFilter
+func (f *BalanceFilter) Validate() []ValidationError {
+	var errors []ValidationError
+
+	if f.RootType != nil && !f.RootType.IsValid() {
+		errors = append(errors, ValidationError{
+			Field:   "root_type",
+			Message: "Invalid root type",
+			Code:    "INVALID_VALUE",
+		})
+	}
+
+	if f.Limit != nil && *f.Limit < 0 {
+		errors = append(errors, ValidationError{
+			Field:   "limit",
+			Message: "Limit must be non-negative",
+			Code:    "INVALID_VALUE",
+		})
+	}
+
+	if f.Offset != nil && *f.Offset < 0 {
+		errors = append(errors, ValidationError{
+			Field:   "offset",
+			Message: "Offset must be non-negative",
+			Code:    "INVALID_VALUE",
+		})
+	}
+
+	return errors
+}
+
 // NOTE: Consider adding account category groupings for enhanced reporting
 // NOTE: Future enhancement: Add support for account-specific posting rules

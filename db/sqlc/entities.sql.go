@@ -82,12 +82,14 @@ type BulkCreateEntityStatesParams struct {
 }
 
 const bulkMoveEntities = `-- name: BulkMoveEntities :exec
-UPDATE entities
+UPDATE
+  entities
 SET
   parent_id = $1,
   updated_at = NOW()
-WHERE tenant_id = current_tenant_id()
-  AND uuid = ANY($2::UUID[])
+WHERE
+  tenant_id = current_tenant_id()
+  AND uuid = ANY($2::UUID [])
   AND deleted_at IS NULL
 `
 
@@ -198,9 +200,12 @@ func (q *Queries) CountEntitiesWithFilters(ctx context.Context, arg CountEntitie
 }
 
 const countEntityStatesByEntity = `-- name: CountEntityStatesByEntity :one
-SELECT COUNT(*)
-FROM entitystate
-WHERE entity_id = $1::UUID
+SELECT
+  COUNT(*)
+FROM
+  entitystate
+WHERE
+  entity_id = $1::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -213,9 +218,12 @@ func (q *Queries) CountEntityStatesByEntity(ctx context.Context, entityID uuid.U
 }
 
 const countEntityStatesByKey = `-- name: CountEntityStatesByKey :one
-SELECT COUNT(*)
-FROM entitystate
-WHERE key = $1::VARCHAR(10)
+SELECT
+  COUNT(*)
+FROM
+  entitystate
+WHERE
+  KEY = $1::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -327,18 +335,20 @@ func (q *Queries) CreateEntity(ctx context.Context, arg CreateEntityParams) (*En
 }
 
 const createEntityState = `-- name: CreateEntityState :one
-
-INSERT INTO entitystate (
+INSERT INTO
+  entitystate (
     uuid,
     tenant_id,
     fiscal_year,
-    key,
+    KEY,
     sequence,
     entity_id,
     entity_unit_id,
     created_at,
     updated_at
-) VALUES (
+  )
+VALUES
+  (
     $1::UUID,
     current_tenant_id(),
     $2::SMALLINT,
@@ -348,7 +358,9 @@ INSERT INTO entitystate (
     $6::UUID,
     NOW(),
     NOW()
-) RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+  )
+RETURNING
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
 `
 
 type CreateEntityStateParams struct {
@@ -1499,9 +1511,12 @@ func (q *Queries) GetEntitySiblings(ctx context.Context, descendantID uuid.UUID)
 }
 
 const getEntityState = `-- name: GetEntityState :one
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
-FROM entitystate
-WHERE uuid = $1::UUID
+SELECT
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+FROM
+  entitystate
+WHERE
+  uuid = $1::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -1525,13 +1540,19 @@ func (q *Queries) GetEntityState(ctx context.Context, argUuid uuid.UUID) (*Entit
 }
 
 const getEntityStateByEntityAndKey = `-- name: GetEntityStateByEntityAndKey :one
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
-FROM entitystate
-WHERE entity_id = $1::UUID
-  AND key = $2::VARCHAR(10)
+SELECT
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+FROM
+  entitystate
+WHERE
+  entity_id = $1::UUID
+  AND KEY = $2::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($3::SMALLINT IS NULL OR fiscal_year = $3::SMALLINT)
+  AND (
+    $3::SMALLINT IS NULL
+    OR fiscal_year = $3::SMALLINT
+  )
 `
 
 type GetEntityStateByEntityAndKeyParams struct {
@@ -1559,10 +1580,13 @@ func (q *Queries) GetEntityStateByEntityAndKey(ctx context.Context, arg GetEntit
 }
 
 const getEntityStateByEntityKeyAndFiscalYear = `-- name: GetEntityStateByEntityKeyAndFiscalYear :one
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
-FROM entitystate
-WHERE entity_id = $1::UUID
-  AND key = $2::VARCHAR(10)
+SELECT
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+FROM
+  entitystate
+WHERE
+  entity_id = $1::UUID
+  AND KEY = $2::VARCHAR(10)
   AND fiscal_year = $3::SMALLINT
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
@@ -1593,16 +1617,29 @@ func (q *Queries) GetEntityStateByEntityKeyAndFiscalYear(ctx context.Context, ar
 }
 
 const getEntityStatesWithPaging = `-- name: GetEntityStatesWithPaging :many
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
-FROM entitystate
-WHERE tenant_id = current_tenant_id()
+SELECT
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+FROM
+  entitystate
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1 IS NULL OR entity_id = $1)
-  AND ($2 IS NULL OR key = $2)
-  AND ($3 IS NULL OR fiscal_year = $3)
-ORDER BY created_at DESC
-LIMIT $5
-OFFSET $4
+  AND (
+    $1 IS NULL
+    OR entity_id = $1
+  )
+  AND (
+    $2 IS NULL
+    OR KEY = $2
+  )
+  AND (
+    $3 IS NULL
+    OR fiscal_year = $3
+  )
+ORDER BY
+  created_at DESC
+LIMIT
+  $5 OFFSET $4
 `
 
 type GetEntityStatesWithPagingParams struct {
@@ -2048,13 +2085,19 @@ func (q *Queries) GetInconsistentHierarchyPaths(ctx context.Context) ([]*GetInco
 }
 
 const getMaxSequenceByEntityAndKey = `-- name: GetMaxSequenceByEntityAndKey :one
-SELECT COALESCE(MAX(sequence), 0) as max_sequence
-FROM entitystate
-WHERE entity_id = $1::UUID
-  AND key = $2::VARCHAR(10)
+SELECT
+  COALESCE(MAX(sequence), 0) AS max_sequence
+FROM
+  entitystate
+WHERE
+  entity_id = $1::UUID
+  AND KEY = $2::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($3::SMALLINT IS NULL OR fiscal_year = $3::SMALLINT)
+  AND (
+    $3::SMALLINT IS NULL
+    OR fiscal_year = $3::SMALLINT
+  )
 `
 
 type GetMaxSequenceByEntityAndKeyParams struct {
@@ -2071,15 +2114,23 @@ func (q *Queries) GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSe
 }
 
 const getNextSequenceAndIncrement = `-- name: GetNextSequenceAndIncrement :one
-UPDATE entitystate
-SET sequence = sequence + 1,
-    updated_at = NOW()
-WHERE entity_id = $1::UUID
-  AND key = $2::VARCHAR(10)
+UPDATE
+  entitystate
+SET
+  sequence = sequence + 1,
+  updated_at = NOW()
+WHERE
+  entity_id = $1::UUID
+  AND KEY = $2::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($3::SMALLINT IS NULL OR fiscal_year = $3::SMALLINT)
-RETURNING sequence - 1 as used_sequence, sequence as next_sequence
+  AND (
+    $3::SMALLINT IS NULL
+    OR fiscal_year = $3::SMALLINT
+  )
+RETURNING
+  sequence - 1 AS used_sequence,
+  sequence AS next_sequence
 `
 
 type GetNextSequenceAndIncrementParams struct {
@@ -2143,14 +2194,20 @@ func (q *Queries) GetNextSequenceAndIncrement(ctx context.Context, arg GetNextSe
 }
 
 const getNextSequenceNumber = `-- name: GetNextSequenceNumber :one
-SELECT sequence
-FROM entitystate
-WHERE entity_id = $1::UUID
-  AND key = $2::VARCHAR(10)
+SELECT
+  sequence
+FROM
+  entitystate
+WHERE
+  entity_id = $1::UUID
+  AND KEY = $2::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($3::SMALLINT IS NULL OR fiscal_year = $3::SMALLINT)
-FOR UPDATE
+  AND (
+    $3::SMALLINT IS NULL
+    OR fiscal_year = $3::SMALLINT
+  ) FOR
+UPDATE
 `
 
 type GetNextSequenceNumberParams struct {
@@ -2384,35 +2441,50 @@ func (q *Queries) GetUnusedEntityCodes(ctx context.Context) ([]*string, error) {
 
 const get_OrCreateEntityState = `-- name: Get_OrCreateEntityState :one
 WITH ins AS (
-    INSERT INTO entitystate (
-        uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at
+  INSERT INTO
+    entitystate (
+      uuid,
+      tenant_id,
+      fiscal_year,
+      KEY,
+      sequence,
+      entity_id,
+      entity_unit_id,
+      created_at,
+      updated_at
     )
-    VALUES (
-        $1,             -- generate UUID in app layer
-        current_tenant_id(),
-        $2,
-        $3,
-        1,                          -- start sequence at 1
-        $4,
-        $5,
-        NOW(),
-        NOW()
-    )
-    ON CONFLICT (tenant_id, fiscal_year, key, entity_id)
-    DO NOTHING
-    RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+  VALUES
+    (
+      $1,  -- generate UUID in app layer
+      current_tenant_id(),
+      $2,
+      $3,
+      1,  -- start sequence at 1
+      $4,
+      $5,
+      NOW(),
+      NOW()
+    ) ON CONFLICT (tenant_id, fiscal_year, KEY, entity_id) DO NOTHING
+  RETURNING
+    uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
 )
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
-FROM ins
+SELECT
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+FROM
+  ins
 UNION
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
-FROM entitystate
-WHERE tenant_id = current_tenant_id()
+SELECT
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+FROM
+  entitystate
+WHERE
+  tenant_id = current_tenant_id()
   AND fiscal_year = $2
-  AND key = $3
+  AND KEY = $3
   AND entity_id = $4
   AND deleted_at IS NULL
-LIMIT 1
+LIMIT
+  1
 `
 
 type Get_OrCreateEntityStateParams struct {
@@ -2474,13 +2546,17 @@ func (q *Queries) HardDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 }
 
 const incrementSequenceNumber = `-- name: IncrementSequenceNumber :one
-UPDATE entitystate
-SET sequence = sequence + 1,
-    updated_at = NOW()
-WHERE uuid = $1::UUID
+UPDATE
+  entitystate
+SET
+  sequence = sequence + 1,
+  updated_at = NOW()
+WHERE
+  uuid = $1::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-RETURNING sequence
+RETURNING
+  sequence
 `
 
 func (q *Queries) IncrementSequenceNumber(ctx context.Context, argUuid uuid.UUID) (int64, error) {
@@ -2876,12 +2952,17 @@ func (q *Queries) ListEntitiesWithPagination(ctx context.Context, arg ListEntiti
 }
 
 const listEntityStatesByEntity = `-- name: ListEntityStatesByEntity :many
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
-FROM entitystate
-WHERE entity_id = $1::UUID
+SELECT
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+FROM
+  entitystate
+WHERE
+  entity_id = $1::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-ORDER BY key, fiscal_year
+ORDER BY
+  KEY,
+  fiscal_year
 `
 
 func (q *Queries) ListEntityStatesByEntity(ctx context.Context, entityID uuid.UUID) ([]*Entitystate, error) {
@@ -2916,13 +2997,17 @@ func (q *Queries) ListEntityStatesByEntity(ctx context.Context, entityID uuid.UU
 }
 
 const listEntityStatesByEntityAndKey = `-- name: ListEntityStatesByEntityAndKey :many
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
-FROM entitystate
-WHERE entity_id = $1::UUID
-  AND key = $2::VARCHAR(10)
+SELECT
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+FROM
+  entitystate
+WHERE
+  entity_id = $1::UUID
+  AND KEY = $2::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-ORDER BY fiscal_year
+ORDER BY
+  fiscal_year
 `
 
 type ListEntityStatesByEntityAndKeyParams struct {
@@ -2962,12 +3047,18 @@ func (q *Queries) ListEntityStatesByEntityAndKey(ctx context.Context, arg ListEn
 }
 
 const listEntityStatesByEntityUnit = `-- name: ListEntityStatesByEntityUnit :many
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
-FROM entitystate
-WHERE entity_unit_id = $1::UUID
+SELECT
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+FROM
+  entitystate
+WHERE
+  entity_unit_id = $1::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-ORDER BY entity_id, key, fiscal_year
+ORDER BY
+  entity_id,
+  KEY,
+  fiscal_year
 `
 
 func (q *Queries) ListEntityStatesByEntityUnit(ctx context.Context, entityUnitID uuid.UUID) ([]*Entitystate, error) {
@@ -3002,12 +3093,17 @@ func (q *Queries) ListEntityStatesByEntityUnit(ctx context.Context, entityUnitID
 }
 
 const listEntityStatesByFiscalYear = `-- name: ListEntityStatesByFiscalYear :many
-SELECT uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
-FROM entitystate
-WHERE fiscal_year = $1::SMALLINT
+SELECT
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+FROM
+  entitystate
+WHERE
+  fiscal_year = $1::SMALLINT
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-ORDER BY entity_id, key
+ORDER BY
+  entity_id,
+  KEY
 `
 
 func (q *Queries) ListEntityStatesByFiscalYear(ctx context.Context, fiscalYear int16) ([]*Entitystate, error) {
@@ -3236,13 +3332,17 @@ func (q *Queries) RebuildHierarchyPaths(ctx context.Context) error {
 }
 
 const resetSequenceNumber = `-- name: ResetSequenceNumber :one
-UPDATE entitystate
-SET sequence = $1::BIGINT,
-    updated_at = NOW()
-WHERE uuid = $2::UUID
+UPDATE
+  entitystate
+SET
+  sequence = $1::BIGINT,
+  updated_at = NOW()
+WHERE
+  uuid = $2::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+RETURNING
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
 `
 
 type ResetSequenceNumberParams struct {
@@ -3420,15 +3520,22 @@ func (q *Queries) SearchEntitiesByName(ctx context.Context, arg SearchEntitiesBy
 }
 
 const setSequenceNumber = `-- name: SetSequenceNumber :one
-UPDATE entitystate
-SET sequence = $1::BIGINT,
-    updated_at = NOW()
-WHERE entity_id = $2::UUID
-  AND key = $3::VARCHAR(10)
+UPDATE
+  entitystate
+SET
+  sequence = $1::BIGINT,
+  updated_at = NOW()
+WHERE
+  entity_id = $2::UUID
+  AND KEY = $3::VARCHAR(10)
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($4::SMALLINT IS NULL OR fiscal_year = $4::SMALLINT)
-RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+  AND (
+    $4::SMALLINT IS NULL
+    OR fiscal_year = $4::SMALLINT
+  )
+RETURNING
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
 `
 
 type SetSequenceNumberParams struct {
@@ -3478,10 +3585,13 @@ func (q *Queries) SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 }
 
 const softDeleteEntityState = `-- name: SoftDeleteEntityState :exec
-UPDATE entitystate
-SET deleted_at = NOW(),
-    updated_at = NOW()
-WHERE uuid = $1::UUID
+UPDATE
+  entitystate
+SET
+  deleted_at = NOW(),
+  updated_at = NOW()
+WHERE
+  uuid = $1::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -3570,17 +3680,21 @@ func (q *Queries) UpdateEntity(ctx context.Context, arg UpdateEntityParams) (*En
 }
 
 const updateEntityState = `-- name: UpdateEntityState :one
-UPDATE entitystate
-SET fiscal_year = COALESCE($1::SMALLINT, fiscal_year),
-    key = COALESCE($2::VARCHAR(10), key),
-    sequence = COALESCE($3::BIGINT, sequence),
-    entity_id = COALESCE($4::UUID, entity_id),
-    entity_unit_id = COALESCE($5::UUID, entity_unit_id),
-    updated_at = NOW()
-WHERE uuid = $6::UUID
+UPDATE
+  entitystate
+SET
+  fiscal_year = COALESCE($1::SMALLINT, fiscal_year),
+  KEY = COALESCE($2::VARCHAR(10), KEY),
+  sequence = COALESCE($3::BIGINT, sequence),
+  entity_id = COALESCE($4::UUID, entity_id),
+  entity_unit_id = COALESCE($5::UUID, entity_unit_id),
+  updated_at = NOW()
+WHERE
+  uuid = $6::UUID
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-RETURNING uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+RETURNING
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
 `
 
 type UpdateEntityStateParams struct {

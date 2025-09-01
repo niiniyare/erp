@@ -50,6 +50,26 @@ type AccountsRepository interface {
 	GetChildren(ctx context.Context, accountID uuid.UUID) ([]*Accounts, error)
 	HasTransactions(ctx context.Context, accountID uuid.UUID) (bool, error)
 	UpdateBalance(ctx context.Context, accountID uuid.UUID, balance AccountBalance) error
+
+	// Enhanced view-based operations
+	GetAccountWithGroups(ctx context.Context, id uuid.UUID) (*AccountWithGroups, error)
+	GetAccountWithGroupsByCode(ctx context.Context, code string) (*AccountWithGroups, error)
+	ListAccountsWithGroups(ctx context.Context, filter *AccountFilter) ([]*AccountWithGroups, error)
+	SearchAccountsWithGroups(ctx context.Context, query string, limit int) ([]*AccountWithGroups, error)
+	GetLeafAccountsOnly(ctx context.Context, rootType *string) ([]*AccountWithGroups, error)
+
+	// Complete chart of accounts operations
+	GetCompleteChartOfAccounts(ctx context.Context, filter *ChartOfAccountsFilter) ([]*ChartOfAccountsComplete, error)
+	GetAccountForReporting(ctx context.Context, accountID uuid.UUID) (*ChartOfAccountsComplete, error)
+	GetAccountsByStatementSection(ctx context.Context, section string, entityID *uuid.UUID) ([]*ChartOfAccountsComplete, error)
+	GetAccountsByGroup(ctx context.Context, groupCode string, entityID *uuid.UUID) ([]*ChartOfAccountsComplete, error)
+	GetAccountsByHeader(ctx context.Context, headerCode string, entityID *uuid.UUID) ([]*ChartOfAccountsComplete, error)
+
+	// Financial reporting operations
+	GetTrialBalanceAccounts(ctx context.Context, entityID *uuid.UUID, nonZeroOnly bool) ([]*TrialBalanceSummary, error)
+	GetAccountsWithBalances(ctx context.Context, filter *BalanceFilter) ([]*ChartOfAccountsComplete, error)
+	GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*CashFlowAccount, error)
+	GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*AccountGroupSummary, error)
 }
 
 // TransactionRepository defines the contract for transaction persistence

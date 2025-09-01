@@ -78,13 +78,15 @@ func (q *Queries) CheckCurrentTenantExists(ctx context.Context) (bool, error) {
 }
 
 const checkPasswordPolicyRequirements = `-- name: CheckPasswordPolicyRequirements :one
-SELECT 
-    password_policy->>'require_uppercase' = 'true' as require_uppercase,
-    password_policy->>'require_lowercase' = 'true' as require_lowercase,
-    password_policy->>'require_numbers' = 'true' as require_numbers,
-    password_policy->>'require_symbols' = 'true' as require_symbols
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  password_policy ->> 'require_uppercase' = 'true' AS require_uppercase,
+  password_policy ->> 'require_lowercase' = 'true' AS require_lowercase,
+  password_policy ->> 'require_numbers' = 'true' AS require_numbers,
+  password_policy ->> 'require_symbols' = 'true' AS require_symbols
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 type CheckPasswordPolicyRequirementsRow struct {
@@ -880,9 +882,12 @@ func (q *Queries) GetAllTenantsStorageAnalytics(ctx context.Context) ([]*GetAllT
 }
 
 const getBooleanSetting = `-- name: GetBooleanSetting :one
-SELECT (settings->>$1::text)::boolean as value 
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  (settings ->> $1::text)::boolean AS value
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 func (q *Queries) GetBooleanSetting(ctx context.Context, key string) (bool, error) {
@@ -1050,8 +1055,12 @@ func (q *Queries) GetCurrentTenantStorageUsage(ctx context.Context) (*GetCurrent
 }
 
 const getDefaultSettings = `-- name: GetDefaultSettings :one
-
-SELECT settings FROM tenant_configurations WHERE tenant_id = current_tenant_id()
+SELECT
+  settings
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 // =====================================================
@@ -1065,9 +1074,12 @@ func (q *Queries) GetDefaultSettings(ctx context.Context) ([]byte, error) {
 }
 
 const getFullPasswordPolicy = `-- name: GetFullPasswordPolicy :one
-SELECT password_policy 
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  password_policy
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 func (q *Queries) GetFullPasswordPolicy(ctx context.Context) ([]byte, error) {
@@ -1078,9 +1090,12 @@ func (q *Queries) GetFullPasswordPolicy(ctx context.Context) ([]byte, error) {
 }
 
 const getIntegerSetting = `-- name: GetIntegerSetting :one
-SELECT (settings->>$1::text)::integer as value 
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  (settings ->> $1::text)::integer AS value
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 func (q *Queries) GetIntegerSetting(ctx context.Context, key string) (int32, error) {
@@ -1122,9 +1137,12 @@ func (q *Queries) GetLatestTenantUsageStats(ctx context.Context) (*TenantUsageSt
 }
 
 const getPasswordPolicyMinLength = `-- name: GetPasswordPolicyMinLength :one
-SELECT (password_policy->>"min_length")::INT as min_length 
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  (password_policy ->> "min_length")::INT AS min_length
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 func (q *Queries) GetPasswordPolicyMinLength(ctx context.Context) (int32, error) {
@@ -1135,9 +1153,12 @@ func (q *Queries) GetPasswordPolicyMinLength(ctx context.Context) (int32, error)
 }
 
 const getSpecificSetting = `-- name: GetSpecificSetting :one
-SELECT settings->>$1::text as value 
-FROM tenant_configurations 
-WHERE tenant_id = current_tenant_id()
+SELECT
+  settings ->> $1::text AS value
+FROM
+  tenant_configurations
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 func (q *Queries) GetSpecificSetting(ctx context.Context, key string) (interface{}, error) {
@@ -2091,9 +2112,13 @@ func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTena
 }
 
 const updateDefaultSettings = `-- name: UpdateDefaultSettings :exec
-UPDATE tenant_configurations 
-SET settings = $1::jsonb, updated_at = NOW()
-WHERE tenant_id = current_tenant_id()
+UPDATE
+  tenant_configurations
+SET
+  settings = $1::jsonb,
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 func (q *Queries) UpdateDefaultSettings(ctx context.Context, settings []byte) error {
@@ -2102,16 +2127,17 @@ func (q *Queries) UpdateDefaultSettings(ctx context.Context, settings []byte) er
 }
 
 const updatePasswordPolicy = `-- name: UpdatePasswordPolicy :exec
-
-UPDATE tenant_configurations 
-SET 
-    password_policy = jsonb_set(
-        COALESCE(password_policy, '{}'::jsonb),
-        '{min_length}', 
-        to_jsonb($1::int)
-    ),
-    updated_at = NOW()
-WHERE tenant_id = current_tenant_id()
+UPDATE
+  tenant_configurations
+SET
+  password_policy = jsonb_set(
+    COALESCE(password_policy, '{}'::jsonb),
+    '{min_length}',
+    to_jsonb($1::int)
+  ),
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 // =====================================================
@@ -2123,17 +2149,24 @@ func (q *Queries) UpdatePasswordPolicy(ctx context.Context, minLength int32) err
 }
 
 const updatePasswordPolicyFull = `-- name: UpdatePasswordPolicyFull :exec
-UPDATE tenant_configurations 
-SET 
-    password_policy = jsonb_build_object(
-        'min_length', ($1::int),
-        'require_uppercase', ($2::bool),
-        'require_lowercase', ($3::bool),
-        'require_numbers', ($4::bool),
-        'require_symbols', ($5::bool)
-    ),
-    updated_at = NOW()
-WHERE tenant_id = current_tenant_id()
+UPDATE
+  tenant_configurations
+SET
+  password_policy = jsonb_build_object(
+    'min_length',
+    ($1::int),
+    'require_uppercase',
+    ($2::bool),
+    'require_lowercase',
+    ($3::bool),
+    'require_numbers',
+    ($4::bool),
+    'require_symbols',
+    ($5::bool)
+  ),
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 type UpdatePasswordPolicyFullParams struct {
@@ -2156,18 +2189,20 @@ func (q *Queries) UpdatePasswordPolicyFull(ctx context.Context, arg UpdatePasswo
 }
 
 const updateSpecificPasswordPolicyField = `-- name: UpdateSpecificPasswordPolicyField :exec
-UPDATE tenant_configurations 
-SET 
-    password_policy = jsonb_set(
-        COALESCE(password_policy, '{}'::jsonb),
-        '{' || $1 || '}', 
-        CASE 
-            WHEN $1::text = 'min_length' THEN to_jsonb($2::int)
-            ELSE to_jsonb($2::bool)
-        END
-    ),
-    updated_at = NOW()
-WHERE tenant_id = current_tenant_id()
+UPDATE
+  tenant_configurations
+SET
+  password_policy = jsonb_set(
+    COALESCE(password_policy, '{}'::jsonb),
+    '{' || $1 || '}',
+    CASE
+      WHEN $1::text = 'min_length' THEN to_jsonb($2::int)
+      ELSE to_jsonb($2::bool)
+    END
+  ),
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 type UpdateSpecificPasswordPolicyFieldParams struct {
@@ -2181,15 +2216,17 @@ func (q *Queries) UpdateSpecificPasswordPolicyField(ctx context.Context, arg Upd
 }
 
 const updateSpecificSetting = `-- name: UpdateSpecificSetting :exec
-UPDATE tenant_configurations 
-SET 
-    settings = jsonb_set(
-        COALESCE(settings, '{}'::jsonb),
-        '{' || $1 || '}', 
-        to_jsonb($2)
-    ),
-    updated_at = NOW()
-WHERE tenant_id = current_tenant_id()
+UPDATE
+  tenant_configurations
+SET
+  settings = jsonb_set(
+    COALESCE(settings, '{}'::jsonb),
+    '{' || $1 || '}',
+    to_jsonb($2)
+  ),
+  updated_at = NOW()
+WHERE
+  tenant_id = current_tenant_id()
 `
 
 type UpdateSpecificSettingParams struct {
@@ -2491,7 +2528,6 @@ func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndu
 }
 
 const updateTenantLimits = `-- name: UpdateTenantLimits :one
-
 UPDATE
   tenant_configurations
 SET

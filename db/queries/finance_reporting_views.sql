@@ -85,7 +85,6 @@ ORDER BY
 SELECT
   group_code,
   group_name,
-  group_category,
   financial_statement_section,
   account_count,
   active_account_count,
@@ -120,7 +119,7 @@ ORDER BY
 -- =====================================================================
 -- ACCOUNT HIERARCHY VIEW QUERIES
 -- =====================================================================
--- name: GetAccountHierarchy :many
+-- name: GetAccountHierarchyView :many
 SELECT
   *
 FROM
@@ -165,7 +164,7 @@ WHERE
 ORDER BY
   full_path;
 
--- name: GetRootAccounts :many
+-- name: GetRootAccountsView :many
 SELECT
   *
 FROM
@@ -199,12 +198,12 @@ ORDER BY
 SELECT
   *
 FROM
-  v_finance_accounts_hierarchy
+  v_finance_accounts_hierarchy h
 WHERE
-  tenant_id = current_tenant_id()
+  h.tenant_id = current_tenant_id()
   AND (
-    id = sqlc.arg('account_id')
-    OR full_path LIKE '%' || (
+    h.id = sqlc.arg('account_id')
+    OR h.full_path LIKE '%' || (
       SELECT
         account_code
       FROM
@@ -215,8 +214,8 @@ WHERE
     ) || '%'
   )
 ORDER BY
-  LEVEL,
-  account_code;
+  h.LEVEL,
+  h.account_code;
 
 -- =====================================================================
 -- ACCOUNT ACTIVITY VIEW QUERIES

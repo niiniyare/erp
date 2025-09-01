@@ -15,12 +15,17 @@ import (
 )
 
 const addTransactionAttachment = `-- name: AddTransactionAttachment :exec
-UPDATE finance_transactions
-SET 
-    attachment_ids = array_append(COALESCE(attachment_ids, '{}'), $1),
-    updated_at = NOW(),
-    updated_by = $2
-WHERE id = $3 
+UPDATE
+  finance_transactions
+SET
+  attachment_ids = array_append(
+    COALESCE(attachment_ids, '{}'),
+    $1
+  ),
+  updated_at = NOW(),
+  updated_by = $2
+WHERE
+  id = $3
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -37,15 +42,17 @@ func (q *Queries) AddTransactionAttachment(ctx context.Context, arg AddTransacti
 }
 
 const addTransactionTag = `-- name: AddTransactionTag :exec
-UPDATE finance_transactions
-SET 
-    tags = array_append(COALESCE(tags, '{}'), $1),
-    updated_at = NOW(),
-    updated_by = $2
-WHERE id = $3 
+UPDATE
+  finance_transactions
+SET
+  tags = array_append(COALESCE(tags, '{}'), $1),
+  updated_at = NOW(),
+  updated_by = $2
+WHERE
+  id = $3
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND NOT (tags @> ARRAY[$1]::VARCHAR[])
+  AND NOT (tags @> ARRAY [$1]::VARCHAR [])
 `
 
 type AddTransactionTagParams struct {
@@ -60,19 +67,22 @@ func (q *Queries) AddTransactionTag(ctx context.Context, arg AddTransactionTagPa
 }
 
 const approveTransaction = `-- name: ApproveTransaction :one
-UPDATE finance_transactions
-SET 
-    approval_status = 'APPROVED',
-    approved_by = $1,
-    approved_at = NOW(),
-    approval_notes = $2,
-    updated_at = NOW(),
-    updated_by = $1
-WHERE id = $3 
+UPDATE
+  finance_transactions
+SET
+  approval_status = 'APPROVED',
+  approved_by = $1,
+  approved_at = NOW(),
+  approval_notes = $2,
+  updated_at = NOW(),
+  updated_by = $1
+WHERE
+  id = $3
   AND tenant_id = current_tenant_id()
   AND approval_status = 'PENDING'
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+RETURNING
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
 `
 
 type ApproveTransactionParams struct {
@@ -135,12 +145,14 @@ func (q *Queries) ApproveTransaction(ctx context.Context, arg ApproveTransaction
 }
 
 const bulkUpdateTransactionTags = `-- name: BulkUpdateTransactionTags :exec
-UPDATE finance_transactions
-SET 
-    tags = $1::VARCHAR[],
-    updated_at = NOW(),
-    updated_by = $2
-WHERE id = ANY($3::UUID[])
+UPDATE
+  finance_transactions
+SET
+  tags = $1::VARCHAR [],
+  updated_at = NOW(),
+  updated_by = $2
+WHERE
+  id = ANY($3::UUID [])
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -157,14 +169,29 @@ func (q *Queries) BulkUpdateTransactionTags(ctx context.Context, arg BulkUpdateT
 }
 
 const countTransactions = `-- name: CountTransactions :one
-SELECT COUNT(*)
-FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  COUNT(*)
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::VARCHAR IS NULL OR transaction_type = $1::VARCHAR)
-  AND ($2::VARCHAR IS NULL OR transaction_status = $2::VARCHAR)
-  AND ($3::date IS NULL OR transaction_date >= $3::date)
-  AND ($4::date IS NULL OR transaction_date <= $4::date)
+  AND (
+    $1::VARCHAR IS NULL
+    OR transaction_type = $1::VARCHAR
+  )
+  AND (
+    $2::VARCHAR IS NULL
+    OR transaction_status = $2::VARCHAR
+  )
+  AND (
+    $3::date IS NULL
+    OR transaction_date >= $3::date
+  )
+  AND (
+    $4::date IS NULL
+    OR transaction_date <= $4::date
+  )
 `
 
 type CountTransactionsParams struct {
@@ -187,8 +214,8 @@ func (q *Queries) CountTransactions(ctx context.Context, arg CountTransactionsPa
 }
 
 const createTransaction = `-- name: CreateTransaction :one
-
-INSERT INTO finance_transactions (
+INSERT INTO
+  finance_transactions (
     tenant_id,
     entity_id,
     transaction_number,
@@ -218,37 +245,41 @@ INSERT INTO finance_transactions (
     attachment_ids,
     tags,
     created_by
-) VALUES (
+  )
+VALUES
+  (
     current_tenant_id(),
-    $1, 
-    $2, 
-    $3, 
-    $4, 
-    $5, 
-    $6, 
-    $7, 
-    $8, 
-    $9, 
-    $10, 
-    $11, 
-    $12, 
-    $13, 
-    $14, 
-    $15, 
-    $16, 
-    $17, 
-    $18, 
-    $19, 
-    $20, 
-    $21, 
-    $22, 
-    $23, 
-    $24, 
-    $25, 
-    $26, 
-    $27, 
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10,
+    $11,
+    $12,
+    $13,
+    $14,
+    $15,
+    $16,
+    $17,
+    $18,
+    $19,
+    $20,
+    $21,
+    $22,
+    $23,
+    $24,
+    $25,
+    $26,
+    $27,
     $28
-) RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+  )
+RETURNING
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
 `
 
 type CreateTransactionParams struct {
@@ -369,7 +400,8 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 }
 
 const createTransactionWithDefaults = `-- name: CreateTransactionWithDefaults :one
-INSERT INTO finance_transactions (
+INSERT INTO
+  finance_transactions (
     tenant_id,
     entity_id,
     transaction_number,
@@ -378,16 +410,20 @@ INSERT INTO finance_transactions (
     description,
     currency_code,
     created_by
-) VALUES (
+  )
+VALUES
+  (
     current_tenant_id(),
-    $1, 
-    $2, 
-    $3, 
-    $4, 
-    $5, 
-    'USD', 
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    'USD',
     $6
-) RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+  )
+RETURNING
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
 `
 
 type CreateTransactionWithDefaultsParams struct {
@@ -460,12 +496,16 @@ func (q *Queries) CreateTransactionWithDefaults(ctx context.Context, arg CreateT
 }
 
 const getAllTransactionTags = `-- name: GetAllTransactionTags :many
-SELECT DISTINCT unnest(tags) as tag
-FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  DISTINCT unnest(tags) AS tag
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND tags IS NOT NULL
-ORDER BY tag
+ORDER BY
+  tag
 `
 
 func (q *Queries) GetAllTransactionTags(ctx context.Context) ([]interface{}, error) {
@@ -489,13 +529,18 @@ func (q *Queries) GetAllTransactionTags(ctx context.Context) ([]interface{}, err
 }
 
 const getPendingApprovalTransactions = `-- name: GetPendingApprovalTransactions :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND approval_status = 'PENDING'
   AND deleted_at IS NULL
-ORDER BY created_at ASC
-LIMIT $2 
-OFFSET $1
+ORDER BY
+  created_at ASC
+LIMIT
+  $2 OFFSET $1
 `
 
 type GetPendingApprovalTransactionsParams struct {
@@ -570,13 +615,18 @@ func (q *Queries) GetPendingApprovalTransactions(ctx context.Context, arg GetPen
 }
 
 const getRecentTransactions = `-- name: GetRecentTransactions :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
-FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND created_at >= NOW() - INTERVAL '30 days'
-ORDER BY created_at DESC
-LIMIT $1
+ORDER BY
+  created_at DESC
+LIMIT
+  $1
 `
 
 func (q *Queries) GetRecentTransactions(ctx context.Context, limitCount int32) ([]*FinanceTransaction, error) {
@@ -646,13 +696,18 @@ func (q *Queries) GetRecentTransactions(ctx context.Context, limitCount int32) (
 }
 
 const getRecurringTransactionsDue = `-- name: GetRecurringTransactionsDue :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
-  AND is_recurring = true
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
+  AND is_recurring = TRUE
   AND next_recurring_date <= $1
   AND transaction_status = 'POSTED'
   AND deleted_at IS NULL
-ORDER BY next_recurring_date ASC
+ORDER BY
+  next_recurring_date ASC
 `
 
 func (q *Queries) GetRecurringTransactionsDue(ctx context.Context, dueDate time.Time) ([]*FinanceTransaction, error) {
@@ -722,18 +777,22 @@ func (q *Queries) GetRecurringTransactionsDue(ctx context.Context, dueDate time.
 }
 
 const getTransactionActivity = `-- name: GetTransactionActivity :many
-SELECT 
-    DATE(created_at) as activity_date,
-    COUNT(*) as transaction_count,
-    SUM(total_debit_amount) as daily_total_debit,
-    SUM(total_credit_amount) as daily_total_credit
-FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  DATE(created_at) AS activity_date,
+  COUNT(*) AS transaction_count,
+  SUM(total_debit_amount) AS daily_total_debit,
+  SUM(total_credit_amount) AS daily_total_credit
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND created_at >= $1
   AND created_at <= $2
-GROUP BY DATE(created_at)
-ORDER BY activity_date DESC
+GROUP BY
+  DATE(created_at)
+ORDER BY
+  activity_date DESC
 `
 
 type GetTransactionActivityParams struct {
@@ -774,8 +833,12 @@ func (q *Queries) GetTransactionActivity(ctx context.Context, arg GetTransaction
 }
 
 const getTransactionByID = `-- name: GetTransactionByID :one
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
-WHERE id = $1 
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  id = $1
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -834,8 +897,12 @@ func (q *Queries) GetTransactionByID(ctx context.Context, transactionID uuid.UUI
 }
 
 const getTransactionByNumber = `-- name: GetTransactionByNumber :one
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
-WHERE transaction_number = $1 
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  transaction_number = $1
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -894,15 +961,19 @@ func (q *Queries) GetTransactionByNumber(ctx context.Context, transactionNumber 
 }
 
 const getTransactionCountByTag = `-- name: GetTransactionCountByTag :many
-SELECT 
-    unnest(tags) as tag,
-    COUNT(*) as transaction_count
-FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  unnest(tags) AS tag,
+  COUNT(*) AS transaction_count
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND tags IS NOT NULL
-GROUP BY unnest(tags)
-ORDER BY transaction_count DESC
+GROUP BY
+  unnest(tags)
+ORDER BY
+  transaction_count DESC
 `
 
 type GetTransactionCountByTagRow struct {
@@ -931,19 +1002,25 @@ func (q *Queries) GetTransactionCountByTag(ctx context.Context) ([]*GetTransacti
 }
 
 const getTransactionSummaryByPeriod = `-- name: GetTransactionSummaryByPeriod :many
-SELECT 
-    transaction_type,
-    transaction_status,
-    COUNT(*) as transaction_count,
-    SUM(total_debit_amount) as total_debit,
-    SUM(total_credit_amount) as total_credit
-FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  transaction_type,
+  transaction_status,
+  COUNT(*) AS transaction_count,
+  SUM(total_debit_amount) AS total_debit,
+  SUM(total_credit_amount) AS total_credit
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND transaction_date >= $1
   AND transaction_date <= $2
-GROUP BY transaction_type, transaction_status
-ORDER BY transaction_type, transaction_status
+GROUP BY
+  transaction_type,
+  transaction_status
+ORDER BY
+  transaction_type,
+  transaction_status
 `
 
 type GetTransactionSummaryByPeriodParams struct {
@@ -986,29 +1063,32 @@ func (q *Queries) GetTransactionSummaryByPeriod(ctx context.Context, arg GetTran
 }
 
 const getTransactionWithEntries = `-- name: GetTransactionWithEntries :many
-SELECT 
-    t.id, t.tenant_id, t.entity_id, t.transaction_number, t.transaction_type, t.transaction_status, t.transaction_date, t.posting_date, t.due_date, t.description, t.reference_number, t.external_reference, t.memo, t.currency_code, t.exchange_rate, t.total_debit_amount, t.total_credit_amount, t.source_module, t.source_document_type, t.source_document_id, t.batch_id, t.approval_required, t.approval_status, t.approved_by, t.approved_at, t.approval_notes, t.is_recurring, t.recurring_frequency, t.next_recurring_date, t.is_reversed, t.reversed_by_transaction_id, t.reversal_reason, t.version, t.validation_status, t.validation_errors, t.transaction_attributes, t.attachment_ids, t.tags, t.created_at, t.updated_at, t.deleted_at, t.created_by, t.updated_by, t.posted_by, t.posted_at,
-    te.id as entry_id,
-    te.entry_number,
-    te.account_id,
-    te.debit_amount,
-    te.credit_amount,
-    te.description as entry_description,
-    te.reference as entry_reference,
-    te.cost_center,
-    te.department,
-    te.project_id,
-    a.account_code,
-    a.account_name,
-    a.root_type,
-    a.normal_balance
-FROM finance_transactions t
-LEFT JOIN finance_transaction_entries te ON t.id = te.transaction_id
-LEFT JOIN finance_accounts a ON te.account_id = a.id
-WHERE t.id = $1 
+SELECT
+  t.id, t.tenant_id, t.entity_id, t.transaction_number, t.transaction_type, t.transaction_status, t.transaction_date, t.posting_date, t.due_date, t.description, t.reference_number, t.external_reference, t.memo, t.currency_code, t.exchange_rate, t.total_debit_amount, t.total_credit_amount, t.source_module, t.source_document_type, t.source_document_id, t.batch_id, t.approval_required, t.approval_status, t.approved_by, t.approved_at, t.approval_notes, t.is_recurring, t.recurring_frequency, t.next_recurring_date, t.is_reversed, t.reversed_by_transaction_id, t.reversal_reason, t.version, t.validation_status, t.validation_errors, t.transaction_attributes, t.attachment_ids, t.tags, t.created_at, t.updated_at, t.deleted_at, t.created_by, t.updated_by, t.posted_by, t.posted_at,
+  te.id AS entry_id,
+  te.entry_number,
+  te.account_id,
+  te.debit_amount,
+  te.credit_amount,
+  te.description AS entry_description,
+  te.reference AS entry_reference,
+  te.cost_center,
+  te.department,
+  te.project_id,
+  a.account_code,
+  a.account_name,
+  a.root_type,
+  a.normal_balance
+FROM
+  finance_transactions t
+  LEFT JOIN finance_transaction_entries te ON t.id = te.transaction_id
+  LEFT JOIN finance_accounts a ON te.account_id = a.id
+WHERE
+  t.id = $1
   AND t.tenant_id = current_tenant_id()
   AND t.deleted_at IS NULL
-ORDER BY te.entry_number ASC
+ORDER BY
+  te.entry_number ASC
 `
 
 type GetTransactionWithEntriesRow struct {
@@ -1154,11 +1234,16 @@ func (q *Queries) GetTransactionWithEntries(ctx context.Context, transactionID u
 }
 
 const getTransactionsByAttachment = `-- name: GetTransactionsByAttachment :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND attachment_ids @> ARRAY[$1]::TEXT[]
-ORDER BY created_at DESC
+  AND attachment_ids @> ARRAY [$1]::TEXT []
+ORDER BY
+  created_at DESC
 `
 
 func (q *Queries) GetTransactionsByAttachment(ctx context.Context, attachmentID []string) ([]*FinanceTransaction, error) {
@@ -1228,14 +1313,18 @@ func (q *Queries) GetTransactionsByAttachment(ctx context.Context, attachmentID 
 }
 
 const getTransactionsByAttribute = `-- name: GetTransactionsByAttribute :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
-FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND transaction_attributes @> $1::JSONB
-ORDER BY created_at DESC
-LIMIT $3
-OFFSET $2
+ORDER BY
+  created_at DESC
+LIMIT
+  $3 OFFSET $2
 `
 
 type GetTransactionsByAttributeParams struct {
@@ -1311,11 +1400,16 @@ func (q *Queries) GetTransactionsByAttribute(ctx context.Context, arg GetTransac
 }
 
 const getTransactionsByBatch = `-- name: GetTransactionsByBatch :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
-WHERE batch_id = $1 
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  batch_id = $1
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-ORDER BY created_at ASC
+ORDER BY
+  created_at ASC
 `
 
 func (q *Queries) GetTransactionsByBatch(ctx context.Context, batchID *uuid.UUID) ([]*FinanceTransaction, error) {
@@ -1385,12 +1479,17 @@ func (q *Queries) GetTransactionsByBatch(ctx context.Context, batchID *uuid.UUID
 }
 
 const getTransactionsBySourceDocument = `-- name: GetTransactionsBySourceDocument :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
-WHERE source_document_type = $1 
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  source_document_type = $1
   AND source_document_id = $2
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-ORDER BY created_at ASC
+ORDER BY
+  created_at ASC
 `
 
 type GetTransactionsBySourceDocumentParams struct {
@@ -1465,13 +1564,18 @@ func (q *Queries) GetTransactionsBySourceDocument(ctx context.Context, arg GetTr
 }
 
 const getTransactionsByTag = `-- name: GetTransactionsByTag :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND tags @> ARRAY[$1]::VARCHAR[]
-ORDER BY created_at DESC
-LIMIT $3
-OFFSET $2
+  AND tags @> ARRAY [$1]::VARCHAR []
+ORDER BY
+  created_at DESC
+LIMIT
+  $3 OFFSET $2
 `
 
 type GetTransactionsByTagParams struct {
@@ -1547,13 +1651,18 @@ func (q *Queries) GetTransactionsByTag(ctx context.Context, arg GetTransactionsB
 }
 
 const getTransactionsByTags = `-- name: GetTransactionsByTags :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND tags && $1::VARCHAR[]
-ORDER BY created_at DESC
-LIMIT $3
-OFFSET $2
+  AND tags && $1::VARCHAR []
+ORDER BY
+  created_at DESC
+LIMIT
+  $3 OFFSET $2
 `
 
 type GetTransactionsByTagsParams struct {
@@ -1629,23 +1738,26 @@ func (q *Queries) GetTransactionsByTags(ctx context.Context, arg GetTransactions
 }
 
 const getTransactionsWithAttachments = `-- name: GetTransactionsWithAttachments :many
-SELECT 
-    id,
-    transaction_number,
-    description,
-    transaction_date,
-    total_debit_amount,
-    total_credit_amount,
-    array_length(attachment_ids, 1) as attachment_count,
-    attachment_ids
-FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id,
+  transaction_number,
+  description,
+  transaction_date,
+  total_debit_amount,
+  total_credit_amount,
+  array_length(attachment_ids, 1) AS attachment_count,
+  attachment_ids
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND attachment_ids IS NOT NULL
   AND array_length(attachment_ids, 1) > 0
-ORDER BY transaction_date DESC
-LIMIT $2
-OFFSET $1
+ORDER BY
+  transaction_date DESC
+LIMIT
+  $2 OFFSET $1
 `
 
 type GetTransactionsWithAttachmentsParams struct {
@@ -1694,17 +1806,34 @@ func (q *Queries) GetTransactionsWithAttachments(ctx context.Context, arg GetTra
 }
 
 const listTransactions = `-- name: ListTransactions :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
-FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND ($1::VARCHAR IS NULL OR transaction_type = $1::VARCHAR)
-  AND ($2::VARCHAR IS NULL OR transaction_status = $2::VARCHAR)
-  AND ($3::date IS NULL OR transaction_date >= $3::date)
-  AND ($4::date IS NULL OR transaction_date <= $4::date)
-ORDER BY transaction_date DESC, created_at DESC
-LIMIT $6
-OFFSET $5
+  AND (
+    $1::VARCHAR IS NULL
+    OR transaction_type = $1::VARCHAR
+  )
+  AND (
+    $2::VARCHAR IS NULL
+    OR transaction_status = $2::VARCHAR
+  )
+  AND (
+    $3::date IS NULL
+    OR transaction_date >= $3::date
+  )
+  AND (
+    $4::date IS NULL
+    OR transaction_date <= $4::date
+  )
+ORDER BY
+  transaction_date DESC,
+  created_at DESC
+LIMIT
+  $6 OFFSET $5
 `
 
 type ListTransactionsParams struct {
@@ -1790,19 +1919,22 @@ func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsPara
 }
 
 const postTransaction = `-- name: PostTransaction :one
-UPDATE finance_transactions
-SET 
-    transaction_status = 'POSTED',
-    posting_date = COALESCE($1, NOW()::date),
-    posted_by = $2,
-    posted_at = NOW(),
-    updated_at = NOW(),
-    updated_by = $2
-WHERE id = $3 
+UPDATE
+  finance_transactions
+SET
+  transaction_status = 'POSTED',
+  posting_date = COALESCE($1, NOW()::date),
+  posted_by = $2,
+  posted_at = NOW(),
+  updated_at = NOW(),
+  updated_by = $2
+WHERE
+  id = $3
   AND tenant_id = current_tenant_id()
   AND transaction_status IN ('APPROVED', 'DRAFT')
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+RETURNING
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
 `
 
 type PostTransactionParams struct {
@@ -1865,19 +1997,22 @@ func (q *Queries) PostTransaction(ctx context.Context, arg PostTransactionParams
 }
 
 const rejectTransaction = `-- name: RejectTransaction :one
-UPDATE finance_transactions
-SET 
-    approval_status = 'REJECTED',
-    approved_by = $1,
-    approved_at = NOW(),
-    approval_notes = $2,
-    updated_at = NOW(),
-    updated_by = $1
-WHERE id = $3 
+UPDATE
+  finance_transactions
+SET
+  approval_status = 'REJECTED',
+  approved_by = $1,
+  approved_at = NOW(),
+  approval_notes = $2,
+  updated_at = NOW(),
+  updated_by = $1
+WHERE
+  id = $3
   AND tenant_id = current_tenant_id()
   AND approval_status = 'PENDING'
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+RETURNING
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
 `
 
 type RejectTransactionParams struct {
@@ -1940,12 +2075,14 @@ func (q *Queries) RejectTransaction(ctx context.Context, arg RejectTransactionPa
 }
 
 const removeTransactionAttachment = `-- name: RemoveTransactionAttachment :exec
-UPDATE finance_transactions
-SET 
-    attachment_ids = array_remove(attachment_ids, $1),
-    updated_at = NOW(),
-    updated_by = $2
-WHERE id = $3 
+UPDATE
+  finance_transactions
+SET
+  attachment_ids = array_remove(attachment_ids, $1),
+  updated_at = NOW(),
+  updated_by = $2
+WHERE
+  id = $3
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -1962,12 +2099,14 @@ func (q *Queries) RemoveTransactionAttachment(ctx context.Context, arg RemoveTra
 }
 
 const removeTransactionTag = `-- name: RemoveTransactionTag :exec
-UPDATE finance_transactions
-SET 
-    tags = array_remove(tags, $1),
-    updated_at = NOW(),
-    updated_by = $2
-WHERE id = $3 
+UPDATE
+  finance_transactions
+SET
+  tags = array_remove(tags, $1),
+  updated_at = NOW(),
+  updated_by = $2
+WHERE
+  id = $3
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -1984,19 +2123,22 @@ func (q *Queries) RemoveTransactionTag(ctx context.Context, arg RemoveTransactio
 }
 
 const reverseTransaction = `-- name: ReverseTransaction :one
-UPDATE finance_transactions
-SET 
-    is_reversed = true,
-    reversed_by_transaction_id = $1,
-    reversal_reason = $2,
-    updated_at = NOW(),
-    updated_by = $3
-WHERE id = $4 
+UPDATE
+  finance_transactions
+SET
+  is_reversed = TRUE,
+  reversed_by_transaction_id = $1,
+  reversal_reason = $2,
+  updated_at = NOW(),
+  updated_by = $3
+WHERE
+  id = $4
   AND tenant_id = current_tenant_id()
   AND transaction_status = 'POSTED'
   AND is_reversed = false
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+RETURNING
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
 `
 
 type ReverseTransactionParams struct {
@@ -2065,22 +2207,28 @@ func (q *Queries) ReverseTransaction(ctx context.Context, arg ReverseTransaction
 }
 
 const searchTransactions = `-- name: SearchTransactions :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
-FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND (
-    transaction_number ILIKE '%' || $1 || '%' OR
-    description ILIKE '%' || $1 || '%' OR
-    reference_number ILIKE '%' || $1 || '%' OR
-    external_reference ILIKE '%' || $1 || '%' OR
-    memo ILIKE '%' || $1 || '%'
+    transaction_number ILIKE '%' || $1 || '%'
+    OR description ILIKE '%' || $1 || '%'
+    OR reference_number ILIKE '%' || $1 || '%'
+    OR external_reference ILIKE '%' || $1 || '%'
+    OR memo ILIKE '%' || $1 || '%'
   )
-ORDER BY 
-  CASE WHEN transaction_number ILIKE $1 || '%' THEN 1 ELSE 2 END,
+ORDER BY
+  CASE
+    WHEN transaction_number ILIKE $1 || '%' THEN 1
+    ELSE 2
+  END,
   transaction_date DESC
-LIMIT $3
-OFFSET $2
+LIMIT
+  $3 OFFSET $2
 `
 
 type SearchTransactionsParams struct {
@@ -2156,14 +2304,18 @@ func (q *Queries) SearchTransactions(ctx context.Context, arg SearchTransactions
 }
 
 const searchTransactionsByMemo = `-- name: SearchTransactionsByMemo :many
-SELECT id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
-FROM finance_transactions
-WHERE tenant_id = current_tenant_id()
+SELECT
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+FROM
+  finance_transactions
+WHERE
+  tenant_id = current_tenant_id()
   AND deleted_at IS NULL
   AND memo ILIKE '%' || $1 || '%'
-ORDER BY transaction_date DESC
-LIMIT $3
-OFFSET $2
+ORDER BY
+  transaction_date DESC
+LIMIT
+  $3 OFFSET $2
 `
 
 type SearchTransactionsByMemoParams struct {
@@ -2239,12 +2391,14 @@ func (q *Queries) SearchTransactionsByMemo(ctx context.Context, arg SearchTransa
 }
 
 const softDeleteTransaction = `-- name: SoftDeleteTransaction :exec
-UPDATE finance_transactions
-SET 
-    deleted_at = NOW(),
-    updated_at = NOW(),
-    updated_by = $1
-WHERE id = $2 
+UPDATE
+  finance_transactions
+SET
+  deleted_at = NOW(),
+  updated_at = NOW(),
+  updated_by = $1
+WHERE
+  id = $2
   AND tenant_id = current_tenant_id()
   AND transaction_status IN ('DRAFT', 'CANCELLED')
   AND deleted_at IS NULL
@@ -2261,13 +2415,15 @@ func (q *Queries) SoftDeleteTransaction(ctx context.Context, arg SoftDeleteTrans
 }
 
 const updateRecurringTransactionNextDate = `-- name: UpdateRecurringTransactionNextDate :exec
-UPDATE finance_transactions
-SET 
-    next_recurring_date = $1,
-    updated_at = NOW()
-WHERE id = $2 
+UPDATE
+  finance_transactions
+SET
+  next_recurring_date = $1,
+  updated_at = NOW()
+WHERE
+  id = $2
   AND tenant_id = current_tenant_id()
-  AND is_recurring = true
+  AND is_recurring = TRUE
   AND deleted_at IS NULL
 `
 
@@ -2282,30 +2438,48 @@ func (q *Queries) UpdateRecurringTransactionNextDate(ctx context.Context, arg Up
 }
 
 const updateTransaction = `-- name: UpdateTransaction :one
-UPDATE finance_transactions
-SET 
-    transaction_status = COALESCE($1, transaction_status),
-    posting_date = COALESCE($2, posting_date),
-    due_date = COALESCE($3, due_date),
-    description = COALESCE($4, description),
-    reference_number = COALESCE($5, reference_number),
-    external_reference = COALESCE($6, external_reference),
-    memo = COALESCE($7, memo),
-    total_debit_amount = COALESCE($8, total_debit_amount),
-    total_credit_amount = COALESCE($9, total_credit_amount),
-    approval_status = COALESCE($10, approval_status),
-    approved_by = COALESCE($11, approved_by),
-    approved_at = COALESCE($12, approved_at),
-    approval_notes = COALESCE($13, approval_notes),
-    transaction_attributes = COALESCE($14, transaction_attributes),
-    attachment_ids = COALESCE($15, attachment_ids),
-    tags = COALESCE($16, tags),
-    updated_at = NOW(),
-    updated_by = $17
-WHERE id = $18 
+UPDATE
+  finance_transactions
+SET
+  transaction_status = COALESCE(
+    $1,
+    transaction_status
+  ),
+  posting_date = COALESCE($2, posting_date),
+  due_date = COALESCE($3, due_date),
+  description = COALESCE($4, description),
+  reference_number = COALESCE($5, reference_number),
+  external_reference = COALESCE(
+    $6,
+    external_reference
+  ),
+  memo = COALESCE($7, memo),
+  total_debit_amount = COALESCE(
+    $8,
+    total_debit_amount
+  ),
+  total_credit_amount = COALESCE(
+    $9,
+    total_credit_amount
+  ),
+  approval_status = COALESCE($10, approval_status),
+  approved_by = COALESCE($11, approved_by),
+  approved_at = COALESCE($12, approved_at),
+  approval_notes = COALESCE($13, approval_notes),
+  transaction_attributes = COALESCE(
+    $14,
+    transaction_attributes
+  ),
+  attachment_ids = COALESCE($15, attachment_ids),
+  tags = COALESCE($16, tags),
+  updated_at = NOW(),
+  updated_by = $17
+WHERE
+  id = $18
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-RETURNING id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
+RETURNING
+  id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
 `
 
 type UpdateTransactionParams struct {
@@ -2402,12 +2576,14 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 }
 
 const updateTransactionAttributes = `-- name: UpdateTransactionAttributes :exec
-UPDATE finance_transactions
-SET 
-    transaction_attributes = $1::JSONB,
-    updated_at = NOW(),
-    updated_by = $2
-WHERE id = $3 
+UPDATE
+  finance_transactions
+SET
+  transaction_attributes = $1::JSONB,
+  updated_at = NOW(),
+  updated_by = $2
+WHERE
+  id = $3
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -2424,13 +2600,14 @@ func (q *Queries) UpdateTransactionAttributes(ctx context.Context, arg UpdateTra
 }
 
 const updateTransactionMemo = `-- name: UpdateTransactionMemo :exec
-
-UPDATE finance_transactions
-SET 
-    memo = $1,
-    updated_at = NOW(),
-    updated_by = $2
-WHERE id = $3 
+UPDATE
+  finance_transactions
+SET
+  memo = $1,
+  updated_at = NOW(),
+  updated_by = $2
+WHERE
+  id = $3
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `
@@ -2450,13 +2627,15 @@ func (q *Queries) UpdateTransactionMemo(ctx context.Context, arg UpdateTransacti
 }
 
 const validateTransactionBalance = `-- name: ValidateTransactionBalance :one
-SELECT 
-    id,
-    total_debit_amount,
-    total_credit_amount,
-    (total_debit_amount = total_credit_amount) as is_balanced
-FROM finance_transactions
-WHERE id = $1 
+SELECT
+  id,
+  total_debit_amount,
+  total_credit_amount,
+  (total_debit_amount = total_credit_amount) AS is_balanced
+FROM
+  finance_transactions
+WHERE
+  id = $1
   AND tenant_id = current_tenant_id()
   AND deleted_at IS NULL
 `

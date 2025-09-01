@@ -660,3 +660,241 @@ func mapNullRecurringFrequencyToDomainString(recurringFreq *string) *string {
 		return nil
 	}
 }
+
+// Enhanced view-based mapper functions
+
+// TODO: These mapper functions will be implemented once SQLC generates the types
+// mapSQLCAccountWithGroupsToDomain maps SQLC AccountWithGroups to domain type
+func mapSQLCAccountWithGroupsToDomain(sqlcAccount db.VFinanceAccountsWithGroup) (*domain.AccountWithGroups, error) {
+	// Convert pgtype.Numeric to decimal.Decimal
+	currentBalance := pgNumericToDecimal(sqlcAccount.CurrentBalance)
+
+	// Map the base account fields from the view
+	baseAccount := domain.Accounts{
+		ID:                 sqlcAccount.ID,
+		TenantID:           sqlcAccount.TenantID,
+		AccountCode:        sqlcAccount.AccountCode,
+		AccountName:        sqlcAccount.AccountName,
+		AccountDescription: &sqlcAccount.AccountDescription,
+		RootType:           mapSQLCRootTypeToDomain(sqlcAccount.RootType),
+		AccountType:        sqlcAccount.AccountType,
+		AccountCategory:    sqlcAccount.AccountCategory,
+		NormalBalance:      mapSQLCNormalBalanceToDomain(sqlcAccount.NormalBalance),
+		CurrentBalance:     currentBalance,
+		IsActive:           sqlcAccount.IsActive,
+		// Note: Many fields from the full account table are not available in the view
+		// These would need to be set to defaults or fetched separately if needed
+	}
+
+	// Create the AccountWithGroups object
+	account := &domain.AccountWithGroups{
+		Accounts: baseAccount,
+	}
+
+	// Add group information
+	account.GroupCode = sqlcAccount.GroupCode
+	account.GroupName = sqlcAccount.GroupName
+	account.GroupCategory = sqlcAccount.GroupCategory
+	account.HeaderCode = sqlcAccount.HeaderCode
+	// HeaderName is not in this view structure, would need to be fetched separately
+	// For now, set a default value
+	account.EffectiveDisplayOrder = 0 // Not available in this view
+
+	return account, nil
+}
+
+// mapSQLCChartOfAccountsCompleteToDomain maps SQLC complete chart of accounts to domain
+func mapSQLCChartOfAccountsCompleteToDomain(sqlcAccount db.VChartOfAccountsComplete) *domain.ChartOfAccountsComplete {
+	currentBalance := pgNumericToDecimal(sqlcAccount.CurrentBalance)
+
+	return &domain.ChartOfAccountsComplete{
+		AccountID:              sqlcAccount.AccountID,
+		AccountCode:            sqlcAccount.AccountCode,
+		AccountName:            sqlcAccount.AccountName,
+		RootType:               sqlcAccount.RootType,
+		AccountType:            sqlcAccount.AccountType,
+		NormalBalance:          sqlcAccount.NormalBalance,
+		CurrentBalance:         currentBalance,
+		GroupCode:              sqlcAccount.GroupCode,
+		GroupName:              sqlcAccount.GroupName,
+		GroupCategory:          sqlcAccount.GroupCategory,
+		HeaderCode:             sqlcAccount.HeaderCode,
+		HeaderName:             sqlcAccount.HeaderName,
+		StatementSection:       sqlcAccount.StatementSection,
+		CashFlowClassification: sqlcAccount.CashFlowClassification,
+		DisplayOrder:           sqlcAccount.DisplayOrder,
+		IncludeInReports:       sqlcAccount.IncludeInReports,
+		IsActive:               sqlcAccount.IsActive,
+		IsLeafAccount:          sqlcAccount.IsLeafAccount,
+		TenantID:               sqlcAccount.TenantID,
+		// CreatedAt and UpdatedAt are not available in this view
+		CreatedAt: time.Now(), // Default value
+		UpdatedAt: time.Now(), // Default value
+	}
+}
+
+// mapSQLCTrialBalanceSummaryToDomain maps SQLC trial balance data to domain
+func mapSQLCTrialBalanceSummaryToDomain(sqlcAccount db.GetTrialBalanceDataRow) *domain.TrialBalanceSummary {
+	currentBalance := pgNumericToDecimal(sqlcAccount.CurrentBalance)
+
+	return &domain.TrialBalanceSummary{
+		AccountID:        sqlcAccount.AccountID,
+		AccountCode:      sqlcAccount.AccountCode,
+		AccountName:      sqlcAccount.AccountName,
+		RootType:         sqlcAccount.RootType,
+		NormalBalance:    sqlcAccount.NormalBalance,
+		CurrentBalance:   currentBalance,
+		GroupName:        sqlcAccount.GroupName,
+		StatementSection: sqlcAccount.StatementSection,
+	}
+}
+
+// mapSQLCCashFlowAccountToDomain maps SQLC cash flow account to domain
+func mapSQLCCashFlowAccountToDomain(sqlcAccount db.GetCashFlowAccountsListRow) *domain.CashFlowAccount {
+	currentBalance := pgNumericToDecimal(sqlcAccount.CurrentBalance)
+
+	return &domain.CashFlowAccount{
+		AccountID:              sqlcAccount.AccountID,
+		AccountCode:            sqlcAccount.AccountCode,
+		AccountName:            sqlcAccount.AccountName,
+		CurrentBalance:         currentBalance,
+		CashFlowClassification: sqlcAccount.CashFlowClassification,
+		GroupName:              sqlcAccount.GroupName,
+	}
+}
+
+// mapSQLCAccountGroupSummaryToDomain maps SQLC account group summary to domain
+func mapSQLCAccountGroupSummaryToDomain(sqlcSummary db.GetAccountGroupSummaryRow) *domain.AccountGroupSummary {
+	return &domain.AccountGroupSummary{
+		GroupCode:          *sqlcSummary.GroupCode, // Convert from *string to string
+		GroupName:          *sqlcSummary.GroupName, // Convert from *string to string
+		GroupCategory:      sqlcSummary.GroupCategory,
+		StatementSection:   sqlcSummary.StatementSection,
+		AccountCount:       sqlcSummary.AccountCount,
+		ActiveAccountCount: sqlcSummary.ActiveAccountCount,
+		TotalBalance:       decimal.NewFromInt(sqlcSummary.TotalBalance),
+		ActiveBalance:      decimal.NewFromInt(sqlcSummary.ActiveBalance),
+	}
+}
+
+// Filter mapping functions
+
+// mapAccountFilterToSQLCWithGroups maps domain AccountFilter to SQLC parameters for view queries
+func mapAccountFilterToSQLCWithGroups(filter *domain.AccountFilter) (db.ListAccountsWithGroupsParams, error) {
+	var rootType pgtype.Text
+	if filter.RootType != nil {
+		rootType = pgtype.Text{String: string(*filter.RootType), Valid: true}
+	}
+
+	var accountType pgtype.Text
+	if filter.SearchTerm != nil {
+		// For search functionality, we'll need to adapt this
+		accountType = pgtype.Text{String: *filter.SearchTerm, Valid: true}
+	}
+
+	var isActive pgtype.Bool
+	if filter.IsActive != nil {
+		isActive = pgtype.Bool{Bool: *filter.IsActive, Valid: true}
+	}
+
+	limit := int32(50) // default
+	if filter.Limit != nil {
+		limit = int32(*filter.Limit)
+	}
+
+	offset := int32(0) // default
+	if filter.Offset != nil {
+		offset = int32(*filter.Offset)
+	}
+
+	return db.ListAccountsWithGroupsParams{
+		EntityID:    filter.EntityID,
+		RootType:    rootType.String,
+		AccountType: accountType.String,
+		IsActive:    isActive.Bool,
+		IsLeafOnly:  false, // Not specified in base filter
+		Limit:       limit,
+		Offset:      offset,
+	}, nil
+}
+
+// mapChartOfAccountsFilterToSQLC maps domain ChartOfAccountsFilter to SQLC parameters
+func mapChartOfAccountsFilterToSQLC(filter *domain.ChartOfAccountsFilter) (db.GetChartOfAccountsCompleteParams, error) {
+	var statementSection string
+	if filter.StatementSection != nil {
+		statementSection = string(*filter.StatementSection)
+	}
+
+	var includeInactive bool
+	if filter.IncludeInactive != nil {
+		includeInactive = *filter.IncludeInactive
+	}
+
+	var includeInReports bool
+	if filter.IncludeInReports != nil {
+		includeInReports = *filter.IncludeInReports
+	}
+
+	return db.GetChartOfAccountsCompleteParams{
+		EntityID:         filter.EntityID,
+		StatementSection: statementSection,
+		IncludeInactive:  includeInactive,
+		IncludeInReports: includeInReports,
+	}, nil
+}
+
+// mapBalanceFilterToSQLC maps domain BalanceFilter to SQLC parameters
+func mapBalanceFilterToSQLC(filter *domain.BalanceFilter) (db.GetAccountBalancesListParams, error) {
+	var rootType string
+	if filter.RootType != nil {
+		rootType = string(*filter.RootType)
+	}
+
+	var nonZeroOnly bool
+	if filter.NonZeroOnly != nil {
+		nonZeroOnly = *filter.NonZeroOnly
+	}
+
+	return db.GetAccountBalancesListParams{
+		EntityID:    filter.EntityID,
+		NonZeroOnly: nonZeroOnly,
+		RootType:    rootType,
+	}, nil
+}
+
+// mapSQLCAccountBalanceRowToChartOfAccountsComplete maps SQLC balance row to complete chart
+func mapSQLCAccountBalanceRowToChartOfAccountsComplete(sqlcRow db.GetAccountBalancesListRow) *domain.ChartOfAccountsComplete {
+	currentBalance := pgNumericToDecimal(sqlcRow.CurrentBalance)
+
+	return &domain.ChartOfAccountsComplete{
+		AccountID:              sqlcRow.AccountID,
+		AccountCode:            sqlcRow.AccountCode,
+		AccountName:            sqlcRow.AccountName,
+		CurrentBalance:         currentBalance,
+		NormalBalance:          sqlcRow.NormalBalance,
+		GroupName:              sqlcRow.GroupName,
+		StatementSection:       sqlcRow.StatementSection,
+		CashFlowClassification: sqlcRow.CashFlowClassification,
+		// Other fields would be zero/default values since they're not in this query
+	}
+}
+
+// Helper function to map SQLC normal balance to domain
+func mapSQLCNormalBalanceToDomain(normalBalance string) domain.NormalBalance {
+	switch normalBalance {
+	case "DEBIT":
+		return domain.NormalBalanceDebit
+	case "CREDIT":
+		return domain.NormalBalanceCredit
+	default:
+		return domain.NormalBalanceDebit // fallback
+	}
+}
+
+// Helper function for null string to pointer conversion
+func nullStringToPointer(ns pgtype.Text) *string {
+	if !ns.Valid {
+		return nil
+	}
+	return &ns.String
+}
