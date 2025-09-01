@@ -133,7 +133,10 @@ GROUP BY
 
 COMMENT ON VIEW v_finance_transaction_summary IS 'Summary view of transactions with entry counts and reconciliation status';
 
+-- ===============================
 -- PERFORMANCE MONITORING VIEWS
+-- ===============================
+
 -- Account activity monitoring
 CREATE VIEW v_finance_account_activity AS
 SELECT
