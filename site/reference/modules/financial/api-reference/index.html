@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#awo-erp-financial-module-api-reference-guide" class="md-skip">
+        <a href="#financial-module-api-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -1101,11 +1101,44 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#modular-architecture-overview" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
-      🏛️ Modular Architecture Overview
+      Overview
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      Base Information
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Links
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1119,56 +1152,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#api-overview" class="md-nav__link">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
-      API Overview
+      Authentication
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="API Overview">
+    <nav class="md-nav" aria-label="Authentication">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#modular-base-url-structure" class="md-nav__link">
+  <a href="#bearer-token-authentication" class="md-nav__link">
     <span class="md-ellipsis">
-      Modular Base URL Structure
+      Bearer Token Authentication
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#supported-protocols" class="md-nav__link">
+  <a href="#required-headers" class="md-nav__link">
     <span class="md-ellipsis">
-      Supported Protocols
+      Required Headers
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#common-headers" class="md-nav__link">
-    <span class="md-ellipsis">
-      Common Headers
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authentication-authorization" class="md-nav__link">
-    <span class="md-ellipsis">
-      Authentication &amp; Authorization
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Authentication &amp; Authorization">
-      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#jwt-token-structure" class="md-nav__link">
@@ -1194,23 +1203,23 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-finance-module-apis" class="md-nav__link">
+  <a href="#core-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
-      Core Finance Module APIs
+      Core Endpoints
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Core Finance Module APIs">
+    <nav class="md-nav" aria-label="Core Endpoints">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#account-management-apis" class="md-nav__link">
+  <a href="#account-management" class="md-nav__link">
     <span class="md-ellipsis">
-      Account Management APIs
+      Account Management
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Account Management APIs">
+    <nav class="md-nav" aria-label="Account Management">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1223,9 +1232,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get-account" class="md-nav__link">
+  <a href="#get-account-by-id" class="md-nav__link">
     <span class="md-ellipsis">
-      Get Account
+      Get Account by ID
     </span>
   </a>
   
@@ -4370,84 +4379,86 @@
 
 
 
-<h1 id="awo-erp-financial-module-api-reference-guide">AWO ERP Financial Module - API Reference Guide</h1>
+<h1 id="financial-module-api-reference">Financial Module - API Reference</h1>
 <p><strong>Version</strong>: 2.0<br />
-<strong>Date</strong>: January 2025<br />
-<strong>Status</strong>: Technical Documentation  </p>
+<strong>Date</strong>: August 31, 2025<br />
+<strong>Status</strong>: Production<br />
+<strong>OpenAPI Version</strong>: 3.0.3</p>
 <hr />
-<h2 id="modular-architecture-overview"><strong>🏛️ Modular Architecture Overview</strong></h2>
-<p>The AWO ERP Financial system is organized into focused, domain-specific modules:</p>
+<h2 id="overview">Overview</h2>
+<h3 id="api-description">API Description</h3>
+<p>The Financial Module API provides comprehensive double-entry bookkeeping, transaction processing, and financial reporting capabilities within the AWO ERP system. This production-ready API supports multi-currency operations, advanced validation frameworks, and enterprise-grade compliance requirements.</p>
+<h3 id="base-information">Base Information</h3>
 <ul>
-<li><strong>🏦 FINANCE</strong> - Core accounting engine (accounts, transactions, banking, reporting)</li>
-<li><strong>🛒 BUY</strong> - Procurement and accounts payable operations  </li>
-<li><strong>💰 SELL</strong> - Revenue and accounts receivable operations</li>
-<li><strong>📊 BUDGET</strong> - Planning, forecasting, and variance analysis</li>
-<li><strong>📈 PROJECT</strong> - Project accounting and cost management</li>
-<li><strong>💸 TAX</strong> - Multi-jurisdiction tax calculation and compliance</li>
-<li><strong>🌍 CURRENCY</strong> - Exchange rates and multi-currency operations</li>
+<li><strong>Base URL</strong>: <code>https://api.awo-erp.com/api/v1/finance</code></li>
+<li><strong>Authentication</strong>: Bearer Token (JWT)</li>
+<li><strong>Content Type</strong>: <code>application/json</code></li>
+<li><strong>API Version</strong>: <code>v1</code></li>
+</ul>
+<h3 id="quick-links">Quick Links</h3>
+<ul>
+<li><a href="../../../api/swagger-ui/">Interactive API Explorer</a> - Test endpoints directly</li>
+<li><a href="../../../api/auth/">Authentication Guide</a> - Get started with API authentication</li>
+<li><a href="examples/">SDK Examples</a> - Code examples in multiple languages</li>
 </ul>
 <hr />
 <h2 id="table-of-contents">Table of Contents</h2>
 <ol>
-<li><a href="#api-overview">API Overview</a></li>
-<li><a href="#authentication-authorization">Authentication &amp; Authorization</a></li>
-<li><a href="#core-finance-module-apis">Core Finance Module APIs</a><ul>
-<li><a href="#account-management-apis">Account Management</a></li>
-<li><a href="#transaction-processing-apis">Transaction Processing</a></li>
-<li><a href="#banking-cash-management-apis">Banking &amp; Cash Management</a></li>
-<li><a href="#financial-reporting-apis">Financial Reporting</a></li>
-</ul>
-</li>
-<li><a href="#buy-module-apis">Buy Module APIs (Procurement &amp; AP)</a></li>
-<li><a href="#sell-module-apis">Sell Module APIs (Sales &amp; AR)</a></li>
-<li><a href="#ancillary-module-apis">Ancillary Module APIs</a><ul>
-<li><a href="#budget-module">Budget Module</a></li>
-<li><a href="#currency-management-apis">Currency Module</a></li>
-</ul>
-</li>
-<li><a href="#system-quality">System &amp; Quality</a><ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#authentication">Authentication</a></li>
+<li><a href="#core-endpoints">Core Endpoints</a></li>
+<li><a href="#account-management">Account Management</a></li>
+<li><a href="#transaction-processing">Transaction Processing</a></li>
+<li><a href="#financial-reporting">Financial Reporting</a></li>
+<li><a href="#search-endpoints">Search Endpoints</a></li>
+<li><a href="#data-models">Data Models</a></li>
 <li><a href="#error-handling">Error Handling</a></li>
-<li><a href="#rate-limiting-quotas">Rate Limiting &amp; Quotas</a></li>
-<li><a href="#testing-quality-assurance">Testing &amp; Quality Assurance</a></li>
-</ul>
-</li>
-<li><a href="#sdk-integration-examples">SDK &amp; Integration Examples</a></li>
+<li><a href="#rate-limiting">Rate Limiting</a></li>
+<li><a href="#code-examples">Code Examples</a></li>
+<li><a href="#testing">Testing</a></li>
+<li><a href="#changelog">Changelog</a></li>
 </ol>
 <hr />
-<h2 id="api-overview">API Overview</h2>
-<h3 id="modular-base-url-structure"><strong>Modular Base URL Structure</strong></h3>
-<p>All API endpoints are prefixed with a module path.</p>
-<div class="highlight"><pre><span></span><code># Core Finance Module
-Production:  https://api.awo-erp.com/v1/finance
-Staging:     https://staging-api.awo-erp.com/v1/finance
-
-# Buy Module (Procurement &amp; AP)
-Production:  https://api.awo-erp.com/v1/buy
-Staging:     https://staging-api.awo-erp.com/v1/buy
-
-# Sell Module (Sales &amp; AR)
-Production:  https://api.awo-erp.com/v1/sell
-Staging:     https://staging-api.awo-erp.com/v1/sell
-
-# Ancillary Modules
-Production:  https://api.awo-erp.com/v1/{budget|tax|project|currency}
+<h2 id="authentication">Authentication</h2>
+<h3 id="bearer-token-authentication">Bearer Token Authentication</h3>
+<p>All API endpoints require authentication using JWT bearer tokens.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Include in request headers</span>
+Authorization:<span class="w"> </span>Bearer<span class="w"> </span>&lt;your-jwt-token&gt;
+X-Tenant-ID:<span class="w"> </span>&lt;tenant-id&gt;<span class="w">  </span><span class="c1"># Required for multi-tenant operations</span>
 </code></pre></div>
-<h3 id="supported-protocols"><strong>Supported Protocols</strong></h3>
-<ul>
-<li><strong>REST API</strong>: Primary interface with JSON payloads</li>
-<li><strong>gRPC</strong>: High-performance service-to-service communication</li>
-<li><strong>GraphQL</strong>: Flexible query interface for complex data requirements</li>
-</ul>
-<h3 id="common-headers"><strong>Common Headers</strong></h3>
-<div class="highlight"><pre><span></span><code>Content-Type: application/json
-Accept: application/json
-Authorization: Bearer &lt;jwt-token&gt;
-X-Tenant-ID: &lt;tenant-uuid&gt;
-X-Request-ID: &lt;unique-request-id&gt;
-</code></pre></div>
-<hr />
-<h2 id="authentication-authorization">Authentication &amp; Authorization</h2>
-<h3 id="jwt-token-structure"><strong>JWT Token Structure</strong></h3>
+<h3 id="required-headers">Required Headers</h3>
+<table>
+<thead>
+<tr>
+<th>Header</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Authorization</code></td>
+<td>Yes</td>
+<td>Bearer JWT token</td>
+</tr>
+<tr>
+<td><code>X-Tenant-ID</code></td>
+<td>Yes</td>
+<td>Tenant context identifier</td>
+</tr>
+<tr>
+<td><code>Content-Type</code></td>
+<td>Yes</td>
+<td><code>application/json</code> for POST/PUT requests</td>
+</tr>
+<tr>
+<td><code>Accept</code></td>
+<td>No</td>
+<td><code>application/json</code> (default)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="jwt-token-structure">JWT Token Structure</h3>
 <p>The JWT token contains essential identity and permission information, including the <code>tenant_id</code> to enforce data isolation.
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;header&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;alg&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;RS256&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;typ&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;JWT&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;kid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;key-id&quot;</span><span class="w"> </span><span class="p">},</span>
@@ -4465,7 +4476,7 @@ X-Request-ID: &lt;unique-request-id&gt;
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></p>
-<h3 id="attribute-based-access-control-abac"><strong>Attribute-Based Access Control (ABAC)</strong></h3>
+<h3 id="attribute-based-access-control-abac">Attribute-Based Access Control (ABAC)</h3>
 <p>In addition to JWT scopes, the system uses ABAC for fine-grained authorization. Policies are evaluated based on user attributes, resource properties, and request context.</p>
 <p><strong>ABAC Context Headers:</strong>
 <div class="highlight"><pre><span></span><code><span class="err">X-Tenant-ID: tenant-uuid</span>
@@ -4475,13 +4486,12 @@ X-Request-ID: &lt;unique-request-id&gt;
 <p><strong>Business Rule Example (Segregation of Duties):</strong>
 A user who creates a transaction cannot approve the same transaction. This is enforced by the ABAC policy engine.</p>
 <hr />
-<h2 id="core-finance-module-apis">Core Finance Module APIs</h2>
-<p>Base Path: <code>/finance</code></p>
-<h3 id="account-management-apis"><strong>Account Management APIs</strong></h3>
-<h4 id="create-account"><strong>Create Account</strong></h4>
-<div class="highlight"><pre><span></span><code><span class="err">POST /api/v1/finance/accounts</span>
-</code></pre></div>
-<p><strong>Request Body:</strong>
+<h2 id="core-endpoints">Core Endpoints</h2>
+<h3 id="account-management">Account Management</h3>
+<h4 id="create-account">Create Account</h4>
+<p>Create a new financial account within the chart of accounts.</p>
+<p><strong>Endpoint</strong>: <code>POST /api/v1/finance/accounts</code></p>
+<p><strong>Request Body</strong>:
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;entity_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uuid-optional&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;account_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1100&quot;</span><span class="p">,</span>
@@ -4496,11 +4506,101 @@ A user who creates a transaction cannot approve the same transaction. This is en
 <span class="w">  </span><span class="nt">&quot;is_active&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
 <span class="p">}</span>
 </code></pre></div></p>
-<p><strong>Response:</strong> <code>201 Created</code> with <code>AccountResult</code></p>
-<h4 id="get-account"><strong>Get Account</strong></h4>
-<div class="highlight"><pre><span></span><code><span class="err">GET /api/v1/finance/{id}</span>
-</code></pre></div>
-<p><strong>Response:</strong> <code>AccountResult</code> with full account details including current balance</p>
+<p><strong>Response</strong> (201 Created):
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;550e8400-e29b-41d4-a716-446655440000&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;tenantId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;123e4567-e89b-12d3-a456-426614174000&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1100&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cash - Operating Account&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Primary operating cash account&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;accountType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BANK&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;rootType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSET&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;normalBalance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DEBIT&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;currencyCode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;USD&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;currentBalance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.00&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;isActive&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;createdAt&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-08-31T10:30:00Z&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;updatedAt&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-08-31T10:30:00Z&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Business Rules</strong>:
+- Account code must be unique within tenant
+- Required fields: <code>account_code</code>, <code>account_name</code>, <code>account_type</code>, <code>root_type</code>
+- Code format: Alphanumeric with hyphens, max 50 characters
+- Name max length: 255 characters
+- Root type must align with account type (Assets=ASSET, etc.)</p>
+<p><strong>Error Responses</strong>:
+<div class="highlight"><pre><span></span><code><span class="c1">// 400 Bad Request - Validation Error</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;validation_failed&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Request validation failed&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;details&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;field&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;account_code&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;required&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Account code is required&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-08-31T10:30:00Z&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;correlationId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc123-def456&quot;</span>
+<span class="p">}</span>
+
+<span class="c1">// 409 Conflict - Duplicate Code</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;duplicate_account_code&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Account code already exists in tenant&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-08-31T10:30:00Z&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;correlationId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc123-def456&quot;</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<h4 id="get-account-by-id">Get Account by ID</h4>
+<p>Retrieve a specific account by its ID.</p>
+<p><strong>Endpoint</strong>: <code>GET /api/v1/finance/accounts/{id}</code></p>
+<p><strong>Path Parameters</strong>:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| <code>id</code> | UUID | Yes | Account identifier |</p>
+<p><strong>Response</strong> (200 OK):
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;550e8400-e29b-41d4-a716-446655440000&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;tenantId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;123e4567-e89b-12d3-a456-426614174000&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1100&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cash - Operating Account&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Primary operating cash account&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;accountType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BANK&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;rootType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSET&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;normalBalance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DEBIT&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;currencyCode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;USD&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;currentBalance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;5000.00&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;isActive&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;parentAccountId&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;depth&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;createdAt&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-08-31T10:30:00Z&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;updatedAt&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-08-31T10:30:00Z&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;_links&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;self&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;href&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/api/v1/finance/accounts/550e8400-e29b-41d4-a716-446655440000&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;balance&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;href&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/api/v1/finance/accounts/550e8400-e29b-41d4-a716-446655440000/balance&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;transactions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;href&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/api/v1/finance/transactions?account_id=550e8400-e29b-41d4-a716-446655440000&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Error Responses</strong>:
+<div class="highlight"><pre><span></span><code><span class="c1">// 404 Not Found</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;account_not_found&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Account not found or access denied&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-08-31T10:30:00Z&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;correlationId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc123-def456&quot;</span>
+<span class="p">}</span>
+</code></pre></div></p>
 <h4 id="get-account-by-code"><strong>Get Account by Code</strong></h4>
 <div class="highlight"><pre><span></span><code><span class="err">GET /api/v1/finance/accounts/by-code/{account_code}</span>
 </code></pre></div>

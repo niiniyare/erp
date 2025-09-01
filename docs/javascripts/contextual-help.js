@@ -130,10 +130,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const hint = document.createElement('div');
             hint.className = 'contextual-hint api-hint';
             hint.innerHTML = `
-                <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 4px; padding: 8px; margin: 8px 0; font-size: 12px;">
-                    💡 <strong>Quick Tip:</strong> Test this endpoint in the 
-                    <a href="/reference/api/swagger-ui/" style="color: #1976d2;">Interactive API Explorer</a>
-                </div>
+                <!-- <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 4px; padding: 8px; margin: 8px 0; font-size: 12px;"> -->
+                <!--     💡 <strong>Quick Tip:</strong> Test this endpoint in the  -->
+                <!--     <a href="/reference/api/swagger-ui/" style="color: #1976d2;">Interactive API Explorer</a> -->
+                <!-- </div> -->
             `;
             
             codeBlock.parentElement.insertBefore(hint, codeBlock.nextSibling);

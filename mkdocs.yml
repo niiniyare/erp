@@ -56,6 +56,7 @@ nav:
   - 'Contributing':
     - 'Best Practices': 'contributing/01-best-practices.md'
     - 'Documentation Guide': 'contributing/documentation-guide.md'
+    - 'Documentation Structure Guide': 'contributing/documentation-structure-guide.md'
     - 'Mermaid Diagrams': 'contributing/mermaid-diagrams-guide.md'
     - 'Architecture': 'contributing/architecture.md'
     - 'Code Examples': 'contributing/code-examples.md'
@@ -70,14 +71,16 @@ nav:
     - 'Service Layer': 'contributing/service.md'
     - 'SQLC Integration': 'contributing/sqlc-integration.md'
   - 'Financial Module':
+    - 'Overview': 'reference/modules/financial/README.md'
+    - 'Product Requirements': 'reference/modules/financial/PRD.md'
+    - 'Testing Strategy': 'reference/modules/financial/testing.md'
     - 'API Reference': 'reference/modules/financial/api-reference.md'
     - 'Architecture Guide': 'reference/modules/financial/architecture-guide.md'
+    - 'Implementation Task Plan': 'reference/modules/financial/TASK.md'
     - 'Currency Management': 'reference/modules/financial/currency-management.md'
     - 'Deployment Guide': 'reference/modules/financial/deployment-guide.md'
-    - 'Implementation Task Plan': 'reference/modules/financial/TASK.md'
     - 'Integration Guide': 'reference/modules/financial/integration-guide.md'
     - 'Security & Compliance': 'reference/modules/financial/security-compliance-guide.md'
-    - 'Testing Strategy': 'reference/modules/financial/testing-strategy.md'
   - 'Users & IAM Module':
     - 'Overview': 'reference/modules/user/README.md'
     - 'Identity & RBAC': 'reference/modules/user/01_identity_model_and_rbac.md'
