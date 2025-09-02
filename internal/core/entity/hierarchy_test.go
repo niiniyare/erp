@@ -43,6 +43,7 @@ func (s *OrganizationHierarchyTestSuite) SetupSuite() {
 		return
 	}
 	s.dbRunner = dbRunner
+	// var metric *metrics.MockMetricsProvider
 
 	// Initialize controller and mocks
 	s.ctrl = gomock.NewController(s.T())
@@ -65,7 +66,7 @@ func (s *OrganizationHierarchyTestSuite) SetupSuite() {
 	s.metrics.EXPECT().ObserveHistogram(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Create repository and service
-	s.repo = NewRepository(s.dbRunner.GetStore(), s.tracing)
+	s.repo = NewRepository(s.dbRunner.GetStore(), s.tracing, s.metrics)
 	s.service = NewService(s.repo, s.tracing, s.metrics)
 
 	// Initialize cleanup tracking

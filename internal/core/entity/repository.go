@@ -63,11 +63,11 @@ func createNoopMetrics() metrics.MetricsProvider {
 }
 
 // NewRepository creates a new entity repository
-func NewRepository(store db.Store, tracing tracing.TracingService) Repository {
+func NewRepository(store db.Store, tracing tracing.TracingService, metric metrics.MetricsProvider) Repository {
 	return &repository{
 		store:   store,
 		tracing: tracing,
-		metrics: createNoopMetrics(), // Use noop metrics if not provided
+		metrics: metric, // Use noop metrics if not provided
 	}
 }
 
