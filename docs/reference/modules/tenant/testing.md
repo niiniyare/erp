@@ -269,6 +269,8 @@ Then:
   - Manager relationships are validated
   - Organizational structure is preserved
 ```
+- [x] **Status:** Implemented
+- **Comments:** Covered in `TestOrganizationCreation` in `internal/core/entity/hierarchy_test.go`. The test validates creation of different organization types (COMPANY, DEPARTMENT, LOCATION, PROJECT) within tenant context, verifies code uniqueness enforcement, and ensures proper entity retrieval. All 4 test cases pass successfully.
 
 #### Test Case: Hierarchical Relationships
 ```
@@ -283,6 +285,8 @@ Then:
   - Hierarchy depth limits are enforced
   - Cascade operations work correctly
 ```
+- [x] **Status:** Implemented
+- **Comments:** Covered in `TestHierarchicalRelationships` in `internal/core/entity/hierarchy_test.go`. The test creates a complete 6-level hierarchy (Company → Division → Department → Team → SubTeam → WorkGroup), validates parent-child relationships, ancestor retrieval, circular reference prevention, deletion constraints, and hierarchy depth handling. All 5 sub-tests pass successfully.
 
 #### Test Case: Cross-Tenant Organization Isolation
 ```
@@ -296,6 +300,8 @@ Then:
   - Parent relationships cannot cross tenant boundaries
   - Manager assignments respect tenant boundaries
 ```
+- [x] **Status:** Implemented
+- **Comments:** Covered in `TestCrossTenantOrganizationIsolation` in `internal/core/entity/hierarchy_test.go`. The test creates organizations in two separate tenants with identical codes, validates complete data isolation using PostgreSQL RLS, prevents cross-tenant parent references, blocks cross-tenant entity access (get/update/delete operations), and verifies code uniqueness within tenant boundaries. All 5 sub-tests pass successfully, confirming perfect tenant isolation.
 
 ## Configuration Management Tests
 

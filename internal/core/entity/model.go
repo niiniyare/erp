@@ -27,17 +27,16 @@ type Entity struct {
 type EntityType string
 
 const (
-	EntityTypeAccount    EntityType = "account"
-	EntityTypeCustomer   EntityType = "customer"
-	EntityTypeSupplier   EntityType = "supplier"
-	EntityTypeEmployee   EntityType = "employee"
-	EntityTypeProduct    EntityType = "product"
-	EntityTypeService    EntityType = "service"
-	EntityTypeProject    EntityType = "project"
-	EntityTypeDepartment EntityType = "department"
-	EntityTypeLocation   EntityType = "location"
-	EntityTypeCategory   EntityType = "category"
-	EntityTypeOther      EntityType = "other"
+	EntityTypeCompany     EntityType = "COMPANY"
+	EntityTypeSubsidiary  EntityType = "SUBSIDIARY"
+	EntityTypeRegion      EntityType = "REGION"
+	EntityTypeBranch      EntityType = "BRANCH"
+	EntityTypeLocation    EntityType = "LOCATION"
+	EntityTypeDepartment  EntityType = "DEPARTMENT"
+	EntityTypeDivision    EntityType = "DIVISION"
+	EntityTypeCostCenter  EntityType = "COST_CENTER"
+	EntityTypeProject     EntityType = "PROJECT"
+	EntityTypeBudgetUnit  EntityType = "BUDGET_UNIT"
 )
 
 // EntityWithHierarchy represents entity with hierarchy information
@@ -69,13 +68,18 @@ type HierarchyPath struct {
 
 // CreateEntityRequest represents entity creation request
 type CreateEntityRequest struct {
-	ParentID *uuid.UUID     `json:"parent_id,omitempty"`
-	Name     string         `json:"name" validate:"required,min=2,max=100"`
-	Code     string         `json:"code" validate:"required,min=2,max=50"`
-	Type     EntityType     `json:"type" validate:"required"`
-	IsActive bool           `json:"is_active"`
-	IsHidden bool           `json:"is_hidden"`
-	Metadata map[string]any `json:"metadata,omitempty"`
+	ParentID       *uuid.UUID     `json:"parent_id,omitempty"`
+	Name           string         `json:"name" validate:"required,min=2,max=100"`
+	Code           string         `json:"code" validate:"required,min=2,max=50"`
+	Type           EntityType     `json:"type" validate:"required"`
+	IsActive       bool           `json:"is_active"`
+	IsHidden       bool           `json:"is_hidden"`
+	AccrualMethod  bool           `json:"accrual_method"`  // TRUE = Accrual, FALSE = Cash
+	FYStartMonth   int            `json:"fy_start_month"`  // Fiscal year start month (1-12)
+	Address        map[string]any `json:"address,omitempty"`
+	Picture        string         `json:"picture,omitempty"`
+	Settings       map[string]any `json:"settings,omitempty"`
+	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
 // UpdateEntityRequest represents entity update request
@@ -152,13 +156,36 @@ func (req *CreateEntityRequest) ToSQLCCreateParams() (db.CreateEntityParams, err
 		}
 	}
 
+	var settings []byte
+	if req.Settings != nil {
+		var err error
+		settings, err = json.Marshal(req.Settings)
+		if err != nil {
+			return db.CreateEntityParams{}, err
+		}
+	}
+
+	var address []byte
+	if req.Address != nil {
+		var err error
+		address, err = json.Marshal(req.Address)
+		if err != nil {
+			return db.CreateEntityParams{}, err
+		}
+	}
+
 	params := db.CreateEntityParams{
-		Name:     req.Name,
-		Code:     &req.Code,
-		Type:     string(req.Type),
-		IsActive: req.IsActive,
-		Hidden:   req.IsHidden,
-		Metadata: metadata,
+		Name:          req.Name,
+		Code:          &req.Code,
+		Type:          string(req.Type),
+		IsActive:      req.IsActive,
+		Hidden:        req.IsHidden,
+		AccrualMethod: req.AccrualMethod,
+		FyStartMonth:  int32(req.FYStartMonth),
+		Address:       address,
+		Picture:       &req.Picture,
+		Settings:      settings,
+		Metadata:      metadata,
 	}
 
 	if req.ParentID != nil {
@@ -193,9 +220,9 @@ func FromSQLCHierarchyPath(sqlcPath *db.HierarchyPath) *HierarchyPath {
 // IsValid checks if the entity type is valid
 func (et EntityType) IsValid() bool {
 	switch et {
-	case EntityTypeAccount, EntityTypeCustomer, EntityTypeSupplier, EntityTypeEmployee,
-		EntityTypeProduct, EntityTypeService, EntityTypeProject, EntityTypeDepartment,
-		EntityTypeLocation, EntityTypeCategory, EntityTypeOther:
+	case EntityTypeCompany, EntityTypeSubsidiary, EntityTypeRegion, EntityTypeBranch,
+		EntityTypeLocation, EntityTypeDepartment, EntityTypeDivision, EntityTypeCostCenter,
+		EntityTypeProject, EntityTypeBudgetUnit:
 		return true
 	default:
 		return false

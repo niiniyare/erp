@@ -777,6 +777,36 @@ func (mr *MockStoreMockRecorder) CountPolicies(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountPolicies", reflect.TypeOf((*MockStore)(nil).CountPolicies), ctx, arg)
 }
 
+// CountTenantFeatureFlagsAdmin mocks base method.
+func (m *MockStore) CountTenantFeatureFlagsAdmin(ctx context.Context, tenantID uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountTenantFeatureFlagsAdmin", ctx, tenantID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountTenantFeatureFlagsAdmin indicates an expected call of CountTenantFeatureFlagsAdmin.
+func (mr *MockStoreMockRecorder) CountTenantFeatureFlagsAdmin(ctx, tenantID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountTenantFeatureFlagsAdmin", reflect.TypeOf((*MockStore)(nil).CountTenantFeatureFlagsAdmin), ctx, tenantID)
+}
+
+// CountTenantFeatureFlagsUser mocks base method.
+func (m *MockStore) CountTenantFeatureFlagsUser(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountTenantFeatureFlagsUser", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountTenantFeatureFlagsUser indicates an expected call of CountTenantFeatureFlagsUser.
+func (mr *MockStoreMockRecorder) CountTenantFeatureFlagsUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountTenantFeatureFlagsUser", reflect.TypeOf((*MockStore)(nil).CountTenantFeatureFlagsUser), ctx)
+}
+
 // CountTenants mocks base method.
 func (m *MockStore) CountTenants(ctx context.Context) (int64, error) {
 	m.ctrl.T.Helper()
@@ -3460,6 +3490,36 @@ func (mr *MockStoreMockRecorder) GetFeatureFlagStats(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagStats", reflect.TypeOf((*MockStore)(nil).GetFeatureFlagStats), ctx)
 }
 
+// GetFeatureFlagStatusAdmin mocks base method.
+func (m *MockStore) GetFeatureFlagStatusAdmin(ctx context.Context, arg GetFeatureFlagStatusAdminParams) (*GetFeatureFlagStatusAdminRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFeatureFlagStatusAdmin", ctx, arg)
+	ret0, _ := ret[0].(*GetFeatureFlagStatusAdminRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFeatureFlagStatusAdmin indicates an expected call of GetFeatureFlagStatusAdmin.
+func (mr *MockStoreMockRecorder) GetFeatureFlagStatusAdmin(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagStatusAdmin", reflect.TypeOf((*MockStore)(nil).GetFeatureFlagStatusAdmin), ctx, arg)
+}
+
+// GetFeatureFlagStatusUser mocks base method.
+func (m *MockStore) GetFeatureFlagStatusUser(ctx context.Context, featureFlagName string) (*GetFeatureFlagStatusUserRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFeatureFlagStatusUser", ctx, featureFlagName)
+	ret0, _ := ret[0].(*GetFeatureFlagStatusUserRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFeatureFlagStatusUser indicates an expected call of GetFeatureFlagStatusUser.
+func (mr *MockStoreMockRecorder) GetFeatureFlagStatusUser(ctx, featureFlagName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagStatusUser", reflect.TypeOf((*MockStore)(nil).GetFeatureFlagStatusUser), ctx, featureFlagName)
+}
+
 // GetFeatureFlagsByType mocks base method.
 func (m *MockStore) GetFeatureFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error) {
 	m.ctrl.T.Helper()
@@ -3488,6 +3548,36 @@ func (m *MockStore) GetFinancialStatementBuilder(ctx context.Context, arg GetFin
 func (mr *MockStoreMockRecorder) GetFinancialStatementBuilder(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinancialStatementBuilder", reflect.TypeOf((*MockStore)(nil).GetFinancialStatementBuilder), ctx, arg)
+}
+
+// GetFinancialStatementBuilderAdmin mocks base method.
+func (m *MockStore) GetFinancialStatementBuilderAdmin(ctx context.Context, tenantID uuid.UUID) ([]*VFinancialStatementBuilder, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFinancialStatementBuilderAdmin", ctx, tenantID)
+	ret0, _ := ret[0].([]*VFinancialStatementBuilder)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFinancialStatementBuilderAdmin indicates an expected call of GetFinancialStatementBuilderAdmin.
+func (mr *MockStoreMockRecorder) GetFinancialStatementBuilderAdmin(ctx, tenantID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinancialStatementBuilderAdmin", reflect.TypeOf((*MockStore)(nil).GetFinancialStatementBuilderAdmin), ctx, tenantID)
+}
+
+// GetFinancialStatementBuilderUser mocks base method.
+func (m *MockStore) GetFinancialStatementBuilderUser(ctx context.Context) ([]*VFinancialStatementBuilder, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFinancialStatementBuilderUser", ctx)
+	ret0, _ := ret[0].([]*VFinancialStatementBuilder)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFinancialStatementBuilderUser indicates an expected call of GetFinancialStatementBuilderUser.
+func (mr *MockStoreMockRecorder) GetFinancialStatementBuilderUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinancialStatementBuilderUser", reflect.TypeOf((*MockStore)(nil).GetFinancialStatementBuilderUser), ctx)
 }
 
 // GetFinancialStatementData mocks base method.
@@ -3743,6 +3833,21 @@ func (m *MockStore) GetLeafAccountsWithGroups(ctx context.Context, arg GetLeafAc
 func (mr *MockStoreMockRecorder) GetLeafAccountsWithGroups(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLeafAccountsWithGroups", reflect.TypeOf((*MockStore)(nil).GetLeafAccountsWithGroups), ctx, arg)
+}
+
+// GetMaterializedViewMetadata mocks base method.
+func (m *MockStore) GetMaterializedViewMetadata(ctx context.Context) ([]*GetMaterializedViewMetadataRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMaterializedViewMetadata", ctx)
+	ret0, _ := ret[0].([]*GetMaterializedViewMetadataRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMaterializedViewMetadata indicates an expected call of GetMaterializedViewMetadata.
+func (mr *MockStoreMockRecorder) GetMaterializedViewMetadata(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaterializedViewMetadata", reflect.TypeOf((*MockStore)(nil).GetMaterializedViewMetadata), ctx)
 }
 
 // GetMaxSequenceByEntityAndKey mocks base method.
@@ -4149,6 +4254,36 @@ func (mr *MockStoreMockRecorder) GetRootAccountsView(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRootAccountsView", reflect.TypeOf((*MockStore)(nil).GetRootAccountsView), ctx, arg)
 }
 
+// GetSecurityThreatDashboardAdmin mocks base method.
+func (m *MockStore) GetSecurityThreatDashboardAdmin(ctx context.Context, userID uuid.UUID) ([]*VSecurityThreatDashboard, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSecurityThreatDashboardAdmin", ctx, userID)
+	ret0, _ := ret[0].([]*VSecurityThreatDashboard)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSecurityThreatDashboardAdmin indicates an expected call of GetSecurityThreatDashboardAdmin.
+func (mr *MockStoreMockRecorder) GetSecurityThreatDashboardAdmin(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecurityThreatDashboardAdmin", reflect.TypeOf((*MockStore)(nil).GetSecurityThreatDashboardAdmin), ctx, userID)
+}
+
+// GetSecurityThreatDashboardUser mocks base method.
+func (m *MockStore) GetSecurityThreatDashboardUser(ctx context.Context) ([]*VSecurityThreatDashboard, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSecurityThreatDashboardUser", ctx)
+	ret0, _ := ret[0].([]*VSecurityThreatDashboard)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSecurityThreatDashboardUser indicates an expected call of GetSecurityThreatDashboardUser.
+func (mr *MockStoreMockRecorder) GetSecurityThreatDashboardUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecurityThreatDashboardUser", reflect.TypeOf((*MockStore)(nil).GetSecurityThreatDashboardUser), ctx)
+}
+
 // GetSequenceGaps mocks base method.
 func (m *MockStore) GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error) {
 	m.ctrl.T.Helper()
@@ -4222,6 +4357,36 @@ func (m *MockStore) GetSuspiciousActivityByIP(ctx context.Context, arg GetSuspic
 func (mr *MockStoreMockRecorder) GetSuspiciousActivityByIP(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSuspiciousActivityByIP", reflect.TypeOf((*MockStore)(nil).GetSuspiciousActivityByIP), ctx, arg)
+}
+
+// GetTenantAnalyticsOverviewAdmin mocks base method.
+func (m *MockStore) GetTenantAnalyticsOverviewAdmin(ctx context.Context, dollar_1 uuid.UUID) (*GetTenantAnalyticsOverviewAdminRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTenantAnalyticsOverviewAdmin", ctx, dollar_1)
+	ret0, _ := ret[0].(*GetTenantAnalyticsOverviewAdminRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTenantAnalyticsOverviewAdmin indicates an expected call of GetTenantAnalyticsOverviewAdmin.
+func (mr *MockStoreMockRecorder) GetTenantAnalyticsOverviewAdmin(ctx, dollar_1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantAnalyticsOverviewAdmin", reflect.TypeOf((*MockStore)(nil).GetTenantAnalyticsOverviewAdmin), ctx, dollar_1)
+}
+
+// GetTenantAnalyticsOverviewUser mocks base method.
+func (m *MockStore) GetTenantAnalyticsOverviewUser(ctx context.Context) (*GetTenantAnalyticsOverviewUserRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTenantAnalyticsOverviewUser", ctx)
+	ret0, _ := ret[0].(*GetTenantAnalyticsOverviewUserRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTenantAnalyticsOverviewUser indicates an expected call of GetTenantAnalyticsOverviewUser.
+func (mr *MockStoreMockRecorder) GetTenantAnalyticsOverviewUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantAnalyticsOverviewUser", reflect.TypeOf((*MockStore)(nil).GetTenantAnalyticsOverviewUser), ctx)
 }
 
 // GetTenantByEmail mocks base method.
@@ -4299,6 +4464,96 @@ func (mr *MockStoreMockRecorder) GetTenantConfiguration(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantConfiguration", reflect.TypeOf((*MockStore)(nil).GetTenantConfiguration), ctx)
 }
 
+// GetTenantEntitySummaryAdmin mocks base method.
+func (m *MockStore) GetTenantEntitySummaryAdmin(ctx context.Context, tenantID uuid.UUID) ([]*VTenantEntitySummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTenantEntitySummaryAdmin", ctx, tenantID)
+	ret0, _ := ret[0].([]*VTenantEntitySummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTenantEntitySummaryAdmin indicates an expected call of GetTenantEntitySummaryAdmin.
+func (mr *MockStoreMockRecorder) GetTenantEntitySummaryAdmin(ctx, tenantID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantEntitySummaryAdmin", reflect.TypeOf((*MockStore)(nil).GetTenantEntitySummaryAdmin), ctx, tenantID)
+}
+
+// GetTenantEntitySummaryUser mocks base method.
+func (m *MockStore) GetTenantEntitySummaryUser(ctx context.Context) ([]*VTenantEntitySummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTenantEntitySummaryUser", ctx)
+	ret0, _ := ret[0].([]*VTenantEntitySummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTenantEntitySummaryUser indicates an expected call of GetTenantEntitySummaryUser.
+func (mr *MockStoreMockRecorder) GetTenantEntitySummaryUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantEntitySummaryUser", reflect.TypeOf((*MockStore)(nil).GetTenantEntitySummaryUser), ctx)
+}
+
+// GetTenantFeatureFlagsCacheAdmin mocks base method.
+func (m *MockStore) GetTenantFeatureFlagsCacheAdmin(ctx context.Context, tenantID uuid.UUID) ([]*GetTenantFeatureFlagsCacheAdminRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTenantFeatureFlagsCacheAdmin", ctx, tenantID)
+	ret0, _ := ret[0].([]*GetTenantFeatureFlagsCacheAdminRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTenantFeatureFlagsCacheAdmin indicates an expected call of GetTenantFeatureFlagsCacheAdmin.
+func (mr *MockStoreMockRecorder) GetTenantFeatureFlagsCacheAdmin(ctx, tenantID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantFeatureFlagsCacheAdmin", reflect.TypeOf((*MockStore)(nil).GetTenantFeatureFlagsCacheAdmin), ctx, tenantID)
+}
+
+// GetTenantFeatureFlagsCacheUser mocks base method.
+func (m *MockStore) GetTenantFeatureFlagsCacheUser(ctx context.Context) ([]*GetTenantFeatureFlagsCacheUserRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTenantFeatureFlagsCacheUser", ctx)
+	ret0, _ := ret[0].([]*GetTenantFeatureFlagsCacheUserRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTenantFeatureFlagsCacheUser indicates an expected call of GetTenantFeatureFlagsCacheUser.
+func (mr *MockStoreMockRecorder) GetTenantFeatureFlagsCacheUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantFeatureFlagsCacheUser", reflect.TypeOf((*MockStore)(nil).GetTenantFeatureFlagsCacheUser), ctx)
+}
+
+// GetTenantGrowthMetricsAdmin mocks base method.
+func (m *MockStore) GetTenantGrowthMetricsAdmin(ctx context.Context, dollar_1 uuid.UUID) ([]*GetTenantGrowthMetricsAdminRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTenantGrowthMetricsAdmin", ctx, dollar_1)
+	ret0, _ := ret[0].([]*GetTenantGrowthMetricsAdminRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTenantGrowthMetricsAdmin indicates an expected call of GetTenantGrowthMetricsAdmin.
+func (mr *MockStoreMockRecorder) GetTenantGrowthMetricsAdmin(ctx, dollar_1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantGrowthMetricsAdmin", reflect.TypeOf((*MockStore)(nil).GetTenantGrowthMetricsAdmin), ctx, dollar_1)
+}
+
+// GetTenantGrowthMetricsUser mocks base method.
+func (m *MockStore) GetTenantGrowthMetricsUser(ctx context.Context) ([]*GetTenantGrowthMetricsUserRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTenantGrowthMetricsUser", ctx)
+	ret0, _ := ret[0].([]*GetTenantGrowthMetricsUserRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTenantGrowthMetricsUser indicates an expected call of GetTenantGrowthMetricsUser.
+func (mr *MockStoreMockRecorder) GetTenantGrowthMetricsUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantGrowthMetricsUser", reflect.TypeOf((*MockStore)(nil).GetTenantGrowthMetricsUser), ctx)
+}
+
 // GetTenantGrowthStats mocks base method.
 func (m *MockStore) GetTenantGrowthStats(ctx context.Context, arg GetTenantGrowthStatsParams) ([]*GetTenantGrowthStatsRow, error) {
 	m.ctrl.T.Helper()
@@ -4312,6 +4567,36 @@ func (m *MockStore) GetTenantGrowthStats(ctx context.Context, arg GetTenantGrowt
 func (mr *MockStoreMockRecorder) GetTenantGrowthStats(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantGrowthStats", reflect.TypeOf((*MockStore)(nil).GetTenantGrowthStats), ctx, arg)
+}
+
+// GetTenantResourceUtilizationAdmin mocks base method.
+func (m *MockStore) GetTenantResourceUtilizationAdmin(ctx context.Context, tenantID uuid.UUID) ([]*VTenantResourceUtilization, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTenantResourceUtilizationAdmin", ctx, tenantID)
+	ret0, _ := ret[0].([]*VTenantResourceUtilization)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTenantResourceUtilizationAdmin indicates an expected call of GetTenantResourceUtilizationAdmin.
+func (mr *MockStoreMockRecorder) GetTenantResourceUtilizationAdmin(ctx, tenantID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantResourceUtilizationAdmin", reflect.TypeOf((*MockStore)(nil).GetTenantResourceUtilizationAdmin), ctx, tenantID)
+}
+
+// GetTenantResourceUtilizationUser mocks base method.
+func (m *MockStore) GetTenantResourceUtilizationUser(ctx context.Context) ([]*VTenantResourceUtilization, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTenantResourceUtilizationUser", ctx)
+	ret0, _ := ret[0].([]*VTenantResourceUtilization)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTenantResourceUtilizationUser indicates an expected call of GetTenantResourceUtilizationUser.
+func (mr *MockStoreMockRecorder) GetTenantResourceUtilizationUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantResourceUtilizationUser", reflect.TypeOf((*MockStore)(nil).GetTenantResourceUtilizationUser), ctx)
 }
 
 // GetTenantStats mocks base method.
@@ -4974,6 +5259,21 @@ func (mr *MockStoreMockRecorder) GetValidationRulesByAccountType(ctx, accountTyp
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidationRulesByAccountType", reflect.TypeOf((*MockStore)(nil).GetValidationRulesByAccountType), ctx, accountType)
 }
 
+// GetViewMetadata mocks base method.
+func (m *MockStore) GetViewMetadata(ctx context.Context) ([]*GetViewMetadataRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetViewMetadata", ctx)
+	ret0, _ := ret[0].([]*GetViewMetadataRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetViewMetadata indicates an expected call of GetViewMetadata.
+func (mr *MockStoreMockRecorder) GetViewMetadata(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetViewMetadata", reflect.TypeOf((*MockStore)(nil).GetViewMetadata), ctx)
+}
+
 // Get_OrCreateEntityState mocks base method.
 func (m *MockStore) Get_OrCreateEntityState(ctx context.Context, arg Get_OrCreateEntityStateParams) (*Get_OrCreateEntityStateRow, error) {
 	m.ctrl.T.Helper()
@@ -5264,6 +5564,36 @@ func (m *MockStore) ListActiveEntities(ctx context.Context) ([]*Entity, error) {
 func (mr *MockStoreMockRecorder) ListActiveEntities(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListActiveEntities", reflect.TypeOf((*MockStore)(nil).ListActiveEntities), ctx)
+}
+
+// ListActiveFeatureFlagsAdmin mocks base method.
+func (m *MockStore) ListActiveFeatureFlagsAdmin(ctx context.Context, tenantID uuid.UUID) ([]*ListActiveFeatureFlagsAdminRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListActiveFeatureFlagsAdmin", ctx, tenantID)
+	ret0, _ := ret[0].([]*ListActiveFeatureFlagsAdminRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListActiveFeatureFlagsAdmin indicates an expected call of ListActiveFeatureFlagsAdmin.
+func (mr *MockStoreMockRecorder) ListActiveFeatureFlagsAdmin(ctx, tenantID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListActiveFeatureFlagsAdmin", reflect.TypeOf((*MockStore)(nil).ListActiveFeatureFlagsAdmin), ctx, tenantID)
+}
+
+// ListActiveFeatureFlagsUser mocks base method.
+func (m *MockStore) ListActiveFeatureFlagsUser(ctx context.Context) ([]*ListActiveFeatureFlagsUserRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListActiveFeatureFlagsUser", ctx)
+	ret0, _ := ret[0].([]*ListActiveFeatureFlagsUserRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListActiveFeatureFlagsUser indicates an expected call of ListActiveFeatureFlagsUser.
+func (mr *MockStoreMockRecorder) ListActiveFeatureFlagsUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListActiveFeatureFlagsUser", reflect.TypeOf((*MockStore)(nil).ListActiveFeatureFlagsUser), ctx)
 }
 
 // ListActivePolicies mocks base method.
@@ -5668,6 +5998,20 @@ func (mr *MockStoreMockRecorder) RecalculateClosingBalance(ctx, id any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecalculateClosingBalance", reflect.TypeOf((*MockStore)(nil).RecalculateClosingBalance), ctx, id)
 }
 
+// RefreshTenantFeatureFlagsCache mocks base method.
+func (m *MockStore) RefreshTenantFeatureFlagsCache(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RefreshTenantFeatureFlagsCache", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RefreshTenantFeatureFlagsCache indicates an expected call of RefreshTenantFeatureFlagsCache.
+func (mr *MockStoreMockRecorder) RefreshTenantFeatureFlagsCache(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshTenantFeatureFlagsCache", reflect.TypeOf((*MockStore)(nil).RefreshTenantFeatureFlagsCache), ctx)
+}
+
 // RejectTransaction mocks base method.
 func (m *MockStore) RejectTransaction(ctx context.Context, arg RejectTransactionParams) (*FinanceTransaction, error) {
 	m.ctrl.T.Helper()
@@ -6049,11 +6393,12 @@ func (mr *MockStoreMockRecorder) SetTenantContext(ctx, tenantID any) *gomock.Cal
 }
 
 // SoftDeleteAccount mocks base method.
-func (m *MockStore) SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) error {
+func (m *MockStore) SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SoftDeleteAccount", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // SoftDeleteAccount indicates an expected call of SoftDeleteAccount.
@@ -6158,6 +6503,34 @@ func (m *MockStore) SoftDeleteUser(ctx context.Context, id uuid.UUID) error {
 func (mr *MockStoreMockRecorder) SoftDeleteUser(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SoftDeleteUser", reflect.TypeOf((*MockStore)(nil).SoftDeleteUser), ctx, id)
+}
+
+// TestViewPerformanceAdmin mocks base method.
+func (m *MockStore) TestViewPerformanceAdmin(ctx context.Context, tenantID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TestViewPerformanceAdmin", ctx, tenantID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// TestViewPerformanceAdmin indicates an expected call of TestViewPerformanceAdmin.
+func (mr *MockStoreMockRecorder) TestViewPerformanceAdmin(ctx, tenantID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TestViewPerformanceAdmin", reflect.TypeOf((*MockStore)(nil).TestViewPerformanceAdmin), ctx, tenantID)
+}
+
+// TestViewPerformanceUser mocks base method.
+func (m *MockStore) TestViewPerformanceUser(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TestViewPerformanceUser", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// TestViewPerformanceUser indicates an expected call of TestViewPerformanceUser.
+func (mr *MockStoreMockRecorder) TestViewPerformanceUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TestViewPerformanceUser", reflect.TypeOf((*MockStore)(nil).TestViewPerformanceUser), ctx)
 }
 
 // UnlockUser mocks base method.

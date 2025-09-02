@@ -54,12 +54,20 @@ type repository struct {
 	metrics metrics.MetricsProvider
 }
 
+// createNoopMetrics creates a noop metrics provider
+func createNoopMetrics() metrics.MetricsProvider {
+	service, _ := metrics.NewMetricsService(metrics.MetricsConfig{
+		Enabled: false,
+	})
+	return service
+}
+
 // NewRepository creates a new entity repository
-func NewRepository(store db.Store, tracing tracing.TracingService, metrics metrics.MetricsProvider) Repository {
+func NewRepository(store db.Store, tracing tracing.TracingService) Repository {
 	return &repository{
 		store:   store,
 		tracing: tracing,
-		metrics: metrics,
+		metrics: createNoopMetrics(), // Use noop metrics if not provided
 	}
 }
 

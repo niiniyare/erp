@@ -120,7 +120,7 @@ nav:
     - 'Management': 'reference/modules/tenant/tenant-management.md'
     - 'Testing': 'reference/modules/tenant/testing.md'
   - 'Other Modules':
-    - 'System Architecture': 'reference/modules/Architecture.md'
+    - 'System Architecture': 'docs/reference/modules/settings/index.md'
     - 'System Settings': 'reference/modules/settings.md'
     - 'Airline Module': 'reference/modules/airline-module.md'
     - 'Asset Management': 'reference/modules/asset-management.md'

@@ -67,7 +67,7 @@ evans: ## Start Evans gRPC REPL
 sqlc-lint: ## detection of basd queries
 	@./db/queries/lint.sh
 sqlc: ## Generate SQLC store code
-	@sqlc generate
+	@sqlc generate && go generate  ./db/sqlc/...
 
 mock: ## Generate mocks for interfaces
 	# @./generate_all_mocks.sh
@@ -75,6 +75,8 @@ mock: ## Generate mocks for interfaces
 fmt: ## Format Go code
 	@go fmt ./...
 
+docs: ## serve Doc by mkdocs on port 8080 
+	@mkdocs serve -a localhost:8080
 goa: ## generate 7oa 
 	@goa gen github.com/niiniyare/erp/internal/api/design -o internal/api && rm -rf ./internal/api/swagger/openapi && cp -f ./internal/api/gen/http/openapi3.json ./internal/api/swagger
 lint: ## Lint Go code
@@ -238,4 +240,5 @@ run: ## Run the app server
 
 .PHONY: help clean ci fmt lint test test-core test-repo \
 	createdb dropdb migrateup migratedown migratedrop migrate-create \
-	sqlc mock proto buf buf-lint evans dbdocs sql2dbml run check-tools
+	sqlc mock proto buf buf-lint evans dbdocs sql2dbml run check-tools \
+	docs

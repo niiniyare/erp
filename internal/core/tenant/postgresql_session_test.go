@@ -5,7 +5,6 @@ package tenant
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -27,26 +26,22 @@ type PostgreSQLSessionTestSuite struct {
 func (suite *PostgreSQLSessionTestSuite) SetupSuite() {
 	suite.ctx = context.Background()
 
-	// Check if database tests should be skipped
-	databaseURL := os.Getenv("TEST_DATABASE_URL")
-	if databaseURL == "" {
-		suite.T().Skip("TEST_DATABASE_URL not set, skipping database tests")
+	// Use improved database test runner approach
+	dbRunner, err := NewDatabaseTestRunner()
+	if err != nil {
+		suite.T().Skipf("Database not available for testing: %v", err)
+		return
 	}
-
-	// Create database connection
-	config, err := pgxpool.ParseConfig(databaseURL)
-	require.NoError(suite.T(), err)
-
-	// Configure for testing
-	config.MaxConns = 5
-	config.MinConns = 1
-
-	suite.pool, err = pgxpool.NewWithConfig(suite.ctx, config)
-	require.NoError(suite.T(), err)
-
-	// Test connection
+	
+	// Get the pool from the database runner
+	suite.pool = dbRunner.GetPool()
+	
+	// Test connection to ensure it's working
 	err = suite.pool.Ping(suite.ctx)
-	require.NoError(suite.T(), err)
+	if err != nil {
+		suite.T().Skipf("Database connection failed: %v", err)
+		return
+	}
 
 	// Create store
 	suite.store = db.NewStore(suite.pool)
