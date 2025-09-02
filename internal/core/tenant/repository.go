@@ -689,7 +689,7 @@ func (r *repository) ProvisionTenant(ctx context.Context, req ProvisionTenantReq
 	if req.Industry != nil {
 		industry = *req.Industry
 	}
-	companySize := "small" // Default value
+	companySize := "Small" // Default value - must match database constraint
 	if req.CompanySize != nil {
 		companySize = *req.CompanySize
 	}

@@ -7,14 +7,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/platform/config"
 )
-
-// TEST_DATABASE_URL is the default database URL for testing
-var TEST_DATABASE_URL = "postgresql://admin:admin@localhost:5432/ledger?sslmode=disable"
 
 // DatabaseTestRunner provides utilities for running database tests
 type DatabaseTestRunner struct {
@@ -25,26 +24,50 @@ type DatabaseTestRunner struct {
 
 // NewDatabaseTestRunner creates a new database test runner
 func NewDatabaseTestRunner() (*DatabaseTestRunner, error) {
-	// Check if database tests should be run
-	databaseURL := os.Getenv("TEST_DATABASE_URL")
-	if databaseURL == "" {
-		databaseURL = TEST_DATABASE_URL
-		// return nil, fmt.Errorf("TEST_DATABASE_URL not set, database tests cannot run")
-	}
-
 	ctx := context.Background()
 
+	// Check if TEST_DATABASE_URL is set for testing override first
+	databaseURL := os.Getenv("TEST_DATABASE_URL")
+	if databaseURL == "" {
+		// Try to load configuration with timeout protection
+		// If config loading takes too long, fall back to defaults
+		configChan := make(chan *config.Config, 1)
+		errorChan := make(chan error, 1)
+		
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					errorChan <- fmt.Errorf("config loading panicked: %v", r)
+				}
+			}()
+			cfg := config.Load()
+			configChan <- cfg
+		}()
+		
+		// Wait for config with timeout
+		timeout := time.After(2 * time.Second)
+		select {
+		case cfg := <-configChan:
+			databaseURL = cfg.Database.GetDatabaseURL()
+		case err := <-errorChan:
+			return nil, fmt.Errorf("config loading error: %w", err)
+		case <-timeout:
+			// Config loading took too long, use fallback defaults
+			databaseURL = getDefaultTestDatabaseURL()
+		}
+	}
+
 	// Create database connection
-	config, err := pgxpool.ParseConfig(databaseURL)
+	poolConfig, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse database URL: %w", err)
 	}
 
 	// Configure for testing
-	config.MaxConns = 5
-	config.MinConns = 1
+	poolConfig.MaxConns = 5
+	poolConfig.MinConns = 1
 
-	pool, err := pgxpool.NewWithConfig(ctx, config)
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create connection pool: %w", err)
 	}
@@ -251,6 +274,27 @@ func (r *DatabaseTestRunner) CreateTestTenant(ctx context.Context, name string) 
 	}
 
 	return r.store.CreateTenant(ctx, params)
+}
+
+// getDefaultTestDatabaseURL returns a default database URL for testing
+func getDefaultTestDatabaseURL() string {
+	host := getEnvOrDefault("DB_HOST", "localhost")
+	port := getEnvOrDefault("DB_PORT", "5432")
+	user := getEnvOrDefault("DB_USER", "admin")
+	password := getEnvOrDefault("DB_PASSWORD", "admin")
+	dbName := getEnvOrDefault("DB_NAME", "ledger")
+	sslMode := getEnvOrDefault("DB_SSL_MODE", "disable")
+	
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", 
+		user, password, host, port, dbName, sslMode)
+}
+
+// getEnvOrDefault returns environment variable value or default
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 // Helper function for string pointers
