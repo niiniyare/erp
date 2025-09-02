@@ -44,7 +44,7 @@ extra_javascript:
   - javascripts/mermaid-config.js
   - javascripts/search-enhancements.js
   - javascripts/search-analytics.js
-  - javascripts/contextual-help.js
+  # - javascripts/contextual-help.js
 
 nav:
   - 'Getting Started': 'getting-started/01-developer-quick-start.md'
@@ -121,6 +121,7 @@ nav:
     - 'Testing': 'reference/modules/tenant/testing.md'
   - 'Other Modules':
     - 'System Architecture': 'reference/modules/Architecture.md'
+    - 'System Settings': 'reference/modules/settings.md'
     - 'Airline Module': 'reference/modules/airline-module.md'
     - 'Asset Management': 'reference/modules/asset-management.md'
     - 'Forecourt Module': 'reference/modules/forecourt-module.md'

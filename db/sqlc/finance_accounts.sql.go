@@ -2394,7 +2394,7 @@ func (q *Queries) SearchAccountsWithGroupInfo(ctx context.Context, arg SearchAcc
 	return items, nil
 }
 
-const softDeleteAccount = `-- name: SoftDeleteAccount :exec
+const softDeleteAccount = `-- name: SoftDeleteAccount :execrows
 UPDATE
   finance_accounts
 SET
@@ -2412,9 +2412,12 @@ type SoftDeleteAccountParams struct {
 	AccountID uuid.UUID  `json:"account_id"`
 }
 
-func (q *Queries) SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) error {
-	_, err := q.db.Exec(ctx, softDeleteAccount, arg.UpdatedBy, arg.AccountID)
-	return err
+func (q *Queries) SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) (int64, error) {
+	result, err := q.db.Exec(ctx, softDeleteAccount, arg.UpdatedBy, arg.AccountID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const updateAccount = `-- name: UpdateAccount :one

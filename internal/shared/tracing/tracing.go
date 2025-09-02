@@ -650,3 +650,13 @@ func MessagingAttributes(system, destination, operation string) []attribute.KeyV
 		semconv.MessagingOperationKey.String(operation),
 	}
 }
+
+// NewNoOpTracingService creates a tracing service with tracing disabled for testing
+func NewNoOpTracingService() TracingService {
+	return &tracingService{
+		config: TracingConfig{
+			Enabled: false,
+		},
+		tracer: otel.Tracer("noop"),
+	}
+}

@@ -49,34 +49,8 @@ func (r *chartOfAccountsRepository) Create(ctx context.Context, account *domain.
 
 	// Use tenant-aware transaction for proper isolation
 	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
-		// Create a CreateAccountRequest from the domain account
-		req := &domain.CreateAccountRequest{
-			EntityID:                    account.EntityID,
-			AccountCode:                 account.AccountCode,
-			AccountName:                 account.AccountName,
-			AccountDescription:          account.AccountDescription,
-			ParentAccountID:             account.ParentAccountID,
-			RootType:                    account.RootType,
-			AccountType:                 account.AccountType,
-			AccountSubtype:              account.AccountSubtype,
-			NormalBalance:               account.NormalBalance,
-			IsControlAccount:            account.IsControlAccount,
-			ControlAccountID:            account.ControlAccountID,
-			CurrencyCode:                account.CurrencyCode,
-			IsMultiCurrency:             account.IsMultiCurrency,
-			CurrencyRevaluationRequired: account.CurrencyRevaluationRequired,
-			IsActive:                    account.IsActive,
-			AllowManualEntries:          account.AllowManualEntries,
-			RequireReference:            account.RequireReference,
-			FinancialStatementLine:      account.FinancialStatementLine,
-			ReportOrder:                 account.ReportOrder,
-			IsBudgetable:                account.IsBudgetable,
-			BudgetVarianceThreshold:     account.BudgetVarianceThreshold,
-			AccountAttributes:           account.AccountAttributes,
-		}
-
-		// Map domain request to SQLC parameters
-		params, err := mapDomainAccountToSQLCCreate(req)
+		// Map domain account directly to SQLC parameters
+		params, err := mapDomainAccountToSQLCCreateDirect(account)
 		if err != nil {
 			return fmt.Errorf("failed to map create account request: %w", err)
 		}
@@ -103,17 +77,32 @@ func (r *chartOfAccountsRepository) GetByID(ctx context.Context, id uuid.UUID) (
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetByID")
 	defer span.End()
 
-	sqlcAccount, err := r.store.GetAccountByID(ctx, id)
-	if err != nil {
-		if err == db.ErrNoRows {
-			return nil, domain.ErrAccountNotFound
-		}
-		return nil, r.mapDatabaseError(err, "get_account_by_id")
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
-	account, err := mapSQLCAccountToDomain(sqlcAccount)
+	var account *domain.Accounts
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		sqlcAccount, err := s.GetAccountByID(ctx, id)
+		if err != nil {
+			if err == db.ErrNoRows {
+				return domain.ErrAccountNotFound
+			}
+			return r.mapDatabaseError(err, "get_account_by_id")
+		}
+
+		account, err = mapSQLCAccountToDomain(sqlcAccount)
+		if err != nil {
+			return fmt.Errorf("failed to map SQLC account to domain: %w", err)
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to map SQLC account to domain: %w", err)
+		return nil, err
 	}
 
 	return account, nil
@@ -123,18 +112,33 @@ func (r *chartOfAccountsRepository) GetByCode(ctx context.Context, entityID *uui
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetByCode")
 	defer span.End()
 
-	// Note: SQLC GetAccountByCode only takes accountCode string, entityID filtering handled by RLS
-	sqlcAccount, err := r.store.GetAccountByCode(ctx, accountCode)
-	if err != nil {
-		if err == db.ErrNoRows {
-			return nil, domain.ErrAccountNotFound
-		}
-		return nil, r.mapDatabaseError(err, "get_account_by_code")
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
-	account, err := mapSQLCAccountToDomain(sqlcAccount)
+	var account *domain.Accounts
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		// Note: SQLC GetAccountByCode only takes accountCode string, entityID filtering handled by RLS
+		sqlcAccount, err := s.GetAccountByCode(ctx, accountCode)
+		if err != nil {
+			if err == db.ErrNoRows {
+				return domain.ErrAccountNotFound
+			}
+			return r.mapDatabaseError(err, "get_account_by_code")
+		}
+
+		account, err = mapSQLCAccountToDomain(sqlcAccount)
+		if err != nil {
+			return fmt.Errorf("failed to map SQLC account to domain: %w", err)
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to map SQLC account to domain: %w", err)
+		return nil, err
 	}
 
 	return account, nil
@@ -209,14 +213,21 @@ func (r *chartOfAccountsRepository) Delete(ctx context.Context, id uuid.UUID) er
 	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
 		params := db.SoftDeleteAccountParams{
 			AccountID: id,
-			UpdatedBy: &userID,
+			UpdatedBy: nil, // Don't set updated_by if userID is not available
 		}
-		err := s.SoftDeleteAccount(ctx, params)
+		
+		// Only set UpdatedBy if we have a valid user ID
+		if userID != uuid.Nil {
+			params.UpdatedBy = &userID
+		}
+		rowsAffected, err := s.SoftDeleteAccount(ctx, params)
 		if err != nil {
-			if err == db.ErrNoRows {
-				return domain.ErrAccountNotFound
-			}
 			return r.mapDatabaseError(err, "soft_delete_account")
+		}
+		
+		// Check if the account was found and deleted
+		if rowsAffected == 0 {
+			return domain.ErrAccountNotFound
 		}
 
 		return nil
@@ -229,26 +240,41 @@ func (r *chartOfAccountsRepository) List(ctx context.Context, filter *domain.Acc
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.List")
 	defer span.End()
 
-	// Map domain filter to SQLC parameters
-	params, err := mapAccountFilterToSQLCParams(filter)
-	if err != nil {
-		return nil, fmt.Errorf("failed to map account filter: %w", err)
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
-	// Execute SQLC query
-	sqlcAccounts, err := r.store.ListAccounts(ctx, params)
-	if err != nil {
-		return nil, r.mapDatabaseError(err, "list_accounts")
-	}
-
-	// Map results to domain models
-	accounts := make([]*domain.Accounts, 0, len(sqlcAccounts))
-	for _, sqlcAccount := range sqlcAccounts {
-		account, err := mapSQLCAccountToDomain(sqlcAccount)
+	var accounts []*domain.Accounts
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		// Map domain filter to SQLC parameters
+		params, err := mapAccountFilterToSQLCParams(filter)
 		if err != nil {
-			return nil, fmt.Errorf("failed to map SQLC account to domain: %w", err)
+			return fmt.Errorf("failed to map account filter: %w", err)
 		}
-		accounts = append(accounts, account)
+
+		// Execute SQLC query within tenant context
+		sqlcAccounts, err := s.ListAccounts(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "list_accounts")
+		}
+
+		// Map results to domain models
+		accounts = make([]*domain.Accounts, 0, len(sqlcAccounts))
+		for _, sqlcAccount := range sqlcAccounts {
+			account, err := mapSQLCAccountToDomain(sqlcAccount)
+			if err != nil {
+				return fmt.Errorf("failed to map SQLC account to domain: %w", err)
+			}
+			accounts = append(accounts, account)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return accounts, nil
@@ -258,38 +284,52 @@ func (r *chartOfAccountsRepository) Count(ctx context.Context, filter *domain.Ac
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.Count")
 	defer span.End()
 
-	// Map basic filter parameters for count
-	params := db.CountAccountsParams{}
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return 0, fmt.Errorf("tenant ID not found in context")
+	}
 
-	if filter.RootType != nil {
-		switch *filter.RootType {
-		case domain.RootTypeAsset:
-			rootTypeStr := "ASSET"
-			params.RootType = &rootTypeStr
-		case domain.RootTypeLiability:
-			rootTypeStr := "LIABILITY"
-			params.RootType = &rootTypeStr
-		case domain.RootTypeEquity:
-			rootTypeStr := "EQUITY"
-			params.RootType = &rootTypeStr
-		case domain.RootTypeRevenue:
-			rootTypeStr := "REVENUE"
-			params.RootType = &rootTypeStr
-		case domain.RootTypeExpense:
-			rootTypeStr := "EXPENSE"
-			params.RootType = &rootTypeStr
+	var count int64
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		// Map basic filter parameters for count
+		params := db.CountAccountsParams{}
+
+		if filter.RootType != nil {
+			switch *filter.RootType {
+			case domain.RootTypeAsset:
+				rootTypeStr := "ASSET"
+				params.RootType = &rootTypeStr
+			case domain.RootTypeLiability:
+				rootTypeStr := "LIABILITY"
+				params.RootType = &rootTypeStr
+			case domain.RootTypeEquity:
+				rootTypeStr := "EQUITY"
+				params.RootType = &rootTypeStr
+			case domain.RootTypeRevenue:
+				rootTypeStr := "REVENUE"
+				params.RootType = &rootTypeStr
+			case domain.RootTypeExpense:
+				rootTypeStr := "EXPENSE"
+				params.RootType = &rootTypeStr
+			}
 		}
-	}
 
-	// Note: AccountType filter not available in domain.AccountFilter
+		if filter.IsActive != nil {
+			params.IsActive = *filter.IsActive
+		}
 
-	if filter.IsActive != nil {
-		params.IsActive = *filter.IsActive
-	}
+		var err error
+		count, err = s.CountAccounts(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "count_accounts")
+		}
 
-	count, err := r.store.CountAccounts(ctx, params)
+		return nil
+	})
+
 	if err != nil {
-		return 0, r.mapDatabaseError(err, "count_accounts")
+		return 0, err
 	}
 
 	return count, nil
@@ -299,18 +339,33 @@ func (r *chartOfAccountsRepository) ListByParent(ctx context.Context, parentID u
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.ListByParent")
 	defer span.End()
 
-	sqlcAccounts, err := r.store.ListAccountsByParent(ctx, &parentID)
-	if err != nil {
-		return nil, r.mapDatabaseError(err, "list_accounts_by_parent")
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
-	accounts := make([]*domain.Accounts, 0, len(sqlcAccounts))
-	for _, sqlcAccount := range sqlcAccounts {
-		account, err := mapSQLCAccountToDomain(sqlcAccount)
+	var accounts []*domain.Accounts
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		sqlcAccounts, err := s.ListAccountsByParent(ctx, &parentID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to map SQLC account to domain: %w", err)
+			return r.mapDatabaseError(err, "list_accounts_by_parent")
 		}
-		accounts = append(accounts, account)
+
+		accounts = make([]*domain.Accounts, 0, len(sqlcAccounts))
+		for _, sqlcAccount := range sqlcAccounts {
+			account, err := mapSQLCAccountToDomain(sqlcAccount)
+			if err != nil {
+				return fmt.Errorf("failed to map SQLC account to domain: %w", err)
+			}
+			accounts = append(accounts, account)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return accounts, nil
@@ -335,20 +390,35 @@ func (r *chartOfAccountsRepository) GetAccountHierarchy(ctx context.Context, roo
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountHierarchy")
 	defer span.End()
 
-	// Convert rootID to string for hierarchy query
-	rootIDStr := rootID.String()
-	sqlcAccounts, err := r.store.GetAccountHierarchy(ctx, rootIDStr)
-	if err != nil {
-		return nil, r.mapDatabaseError(err, "get_account_hierarchy")
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
-	accounts := make([]*domain.Accounts, 0, len(sqlcAccounts))
-	for _, sqlcAccount := range sqlcAccounts {
-		account, err := mapSQLCAccountToDomain(sqlcAccount)
+	var accounts []*domain.Accounts
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		// Convert rootID to string for hierarchy query
+		rootIDStr := rootID.String()
+		sqlcAccounts, err := s.GetAccountHierarchy(ctx, rootIDStr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to map SQLC account to domain: %w", err)
+			return r.mapDatabaseError(err, "get_account_hierarchy")
 		}
-		accounts = append(accounts, account)
+
+		accounts = make([]*domain.Accounts, 0, len(sqlcAccounts))
+		for _, sqlcAccount := range sqlcAccounts {
+			account, err := mapSQLCAccountToDomain(sqlcAccount)
+			if err != nil {
+				return fmt.Errorf("failed to map SQLC account to domain: %w", err)
+			}
+			accounts = append(accounts, account)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return accounts, nil
@@ -481,19 +551,34 @@ func (r *chartOfAccountsRepository) GetControlAccounts(ctx context.Context, enti
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetControlAccounts")
 	defer span.End()
 
-	// Pass entityID parameter to GetControlAccounts
-	sqlcAccounts, err := r.store.GetControlAccounts(ctx, entityID)
-	if err != nil {
-		return nil, r.mapDatabaseError(err, "get_control_accounts")
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
-	accounts := make([]*domain.Accounts, 0, len(sqlcAccounts))
-	for _, sqlcAccount := range sqlcAccounts {
-		account, err := mapSQLCAccountToDomain(sqlcAccount)
+	var accounts []*domain.Accounts
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		// Pass entityID parameter to GetControlAccounts
+		sqlcAccounts, err := s.GetControlAccounts(ctx, entityID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to map SQLC account to domain: %w", err)
+			return r.mapDatabaseError(err, "get_control_accounts")
 		}
-		accounts = append(accounts, account)
+
+		accounts = make([]*domain.Accounts, 0, len(sqlcAccounts))
+		for _, sqlcAccount := range sqlcAccounts {
+			account, err := mapSQLCAccountToDomain(sqlcAccount)
+			if err != nil {
+				return fmt.Errorf("failed to map SQLC account to domain: %w", err)
+			}
+			accounts = append(accounts, account)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return accounts, nil
@@ -554,13 +639,29 @@ func (r *chartOfAccountsRepository) HasChildren(ctx context.Context, accountID u
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.HasChildren")
 	defer span.End()
 
-	// Use ListAccountsByParent to check if children exist
-	children, err := r.store.ListAccountsByParent(ctx, &accountID)
-	if err != nil {
-		return false, r.mapDatabaseError(err, "list_accounts_by_parent")
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return false, fmt.Errorf("tenant ID not found in context")
 	}
 
-	return len(children) > 0, nil
+	var hasChildren bool
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		// Use ListAccountsByParent to check if children exist
+		children, err := s.ListAccountsByParent(ctx, &accountID)
+		if err != nil {
+			return r.mapDatabaseError(err, "list_accounts_by_parent")
+		}
+
+		hasChildren = len(children) > 0
+		return nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	return hasChildren, nil
 }
 
 func (r *chartOfAccountsRepository) HasTransactions(ctx context.Context, accountID uuid.UUID) (bool, error) {
@@ -610,7 +711,8 @@ func (r *chartOfAccountsRepository) mapDatabaseError(err error, operation string
 				return domain.ErrAccountCodeExists
 			}
 		case "23503": // foreign key violation
-			return fmt.Errorf("invalid parent account reference")
+			// Include more details about the constraint violation for debugging
+			return fmt.Errorf("foreign key constraint violation: %s (detail: %s, constraint: %s)", pgErr.Message, pgErr.Detail, pgErr.ConstraintName)
 		}
 	}
 

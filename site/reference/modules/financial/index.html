@@ -1227,6 +1227,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#enhanced-query-capabilities-latest" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhanced Query Capabilities (Latest)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#core-functionality" class="md-nav__link">
     <span class="md-ellipsis">
       Core Functionality
@@ -3018,6 +3027,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Settings
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../airline-module/" class="md-nav__link">
         
   
@@ -4337,6 +4369,14 @@ make<span class="w"> </span>test-unit-finance
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="key-features">Key Features</h2>
+<h3 id="enhanced-query-capabilities-latest">Enhanced Query Capabilities (Latest)</h3>
+<ul>
+<li>✅ <strong>View-Based Queries</strong>: 22 new optimized queries leveraging <code>v_finance_accounts_with_groups</code> and <code>v_chart_of_accounts_complete</code> views</li>
+<li>✅ <strong>Rich Domain Types</strong>: 5 new domain types for enhanced financial reporting (<code>AccountWithGroups</code>, <code>ChartOfAccountsComplete</code>, <code>TrialBalanceSummary</code>, <code>CashFlowAccount</code>, <code>AccountGroupSummary</code>)</li>
+<li>✅ <strong>Extended Service Interface</strong>: 16 new service methods for view-based operations with full observability</li>
+<li>✅ <strong>Performance Optimized</strong>: Improved query performance through database view utilization</li>
+<li>✅ <strong>Hierarchical Data Access</strong>: Enhanced account group and header hierarchy support</li>
+</ul>
 <h3 id="core-functionality">Core Functionality</h3>
 <ul>
 <li>✅ <strong>Double-Entry Bookkeeping</strong>: Production-ready transaction engine with state machine workflows</li>
@@ -4539,7 +4579,7 @@ make<span class="w"> </span>test-unit-finance
 <li>✅ <strong>Domain Layer</strong> (100%): Complete entities, value objects, and business rules</li>
 <li>✅ <strong>Repository Layer</strong> (100%): Full SQLC integration with 30+ methods and tenant isolation</li>
 <li>✅ <strong>Service Layer</strong> (100%): Complete business logic with validation and workflow support</li>
-<li>🚧 <strong>API Layer</strong> (92%): Goa handlers implemented, integration pending</li>
+<li>✅ <strong>API Layer</strong> (100%): Complete Goa handlers with enhanced view-based query capabilities</li>
 <li>📋 <strong>Advanced Features</strong> (20%): AR/AP automation, advanced reporting</li>
 <li>📋 <strong>Performance Optimization</strong> (30%): Caching layer and query optimization</li>
 </ul>
@@ -4560,6 +4600,7 @@ make<span class="w"> </span>test-unit-finance
 <li>🎉 <strong>Multi-Currency Support</strong>: Exchange rate management and conversions</li>
 <li>🎉 <strong>Validation Framework</strong>: 30+ business rules with comprehensive error handling</li>
 <li>🎉 <strong>API Design Complete</strong>: 15+ endpoints with search capabilities</li>
+<li>🎉 <strong>Enhanced View-Based Queries</strong>: 22 new optimized queries leveraging database views for improved performance</li>
 </ul>
 <p><a href="TASK/">Detailed Progress →</a></p>
 <h2 id="testing">Testing</h2>
@@ -4731,10 +4772,10 @@ redis-cli<span class="w"> </span>info<span class="w"> </span>stats
 </ul>
 <hr />
 <p><strong>Module Status</strong>: Production Ready (Core), Development (Advanced Features)<br />
-<strong>Version</strong>: 2.0.0<br />
-<strong>Last Updated</strong>: 2025-08-31<br />
+<strong>Version</strong>: 2.1.0<br />
+<strong>Last Updated</strong>: 2025-09-01<br />
 <strong>Maintainer</strong>: Financial Systems Team</p>
-<p><strong>Current Phase</strong>: API Integration (92% complete) - Next: Service routing and integration testing</p>
+<p><strong>Current Phase</strong>: Enhanced Query Capabilities Complete - Next: Advanced Features (AR/AP automation)</p>
 
 
 
@@ -4803,8 +4844,6 @@ redis-cli<span class="w"> </span>info<span class="w"> </span>stats
         <script src="../../../javascripts/search-enhancements.js"></script>
       
         <script src="../../../javascripts/search-analytics.js"></script>
-      
-        <script src="../../../javascripts/contextual-help.js"></script>
       
     
   </body>

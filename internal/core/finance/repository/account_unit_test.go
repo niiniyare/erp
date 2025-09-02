@@ -64,6 +64,7 @@ func (s *AccountsRepositoryUnitTestSuite) TestCreateAccountSuccess() {
 		CurrencyCode:       "USD",
 		IsActive:           true,
 		AllowManualEntries: true,
+		Version:            1,
 	}
 
 	// Expected SQLC parameters
@@ -157,6 +158,7 @@ func (s *AccountsRepositoryUnitTestSuite) TestCreateAccountDuplicateCode() {
 		CurrencyCode:       "USD",
 		IsActive:           true,
 		AllowManualEntries: true,
+		Version:            1,
 	}
 
 	// Mock duplicate key violation
@@ -301,6 +303,7 @@ func (s *AccountsRepositoryUnitTestSuite) TestUpdateAccountSuccess() {
 		CurrencyCode:       "USD",
 		IsActive:           false, // Updated to inactive
 		AllowManualEntries: true,
+		Version:            1,
 		CreatedAt:          time.Now(),
 		UpdatedAt:          time.Now(),
 		UpdatedBy:          &uuid.UUID{},

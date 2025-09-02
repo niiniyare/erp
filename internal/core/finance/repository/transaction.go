@@ -647,7 +647,8 @@ func (r *transactionRepository) mapDatabaseError(err error, operation string) er
 		case "23505": // unique violation
 			return domain.ErrTransactionNumberExists
 		case "23503": // foreign key violation
-			return fmt.Errorf("invalid reference in transaction")
+			// Include more details about the constraint violation for debugging
+			return fmt.Errorf("foreign key constraint violation: %s (detail: %s, constraint: %s)", pgErr.Message, pgErr.Detail, pgErr.ConstraintName)
 		}
 	}
 

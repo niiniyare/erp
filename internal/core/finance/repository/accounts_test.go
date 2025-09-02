@@ -5,12 +5,12 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	db "github.com/niiniyare/erp/db/sqlc"
@@ -42,10 +42,10 @@ func (s *AccountsRepositoryTestSuite) SetupSuite() {
 	s.ctx = context.Background()
 
 	// Create test tenants
-	s.tenantA, err = s.runner.CreateTestTenant(s.ctx, "finance-test-tenant-a")
+	s.tenantA, err = s.runner.CreateTestTenant(s.ctx, fmt.Sprintf("accounts-tenant-a-%s", uuid.New().String()[:8]))
 	s.Require().NoError(err, "Failed to create tenant A")
 
-	s.tenantB, err = s.runner.CreateTestTenant(s.ctx, "finance-test-tenant-b")
+	s.tenantB, err = s.runner.CreateTestTenant(s.ctx, fmt.Sprintf("accounts-tenant-b-%s", uuid.New().String()[:8]))
 	s.Require().NoError(err, "Failed to create tenant B")
 
 	// Setup repository
@@ -94,33 +94,55 @@ func (s *AccountsRepositoryTestSuite) TestCreateAccount() {
 		{
 			name: "Valid Asset Account Creation",
 			account: &domain.Accounts{
-				ID:                 uuid.New(),
-				AccountCode:        "1000-TEST-CASH",
-				AccountName:        "Test Cash Account",
-				AccountDescription: stringPtr("Test cash account for unit tests"),
-				RootType:           domain.RootTypeAsset,
-				AccountType:        "CASH",
-				AccountSubtype:     stringPtr("PETTY_CASH"),
-				NormalBalance:      domain.NormalBalanceDebit,
-				CurrencyCode:       "USD",
-				IsActive:           true,
-				AllowManualEntries: true,
+				ID:                      uuid.New(),
+				AccountCode:             "1000-TEST-CASH",
+				AccountName:             "Test Cash Account",
+				AccountDescription:      stringPtr("Test cash account for unit tests"),
+				RootType:                domain.RootTypeAsset,
+				AccountType:             "CASH",
+				AccountSubtype:          stringPtr("PETTY_CASH"),
+				NormalBalance:           domain.NormalBalanceDebit,
+				CurrencyCode:            stringPtr("USD"),
+				IsActive:                true,
+				AllowManualEntries:      true,
+				CurrentBalance:          decimal.Zero,
+				YTDBalance:              decimal.Zero,
+				BudgetVarianceThreshold: decimal.Zero,
+				ValidationStatus:        domain.ValidationStatusPending,
+				Version:                 1,
+				AccountLevel:            0, // Root level account
+				HasChildren:             false,
+				IsLeafAccount:           true,
+				// CreatedBy:               uuid.New(), // Skip for now to avoid foreign key issues
+				CreatedAt:               time.Now(),
+				UpdatedAt:               time.Now(),
 			},
 			expectError: false,
 		},
 		{
 			name: "Valid Liability Account Creation",
 			account: &domain.Accounts{
-				ID:                 uuid.New(),
-				AccountCode:        "2000-TEST-PAYABLE",
-				AccountName:        "Test Accounts Payable",
-				AccountDescription: stringPtr("Test accounts payable for unit tests"),
-				RootType:           domain.RootTypeLiability,
-				AccountType:        "ACCOUNTS_PAYABLE",
-				NormalBalance:      domain.NormalBalanceCredit,
-				CurrencyCode:       "USD",
-				IsActive:           true,
-				AllowManualEntries: true,
+				ID:                      uuid.New(),
+				AccountCode:             "2000-TEST-PAYABLE",
+				AccountName:             "Test Accounts Payable",
+				AccountDescription:      stringPtr("Test accounts payable for unit tests"),
+				RootType:                domain.RootTypeLiability,
+				AccountType:             "ACCOUNTS_PAYABLE",
+				NormalBalance:           domain.NormalBalanceCredit,
+				CurrencyCode:            stringPtr("USD"),
+				IsActive:                true,
+				AllowManualEntries:      true,
+				CurrentBalance:          decimal.Zero,
+				YTDBalance:              decimal.Zero,
+				BudgetVarianceThreshold: decimal.Zero,
+				ValidationStatus:        domain.ValidationStatusPending,
+				Version:                 1,
+				AccountLevel:            0, // Root level account
+				HasChildren:             false,
+				IsLeafAccount:           true,
+				// CreatedBy:               uuid.New(), // Skip for now to avoid foreign key issues
+				CreatedAt:               time.Now(),
+				UpdatedAt:               time.Now(),
 			},
 			expectError: false,
 		},
@@ -131,6 +153,7 @@ func (s *AccountsRepositoryTestSuite) TestCreateAccount() {
 				AccountCode: "", // Missing required field
 				AccountName: "Test Invalid Account",
 				RootType:    domain.RootTypeAsset,
+				Version:     1,
 			},
 			expectError: true,
 			errorType:   "validation",
@@ -141,8 +164,10 @@ func (s *AccountsRepositoryTestSuite) TestCreateAccount() {
 		s.Run(tc.name, func() {
 			// Test with tenant A context
 			ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
+			s.T().Logf("Creating account with ID: %s, Code: %s, TenantID in context: %s", tc.account.ID, tc.account.AccountCode, s.tenantA.ID)
 
 			err := s.repo.Create(ctx, tc.account)
+			s.T().Logf("After creation - ID: %s, TenantID: %s, Error: %v", tc.account.ID, tc.account.TenantID, err)
 
 			if tc.expectError {
 				s.Assert().Error(err, "Expected error for test case: %s", tc.name)
@@ -152,12 +177,22 @@ func (s *AccountsRepositoryTestSuite) TestCreateAccount() {
 					s.createdAccountIDs = append(s.createdAccountIDs, tc.account.ID)
 
 					// Verify the account was created correctly
+					// Try both GetByID and GetByCode for debugging
 					retrieved, err := s.repo.GetByID(ctx, tc.account.ID)
-					s.Assert().NoError(err)
-					s.Assert().Equal(tc.account.AccountCode, retrieved.AccountCode)
-					s.Assert().Equal(tc.account.AccountName, retrieved.AccountName)
-					s.Assert().Equal(tc.account.RootType, retrieved.RootType)
-					s.Assert().Equal(tc.account.NormalBalance, retrieved.NormalBalance)
+					s.T().Logf("GetByID result: account=%v, error=%v", retrieved != nil, err)
+					
+					// Also try GetByCode
+					retrievedByCode, errByCode := s.repo.GetByCode(ctx, nil, tc.account.AccountCode)
+					s.T().Logf("GetByCode result: account=%v, error=%v", retrievedByCode != nil, errByCode)
+					if err != nil {
+						s.T().Logf("Failed to retrieve created account %s: %v", tc.account.ID, err)
+						s.Assert().NoError(err)
+					} else {
+						s.Assert().Equal(tc.account.AccountCode, retrieved.AccountCode)
+						s.Assert().Equal(tc.account.AccountName, retrieved.AccountName)
+						s.Assert().Equal(tc.account.RootType, retrieved.RootType)
+						s.Assert().Equal(tc.account.NormalBalance, retrieved.NormalBalance)
+					}
 				}
 			}
 		})
@@ -177,9 +212,10 @@ func (s *AccountsRepositoryTestSuite) TestGetAccountByID() {
 		RootType:           domain.RootTypeAsset,
 		AccountType:        "BANK",
 		NormalBalance:      domain.NormalBalanceDebit,
-		CurrencyCode:       "USD",
+		CurrencyCode:       stringPtr("USD"),
 		IsActive:           true,
 		AllowManualEntries: true,
+		Version:            1,
 	}
 
 	err := s.repo.Create(ctx, account)
@@ -213,9 +249,10 @@ func (s *AccountsRepositoryTestSuite) TestGetAccountByCode() {
 		RootType:           domain.RootTypeAsset,
 		AccountType:        "BANK",
 		NormalBalance:      domain.NormalBalanceDebit,
-		CurrencyCode:       "USD",
+		CurrencyCode:       stringPtr("USD"),
 		IsActive:           true,
 		AllowManualEntries: true,
+		Version:            1,
 	}
 
 	err := s.repo.Create(ctx, account)
@@ -223,13 +260,13 @@ func (s *AccountsRepositoryTestSuite) TestGetAccountByCode() {
 	s.createdAccountIDs = append(s.createdAccountIDs, account.ID)
 
 	// Test retrieval by code
-	retrieved, err := s.repo.GetByCode(ctx, account.AccountCode)
+	retrieved, err := s.repo.GetByCode(ctx, nil, account.AccountCode)
 	s.Assert().NoError(err)
 	s.Assert().Equal(account.ID, retrieved.ID)
 	s.Assert().Equal(account.AccountCode, retrieved.AccountCode)
 
 	// Test non-existent code
-	_, err = s.repo.GetByCode(ctx, "NON-EXISTENT-CODE")
+	_, err = s.repo.GetByCode(ctx, nil, "NON-EXISTENT-CODE")
 	s.Assert().Error(err)
 	s.Assert().Equal(domain.ErrAccountNotFound, err)
 }
@@ -246,9 +283,10 @@ func (s *AccountsRepositoryTestSuite) TestTenantIsolation() {
 		RootType:           domain.RootTypeAsset,
 		AccountType:        "CASH",
 		NormalBalance:      domain.NormalBalanceDebit,
-		CurrencyCode:       "USD",
+		CurrencyCode:       stringPtr("USD"),
 		IsActive:           true,
 		AllowManualEntries: true,
+		Version:            1,
 	}
 
 	err := s.repo.Create(ctxA, accountA)
@@ -265,9 +303,10 @@ func (s *AccountsRepositoryTestSuite) TestTenantIsolation() {
 		RootType:           domain.RootTypeAsset,
 		AccountType:        "CASH",
 		NormalBalance:      domain.NormalBalanceDebit,
-		CurrencyCode:       "USD",
+		CurrencyCode:       stringPtr("USD"),
 		IsActive:           true,
 		AllowManualEntries: true,
+		Version:            1,
 	}
 
 	err = s.repo.Create(ctxB, accountB)
@@ -309,9 +348,10 @@ func (s *AccountsRepositoryTestSuite) TestListAccountsWithFiltering() {
 			RootType:           domain.RootTypeAsset,
 			AccountType:        "CASH",
 			NormalBalance:      domain.NormalBalanceDebit,
-			CurrencyCode:       "USD",
+			CurrencyCode:       stringPtr("USD"),
 			IsActive:           true,
 			AllowManualEntries: true,
+			Version:            1,
 		},
 		{
 			ID:                 uuid.New(),
@@ -321,9 +361,10 @@ func (s *AccountsRepositoryTestSuite) TestListAccountsWithFiltering() {
 			RootType:           domain.RootTypeAsset,
 			AccountType:        "CASH",
 			NormalBalance:      domain.NormalBalanceDebit,
-			CurrencyCode:       "USD",
+			CurrencyCode:       stringPtr("USD"),
 			IsActive:           false, // Inactive account
 			AllowManualEntries: true,
+			Version:            1,
 		},
 		{
 			ID:                 uuid.New(),
@@ -333,9 +374,10 @@ func (s *AccountsRepositoryTestSuite) TestListAccountsWithFiltering() {
 			RootType:           domain.RootTypeLiability,
 			AccountType:        "ACCOUNTS_PAYABLE",
 			NormalBalance:      domain.NormalBalanceCredit,
-			CurrencyCode:       "USD",
+			CurrencyCode:       stringPtr("USD"),
 			IsActive:           true,
 			AllowManualEntries: true,
+			Version:            1,
 		},
 	}
 
@@ -358,8 +400,9 @@ func (s *AccountsRepositoryTestSuite) TestListAccountsWithFiltering() {
 	s.Assert().GreaterOrEqual(len(results), 2) // At least our 2 active accounts
 
 	// Test list by root type
+	assetRootType := domain.RootTypeAsset
 	assetFilter := &domain.AccountFilter{
-		RootType: &domain.RootTypeAsset,
+		RootType: &assetRootType,
 		IsActive: boolPtr(true),
 		Limit:    intPtr(10),
 		Offset:   intPtr(0),
@@ -388,9 +431,10 @@ func (s *AccountsRepositoryTestSuite) TestUpdateAccount() {
 		RootType:           domain.RootTypeAsset,
 		AccountType:        "CASH",
 		NormalBalance:      domain.NormalBalanceDebit,
-		CurrencyCode:       "USD",
+		CurrencyCode:       stringPtr("USD"),
 		IsActive:           true,
 		AllowManualEntries: true,
+		Version:            1,
 	}
 
 	err := s.repo.Create(ctx, account)
@@ -427,13 +471,16 @@ func (s *AccountsRepositoryTestSuite) TestDeleteAccount() {
 		RootType:           domain.RootTypeAsset,
 		AccountType:        "CASH",
 		NormalBalance:      domain.NormalBalanceDebit,
-		CurrencyCode:       "USD",
+		CurrencyCode:       stringPtr("USD"),
 		IsActive:           true,
 		AllowManualEntries: true,
+		Version:            1,
+		ParentAccountID:    nil, // Explicitly set to nil to ensure no foreign key reference
 	}
 
 	err := s.repo.Create(ctx, account)
 	s.Require().NoError(err)
+	s.createdAccountIDs = append(s.createdAccountIDs, account.ID)
 
 	// Verify account exists
 	_, err = s.repo.GetByID(ctx, account.ID)
@@ -455,15 +502,4 @@ func (s *AccountsRepositoryTestSuite) TestDeleteAccount() {
 	s.Assert().Equal(domain.ErrAccountNotFound, err)
 }
 
-// Helper functions
-func stringPtr(s string) *string {
-	return &s
-}
-
-func boolPtr(b bool) *bool {
-	return &b
-}
-
-func intPtr(i int) *int {
-	return &i
-}
+// Helper functions are now in mappers.go

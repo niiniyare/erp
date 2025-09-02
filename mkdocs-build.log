@@ -1,0 +1,114 @@
+INFO    -  Cleaning site directory
+INFO    -  Building documentation to directory: /data/data/com.termux/files/home/project/erp/site
+INFO    -  The following pages exist in the docs directory, but are not included in the "nav" configuration:
+  - performance-optimization-plan.md
+  - ux-improvement-plan.md
+  - examples/mermaid-test.md
+  - reference/api/core-apis/auth/api-reference.md
+  - reference/api/core-apis/entities/schema-reference.md
+  - reference/api-source/core-apis/entities/api-reference.md
+  - reference/api-source/core-apis/entities/schema-reference.md
+  - reference/api-source/workflows/access-requests/api-reference.md
+  - reference/api-source/workflows/access-requests/schema-reference.md
+  - reference/api-source/workflows/access-requests/workflow-guide.md
+  - reference/api-source/workflows/auth/README.md
+  - reference/modules/feature_flag/feature_flag.md
+  - reference/modules/financial/testing-strategy.md
+WARNING -  Doc file 'contributing/documentation-guide.md' contains a link '../path/to/guide.md', but the target 'path/to/guide.md' is not found among documentation files.
+WARNING -  Doc file 'contributing/documentation-guide.md' contains a link '../path/to/other-guide.md', but the target 'path/to/other-guide.md' is not found among documentation files.
+WARNING -  Doc file 'contributing/documentation-guide.md' contains a link 'next-topic.md', but the target 'contributing/next-topic.md' is not found among documentation files.
+WARNING -  Doc file 'contributing/documentation-guide.md' contains a link '../index.md', but the target 'index.md' is not found among documentation files.
+INFO    -  Doc file 'contributing/documentation-guide.md' contains an unrecognized relative link '../contributing/', it was left as is.
+INFO    -  Doc file 'contributing/mermaid-diagrams-guide.md' contains an unrecognized relative link '../contributing/', it was left as is.
+INFO    -  Doc file 'reference/api/index.md' contains an unrecognized relative link 'abac/', it was left as is. Did you mean 'abac/index.md'?
+INFO    -  Doc file 'reference/api/index.md' contains an unrecognized relative link 'auth/', it was left as is. Did you mean 'auth/index.md'?
+INFO    -  Doc file 'reference/api/index.md' contains an unrecognized relative link 'users/', it was left as is. Did you mean 'users/index.md'?
+INFO    -  Doc file 'reference/api/index.md' contains an unrecognized relative link 'organizations/', it was left as is. Did you mean 'organizations/index.md'?
+INFO    -  Doc file 'reference/api/index.md' contains an unrecognized relative link '../api-source/utilities/scripts/', it was left as is.
+INFO    -  Doc file 'reference/api/index.md' contains an unrecognized relative link '../api-source/utilities/postman/', it was left as is.
+WARNING -  Doc file 'reference/api/swagger-ui.md' contains a link '../../../internal/api/swagger/openapi3.json', but the target '../internal/api/swagger/openapi3.json' is not found among documentation files.
+WARNING -  Doc file 'reference/api/swagger-ui.md' contains a link '../../../internal/api/swagger/openapi.json', but the target '../internal/api/swagger/openapi.json' is not found among documentation files.
+INFO    -  Doc file 'reference/api/swagger-ui.md' contains an unrecognized relative link '../../api-source/utilities/postman/', it was left as is.
+INFO    -  Doc file 'reference/api/swagger-ui.md' contains an unrecognized relative link '../../api-source/utilities/scripts/', it was left as is.
+WARNING -  Doc file 'reference/api/swagger-ui.md' contains a link '../../../internal/api/swagger/index.html', but the target '../internal/api/swagger/index.html' is not found among documentation files.
+WARNING -  Doc file 'reference/api/abac/index.md' contains a link '../../../modules/user/abac/policy_evaluation.md', but the target 'modules/user/abac/policy_evaluation.md' is not found among documentation files.
+INFO    -  Doc file 'reference/api/abac/index.md' contains an unrecognized relative link '../auth/', it was left as is. Did you mean '../auth/index.md'?
+INFO    -  Doc file 'reference/api/auth/index.md' contains an unrecognized relative link '../users/', it was left as is. Did you mean '../users/index.md'?
+INFO    -  Doc file 'reference/api/organizations/index.md' contains an unrecognized relative link '../tenants/', it was left as is.
+WARNING -  Doc file 'reference/api/tutorials/api-integration.md' contains a link '../../../modules/user/abac/policy_evaluation.md', but the target 'modules/user/abac/policy_evaluation.md' is not found among documentation files. Did you mean '../../modules/user/abac/policy_evaluation.md'?
+INFO    -  Doc file 'reference/api/tutorials/api-integration.md' contains an unrecognized relative link '../../api-source/utilities/scripts/', it was left as is.
+INFO    -  Doc file 'reference/api/tutorials/api-integration.md' contains an unrecognized relative link '../../api-source/utilities/postman/', it was left as is.
+INFO    -  Doc file 'reference/api/users/index.md' contains an unrecognized relative link '../organizations/', it was left as is. Did you mean '../organizations/index.md'?
+WARNING -  Doc file 'reference/api-source/core-apis/tenants/README.md' contains a link '../../utilities/postman/tenants-collection.json', but the target 'reference/api-source/utilities/postman/tenants-collection.json' is not found among documentation files.
+WARNING -  Doc file 'reference/api-source/workflows/access-requests/README.md' contains a link 'integration-guide.md', but the target 'reference/api-source/workflows/access-requests/integration-guide.md' is not found among documentation files.
+WARNING -  Doc file 'reference/api-source/workflows/conditional-access/README.md' contains a link 'curl-examples.md', but the target 'reference/api-source/workflows/conditional-access/curl-examples.md' is not found among documentation files.
+WARNING -  Doc file 'reference/api-source/workflows/conditional-access/README.md' contains a link 'api-reference.md', but the target 'reference/api-source/workflows/conditional-access/api-reference.md' is not found among documentation files.
+WARNING -  Doc file 'reference/api-source/workflows/conditional-access/README.md' contains a link 'schema-reference.md', but the target 'reference/api-source/workflows/conditional-access/schema-reference.md' is not found among documentation files.
+WARNING -  Doc file 'reference/api-source/workflows/conditional-access/README.md' contains a link 'rule-configuration.md', but the target 'reference/api-source/workflows/conditional-access/rule-configuration.md' is not found among documentation files.
+WARNING -  Doc file 'reference/api-source/workflows/conditional-access/README.md' contains a link 'integration-guide.md', but the target 'reference/api-source/workflows/conditional-access/integration-guide.md' is not found among documentation files.
+WARNING -  Doc file 'reference/api-source/workflows/user-analytics/README.md' contains a link 'curl-examples.md', but the target 'reference/api-source/workflows/user-analytics/curl-examples.md' is not found among documentation files.
+WARNING -  Doc file 'reference/api-source/workflows/user-analytics/README.md' contains a link 'api-reference.md', but the target 'reference/api-source/workflows/user-analytics/api-reference.md' is not found among documentation files.
+WARNING -  Doc file 'reference/api-source/workflows/user-analytics/README.md' contains a link 'schema-reference.md', but the target 'reference/api-source/workflows/user-analytics/schema-reference.md' is not found among documentation files.
+WARNING -  Doc file 'reference/api-source/workflows/user-analytics/README.md' contains a link 'analytics-guide.md', but the target 'reference/api-source/workflows/user-analytics/analytics-guide.md' is not found among documentation files.
+WARNING -  Doc file 'reference/api-source/workflows/user-analytics/README.md' contains a link 'integration-guide.md', but the target 'reference/api-source/workflows/user-analytics/integration-guide.md' is not found among documentation files.
+WARNING -  Doc file 'reference/modules/financial/README.md' contains a link '../../contributing/01-best-practices.md', but the target 'reference/contributing/01-best-practices.md' is not found among documentation files.
+INFO    -  Doc file 'reference/modules/financial/README.md' contains an unrecognized relative link 'examples/', it was left as is.
+INFO    -  Doc file 'reference/modules/financial/README.md' contains an unrecognized relative link '../../../db/migration/', it was left as is.
+INFO    -  Doc file 'reference/modules/financial/api-reference.md' contains an unrecognized relative link 'examples/', it was left as is.
+WARNING -  Doc file 'reference/modules/financial/api-reference.md' contains a link 'postman/finance-api-collection.json', but the target 'reference/modules/financial/postman/finance-api-collection.json' is not found among documentation files.
+WARNING -  Doc file 'reference/modules/financial/api-reference.md' contains a link 'openapi/swagger.yaml', but the target 'reference/modules/financial/openapi/swagger.yaml' is not found among documentation files.
+WARNING -  Doc file 'reference/modules/user/RELEASE_NOTES_RC1.md' contains a link './internal/core/iam/README.md', but the target 'reference/modules/user/internal/core/iam/README.md' is not found among documentation files.
+WARNING -  Doc file 'reference/modules/user/RELEASE_NOTES_RC1.md' contains a link './internal/core/iam/authz/service.go', but the target 'reference/modules/user/internal/core/iam/authz/service.go' is not found among documentation files.
+WARNING -  Doc file 'reference/modules/user/RELEASE_NOTES_RC1.md' contains a link './internal/core/iam/authz/*_test.go', but the target 'reference/modules/user/internal/core/iam/authz/*_test.go' is not found among documentation files.
+WARNING -  Doc file 'reference/modules/user/RELEASE_NOTES_RC1.md' contains a link './internal/core/iam/authz/adapter_benchmark_test.go', but the target 'reference/modules/user/internal/core/iam/authz/adapter_benchmark_test.go' is not found among documentation files.
+WARNING -  Doc file 'reference/modules/user/abac/desing.md' contains a link './abac/audit_monitoring.md', but the target 'reference/modules/user/abac/abac/audit_monitoring.md' is not found among documentation files.
+INFO    -  Doc file 'reference/modules/settings.md' contains a link '#security--access-control', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/settings.md' contains a link '#performance--scalability', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/settings.md' contains a link '#risk-analysis--mitigations', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/README.md' contains a link 'integration-guide.md#financial-workflows', but the doc 'reference/modules/financial/integration-guide.md' does not contain an anchor '#financial-workflows'.
+INFO    -  Doc file 'reference/modules/financial/README.md' contains a link 'security-compliance-guide.md#regulatory-compliance', but the doc 'reference/modules/financial/security-compliance-guide.md' does not contain an anchor '#regulatory-compliance'.
+INFO    -  Doc file 'reference/modules/financial/README.md' contains a link 'api-reference.md#reporting-endpoints', but the doc 'reference/modules/financial/api-reference.md' does not contain an anchor '#reporting-endpoints'.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#-detailed-implementation-plan', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#phase-1-foundation-infrastructure-weeks-1-3', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#phase-2-core-transaction-engine-weeks-4-6', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#phase-3-security-compliance-integration-weeks-7-8', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#phase-4-api-layer-implementation-weeks-9-10', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#phase-5-accounts-receivable-weeks-11-13', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#phase-6-accounts-payable-weeks-14-16', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#phase-7-cash-management-weeks-17-18', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#phase-8-financial-reporting-weeks-19-20', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#phase-9-integration-testing-week-19', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#phase-10-performance-optimization-week-20', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#-quality-assurance-success-deployment', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#-quality-assurance-checklist', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#-success-metrics-kpis', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#-deployment-checklist', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#-documentation-requirements', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#-final-acceptance-criteria', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#-post-implementation', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#-post-implementation-support', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/TASK.md' contains a link '#-project-completion', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/architecture-guide.md' contains a link '#api-layer-implementation', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/architecture-guide.md' contains a link '#security-architecture', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/architecture-guide.md' contains a link '#performance-architecture', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/architecture-guide.md' contains a link '#integration-patterns', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/architecture-guide.md' contains a link '#scalability-design', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/architecture-guide.md' contains a link '#monitoring-observability', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/security-compliance-guide.md' contains a link '#data-protection-privacy', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/security-compliance-guide.md' contains a link '#regulatory-compliance', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/security-compliance-guide.md' contains a link '#security-controls-monitoring', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/security-compliance-guide.md' contains a link '#threat-modeling-risk-assessment', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/security-compliance-guide.md' contains a link '#security-testing-validation', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/security-compliance-guide.md' contains a link '#incident-response-recovery', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/security-compliance-guide.md' contains a link '#security-best-practices', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/testing-strategy.md' contains a link '#unit-testing-framework', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/testing-strategy.md' contains a link '#integration-testing', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/testing-strategy.md' contains a link '#end-to-end-testing', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/testing.md' contains a link '#security--authorization-tests', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/testing.md' contains a link '#performance--load-tests', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/financial/testing.md' contains a link '#compliance--audit-tests', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/tenant/testing.md' contains a link '#api-integration-tests', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/tenant/testing.md' contains a link '#billing-tests', but there is no such anchor on this page.
+INFO    -  Doc file 'reference/modules/user/test_cases.md' contains a link '#end-to-end-e2e-workflow-tests', but there is no such anchor on this page.
+
+Aborted with 29 warnings in strict mode!

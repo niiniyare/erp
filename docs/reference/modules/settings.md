@@ -2,10 +2,10 @@
 ## Complete Technical Specification
 
 ### Document Information
-- **Version**: 1.0
-- **Date**: September 2025
-- **Author**: System Architecture Team
-- **Status**: Draft for Review
+-###### **Version**: 1.0
+-###### **Date**: September 2025
+-###### **Author**: System Architecture Team
+-###### **Status**: Draft for Review
 
 ---
 
@@ -36,11 +36,11 @@
 - Critical security isolation needs
 
 ### Key Benefits
-- **Strong Security**: Database-level enforcement prevents cross-tenant data leakage
-- **Comprehensive Audit**: Complete configuration change tracking and compliance support
-- **Flexible Schema**: Supports evolving ERP module requirements without schema changes
-- **Template System**: Accelerates tenant onboarding with industry-specific configurations
-- **Default Management**: Three-tier hierarchy (system → tenant → entity) with inheritance
+-###### **Strong Security**: Database-level enforcement prevents cross-tenant data leakage
+-###### **Comprehensive Audit**: Complete configuration change tracking and compliance support
+-###### **Flexible Schema**: Supports evolving ERP module requirements without schema changes
+-###### **Template System**: Accelerates tenant onboarding with industry-specific configurations
+-###### **Default Management**: Three-tier hierarchy (system → tenant → entity) with inheritance
 
 ### Architecture Approach
 The solution extends your existing sophisticated ERP system rather than replacing it, leveraging:
@@ -82,18 +82,18 @@ The solution extends your existing sophisticated ERP system rather than replacin
 
 #### Component Responsibilities
 
-**API Gateway**
+###### **API Gateway**
 - Routes requests and extracts tenant context from JWT tokens
 - Implements rate limiting per tenant
 - Validates initial authentication
 
-**Config Service (Golang)**
+###### **Config Service (Golang)**
 - Core business logic for configuration management
 - Validates tenant permissions and manages CRUD operations
 - Handles bulk operations, migrations, and template applications
 - Integrates with existing finance modules
 
-**Tenant Context Manager**
+###### **Tenant Context Manager**
 - Establishes database connections with proper tenant context
 - Manages connection pooling per tenant context
 - Handles context propagation through request lifecycle
@@ -111,20 +111,20 @@ The solution extends your existing sophisticated ERP system rather than replacin
 ### Data Flow Patterns
 
 #### Configuration Read Flow
-1. **Request** → API Gateway validates JWT and extracts tenant context
-2. **Service Layer** → Validates user permissions for tenant/module
-3. **Context Setup** → Sets `app.current_tenant` session variable
-4. **Database Query** → RLS policies filter results to tenant data
-5. **Default Resolution** → Merges with system/tenant defaults if needed
-6. **Response** → Returns configured values with metadata
+1.###### **Request** → API Gateway validates JWT and extracts tenant context
+2.###### **Service Layer** → Validates user permissions for tenant/module
+3.###### **Context Setup** → Sets `app.current_tenant` session variable
+4.###### **Database Query** → RLS policies filter results to tenant data
+5.###### **Default Resolution** → Merges with system/tenant defaults if needed
+6.###### **Response** → Returns configured values with metadata
 
 #### Configuration Write Flow
-1. **Request Validation** → Validates schema and business rules
-2. **Dependency Check** → Validates configuration dependencies
-3. **Change Request** → Creates approval workflow if required
-4. **Transaction** → Applies changes with proper audit logging
-5. **Propagation** → Updates dependent configurations and caches
-6. **Notification** → Triggers relevant stakeholder notifications
+1.###### **Request Validation** → Validates schema and business rules
+2.###### **Dependency Check** → Validates configuration dependencies
+3.###### **Change Request** → Creates approval workflow if required
+4.###### **Transaction** → Applies changes with proper audit logging
+5.###### **Propagation** → Updates dependent configurations and caches
+6.###### **Notification** → Triggers relevant stakeholder notifications
 
 ---
 
@@ -134,15 +134,15 @@ The solution extends your existing sophisticated ERP system rather than replacin
 
 Rather than replacing your existing sophisticated system, we extend it strategically:
 
-**Existing Infrastructure (Leveraged)**
-- ✅ Core tenant/entity structure (`tenants`, `entities`)
-- ✅ Robust IAM system (`roles`, `permissions`, `user_roles`)
-- ✅ Basic configuration (`tenant_configurations`, `feature_flags`)
-- ✅ Audit infrastructure (`audit_log`, `user_activities`)
-- ✅ Finance module (`finance_accounts`, `finance_transactions`)
-- ✅ Flexible attribute system (`attribute_definitions`, `attribute_values`)
-- ✅ Hierarchy management (`hierarchy_paths`)
-- ✅ Module system (`modules`)
+###### **Existing Infrastructure (Leveraged)**
+  - Core tenant/entity structure (`tenants`, `entities`).
+  - Robust IAM system (`roles`, `permissions`, `user_roles`).
+  - Basic configuration (`tenant_configurations`, `feature_flags`).
+  - Audit infrastructure (`audit_log`, `user_activities`).
+  - Finance module (`finance_accounts`, `finance_transactions`).
+  - Flexible attribute system (`attribute_definitions`, `attribute_values`).
+  - Hierarchy management (`hierarchy_paths`).
+  - Module system (`modules`)
 
 ### New Configuration Tables
 
@@ -383,14 +383,14 @@ CREATE POLICY module_access_policy ON config_values_extended
 #### Context Propagation Strategy
 
 **Database Session Context**
-- Every database connection sets `app.current_tenant` using `set_config()`
-- Context automatically cleared when connection returns to pool
-- Validates tenant context exists before allowing operations
+  - Every database connection sets `app.current_tenant` using `set_config()`
+  - Context automatically cleared when connection returns to pool
+  - Validates tenant context exists before allowing operations
 
 **Application Layer Validation**
-- Validates tenant access before database calls
-- Database RLS provides final enforcement layer
-- Comprehensive audit logging captures all access attempts
+  - Validates tenant access before database calls
+  - Database RLS provides final enforcement layer
+  - Comprehensive audit logging captures all access attempts
 
 ### Access Control Integration
 
@@ -411,23 +411,23 @@ CREATE POLICY module_access_policy ON config_values_extended
 ### Schema Management
 
 #### Configuration Schema Lifecycle
-1. **Schema Definition** → JSON Schema-based validation rules
-2. **Version Management** → Support for schema evolution
-3. **Default Values** → System and tenant-specific defaults
-4. **Validation** → Runtime validation against defined schemas
+1.###### **Schema Definition** → JSON Schema-based validation rules
+2.###### **Version Management** → Support for schema evolution
+3.###### **Default Values** → System and tenant-specific defaults
+4.###### **Validation** → Runtime validation against defined schemas
 
 #### Template System
 
 **Template Types**
-- **System Templates**: Pre-built industry configurations
-- **Tenant Templates**: Custom tenant-specific templates  
-- **Entity Templates**: Entity-level configuration patterns
+-###### **System Templates**: Pre-built industry configurations
+-###### **Tenant Templates**: Custom tenant-specific templates  
+-###### **Entity Templates**: Entity-level configuration patterns
 
 **Template Application Process**
-1. **Selection** → Choose appropriate template for tenant/entity
-2. **Customization** → Modify template values for specific needs
-3. **Validation** → Ensure template values meet schema requirements
-4. **Application** → Apply template configurations with audit trail
+1.###### **Selection** → Choose appropriate template for tenant/entity
+2.###### **Customization** → Modify template values for specific needs
+3.###### **Validation** → Ensure template values meet schema requirements
+4.###### **Application** → Apply template configurations with audit trail
 
 ### Configuration Inheritance
 
@@ -443,10 +443,10 @@ Actual Configuration Values
 ```
 
 #### Merge Strategies
-- **Replace**: Complete replacement of parent configuration
-- **Shallow Merge**: Top-level property merge
-- **Deep Merge**: Recursive merge of nested objects
-- **Selective Override**: Override specific properties while inheriting others
+-###### **Replace**: Complete replacement of parent configuration
+-###### **Shallow Merge**: Top-level property merge
+-###### **Deep Merge**: Recursive merge of nested objects
+-###### **Selective Override**: Override specific properties while inheriting others
 
 ---
 
@@ -631,23 +631,23 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 ```
 
 #### 3. Connection Pooling Strategy
-- **Per-Tenant Context**: Dedicated connection pools per tenant context
-- **Session Reuse**: Efficient session variable management
-- **Context Validation**: Middleware ensures proper tenant context
+-###### **Per-Tenant Context**: Dedicated connection pools per tenant context
+-###### **Session Reuse**: Efficient session variable management
+-###### **Context Validation**: Middleware ensures proper tenant context
 
 ### Scalability Targets
 
 #### Performance Benchmarks
-- **Read Latency**: 95th percentile < 100ms for typical configuration queries
-- **Write Latency**: 95th percentile < 200ms for configuration updates
-- **Throughput**: Support 1000+ concurrent tenant operations
-- **RLS Overhead**: <20% performance impact from RLS policies
+-###### **Read Latency**: 95th percentile < 100ms for typical configuration queries
+-###### **Write Latency**: 95th percentile < 200ms for configuration updates
+-###### **Throughput**: Support 1000+ concurrent tenant operations
+-###### **RLS Overhead**: <20% performance impact from RLS policies
 
 #### Scaling Strategies
-- **Horizontal Read Scaling**: Read replicas for configuration queries
-- **Caching Layer**: Redis caching for frequently accessed configurations
-- **Query Optimization**: Tenant-aware query plans and statistics
-- **Partitioning**: Consider tenant-based partitioning for large deployments
+-###### **Horizontal Read Scaling**: Read replicas for configuration queries
+-###### **Caching Layer**: Redis caching for frequently accessed configurations
+-###### **Query Optimization**: Tenant-aware query plans and statistics
+-###### **Partitioning**: Consider tenant-based partitioning for large deployments
 
 ---
 
@@ -656,14 +656,14 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 ### Phase 1: Foundation (Months 1-2)
 **Objectives**: Establish core configuration infrastructure
 
-**Deliverables**:
+###### **Deliverables**:
 - [ ] Core configuration tables (schemas, values, templates)
 - [ ] Basic RLS policies and tenant context management
 - [ ] Integration with existing IAM system
 - [ ] Initial audit logging and monitoring
 - [ ] Simple configuration CRUD operations
 
-**Success Criteria**:
+###### **Success Criteria**:
 - Configuration values can be stored and retrieved securely
 - Tenant isolation is enforced at database level
 - Basic audit trail is captured
@@ -671,14 +671,14 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 ### Phase 2: Default Management System (Months 2-3)
 **Objectives**: Implement comprehensive default management
 
-**Deliverables**:
+###### **Deliverables**:
 - [ ] System and tenant default tables
 - [ ] Default resolution function with inheritance
 - [ ] Template system with industry patterns
 - [ ] Migration tools for existing configurations
 - [ ] Default coverage reporting
 
-**Success Criteria**:
+###### **Success Criteria**:
 - New tenants can be onboarded with appropriate defaults
 - Configuration inheritance works correctly
 - Templates can be applied and customized
@@ -686,14 +686,14 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 ### Phase 3: Finance Module Integration (Months 3-4)
 **Objectives**: Full integration with existing finance module
 
-**Deliverables**:
+###### **Deliverables**:
 - [ ] Document sequence configuration integration
 - [ ] Enhanced document number generation
 - [ ] Migration from existing `finance_document_sequences`
 - [ ] Configuration dependencies for finance workflows
 - [ ] Approval workflows for sensitive financial configurations
 
-**Success Criteria**:
+###### **Success Criteria**:
 - Finance document sequences work with new configuration system
 - No disruption to existing finance operations
 - Enhanced configuration capabilities are available
@@ -701,14 +701,14 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 ### Phase 4: Advanced Features (Months 4-5)
 **Objectives**: Add sophisticated configuration management features
 
-**Deliverables**:
+###### **Deliverables**:
 - [ ] Configuration change request workflows
 - [ ] Cross-module dependency management
 - [ ] Time-based configuration changes
 - [ ] Bulk configuration operations
 - [ ] Configuration validation and testing framework
 
-**Success Criteria**:
+###### **Success Criteria**:
 - Complex configuration changes can be managed through approval workflows
 - Configuration dependencies prevent invalid combinations
 - Bulk operations maintain data integrity
@@ -716,7 +716,7 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 ### Phase 5: Performance & Operations (Months 5-6)
 **Objectives**: Optimize performance and establish operational procedures
 
-**Deliverables**:
+###### **Deliverables**:
 - [ ] Performance optimization and caching
 - [ ] Comprehensive monitoring and alerting
 - [ ] Backup and recovery procedures
@@ -731,14 +731,14 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 ### Phase 6: Additional Modules (Months 6-12)
 **Objectives**: Extend to other ERP modules
 
-**Deliverables**:
+###### **Deliverables**:
 - [ ] HR module configuration integration
 - [ ] Inventory module configuration integration
 - [ ] IAM module configuration enhancement
 - [ ] Custom module configuration framework
 - [ ] Advanced reporting and analytics
 
-**Success Criteria**:
+###### **Success Criteria**:
 - All major ERP modules use centralized configuration
 - Configuration consistency across all modules
 - Advanced configuration analytics available
@@ -751,9 +751,9 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 
 #### 1. RLS Policy Bugs
 **Risk**: Incorrect RLS policies could cause cross-tenant data leakage
-- **Impact**: Critical - Data security breach
-- **Probability**: Medium
-- **Mitigation**: 
+-###### **Impact**: Critical - Data security breach
+-###### **Probability**: Medium
+-###### **Mitigation**: 
   - Automated RLS policy testing in CI/CD
   - Comprehensive security testing with tenant context variations
   - Staged deployment with security validation
@@ -761,9 +761,9 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 
 #### 2. Performance Degradation
 **Risk**: RLS overhead could significantly impact query performance
-- **Impact**: Medium - User experience degradation
-- **Probability**: Medium
-- **Mitigation**:
+-###### **Impact**: Medium - User experience degradation
+-###### **Probability**: Medium
+-###### **Mitigation**:
   - Continuous performance monitoring with alerting
   - Query optimization and explain plan analysis
   - Materialized view caching for complex queries
@@ -771,9 +771,9 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 
 #### 3. Context Injection Failures
 **Risk**: Tenant context might not be properly set, causing access issues
-- **Impact**: High - Service disruption
-- **Probability**: Low
-- **Mitigation**:
+-###### **Impact**: High - Service disruption
+-###### **Probability**: Low
+-###### **Mitigation**:
   - Connection middleware validation with circuit breakers
   - Comprehensive context propagation testing
   - Fallback mechanisms for context failures
@@ -783,9 +783,9 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 
 #### 4. Configuration Migration Issues
 **Risk**: Data corruption during migration from existing systems
-- **Impact**: High - Data integrity issues
-- **Probability**: Low
-- **Mitigation**:
+-###### **Impact**: High - Data integrity issues
+-###### **Probability**: Low
+-###### **Mitigation**:
   - Extensive testing with production data copies
   - Staged migration with rollback procedures
   - Comprehensive validation at each migration step
@@ -793,9 +793,9 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 
 #### 5. Default Resolution Performance
 **Risk**: Complex default resolution could impact response times
-- **Impact**: Medium - Degraded user experience
-- **Probability**: Medium
-- **Mitigation**:
+-###### **Impact**: Medium - Degraded user experience
+-###### **Probability**: Medium
+-###### **Mitigation**:
   - Materialized view caching for common default patterns
   - Query optimization and indexing strategies
   - Lazy default resolution where appropriate
@@ -803,9 +803,9 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 
 #### 6. Operational Complexity
 **Risk**: Increased operational burden for database administration
-- **Impact**: Medium - Higher operational costs
-- **Probability**: Medium
-- **Mitigation**:
+-###### **Impact**: Medium - Higher operational costs
+-###### **Probability**: Medium
+-###### **Mitigation**:
   - Comprehensive documentation and runbooks
   - Automated operational procedures
   - Training for operations team
@@ -818,46 +818,46 @@ ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
 ### Monitoring & Alerting
 
 #### Key Metrics to Monitor
-- **RLS Policy Effectiveness**: Cross-tenant access attempt alerts
-- **Configuration Access Patterns**: Unusual access pattern detection
-- **Performance Metrics**: Query latency and throughput tracking
-- **Default Resolution Performance**: Default lookup timing
-- **Audit Trail Completeness**: Missing audit entries detection
+-###### **RLS Policy Effectiveness**: Cross-tenant access attempt alerts
+-###### **Configuration Access Patterns**: Unusual access pattern detection
+-###### **Performance Metrics**: Query latency and throughput tracking
+-###### **Default Resolution Performance**: Default lookup timing
+-###### **Audit Trail Completeness**: Missing audit entries detection
 
 #### Alert Thresholds
-- **Security**: Any cross-tenant data access attempts
-- **Performance**: 95th percentile latency > 200ms
-- **Errors**: Configuration validation failures > 5%
-- **Availability**: Service response time > 500ms
+-###### **Security**: Any cross-tenant data access attempts
+-###### **Performance**: 95th percentile latency > 200ms
+-###### **Errors**: Configuration validation failures > 5%
+-###### **Availability**: Service response time > 500ms
 
 ### Backup & Recovery
 
 #### Backup Strategy
-- **Configuration Data**: Point-in-time recovery for all configuration tables
-- **Tenant-Specific Recovery**: Ability to restore individual tenant configurations
-- **Schema Versioning**: Backup and recovery of configuration schemas
-- **Audit Trail Preservation**: Long-term audit log retention
+-###### **Configuration Data**: Point-in-time recovery for all configuration tables
+-###### **Tenant-Specific Recovery**: Ability to restore individual tenant configurations
+-###### **Schema Versioning**: Backup and recovery of configuration schemas
+-###### **Audit Trail Preservation**: Long-term audit log retention
 
 #### Recovery Procedures
-1. **Individual Configuration Recovery**: Restore specific configuration values
-2. **Tenant Data Recovery**: Complete tenant configuration restoration
-3. **Schema Rollback**: Revert schema changes with data migration
-4. **Disaster Recovery**: Full system restoration from backups
+1.###### **Individual Configuration Recovery**: Restore specific configuration values
+2.###### **Tenant Data Recovery**: Complete tenant configuration restoration
+3.###### **Schema Rollback**: Revert schema changes with data migration
+4.###### **Disaster Recovery**: Full system restoration from backups
 
 ### Maintenance Procedures
 
 #### Regular Maintenance Tasks
-- **Default Cache Refresh**: Automated materialized view maintenance
-- **Audit Log Archival**: Automated old audit data archival
-- **Performance Analysis**: Monthly query performance review
-- **Security Review**: Quarterly RLS policy effectiveness review
+-###### **Default Cache Refresh**: Automated materialized view maintenance
+-###### **Audit Log Archival**: Automated old audit data archival
+-###### **Performance Analysis**: Monthly query performance review
+-###### **Security Review**: Quarterly RLS policy effectiveness review
 
 #### Schema Migration Procedures
-1. **Schema Change Preparation**: Validate against existing configurations
-2. **Staged Deployment**: Deploy schema changes incrementally
-3. **Data Migration**: Migrate existing data to new schema
-4. **Validation**: Verify data integrity and functionality
-5. **Rollback Plan**: Prepared rollback procedures if issues occur
+1.###### **Schema Change Preparation**: Validate against existing configurations
+2.###### **Staged Deployment**: Deploy schema changes incrementally
+3.###### **Data Migration**: Migrate existing data to new schema
+4.###### **Validation**: Verify data integrity and functionality
+5.###### **Rollback Plan**: Prepared rollback procedures if issues occur
 
 ### Testing & Validation
 
@@ -987,41 +987,41 @@ INSERT INTO config_template_values VALUES
 ### C. Performance Benchmarks
 
 #### Expected Performance Targets
-- **Simple Configuration Read**: < 50ms (95th percentile)
-- **Complex Default Resolution**: < 100ms (95th percentile)  
-- **Configuration Update**: < 200ms (95th percentile)
-- **Bulk Template Application**: < 5s for 100 configurations
-- **Tenant Onboarding**: < 30s for complete setup
+-###### **Simple Configuration Read**: < 50ms (95th percentile)
+-###### **Complex Default Resolution**: < 100ms (95th percentile)  
+-###### **Configuration Update**: < 200ms (95th percentile)
+-###### **Bulk Template Application**: < 5s for 100 configurations
+-###### **Tenant Onboarding**: < 30s for complete setup
 
 ### D. Troubleshooting Guide
 
 #### Common Issues
 
 **Issue**: Cross-tenant data visible
-- **Cause**: RLS policy not applied or tenant context not set
-- **Resolution**: Verify `app.current_tenant` is set, check RLS policy
+-###### **Cause**: RLS policy not applied or tenant context not set
+-###### **Resolution**: Verify `app.current_tenant` is set, check RLS policy
 
 **Issue**: Performance degradation
-- **Cause**: Missing indexes or inefficient RLS policies
-- **Resolution**: Analyze query plans, optimize indexes, review policies
+-###### **Cause**: Missing indexes or inefficient RLS policies
+-###### **Resolution**: Analyze query plans, optimize indexes, review policies
 
 **Issue**: Default resolution errors
-- **Cause**: Circular dependencies or invalid merge strategies
-- **Resolution**: Check dependency graph, validate merge logic
+-###### **Cause**: Circular dependencies or invalid merge strategies
+-###### **Resolution**: Check dependency graph, validate merge logic
 
 ### E. Security Compliance
 
 #### Compliance Requirements Met
-- **SOC 2 Type II**: Audit logging and access controls
-- **GDPR**: Data isolation and right to deletion
-- **SOX**: Financial configuration change controls
-- **ISO 27001**: Information security management
+-###### **SOC 2 Type II**: Audit logging and access controls
+-###### **GDPR**: Data isolation and right to deletion
+-###### **SOX**: Financial configuration change controls
+-###### **ISO 27001**: Information security management
 
 #### Audit Trail Requirements
-- **Configuration Changes**: Complete change history with user attribution
-- **Access Logging**: All configuration access attempts logged
-- **Administrative Actions**: Admin bypass usage tracked
-- **Schema Changes**: Schema evolution audit trail
+-###### **Configuration Changes**: Complete change history with user attribution
+-###### **Access Logging**: All configuration access attempts logged
+-###### **Administrative Actions**: Admin bypass usage tracked
+-###### **Schema Changes**: Schema evolution audit trail
 
 ---
 

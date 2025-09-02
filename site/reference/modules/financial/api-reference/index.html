@@ -1472,6 +1472,66 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#enhanced-query-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhanced Query Endpoints
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Enhanced Query Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#accounts-with-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Accounts with Groups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#complete-chart-of-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Complete Chart of Accounts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trial-balance-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trial Balance Summary
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cash-flow-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cash Flow Accounts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#account-group-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Account Group Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#search-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       Search Endpoints
@@ -3066,6 +3126,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Settings
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../airline-module/" class="md-nav__link">
         
   
@@ -4308,8 +4391,8 @@
 
 
 <h1 id="financial-module-api-reference">Financial Module - API Reference</h1>
-<p><strong>Version</strong>: 2.0<br />
-<strong>Date</strong>: August 31, 2025<br />
+<p><strong>Version</strong>: 2.1<br />
+<strong>Date</strong>: September 1, 2025<br />
 <strong>Status</strong>: Production<br />
 <strong>OpenAPI Version</strong>: 3.0.3</p>
 <hr />
@@ -4338,6 +4421,7 @@
 <li><a href="#account-management">Account Management</a></li>
 <li><a href="#transaction-processing">Transaction Processing</a></li>
 <li><a href="#financial-reporting">Financial Reporting</a></li>
+<li><a href="#enhanced-query-endpoints">Enhanced Query Endpoints</a></li>
 <li><a href="#search-endpoints">Search Endpoints</a></li>
 <li><a href="#data-models">Data Models</a></li>
 <li><a href="#error-handling">Error Handling</a></li>
@@ -4964,6 +5048,180 @@ A user who creates a transaction cannot approve the same transaction. This is en
 <span class="w">  </span><span class="nt">&quot;total_credits&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;50000.00&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;is_balanced&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;generated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-08-31T10:30:00Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<hr />
+<h2 id="enhanced-query-endpoints">Enhanced Query Endpoints</h2>
+<h3 id="accounts-with-groups">Accounts with Groups</h3>
+<p>Get accounts with hierarchical group information for enhanced reporting.</p>
+<p><strong>Endpoint</strong>: <code>GET /api/v1/finance/accounts/with-groups</code></p>
+<p><strong>Query Parameters</strong>:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| <code>entity_id</code> | uuid | Yes | Entity ID for tenant scoping |
+| <code>root_type</code> | string | No | Filter by root type (ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE) |
+| <code>account_type</code> | string | No | Filter by account type |
+| <code>is_active</code> | boolean | No | Filter by active status (default: true) |
+| <code>is_leaf_only</code> | boolean | No | Return only leaf accounts (default: false) |
+| <code>limit</code> | integer | No | Page size (default: 50, max: 200) |
+| <code>offset</code> | integer | No | Page offset (default: 0) |</p>
+<p><strong>Response</strong> (200 OK):
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;accounts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uuid&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1100&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cash&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cash accounts&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;root_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSET&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BANK&quot;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">      </span><span class="nt">&quot;account_category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;CURRENT_ASSETS&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;normal_balance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DEBIT&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;current_balance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;5000.00&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;is_active&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;group_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;CA&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;group_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Current Assets&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;group_category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSET&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;header_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;effective_display_order&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;pagination&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;total&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">150</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">50</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;offset&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;has_more&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<h3 id="complete-chart-of-accounts">Complete Chart of Accounts</h3>
+<p>Get comprehensive chart of accounts with full hierarchy and reporting structure.</p>
+<p><strong>Endpoint</strong>: <code>GET /api/v1/finance/accounts/chart-complete</code></p>
+<p><strong>Query Parameters</strong>:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| <code>entity_id</code> | uuid | Yes | Entity ID for tenant scoping |
+| <code>statement_section</code> | string | No | Filter by statement section |
+| <code>include_inactive</code> | boolean | No | Include inactive accounts (default: false) |
+| <code>include_in_reports</code> | boolean | No | Filter by reporting status (default: true) |</p>
+<p><strong>Response</strong> (200 OK):
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;chart_of_accounts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;account_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uuid&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1100&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cash&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;root_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSET&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BANK&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;normal_balance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DEBIT&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;current_balance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;5000.00&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;group_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;CA&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;group_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Current Assets&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;group_category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSET&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;header_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;header_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Assets&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;statement_section&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSETS&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;cash_flow_classification&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;OPERATING&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;display_order&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;include_in_reports&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;is_active&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;is_leaf_account&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;total_accounts&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">250</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;active_accounts&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;reporting_accounts&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">180</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<h3 id="trial-balance-summary">Trial Balance Summary</h3>
+<p>Get trial balance data with enhanced grouping and categorization.</p>
+<p><strong>Endpoint</strong>: <code>GET /api/v1/finance/reports/trial-balance-summary</code></p>
+<p><strong>Query Parameters</strong>:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| <code>entity_id</code> | uuid | Yes | Entity ID for tenant scoping |
+| <code>as_of_date</code> | date | No | Balance as of date (default: current date) |
+| <code>group_by</code> | string | No | Group by ROOT_TYPE, GROUP, or STATEMENT_SECTION |
+| <code>include_zero_balances</code> | boolean | No | Include zero balance accounts (default: false) |</p>
+<p><strong>Response</strong> (200 OK):
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;account_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uuid&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1100&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cash&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;root_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSET&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;normal_balance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DEBIT&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;current_balance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;5000.00&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;group_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Current Assets&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;statement_section&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSETS&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;totals&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;total_debits&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;25000.00&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;total_credits&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;25000.00&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;is_balanced&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;generated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-09-01T10:30:00Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<h3 id="cash-flow-accounts">Cash Flow Accounts</h3>
+<p>Get accounts classified for cash flow statement reporting.</p>
+<p><strong>Endpoint</strong>: <code>GET /api/v1/finance/accounts/cash-flow</code></p>
+<p><strong>Query Parameters</strong>:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| <code>entity_id</code> | uuid | Yes | Entity ID for tenant scoping |
+| <code>classification</code> | string | No | Filter by OPERATING, INVESTING, or FINANCING |
+| <code>non_zero_only</code> | boolean | No | Include only non-zero balances (default: true) |</p>
+<p><strong>Response</strong> (200 OK):
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;accounts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;account_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uuid&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1100&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cash&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;current_balance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;5000.00&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;cash_flow_classification&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;OPERATING&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;group_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Current Assets&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;classifications&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;OPERATING&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;15000.00&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;INVESTING&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;-5000.00&quot;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">&quot;FINANCING&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;10000.00&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<h3 id="account-group-summary">Account Group Summary</h3>
+<p>Get summary statistics by account groups for management reporting.</p>
+<p><strong>Endpoint</strong>: <code>GET /api/v1/finance/accounts/group-summary</code></p>
+<p><strong>Query Parameters</strong>:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| <code>entity_id</code> | uuid | Yes | Entity ID for tenant scoping |
+| <code>group_category</code> | string | No | Filter by group category |</p>
+<p><strong>Response</strong> (200 OK):
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;group_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;CA&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;group_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Current Assets&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;group_category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSET&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;statement_section&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ASSETS&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;account_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;active_account_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;total_balance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;50000.00&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;active_balance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;45000.00&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;totals&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;total_groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">15</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;total_accounts&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;total_balance&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;250000.00&quot;</span>
+<span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></p>
 <hr />
@@ -5597,8 +5855,6 @@ X-RateLimit-Reset: 1642248000
         <script src="../../../../javascripts/search-enhancements.js"></script>
       
         <script src="../../../../javascripts/search-analytics.js"></script>
-      
-        <script src="../../../../javascripts/contextual-help.js"></script>
       
     
   </body>

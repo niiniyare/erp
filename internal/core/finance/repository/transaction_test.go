@@ -5,12 +5,12 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	db "github.com/niiniyare/erp/db/sqlc"
@@ -30,6 +30,9 @@ type TransactionRepositoryTestSuite struct {
 	tenantA *db.Tenant
 	tenantB *db.Tenant
 
+	// Test user for foreign key references
+	testUser *db.User
+
 	// Test data cleanup tracking
 	createdTransactionIDs []uuid.UUID
 }
@@ -42,11 +45,47 @@ func (s *TransactionRepositoryTestSuite) SetupSuite() {
 	s.ctx = context.Background()
 
 	// Create test tenants
-	s.tenantA, err = s.runner.CreateTestTenant(s.ctx, "finance-test-tenant-a")
+	s.tenantA, err = s.runner.CreateTestTenant(s.ctx, fmt.Sprintf("finance-transaction-tenant-a-%s", uuid.New().String()[:8]))
 	s.Require().NoError(err, "Failed to create tenant A")
 
-	s.tenantB, err = s.runner.CreateTestTenant(s.ctx, "finance-test-tenant-b")
+	s.tenantB, err = s.runner.CreateTestTenant(s.ctx, fmt.Sprintf("finance-transaction-tenant-b-%s", uuid.New().String()[:8]))
 	s.Require().NoError(err, "Failed to create tenant B")
+
+	// Create test entity and user for foreign key references (within tenant A context)
+	ctxA := shared.WithTenantID(s.ctx, s.tenantA.ID)
+	var testEntity *db.Entity
+	err = s.runner.GetStore().WithTenant(ctxA, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
+		// Create test entity first
+		entityParams := db.CreateEntityParams{
+			Uuid:          uuid.New(),
+			Name:          fmt.Sprintf("Test Entity %s", uuid.New().String()[:8]),
+			Type:          "COMPANY",
+			IsActive:      true,
+			Hidden:        false,
+			AccrualMethod: true,
+			FyStartMonth:  1,
+			Address:       []byte(`{}`),
+			Settings:      []byte(`{}`),
+			Metadata:      []byte(`{}`),
+		}
+		testEntity, err = store.CreateEntity(ctx, entityParams)
+		if err != nil {
+			return err
+		}
+
+		// Create test user
+		userParams := db.CreateUserParams{
+			EntityID:       testEntity.Uuid,
+			Username:       fmt.Sprintf("testuser-%s", uuid.New().String()[:8]),
+			Email:          fmt.Sprintf("test-transactions-%s@example.com", uuid.New().String()[:8]),
+			UserType:       "INTERNAL",
+			UserAttributes: []byte("{}"),
+			Settings:       []byte("{}"),
+		}
+		s.testUser, err = store.CreateUser(ctx, userParams)
+		return err
+	})
+	s.Require().NoError(err, "Failed to create test entity and user")
 
 	// Setup repository
 	traceService := tracing.NewNoOpTracingService()
@@ -97,13 +136,13 @@ func (s *TransactionRepositoryTestSuite) TestCreateTransaction() {
 				ID:                uuid.New(),
 				TransactionDate:   time.Now(),
 				TransactionType:   domain.TransactionTypeManual,
-				TransactionStatus: domain.TransactionStatusPending,
+				TransactionStatus: domain.TransactionStatusDraft,
 				ReferenceNumber:   stringPtr("TXN-001"),
 				Description:       "Test manual transaction",
-				Amount:            decimal.NewFromFloat(100.50),
 				CurrencyCode:      "USD",
+				ExchangeRate:      decimal.NewFromFloat(1.0),
 				IsRecurring:       false,
-				CreatedBy:         uuid.New(),
+				CreatedBy:         s.testUser.ID,
 			},
 			expectError: false,
 		},
@@ -116,10 +155,10 @@ func (s *TransactionRepositoryTestSuite) TestCreateTransaction() {
 				TransactionStatus: domain.TransactionStatusPosted,
 				ReferenceNumber:   stringPtr("SYS-TXN-001"),
 				Description:       "Test system transaction",
-				Amount:            decimal.NewFromFloat(250.75),
 				CurrencyCode:      "USD",
+				ExchangeRate:      decimal.NewFromFloat(1.0),
 				IsRecurring:       false,
-				CreatedBy:         uuid.New(),
+				CreatedBy:         s.testUser.ID,
 			},
 			expectError: false,
 		},
@@ -129,15 +168,15 @@ func (s *TransactionRepositoryTestSuite) TestCreateTransaction() {
 				ID:                 uuid.New(),
 				TransactionDate:    time.Now(),
 				TransactionType:    domain.TransactionTypeManual,
-				TransactionStatus:  domain.TransactionStatusPending,
+				TransactionStatus:  domain.TransactionStatusDraft,
 				ReferenceNumber:    stringPtr("REC-TXN-001"),
 				Description:        "Test recurring transaction",
-				Amount:             decimal.NewFromFloat(500.00),
 				CurrencyCode:       "USD",
+				ExchangeRate:       decimal.NewFromFloat(1.0),
 				IsRecurring:        true,
-				RecurringFrequency: &domain.RecurringFrequencyMonthly,
-				RecurringEndDate:   timePtr(time.Now().AddDate(1, 0, 0)),
-				CreatedBy:          uuid.New(),
+				RecurringFrequency: stringPtr(domain.RecurringFrequencyMonthly),
+				NextRecurringDate:  timePtr(time.Now().AddDate(1, 0, 0)),
+				// CreatedBy:          uuid.New(), // Don't set to avoid foreign key constraint
 			},
 			expectError: false,
 		},
@@ -146,9 +185,9 @@ func (s *TransactionRepositoryTestSuite) TestCreateTransaction() {
 			transaction: &domain.Transaction{
 				ID:                uuid.New(),
 				TransactionType:   domain.TransactionTypeManual,
-				TransactionStatus: domain.TransactionStatusPending,
-				Description:       "",                      // Missing required field
-				Amount:            decimal.NewFromFloat(0), // Invalid amount
+				TransactionStatus: domain.TransactionStatusDraft,
+				Description:       "", // Missing required field
+				// Amount field removed - doesn't exist in Transaction struct
 			},
 			expectError: true,
 			errorType:   "validation",
@@ -175,7 +214,7 @@ func (s *TransactionRepositoryTestSuite) TestCreateTransaction() {
 					s.Assert().Equal(tc.transaction.Description, retrieved.Description)
 					s.Assert().Equal(tc.transaction.TransactionType, retrieved.TransactionType)
 					s.Assert().Equal(tc.transaction.TransactionStatus, retrieved.TransactionStatus)
-					s.Assert().True(tc.transaction.Amount.Equal(retrieved.Amount))
+					// s.Assert().True(tc.transaction.Amount.Equal(retrieved.Amount)) // Amount field doesn't exist
 				}
 			}
 		})
@@ -191,13 +230,13 @@ func (s *TransactionRepositoryTestSuite) TestGetTransactionByID() {
 		ID:                uuid.New(),
 		TransactionDate:   time.Now(),
 		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusPending,
+		TransactionStatus: domain.TransactionStatusDraft,
 		ReferenceNumber:   stringPtr("GET-TEST-001"),
 		Description:       "Test transaction for retrieval test",
-		Amount:            decimal.NewFromFloat(150.25),
 		CurrencyCode:      "USD",
+		ExchangeRate:      decimal.NewFromFloat(1.0),
 		IsRecurring:       false,
-		CreatedBy:         uuid.New(),
+		CreatedBy:         s.testUser.ID,
 	}
 
 	err := s.repo.Create(ctx, transaction)
@@ -209,7 +248,7 @@ func (s *TransactionRepositoryTestSuite) TestGetTransactionByID() {
 	s.Assert().NoError(err)
 	s.Assert().Equal(transaction.Description, retrieved.Description)
 	s.Assert().Equal(transaction.TransactionType, retrieved.TransactionType)
-	s.Assert().True(transaction.Amount.Equal(retrieved.Amount))
+	// s.Assert().True(transaction.Amount.Equal(retrieved.Amount)) // Amount field doesn't exist
 	s.Assert().NotZero(retrieved.CreatedAt)
 
 	// Test non-existent transaction
@@ -227,13 +266,13 @@ func (s *TransactionRepositoryTestSuite) TestTenantIsolation() {
 		ID:                uuid.New(),
 		TransactionDate:   time.Now(),
 		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusPending,
+		TransactionStatus: domain.TransactionStatusDraft,
 		ReferenceNumber:   stringPtr("TENANT-A-001"),
 		Description:       "Tenant A transaction",
-		Amount:            decimal.NewFromFloat(100.00),
 		CurrencyCode:      "USD",
+		ExchangeRate:      decimal.NewFromFloat(1.0),
 		IsRecurring:       false,
-		CreatedBy:         uuid.New(),
+		CreatedBy:         s.testUser.ID,
 	}
 
 	err := s.repo.Create(ctxA, transactionA)
@@ -246,13 +285,13 @@ func (s *TransactionRepositoryTestSuite) TestTenantIsolation() {
 		ID:                uuid.New(),
 		TransactionDate:   time.Now(),
 		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusPending,
+		TransactionStatus: domain.TransactionStatusDraft,
 		ReferenceNumber:   stringPtr("TENANT-A-001"), // Same reference but different tenant
 		Description:       "Tenant B transaction",
-		Amount:            decimal.NewFromFloat(200.00),
 		CurrencyCode:      "USD",
+		ExchangeRate:      decimal.NewFromFloat(1.0),
 		IsRecurring:       false,
-		CreatedBy:         uuid.New(),
+		CreatedBy:         s.testUser.ID,
 	}
 
 	err = s.repo.Create(ctxB, transactionB)
@@ -290,13 +329,13 @@ func (s *TransactionRepositoryTestSuite) TestListTransactionsWithFiltering() {
 			ID:                uuid.New(),
 			TransactionDate:   time.Now(),
 			TransactionType:   domain.TransactionTypeManual,
-			TransactionStatus: domain.TransactionStatusPending,
+			TransactionStatus: domain.TransactionStatusDraft,
 			ReferenceNumber:   stringPtr("FILTER-001"),
 			Description:       "Pending transaction 1",
-			Amount:            decimal.NewFromFloat(100.00),
 			CurrencyCode:      "USD",
+			ExchangeRate:      decimal.NewFromFloat(1.0),
 			IsRecurring:       false,
-			CreatedBy:         uuid.New(),
+			CreatedBy:         s.testUser.ID,
 		},
 		{
 			ID:                uuid.New(),
@@ -305,10 +344,10 @@ func (s *TransactionRepositoryTestSuite) TestListTransactionsWithFiltering() {
 			TransactionStatus: domain.TransactionStatusPosted,
 			ReferenceNumber:   stringPtr("FILTER-002"),
 			Description:       "Posted transaction 1",
-			Amount:            decimal.NewFromFloat(200.00),
 			CurrencyCode:      "USD",
+			ExchangeRate:      decimal.NewFromFloat(1.0),
 			IsRecurring:       false,
-			CreatedBy:         uuid.New(),
+			CreatedBy:         s.testUser.ID,
 		},
 		{
 			ID:                uuid.New(),
@@ -317,10 +356,10 @@ func (s *TransactionRepositoryTestSuite) TestListTransactionsWithFiltering() {
 			TransactionStatus: domain.TransactionStatusPosted,
 			ReferenceNumber:   stringPtr("FILTER-003"),
 			Description:       "System transaction",
-			Amount:            decimal.NewFromFloat(300.00),
 			CurrencyCode:      "USD",
+			ExchangeRate:      decimal.NewFromFloat(1.0),
 			IsRecurring:       false,
-			CreatedBy:         uuid.New(),
+			CreatedBy:         s.testUser.ID,
 		},
 	}
 
@@ -342,8 +381,9 @@ func (s *TransactionRepositoryTestSuite) TestListTransactionsWithFiltering() {
 	s.Assert().GreaterOrEqual(len(results), 3) // At least our 3 transactions
 
 	// Test list by status
+	postedStatus := domain.TransactionStatusPosted
 	statusFilter := &domain.TransactionFilter{
-		Status: &domain.TransactionStatusPosted,
+		Status: &postedStatus,
 		Limit:  intPtr(10),
 		Offset: intPtr(0),
 	}
@@ -358,8 +398,9 @@ func (s *TransactionRepositoryTestSuite) TestListTransactionsWithFiltering() {
 	}
 
 	// Test list by transaction type
+	systemType := domain.TransactionTypeSystem
 	typeFilter := &domain.TransactionFilter{
-		TransactionType: &domain.TransactionTypeSystem,
+		TransactionType: &systemType,
 		Limit:           intPtr(10),
 		Offset:          intPtr(0),
 	}
@@ -383,13 +424,13 @@ func (s *TransactionRepositoryTestSuite) TestUpdateTransaction() {
 		ID:                uuid.New(),
 		TransactionDate:   time.Now(),
 		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusPending,
+		TransactionStatus: domain.TransactionStatusDraft,
 		ReferenceNumber:   stringPtr("UPDATE-001"),
 		Description:       "Original transaction description",
-		Amount:            decimal.NewFromFloat(100.00),
 		CurrencyCode:      "USD",
+		ExchangeRate:      decimal.NewFromFloat(1.0),
 		IsRecurring:       false,
-		CreatedBy:         uuid.New(),
+		CreatedBy:         s.testUser.ID,
 	}
 
 	err := s.repo.Create(ctx, transaction)
@@ -398,7 +439,7 @@ func (s *TransactionRepositoryTestSuite) TestUpdateTransaction() {
 
 	// Update transaction
 	transaction.Description = "Updated transaction description"
-	transaction.Amount = decimal.NewFromFloat(150.00)
+	// transaction.Amount = decimal.NewFromFloat(150.00) // Amount field doesn't exist
 	transaction.TransactionStatus = domain.TransactionStatusPosted
 
 	err = s.repo.Update(ctx, transaction)
@@ -408,7 +449,7 @@ func (s *TransactionRepositoryTestSuite) TestUpdateTransaction() {
 	updated, err := s.repo.GetByID(ctx, transaction.ID)
 	s.Assert().NoError(err)
 	s.Assert().Equal("Updated transaction description", updated.Description)
-	s.Assert().True(decimal.NewFromFloat(150.00).Equal(updated.Amount))
+	// s.Assert().True(decimal.NewFromFloat(150.00).Equal(updated.Amount)) // Amount field doesn't exist
 	s.Assert().Equal(domain.TransactionStatusPosted, updated.TransactionStatus)
 	s.Assert().NotEqual(updated.CreatedAt, updated.UpdatedAt)
 }
@@ -422,13 +463,13 @@ func (s *TransactionRepositoryTestSuite) TestTransactionApproval() {
 		ID:                uuid.New(),
 		TransactionDate:   time.Now(),
 		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusPending,
+		TransactionStatus: domain.TransactionStatusDraft,
 		ReferenceNumber:   stringPtr("APPROVAL-001"),
 		Description:       "Transaction requiring approval",
-		Amount:            decimal.NewFromFloat(1000.00),
 		CurrencyCode:      "USD",
+		ExchangeRate:      decimal.NewFromFloat(1.0),
 		IsRecurring:       false,
-		CreatedBy:         uuid.New(),
+		CreatedBy:         s.testUser.ID,
 	}
 
 	err := s.repo.Create(ctx, transaction)
@@ -446,7 +487,7 @@ func (s *TransactionRepositoryTestSuite) TestTransactionApproval() {
 	// Verify approval
 	approved, err := s.repo.GetByID(ctx, transaction.ID)
 	s.Assert().NoError(err)
-	s.Assert().Equal(domain.ApprovalStatusApproved, *approved.ApprovalStatus)
+	s.Assert().Equal(domain.ApprovalStatusApproved, approved.ApprovalStatus)
 	s.Assert().Equal(approverID, *approved.ApprovedBy)
 	s.Assert().WithinDuration(approvedAt, *approved.ApprovedAt, time.Second)
 	s.Assert().Equal(notes, *approved.ApprovalNotes)
@@ -461,13 +502,13 @@ func (s *TransactionRepositoryTestSuite) TestDeleteTransaction() {
 		ID:                uuid.New(),
 		TransactionDate:   time.Now(),
 		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusPending,
+		TransactionStatus: domain.TransactionStatusDraft,
 		ReferenceNumber:   stringPtr("DELETE-001"),
 		Description:       "Transaction to delete",
-		Amount:            decimal.NewFromFloat(50.00),
 		CurrencyCode:      "USD",
+		ExchangeRate:      decimal.NewFromFloat(1.0),
 		IsRecurring:       false,
-		CreatedBy:         uuid.New(),
+		CreatedBy:         s.testUser.ID,
 	}
 
 	err := s.repo.Create(ctx, transaction)
@@ -493,15 +534,7 @@ func (s *TransactionRepositoryTestSuite) TestDeleteTransaction() {
 	s.Assert().Equal(domain.ErrTransactionNotFound, err)
 }
 
-// Helper functions
-func stringPtr(s string) *string {
-	return &s
-}
-
-func intPtr(i int) *int {
-	return &i
-}
-
+// Helper functions are now in mappers.go
 func timePtr(t time.Time) *time.Time {
 	return &t
 }

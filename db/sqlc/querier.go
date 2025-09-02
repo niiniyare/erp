@@ -851,7 +851,7 @@ type Querier interface {
 	// TENANT CONTEXT AND LIMITS QUERIES
 	// =====================================================
 	SetTenantContext(ctx context.Context, tenantID uuid.UUID) error
-	SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) error
+	SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) (int64, error)
 	SoftDeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	SoftDeleteEntityState(ctx context.Context, argUuid uuid.UUID) error

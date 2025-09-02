@@ -16,6 +16,131 @@ import (
 
 // Account Domain to SQLC mappings
 
+func mapDomainAccountToSQLCCreateDirect(account *domain.Accounts) (db.CreateAccountParams, error) {
+	// Map root type string
+	var rootType string
+	switch account.RootType {
+	case domain.RootTypeAsset:
+		rootType = "ASSET"
+	case domain.RootTypeLiability:
+		rootType = "LIABILITY"
+	case domain.RootTypeEquity:
+		rootType = "EQUITY"
+	case domain.RootTypeRevenue:
+		rootType = "REVENUE"
+	case domain.RootTypeExpense:
+		rootType = "EXPENSE"
+	default:
+		return db.CreateAccountParams{}, fmt.Errorf("invalid root type: %s", account.RootType)
+	}
+
+	// Map normal balance string
+	var normalBalance string
+	switch account.NormalBalance {
+	case domain.NormalBalanceDebit:
+		normalBalance = "DEBIT"
+	case domain.NormalBalanceCredit:
+		normalBalance = "CREDIT"
+	default:
+		return db.CreateAccountParams{}, fmt.Errorf("invalid normal balance: %s", account.NormalBalance)
+	}
+
+	// Map account attributes to JSONB
+	var attributes []byte
+	if account.AccountAttributes != nil {
+		var err error
+		attributes, err = json.Marshal(account.AccountAttributes)
+		if err != nil {
+			return db.CreateAccountParams{}, fmt.Errorf("failed to marshal account attributes: %w", err)
+		}
+	} else {
+		attributes = []byte("{}")
+	}
+
+	// Map decimal fields to pgtype.Numeric
+	var budgetVarianceThreshold pgtype.Numeric
+	if !account.BudgetVarianceThreshold.IsZero() {
+		budgetVarianceThreshold = pgtype.Numeric{
+			Int:   account.BudgetVarianceThreshold.BigInt(),
+			Valid: true,
+		}
+	}
+
+	var currentBalance pgtype.Numeric
+	if !account.CurrentBalance.IsZero() {
+		currentBalance = pgtype.Numeric{
+			Int:   account.CurrentBalance.BigInt(),
+			Valid: true,
+		}
+	}
+
+	var ytdBalance pgtype.Numeric
+	if !account.YTDBalance.IsZero() {
+		ytdBalance = pgtype.Numeric{
+			Int:   account.YTDBalance.BigInt(),
+			Valid: true,
+		}
+	}
+
+	// Map validation status
+	var validationStatus string
+	switch account.ValidationStatus {
+	case domain.ValidationStatusPending:
+		validationStatus = "PENDING"
+	case domain.ValidationStatusValid:
+		validationStatus = "VALID"
+	case domain.ValidationStatusError:
+		validationStatus = "ERROR"
+	case domain.ValidationStatusWarning:
+		validationStatus = "WARNING"
+	default:
+		validationStatus = "PENDING"
+	}
+
+	return db.CreateAccountParams{
+		EntityID:                    account.EntityID,
+		AccountCode:                 account.AccountCode,
+		AccountName:                 account.AccountName,
+		AccountDescription:          getStringValue(account.AccountDescription),
+		ParentAccountID:             account.ParentAccountID,
+		AccountLevel:                &account.AccountLevel,
+		AccountPath:                 account.AccountPath,
+		AccountCategory:             account.AccountCategory,
+		SubCategory:                 account.SubCategory,
+		DisplayOrder:                &account.DisplayOrder,
+		ShowInReports:               &account.ShowInReports,
+		ConsolidationAccount:        account.ConsolidationAccount,
+		CashFlowType:                account.CashFlowType,
+		RootType:                    rootType,
+		AccountType:                 account.AccountType,
+		AccountSubtype:              account.AccountSubtype,
+		NormalBalance:               normalBalance,
+		IsControlAccount:            boolPtr(account.IsControlAccount),
+		ControlAccountID:            account.ControlAccountID,
+		CurrencyCode:                account.CurrencyCode,
+		IsMultiCurrency:             &account.IsMultiCurrency,
+		CurrencyRevaluationRequired: &account.CurrencyRevaluationRequired,
+		IsActive:                    boolPtr(account.IsActive),
+		IsSystemAccount:             boolPtr(account.IsSystemAccount),
+		AllowManualEntries:          boolPtr(account.AllowManualEntries),
+		RequireReference:            boolPtr(account.RequireReference),
+		CurrentBalance:              currentBalance,
+		YtdBalance:                  ytdBalance,
+		LastTransactionDate:        time.Time{}, // Zero time as default
+		FinancialStatementLine:      account.FinancialStatementLine,
+		ReportOrder:                 &account.ReportOrder,
+		IsBudgetable:                &account.IsBudgetable,
+		BudgetVarianceThreshold:     budgetVarianceThreshold,
+		Version:                     &account.Version,
+		LastValidationRun:           sql.NullTime{}, // Not set initially
+		ValidationStatus:            &validationStatus,
+		AccountAttributes:           attributes,
+		HasChildren:                 &account.HasChildren,
+		IsLeafAccount:               &account.IsLeafAccount,
+		// CreatedBy:                   &account.CreatedBy, // Will be set by triggers or defaults
+	}, nil
+}
+
 func mapDomainAccountToSQLCCreate(req *domain.CreateAccountRequest) (db.CreateAccountParams, error) {
 	// Map root type string
 	var rootType string
@@ -92,6 +217,7 @@ func mapDomainAccountToSQLCCreate(req *domain.CreateAccountRequest) (db.CreateAc
 		BudgetVarianceThreshold: budgetVarianceThreshold,
 		AccountAttributes:       attributes,
 		// CreatedBy not in CreateAccountRequest, will be nil
+		// Version not in CreateAccountRequest, will be nil
 	}, nil
 }
 
@@ -552,10 +678,6 @@ func mapStringToApprovalStatus(s *string) *domain.ApprovalStatus {
 }
 
 // Additional helper functions for tests and general usage
-//
-//	func stringPtr(s string) *string {
-//		return &s
-//	}
 func intPtr(i int) *int {
 	return &i
 }
