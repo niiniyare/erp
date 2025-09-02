@@ -87,6 +87,8 @@ type Querier interface {
 	CountEvaluationsByDecision(ctx context.Context, arg CountEvaluationsByDecisionParams) (*CountEvaluationsByDecisionRow, error)
 	CountFilteredTenants(ctx context.Context, arg CountFilteredTenantsParams) (int64, error)
 	CountPolicies(ctx context.Context, arg CountPoliciesParams) (int64, error)
+	CountTenantFeatureFlagsAdmin(ctx context.Context, tenantID uuid.UUID) (int64, error)
+	CountTenantFeatureFlagsUser(ctx context.Context) (int64, error)
 	CountTenants(ctx context.Context) (int64, error)
 	CountTransactions(ctx context.Context, arg CountTransactionsParams) (int64, error)
 	CreateAccessRequest(ctx context.Context, arg CreateAccessRequestParams) (*AccessRequest, error)
@@ -557,12 +559,19 @@ type Querier interface {
 	GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error)
 	GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error)
 	GetFeatureFlagStats(ctx context.Context) (*GetFeatureFlagStatsRow, error)
+	// =====================================================================
+	// FEATURE FLAG QUERIES WITH VIEW SUPPORT
+	// =====================================================================
+	GetFeatureFlagStatusAdmin(ctx context.Context, arg GetFeatureFlagStatusAdminParams) (*GetFeatureFlagStatusAdminRow, error)
+	GetFeatureFlagStatusUser(ctx context.Context, featureFlagName string) (*GetFeatureFlagStatusUserRow, error)
 	GetFeatureFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error)
 	// =====================================================================
 	// FINANCE MODULE - REPORTING QUERIES USING VIEWS
 	// SQLC queries leveraging v_financial_statement_builder and other reporting views
 	// =====================================================================
 	GetFinancialStatementBuilder(ctx context.Context, arg GetFinancialStatementBuilderParams) ([]*VFinancialStatementBuilder, error)
+	GetFinancialStatementBuilderAdmin(ctx context.Context, tenantID uuid.UUID) ([]*VFinancialStatementBuilder, error)
+	GetFinancialStatementBuilderUser(ctx context.Context) ([]*VFinancialStatementBuilder, error)
 	GetFinancialStatementData(ctx context.Context, arg GetFinancialStatementDataParams) ([]*GetFinancialStatementDataRow, error)
 	GetFinancialStatementStructure(ctx context.Context, arg GetFinancialStatementStructureParams) ([]*VFinancialStatementStructure, error)
 	GetFullPasswordPolicy(ctx context.Context) ([]byte, error)
@@ -584,6 +593,8 @@ type Querier interface {
 	GetLatestAccountBalance(ctx context.Context, accountID uuid.UUID) (*FinanceAccountBalance, error)
 	GetLatestTenantUsageStats(ctx context.Context) (*TenantUsageStat, error)
 	GetLeafAccountsWithGroups(ctx context.Context, arg GetLeafAccountsWithGroupsParams) ([]*VFinanceAccountsWithGroup, error)
+	// Get metadata about materialized views
+	GetMaterializedViewMetadata(ctx context.Context) ([]*GetMaterializedViewMetadataRow, error)
 	GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSequenceByEntityAndKeyParams) (interface{}, error)
 	// Ensures positive sequence number
 	// =====================================================================
@@ -684,6 +695,8 @@ type Querier interface {
 	GetResourceEvaluationHistory(ctx context.Context, arg GetResourceEvaluationHistoryParams) ([]*PolicyEvaluation, error)
 	GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error)
 	GetRootAccountsView(ctx context.Context, arg GetRootAccountsViewParams) ([]*VFinanceAccountsHierarchy, error)
+	GetSecurityThreatDashboardAdmin(ctx context.Context, userID uuid.UUID) ([]*VSecurityThreatDashboard, error)
+	GetSecurityThreatDashboardUser(ctx context.Context) ([]*VSecurityThreatDashboard, error)
 	// Usage: Identifies missing sequence numbers (gaps in numbering)
 	// Use case: Audit compliance, finding deleted/voided documents, sequence integrity checks
 	GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error)
@@ -695,6 +708,11 @@ type Querier interface {
 	GetStaleEntityStates(ctx context.Context, updatedAt time.Time) ([]*GetStaleEntityStatesRow, error)
 	// Get suspicious activity from specific IP addresses with risk analysis
 	GetSuspiciousActivityByIP(ctx context.Context, arg GetSuspiciousActivityByIPParams) ([]*GetSuspiciousActivityByIPRow, error)
+	// =====================================================================
+	// TENANT ANALYTICS QUERIES
+	// =====================================================================
+	GetTenantAnalyticsOverviewAdmin(ctx context.Context, dollar_1 uuid.UUID) (*GetTenantAnalyticsOverviewAdminRow, error)
+	GetTenantAnalyticsOverviewUser(ctx context.Context) (*GetTenantAnalyticsOverviewUserRow, error)
 	GetTenantByEmail(ctx context.Context, email string) (*Tenant, error)
 	GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error)
 	GetTenantBySlug(ctx context.Context, slug string) (*Tenant, error)
@@ -702,11 +720,22 @@ type Querier interface {
 	// WHERE id = $1 AND deleted_at IS NULL;
 	GetTenantByUUID(ctx context.Context, subdomain *string) (*Tenant, error)
 	GetTenantConfiguration(ctx context.Context) (*TenantConfiguration, error)
+	GetTenantEntitySummaryAdmin(ctx context.Context, tenantID uuid.UUID) ([]*VTenantEntitySummary, error)
+	GetTenantEntitySummaryUser(ctx context.Context) ([]*VTenantEntitySummary, error)
+	GetTenantFeatureFlagsCacheAdmin(ctx context.Context, tenantID uuid.UUID) ([]*GetTenantFeatureFlagsCacheAdminRow, error)
+	GetTenantFeatureFlagsCacheUser(ctx context.Context) ([]*GetTenantFeatureFlagsCacheUserRow, error)
+	GetTenantGrowthMetricsAdmin(ctx context.Context, dollar_1 uuid.UUID) ([]*GetTenantGrowthMetricsAdminRow, error)
+	GetTenantGrowthMetricsUser(ctx context.Context) ([]*GetTenantGrowthMetricsUserRow, error)
 	// =====================================================
 	// ADVANCED ANALYTICS QUERIES
 	// =====================================================
 	// Admin-level analytics (requires explicit tenant_id for cross-tenant queries)
 	GetTenantGrowthStats(ctx context.Context, arg GetTenantGrowthStatsParams) ([]*GetTenantGrowthStatsRow, error)
+	// =====================================================================
+	// STANDARD VIEWS QUERIES
+	// =====================================================================
+	GetTenantResourceUtilizationAdmin(ctx context.Context, tenantID uuid.UUID) ([]*VTenantResourceUtilization, error)
+	GetTenantResourceUtilizationUser(ctx context.Context) ([]*VTenantResourceUtilization, error)
 	GetTenantStats(ctx context.Context) (*GetTenantStatsRow, error)
 	GetTenantStatusDistribution(ctx context.Context) (*GetTenantStatusDistributionRow, error)
 	GetTenantUsageStats(ctx context.Context, periodStart time.Time) (*TenantUsageStat, error)
@@ -758,6 +787,8 @@ type Querier interface {
 	// Get audit events for a specific session
 	GetUserSessionEvents(ctx context.Context, sessionID *uuid.UUID) ([]*GetUserSessionEventsRow, error)
 	GetValidationRulesByAccountType(ctx context.Context, accountType *string) ([]*FinanceAccountValidationRule, error)
+	// Get metadata about available views
+	GetViewMetadata(ctx context.Context) ([]*GetViewMetadataRow, error)
 	Get_OrCreateEntityState(ctx context.Context, arg Get_OrCreateEntityStateParams) (*Get_OrCreateEntityStateRow, error)
 	HardDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	HardDeletePolicy(ctx context.Context, id uuid.UUID) error
@@ -778,6 +809,8 @@ type Querier interface {
 	ListAccountsByParent(ctx context.Context, parentAccountID *uuid.UUID) ([]*FinanceAccount, error)
 	ListAccountsWithGroups(ctx context.Context, arg ListAccountsWithGroupsParams) ([]*VFinanceAccountsWithGroup, error)
 	ListActiveEntities(ctx context.Context) ([]*Entity, error)
+	ListActiveFeatureFlagsAdmin(ctx context.Context, tenantID uuid.UUID) ([]*ListActiveFeatureFlagsAdminRow, error)
+	ListActiveFeatureFlagsUser(ctx context.Context) ([]*ListActiveFeatureFlagsUserRow, error)
 	ListActivePolicies(ctx context.Context) ([]*Policy, error)
 	// Attribute Definition Listing and Filtering
 	ListAttributeDefinitions(ctx context.Context, arg ListAttributeDefinitionsParams) ([]*AttributeDefinition, error)
@@ -812,6 +845,15 @@ type Querier interface {
 	ProvisionTenant(ctx context.Context, arg ProvisionTenantParams) (uuid.UUID, error)
 	RebuildHierarchyPaths(ctx context.Context) error
 	RecalculateClosingBalance(ctx context.Context, id uuid.UUID) (*FinanceAccountBalance, error)
+	// =====================================================================
+	// DATABASE VIEWS QUERIES FOR SQLC GENERATION
+	// Queries for database views and materialized views with proper tenant isolation
+	// Admin queries use tenant_id parameter, user queries use current_tenant_id()
+	// =====================================================================
+	// =====================================================================
+	// MATERIALIZED VIEWS QUERIES
+	// =====================================================================
+	RefreshTenantFeatureFlagsCache(ctx context.Context) error
 	RejectTransaction(ctx context.Context, arg RejectTransactionParams) (*FinanceTransaction, error)
 	RemoveTransactionAttachment(ctx context.Context, arg RemoveTransactionAttachmentParams) error
 	RemoveTransactionTag(ctx context.Context, arg RemoveTransactionTagParams) error
@@ -859,6 +901,13 @@ type Querier interface {
 	SoftDeleteTenant(ctx context.Context, id uuid.UUID) error
 	SoftDeleteTransaction(ctx context.Context, arg SoftDeleteTransactionParams) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
+	// =====================================================================
+	// VIEW PERFORMANCE AND METADATA QUERIES
+	// =====================================================================
+	// Test query for view performance with admin access
+	TestViewPerformanceAdmin(ctx context.Context, tenantID uuid.UUID) error
+	// Test query for view performance with user access
+	TestViewPerformanceUser(ctx context.Context) error
 	UnlockUser(ctx context.Context, id uuid.UUID) error
 	UpdateAccessRequestStatus(ctx context.Context, arg UpdateAccessRequestStatusParams) (*AccessRequest, error)
 	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceAccount, error)
