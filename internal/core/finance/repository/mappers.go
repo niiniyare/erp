@@ -126,7 +126,7 @@ func mapDomainAccountToSQLCCreateDirect(account *domain.Accounts) (db.CreateAcco
 		RequireReference:            boolPtr(account.RequireReference),
 		CurrentBalance:              currentBalance,
 		YtdBalance:                  ytdBalance,
-		LastTransactionDate:        time.Time{}, // Zero time as default
+		LastTransactionDate:         time.Time{}, // Zero time as default
 		FinancialStatementLine:      account.FinancialStatementLine,
 		ReportOrder:                 &account.ReportOrder,
 		IsBudgetable:                &account.IsBudgetable,

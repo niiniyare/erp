@@ -33,7 +33,7 @@ func NewDatabaseTestRunner() (*DatabaseTestRunner, error) {
 		// If config loading takes too long, fall back to defaults
 		configChan := make(chan *config.Config, 1)
 		errorChan := make(chan error, 1)
-		
+
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
@@ -43,7 +43,7 @@ func NewDatabaseTestRunner() (*DatabaseTestRunner, error) {
 			cfg := config.Load()
 			configChan <- cfg
 		}()
-		
+
 		// Wait for config with timeout
 		timeout := time.After(2 * time.Second)
 		select {
@@ -284,8 +284,8 @@ func getDefaultTestDatabaseURL() string {
 	password := getEnvOrDefault("DB_PASSWORD", "admin")
 	dbName := getEnvOrDefault("DB_NAME", "ledger")
 	sslMode := getEnvOrDefault("DB_SSL_MODE", "disable")
-	
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", 
+
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		user, password, host, port, dbName, sslMode)
 }
 

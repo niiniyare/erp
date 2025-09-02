@@ -215,7 +215,7 @@ func (r *chartOfAccountsRepository) Delete(ctx context.Context, id uuid.UUID) er
 			AccountID: id,
 			UpdatedBy: nil, // Don't set updated_by if userID is not available
 		}
-		
+
 		// Only set UpdatedBy if we have a valid user ID
 		if userID != uuid.Nil {
 			params.UpdatedBy = &userID
@@ -224,7 +224,7 @@ func (r *chartOfAccountsRepository) Delete(ctx context.Context, id uuid.UUID) er
 		if err != nil {
 			return r.mapDatabaseError(err, "soft_delete_account")
 		}
-		
+
 		// Check if the account was found and deleted
 		if rowsAffected == 0 {
 			return domain.ErrAccountNotFound

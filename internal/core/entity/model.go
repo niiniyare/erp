@@ -27,16 +27,16 @@ type Entity struct {
 type EntityType string
 
 const (
-	EntityTypeCompany     EntityType = "COMPANY"
-	EntityTypeSubsidiary  EntityType = "SUBSIDIARY"
-	EntityTypeRegion      EntityType = "REGION"
-	EntityTypeBranch      EntityType = "BRANCH"
-	EntityTypeLocation    EntityType = "LOCATION"
-	EntityTypeDepartment  EntityType = "DEPARTMENT"
-	EntityTypeDivision    EntityType = "DIVISION"
-	EntityTypeCostCenter  EntityType = "COST_CENTER"
-	EntityTypeProject     EntityType = "PROJECT"
-	EntityTypeBudgetUnit  EntityType = "BUDGET_UNIT"
+	EntityTypeCompany    EntityType = "COMPANY"
+	EntityTypeSubsidiary EntityType = "SUBSIDIARY"
+	EntityTypeRegion     EntityType = "REGION"
+	EntityTypeBranch     EntityType = "BRANCH"
+	EntityTypeLocation   EntityType = "LOCATION"
+	EntityTypeDepartment EntityType = "DEPARTMENT"
+	EntityTypeDivision   EntityType = "DIVISION"
+	EntityTypeCostCenter EntityType = "COST_CENTER"
+	EntityTypeProject    EntityType = "PROJECT"
+	EntityTypeBudgetUnit EntityType = "BUDGET_UNIT"
 )
 
 // EntityWithHierarchy represents entity with hierarchy information
@@ -68,18 +68,18 @@ type HierarchyPath struct {
 
 // CreateEntityRequest represents entity creation request
 type CreateEntityRequest struct {
-	ParentID       *uuid.UUID     `json:"parent_id,omitempty"`
-	Name           string         `json:"name" validate:"required,min=2,max=100"`
-	Code           string         `json:"code" validate:"required,min=2,max=50"`
-	Type           EntityType     `json:"type" validate:"required"`
-	IsActive       bool           `json:"is_active"`
-	IsHidden       bool           `json:"is_hidden"`
-	AccrualMethod  bool           `json:"accrual_method"`  // TRUE = Accrual, FALSE = Cash
-	FYStartMonth   int            `json:"fy_start_month"`  // Fiscal year start month (1-12)
-	Address        map[string]any `json:"address,omitempty"`
-	Picture        string         `json:"picture,omitempty"`
-	Settings       map[string]any `json:"settings,omitempty"`
-	Metadata       map[string]any `json:"metadata,omitempty"`
+	ParentID      *uuid.UUID     `json:"parent_id,omitempty"`
+	Name          string         `json:"name" validate:"required,min=2,max=100"`
+	Code          string         `json:"code" validate:"required,min=2,max=50"`
+	Type          EntityType     `json:"type" validate:"required"`
+	IsActive      bool           `json:"is_active"`
+	IsHidden      bool           `json:"is_hidden"`
+	AccrualMethod bool           `json:"accrual_method"` // TRUE = Accrual, FALSE = Cash
+	FYStartMonth  int            `json:"fy_start_month"` // Fiscal year start month (1-12)
+	Address       map[string]any `json:"address,omitempty"`
+	Picture       string         `json:"picture,omitempty"`
+	Settings      map[string]any `json:"settings,omitempty"`
+	Metadata      map[string]any `json:"metadata,omitempty"`
 }
 
 // UpdateEntityRequest represents entity update request

@@ -1848,8 +1848,8 @@ WITH RECURSIVE entity_tree AS (
   SELECT
     e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
     0 AS LEVEL,
-    ARRAY [e.name] AS path,
-    e.name AS sort_path
+    CAST(e.name AS TEXT) AS path_text,
+    CAST(e.name AS TEXT) AS sort_path
   FROM
     entities e
   WHERE
@@ -1861,8 +1861,8 @@ WITH RECURSIVE entity_tree AS (
   SELECT
     e.uuid, e.tenant_id, e.parent_id, e.name, e.code, e.type, e.is_active, e.hidden, e.accrual_method, e.fy_start_month, e.address, e.picture, e.settings, e.metadata, e.version, e.last_validation_run, e.validation_status, e.validation_errors, e.created_at, e.updated_at, e.deleted_at,
     et.level + 1,
-    et.path || e.name,
-    et.sort_path || '/' || e.name
+    CAST(et.path_text || ' > ' || e.name AS TEXT),
+    CAST(et.sort_path || '/' || e.name AS TEXT)
   FROM
     entities e
     JOIN entity_tree et ON e.parent_id = et.uuid
@@ -1872,7 +1872,7 @@ WITH RECURSIVE entity_tree AS (
     AND et.level < 10
 )
 SELECT
-  uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, level, path, sort_path
+  uuid, tenant_id, parent_id, name, code, type, is_active, hidden, accrual_method, fy_start_month, address, picture, settings, metadata, version, last_validation_run, validation_status, validation_errors, created_at, updated_at, deleted_at, level, path_text, sort_path
 FROM
   entity_tree
 ORDER BY
@@ -1902,7 +1902,7 @@ type GetEntityTreeStructureRow struct {
 	UpdatedAt         time.Time    `json:"updated_at"`
 	DeletedAt         sql.NullTime `json:"deleted_at"`
 	Level             int32        `json:"level"`
-	Path              interface{}  `json:"path"`
+	PathText          string       `json:"path_text"`
 	SortPath          string       `json:"sort_path"`
 }
 
@@ -1938,7 +1938,7 @@ func (q *Queries) GetEntityTreeStructure(ctx context.Context) ([]*GetEntityTreeS
 			&i.UpdatedAt,
 			&i.DeletedAt,
 			&i.Level,
-			&i.Path,
+			&i.PathText,
 			&i.SortPath,
 		); err != nil {
 			return nil, err

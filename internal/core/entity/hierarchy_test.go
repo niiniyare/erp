@@ -117,8 +117,8 @@ func (s *OrganizationHierarchyTestSuite) createTestEntity(name, code string, ent
 		ParentID:      parentID,
 		IsActive:      true,
 		IsHidden:      false,
-		AccrualMethod: true,  // Default to accrual accounting
-		FYStartMonth:  1,     // Default to January fiscal year start
+		AccrualMethod: true, // Default to accrual accounting
+		FYStartMonth:  1,    // Default to January fiscal year start
 		Address:       map[string]any{"country": "US", "city": "Test City"},
 		Picture:       "",
 		Settings:      map[string]any{"currency": "USD", "timezone": "UTC"},
@@ -310,26 +310,24 @@ func (s *OrganizationHierarchyTestSuite) TestHierarchicalRelationships() {
 		})
 
 		s.Run("Test entity tree retrieval", func() {
-			// TODO: Fix SQL query type mismatch in entity_tree recursive query
-			// The test is currently disabled due to database view issue
-			s.T().Skip("Entity tree query has SQL type mismatch - needs database schema fix")
-			
 			// Get the complete entity tree
-			// entityTree, err := s.service.GetEntityTree(s.ctx)
-			// s.Require().NoError(err)
-			// s.NotEmpty(entityTree)
+			entityTree, err := s.service.GetEntityTree(s.ctx)
+			s.Require().NoError(err)
+			s.NotEmpty(entityTree)
 
-			// // Verify tree structure contains our created entities
-			// foundCompany := false
-			// for _, treeEntity := range entityTree {
-			// 	if treeEntity.ID == company.ID {
-			// 		foundCompany = true
-			// 		s.True(treeEntity.HasChildren)
-			// 		s.GreaterOrEqual(treeEntity.Level, 0)
-			// 		break
-			// 	}
-			// }
-			// s.True(foundCompany, "Company should be found in entity tree")
+			// Verify tree structure contains our created entities
+			foundCompany := false
+			for _, treeEntity := range entityTree {
+				if treeEntity.ID == company.ID {
+					foundCompany = true
+					s.GreaterOrEqual(treeEntity.Level, 0)
+					s.NotEmpty(treeEntity.Path)
+					break
+				}
+			}
+			s.True(foundCompany, "Company should be found in entity tree")
+
+			s.T().Logf("Successfully retrieved entity tree with %d entities", len(entityTree))
 		})
 	})
 }
@@ -339,7 +337,7 @@ func (s *OrganizationHierarchyTestSuite) TestCrossTenantOrganizationIsolation() 
 	s.Run("MT-ORG-003: Cross-tenant organization isolation", func() {
 		// Create two separate tenants
 		tenant1ID := s.createTestTenant("isolation-tenant-1")
-		
+
 		// Create organizations in tenant 1
 		company1 := s.createTestEntity("ACME Corp Tenant 1", "ACME-T1", EntityTypeCompany, nil)
 		dept1 := s.createTestEntity("Engineering Dept T1", "ENG-T1", EntityTypeDepartment, &company1.ID)
@@ -348,7 +346,7 @@ func (s *OrganizationHierarchyTestSuite) TestCrossTenantOrganizationIsolation() 
 		tenant2ID := s.createTestTenant("isolation-tenant-2")
 
 		// Create organizations in tenant 2 (can reuse codes due to tenant isolation)
-		company2 := s.createTestEntity("ACME Corp Tenant 2", "ACME-T1", EntityTypeCompany, nil) // Same code as tenant 1
+		company2 := s.createTestEntity("ACME Corp Tenant 2", "ACME-T1", EntityTypeCompany, nil)          // Same code as tenant 1
 		dept2 := s.createTestEntity("Engineering Dept T2", "ENG-T1", EntityTypeDepartment, &company2.ID) // Same code as tenant 1
 
 		s.T().Logf("Created isolated organizations for tenant1=%s and tenant2=%s", tenant1ID, tenant2ID)
@@ -453,20 +451,17 @@ func (s *OrganizationHierarchyTestSuite) TestCrossTenantOrganizationIsolation() 
 			_, err = s.service.GetEntityChildren(s.ctx, company2.ID)
 			s.Error(err, "Should not be able to get children of entities from other tenants")
 
-			// TODO: Entity tree test disabled due to SQL type mismatch
-			s.T().Skip("Entity tree query has SQL type mismatch - needs database schema fix")
-			
 			// Get entity tree should only return tenant 1's entities
-			// entityTree, err := s.service.GetEntityTree(s.ctx)
-			// s.Require().NoError(err)
+			entityTree, err := s.service.GetEntityTree(s.ctx)
+			s.Require().NoError(err)
 
-			// treeEntityIDs := make(map[uuid.UUID]bool)
-			// for _, treeEntity := range entityTree {
-			// 	treeEntityIDs[treeEntity.ID] = true
-			// }
+			treeEntityIDs := make(map[uuid.UUID]bool)
+			for _, treeEntity := range entityTree {
+				treeEntityIDs[treeEntity.ID] = true
+			}
 
-			// s.True(treeEntityIDs[company1.ID], "Tree should contain tenant 1's entities")
-			// s.False(treeEntityIDs[company2.ID], "Tree should NOT contain tenant 2's entities")
+			s.True(treeEntityIDs[company1.ID], "Tree should contain tenant 1's entities")
+			s.False(treeEntityIDs[company2.ID], "Tree should NOT contain tenant 2's entities")
 		})
 
 		s.Run("Test code uniqueness within tenant boundaries", func() {

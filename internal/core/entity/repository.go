@@ -713,7 +713,7 @@ func (r *repository) GetEntityTree(ctx context.Context) ([]*EntityWithHierarchy,
 		entities[i] = &EntityWithHierarchy{
 			Entity:      *entity,
 			Level:       int(row.Level),
-			Path:        row.SortPath,
+			Path:        row.PathText,
 			HasChildren: false, // TODO: calculate from children count
 		}
 	}

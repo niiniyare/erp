@@ -685,7 +685,7 @@ func (suite *TenantTestSuite) TestTenantConfiguration() {
 	var expectedFeatures map[string]bool
 	err = json.Unmarshal(newFeatures, &expectedFeatures)
 	suite.Require().NoError(err)
-	
+
 	// For now, just verify the JSON can be parsed correctly
 	suite.Require().NotNil(expectedFeatures)
 	suite.Require().Equal(3, len(expectedFeatures))
@@ -889,7 +889,7 @@ func (suite *TenantTestSuite) TestAdvancedSearchAndFilter() {
 
 	filtered, err := suite.store.FilterTenants(testCtx, filterParams)
 	suite.Require().NoError(err)
-	
+
 	// Should find at least our tech active tenants
 	techActiveCount := 0
 	for _, tenant := range createdTenants {
@@ -902,7 +902,7 @@ func (suite *TenantTestSuite) TestAdvancedSearchAndFilter() {
 	// Test date range queries
 	now := time.Now()
 	yesterday := now.Add(-24 * time.Hour)
-	
+
 	dateRangeParams := GetTenantsCreatedInDateRangeParams{
 		CreatedAt:   yesterday,
 		CreatedAt_2: now,
@@ -1028,8 +1028,8 @@ func (suite *TenantTestSuite) TestTenantCompleteLifecycle() {
 
 	// Step 4: Update tenant settings and metadata
 	newSettings, _ := json.Marshal(map[string]any{
-		"theme": "dark",
-		"locale": "en-US",
+		"theme":         "dark",
+		"locale":        "en-US",
 		"notifications": true,
 	})
 
@@ -1038,7 +1038,7 @@ func (suite *TenantTestSuite) TestTenantCompleteLifecycle() {
 
 	newMetadata, _ := json.Marshal(map[string]any{
 		"environment": "production",
-		"version": "2.1.0",
+		"version":     "2.1.0",
 	})
 
 	_, err = suite.store.UpdateTenantMetadata(testCtx, newMetadata)
@@ -1185,7 +1185,7 @@ func (suite *TenantTestSuite) TestAdvancedAnalytics() {
 	// Create tenants for analytics testing
 	now := time.Now()
 	yesterday := now.Add(-24 * time.Hour)
-	
+
 	analyticsTestData := []struct {
 		name        string
 		createdAt   time.Time
@@ -1374,7 +1374,7 @@ func (suite *TenantTestSuite) TestErrorHandlingAndEdgeCases() {
 func (suite *TenantTestSuite) TestConcurrencyAndRaceConditions() {
 	// Test concurrent tenant creation
 	baseName := generateShortUniqueName("Concurrent")
-	
+
 	// Create multiple tenants concurrently
 	var tenantIDs []uuid.UUID
 	concurrentCount := 5
@@ -1526,7 +1526,7 @@ func (suite *TenantTestSuite) TestTenantCurrencyValidation() {
 		// Note: CreateTenantParams doesn't have currency field, using complete version
 		metadata, _ := json.Marshal(map[string]any{"test": true})
 		settings, _ := json.Marshal(map[string]any{"theme": "light"})
-		
+
 		params := CreateTenantCompleteParams{
 			Name:         generateShortUniqueName(fmt.Sprintf("CurrencyTest%d", i)),
 			Slug:         generateShortUniqueName(fmt.Sprintf("slug%d", i)),
@@ -1559,7 +1559,7 @@ func (suite *TenantTestSuite) TestTenantTimezoneValidation() {
 		// Note: CreateTenantParams doesn't have timezone field, using complete version
 		metadata, _ := json.Marshal(map[string]any{"test": true})
 		settings, _ := json.Marshal(map[string]any{"theme": "light"})
-		
+
 		params := CreateTenantCompleteParams{
 			Name:         generateShortUniqueName(fmt.Sprintf("TimezoneTest%d", i)),
 			Slug:         generateShortUniqueName(fmt.Sprintf("slug%d", i)),
@@ -1713,28 +1713,28 @@ func (suite *TenantTestSuite) TestPerformance() {
 
 	// Test bulk query performance
 	start = time.Now()
-	
+
 	// List tenants with pagination
 	listParams := ListTenantsParams{
 		Limit:  25,
 		Offset: 0,
 	}
-	
+
 	tenants, err := suite.store.ListTenants(testCtx, listParams)
 	suite.Require().NoError(err)
 	suite.Require().GreaterOrEqual(len(tenants), 25)
-	
+
 	// Search tenants performance
 	searchParams := SearchTenantsByNameParams{
 		Name:   "Perf",
 		Limit:  25,
 		Offset: 0,
 	}
-	
+
 	searchResults, err := suite.store.SearchTenantsByName(testCtx, searchParams)
 	suite.Require().NoError(err)
 	suite.Require().GreaterOrEqual(len(searchResults), 10)
-	
+
 	queryDuration := time.Since(start)
 	suite.T().Logf("Performed queries in %v", queryDuration)
 	suite.Require().Less(queryDuration, 5*time.Second, "Queries should complete in less than 5 seconds")
@@ -1745,10 +1745,10 @@ func (suite *TenantTestSuite) TestPerformance() {
 		Status: "suspended",
 		ID:     createdTenants,
 	}
-	
+
 	err = suite.store.BulkUpdateTenantStatus(testCtx, bulkParams)
 	suite.Require().NoError(err)
-	
+
 	bulkDuration := time.Since(start)
 	suite.T().Logf("Bulk updated 50 tenants in %v", bulkDuration)
 	suite.Require().Less(bulkDuration, 10*time.Second, "Bulk update should complete in less than 10 seconds")
@@ -1934,7 +1934,7 @@ func TestStoreTenantMethods(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			
+
 			if currentTenant.ID != tenantID {
 				return fmt.Errorf("expected tenant ID %s, got %s", tenantID, currentTenant.ID)
 			}
@@ -1944,7 +1944,7 @@ func TestStoreTenantMethods(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			
+
 			if !exists {
 				return fmt.Errorf("current tenant should exist")
 			}
@@ -2034,7 +2034,7 @@ func TestStoreTenantMethods(t *testing.T) {
 		// Test concurrent tenant context operations
 		const numGoroutines = 5
 		errChan := make(chan error, numGoroutines)
-		
+
 		for i := 0; i < numGoroutines; i++ {
 			go func(i int) {
 				err := store.WithTenant(testCtx, tenantID, func(ctx context.Context, s Store) error {
@@ -2043,7 +2043,7 @@ func TestStoreTenantMethods(t *testing.T) {
 					if err != nil {
 						return err
 					}
-					
+
 					if currentTenant.ID != tenantID {
 						return fmt.Errorf("goroutine %d: wrong tenant context", i)
 					}
@@ -2118,13 +2118,13 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 
 	t.Run("TenantFeatureFlagsCache", func(t *testing.T) {
 		// Test materialized view for tenant feature flags using SQLC generated functions
-		
+
 		// Test feature flags for each tenant using admin function
 		for _, tenantID := range createdTenants {
 			featureFlags, err := store.GetTenantFeatureFlagsCacheAdmin(testCtx, tenantID)
 			require.NoError(t, err)
 			t.Logf("Found %d feature flags for tenant %s", len(featureFlags), tenantID.String()[:8])
-			
+
 			// Count feature flags for this tenant
 			count, err := store.CountTenantFeatureFlagsAdmin(testCtx, tenantID)
 			require.NoError(t, err)
@@ -2140,11 +2140,11 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 		if len(createdTenants) > 0 {
 			err = store.SetTenantContext(testCtx, createdTenants[0])
 			require.NoError(t, err)
-			
+
 			userFlags, err := store.GetTenantFeatureFlagsCacheUser(testCtx)
 			require.NoError(t, err)
 			t.Logf("User context returned %d feature flags", len(userFlags))
-			
+
 			userCount, err := store.CountTenantFeatureFlagsUser(testCtx)
 			require.NoError(t, err)
 			require.Equal(t, int64(len(userFlags)), userCount)
@@ -2153,21 +2153,21 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 
 	t.Run("TenantResourceUtilization", func(t *testing.T) {
 		// Test tenant resource utilization view using SQLC generated functions
-		
+
 		var allUtilizations []*VTenantResourceUtilization
-		
+
 		// Test resource utilization for each tenant using admin function
 		for _, tenantID := range createdTenants {
 			utilizations, err := store.GetTenantResourceUtilizationAdmin(testCtx, tenantID)
 			require.NoError(t, err)
-			
+
 			if len(utilizations) > 0 {
 				allUtilizations = append(allUtilizations, utilizations...)
-				t.Logf("Tenant %s: %d entities, %d active, status: %s", 
-					   utilizations[0].TenantName, 
-					   utilizations[0].TotalEntities,
-					   utilizations[0].ActiveEntities,
-					   utilizations[0].TenantStatus)
+				t.Logf("Tenant %s: %d entities, %d active, status: %s",
+					utilizations[0].TenantName,
+					utilizations[0].TotalEntities,
+					utilizations[0].ActiveEntities,
+					utilizations[0].TenantStatus)
 			}
 		}
 
@@ -2178,7 +2178,7 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 		if len(createdTenants) > 0 {
 			err := store.SetTenantContext(testCtx, createdTenants[0])
 			require.NoError(t, err)
-			
+
 			userUtilizations, err := store.GetTenantResourceUtilizationUser(testCtx)
 			require.NoError(t, err)
 			t.Logf("User context returned %d resource utilization records", len(userUtilizations))
@@ -2195,21 +2195,21 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 
 	t.Run("TenantEntitySummary", func(t *testing.T) {
 		// Test tenant entity summary view using SQLC generated functions
-		
+
 		var allSummaries []*VTenantEntitySummary
-		
+
 		// Test entity summaries for each tenant using admin function
 		for _, tenantID := range createdTenants {
 			summaries, err := store.GetTenantEntitySummaryAdmin(testCtx, tenantID)
 			require.NoError(t, err)
-			
+
 			if len(summaries) > 0 {
 				allSummaries = append(allSummaries, summaries...)
-				t.Logf("Tenant %s: %d total entities, %d companies, %d departments", 
-					   summaries[0].TenantName,
-					   summaries[0].TotalEntities,
-					   summaries[0].CompanyCount,
-					   summaries[0].DepartmentCount)
+				t.Logf("Tenant %s: %d total entities, %d companies, %d departments",
+					summaries[0].TenantName,
+					summaries[0].TotalEntities,
+					summaries[0].CompanyCount,
+					summaries[0].DepartmentCount)
 			}
 		}
 
@@ -2220,7 +2220,7 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 		if len(createdTenants) > 0 {
 			err := store.SetTenantContext(testCtx, createdTenants[0])
 			require.NoError(t, err)
-			
+
 			userSummaries, err := store.GetTenantEntitySummaryUser(testCtx)
 			require.NoError(t, err)
 			t.Logf("User context returned %d entity summary records", len(userSummaries))
@@ -2229,28 +2229,28 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 
 	t.Run("FinancialStatementBuilder", func(t *testing.T) {
 		// Test financial statement builder view using SQLC generated functions
-		
+
 		var allStatements []*VFinancialStatementBuilder
-		
+
 		// Test financial statements for each tenant using admin function
 		for _, tenantID := range createdTenants {
 			statements, err := store.GetFinancialStatementBuilderAdmin(testCtx, tenantID)
 			require.NoError(t, err)
-			
+
 			if len(statements) > 0 {
 				allStatements = append(allStatements, statements...)
-				t.Logf("Tenant %s has %d financial statement entries", 
-					   tenantID.String()[:8], len(statements))
+				t.Logf("Tenant %s has %d financial statement entries",
+					tenantID.String()[:8], len(statements))
 			}
 		}
 
 		t.Logf("Found %d financial statement entries across tenants", len(allStatements))
-		
+
 		// Test user access (requires tenant context)
 		if len(createdTenants) > 0 {
 			err := store.SetTenantContext(testCtx, createdTenants[0])
 			require.NoError(t, err)
-			
+
 			userStatements, err := store.GetFinancialStatementBuilderUser(testCtx)
 			require.NoError(t, err)
 			t.Logf("User context returned %d financial statement records", len(userStatements))
@@ -2271,12 +2271,12 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 	t.Run("SecurityThreatDashboard", func(t *testing.T) {
 		// Test security threat dashboard view using SQLC generated functions
 		// This view may be empty in test environment, which is acceptable
-		
+
 		// Test user access - this view doesn't filter by tenant_id, so we can query directly
 		threats, err := store.GetSecurityThreatDashboardUser(testCtx)
 		require.NoError(t, err)
 		t.Logf("Found %d security threat entries", len(threats))
-		
+
 		// Test admin access for specific users if any exist
 		if len(threats) > 0 {
 			for i, threat := range threats {
@@ -2285,15 +2285,15 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 				}
 				adminThreats, err := store.GetSecurityThreatDashboardAdmin(testCtx, threat.UserID)
 				require.NoError(t, err)
-				t.Logf("Admin query for user %s returned %d records", 
-					   threat.UserID.String()[:8], len(adminThreats))
+				t.Logf("Admin query for user %s returned %d records",
+					threat.UserID.String()[:8], len(adminThreats))
 			}
 		}
 	})
 
 	t.Run("ViewPerformanceAndIndexing", func(t *testing.T) {
 		// Test that views can be queried efficiently using SQLC generated functions
-		
+
 		// Test view performance with different access patterns
 		if len(createdTenants) > 0 {
 			// Test admin performance queries
@@ -2303,11 +2303,11 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 			require.NoError(t, err, "Admin view performance test should succeed")
 			require.Less(t, duration, 5*time.Second, "Admin view query should complete quickly")
 			t.Logf("Admin view performance test took %v", duration)
-			
+
 			// Test user performance queries (requires tenant context)
 			err = store.SetTenantContext(testCtx, createdTenants[0])
 			require.NoError(t, err)
-			
+
 			start = time.Now()
 			err = store.TestViewPerformanceUser(testCtx)
 			duration = time.Since(start)
@@ -2328,12 +2328,12 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 
 	t.Run("MaterializedViewRefresh", func(t *testing.T) {
 		// Test materialized view refresh operations using SQLC generated functions
-		
+
 		// Test tenant feature flags cache refresh (we have a generated function for this)
 		start := time.Now()
 		err := store.RefreshTenantFeatureFlagsCache(testCtx)
 		duration := time.Since(start)
-		
+
 		require.NoError(t, err, "Refreshing tenant feature flags cache should succeed")
 		require.Less(t, duration, 10*time.Second, "Refreshing should complete quickly")
 		t.Logf("Tenant feature flags cache refreshed in %v", duration)
@@ -2347,10 +2347,10 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 			start := time.Now()
 			_, err := pool.Exec(testCtx, fmt.Sprintf("REFRESH MATERIALIZED VIEW %s", mv))
 			duration := time.Since(start)
-			
+
 			require.NoError(t, err, "Refreshing %s should succeed", mv)
 			require.Less(t, duration, 10*time.Second, "Refreshing %s should complete quickly", mv)
-			
+
 			t.Logf("Materialized view %s refreshed in %v", mv, duration)
 		}
 	})

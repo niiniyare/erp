@@ -133,10 +133,10 @@ func (suite *TenantDatabaseContextTestSuite) SetupSuite() {
 		suite.T().Skipf("Database not available for testing: %v", err)
 		return
 	}
-	
+
 	// Get the pool from the database runner
 	suite.pool = dbRunner.GetPool()
-	
+
 	// Test connection to ensure it's working
 	err = suite.pool.Ping(suite.ctx)
 	if err != nil {

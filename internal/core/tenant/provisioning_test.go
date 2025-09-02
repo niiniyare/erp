@@ -57,26 +57,26 @@ func (s *ProvisioningTestSuite) TearDownTest() {
 		// Use a timeout context to prevent hanging cleanup
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		
+
 		dbRunner, err := NewDatabaseTestRunner()
 		if err == nil {
 			defer dbRunner.Close()
 			// Use a superuser connection to hard delete test data, bypassing RLS
 			// This ensures test atomicity
 			superuserPool := dbRunner.pool
-			
+
 			// Order is important due to foreign key constraints
 			// Use Exec instead of QueryRow for DELETE operations
 			_, err1 := superuserPool.Exec(cleanupCtx, "DELETE FROM tenant_configurations WHERE tenant_id = $1", s.cleanupID)
 			if err1 != nil {
 				s.T().Logf("Failed to delete tenant_configurations for %s: %v", s.cleanupID, err1)
 			}
-			
+
 			_, err2 := superuserPool.Exec(cleanupCtx, "DELETE FROM tenant_usage_stats WHERE tenant_id = $1", s.cleanupID)
 			if err2 != nil {
 				s.T().Logf("Failed to delete tenant_usage_stats for %s: %v", s.cleanupID, err2)
 			}
-			
+
 			_, err3 := superuserPool.Exec(cleanupCtx, "DELETE FROM tenants WHERE id = $1", s.cleanupID)
 			if err3 != nil {
 				s.T().Logf("Failed to delete tenant for %s: %v", s.cleanupID, err3)
@@ -97,7 +97,7 @@ func (s *ProvisioningTestSuite) TestProvisionTenant_Database() {
 	// Create a timeout context for the entire test
 	testCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	
+
 	dbRunner, err := NewDatabaseTestRunner()
 	if err != nil {
 		s.T().Skipf("Database not available for testing: %v", err)
@@ -119,7 +119,7 @@ func (s *ProvisioningTestSuite) TestProvisionTenant_Database() {
 	}
 
 	s.T().Logf("Attempting to provision tenant with name: %s", req.Name)
-	
+
 	info, err := service.ProvisionTenant(testCtx, req)
 	s.Require().NoError(err)
 	s.Require().NotNil(info)
@@ -148,7 +148,7 @@ func (s *ProvisioningTestSuite) TestProvisionTenant_Database() {
 	s.Equal(int32(100), config.MaxUsers)
 	s.Equal(int64(1073741824), config.StorageQuota) // 1GB
 	s.Equal("ACCRUAL", config.AccountingMethod)
-	
+
 	s.T().Logf("Verified tenant configuration defaults")
 	// Check modules in settings JSONB field instead of ModulesEnabled (which doesn't exist)
 	// s.JSONEq(`["accounting", "inventory", "contacts", "sales"]`, string(config.ModulesEnabled))

@@ -380,8 +380,8 @@ WITH RECURSIVE entity_tree AS (
   SELECT
     e.*,
     0 AS LEVEL,
-    ARRAY [e.name] AS path,
-    e.name AS sort_path
+    CAST(e.name AS TEXT) AS path_text,
+    CAST(e.name AS TEXT) AS sort_path
   FROM
     entities e
   WHERE
@@ -393,8 +393,8 @@ WITH RECURSIVE entity_tree AS (
   SELECT
     e.*,
     et.level + 1,
-    et.path || e.name,
-    et.sort_path || '/' || e.name
+    CAST(et.path_text || ' > ' || e.name AS TEXT),
+    CAST(et.sort_path || '/' || e.name AS TEXT)
   FROM
     entities e
     JOIN entity_tree et ON e.parent_id = et.uuid

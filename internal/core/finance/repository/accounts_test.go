@@ -114,8 +114,8 @@ func (s *AccountsRepositoryTestSuite) TestCreateAccount() {
 				HasChildren:             false,
 				IsLeafAccount:           true,
 				// CreatedBy:               uuid.New(), // Skip for now to avoid foreign key issues
-				CreatedAt:               time.Now(),
-				UpdatedAt:               time.Now(),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			},
 			expectError: false,
 		},
@@ -141,8 +141,8 @@ func (s *AccountsRepositoryTestSuite) TestCreateAccount() {
 				HasChildren:             false,
 				IsLeafAccount:           true,
 				// CreatedBy:               uuid.New(), // Skip for now to avoid foreign key issues
-				CreatedAt:               time.Now(),
-				UpdatedAt:               time.Now(),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			},
 			expectError: false,
 		},
@@ -180,7 +180,7 @@ func (s *AccountsRepositoryTestSuite) TestCreateAccount() {
 					// Try both GetByID and GetByCode for debugging
 					retrieved, err := s.repo.GetByID(ctx, tc.account.ID)
 					s.T().Logf("GetByID result: account=%v, error=%v", retrieved != nil, err)
-					
+
 					// Also try GetByCode
 					retrievedByCode, errByCode := s.repo.GetByCode(ctx, nil, tc.account.AccountCode)
 					s.T().Logf("GetByCode result: account=%v, error=%v", retrievedByCode != nil, errByCode)

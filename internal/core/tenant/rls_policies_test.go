@@ -383,7 +383,7 @@ func (suite *RLSPoliciesTestSuite) TestTransactionTenantContext() {
 	suite.Run("TransactionContext", func() {
 		// This is a complex test that verifies RLS behavior in transactions
 		// For now, we'll do a simple verification that tenant context works in transactions
-		
+
 		// Start a transaction
 		tx, err := suite.pool.Begin(suite.ctx)
 		require.NoError(suite.T(), err)
@@ -391,7 +391,7 @@ func (suite *RLSPoliciesTestSuite) TestTransactionTenantContext() {
 
 		// Create a querier for the transaction to use SQLC functions
 		txQuerier := db.New(tx)
-		
+
 		// Set tenant context within the transaction using SQLC function
 		err = txQuerier.SetTenantContext(suite.ctx, suite.testTenantID)
 		require.NoError(suite.T(), err)
@@ -399,7 +399,7 @@ func (suite *RLSPoliciesTestSuite) TestTransactionTenantContext() {
 		// Verify the context was set within the transaction using SQLC function
 		currentTenantID, err := txQuerier.GetCurrentTenantID(suite.ctx)
 		assert.NoError(suite.T(), err)
-		
+
 		if currentTenantID != uuid.Nil {
 			assert.Equal(suite.T(), suite.testTenantID, currentTenantID)
 		}

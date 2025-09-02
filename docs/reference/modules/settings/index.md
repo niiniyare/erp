@@ -1,908 +1,549 @@
-# Multi-Tenant ERP Configuration Service
-## Complete Technical Specification
+# ERP Configuration & Settings System
+## Product Requirements Document
 
 ### Document Information
-- **Version**: 1.0
+- **Version**: 2.0
 - **Date**: September 2025
-- **Author**: System Architecture Team
-- **Status**: Draft for Review
+- **Product Manager**: [Name]
+- **Engineering Lead**: [Name]
+- **Status**: Ready for Implementation
 
 ---
 
 ## Table of Contents
 
-1. [Executive Summary](#executive-summary)
-2. [Architecture Overview](#architecture-overview)
-3. [Database Design](#database-design)
-4. [Security & Access Control](#security--access-control)
-5. [Configuration Management](#configuration-management)
-6. [Default Values System](#default-values-system)
-7. [Integration Patterns](#integration-patterns)
-8. [Performance & Scalability](#performance--scalability)
-9. [Implementation Roadmap](#implementation-roadmap)
-10. [Risk Analysis & Mitigations](#risk-analysis--mitigations)
-11. [Operational Procedures](#operational-procedures)
-12. [Appendices](#appendices)
+1. [Product Overview](#product-overview)
+2. [User Stories & Use Cases](#user-stories--use-cases)
+3. [System Architecture](#system-architecture)
+4. [Configuration Hierarchy](#configuration-hierarchy)
+5. [Module Integration](#module-integration)
+6. [User Experience](#user-experience)
+7. [Success Metrics](#success-metrics)
+8. [Implementation Phases](#implementation-phases)
+9. [Appendices](#appendices)
 
 ---
 
-## Executive Summary
+## Product Overview
 
-### Recommendation
-**Use PostgreSQL Row-Level Security (RLS) for the ERP configuration service** with important conditions:
-- Suitable for organizations with up to 10,000 tenants
-- Acceptable 10-20% performance overhead
-- Strong PostgreSQL RLS operational expertise required
-- Critical security isolation needs
+### Purpose
+Provide a unified, hierarchical configuration system that allows tenants and entities to customize ERP behavior while maintaining system integrity and operational simplicity.
 
-### Key Benefits
-- **Strong Security**: Database-level enforcement prevents cross-tenant data leakage
-- **Comprehensive Audit**: Complete configuration change tracking and compliance support
-- **Flexible Schema**: Supports evolving ERP module requirements without schema changes
-- **Template System**: Accelerates tenant onboarding with industry-specific configurations
-- **Default Management**: Three-tier hierarchy (system → tenant → entity) with inheritance
+### Design Philosophy
+- **Leverage existing infrastructure** - Build on current tenant_configurations and entities tables
+- **Dedicated columns for critical settings**, JSONB for flexibility
+- **Simple 3-level inheritance** (System → Tenant → Entity)
+- **Application-layer logic** instead of complex database functions
+- **Seamless integration** with existing IAM and Feature Flag systems
 
-### Architecture Approach
-The solution extends your existing sophisticated ERP system rather than replacing it, leveraging:
-- Existing `tenants`, `entities`, `users` tables
-- Current `modules` and IAM infrastructure  
-- Established `audit_log` and `finance_*` tables
-- Your proven RLS implementation patterns
+### Key Principles
+1. **Simplicity over sophistication** - Easy to understand and maintain
+2. **Type safety where it matters** - Critical settings use dedicated columns
+3. **Flexibility where needed** - JSONB settings for module-specific configs
+4. **Clear inheritance model** - Predictable 3-level hierarchy
+5. **Operational efficiency** - Minimal database overhead
 
 ---
 
-## Architecture Overview
+## User Stories & Use Cases
 
-### High-Level Components
+### Primary Users
 
-#### Core Service Architecture
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   API Gateway   │────│  Config Service  │────│   IAM Service   │
-│                 │    │     (Golang)     │    │   (Existing)    │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                               │
-                               │
-                    ┌──────────────────┐
-                    │ Tenant Context   │
-                    │    Manager       │
-                    └──────────────────┘
-                               │
-                    ┌──────────────────┐    ┌─────────────────┐
-                    │   Policy Engine  │────│ Audit & Monitor │
-                    │                  │    │                 │
-                    └──────────────────┘    └─────────────────┘
-                               │
-                    ┌──────────────────┐
-                    │  PostgreSQL DB   │
-                    │   with RLS       │
-                    │  (Extended)      │
-                    └──────────────────┘
-```
+#### **System Administrators**
+- Set global system defaults for all tenants
+- Configure module-specific baseline behaviors
+- Manage configuration templates and validation rules
 
-#### Component Responsibilities
+#### **Tenant Administrators**
+- Customize tenant-wide settings (accounting methods, fiscal year, localization)
+- Set defaults for all entities within their tenant
+- Apply configuration templates for rapid setup
 
-###### **API Gateway**
-- Routes requests and extracts tenant context from JWT tokens
-- Implements rate limiting per tenant
-- Validates initial authentication
+#### **Entity Managers**
+- Configure entity-specific settings (document prefixes, approval limits)
+- Override tenant defaults for their specific entity
+- Manage operational settings for departments/branches
 
-###### **Config Service (Golang)**
-- Core business logic for configuration management
-- Validates tenant permissions and manages CRUD operations
-- Handles bulk operations, migrations, and template applications
-- Integrates with existing finance modules
+#### **End Users**
+- View effective configuration values in their workflows
+- Understand configuration sources and inheritance
+- Request configuration changes through proper channels
 
-###### **Tenant Context Manager**
-- Establishes database connections with proper tenant context
-- Manages connection pooling per tenant context
-- Handles context propagation through request lifecycle
+### Core Use Cases
 
-**Policy Engine**
-- Maintains RLS policy definitions and deployment
-- Provides policy testing framework
-- Manages admin bypass scenarios with audit trails
+#### **UC-1: Tenant Onboarding with Templates**
+**As a** system administrator  
+**I want to** apply industry-appropriate configuration templates to new tenants  
+**So that** they can start using the system with sensible defaults  
 
-**Audit & Monitor**
-- Captures all configuration access attempts
-- Monitors RLS policy effectiveness
-- Provides debugging tools for access denied scenarios
+**Acceptance Criteria:**
+- New tenant gets system defaults automatically
+- Industry templates (Manufacturing, Services, Retail) can be applied
+- Critical settings (accounting method, fiscal year) must be explicitly configured
+- Template application is audited and reversible
 
-### Data Flow Patterns
+#### **UC-2: Multi-Entity Document Sequences**
+**As a** tenant administrator  
+**I want to** set different invoice prefixes for different branches  
+**So that** each location maintains distinct document numbering  
 
-#### Configuration Read Flow
-1. **Request** → API Gateway validates JWT and extracts tenant context
-2. **Service Layer** → Validates user permissions for tenant/module
-3. **Context Setup** → Sets `app.current_tenant` session variable
-4. **Database Query** → RLS policies filter results to tenant data
-5. **Default Resolution** → Merges with system/tenant defaults if needed
-6. **Response** → Returns configured values with metadata
+**Acceptance Criteria:**
+- Each entity can have unique document sequence configurations
+- Entity inherits tenant sequence defaults by default
+- Override capability for prefix, padding, reset frequency
+- Existing sequences are preserved during configuration changes
 
-#### Configuration Write Flow
-1. **Request Validation** → Validates schema and business rules
-2. **Dependency Check** → Validates configuration dependencies
-3. **Change Request** → Creates approval workflow if required
-4. **Transaction** → Applies changes with proper audit logging
-5. **Propagation** → Updates dependent configurations and caches
-6. **Notification** → Triggers relevant stakeholder notifications
+#### **UC-3: Hierarchical Approval Limits**
+**As an** entity manager  
+**I want to** configure approval limits that inherit from tenant policies  
+**So that** my entity follows corporate guidelines while accommodating local needs  
 
----
+**Acceptance Criteria:**
+- Entity approval limits can override tenant defaults (within bounds)
+- Clear visibility of inherited vs. overridden values
+- Tenant administrators can set maximum override limits
+- Changes require appropriate IAM permissions
 
-## Database Design
+#### **UC-4: Configuration Inheritance Transparency**
+**As an** entity manager  
+**I want to** understand where each configuration value comes from  
+**So that** I know what I can change and what will inherit updates  
 
-### Extension Strategy
+**Acceptance Criteria:**
+- UI clearly shows configuration source (system/tenant/entity)
+- Indicates which values will inherit changes from parent levels
+- Shows effective value even when inherited
+- Provides override capabilities where permitted by IAM
 
-Rather than replacing your existing sophisticated system, we extend it strategically:
+#### **UC-5: Bulk Configuration Management**
+**As a** tenant administrator  
+**I want to** update settings across multiple entities efficiently  
+**So that** I can respond quickly to policy changes  
 
-###### **Existing Infrastructure (Leveraged)**
-  - Core tenant/entity structure (`tenants`, `entities`).
-  - Robust IAM system (`roles`, `permissions`, `user_roles`).
-  - Basic configuration (`tenant_configurations`, `feature_flags`).
-  - Audit infrastructure (`audit_log`, `user_activities`).
-  - Finance module (`finance_accounts`, `finance_transactions`).
-  - Flexible attribute system (`attribute_definitions`, `attribute_values`).
-  - Hierarchy management (`hierarchy_paths`).
-  - Module system (`modules`)
-
-### New Configuration Tables
-
-#### 1. Configuration Schemas
-```sql
-CREATE TABLE config_schemas (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID, -- NULL = system-wide schema
-    module_id UUID NOT NULL, -- References existing modules
-    schema_name VARCHAR(100) NOT NULL,
-    schema_version INTEGER NOT NULL DEFAULT 1,
-    json_schema JSONB NOT NULL, -- JSON Schema validation
-    default_values JSONB, -- Default configuration values
-    is_system_schema BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    created_by UUID NOT NULL,
-    
-    UNIQUE(tenant_id, module_id, schema_name, schema_version),
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id),
-    FOREIGN KEY (module_id) REFERENCES modules(id),
-    FOREIGN KEY (created_by) REFERENCES users(id)
-);
-```
-
-**Purpose**: Defines structure and validation rules for configuration values, enabling schema evolution without data migration.
-
-#### 2. Extended Configuration Values
-```sql
-CREATE TABLE config_values_extended (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL,
-    entity_id UUID, -- NULL = tenant-wide config
-    module_id UUID NOT NULL,
-    config_key VARCHAR(200) NOT NULL,
-    config_value JSONB NOT NULL,
-    schema_id UUID, -- References config_schemas for validation
-    environment VARCHAR(20) DEFAULT 'production',
-    effective_from TIMESTAMPTZ DEFAULT NOW(),
-    effective_until TIMESTAMPTZ,
-    priority INTEGER DEFAULT 0, -- For inheritance resolution
-    source_type VARCHAR(50) DEFAULT 'manual', -- 'manual', 'template', 'inherited', 'system'
-    source_id UUID, -- Reference to template or parent config
-    is_default_derived BOOLEAN DEFAULT FALSE,
-    default_source VARCHAR(50), -- 'system', 'tenant', 'entity', 'template', 'manual'
-    default_source_id UUID, -- Reference to source record
-    version INTEGER DEFAULT 1,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    created_by UUID NOT NULL,
-    updated_by UUID NOT NULL,
-    
-    UNIQUE(tenant_id, entity_id, module_id, config_key, environment, effective_from),
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id),
-    FOREIGN KEY (entity_id) REFERENCES entities(id),
-    FOREIGN KEY (module_id) REFERENCES modules(id),
-    FOREIGN KEY (schema_id) REFERENCES config_schemas(id),
-    FOREIGN KEY (created_by) REFERENCES users(id),
-    FOREIGN KEY (updated_by) REFERENCES users(id)
-);
-```
-
-**Purpose**: Stores actual configuration values with support for time-based changes, inheritance, templates, and multi-environment configurations.
-
-#### 3. Configuration Templates
-```sql
-CREATE TABLE config_templates (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID, -- NULL = global/system template
-    name VARCHAR(200) NOT NULL,
-    description TEXT,
-    module_id UUID NOT NULL,
-    template_type VARCHAR(50) NOT NULL, -- 'starter', 'industry', 'custom'
-    base_template_id UUID, -- For template inheritance
-    is_system_template BOOLEAN DEFAULT FALSE,
-    is_active BOOLEAN DEFAULT TRUE,
-    tags TEXT[],
-    metadata JSONB, -- Template-specific metadata
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    created_by UUID NOT NULL,
-    
-    UNIQUE(tenant_id, module_id, name),
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id),
-    FOREIGN KEY (module_id) REFERENCES modules(id),
-    FOREIGN KEY (base_template_id) REFERENCES config_templates(id),
-    FOREIGN KEY (created_by) REFERENCES users(id)
-);
-
-CREATE TABLE config_template_values (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    template_id UUID NOT NULL,
-    config_key VARCHAR(200) NOT NULL,
-    config_value JSONB NOT NULL,
-    is_required BOOLEAN DEFAULT FALSE,
-    validation_rules JSONB,
-    display_order INTEGER,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    
-    UNIQUE(template_id, config_key),
-    FOREIGN KEY (template_id) REFERENCES config_templates(id) ON DELETE CASCADE
-);
-```
-
-**Purpose**: Enables configuration reuse through templates, supporting industry-specific and custom configuration patterns.
-
-#### 4. Configuration Dependencies
-```sql
-CREATE TABLE config_dependencies (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL,
-    source_config_key VARCHAR(200) NOT NULL,
-    source_module_id UUID NOT NULL,
-    target_config_key VARCHAR(200) NOT NULL,
-    target_module_id UUID NOT NULL,
-    dependency_type VARCHAR(50) NOT NULL, -- 'requires', 'conflicts', 'implies', 'excludes'
-    validation_rule JSONB,
-    error_message TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    created_by UUID NOT NULL,
-    
-    UNIQUE(tenant_id, source_module_id, source_config_key, target_module_id, target_config_key, dependency_type),
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id),
-    FOREIGN KEY (source_module_id) REFERENCES modules(id),
-    FOREIGN KEY (target_module_id) REFERENCES modules(id),
-    FOREIGN KEY (created_by) REFERENCES users(id)
-);
-```
-
-**Purpose**: Models complex ERP configuration relationships and prevents invalid configuration combinations.
-
-#### 5. Configuration Change Requests
-```sql
-CREATE TABLE config_change_requests (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL,
-    entity_id UUID,
-    config_value_id UUID,
-    change_type VARCHAR(50) NOT NULL, -- 'create', 'update', 'delete', 'bulk_update'
-    current_value JSONB,
-    proposed_value JSONB NOT NULL,
-    change_reason TEXT NOT NULL,
-    business_justification TEXT,
-    risk_assessment VARCHAR(20), -- 'low', 'medium', 'high'
-    status VARCHAR(20) DEFAULT 'draft', -- 'draft', 'submitted', 'approved', 'rejected', 'applied', 'cancelled'
-    scheduled_for TIMESTAMPTZ,
-    auto_approve BOOLEAN DEFAULT FALSE,
-    
-    -- Integration with existing IAM
-    requested_by UUID NOT NULL,
-    requested_at TIMESTAMPTZ DEFAULT NOW(),
-    assigned_to UUID,
-    reviewed_by UUID,
-    reviewed_at TIMESTAMPTZ,
-    review_notes TEXT,
-    applied_by UUID,
-    applied_at TIMESTAMPTZ,
-    
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id),
-    FOREIGN KEY (entity_id) REFERENCES entities(id),
-    FOREIGN KEY (config_value_id) REFERENCES config_values_extended(id),
-    FOREIGN KEY (requested_by) REFERENCES users(id),
-    FOREIGN KEY (assigned_to) REFERENCES users(id),
-    FOREIGN KEY (reviewed_by) REFERENCES users(id),
-    FOREIGN KEY (applied_by) REFERENCES users(id)
-);
-```
-
-**Purpose**: Provides approval workflows for sensitive configuration changes with comprehensive audit trails.
-
-#### 6. Enhanced Configuration Audit
-```sql
-CREATE TABLE config_audit_details (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    audit_log_id UUID, -- References existing audit_log if needed
-    tenant_id UUID NOT NULL,
-    entity_id UUID,
-    config_id UUID,
-    operation_type VARCHAR(20) NOT NULL, -- 'read', 'create', 'update', 'delete'
-    config_key VARCHAR(200) NOT NULL,
-    old_value JSONB,
-    new_value JSONB,
-    change_source VARCHAR(50), -- 'manual', 'template_apply', 'bulk_operation', 'api', 'migration'
-    change_request_id UUID,
-    session_context JSONB,
-    performed_at TIMESTAMPTZ DEFAULT NOW(),
-    performed_by UUID NOT NULL,
-    
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id),
-    FOREIGN KEY (entity_id) REFERENCES entities(id),
-    FOREIGN KEY (config_id) REFERENCES config_values_extended(id),
-    FOREIGN KEY (change_request_id) REFERENCES config_change_requests(id),
-    FOREIGN KEY (performed_by) REFERENCES users(id)
-);
-```
-
-**Purpose**: Complements existing audit system with configuration-specific audit details and compliance support.
+**Acceptance Criteria:**
+- Bulk operations preserve entity-specific overrides where intended
+- Preview capability shows what will change before applying
+- Rollback capability for bulk changes
+- Comprehensive audit trail for bulk operations
 
 ---
 
-## Security & Access Control
+## System Architecture
 
-### Row-Level Security Implementation
+### Existing Infrastructure (Leveraged)
 
-#### Core RLS Policies
-
-**1. Tenant Isolation Policy**
+#### **Current Tables**
 ```sql
-CREATE POLICY tenant_isolation_policy ON config_values_extended
-    FOR ALL 
-    TO application_role
-    USING (
-        tenant_id = current_setting('app.current_tenant')::uuid
-        OR current_setting('app.admin_mode', true)::boolean = true
-    );
+tenant_configurations
+├── Dedicated columns for critical settings
+├── settings JSONB for flexible configurations
+└── Built-in tenant isolation and audit
+
+entities  
+├── settings JSONB for entity-specific configs
+├── accrual_method, fy_start_month (typed columns)
+└── Hierarchical structure via parent_id
+
+entitystate
+├── Document sequence management per entity
+├── Per-document-type sequences with fiscal year support
+└── Ready for enhanced configuration integration
 ```
 
-**2. Admin Bypass Policy**
+#### **Integration Points**
+- **IAM System**: Handles all permission checking and user attribute resolution
+- **Feature Flags**: Controls configuration availability at tenant level
+- **Audit System**: Tracks all configuration access and changes
+
+### New Components (Minimal)
+
+#### **Configuration Definitions Table**
 ```sql
-CREATE POLICY admin_access_policy ON config_values_extended 
-    FOR ALL 
-    TO admin_role 
-    USING (true);
+config_definitions
+├── Defines available configuration keys per module
+├── Specifies data types, validation, and inheritance rules
+├── Links to required feature flags and IAM permissions
+└── Documents configuration purposes and constraints
 ```
 
-**3. Module-Scoped Access Policy**
-```sql
-CREATE POLICY module_access_policy ON config_values_extended
-    FOR ALL
-    TO application_role
-    USING (
-        tenant_id = current_setting('app.current_tenant')::uuid
-        AND has_module_permission(module_id, current_setting('app.current_user')::uuid)
-    );
-```
+#### **Configuration Service (Application Layer)**
+- Resolves 3-level configuration inheritance
+- Integrates with IAM for permission checking
+- Validates configuration changes against business rules
+- Handles bulk operations and template application
 
-#### Context Propagation Strategy
+### Configuration Resolution Flow
 
-**Database Session Context**
-  - Every database connection sets `app.current_tenant` using `set_config()`
-  - Context automatically cleared when connection returns to pool
-  - Validates tenant context exists before allowing operations
-
-**Application Layer Validation**
-  - Validates tenant access before database calls
-  - Database RLS provides final enforcement layer
-  - Comprehensive audit logging captures all access attempts
-
-### Access Control Integration
-
-**Permission Model**
-- Leverages existing `roles` and `permissions` tables
-- Configuration permissions integrate with `role_permissions` system
-- Fine-grained access control using pattern matching
-
-**Module-Based Security**
-- Configuration access tied to module permissions
-- Cross-module dependencies require appropriate permissions
-- Admin roles can manage cross-tenant configurations
+1. **Request** → Extract tenant/entity context from request
+2. **IAM Check** → Verify user permissions for configuration access
+3. **Feature Gate** → Confirm required features are enabled
+4. **Entity Level** → Check entity.settings JSONB for explicit values
+5. **Tenant Level** → Check tenant_configurations for tenant defaults
+6. **System Level** → Use config_definitions.default_value as fallback
+7. **Response** → Return value with source metadata and inheritance info
 
 ---
 
-## Configuration Management
+## Configuration Hierarchy
 
-### Schema Management
+### Three-Level Inheritance Model
 
-#### Configuration Schema Lifecycle
-1. **Schema Definition** → JSON Schema-based validation rules
-2. **Version Management** → Support for schema evolution
-3. **Default Values** → System and tenant-specific defaults
-4. **Validation** → Runtime validation against defined schemas
+#### **Level 1: System Defaults**
+- **Stored in**: `config_definitions.default_value`
+- **Managed by**: System administrators
+- **Purpose**: Baseline behavior for all tenants
+- **Examples**: Default currency (USD), standard document padding (6 digits)
 
-#### Template System
+#### **Level 2: Tenant Configurations**  
+- **Stored in**: `tenant_configurations` (dedicated columns + settings JSONB)
+- **Managed by**: Tenant administrators
+- **Purpose**: Organization-wide customizations and entity defaults
+- **Examples**: Fiscal year start, accounting method, company-specific prefixes
 
-**Template Types**
-- **System Templates**: Pre-built industry configurations
-- **Tenant Templates**: Custom tenant-specific templates  
-- **Entity Templates**: Entity-level configuration patterns
+#### **Level 3: Entity Configurations**
+- **Stored in**: `entities.settings` JSONB
+- **Managed by**: Entity managers (with appropriate IAM permissions)
+- **Purpose**: Location/department-specific overrides
+- **Examples**: Branch-specific prefixes, department approval limits
 
-**Template Application Process**
-1. **Selection** → Choose appropriate template for tenant/entity
-2. **Customization** → Modify template values for specific needs
-3. **Validation** → Ensure template values meet schema requirements
-4. **Application** → Apply template configurations with audit trail
+### Configuration Types
 
-### Configuration Inheritance
+#### **Critical Settings (Dedicated Columns)**
+Settings requiring strong typing and database constraints:
+- **Accounting method** (tenant_configurations.accounting_method)
+- **Fiscal year start** (tenant_configurations.fiscal_year_start_month)  
+- **Default currency** (tenant_configurations.default_currency)
+- **Entity accounting method** (entities.accrual_method)
+- **Entity fiscal year** (entities.fy_start_month)
 
-#### Inheritance Hierarchy
-```
-System Defaults (Global)
-    ↓ (inherits/overrides)
-Tenant Defaults 
-    ↓ (inherits/overrides)  
-Entity Defaults
-    ↓ (inherits/overrides)
-Actual Configuration Values
-```
-
-#### Merge Strategies
-- **Replace**: Complete replacement of parent configuration
-- **Shallow Merge**: Top-level property merge
-- **Deep Merge**: Recursive merge of nested objects
-- **Selective Override**: Override specific properties while inheriting others
-
----
-
-## Default Values System
-
-### Three-Tier Default Architecture
-
-#### 1. System Defaults
-```sql
-CREATE TABLE config_system_defaults (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    module_id UUID NOT NULL,
-    schema_id UUID NOT NULL,
-    config_key VARCHAR(200) NOT NULL,
-    default_value JSONB NOT NULL,
-    is_required BOOLEAN DEFAULT FALSE,
-    is_overridable BOOLEAN DEFAULT TRUE,
-    override_scope VARCHAR(20) DEFAULT 'full', -- 'none', 'partial', 'full'
-    description TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    created_by UUID NOT NULL,
-    
-    UNIQUE(module_id, config_key),
-    FOREIGN KEY (module_id) REFERENCES modules(id),
-    FOREIGN KEY (schema_id) REFERENCES config_schemas(id),
-    FOREIGN KEY (created_by) REFERENCES users(id)
-);
-```
-
-**Purpose**: Provides baseline configurations for all tenants, ensuring consistent ERP behavior.
-
-#### 2. Tenant Defaults
-```sql
-CREATE TABLE config_tenant_defaults (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL,
-    module_id UUID NOT NULL,
-    config_key VARCHAR(200) NOT NULL,
-    default_value JSONB NOT NULL,
-    inherit_from_system BOOLEAN DEFAULT TRUE,
-    merge_strategy VARCHAR(20) DEFAULT 'deep_merge', -- 'replace', 'shallow_merge', 'deep_merge'
-    applies_to_entities BOOLEAN DEFAULT TRUE,
-    environment VARCHAR(20) DEFAULT 'production',
-    effective_from TIMESTAMPTZ DEFAULT NOW(),
-    effective_until TIMESTAMPTZ,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    created_by UUID NOT NULL,
-    updated_by UUID,
-    
-    UNIQUE(tenant_id, module_id, config_key, environment, effective_from),
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id),
-    FOREIGN KEY (module_id) REFERENCES modules(id),
-    FOREIGN KEY (created_by) REFERENCES users(id),
-    FOREIGN KEY (updated_by) REFERENCES users(id)
-);
-```
-
-**Purpose**: Allows tenants to customize default behaviors while inheriting system baselines.
-
-#### 3. Default Resolution Function
-```sql
-CREATE OR REPLACE FUNCTION resolve_config_defaults(
-    p_tenant_id UUID,
-    p_entity_id UUID DEFAULT NULL,
-    p_module_name VARCHAR DEFAULT NULL,
-    p_config_key VARCHAR DEFAULT NULL,
-    p_environment VARCHAR DEFAULT 'production',
-    p_as_of_date TIMESTAMPTZ DEFAULT NOW()
-) RETURNS TABLE (
-    config_key VARCHAR,
-    resolved_value JSONB,
-    source_hierarchy JSONB,
-    final_source VARCHAR
-) AS $$
--- [Implementation details in full specification]
-$$ LANGUAGE plpgsql;
-```
-
-**Purpose**: Resolves configuration values through the default hierarchy with proper inheritance and merge strategies.
-
----
-
-## Integration Patterns
-
-### Finance Module Integration
-
-#### Document Sequence Integration
-
-**Enhanced Document Number Generation**
-```sql
-CREATE OR REPLACE FUNCTION generate_document_number_with_defaults(
-    p_tenant_id UUID,
-    p_entity_id UUID,
-    p_document_type VARCHAR,
-    p_date DATE DEFAULT CURRENT_DATE
-) RETURNS VARCHAR AS $$
--- [Full implementation with default resolution]
-$$ LANGUAGE plpgsql;
-```
-
-**Configuration Schema for Document Sequences**
+#### **Flexible Settings (JSONB)**
+Module-specific configurations in settings fields:
 ```json
 {
-    "type": "object",
-    "properties": {
-        "document_type": {"type": "string", "enum": ["invoice", "payment", "receipt", "journal", "purchase_order"]},
-        "prefix": {"type": "string", "maxLength": 20},
-        "suffix": {"type": "string", "maxLength": 20},
-        "current_number": {"type": "integer", "minimum": 1},
-        "increment_by": {"type": "integer", "minimum": 1, "maximum": 1000},
-        "pad_length": {"type": "integer", "minimum": 1, "maximum": 20},
-        "reset_frequency": {"type": "string", "enum": ["never", "yearly", "monthly", "daily"]},
-        "format_template": {"type": "string"}
-    },
-    "required": ["document_type", "current_number", "increment_by", "pad_length"]
+  "finance": {
+    "invoice_prefix": "INV-",
+    "auto_approval_limit": 1000,
+    "require_purchase_orders": true,
+    "payment_terms_default": "NET30"
+  },
+  "hr": {
+    "overtime_threshold": 40,
+    "default_pay_frequency": "biweekly",
+    "probation_period_days": 90
+  },
+  "inventory": {
+    "reorder_point_days": 30,
+    "default_valuation_method": "FIFO",
+    "require_lot_tracking": false
+  }
 }
 ```
 
-#### Migration from Existing Tables
-```sql
-CREATE OR REPLACE FUNCTION migrate_document_sequences_to_config() 
-RETURNS VOID AS $$
--- [Migration logic to sync existing finance_document_sequences]
-$$ LANGUAGE plpgsql;
+#### **Document Sequences (Enhanced entitystate)**
+Per-entity document numbering with enhanced configuration:
+```json
+{
+  "prefix": "BRANCH-INV-",
+  "suffix": "",
+  "pad_length": 6,
+  "reset_frequency": "yearly",
+  "format_template": "{prefix}{number:06d}{suffix}"
+}
 ```
-
-### Other Module Integration Patterns
-
-#### HR Module Configuration
-- Employee onboarding workflows
-- Payroll calculation rules
-- Leave policies and accrual rules
-- Performance review configurations
-
-#### Inventory Module Configuration
-- Stock valuation methods
-- Reorder point calculations
-- Warehouse location settings
-- Product categorization rules
-
-#### IAM Module Configuration
-- Password policies
-- Session timeout settings
-- MFA requirements
-- Role assignment rules
 
 ---
 
-## Performance & Scalability
+## Module Integration
 
-### Performance Optimization Strategies
+### Finance Module Integration
 
-#### 1. Indexing Strategy
+#### **Document Sequence Enhancement**
+**Current State**: `entitystate` table manages sequences per entity  
+**Enhancement**: Add `config` JSONB column for formatting options
+
+**New Capabilities**:
+- Configurable document prefixes and suffixes per entity
+- Variable number padding length
+- Multiple reset frequency options (never, yearly, monthly)
+- Custom format templates for complex numbering schemes
+
+**Migration Approach**:
 ```sql
--- Primary lookup patterns
-CREATE INDEX idx_config_values_tenant_module ON config_values_extended (tenant_id, module_id, config_key);
-CREATE INDEX idx_config_values_entity_key ON config_values_extended (tenant_id, entity_id, config_key);
-CREATE INDEX idx_config_values_effective ON config_values_extended (tenant_id, effective_from, effective_until) 
-    WHERE effective_until IS NOT NULL;
+-- Add configuration column to existing table
+ALTER TABLE entitystate ADD COLUMN config JSONB DEFAULT '{}';
 
--- JSON path queries
-CREATE INDEX idx_config_values_json_paths ON config_values_extended USING GIN (config_value jsonb_path_ops);
-
--- Default resolution performance
-CREATE INDEX idx_config_values_default_source ON config_values_extended (default_source, default_source_id);
+-- Populate with tenant-level prefix defaults
+UPDATE entitystate SET config = jsonb_build_object(
+    'prefix', COALESCE(
+        (SELECT tc.settings->'finance'->>'default_prefix' 
+         FROM tenant_configurations tc 
+         WHERE tc.tenant_id = entitystate.tenant_id), 
+        'DOC-'
+    ),
+    'pad_length', 6,
+    'reset_frequency', 'yearly'
+);
 ```
 
-#### 2. Materialized View for Default Resolution
-```sql
-CREATE MATERIALIZED VIEW mv_resolved_defaults AS
-SELECT 
-    tenant_id, entity_id, module_name, config_key,
-    resolved_value, final_source, last_updated
-FROM [complex default resolution query]
-WITH DATA;
+#### **Financial Configuration Examples**
+- **Approval workflows**: Multi-level approval limits with escalation rules
+- **Document defaults**: Payment terms, tax settings, account defaults
+- **Multi-currency**: Exchange rate sources and rounding rules
+- **Integration settings**: Bank connection parameters, payment processor configs
 
-CREATE UNIQUE INDEX idx_mv_resolved_defaults_lookup 
-ON mv_resolved_defaults (tenant_id, entity_id, module_name, config_key);
+### HR Module Integration
+
+#### **Payroll and Benefits Configuration**
+```json
+{
+  "hr": {
+    "payroll": {
+      "default_pay_frequency": "biweekly",
+      "overtime_calculation": "daily_and_weekly",
+      "tax_jurisdiction": "US_CA"
+    },
+    "benefits": {
+      "health_insurance_waiting_period": 90,
+      "vacation_accrual_method": "per_pay_period",
+      "sick_leave_policy": "california_standard"
+    },
+    "onboarding": {
+      "probation_period_days": 90,
+      "required_documents": ["I9", "W4", "direct_deposit"],
+      "training_modules": ["safety", "compliance", "systems"]
+    }
+  }
+}
 ```
 
-#### 3. Connection Pooling Strategy
-- **Per-Tenant Context**: Dedicated connection pools per tenant context
-- **Session Reuse**: Efficient session variable management
-- **Context Validation**: Middleware ensures proper tenant context
+### Inventory Module Integration
 
-### Scalability Targets
+#### **Warehouse and Stock Configuration**
+```json
+{
+  "inventory": {
+    "valuation": {
+      "default_method": "FIFO",
+      "allow_negative_stock": false,
+      "cycle_count_frequency": "quarterly"
+    },
+    "locations": {
+      "default_warehouse": "MAIN-001",
+      "require_location_for_all_items": true,
+      "enable_bin_tracking": true
+    },
+    "purchasing": {
+      "auto_reorder_enabled": true,
+      "lead_time_buffer_days": 7,
+      "preferred_vendor_priority": true
+    }
+  }
+}
+```
 
-#### Performance Benchmarks
-- **Read Latency**: 95th percentile < 100ms for typical configuration queries
-- **Write Latency**: 95th percentile < 200ms for configuration updates
-- **Throughput**: Support 1000+ concurrent tenant operations
-- **RLS Overhead**: <20% performance impact from RLS policies
+### Feature Flag Integration
 
-#### Scaling Strategies
-- **Horizontal Read Scaling**: Read replicas for configuration queries
-- **Caching Layer**: Redis caching for frequently accessed configurations
-- **Query Optimization**: Tenant-aware query plans and statistics
-- **Partitioning**: Consider tenant-based partitioning for large deployments
+#### **Configuration Availability Control**
+Configurations are gated by feature flags to control rollout:
+- **Multi-currency features**: Require "finance.multi_currency" flag
+- **Advanced approvals**: Require "finance.advanced_workflows" flag  
+- **Inventory lot tracking**: Require "inventory.lot_tracking" flag
+
+#### **Graceful Degradation**
+When features are disabled:
+- Related configurations become read-only
+- UI hides unavailable configuration options
+- API returns feature availability in response metadata
 
 ---
 
-## Implementation Roadmap
+## User Experience
 
-### Phase 1: Foundation 
-**Objectives**: Establish core configuration infrastructure
+### Configuration Management Interface
 
-###### **Deliverables**:
-- [ ] Core configuration tables (schemas, values, templates)
-- [ ] Basic RLS policies and tenant context management
-- [ ] Integration with existing IAM system
-- [ ] Initial audit logging and monitoring
-- [ ] Simple configuration CRUD operations
+#### **Module-Organized View**
+Users navigate configurations by:
+- **Module tabs** (Finance, HR, Inventory, etc.)
+- **Configuration groups** within each module
+- **Inheritance level** (System, Tenant, Entity)
 
-###### **Success Criteria**:
-- Configuration values can be stored and retrieved securely
-- Tenant isolation is enforced at database level
-- Basic audit trail is captured
+#### **Clear Source Indicators**
+Visual indicators show configuration sources:
+- **Green badge**: Value explicitly set at current level
+- **Blue badge**: Value inherited from parent level  
+- **Lock icon**: Value cannot be overridden (IAM restriction)
+- **Warning icon**: Value conflicts with feature availability
 
-### Phase 2: Default Management System
-**Objectives**: Implement comprehensive default management
+#### **Template Application Workflow**
+1. **Template Selection**: Choose from industry-specific or custom templates
+2. **Preview Changes**: Show what configurations will be modified
+3. **Selective Application**: Allow choosing which template sections to apply
+4. **Confirmation**: Apply changes with comprehensive audit logging
 
-###### **Deliverables**:
-- [ ] System and tenant default tables
-- [ ] Default resolution function with inheritance
-- [ ] Template system with industry patterns
-- [ ] Migration tools for existing configurations
-- [ ] Default coverage reporting
+### Configuration Resolution Display
 
-###### **Success Criteria**:
-- New tenants can be onboarded with appropriate defaults
-- Configuration inheritance works correctly
-- Templates can be applied and customized
+#### **Effective Value View**
+Shows users the complete inheritance chain:
+```
+Current Value: "BRANCH-INV-"
+├── Entity Override: "BRANCH-INV-" (explicitly set)
+├── Tenant Default: "INV-" (would inherit if not overridden)
+└── System Default: "DOC-" (final fallback)
 
-### Phase 3: Finance Module Integration
-**Objectives**: Full integration with existing finance module
+Permission: Can modify (finance.admin role)
+Feature Status: Multi-location numbering (enabled)
+```
 
-###### **Deliverables**:
-- [ ] Document sequence configuration integration
-- [ ] Enhanced document number generation
-- [ ] Migration from existing `finance_document_sequences`
-- [ ] Configuration dependencies for finance workflows
-- [ ] Approval workflows for sensitive financial configurations
+#### **Bulk Operations Interface**
+- **Filter by**: Entity type, module, configuration key pattern
+- **Preview mode**: Shows all changes before applying
+- **Conflict resolution**: Handle entities with explicit overrides
+- **Progress tracking**: Real-time status for large operations
 
-###### **Success Criteria**:
-- Finance document sequences work with new configuration system
-- No disruption to existing finance operations
-- Enhanced configuration capabilities are available
+### Configuration Templates
 
-### Phase 4: Advanced Features
-**Objectives**: Add sophisticated configuration management features
+#### **Industry-Specific Templates**
+- **Manufacturing**: Focus on inventory tracking, production workflows
+- **Services**: Emphasis on time tracking, project configurations  
+- **Retail**: Point-of-sale settings, inventory management
+- **Non-Profit**: Fund tracking, grant reporting configurations
 
-###### **Deliverables**:
-- [ ] Configuration change request workflows
-- [ ] Cross-module dependency management
-- [ ] Time-based configuration changes
-- [ ] Bulk configuration operations
-- [ ] Configuration validation and testing framework
+#### **Template Structure**
+```json
+{
+  "template_name": "Manufacturing Company Standard",
+  "description": "Standard configuration for manufacturing operations",
+  "modules": {
+    "finance": {
+      "document_sequences": {
+        "invoice": {"prefix": "INV-", "pad_length": 6},
+        "purchase_order": {"prefix": "PO-", "pad_length": 8}
+      },
+      "approval_limits": {
+        "purchase_orders": 5000,
+        "expense_reports": 1000
+      }
+    },
+    "inventory": {
+      "valuation_method": "FIFO",
+      "require_lot_tracking": true,
+      "auto_reorder_enabled": true
+    }
+  }
+}
+```
 
-###### **Success Criteria**:
-- Complex configuration changes can be managed through approval workflows
-- Configuration dependencies prevent invalid combinations
-- Bulk operations maintain data integrity
+---
 
-### Phase 5: Performance & Operations 
-**Objectives**: Optimize performance and establish operational procedures
+## Success Metrics
 
-###### **Deliverables**:
-- [ ] Performance optimization and caching
-- [ ] Comprehensive monitoring and alerting
-- [ ] Backup and recovery procedures
-- [ ] Configuration import/export tools
+### User Experience Metrics
+- **Tenant setup time**: Complete configuration in < 30 minutes with templates
+- **Configuration errors**: < 3% of configuration changes result in support tickets
+- **Template adoption**: 70% of new tenants use configuration templates
+- **Self-service rate**: 85% of configuration changes done without support
+
+### System Performance Metrics
+- **Configuration resolution**: 95th percentile < 50ms for read operations
+- **Bulk operations**: 1000 entity updates complete in < 60 seconds
+- **Template application**: Complete tenant template in < 5 minutes
+- **System overhead**: Configuration system adds < 5% database load
+
+### Business Impact Metrics
+- **Onboarding acceleration**: 50% reduction in new tenant setup time
+- **Support reduction**: 60% fewer configuration-related support requests
+- **Customization usage**: Average tenant customizes 15+ configuration settings
+- **Operational efficiency**: 40% reduction in configuration maintenance effort
+
+---
+
+## Implementation Phases
+
+### Phase 1: Core Infrastructure (4 weeks)
+**Objective**: Establish basic configuration resolution and management
+
+**Deliverables**:
+- [ ] Configuration definitions table and basic metadata
+- [ ] 3-level inheritance resolution logic
+- [ ] Integration with existing IAM permission checking
+- [ ] Basic CRUD operations for tenant and entity configurations
+- [ ] Simple configuration management UI
+
+**Success Criteria**:
+- Configuration values resolve correctly through inheritance hierarchy
+- IAM permissions properly restrict configuration access
+- Basic configuration changes work through UI and API
+
+### Phase 2: Document Sequence Enhancement (3 weeks)
+**Objective**: Enhance document numbering with flexible configuration
+
+**Deliverables**:
+- [ ] Add config JSONB column to entitystate table
+- [ ] Enhanced document generation with configurable formatting
+- [ ] Migration of existing sequence preferences
+- [ ] UI for document sequence configuration per entity
+
+**Success Criteria**:
+- All document types support configurable formatting
+- No disruption to existing document numbering
+- Enhanced formatting options available and working
+
+### Phase 3: Template System (4 weeks)  
+**Objective**: Configuration templates for rapid tenant setup
+
+**Deliverables**:
+- [ ] Configuration template storage and management
+- [ ] Industry-specific template library (Manufacturing, Services, Retail)
+- [ ] Template application workflow with preview and confirmation
+- [ ] Custom template creation for tenant administrators
+
+**Success Criteria**:
+- Templates reduce new tenant setup time by 50%
+- Template application preserves existing customizations
+- Custom templates can be created and shared
+
+### Phase 4: Module Integration (6 weeks)
+**Objective**: Full integration with Finance, HR, and Inventory modules
+
+**Deliverables**:
+- [ ] Finance module configuration integration (approval workflows, defaults)
+- [ ] HR module configuration integration (payroll, benefits, onboarding)
+- [ ] Inventory module configuration integration (warehouses, valuation)
+- [ ] Feature flag integration for configuration availability
+- [ ] Enhanced configuration validation and dependency checking
+
+**Success Criteria**:
+- All major modules use unified configuration system
+- Feature flags properly gate configuration availability
+- Configuration validation prevents invalid business rule combinations
+
+### Phase 5: Advanced Features (4 weeks)
+**Objective**: Bulk operations, advanced UI, and operational tools
+
+**Deliverables**:
+- [ ] Bulk configuration operations with preview and rollback
+- [ ] Advanced configuration UI with inheritance visualization
+- [ ] Configuration export/import for backup and migration
+- [ ] Enhanced audit reporting and configuration analytics
+
+**Success Criteria**:
+- Bulk operations handle 1000+ entities efficiently
+- UI provides clear understanding of configuration inheritance
+- Export/import supports configuration migration scenarios
+
+### Phase 6: Performance & Monitoring (2 weeks)
+**Objective**: Optimize performance and establish monitoring
+
+**Deliverables**:
+- [ ] Configuration resolution performance optimization
+- [ ] Monitoring and alerting for configuration system health
+- [ ] Performance testing and benchmark establishment
 - [ ] Documentation and training materials
 
 **Success Criteria**:
-- System meets performance benchmarks
-- Operations team can manage the system effectively
-- Disaster recovery procedures are tested and documented
-
-### Phase 6: Additional Modules
-**Objectives**: Extend to other ERP modules
-
-###### **Deliverables**:
-- [ ] HR module configuration integration
-- [ ] Inventory module configuration integration
-- [ ] IAM module configuration enhancement
-- [ ] Custom module configuration framework
-- [ ] Advanced reporting and analytics
-
-###### **Success Criteria**:
-- All major ERP modules use centralized configuration
-- Configuration consistency across all modules
-- Advanced configuration analytics available
-
----
-
-## Risk Analysis & Mitigations
-
-### High-Priority Risks
-
-#### 1. RLS Policy Bugs
-**Risk**: Incorrect RLS policies could cause cross-tenant data leakage
-- **Impact**: Critical - Data security breach
-- **Probability**: Medium
-- **Mitigation**: 
-  - Automated RLS policy testing in CI/CD
-  - Comprehensive security testing with tenant context variations
-  - Staged deployment with security validation
-  - Regular security audits and penetration testing
-
-#### 2. Performance Degradation
-**Risk**: RLS overhead could significantly impact query performance
-- **Impact**: Medium - User experience degradation
-- **Probability**: Medium
-- **Mitigation**:
-  - Continuous performance monitoring with alerting
-  - Query optimization and explain plan analysis
-  - Materialized view caching for complex queries
-  - Escape hatches for critical performance paths
-
-#### 3. Context Injection Failures
-**Risk**: Tenant context might not be properly set, causing access issues
-- **Impact**: High - Service disruption
-- **Probability**: Low
-- **Mitigation**:
-  - Connection middleware validation with circuit breakers
-  - Comprehensive context propagation testing
-  - Fallback mechanisms for context failures
-  - Real-time context monitoring and alerting
-
-### Medium-Priority Risks
-
-#### 4. Configuration Migration Issues
-**Risk**: Data corruption during migration from existing systems
-- **Impact**: High - Data integrity issues
-- **Probability**: Low
-- **Mitigation**:
-  - Extensive testing with production data copies
-  - Staged migration with rollback procedures
-  - Comprehensive validation at each migration step
-  - Backup verification before and after migration
-
-#### 5. Default Resolution Performance
-**Risk**: Complex default resolution could impact response times
-- **Impact**: Medium - Degraded user experience
-- **Probability**: Medium
-- **Mitigation**:
-  - Materialized view caching for common default patterns
-  - Query optimization and indexing strategies
-  - Lazy default resolution where appropriate
-  - Performance benchmarking and monitoring
-
-#### 6. Operational Complexity
-**Risk**: Increased operational burden for database administration
-- **Impact**: Medium - Higher operational costs
-- **Probability**: Medium
-- **Mitigation**:
-  - Comprehensive documentation and runbooks
-  - Automated operational procedures
-  - Training for operations team
-  - Monitoring and alerting for common issues
-
----
-
-## Operational Procedures
-
-### Monitoring & Alerting
-
-#### Key Metrics to Monitor
-- **RLS Policy Effectiveness**: Cross-tenant access attempt alerts
-- **Configuration Access Patterns**: Unusual access pattern detection
-- **Performance Metrics**: Query latency and throughput tracking
-- **Default Resolution Performance**: Default lookup timing
-- **Audit Trail Completeness**: Missing audit entries detection
-
-#### Alert Thresholds
-- **Security**: Any cross-tenant data access attempts
-- **Performance**: 95th percentile latency > 200ms
-- **Errors**: Configuration validation failures > 5%
-- **Availability**: Service response time > 500ms
-
-### Backup & Recovery
-
-#### Backup Strategy
-- **Configuration Data**: Point-in-time recovery for all configuration tables
-- **Tenant-Specific Recovery**: Ability to restore individual tenant configurations
-- **Schema Versioning**: Backup and recovery of configuration schemas
-- **Audit Trail Preservation**: Long-term audit log retention
-
-#### Recovery Procedures
-1. **Individual Configuration Recovery**: Restore specific configuration values
-2. **Tenant Data Recovery**: Complete tenant configuration restoration
-3. **Schema Rollback**: Revert schema changes with data migration
-4. **Disaster Recovery**: Full system restoration from backups
-
-### Maintenance Procedures
-
-#### Regular Maintenance Tasks
-- **Default Cache Refresh**: Automated materialized view maintenance
-- **Audit Log Archival**: Automated old audit data archival
-- **Performance Analysis**: Monthly query performance review
-- **Security Review**: Quarterly RLS policy effectiveness review
-
-#### Schema Migration Procedures
-1. **Schema Change Preparation**: Validate against existing configurations
-2. **Staged Deployment**: Deploy schema changes incrementally
-3. **Data Migration**: Migrate existing data to new schema
-4. **Validation**: Verify data integrity and functionality
-5. **Rollback Plan**: Prepared rollback procedures if issues occur
-
-### Testing & Validation
-
-#### Automated Test Suite
-```yaml
-RLS Policy Tests:
-  - Tenant isolation verification
-  - Admin bypass functionality
-  - Null context handling
-  - Cross-tenant access prevention
-  - Module-scoped access validation
-
-Configuration Tests:
-  - Schema validation
-  - Default resolution accuracy
-  - Template application
-  - Dependency enforcement
-  - Change request workflows
-
-Integration Tests:
-  - Finance module integration
-  - Document sequence generation
-  - Cross-module dependencies
-  - Bulk operations
-  - Performance benchmarks
-```
-
-#### Security Testing Checklist
-- [ ] Cross-tenant data access attempts (should fail)
-- [ ] JWT token manipulation testing
-- [ ] SQL injection attempts with RLS bypass
-- [ ] Admin privilege escalation testing
-- [ ] Context injection failure scenarios
-
-### Deployment Procedures
-
-#### Deployment Checklist
-- [ ] Schema migration scripts tested
-- [ ] RLS policies validated in staging
-- [ ] Performance benchmarks meet targets
-- [ ] Security tests pass completely
-- [ ] Audit logging is functional
-- [ ] Default resolution works correctly
-- [ ] Integration with existing modules validated
-- [ ] Rollback procedures tested
+- All performance targets met consistently
+- Comprehensive monitoring provides operational visibility
+- Team trained on configuration system operation and maintenance
 
 ---
 
@@ -910,118 +551,160 @@ Integration Tests:
 
 ### A. Configuration Schema Examples
 
-#### Document Sequence Schema
+#### Finance Module Configuration Schema
 ```json
 {
-  "type": "object",
-  "properties": {
-    "document_type": {
-      "type": "string",
-      "enum": ["invoice", "payment", "receipt", "journal", "purchase_order"]
-    },
-    "prefix": {"type": "string", "maxLength": 20},
-    "suffix": {"type": "string", "maxLength": 20},
-    "current_number": {"type": "integer", "minimum": 1},
-    "increment_by": {"type": "integer", "minimum": 1, "maximum": 1000},
-    "pad_length": {"type": "integer", "minimum": 1, "maximum": 20},
-    "reset_frequency": {
-      "type": "string", 
-      "enum": ["never", "yearly", "monthly", "daily"]
-    },
-    "format_template": {"type": "string"}
-  },
-  "required": ["document_type", "current_number", "increment_by", "pad_length"],
-  "additionalProperties": false
-}
-```
-
-#### HR Payroll Configuration Schema
-```json
-{
-  "type": "object",
-  "properties": {
-    "pay_frequency": {
-      "type": "string",
-      "enum": ["weekly", "biweekly", "monthly", "semimonthly"]
-    },
-    "overtime_rules": {
-      "type": "object",
-      "properties": {
-        "enabled": {"type": "boolean"},
-        "threshold_hours": {"type": "number", "minimum": 0},
-        "multiplier": {"type": "number", "minimum": 1}
-      }
-    },
-    "tax_settings": {
-      "type": "object",
-      "properties": {
-        "jurisdiction": {"type": "string"},
-        "tax_tables": {"type": "array"}
-      }
+  "document_sequences": {
+    "invoice": {
+      "prefix": "INV-",
+      "suffix": "",
+      "pad_length": 6,
+      "reset_frequency": "yearly",
+      "format_template": "{prefix}{year:2d}{number:06d}"
     }
+  },
+  "approval_workflows": {
+    "purchase_orders": {
+      "auto_approve_limit": 1000,
+      "manager_approval_limit": 10000,
+      "director_approval_required": true
+    }
+  },
+  "defaults": {
+    "payment_terms": "NET30",
+    "expense_account": "6000-GENERAL",
+    "tax_rate": 0.0875
   }
 }
 ```
 
-### B. Template Examples
-
-#### Standard Manufacturing Company Template
-```sql
-INSERT INTO config_templates (name, description, module_id, template_type, is_system_template)
-VALUES ('Standard Manufacturing', 'Configuration for manufacturing companies', 
-        (SELECT id FROM modules WHERE name = 'finance'), 'industry', true);
-
-INSERT INTO config_template_values VALUES
-('invoice_sequence', '{
-  "prefix": "INV-",
-  "reset_frequency": "yearly",
-  "pad_length": 6
-}', true),
-('purchase_order_sequence', '{
-  "prefix": "PO-", 
-  "reset_frequency": "never",
-  "pad_length": 8
-}', true);
+#### HR Module Configuration Schema  
+```json
+{
+  "payroll": {
+    "pay_frequency": "biweekly",
+    "overtime_threshold": 40,
+    "overtime_multiplier": 1.5,
+    "pay_period_start_day": "monday"
+  },
+  "benefits": {
+    "health_insurance_waiting_days": 90,
+    "vacation_accrual_rate": 0.0833,
+    "sick_leave_annual_hours": 80
+  },
+  "policies": {
+    "probation_period_days": 90,
+    "performance_review_frequency": "annual",
+    "remote_work_allowed": true
+  }
+}
 ```
 
-### C. Performance Benchmarks
+### B. API Response Examples
 
-#### Expected Performance Targets
-- **Simple Configuration Read**: < 50ms (95th percentile)
-- **Complex Default Resolution**: < 100ms (95th percentile)  
-- **Configuration Update**: < 200ms (95th percentile)
-- **Bulk Template Application**: < 5s for 100 configurations
-- **Tenant Onboarding**: < 30s for complete setup
+#### Get Configuration with Inheritance
+```http
+GET /api/v1/config/finance/invoice_prefix?entity_id=123
 
-### D. Troubleshooting Guide
+{
+  "value": "BRANCH-INV-",
+  "source": "entity",
+  "inheritance_chain": {
+    "entity": "BRANCH-INV-",
+    "tenant": "INV-", 
+    "system": "DOC-"
+  },
+  "metadata": {
+    "can_override": true,
+    "feature_enabled": true,
+    "required_permission": "finance.admin",
+    "last_modified": "2025-09-01T10:30:00Z",
+    "modified_by": "user-456"
+  }
+}
+```
 
-#### Common Issues
+#### Bulk Configuration Update
+```http
+POST /api/v1/config/bulk-update
 
-**Issue**: Cross-tenant data visible
-- **Cause**: RLS policy not applied or tenant context not set
-- **Resolution**: Verify `app.current_tenant` is set, check RLS policy
+{
+  "filter": {
+    "entity_types": ["BRANCH", "LOCATION"],
+    "module": "finance",
+    "config_pattern": "approval_*"
+  },
+  "updates": {
+    "approval_limit": 2000
+  },
+  "options": {
+    "preserve_explicit_overrides": true,
+    "dry_run": false
+  }
+}
 
-**Issue**: Performance degradation
-- **Cause**: Missing indexes or inefficient RLS policies
-- **Resolution**: Analyze query plans, optimize indexes, review policies
+Response:
+{
+  "operation_id": "bulk-op-789",
+  "entities_affected": 45,
+  "changes_preview": [
+    {
+      "entity_id": "entity-123",
+      "changes": {
+        "approval_limit": {"from": 1000, "to": 2000}
+      }
+    }
+  ],
+  "estimated_duration": "30 seconds"
+}
+```
 
-**Issue**: Default resolution errors
-- **Cause**: Circular dependencies or invalid merge strategies
-- **Resolution**: Check dependency graph, validate merge logic
+### C. Migration Strategy
 
-### E. Security Compliance
+#### Phase 1: Existing Data Migration
+```sql
+-- Migrate existing tenant-level configurations
+INSERT INTO config_definitions (module_name, config_key, config_type, default_value)
+VALUES 
+('finance', 'default_currency', 'string', '"USD"'),
+('finance', 'fiscal_year_start', 'integer', '1'),
+('finance', 'accounting_method', 'string', '"ACCRUAL"');
 
-#### Compliance Requirements Met
-- **SOC 2 Type II**: Audit logging and access controls
-- **GDPR**: Data isolation and right to deletion
-- **SOX**: Financial configuration change controls
-- **ISO 27001**: Information security management
+-- Migrate existing entity preferences to settings JSONB
+UPDATE entities SET settings = jsonb_set(
+    COALESCE(settings, '{}'),
+    '{finance}',
+    jsonb_build_object(
+        'accounting_method', 
+        CASE accrual_method 
+            WHEN true THEN 'ACCRUAL' 
+            ELSE 'CASH' 
+        END,
+        'fiscal_year_start', fy_start_month
+    )
+) WHERE accrual_method IS NOT NULL OR fy_start_month IS NOT NULL;
+```
 
-#### Audit Trail Requirements
-- **Configuration Changes**: Complete change history with user attribution
-- **Access Logging**: All configuration access attempts logged
-- **Administrative Actions**: Admin bypass usage tracked
-- **Schema Changes**: Schema evolution audit trail
+### D. Testing Scenarios
+
+#### Configuration Resolution Tests
+- [ ] Entity configuration overrides tenant default
+- [ ] Tenant configuration overrides system default  
+- [ ] Missing entity config inherits from tenant
+- [ ] Missing tenant config inherits from system
+- [ ] JSONB deep merge works correctly for nested objects
+
+#### Permission Integration Tests
+- [ ] IAM permissions properly restrict configuration access
+- [ ] Feature flags gate configuration availability
+- [ ] Module-specific permissions enforced
+- [ ] Entity-scoped permissions work correctly
+
+#### Performance Tests
+- [ ] Configuration resolution under concurrent load
+- [ ] Bulk update performance with 1000+ entities
+- [ ] Template application performance
+- [ ] Database query optimization effectiveness
 
 ---
 
@@ -1029,8 +712,10 @@ INSERT INTO config_template_values VALUES
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | Sep 2025 | Architecture Team | Initial complete specification |
+| 2.0 | Sep 2025 | Product Team | Streamlined architecture leveraging existing infrastructure |
+| 1.0 | Aug 2025 | Architecture Team | Initial specification (superseded) |
 
 ---
 
-**End of Document**
+**Document Status**: Ready for Implementation  
+**Next Review**: After Phase 1 completion
