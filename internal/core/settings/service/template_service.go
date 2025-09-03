@@ -10,6 +10,7 @@ import (
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/settings/domain"
 	"github.com/niiniyare/erp/internal/core/settings/repository"
+	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
@@ -37,6 +38,7 @@ type TemplateService interface {
 type templateService struct {
 	repo         repository.ConfigurationRepository
 	auditService audit.Service
+	logger       logger.Logger
 	tracing      tracing.TracingService
 	metrics      metrics.MetricsProvider
 }
@@ -45,12 +47,14 @@ type templateService struct {
 func NewTemplateService(
 	repo repository.ConfigurationRepository,
 	auditService audit.Service,
+	logger logger.Logger,
 	tracing tracing.TracingService,
 	metrics metrics.MetricsProvider,
 ) TemplateService {
 	return &templateService{
 		repo:         repo,
 		auditService: auditService,
+		logger:       logger,
 		tracing:      tracing,
 		metrics:      metrics,
 	}
@@ -66,8 +70,18 @@ func (s *templateService) CreateTemplate(ctx context.Context, template *domain.T
 	})
 	defer timer.Stop()
 
+	s.logger.InfoContext(ctx, "Creating new template", logger.Fields{
+		"template_name":       template.Name,
+		"template_category":   string(template.Category),
+		"configuration_count": len(template.Configurations),
+	})
+
 	// Validate template structure
 	if err := s.validateTemplate(ctx, template); err != nil {
+		s.logger.WarnContext(ctx, "Template validation failed", logger.Fields{
+			"template_name": template.Name,
+			"error":         err.Error(),
+		})
 		s.metrics.IncrementCounter("settings.template_validation_error", nil)
 		return fmt.Errorf("template validation failed: %w", err)
 	}
@@ -75,9 +89,21 @@ func (s *templateService) CreateTemplate(ctx context.Context, template *domain.T
 	// Create the template
 	err := s.repo.CreateTemplate(ctx, template)
 	if err != nil {
+		s.logger.ErrorContext(ctx, "Failed to create template", logger.Fields{
+			"template_name": template.Name,
+			"template_id":   template.ID,
+			"error":         err.Error(),
+		})
 		s.metrics.IncrementCounter("settings.create_template_error", nil)
 		return fmt.Errorf("failed to create template: %w", err)
 	}
+
+	s.logger.InfoContext(ctx, "Successfully created template", logger.Fields{
+		"template_name":       template.Name,
+		"template_id":         template.ID,
+		"template_category":   string(template.Category),
+		"configuration_count": len(template.Configurations),
+	})
 
 	// Create audit event
 	if err := s.createTemplateAuditEvent(ctx, audit.CreateAuditEventRequest{
@@ -212,14 +238,28 @@ func (s *templateService) ApplyTemplate(ctx context.Context, templateID domain.T
 	})
 	defer timer.Stop()
 
+	s.logger.InfoContext(ctx, "Starting template application", logger.Fields{
+		"template_id":   templateID,
+		"target_type":   target.Type,
+		"target_entity": target.EntityID,
+	})
+
 	// Get and validate template
 	template, err := s.repo.GetTemplate(ctx, templateID)
 	if err != nil {
+		s.logger.ErrorContext(ctx, "Failed to retrieve template for application", logger.Fields{
+			"template_id": templateID,
+			"error":       err.Error(),
+		})
 		s.metrics.IncrementCounter("settings.apply_template_error", nil)
 		return nil, fmt.Errorf("failed to get template: %w", err)
 	}
 
 	if !template.IsActive {
+		s.logger.WarnContext(ctx, "Attempted to apply inactive template", logger.Fields{
+			"template_id":   templateID,
+			"template_name": template.Name,
+		})
 		s.metrics.IncrementCounter("settings.apply_inactive_template_error", nil)
 		return nil, fmt.Errorf("cannot apply inactive template")
 	}
@@ -238,9 +278,27 @@ func (s *templateService) ApplyTemplate(ctx context.Context, templateID domain.T
 	// Apply the template
 	result, err := s.repo.ApplyTemplate(ctx, templateID, target, options, userID)
 	if err != nil {
+		s.logger.ErrorContext(ctx, "Failed to apply template", logger.Fields{
+			"template_id":   templateID,
+			"template_name": template.Name,
+			"target_type":   target.Type,
+			"target_entity": target.EntityID,
+			"error":         err.Error(),
+		})
 		s.metrics.IncrementCounter("settings.apply_template_error", nil)
 		return nil, fmt.Errorf("failed to apply template: %w", err)
 	}
+
+	s.logger.InfoContext(ctx, "Successfully applied template", logger.Fields{
+		"template_id":   templateID,
+		"template_name": template.Name,
+		"target_type":   target.Type,
+		"target_entity": target.EntityID,
+		"applied":       result.Summary.Applied,
+		"conflicts":     result.Summary.Conflicts,
+		"errors":        result.Summary.Errors,
+		"duration_ms":   result.Summary.DurationMS,
+	})
 
 	// Create audit event
 	if err := s.createTemplateApplicationAuditEvent(ctx, audit.CreateAuditEventRequest{

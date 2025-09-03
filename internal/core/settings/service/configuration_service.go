@@ -10,6 +10,7 @@ import (
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/settings/domain"
 	"github.com/niiniyare/erp/internal/core/settings/repository"
+	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
@@ -43,6 +44,7 @@ type ConfigurationService interface {
 type configurationService struct {
 	repo         repository.ConfigurationRepository
 	auditService audit.Service
+	logger       logger.Logger
 	tracing      tracing.TracingService
 	metrics      metrics.MetricsProvider
 }
@@ -51,12 +53,14 @@ type configurationService struct {
 func NewConfigurationService(
 	repo repository.ConfigurationRepository,
 	auditService audit.Service,
+	logger logger.Logger,
 	tracing tracing.TracingService,
 	metrics metrics.MetricsProvider,
 ) ConfigurationService {
 	return &configurationService{
 		repo:         repo,
 		auditService: auditService,
+		logger:       logger,
 		tracing:      tracing,
 		metrics:      metrics,
 	}
@@ -74,12 +78,25 @@ func (s *configurationService) GetEffectiveConfiguration(ctx context.Context, en
 
 	config, err := s.repo.GetEffectiveConfiguration(ctx, entityID, module, key)
 	if err != nil {
+		s.logger.ErrorContext(ctx, "Failed to get effective configuration", logger.Fields{
+			"module":    string(module),
+			"key":       string(key),
+			"entity_id": entityID,
+			"error":     err.Error(),
+		})
 		s.metrics.IncrementCounter("settings.get_effective_configuration_error", metrics.Fields{
 			"module": string(module),
 			"error":  err.Error(),
 		})
 		return nil, fmt.Errorf("failed to get effective configuration: %w", err)
 	}
+
+	s.logger.DebugContext(ctx, "Successfully retrieved effective configuration", logger.Fields{
+		"module":    string(module),
+		"key":       string(key),
+		"entity_id": entityID,
+		"source":    string(config.Source),
+	})
 
 	s.metrics.IncrementCounter("settings.get_effective_configuration_success", metrics.Fields{
 		"module": string(module),
@@ -138,8 +155,20 @@ func (s *configurationService) UpdateTenantConfiguration(ctx context.Context, mo
 	})
 	defer timer.Stop()
 
+	s.logger.InfoContext(ctx, "Starting tenant configuration update", logger.Fields{
+		"module": string(module),
+		"key":    string(key),
+		"user":   userID.String(),
+	})
+
 	// Validate the configuration value
 	if err := s.ValidateConfigurationValue(ctx, module, key, value); err != nil {
+		s.logger.WarnContext(ctx, "Configuration validation failed", logger.Fields{
+			"module": string(module),
+			"key":    string(key),
+			"level":  "tenant",
+			"error":  err.Error(),
+		})
 		s.metrics.IncrementCounter("settings.validation_error", metrics.Fields{
 			"module": string(module),
 			"level":  "tenant",
@@ -153,6 +182,12 @@ func (s *configurationService) UpdateTenantConfiguration(ctx context.Context, mo
 	// Update the configuration
 	err := s.repo.UpdateTenantConfiguration(ctx, module, key, value, userID)
 	if err != nil {
+		s.logger.ErrorContext(ctx, "Failed to update tenant configuration", logger.Fields{
+			"module": string(module),
+			"key":    string(key),
+			"user":   userID.String(),
+			"error":  err.Error(),
+		})
 		s.metrics.IncrementCounter("settings.update_tenant_configuration_error", metrics.Fields{
 			"module": string(module),
 		})
@@ -168,8 +203,20 @@ func (s *configurationService) UpdateTenantConfiguration(ctx context.Context, mo
 		Context:       s.buildAuditContext("tenant", module, key, currentConfig, &value),
 	}); err != nil {
 		// Log audit error but don't fail the operation
+		s.logger.WarnContext(ctx, "Failed to create audit event for configuration update", logger.Fields{
+			"module": string(module),
+			"key":    string(key),
+			"user":   userID.String(),
+			"error":  err.Error(),
+		})
 		span.RecordError(err)
 	}
+
+	s.logger.InfoContext(ctx, "Successfully updated tenant configuration", logger.Fields{
+		"module": string(module),
+		"key":    string(key),
+		"user":   userID.String(),
+	})
 
 	s.metrics.IncrementCounter("settings.update_tenant_configuration_success", metrics.Fields{
 		"module": string(module),
@@ -350,6 +397,10 @@ func (s *configurationService) BulkUpdateConfigurations(ctx context.Context, upd
 	ctx, span := s.tracing.StartSpan(ctx, "service.bulk_update_configurations")
 	defer span.End()
 
+	s.logger.InfoContext(ctx, "Starting bulk configuration update", logger.Fields{
+		"update_count": len(updates),
+	})
+
 	timer := s.metrics.Timer("settings.bulk_update_configurations", metrics.Fields{
 		"count": fmt.Sprintf("%d", len(updates)),
 	})
@@ -366,9 +417,21 @@ func (s *configurationService) BulkUpdateConfigurations(ctx context.Context, upd
 	// Process bulk updates
 	result, err := s.repo.BulkUpdateConfigurations(ctx, updates)
 	if err != nil {
+		s.logger.ErrorContext(ctx, "Failed to perform bulk configuration update", logger.Fields{
+			"update_count": len(updates),
+			"error":        err.Error(),
+		})
 		s.metrics.IncrementCounter("settings.bulk_update_configurations_error", nil)
 		return nil, fmt.Errorf("failed to perform bulk update: %w", err)
 	}
+
+	s.logger.InfoContext(ctx, "Successfully completed bulk configuration update", logger.Fields{
+		"total_targets":      result.TotalTargets,
+		"processed_targets":  result.ProcessedTargets,
+		"successful_updates": result.SuccessfulUpdates,
+		"failed_updates":     result.FailedUpdates,
+		"duration_ms":        result.DurationMS,
+	})
 
 	// Create audit event for bulk operation
 	if len(updates) > 0 {
