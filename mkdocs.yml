@@ -122,6 +122,8 @@ nav:
     - 'Testing': 'reference/modules/tenant/testing.md'
   - 'System Configuration':
     - 'Overview': 'reference/modules/settings/index.md'
+    - 'Service Integration Guide': 'reference/modules/settings/service-integration.md'
+    - 'Data Flow': 'reference/modules/settings/data-flow.md'
     - 'Architecture Guide': 'reference/modules/settings/architecture-guide.md'
     - 'API Reference': 'reference/modules/settings/api-reference.md'
   - 'Other Modules':

@@ -753,5 +753,22 @@ UPDATE entities SET settings = jsonb_set(
 
 ---
 
-**Document Status**: Ready for Implementation  
-**Next Review**: After Phase 1 completion
+## Related Documentation
+
+### Implementation Guides
+- **[Service Integration Guide](service-integration.md)**: How other services integrate with and use the Settings system
+- **[Data Flow & Architecture](data-flow.md)**: Technical architecture, data flow patterns, and system integration details
+- **[API Reference](api-reference.md)**: REST API endpoints and usage examples
+- **[Architecture Guide](architecture-guide.md)**: Detailed technical architecture and design decisions
+- **[Integration Guide](integration-guide.md)**: Step-by-step integration instructions for developers
+
+### Quick Reference
+- **Service Dependencies**: Configuration and Template services require Repository, Audit, Logger, Tracing, and Metrics
+- **Integration Pattern**: Services inject Settings services and call methods like `GetEffectiveConfiguration()`
+- **Data Flow**: 3-level inheritance resolution (Entity → Tenant → System) with caching and audit trails
+- **Security Model**: Context-based tenant isolation with RLS protection and IAM permission checks
+
+---
+
+**Document Status**: Implementation in Progress (Backend Complete)  
+**Next Review**: After Phase 2 completion (API Layer)
