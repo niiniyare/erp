@@ -119,9 +119,12 @@ nav:
   - 'Tenant Module':
     - 'Management': 'reference/modules/tenant/tenant-management.md'
     - 'Testing': 'reference/modules/tenant/testing.md'
+  - 'System Configuration':
+    - 'Overview': 'reference/modules/settings/index.md'
+    - 'Architecture Guide': 'reference/modules/settings/architecture-guide.md'
+    - 'API Reference': 'reference/modules/settings/api-reference.md'
   - 'Other Modules':
-    - 'System Architecture': 'docs/reference/modules/settings/index.md'
-    - 'System Settings': 'reference/modules/settings.md'
+    - 'System Architecture': 'reference/modules/Architecture.md'
     - 'Airline Module': 'reference/modules/airline-module.md'
     - 'Asset Management': 'reference/modules/asset-management.md'
     - 'Forecourt Module': 'reference/modules/forecourt-module.md'

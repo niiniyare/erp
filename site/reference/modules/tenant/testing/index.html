@@ -4901,7 +4901,7 @@ Then:
 <h2 id="organization-hierarchy-tests">Organization Hierarchy Tests</h2>
 <h3 id="organization-crud-tests">Organization CRUD Tests</h3>
 <h4 id="test-case-organization-creation">Test Case: Organization Creation</h4>
-<div class="highlight"><pre><span></span><code>Test ID: MT-ORG-001
+<p><div class="highlight"><pre><span></span><code>Test ID: MT-ORG-001
 Description: Test organization creation within tenant
 Given: Valid organization data and tenant context
 When: Creating new organization
@@ -4912,8 +4912,10 @@ Then:
   - Manager relationships are validated
   - Organizational structure is preserved
 </code></pre></div>
+- [x] <strong>Status:</strong> Implemented
+- <strong>Comments:</strong> Covered in <code>TestOrganizationCreation</code> in <code>internal/core/entity/hierarchy_test.go</code>. The test validates creation of different organization types (COMPANY, DEPARTMENT, LOCATION, PROJECT) within tenant context, verifies code uniqueness enforcement, and ensures proper entity retrieval. All 4 test cases pass successfully.</p>
 <h4 id="test-case-hierarchical-relationships">Test Case: Hierarchical Relationships</h4>
-<div class="highlight"><pre><span></span><code>Test ID: MT-ORG-002
+<p><div class="highlight"><pre><span></span><code>Test ID: MT-ORG-002
 Description: Test parent-child organization relationships
 Given: Company → Division → Department structure
 When: Creating nested organizations
@@ -4924,8 +4926,10 @@ Then:
   - Hierarchy depth limits are enforced
   - Cascade operations work correctly
 </code></pre></div>
+- [x] <strong>Status:</strong> Implemented
+- <strong>Comments:</strong> Covered in <code>TestHierarchicalRelationships</code> in <code>internal/core/entity/hierarchy_test.go</code>. The test creates a complete 6-level hierarchy (Company → Division → Department → Team → SubTeam → WorkGroup), validates parent-child relationships, ancestor retrieval, circular reference prevention, deletion constraints, and hierarchy depth handling. All 5 sub-tests pass successfully.</p>
 <h4 id="test-case-cross-tenant-organization-isolation">Test Case: Cross-Tenant Organization Isolation</h4>
-<div class="highlight"><pre><span></span><code>Test ID: MT-ORG-003
+<p><div class="highlight"><pre><span></span><code>Test ID: MT-ORG-003
 Description: Verify organization isolation between tenants
 Given: Organizations from different tenants
 When: Querying organizations with tenant context
@@ -4935,6 +4939,8 @@ Then:
   - Parent relationships cannot cross tenant boundaries
   - Manager assignments respect tenant boundaries
 </code></pre></div>
+- [x] <strong>Status:</strong> Implemented
+- <strong>Comments:</strong> Covered in <code>TestCrossTenantOrganizationIsolation</code> in <code>internal/core/entity/hierarchy_test.go</code>. The test creates organizations in two separate tenants with identical codes, validates complete data isolation using PostgreSQL RLS, prevents cross-tenant parent references, blocks cross-tenant entity access (get/update/delete operations), and verifies code uniqueness within tenant boundaries. All 5 sub-tests pass successfully, confirming perfect tenant isolation.</p>
 <h2 id="configuration-management-tests">Configuration Management Tests</h2>
 <h3 id="tenant-configuration-tests">Tenant Configuration Tests</h3>
 <h4 id="test-case-configuration-updates">Test Case: Configuration Updates</h4>
