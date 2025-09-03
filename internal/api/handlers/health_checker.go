@@ -25,11 +25,11 @@ type HealthChecker interface {
 
 // HealthCheckResult represents the result of a health check
 type HealthCheckResult struct {
-	Status    string                 `json:"status"` // "ok", "warning", "critical"
-	Message   string                 `json:"message,omitempty"`
-	Duration  time.Duration          `json:"duration"`
-	Timestamp time.Time              `json:"timestamp"`
-	Details   map[string]interface{} `json:"details,omitempty"`
+	Status    string         `json:"status"` // "ok", "warning", "critical"
+	Message   string         `json:"message,omitempty"`
+	Duration  time.Duration  `json:"duration"`
+	Timestamp time.Time      `json:"timestamp"`
+	Details   map[string]any `json:"details,omitempty"`
 }
 
 // healthChecker implements HealthChecker with comprehensive dependency validation
@@ -72,7 +72,7 @@ func (h *healthChecker) CheckDatabase(ctx context.Context) HealthCheckResult {
 	start := time.Now()
 	result := HealthCheckResult{
 		Timestamp: start,
-		Details:   make(map[string]interface{}),
+		Details:   make(map[string]any),
 	}
 
 	// Create timeout context for database operations
@@ -168,7 +168,7 @@ func (h *healthChecker) CheckCache(ctx context.Context) HealthCheckResult {
 	start := time.Now()
 	result := HealthCheckResult{
 		Timestamp: start,
-		Details:   make(map[string]interface{}),
+		Details:   make(map[string]any),
 	}
 
 	if h.redis == nil {

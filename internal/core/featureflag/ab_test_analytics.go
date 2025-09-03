@@ -186,7 +186,7 @@ package featureflag
 // 	PotentialCauses    []string               `json:"potential_causes"`
 // 	RecommendedActions []string               `json:"recommended_actions"`
 // 	AutoResolved       bool                   `json:"auto_resolved"`
-// 	Context            map[string]interface{} `json:"context,omitempty"`
+// 	Context            map[string]any `json:"context,omitempty"`
 // }
 //
 // type ABTestReport struct {
@@ -219,7 +219,7 @@ package featureflag
 // 	Resources           []string               `json:"resources"`
 // 	RiskFactors         []string               `json:"risk_factors"`
 // 	SuccessMetrics      []string               `json:"success_metrics"`
-// 	Context             map[string]interface{} `json:"context,omitempty"`
+// 	Context             map[string]any `json:"context,omitempty"`
 // }
 //
 // // Supporting data structures
@@ -704,7 +704,7 @@ package featureflag
 // 	Importance  string                 `json:"importance"`
 // 	Supporting  []string               `json:"supporting_evidence"`
 // 	Actionable  bool                   `json:"actionable"`
-// 	Context     map[string]interface{} `json:"context,omitempty"`
+// 	Context     map[string]any `json:"context,omitempty"`
 // }
 //
 // type DetailedRecommendation struct {
@@ -766,7 +766,7 @@ package featureflag
 // 	PowerAnalysisDetails   *PowerAnalysisDetails  `json:"power_analysis_details"`
 // 	BiasAssessment         *BiasAssessment        `json:"bias_assessment"`
 // 	LimitationsAndCaveats  []string               `json:"limitations_and_caveats"`
-// 	RawDataSummary         map[string]interface{} `json:"raw_data_summary"`
+// 	RawDataSummary         map[string]any `json:"raw_data_summary"`
 // }
 //
 // type DataQualityReport struct {
@@ -1030,7 +1030,7 @@ package featureflag
 // type BusinessMetricsConfig struct {
 // 	RevenueMetrics []string               `json:"revenue_metrics"`
 // 	CostMetrics    []string               `json:"cost_metrics"`
-// 	CustomMetrics  map[string]interface{} `json:"custom_metrics"`
+// 	CustomMetrics  map[string]any `json:"custom_metrics"`
 // 	TimeHorizon    time.Duration          `json:"time_horizon"`
 // 	DiscountRate   float64                `json:"discount_rate"`
 // 	CurrencyCode   string                 `json:"currency_code"`

@@ -76,7 +76,7 @@ func (a *adapter) CreateUser(ctx context.Context, req *CreateUserRequest) (*mode
 	iamUser := a.convertIdentityUserToIAMUser(identityUser)
 
 	a.metrics.IncrementCounter("authn.create_user.success", nil)
-	a.logger.Info("User created successfully", map[string]interface{}{
+	a.logger.Info("User created successfully", map[string]any{
 		"user_id": iamUser.ID,
 		"email":   iamUser.Email,
 	})
@@ -296,7 +296,7 @@ func (a *adapter) Authenticate(ctx context.Context, req *AuthenticationRequest) 
 	}
 
 	a.metrics.IncrementCounter("authn.authenticate.success", nil)
-	a.logger.Info("User authenticated successfully", map[string]interface{}{
+	a.logger.Info("User authenticated successfully", map[string]any{
 		"user_id": iamUser.ID,
 		"email":   iamUser.Email,
 	})

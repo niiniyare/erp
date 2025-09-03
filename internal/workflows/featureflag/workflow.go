@@ -280,7 +280,7 @@ package featureflag
 // 		NewValue:       req.RollbackValue,
 // 		Justification:  "Automatic rollback after expiration",
 // 		BusinessReason: "Scheduled rollback",
-// 		Metadata: map[string]interface{}{
+// 		Metadata: map[string]any{
 // 			"auto_rollback":         true,
 // 			"original_scheduled_at": req.RollbackAt,
 // 		},
@@ -314,7 +314,7 @@ package featureflag
 // 		NewValue:    req.RollbackValue,
 // 		RequestedBy: uuid.Nil,
 // 		AppliedAt:   changeResult.AppliedAt,
-// 		Metadata: map[string]interface{}{
+// 		Metadata: map[string]any{
 // 			"auto_rollback": true,
 // 			"scheduled_at":  req.RollbackAt,
 // 		},

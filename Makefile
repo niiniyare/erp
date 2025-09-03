@@ -69,6 +69,8 @@ sqlc-lint: ## detection of basd queries
 sqlc: ## Generate SQLC store code
 	@sqlc generate && go generate  ./db/sqlc/...
 
+interface2any: ## conver interfaces to any 
+	@find . -type f -name '*.go' | xargs sed -i 's/interface{}/any/g'
 mock: ## Generate mocks for interfaces
 	# @./generate_all_mocks.sh
 		@go generate  ./...

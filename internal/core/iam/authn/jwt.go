@@ -141,7 +141,7 @@ func (j *JWTManager) ValidateRefreshToken(tokenString string) (*TokenClaims, err
 
 // validateToken validates a JWT token and returns the claims
 func (j *JWTManager) validateToken(tokenString string, expectedType TokenType, secret string) (*TokenClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (any, error) {
 		// Verify signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -216,8 +216,8 @@ func (j *JWTManager) RefreshAccessToken(refreshToken string) (newAccessToken str
 }
 
 // ExtractClaimsFromToken extracts claims without validation (for logging/debugging)
-func ExtractClaimsFromToken(tokenString string) (map[string]interface{}, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+func ExtractClaimsFromToken(tokenString string) (map[string]any, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		// Don't validate signature for extraction
 		return []byte("dummy"), nil
 	})

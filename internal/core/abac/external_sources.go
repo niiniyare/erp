@@ -359,7 +359,7 @@ func (lac *LDAPAttributeConnector) FetchUserAttributes(ctx context.Context, user
 	// }
 
 	// // Map LDAP attributes to internal attributes
-	// attributes_map := make(map[string]interface{})
+	// attributes_map := make(map[string]any)
 	// entry := result.Entries[0]
 
 	// for ldapAttr, internalAttr := range lac.config.AttributeMappings {

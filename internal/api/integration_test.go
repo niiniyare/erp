@@ -180,7 +180,7 @@ func (s *APIIntegrationTestSuite) TestHealthCheckEndpoint() {
 	s.Assert().Equal("application/json", resp.Header.Get("Content-Type"), "Content type should be application/json")
 
 	// Parse response body
-	var healthStatus map[string]interface{}
+	var healthStatus map[string]any
 	body, err := io.ReadAll(resp.Body)
 	s.Require().NoError(err, "Failed to read response body")
 	
@@ -237,7 +237,7 @@ func (s *APIIntegrationTestSuite) TestReadinessCheckEndpoint() {
 	s.Assert().Equal("application/json", resp.Header.Get("Content-Type"), "Content type should be application/json")
 
 	// Parse response body
-	var readinessStatus map[string]interface{}
+	var readinessStatus map[string]any
 	body, err := io.ReadAll(resp.Body)
 	s.Require().NoError(err, "Failed to read response body")
 	
@@ -249,7 +249,7 @@ func (s *APIIntegrationTestSuite) TestReadinessCheckEndpoint() {
 	s.Assert().Contains(readinessStatus, "checks", "Response should contain checks field")
 
 	// Validate checks object
-	checks, ok := readinessStatus["checks"].(map[string]interface{})
+	checks, ok := readinessStatus["checks"].(map[string]any)
 	s.Require().True(ok, "Checks should be an object")
 	s.Assert().Contains(checks, "database", "Checks should contain database status")
 	s.Assert().Contains(checks, "cache", "Checks should contain cache status")

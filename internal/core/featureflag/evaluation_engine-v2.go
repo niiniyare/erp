@@ -70,8 +70,8 @@ import (
 // type RuleCondition struct {
 // 	Field    string             `json:"field"`
 // 	Operator ComparisonOperator `json:"operator"`
-// 	Value    interface{}        `json:"value,omitempty"`
-// 	Values   []interface{}      `json:"values,omitempty"`
+// 	Value    any        `json:"value,omitempty"`
+// 	Values   []any      `json:"values,omitempty"`
 // }
 //
 // type ComplexEvaluationRules struct {
@@ -141,16 +141,16 @@ type TimeContext struct {
 // ExpressionEngine represents the interface for expression evaluation engines
 type ExpressionEngine interface {
 	// Evaluate a single expression with context
-	EvaluateExpression(ctx context.Context, expression string, context map[string]interface{}) (interface{}, error)
+	EvaluateExpression(ctx context.Context, expression string, context map[string]any) (any, error)
 
 	// Evaluate boolean expression (for conditional logic)
-	EvaluateBooleanExpression(ctx context.Context, expression string, context map[string]interface{}) (bool, error)
+	EvaluateBooleanExpression(ctx context.Context, expression string, context map[string]any) (bool, error)
 
 	// Get engine type for logging/metrics
 	GetEngineType() string
 
 	// Validate expression syntax
-	ValidateExpression(expression string, context map[string]interface{}) error
+	ValidateExpression(expression string, context map[string]any) error
 
 	// Get available functions and variables
 	GetCapabilities() EngineCapabilities
@@ -174,11 +174,11 @@ const (
 
 // EngineConfig holds configuration for expression engines
 type EngineConfig struct {
-	Type            EngineType             `json:"type"`
-	CacheTTL        time.Duration          `json:"cache_ttl"`
-	MaxCacheSize    int                    `json:"max_cache_size"`
-	EnableMetrics   bool                   `json:"enable_metrics"`
-	CustomFunctions map[string]interface{} `json:"custom_functions,omitempty"`
+	Type            EngineType     `json:"type"`
+	CacheTTL        time.Duration  `json:"cache_ttl"`
+	MaxCacheSize    int            `json:"max_cache_size"`
+	EnableMetrics   bool           `json:"enable_metrics"`
+	CustomFunctions map[string]any `json:"custom_functions,omitempty"`
 }
 
 // DefaultEngineConfigs provides sensible defaults
@@ -248,7 +248,7 @@ func NewCELExpressionEngine(logger *slog.Logger, config ...EngineConfig) (Expres
 				rhsValue := rhs.Value()
 
 				// Handle list conversion
-				if rhsList, ok := rhsValue.([]interface{}); ok {
+				if rhsList, ok := rhsValue.([]any); ok {
 					for _, item := range rhsList {
 						if lhsValue == item {
 							return types.True
@@ -422,7 +422,7 @@ func NewCELExpressionEngine(logger *slog.Logger, config ...EngineConfig) (Expres
 	}, nil
 }
 
-func (e *celExpressionEngine) EvaluateExpression(ctx context.Context, expression string, context map[string]interface{}) (interface{}, error) {
+func (e *celExpressionEngine) EvaluateExpression(ctx context.Context, expression string, context map[string]any) (any, error) {
 	cacheKey := fmt.Sprintf("cel_%s", expression)
 
 	var program cel.Program
@@ -452,7 +452,7 @@ func (e *celExpressionEngine) EvaluateExpression(ctx context.Context, expression
 	return out.Value(), nil
 }
 
-func (e *celExpressionEngine) EvaluateBooleanExpression(ctx context.Context, expression string, context map[string]interface{}) (bool, error) {
+func (e *celExpressionEngine) EvaluateBooleanExpression(ctx context.Context, expression string, context map[string]any) (bool, error) {
 	result, err := e.EvaluateExpression(ctx, expression, context)
 	if err != nil {
 		return false, err
@@ -469,7 +469,7 @@ func (e *celExpressionEngine) GetEngineType() string {
 	return string(EngineTypeCEL)
 }
 
-func (e *celExpressionEngine) ValidateExpression(expression string, context map[string]interface{}) error {
+func (e *celExpressionEngine) ValidateExpression(expression string, context map[string]any) error {
 	ast, issues := e.env.Compile(expression)
 	if issues != nil && issues.Err() != nil {
 		return issues.Err()
@@ -517,7 +517,7 @@ func NewExprExpressionEngine(logger *slog.Logger, config ...EngineConfig) Expres
 	}
 }
 
-func (e *exprExpressionEngine) EvaluateExpression(ctx context.Context, expression string, context map[string]interface{}) (interface{}, error) {
+func (e *exprExpressionEngine) EvaluateExpression(ctx context.Context, expression string, context map[string]any) (any, error) {
 	cacheKey := fmt.Sprintf("expr_%s", expression)
 
 	var program *vm.Program
@@ -525,8 +525,8 @@ func (e *exprExpressionEngine) EvaluateExpression(ctx context.Context, expressio
 		program = cached.(*vm.Program)
 	} else {
 		// Create environment with custom functions
-		env := map[string]interface{}{
-			"inList": func(value interface{}, list []interface{}) bool {
+		env := map[string]any{
+			"inList": func(value any, list []any) bool {
 				for _, item := range list {
 					if value == item {
 						return true
@@ -547,7 +547,7 @@ func (e *exprExpressionEngine) EvaluateExpression(ctx context.Context, expressio
 				hashVal := h.Sum32()
 				return int(hashVal%100) < percent
 			},
-			"riskScore": func(context map[string]interface{}) int {
+			"riskScore": func(context map[string]any) int {
 				// Calculate risk score from context
 				return 25 // Placeholder
 			},
@@ -594,7 +594,7 @@ func (e *exprExpressionEngine) EvaluateExpression(ctx context.Context, expressio
 	return output, nil
 }
 
-func (e *exprExpressionEngine) EvaluateBooleanExpression(ctx context.Context, expression string, context map[string]interface{}) (bool, error) {
+func (e *exprExpressionEngine) EvaluateBooleanExpression(ctx context.Context, expression string, context map[string]any) (bool, error) {
 	result, err := e.EvaluateExpression(ctx, expression, context)
 	if err != nil {
 		return false, err
@@ -619,7 +619,7 @@ func (e *exprExpressionEngine) GetEngineType() string {
 	return string(EngineTypeExpr)
 }
 
-func (e *exprExpressionEngine) ValidateExpression(expression string, context map[string]interface{}) error {
+func (e *exprExpressionEngine) ValidateExpression(expression string, context map[string]any) error {
 	_, err := expr.Compile(expression, expr.Env(context))
 	return err
 }
@@ -657,7 +657,7 @@ type EnhancedAdvancedEvaluationEngine struct {
 
 // EngineSelector determines which engine to use for a given expression
 type EngineSelector interface {
-	SelectEngine(ctx context.Context, expression string, context map[string]interface{}) EngineType
+	SelectEngine(ctx context.Context, expression string, context map[string]any) EngineType
 }
 
 // SimpleEngineSelector always returns the default engine
@@ -665,7 +665,7 @@ type SimpleEngineSelector struct {
 	defaultEngine EngineType
 }
 
-func (s *SimpleEngineSelector) SelectEngine(ctx context.Context, expression string, context map[string]interface{}) EngineType {
+func (s *SimpleEngineSelector) SelectEngine(ctx context.Context, expression string, context map[string]any) EngineType {
 	return s.defaultEngine
 }
 
@@ -675,7 +675,7 @@ type SmartEngineSelector struct {
 	exprThreshold int
 }
 
-func (s *SmartEngineSelector) SelectEngine(ctx context.Context, expression string, context map[string]interface{}) EngineType {
+func (s *SmartEngineSelector) SelectEngine(ctx context.Context, expression string, context map[string]any) EngineType {
 	// Simple heuristics for engine selection
 	if strings.Contains(expression, "timestamp") || strings.Contains(expression, "duration") {
 		return EngineTypeCEL // CEL better for time operations
@@ -749,13 +749,13 @@ func (e *EnhancedAdvancedEvaluationEngine) GetExpressionEngine(engineType Engine
 }
 
 // EvaluateExpressionWithEngine evaluates an expression using the specified engine
-func (e *EnhancedAdvancedEvaluationEngine) EvaluateExpressionWithEngine(ctx context.Context, expression string, context map[string]interface{}, engineType EngineType) (interface{}, error) {
+func (e *EnhancedAdvancedEvaluationEngine) EvaluateExpressionWithEngine(ctx context.Context, expression string, context map[string]any, engineType EngineType) (any, error) {
 	engine := e.GetExpressionEngine(engineType)
 	return engine.EvaluateExpression(ctx, expression, context)
 }
 
 // EvaluateExpressionAuto automatically selects the best engine for the expression
-func (e *EnhancedAdvancedEvaluationEngine) EvaluateExpressionAuto(ctx context.Context, expression string, context map[string]interface{}) (interface{}, error) {
+func (e *EnhancedAdvancedEvaluationEngine) EvaluateExpressionAuto(ctx context.Context, expression string, context map[string]any) (any, error) {
 	engineType := e.engineSelector.SelectEngine(ctx, expression, context)
 	engine := e.GetExpressionEngine(engineType)
 
@@ -814,8 +814,8 @@ func (e *EnhancedAdvancedEvaluationEngine) EvaluateComplexRulesWithEngine(
 
 // Helper methods for enhanced engine
 
-func (e *EnhancedAdvancedEvaluationEngine) buildExpressionContext(context *AdvancedEvaluationContext) map[string]interface{} {
-	expressionContext := make(map[string]interface{})
+func (e *EnhancedAdvancedEvaluationEngine) buildExpressionContext(context *AdvancedEvaluationContext) map[string]any {
+	expressionContext := make(map[string]any)
 
 	// Add structured context data
 	expressionContext["user"] = context.UserData
@@ -828,7 +828,7 @@ func (e *EnhancedAdvancedEvaluationEngine) buildExpressionContext(context *Advan
 
 	// Add device context
 	if context.DeviceInfo != nil {
-		expressionContext["device"] = map[string]interface{}{
+		expressionContext["device"] = map[string]any{
 			"type":         context.DeviceInfo.DeviceType,
 			"os":           context.DeviceInfo.OperatingSystem,
 			"browser":      context.DeviceInfo.Browser,
@@ -839,7 +839,7 @@ func (e *EnhancedAdvancedEvaluationEngine) buildExpressionContext(context *Advan
 
 	// Add location context
 	if context.LocationInfo != nil {
-		expressionContext["location"] = map[string]interface{}{
+		expressionContext["location"] = map[string]any{
 			"country":    context.LocationInfo.Country,
 			"region":     context.LocationInfo.Region,
 			"city":       context.LocationInfo.City,
@@ -849,7 +849,7 @@ func (e *EnhancedAdvancedEvaluationEngine) buildExpressionContext(context *Advan
 
 	// Add time context
 	if context.TimeContext != nil {
-		expressionContext["time"] = map[string]interface{}{
+		expressionContext["time"] = map[string]any{
 			"is_working_hours": context.TimeContext.IsWorkingHours,
 			"is_weekend":       context.TimeContext.IsWeekend,
 		}
@@ -869,7 +869,7 @@ func (e *EnhancedAdvancedEvaluationEngine) buildExpressionContext(context *Advan
 func (e *EnhancedAdvancedEvaluationEngine) evaluateRuleWithEngine(
 	ctx context.Context,
 	rule *EvaluationRule,
-	context map[string]interface{},
+	context map[string]any,
 	engineType EngineType,
 ) (bool, []string) {
 	engine := e.GetExpressionEngine(engineType)
@@ -934,7 +934,7 @@ func (e *EnhancedAdvancedEvaluationEngine) evaluateRuleWithEngine(
 func (e *EnhancedAdvancedEvaluationEngine) evaluateLogicalRuleWithEngine(
 	ctx context.Context,
 	rule *EvaluationRule,
-	context map[string]interface{},
+	context map[string]any,
 	engine ExpressionEngine,
 ) (bool, []string) {
 	var expressions []string
@@ -1043,15 +1043,15 @@ func (e *EnhancedAdvancedEvaluationEngine) countRules(rule *EvaluationRule) int 
 	return count
 }
 
-// Utility function to safely convert interface{} to map[string]any
-func getMapFromInterface(value interface{}) map[string]any {
+// Utility function to safely convert any to map[string]any
+func getMapFromInterface(value any) map[string]any {
 	if value == nil {
 		return make(map[string]any)
 	}
 	if m, ok := value.(map[string]any); ok {
 		return m
 	}
-	if m, ok := value.(map[string]interface{}); ok {
+	if m, ok := value.(map[string]any); ok {
 		result := make(map[string]any)
 		for k, v := range m {
 			result[k] = v
@@ -1108,7 +1108,7 @@ func NewExpressionEngineComparator(logger *slog.Logger) (*ExpressionEngineCompar
 }
 
 // CompareEvaluation runs the same expression on both engines and compares results
-func (c *ExpressionEngineComparator) CompareEvaluation(ctx context.Context, expression string, context map[string]interface{}) (*ComparisonResult, error) {
+func (c *ExpressionEngineComparator) CompareEvaluation(ctx context.Context, expression string, context map[string]any) (*ComparisonResult, error) {
 	start := time.Now()
 
 	// Evaluate with CEL
@@ -1144,17 +1144,17 @@ func (c *ExpressionEngineComparator) CompareEvaluation(ctx context.Context, expr
 
 type ComparisonResult struct {
 	Expression    string        `json:"expression"`
-	CELResult     interface{}   `json:"cel_result"`
+	CELResult     any           `json:"cel_result"`
 	CELError      error         `json:"cel_error,omitempty"`
 	CELDuration   time.Duration `json:"cel_duration"`
-	ExprResult    interface{}   `json:"expr_result"`
+	ExprResult    any           `json:"expr_result"`
 	ExprError     error         `json:"expr_error,omitempty"`
 	ExprDuration  time.Duration `json:"expr_duration"`
 	ResultsMatch  bool          `json:"results_match"`
 	TotalDuration time.Duration `json:"total_duration"`
 }
 
-func compareResults(celResult, exprResult interface{}, celErr, exprErr error) bool {
+func compareResults(celResult, exprResult any, celErr, exprErr error) bool {
 	// If both have errors, consider them matching
 	if celErr != nil && exprErr != nil {
 		return true
@@ -1367,7 +1367,7 @@ func NewBenchmarkSuite(logger *slog.Logger) (*BenchmarkSuite, error) {
 	}, nil
 }
 
-func (b *BenchmarkSuite) RunBenchmark(ctx context.Context, expressions []string, context map[string]interface{}, iterations int) ([]*BenchmarkResult, error) {
+func (b *BenchmarkSuite) RunBenchmark(ctx context.Context, expressions []string, context map[string]any, iterations int) ([]*BenchmarkResult, error) {
 	var results []*BenchmarkResult
 
 	for _, expression := range expressions {
@@ -1383,7 +1383,7 @@ func (b *BenchmarkSuite) RunBenchmark(ctx context.Context, expressions []string,
 	return results, nil
 }
 
-func (b *BenchmarkSuite) benchmarkEngine(ctx context.Context, engine ExpressionEngine, expression string, context map[string]interface{}, iterations int) *BenchmarkResult {
+func (b *BenchmarkSuite) benchmarkEngine(ctx context.Context, engine ExpressionEngine, expression string, context map[string]any, iterations int) *BenchmarkResult {
 	var totalTime time.Duration
 	var successCount int
 	var lastError error
@@ -1423,7 +1423,7 @@ func NewExpressionDebugger(logger *slog.Logger) *ExpressionDebugger {
 }
 
 // DebugExpression provides detailed information about expression evaluation
-func (d *ExpressionDebugger) DebugExpression(ctx context.Context, engine ExpressionEngine, expression string, context map[string]interface{}) *DebugResult {
+func (d *ExpressionDebugger) DebugExpression(ctx context.Context, engine ExpressionEngine, expression string, context map[string]any) *DebugResult {
 	start := time.Now()
 
 	// Validate expression first
@@ -1456,12 +1456,12 @@ func (d *ExpressionDebugger) DebugExpression(ctx context.Context, engine Express
 }
 
 type DebugResult struct {
-	Expression      string                 `json:"expression"`
-	EngineType      string                 `json:"engine_type"`
-	Context         map[string]interface{} `json:"context"`
-	Result          interface{}            `json:"result"`
-	ValidationError error                  `json:"validation_error,omitempty"`
-	EvaluationError error                  `json:"evaluation_error,omitempty"`
-	ExecutionTime   time.Duration          `json:"execution_time"`
-	Capabilities    EngineCapabilities     `json:"capabilities"`
+	Expression      string             `json:"expression"`
+	EngineType      string             `json:"engine_type"`
+	Context         map[string]any     `json:"context"`
+	Result          any                `json:"result"`
+	ValidationError error              `json:"validation_error,omitempty"`
+	EvaluationError error              `json:"evaluation_error,omitempty"`
+	ExecutionTime   time.Duration      `json:"execution_time"`
+	Capabilities    EngineCapabilities `json:"capabilities"`
 }

@@ -144,7 +144,7 @@ func (s *attributeValidationService) ValidateAttribute(ctx context.Context, attr
 
 	// Validate allowed values (enum validation)
 	if len(definition.AllowedValues) > 0 {
-		// Convert []string to []interface{} for validation
+		// Convert []string to []any for validation
 		allowedValues := make([]any, len(definition.AllowedValues))
 		for i, v := range definition.AllowedValues {
 			allowedValues[i] = v
@@ -519,7 +519,7 @@ func (s *attributeValidationService) GetValidationRules(ctx context.Context, att
 		return nil, err
 	}
 
-	// Convert AllowedValues from []string to []interface{}
+	// Convert AllowedValues from []string to []any
 	var allowedValues []any
 	for _, v := range definition.AllowedValues {
 		allowedValues = append(allowedValues, v)

@@ -250,7 +250,7 @@ func (r *repository) EvaluateFlags(ctx context.Context, userID *string, flagName
 			Source:      dbResult.Source,
 			Reason:      dbResult.Reason,
 			Variation:   dbResult.Variation,
-			EvaluatedAt: time.Now(), // Use current time since dbResult.EvaluatedAt is interface{}
+			EvaluatedAt: time.Now(), // Use current time since dbResult.EvaluatedAt is any
 		}
 	}
 

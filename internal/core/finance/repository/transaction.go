@@ -659,7 +659,7 @@ func (r *transactionRepository) mapDatabaseError(err error, operation string) er
 // Mapping helper functions
 func (r *transactionRepository) mapSQLCTransactionToDomain(sqlcTransaction *db.FinanceTransaction) (*domain.Transaction, error) {
 	// Parse metadata from JSONB
-	var metadata map[string]interface{}
+	var metadata map[string]any
 	if len(sqlcTransaction.TransactionAttributes) > 0 {
 		if err := json.Unmarshal(sqlcTransaction.TransactionAttributes, &metadata); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal transaction metadata: %w", err)
@@ -705,7 +705,7 @@ func (r *transactionRepository) mapSQLCTransactionToDomain(sqlcTransaction *db.F
 
 func (r *transactionRepository) mapSQLCTransactionRowToDomain(row *db.GetTransactionWithEntriesRow) (*domain.Transaction, error) {
 	// Parse metadata from JSONB
-	var metadata map[string]interface{}
+	var metadata map[string]any
 	if len(row.TransactionAttributes) > 0 {
 		if err := json.Unmarshal(row.TransactionAttributes, &metadata); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal transaction metadata: %w", err)

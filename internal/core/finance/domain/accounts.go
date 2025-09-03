@@ -138,7 +138,7 @@ type CreateAccountRequest struct {
 	BudgetVarianceThreshold decimal.Decimal `json:"budget_variance_threshold" validate:"min=0,max=100"`
 
 	// Extensions
-	AccountAttributes map[string]interface{} `json:"account_attributes,omitempty"`
+	AccountAttributes map[string]any `json:"account_attributes,omitempty"`
 }
 
 // UpdateAccountRequest represents the request to update an account
@@ -175,7 +175,7 @@ type UpdateAccountRequest struct {
 	BudgetVarianceThreshold *decimal.Decimal `json:"budget_variance_threshold,omitempty" validate:"omitempty,min=0,max=100"`
 
 	// Extensions
-	AccountAttributes map[string]interface{} `json:"account_attributes,omitempty"`
+	AccountAttributes map[string]any `json:"account_attributes,omitempty"`
 }
 
 // AccountBalance represents account balance information at a point in time

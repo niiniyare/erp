@@ -528,10 +528,10 @@ type AuthenticationResponse struct {
 }
 
 type TokenValidation struct {
-	Valid    bool                   `json:"valid"`
-	UserID   uuid.UUID              `json:"user_id"`
-	TenantID uuid.UUID              `json:"tenant_id"`
-	Claims   map[string]interface{} `json:"claims"`
+	Valid    bool           `json:"valid"`
+	UserID   uuid.UUID      `json:"user_id"`
+	TenantID uuid.UUID      `json:"tenant_id"`
+	Claims   map[string]any `json:"claims"`
 }
 
 func setupTestAuthenticationService(t *testing.T) AuthenticationService {

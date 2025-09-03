@@ -658,7 +658,7 @@ func (r *repository) GetEntityWithHierarchy(ctx context.Context, entityID uuid.U
 		return nil, fmt.Errorf("failed to get hierarchy info: %w", err)
 	}
 
-	// Convert interface{} to int for Level
+	// Convert any to int for Level
 	level, ok := hierarchyInfo.Level.(int64)
 	if !ok {
 		level = 0

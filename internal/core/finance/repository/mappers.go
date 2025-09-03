@@ -251,7 +251,7 @@ func mapSQLCAccountToDomain(sqlcAccount *db.FinanceAccount) (*domain.Accounts, e
 	}
 
 	// Parse account attributes from JSONB
-	var attributes map[string]interface{}
+	var attributes map[string]any
 	if len(sqlcAccount.AccountAttributes) > 0 {
 		if err := json.Unmarshal(sqlcAccount.AccountAttributes, &attributes); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal account attributes: %w", err)
@@ -654,7 +654,7 @@ func pgNumericToDecimalPtr(n pgtype.Numeric) *decimal.Decimal {
 	return nil
 }
 
-func mapAttributesToJSON(attributes map[string]interface{}) []byte {
+func mapAttributesToJSON(attributes map[string]any) []byte {
 	if attributes == nil {
 		return []byte("{}")
 	}

@@ -57,8 +57,8 @@ type ListPoliciesResult struct {
 // Additional types used by the implementation
 type PolicyEvaluationRequest struct {
 	PolicyID    uuid.UUID      `json:"policy_id"`
-	Subject     interface{}    `json:"subject"`
-	Resource    interface{}    `json:"resource"`
+	Subject     any            `json:"subject"`
+	Resource    any            `json:"resource"`
 	Action      string         `json:"action"`
 	Environment map[string]any `json:"environment,omitempty"`
 }

@@ -679,7 +679,7 @@ func (as *attributeService) ValidateAttributeValue(ctx context.Context, req *Val
 
 		// Custom validation rules
 		if len(attributeDef.ValidationRules) > 0 {
-			// Convert map[string]any to []map[string]interface{}
+			// Convert map[string]any to []map[string]any
 			var rulesSlice []map[string]any
 			for _, rule := range attributeDef.ValidationRules {
 				if ruleMap, ok := rule.(map[string]any); ok {

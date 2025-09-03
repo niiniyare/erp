@@ -181,7 +181,7 @@ func (s *AuthAPIIntegrationTestSuite) TestSuccessfulAuthentication() {
 	defer server.Close()
 
 	// Prepare authentication request
-	authRequest := map[string]interface{}{
+	authRequest := map[string]any{
 		"email":    s.testUserA.Email,
 		"password": s.validPassword,
 	}
@@ -202,7 +202,7 @@ func (s *AuthAPIIntegrationTestSuite) TestSuccessfulAuthentication() {
 	// Validate response
 	s.Assert().Equal(http.StatusOK, resp.StatusCode, "Authentication should succeed")
 
-	var authResponse map[string]interface{}
+	var authResponse map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&authResponse)
 	s.Require().NoError(err, "Failed to decode auth response")
 
@@ -267,7 +267,7 @@ func (s *AuthAPIIntegrationTestSuite) TestAuthenticationFailure() {
 	for _, tc := range testCases {
 		s.T().Logf("Testing %s: %s", tc.name, tc.description)
 
-		authRequest := map[string]interface{}{
+		authRequest := map[string]any{
 			"email":    tc.email,
 			"password": tc.password,
 		}
@@ -357,7 +357,7 @@ func (s *AuthAPIIntegrationTestSuite) TestMultiTenantAuthenticationIsolation() {
 	defer server.Close()
 
 	// Test: User from Tenant A cannot authenticate in Tenant B context
-	authRequest := map[string]interface{}{
+	authRequest := map[string]any{
 		"email":    s.testUserA.Email, // User from Tenant A
 		"password": s.validPassword,
 	}
@@ -412,7 +412,7 @@ func (s *AuthAPIIntegrationTestSuite) TestTokenRefresh() {
 	s.Require().NotEmpty(refreshToken, "Refresh token should not be empty")
 
 	// Test token refresh
-	refreshRequest := map[string]interface{}{
+	refreshRequest := map[string]any{
 		"refresh_token": refreshToken,
 	}
 
@@ -430,7 +430,7 @@ func (s *AuthAPIIntegrationTestSuite) TestTokenRefresh() {
 
 	s.Assert().Equal(http.StatusOK, resp.StatusCode, "Token refresh should succeed")
 
-	var refreshResponse map[string]interface{}
+	var refreshResponse map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&refreshResponse)
 	s.Require().NoError(err, "Failed to decode refresh response")
 
@@ -458,7 +458,7 @@ func (s *AuthAPIIntegrationTestSuite) createAuthTestServer(authHandler auth.Serv
 			return
 		}
 
-		var loginReq map[string]interface{}
+		var loginReq map[string]any
 		if err := json.NewDecoder(r.Body).Decode(&loginReq); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
@@ -520,7 +520,7 @@ func (s *AuthAPIIntegrationTestSuite) createAuthTestServer(authHandler auth.Serv
 
 		// Return user info (simplified)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		json.NewEncoder(w).Encode(map[string]any{
 			"user_id": s.testUserA.ID,
 			"email":   s.testUserA.Email,
 		})
@@ -533,7 +533,7 @@ func (s *AuthAPIIntegrationTestSuite) createAuthTestServer(authHandler auth.Serv
 			return
 		}
 
-		var refreshReq map[string]interface{}
+		var refreshReq map[string]any
 		if err := json.NewDecoder(r.Body).Decode(&refreshReq); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
@@ -576,8 +576,8 @@ func (s *AuthAPIIntegrationTestSuite) authenticateAndGetToken(server *httptest.S
 }
 
 // authenticateAndGetFullResponse performs authentication and returns full response
-func (s *AuthAPIIntegrationTestSuite) authenticateAndGetFullResponse(server *httptest.Server, email, password string, tenantID uuid.UUID) map[string]interface{} {
-	authRequest := map[string]interface{}{
+func (s *AuthAPIIntegrationTestSuite) authenticateAndGetFullResponse(server *httptest.Server, email, password string, tenantID uuid.UUID) map[string]any {
+	authRequest := map[string]any{
 		"email":    email,
 		"password": password,
 	}
@@ -590,7 +590,7 @@ func (s *AuthAPIIntegrationTestSuite) authenticateAndGetFullResponse(server *htt
 	resp, _ := s.client.Do(req)
 	defer resp.Body.Close()
 
-	var authResponse map[string]interface{}
+	var authResponse map[string]any
 	json.NewDecoder(resp.Body).Decode(&authResponse)
 	return authResponse
 }

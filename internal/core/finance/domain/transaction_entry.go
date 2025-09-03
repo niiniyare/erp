@@ -520,8 +520,8 @@ func (e *TransactionEntry) UnmarkReconciled() {
 }
 
 // GetDimensionalAnalysis returns a map of dimensional attributes
-func (e *TransactionEntry) GetDimensionalAnalysis() map[string]interface{} {
-	dimensions := make(map[string]interface{})
+func (e *TransactionEntry) GetDimensionalAnalysis() map[string]any {
+	dimensions := make(map[string]any)
 
 	if e.CostCenter != nil {
 		dimensions["cost_center"] = *e.CostCenter

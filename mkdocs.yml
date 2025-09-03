@@ -13,6 +13,7 @@ theme:
     - content.code.annotation
     - content.code.copy
   language: en
+  highlightjs: true
   palette:
     - scheme: default
       toggle:

@@ -692,8 +692,8 @@ func IsValidCurrency(currencyCode string) bool {
 }
 
 // GetEnvironmentDefaults returns environment-specific default values
-func GetEnvironmentDefaults(environment string) map[string]interface{} {
-	defaults := make(map[string]interface{})
+func GetEnvironmentDefaults(environment string) map[string]any {
+	defaults := make(map[string]any)
 
 	switch environment {
 	case EnvironmentDevelopment:
