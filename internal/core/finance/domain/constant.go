@@ -346,18 +346,19 @@ const (
 var (
 	// Most common currencies
 	CommonCurrencies = []string{
-		"USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "CNY", "INR", "BRL",
+		"USD", "EUR", "GBP", "JPY", "CHF",
+		"CAD", "AUD", "CNY", "INR", "BRL",
 		"KES", "UGX", "TZS", "RWF", "ZAR", // East African currencies
 	}
 
 	// Default currency display formats
 	CurrencyDisplayFormats = map[string]string{
-		"USD": "$%.2f",
-		"EUR": "€%.2f",
-		"GBP": "£%.2f",
+		"USD": "$%.4f",
+		"EUR": "€%.4f",
+		"GBP": "£%.4f",
 		"JPY": "¥%.0f",
-		"KES": "KSh %.2f",
-		"UGX": "UGX %.0f",
+		"KES": "KSh %.4f",
+		"UGX": "UGX %.2f",
 	}
 
 	// Currencies that don't use decimal places

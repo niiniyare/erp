@@ -1,3 +1,5 @@
+// Package services provides comprehensive financial services and utilities //for enterprise-grade accounting and financial management systems. // //It includes modules for: //- Accounts Receivable (AR) management: invoice processing, payment tracking, and aging reports //- Accounts Payable (AP) management: vendor payments, expense tracking, and payment scheduling //- Foreign exchange operations: real-time currency conversion, rate management, and gain/loss calculations //- Financial reporting: balance sheets, income statements, cash flow statements, and regulatory compliance //- General ledger maintenance: journal entries, chart of accounts, and trial balance //- Audit trail management: transaction logging and compliance documentation // //The package is designed to meet professional accounting standards (GAAP/IFRS) //and provides robust error handling, data validation, and security features //suitable for production financial systems. package finance
+
 package service
 
 import (
