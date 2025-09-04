@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#architecture-overview" class="md-skip">
+        <a href="#awo-erp-architecture-overview" class="md-skip">
           Skip to content
         </a>
       
@@ -355,6 +355,26 @@
   
   
   Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/modules/settings/" class="md-tabs__link">
+          
+  
+  
+  System Configuration
 
         </a>
       </li>
@@ -798,6 +818,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#clean-architecture-temporal-workflows-module-facades" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clean Architecture + Temporal Workflows + Module Facades
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system-architecture" class="md-nav__link">
     <span class="md-ellipsis">
       🏗️ System Architecture
@@ -832,168 +861,39 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1. API Layer (internal/api/)">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
-  <a href="#components" class="md-nav__link">
+  <a href="#2-application-core-internalcoremodule" class="md-nav__link">
     <span class="md-ellipsis">
-      Components:
+      2. Application Core (internal/core/{module}/)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#responsibilities" class="md-nav__link">
+  <a href="#3-repository-layer-internalcoremodulerepository" class="md-nav__link">
     <span class="md-ellipsis">
-      Responsibilities:
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-application-core-internalcoredomain" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. Application Core (internal/core/{domain}/)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Application Core (internal/core/{domain}/)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#components_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Components:
+      3. Repository Layer (internal/core/{module}/repository/)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#responsibilities_1" class="md-nav__link">
+  <a href="#4-temporal-layer-workflows-activities" class="md-nav__link">
     <span class="md-ellipsis">
-      Responsibilities:
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-persistence-adapter-internalcoredomainrepository" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Persistence Adapter (internal/core/{domain}/repository/)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. Persistence Adapter (internal/core/{domain}/repository/)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#components_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Components:
+      4. Temporal Layer (Workflows &amp; Activities)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#responsibilities_2" class="md-nav__link">
+  <a href="#5-infrastructure-layer-internalplatform" class="md-nav__link">
     <span class="md-ellipsis">
-      Responsibilities:
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-platform-infrastructure-internalplatform" class="md-nav__link">
-    <span class="md-ellipsis">
-      4. Platform Infrastructure (internal/platform/)
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. Platform Infrastructure (internal/platform/)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#components_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      Components:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#responsibilities_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      Responsibilities:
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dependency-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      🔄 Dependency Flow
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="🔄 Dependency Flow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#correct-dependency-direction" class="md-nav__link">
-    <span class="md-ellipsis">
-      Correct Dependency Direction
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#key-rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      Key Rules:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-dependency-injection-conceptual-maingo" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example Dependency Injection (Conceptual main.go):
+      5. Infrastructure Layer (internal/platform/)
     </span>
   </a>
   
@@ -1005,46 +905,37 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#hexagonal-architecture-benefits" class="md-nav__link">
+  <a href="#dependency-flow-module-isolation" class="md-nav__link">
     <span class="md-ellipsis">
-      🏛️ Hexagonal Architecture Benefits
+      🔄 Dependency Flow &amp; Module Isolation
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="🏛️ Hexagonal Architecture Benefits">
+    <nav class="md-nav" aria-label="🔄 Dependency Flow &amp; Module Isolation">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-maximum-testability" class="md-nav__link">
+  <a href="#strict-dependency-direction" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Maximum Testability
+      Strict Dependency Direction
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-framework-independence" class="md-nav__link">
+  <a href="#module-isolation-rules" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Framework Independence
+      Module Isolation Rules
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-technology-independence" class="md-nav__link">
+  <a href="#context-propagation-pattern" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Technology Independence
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-clear-boundaries-maintainability" class="md-nav__link">
-    <span class="md-ellipsis">
-      4. Clear Boundaries &amp; Maintainability
+      Context Propagation Pattern
     </span>
   </a>
   
@@ -1056,37 +947,106 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-anti-patterns-to-avoid" class="md-nav__link">
+  <a href="#architecture-benefits" class="md-nav__link">
     <span class="md-ellipsis">
-      🚨 Common Anti-Patterns to Avoid
+      🏛️ Architecture Benefits
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="🚨 Common Anti-Patterns to Avoid">
+    <nav class="md-nav" aria-label="🏛️ Architecture Benefits">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#wrong-dependency-direction" class="md-nav__link">
+  <a href="#1-workflow-first-design" class="md-nav__link">
     <span class="md-ellipsis">
-      ❌ Wrong Dependency Direction
+      1. Workflow-First Design
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#business-logic-in-adapters" class="md-nav__link">
+  <a href="#2-module-autonomy" class="md-nav__link">
     <span class="md-ellipsis">
-      ❌ Business Logic in Adapters
+      2. Module Autonomy
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#leaking-database-models" class="md-nav__link">
+  <a href="#3-multi-tenant-by-design" class="md-nav__link">
     <span class="md-ellipsis">
-      ❌ Leaking Database Models
+      3. Multi-Tenant by Design
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-configuration-driven" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Configuration-Driven
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-enterprise-grade-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Enterprise-Grade Observability
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anti-patterns-to-avoid" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚨 Anti-Patterns to Avoid
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚨 Anti-Patterns to Avoid">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-module-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❌ Breaking Module Boundaries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hard-coded-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❌ Hard-Coded Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bypassing-workflows-for-complex-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❌ Bypassing Workflows for Complex Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-free-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❌ Context-Free Operations
     </span>
   </a>
   
@@ -2721,7 +2681,7 @@
   
   
   <span class="md-ellipsis">
-    Other Modules
+    System Configuration
     
   </span>
   
@@ -2731,6 +2691,171 @@
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            System Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/service-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Other Modules
           </label>
@@ -2749,29 +2874,6 @@
   
   <span class="md-ellipsis">
     System Architecture
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/modules/settings/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    System Settings
     
   </span>
   
@@ -3131,10 +3233,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
             
   
   
@@ -3147,8 +3249,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             API Reference
           </label>
@@ -3312,10 +3414,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_7" >
         
           
-          <label class="md-nav__link" for="__nav_10_7" id="__nav_10_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_7" id="__nav_11_7_label" tabindex="0">
             
   
   
@@ -3328,8 +3430,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_7">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
           </label>
@@ -3432,10 +3534,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_10" >
         
           
-          <label class="md-nav__link" for="__nav_10_10" id="__nav_10_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_10" id="__nav_11_10_label" tabindex="0">
             
   
   
@@ -3448,8 +3550,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_10">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_10">
             <span class="md-nav__icon md-icon"></span>
             Core APIs
           </label>
@@ -3713,10 +3815,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_11" >
         
           
-          <label class="md-nav__link" for="__nav_10_11" id="__nav_10_11_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_11" id="__nav_11_11_label" tabindex="0">
             
   
   
@@ -3729,8 +3831,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_11">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_11">
             <span class="md-nav__icon md-icon"></span>
             Workflows
           </label>
@@ -3856,10 +3958,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_12" >
         
           
-          <label class="md-nav__link" for="__nav_10_12" id="__nav_10_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_12" id="__nav_11_12_label" tabindex="0">
             
   
   
@@ -3872,8 +3974,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_12">
             <span class="md-nav__icon md-icon"></span>
             Testing
           </label>
@@ -3953,10 +4055,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_13" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_13" >
         
           
-          <label class="md-nav__link" for="__nav_10_13" id="__nav_10_13_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_13" id="__nav_11_13_label" tabindex="0">
             
   
   
@@ -3969,8 +4071,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_13">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_13">
             <span class="md-nav__icon md-icon"></span>
             Utilities
           </label>
@@ -4030,231 +4132,343 @@
 
 
 
-<h1 id="architecture-overview">Architecture Overview</h1>
-<p>Our ERP system follows a <strong>Hexagonal (Ports &amp; Adapters) Architecture</strong>. This is a specific implementation of Clean Architecture that emphasizes the isolation of the application core from external technologies and frameworks.</p>
+<h1 id="awo-erp-architecture-overview">Awo ERP Architecture Overview</h1>
+<h2 id="clean-architecture-temporal-workflows-module-facades"><em>Clean Architecture + Temporal Workflows + Module Facades</em></h2>
+<p><em>Modern ERP system architecture combining Clean Architecture principles with Temporal workflow orchestration and modular service design</em></p>
+<blockquote>
+<p><strong>📚 Related Documentation:</strong><br />
+- <code>docs/contributing/service.md</code> - Service implementation patterns and module development<br />
+- <code>docs/contributing/goa.md</code> - API design and handler architecture<br />
+- <code>docs/contributing/database-transactions.md</code> - Database patterns and tenant isolation</p>
+</blockquote>
 <h2 id="system-architecture">🏗️ System Architecture</h2>
-<p>The architecture is designed to protect the core business logic from outside concerns. External actors (like users or other systems) interact with the core through specific "Ports," and "Adapters" provide the concrete implementation for these interactions.</p>
-<div class="highlight"><pre><span></span><code>                                 ┌──────────────────┐
-                                 │   Web Browser    │
-                                 │ (External Actor) │
-                                 └──────────────────┘
-                                         │
-                                         ▼
-                          ┌─────────────────────────────┐
-                          │   Transport/API Layer       │
-                          │ (internal/api/handlers)     │
-                          └─────────────────────────────┘
-                                         │ (Primary Port)
-                                         ▼
-  ┌──────────────────────────────────────────────────────────────────────────┐
-  │                            Application Core                              │
-  │                          (internal/core/{domain})                          │
-  │                                                                          │
-  │   ┌────────────────┐   ┌──────────────────┐   ┌───────────────────────┐  │
-  │   │    Services    │──▶│ Domain Models &amp;  │◀──│ Repository Interfaces │  │
-  │   │ (Business Logic) │   │    Interfaces    │   │    (Secondary Port)   │  │
-  │   └────────────────┘   └──────────────────┘   └───────────────────────┘  │
-  │                                                                          │
-  └────────────────────────────────────┬─────────────────────────────────────┘
-                                       │ (Secondary Adapters)
-           ┌───────────────────────────┴───────────────────────────┐
-           │                                                       │
-┌──────────────────────────┐                          ┌──────────────────────────┐
-│  Persistence Adapter     │                          │  Platform Infrastructure │
-│ (internal/core/{domain}/ │                          │   (internal/platform)    │
-│      repository)         │                          │                          │
-└──────────────────────────┘                          └──────────────────────────┘
-           │                                                       │
-           ▼                                                       ▼
-┌──────────────────────────┐                          ┌──────────────────────────┐
-│   Database (Postgres)    │                          │      Cache (Redis)       │
-│       (sqlc)             │                          │      Middleware, etc.    │
-└──────────────────────────┘                          └──────────────────────────┘
+<p>Awo ERP follows <strong>Clean Architecture with Temporal-First design</strong>, emphasizing workflow orchestration, multi-tenant isolation, and modular service facades.</p>
+<div class="highlight"><pre><span></span><code>                    ┌─────────────────────────────────────────┐
+                    │           External Actors               │
+                    │  Web Browser  │  API Clients  │  CLI    │
+                    └─────────────────┬───────────────────────┘
+                                      │
+                                      ▼
+                    ┌─────────────────────────────────────────┐
+                    │          API Layer (Goa)                │
+                    │    internal/api/handlers/               │
+                    │  ┌─────────────────────────────────────┐│
+                    │  │ Module Entry Points                 ││
+                    │  │ finance.go, iam.go, tenant.go      ││
+                    │  │         │                           ││
+                    │  │         ▼                           ││
+                    │  │ ┌─────────────────┐ ┌─────────────┐ ││
+                    │  │ │ finance/        │ │ iam/        │ ││
+                    │  │ │ service_handler │ │ auth_handler│ ││
+                    │  │ └─────────────────┘ └─────────────┘ ││
+                    │  └─────────────────────────────────────┘│
+                    └─────────────────┬───────────────────────┘
+                                      │ (Primary Ports)
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        Application Core                                     │
+│                     internal/core/{module}/                                 │
+│                                                                             │
+│  ┌─────────────────┐ ┌─────────────────────────────────────────────────────┐ │
+│  │ Module Facade   │ │                Service Layer                        │ │
+│  │ service.go      │ │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐   │ │
+│  │                 │ │ │   Domain    │ │  Feature    │ │ Workflows &amp; │   │ │
+│  │ finance.Service │ │ │   Models    │ │  Services   │ │ Activities  │   │ │
+│  │ iam.Service     ├─┼▶│ Entities &amp;  │◀┤ Business   │◀┤  (Temporal) │   │ │
+│  │ tenant.Service  │ │ │ Value Objs  │ │  Logic      │ │             │   │ │
+│  │                 │ │ └─────────────┘ └─────────────┘ └─────────────┘   │ │
+│  └─────────────────┘ └─────────────────────────────────────────────────────┘ │
+│                                         │ (Secondary Ports)                 │
+└─────────────────────────────────────────┼─────────────────────────────────────┘
+                                          │
+                    ┌─────────────────────┼─────────────────────┐
+                    │                     │                     │
+         ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+         │  Persistence     │  │   Temporal       │  │   Infrastructure │
+         │  (Repository)    │  │   Workers        │  │   (Platform)     │
+         │                  │  │                  │  │                  │
+         │ SQLC + Context   │  │ Workflow/        │  │ Cache, Config,   │
+         │ Tenant Isolation │  │ Activity Engine  │  │ Metrics, Tracing │
+         └──────────────────┘  └──────────────────┘  └──────────────────┘
+                    │                     │                     │
+                    ▼                     ▼                     ▼
+         ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+         │   PostgreSQL     │  │    Temporal      │  │ Redis, Observ.   │
+         │   (RLS + SQLC)   │  │    Server        │  │ External APIs    │
+         └──────────────────┘  └──────────────────┘  └──────────────────┘
 </code></pre></div>
 <h2 id="directory-structure">📁 Directory Structure</h2>
-<p>The directory structure strictly follows the architectural pattern, separating concerns into distinct modules.</p>
+<p>The architecture follows strict modular organization with clear separation of concerns:</p>
 <div class="highlight"><pre><span></span><code>internal/
-├── api/
-│   ├── design/           # API Design (Goa DSL) - The Source of Truth
-│   ├── middleware/       # Tenant context, auth, logging middleware
-│   └── handlers/         # HTTP Handlers (Adapter for API input)
-├── core/
-│   ├── {domain}/         # Self-contained domain module (e.g., tenant, abac)
-│   │   ├── models/       # Domain models for the module
-│   │   ├── services/     # Business logic implementation (Application Core)
-│   │   ├── repository/   # Data persistence IMPLEMENTATION (Adapter)
-│   │   └── *.go          # Interfaces (Ports) for services/repositories
+├── api/                                # API Layer - External Interface
+│   ├── design/                         # Goa API specifications
+│   │   ├── design.go                   # Main API definition  
+│   │   └── services/                   # Module service designs
+│   ├── gen/                            # Generated Goa code
+│   └── handlers/                       # HTTP request handlers
+│       ├── {module}.go                 # 🔥 Module entry points (main imports)
+│       ├── {module}/                   # Module handler implementations
+│       │   ├── service_handler.go      # Core service handler
+│       │   ├── types.go                # Request/response adapters
+│       │   └── validation.go           # Input validation
+│       └── common/                     # Shared handler utilities
+│
+├── core/                               # Application Core - Business Logic
+│   ├── {module}/                       # Self-contained domain module
+│   │   ├── service.go                  # 🔥 Module facade (external interface)
+│   │   ├── domain/                     # Business entities and rules
+│   │   │   ├── entities.go             # Core business entities
+│   │   │   ├── types.go                # Value objects and enums
+│   │   │   ├── constants.go            # Business configuration
+│   │   │   └── validation.go           # Business validation rules
+│   │   ├── {feature}/                  # Feature-specific submodules  
+│   │   │   ├── service.go              # Feature service implementation
+│   │   │   └── models.go               # Feature-specific models
+│   │   ├── repository/                 # Data access layer
+│   │   │   ├── interfaces.go           # Repository contracts
+│   │   │   ├── {entity}.go             # SQLC-based implementations
+│   │   │   └── mappers.go              # Domain ↔ DB conversions
+│   │   ├── activities/                 # Temporal activities
+│   │   │   ├── activity_registry.go    # Activity registration
+│   │   │   └── {domain}_activities.go  # Domain-specific activities
+│   │   └── workflows/                  # Temporal workflows
+│   │       └── {process}_workflow.go   # Business process workflows
 │   └── ...
-├── platform/             # Cross-cutting infrastructure concerns (Adapters)
-│   ├── cache/            # Caching implementation (e.g., Redis)
-│   └── config/           # Application configuration
-└── shared/               # Utilities used by all other layers
-    ├── logger/
-    ├── errors/
-    └── context.go
+│
+├── platform/                           # Infrastructure Layer - External Concerns
+│   ├── cache/                          # Redis caching implementation
+│   ├── config/                         # Configuration management
+│   ├── database/                       # Database connection &amp; migrations
+│   └── temporal/                       # Temporal client configuration
+│
+└── shared/                             # Cross-cutting Utilities
+    ├── errors/                         # Error handling framework
+    ├── logger/                         # Structured logging
+    ├── metrics/                        # Metrics collection
+    └── tracing/                        # Distributed tracing
 </code></pre></div>
 <h2 id="layer-responsibilities">🎯 Layer Responsibilities</h2>
-<h3 id="1-api-layer-internalapi">1. API Layer (<code>internal/api/</code>)</h3>
-<p><strong>Purpose</strong>: To act as an adapter for external API calls, translating them into calls to the application core.</p>
-<h4 id="components">Components:</h4>
-<ul>
-<li><strong><code>design/</code></strong>: The declarative source of truth for the API using the <strong>Goa</strong> DSL.</li>
-<li><strong><code>handlers/</code></strong>: The concrete implementation that handles HTTP requests, extracts data, and calls the appropriate core service.</li>
-</ul>
-<h4 id="responsibilities">Responsibilities:</h4>
-<ul>
-<li>✅ Define API contracts, endpoints, and data structures in <code>design/</code>.</li>
-<li>✅ Handle HTTP request/response lifecycle.</li>
-<li>✅ Perform initial input validation and sanitization.</li>
-<li>✅ Call the appropriate service in the core layer, passing a <code>context</code>.</li>
-<li>✅ Format responses (JSON, status codes) based on the results from the core.</li>
-<li>❌ <strong>No business logic.</strong></li>
-<li>❌ <strong>No direct database or repository access.</strong></li>
-</ul>
-<h3 id="2-application-core-internalcoredomain">2. Application Core (<code>internal/core/{domain}/</code>)</h3>
-<p><strong>Purpose</strong>: To contain all business logic and domain knowledge, completely independent of any external framework or technology.</p>
-<h4 id="components_1">Components:</h4>
-<ul>
-<li><strong>Service Interfaces (Ports)</strong>: Defines the contract for the business logic (e.g., <code>TenantService</code> interface).</li>
-<li><strong><code>services/</code></strong>: The implementation of the service interfaces, orchestrating business operations.</li>
-<li><strong><code>models/</code></strong>: The rich domain entities, value objects, and data structures that represent business concepts.</li>
-<li><strong>Repository Interfaces (Ports)</strong>: Defines the contracts for data persistence (e.g., <code>TenantRepository</code> interface). The service depends on this, not the implementation.</li>
-</ul>
-<h4 id="responsibilities_1">Responsibilities:</h4>
-<ul>
-<li>✅ Implement all business rules and validation.</li>
-<li>✅ Manage the state and lifecycle of domain entities.</li>
-<li>✅ Orchestrate complex operations and workflows.</li>
-<li>✅ Define the requirements for persistence through repository interfaces.</li>
-<li>❌ <strong>No knowledge of HTTP, SQL, or specific databases.</strong></li>
-<li>❌ <strong>Depends only on interfaces (ports), never concrete implementations (adapters).</strong></li>
-</ul>
-<h3 id="3-persistence-adapter-internalcoredomainrepository">3. Persistence Adapter (<code>internal/core/{domain}/repository/</code>)</h3>
-<p><strong>Purpose</strong>: To implement the data persistence port defined in the application core. It adapts the domain's needs to the specific database technology.</p>
-<h4 id="components_2">Components:</h4>
-<ul>
-<li><strong>Repository Implementation</strong>: A struct that implements the repository interface from the core.</li>
-<li><strong>Model Converters</strong>: Functions to transform data between the core domain models and the <code>sqlc</code>-generated database models.</li>
-<li><strong>Store Integration</strong>: Uses the <code>sqlc</code>-generated <code>Store</code> to execute database queries.</li>
-</ul>
-<h4 id="responsibilities_2">Responsibilities:</h4>
-<ul>
-<li>✅ Implement the repository interfaces defined in the core.</li>
-<li>✅ Convert domain models to database models (and vice-versa).</li>
-<li>✅ Execute queries using the type-safe <code>sqlc</code> store.</li>
-<li>✅ Handle database-specific errors and translate them into domain-agnostic errors.</li>
-<li>✅ Manage database transactions.</li>
-<li>❌ <strong>No business logic.</strong></li>
-</ul>
-<h3 id="4-platform-infrastructure-internalplatform">4. Platform Infrastructure (<code>internal/platform/</code>)</h3>
-<p><strong>Purpose</strong>: To provide concrete implementations for all other cross-cutting technical concerns.</p>
-<h4 id="components_3">Components:</h4>
-<ul>
-<li><strong><code>database/</code></strong>: Connection management, pooling, and migration logic.</li>
-<li><strong><code>middleware/</code></strong>: HTTP middleware adapters for auth, logging, and injecting the tenant context.</li>
-<li><strong><code>cache/</code></strong>: A Redis client adapter that implements a generic caching interface.</li>
-<li><strong><code>config/</code></strong>: Environment-based configuration loading.</li>
-</ul>
-<h4 id="responsibilities_3">Responsibilities:</h4>
-<ul>
-<li>✅ Manage the lifecycle of infrastructure components.</li>
-<li>✅ Provide concrete tools for the rest of the application to use.</li>
-<li>✅ Integrate with external third-party services.</li>
-<li>❌ <strong>No business logic or domain-specific knowledge.</strong></li>
-</ul>
-<h2 id="dependency-flow">🔄 Dependency Flow</h2>
-<p>The dependency rule is strict: <strong>all dependencies must point inward, toward the application core.</strong></p>
-<h3 id="correct-dependency-direction">Correct Dependency Direction</h3>
-<div class="highlight"><pre><span></span><code>API Handlers (`adapters`) ──depends on──▶ Core Service Interfaces (`ports`)
-                                                  │
-                                                  ▼
-Core Services (`core`)    ──depends on──▶ Core Repository Interfaces (`ports`)
-                                                                      ▲
-                                                                      │ (implements)
-Persistence (`adapters`)  ◀───uses───── `sqlc` Generated Store &amp; `platform`
-</code></pre></div>
-<h3 id="key-rules">Key Rules:</h3>
-<ol>
-<li>The <code>internal/core</code> modules must not import any other layer (<code>api</code>, <code>platform</code>).</li>
-<li>The <code>internal/api</code> and <code>internal/platform</code> layers depend on the interfaces defined in <code>internal/core</code>.</li>
-<li>The repository <em>implementations</em> in <code>internal/core/{domain}/repository</code> are adapters and are allowed to depend on <code>platform</code> and the <code>db/sqlc</code> store.</li>
-</ol>
-<h3 id="example-dependency-injection-conceptual-maingo">Example Dependency Injection (Conceptual <code>main.go</code>):</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// main.go - Wire dependencies together</span>
-<span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// 1. Platform &amp; Infrastructure Adapters</span>
-<span class="w">    </span><span class="nx">dbConn</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">database</span><span class="p">.</span><span class="nx">Connect</span><span class="p">(</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">Database</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">store</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">sqlc</span><span class="p">.</span><span class="nx">NewStore</span><span class="p">(</span><span class="nx">dbConn</span><span class="p">)</span><span class="w"> </span><span class="c1">// sqlc-generated DAL</span>
-
-<span class="w">    </span><span class="c1">// 2. Persistence Adapter (implements the core port)</span>
-<span class="w">    </span><span class="c1">// This NewRepository lives in internal/core/tenant/repository/</span>
-<span class="w">    </span><span class="nx">tenantRepo</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">tenant_repository</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">store</span><span class="p">)</span>
-
-<span class="w">    </span><span class="c1">// 3. Core Service (depends on the repository PORT/interface)</span>
-<span class="w">    </span><span class="c1">// This NewService lives in internal/core/tenant/services/</span>
-<span class="w">    </span><span class="nx">tenantService</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">tenant_service</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">tenantRepo</span><span class="p">)</span>
-
-<span class="w">    </span><span class="c1">// 4. API Adapter (depends on the service PORT/interface)</span>
-<span class="w">    </span><span class="c1">// This NewHandler lives in internal/api/handlers/</span>
-<span class="w">    </span><span class="nx">tenantHandler</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">handlers</span><span class="p">.</span><span class="nx">NewTenantHandler</span><span class="p">(</span><span class="nx">tenantService</span><span class="p">)</span>
-
-<span class="w">    </span><span class="c1">// 5. Setup router with the handler</span>
-<span class="w">    </span><span class="nx">router</span><span class="p">.</span><span class="nx">Setup</span><span class="p">(</span><span class="nx">tenantHandler</span><span class="p">)</span>
+<h3 id="1-api-layer-internalapi">1. <strong>API Layer (<code>internal/api/</code>)</strong></h3>
+<p><em>External interface for HTTP requests</em></p>
+<p><strong>Key Pattern: Modular Handler Architecture</strong>
+- <strong>Entry Points</strong>: <code>{module}.go</code> files export constructor functions
+- <strong>Handler Directories</strong>: <code>{module}/</code> contains implementation details
+- <strong>Main Integration</strong>: Only imports entry point functions</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// internal/api/handlers/finance.go</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">NewFinanceHandler</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">financeService</span><span class="w"> </span><span class="nx">finance</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">tracing</span><span class="w"> </span><span class="nx">tracing</span><span class="p">.</span><span class="nx">TracingService</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">metrics</span><span class="w"> </span><span class="nx">metrics</span><span class="p">.</span><span class="nx">MetricsProvider</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="nx">goaFinance</span><span class="p">.</span><span class="nx">Service</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">finance</span><span class="p">.</span><span class="nx">NewFinanceHandler</span><span class="p">(</span><span class="nx">financeService</span><span class="p">,</span><span class="w"> </span><span class="nx">tracing</span><span class="p">,</span><span class="w"> </span><span class="nx">metrics</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre></div>
-<h2 id="hexagonal-architecture-benefits">🏛️ Hexagonal Architecture Benefits</h2>
-<h3 id="1-maximum-testability">1. <strong>Maximum Testability</strong></h3>
-<ul>
-<li>The application core is completely isolated and can be tested without any database or API, leading to extremely fast and reliable unit tests.</li>
-<li>Adapters can be tested independently against their respective ports.</li>
-</ul>
-<h3 id="2-framework-independence">2. <strong>Framework Independence</strong></h3>
-<ul>
-<li>The core business logic is not tied to Goa, Gin, or any other web framework. The entire API layer could be swapped out with minimal impact on the core.</li>
-</ul>
-<h3 id="3-technology-independence">3. <strong>Technology Independence</strong></h3>
-<ul>
-<li>The persistence logic is abstracted away. The database could be swapped from Postgres to another SQL database by changing only the <code>sqlc</code> queries and the repository implementation, with zero changes to the business logic.</li>
-</ul>
-<h3 id="4-clear-boundaries-maintainability">4. <strong>Clear Boundaries &amp; Maintainability</strong></h3>
-<ul>
-<li>The strict separation of concerns makes the codebase easy to navigate and understand. It's always clear where a specific piece of logic should live.</li>
-</ul>
-<h2 id="common-anti-patterns-to-avoid">🚨 Common Anti-Patterns to Avoid</h2>
-<h3 id="wrong-dependency-direction">❌ <strong>Wrong Dependency Direction</strong></h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// In internal/core/tenant/services/service.go</span>
-<span class="kn">import</span><span class="w"> </span><span class="s">&quot;internal/api/handlers&quot;</span><span class="w"> </span><span class="c1">// ❌ WRONG! The core cannot know about the API layer.</span>
-<span class="kn">import</span><span class="w"> </span><span class="s">&quot;internal/platform/database&quot;</span><span class="w"> </span><span class="c1">// ❌ WRONG! The core cannot know about platform specifics.</span>
+<p><strong>Responsibilities:</strong>
+- ✅ Handle HTTP request/response lifecycle
+- ✅ Convert between API and domain models<br />
+- ✅ Input validation and sanitization
+- ✅ Call appropriate core services
+- ✅ Format responses with proper status codes
+- ❌ No business logic or data access</p>
+<h3 id="2-application-core-internalcoremodule">2. <strong>Application Core (<code>internal/core/{module}/</code>)</strong></h3>
+<p><em>Business logic and domain knowledge</em></p>
+<p><strong>Key Pattern: Module Facade Architecture</strong>
+- <strong>Module Facade</strong>: <code>service.go</code> provides unified external interface
+- <strong>Feature Submodules</strong>: Organized by business capability
+- <strong>Temporal Integration</strong>: Workflows and activities for complex processes</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// internal/core/finance/service.go</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">Service</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Account</span><span class="p">()</span><span class="w"> </span><span class="nx">AccountService</span>
+<span class="w">    </span><span class="nx">Transaction</span><span class="p">()</span><span class="w"> </span><span class="nx">TransactionService</span>
+<span class="w">    </span><span class="nx">Reports</span><span class="p">()</span><span class="w"> </span><span class="nx">ReportService</span>
+<span class="p">}</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">service</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">accountSvc</span><span class="w">     </span><span class="nx">AccountService</span>
+<span class="w">    </span><span class="nx">transactionSvc</span><span class="w"> </span><span class="nx">TransactionService</span>
+<span class="w">    </span><span class="nx">reportSvc</span><span class="w">      </span><span class="nx">ReportService</span>
+
+<span class="w">    </span><span class="c1">// Essential dependencies</span>
+<span class="w">    </span><span class="nx">tenantService</span><span class="w">      </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">auditService</span><span class="w">       </span><span class="nx">audit</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">featureFlagService</span><span class="w"> </span><span class="nx">featureflag</span><span class="p">.</span><span class="nx">Service</span>
+<span class="p">}</span>
 </code></pre></div>
-<h3 id="business-logic-in-adapters">❌ <strong>Business Logic in Adapters</strong></h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// In internal/api/handlers/tenant.go</span>
-<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">Handler</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">gin</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// ❌ Business validation should be in the core service, not the handler.</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nx">c</span><span class="p">.</span><span class="nx">JSON</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span><span class="w"> </span><span class="nx">gin</span><span class="p">.</span><span class="nx">H</span><span class="p">{</span><span class="s">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Name too short&quot;</span><span class="p">})</span>
-<span class="w">        </span><span class="k">return</span>
+<p><strong>Responsibilities:</strong>
+- ✅ Implement business rules and validation
+- ✅ Orchestrate complex workflows (Temporal)
+- ✅ Manage domain entity lifecycle
+- ✅ Define repository contracts (interfaces)
+- ✅ Maintain module boundaries
+- ❌ No knowledge of HTTP, database specifics, or frameworks</p>
+<h3 id="3-repository-layer-internalcoremodulerepository">3. <strong>Repository Layer (<code>internal/core/{module}/repository/</code>)</strong></h3>
+<p><em>Data persistence with tenant isolation</em></p>
+<p><strong>Key Pattern: Context-Based Tenant Resolution</strong>
+- Uses <code>shared.GetTenantID(ctx)</code> for automatic tenant isolation
+- SQLC queries with <code>current_tenant_id()</code> function
+- No explicit tenant ID parameters needed</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// All queries automatically tenant-isolated</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">CreateAccountRequest</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Tenant ID resolved from context automatically</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">sqlc</span><span class="p">.</span><span class="nx">CreateAccountParams</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">Code</span><span class="p">:</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">Code</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Name</span><span class="p">:</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span>
+<span class="w">        </span><span class="c1">// current_tenant_id() used in SQL query</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Responsibilities:</strong>
+- ✅ Implement repository interfaces from core
+- ✅ Convert between domain and database models
+- ✅ Execute type-safe SQLC queries
+- ✅ Handle tenant isolation automatically
+- ✅ Manage database transactions
+- ❌ No business logic or validation</p>
+<h3 id="4-temporal-layer-workflows-activities">4. <strong>Temporal Layer (Workflows &amp; Activities)</strong></h3>
+<p><em>Long-running business processes</em></p>
+<p><strong>Key Pattern: Configuration-Driven Workflows</strong>
+- Activities depend on domain services via DI
+- Workflows orchestrate complex business processes
+- Configuration constants prevent hard-coded values</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// internal/core/finance/workflows/transaction_approval_workflow.go</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">TransactionApprovalWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="o">*</span><span class="nx">TransactionApprovalInput</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Configure timeouts from domain constants</span>
+<span class="w">    </span><span class="nx">activityOptions</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">ActivityOptions</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">ScheduleToCloseTimeout</span><span class="p">:</span><span class="w"> </span><span class="nx">domain</span><span class="p">.</span><span class="nx">DefaultApprovalTimeout</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">RetryPolicy</span><span class="p">:</span><span class="w"> </span><span class="nx">domain</span><span class="p">.</span><span class="nx">DefaultRetryPolicy</span><span class="p">,</span>
 <span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Execute activities with dependency injection</span>
+<span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">ExecuteActivity</span><span class="p">(</span><span class="nx">activityCtx</span><span class="p">,</span><span class="w"> </span><span class="nx">a</span><span class="p">.</span><span class="nx">ValidateTransaction</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">.</span><span class="nx">TransactionID</span><span class="p">).</span><span class="nx">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// ... orchestrate approval process</span>
 <span class="p">}</span>
 </code></pre></div>
-<h3 id="leaking-database-models">❌ <strong>Leaking Database Models</strong></h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// In internal/core/tenant/services/service.go</span>
-<span class="kn">import</span><span class="w"> </span><span class="s">&quot;project/db/sqlc&quot;</span><span class="w"> </span><span class="c1">// ❌ WRONG! The service must not know about sqlc models.</span>
-<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">Service</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">req</span><span class="w"> </span><span class="nx">CreateRequest</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">sqlc</span><span class="p">.</span><span class="nx">Tenant</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// ❌ The service must always use and return its own domain models.</span>
+<p><strong>Responsibilities:</strong>
+- ✅ Orchestrate long-running business processes
+- ✅ Handle async operations and timeouts
+- ✅ Manage complex state transitions
+- ✅ Integrate with external systems
+- ✅ Ensure process reliability and recovery
+- ❌ No direct database access (use activities)</p>
+<h3 id="5-infrastructure-layer-internalplatform">5. <strong>Infrastructure Layer (<code>internal/platform/</code>)</strong></h3>
+<p><em>Technical concerns and external integrations</em></p>
+<p><strong>Responsibilities:</strong>
+- ✅ Database connection management
+- ✅ Caching infrastructure (Redis)
+- ✅ Configuration loading and validation
+- ✅ Observability (metrics, tracing, logging)
+- ✅ External service integrations
+- ❌ No business logic or domain knowledge</p>
+<h2 id="dependency-flow-module-isolation">🔄 Dependency Flow &amp; Module Isolation</h2>
+<h3 id="strict-dependency-direction"><strong>Strict Dependency Direction</strong></h3>
+<p>All dependencies must point inward toward the application core:</p>
+<div class="highlight"><pre><span></span><code>External → API Handlers → Core Services → Repository Interfaces
+                           ↑                        ↓
+                    Module Facades           Repository Implementations
+                           ↑                        ↓
+                Essential Services            SQLC + Database
+</code></pre></div>
+<h3 id="module-isolation-rules"><strong>Module Isolation Rules</strong></h3>
+<ol>
+<li><strong>External Imports</strong>: Only import module facades (<code>{module}.Service</code>)</li>
+<li><strong>Internal Structure</strong>: Features organized in submodules</li>
+<li><strong>Essential Dependencies</strong>: Each module has tenant, audit, featureflag services</li>
+<li><strong>Cross-Module Communication</strong>: Via events or direct service calls</li>
+</ol>
+<h3 id="context-propagation-pattern"><strong>Context Propagation Pattern</strong></h3>
+<p>Every operation includes context with tenant/entity/user isolation:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="o">*</span><span class="nx">CreateAccountRequest</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Account</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Context automatically contains:</span>
+<span class="w">    </span><span class="c1">// - Tenant ID (for RLS)</span>
+<span class="w">    </span><span class="c1">// - Entity ID (for company isolation)  </span>
+<span class="w">    </span><span class="c1">// - User ID (for audit trails)</span>
+<span class="w">    </span><span class="c1">// - Trace spans (for observability)</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">accountService</span><span class="p">.</span><span class="nx">Create</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">)</span>
 <span class="p">}</span>
+</code></pre></div>
+<h2 id="architecture-benefits">🏛️ Architecture Benefits</h2>
+<h3 id="1-workflow-first-design"><strong>1. Workflow-First Design</strong></h3>
+<ul>
+<li>Complex business processes are explicitly modeled as workflows</li>
+<li>Async operations handled reliably with Temporal</li>
+<li>Clear process visibility and monitoring</li>
+</ul>
+<h3 id="2-module-autonomy"><strong>2. Module Autonomy</strong></h3>
+<ul>
+<li>Each module is self-contained with clear boundaries</li>
+<li>Easy to test, develop, and maintain independently  </li>
+<li>Consistent patterns across all business domains</li>
+</ul>
+<h3 id="3-multi-tenant-by-design"><strong>3. Multi-Tenant by Design</strong></h3>
+<ul>
+<li>Automatic tenant isolation at database level</li>
+<li>Context-driven data access with RLS policies</li>
+<li>No risk of cross-tenant data leakage</li>
+</ul>
+<h3 id="4-configuration-driven"><strong>4. Configuration-Driven</strong></h3>
+<ul>
+<li>Business rules and timeouts externalized</li>
+<li>Feature flags for controlled rollouts</li>
+<li>Environment-specific behavior without code changes</li>
+</ul>
+<h3 id="5-enterprise-grade-observability"><strong>5. Enterprise-Grade Observability</strong></h3>
+<ul>
+<li>Distributed tracing across all layers</li>
+<li>Structured logging with context</li>
+<li>Business metrics and operational dashboards</li>
+</ul>
+<h2 id="anti-patterns-to-avoid">🚨 Anti-Patterns to Avoid</h2>
+<h3 id="breaking-module-boundaries">❌ <strong>Breaking Module Boundaries</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// DON&#39;T: Direct import of internal module structure</span>
+<span class="kn">import</span><span class="w"> </span><span class="s">&quot;internal/core/finance/account&quot;</span><span class="w"> </span><span class="c1">// ❌ WRONG</span>
+
+<span class="c1">// DO: Import module facade only  </span>
+<span class="kn">import</span><span class="w"> </span><span class="s">&quot;internal/core/finance&quot;</span><span class="w"> </span><span class="c1">// ✅ CORRECT</span>
+</code></pre></div>
+<h3 id="hard-coded-configuration">❌ <strong>Hard-Coded Configuration</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// DON&#39;T: Hard-coded timeouts and values</span>
+<span class="nx">timeout</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Minute</span><span class="w"> </span><span class="c1">// ❌ WRONG</span>
+
+<span class="c1">// DO: Use domain constants</span>
+<span class="nx">timeout</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">domain</span><span class="p">.</span><span class="nx">DefaultApprovalTimeout</span><span class="w"> </span><span class="c1">// ✅ CORRECT</span>
+</code></pre></div>
+<h3 id="bypassing-workflows-for-complex-operations">❌ <strong>Bypassing Workflows for Complex Operations</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// DON&#39;T: Synchronous multi-step operations</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">ProcessMonthEnd</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">s</span><span class="p">.</span><span class="nx">calculateBalances</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w">   </span><span class="c1">// This could fail after 20 minutes</span>
+<span class="w">    </span><span class="nx">s</span><span class="p">.</span><span class="nx">generateReports</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w">     </span><span class="c1">// Leaving system in inconsistent state</span>
+<span class="w">    </span><span class="nx">s</span><span class="p">.</span><span class="nx">sendNotifications</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w">   </span><span class="c1">// ❌ WRONG</span>
+<span class="p">}</span>
+
+<span class="c1">// DO: Use workflows for complex processes  </span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">ProcessMonthEnd</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">temporal</span><span class="p">.</span><span class="nx">ExecuteWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">workflows</span><span class="p">.</span><span class="nx">MonthEndProcess</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">)</span>
+<span class="p">}</span><span class="w"> </span><span class="c1">// ✅ CORRECT</span>
+</code></pre></div>
+<h3 id="context-free-operations">❌ <strong>Context-Free Operations</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// DON&#39;T: Skip context propagation</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repo</span><span class="p">)</span><span class="w"> </span><span class="nx">GetAccount</span><span class="p">(</span><span class="nx">id</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Account</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="c1">// ❌ WRONG</span>
+
+<span class="c1">// DO: Always include context</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repo</span><span class="p">)</span><span class="w"> </span><span class="nx">GetAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Account</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="c1">// ✅ CORRECT</span>
 </code></pre></div>
 <h2 id="best-practices">✅ Best Practices</h2>
 <ol>
-<li><strong>Define Ports First</strong>: Always start by defining the interfaces in the core that represent the application's needs.</li>
-<li><strong>Implement Adapters Second</strong>: Write the concrete implementations for those interfaces in the outer layers (<code>repository</code>, <code>handlers</code>).</li>
-<li><strong>Convert Models at the Boundary</strong>: The adapter's primary job is to convert data between the external world's format and the core domain's format.</li>
-<li><strong>Dependency Injection</strong>: Wire everything together at the application's entry point (<code>main.go</code>).</li>
+<li><strong>Start with Domain Design</strong>: Define entities, value objects, and business rules first</li>
+<li><strong>Implement Service Facades</strong>: Create clean module interfaces before internal complexity</li>
+<li><strong>Use Workflows for Complex Processes</strong>: Model multi-step operations as explicit workflows</li>
+<li><strong>Context Everywhere</strong>: Every operation must accept and propagate context</li>
+<li><strong>Configuration Over Code</strong>: Externalize business parameters and timeouts</li>
+<li><strong>Test Module Boundaries</strong>: Verify modules can be tested in isolation</li>
+<li><strong>Monitor Workflows</strong>: Add observability to understand business process health</li>
 </ol>
 <hr />
-<p>📚 <strong>Next Steps</strong>: 
-- <a href="../data-flow/">Data Flow Patterns</a> - See how requests flow through layers
-- <a href="../code-examples/">Code Examples</a> - Practical implementation examples
-- <a href="../01-best-practices/">Best Practices</a> - Development guidelines</p>
+<p>📚 <strong>Next Steps</strong>:
+- <a href="../service/">Service Implementation Guide</a> - Module development patterns
+- <a href="../goa/">Goa API Development</a> - Handler and API design patterns<br />
+- <a href="../database-transactions/">Database Transactions</a> - Tenant isolation and SQLC patterns
+- <a href="../01-best-practices/">Best Practices</a> - Development guidelines and standards</p>
 
 
 

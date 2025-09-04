@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#best-practices-guide" class="md-skip">
+        <a href="#awo-erp-best-practices-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -355,6 +355,26 @@
   
   
   Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/modules/settings/" class="md-tabs__link">
+          
+  
+  
+  System Configuration
 
         </a>
       </li>
@@ -706,6 +726,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#development-standards-for-modern-enterprise-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Development Standards for Modern Enterprise Architecture
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#architecture-best-practices" class="md-nav__link">
     <span class="md-ellipsis">
       🏗️ Architecture Best Practices
@@ -759,9 +788,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#api-layer-responsibilities" class="md-nav__link">
+  <a href="#api-layer-responsibilities-goa-handlers" class="md-nav__link">
     <span class="md-ellipsis">
-      API Layer Responsibilities
+      API Layer Responsibilities (Goa Handlers)
     </span>
   </a>
   
@@ -771,6 +800,141 @@
   <a href="#service-layer-responsibilities" class="md-nav__link">
     <span class="md-ellipsis">
       Service Layer Responsibilities
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-module-facade-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Module Facade Pattern
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Module Facade Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#correct-module-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Correct Module Design
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-facade-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Service Facade Implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-module-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❌ Wrong Module Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-context-based-tenant-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Context-Based Tenant Isolation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Context-Based Tenant Isolation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modern-repository-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Modern Repository Pattern
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sqlc-query-with-rls" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ SQLC Query with RLS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-context-propagation" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Service Context Propagation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#old-tenant-parameter-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❌ Old Tenant Parameter Pattern
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-temporal-workflow-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Temporal Workflow Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Temporal Workflow Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-driven-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Configuration-Driven Workflows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#activity-implementation-with-di" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Activity Implementation with DI
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-anti-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❌ Workflow Anti-Patterns
     </span>
   </a>
   
@@ -1205,19 +1369,19 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-handler-testing" class="md-nav__link">
+  <a href="#3-handler-testing-goa" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Handler Testing
+      3. Handler Testing (Goa)
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="3. Handler Testing">
+    <nav class="md-nav" aria-label="3. Handler Testing (Goa)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#http-handler-tests" class="md-nav__link">
+  <a href="#goa-handler-tests" class="md-nav__link">
     <span class="md-ellipsis">
-      HTTP Handler Tests
+      Goa Handler Tests
     </span>
   </a>
   
@@ -1254,9 +1418,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#api-layer-validation" class="md-nav__link">
+  <a href="#api-layer-validation-goa-design" class="md-nav__link">
     <span class="md-ellipsis">
-      API Layer Validation
+      API Layer Validation (Goa Design)
     </span>
   </a>
   
@@ -3108,7 +3272,7 @@
   
   
   <span class="md-ellipsis">
-    Other Modules
+    System Configuration
     
   </span>
   
@@ -3118,6 +3282,171 @@
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            System Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/service-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Other Modules
           </label>
@@ -3136,29 +3465,6 @@
   
   <span class="md-ellipsis">
     System Architecture
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/modules/settings/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    System Settings
     
   </span>
   
@@ -3518,10 +3824,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
             
   
   
@@ -3534,8 +3840,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             API Reference
           </label>
@@ -3699,10 +4005,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_7" >
         
           
-          <label class="md-nav__link" for="__nav_10_7" id="__nav_10_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_7" id="__nav_11_7_label" tabindex="0">
             
   
   
@@ -3715,8 +4021,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_7">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
           </label>
@@ -3819,10 +4125,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_10" >
         
           
-          <label class="md-nav__link" for="__nav_10_10" id="__nav_10_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_10" id="__nav_11_10_label" tabindex="0">
             
   
   
@@ -3835,8 +4141,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_10">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_10">
             <span class="md-nav__icon md-icon"></span>
             Core APIs
           </label>
@@ -4100,10 +4406,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_11" >
         
           
-          <label class="md-nav__link" for="__nav_10_11" id="__nav_10_11_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_11" id="__nav_11_11_label" tabindex="0">
             
   
   
@@ -4116,8 +4422,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_11">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_11">
             <span class="md-nav__icon md-icon"></span>
             Workflows
           </label>
@@ -4243,10 +4549,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_12" >
         
           
-          <label class="md-nav__link" for="__nav_10_12" id="__nav_10_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_12" id="__nav_11_12_label" tabindex="0">
             
   
   
@@ -4259,8 +4565,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_12">
             <span class="md-nav__icon md-icon"></span>
             Testing
           </label>
@@ -4340,10 +4646,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_13" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_13" >
         
           
-          <label class="md-nav__link" for="__nav_10_13" id="__nav_10_13_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_13" id="__nav_11_13_label" tabindex="0">
             
   
   
@@ -4356,8 +4662,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_13">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_13">
             <span class="md-nav__icon md-icon"></span>
             Utilities
           </label>
@@ -4417,8 +4723,16 @@
 
 
 
-<h1 id="best-practices-guide">Best Practices Guide</h1>
-<p>Essential development guidelines and patterns for building maintainable, scalable features in our ERP system.</p>
+<h1 id="awo-erp-best-practices-guide">Awo ERP Best Practices Guide</h1>
+<h2 id="development-standards-for-modern-enterprise-architecture"><em>Development Standards for Modern Enterprise Architecture</em></h2>
+<p><em>Essential guidelines for building maintainable, scalable features in Awo ERP following Clean Architecture, Temporal workflows, and modular design patterns</em></p>
+<blockquote>
+<p><strong>📚 Essential Reading:</strong> This guide complements other contributing documentation:
+- <code>docs/contributing/architecture.md</code> - System architecture and design principles
+- <code>docs/contributing/service.md</code> - Service implementation patterns
+- <code>docs/contributing/goa.md</code> - API design and handler architecture<br />
+- <code>docs/contributing/database-transactions.md</code> - Database patterns and tenant isolation</p>
+</blockquote>
 <h2 id="architecture-best-practices">🏗️ Architecture Best Practices</h2>
 <h3 id="1-dependency-direction-rules">1. Dependency Direction Rules</h3>
 <h4 id="correct-dependency-flow">✅ <strong>Correct Dependency Flow</strong></h4>
@@ -4461,38 +4775,42 @@
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="2-layer-isolation">2. Layer Isolation</h3>
-<h4 id="api-layer-responsibilities"><strong>API Layer Responsibilities</strong></h4>
-<div class="highlight"><pre><span></span><code><span class="c1">// ✅ API layer handles HTTP concerns only</span>
-<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">TenantHandler</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">gin</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// ✅ Parse request</span>
-<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="nx">CreateTenantRequest</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">ShouldBindJSON</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">req</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nx">c</span><span class="p">.</span><span class="nx">JSON</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span><span class="w"> </span><span class="nx">gin</span><span class="p">.</span><span class="nx">H</span><span class="p">{</span><span class="s">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="nx">err</span><span class="p">.</span><span class="nx">Error</span><span class="p">()})</span>
-<span class="w">        </span><span class="k">return</span>
-<span class="w">    </span><span class="p">}</span>
+<h4 id="api-layer-responsibilities-goa-handlers"><strong>API Layer Responsibilities (Goa Handlers)</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// ✅ Goa handler handles HTTP concerns only</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">TenantHandler</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">CreateTenantPayload</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">Tenant</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ✅ Start tracing span</span>
+<span class="w">    </span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">span</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">tracing</span><span class="p">.</span><span class="nx">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;tenant.CreateTenant&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="k">defer</span><span class="w"> </span><span class="nx">span</span><span class="p">.</span><span class="nx">End</span><span class="p">()</span>
 
-<span class="w">    </span><span class="c1">// ✅ Call service layer</span>
-<span class="w">    </span><span class="nx">tenant</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">service</span><span class="p">.</span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">Request</span><span class="p">.</span><span class="nx">Context</span><span class="p">(),</span><span class="w"> </span><span class="nx">req</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// ✅ Record metrics</span>
+<span class="w">    </span><span class="nx">h</span><span class="p">.</span><span class="nx">metrics</span><span class="p">.</span><span class="nx">Counter</span><span class="p">(</span><span class="s">&quot;api.tenant.create.requests&quot;</span><span class="p">).</span><span class="nx">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="w">    </span><span class="c1">// ✅ Handle errors and format response</span>
+<span class="w">    </span><span class="c1">// ✅ Convert Goa payload to domain request</span>
+<span class="w">    </span><span class="nx">request</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">payloadToCreateTenantRequest</span><span class="p">(</span><span class="nx">p</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// ✅ Call service layer (no business logic in handler)</span>
+<span class="w">    </span><span class="nx">tenant</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">tenantService</span><span class="p">.</span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">request</span><span class="p">)</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nx">handleError</span><span class="p">(</span><span class="nx">c</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
-<span class="w">        </span><span class="k">return</span>
+<span class="w">        </span><span class="nx">h</span><span class="p">.</span><span class="nx">metrics</span><span class="p">.</span><span class="nx">Counter</span><span class="p">(</span><span class="s">&quot;api.tenant.create.errors&quot;</span><span class="p">).</span><span class="nx">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">handleError</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"> </span><span class="c1">// Convert to Goa error</span>
 <span class="w">    </span><span class="p">}</span>
 
-<span class="w">    </span><span class="nx">c</span><span class="p">.</span><span class="nx">JSON</span><span class="p">(</span><span class="mi">201</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// ✅ Convert domain model to Goa response</span>
+<span class="w">    </span><span class="nx">response</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">tenantToGoaResponse</span><span class="p">(</span><span class="nx">tenant</span><span class="p">)</span>
+
+<span class="w">    </span><span class="nx">h</span><span class="p">.</span><span class="nx">metrics</span><span class="p">.</span><span class="nx">Counter</span><span class="p">(</span><span class="s">&quot;api.tenant.create.success&quot;</span><span class="p">).</span><span class="nx">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span>
 <span class="p">}</span>
 
 <span class="c1">// ❌ DON&#39;T put business logic in handlers</span>
-<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">TenantHandler</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">gin</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">TenantHandler</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">CreateTenantPayload</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">Tenant</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="c1">// ❌ Business validation in API layer</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nx">c</span><span class="p">.</span><span class="nx">JSON</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span><span class="w"> </span><span class="nx">gin</span><span class="p">.</span><span class="nx">H</span><span class="p">{</span><span class="s">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Name too short&quot;</span><span class="p">})</span>
-<span class="w">        </span><span class="k">return</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">MakeBadRequest</span><span class="p">(</span><span class="nx">errors</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="s">&quot;Name too short&quot;</span><span class="p">))</span><span class="w"> </span><span class="c1">// WRONG!</span>
 <span class="w">    </span><span class="p">}</span>
 
 <span class="w">    </span><span class="c1">// ❌ Direct database access from API layer</span>
-<span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">Exec</span><span class="p">(</span><span class="s">&quot;INSERT INTO tenants...&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">Exec</span><span class="p">(</span><span class="s">&quot;INSERT INTO tenants...&quot;</span><span class="p">)</span><span class="w"> </span><span class="c1">// WRONG!</span>
 <span class="p">}</span>
 </code></pre></div>
 <h4 id="service-layer-responsibilities"><strong>Service Layer Responsibilities</strong></h4>
@@ -4514,9 +4832,9 @@
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">repo</span><span class="p">.</span><span class="nx">Create</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="p">)</span>
 <span class="p">}</span>
 
-<span class="c1">// ❌ DON&#39;T put HTTP concerns in service</span>
-<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">gin</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// ❌ HTTP request/response handling in service</span>
+<span class="c1">// ❌ DON&#39;T put HTTP/API concerns in service</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="o">*</span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">CreateTenantPayload</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">Tenant</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ❌ Goa types should not leak into service layer - WRONG!</span>
 <span class="p">}</span>
 
 <span class="c1">// ❌ DON&#39;T put database queries in service</span>
@@ -4525,18 +4843,198 @@
 <span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">db</span><span class="p">.</span><span class="nx">Exec</span><span class="p">(</span><span class="s">&quot;INSERT INTO tenants...&quot;</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre></div>
+<h3 id="3-module-facade-pattern">3. <strong>Module Facade Pattern</strong></h3>
+<h4 id="correct-module-design">✅ <strong>Correct Module Design</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// External modules import facades only</span>
+<span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="s">&quot;github.com/niiniyare/erp/internal/core/finance&quot;</span><span class="w">     </span><span class="c1">// ✅ Module facade</span>
+<span class="w">    </span><span class="s">&quot;github.com/niiniyare/erp/internal/core/iam&quot;</span><span class="w">         </span><span class="c1">// ✅ Module facade</span>
+<span class="p">)</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">InitializeServices</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">financeService</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">finance</span><span class="p">.</span><span class="nx">NewService</span><span class="p">(</span><span class="nx">deps</span><span class="p">)</span><span class="w">  </span><span class="c1">// ✅ Clean interface</span>
+<span class="w">    </span><span class="nx">iamService</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">iam</span><span class="p">.</span><span class="nx">NewService</span><span class="p">(</span><span class="nx">deps</span><span class="p">)</span><span class="w">          </span><span class="c1">// ✅ Clean interface</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="service-facade-implementation">✅ <strong>Service Facade Implementation</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// internal/core/finance/service.go - Module Facade</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">Service</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Account</span><span class="p">()</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">Transaction</span><span class="p">()</span><span class="w"> </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">Reports</span><span class="p">()</span><span class="w"> </span><span class="nx">report</span><span class="p">.</span><span class="nx">Service</span>
+<span class="p">}</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">service</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">accountSvc</span><span class="w">     </span><span class="nx">account</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">transactionSvc</span><span class="w"> </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">reportSvc</span><span class="w">      </span><span class="nx">report</span><span class="p">.</span><span class="nx">Service</span>
+
+<span class="w">    </span><span class="c1">// Essential dependencies (every module needs these)</span>
+<span class="w">    </span><span class="nx">tenantService</span><span class="w">      </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">auditService</span><span class="w">       </span><span class="nx">audit</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">featureFlagService</span><span class="w"> </span><span class="nx">featureflag</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">entityService</span><span class="w">      </span><span class="nx">entity</span><span class="p">.</span><span class="nx">Service</span>
+<span class="p">}</span>
+
+<span class="c1">// Facade methods expose feature services</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">Account</span><span class="p">()</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">Service</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">accountSvc</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">Transaction</span><span class="p">()</span><span class="w"> </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">Service</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">transactionSvc</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="wrong-module-usage">❌ <strong>Wrong Module Usage</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// DON&#39;T: Import internal module structure</span>
+<span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="s">&quot;internal/core/finance/account&quot;</span><span class="w">     </span><span class="c1">// ❌ Internal structure</span>
+<span class="w">    </span><span class="s">&quot;internal/core/finance/service&quot;</span><span class="w">     </span><span class="c1">// ❌ Implementation details</span>
+<span class="p">)</span>
+</code></pre></div>
+<h3 id="4-context-based-tenant-isolation">4. <strong>Context-Based Tenant Isolation</strong></h3>
+<h4 id="modern-repository-pattern">✅ <strong>Modern Repository Pattern</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// All operations automatically tenant-isolated via context</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">CreateAccountRequest</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">Account</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ✅ Tenant ID resolved automatically from context</span>
+<span class="w">    </span><span class="c1">// No explicit tenant parameter needed!</span>
+
+<span class="w">    </span><span class="nx">params</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">sqlc</span><span class="p">.</span><span class="nx">CreateAccountParams</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">Code</span><span class="p">:</span><span class="w">        </span><span class="nx">req</span><span class="p">.</span><span class="nx">Code</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Name</span><span class="p">:</span><span class="w">        </span><span class="nx">req</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">AccountType</span><span class="p">:</span><span class="w"> </span><span class="nb">string</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">AccountType</span><span class="p">),</span>
+<span class="w">        </span><span class="nx">Description</span><span class="p">:</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">Description</span><span class="p">,</span>
+<span class="w">        </span><span class="c1">// current_tenant_id() used in SQL query automatically</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nx">sqlcAccount</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">handleDBError</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">mappers</span><span class="p">.</span><span class="nx">SQLCAccountToDomain</span><span class="p">(</span><span class="nx">sqlcAccount</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="sqlc-query-with-rls">✅ <strong>SQLC Query with RLS</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="c1">-- db/queries/accounts.sql</span>
+<span class="c1">-- name: CreateAccount :one</span>
+<span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">accounts</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="n">code</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">account_type</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="n">tenant_id</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="p">,</span><span class="w"> </span><span class="n">updated_at</span>
+<span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="err">$</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="err">$</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="err">$</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="err">$</span><span class="mi">4</span><span class="p">,</span>
+<span class="w">    </span><span class="n">current_tenant_id</span><span class="p">(),</span><span class="w"> </span><span class="c1">-- ✅ Automatic tenant isolation</span>
+<span class="w">    </span><span class="n">NOW</span><span class="p">(),</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<span class="p">)</span><span class="w"> </span><span class="n">RETURNING</span><span class="w"> </span><span class="o">*</span><span class="p">;</span>
+</code></pre></div>
+<h4 id="service-context-propagation">✅ <strong>Service Context Propagation</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">accountService</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="o">*</span><span class="nx">CreateAccountRequest</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Account</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ✅ Context contains:</span>
+<span class="w">    </span><span class="c1">// - Tenant ID (automatic RLS isolation)</span>
+<span class="w">    </span><span class="c1">// - Entity ID (company isolation within tenant)</span>
+<span class="w">    </span><span class="c1">// - User ID (audit trail)</span>
+<span class="w">    </span><span class="c1">// - Tracing spans (observability)</span>
+
+<span class="w">    </span><span class="c1">// ✅ Feature flag check using context</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">s</span><span class="p">.</span><span class="nx">featureFlagService</span><span class="p">.</span><span class="nx">IsEnabled</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;advanced_accounting&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">NewBusinessError</span><span class="p">(</span><span class="s">&quot;FEATURE_DISABLED&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Advanced accounting not enabled&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// ✅ Repository automatically uses context for tenant isolation</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">repository</span><span class="p">.</span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="old-tenant-parameter-pattern">❌ <strong>Old Tenant Parameter Pattern</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// ❌ DON&#39;T: Explicit tenant parameters everywhere</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">CreateAccountRequest</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ❌ Requires explicit tenant management everywhere</span>
+<span class="w">    </span><span class="nx">params</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">sqlc</span><span class="p">.</span><span class="nx">CreateAccountParams</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">TenantID</span><span class="p">:</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="c1">// Error-prone manual tenant handling</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="5-temporal-workflow-patterns">5. <strong>Temporal Workflow Patterns</strong></h3>
+<h4 id="configuration-driven-workflows">✅ <strong>Configuration-Driven Workflows</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// internal/core/finance/workflows/transaction_approval_workflow.go</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">TransactionApprovalWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="o">*</span><span class="nx">TransactionApprovalInput</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ✅ Use domain constants for configuration</span>
+<span class="w">    </span><span class="nx">activityOptions</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">ActivityOptions</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">ScheduleToCloseTimeout</span><span class="p">:</span><span class="w"> </span><span class="nx">domain</span><span class="p">.</span><span class="nx">TransactionValidationTimeout</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">RetryPolicy</span><span class="p">:</span><span class="w"> </span><span class="nx">domain</span><span class="p">.</span><span class="nx">DefaultRetryPolicy</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nx">ctx</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">WithActivityOptions</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">activityOptions</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// ✅ Step-by-step process with error handling</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">validationResult</span><span class="w"> </span><span class="nx">ValidationResult</span>
+<span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">ExecuteActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;ValidateTransaction&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">.</span><span class="nx">TransactionID</span><span class="p">).</span><span class="nx">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">validationResult</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;transaction validation failed: %w&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">validationResult</span><span class="p">.</span><span class="nx">IsValid</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// ✅ Execute final processing</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">ExecuteActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;ProcessApprovedTransaction&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">.</span><span class="nx">TransactionID</span><span class="p">).</span><span class="nx">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">ExecuteActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;HandleRejectedTransaction&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">.</span><span class="nx">TransactionID</span><span class="p">).</span><span class="nx">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="activity-implementation-with-di">✅ <strong>Activity Implementation with DI</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// internal/core/finance/activities/transaction_activities.go</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">TransactionActivities</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">financeService</span><span class="w"> </span><span class="nx">finance</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">auditService</span><span class="w">   </span><span class="nx">audit</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">logger</span><span class="w">         </span><span class="nx">logger</span><span class="p">.</span><span class="nx">Logger</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">a</span><span class="w"> </span><span class="o">*</span><span class="nx">TransactionActivities</span><span class="p">)</span><span class="w"> </span><span class="nx">ValidateTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transactionID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">ValidationResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ✅ Use injected services (no direct database access)</span>
+<span class="w">    </span><span class="nx">transaction</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">a</span><span class="p">.</span><span class="nx">financeService</span><span class="p">.</span><span class="nx">Transaction</span><span class="p">().</span><span class="nx">GetByID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">transactionID</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;failed to get transaction: %w&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// ✅ Business validation through service layer</span>
+<span class="w">    </span><span class="nx">validationErrors</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">a</span><span class="p">.</span><span class="nx">financeService</span><span class="p">.</span><span class="nx">Transaction</span><span class="p">().</span><span class="nx">ValidateForApproval</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">transaction</span><span class="p">)</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">ValidationResult</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">TransactionID</span><span class="p">:</span><span class="w"> </span><span class="nx">transactionID</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">IsValid</span><span class="p">:</span><span class="w">       </span><span class="nb">len</span><span class="p">(</span><span class="nx">validationErrors</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Errors</span><span class="p">:</span><span class="w">        </span><span class="nx">validationErrors</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="workflow-anti-patterns">❌ <strong>Workflow Anti-Patterns</strong></h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// ❌ DON&#39;T: Hard-coded timeouts and synchronous operations</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">BadTransactionWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="o">*</span><span class="nx">TransactionInput</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ❌ Hard-coded timeout</span>
+<span class="w">    </span><span class="nx">timeout</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Minute</span><span class="w"> </span><span class="c1">// Should use domain constants</span>
+
+<span class="w">    </span><span class="c1">// ❌ Direct database access in workflow</span>
+<span class="w">    </span><span class="nx">db</span><span class="p">.</span><span class="nx">Exec</span><span class="p">(</span><span class="s">&quot;UPDATE transactions SET status = &#39;approved&#39;&quot;</span><span class="p">)</span><span class="w"> </span><span class="c1">// WRONG!</span>
+
+<span class="w">    </span><span class="c1">// ❌ Blocking synchronous call (should be activity)</span>
+<span class="w">    </span><span class="nx">http</span><span class="p">.</span><span class="nx">Post</span><span class="p">(</span><span class="s">&quot;http://approval-service/approve&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">body</span><span class="p">)</span><span class="w"> </span><span class="c1">// WRONG!</span>
+<span class="p">}</span>
+</code></pre></div>
 <h2 id="model-conversion-patterns">🔄 Model Conversion Patterns</h2>
 <h3 id="1-conversion-at-boundaries">1. <strong>Conversion at Boundaries</strong></h3>
 <h4 id="repository-layer-conversions">Repository Layer Conversions</h4>
 <div class="highlight"><pre><span></span><code><span class="c1">// ✅ Convert domain models to database parameters</span>
 <span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">Create</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="w"> </span><span class="o">*</span><span class="nx">Tenant</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="c1">// Convert domain → SQLC params</span>
+<span class="w">    </span><span class="c1">// ✅ Context-based tenant isolation (no explicit tenant_id needed)</span>
 <span class="w">    </span><span class="nx">params</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">CreateTenantParams</span><span class="p">{</span>
-<span class="w">        </span><span class="nx">ID</span><span class="p">:</span><span class="w">           </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span>
-<span class="w">        </span><span class="nx">Name</span><span class="p">:</span><span class="w">         </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span>
-<span class="w">        </span><span class="nx">Status</span><span class="p">:</span><span class="w">       </span><span class="nb">string</span><span class="p">(</span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Status</span><span class="p">),</span><span class="w">  </span><span class="c1">// Enum conversion</span>
-<span class="w">        </span><span class="nx">Metadata</span><span class="p">:</span><span class="w">     </span><span class="nx">marshalJSON</span><span class="p">(</span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Metadata</span><span class="p">),</span><span class="w">  </span><span class="c1">// JSON conversion</span>
-<span class="w">        </span><span class="nx">CreatedAt</span><span class="p">:</span><span class="w">    </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">CreatedAt</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Name</span><span class="p">:</span><span class="w">      </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Status</span><span class="p">:</span><span class="w">    </span><span class="nb">string</span><span class="p">(</span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Status</span><span class="p">),</span><span class="w">  </span><span class="c1">// Enum conversion</span>
+<span class="w">        </span><span class="nx">Metadata</span><span class="p">:</span><span class="w">  </span><span class="nx">marshalJSON</span><span class="p">(</span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Metadata</span><span class="p">),</span><span class="w">  </span><span class="c1">// JSON conversion</span>
+<span class="w">        </span><span class="c1">// tenant_id automatically set via current_tenant_id() in SQL</span>
 <span class="w">    </span><span class="p">}</span>
 
 <span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="p">)</span>
@@ -4933,21 +5431,21 @@
 <span class="w">    </span><span class="nx">SpanDatabasePrefix</span><span class="w">   </span><span class="p">=</span><span class="w"> </span><span class="s">&quot;db.&quot;</span>
 <span class="p">)</span>
 
-<span class="c1">// ✅ Comprehensive span attributes</span>
-<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">TenantHandler</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">gin</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">span</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">tracing</span><span class="p">.</span><span class="nx">StartSpan</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;http.create_tenant&quot;</span><span class="p">,</span>
+<span class="c1">// ✅  span attributes in Goa handler</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">TenantHandler</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">CreateTenantPayload</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">Tenant</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">span</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">tracing</span><span class="p">.</span><span class="nx">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;http.create_tenant&quot;</span><span class="p">,</span>
 <span class="w">        </span><span class="nx">tracing</span><span class="p">.</span><span class="nx">WithSpanKind</span><span class="p">(</span><span class="nx">tracing</span><span class="p">.</span><span class="nx">SpanKindServer</span><span class="p">),</span>
 <span class="w">        </span><span class="nx">tracing</span><span class="p">.</span><span class="nx">WithAttributes</span><span class="p">(</span>
-<span class="w">            </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;http.method&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">Request</span><span class="p">.</span><span class="nx">Method</span><span class="p">),</span>
-<span class="w">            </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;http.route&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/api/v1/tenants&quot;</span><span class="p">),</span>
-<span class="w">            </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;http.url&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">Request</span><span class="p">.</span><span class="nx">URL</span><span class="p">.</span><span class="nx">String</span><span class="p">()),</span>
-<span class="w">            </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;user_agent&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">Request</span><span class="p">.</span><span class="nx">UserAgent</span><span class="p">()),</span>
+<span class="w">            </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;http.method&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;POST&quot;</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;http.route&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/tenants&quot;</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;module&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;tenant&quot;</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;operation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;create_tenant&quot;</span><span class="p">),</span>
 <span class="w">        </span><span class="p">))</span>
 <span class="w">    </span><span class="k">defer</span><span class="w"> </span><span class="nx">span</span><span class="p">.</span><span class="nx">End</span><span class="p">()</span>
 
 <span class="w">    </span><span class="c1">// Add business context as operation progresses</span>
 <span class="w">    </span><span class="nx">span</span><span class="p">.</span><span class="nx">SetAttributes</span><span class="p">(</span>
-<span class="w">        </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;tenant.name&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">Name</span><span class="p">),</span>
+<span class="w">        </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;tenant.name&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">p</span><span class="p">.</span><span class="nx">Name</span><span class="p">),</span>
 <span class="w">        </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;tenant.slug&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">Slug</span><span class="p">),</span>
 <span class="w">    </span><span class="p">)</span>
 
@@ -5019,8 +5517,8 @@
 <span class="w">    </span><span class="c1">// Verify persistence</span>
 <span class="w">    </span><span class="nx">found</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">repo</span><span class="p">.</span><span class="nx">GetByID</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
 <span class="w">    </span><span class="nx">require</span><span class="p">.</span><span class="nx">NoError</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span><span class="w"> </span><span class="nx">found</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Status</span><span class="p">,</span><span class="w"> </span><span class="nx">found</span><span class="p">.</span><span class="nx">Status</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">require</span><span class="w"> </span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span><span class="w"> </span><span class="nx">found</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">require</span><span class="w"> </span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Status</span><span class="p">,</span><span class="w"> </span><span class="nx">found</span><span class="p">.</span><span class="nx">Status</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="2-service-testing-with-mocks">2. <strong>Service Testing with Mocks</strong></h3>
@@ -5049,8 +5547,8 @@
 
 <span class="w">    </span><span class="c1">// Verify</span>
 <span class="w">    </span><span class="nx">require</span><span class="p">.</span><span class="nx">NoError</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">StatusActive</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Status</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">require</span><span class="w"> </span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">require</span><span class="w"> </span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">StatusActive</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Status</span><span class="p">)</span>
 
 <span class="w">    </span><span class="nx">mockRepo</span><span class="p">.</span><span class="nx">AssertExpectations</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span>
 <span class="w">    </span><span class="nx">mockCache</span><span class="p">.</span><span class="nx">AssertExpectations</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span>
@@ -5060,62 +5558,84 @@
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">s</span>
 <span class="p">}</span>
 </code></pre></div>
-<h3 id="3-handler-testing">3. <strong>Handler Testing</strong></h3>
-<h4 id="http-handler-tests">HTTP Handler Tests</h4>
-<div class="highlight"><pre><span></span><code><span class="c1">// ✅ Test handlers with mock service</span>
+<h3 id="3-handler-testing-goa">3. <strong>Handler Testing (Goa)</strong></h3>
+<h4 id="goa-handler-tests">Goa Handler Tests</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// ✅ Test Goa handlers with mock service</span>
 <span class="kd">func</span><span class="w"> </span><span class="nx">TestTenantHandler_CreateTenant</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">mockService</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nb">new</span><span class="p">(</span><span class="nx">mocks</span><span class="p">.</span><span class="nx">MockService</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">handler</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">NewTenantHandler</span><span class="p">(</span><span class="nx">mockService</span><span class="p">,</span><span class="w"> </span><span class="nx">logger</span><span class="p">.</span><span class="nx">NewTestLogger</span><span class="p">(),</span><span class="w"> </span><span class="nx">tracing</span><span class="p">.</span><span class="nx">NewNoopTracer</span><span class="p">(),</span><span class="w"> </span><span class="nx">metrics</span><span class="p">.</span><span class="nx">NewNoopMetrics</span><span class="p">())</span>
+<span class="w">    </span><span class="nx">mockService</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nb">new</span><span class="p">(</span><span class="nx">mocks</span><span class="p">.</span><span class="nx">MockTenantService</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">handler</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">NewTenantHandler</span><span class="p">(</span>
+<span class="w">        </span><span class="nx">mockService</span><span class="p">,</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">logger</span><span class="p">.</span><span class="nx">NewTestLogger</span><span class="p">(),</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">tracing</span><span class="p">.</span><span class="nx">NewNoopTracer</span><span class="p">(),</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">metrics</span><span class="p">.</span><span class="nx">NewNoopMetrics</span><span class="p">(),</span>
+<span class="w">    </span><span class="p">)</span>
 
-<span class="w">    </span><span class="c1">// Setup router</span>
-<span class="w">    </span><span class="nx">router</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">gin</span><span class="p">.</span><span class="nx">New</span><span class="p">()</span>
-<span class="w">    </span><span class="nx">router</span><span class="p">.</span><span class="nx">POST</span><span class="p">(</span><span class="s">&quot;/tenants&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">handler</span><span class="p">.</span><span class="nx">CreateTenant</span><span class="p">)</span>
-
-<span class="w">    </span><span class="c1">// Expected response</span>
-<span class="w">    </span><span class="nx">expectedTenant</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">Tenant</span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Expected domain response</span>
+<span class="w">    </span><span class="nx">expectedTenant</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">domain</span><span class="p">.</span><span class="nx">Tenant</span><span class="p">{</span>
 <span class="w">        </span><span class="nx">ID</span><span class="p">:</span><span class="w">   </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">New</span><span class="p">(),</span>
 <span class="w">        </span><span class="nx">Name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Test Tenant&quot;</span><span class="p">,</span>
 <span class="w">        </span><span class="nx">Slug</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;test-tenant&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Status</span><span class="p">:</span><span class="w"> </span><span class="nx">domain</span><span class="p">.</span><span class="nx">StatusActive</span><span class="p">,</span>
 <span class="w">    </span><span class="p">}</span>
 
-<span class="w">    </span><span class="nx">mockService</span><span class="p">.</span><span class="nx">On</span><span class="p">(</span><span class="s">&quot;CreateTenant&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">mock</span><span class="p">.</span><span class="nx">Anything</span><span class="p">,</span><span class="w"> </span><span class="nx">mock</span><span class="p">.</span><span class="nx">AnythingOfType</span><span class="p">(</span><span class="s">&quot;tenant.CreateTenantRequest&quot;</span><span class="p">)).</span>
+<span class="w">    </span><span class="nx">mockService</span><span class="p">.</span><span class="nx">On</span><span class="p">(</span><span class="s">&quot;CreateTenant&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">mock</span><span class="p">.</span><span class="nx">Anything</span><span class="p">,</span><span class="w"> </span><span class="nx">mock</span><span class="p">.</span><span class="nx">AnythingOfType</span><span class="p">(</span><span class="s">&quot;*domain.CreateTenantRequest&quot;</span><span class="p">)).</span>
 <span class="w">        </span><span class="nx">Return</span><span class="p">(</span><span class="nx">expectedTenant</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">)</span>
 
-<span class="w">    </span><span class="c1">// Test request</span>
-<span class="w">    </span><span class="nx">requestBody</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="s">`{</span>
-<span class="s">        &quot;name&quot;: &quot;Test Tenant&quot;,</span>
-<span class="s">        &quot;slug&quot;: &quot;test-tenant&quot;,</span>
-<span class="s">        &quot;email&quot;: &quot;test@example.com&quot;</span>
-<span class="s">    }`</span>
+<span class="w">    </span><span class="c1">// Create Goa payload</span>
+<span class="w">    </span><span class="nx">payload</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">CreateTenantPayload</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">Name</span><span class="p">:</span><span class="w">      </span><span class="s">&quot;Test Tenant&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Slug</span><span class="p">:</span><span class="w">      </span><span class="s">&quot;test-tenant&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Email</span><span class="p">:</span><span class="w">     </span><span class="s">&quot;test@example.com&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Subdomain</span><span class="p">:</span><span class="w"> </span><span class="nx">stringPtr</span><span class="p">(</span><span class="s">&quot;test-subdomain&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="p">}</span>
 
-<span class="w">    </span><span class="nx">req</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">http</span><span class="p">.</span><span class="nx">NewRequest</span><span class="p">(</span><span class="s">&quot;POST&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/tenants&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nx">NewReader</span><span class="p">(</span><span class="nx">requestBody</span><span class="p">))</span>
-<span class="w">    </span><span class="nx">req</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nx">Set</span><span class="p">(</span><span class="s">&quot;Content-Type&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;application/json&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// Execute handler directly (no HTTP router needed)</span>
+<span class="w">    </span><span class="nx">result</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">handler</span><span class="p">.</span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">payload</span><span class="p">)</span>
 
-<span class="w">    </span><span class="nx">w</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">httptest</span><span class="p">.</span><span class="nx">NewRecorder</span><span class="p">()</span>
-<span class="w">    </span><span class="nx">router</span><span class="p">.</span><span class="nx">ServeHTTP</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">)</span>
-
-<span class="w">    </span><span class="c1">// Verify response</span>
-<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">http</span><span class="p">.</span><span class="nx">StatusCreated</span><span class="p">,</span><span class="w"> </span><span class="nx">w</span><span class="p">.</span><span class="nx">Code</span><span class="p">)</span>
-
-<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="nx">Tenant</span>
-<span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">json</span><span class="p">.</span><span class="nx">Unmarshal</span><span class="p">(</span><span class="nx">w</span><span class="p">.</span><span class="nx">Body</span><span class="p">.</span><span class="nx">Bytes</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">response</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// Verify results</span>
 <span class="w">    </span><span class="nx">require</span><span class="p">.</span><span class="nx">NoError</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">expectedTenant</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">require</span><span class="w"> </span><span class="nx">NotNil</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">require</span><span class="w"> </span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">expectedTenant</span><span class="p">.</span><span class="nx">ID</span><span class="p">.</span><span class="nx">String</span><span class="p">(),</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">require</span><span class="w"> </span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Test Tenant&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">require</span><span class="w"> </span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;test-tenant&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">Slug</span><span class="p">)</span>
 
 <span class="w">    </span><span class="nx">mockService</span><span class="p">.</span><span class="nx">AssertExpectations</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">stringPtr</span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">s</span>
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="security-best-practices">🔐 Security Best Practices</h2>
 <h3 id="1-input-validation">1. <strong>Input Validation</strong></h3>
-<h4 id="api-layer-validation">API Layer Validation</h4>
-<div class="highlight"><pre><span></span><code><span class="c1">// ✅ Validate and sanitize input at API boundary</span>
-<span class="kd">type</span><span class="w"> </span><span class="nx">CreateTenantRequest</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">Name</span><span class="w">      </span><span class="kt">string</span><span class="w">                 </span><span class="s">`json:&quot;name&quot; binding:&quot;required,min=3,max=100&quot;`</span>
-<span class="w">    </span><span class="nx">Slug</span><span class="w">      </span><span class="kt">string</span><span class="w">                 </span><span class="s">`json:&quot;slug&quot; binding:&quot;required,min=3,max=50,alphanum&quot;`</span>
-<span class="w">    </span><span class="nx">Email</span><span class="w">     </span><span class="kt">string</span><span class="w">                 </span><span class="s">`json:&quot;email&quot; binding:&quot;required,email&quot;`</span>
-<span class="w">    </span><span class="nx">Subdomain</span><span class="w"> </span><span class="o">*</span><span class="kt">string</span><span class="w">                </span><span class="s">`json:&quot;subdomain,omitempty&quot; binding:&quot;omitempty,min=3,max=63,alphanum&quot;`</span>
-<span class="w">    </span><span class="nx">Metadata</span><span class="w">  </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kd">interface</span><span class="p">{}</span><span class="w"> </span><span class="s">`json:&quot;metadata,omitempty&quot;`</span>
-<span class="p">}</span>
+<h4 id="api-layer-validation-goa-design">API Layer Validation (Goa Design)</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// ✅ Validate input in Goa design files</span>
+<span class="c1">// internal/api/design/services/tenant.go</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">CreateTenantPayload</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">Type</span><span class="p">(</span><span class="s">&quot;CreateTenantPayload&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Attribute</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">String</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Tenant name&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">MinLength</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">MaxLength</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">Pattern</span><span class="p">(</span><span class="s">&quot;^[a-zA-Z0-9\\s]+$&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">Example</span><span class="p">(</span><span class="s">&quot;Acme Corporation&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="nx">Attribute</span><span class="p">(</span><span class="s">&quot;slug&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">String</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Tenant slug&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">MinLength</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">MaxLength</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">Pattern</span><span class="p">(</span><span class="s">&quot;^[a-z0-9-]+$&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">Example</span><span class="p">(</span><span class="s">&quot;acme-corp&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="nx">Attribute</span><span class="p">(</span><span class="s">&quot;email&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">String</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Admin email&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">Format</span><span class="p">(</span><span class="nx">FormatEmail</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">Example</span><span class="p">(</span><span class="s">&quot;admin@acme.com&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="nx">Attribute</span><span class="p">(</span><span class="s">&quot;subdomain&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">String</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Optional subdomain&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">MinLength</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">MaxLength</span><span class="p">(</span><span class="mi">63</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">Pattern</span><span class="p">(</span><span class="s">&quot;^[a-z0-9-]+$&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">Example</span><span class="p">(</span><span class="s">&quot;acme&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="nx">Required</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;slug&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;email&quot;</span><span class="p">)</span>
+<span class="p">})</span>
 
 <span class="c1">// ✅ Additional validation in service layer</span>
 <span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">validateCreateRequest</span><span class="p">(</span><span class="nx">req</span><span class="w"> </span><span class="nx">CreateTenantRequest</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
@@ -5205,22 +5725,30 @@
 </code></pre></div>
 <h2 id="common-anti-patterns-to-avoid">🚨 Common Anti-Patterns to Avoid</h2>
 <h3 id="1-architecture-violations">1. <strong>Architecture Violations</strong></h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// ❌ DON&#39;T: Service importing handler</span>
-<span class="kn">package</span><span class="w"> </span><span class="nx">tenant</span>
-<span class="kn">import</span><span class="w"> </span><span class="s">&quot;internal/api/handlers&quot;</span><span class="w">  </span><span class="c1">// WRONG!</span>
+<div class="highlight"><pre><span></span><code><span class="c1">// ❌ DON&#39;T: Import internal module structure</span>
+<span class="kn">import</span><span class="w"> </span><span class="s">&quot;internal/core/finance/account&quot;</span><span class="w">     </span><span class="c1">// ❌ Internal structure - WRONG!</span>
+<span class="kn">import</span><span class="w"> </span><span class="s">&quot;internal/core/finance/service&quot;</span><span class="w">     </span><span class="c1">// ❌ Implementation details - WRONG!</span>
+
+<span class="c1">// ✅ DO: Import module facade only  </span>
+<span class="kn">import</span><span class="w"> </span><span class="s">&quot;internal/core/finance&quot;</span><span class="w">             </span><span class="c1">// ✅ Module facade - CORRECT!</span>
 
 <span class="c1">// ❌ DON&#39;T: Handler containing business logic</span>
-<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">Handler</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">gin</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">{</span><span class="w">  </span><span class="c1">// Business logic in handler</span>
-<span class="w">        </span><span class="c1">// WRONG!</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">FinanceHandler</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">goaFinance</span><span class="p">.</span><span class="nx">CreateAccountPayload</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">goaFinance</span><span class="p">.</span><span class="nx">Account</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">p</span><span class="p">.</span><span class="nx">Balance</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w">  </span><span class="c1">// Business validation in API layer - WRONG!</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">goaFinance</span><span class="p">.</span><span class="nx">MakeBadRequest</span><span class="p">(</span><span class="nx">errors</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="s">&quot;Invalid balance&quot;</span><span class="p">))</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="c1">// ❌ DON&#39;T: Repository containing business logic</span>
-<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">Repository</span><span class="p">)</span><span class="w"> </span><span class="nx">Create</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenant</span><span class="w"> </span><span class="o">*</span><span class="nx">Tenant</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Status</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">StatusInactive</span><span class="w"> </span><span class="p">{</span><span class="w">  </span><span class="c1">// Business logic in repository</span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="s">&quot;cannot create inactive tenant&quot;</span><span class="p">)</span><span class="w">  </span><span class="c1">// WRONG!</span>
-<span class="w">    </span><span class="p">}</span>
+<span class="c1">// ❌ DON&#39;T: Skip context propagation</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">req</span><span class="w"> </span><span class="nx">CreateAccountRequest</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Account</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// No context = no tenant isolation, audit, or tracing - WRONG!</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">repository</span><span class="p">.</span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">req</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// ❌ DON&#39;T: Hard-code business parameters</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">ProcessApproval</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">timeout</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Minute</span><span class="w">  </span><span class="c1">// Hard-coded timeout - WRONG!</span>
+<span class="w">    </span><span class="nx">retries</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="mi">3</span><span class="w">                </span><span class="c1">// Hard-coded retries - WRONG!</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="2-error-handling-anti-patterns">2. <strong>Error Handling Anti-Patterns</strong></h3>
@@ -5233,12 +5761,19 @@
 <span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="c1">// ❌ DON&#39;T: Generic error messages</span>
-<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">Handler</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">gin</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="c1">// ❌ DON&#39;T: Generic error messages in Goa handlers</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">h</span><span class="w"> </span><span class="o">*</span><span class="nx">TenantHandler</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">CreateTenantPayload</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">Tenant</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">service</span><span class="p">.</span><span class="nx">CreateTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">)</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nx">c</span><span class="p">.</span><span class="nx">JSON</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span><span class="w"> </span><span class="nx">gin</span><span class="p">.</span><span class="nx">H</span><span class="p">{</span><span class="s">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Something went wrong&quot;</span><span class="p">})</span><span class="w">  </span><span class="c1">// Not helpful - WRONG!</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">goaTenant</span><span class="p">.</span><span class="nx">MakeInternalError</span><span class="p">(</span><span class="nx">errors</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="s">&quot;Something went wrong&quot;</span><span class="p">))</span><span class="w">  </span><span class="c1">// Not helpful - WRONG!</span>
 <span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// ❌ DON&#39;T: Bypass workflows for complex operations</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">ProcessMonthEnd</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">s</span><span class="p">.</span><span class="nx">calculateBalances</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w">   </span><span class="c1">// Could fail after 20 minutes</span>
+<span class="w">    </span><span class="nx">s</span><span class="p">.</span><span class="nx">generateReports</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w">     </span><span class="c1">// Leaving system in inconsistent state  </span>
+<span class="w">    </span><span class="nx">s</span><span class="p">.</span><span class="nx">sendNotifications</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w">   </span><span class="c1">// ❌ WRONG!</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="3-performance-anti-patterns">3. <strong>Performance Anti-Patterns</strong></h3>
@@ -5263,9 +5798,10 @@
 </code></pre></div>
 <hr />
 <p>📚 <strong>Next Steps</strong>:
-- <a href="../error-handling/">Error Handling</a> - Comprehensive error handling strategies
-- <a href="../code-examples/">Code Examples</a> - See these patterns in action
-- <a href="../architecture/">Architecture Overview</a> - Review architectural principles</p>
+- <a href="../architecture/">Architecture Overview</a> - System design principles
+- <a href="../service/">Service Implementation</a> - Module development patterns
+- <a href="../goa/">API Development</a> - Handler and API patterns
+- <a href="../error-handling/">Error Handling</a> - Error management strategies</p>
 
 
 

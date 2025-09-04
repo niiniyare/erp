@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#database-transactions-and-tenant-lifecycle" class="md-skip">
+        <a href="#awo-erp-database-transactions-and-tenant-isolation" class="md-skip">
           Skip to content
         </a>
       
@@ -355,6 +355,26 @@
   
   
   Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/modules/settings/" class="md-tabs__link">
+          
+  
+  
+  System Configuration
 
         </a>
       </li>
@@ -844,6 +864,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#withtenant-pattern-and-context-based-multi-tenancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      WithTenant Pattern and Context-Based Multi-Tenancy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       Overview
@@ -853,28 +882,37 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#store-interface" class="md-nav__link">
+  <a href="#key-architecture-components" class="md-nav__link">
     <span class="md-ellipsis">
-      Store Interface
+      Key Architecture Components
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Store Interface">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#store-interface-transaction-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Store Interface Transaction Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Store Interface Transaction Patterns">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-basic-transactions-withtx" class="md-nav__link">
+  <a href="#1-withtenant-pattern-most-common" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Basic Transactions (WithTx)
+      1. WithTenant Pattern (Most Common)
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-tenant-aware-transactions-withtenant" class="md-nav__link">
+  <a href="#2-multi-operation-withtenant-example" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Tenant-Aware Transactions (WithTenant)
+      2. Multi-Operation WithTenant Example
     </span>
   </a>
   
@@ -889,41 +927,44 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#4-basic-transactions-withtx" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Basic Transactions (WithTx)
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-withtenant-works-internally" class="md-nav__link">
+    <span class="md-ellipsis">
+      How WithTenant Works Internally
+    </span>
+  </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#tenant-context-management" class="md-nav__link">
+  <a href="#context-resolution-in-repositories" class="md-nav__link">
     <span class="md-ellipsis">
-      Tenant Context Management
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Tenant Context Management">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#setting-tenant-context" class="md-nav__link">
-    <span class="md-ellipsis">
-      Setting Tenant Context
+      Context Resolution in Repositories
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#tenant-id-sources" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#database-session-variables" class="md-nav__link">
     <span class="md-ellipsis">
-      Tenant ID Sources
+      Database Session Variables
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -938,27 +979,36 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-always-use-tenant-context" class="md-nav__link">
+  <a href="#1-always-use-withtenant-for-multi-tenant-data" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Always Use Tenant Context
+      1. Always Use WithTenant for Multi-Tenant Data
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-handle-errors-properly" class="md-nav__link">
+  <a href="#2-handle-context-errors-properly" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Handle Errors Properly
+      2. Handle Context Errors Properly
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-keep-transactions-short" class="md-nav__link">
+  <a href="#3-keep-transactions-focused-and-short" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Keep Transactions Short
+      3. Keep Transactions Focused and Short
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-use-temporal-for-complex-multi-step-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Use Temporal for Complex Multi-Step Operations
     </span>
   </a>
   
@@ -970,28 +1020,19 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-patterns" class="md-nav__link">
+  <a href="#testing-database-transactions" class="md-nav__link">
     <span class="md-ellipsis">
-      Common Patterns
+      Testing Database Transactions
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Common Patterns">
+    <nav class="md-nav" aria-label="Testing Database Transactions">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#bulk-operations" class="md-nav__link">
+  <a href="#repository-testing-with-test-database" class="md-nav__link">
     <span class="md-ellipsis">
-      Bulk Operations
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#complex-business-logic" class="md-nav__link">
-    <span class="md-ellipsis">
-      Complex Business Logic
+      Repository Testing with Test Database
     </span>
   </a>
   
@@ -1003,53 +1044,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing-transactions" class="md-nav__link">
+  <a href="#common-patterns-summary" class="md-nav__link">
     <span class="md-ellipsis">
-      Testing Transactions
+      Common Patterns Summary
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migration-considerations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Migration Considerations
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      Troubleshooting
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#common-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      Common Issues
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#debug-tips" class="md-nav__link">
-    <span class="md-ellipsis">
-      Debug Tips
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2622,7 +2621,7 @@
   
   
   <span class="md-ellipsis">
-    Other Modules
+    System Configuration
     
   </span>
   
@@ -2632,6 +2631,171 @@
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            System Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/service-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Other Modules
           </label>
@@ -2650,29 +2814,6 @@
   
   <span class="md-ellipsis">
     System Architecture
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/modules/settings/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    System Settings
     
   </span>
   
@@ -3032,10 +3173,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
             
   
   
@@ -3048,8 +3189,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             API Reference
           </label>
@@ -3213,10 +3354,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_7" >
         
           
-          <label class="md-nav__link" for="__nav_10_7" id="__nav_10_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_7" id="__nav_11_7_label" tabindex="0">
             
   
   
@@ -3229,8 +3370,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_7">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
           </label>
@@ -3333,10 +3474,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_10" >
         
           
-          <label class="md-nav__link" for="__nav_10_10" id="__nav_10_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_10" id="__nav_11_10_label" tabindex="0">
             
   
   
@@ -3349,8 +3490,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_10">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_10">
             <span class="md-nav__icon md-icon"></span>
             Core APIs
           </label>
@@ -3614,10 +3755,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_11" >
         
           
-          <label class="md-nav__link" for="__nav_10_11" id="__nav_10_11_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_11" id="__nav_11_11_label" tabindex="0">
             
   
   
@@ -3630,8 +3771,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_11">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_11">
             <span class="md-nav__icon md-icon"></span>
             Workflows
           </label>
@@ -3757,10 +3898,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_12" >
         
           
-          <label class="md-nav__link" for="__nav_10_12" id="__nav_10_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_12" id="__nav_11_12_label" tabindex="0">
             
   
   
@@ -3773,8 +3914,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_12">
             <span class="md-nav__icon md-icon"></span>
             Testing
           </label>
@@ -3854,10 +3995,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_13" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_13" >
         
           
-          <label class="md-nav__link" for="__nav_10_13" id="__nav_10_13_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_13" id="__nav_11_13_label" tabindex="0">
             
   
   
@@ -3870,8 +4011,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_13">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_13">
             <span class="md-nav__icon md-icon"></span>
             Utilities
           </label>
@@ -3931,260 +4072,434 @@
 
 
 
-<h1 id="database-transactions-and-tenant-lifecycle">Database Transactions and Tenant Lifecycle</h1>
-<p>This guide explains how to properly manage database transactions and tenant context in the ERP system.</p>
+<h1 id="awo-erp-database-transactions-and-tenant-isolation">Awo ERP Database Transactions and Tenant Isolation</h1>
+<h2 id="withtenant-pattern-and-context-based-multi-tenancy"><em>WithTenant Pattern and Context-Based Multi-Tenancy</em></h2>
+<p><em>Guide for managing database transactions with proper tenant isolation using WithTenant pattern, context propagation, and SQLC integration</em></p>
+<blockquote>
+<p><strong>📚 Related Documentation:</strong>
+- <code>docs/contributing/architecture.md</code> - System architecture and context patterns
+- <code>docs/contributing/sqlc-integration.md</code> - SQLC query patterns and code generation
+- <code>docs/contributing/01-best-practices.md</code> - Development guidelines and patterns</p>
+</blockquote>
 <h2 id="overview">Overview</h2>
-<p>The ERP system uses PostgreSQL with row-level security (RLS) for multi-tenant isolation. All database operations must be performed within the correct tenant context to ensure data isolation.</p>
-<h2 id="store-interface">Store Interface</h2>
-<p>The <code>Store</code> interface in <code>db/sqlc/store.go</code> provides three main transaction patterns:</p>
-<h3 id="1-basic-transactions-withtx">1. Basic Transactions (<code>WithTx</code>)</h3>
-<p>Use for simple operations that don't require tenant context:</p>
-<div class="highlight"><pre><span></span><code><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTx</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// Perform multiple database operations</span>
-<span class="w">    </span><span class="nx">user</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">CreateUser</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="p">)</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">UpdateUserProfile</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">profileParams</span><span class="p">)</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
-<span class="p">})</span>
+<p>Awo ERP uses the <strong>WithTenant pattern</strong> for database transactions, combining PostgreSQL transaction management with tenant context isolation. The <code>db.Store</code> interface provides tenant-aware transaction methods that ensure all operations are properly isolated by setting database session variables within transaction scope.</p>
+<h2 id="key-architecture-components">Key Architecture Components</h2>
+<ol>
+<li><strong>Context Propagation</strong>: Tenant ID stored in Go context via <code>shared.GetTenantID(ctx)</code></li>
+<li><strong>WithTenant Pattern</strong>: Database transactions with tenant session variables  </li>
+<li><strong>SQLC Integration</strong>: Type-safe queries with automatic tenant isolation</li>
+<li><strong>Repository Layer</strong>: Clean abstractions over database operations</li>
+</ol>
+<h2 id="store-interface-transaction-patterns">Store Interface Transaction Patterns</h2>
+<p>The <code>db.Store</code> interface in <code>db/sqlc/store.go</code> provides these transaction methods:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">Store</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Querier</span>
+<span class="w">    </span><span class="c1">// Tenant context methods</span>
+<span class="w">    </span><span class="nx">SetTenantContext</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">,</span><span class="w"> </span><span class="nx">fn</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">BeginTxWithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">pgx</span><span class="p">.</span><span class="nx">Tx</span><span class="p">,</span><span class="w"> </span><span class="nx">Store</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">WithTx</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">fn</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="c1">// Connection management</span>
+<span class="w">    </span><span class="nx">Close</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">GetPool</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">pgxpool</span><span class="p">.</span><span class="nx">Pool</span>
+<span class="p">}</span>
 </code></pre></div>
-<h3 id="2-tenant-aware-transactions-withtenant">2. Tenant-Aware Transactions (<code>WithTenant</code>)</h3>
-<p>Use for operations requiring tenant isolation (most common):</p>
-<div class="highlight"><pre><span></span><code><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// All operations automatically isolated to tenantID</span>
-<span class="w">    </span><span class="nx">entities</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">ListEntities</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<h3 id="1-withtenant-pattern-most-common">1. <strong>WithTenant Pattern (Most Common)</strong></h3>
+<p>This is the primary pattern used throughout the codebase for tenant-isolated operations:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// internal/core/finance/repository/accounts.go</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">chartOfAccountsRepository</span><span class="p">)</span><span class="w"> </span><span class="nx">Create</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">account</span><span class="w"> </span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">Accounts</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Get tenant ID from context</span>
+<span class="w">    </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;tenant ID not found in context&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Use tenant-aware transaction for proper isolation</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Map domain account to SQLC parameters</span>
+<span class="w">        </span><span class="nx">params</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">mapDomainAccountToSQLCCreateDirect</span><span class="p">(</span><span class="nx">account</span><span class="p">)</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;failed to map create account request: %w&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// Execute SQLC query within tenant context</span>
+<span class="w">        </span><span class="nx">sqlcAccount</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="p">)</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">mapDatabaseError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;create_account&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// Update the account with generated fields</span>
+<span class="w">        </span><span class="nx">account</span><span class="p">.</span><span class="nx">ID</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">sqlcAccount</span><span class="p">.</span><span class="nx">ID</span>
+<span class="w">        </span><span class="nx">account</span><span class="p">.</span><span class="nx">TenantID</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">sqlcAccount</span><span class="p">.</span><span class="nx">TenantID</span>
+<span class="w">        </span><span class="nx">account</span><span class="p">.</span><span class="nx">CreatedAt</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">sqlcAccount</span><span class="p">.</span><span class="nx">CreatedAt</span>
+<span class="w">        </span><span class="nx">account</span><span class="p">.</span><span class="nx">UpdatedAt</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">sqlcAccount</span><span class="p">.</span><span class="nx">UpdatedAt</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="2-multi-operation-withtenant-example">2. <strong>Multi-Operation WithTenant Example</strong></h3>
+<p>Complex operations that need multiple queries in the same tenant context:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// internal/core/finance/repository/transaction.go</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">transactionRepository</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateWithEntries</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transaction</span><span class="w"> </span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">Transaction</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Get tenant ID from context</span>
+<span class="w">    </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;tenant ID not found in context&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 1. Create the main transaction</span>
+<span class="w">        </span><span class="nx">params</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">CreateTransactionParams</span><span class="p">{</span>
+<span class="w">            </span><span class="nx">EntityID</span><span class="p">:</span><span class="w">          </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">EntityID</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">TransactionNumber</span><span class="p">:</span><span class="w"> </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">TransactionNumber</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">TransactionType</span><span class="p">:</span><span class="w">   </span><span class="nx">mapDomainTransactionTypeToSQLCEnum</span><span class="p">(</span><span class="nx">transaction</span><span class="p">.</span><span class="nx">TransactionType</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">TransactionDate</span><span class="p">:</span><span class="w">   </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">TransactionDate</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">Description</span><span class="p">:</span><span class="w">       </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">Description</span><span class="p">,</span>
+<span class="w">            </span><span class="c1">// ... other fields</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="nx">sqlcTransaction</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">CreateTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="p">)</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">mapDatabaseError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;create_transaction&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">ID</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">sqlcTransaction</span><span class="p">.</span><span class="nx">ID</span>
+<span class="w">        </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">TenantID</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">sqlcTransaction</span><span class="p">.</span><span class="nx">TenantID</span>
+
+<span class="w">        </span><span class="c1">// 2. Create transaction entries in the same transaction</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">entry</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">Entries</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">entryParams</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">CreateTransactionEntryParams</span><span class="p">{</span>
+<span class="w">                </span><span class="nx">TransactionID</span><span class="p">:</span><span class="w"> </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">AccountID</span><span class="p">:</span><span class="w">     </span><span class="nx">entry</span><span class="p">.</span><span class="nx">AccountID</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">DebitAmount</span><span class="p">:</span><span class="w">   </span><span class="nx">decimalToPgNumeric</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">entry</span><span class="p">.</span><span class="nx">DebitAmount</span><span class="p">),</span>
+<span class="w">                </span><span class="nx">CreditAmount</span><span class="p">:</span><span class="w">  </span><span class="nx">decimalToPgNumeric</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">entry</span><span class="p">.</span><span class="nx">CreditAmount</span><span class="p">),</span>
+<span class="w">                </span><span class="nx">Description</span><span class="p">:</span><span class="w">   </span><span class="nx">entry</span><span class="p">.</span><span class="nx">Description</span><span class="p">,</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">CreateTransactionEntry</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">entryParams</span><span class="p">)</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">mapDatabaseError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;create_transaction_entry&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="3-manual-transaction-control-begintxwithtenant">3. <strong>Manual Transaction Control (BeginTxWithTenant)</strong></h3>
+<p>For advanced scenarios requiring explicit transaction management:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateComplexFinancialOperation</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">ComplexRequest</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Get tenant ID from context</span>
+<span class="w">    </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;tenant ID not found in context&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nx">tx</span><span class="p">,</span><span class="w"> </span><span class="nx">txStore</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">BeginTxWithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">defer</span><span class="w"> </span><span class="nx">tx</span><span class="p">.</span><span class="nx">Rollback</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// Step 1: Create primary record</span>
+<span class="w">    </span><span class="nx">record</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">txStore</span><span class="p">.</span><span class="nx">CreatePrimaryRecord</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="p">)</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
 <span class="w">    </span><span class="p">}</span>
 
-<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">entity</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">entities</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">UpdateEntityStatus</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">UpdateEntityStatusParams</span><span class="p">{</span>
-<span class="w">            </span><span class="nx">ID</span><span class="p">:</span><span class="w">     </span><span class="nx">entity</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span>
-<span class="w">            </span><span class="nx">Status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;active&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">// Step 2: Conditional logic based on business rules</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">record</span><span class="p">.</span><span class="nx">RequiresApproval</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">txStore</span><span class="p">.</span><span class="nx">CreateApprovalRequest</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">CreateApprovalParams</span><span class="p">{</span>
+<span class="w">            </span><span class="nx">RecordID</span><span class="p">:</span><span class="w">   </span><span class="nx">record</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">ApproverID</span><span class="p">:</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">ApproverID</span><span class="p">,</span>
 <span class="w">        </span><span class="p">})</span>
 <span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
 <span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
 <span class="w">        </span><span class="p">}</span>
 <span class="w">    </span><span class="p">}</span>
 
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
-<span class="p">})</span>
+<span class="w">    </span><span class="c1">// Step 3: Create related records</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">item</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">RelatedItems</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">txStore</span><span class="p">.</span><span class="nx">CreateRelatedRecord</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">CreateRelatedParams</span><span class="p">{</span>
+<span class="w">            </span><span class="nx">PrimaryID</span><span class="p">:</span><span class="w"> </span><span class="nx">record</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">Data</span><span class="p">:</span><span class="w">      </span><span class="nx">item</span><span class="p">.</span><span class="nx">Data</span><span class="p">,</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Explicit commit</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">tx</span><span class="p">.</span><span class="nx">Commit</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="p">}</span>
 </code></pre></div>
-<h3 id="3-manual-transaction-control-begintxwithtenant">3. Manual Transaction Control (<code>BeginTxWithTenant</code>)</h3>
-<p>Use when you need explicit transaction control:</p>
-<div class="highlight"><pre><span></span><code><span class="nx">tx</span><span class="p">,</span><span class="w"> </span><span class="nx">txStore</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">BeginTxWithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">)</span>
-<span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<h3 id="4-basic-transactions-withtx">4. <strong>Basic Transactions (WithTx)</strong></h3>
+<p>For operations that don't require tenant context (rare):</p>
+<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">PerformSystemOperation</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTx</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// System-level operations without tenant isolation</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">UpdateSystemSettings</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="p">)</span>
+<span class="w">    </span><span class="p">})</span>
 <span class="p">}</span>
-<span class="k">defer</span><span class="w"> </span><span class="nx">tx</span><span class="p">.</span><span class="nx">Rollback</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
-
-<span class="c1">// Perform operations</span>
-<span class="nx">user</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">txStore</span><span class="p">.</span><span class="nx">CreateUser</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="p">)</span>
-<span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
-<span class="p">}</span>
-
-<span class="c1">// Conditional logic</span>
-<span class="k">if</span><span class="w"> </span><span class="nx">user</span><span class="p">.</span><span class="nx">RequiresApproval</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">txStore</span><span class="p">.</span><span class="nx">CreateApprovalRequest</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">approvalParams</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="how-withtenant-works-internally">How WithTenant Works Internally</h2>
+<p>The <code>WithTenant</code> method in <code>db/sqlc/store.go</code> handles the transaction and tenant context setup:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// WithTenant executes a function with tenant context set</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">SQLStore</span><span class="p">)</span><span class="w"> </span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">,</span><span class="w"> </span><span class="nx">fn</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">tx</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">connPool</span><span class="p">.</span><span class="nx">Begin</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
 <span class="w">    </span><span class="p">}</span>
-<span class="p">}</span>
+<span class="w">    </span><span class="k">defer</span><span class="w"> </span><span class="nx">tx</span><span class="p">.</span><span class="nx">Rollback</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
 
-<span class="c1">// Explicit commit</span>
-<span class="k">return</span><span class="w"> </span><span class="nx">tx</span><span class="p">.</span><span class="nx">Commit</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// Set tenant context with transaction scope (true)</span>
+<span class="w">    </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">tx</span><span class="p">.</span><span class="nx">Exec</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;SELECT set_config(&#39;app.current_tenant_id&#39;, $1, true)&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">.</span><span class="nx">String</span><span class="p">())</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Create store instance with transaction</span>
+<span class="w">    </span><span class="nx">txStore</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">SQLStore</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">connPool</span><span class="p">:</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">connPool</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Queries</span><span class="p">:</span><span class="w">  </span><span class="nx">s</span><span class="p">.</span><span class="nx">Queries</span><span class="p">.</span><span class="nx">WithTx</span><span class="p">(</span><span class="nx">tx</span><span class="p">),</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Execute function</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">fn</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">txStore</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">tx</span><span class="p">.</span><span class="nx">Commit</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="p">}</span>
 </code></pre></div>
-<h2 id="tenant-context-management">Tenant Context Management</h2>
-<h3 id="setting-tenant-context">Setting Tenant Context</h3>
-<p>The system uses PostgreSQL session variables to enforce tenant isolation:</p>
-<ul>
-<li><code>WithTenant</code>: Sets <code>app.current_tenant_id</code> with transaction scope</li>
-<li><code>BeginTxWithTenant</code>: Uses <code>set_tenant_context()</code> database function</li>
-<li><code>SetTenantContext</code>: Sets session-level tenant context</li>
-</ul>
-<h3 id="tenant-id-sources">Tenant ID Sources</h3>
-<p>Tenant ID should come from:</p>
-<ol>
-<li><strong>JWT Claims</strong>: Extract from authenticated user token</li>
-<li><strong>Request Headers</strong>: For service-to-service calls</li>
-<li><strong>Context Values</strong>: Passed through request chain</li>
-</ol>
-<p>Example:</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// Extract tenant from JWT claims</span>
-<span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">auth</span><span class="p">.</span><span class="nx">GetTenantIDFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
-<span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;failed to get tenant ID: %w&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+<h2 id="context-resolution-in-repositories">Context Resolution in Repositories</h2>
+<p>All repositories follow the same pattern for extracting tenant context:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// internal/shared/context.go - Context helper functions</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">GetTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">Value</span><span class="p">(</span><span class="nx">TenantIDKey</span><span class="p">).(</span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span>
 <span class="p">}</span>
 
-<span class="c1">// Use in database operations</span>
-<span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">CreateEntity</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="p">)</span>
-<span class="p">})</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">WithTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">WithValue</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">TenantIDKey</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// Repository usage pattern</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">SomeOperation</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ✅ Standard pattern: Get tenant ID from context</span>
+<span class="w">    </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;tenant ID not found in context&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// ✅ Use WithTenant for all database operations</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// All database operations within this block are tenant-isolated</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">SomeQuery</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="p">)</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="database-session-variables">Database Session Variables</h2>
+<p>The tenant context is maintained using PostgreSQL session variables:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Set tenant context (done automatically by WithTenant)</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">set_config</span><span class="p">(</span><span class="s1">&#39;app.current_tenant_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
+
+<span class="c1">-- Database functions can access current tenant</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">current_tenant_id</span><span class="p">()</span><span class="w"> </span>
+<span class="k">RETURNS</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<span class="k">BEGIN</span>
+<span class="w">    </span><span class="k">RETURN</span><span class="w"> </span><span class="n">current_setting</span><span class="p">(</span><span class="s1">&#39;app.current_tenant_id&#39;</span><span class="p">)::</span><span class="n">UUID</span><span class="p">;</span>
+<span class="k">END</span><span class="p">;</span>
+<span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">plpgsql</span><span class="p">;</span>
+
+<span class="c1">-- Usage in SQLC queries</span>
+<span class="c1">-- name: CreateAccount :one</span>
+<span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">accounts</span><span class="w"> </span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">code</span><span class="p">,</span><span class="w"> </span><span class="n">tenant_id</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="p">,</span><span class="w"> </span><span class="n">updated_at</span><span class="p">)</span>
+<span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="err">$</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="err">$</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">current_tenant_id</span><span class="p">(),</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span><span class="w"> </span><span class="n">NOW</span><span class="p">())</span>
+<span class="n">RETURNING</span><span class="w"> </span><span class="o">*</span><span class="p">;</span>
 </code></pre></div>
 <h2 id="best-practices">Best Practices</h2>
-<h3 id="1-always-use-tenant-context">1. Always Use Tenant Context</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// ❌ Wrong - bypasses tenant isolation</span>
-<span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTx</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">ListEntities</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="c1">// May return data from all tenants</span>
-<span class="p">})</span>
-
-<span class="c1">// ✅ Correct - enforces tenant isolation</span>
-<span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">ListEntities</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="c1">// Only returns tenant&#39;s data</span>
-<span class="p">})</span>
-</code></pre></div>
-<h3 id="2-handle-errors-properly">2. Handle Errors Properly</h3>
-<div class="highlight"><pre><span></span><code><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">entity</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">GetEntity</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">entityID</span><span class="p">)</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">Is</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="w"> </span><span class="nx">sql</span><span class="p">.</span><span class="nx">ErrNoRows</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">ErrEntityNotFound</span>
-<span class="w">        </span><span class="p">}</span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;failed to get entity: %w&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+<h3 id="1-always-use-withtenant-for-multi-tenant-data">1. <strong>Always Use WithTenant for Multi-Tenant Data</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// ✅ Correct - ensures tenant isolation</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">GetAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">Account</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;tenant ID not found in context&quot;</span><span class="p">)</span>
 <span class="w">    </span><span class="p">}</span>
 
-<span class="w">    </span><span class="c1">// Continue processing...</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
-<span class="p">})</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">account</span><span class="w"> </span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">Account</span>
+<span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">sqlcAccount</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">GetAccountByID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">)</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">ErrNoRows</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="nx">domain</span><span class="p">.</span><span class="nx">ErrAccountNotFound</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">        </span><span class="p">}</span>
 
-<span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// Transaction automatically rolled back</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">        </span><span class="nx">account</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">mapSQLCAccountToDomain</span><span class="p">(</span><span class="nx">sqlcAccount</span><span class="p">)</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">})</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">account</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="p">}</span>
+
+<span class="c1">// ❌ Wrong - bypasses tenant isolation</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">GetAccountUnsafe</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">Account</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTx</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// No tenant context - could return data from any tenant!</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">GetAccountByID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">)</span>
+<span class="w">    </span><span class="p">})</span>
 <span class="p">}</span>
 </code></pre></div>
-<h3 id="3-keep-transactions-short">3. Keep Transactions Short</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// ❌ Wrong - long-running transaction</span>
-<span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">entities</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">ListEntities</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<h3 id="2-handle-context-errors-properly">2. <strong>Handle Context Errors Properly</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// ✅ Proper error handling for missing tenant context</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateAccount</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">account</span><span class="w"> </span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">Account</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// This should never happen in normal flow - indicates middleware/context issue</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;tenant ID not found in context - ensure request has proper authentication&quot;</span><span class="p">)</span>
 <span class="w">    </span><span class="p">}</span>
 
-<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">entity</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">entities</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="c1">// Long processing that might fail</span>
-<span class="w">        </span><span class="nx">processedData</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">heavyProcessing</span><span class="p">(</span><span class="nx">entity</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Implementation...</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="3-keep-transactions-focused-and-short">3. <strong>Keep Transactions Focused and Short</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// ✅ Good - focused transaction</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">UpdateAccountBalance</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">accountID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">,</span><span class="w"> </span><span class="nx">newBalance</span><span class="w"> </span><span class="nx">decimal</span><span class="p">.</span><span class="nx">Decimal</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;tenant ID not found in context&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
 
-<span class="w">        </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">UpdateEntity</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">UpdateEntityParams</span><span class="p">{</span>
-<span class="w">            </span><span class="nx">ID</span><span class="p">:</span><span class="w">   </span><span class="nx">entity</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span>
-<span class="w">            </span><span class="nx">Data</span><span class="p">:</span><span class="w"> </span><span class="nx">processedData</span><span class="p">,</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">UpdateAccountBalance</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">UpdateAccountBalanceParams</span><span class="p">{</span>
+<span class="w">            </span><span class="nx">ID</span><span class="p">:</span><span class="w">      </span><span class="nx">accountID</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">Balance</span><span class="p">:</span><span class="w"> </span><span class="nx">decimalToPgNumeric</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">newBalance</span><span class="p">),</span>
 <span class="w">        </span><span class="p">})</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">// ❌ Avoid - long-running operations in transaction</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><span class="nx">repository</span><span class="p">)</span><span class="w"> </span><span class="nx">ProcessMonthEndBad</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;tenant ID not found in context&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">accounts</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">ListAccounts</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
 <span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
 <span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
 <span class="w">        </span><span class="p">}</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
-<span class="p">})</span>
 
-<span class="c1">// ✅ Better - separate processing from database operations</span>
-<span class="nx">entities</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">ListEntities</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
-<span class="p">})</span>
-<span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
-<span class="p">}</span>
-
-<span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">entity</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">entities</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">processedData</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">heavyProcessing</span><span class="p">(</span><span class="nx">entity</span><span class="p">)</span><span class="w"> </span><span class="c1">// Outside transaction</span>
-
-<span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">UpdateEntity</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">UpdateEntityParams</span><span class="p">{</span>
-<span class="w">            </span><span class="nx">ID</span><span class="p">:</span><span class="w">   </span><span class="nx">entity</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span>
-<span class="w">            </span><span class="nx">Data</span><span class="p">:</span><span class="w"> </span><span class="nx">processedData</span><span class="p">,</span>
-<span class="w">        </span><span class="p">})</span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
-<span class="w">    </span><span class="p">})</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>
-<h2 id="common-patterns">Common Patterns</h2>
-<h3 id="bulk-operations">Bulk Operations</h3>
-<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">Service</span><span class="p">)</span><span class="w"> </span><span class="nx">BulkUpdateEntities</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">,</span><span class="w"> </span><span class="nx">updates</span><span class="w"> </span><span class="p">[]</span><span class="nx">EntityUpdate</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">store</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">update</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">updates</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">UpdateEntity</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">UpdateEntityParams</span><span class="p">{</span>
-<span class="w">                </span><span class="nx">ID</span><span class="p">:</span><span class="w">     </span><span class="nx">update</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span>
-<span class="w">                </span><span class="nx">Status</span><span class="p">:</span><span class="w"> </span><span class="nx">update</span><span class="p">.</span><span class="nx">Status</span><span class="p">,</span>
-<span class="w">            </span><span class="p">})</span>
-<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;failed to update entity %s: %w&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">update</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
-<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="c1">// ❌ Heavy processing inside transaction</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">account</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">accounts</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">report</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">generateComplexReport</span><span class="p">(</span><span class="nx">account</span><span class="p">)</span><span class="w"> </span><span class="c1">// Could take minutes!</span>
+<span class="w">            </span><span class="nx">s</span><span class="p">.</span><span class="nx">CreateReport</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">report</span><span class="p">)</span>
 <span class="w">        </span><span class="p">}</span>
 <span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
 <span class="w">    </span><span class="p">})</span>
 <span class="p">}</span>
 </code></pre></div>
-<h3 id="complex-business-logic">Complex Business Logic</h3>
-<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">Service</span><span class="p">)</span><span class="w"> </span><span class="nx">ProcessApproval</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">,</span><span class="w"> </span><span class="nx">approvalID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">store</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="c1">// Get approval request</span>
-<span class="w">        </span><span class="nx">approval</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">GetApprovalRequest</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">approvalID</span><span class="p">)</span>
-<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
-<span class="w">        </span><span class="p">}</span>
+<h3 id="4-use-temporal-for-complex-multi-step-operations">4. <strong>Use Temporal for Complex Multi-Step Operations</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// ✅ Better approach for complex operations</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">ProcessMonthEnd</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Use Temporal workflow for complex, long-running processes</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">temporal</span><span class="p">.</span><span class="nx">ExecuteWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">workflows</span><span class="p">.</span><span class="nx">MonthEndProcess</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">workflows</span><span class="p">.</span><span class="nx">MonthEndInput</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">TenantID</span><span class="p">:</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">),</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="p">}</span>
 
-<span class="w">        </span><span class="c1">// Update entity status</span>
-<span class="w">        </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">UpdateEntityStatus</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">UpdateEntityStatusParams</span><span class="p">{</span>
-<span class="w">            </span><span class="nx">ID</span><span class="p">:</span><span class="w">     </span><span class="nx">approval</span><span class="p">.</span><span class="nx">EntityID</span><span class="p">,</span>
-<span class="w">            </span><span class="nx">Status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;approved&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="p">})</span>
-<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
-<span class="w">        </span><span class="p">}</span>
-
-<span class="w">        </span><span class="c1">// Mark approval as completed</span>
-<span class="w">        </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">CompleteApproval</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">approvalID</span><span class="p">)</span>
+<span class="c1">// The workflow coordinates individual database operations</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">MonthEndWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="o">*</span><span class="nx">MonthEndInput</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Each activity uses WithTenant for focused database operations</span>
+<span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">ExecuteActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">activities</span><span class="p">.</span><span class="nx">GenerateReports</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">).</span><span class="nx">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
-<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">ExecuteActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">activities</span><span class="p">.</span><span class="nx">UpdateBalances</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">).</span><span class="nx">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
 <span class="p">}</span>
 </code></pre></div>
-<h2 id="testing-transactions">Testing Transactions</h2>
-<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="nx">TestEntityService_CreateWithApproval</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">store</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">setupTestStore</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">service</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">NewEntityService</span><span class="p">(</span><span class="nx">store</span><span class="p">)</span>
+<h2 id="testing-database-transactions">Testing Database Transactions</h2>
+<h3 id="repository-testing-with-test-database">Repository Testing with Test Database</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="nx">TestAccountRepository_Create</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Setup test database</span>
+<span class="w">    </span><span class="nx">testDB</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">setupTestDB</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span>
+<span class="w">    </span><span class="k">defer</span><span class="w"> </span><span class="nx">testDB</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
 
+<span class="w">    </span><span class="nx">store</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">NewStore</span><span class="p">(</span><span class="nx">testDB</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">repo</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">NewAccountsRepository</span><span class="p">(</span><span class="nx">store</span><span class="p">,</span><span class="w"> </span><span class="nx">tracing</span><span class="p">.</span><span class="nx">NewNoopTracer</span><span class="p">())</span>
+
+<span class="w">    </span><span class="c1">// Create test context with tenant ID</span>
+<span class="w">    </span><span class="nx">ctx</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">()</span>
 <span class="w">    </span><span class="nx">tenantID</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">New</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">ctx</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">WithTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">)</span>
 
-<span class="w">    </span><span class="c1">// Test successful creation</span>
-<span class="w">    </span><span class="nx">entity</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">service</span><span class="p">.</span><span class="nx">CreateEntityWithApproval</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">CreateEntityParams</span><span class="p">{</span>
-<span class="w">        </span><span class="nx">Name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Test Entity&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="c1">// Test data</span>
+<span class="w">    </span><span class="nx">account</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">domain</span><span class="p">.</span><span class="nx">Accounts</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">Name</span><span class="p">:</span><span class="w">        </span><span class="s">&quot;Test Account&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Code</span><span class="p">:</span><span class="w">        </span><span class="s">&quot;1000&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">AccountType</span><span class="p">:</span><span class="w"> </span><span class="nx">domain</span><span class="p">.</span><span class="nx">AssetAccount</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
 
+<span class="w">    </span><span class="c1">// Execute</span>
+<span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">repo</span><span class="p">.</span><span class="nx">Create</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">account</span><span class="p">)</span>
 <span class="w">    </span><span class="nx">require</span><span class="p">.</span><span class="nx">NoError</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">NotEmpty</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">entity</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
 
-<span class="w">    </span><span class="c1">// Verify approval was created</span>
-<span class="w">    </span><span class="nx">approvals</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">WithTenant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">ListApprovalRequests</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
-<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="c1">// Verify the account was created with correct tenant ID</span>
+<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">,</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">TenantID</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">NotEqual</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">Nil</span><span class="p">,</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// Verify persistence</span>
+<span class="w">    </span><span class="nx">retrieved</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">repo</span><span class="p">.</span><span class="nx">GetByID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
 <span class="w">    </span><span class="nx">require</span><span class="p">.</span><span class="nx">NoError</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">Len</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">approvals</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span><span class="w"> </span><span class="nx">retrieved</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">Code</span><span class="p">,</span><span class="w"> </span><span class="nx">retrieved</span><span class="p">.</span><span class="nx">Code</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre></div>
-<h2 id="migration-considerations">Migration Considerations</h2>
-<p>When adding new tenant-aware tables:</p>
-<ol>
-<li>Add RLS policies in migration</li>
-<li>Update SQLC queries with tenant context</li>
-<li>Test tenant isolation in integration tests</li>
-<li>Update this documentation</li>
-</ol>
-<h2 id="troubleshooting">Troubleshooting</h2>
-<h3 id="common-issues">Common Issues</h3>
-<ol>
-<li><strong>Data Leakage</strong>: Always verify tenant context is set</li>
-<li><strong>Deadlocks</strong>: Keep transactions short and consistent lock ordering</li>
-<li><strong>Connection Pool Exhaustion</strong>: Avoid nested transactions</li>
-<li><strong>RLS Violations</strong>: Ensure all queries respect tenant boundaries</li>
-</ol>
-<h3 id="debug-tips">Debug Tips</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// Log tenant context in development</span>
-<span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">tx</span><span class="p">.</span><span class="nx">Exec</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;SELECT current_setting(&#39;app.current_tenant_id&#39;)&quot;</span><span class="p">)</span>
-</code></pre></div>
+<h2 id="common-patterns-summary">Common Patterns Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Use Case</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WithTenant</code></td>
+<td>Standard multi-tenant operations</td>
+<td>Creating accounts, transactions, most business operations</td>
+</tr>
+<tr>
+<td><code>BeginTxWithTenant</code></td>
+<td>Complex operations requiring transaction control</td>
+<td>Multi-step processes with conditional logic</td>
+</tr>
+<tr>
+<td><code>WithTx</code></td>
+<td>System-level operations</td>
+<td>Migrations, system settings (no tenant context needed)</td>
+</tr>
+<tr>
+<td><code>SetTenantContext</code></td>
+<td>Session-level tenant setting</td>
+<td>Middleware setup, connection initialization</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p>📚 <strong>Next Steps</strong>:
+- <a href="../sqlc-integration/">SQLC Integration</a> - Type-safe query generation patterns
+- <a href="../architecture/">Architecture Overview</a> - Overall system design and context flow
+- <a href="../01-best-practices/">Best Practices</a> - Development guidelines and standards</p>
 
 
 

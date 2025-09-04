@@ -9,6 +9,10 @@
       
       
       
+        <link rel="prev" href="../data-flow/">
+      
+      
+        <link rel="next" href="../api-reference/">
       
       
       <link rel="icon" href="../../../../assets/images/favicon.png">
@@ -16,7 +20,7 @@
     
     
       
-        <title>ERP Configuration & Settings Module - Architecture Guide - Awo ERP Documentation</title>
+        <title>Architecture Guide - Awo ERP Documentation</title>
       
     
     
@@ -102,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ERP Configuration &amp; Settings Module - Architecture Guide
+              Architecture Guide
             
           </span>
         </div>
@@ -349,6 +353,28 @@
   
   
   Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  System Configuration
 
         </a>
       </li>
@@ -2335,6 +2361,479 @@
       
   
   
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    System Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            System Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Table of Contents
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clean-architecture-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clean Architecture Implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-architectural-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Architectural Principles
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Architectural Principles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-configuration-inheritance" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Configuration Inheritance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-template-driven-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Template-Driven Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-type-safe-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Type-Safe Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain-driven-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Domain-Driven Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Domain-Driven Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aggregate-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Aggregate Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Aggregate Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-aggregate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Aggregate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-aggregate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Aggregate
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#value-objects" class="md-nav__link">
+    <span class="md-ellipsis">
+      Value Objects
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Value Objects">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-value-object" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Value Object
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-key-value-object" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Key Value Object
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#domain-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Domain Events
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Domain Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Event Definitions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-layer-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Layer Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Layer Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-schema-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Schema Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database Schema Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-tenant-configuration-tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Tenant Configuration Tables
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-resolution-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Resolution Views
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sqlc-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      SQLC Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SQLC Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type-safe-configuration-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type-Safe Configuration Queries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#repository-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Repository Implementation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
   
   
     
@@ -2351,10 +2850,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
             
   
   
@@ -2367,8 +2866,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Other Modules
           </label>
@@ -2387,29 +2886,6 @@
   
   <span class="md-ellipsis">
     System Architecture
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    System Settings
     
   </span>
   
@@ -2769,10 +3245,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
             
   
   
@@ -2785,8 +3261,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             API Reference
           </label>
@@ -2950,10 +3426,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_7" >
         
           
-          <label class="md-nav__link" for="__nav_10_7" id="__nav_10_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_7" id="__nav_11_7_label" tabindex="0">
             
   
   
@@ -2966,8 +3442,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_7">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
           </label>
@@ -3070,10 +3546,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_10" >
         
           
-          <label class="md-nav__link" for="__nav_10_10" id="__nav_10_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_10" id="__nav_11_10_label" tabindex="0">
             
   
   
@@ -3086,8 +3562,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_10">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_10">
             <span class="md-nav__icon md-icon"></span>
             Core APIs
           </label>
@@ -3351,10 +3827,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_11" >
         
           
-          <label class="md-nav__link" for="__nav_10_11" id="__nav_10_11_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_11" id="__nav_11_11_label" tabindex="0">
             
   
   
@@ -3367,8 +3843,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_11">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_11">
             <span class="md-nav__icon md-icon"></span>
             Workflows
           </label>
@@ -3494,10 +3970,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_12" >
         
           
-          <label class="md-nav__link" for="__nav_10_12" id="__nav_10_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_12" id="__nav_11_12_label" tabindex="0">
             
   
   
@@ -3510,8 +3986,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_12">
             <span class="md-nav__icon md-icon"></span>
             Testing
           </label>
@@ -3591,10 +4067,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_13" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_13" >
         
           
-          <label class="md-nav__link" for="__nav_10_13" id="__nav_10_13_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_13" id="__nav_11_13_label" tabindex="0">
             
   
   
@@ -3607,8 +4083,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_13">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_13">
             <span class="md-nav__icon md-icon"></span>
             Utilities
           </label>
@@ -4547,7 +5023,7 @@
 <span class="p">}</span>
 </code></pre></div>
 <hr />
-<p>This architectural foundation demonstrates enterprise-grade configuration management with proper separation of concerns, robust domain modeling, comprehensive caching strategies, and high-performance data access patterns. The remaining sections would continue with similar detail for API implementation, security architecture, performance optimization, and integration patterns.</p>
+<p>This architectural foundation demonstrates enterprise-grade configuration management with proper separation of concerns, robust domain modeling,  caching strategies, and high-performance data access patterns. The remaining sections would continue with similar detail for API implementation, security architecture, performance optimization, and integration patterns.</p>
 <p><strong>Document Status</strong>: Core Architecture Complete
 <strong>Next Sections</strong>: API Layer Implementation, Security Architecture, Performance Optimization</p>
 

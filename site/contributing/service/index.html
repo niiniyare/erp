@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#awo-erp-service-implementation-checklist" class="md-skip">
+        <a href="#awo-erp-service-implementation-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -355,6 +355,26 @@
   
   
   Tenant Module
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/modules/settings/" class="md-tabs__link">
+          
+  
+  
+  System Configuration
 
         </a>
       </li>
@@ -1028,9 +1048,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#hexagonal-architecture-ports-adapters-edition" class="md-nav__link">
+  <a href="#clean-architecture-temporal-workflows-edition" class="md-nav__link">
     <span class="md-ellipsis">
-      Hexagonal Architecture (Ports &amp; Adapters) Edition
+      Clean Architecture + Temporal Workflows Edition
     </span>
   </a>
   
@@ -1064,9 +1084,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-integration-messaging" class="md-nav__link">
+  <a href="#4-temporal-workflow-integration-new" class="md-nav__link">
     <span class="md-ellipsis">
-      🔌 4. Integration &amp; Messaging
+      🌊 4. Temporal Workflow Integration - NEW
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-integration-messaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔌 5. Integration &amp; Messaging
     </span>
   </a>
   
@@ -1100,18 +1129,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#8-testing-strategy-go-specific" class="md-nav__link">
+  <a href="#8-testing-strategy-go-temporal" class="md-nav__link">
     <span class="md-ellipsis">
-      🧪 8. Testing Strategy (Go-Specific)
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#9-deployment-devops" class="md-nav__link">
-    <span class="md-ellipsis">
-      🚀 9. Deployment &amp; DevOps
+      🧪 8. Testing Strategy (Go + Temporal)
     </span>
   </a>
   
@@ -1123,6 +1143,30 @@
       📊 10. ERP-Specific Considerations
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="📊 10. ERP-Specific Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-tenancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Tenancy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#business-intelligence" class="md-nav__link">
+    <span class="md-ellipsis">
+      Business Intelligence
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1160,11 +1204,74 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#essential-service-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏗️ Essential Service Dependencies
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🏗️ Essential Service Dependencies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#context-propagation-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context Propagation Pattern
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#service-facade-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏗️ Service Facade Pattern
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🏗️ Service Facade Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mandatory-service-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mandatory Service Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#progressive-implementation-path" class="md-nav__link">
     <span class="md-ellipsis">
       📈 Progressive Implementation Path
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="📈 Progressive Implementation Path">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#implementation-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Phases
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1186,6 +1293,15 @@
   
     <nav class="md-nav" aria-label="🏗️ Hexagonal Architecture Anti-Patterns to Avoid">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#service-import-violations" class="md-nav__link">
+    <span class="md-ellipsis">
+      ❌ Service Import Violations
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#dependency-rule-violations" class="md-nav__link">
@@ -1298,11 +1414,53 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
+  <a href="#implementation-notes" class="md-nav__link">
     <span class="md-ellipsis">
-      📝 Notes
+      📝 Implementation Notes
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="📝 Implementation Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#module-template-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Module Template Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architecture-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Architecture Principles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#essential-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Essential Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#development-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Development Best Practices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2691,7 +2849,7 @@
   
   
   <span class="md-ellipsis">
-    Other Modules
+    System Configuration
     
   </span>
   
@@ -2701,6 +2859,171 @@
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            System Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/service-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Other Modules
           </label>
@@ -2719,29 +3042,6 @@
   
   <span class="md-ellipsis">
     System Architecture
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/modules/settings/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    System Settings
     
   </span>
   
@@ -3101,10 +3401,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
             
   
   
@@ -3117,8 +3417,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             API Reference
           </label>
@@ -3282,10 +3582,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_7" >
         
           
-          <label class="md-nav__link" for="__nav_10_7" id="__nav_10_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_7" id="__nav_11_7_label" tabindex="0">
             
   
   
@@ -3298,8 +3598,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_7">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
           </label>
@@ -3402,10 +3702,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_10" >
         
           
-          <label class="md-nav__link" for="__nav_10_10" id="__nav_10_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_10" id="__nav_11_10_label" tabindex="0">
             
   
   
@@ -3418,8 +3718,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_10">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_10">
             <span class="md-nav__icon md-icon"></span>
             Core APIs
           </label>
@@ -3683,10 +3983,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_11" >
         
           
-          <label class="md-nav__link" for="__nav_10_11" id="__nav_10_11_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_11" id="__nav_11_11_label" tabindex="0">
             
   
   
@@ -3699,8 +3999,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_11">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_11">
             <span class="md-nav__icon md-icon"></span>
             Workflows
           </label>
@@ -3826,10 +4126,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_12" >
         
           
-          <label class="md-nav__link" for="__nav_10_12" id="__nav_10_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_12" id="__nav_11_12_label" tabindex="0">
             
   
   
@@ -3842,8 +4142,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_12">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_12">
             <span class="md-nav__icon md-icon"></span>
             Testing
           </label>
@@ -3923,10 +4223,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_13" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_13" >
         
           
-          <label class="md-nav__link" for="__nav_10_13" id="__nav_10_13_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_13" id="__nav_11_13_label" tabindex="0">
             
   
   
@@ -3939,8 +4239,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10_13">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_13">
             <span class="md-nav__icon md-icon"></span>
             Utilities
           </label>
@@ -4000,9 +4300,17 @@
 
 
 
-<h1 id="awo-erp-service-implementation-checklist">Awo ERP Service Implementation Checklist</h1>
-<h2 id="hexagonal-architecture-ports-adapters-edition"><em>Hexagonal Architecture (Ports &amp; Adapters) Edition</em></h2>
-<p><em>A comprehensive todo list for implementing any new domain module in Go-based ERP systems following Hexagonal Architecture principles</em></p>
+<h1 id="awo-erp-service-implementation-guide">Awo ERP Service Implementation Guide</h1>
+<h2 id="clean-architecture-temporal-workflows-edition"><em>Clean Architecture + Temporal Workflows Edition</em></h2>
+<p><em>A comprehensive guide for implementing domain modules in Awo ERP following Clean Architecture principles, Temporal workflow orchestration, and modern ERP patterns</em></p>
+<blockquote>
+<p><strong>📚 Essential Reading:</strong> This guide focuses on <code>internal/core/</code> module development. For detailed implementation patterns, also review:
+- <code>docs/contributing/database-transactions.md</code> - Database and SQLC patterns
+- <code>docs/contributing/goa.md</code> - API design and code generation<br />
+- <code>docs/contributing/general-testing.md</code> - Testing strategies and patterns
+- <code>docs/contributing/error-handling.md</code> - Error handling best practices
+- <code>docs/contributing/observability.md</code> - Logging, metrics, and tracing</p>
+</blockquote>
 <h2 id="1-analysis-design-phase"><strong>🔍 1. Analysis &amp; Design Phase</strong></h2>
 <ul>
 <li>[ ] <strong>Domain Analysis</strong></li>
@@ -4012,8 +4320,7 @@
 <li>[ ] Establish domain events for inter-module communication</li>
 <li>[ ] <strong>Data Modeling</strong></li>
 <li>[ ] Create Entity Relationship Diagram (ERD)</li>
-<li>[ ] Define Go structs with proper tags (<code>json</code>, <code>db</code>, <code>validate</code>)</li>
-<li>[ ] Plan multi-tenant data isolation strategy</li>
+<li>[ ] Define Go structs with proper tags (<code>json</code>, <code>validate</code>) etc...</li>
 <li>[ ] Design audit trail requirements</li>
 <li>[ ] <strong>API Design</strong></li>
 <li>[ ] Create OpenAPI 3.0 specification</li>
@@ -4028,51 +4335,77 @@
 </ul>
 <h2 id="2-core-go-implementation"><strong>🧱 2. Core Go Implementation</strong></h2>
 <ul>
-<li>[ ] <strong>Hexagonal Architecture Structure</strong>
-  <div class="highlight"><pre><span></span><code>internal/
-├── api/
-│   ├── design/             # Goa DSL - API contracts (source of truth)
-│   └── handlers/           # HTTP handlers (Primary Adapters)
-├── core/
-│   └── {domain}/           # Self-contained domain module
-│       ├── models/         # Domain entities &amp; value objects
-│       ├── services/       # Business logic (Application Core)
-│       ├── repository/     # Persistence adapter implementation
-│       ├── interfaces.go   # Service &amp; repository interfaces (Ports)
-│       └── errors.go       # Domain-specific errors
-├── platform/               # Infrastructure adapters
-│   ├── database/           # DB connection &amp; migrations
-│   ├── middleware/         # Cross-cutting concerns
-│   ├── cache/             # Caching implementation
-│   └── config/            # Configuration management
-└── shared/                 # Common utilities
-    ├── logger/
-    ├── errors/
-    └── context.go
+<li>[ ] <strong>Module Structure in <code>internal/core/</code></strong> 
+  <div class="highlight"><pre><span></span><code>internal/core/
+└── {your-module}/          # New module (stock, payroll, hr, etc.)
+    ├── service.go          # 🔥 MAIN MODULE ENTRY POINT - External interface
+    ├── domain/             # Business entities and rules
+    │   ├── entities.go     # Core business entities  
+    │   ├── types.go        # Value objects and enums
+    │   ├── errors.go       # Domain-specific errors
+    │   ├── constants.go    # Business rule constants
+    │   └── validation.go   # Business validation rules
+    ├── repository/         # Data access layer
+    │   ├── interfaces.go   # Repository interfaces
+    │   ├── {entity}.go     # SQLC-based implementations
+    │   └── mappers.go      # Domain ↔ DB model conversions
+    ├── {feature}/          # Feature-specific submodules
+    │   ├── service.go      # Feature service implementation
+    │   ├── models.go       # Feature-specific models
+    │   └── handlers.go     # Feature business logic
+    ├── activities/         # Temporal activities (NEW)
+    │   ├── activity_registry.go   # Activity registration
+    │   ├── {domain}_activities.go # Domain activities
+    │   └── integration_activities.go # Cross-service activities
+    └── workflows/          # Temporal workflows (NEW)
+        ├── {process}_workflow.go   # Business process workflows
+        └── bulk_operations_workflow.go # Bulk processing
 </code></pre></div></li>
-<li>[ ] <strong>Domain Layer (Application Core)</strong></li>
-<li>[ ] Define domain entities with rich behavior (<code>internal/core/{domain}/models/</code>)</li>
-<li>[ ] Create value objects with validation methods</li>
-<li>[ ] Build aggregates that enforce business invariants</li>
-<li>[ ] Define domain events for inter-module communication</li>
-<li>[ ] Create domain-specific error types (<code>internal/core/{domain}/errors.go</code>)</li>
-<li>[ ] <strong>Port Definitions (Interfaces)</strong></li>
-<li>[ ] Define service interfaces (Primary Ports) in <code>interfaces.go</code></li>
-<li>[ ] Define repository interfaces (Secondary Ports) in <code>interfaces.go</code></li>
-<li>[ ] Ensure interfaces depend only on domain models</li>
-<li>[ ] Keep interfaces focused and cohesive (Interface Segregation)</li>
-<li>[ ] <strong>Service Implementation (Business Logic)</strong></li>
-<li>[ ] Implement service interfaces in <code>internal/core/{domain}/services/</code></li>
-<li>[ ] Orchestrate business operations and workflows</li>
-<li>[ ] Enforce business rules and validation</li>
-<li>[ ] Handle domain events and cross-aggregate operations</li>
-<li>[ ] Depend only on repository interfaces, never implementations</li>
-<li>[ ] <strong>Error Handling</strong></li>
-<li>[ ] Create custom error types (<code>type ErrNotFound struct</code>)</li>
-<li>[ ] Implement error wrapping with context</li>
-<li>[ ] Build error translation for API responses</li>
-<li>[ ] Add validation error aggregation</li>
 </ul>
+<p><strong>Reference existing modules:</strong>
+  - <strong>Finance Module</strong>: <code>internal/core/finance/</code> - Complete implementation example
+  - <strong>ABAC Module</strong>: <code>internal/core/abac/</code> - Complex service with activities/workflows
+  - <strong>Settings Module</strong>: <code>internal/core/settings/</code> - Configuration management pattern
+  - <strong>Entity Module</strong>: <code>internal/core/entity/</code> - Multi-tenancy isolation pattern
+- [ ] <strong>Domain Layer (<code>internal/core/{domain}/domain/</code>)</strong>
+  - [ ] Define domain entities with rich behavior and business rules
+  - [ ] Create value objects with validation methods
+  - [ ] Build aggregates that enforce business invariants
+  - [ ] Define domain events for inter-module communication
+  - [ ] Create domain-specific error types and constants
+  - [ ] Define configuration structs for workflow behavior
+- [ ] <strong>Service Layer (Module Root + Submodules)</strong>
+  - [ ] <strong>Create <code>{module}/service.go</code> as main entry point</strong> - This is the ONLY file external modules import
+  - [ ] <strong>Implement module-level facade pattern</strong> - Provide unified interface to all features
+  - [ ] <strong>Build feature submodules</strong> - Create <code>{feature}/service.go</code> for each feature
+  - [ ] <strong>Add essential service dependencies</strong> - Entity, Settings, FeatureFlag, Audit, ABAC services
+  - [ ] <strong>Maintain clean module interfaces</strong> - Hide internal feature complexity from consumers
+- [ ] <strong>Activities Layer (<code>internal/core/{domain}/activities/</code>) - NEW</strong>
+  - [ ] Create activity registry to manage all domain activities
+  - [ ] Implement validation activities that wrap existing services
+  - [ ] Create CRUD activities for database operations
+  - [ ] Build approval activities with business rule evaluation
+  - [ ] Add cross-service integration activities (tenant, IAM, settings)
+  - [ ] Implement notification and audit activities
+  - [ ] Use dependency injection for all service dependencies
+  - [ ] Add comprehensive error handling and retries
+- [ ] <strong>Workflows Layer (<code>internal/core/{domain}/workflows/</code>) - NEW</strong>
+  - [ ] Define workflow input/output types with validation
+  - [ ] Implement creation workflows with multi-step validation
+  - [ ] Build approval workflows with timeout handling
+  - [ ] Create bulk operation workflows with concurrency control
+  - [ ] Add long-running process workflows (month-end closing)
+  - [ ] Implement saga patterns for complex transactions
+  - [ ] Add child workflow orchestration for complex processes
+  - [ ] Use configuration-driven timeouts and retry policies
+- [ ] <strong>Error Handling &amp; Configuration</strong>
+  - [ ] Create custom error types with business context
+  - [ ] Implement error wrapping with correlation IDs
+  - [ ] Build error translation for API responses
+  - [ ] Add validation error aggregation and reporting
+  - [ ] Define domain constants for business rules
+  - [ ] Create configuration structs for workflow behavior
+  - [ ] Implement environment-specific configuration loading</p>
 <h2 id="3-data-layer-go-specific"><strong>🗄️ 3. Data Layer (Go-Specific)</strong></h2>
 <ul>
 <li>[ ] <strong>Database Setup</strong></li>
@@ -4102,7 +4435,50 @@
 <li>[ ] Build cache invalidation for data mutations</li>
 <li>[ ] Setup distributed cache for multi-instance deployments</li>
 </ul>
-<h2 id="4-integration-messaging"><strong>🔌 4. Integration &amp; Messaging</strong></h2>
+<h2 id="4-temporal-workflow-integration-new"><strong>🌊 4. Temporal Workflow Integration - NEW</strong></h2>
+<ul>
+<li>[ ] <strong>Temporal Infrastructure Setup</strong></li>
+<li>[ ] Add Temporal configuration to <code>internal/platform/config/config.go</code></li>
+<li>[ ] Create Temporal client in <code>internal/platform/temporal/client.go</code></li>
+<li>[ ] Setup worker management in <code>internal/platform/temporal/worker.go</code></li>
+<li>[ ] Configure task queues by domain (<code>finance-task-queue</code>, <code>inventory-task-queue</code>)</li>
+<li>[ ] Add Temporal health checks and monitoring</li>
+<li>[ ] <strong>Activity Development Pattern</strong></li>
+<li>[ ] Create activity registry pattern for each domain</li>
+<li>[ ] Wrap existing services as activities (don't rewrite business logic)</li>
+<li>[ ] Implement activity input/output types with validation</li>
+<li>[ ] Add cross-service dependencies via dependency injection</li>
+<li>[ ] Use configuration structs instead of hard-coded values</li>
+<li>[ ] Implement proper error handling and timeout management</li>
+<li>[ ] Add structured logging and metrics to all activities</li>
+<li>[ ] <strong>Workflow Implementation</strong></li>
+<li>[ ] Define workflow interfaces and registration patterns</li>
+<li>[ ] Implement async alternatives to synchronous operations</li>
+<li>[ ] Create approval workflows with human task integration</li>
+<li>[ ] Build bulk operation workflows with controlled concurrency</li>
+<li>[ ] Add long-running business process workflows</li>
+<li>[ ] Implement saga patterns for distributed transactions</li>
+<li>[ ] Use child workflows for complex orchestration</li>
+<li>[ ] <strong>Service Layer Integration</strong></li>
+<li>[ ] Create service interfaces (sync + async methods)</li>
+<li>[ ] Implement smart routing (simple ops → sync, complex → async)</li>
+<li>[ ] Add workflow status tracking and monitoring</li>
+<li>[ ] Build workflow result polling mechanisms</li>
+<li>[ ] Maintain backward compatibility with existing API contracts</li>
+<li>[ ] <strong>Configuration-Driven Workflows</strong></li>
+<li>[ ] Define domain constants for business rules and thresholds</li>
+<li>[ ] Create configuration structs for timeouts and retry policies</li>
+<li>[ ] Implement environment-specific workflow behavior</li>
+<li>[ ] Add feature flag integration for workflow switching</li>
+<li>[ ] Build tenant-specific workflow configuration</li>
+<li>[ ] <strong>Testing Temporal Components</strong></li>
+<li>[ ] Test activities with mocked service dependencies</li>
+<li>[ ] Use Temporal test framework for workflow testing</li>
+<li>[ ] Test workflow timeouts and error scenarios</li>
+<li>[ ] Verify activity retry and compensation logic</li>
+<li>[ ] Test cross-service activity integration</li>
+</ul>
+<h2 id="5-integration-messaging"><strong>🔌 5. Integration &amp; Messaging</strong></h2>
 <ul>
 <li>[ ] <strong>Internal Communication</strong></li>
 <li>[ ] Implement event bus (NATS, RabbitMQ, or Kafka)</li>
@@ -4146,13 +4522,21 @@
 <li>[ ] Define error responses and HTTP status codes</li>
 <li>[ ] Document API endpoints with descriptions and examples</li>
 <li>[ ] Generate OpenAPI specification from Goa design</li>
+<li>[ ] Add async operation endpoints with workflow tracking</li>
 <li>[ ] <strong>HTTP Handlers (Primary Adapters)</strong></li>
-<li>[ ] Implement handlers in <code>internal/api/handlers/</code></li>
+<li>[ ] Implement synchronous handlers in <code>internal/api/handlers/</code></li>
 <li>[ ] Extract and validate request data</li>
 <li>[ ] Convert request DTOs to domain models</li>
-<li>[ ] Call appropriate core service methods</li>
+<li>[ ] Call appropriate core service methods (sync or async routing)</li>
 <li>[ ] Convert domain responses to API DTOs</li>
 <li>[ ] Handle errors and return appropriate HTTP status codes</li>
+<li>[ ] <strong>Async API Patterns - NEW</strong></li>
+<li>[ ] Add async alternatives for complex operations</li>
+<li>[ ] Return workflow execution details (workflow_id, status, check_url)</li>
+<li>[ ] Implement workflow status polling endpoints</li>
+<li>[ ] Add workflow cancellation endpoints</li>
+<li>[ ] Build webhook integration for workflow completion</li>
+<li>[ ] Create batch operation APIs with progress tracking</li>
 <li>[ ] <strong>Security &amp; Authorization Integration</strong></li>
 <li>[ ] Integrate ABAC policy evaluation in middleware</li>
 <li>[ ] Add audit logging for all security decisions</li>
@@ -4191,7 +4575,7 @@
 <li>[ ] Build performance profiling endpoints (<code>net/http/pprof</code>)</li>
 <li>[ ] Setup log aggregation (ELK, Loki)</li>
 </ul>
-<h2 id="8-testing-strategy-go-specific"><strong>🧪 8. Testing Strategy (Go-Specific)</strong></h2>
+<h2 id="8-testing-strategy-go-temporal"><strong>🧪 8. Testing Strategy (Go + Temporal)</strong></h2>
 <ul>
 <li>[ ] <strong>Core Business Logic Testing</strong></li>
 <li>[ ] Unit test domain models and value objects</li>
@@ -4199,48 +4583,62 @@
 <li>[ ] Verify business rules and invariants</li>
 <li>[ ] Test error handling and edge cases</li>
 <li>[ ] Achieve &gt;90% coverage on core business logic</li>
+<li>[ ] <strong>Temporal Components Testing - NEW</strong></li>
+<li>[ ] Test activities with mocked service dependencies</li>
+<li>[ ] Use <code>testsuite.TestSuite</code> for workflow testing</li>
+<li>[ ] Test workflow decision points and branching logic</li>
+<li>[ ] Verify timeout handling and retry behavior</li>
+<li>[ ] Test child workflow orchestration</li>
+<li>[ ] Mock external service calls in activities</li>
+<li>[ ] Test workflow cancellation and compensation</li>
 <li>[ ] <strong>Adapter Testing</strong></li>
 <li>[ ] Test repository implementations with testcontainers</li>
-<li>[ ] Test API handlers with mocked services</li>
+<li>[ ] Test API handlers with mocked services (sync + async)</li>
 <li>[ ] Verify model conversions (domain ↔ database)</li>
 <li>[ ] Test middleware and cross-cutting concerns</li>
+<li>[ ] Test async API response patterns</li>
 <li>[ ] <strong>Integration Testing</strong></li>
 <li>[ ] Test complete request flows (API → Service → Repository → DB)</li>
+<li>[ ] Test end-to-end workflow execution</li>
 <li>[ ] Verify tenant isolation and multi-tenancy</li>
 <li>[ ] Test transaction boundaries and rollback scenarios</li>
 <li>[ ] Validate API contract compliance</li>
+<li>[ ] Test workflow-database integration patterns</li>
 <li>[ ] <strong>Performance Testing</strong></li>
 <li>[ ] Benchmark critical paths with <code>go test -bench</code></li>
-<li>[ ] Load test APIs with k6 or similar</li>
+<li>[ ] Load test APIs with k6 or similar (sync + async endpoints)</li>
 <li>[ ] Profile memory and CPU usage</li>
 <li>[ ] Test concurrent access patterns</li>
+<li>[ ] Benchmark workflow throughput and latency</li>
 </ul>
-<h2 id="9-deployment-devops"><strong>🚀 9. Deployment &amp; DevOps</strong></h2>
-<ul>
-<li>[ ] <strong>Containerization</strong></li>
-<li>[ ] Create multi-stage Dockerfile</li>
-<li>[ ] Optimize image size (Alpine base, scratch for static)</li>
-<li>[ ] Add non-root user for security</li>
-<li>[ ] Setup health checks in container</li>
-<li>[ ] <strong>CI/CD Pipeline</strong></li>
-<li>[ ] Setup Go module caching</li>
-<li>[ ] Add linting (golangci-lint)</li>
-<li>[ ] Build and push container images</li>
-<li>[ ] Run automated tests in pipeline</li>
-<li>[ ] <strong>Kubernetes Deployment</strong> (if applicable)</li>
-<li>[ ] Create deployment, service, and ingress manifests</li>
-<li>[ ] Setup horizontal pod autoscaler</li>
-<li>[ ] Add resource limits and requests</li>
-<li>[ ] Configure liveness and readiness probes</li>
-</ul>
+<!-- ## **🚀 9. Deployment & DevOps** -->
+<!-- - [ ] **Containerization** -->
+<!--   - [ ] Create multi-stage Dockerfile -->
+<!--   - [ ] Optimize image size (Alpine base, scratch for static) -->
+<!--   - [ ] Add non-root user for security -->
+<!--   - [ ] Setup health checks in container -->
+<!-- - [ ] **CI/CD Pipeline** -->
+<!--   - [ ] Setup Go module caching -->
+<!--   - [ ] Add linting (golangci-lint) -->
+<!--   - [ ] Build and push container images -->
+<!--   - [ ] Run automated tests in pipeline -->
+<!-- - [ ] **Kubernetes Deployment** (if applicable) -->
+<!--   - [ ] Create deployment, service, and ingress manifests -->
+<!--   - [ ] Setup horizontal pod autoscaler -->
+<!--   - [ ] Add resource limits and requests -->
+<!--   - [ ] Configure liveness and readiness probes -->
+<!---->
 <h2 id="10-erp-specific-considerations"><strong>📊 10. ERP-Specific Considerations</strong></h2>
+<h4 id="multi-tenancy"><strong>Multi-Tenancy</strong></h4>
 <ul>
-<li>[ ] <strong>Multi-Tenancy</strong></li>
 <li>[ ] Implement tenant context propagation</li>
 <li>[ ] Add tenant-based data filtering</li>
-<li>[ ] Setup tenant-specific configurations</li>
+<li>[ ] Add Entity-based (company-based) data filtering</li>
+<li>[ ] Setup tenant/company specific configurations</li>
 <li>[ ] Build tenant onboarding automation</li>
-<li>[ ] <strong>Business Intelligence</strong></li>
+</ul>
+<h4 id="business-intelligence"><strong>Business Intelligence</strong></h4>
+<ul>
 <li>[ ] Create data export capabilities</li>
 <li>[ ] Build reporting APIs</li>
 <li>[ ] Add data warehouse integration</li>
@@ -4305,60 +4703,297 @@
 <span class="s">&quot;goa.design/goa/v3/dsl&quot;</span>
 <span class="s">&quot;goa.design/goa/v3/http&quot;</span>
 
-<span class="c1">// Database (sqlc)</span>
-<span class="s">&quot;github.com/lib/pq&quot;</span><span class="w">           </span><span class="c1">// PostgreSQL driver</span>
-<span class="s">&quot;database/sql&quot;</span>
-
 <span class="c1">// Platform Infrastructure</span>
 <span class="s">&quot;github.com/spf13/viper&quot;</span><span class="w">      </span><span class="c1">// Configuration</span>
-<span class="s">&quot;github.com/redis/go-redis/v9&quot;</span><span class="w"> </span><span class="c1">// Caching</span>
-<span class="s">&quot;go.uber.org/zap&quot;</span><span class="w">            </span><span class="c1">// Structured logging</span>
+<span class="s">&quot;github.com/redis/go-redis/v9&quot;</span><span class="c1">// Caching</span>
+<span class="s">&quot;github.com/rs/zerolog/log&quot;</span><span class="w">   </span><span class="c1">// Structured logging</span>
 
 <span class="c1">// Testing with Architecture</span>
-<span class="s">&quot;github.com/stretchr/testify/mock&quot;</span><span class="w">  </span><span class="c1">// Interface mocking</span>
-<span class="s">&quot;github.com/testcontainers/testcontainers-go&quot;</span><span class="w"> </span><span class="c1">// Integration testing</span>
+<span class="s">&quot;go.uber.org/mockt&quot;</span><span class="w">  </span><span class="c1">// Interface mocking</span>
+<span class="s">&quot;github.com/stretchr/testify/require&quot;</span>
+<span class="s">&quot;github.com/stretchr/testify/suite&quot;</span>
 </code></pre></div>
 <h3 id="development-tools"><strong>Development Tools</strong></h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># Goa code generation</span>
-goa<span class="w"> </span>gen<span class="w"> </span>./internal/api/design
+<div class="highlight"><pre><span></span><code><span class="c1"># Code generation pipeline</span>
+make<span class="w"> </span>sqlc<span class="w">                    </span><span class="c1"># Generate SQLC code from SQL queries</span>
+make<span class="w"> </span>goa<span class="w">                     </span><span class="c1"># Generate Goa framework code from design</span>
+make<span class="w"> </span>proto<span class="w">                   </span><span class="c1"># Generate gRPC and gateway files (if needed)</span>
+make<span class="w"> </span>mock<span class="w">                    </span><span class="c1"># Generate mocks for interfaces</span>
+make<span class="w"> </span>gen<span class="w">                     </span><span class="c1"># Generate all (sqlc + goa + proto + mock)</span>
 
-<span class="c1"># sqlc code generation  </span>
-sqlc<span class="w"> </span>generate
+<span class="c1"># Database operations</span>
+make<span class="w"> </span>migrateup<span class="w">              </span><span class="c1"># Run database migrations</span>
+make<span class="w"> </span>migratedown<span class="w">            </span><span class="c1"># Rollback last migration</span>
+make<span class="w"> </span>createdb<span class="w">               </span><span class="c1"># Create PostgreSQL database</span>
 
-<span class="c1"># Database migrations</span>
-migrate<span class="w"> </span>-path<span class="w"> </span>db/migrations<span class="w"> </span>-database<span class="w"> </span><span class="s2">&quot;postgres://...&quot;</span><span class="w"> </span>up
+<span class="c1"># Development workflow</span>
+make<span class="w"> </span>ci<span class="w">                     </span><span class="c1"># Run all essential checks (fmt, lint, test, proto, sqlc)</span>
+make<span class="w"> </span>test-unit<span class="w">              </span><span class="c1"># Run unit tests only</span>
+make<span class="w"> </span>test-integration<span class="w">       </span><span class="c1"># Run integration tests with Docker</span>
+make<span class="w"> </span>dev-test<span class="w">               </span><span class="c1"># Quick development test cycle</span>
 
-<span class="c1"># ABAC policy validation</span>
-casbin<span class="w"> </span>validate<span class="w"> </span>./configs/abac/policies.json
-
-<span class="c1"># Feature flag validation</span>
-go<span class="w"> </span>run<span class="w"> </span>./cmd/validate-flags<span class="w"> </span>./configs/feature-flags/
-
-<span class="c1"># Testing with architecture boundaries</span>
-go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-race<span class="w"> </span>-cover<span class="w"> </span>./internal/core/...<span class="w">  </span><span class="c1"># Core business logic</span>
-go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-race<span class="w"> </span>./internal/api/handlers/...<span class="w"> </span><span class="c1"># API adapters  </span>
-go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-race<span class="w"> </span>./internal/platform/...<span class="w">    </span><span class="c1"># Infrastructure</span>
-
-<span class="c1"># Audit service specific tests</span>
-go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-race<span class="w"> </span>./internal/core/audit/...<span class="w">   </span><span class="c1"># Audit domain tests</span>
-go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-race<span class="w"> </span>./internal/core/abac/...<span class="w">    </span><span class="c1"># ABAC policy tests</span>
+<span class="c1"># Temporal-specific testing</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-race<span class="w"> </span>./internal/core/<span class="o">{</span>domain<span class="o">}</span>/activities/...<span class="w">  </span><span class="c1"># Activity tests</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-race<span class="w"> </span>./internal/core/<span class="o">{</span>domain<span class="o">}</span>/workflows/...<span class="w">   </span><span class="c1"># Workflow tests</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>./internal/platform/temporal/...<span class="w">               </span><span class="c1"># Temporal infrastructure tests</span>
 
 <span class="c1"># Architecture validation</span>
-go<span class="w"> </span>mod<span class="w"> </span>graph<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;internal/core&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;(internal/(api|platform))&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;❌ Dependency violation!&quot;</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-race<span class="w"> </span>-cover<span class="w"> </span>./internal/core/...<span class="w">               </span><span class="c1"># Core business logic</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-race<span class="w"> </span>./internal/api/handlers/...<span class="w">              </span><span class="c1"># API adapters  </span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-race<span class="w"> </span>./internal/platform/...<span class="w">                  </span><span class="c1"># Infrastructure</span>
 
-<span class="c1"># Feature flag dependency analysis</span>
-go<span class="w"> </span>run<span class="w"> </span>./cmd/analyze-flag-deps<span class="w"> </span>./configs/feature-flags/
+<span class="c1"># Configuration validation</span>
+go<span class="w"> </span>run<span class="w"> </span>./cmd/validate-config<span class="w">                           </span><span class="c1"># Validate configuration files</span>
+go<span class="w"> </span>run<span class="w"> </span>./cmd/validate-workflows<span class="w">                        </span><span class="c1"># Validate workflow definitions</span>
+
+<span class="c1"># Development server</span>
+make<span class="w"> </span>run<span class="w">                    </span><span class="c1"># Run the app server (includes Temporal worker)</span>
+
+<span class="c1"># Architecture dependency validation</span>
+go<span class="w"> </span>mod<span class="w"> </span>graph<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;internal/core&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;(internal/(api|platform))&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;❌ Dependency violation!&quot;</span>
 </code></pre></div>
+<h2 id="essential-service-dependencies"><strong>🏗️ Essential Service Dependencies</strong></h2>
+<p>Every new module in <code>internal/core/</code> MUST integrate with these core services for proper multi-tenancy and system cohesion:</p>
+<h3 id="context-propagation-pattern"><strong>Context Propagation Pattern</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// Every service method must receive context with tenant isolation data</span>
+<span class="c1">// Example from internal/core/finance/service/transaction_service.go</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">transactionService</span><span class="p">)</span><span class="w"> </span><span class="nx">CreateTransaction</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="nx">req</span><span class="w"> </span><span class="nx">domain</span><span class="p">.</span><span class="nx">CreateTransactionRequest</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">domain</span><span class="p">.</span><span class="nx">Transaction</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Context automatically contains: tenantID, entityID, userID</span>
+<span class="w">    </span><span class="c1">// These are injected by middleware and available via shared.GetTenantID(ctx)</span>
+
+<span class="w">    </span><span class="c1">// Tenant isolation is enforced at database level via RLS</span>
+<span class="w">    </span><span class="c1">// Entity isolation allows multiple companies per tenant</span>
+<span class="w">    </span><span class="c1">// User context enables audit trails and permissions</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="service-facade-pattern"><strong>🏗️ Service Facade Pattern</strong></h2>
+<p><strong>Every module MUST implement a service facade at the root level <code>{module}/service.go</code> as the single entry point:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Example from internal/core/iam/service.go</span>
+<span class="kn">package</span><span class="w"> </span><span class="nx">iam</span>
+
+<span class="c1">// Service defines the unified module interface that consolidates </span>
+<span class="c1">// all feature functionality into a single entry point</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">Service</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Access to feature-specific services</span>
+<span class="w">    </span><span class="nx">Authentication</span><span class="p">()</span><span class="w"> </span><span class="nx">authn</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">Authorization</span><span class="p">()</span><span class="w"> </span><span class="nx">authz</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">Policy</span><span class="p">()</span><span class="w"> </span><span class="nx">policy</span><span class="p">.</span><span class="nx">Service</span>
+<span class="p">}</span>
+
+<span class="c1">// service implements the unified module service</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">service</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Feature-specific services (internal implementations)</span>
+<span class="w">    </span><span class="nx">authnService</span><span class="w">  </span><span class="nx">authn</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">authzService</span><span class="w">  </span><span class="nx">authz</span><span class="p">.</span><span class="nx">Service</span><span class="w">  </span>
+<span class="w">    </span><span class="nx">policyService</span><span class="w"> </span><span class="nx">policy</span><span class="p">.</span><span class="nx">Service</span>
+
+<span class="w">    </span><span class="c1">// Essential service dependencies (REQUIRED for all modules)</span>
+<span class="w">    </span><span class="nx">tenantService</span><span class="w">      </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">auditService</span><span class="w">       </span><span class="nx">audit</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">featureFlagService</span><span class="w"> </span><span class="nx">featureflag</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">entityService</span><span class="w">      </span><span class="nx">entity</span><span class="p">.</span><span class="nx">Service</span><span class="w">      </span><span class="c1">// Add this</span>
+<span class="w">    </span><span class="nx">settingsService</span><span class="w">    </span><span class="nx">settings</span><span class="p">.</span><span class="nx">Service</span><span class="w">    </span><span class="c1">// Add this</span>
+<span class="w">    </span><span class="nx">abacService</span><span class="w">        </span><span class="nx">abac</span><span class="p">.</span><span class="nx">Service</span><span class="w">        </span><span class="c1">// Add this (for non-ABAC modules)</span>
+
+<span class="w">    </span><span class="c1">// Infrastructure dependencies</span>
+<span class="w">    </span><span class="nx">cache</span><span class="w">   </span><span class="nx">cache</span><span class="p">.</span><span class="nx">Service</span>
+<span class="w">    </span><span class="nx">logger</span><span class="w">  </span><span class="nx">logger</span><span class="p">.</span><span class="nx">Logger</span>
+<span class="w">    </span><span class="nx">metrics</span><span class="w"> </span><span class="nx">metrics</span><span class="p">.</span><span class="nx">MetricsProvider</span>
+<span class="w">    </span><span class="nx">tracer</span><span class="w">  </span><span class="nx">tracing</span><span class="p">.</span><span class="nx">TracingService</span>
+<span class="p">}</span>
+
+<span class="c1">// NewService creates a new unified module service instance</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">NewService</span><span class="p">(</span>
+<span class="w">    </span><span class="c1">// Feature services (created internally)</span>
+<span class="w">    </span><span class="nx">authnService</span><span class="w"> </span><span class="nx">authn</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">authzService</span><span class="w"> </span><span class="nx">authz</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">policyService</span><span class="w"> </span><span class="nx">policy</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">// Essential dependencies (REQUIRED for all modules)</span>
+<span class="w">    </span><span class="nx">tenantService</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">auditService</span><span class="w"> </span><span class="nx">audit</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">featureFlagService</span><span class="w"> </span><span class="nx">featureflag</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">entityService</span><span class="w"> </span><span class="nx">entity</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">settingsService</span><span class="w"> </span><span class="nx">settings</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">abacService</span><span class="w"> </span><span class="nx">abac</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">// Infrastructure</span>
+<span class="w">    </span><span class="nx">cache</span><span class="w"> </span><span class="nx">cache</span><span class="p">.</span><span class="nx">Service</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">logger</span><span class="w"> </span><span class="nx">logger</span><span class="p">.</span><span class="nx">Logger</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">metrics</span><span class="w"> </span><span class="nx">metrics</span><span class="p">.</span><span class="nx">MetricsProvider</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">tracer</span><span class="w"> </span><span class="nx">tracing</span><span class="p">.</span><span class="nx">TracingService</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="nx">Service</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">service</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">authnService</span><span class="p">:</span><span class="w">       </span><span class="nx">authnService</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">authzService</span><span class="p">:</span><span class="w">       </span><span class="nx">authzService</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">policyService</span><span class="p">:</span><span class="w">      </span><span class="nx">policyService</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">tenantService</span><span class="p">:</span><span class="w">      </span><span class="nx">tenantService</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">auditService</span><span class="p">:</span><span class="w">       </span><span class="nx">auditService</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">featureFlagService</span><span class="p">:</span><span class="w"> </span><span class="nx">featureFlagService</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">entityService</span><span class="p">:</span><span class="w">      </span><span class="nx">entityService</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">settingsService</span><span class="p">:</span><span class="w">    </span><span class="nx">settingsService</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">abacService</span><span class="p">:</span><span class="w">        </span><span class="nx">abacService</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">cache</span><span class="p">:</span><span class="w">              </span><span class="nx">cache</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">logger</span><span class="p">:</span><span class="w">             </span><span class="nx">logger</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">metrics</span><span class="p">:</span><span class="w">            </span><span class="nx">metrics</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">tracer</span><span class="p">:</span><span class="w">             </span><span class="nx">tracer</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Feature service access methods</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">Authentication</span><span class="p">()</span><span class="w"> </span><span class="nx">authn</span><span class="p">.</span><span class="nx">Service</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">authnService</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">Authorization</span><span class="p">()</span><span class="w"> </span><span class="nx">authz</span><span class="p">.</span><span class="nx">Service</span><span class="w">   </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">authzService</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">service</span><span class="p">)</span><span class="w"> </span><span class="nx">Policy</span><span class="p">()</span><span class="w"> </span><span class="nx">policy</span><span class="p">.</span><span class="nx">Service</span><span class="w">         </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">policyService</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p><strong>External modules import ONLY the module root:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1">// ✅ CORRECT: Import only the module package</span>
+<span class="kn">import</span><span class="w"> </span><span class="s">&quot;github.com/niiniyare/erp/internal/core/iam&quot;</span>
+
+<span class="nx">iamService</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">iam</span><span class="p">.</span><span class="nx">NewService</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">authnService</span><span class="p">,</span><span class="w">      </span><span class="c1">// Created from iam/authn submodule</span>
+<span class="w">    </span><span class="nx">authzService</span><span class="p">,</span><span class="w">      </span><span class="c1">// Created from iam/authz submodule</span>
+<span class="w">    </span><span class="nx">policyService</span><span class="p">,</span><span class="w">     </span><span class="c1">// Created from iam/policy submodule</span>
+<span class="w">    </span><span class="nx">tenantService</span><span class="p">,</span><span class="w">     </span><span class="c1">// Essential dependency</span>
+<span class="w">    </span><span class="nx">auditService</span><span class="p">,</span><span class="w">      </span><span class="c1">// Essential dependency</span>
+<span class="w">    </span><span class="nx">featureFlagService</span><span class="p">,</span><span class="w"> </span><span class="c1">// Essential dependency</span>
+<span class="w">    </span><span class="nx">entityService</span><span class="p">,</span><span class="w">     </span><span class="c1">// Essential dependency</span>
+<span class="w">    </span><span class="nx">settingsService</span><span class="p">,</span><span class="w">   </span><span class="c1">// Essential dependency</span>
+<span class="w">    </span><span class="nx">abacService</span><span class="p">,</span><span class="w">       </span><span class="c1">// Essential dependency</span>
+<span class="w">    </span><span class="nx">cache</span><span class="p">,</span><span class="w"> </span><span class="nx">logger</span><span class="p">,</span><span class="w"> </span><span class="nx">metrics</span><span class="p">,</span><span class="w"> </span><span class="nx">tracer</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">// Use through the facade</span>
+<span class="nx">user</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">iamService</span><span class="p">.</span><span class="nx">Authentication</span><span class="p">().</span><span class="nx">GetUser</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">userID</span><span class="p">)</span>
+<span class="nx">hasPermission</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">iamService</span><span class="p">.</span><span class="nx">Authorization</span><span class="p">().</span><span class="nx">HasPermission</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">)</span>
+
+<span class="c1">// ❌ WRONG: Never import submodules directly</span>
+<span class="c1">// import &quot;github.com/niiniyare/erp/internal/core/iam/authn&quot;</span>
+<span class="c1">// import &quot;github.com/niiniyare/erp/internal/core/iam/authz&quot;</span>
+</code></pre></div></p>
+<h3 id="mandatory-service-dependencies"><strong>Mandatory Service Dependencies</strong></h3>
+<p><strong>1. Entity Service</strong> - Company/Organization isolation within tenant
+<div class="highlight"><pre><span></span><code><span class="c1">// Example from existing modules - every service needs entity access</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">YourModuleService</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">entityService</span><span class="w"> </span><span class="nx">entity</span><span class="p">.</span><span class="nx">Service</span><span class="w">  </span><span class="c1">// REQUIRED for multi-entity data filtering</span>
+<span class="w">    </span><span class="c1">// ... other dependencies</span>
+<span class="p">}</span>
+
+<span class="c1">// Usage pattern from internal/core/finance/service/account_service.go</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">accountService</span><span class="p">)</span><span class="w"> </span><span class="nx">validateEntityAccess</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">accountID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">entityID</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetEntityID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">account</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">repo</span><span class="p">.</span><span class="nx">GetByID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">accountID</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// RLS automatically filters by tenant, but entity check may be needed for business logic</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">EntityID</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nx">entityID</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">domain</span><span class="p">.</span><span class="nx">ErrUnauthorizedAccess</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>2. Settings Service</strong> - Customer-facing configuration
+<div class="highlight"><pre><span></span><code><span class="c1">// Get tenant/entity-specific settings for your module</span>
+<span class="c1">// Example from internal/core/finance/service/settings_helper.go</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">financeService</span><span class="p">)</span><span class="w"> </span><span class="nx">getModuleSettings</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">ModuleSettings</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">settingsService</span><span class="p">.</span><span class="nx">GetConfiguration</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;finance&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;default_settings&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// Settings are automatically tenant/entity scoped</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">parseSettings</span><span class="p">(</span><span class="nx">config</span><span class="p">),</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>3. Feature Flag Service</strong> - Dynamic feature control<br />
+<div class="highlight"><pre><span></span><code><span class="c1">// Check feature availability before executing business logic</span>
+<span class="c1">// Pattern used across all modules</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">yourService</span><span class="p">)</span><span class="w"> </span><span class="nx">processWithFeatureGate</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="nx">Request</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">userID</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetUserID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">tenantID</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetTenantID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+
+<span class="w">    </span><span class="nx">enabled</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">featureFlagService</span><span class="p">.</span><span class="nx">IsEnabled</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;new_algorithm_v2&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">userID</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Fall back to default behavior on error</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">processDefault</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">enabled</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">processNewAlgorithm</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">processDefault</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>4. Audit Service</strong> - Compliance and change tracking
+<div class="highlight"><pre><span></span><code><span class="c1">// Audit integration is handled automatically via middleware</span>
+<span class="c1">// See: docs/contributing/audit-integration.md for implementation details</span>
+<span class="c1">// All CUD operations are audited with:</span>
+<span class="c1">// - Who: UserID from context</span>
+<span class="c1">// - What: Operation type and resource</span>
+<span class="c1">// - When: Timestamp</span>
+<span class="c1">// - Where: TenantID and EntityID from context</span>
+</code></pre></div></p>
+<p><strong>5. ABAC Service</strong> - Authorization decisions
+<div class="highlight"><pre><span></span><code><span class="c1">// Permission checks for all operations</span>
+<span class="c1">// Example from internal/core/finance/service/transaction_service.go</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">transactionService</span><span class="p">)</span><span class="w"> </span><span class="nx">checkPermission</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">action</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">resourceID</span><span class="w"> </span><span class="o">*</span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">userID</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetUserID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">entityID</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">shared</span><span class="p">.</span><span class="nx">GetEntityID</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+
+<span class="w">    </span><span class="nx">hasPermission</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">abacService</span><span class="p">.</span><span class="nx">EvaluatePermission</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">abac</span><span class="p">.</span><span class="nx">PermissionRequest</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">UserID</span><span class="p">:</span><span class="w">       </span><span class="nx">userID</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">ResourceType</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;finance_transaction&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">ResourceID</span><span class="p">:</span><span class="w">   </span><span class="nx">resourceID</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Action</span><span class="p">:</span><span class="w">       </span><span class="nx">action</span><span class="p">,</span><span class="w"> </span><span class="c1">// &quot;create&quot;, &quot;read&quot;, &quot;update&quot;, &quot;delete&quot;</span>
+<span class="w">        </span><span class="nx">EntityID</span><span class="p">:</span><span class="w">     </span><span class="nx">entityID</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Context</span><span class="p">:</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kd">interface</span><span class="p">{}{</span>
+<span class="w">            </span><span class="s">&quot;amount&quot;</span><span class="p">:</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">Amount</span><span class="p">,</span><span class="w"> </span><span class="c1">// Business context for policies</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">    </span><span class="p">})</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">!</span><span class="nx">hasPermission</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">domain</span><span class="p">.</span><span class="nx">ErrUnauthorizedAccess</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div></p>
 <h2 id="progressive-implementation-path"><strong>📈 Progressive Implementation Path</strong></h2>
+<p><strong>Development sequence for any new module (Stock, Payroll, HR, etc.) in <code>internal/core/</code>:</strong></p>
 <pre class="mermaid"><code>graph TD
-    A[Goa API Design] --&gt; B[Domain Models]
-    B --&gt; C[Service Interfaces/Ports]
-    C --&gt; D[Repository Interfaces/Ports]
-    D --&gt; E[Service Implementation]
-    E --&gt; F[Repository Implementation]
-    F --&gt; G[HTTP Handlers/Adapters]
-    G --&gt; H[Platform Infrastructure]
-    H --&gt; I[Integration &amp; Testing]</code></pre>
+    A[1. Domain Analysis] --&gt; B[2. Database Design]
+    B --&gt; C[3. Domain Layer] 
+    C --&gt; D[4. Repository Layer]
+    D --&gt; E[5. Service Layer]
+    E --&gt; F[6. Activities Layer]
+    F --&gt; G[7. Workflows Layer]
+    G --&gt; H[8. API Integration]
+    H --&gt; I[9. Testing &amp; Documentation]
+
+    style F fill:#e1f5fe
+    style G fill:#e1f5fe
+
+    A1[Study Finance Module] --&gt; A
+    A1 --&gt; A2[Study ABAC Module]
+    A2 --&gt; A</code></pre>
+<h3 id="implementation-phases"><strong>Implementation Phases</strong></h3>
+<p><strong>Phase 1: Foundation</strong>
+- <strong>Domain Analysis</strong> - Study existing modules (finance, abac, settings) for patterns
+- <strong>Database Design</strong> - Create migrations with RLS policies (see <code>docs/contributing/database-transactions.md</code>)
+- <strong>Domain Layer</strong> - Build entities and value objects following domain patterns</p>
+<p><strong>Phase 2: Core Implementation</strong>
+- <strong>Repository Layer</strong> - Implement with SQLC integration (see <code>docs/contributing/sqlc-integration.md</code>)
+- <strong>Service Layer</strong> - Add essential dependencies and business logic
+- <strong>Integration</strong> - Connect with entity, settings, feature flags, audit, ABAC services</p>
+<p><strong>Phase 3: Workflow Enhancement</strong><br />
+- <strong>Activities Layer</strong> - Wrap services as Temporal activities
+- <strong>Workflows Layer</strong> - Implement business process orchestration
+- <strong>Advanced Features</strong> - Add async operations and complex workflows</p>
+<p><strong>Phase 4: API &amp; Production</strong>
+- <strong>API Integration</strong> - Connect with Goa design (see <code>docs/contributing/goa.md</code>)
+- <strong>Testing</strong> -  test suite (see <code>docs/contributing/general-testing.md</code>)
+- <strong>Documentation</strong> - API docs and module guides</p>
 <h2 id="success-criteria"><strong>🎯 Success Criteria</strong></h2>
 <ul>
 <li>[ ] Service starts and serves traffic within 30 seconds</li>
@@ -4386,10 +5021,21 @@ go<span class="w"> </span>run<span class="w"> </span>./cmd/analyze-flag-deps<spa
 <li>[ ] Flag usage is monitored and analyzed</li>
 </ul>
 <h2 id="hexagonal-architecture-anti-patterns-to-avoid"><strong>🏗️ Hexagonal Architecture Anti-Patterns to Avoid</strong></h2>
+<h3 id="service-import-violations"><strong>❌ Service Import Violations</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// ❌ WRONG: Importing submodules directly</span>
+<span class="kn">import</span><span class="w"> </span><span class="s">&quot;github.com/niiniyare/erp/internal/core/iam/authn&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="s">&quot;github.com/niiniyare/erp/internal/core/iam/authz&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="s">&quot;github.com/niiniyare/erp/internal/core/finance/service&quot;</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ❌ BAD: Bypassing the module facade  </span>
+<span class="w">    </span><span class="nx">authSvc</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">authn</span><span class="p">.</span><span class="nx">NewService</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">authzSvc</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">authz</span><span class="p">.</span><span class="nx">NewService</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
 <h3 id="dependency-rule-violations"><strong>❌ Dependency Rule Violations</strong></h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// In internal/core/{domain}/services/service.go</span>
+<div class="highlight"><pre><span></span><code><span class="c1">// In internal/core/{domain}/service/service.go</span>
 <span class="kn">import</span><span class="w"> </span><span class="s">&quot;internal/api/handlers&quot;</span><span class="w">        </span><span class="c1">// ❌ Core cannot depend on API layer</span>
-<span class="kn">import</span><span class="w"> </span><span class="s">&quot;internal/platform/database&quot;</span><span class="w">   </span><span class="c1">// ❌ Core cannot depend on platform</span>
 <span class="kn">import</span><span class="w"> </span><span class="s">&quot;project/db/sqlc&quot;</span><span class="w">             </span><span class="c1">// ❌ Core cannot depend on sqlc models</span>
 </code></pre></div>
 <h3 id="business-logic-in-adapters"><strong>❌ Business Logic in Adapters</strong></h3>
@@ -4493,13 +5139,36 @@ go<span class="w"> </span>run<span class="w"> </span>./cmd/analyze-flag-deps<spa
 <span class="w">    </span><span class="nx">server</span><span class="p">.</span><span class="nx">Setup</span><span class="p">(</span><span class="nx">tenantHandler</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre></div>
-<h2 id="notes"><strong>📝 Notes</strong></h2>
+<h2 id="implementation-notes"><strong>📝 Implementation Notes</strong></h2>
+<h3 id="module-template-usage"><strong>Module Template Usage</strong></h3>
+<p>This guide serves as a template for implementing <strong>any new module</strong> in <code>internal/core/</code>:
+- <strong>Stock Management</strong> (<code>internal/core/stock/</code>)
+- <strong>Payroll System</strong> (<code>internal/core/payroll/</code>) 
+- <strong>Human Resources</strong> (<code>internal/core/hr/</code>)
+- <strong>Customer Relationship Management</strong> (<code>internal/core/crm/</code>)
+- <strong>Project Management</strong> (<code>internal/core/project/</code>)</p>
+<h3 id="architecture-principles"><strong>Architecture Principles</strong></h3>
 <ul>
-<li><strong>Hexagonal Architecture</strong>: Protects business logic from external concerns</li>
-<li><strong>Goa Integration</strong>: API design as source of truth with generated code</li>
-<li><strong>sqlc Integration</strong>: Type-safe database operations with SQL-first approach</li>
-<li><strong>Testability</strong>: Core logic testable without external dependencies</li>
-<li><strong>ERP Optimized</strong>: Multi-tenancy, compliance, and business intelligence ready</li>
+<li><strong>Clean Architecture</strong>: Business logic isolated from infrastructure concerns</li>
+<li><strong>Multi-Tenancy</strong>: Tenant/Entity isolation enforced at database and service levels</li>
+<li><strong>Temporal Integration</strong>: Complex business processes handled via workflows</li>
+<li><strong>ABAC Authorization</strong>: Fine-grained permission control for all operations</li>
+<li><strong>Configuration-Driven</strong>: Feature flags and settings control module behavior</li>
+</ul>
+<h3 id="essential-dependencies"><strong>Essential Dependencies</strong></h3>
+<p>Every new module MUST integrate with these core services:
+- <strong>Entity Service</strong> - Multi-company isolation within tenants
+- <strong>Settings Service</strong> - Customer-facing configuration management
+- <strong>Feature Flag Service</strong> - Dynamic feature control and gradual rollouts<br />
+- <strong>Audit Service</strong> - Compliance and change tracking (via middleware)
+- <strong>ABAC Service</strong> - Authorization decisions and policy evaluation</p>
+<h3 id="development-best-practices"><strong>Development Best Practices</strong></h3>
+<ul>
+<li><strong>Study Existing Modules</strong>: Start by examining <code>finance/</code>, <code>abac/</code>, and <code>settings/</code> modules</li>
+<li><strong>Follow Context Patterns</strong>: Always propagate tenant/entity/user context</li>
+<li><strong>Use Real Examples</strong>: Adapt patterns from existing implementations</li>
+<li><strong>Test Thoroughly</strong>: Unit, integration, and workflow testing required</li>
+<li><strong>Document APIs</strong>: Keep OpenAPI specifications current</li>
 </ul>
 
 
