@@ -3,3 +3,4 @@ logs/
 # internal/api/gen/
 internal/gen/gen/http/openapi*.json
 internal/gen/gen/http/openapi*.yaml
+./2025-*.txt

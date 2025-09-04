@@ -19,12 +19,13 @@ AWO ERP requires a  financial management system that can handle complex multi-te
 - Scalable architecture supporting high-volume transaction processing
 
 ### Solution Overview
-The Financial Module provides a complete double-entry accounting system built on clean architecture principles with:
-- **Production-Ready Transaction Engine**: Full double-entry processing with state machine workflows
-- **Multi-Currency Support**: Real-time exchange rate management and conversion
-- **Advanced Validation**: 30+ business rules ensuring financial accuracy and compliance
-- **Complete Audit Trail**: SOX-compliant logging and change tracking
-- **Enterprise Scalability**: Designed for high-volume, multi-tenant operations
+The Financial Module provides a complete double-entry accounting system built on clean architecture principles with Temporal-first workflow orchestration:
+- **Production-Ready Transaction Engine**: Full double-entry processing with Temporal workflow state machines
+- **Temporal-First Architecture**: Reliable, durable transaction processing with automatic retries and error handling
+- **Multi-Currency Support**: Real-time exchange rate management and conversion via Temporal activities
+- **Advanced Validation**: 30+ business rules ensuring financial accuracy and compliance through workflow validation
+- **Complete Audit Trail**: SOX-compliant logging and change tracking with Temporal's built-in event sourcing
+- **Enterprise Scalability**: Designed for high-volume, multi-tenant operations with Temporal's distributed processing
 
 ### Business Impact
 - **Primary Metrics**: 
@@ -106,33 +107,46 @@ The Financial Module provides a complete double-entry accounting system built on
 - SQLC integration for type-safe database operations
 - Redis caching for frequently accessed account data
 
-#### Feature 2: Double-Entry Transaction Processing
+#### Feature 2: Temporal-First Double-Entry Transaction Processing
 **Priority**: High  
 **Effort**: Large (8+ weeks)  
 **Business Value**: Critical Core Function
 
-**Description**: Complete transaction lifecycle management with double-entry validation, approval workflows, and state machine processing.
+**Description**: Complete transaction lifecycle management with double-entry validation, approval workflows, and Temporal workflow state machine processing providing reliability, durability, and automatic error recovery.
 
 **User Stories**:
-- As a financial accountant, I want to create transactions that automatically validate double-entry rules so that all entries balance correctly
-- As a finance manager, I need approval workflows for high-value transactions so that proper segregation of duties is maintained
-- As an auditor, I want complete transaction history with immutable audit trails so that I can verify financial integrity
+- As a financial accountant, I want to create transactions that automatically validate double-entry rules through Temporal workflows so that all entries balance correctly with guaranteed processing
+- As a finance manager, I need approval workflows for high-value transactions orchestrated by Temporal so that proper segregation of duties is maintained with retry logic and timeout handling
+- As an auditor, I want complete transaction history with immutable audit trails provided by Temporal's event sourcing so that I can verify financial integrity with full workflow visibility
+- As a system administrator, I want failed transaction processing to automatically retry with exponential backoff so that temporary failures don't result in data loss
 
 **Acceptance Criteria**:
-- [ ] All transactions must balance (total debits = total credits) with validation enforcement
-- [ ] Support for complex transactions with multiple entries and accounts
-- [ ] State machine workflow: Draft → Submitted → Approved → Posted → Reconciled
-- [ ] Configurable approval thresholds based on transaction amount and type
-- [ ] Transaction reversal functionality maintaining audit trail
-- [ ] Support for recurring transactions with flexible scheduling
-- [ ] Multi-currency transactions with exchange rate management
-- [ ] Batch processing capabilities for high-volume operations
+- [ ] All transactions must balance (total debits = total credits) with validation enforcement via Temporal activities
+- [ ] Support for complex transactions with multiple entries and accounts orchestrated through workflows
+- [ ] Temporal workflow state machine: Draft → ValidationWorkflow → ApprovalWorkflow → PostingWorkflow → ReconciliationWorkflow
+- [ ] Configurable approval thresholds based on transaction amount and type with timeout handling
+- [ ] Transaction reversal functionality maintaining audit trail through compensating workflows
+- [ ] Support for recurring transactions with flexible scheduling via Temporal cron workflows
+- [ ] Multi-currency transactions with exchange rate management through dedicated activities
+- [ ] Batch processing capabilities for high-volume operations using Temporal's parallel processing
+- [ ] Automatic retry logic for transient failures with exponential backoff
+- [ ] Workflow timeout handling for stuck approval processes
+- [ ] Dead letter queue handling for permanently failed transactions
 
 **Technical Considerations**:
-- Domain-driven design with transaction aggregates
-- Event sourcing for transaction state changes
-- Message queues for async processing
-- Database transactions ensuring ACID compliance
+- Domain-driven design with transaction aggregates orchestrated by Temporal workflows
+- Event sourcing provided by Temporal's built-in workflow event history
+- Temporal activities for atomic operations (validation, posting, notifications)
+- Database transactions ensuring ACID compliance within individual activities
+- **Saga Pattern Implementation**: Compensation-based rollback for multi-step financial operations
+- **Rollback and Compensation**: Automatic rollback of completed steps when subsequent steps fail
+- **Transaction Isolation**: Each activity maintains transactional boundaries for safe rollback
+- **Compensating Activities**: Dedicated activities for reversing completed operations
+- **Partial Success Handling**: Graceful handling of partial transaction completion with compensation
+- Workflow versioning for seamless updates to business logic
+- Activity heartbeats for long-running operations
+- Temporal signals for external event handling (approvals, rejections)
+- Workflow queries for real-time status monitoring
 
 #### Feature 3: Multi-Currency Support
 **Priority**: High  
@@ -264,9 +278,9 @@ The Financial Module provides a complete double-entry accounting system built on
 
 ### System Components
 
-#### Backend Services
+#### Backend Services with Temporal Integration
 ```go
-// Financial module service interfaces
+// Financial module service interfaces with Temporal workflow orchestration
 type FinanceServices struct {
     AccountService           AccountService
     TransactionService       TransactionService  
@@ -274,6 +288,10 @@ type FinanceServices struct {
     ExchangeRateService     ExchangeRateService
     ValidationService       ValidationService
     ReportingService        ReportingService
+    
+    // Temporal workflow orchestration
+    WorkflowService         FinanceWorkflowService
+    ActivityService         FinanceActivityService
 }
 
 type AccountService interface {
@@ -287,14 +305,80 @@ type AccountService interface {
     ListAccounts(ctx context.Context, query ListAccountsQuery) (*AccountList, error)
 }
 
+// Temporal-first transaction service
 type TransactionService interface {
-    CreateTransaction(ctx context.Context, cmd CreateTransactionCommand) (*Transaction, error)
+    // Workflow-orchestrated operations
+    CreateTransaction(ctx context.Context, cmd CreateTransactionCommand) (*TransactionWorkflowResult, error)
+    ProcessTransactionWorkflow(ctx workflow.Context, input TransactionWorkflowInput) (*TransactionWorkflowResult, error)
+    ApprovalWorkflow(ctx workflow.Context, input ApprovalWorkflowInput) (*ApprovalResult, error)
+    ReconciliationWorkflow(ctx workflow.Context, input ReconciliationWorkflowInput) error
+    
+    // Query operations (non-workflow)
     GetTransaction(ctx context.Context, tenantID tenant.ID, id TransactionID) (*Transaction, error)
-    PostTransaction(ctx context.Context, tenantID tenant.ID, id TransactionID, userID identity.UserID) error
-    ReverseTransaction(ctx context.Context, tenantID tenant.ID, id TransactionID, reason string) error
-    ApproveTransaction(ctx context.Context, tenantID tenant.ID, id TransactionID, userID identity.UserID) error
-    ValidateTransaction(ctx context.Context, transaction *Transaction) error
     ListTransactions(ctx context.Context, query ListTransactionsQuery) (*TransactionList, error)
+    GetWorkflowStatus(ctx context.Context, workflowID string) (*WorkflowStatus, error)
+    
+    // Signal operations for workflow interaction
+    ApproveTransactionSignal(ctx context.Context, workflowID string, approval ApprovalSignal) error
+    RejectTransactionSignal(ctx context.Context, workflowID string, rejection RejectionSignal) error
+}
+
+// Temporal workflow service for financial operations
+type FinanceWorkflowService interface {
+    // Core transaction workflows
+    TransactionProcessingWorkflow(ctx workflow.Context, input TransactionProcessingInput) error
+    ApprovalWorkflow(ctx workflow.Context, input ApprovalInput) (*ApprovalResult, error)
+    RecurringTransactionWorkflow(ctx workflow.Context, input RecurringTransactionInput) error
+    BatchProcessingWorkflow(ctx workflow.Context, input BatchProcessingInput) (*BatchResult, error)
+    
+    // Reconciliation workflows
+    BankReconciliationWorkflow(ctx workflow.Context, input BankReconciliationInput) error
+    AutoReconciliationWorkflow(ctx workflow.Context, input AutoReconciliationInput) error
+    
+    // Reporting workflows
+    FinancialReportingWorkflow(ctx workflow.Context, input ReportingInput) (*ReportResult, error)
+    MonthEndClosingWorkflow(ctx workflow.Context, input MonthEndInput) error
+}
+
+// Temporal activities for atomic financial operations
+type FinanceActivityService interface {
+    // Validation activities
+    ValidateTransactionActivity(ctx context.Context, transaction *Transaction) (*ValidationResult, error)
+    ValidateAccountBalanceActivity(ctx context.Context, accountID AccountID) error
+    ValidateApprovalRequirementActivity(ctx context.Context, transaction *Transaction) (*ApprovalRequirement, error)
+    
+    // Transaction processing activities
+    CreateTransactionActivity(ctx context.Context, cmd CreateTransactionCommand) (*Transaction, error)
+    PostTransactionActivity(ctx context.Context, transactionID TransactionID) error
+    UpdateAccountBalancesActivity(ctx context.Context, entries []TransactionEntry) error
+    
+    // Approval activities
+    SendApprovalRequestActivity(ctx context.Context, request ApprovalRequest) error
+    ProcessApprovalActivity(ctx context.Context, approval Approval) (*ApprovalResult, error)
+    EscalateApprovalActivity(ctx context.Context, escalation ApprovalEscalation) error
+    
+    // Notification activities
+    SendTransactionNotificationActivity(ctx context.Context, notification TransactionNotification) error
+    SendApprovalNotificationActivity(ctx context.Context, notification ApprovalNotification) error
+    
+    // External integration activities
+    FetchExchangeRateActivity(ctx context.Context, request ExchangeRateRequest) (*ExchangeRate, error)
+    SyncWithBankActivity(ctx context.Context, request BankSyncRequest) (*BankSyncResult, error)
+    NotifyExternalSystemActivity(ctx context.Context, notification ExternalNotification) error
+    
+    // Compensation activities for rollback capabilities
+    CompensateTransactionCreationActivity(ctx context.Context, transactionID TransactionID) error
+    CompensatePostingActivity(ctx context.Context, transactionID TransactionID) error
+    CompensateBalanceActivity(ctx context.Context, entries []TransactionEntry) error
+    CompensateNotificationActivity(ctx context.Context, notificationID string) error
+    CompensateApprovalActivity(ctx context.Context, approvalID string) error
+    CompensateExternalSyncActivity(ctx context.Context, syncID string) error
+    CompensateReconciliationActivity(ctx context.Context, reconciliationID string) error
+    
+    // Recovery activities for failed operations
+    RecoverTransactionStateActivity(ctx context.Context, transactionID TransactionID, targetState TransactionStatus) error
+    RecoverAccountBalancesActivity(ctx context.Context, accountID AccountID, backupBalance decimal.Decimal) error
+    RecoverWorkflowStateActivity(ctx context.Context, workflowID string, checkpoint WorkflowCheckpoint) error
 }
 ```
 
@@ -524,29 +608,96 @@ erDiagram
     }
 ```
 
-#### Business Workflows
+#### Temporal Workflow Architecture with Compensation
+```mermaid
+graph TD
+    A[Transaction Created] --> B[TransactionProcessingWorkflow]
+    
+    B --> C{Validation Activity}
+    C -->|Pass| D{Approval Required?}
+    C -->|Fail| E[ValidationFailureActivity]
+    E --> F[Transaction Rejected]
+    
+    D -->|No| G[PostingActivity]
+    D -->|Yes| H[ApprovalWorkflow]
+    
+    H --> I{Approval Timeout?}
+    I -->|No| J{Approved?}
+    I -->|Yes| K[TimeoutActivity]
+    K --> L[Transaction Expired]
+    
+    J -->|Yes| G[PostingActivity]
+    J -->|No| M[RejectionActivity]
+    M --> N[Transaction Rejected]
+    
+    G --> O{Posting Success?}
+    O -->|Yes| P[UpdateBalancesActivity]
+    O -->|No| Q[PostingRetryActivity]
+    Q --> R{Max Retries?}
+    R -->|No| G
+    R -->|Yes| S[CompensatePostingActivity]
+    S --> T[Transaction Failed]
+    
+    P --> U{Balance Update Success?}
+    U -->|Yes| V[NotificationActivity]
+    U -->|No| W[CompensateBalanceActivity]
+    W --> X[CompensatePostingActivity]
+    X --> T
+    
+    V --> Y{Notification Success?}
+    Y -->|Yes| Z[Transaction Posted]
+    Y -->|No| AA[CompensateNotificationActivity]
+    AA --> W
+    
+    Z --> BB[ReconciliationWorkflow]
+    BB --> CC{Reconciliation Success?}
+    CC -->|Yes| DD[Transaction Complete]
+    CC -->|No| EE[CompensateReconciliationActivity]
+    EE --> FF[Manual Intervention Required]
+    
+    style B fill:#e1f5fe
+    style H fill:#fff3e0
+    style BB fill:#f3e5f5
+    style C fill:#e8f5e8
+    style G fill:#fff9c4
+    style W fill:#ffebee
+    style X fill:#ffebee
+    style S fill:#ffebee
+    style AA fill:#ffebee
+    style EE fill:#ffebee
+```
+
+#### Temporal Workflow State Machine
 ```mermaid
 stateDiagram-v2
     [*] --> Draft
-    Draft --> Submitted : submit()
-    Submitted --> Approved : approve()
-    Submitted --> Draft : reject()
-    Approved --> Posted : post()
-    Posted --> Reconciled : reconcile()
-    Posted --> Reversed : reverse()
-    Reversed --> [*]
-    Reconciled --> [*]
+    Draft --> ValidationWorkflow : startWorkflow()
+    ValidationWorkflow --> ApprovalWorkflow : validation_passed
+    ValidationWorkflow --> Failed : validation_failed
+    ApprovalWorkflow --> PostingWorkflow : approved
+    ApprovalWorkflow --> Rejected : rejected
+    ApprovalWorkflow --> Expired : timeout
+    PostingWorkflow --> ReconciliationWorkflow : posted
+    PostingWorkflow --> PostingRetry : posting_failed
+    PostingRetry --> PostingWorkflow : retry
+    PostingRetry --> Failed : max_retries_exceeded
+    ReconciliationWorkflow --> Completed : reconciled
+    ReconciliationWorkflow --> [*] : workflow_complete
+    Failed --> [*]
+    Rejected --> [*]
+    Expired --> [*]
     
-    note right of Submitted
-        Approval required for
-        transactions > $10,000
-        or based on user roles
+    note right of ApprovalWorkflow
+        Temporal workflow with
+        configurable timeouts,
+        signal handling for approvals,
+        and automatic escalation
     end note
     
-    note right of Posted
-        Posted transactions
-        are immutable and can
-        only be reversed
+    note right of PostingWorkflow
+        Atomic posting operations
+        with automatic retry logic
+        and compensation handling
     end note
 ```
 
