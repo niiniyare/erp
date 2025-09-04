@@ -30,7 +30,7 @@ The  Redis cache provides:
 - **Data compression** for large values
 - **Circuit breaker** pattern for resilience
 - **Connection pooling** optimization
-- **Comprehensive metrics** and monitoring
+- ** metrics** and monitoring
 - **Bulk operations** for better performance
 - **Distributed locking** support
 
@@ -441,7 +441,7 @@ func HealthCheckHandler(cache cache.Service) http.HandlerFunc {
 }
 ```
 
-### 2. Comprehensive Monitoring
+### 2.  Monitoring
 
 ```go
 func SetupCacheMonitoring(cache cache.Service) {

@@ -534,14 +534,14 @@
 - **Rich Domain Types**: Created 5 new domain types (`AccountWithGroups`, `ChartOfAccountsComplete`, `TrialBalanceSummary`, `CashFlowAccount`, `AccountGroupSummary`) 
 - **Extended Service Interface**: Added 16 new service methods for view-based operations with full observability
 - **Complete Repository Implementation**: Implemented all repository methods with tenant isolation and proper error handling
-- **Comprehensive Type Mappers**: Added 15+ mapping functions for seamless SQLC integration with view structures
+- ** Type Mappers**: Added 15+ mapping functions for seamless SQLC integration with view structures
 
 **Technical Achievements:**
 - ✅ Full compilation and integration with existing ERP codebase
 - ✅  financial reporting capabilities with rich hierarchical data
 - ✅ Improved query performance through optimized database views
 - ✅ Complete tenant isolation and security compliance
-- ✅ Comprehensive error handling and distributed tracing
+- ✅  error handling and distributed tracing
 - ✅ Advanced account filtering and search capabilities
 
 **Files :**
@@ -549,7 +549,7 @@
 - `internal/core/finance/domain/accounts.go` - Added new domain types (602 lines)
 - `internal/core/finance/service/account_service.go` - Extended interface and implementation (1031 lines)
 - `internal/core/finance/repository/accounts.go` - Full repository implementation (1065 lines)
-- `internal/core/finance/repository/mappers.go` - Comprehensive mapper functions (901 lines)
+- `internal/core/finance/repository/mappers.go` -  mapper functions (901 lines)
 
 **Business Value:**
 -  financial reporting with group and header hierarchies

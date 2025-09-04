@@ -27,7 +27,7 @@ The Administrative & Performance API provides system configuration, performance 
 
 ### System Health & Monitoring
 
-#### Comprehensive Health Check
+####  Health Check
 
 **Action**: `GetSystemHealth`
 
@@ -1132,7 +1132,7 @@ Response: 202 Accepted
 
 ### System Statistics & Reporting
 
-#### Comprehensive System Statistics
+####  System Statistics
 
 **Action**: `GetSystemStatistics`
 
@@ -1451,7 +1451,7 @@ func CircuitBreakerMiddleware(config CircuitBreakerConfig) func(endpoint.Endpoin
 
 ### Operational Features
 
-- **Health Monitoring**: Comprehensive health checks with dependency tracking
+- **Health Monitoring**:  health checks with dependency tracking
 - **Performance Analytics**: Real-time performance metrics and trend analysis
 - **Configuration Management**: Dynamic configuration updates with rollback support
 - **Cache Management**: Intelligent cache operations and optimization

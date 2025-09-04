@@ -446,7 +446,7 @@ result = opaClient.evaluate(policy, input);
 | **Performance** | Excellent | Good | Excellent | Good |
 | **Multi-language** | Poor | Excellent | Excellent | Excellent |
 | **Ecosystem** | Limited | Rich | Growing | Mature |
-| **Enterprise Features** | None | Comprehensive | Growing | Good |
+| **Enterprise Features** | None |  | Growing | Good |
 
 ### Feature Implementation Effort Comparison
 

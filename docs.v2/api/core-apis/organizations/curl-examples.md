@@ -299,7 +299,7 @@ curl -X PATCH $API_BASE_URL/api/v1/organizations/$TEAM_ID/archive \
   }' -v
 ```
 
-## 🧪 Comprehensive Test Scenarios
+## 🧪  Test Scenarios
 
 ### Scenario 1: Complete Organization Lifecycle
 ```bash

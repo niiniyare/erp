@@ -182,7 +182,7 @@ curl -X POST "http://localhost:8080/api/v1/auth/mfa/verify" \
 
 ### Security Considerations
 - **HTTPS Only**: Always use HTTPS in production
-- **Token Rotation**: Implement token rotation for enhanced security
+- **Token Rotation**: Implement token rotation for security
 - **Audit Logging**: Log all authentication events for security monitoring
 - **IP Restrictions**: Consider IP-based access restrictions for sensitive accounts
 

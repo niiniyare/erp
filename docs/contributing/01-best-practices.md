@@ -1,6 +1,13 @@
-# Best Practices Guide
+# Awo ERP Best Practices Guide
+## *Development Standards for Modern Enterprise Architecture*
 
-Essential development guidelines and patterns for building maintainable, scalable features in our ERP system.
+*Essential guidelines for building maintainable, scalable features in Awo ERP following Clean Architecture, Temporal workflows, and modular design patterns*
+
+> **📚 Essential Reading:** This guide complements other contributing documentation:
+> - `docs/contributing/architecture.md` - System architecture and design principles
+> - `docs/contributing/service.md` - Service implementation patterns
+> - `docs/contributing/goa.md` - API design and handler architecture  
+> - `docs/contributing/database-transactions.md` - Database patterns and tenant isolation
 
 ## 🏗️ Architecture Best Practices
 
@@ -51,39 +58,43 @@ type Service struct {
 
 ### 2. Layer Isolation
 
-#### **API Layer Responsibilities**
+#### **API Layer Responsibilities (Goa Handlers)**
 ```go
-// ✅ API layer handles HTTP concerns only
-func (h *TenantHandler) CreateTenant(c *gin.Context) {
-    // ✅ Parse request
-    var req CreateTenantRequest
-    if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(400, gin.H{"error": err.Error()})
-        return
-    }
+// ✅ Goa handler handles HTTP concerns only
+func (h *TenantHandler) CreateTenant(ctx context.Context, p *goaTenant.CreateTenantPayload) (*goaTenant.Tenant, error) {
+    // ✅ Start tracing span
+    ctx, span := h.tracing.Start(ctx, "tenant.CreateTenant")
+    defer span.End()
     
-    // ✅ Call service layer
-    tenant, err := h.service.CreateTenant(c.Request.Context(), req)
+    // ✅ Record metrics
+    h.metrics.Counter("api.tenant.create.requests").Add(1)
     
-    // ✅ Handle errors and format response
+    // ✅ Convert Goa payload to domain request
+    request := h.payloadToCreateTenantRequest(p)
+    
+    // ✅ Call service layer (no business logic in handler)
+    tenant, err := h.tenantService.CreateTenant(ctx, request)
     if err != nil {
-        handleError(c, err)
-        return
+        h.metrics.Counter("api.tenant.create.errors").Add(1)
+        return nil, h.handleError(err) // Convert to Goa error
     }
     
-    c.JSON(201, tenant)
+    // ✅ Convert domain model to Goa response
+    response := h.tenantToGoaResponse(tenant)
+    
+    h.metrics.Counter("api.tenant.create.success").Add(1)
+    return response, nil
 }
 
 // ❌ DON'T put business logic in handlers
-func (h *TenantHandler) CreateTenant(c *gin.Context) {
+func (h *TenantHandler) CreateTenant(ctx context.Context, p *goaTenant.CreateTenantPayload) (*goaTenant.Tenant, error) {
     // ❌ Business validation in API layer
-    if len(req.Name) < 3 {
-        c.JSON(400, gin.H{"error": "Name too short"})
-        return
+    if len(p.Name) < 3 {
+        return nil, goaTenant.MakeBadRequest(errors.New("Name too short")) // WRONG!
     }
     
     // ❌ Direct database access from API layer
-    _, err := h.db.Exec("INSERT INTO tenants...")
+    _, err := h.db.Exec("INSERT INTO tenants...") // WRONG!
 }
 ```
 
@@ -107,15 +118,218 @@ func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*T
     return s.repo.Create(ctx, tenant)
 }
 
-// ❌ DON'T put HTTP concerns in service
-func (s *service) CreateTenant(ctx context.Context, req *http.Request) (*gin.Context, error) {
-    // ❌ HTTP request/response handling in service
+// ❌ DON'T put HTTP/API concerns in service
+func (s *service) CreateTenant(ctx context.Context, req *goaTenant.CreateTenantPayload) (*goaTenant.Tenant, error) {
+    // ❌ Goa types should not leak into service layer - WRONG!
 }
 
 // ❌ DON'T put database queries in service
 func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*Tenant, error) {
     // ❌ Direct SQL in service layer
     _, err := s.db.Exec("INSERT INTO tenants...")
+}
+```
+
+### 3. **Module Facade Pattern**
+
+#### ✅ **Correct Module Design**
+```go
+// External modules import facades only
+package main
+
+import (
+    "github.com/niiniyare/erp/internal/core/finance"     // ✅ Module facade
+    "github.com/niiniyare/erp/internal/core/iam"         // ✅ Module facade
+)
+
+func InitializeServices() {
+    financeService := finance.NewService(deps)  // ✅ Clean interface
+    iamService := iam.NewService(deps)          // ✅ Clean interface
+}
+```
+
+#### ✅ **Service Facade Implementation**
+```go
+// internal/core/finance/service.go - Module Facade
+type Service interface {
+    Account() account.Service
+    Transaction() transaction.Service
+    Reports() report.Service
+}
+
+type service struct {
+    accountSvc     account.Service
+    transactionSvc transaction.Service
+    reportSvc      report.Service
+    
+    // Essential dependencies (every module needs these)
+    tenantService      tenant.Service
+    auditService       audit.Service
+    featureFlagService featureflag.Service
+    entityService      entity.Service
+}
+
+// Facade methods expose feature services
+func (s *service) Account() account.Service {
+    return s.accountSvc
+}
+
+func (s *service) Transaction() transaction.Service {
+    return s.transactionSvc
+}
+```
+
+#### ❌ **Wrong Module Usage**
+```go
+// DON'T: Import internal module structure
+package main
+
+import (
+    "internal/core/finance/account"     // ❌ Internal structure
+    "internal/core/finance/service"     // ❌ Implementation details
+)
+```
+
+### 4. **Context-Based Tenant Isolation**
+
+#### ✅ **Modern Repository Pattern**
+```go
+// All operations automatically tenant-isolated via context
+func (r *repository) CreateAccount(ctx context.Context, req *domain.CreateAccountRequest) (*domain.Account, error) {
+    // ✅ Tenant ID resolved automatically from context
+    // No explicit tenant parameter needed!
+    
+    params := sqlc.CreateAccountParams{
+        Code:        req.Code,
+        Name:        req.Name,
+        AccountType: string(req.AccountType),
+        Description: req.Description,
+        // current_tenant_id() used in SQL query automatically
+    }
+    
+    sqlcAccount, err := r.store.CreateAccount(ctx, params)
+    if err != nil {
+        return nil, r.handleDBError(err)
+    }
+    
+    return r.mappers.SQLCAccountToDomain(sqlcAccount)
+}
+```
+
+#### ✅ **SQLC Query with RLS**
+```sql
+-- db/queries/accounts.sql
+-- name: CreateAccount :one
+INSERT INTO accounts (
+    code, name, account_type, description, 
+    tenant_id, created_at, updated_at
+) VALUES (
+    $1, $2, $3, $4,
+    current_tenant_id(), -- ✅ Automatic tenant isolation
+    NOW(), NOW()
+) RETURNING *;
+```
+
+#### ✅ **Service Context Propagation**
+```go
+func (s *accountService) CreateAccount(ctx context.Context, req *CreateAccountRequest) (*Account, error) {
+    // ✅ Context contains:
+    // - Tenant ID (automatic RLS isolation)
+    // - Entity ID (company isolation within tenant)
+    // - User ID (audit trail)
+    // - Tracing spans (observability)
+    
+    // ✅ Feature flag check using context
+    if !s.featureFlagService.IsEnabled(ctx, "advanced_accounting") {
+        return nil, errors.NewBusinessError("FEATURE_DISABLED", "Advanced accounting not enabled")
+    }
+    
+    // ✅ Repository automatically uses context for tenant isolation
+    return s.repository.CreateAccount(ctx, req)
+}
+```
+
+#### ❌ **Old Tenant Parameter Pattern**
+```go
+// ❌ DON'T: Explicit tenant parameters everywhere
+func (r *repository) CreateAccount(ctx context.Context, tenantID uuid.UUID, req *domain.CreateAccountRequest) error {
+    // ❌ Requires explicit tenant management everywhere
+    params := sqlc.CreateAccountParams{
+        TenantID: tenantID, // Error-prone manual tenant handling
+        // ...
+    }
+}
+```
+
+### 5. **Temporal Workflow Patterns**
+
+#### ✅ **Configuration-Driven Workflows**
+```go
+// internal/core/finance/workflows/transaction_approval_workflow.go
+func TransactionApprovalWorkflow(ctx workflow.Context, input *TransactionApprovalInput) error {
+    // ✅ Use domain constants for configuration
+    activityOptions := workflow.ActivityOptions{
+        ScheduleToCloseTimeout: domain.TransactionValidationTimeout,
+        RetryPolicy: domain.DefaultRetryPolicy,
+    }
+    
+    ctx = workflow.WithActivityOptions(ctx, activityOptions)
+    
+    // ✅ Step-by-step process with error handling
+    var validationResult ValidationResult
+    err := workflow.ExecuteActivity(ctx, "ValidateTransaction", input.TransactionID).Get(ctx, &validationResult)
+    if err != nil {
+        return fmt.Errorf("transaction validation failed: %w", err)
+    }
+    
+    if validationResult.IsValid {
+        // ✅ Execute final processing
+        return workflow.ExecuteActivity(ctx, "ProcessApprovedTransaction", input.TransactionID).Get(ctx, nil)
+    }
+    
+    return workflow.ExecuteActivity(ctx, "HandleRejectedTransaction", input.TransactionID).Get(ctx, nil)
+}
+```
+
+#### ✅ **Activity Implementation with DI**
+```go
+// internal/core/finance/activities/transaction_activities.go
+type TransactionActivities struct {
+    financeService finance.Service
+    auditService   audit.Service
+    logger         logger.Logger
+}
+
+func (a *TransactionActivities) ValidateTransaction(ctx context.Context, transactionID uuid.UUID) (*ValidationResult, error) {
+    // ✅ Use injected services (no direct database access)
+    transaction, err := a.financeService.Transaction().GetByID(ctx, transactionID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get transaction: %w", err)
+    }
+    
+    // ✅ Business validation through service layer
+    validationErrors := a.financeService.Transaction().ValidateForApproval(ctx, transaction)
+    
+    return &ValidationResult{
+        TransactionID: transactionID,
+        IsValid:       len(validationErrors) == 0,
+        Errors:        validationErrors,
+    }, nil
+}
+```
+
+#### ❌ **Workflow Anti-Patterns**
+```go
+// ❌ DON'T: Hard-coded timeouts and synchronous operations
+func BadTransactionWorkflow(ctx workflow.Context, input *TransactionInput) error {
+    // ❌ Hard-coded timeout
+    timeout := 5 * time.Minute // Should use domain constants
+    
+    // ❌ Direct database access in workflow
+    db.Exec("UPDATE transactions SET status = 'approved'") // WRONG!
+    
+    // ❌ Blocking synchronous call (should be activity)
+    http.Post("http://approval-service/approve", body) // WRONG!
 }
 ```
 
@@ -128,12 +342,12 @@ func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*T
 // ✅ Convert domain models to database parameters
 func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
     // Convert domain → SQLC params
+    // ✅ Context-based tenant isolation (no explicit tenant_id needed)
     params := db.CreateTenantParams{
-        ID:           tenant.ID,
-        Name:         tenant.Name,
-        Status:       string(tenant.Status),  // Enum conversion
-        Metadata:     marshalJSON(tenant.Metadata),  // JSON conversion
-        CreatedAt:    tenant.CreatedAt,
+        Name:      tenant.Name,
+        Status:    string(tenant.Status),  // Enum conversion
+        Metadata:  marshalJSON(tenant.Metadata),  // JSON conversion
+        // tenant_id automatically set via current_tenant_id() in SQL
     }
     
     _, err := r.store.CreateTenant(ctx, params)
@@ -568,21 +782,21 @@ const (
     SpanDatabasePrefix   = "db."
 )
 
-// ✅ Comprehensive span attributes
-func (h *TenantHandler) CreateTenant(c *gin.Context) {
-    ctx, span := h.tracing.StartSpan(ctx, "http.create_tenant",
+// ✅  span attributes in Goa handler
+func (h *TenantHandler) CreateTenant(ctx context.Context, p *goaTenant.CreateTenantPayload) (*goaTenant.Tenant, error) {
+    ctx, span := h.tracing.Start(ctx, "http.create_tenant",
         tracing.WithSpanKind(tracing.SpanKindServer),
         tracing.WithAttributes(
-            attribute.String("http.method", c.Request.Method),
-            attribute.String("http.route", "/api/v1/tenants"),
-            attribute.String("http.url", c.Request.URL.String()),
-            attribute.String("user_agent", c.Request.UserAgent()),
+            attribute.String("http.method", "POST"),
+            attribute.String("http.route", "/tenants"),
+            attribute.String("module", "tenant"),
+            attribute.String("operation", "create_tenant"),
         ))
     defer span.End()
     
     // Add business context as operation progresses
     span.SetAttributes(
-        attribute.String("tenant.name", req.Name),
+        attribute.String("tenant.name", p.Name),
         attribute.String("tenant.slug", req.Slug),
     )
     
@@ -661,8 +875,8 @@ func TestRepository_Create(t *testing.T) {
     // Verify persistence
     found, err := repo.GetByID(context.Background(), tenant.ID)
     require.NoError(t, err)
-    assert.Equal(t, tenant.Name, found.Name)
-    assert.Equal(t, tenant.Status, found.Status)
+    require Equal(t, tenant.Name, found.Name)
+    require Equal(t, tenant.Status, found.Status)
 }
 ```
 
@@ -694,8 +908,8 @@ func TestService_CreateTenant(t *testing.T) {
     
     // Verify
     require.NoError(t, err)
-    assert.Equal(t, req.Name, tenant.Name)
-    assert.Equal(t, StatusActive, tenant.Status)
+    require Equal(t, req.Name, tenant.Name)
+    require Equal(t, StatusActive, tenant.Status)
     
     mockRepo.AssertExpectations(t)
     mockCache.AssertExpectations(t)
@@ -706,51 +920,54 @@ func stringPtr(s string) *string {
 }
 ```
 
-### 3. **Handler Testing**
+### 3. **Handler Testing (Goa)**
 
-#### HTTP Handler Tests
+#### Goa Handler Tests
 ```go
-// ✅ Test handlers with mock service
+// ✅ Test Goa handlers with mock service
 func TestTenantHandler_CreateTenant(t *testing.T) {
-    mockService := new(mocks.MockService)
-    handler := NewTenantHandler(mockService, logger.NewTestLogger(), tracing.NewNoopTracer(), metrics.NewNoopMetrics())
+    mockService := new(mocks.MockTenantService)
+    handler := tenant.NewTenantHandler(
+        mockService, 
+        logger.NewTestLogger(), 
+        tracing.NewNoopTracer(), 
+        metrics.NewNoopMetrics(),
+    )
     
-    // Setup router
-    router := gin.New()
-    router.POST("/tenants", handler.CreateTenant)
-    
-    // Expected response
-    expectedTenant := &Tenant{
+    // Expected domain response
+    expectedTenant := &domain.Tenant{
         ID:   uuid.New(),
         Name: "Test Tenant",
         Slug: "test-tenant",
+        Status: domain.StatusActive,
     }
     
-    mockService.On("CreateTenant", mock.Anything, mock.AnythingOfType("tenant.CreateTenantRequest")).
+    mockService.On("CreateTenant", mock.Anything, mock.AnythingOfType("*domain.CreateTenantRequest")).
         Return(expectedTenant, nil)
     
-    // Test request
-    requestBody := `{
-        "name": "Test Tenant",
-        "slug": "test-tenant",
-        "email": "test@example.com"
-    }`
+    // Create Goa payload
+    payload := &goaTenant.CreateTenantPayload{
+        Name:      "Test Tenant",
+        Slug:      "test-tenant",
+        Email:     "test@example.com",
+        Subdomain: stringPtr("test-subdomain"),
+    }
     
-    req, _ := http.NewRequest("POST", "/tenants", strings.NewReader(requestBody))
-    req.Header.Set("Content-Type", "application/json")
+    // Execute handler directly (no HTTP router needed)
+    result, err := handler.CreateTenant(context.Background(), payload)
     
-    w := httptest.NewRecorder()
-    router.ServeHTTP(w, req)
-    
-    // Verify response
-    assert.Equal(t, http.StatusCreated, w.Code)
-    
-    var response Tenant
-    err := json.Unmarshal(w.Body.Bytes(), &response)
+    // Verify results
     require.NoError(t, err)
-    assert.Equal(t, expectedTenant.Name, response.Name)
+    require NotNil(t, result)
+    require Equal(t, expectedTenant.ID.String(), result.ID)
+    require Equal(t, "Test Tenant", result.Name)
+    require Equal(t, "test-tenant", result.Slug)
     
     mockService.AssertExpectations(t)
+}
+
+func stringPtr(s string) *string {
+    return &s
 }
 ```
 
@@ -758,16 +975,35 @@ func TestTenantHandler_CreateTenant(t *testing.T) {
 
 ### 1. **Input Validation**
 
-#### API Layer Validation
+#### API Layer Validation (Goa Design)
 ```go
-// ✅ Validate and sanitize input at API boundary
-type CreateTenantRequest struct {
-    Name      string                 `json:"name" binding:"required,min=3,max=100"`
-    Slug      string                 `json:"slug" binding:"required,min=3,max=50,alphanum"`
-    Email     string                 `json:"email" binding:"required,email"`
-    Subdomain *string                `json:"subdomain,omitempty" binding:"omitempty,min=3,max=63,alphanum"`
-    Metadata  map[string]interface{} `json:"metadata,omitempty"`
-}
+// ✅ Validate input in Goa design files
+// internal/api/design/services/tenant.go
+var CreateTenantPayload = Type("CreateTenantPayload", func() {
+    Attribute("name", String, "Tenant name", func() {
+        MinLength(3)
+        MaxLength(100)
+        Pattern("^[a-zA-Z0-9\\s]+$")
+        Example("Acme Corporation")
+    })
+    Attribute("slug", String, "Tenant slug", func() {
+        MinLength(3)
+        MaxLength(50) 
+        Pattern("^[a-z0-9-]+$")
+        Example("acme-corp")
+    })
+    Attribute("email", String, "Admin email", func() {
+        Format(FormatEmail)
+        Example("admin@acme.com")
+    })
+    Attribute("subdomain", String, "Optional subdomain", func() {
+        MinLength(3)
+        MaxLength(63)
+        Pattern("^[a-z0-9-]+$")
+        Example("acme")
+    })
+    Required("name", "slug", "email")
+})
 
 // ✅ Additional validation in service layer
 func (s *service) validateCreateRequest(req CreateTenantRequest) error {
@@ -870,22 +1106,30 @@ func (s *service) GetTenant(ctx context.Context, id uuid.UUID) (*Tenant, error) 
 
 ### 1. **Architecture Violations**
 ```go
-// ❌ DON'T: Service importing handler
-package tenant
-import "internal/api/handlers"  // WRONG!
+// ❌ DON'T: Import internal module structure
+import "internal/core/finance/account"     // ❌ Internal structure - WRONG!
+import "internal/core/finance/service"     // ❌ Implementation details - WRONG!
+
+// ✅ DO: Import module facade only  
+import "internal/core/finance"             // ✅ Module facade - CORRECT!
 
 // ❌ DON'T: Handler containing business logic
-func (h *Handler) CreateTenant(c *gin.Context) {
-    if len(req.Name) < 3 {  // Business logic in handler
-        // WRONG!
+func (h *FinanceHandler) CreateAccount(ctx context.Context, p *goaFinance.CreateAccountPayload) (*goaFinance.Account, error) {
+    if p.Balance < 0 {  // Business validation in API layer - WRONG!
+        return nil, goaFinance.MakeBadRequest(errors.New("Invalid balance"))
     }
 }
 
-// ❌ DON'T: Repository containing business logic
-func (r *Repository) Create(ctx context.Context, tenant *Tenant) error {
-    if tenant.Status == StatusInactive {  // Business logic in repository
-        return errors.New("cannot create inactive tenant")  // WRONG!
-    }
+// ❌ DON'T: Skip context propagation
+func (s *service) CreateAccount(req CreateAccountRequest) (*Account, error) {
+    // No context = no tenant isolation, audit, or tracing - WRONG!
+    return s.repository.CreateAccount(req)
+}
+
+// ❌ DON'T: Hard-code business parameters
+func (s *service) ProcessApproval(ctx context.Context) error {
+    timeout := 5 * time.Minute  // Hard-coded timeout - WRONG!
+    retries := 3                // Hard-coded retries - WRONG!
 }
 ```
 
@@ -900,12 +1144,19 @@ func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*T
     }
 }
 
-// ❌ DON'T: Generic error messages
-func (h *Handler) CreateTenant(c *gin.Context) {
+// ❌ DON'T: Generic error messages in Goa handlers
+func (h *TenantHandler) CreateTenant(ctx context.Context, p *goaTenant.CreateTenantPayload) (*goaTenant.Tenant, error) {
     _, err := h.service.CreateTenant(ctx, req)
     if err != nil {
-        c.JSON(500, gin.H{"error": "Something went wrong"})  // Not helpful - WRONG!
+        return nil, goaTenant.MakeInternalError(errors.New("Something went wrong"))  // Not helpful - WRONG!
     }
+}
+
+// ❌ DON'T: Bypass workflows for complex operations
+func (s *service) ProcessMonthEnd(ctx context.Context) error {
+    s.calculateBalances(ctx)   // Could fail after 20 minutes
+    s.generateReports(ctx)     // Leaving system in inconsistent state  
+    s.sendNotifications(ctx)   // ❌ WRONG!
 }
 ```
 
@@ -934,6 +1185,7 @@ func (s *service) GetTenantsWithUsers(ctx context.Context) ([]*TenantWithUsers, 
 ---
 
 📚 **Next Steps**:
-- [Error Handling](./error-handling.md) - Comprehensive error handling strategies
-- [Code Examples](./code-examples.md) - See these patterns in action
-- [Architecture Overview](./architecture.md) - Review architectural principles
+- [Architecture Overview](./architecture.md) - System design principles
+- [Service Implementation](./service.md) - Module development patterns
+- [API Development](./goa.md) - Handler and API patterns
+- [Error Handling](./error-handling.md) - Error management strategies

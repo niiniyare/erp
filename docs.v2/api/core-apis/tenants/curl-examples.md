@@ -168,7 +168,7 @@ curl -X DELETE $API_BASE_URL/api/v1/tenants/00000000-0000-0000-0000-000000000000
 curl -X DELETE $API_BASE_URL/api/v1/tenants/invalid-uuid -v
 ```
 
-## 🧪 Comprehensive Test Scenarios
+## 🧪  Test Scenarios
 
 ### Scenario 1: Complete Tenant Lifecycle
 ```bash

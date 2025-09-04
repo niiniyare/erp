@@ -5,7 +5,7 @@
 | Test Case / Spec                | Implementation Location                           | Verified | Notes |
 |---------------------------------|---------------------------------------------------|----------|-------|
 | ABAC policy evaluation          | @internal/core/abac/policy_evaluation_engine.go  | ✅       | 1900+ lines mature engine |
-| Attribute resolver              | @internal/core/abac/attribute_service.go         | ✅       | Comprehensive attribute collection |
+| Attribute resolver              | @internal/core/abac/attribute_service.go         | ✅       |  attribute collection |
 | Identity user lifecycle         | @internal/core/identity/service.go               | ✅       | 317+ lines mature service |
 | Session management              | @internal/core/identity/service.go               | ✅       | Integrated in identity service |
 | Role + permission assignment    | @internal/core/access/request/access_request_service.go | ✅ | 806+ lines workflow logic |

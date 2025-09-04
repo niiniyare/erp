@@ -1,6 +1,6 @@
 # Error Handling Guide
 
-Comprehensive error handling strategies for building resilient applications with proper error propagation, classification, and observability.
+ error handling strategies for building resilient applications with proper error propagation, classification, and observability.
 
 ## 🎯 Error Handling Philosophy
 
@@ -937,7 +937,7 @@ func classifyError(err error) string {
 
 ### 2. **Error Tracing**
 
-#### Comprehensive Error Spans
+####  Error Spans
 ```go
 func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
     ctx, span := r.tracing.StartSpan(ctx, "repository.create_tenant")
@@ -1194,7 +1194,7 @@ func (h *TenantHandler) CreateTenant(c *gin.Context) {
 
 ### 2. **Error Testing**
 
-#### Comprehensive Error Testing
+####  Error Testing
 ```go
 func TestService_CreateTenant_SubdomainExists(t *testing.T) {
     mockRepo := new(mocks.MockRepository)

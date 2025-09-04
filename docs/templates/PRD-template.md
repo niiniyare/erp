@@ -451,7 +451,7 @@ journey
 
 ### Success Review
 - **30-Day Review**: Initial metrics assessment and quick fixes
-- **90-Day Review**: Comprehensive success metrics evaluation
+- **90-Day Review**:  success metrics evaluation
 - **Annual Review**: Full business impact assessment and planning
 - **Continuous Monitoring**: Ongoing metrics tracking and reporting
 

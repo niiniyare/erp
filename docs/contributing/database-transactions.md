@@ -1,302 +1,458 @@
-# Database Transactions and Tenant Lifecycle
+# Awo ERP Database Transactions and Tenant Isolation
+## *WithTenant Pattern and Context-Based Multi-Tenancy*
 
-This guide explains how to properly manage database transactions and tenant context in the ERP system.
+*Guide for managing database transactions with proper tenant isolation using WithTenant pattern, context propagation, and SQLC integration*
+
+> **📚 Related Documentation:**
+> - `docs/contributing/architecture.md` - System architecture and context patterns
+> - `docs/contributing/sqlc-integration.md` - SQLC query patterns and code generation
+> - `docs/contributing/01-best-practices.md` - Development guidelines and patterns
 
 ## Overview
 
-The ERP system uses PostgreSQL with row-level security (RLS) for multi-tenant isolation. All database operations must be performed within the correct tenant context to ensure data isolation.
+Awo ERP uses the **WithTenant pattern** for database transactions, combining PostgreSQL transaction management with tenant context isolation. The `db.Store` interface provides tenant-aware transaction methods that ensure all operations are properly isolated by setting database session variables within transaction scope.
 
-## Store Interface
+## Key Architecture Components
 
-The `Store` interface in `db/sqlc/store.go` provides three main transaction patterns:
+1. **Context Propagation**: Tenant ID stored in Go context via `shared.GetTenantID(ctx)`
+2. **WithTenant Pattern**: Database transactions with tenant session variables  
+3. **SQLC Integration**: Type-safe queries with automatic tenant isolation
+4. **Repository Layer**: Clean abstractions over database operations
 
-### 1. Basic Transactions (`WithTx`)
+## Store Interface Transaction Patterns
 
-Use for simple operations that don't require tenant context:
+The `db.Store` interface in `db/sqlc/store.go` provides these transaction methods:
 
 ```go
-err := store.WithTx(ctx, func(ctx context.Context, s Store) error {
-    // Perform multiple database operations
-    user, err := s.CreateUser(ctx, params)
-    if err != nil {
-        return err
-    }
-    
-    _, err = s.UpdateUserProfile(ctx, profileParams)
-    return err
-})
+type Store interface {
+    Querier
+    // Tenant context methods
+    SetTenantContext(ctx context.Context, tenantID uuid.UUID) error
+    WithTenant(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, Store) error) error
+    BeginTxWithTenant(ctx context.Context, tenantID uuid.UUID) (pgx.Tx, Store, error)
+    WithTx(ctx context.Context, fn func(context.Context, Store) error) error
+    // Connection management
+    Close()
+    GetPool() *pgxpool.Pool
+}
 ```
 
-### 2. Tenant-Aware Transactions (`WithTenant`)
+### 1. **WithTenant Pattern (Most Common)**
 
-Use for operations requiring tenant isolation (most common):
+This is the primary pattern used throughout the codebase for tenant-isolated operations:
 
 ```go
-err := store.WithTenant(ctx, tenantID, func(ctx context.Context, s Store) error {
-    // All operations automatically isolated to tenantID
-    entities, err := s.ListEntities(ctx)
+// internal/core/finance/repository/accounts.go
+func (r *chartOfAccountsRepository) Create(ctx context.Context, account *domain.Accounts) error {
+    // Get tenant ID from context
+    tenantID, ok := shared.GetTenantID(ctx)
+    if !ok {
+        return fmt.Errorf("tenant ID not found in context")
+    }
+
+    // Use tenant-aware transaction for proper isolation
+    return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+        // Map domain account to SQLC parameters
+        params, err := mapDomainAccountToSQLCCreateDirect(account)
+        if err != nil {
+            return fmt.Errorf("failed to map create account request: %w", err)
+        }
+
+        // Execute SQLC query within tenant context
+        sqlcAccount, err := s.CreateAccount(ctx, params)
+        if err != nil {
+            return r.mapDatabaseError(err, "create_account")
+        }
+
+        // Update the account with generated fields
+        account.ID = sqlcAccount.ID
+        account.TenantID = sqlcAccount.TenantID
+        account.CreatedAt = sqlcAccount.CreatedAt
+        account.UpdatedAt = sqlcAccount.UpdatedAt
+
+        return nil
+    })
+}
+```
+
+### 2. **Multi-Operation WithTenant Example**
+
+Complex operations that need multiple queries in the same tenant context:
+
+```go
+// internal/core/finance/repository/transaction.go
+func (r *transactionRepository) CreateWithEntries(ctx context.Context, transaction *domain.Transaction) error {
+    // Get tenant ID from context
+    tenantID, ok := shared.GetTenantID(ctx)
+    if !ok {
+        return fmt.Errorf("tenant ID not found in context")
+    }
+
+    return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+        // 1. Create the main transaction
+        params := db.CreateTransactionParams{
+            EntityID:          transaction.EntityID,
+            TransactionNumber: transaction.TransactionNumber,
+            TransactionType:   mapDomainTransactionTypeToSQLCEnum(transaction.TransactionType),
+            TransactionDate:   transaction.TransactionDate,
+            Description:       transaction.Description,
+            // ... other fields
+        }
+
+        sqlcTransaction, err := s.CreateTransaction(ctx, params)
+        if err != nil {
+            return r.mapDatabaseError(err, "create_transaction")
+        }
+        
+        transaction.ID = sqlcTransaction.ID
+        transaction.TenantID = sqlcTransaction.TenantID
+
+        // 2. Create transaction entries in the same transaction
+        for _, entry := range transaction.Entries {
+            entryParams := db.CreateTransactionEntryParams{
+                TransactionID: transaction.ID,
+                AccountID:     entry.AccountID,
+                DebitAmount:   decimalToPgNumeric(&entry.DebitAmount),
+                CreditAmount:  decimalToPgNumeric(&entry.CreditAmount),
+                Description:   entry.Description,
+            }
+            
+            _, err := s.CreateTransactionEntry(ctx, entryParams)
+            if err != nil {
+                return r.mapDatabaseError(err, "create_transaction_entry")
+            }
+        }
+        
+        return nil
+    })
+}
+```
+
+### 3. **Manual Transaction Control (BeginTxWithTenant)**
+
+For advanced scenarios requiring explicit transaction management:
+
+```go
+func (r *repository) CreateComplexFinancialOperation(ctx context.Context, req *domain.ComplexRequest) error {
+    // Get tenant ID from context
+    tenantID, ok := shared.GetTenantID(ctx)
+    if !ok {
+        return fmt.Errorf("tenant ID not found in context")
+    }
+
+    tx, txStore, err := r.store.BeginTxWithTenant(ctx, tenantID)
     if err != nil {
         return err
     }
-    
-    for _, entity := range entities {
-        _, err = s.UpdateEntityStatus(ctx, UpdateEntityStatusParams{
-            ID:     entity.ID,
-            Status: "active",
+    defer tx.Rollback(ctx)
+
+    // Step 1: Create primary record
+    record, err := txStore.CreatePrimaryRecord(ctx, params)
+    if err != nil {
+        return err
+    }
+
+    // Step 2: Conditional logic based on business rules
+    if record.RequiresApproval {
+        _, err = txStore.CreateApprovalRequest(ctx, db.CreateApprovalParams{
+            RecordID:   record.ID,
+            ApproverID: req.ApproverID,
         })
         if err != nil {
             return err
         }
     }
-    
-    return nil
-})
+
+    // Step 3: Create related records
+    for _, item := range req.RelatedItems {
+        _, err = txStore.CreateRelatedRecord(ctx, db.CreateRelatedParams{
+            PrimaryID: record.ID,
+            Data:      item.Data,
+        })
+        if err != nil {
+            return err
+        }
+    }
+
+    // Explicit commit
+    return tx.Commit(ctx)
+}
 ```
 
-### 3. Manual Transaction Control (`BeginTxWithTenant`)
+### 4. **Basic Transactions (WithTx)**
 
-Use when you need explicit transaction control:
+For operations that don't require tenant context (rare):
 
 ```go
-tx, txStore, err := store.BeginTxWithTenant(ctx, tenantID)
-if err != nil {
-    return err
+func (r *repository) PerformSystemOperation(ctx context.Context) error {
+    return r.store.WithTx(ctx, func(ctx context.Context, s db.Store) error {
+        // System-level operations without tenant isolation
+        return s.UpdateSystemSettings(ctx, params)
+    })
 }
-defer tx.Rollback(ctx)
+```
 
-// Perform operations
-user, err := txStore.CreateUser(ctx, params)
-if err != nil {
-    return err
-}
+## How WithTenant Works Internally
 
-// Conditional logic
-if user.RequiresApproval {
-    _, err = txStore.CreateApprovalRequest(ctx, approvalParams)
+The `WithTenant` method in `db/sqlc/store.go` handles the transaction and tenant context setup:
+
+```go
+// WithTenant executes a function with tenant context set
+func (s *SQLStore) WithTenant(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, Store) error) error {
+    tx, err := s.connPool.Begin(ctx)
     if err != nil {
         return err
     }
-}
+    defer tx.Rollback(ctx)
 
-// Explicit commit
-return tx.Commit(ctx)
+    // Set tenant context with transaction scope (true)
+    _, err = tx.Exec(ctx, "SELECT set_config('app.current_tenant_id', $1, true)", tenantID.String())
+    if err != nil {
+        return err
+    }
+
+    // Create store instance with transaction
+    txStore := &SQLStore{
+        connPool: s.connPool,
+        Queries:  s.Queries.WithTx(tx),
+    }
+
+    // Execute function
+    if err := fn(ctx, txStore); err != nil {
+        return err
+    }
+
+    return tx.Commit(ctx)
+}
 ```
 
-## Tenant Context Management
+## Context Resolution in Repositories
 
-### Setting Tenant Context
-
-The system uses PostgreSQL session variables to enforce tenant isolation:
-
-- `WithTenant`: Sets `app.current_tenant_id` with transaction scope
-- `BeginTxWithTenant`: Uses `set_tenant_context()` database function
-- `SetTenantContext`: Sets session-level tenant context
-
-### Tenant ID Sources
-
-Tenant ID should come from:
-
-1. **JWT Claims**: Extract from authenticated user token
-2. **Request Headers**: For service-to-service calls
-3. **Context Values**: Passed through request chain
-
-Example:
+All repositories follow the same pattern for extracting tenant context:
 
 ```go
-// Extract tenant from JWT claims
-tenantID, err := auth.GetTenantIDFromContext(ctx)
-if err != nil {
-    return fmt.Errorf("failed to get tenant ID: %w", err)
+// internal/shared/context.go - Context helper functions
+func GetTenantID(ctx context.Context) (uuid.UUID, bool) {
+    tenantID, ok := ctx.Value(TenantIDKey).(uuid.UUID)
+    return tenantID, ok
 }
 
-// Use in database operations
-err = store.WithTenant(ctx, tenantID, func(ctx context.Context, s Store) error {
-    return s.CreateEntity(ctx, params)
-})
+func WithTenantID(ctx context.Context, tenantID uuid.UUID) context.Context {
+    return context.WithValue(ctx, TenantIDKey, tenantID)
+}
+
+// Repository usage pattern
+func (r *repository) SomeOperation(ctx context.Context, req *domain.Request) error {
+    // ✅ Standard pattern: Get tenant ID from context
+    tenantID, ok := shared.GetTenantID(ctx)
+    if !ok {
+        return fmt.Errorf("tenant ID not found in context")
+    }
+
+    // ✅ Use WithTenant for all database operations
+    return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+        // All database operations within this block are tenant-isolated
+        return s.SomeQuery(ctx, params)
+    })
+}
+```
+
+## Database Session Variables
+
+The tenant context is maintained using PostgreSQL session variables:
+
+```sql
+-- Set tenant context (done automatically by WithTenant)
+SELECT set_config('app.current_tenant_id', $1, true);
+
+-- Database functions can access current tenant
+CREATE OR REPLACE FUNCTION current_tenant_id() 
+RETURNS UUID AS $$
+BEGIN
+    RETURN current_setting('app.current_tenant_id')::UUID;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Usage in SQLC queries
+-- name: CreateAccount :one
+INSERT INTO accounts (name, code, tenant_id, created_at, updated_at)
+VALUES ($1, $2, current_tenant_id(), NOW(), NOW())
+RETURNING *;
 ```
 
 ## Best Practices
 
-### 1. Always Use Tenant Context
+### 1. **Always Use WithTenant for Multi-Tenant Data**
 
 ```go
-// ❌ Wrong - bypasses tenant isolation
-err := store.WithTx(ctx, func(ctx context.Context, s Store) error {
-    return s.ListEntities(ctx) // May return data from all tenants
-})
-
-// ✅ Correct - enforces tenant isolation
-err := store.WithTenant(ctx, tenantID, func(ctx context.Context, s Store) error {
-    return s.ListEntities(ctx) // Only returns tenant's data
-})
-```
-
-### 2. Handle Errors Properly
-
-```go
-err := store.WithTenant(ctx, tenantID, func(ctx context.Context, s Store) error {
-    entity, err := s.GetEntity(ctx, entityID)
-    if err != nil {
-        if errors.Is(err, sql.ErrNoRows) {
-            return ErrEntityNotFound
-        }
-        return fmt.Errorf("failed to get entity: %w", err)
+// ✅ Correct - ensures tenant isolation
+func (r *repository) GetAccount(ctx context.Context, id uuid.UUID) (*domain.Account, error) {
+    tenantID, ok := shared.GetTenantID(ctx)
+    if !ok {
+        return nil, fmt.Errorf("tenant ID not found in context")
     }
-    
-    // Continue processing...
-    return nil
-})
 
-if err != nil {
-    // Transaction automatically rolled back
-    return err
+    var account *domain.Account
+    err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+        sqlcAccount, err := s.GetAccountByID(ctx, id)
+        if err != nil {
+            if err == db.ErrNoRows {
+                return domain.ErrAccountNotFound
+            }
+            return err
+        }
+        
+        account, err = mapSQLCAccountToDomain(sqlcAccount)
+        return err
+    })
+    
+    return account, err
+}
+
+// ❌ Wrong - bypasses tenant isolation
+func (r *repository) GetAccountUnsafe(ctx context.Context, id uuid.UUID) (*domain.Account, error) {
+    return r.store.WithTx(ctx, func(ctx context.Context, s db.Store) error {
+        // No tenant context - could return data from any tenant!
+        return s.GetAccountByID(ctx, id)
+    })
 }
 ```
 
-### 3. Keep Transactions Short
+### 2. **Handle Context Errors Properly**
 
 ```go
-// ❌ Wrong - long-running transaction
-err := store.WithTenant(ctx, tenantID, func(ctx context.Context, s Store) error {
-    entities, err := s.ListEntities(ctx)
-    if err != nil {
-        return err
+// ✅ Proper error handling for missing tenant context
+func (r *repository) CreateAccount(ctx context.Context, account *domain.Account) error {
+    tenantID, ok := shared.GetTenantID(ctx)
+    if !ok {
+        // This should never happen in normal flow - indicates middleware/context issue
+        return fmt.Errorf("tenant ID not found in context - ensure request has proper authentication")
     }
-    
-    for _, entity := range entities {
-        // Long processing that might fail
-        processedData := heavyProcessing(entity)
-        
-        _, err = s.UpdateEntity(ctx, UpdateEntityParams{
-            ID:   entity.ID,
-            Data: processedData,
+
+    return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+        // Implementation...
+    })
+}
+```
+
+### 3. **Keep Transactions Focused and Short**
+
+```go
+// ✅ Good - focused transaction
+func (r *repository) UpdateAccountBalance(ctx context.Context, accountID uuid.UUID, newBalance decimal.Decimal) error {
+    tenantID, ok := shared.GetTenantID(ctx)
+    if !ok {
+        return fmt.Errorf("tenant ID not found in context")
+    }
+
+    return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+        return s.UpdateAccountBalance(ctx, db.UpdateAccountBalanceParams{
+            ID:      accountID,
+            Balance: decimalToPgNumeric(&newBalance),
         })
+    })
+}
+
+// ❌ Avoid - long-running operations in transaction
+func (r *repository) ProcessMonthEndBad(ctx context.Context) error {
+    tenantID, ok := shared.GetTenantID(ctx)
+    if !ok {
+        return fmt.Errorf("tenant ID not found in context")
+    }
+
+    return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+        accounts, err := s.ListAccounts(ctx)
         if err != nil {
             return err
         }
-    }
-    return nil
-})
-
-// ✅ Better - separate processing from database operations
-entities, err := store.WithTenant(ctx, tenantID, func(ctx context.Context, s Store) error {
-    return s.ListEntities(ctx)
-})
-if err != nil {
-    return err
-}
-
-for _, entity := range entities {
-    processedData := heavyProcessing(entity) // Outside transaction
-    
-    err := store.WithTenant(ctx, tenantID, func(ctx context.Context, s Store) error {
-        _, err := s.UpdateEntity(ctx, UpdateEntityParams{
-            ID:   entity.ID,
-            Data: processedData,
-        })
-        return err
-    })
-    if err != nil {
-        return err
-    }
-}
-```
-
-## Common Patterns
-
-### Bulk Operations
-
-```go
-func (s *Service) BulkUpdateEntities(ctx context.Context, tenantID uuid.UUID, updates []EntityUpdate) error {
-    return s.store.WithTenant(ctx, tenantID, func(ctx context.Context, store Store) error {
-        for _, update := range updates {
-            _, err := store.UpdateEntity(ctx, UpdateEntityParams{
-                ID:     update.ID,
-                Status: update.Status,
-            })
-            if err != nil {
-                return fmt.Errorf("failed to update entity %s: %w", update.ID, err)
-            }
+        
+        // ❌ Heavy processing inside transaction
+        for _, account := range accounts {
+            report := generateComplexReport(account) // Could take minutes!
+            s.CreateReport(ctx, report)
         }
         return nil
     })
 }
 ```
 
-### Complex Business Logic
+### 4. **Use Temporal for Complex Multi-Step Operations**
 
 ```go
-func (s *Service) ProcessApproval(ctx context.Context, tenantID uuid.UUID, approvalID uuid.UUID) error {
-    return s.store.WithTenant(ctx, tenantID, func(ctx context.Context, store Store) error {
-        // Get approval request
-        approval, err := store.GetApprovalRequest(ctx, approvalID)
-        if err != nil {
-            return err
-        }
-        
-        // Update entity status
-        _, err = store.UpdateEntityStatus(ctx, UpdateEntityStatusParams{
-            ID:     approval.EntityID,
-            Status: "approved",
-        })
-        if err != nil {
-            return err
-        }
-        
-        // Mark approval as completed
-        _, err = store.CompleteApproval(ctx, approvalID)
+// ✅ Better approach for complex operations
+func (s *service) ProcessMonthEnd(ctx context.Context) error {
+    // Use Temporal workflow for complex, long-running processes
+    return s.temporal.ExecuteWorkflow(ctx, workflows.MonthEndProcess, &workflows.MonthEndInput{
+        TenantID: shared.GetTenantID(ctx),
+    })
+}
+
+// The workflow coordinates individual database operations
+func MonthEndWorkflow(ctx workflow.Context, input *MonthEndInput) error {
+    // Each activity uses WithTenant for focused database operations
+    err := workflow.ExecuteActivity(ctx, activities.GenerateReports, input).Get(ctx, nil)
+    if err != nil {
         return err
-    })
+    }
+    
+    err = workflow.ExecuteActivity(ctx, activities.UpdateBalances, input).Get(ctx, nil)
+    return err
 }
 ```
 
-## Testing Transactions
+## Testing Database Transactions
+
+### Repository Testing with Test Database
 
 ```go
-func TestEntityService_CreateWithApproval(t *testing.T) {
-    store := setupTestStore(t)
-    service := NewEntityService(store)
+func TestAccountRepository_Create(t *testing.T) {
+    // Setup test database
+    testDB := setupTestDB(t)
+    defer testDB.Close()
     
+    store := db.NewStore(testDB)
+    repo := NewAccountsRepository(store, tracing.NewNoopTracer())
+    
+    // Create test context with tenant ID
+    ctx := context.Background()
     tenantID := uuid.New()
+    ctx = shared.WithTenantID(ctx, tenantID)
     
-    // Test successful creation
-    entity, err := service.CreateEntityWithApproval(ctx, tenantID, CreateEntityParams{
-        Name: "Test Entity",
-    })
+    // Test data
+    account := &domain.Accounts{
+        Name:        "Test Account",
+        Code:        "1000",
+        AccountType: domain.AssetAccount,
+    }
     
+    // Execute
+    err := repo.Create(ctx, account)
     require.NoError(t, err)
-    assert.NotEmpty(t, entity.ID)
     
-    // Verify approval was created
-    approvals, err := store.WithTenant(ctx, tenantID, func(ctx context.Context, s Store) error {
-        return s.ListApprovalRequests(ctx)
-    })
+    // Verify the account was created with correct tenant ID
+    assert.Equal(t, tenantID, account.TenantID)
+    assert.NotEqual(t, uuid.Nil, account.ID)
+    
+    // Verify persistence
+    retrieved, err := repo.GetByID(ctx, account.ID)
     require.NoError(t, err)
-    assert.Len(t, approvals, 1)
+    assert.Equal(t, account.Name, retrieved.Name)
+    assert.Equal(t, account.Code, retrieved.Code)
 }
 ```
 
-## Migration Considerations
+## Common Patterns Summary
 
-When adding new tenant-aware tables:
+| Pattern | Use Case | Example |
+|---------|----------|---------|
+| `WithTenant` | Standard multi-tenant operations | Creating accounts, transactions, most business operations |
+| `BeginTxWithTenant` | Complex operations requiring transaction control | Multi-step processes with conditional logic |
+| `WithTx` | System-level operations | Migrations, system settings (no tenant context needed) |
+| `SetTenantContext` | Session-level tenant setting | Middleware setup, connection initialization |
 
-1. Add RLS policies in migration
-2. Update SQLC queries with tenant context
-3. Test tenant isolation in integration tests
-4. Update this documentation
+---
 
-## Troubleshooting
-
-### Common Issues
-
-1. **Data Leakage**: Always verify tenant context is set
-2. **Deadlocks**: Keep transactions short and consistent lock ordering
-3. **Connection Pool Exhaustion**: Avoid nested transactions
-4. **RLS Violations**: Ensure all queries respect tenant boundaries
-
-### Debug Tips
-
-```go
-// Log tenant context in development
-_, err = tx.Exec(ctx, "SELECT current_setting('app.current_tenant_id')")
-```
+📚 **Next Steps**:
+- [SQLC Integration](./sqlc-integration.md) - Type-safe query generation patterns
+- [Architecture Overview](./architecture.md) - Overall system design and context flow
+- [Best Practices](./01-best-practices.md) - Development guidelines and standards

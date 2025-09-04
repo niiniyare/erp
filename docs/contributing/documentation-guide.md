@@ -223,7 +223,7 @@ mkdocs build --strict
 
 ### Step 7: API Documentation (Special Case)
 
-For API documentation, follow this enhanced structure:
+For API documentation, follow this structure:
 
 #### 7.1 API Guide Template
 ```markdown

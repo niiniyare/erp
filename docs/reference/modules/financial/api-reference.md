@@ -743,7 +743,7 @@ Generate trial balance report showing account balances.
 ##  Query Endpoints
 
 ### Accounts with Groups
-Get accounts with hierarchical group information for enhanced reporting.
+Get accounts with hierarchical group information for reporting.
 
 **Endpoint**: `GET /api/v1/finance/accounts/with-groups`
 
@@ -836,7 +836,7 @@ Get  chart of accounts with full hierarchy and reporting structure.
 ```
 
 ### Trial Balance Summary
-Get trial balance data with enhanced grouping and categorization.
+Get trial balance data with grouping and categorization.
 
 **Endpoint**: `GET /api/v1/finance/reports/trial-balance-summary`
 

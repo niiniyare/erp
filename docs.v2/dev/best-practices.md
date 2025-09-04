@@ -568,7 +568,7 @@ const (
     SpanDatabasePrefix   = "db."
 )
 
-// ✅ Comprehensive span attributes
+// ✅  span attributes
 func (h *TenantHandler) CreateTenant(c *gin.Context) {
     ctx, span := h.tracing.StartSpan(ctx, "http.create_tenant",
         tracing.WithSpanKind(tracing.SpanKindServer),
@@ -934,6 +934,6 @@ func (s *service) GetTenantsWithUsers(ctx context.Context) ([]*TenantWithUsers, 
 ---
 
 📚 **Next Steps**:
-- [Error Handling](./error-handling.md) - Comprehensive error handling strategies
+- [Error Handling](./error-handling.md) -  error handling strategies
 - [Code Examples](./code-examples.md) - See these patterns in action
 - [Architecture Overview](./architecture.md) - Review architectural principles

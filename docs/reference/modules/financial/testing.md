@@ -68,7 +68,7 @@ Then:
 ```
 - ✅ **Status:** Implemented
 - **Location:** `internal/core/finance/domain/account_test.go:TestAccount_Validation`
-- **Comments:** Comprehensive validation covering all financial account types and GAAP compliance
+- **Comments:**  validation covering all financial account types and GAAP compliance
 
 #### Test Case: Chart of Accounts Business Rules
 ```

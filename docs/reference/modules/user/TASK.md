@@ -27,7 +27,7 @@ internal/core/
 │   ├── model.go                 # Domain models with type safety
 │   ├── service.go               # Business logic with caching
 │   ├── repository.go            # SQLC integration with proper error handling
-│   └── *_test.go, *_mock.go     # Comprehensive testing setup
+│   └── *_test.go, *_mock.go     #  testing setup
 ├── abac/              # Mature ABAC system (40+ files) - Production ready
 │   ├── service.go               # Main ABAC service with full implementation
 │   ├── policy_evaluation_engine.go  # Advanced policy evaluation (1900+ lines)
@@ -35,7 +35,7 @@ internal/core/
 │   ├── services/                # Specialized sub-services
 │   ├── repository/              # ABAC-specific repositories
 │   ├── workflows/               # Temporal workflow integration
-│   └── models/domain.go         # Comprehensive ABAC models
+│   └── models/domain.go         #  ABAC models
 ├── access/            # Sophisticated access management (20+ files)
 │   ├── request/                 # Access request workflows
 │   ├── approval/                # Approval process engine
@@ -43,7 +43,7 @@ internal/core/
 │   ├── execution/               # Access execution service
 │   └── permission/              # Permission caching
 ├── analytics/         # Advanced user analytics (2 files)
-│   └── user_analytics_service.go  # Comprehensive user behavior analysis (1300+ lines)
+│   └── user_analytics_service.go  #  user behavior analysis (1300+ lines)
 └── iam/               # NEW: Unified IAM module (PARTIALLY IMPLEMENTED)
     ├── service.go               # ✅ Main unified IAM service interface
     ├── model/                   # ✅ Centralized domain models
@@ -69,7 +69,7 @@ internal/core/
 - **Multi-tenant Cache**: Redis with automatic tenant isolation
 - **Shared Services**: Tracing, Logger, Metrics (OpenTelemetry, structured logging, Prometheus)
 - **SQLC Integration**: Type-safe database operations with proper error handling
-- **Mock Generation**: Comprehensive test coverage with auto-generated mocks
+- **Mock Generation**:  test coverage with auto-generated mocks
 
 ## 🏗️ Target Architecture (UPDATED)
 
@@ -187,7 +187,7 @@ type policy.Service interface {
   - ✅ `UserAccountStatus`, `EmploymentStatus`, `MFAMethod`
   - ✅ `RequestType`, `ApprovalStatus`, `SessionStatus`
 
-- ✅ **Comprehensive Domain Models**: Created all IAM entity models
+- ✅ ** Domain Models**: Created all IAM entity models
   - ✅ **Identity Models**: `User`, `Person`, `Employee`, `Role`, `UserRole`, `Session`
   - ✅ **Authorization Models**: `Permission`, `Policy`, `PolicyTarget`, `PolicyDecision`, `Attribute`
   - ✅ **Access Models**: `AccessRequest`, `ApprovalWorkflow`, `ConditionalAccessPolicy`
@@ -217,7 +217,7 @@ type policy.Service interface {
 - ✅ **Mock Generation Setup**: Added proper mock generation directives
 
 #### Phase 1.5: Repository Interface Design (COMPLETED)
-- ✅ **Repository Interfaces**: Comprehensive interfaces for all IAM entities
+- ✅ **Repository Interfaces**:  interfaces for all IAM entities
 - ✅ **Transaction Management**: Proper Store interface integration
 - ✅ **Repository Implementation Structure**: Created IAMRepository with proper dependency injection
 

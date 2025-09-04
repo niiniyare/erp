@@ -376,7 +376,7 @@ ABAC's power (dynamic, attribute-based decisions) is also its Achilles' heel. Th
 *   Obligation enforcement
 *   Performance demands
 
-...create a system where the behavior can become emergent and hard to predict. Rigorous **Policy Analysis Tools** (simulation, "what-if" testing), **Attribute Governance**, and **Comprehensive Auditing** are not just nice-to-haves; they are essential for secure and manageable ABAC implementations.
+...create a system where the behavior can become emergent and hard to predict. Rigorous **Policy Analysis Tools** (simulation, "what-if" testing), **Attribute Governance**, and ** Auditing** are not just nice-to-haves; they are essential for secure and manageable ABAC implementations.
 
 **In essence:** ABAC is not just a set of components; it's a complex, dynamic **authorization ecosystem**. Understanding the deep interplay of "Request," "Conditional" (attributes + policies + combining logic), "Permission" (decision + obligations), "Approval" (external workflow integration), and "Execution" (PEP capabilities + obligation handling), along with the underlying challenges of attribute trust, performance, and complexity management, is crucial for moving beyond theory into practical, secure deployment.
 
@@ -538,7 +538,7 @@ managerAccessPolicy := HierarchicalPolicy{
 }
 ```
 
-## 📊 Comprehensive Audit & Compliance
+## 📊  Audit & Compliance
 
 ### Audit Logging
 
@@ -810,9 +810,9 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-// GetComprehensiveOffboarding returns the  offboarding process
+// GetOffboarding returns the  offboarding process
 // This replaces the const object literal in TypeScript
-func GetComprehensiveOffboarding() OffboardingProcess {
+func GetOffboarding() OffboardingProcess {
 	return OffboardingProcess{
 		TriggerEvents: []TriggerEvent{
 			{
@@ -920,7 +920,7 @@ func GetComprehensiveOffboarding() OffboardingProcess {
 
 // Alternative constructor pattern (common in Go)
 func NewOffboardingProcess() *OffboardingProcess {
-	process := GetComprehensiveOffboarding()
+	process := GetOffboarding()
 	return &process
 }
 
@@ -1097,7 +1097,7 @@ type UserBehaviorAnalytics struct {
 
 ## 🔧 Advanced Permission Management API
 
-### Comprehensive User Management Endpoints
+###  User Management Endpoints
 
 ```go
 package handlers
@@ -1234,7 +1234,7 @@ type UserManagementAPI interface {
     StepUpAuthentication(w http.ResponseWriter, r *http.Request)     // POST /api/v1/auth/step-up
     AssessLoginRisk(w http.ResponseWriter, r *http.Request)          // POST /api/v1/auth/risk-assessment
     
-    // Comprehensive Audit & Analytics
+    //  Audit & Analytics
     QueryActivityLogs(w http.ResponseWriter, r *http.Request)        // GET /api/v1/audit/activities
     GetSecurityEvents(w http.ResponseWriter, r *http.Request)        // GET /api/v1/audit/security-events
     GetUserBehaviorAnalytics(w http.ResponseWriter, r *http.Request) // GET /api/v1/analytics/user-behavior
@@ -1358,7 +1358,7 @@ CREATE TABLE policy_evaluations (
 ### Utility Views for Performance
 
 ```sql
--- Comprehensive user view with aggregated data
+--  user view with aggregated data
 CREATE VIEW user_complete_view AS
 SELECT 
     u.id as user_id,

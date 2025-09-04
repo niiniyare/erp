@@ -1,7 +1,14 @@
-# Awo ERP Service Implementation Checklist
-## *Hexagonal Architecture (Ports & Adapters) Edition*
+# Awo ERP Service Implementation Guide
+## *Clean Architecture + Temporal Workflows Edition*
 
-*A  todo list for implementing any new domain module in Go-based ERP systems following Hexagonal Architecture principles*
+*A comprehensive guide for implementing domain modules in Awo ERP following Clean Architecture principles, Temporal workflow orchestration, and modern ERP patterns*
+
+> **📚 Essential Reading:** This guide focuses on `internal/core/` module development. For detailed implementation patterns, also review:
+> - `docs/contributing/database-transactions.md` - Database and SQLC patterns
+> - `docs/contributing/goa.md` - API design and code generation  
+> - `docs/contributing/general-testing.md` - Testing strategies and patterns
+> - `docs/contributing/error-handling.md` - Error handling best practices
+> - `docs/contributing/observability.md` - Logging, metrics, and tracing
 
 ## **🔍 1. Analysis & Design Phase**
 - [ ] **Domain Analysis**
@@ -11,8 +18,7 @@
   - [ ] Establish domain events for inter-module communication
 - [ ] **Data Modeling**
   - [ ] Create Entity Relationship Diagram (ERD)
-  - [ ] Define Go structs with proper tags (`json`, `db`, `validate`)
-  - [ ] Plan multi-tenant data isolation strategy
+  - [ ] Define Go structs with proper tags (`json`, `validate`) etc...
   - [ ] Design audit trail requirements
 - [ ] **API Design**
   - [ ] Create OpenAPI 3.0 specification
@@ -26,51 +32,78 @@
   - [ ] Establish idempotency keys for critical operations
 
 ## **🧱 2. Core Go Implementation**
-- [ ] **Hexagonal Architecture Structure**
+- [ ] **Module Structure in `internal/core/`** 
   ```
-  internal/
-  ├── api/
-  │   ├── design/             # Goa DSL - API contracts (source of truth)
-  │   └── handlers/           # HTTP handlers (Primary Adapters)
-  ├── core/
-  │   └── {domain}/           # Self-contained domain module
-  │       ├── models/         # Domain entities & value objects
-  │       ├── services/       # Business logic (Application Core)
-  │       ├── repository/     # Persistence adapter implementation
-  │       ├── interfaces.go   # Service & repository interfaces (Ports)
-  │       └── errors.go       # Domain-specific errors
-  ├── platform/               # Infrastructure adapters
-  │   ├── database/           # DB connection & migrations
-  │   ├── middleware/         # Cross-cutting concerns
-  │   ├── cache/             # Caching implementation
-  │   └── config/            # Configuration management
-  └── shared/                 # Common utilities
-      ├── logger/
-      ├── errors/
-      └── context.go
+  internal/core/
+  └── {your-module}/          # New module (stock, payroll, hr, etc.)
+      ├── service.go          # 🔥 MAIN MODULE ENTRY POINT - External interface
+      ├── domain/             # Business entities and rules
+      │   ├── entities.go     # Core business entities  
+      │   ├── types.go        # Value objects and enums
+      │   ├── errors.go       # Domain-specific errors
+      │   ├── constants.go    # Business rule constants
+      │   └── validation.go   # Business validation rules
+      ├── repository/         # Data access layer
+      │   ├── interfaces.go   # Repository interfaces
+      │   ├── {entity}.go     # SQLC-based implementations
+      │   └── mappers.go      # Domain ↔ DB model conversions
+      ├── {feature}/          # Feature-specific submodules
+      │   ├── service.go      # Feature service implementation
+      │   ├── models.go       # Feature-specific models
+      │   └── handlers.go     # Feature business logic
+      ├── activities/         # Temporal activities (NEW)
+      │   ├── activity_registry.go   # Activity registration
+      │   ├── {domain}_activities.go # Domain activities
+      │   └── integration_activities.go # Cross-service activities
+      └── workflows/          # Temporal workflows (NEW)
+          ├── {process}_workflow.go   # Business process workflows
+          └── bulk_operations_workflow.go # Bulk processing
   ```
-- [ ] **Domain Layer (Application Core)**
-  - [ ] Define domain entities with rich behavior (`internal/core/{domain}/models/`)
+
+  **Reference existing modules:**
+  - **Finance Module**: `internal/core/finance/` - Complete implementation example
+  - **ABAC Module**: `internal/core/abac/` - Complex service with activities/workflows
+  - **Settings Module**: `internal/core/settings/` - Configuration management pattern
+  - **Entity Module**: `internal/core/entity/` - Multi-tenancy isolation pattern
+- [ ] **Domain Layer (`internal/core/{domain}/domain/`)**
+  - [ ] Define domain entities with rich behavior and business rules
   - [ ] Create value objects with validation methods
   - [ ] Build aggregates that enforce business invariants
   - [ ] Define domain events for inter-module communication
-  - [ ] Create domain-specific error types (`internal/core/{domain}/errors.go`)
-- [ ] **Port Definitions (Interfaces)**
-  - [ ] Define service interfaces (Primary Ports) in `interfaces.go`
-  - [ ] Define repository interfaces (Secondary Ports) in `interfaces.go`
-  - [ ] Ensure interfaces depend only on domain models
-  - [ ] Keep interfaces focused and cohesive (Interface Segregation)
-- [ ] **Service Implementation (Business Logic)**
-  - [ ] Implement service interfaces in `internal/core/{domain}/services/`
-  - [ ] Orchestrate business operations and workflows
-  - [ ] Enforce business rules and validation
-  - [ ] Handle domain events and cross-aggregate operations
-  - [ ] Depend only on repository interfaces, never implementations
-- [ ] **Error Handling**
-  - [ ] Create custom error types (`type ErrNotFound struct`)
-  - [ ] Implement error wrapping with context
+  - [ ] Create domain-specific error types and constants
+  - [ ] Define configuration structs for workflow behavior
+- [ ] **Service Layer (Module Root + Submodules)**
+  - [ ] **Create `{module}/service.go` as main entry point** - This is the ONLY file external modules import
+  - [ ] **Implement module-level facade pattern** - Provide unified interface to all features
+  - [ ] **Build feature submodules** - Create `{feature}/service.go` for each feature
+  - [ ] **Add essential service dependencies** - Entity, Settings, FeatureFlag, Audit, ABAC services
+  - [ ] **Maintain clean module interfaces** - Hide internal feature complexity from consumers
+- [ ] **Activities Layer (`internal/core/{domain}/activities/`) - NEW**
+  - [ ] Create activity registry to manage all domain activities
+  - [ ] Implement validation activities that wrap existing services
+  - [ ] Create CRUD activities for database operations
+  - [ ] Build approval activities with business rule evaluation
+  - [ ] Add cross-service integration activities (tenant, IAM, settings)
+  - [ ] Implement notification and audit activities
+  - [ ] Use dependency injection for all service dependencies
+  - [ ] Add comprehensive error handling and retries
+- [ ] **Workflows Layer (`internal/core/{domain}/workflows/`) - NEW**
+  - [ ] Define workflow input/output types with validation
+  - [ ] Implement creation workflows with multi-step validation
+  - [ ] Build approval workflows with timeout handling
+  - [ ] Create bulk operation workflows with concurrency control
+  - [ ] Add long-running process workflows (month-end closing)
+  - [ ] Implement saga patterns for complex transactions
+  - [ ] Add child workflow orchestration for complex processes
+  - [ ] Use configuration-driven timeouts and retry policies
+- [ ] **Error Handling & Configuration**
+  - [ ] Create custom error types with business context
+  - [ ] Implement error wrapping with correlation IDs
   - [ ] Build error translation for API responses
-  - [ ] Add validation error aggregation
+  - [ ] Add validation error aggregation and reporting
+  - [ ] Define domain constants for business rules
+  - [ ] Create configuration structs for workflow behavior
+  - [ ] Implement environment-specific configuration loading
 
 ## **🗄️ 3. Data Layer (Go-Specific)**
 - [ ] **Database Setup**
@@ -100,7 +133,49 @@
   - [ ] Build cache invalidation for data mutations
   - [ ] Setup distributed cache for multi-instance deployments
 
-## **🔌 4. Integration & Messaging**
+## **🌊 4. Temporal Workflow Integration - NEW**
+- [ ] **Temporal Infrastructure Setup**
+  - [ ] Add Temporal configuration to `internal/platform/config/config.go`
+  - [ ] Create Temporal client in `internal/platform/temporal/client.go`
+  - [ ] Setup worker management in `internal/platform/temporal/worker.go`
+  - [ ] Configure task queues by domain (`finance-task-queue`, `inventory-task-queue`)
+  - [ ] Add Temporal health checks and monitoring
+- [ ] **Activity Development Pattern**
+  - [ ] Create activity registry pattern for each domain
+  - [ ] Wrap existing services as activities (don't rewrite business logic)
+  - [ ] Implement activity input/output types with validation
+  - [ ] Add cross-service dependencies via dependency injection
+  - [ ] Use configuration structs instead of hard-coded values
+  - [ ] Implement proper error handling and timeout management
+  - [ ] Add structured logging and metrics to all activities
+- [ ] **Workflow Implementation**
+  - [ ] Define workflow interfaces and registration patterns
+  - [ ] Implement async alternatives to synchronous operations
+  - [ ] Create approval workflows with human task integration
+  - [ ] Build bulk operation workflows with controlled concurrency
+  - [ ] Add long-running business process workflows
+  - [ ] Implement saga patterns for distributed transactions
+  - [ ] Use child workflows for complex orchestration
+- [ ] **Service Layer Integration**
+  - [ ] Create service interfaces (sync + async methods)
+  - [ ] Implement smart routing (simple ops → sync, complex → async)
+  - [ ] Add workflow status tracking and monitoring
+  - [ ] Build workflow result polling mechanisms
+  - [ ] Maintain backward compatibility with existing API contracts
+- [ ] **Configuration-Driven Workflows**
+  - [ ] Define domain constants for business rules and thresholds
+  - [ ] Create configuration structs for timeouts and retry policies
+  - [ ] Implement environment-specific workflow behavior
+  - [ ] Add feature flag integration for workflow switching
+  - [ ] Build tenant-specific workflow configuration
+- [ ] **Testing Temporal Components**
+  - [ ] Test activities with mocked service dependencies
+  - [ ] Use Temporal test framework for workflow testing
+  - [ ] Test workflow timeouts and error scenarios
+  - [ ] Verify activity retry and compensation logic
+  - [ ] Test cross-service activity integration
+
+## **🔌 5. Integration & Messaging**
 - [ ] **Internal Communication**
   - [ ] Implement event bus (NATS, RabbitMQ, or Kafka)
   - [ ] Create event publishers with guaranteed delivery
@@ -141,13 +216,21 @@
   - [ ] Define error responses and HTTP status codes
   - [ ] Document API endpoints with descriptions and examples
   - [ ] Generate OpenAPI specification from Goa design
+  - [ ] Add async operation endpoints with workflow tracking
 - [ ] **HTTP Handlers (Primary Adapters)**
-  - [ ] Implement handlers in `internal/api/handlers/`
+  - [ ] Implement synchronous handlers in `internal/api/handlers/`
   - [ ] Extract and validate request data
   - [ ] Convert request DTOs to domain models
-  - [ ] Call appropriate core service methods
+  - [ ] Call appropriate core service methods (sync or async routing)
   - [ ] Convert domain responses to API DTOs
   - [ ] Handle errors and return appropriate HTTP status codes
+- [ ] **Async API Patterns - NEW**
+  - [ ] Add async alternatives for complex operations
+  - [ ] Return workflow execution details (workflow_id, status, check_url)
+  - [ ] Implement workflow status polling endpoints
+  - [ ] Add workflow cancellation endpoints
+  - [ ] Build webhook integration for workflow completion
+  - [ ] Create batch operation APIs with progress tracking
 - [ ] **Security & Authorization Integration**
   - [ ] Integrate ABAC policy evaluation in middleware
   - [ ] Add audit logging for all security decisions
@@ -185,53 +268,67 @@
   - [ ] Build performance profiling endpoints (`net/http/pprof`)
   - [ ] Setup log aggregation (ELK, Loki)
 
-## **🧪 8. Testing Strategy (Go-Specific)**
+## **🧪 8. Testing Strategy (Go + Temporal)**
 - [ ] **Core Business Logic Testing**
   - [ ] Unit test domain models and value objects
   - [ ] Test services with mocked repository interfaces
   - [ ] Verify business rules and invariants
   - [ ] Test error handling and edge cases
   - [ ] Achieve >90% coverage on core business logic
+- [ ] **Temporal Components Testing - NEW**
+  - [ ] Test activities with mocked service dependencies
+  - [ ] Use `testsuite.TestSuite` for workflow testing
+  - [ ] Test workflow decision points and branching logic
+  - [ ] Verify timeout handling and retry behavior
+  - [ ] Test child workflow orchestration
+  - [ ] Mock external service calls in activities
+  - [ ] Test workflow cancellation and compensation
 - [ ] **Adapter Testing**
   - [ ] Test repository implementations with testcontainers
-  - [ ] Test API handlers with mocked services
+  - [ ] Test API handlers with mocked services (sync + async)
   - [ ] Verify model conversions (domain ↔ database)
   - [ ] Test middleware and cross-cutting concerns
+  - [ ] Test async API response patterns
 - [ ] **Integration Testing**
   - [ ] Test complete request flows (API → Service → Repository → DB)
+  - [ ] Test end-to-end workflow execution
   - [ ] Verify tenant isolation and multi-tenancy
   - [ ] Test transaction boundaries and rollback scenarios
   - [ ] Validate API contract compliance
+  - [ ] Test workflow-database integration patterns
 - [ ] **Performance Testing**
   - [ ] Benchmark critical paths with `go test -bench`
-  - [ ] Load test APIs with k6 or similar
+  - [ ] Load test APIs with k6 or similar (sync + async endpoints)
   - [ ] Profile memory and CPU usage
   - [ ] Test concurrent access patterns
+  - [ ] Benchmark workflow throughput and latency
 
-## **🚀 9. Deployment & DevOps**
-- [ ] **Containerization**
-  - [ ] Create multi-stage Dockerfile
-  - [ ] Optimize image size (Alpine base, scratch for static)
-  - [ ] Add non-root user for security
-  - [ ] Setup health checks in container
-- [ ] **CI/CD Pipeline**
-  - [ ] Setup Go module caching
-  - [ ] Add linting (golangci-lint)
-  - [ ] Build and push container images
-  - [ ] Run automated tests in pipeline
-- [ ] **Kubernetes Deployment** (if applicable)
-  - [ ] Create deployment, service, and ingress manifests
-  - [ ] Setup horizontal pod autoscaler
-  - [ ] Add resource limits and requests
-  - [ ] Configure liveness and readiness probes
-
+<!-- ## **🚀 9. Deployment & DevOps** -->
+<!-- - [ ] **Containerization** -->
+<!--   - [ ] Create multi-stage Dockerfile -->
+<!--   - [ ] Optimize image size (Alpine base, scratch for static) -->
+<!--   - [ ] Add non-root user for security -->
+<!--   - [ ] Setup health checks in container -->
+<!-- - [ ] **CI/CD Pipeline** -->
+<!--   - [ ] Setup Go module caching -->
+<!--   - [ ] Add linting (golangci-lint) -->
+<!--   - [ ] Build and push container images -->
+<!--   - [ ] Run automated tests in pipeline -->
+<!-- - [ ] **Kubernetes Deployment** (if applicable) -->
+<!--   - [ ] Create deployment, service, and ingress manifests -->
+<!--   - [ ] Setup horizontal pod autoscaler -->
+<!--   - [ ] Add resource limits and requests -->
+<!--   - [ ] Configure liveness and readiness probes -->
+<!---->
 ## **📊 10. ERP-Specific Considerations**
-- [ ] **Multi-Tenancy**
+#### **Multi-Tenancy**
   - [ ] Implement tenant context propagation
   - [ ] Add tenant-based data filtering
-  - [ ] Setup tenant-specific configurations
+  - [ ] Add Entity-based (company-based) data filtering
+  - [ ] Setup tenant/company specific configurations
   - [ ] Build tenant onboarding automation
-- [ ] **Business Intelligence**
+
+#### **Business Intelligence**
   - [ ] Create data export capabilities
   - [ ] Build reporting APIs
   - [ ] Add data warehouse integration
@@ -296,66 +393,331 @@
 "goa.design/goa/v3/dsl"
 "goa.design/goa/v3/http"
 
-// Database (sqlc)
-"github.com/lib/pq"           // PostgreSQL driver
-"database/sql"
-
 // Platform Infrastructure
 "github.com/spf13/viper"      // Configuration
-"github.com/redis/go-redis/v9" // Caching
-"go.uber.org/zap"            // Structured logging
+"github.com/redis/go-redis/v9"// Caching
+"github.com/rs/zerolog/log"   // Structured logging
 
 // Testing with Architecture
-"github.com/stretchr/testify/mock"  // Interface mocking
-"github.com/testcontainers/testcontainers-go" // Integration testing
+"go.uber.org/mockt"  // Interface mocking
+"github.com/stretchr/testify/require"
+"github.com/stretchr/testify/suite"
+
 ```
 
 ### **Development Tools**
 ```bash
-# Goa code generation
-goa gen ./internal/api/design
+# Code generation pipeline
+make sqlc                    # Generate SQLC code from SQL queries
+make goa                     # Generate Goa framework code from design
+make proto                   # Generate gRPC and gateway files (if needed)
+make mock                    # Generate mocks for interfaces
+make gen                     # Generate all (sqlc + goa + proto + mock)
 
-# sqlc code generation  
-sqlc generate
+# Database operations
+make migrateup              # Run database migrations
+make migratedown            # Rollback last migration
+make createdb               # Create PostgreSQL database
 
-# Database migrations
-migrate -path db/migrations -database "postgres://..." up
+# Development workflow
+make ci                     # Run all essential checks (fmt, lint, test, proto, sqlc)
+make test-unit              # Run unit tests only
+make test-integration       # Run integration tests with Docker
+make dev-test               # Quick development test cycle
 
-# ABAC policy validation
-casbin validate ./configs/abac/policies.json
-
-# Feature flag validation
-go run ./cmd/validate-flags ./configs/feature-flags/
-
-# Testing with architecture boundaries
-go test -race -cover ./internal/core/...  # Core business logic
-go test -race ./internal/api/handlers/... # API adapters  
-go test -race ./internal/platform/...    # Infrastructure
-
-# Audit service specific tests
-go test -race ./internal/core/audit/...   # Audit domain tests
-go test -race ./internal/core/abac/...    # ABAC policy tests
+# Temporal-specific testing
+go test -race ./internal/core/{domain}/activities/...  # Activity tests
+go test -race ./internal/core/{domain}/workflows/...   # Workflow tests
+go test ./internal/platform/temporal/...               # Temporal infrastructure tests
 
 # Architecture validation
-go mod graph | grep "internal/core" | grep -E "(internal/(api|platform))" && echo "❌ Dependency violation!"
+go test -race -cover ./internal/core/...               # Core business logic
+go test -race ./internal/api/handlers/...              # API adapters  
+go test -race ./internal/platform/...                  # Infrastructure
 
-# Feature flag dependency analysis
-go run ./cmd/analyze-flag-deps ./configs/feature-flags/
+# Configuration validation
+go run ./cmd/validate-config                           # Validate configuration files
+go run ./cmd/validate-workflows                        # Validate workflow definitions
+
+# Development server
+make run                    # Run the app server (includes Temporal worker)
+
+# Architecture dependency validation
+go mod graph | grep "internal/core" | grep -E "(internal/(api|platform))" && echo "❌ Dependency violation!"
+```
+
+## **🏗️ Essential Service Dependencies**
+
+Every new module in `internal/core/` MUST integrate with these core services for proper multi-tenancy and system cohesion:
+
+### **Context Propagation Pattern**
+```go
+// Every service method must receive context with tenant isolation data
+// Example from internal/core/finance/service/transaction_service.go
+func (s *transactionService) CreateTransaction(
+    ctx context.Context, 
+    req domain.CreateTransactionRequest,
+) (*domain.Transaction, error) {
+    // Context automatically contains: tenantID, entityID, userID
+    // These are injected by middleware and available via shared.GetTenantID(ctx)
+    
+    // Tenant isolation is enforced at database level via RLS
+    // Entity isolation allows multiple companies per tenant
+    // User context enables audit trails and permissions
+}
+```
+
+## **🏗️ Service Facade Pattern**
+
+**Every module MUST implement a service facade at the root level `{module}/service.go` as the single entry point:**
+
+```go
+// Example from internal/core/iam/service.go
+package iam
+
+// Service defines the unified module interface that consolidates 
+// all feature functionality into a single entry point
+type Service interface {
+    // Access to feature-specific services
+    Authentication() authn.Service
+    Authorization() authz.Service
+    Policy() policy.Service
+}
+
+// service implements the unified module service
+type service struct {
+    // Feature-specific services (internal implementations)
+    authnService  authn.Service
+    authzService  authz.Service  
+    policyService policy.Service
+    
+    // Essential service dependencies (REQUIRED for all modules)
+    tenantService      tenant.Service
+    auditService       audit.Service
+    featureFlagService featureflag.Service
+    entityService      entity.Service      // Add this
+    settingsService    settings.Service    // Add this
+    abacService        abac.Service        // Add this (for non-ABAC modules)
+    
+    // Infrastructure dependencies
+    cache   cache.Service
+    logger  logger.Logger
+    metrics metrics.MetricsProvider
+    tracer  tracing.TracingService
+}
+
+// NewService creates a new unified module service instance
+func NewService(
+    // Feature services (created internally)
+    authnService authn.Service,
+    authzService authz.Service,
+    policyService policy.Service,
+    
+    // Essential dependencies (REQUIRED for all modules)
+    tenantService tenant.Service,
+    auditService audit.Service,
+    featureFlagService featureflag.Service,
+    entityService entity.Service,
+    settingsService settings.Service,
+    abacService abac.Service,
+    
+    // Infrastructure
+    cache cache.Service,
+    logger logger.Logger,
+    metrics metrics.MetricsProvider,
+    tracer tracing.TracingService,
+) Service {
+    return &service{
+        authnService:       authnService,
+        authzService:       authzService,
+        policyService:      policyService,
+        tenantService:      tenantService,
+        auditService:       auditService,
+        featureFlagService: featureFlagService,
+        entityService:      entityService,
+        settingsService:    settingsService,
+        abacService:        abacService,
+        cache:              cache,
+        logger:             logger,
+        metrics:            metrics,
+        tracer:             tracer,
+    }
+}
+
+// Feature service access methods
+func (s *service) Authentication() authn.Service { return s.authnService }
+func (s *service) Authorization() authz.Service   { return s.authzService }
+func (s *service) Policy() policy.Service         { return s.policyService }
+```
+
+**External modules import ONLY the module root:**
+```go
+// ✅ CORRECT: Import only the module package
+import "github.com/niiniyare/erp/internal/core/iam"
+
+iamService := iam.NewService(
+    authnService,      // Created from iam/authn submodule
+    authzService,      // Created from iam/authz submodule
+    policyService,     // Created from iam/policy submodule
+    tenantService,     // Essential dependency
+    auditService,      // Essential dependency
+    featureFlagService, // Essential dependency
+    entityService,     // Essential dependency
+    settingsService,   // Essential dependency
+    abacService,       // Essential dependency
+    cache, logger, metrics, tracer,
+)
+
+// Use through the facade
+user, err := iamService.Authentication().GetUser(ctx, userID)
+hasPermission, err := iamService.Authorization().HasPermission(ctx, req)
+
+// ❌ WRONG: Never import submodules directly
+// import "github.com/niiniyare/erp/internal/core/iam/authn"
+// import "github.com/niiniyare/erp/internal/core/iam/authz"
+```
+
+### **Mandatory Service Dependencies**
+
+**1. Entity Service** - Company/Organization isolation within tenant
+```go
+// Example from existing modules - every service needs entity access
+type YourModuleService struct {
+    entityService entity.Service  // REQUIRED for multi-entity data filtering
+    // ... other dependencies
+}
+
+// Usage pattern from internal/core/finance/service/account_service.go
+func (s *accountService) validateEntityAccess(ctx context.Context, accountID uuid.UUID) error {
+    entityID := shared.GetEntityID(ctx)
+    account, err := s.repo.GetByID(ctx, accountID)
+    if err != nil {
+        return err
+    }
+    // RLS automatically filters by tenant, but entity check may be needed for business logic
+    if account.EntityID != entityID {
+        return domain.ErrUnauthorizedAccess
+    }
+    return nil
+}
+```
+
+**2. Settings Service** - Customer-facing configuration
+```go
+// Get tenant/entity-specific settings for your module
+// Example from internal/core/finance/service/settings_helper.go
+func (s *financeService) getModuleSettings(ctx context.Context) (*ModuleSettings, error) {
+    config, err := s.settingsService.GetConfiguration(ctx, "finance", "default_settings")
+    if err != nil {
+        return nil, err
+    }
+    // Settings are automatically tenant/entity scoped
+    return parseSettings(config), nil
+}
+```
+
+**3. Feature Flag Service** - Dynamic feature control  
+```go
+// Check feature availability before executing business logic
+// Pattern used across all modules
+func (s *yourService) processWithFeatureGate(ctx context.Context, req Request) error {
+    userID := shared.GetUserID(ctx)
+    tenantID := shared.GetTenantID(ctx)
+    
+    enabled, err := s.featureFlagService.IsEnabled(ctx, "new_algorithm_v2", userID, tenantID)
+    if err != nil {
+        // Fall back to default behavior on error
+        return s.processDefault(ctx, req)
+    }
+    
+    if enabled {
+        return s.processNewAlgorithm(ctx, req)
+    }
+    return s.processDefault(ctx, req)
+}
+```
+
+**4. Audit Service** - Compliance and change tracking
+```go
+// Audit integration is handled automatically via middleware
+// See: docs/contributing/audit-integration.md for implementation details
+// All CUD operations are audited with:
+// - Who: UserID from context
+// - What: Operation type and resource
+// - When: Timestamp
+// - Where: TenantID and EntityID from context
+```
+
+**5. ABAC Service** - Authorization decisions
+```go
+// Permission checks for all operations
+// Example from internal/core/finance/service/transaction_service.go
+func (s *transactionService) checkPermission(ctx context.Context, action string, resourceID *uuid.UUID) error {
+    userID := shared.GetUserID(ctx)
+    entityID := shared.GetEntityID(ctx)
+    
+    hasPermission, err := s.abacService.EvaluatePermission(ctx, abac.PermissionRequest{
+        UserID:       userID,
+        ResourceType: "finance_transaction",
+        ResourceID:   resourceID,
+        Action:       action, // "create", "read", "update", "delete"
+        EntityID:     entityID,
+        Context: map[string]interface{}{
+            "amount": req.Amount, // Business context for policies
+        },
+    })
+    
+    if err != nil || !hasPermission {
+        return domain.ErrUnauthorizedAccess
+    }
+    return nil
+}
 ```
 
 ## **📈 Progressive Implementation Path**
 
+**Development sequence for any new module (Stock, Payroll, HR, etc.) in `internal/core/`:**
+
 ```mermaid
 graph TD
-    A[Goa API Design] --> B[Domain Models]
-    B --> C[Service Interfaces/Ports]
-    C --> D[Repository Interfaces/Ports]
-    D --> E[Service Implementation]
-    E --> F[Repository Implementation]
-    F --> G[HTTP Handlers/Adapters]
-    G --> H[Platform Infrastructure]
-    H --> I[Integration & Testing]
+    A[1. Domain Analysis] --> B[2. Database Design]
+    B --> C[3. Domain Layer] 
+    C --> D[4. Repository Layer]
+    D --> E[5. Service Layer]
+    E --> F[6. Activities Layer]
+    F --> G[7. Workflows Layer]
+    G --> H[8. API Integration]
+    H --> I[9. Testing & Documentation]
+    
+    style F fill:#e1f5fe
+    style G fill:#e1f5fe
+    
+    A1[Study Finance Module] --> A
+    A1 --> A2[Study ABAC Module]
+    A2 --> A
 ```
+
+### **Implementation Phases**
+
+**Phase 1: Foundation**
+- **Domain Analysis** - Study existing modules (finance, abac, settings) for patterns
+- **Database Design** - Create migrations with RLS policies (see `docs/contributing/database-transactions.md`)
+- **Domain Layer** - Build entities and value objects following domain patterns
+
+**Phase 2: Core Implementation**
+- **Repository Layer** - Implement with SQLC integration (see `docs/contributing/sqlc-integration.md`)
+- **Service Layer** - Add essential dependencies and business logic
+- **Integration** - Connect with entity, settings, feature flags, audit, ABAC services
+
+**Phase 3: Workflow Enhancement**  
+- **Activities Layer** - Wrap services as Temporal activities
+- **Workflows Layer** - Implement business process orchestration
+- **Advanced Features** - Add async operations and complex workflows
+
+**Phase 4: API & Production**
+- **API Integration** - Connect with Goa design (see `docs/contributing/goa.md`)
+- **Testing** -  test suite (see `docs/contributing/general-testing.md`)
+- **Documentation** - API docs and module guides
 
 ## **🎯 Success Criteria**
 - [ ] Service starts and serves traffic within 30 seconds
@@ -384,11 +746,24 @@ graph TD
 
 ## **🏗️ Hexagonal Architecture Anti-Patterns to Avoid**
 
+### **❌ Service Import Violations**
+```go
+// ❌ WRONG: Importing submodules directly
+import "github.com/niiniyare/erp/internal/core/iam/authn"
+import "github.com/niiniyare/erp/internal/core/iam/authz"
+import "github.com/niiniyare/erp/internal/core/finance/service"
+
+func main() {
+    // ❌ BAD: Bypassing the module facade  
+    authSvc := authn.NewService(...)
+    authzSvc := authz.NewService(...)
+}
+```
+
 ### **❌ Dependency Rule Violations**
 ```go
-// In internal/core/{domain}/services/service.go
+// In internal/core/{domain}/service/service.go
 import "internal/api/handlers"        // ❌ Core cannot depend on API layer
-import "internal/platform/database"   // ❌ Core cannot depend on platform
 import "project/db/sqlc"             // ❌ Core cannot depend on sqlc models
 ```
 
@@ -512,9 +887,34 @@ func main() {
 }
 ```
 
-## **📝 Notes**
-- **Hexagonal Architecture**: Protects business logic from external concerns
-- **Goa Integration**: API design as source of truth with generated code
-- **sqlc Integration**: Type-safe database operations with SQL-first approach
-- **Testability**: Core logic testable without external dependencies
-- **ERP Optimized**: Multi-tenancy, compliance, and business intelligence ready
+## **📝 Implementation Notes**
+
+### **Module Template Usage**
+This guide serves as a template for implementing **any new module** in `internal/core/`:
+- **Stock Management** (`internal/core/stock/`)
+- **Payroll System** (`internal/core/payroll/`) 
+- **Human Resources** (`internal/core/hr/`)
+- **Customer Relationship Management** (`internal/core/crm/`)
+- **Project Management** (`internal/core/project/`)
+
+### **Architecture Principles**
+- **Clean Architecture**: Business logic isolated from infrastructure concerns
+- **Multi-Tenancy**: Tenant/Entity isolation enforced at database and service levels
+- **Temporal Integration**: Complex business processes handled via workflows
+- **ABAC Authorization**: Fine-grained permission control for all operations
+- **Configuration-Driven**: Feature flags and settings control module behavior
+
+### **Essential Dependencies**
+Every new module MUST integrate with these core services:
+- **Entity Service** - Multi-company isolation within tenants
+- **Settings Service** - Customer-facing configuration management
+- **Feature Flag Service** - Dynamic feature control and gradual rollouts  
+- **Audit Service** - Compliance and change tracking (via middleware)
+- **ABAC Service** - Authorization decisions and policy evaluation
+
+### **Development Best Practices**
+- **Study Existing Modules**: Start by examining `finance/`, `abac/`, and `settings/` modules
+- **Follow Context Patterns**: Always propagate tenant/entity/user context
+- **Use Real Examples**: Adapt patterns from existing implementations
+- **Test Thoroughly**: Unit, integration, and workflow testing required
+- **Document APIs**: Keep OpenAPI specifications current

@@ -23,7 +23,7 @@
    - ✅ Design created in `internal/api/design/services/access_request/access_request.go`
    - ✅ Routes: `/api/v1/access-requests/*`, conditional access, analytics
    - ✅ GOA code generated successfully
-   - ✅ Comprehensive ABAC integration with 12 endpoints
+   - ✅  ABAC integration with 12 endpoints
    - ✅ Compilation validated
 
 #### Entity Service Status 📋
@@ -97,7 +97,7 @@
 4. **CheckPermission** - ABAC permission checking
 5. **GetSessionAttributes** - Session attribute retrieval
 6. **SetSessionContext** - Session context management
-7. **GetUserContext** - Comprehensive user context
+7. **GetUserContext** -  user context
 8. **ValidateAttributes** - Attribute validation for compliance
 9. **RefreshAttributes** - External source attribute refresh
 10-18. **Standard CRUD Operations** - Create, Get, List, Update, Deactivate, Permissions, AssignRole, RemoveRole
@@ -198,7 +198,7 @@
 - ~~**Server configuration conflict**~~ → Combined handler working properly
 - ~~**Endpoint testing blocked**~~ → Dual serving enabled and ready for testing
 - ~~**User service compilation error**~~ → All 18 ABAC methods implemented
-- ~~**Missing ABAC integration**~~ → Comprehensive ABAC methods in User & Access Request services
+- ~~**Missing ABAC integration**~~ →  ABAC methods in User & Access Request services
 - ~~**Access Request service missing**~~ → Complete implementation with 12 methods
 - ~~**Error handling inconsistency**~~ → ErpError type implemented across all services
 
@@ -211,7 +211,7 @@
 - **Incremental migration**: ✅ Systematic service-by-service implementation
 - **Behavior preservation**: ✅ Exact request/response format replication
 - **Performance monitoring**: 🔄 Ready for dual-framework performance testing
-- **ABAC Integration**: ✅ Comprehensive implementation in User & Access Request services
+- **ABAC Integration**: ✅  implementation in User & Access Request services
 - **Error Handling**: ✅ Consistent ErpError implementation across all services
 
 ---

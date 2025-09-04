@@ -302,7 +302,7 @@ else:
     print("Access denied")
 ```
 
-### Comprehensive Authorization with Context
+###  Authorization with Context
 ```python
 def check_with_context(client, user_id, resource_id, resource_type, action, context=None):
     payload = {
@@ -625,7 +625,7 @@ class ProductionAWOERPClient(AWOERPClientWithRetry):
 ### Health Checks & Monitoring
 ```python
 def health_check(client):
-    """Comprehensive health check for API connectivity."""
+    """ health check for API connectivity."""
     health_status = {
         'api_reachable': False,
         'authentication_working': False,

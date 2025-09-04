@@ -22,7 +22,7 @@ Awo is a sophisticated, multi-tenant Enterprise Resource Planning system that co
 
 ### **Regulatory Compliance by Design**
 - **Multi-Framework Support**: GDPR, SOX, HIPAA, ISO27001, NIST compliance automation
-- **Comprehensive Auditing**: Every transaction logged with compliance context and risk assessment
+- ** Auditing**: Every transaction logged with compliance context and risk assessment
 - **Data Privacy Controls**: Automated data retention, anonymization, and breach detection
 - **Forensic Analysis**: Timeline reconstruction and incident investigation capabilities
 
@@ -59,7 +59,7 @@ Awo is a sophisticated, multi-tenant Enterprise Resource Planning system that co
 #### **Identity & Access Management (IAM)**
 - **Three-Tier Identity Model**: Person → Employee → User separation for clean data architecture
 - **Multi-Factor Authentication**: Enterprise SSO, LDAP integration, session management
-- **Hybrid RBAC/ABAC**: Traditional roles enhanced with context-aware attribute evaluation
+- **Hybrid RBAC/ABAC**: Traditional roles with context-aware attribute evaluation
 - **External Provider Integration**: LDAP, Active Directory, REST API attribute sources
 
 #### **Advanced Feature Management**
@@ -111,7 +111,7 @@ Awo provides sophisticated organizational modeling that adapts to complex busine
 
 ---
 
-## 💼 Comprehensive Business Modules
+## 💼  Business Modules
 
 ### **🧮 Advanced Accounting & Finance**
 **Complete financial management with multi-entity consolidation**
@@ -123,7 +123,7 @@ Awo provides sophisticated organizational modeling that adapts to complex busine
 - **Cash Flow Management**: Predictive cash flow modeling with scenario planning
 
 ### **👥 Enterprise Human Resources**
-**Comprehensive workforce management across organizational hierarchies**
+** workforce management across organizational hierarchies**
 - **Multi-Entity Payroll**: Centralized payroll processing with local compliance
 - **Global Leave Management**: Region-specific leave policies with automated calculations
 - **Performance Management**: 360-degree reviews with organizational goal alignment
@@ -189,7 +189,7 @@ Awo provides sophisticated organizational modeling that adapts to complex busine
 - Integration with external attribute providers and HR systems
 
 ### **Operational Excellence**
-- Comprehensive audit logging with immutable trails
+-  audit logging with immutable trails
 - Advanced analytics and reporting for business insights
 - Workflow automation with approval chains and notifications
 - Real-time monitoring with OpenTelemetry and Prometheus metrics
@@ -197,7 +197,7 @@ Awo provides sophisticated organizational modeling that adapts to complex busine
 ### **Developer Experience**
 - **Type-Safe Database Operations**: SQLC-generated Go code for zero SQL injection risk
 - **API-First Design**: Goa framework ensures consistent REST and gRPC interfaces
-- **Comprehensive Testing**: Unit, integration, and end-to-end test coverage
+- ** Testing**: Unit, integration, and end-to-end test coverage
 - **Advanced Observability**: Distributed tracing, structured logging, and performance metrics
 
 ---
@@ -260,7 +260,7 @@ Awo provides sophisticated organizational modeling that adapts to complex busine
 - Every request authenticated and authorized through ABAC engine
 - Attribute-based access control with real-time risk assessment
 - Encrypted data at rest and in transit with key rotation
-- Comprehensive audit logging with tamper-proof trails
+-  audit logging with tamper-proof trails
 
 ### **Compliance Automation**
 - **GDPR**: Automated data discovery, retention, and right-to-be-forgotten

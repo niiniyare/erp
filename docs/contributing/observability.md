@@ -1,6 +1,6 @@
 # Observability Integration Guide
 
-Comprehensive observability through structured logging, distributed tracing, and metrics collection for better monitoring, debugging, and performance optimization.
+ observability through structured logging, distributed tracing, and metrics collection for better monitoring, debugging, and performance optimization.
 
 ## 📊 Observability Stack Overview
 

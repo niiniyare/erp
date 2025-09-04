@@ -94,7 +94,7 @@ type AccountRepository interface {
 
 ###  Query Capabilities (Latest)
 - ✅ **View-Based Queries**: 22 new optimized queries leveraging `v_finance_accounts_with_groups` and `v_chart_of_accounts_complete` views
-- ✅ **Rich Domain Types**: 5 new domain types for enhanced financial reporting (`AccountWithGroups`, `ChartOfAccountsComplete`, `TrialBalanceSummary`, `CashFlowAccount`, `AccountGroupSummary`)
+- ✅ **Rich Domain Types**: 5 new domain types for financial reporting (`AccountWithGroups`, `ChartOfAccountsComplete`, `TrialBalanceSummary`, `CashFlowAccount`, `AccountGroupSummary`)
 - ✅ **Extended Service Interface**: 16 new service methods for view-based operations with full observability
 - ✅ **Performance Optimized**: Improved query performance through database view utilization
 - ✅ **Hierarchical Data Access**:  account group and header hierarchy support
@@ -214,7 +214,7 @@ erDiagram
 ### Internal Dependencies
 - **User Module**: Authentication, authorization, and audit user tracking
 - **Tenant Module**: Multi-tenancy support and context management
-- **Audit Module**: Comprehensive activity logging and compliance tracking
+- **Audit Module**:  activity logging and compliance tracking
 - **ABAC Module**: Attribute-based access control for financial operations
 
 ### External Services
@@ -236,7 +236,7 @@ erDiagram
 - ✅ **Domain Layer** (100%): Complete entities, value objects, and business rules
 - ✅ **Repository Layer** (100%): Full SQLC integration with 30+ methods and tenant isolation
 - ✅ **Service Layer** (100%): Complete business logic with validation and workflow support
-- ✅ **API Layer** (100%): Complete Goa handlers with enhanced view-based query capabilities
+- ✅ **API Layer** (100%): Complete Goa handlers with view-based query capabilities
 - 📋 **Advanced Features** (20%): AR/AP automation, advanced reporting
 - 📋 **Performance Optimization** (30%): Caching layer and query optimization
 
@@ -310,7 +310,7 @@ make test-finance
 ### Regulatory Compliance
 - **Double-Entry Standards**: GAAP-compliant accounting principles
 - **Multi-Currency**: ISO 4217 currency code compliance
-- **Audit Requirements**: Comprehensive change tracking and approval workflows
+- **Audit Requirements**:  change tracking and approval workflows
 - **Data Retention**: Configurable retention policies for financial records
 
 [Security Guide →](security-compliance-guide.md)
@@ -325,7 +325,7 @@ make test-finance
 - **Cache Hit Rate**: 85%+ for frequently accessed accounts and balances
 
 ### Optimization Features
-- **Database Indexing**: Comprehensive indexing strategy for financial queries
+- **Database Indexing**:  indexing strategy for financial queries
 - **Caching Layer**: Redis-based caching for accounts and exchange rates
 - **Query Optimization**: SQLC-generated queries with optimal execution plans
 - **Connection Pooling**: Efficient database connection management

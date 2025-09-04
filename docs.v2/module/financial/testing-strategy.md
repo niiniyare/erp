@@ -871,7 +871,7 @@ func TestFinancialAuditTrail(t *testing.T) {
         assert.Contains(t, event.EncryptedData, "account_name")
     })
     
-    t.Run("high-risk transaction generates enhanced audit", func(t *testing.T) {
+    t.Run("high-risk transaction generates audit", func(t *testing.T) {
         transaction := &domain.Transaction{
             ID:          domain.TransactionID("txn-1"),
             TenantID:    tenant.ID("tenant-1"),

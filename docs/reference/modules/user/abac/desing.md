@@ -29,7 +29,7 @@ I've successfully structured the ABAC API specification into your requested docu
 - Goa service: `context-attribute-management`
 
 ### ✅ [**audit_monitoring.md**](./abac/audit_monitoring.md)
-- Comprehensive audit trails for compliance
+-  audit trails for compliance
 - Security event monitoring and analytics
 - GDPR, SOX, HIPAA compliance reporting
 - Goa service: `audit-monitoring`
@@ -46,7 +46,7 @@ Each document includes:
 - **Goa DSL service definitions** with proper middleware
 - **Performance targets** and SLA requirements
 - **Enterprise security** with JWT and tenant isolation
-- **Comprehensive error handling** and validation
+- ** error handling** and validation
 - **Real-world request/response examples**
 - **Implementation roadmap** and best practices
 

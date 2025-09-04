@@ -680,7 +680,7 @@ func isBusinessHours(t time.Time) bool {
 
 ## Audit & Compliance Framework
 
-### **Comprehensive Audit Logging**
+### ** Audit Logging**
 
 #### **Financial Audit Service**
 ```go

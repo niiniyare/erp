@@ -84,7 +84,7 @@ func UserService(ctx context.Context, userID string) error {
 
 func HandleError(w http.ResponseWriter, err error) {
     if errors.Is(err, ErrUserNotFound) {
-        // 🆕 Extract rich information from enhanced error
+        // 🆕 Extract rich information from error
         if be, ok := err.(*BusinessError); ok {
             log.Printf("Error code: %s", be.Code)                    // "USER_NOT_FOUND"
             log.Printf("HTTP status: %d", be.HTTPStatus)             // 404
@@ -452,7 +452,7 @@ func ErrorMiddleware(next http.Handler) http.Handler {
                 // Convert panic to error
                 err := fmt.Errorf("panic: %v", recovered)
                 
-                // 🆕 Use enhanced error for panics
+                // 🆕 Use error for panics
                 enhancedErr := NewBusinessError("INTERNAL_PANIC", "An unexpected error occurred").
                     WithHTTPStatus(http.StatusInternalServerError).
                     WithCategory(CategorySystem).
@@ -522,12 +522,12 @@ func CustomErrorVariations(ctx context.Context) error {
 func Phase1_ExistingCode() error {
     // Your existing code works unchanged
     if userNotFound {
-        return ErrUserNotFound // Now enhanced but same interface
+        return ErrUserNotFound // Now but same interface
     }
     return nil
 }
 
-// Phase 2: Start using enhanced features
+// Phase 2: Start using features
 func Phase2_Usage(ctx context.Context) error {
     if userNotFound {
         // 🆕 Add context and details
@@ -553,7 +553,7 @@ func Phase3_Fully(ctx context.Context) error {
 ### Legacy Error Upgrade
 
 ```go
-// 🆕 Upgrade simple errors to enhanced errors
+// 🆕 Upgrade simple errors to errors
 func UpgradeLegacyErrors(err error) error {
     // Automatic upgrade for common errors
     upgradedErr := UpgradeError(err)
@@ -578,7 +578,7 @@ type legacyServiceWrapper struct {
 func (w *legacyServiceWrapper) GetUser(ctx context.Context, userID string) (*User, error) {
     user, err := w.legacy.GetUser(userID)
     if err != nil {
-        // 🆕 Convert legacy errors to enhanced errors
+        // 🆕 Convert legacy errors to errors
         if err.Error() == "user not found" {
             return nil, NewUserNotFoundError(userID)
         }
@@ -674,4 +674,4 @@ func TestErrors(t *testing.T) {
 }
 ```
 
-This enhanced predefined errors system provides rich, contextual error handling while maintaining complete backward compatibility with your existing error checking patterns.
+This predefined errors system provides rich, contextual error handling while maintaining complete backward compatibility with your existing error checking patterns.

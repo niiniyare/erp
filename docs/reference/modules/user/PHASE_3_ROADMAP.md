@@ -290,7 +290,7 @@ Based on test completion criteria analysis and TODO/FIXME audit:
 **Owner**: Development Team  
 
 **Files**:
-- `@internal/core/iam/tenant/isolation_test.go` - Comprehensive isolation tests
+- `@internal/core/iam/tenant/isolation_test.go` -  isolation tests
 
 **Deliverables**:
 - Complete IAM-MULTI-TENANT-001 to IAM-MULTI-TENANT-002 test cases
@@ -311,7 +311,7 @@ Based on test completion criteria analysis and TODO/FIXME audit:
 **Owner**: QA Team  
 
 **Files**:
-- `@test/load/iam_load_test.go` - Comprehensive load testing
+- `@test/load/iam_load_test.go` -  load testing
 - `@test/stress/iam_stress_test.go` - Stress testing scenarios
 
 **Deliverables**:
@@ -442,7 +442,7 @@ Based on test completion criteria analysis and TODO/FIXME audit:
 **Probability**: Low | **Impact**: Critical  
 **Description**: Tenant isolation failures could cause data breaches
 **Mitigation**:
-- Comprehensive RLS testing with audit trails
+-  RLS testing with audit trails
 - Multi-tenant integration tests in CI/CD
 - Regular security penetration testing
 

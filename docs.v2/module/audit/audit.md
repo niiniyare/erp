@@ -306,7 +306,7 @@ END DESC;
 
 ### User Risk Profiling
 
-#### Comprehensive Risk Assessment
+####  Risk Assessment
 ```sql
 -- Generate detailed user risk profile
 SELECT user_id,
@@ -490,7 +490,7 @@ WHERE id IN (SELECT id FROM old_events);
 
 ### Event Logging Guidelines
 
-1. **Comprehensive Context**: Include relevant metadata in context fields
+1. ** Context**: Include relevant metadata in context fields
 2. **Consistent Categorization**: Use standardized event types and categories
 3. **Appropriate Severity**: Match severity to business impact
 4. **Rich IP Context**: Capture network information for security analysis

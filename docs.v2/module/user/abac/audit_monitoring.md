@@ -860,7 +860,7 @@ Response: 202 Accepted
       "consent_records"
     ],
     "processing_notes": [
-      "Comprehensive audit log analysis in progress",
+      " audit log analysis in progress",
       "Behavioral analytics data anonymization required",
       "Third-party data references being identified"
     ]

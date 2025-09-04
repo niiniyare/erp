@@ -83,7 +83,7 @@ curl -X GET http://localhost:8080/api/v1/access-requests | jq .
 
 ## 📚 Documentation Files
 
-- **[curl-examples.md](curl-examples.md)** - Comprehensive curl command examples
+- **[curl-examples.md](curl-examples.md)** -  curl command examples
 - **[API Reference](api-reference.md)** - Detailed API specification
 - **[Schema Reference](schema-reference.md)** - Request/response schemas
 - **[Workflow Guide](workflow-guide.md)** - Approval workflow configuration

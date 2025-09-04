@@ -9,8 +9,8 @@ The Policy Evaluation API is the core of the ABAC system, providing real-time au
 
 ## Business Value
 
-- **Real-time Authorization**: Sub-50ms policy evaluation for enhanced user experience
-- **Comprehensive Context**: Rich attribute-based decision making
+- **Real-time Authorization**: Sub-50ms policy evaluation for user experience
+- ** Context**: Rich attribute-based decision making
 - **Obligation Enforcement**: Automated compliance and security actions
 - **Audit Trail**: Complete decision logging for compliance and security analysis
 

@@ -18,7 +18,7 @@ The ABAC API provides advanced authorization capabilities using attribute-based 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | POST | `/abac/authorize` | Simple authorization check |
-| POST | `/abac/evaluate` | Comprehensive policy evaluation with explanation |
+| POST | `/abac/evaluate` |  policy evaluation with explanation |
 | POST | `/abac/evaluate-bulk` | Bulk authorization requests |
 | POST | `/abac/collect-attributes` | Gather attributes for context |
 | POST | `/abac/discover-policies` | Find applicable policies |
@@ -51,7 +51,7 @@ curl -X POST "http://localhost:8080/abac/authorize" \
 }
 ```
 
-### Comprehensive Evaluation with Explanation
+###  Evaluation with Explanation
 ```bash
 curl -X POST "http://localhost:8080/abac/evaluate" \
   -H "Authorization: Bearer $JWT_TOKEN" \

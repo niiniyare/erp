@@ -107,7 +107,7 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/evaluate \
 
 ## 📚 Documentation Files
 
-- **[curl-examples.md](curl-examples.md)** - Comprehensive curl command examples
+- **[curl-examples.md](curl-examples.md)** -  curl command examples
 - **[API Reference](api-reference.md)** - Detailed API specification
 - **[Schema Reference](schema-reference.md)** - Request/response schemas
 - **[Rule Configuration Guide](rule-configuration.md)** - Rule setup and management

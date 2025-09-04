@@ -1143,7 +1143,7 @@ A  Postman collection is available with:
 - Template-based configuration system
 - Bulk operation support
 - Three-level inheritance resolution
-- Comprehensive error handling
+-  error handling
 - Multi-tenant security model
 
 ---

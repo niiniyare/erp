@@ -55,7 +55,7 @@ CREATE POLICY tenant_isolation_policy ON tenants
 ```
 - **Role-Based**: Applied only to `application_role`
 - **Simple Logic**: Direct tenant ID comparison
-- **Comprehensive**: Covers all operations (SELECT, INSERT, UPDATE, DELETE)
+- ****: Covers all operations (SELECT, INSERT, UPDATE, DELETE)
 
 ## ⚠️ **Potential Issues & Improvements**
 
@@ -156,7 +156,7 @@ $$ LANGUAGE plpgsql;
 -- Drop existing policies first
 DROP POLICY IF EXISTS tenant_isolation_policy ON tenants;
 
--- Create enhanced policy
+-- Create policy
 CREATE POLICY enhanced_tenant_isolation_policy ON tenants
     FOR ALL TO application_role
     USING (

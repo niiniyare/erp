@@ -23,7 +23,7 @@ http://localhost:8080/api/v1/analytics
 
 | Type | Description | Use Case |
 |------|-------------|----------|
-| `Behavior Pattern` | Comprehensive user behavior analysis | Security baselines, productivity insights |
+| `Behavior Pattern` |  user behavior analysis | Security baselines, productivity insights |
 | `Risk Assessment` | Real-time risk scoring | Access control decisions, security alerts |
 | `Anomaly Detection` | Unusual behavior identification | Threat detection, compliance monitoring |
 | `Personalized Insights` | User-specific recommendations | Productivity enhancement, security awareness |
@@ -72,7 +72,7 @@ curl -X POST http://localhost:8080/api/v1/analytics/users/00000000-0000-0000-000
 
 ## 📚 Documentation Files
 
-- **[curl-examples.md](curl-examples.md)** - Comprehensive curl command examples
+- **[curl-examples.md](curl-examples.md)** -  curl command examples
 - **[API Reference](api-reference.md)** - Detailed API specification
 - **[Schema Reference](schema-reference.md)** - Request/response schemas
 - **[Analytics Guide](analytics-guide.md)** - Understanding analytics data

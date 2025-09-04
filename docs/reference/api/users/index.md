@@ -7,7 +7,7 @@ The Users API provides  user management capabilities for AWO ERP, including user
 ## Key Features
 
 - **User Lifecycle Management**: Create, update, archive, and restore user accounts
-- **Profile Management**: Comprehensive user profile with custom attributes
+- **Profile Management**:  user profile with custom attributes
 - **Bulk Operations**: Efficient bulk user operations and attribute management
 - **User Analytics**: Behavior tracking, anomaly detection, and risk assessment
 - **Multi-tenant Support**: Tenant-scoped user management and isolation

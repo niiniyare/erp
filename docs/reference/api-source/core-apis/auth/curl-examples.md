@@ -173,7 +173,7 @@ curl -X GET $API_BASE_URL/api/v1/auth/validate \
   -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
 ```
 
-## 🧪 Comprehensive Test Scenarios
+## 🧪  Test Scenarios
 
 ### Scenario 1: Complete Authentication Flow
 ```bash

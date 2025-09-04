@@ -200,7 +200,7 @@ func TestPolicyCompilation(t *testing.T) {
 
 ### Risks & Mitigations
 - **Risk**: CEL learning curve for policy authors
-  - **Mitigation**: Comprehensive templates, interactive tutorials, validation feedback
+  - **Mitigation**:  templates, interactive tutorials, validation feedback
 - **Risk**: Performance overhead from CEL interpretation
   - **Mitigation**: Policy pre-compilation, cost estimation, benchmarking
 - **Risk**: CEL library bugs or security issues

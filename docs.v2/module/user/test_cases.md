@@ -1,4 +1,4 @@
-# IAM Module - Comprehensive Test Cases
+# IAM Module -  Test Cases
 
 ## Table of Contents
 - [Core Domain Model Tests](#core-domain-model-tests)
