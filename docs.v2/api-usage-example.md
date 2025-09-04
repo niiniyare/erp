@@ -178,7 +178,7 @@ func main() {
 
 ## Observability Features
 
-The User API includes comprehensive observability:
+The User API includes  observability:
 
 ### Distributed Tracing
 - Every request creates a root span
@@ -204,4 +204,4 @@ The User API includes comprehensive observability:
 - Cache invalidation on updates
 - Cache miss handling with fallback
 
-This API implementation follows the Clean Architecture data flow pattern with proper separation of concerns, comprehensive observability, and production-ready error handling.
+This API implementation follows the Clean Architecture data flow pattern with proper separation of concerns,  observability, and production-ready error handling.

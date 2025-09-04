@@ -48,7 +48,7 @@ curl -X GET http://localhost:8080/api/v1/tenants/health | jq .
 # Navigate to API docs directory
 cd docs/api
 
-# Run comprehensive test suite
+# Run  test suite
 ./utilities/scripts/run-all-tests.sh
 
 # Run with verbose output

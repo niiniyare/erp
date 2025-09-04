@@ -332,7 +332,7 @@ journey
 | User adoption slower than expected | High | Medium | User training, change management, feedback incorporation |
 | Regulatory compliance changes | Medium | Medium | Compliance monitoring, flexible architecture, legal review |
 | Competitive feature pressure | Medium | High | Market monitoring, agile development, customer feedback |
-| Integration complexity | High | Medium | API-first design, comprehensive testing, vendor engagement |
+| Integration complexity | High | Medium | API-first design,  testing, vendor engagement |
 
 ### Operational Risks
 

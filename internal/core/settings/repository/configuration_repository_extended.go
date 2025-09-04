@@ -200,7 +200,6 @@ func (r *configurationRepository) CreateConfigDefinition(ctx context.Context, de
 		RequiredFeatureFlag: requiredFeatureFlag,
 		IsOverridable:       def.IsOverridable,
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to create config definition: %w", err)
 	}
@@ -259,7 +258,6 @@ func (r *configurationRepository) UpdateConfigDefinition(ctx context.Context, de
 		ModuleName:          string(def.ModuleName),
 		ConfigKey:           string(def.ConfigKey),
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to update config definition: %w", err)
 	}
@@ -299,7 +297,6 @@ func (r *configurationRepository) CreateAuditRecord(ctx context.Context, record 
 		SessionID:     record.SessionID,
 		CorrelationID: record.CorrelationID,
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to create audit record: %w", err)
 	}

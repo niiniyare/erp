@@ -26,7 +26,7 @@ docs/
 │   │   ├── abac/           # ABAC Authorization API
 │   │   └── tutorials/      # API tutorials
 │   └── modules/             # Module-specific docs
-├── javascripts/             # Enhanced search & help system
+├── javascripts/             #  search & help system
 └── mkdocs.yml              # Main configuration file
 ```
 

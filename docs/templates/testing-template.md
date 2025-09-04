@@ -66,7 +66,7 @@ Then:
 ```
 - [ ] **Status:** Not Implemented
 - **Location:** `internal/core/{module}/domain/entity_test.go`
-- **Comments:** Implement comprehensive validation testing for all domain entities
+- **Comments:** Implement  validation testing for all domain entities
 
 #### Test Case: Field Validation Rules
 ```

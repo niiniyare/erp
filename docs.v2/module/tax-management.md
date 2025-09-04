@@ -2,7 +2,7 @@
 
 ## 💼 Overview
 
-The Tax Management module provides comprehensive tax calculation, compliance, and reporting capabilities for multiple jurisdictions and tax types. It supports various tax regimes including VAT/GST, sales tax, income tax, withholding tax, and custom tax structures with automated calculations and regulatory compliance.
+The Tax Management module provides  tax calculation, compliance, and reporting capabilities for multiple jurisdictions and tax types. It supports various tax regimes including VAT/GST, sales tax, income tax, withholding tax, and custom tax structures with automated calculations and regulatory compliance.
 
 ## 🏛️ Tax Configuration & Setup
 
@@ -1056,4 +1056,4 @@ CREATE TABLE transfer_pricing_docs (
 );
 ```
 
-This comprehensive tax management system provides robust multi-jurisdiction tax handling, automated calculations, compliance tracking, and reporting capabilities to meet complex international tax requirements while maintaining accuracy and regulatory compliance.
+This  tax management system provides robust multi-jurisdiction tax handling, automated calculations, compliance tracking, and reporting capabilities to meet complex international tax requirements while maintaining accuracy and regulatory compliance.

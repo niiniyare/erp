@@ -1,6 +1,6 @@
 # Awo ERP: Identity & Access Management (IAM) System
 
-Welcome to the documentation for the Awo ERP's comprehensive Identity and Access Management (IAM) system. This system is built on a sophisticated, ABAC-centric design that provides enterprise-grade security, flexibility, and performance.
+Welcome to the documentation for the Awo ERP's  Identity and Access Management (IAM) system. This system is built on a sophisticated, ABAC-centric design that provides enterprise-grade security, flexibility, and performance.
 
 This guide serves as the central starting point for developers, SREs, and technical writers to understand how identity is managed and how authorization decisions are made.
 
@@ -39,7 +39,7 @@ The following documents provide a detailed, API-first reference for the various 
     *   **Summary**: Provides the schema and validation rules for all attributes used in the system, ensuring data consistency.
 
 *   **[Audit monitoring ](./abac/audit_monitoring.md)**
-    *   **Summary**: The compliance and security hub. This API provides access to comprehensive audit logs, security event monitoring, and user behavior analytics.
+    *   **Summary**: The compliance and security hub. This API provides access to  audit logs, security event monitoring, and user behavior analytics.
 
 *   **[Administrative performance](./abac/administrative_performance.md)**
     *   **Summary**: The command and control center for SREs and administrators. This API provides tools for monitoring system health, managing performance, and optimizing the ABAC engine.

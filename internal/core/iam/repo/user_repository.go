@@ -100,7 +100,6 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) (*model.U
 		r.metrics.IncrementCounter("user_repository_create_success", nil)
 		return nil
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementCounter("user_repository_create_error", nil)
@@ -152,7 +151,6 @@ func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User
 
 		return nil
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementCounter("user_repository_get_error", nil)
@@ -201,7 +199,6 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*model.U
 
 		return nil
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementCounter("user_repository_get_by_email_error", nil)
@@ -259,7 +256,6 @@ func (r *userRepository) Update(ctx context.Context, user *model.User) (*model.U
 
 		return nil
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementCounter("user_repository_update_error", nil)
@@ -291,7 +287,6 @@ func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
 
 		return nil
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementCounter("user_repository_delete_error", nil)
@@ -359,7 +354,6 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*model.
 
 		return nil
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return nil, err
@@ -390,7 +384,6 @@ func (r *userRepository) GetPasswordHash(ctx context.Context, userID uuid.UUID) 
 		hash = getStringValue(hashPtr)
 		return nil
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return "", err
@@ -421,7 +414,6 @@ func (r *userRepository) UpdatePasswordHash(ctx context.Context, userID uuid.UUI
 		}
 		return nil
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return err

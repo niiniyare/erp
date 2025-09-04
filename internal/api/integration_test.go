@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/suite"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/api/handlers"
@@ -33,14 +33,14 @@ import (
 // TODO: Add performance benchmarking and load testing capabilities
 type APIIntegrationTestSuite struct {
 	suite.Suite
-	ctx            context.Context
-	runner         *tenant.DatabaseTestRunner
-	server         *httptest.Server
-	client         *http.Client
-	healthChecker  handlers.HealthChecker
-	tenantA        *db.Tenant
-	tenantB        *db.Tenant
-	
+	ctx           context.Context
+	runner        *tenant.DatabaseTestRunner
+	server        *httptest.Server
+	client        *http.Client
+	healthChecker handlers.HealthChecker
+	tenantA       *db.Tenant
+	tenantB       *db.Tenant
+
 	// Test configuration
 	baseURL        string
 	defaultTimeout time.Duration
@@ -84,10 +84,10 @@ func (s *APIIntegrationTestSuite) TearDownSuite() {
 	if s.server != nil {
 		s.server.Close()
 	}
-	
+
 	// Cleanup test tenants
 	s.cleanupTestTenants()
-	
+
 	if s.runner != nil {
 		s.runner.Close()
 	}
@@ -145,8 +145,8 @@ func (s *APIIntegrationTestSuite) TestHealthCheckEndpoint() {
 	s.T().Log("Running API-INTEGRATION-001: Health Check Endpoint")
 
 	// Create test server with health handler
-	healthHandler := handlers.NewHealthGoaHandler(s.healthChecker, 
-		tracing.NewNoOpTracingService(), 
+	healthHandler := handlers.NewHealthGoaHandler(s.healthChecker,
+		tracing.NewNoOpTracingService(),
 		&metrics.MetricsService{})
 
 	// Create a simple HTTP handler for testing
@@ -183,7 +183,7 @@ func (s *APIIntegrationTestSuite) TestHealthCheckEndpoint() {
 	var healthStatus map[string]any
 	body, err := io.ReadAll(resp.Body)
 	s.Require().NoError(err, "Failed to read response body")
-	
+
 	err = json.Unmarshal(body, &healthStatus)
 	s.Require().NoError(err, "Failed to parse JSON response")
 
@@ -202,8 +202,8 @@ func (s *APIIntegrationTestSuite) TestReadinessCheckEndpoint() {
 	s.T().Log("Running API-INTEGRATION-002: Readiness Check Endpoint")
 
 	// Create test server with health handler
-	healthHandler := handlers.NewHealthGoaHandler(s.healthChecker, 
-		tracing.NewNoOpTracingService(), 
+	healthHandler := handlers.NewHealthGoaHandler(s.healthChecker,
+		tracing.NewNoOpTracingService(),
 		&metrics.MetricsService{})
 
 	// Create a simple HTTP handler for testing
@@ -240,7 +240,7 @@ func (s *APIIntegrationTestSuite) TestReadinessCheckEndpoint() {
 	var readinessStatus map[string]any
 	body, err := io.ReadAll(resp.Body)
 	s.Require().NoError(err, "Failed to read response body")
-	
+
 	err = json.Unmarshal(body, &readinessStatus)
 	s.Require().NoError(err, "Failed to parse JSON response")
 
@@ -266,8 +266,8 @@ func (s *APIIntegrationTestSuite) TestHealthEndpointMethodValidation() {
 	s.T().Log("Running API-INTEGRATION-003: Health Endpoint Method Validation")
 
 	// Create test server
-	healthHandler := handlers.NewHealthGoaHandler(s.healthChecker, 
-		tracing.NewNoOpTracingService(), 
+	healthHandler := handlers.NewHealthGoaHandler(s.healthChecker,
+		tracing.NewNoOpTracingService(),
 		&metrics.MetricsService{})
 
 	mux := http.NewServeMux()
@@ -292,7 +292,7 @@ func (s *APIIntegrationTestSuite) TestHealthEndpointMethodValidation() {
 
 	// Test invalid HTTP methods
 	invalidMethods := []string{"POST", "PUT", "DELETE", "PATCH"}
-	
+
 	for _, method := range invalidMethods {
 		req, err := http.NewRequest(method, server.URL+"/health", nil)
 		s.Require().NoError(err, "Failed to create %s request", method)
@@ -301,7 +301,7 @@ func (s *APIIntegrationTestSuite) TestHealthEndpointMethodValidation() {
 		s.Require().NoError(err, "Failed to execute %s request", method)
 		resp.Body.Close()
 
-		s.Assert().Equal(http.StatusMethodNotAllowed, resp.StatusCode, 
+		s.Assert().Equal(http.StatusMethodNotAllowed, resp.StatusCode,
 			"%s method should return 405 Method Not Allowed", method)
 	}
 
@@ -314,8 +314,8 @@ func (s *APIIntegrationTestSuite) TestHealthCheckPerformance() {
 	s.T().Log("Running API-INTEGRATION-004: Health Check Performance")
 
 	// Create test server
-	healthHandler := handlers.NewHealthGoaHandler(s.healthChecker, 
-		tracing.NewNoOpTracingService(), 
+	healthHandler := handlers.NewHealthGoaHandler(s.healthChecker,
+		tracing.NewNoOpTracingService(),
 		&metrics.MetricsService{})
 
 	mux := http.NewServeMux()
@@ -340,9 +340,9 @@ func (s *APIIntegrationTestSuite) TestHealthCheckPerformance() {
 
 	// Performance test parameters
 	const (
-		numRequests    = 50
+		numRequests     = 50
 		maxResponseTime = 100 * time.Millisecond
-		concurrency    = 5
+		concurrency     = 5
 	)
 
 	// Measure response times
@@ -355,7 +355,7 @@ func (s *APIIntegrationTestSuite) TestHealthCheckPerformance() {
 
 	for i := 0; i < numRequests; i++ {
 		go func(index int) {
-			sem <- struct{}{} // Acquire semaphore
+			sem <- struct{}{}        // Acquire semaphore
 			defer func() { <-sem }() // Release semaphore
 
 			start := time.Now()
@@ -399,15 +399,15 @@ func (s *APIIntegrationTestSuite) TestHealthCheckPerformance() {
 
 	// Validate performance metrics
 	s.Assert().Equal(numRequests, successCount, "All requests should succeed")
-	
+
 	if successCount > 0 {
 		avgDuration := totalDuration / time.Duration(successCount)
-		s.Assert().Less(avgDuration, maxResponseTime, 
+		s.Assert().Less(avgDuration, maxResponseTime,
 			"Average response time should be less than %v (got %v)", maxResponseTime, avgDuration)
-		s.Assert().Less(maxDuration, 2*maxResponseTime, 
+		s.Assert().Less(maxDuration, 2*maxResponseTime,
 			"Maximum response time should be reasonable (got %v)", maxDuration)
-		
-		s.T().Logf("Performance metrics: avg=%v, min=%v, max=%v, requests=%d", 
+
+		s.T().Logf("Performance metrics: avg=%v, min=%v, max=%v, requests=%d",
 			avgDuration, minDuration, maxDuration, successCount)
 	}
 
@@ -439,7 +439,7 @@ func (s *APIIntegrationTestSuite) TestCacheConnectivityValidation() {
 
 	// Test direct cache health check (should handle missing Redis gracefully)
 	cacheResult := s.healthChecker.CheckCache(s.ctx)
-	
+
 	// Since Redis is not configured in test environment, we expect a warning
 	s.Assert().Equal("warning", cacheResult.Status, "Cache should report warning when not configured")
 	s.Assert().Contains(cacheResult.Message, "not configured", "Message should indicate cache not configured")
@@ -475,7 +475,7 @@ func (s *APIIntegrationTestSuite) TestComprehensiveDependencyHealthCheck() {
 
 	// Log results for debugging
 	for component, result := range results {
-		s.T().Logf("%s: status=%s, duration=%v, message=%s", 
+		s.T().Logf("%s: status=%s, duration=%v, message=%s",
 			component, result.Status, result.Duration, result.Message)
 	}
 

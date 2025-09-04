@@ -1,7 +1,7 @@
 # Awo ERP Service Implementation Checklist
 ## *Hexagonal Architecture (Ports & Adapters) Edition*
 
-*A comprehensive todo list for implementing any new domain module in Go-based ERP systems following Hexagonal Architecture principles*
+*A  todo list for implementing any new domain module in Go-based ERP systems following Hexagonal Architecture principles*
 
 ## **🔍 1. Analysis & Design Phase**
 - [ ] **Domain Analysis**

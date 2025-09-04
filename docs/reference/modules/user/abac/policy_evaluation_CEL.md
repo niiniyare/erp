@@ -859,7 +859,7 @@ func TestCachePerformanceImprovement(t *testing.T) {
 
 ### Risks & Mitigations
 - **Risk**: Stale cached results leading to incorrect decisions
-  - **Mitigation**: Conservative TTLs, comprehensive invalidation testing
+  - **Mitigation**: Conservative TTLs,  invalidation testing
 - **Risk**: Cache key collisions
   - **Mitigation**: Strong hashing algorithms, collision monitoring
 - **Risk**: Redis availability affecting performance

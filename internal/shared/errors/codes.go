@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // ─── CONTEXT KEYS ─────────────────────────────────────────────
@@ -293,10 +291,12 @@ func (e *BusinessError) WithCause(cause error) *BusinessError {
 	e.Err = cause
 	return e
 }
+
 func (e *BusinessError) WithCategory(category Category) *BusinessError {
 	e.Category = category
 	return e
 }
+
 func (e *BusinessError) WithSeverity(severity Severity) *BusinessError {
 	e.Severity = severity
 	return e
@@ -348,31 +348,6 @@ func NewBusinessErrorWithContext(ctx context.Context, code, message string) *Bus
 }
 
 // ─── DOMAIN-SPECIFIC ERROR CONSTRUCTORS ─────────────────────────────────────────────
-
-// Tenant-related errors
-// func ErrTenantNotFound(tenantID string) *BusinessError {
-// 	return NewBusinessError("TENANT_NOT_FOUND", "Tenant not found").
-// 		WithDetail("tenant_id", tenantID).
-// 		WithHTTPStatus(http.StatusNotFound).
-// 		WithSuggestion("Verify the tenant ID is correct")
-// }
-
-func ErrTenantSuspended(tenantID string) *BusinessError {
-	return NewBusinessError("TENANT_SUSPENDED", "Tenant account is suspended").
-		WithDetail("tenant_id", tenantID).
-		WithHTTPStatus(http.StatusForbidden).
-		WithSuggestion("Contact support to reactivate your account")
-}
-
-func ErrTenantLimitExceeded(tenantID, limitType string, current, max int64) *BusinessError {
-	return NewBusinessError("TENANT_LIMIT_EXCEEDED", fmt.Sprintf("Tenant %s limit exceeded", limitType)).
-		WithDetail("tenant_id", tenantID).
-		WithDetail("limit_type", limitType).
-		WithDetail("current", current).
-		WithDetail("maximum", max).
-		WithHTTPStatus(http.StatusPaymentRequired).
-		WithSuggestion("Upgrade your plan to increase limits")
-}
 
 //
 // // Authentication/Authorization errors
@@ -539,129 +514,6 @@ func NewErrorCollection(operation string) *ErrorCollection {
 		Severity:  SeverityInfo,
 		Category:  CategorySystem,
 	}
-}
-
-// NewErrorCollectionWithContext creates an error collection with context
-func NewErrorCollectionWithContext(ctx context.Context, operation string) *ErrorCollection {
-	ec := NewErrorCollection(operation)
-
-	if tenantID := getTenantIDFromContext(ctx); tenantID != "" {
-		ec.TenantID = tenantID
-	}
-
-	if requestID := getRequestIDFromContext(ctx); requestID != "" {
-		ec.RequestID = requestID
-	}
-
-	return ec
-}
-
-// ─── HTTP ERROR HANDLING ─────────────────────────────────────────────
-
-// HTTPError represents an error that can be directly returned as HTTP response
-type HTTPError struct {
-	Status    int            `json:"status"`
-	Code      string         `json:"code"`
-	Message   string         `json:"message"`
-	Details   map[string]any `json:"details,omitempty"`
-	Errors    []error        `json:"errors,omitempty"`
-	Timestamp time.Time      `json:"timestamp"`
-	RequestID string         `json:"request_id,omitempty"`
-	TraceID   string         `json:"trace_id,omitempty"`
-}
-
-func (e *HTTPError) Error() string {
-	return fmt.Sprintf("HTTP %d: %s - %s", e.Status, e.Code, e.Message)
-}
-
-// ToHTTPError converts any error to an HTTPError
-func ToHTTPError(err error) *HTTPError {
-	if err == nil {
-		return nil
-	}
-
-	httpErr := &HTTPError{
-		Status:    http.StatusInternalServerError,
-		Code:      "INTERNAL_ERROR",
-		Message:   "An internal error occurred",
-		Details:   make(map[string]any),
-		Timestamp: time.Now(),
-	}
-
-	// Handle different error types
-	switch e := err.(type) {
-	case *BusinessError:
-		httpErr.Status = e.HTTPStatus
-		httpErr.Code = e.Code
-		httpErr.Message = e.Message
-		httpErr.Details = e.Details
-
-	case *RepositoryError:
-		httpErr.Status = http.StatusInternalServerError
-		httpErr.Code = e.Code
-		httpErr.Message = "A database error occurred"
-		// Don't expose internal database details
-
-	case ValidationErrors:
-		httpErr.Status = http.StatusBadRequest
-		httpErr.Code = "VALIDATION_FAILED"
-		httpErr.Message = "Validation failed"
-		httpErr.Details["validation_errors"] = e.ToMap()
-
-	case *ErrorCollection:
-		if len(e.GetValidationErrors()) > 0 {
-			httpErr.Status = http.StatusBadRequest
-			httpErr.Code = "VALIDATION_FAILED"
-			httpErr.Message = "Validation failed"
-			httpErr.Details["validation_errors"] = e.GetValidationErrors().ToMap()
-		} else {
-			httpErr.Status = http.StatusInternalServerError
-			httpErr.Code = "MULTIPLE_ERRORS"
-			httpErr.Message = "Multiple errors occurred"
-		}
-
-	default:
-		// Keep default internal server error
-		httpErr.Details["original_error"] = err.Error()
-	}
-
-	return httpErr
-}
-
-// ─── CONTEXT HELPERS ─────────────────────────────────────────────
-
-func getTenantIDFromContext(ctx context.Context) string {
-	if tenantID, ok := ctx.Value(TenantIDKey).(uuid.UUID); ok {
-		return tenantID.String()
-	}
-	if tenantID, ok := ctx.Value(TenantIDKey).(string); ok {
-		return tenantID
-	}
-	return ""
-}
-
-func getUserIDFromContext(ctx context.Context) string {
-	if userID, ok := ctx.Value(UserIDKey).(uuid.UUID); ok {
-		return userID.String()
-	}
-	if userID, ok := ctx.Value(UserIDKey).(string); ok {
-		return userID
-	}
-	return ""
-}
-
-func getRequestIDFromContext(ctx context.Context) string {
-	if requestID, ok := ctx.Value(RequestIDKey).(string); ok {
-		return requestID
-	}
-	return ""
-}
-
-func getOperationFromContext(ctx context.Context) string {
-	if operation, ok := ctx.Value(OperationKey).(string); ok {
-		return operation
-	}
-	return ""
 }
 
 // ─── UTILITY FUNCTIONS ─────────────────────────────────────────────

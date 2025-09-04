@@ -2,7 +2,7 @@
 
 ## AWO ERP API Explorer
 
-The AWO ERP system provides a comprehensive REST API with 50+ endpoints across multiple domains. All APIs are auto-documented using OpenAPI 3.0 specifications generated directly from the Go codebase.
+The AWO ERP system provides a  REST API with 50+ endpoints across multiple domains. All APIs are auto-documented using OpenAPI 3.0 specifications generated directly from the Go codebase.
 
 ### Access the API Documentation
 

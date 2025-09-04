@@ -16,9 +16,11 @@ import (
 )
 
 // Type aliases for external types
-type User = identity.User
-type UserService = identity.Service
-type AccessRequest = types.AccessRequest
+type (
+	User          = identity.User
+	UserService   = identity.Service
+	AccessRequest = types.AccessRequest
+)
 
 // ApproverService handles approver validation and determination
 type ApproverService interface {

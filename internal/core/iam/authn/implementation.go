@@ -199,7 +199,6 @@ func (s *service) ChangePassword(ctx context.Context, req *ChangePasswordRequest
 	err = s.store.WithTenant(ctx, tenantID, func(ctx context.Context, store db.Store) error {
 		return s.repo.Users().UpdatePasswordHash(ctx, req.UserID, newHash)
 	})
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return fmt.Errorf("failed to update password: %w", err)
@@ -240,7 +239,7 @@ func (s *service) getCurrentTenantSlug(ctx context.Context) string {
 }
 
 func (s *service) getTenantCache(ctx context.Context) cache.Service {
-	//NOTE: Since the cache service doesn't have WithTenantAndNamespace method,
+	// NOTE: Since the cache service doesn't have WithTenantAndNamespace method,
 	// we'll use the cache service directly for now
 	return s.cache
 }
@@ -254,7 +253,7 @@ func (s *service) hashPassword(password string) (string, error) {
 }
 
 func (s *service) verifyPassword(ctx context.Context, userID uuid.UUID, password string) (bool, error) {
-	//TODO: Get password hash from database
+	// TODO: Get password hash from database
 	tenantID, err := s.getCurrentTenantID(ctx)
 	if err != nil {
 		return false, err
@@ -266,7 +265,6 @@ func (s *service) verifyPassword(ctx context.Context, userID uuid.UUID, password
 		hash, err = s.repo.Users().GetPasswordHash(ctx, userID)
 		return err
 	})
-
 	if err != nil {
 		return false, fmt.Errorf("failed to get password hash: %w", err)
 	}
@@ -367,13 +365,12 @@ func (s *service) EnableMFA(ctx context.Context, req *EnableMFARequest) (*MFASet
 
 	// Store MFA secret
 	err = s.repo.Users().SetMFASecret(ctx, req.UserID, secret)
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return nil, fmt.Errorf("failed to store MFA secret: %w", err)
 	}
 
-	//TODO: Generate QR code (placeholder implementation)
+	// TODO: Generate QR code (placeholder implementation)
 	qrCode := fmt.Sprintf("otpauth://totp/%s:%s?secret=%s&issuer=ERP", "ERP", user.Email, secret)
 
 	// Audit log
@@ -397,7 +394,6 @@ func (s *service) DisableMFA(ctx context.Context, userID uuid.UUID) error {
 
 	// Disable MFA directly through repository
 	err := s.repo.Users().DisableMFA(ctx, userID)
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return fmt.Errorf("failed to disable MFA: %w", err)
@@ -421,7 +417,6 @@ func (s *service) ValidateMFA(ctx context.Context, req *ValidateMFARequest) (*MF
 
 	// Get MFA secret
 	secret, err := s.repo.Users().GetMFASecret(ctx, req.UserID)
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return nil, fmt.Errorf("failed to get MFA secret: %w", err)
@@ -470,7 +465,6 @@ func (s *service) CreateSession(ctx context.Context, req *CreateSessionRequest) 
 	// createdSession, err = s.repo.Sessions().Create(ctx, session)
 	createdSession = session
 	err = nil
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return nil, fmt.Errorf("failed to persist session: %w", err)
@@ -508,7 +502,6 @@ func (s *service) InvalidateSession(ctx context.Context, sessionID uuid.UUID) er
 	// NOTE: Sessions repository is not implemented yet, using placeholder
 	// err = s.repo.Sessions().InvalidateSession(ctx, sessionID)
 	err := error(nil)
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return fmt.Errorf("failed to invalidate session: %w", err)
@@ -530,7 +523,6 @@ func (s *service) InvalidateAllUserSessions(ctx context.Context, userID uuid.UUI
 	// NOTE: Sessions repository is not implemented yet, using placeholder
 	// err = s.repo.Sessions().InvalidateUserSessions(ctx, userID)
 	err := error(nil)
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return fmt.Errorf("failed to invalidate user sessions: %w", err)
@@ -569,7 +561,6 @@ func (s *service) AssignRole(ctx context.Context, req *AssignRoleRequest) error 
 	// NOTE: UserRoles repository is not implemented yet, using placeholder
 	// err = s.repo.UserRoles().Assign(ctx, userRole)
 	err = nil
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return fmt.Errorf("failed to assign role: %w", err)
@@ -594,7 +585,6 @@ func (s *service) RemoveRole(ctx context.Context, req *RemoveRoleRequest) error 
 	// NOTE: UserRoles repository is not implemented yet, using placeholder
 	// err = s.repo.UserRoles().Remove(ctx, req.UserID, req.RoleID, req.EntityID)
 	err := error(nil)
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return fmt.Errorf("failed to remove role: %w", err)
@@ -629,7 +619,6 @@ func (s *service) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*model.
 	// Convert to Role objects
 	roles = []*model.Role{}
 	err := error(nil)
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return nil, fmt.Errorf("failed to get user roles: %w", err)

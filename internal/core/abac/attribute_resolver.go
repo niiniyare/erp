@@ -1396,12 +1396,14 @@ func (ar *attributeResolver) generateAttributeCacheKey(targetType AttributeTarge
 
 // Placeholder implementations for cache and dependency components
 
-type LayeredAttributeCache struct{}
-type AttributeDependencyGraph struct{}
-type CacheCoordinator struct{}
-type InvalidationQueue struct{}
-type ResolutionEngine struct{}
-type DependencyManager struct{}
+type (
+	LayeredAttributeCache    struct{}
+	AttributeDependencyGraph struct{}
+	CacheCoordinator         struct{}
+	InvalidationQueue        struct{}
+	ResolutionEngine         struct{}
+	DependencyManager        struct{}
+)
 
 func NewLayeredAttributeCache() *LayeredAttributeCache {
 	return &LayeredAttributeCache{}
@@ -1443,23 +1445,25 @@ func (g *AttributeDependencyGraph) EdgeCount() int                              
 
 // Placeholder implementations for remaining interface methods
 
-type CreateDependencyRequest struct{}
-type AttributeDependencyResult struct{}
-type UpdateDependencyRequest struct{}
-type GetDependenciesRequest struct{}
-type DependenciesResult struct{}
-type PreloadCacheRequest struct{}
-type PreloadCacheResult struct{}
-type CacheInvalidationResult struct{}
-type CacheStatisticsRequest struct{}
-type ConfigureCacheStrategyRequest struct{}
-type CacheStrategyResult struct{}
-type OptimizeCacheRequest struct{}
-type CacheOptimizationResult struct{}
-type ResolutionMetricsRequest struct{}
-type ResolutionMetrics struct{}
-type ResolutionPatternRequest struct{}
-type ResolutionPatternAnalysis struct{}
+type (
+	CreateDependencyRequest       struct{}
+	AttributeDependencyResult     struct{}
+	UpdateDependencyRequest       struct{}
+	GetDependenciesRequest        struct{}
+	DependenciesResult            struct{}
+	PreloadCacheRequest           struct{}
+	PreloadCacheResult            struct{}
+	CacheInvalidationResult       struct{}
+	CacheStatisticsRequest        struct{}
+	ConfigureCacheStrategyRequest struct{}
+	CacheStrategyResult           struct{}
+	OptimizeCacheRequest          struct{}
+	CacheOptimizationResult       struct{}
+	ResolutionMetricsRequest      struct{}
+	ResolutionMetrics             struct{}
+	ResolutionPatternRequest      struct{}
+	ResolutionPatternAnalysis     struct{}
+)
 
 func (ar *attributeResolver) CreateAttributeDependency(ctx context.Context, req *CreateDependencyRequest) (*AttributeDependencyResult, error) {
 	return &AttributeDependencyResult{}, nil

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Audit Log module provides comprehensive event tracking, security monitoring, and compliance reporting capabilities for multi-tenant applications. It captures detailed records of user actions, system events, and security-related activities with advanced analytics and forensic investigation features.
+The Audit Log module provides  event tracking, security monitoring, and compliance reporting capabilities for multi-tenant applications. It captures detailed records of user actions, system events, and security-related activities with advanced analytics and forensic investigation features.
 
 ## Table of Contents
 
@@ -60,7 +60,7 @@ The Audit Log module is built using:
 
 ### Key Entities
 
-- **Audit Events**: Core log entries with comprehensive metadata
+- **Audit Events**: Core log entries with  metadata
 - **Users**: Actors performing actions (human users, service accounts)
 - **Entities**: Business objects being accessed or modified
 - **Resources**: System resources (files, endpoints, services)
@@ -200,7 +200,7 @@ Risk scores range from 0-100, calculated based on:
 
 #### Get Audit Events
 ```sql
--- Retrieve events with comprehensive filtering
+-- Retrieve events with  filtering
 SELECT * FROM audit_log 
 WHERE tenant_id = current_tenant_id()
   AND created_at >= $start_time 

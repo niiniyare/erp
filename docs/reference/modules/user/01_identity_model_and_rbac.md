@@ -2,7 +2,7 @@
 
 ## 👥 Overview
 
-The ERP system implements a comprehensive identity and access management framework based on a sophisticated **Person-Employee-User separation pattern** with advanced **Role-Based Access Control (RBAC)** and **Attribute-Based Access Control (ABAC)**. The system provides enterprise-grade security with tenant isolation, row-level security, and comprehensive audit logging while maintaining usability for administrators and end users.
+The ERP system implements a  identity and access management framework based on a sophisticated **Person-Employee-User separation pattern** with advanced **Role-Based Access Control (RBAC)** and **Attribute-Based Access Control (ABAC)**. The system provides enterprise-grade security with tenant isolation, row-level security, and  audit logging while maintaining usability for administrators and end users.
 
 ## 🏗️ Identity Management Architecture
 
@@ -695,7 +695,7 @@ user_onboarding:
     
     2. user_accepts_invitation:
         - validate_invitation_token_and_expiry
-        - collect_comprehensive_user_information
+        - collect__user_information
         - create_person_record_if_needed
         - create_employee_record_if_applicable
         - create_user_account_with_security_attributes
@@ -810,7 +810,7 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-// GetComprehensiveOffboarding returns the comprehensive offboarding process
+// GetComprehensiveOffboarding returns the  offboarding process
 // This replaces the const object literal in TypeScript
 func GetComprehensiveOffboarding() OffboardingProcess {
 	return OffboardingProcess{

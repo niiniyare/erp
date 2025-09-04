@@ -2,7 +2,7 @@
 
 ## 👥 Overview
 
-The Human Resources Management module provides comprehensive employee lifecycle management, from recruitment and onboarding to performance management and offboarding. It includes payroll processing, benefits administration, time tracking, and compliance with labor regulations.
+The Human Resources Management module provides  employee lifecycle management, from recruitment and onboarding to performance management and offboarding. It includes payroll processing, benefits administration, time tracking, and compliance with labor regulations.
 
 ## 👤 Employee Management
 
@@ -1098,4 +1098,4 @@ CREATE TABLE payroll_adjustments (
 );
 ```
 
-This comprehensive HR management system provides complete employee lifecycle management, sophisticated time tracking, flexible leave management, and robust payroll processing capabilities while ensuring compliance with labor regulations and tax requirements.
+This  HR management system provides complete employee lifecycle management, sophisticated time tracking, flexible leave management, and robust payroll processing capabilities while ensuring compliance with labor regulations and tax requirements.

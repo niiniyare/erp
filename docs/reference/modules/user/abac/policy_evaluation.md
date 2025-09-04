@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Policy Evaluation API is the core of the ABAC system, providing real-time authorization decisions with sub-millisecond response times. This service evaluates policies against request contexts and returns comprehensive authorization decisions with obligations and advice.
+The Policy Evaluation API is the core of the ABAC system, providing real-time authorization decisions with sub-millisecond response times. This service evaluates policies against request contexts and returns  authorization decisions with obligations and advice.
 
 **Goa Service**: `policy-evaluation`  
 **Base Path**: `/api/v1/evaluate`
@@ -941,7 +941,7 @@ var PolicyCompilationError = ErrorResult("policy_compilation_error", func() {
 
 
 <!-- ## ⚡ 3. Policy Evaluation API (Core ABAC Engine) -->
-<!-- *Business Value*: Real-time authorization decisions with comprehensive context evaluation and audit trails. -->
+<!-- *Business Value*: Real-time authorization decisions with  context evaluation and audit trails. -->
 <!---->
 <!---->
 <!-- ```json  -->

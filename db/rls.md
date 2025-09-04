@@ -108,7 +108,7 @@ CREATE POLICY admin_full_access_policy ON tenants
 **Current**: Only `USING` clause (applies to SELECT/UPDATE/DELETE)
 **Missing**: `WITH CHECK` clause for INSERT/UPDATE validation
 
-**Enhanced Policy:**
+** Policy:**
 ```sql
 CREATE POLICY tenant_isolation_policy ON tenants
     FOR ALL TO application_role
@@ -149,7 +149,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## 🚀 **Enhanced RLS Implementation**
+## 🚀 ** RLS Implementation**
 
 ### 1. **Improved Policy with Better Error Handling**
 ```sql
@@ -244,7 +244,7 @@ CREATE TABLE tenant_context_audit (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Enhanced context setting with audit
+--  context setting with audit
 CREATE OR REPLACE FUNCTION set_tenant_context_with_audit(
     p_tenant_id UUID,
     p_user_id UUID DEFAULT NULL,

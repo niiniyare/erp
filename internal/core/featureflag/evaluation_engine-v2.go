@@ -409,7 +409,6 @@ func NewCELExpressionEngine(logger *slog.Logger, config ...EngineConfig) (Expres
 				return types.Bool(true)
 			})),
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CEL environment: %w", err)
 	}

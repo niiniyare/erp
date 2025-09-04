@@ -53,7 +53,7 @@ func (h *TenantHandler) CreateTenant(c *gin.Context) {
     // Extract tracing context from HTTP headers
     ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
     
-    // Start HTTP span with comprehensive attributes
+    // Start HTTP span with  attributes
     ctx, span := h.tracing.StartSpan(ctx, "http.create_tenant", 
         tracing.WithSpanKind(tracing.SpanKindServer),
         tracing.WithAttributes(

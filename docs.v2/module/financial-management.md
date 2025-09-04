@@ -2,7 +2,7 @@
 
 ## 💰 Overview
 
-The Financial Management module provides comprehensive accounting capabilities including general ledger, accounts payable/receivable, financial reporting, budgeting, and multi-currency support. Built on double-entry accounting principles with support for multiple accounting standards (GAAP, IFRS).
+The Financial Management module provides  accounting capabilities including general ledger, accounts payable/receivable, financial reporting, budgeting, and multi-currency support. Built on double-entry accounting principles with support for multiple accounting standards (GAAP, IFRS).
 
 ## 🏗️ Chart of Accounts
 
@@ -1083,4 +1083,4 @@ class CashFlowService {
 }
 ```
 
-This comprehensive financial management system provides robust accounting capabilities with proper controls, automation, and reporting to meet enterprise-level requirements while maintaining flexibility for different business needs and regulatory compliance.
+This  financial management system provides robust accounting capabilities with proper controls, automation, and reporting to meet enterprise-level requirements while maintaining flexibility for different business needs and regulatory compliance.

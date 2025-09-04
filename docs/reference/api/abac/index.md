@@ -229,7 +229,7 @@ curl -X POST "http://localhost:8080/abac/evaluate-bulk" \
 ### Integration Patterns
 1. **Middleware Integration**: Embed authorization checks in application middleware
 2. **Policy-as-Code**: Define policies in version control alongside application code
-3. **Attribute Sources**: Configure multiple attribute sources for comprehensive context
+3. **Attribute Sources**: Configure multiple attribute sources for  context
 4. **Audit Integration**: Stream audit events to security monitoring systems
 
 ## Error Handling
@@ -274,7 +274,7 @@ Common error scenarios and responses:
 
 ## Monitoring & Metrics
 
-Access comprehensive metrics about ABAC system performance:
+Access  metrics about ABAC system performance:
 
 ```bash
 curl -X GET "http://localhost:8080/abac/metrics" \

@@ -1,6 +1,6 @@
 # Organization Management API
 
-The Organization Management API provides comprehensive functionality for managing organizational structures, hierarchies, and entities within the AWO ERP System. This API supports complex organizational relationships, department management, and hierarchical data structures.
+The Organization Management API provides  functionality for managing organizational structures, hierarchies, and entities within the AWO ERP System. This API supports complex organizational relationships, department management, and hierarchical data structures.
 
 ## 📋 Overview
 

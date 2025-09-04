@@ -2,7 +2,7 @@
 
 ## 🍽️ Overview
 
-The Restaurant Management module transforms the core ERP into a comprehensive restaurant operations platform. It provides menu management, kitchen operations, table service, inventory control, staff scheduling, and customer relationship management specifically designed for restaurants, cafes, and food service establishments.
+The Restaurant Management module transforms the core ERP into a  restaurant operations platform. It provides menu management, kitchen operations, table service, inventory control, staff scheduling, and customer relationship management specifically designed for restaurants, cafes, and food service establishments.
 
 ## 🍜 Menu & Recipe Management
 
@@ -929,4 +929,4 @@ CREATE TABLE loyalty_point_transactions (
 );
 ```
 
-This comprehensive restaurant management system provides sophisticated menu engineering, kitchen operations, table service management, and customer analytics specifically designed for restaurant operations while integrating seamlessly with the core ERP inventory, financial, and HR modules.
+This  restaurant management system provides sophisticated menu engineering, kitchen operations, table service management, and customer analytics specifically designed for restaurant operations while integrating seamlessly with the core ERP inventory, financial, and HR modules.

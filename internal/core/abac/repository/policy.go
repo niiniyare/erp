@@ -131,7 +131,6 @@ func (r *policyRepository) CreatePolicy(ctx context.Context, req *CreatePolicyRe
 		policy = r.convertSQLCPolicyToModel(*sqlcPolicy)
 		return nil
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementCounter("policy_repository_create_failed", metrics.Fields{"operation": "create"})
@@ -311,7 +310,6 @@ func (r *policyRepository) UpdatePolicy(ctx context.Context, id uuid.UUID, req *
 		policy, err = txStore.UpdatePolicy(ctx, params)
 		return err
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementCounter("policy_repository_update_failed", metrics.Fields{"operation": "update"})
@@ -351,7 +349,6 @@ func (r *policyRepository) DeletePolicy(ctx context.Context, id uuid.UUID) error
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, txStore db.Store) error {
 		return txStore.SoftDeletePolicy(ctx, id)
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementCounter("policy_repository_delete_failed", metrics.Fields{"operation": "delete"})
@@ -382,7 +379,6 @@ func (r *policyRepository) ListPolicies(ctx context.Context, req *ListPoliciesRe
 
 	// Get policies (RLS automatically filters by tenant)
 	policies, err = r.store.ListPolicies(ctx)
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementCounter("policy_repository_list_failed", metrics.Fields{"operation": "list"})

@@ -271,7 +271,6 @@ func (v *FieldValidator) ValidateEnum(value string, fieldName string, allowedVal
 	}
 
 	return errors
-
 }
 
 // BusinessRuleValidator provides business-specific validation
@@ -279,7 +278,6 @@ type BusinessRuleValidator struct{}
 
 func NewBusinessRuleValidator() *BusinessRuleValidator {
 	return &BusinessRuleValidator{}
-
 }
 
 // ValidateAccountCode validates account code format and uniqueness constraints

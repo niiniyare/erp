@@ -635,12 +635,14 @@ func (me *migrationEngine) ExecuteRollback(ctx context.Context, req *RollbackReq
 }
 
 // Placeholder types for incomplete implementations
-type MigrationValidationResult struct{}
-type ExecuteMigrationPlanRequest struct{}
-type MigrationExecutionResult struct{}
-type MigrationImpactRequest struct{}
-type MigrationImpactResult struct{}
-type MigrationReport struct{}
-type RollbackPlan struct{}
-type RollbackRequest struct{}
-type RollbackResult struct{}
+type (
+	MigrationValidationResult   struct{}
+	ExecuteMigrationPlanRequest struct{}
+	MigrationExecutionResult    struct{}
+	MigrationImpactRequest      struct{}
+	MigrationImpactResult       struct{}
+	MigrationReport             struct{}
+	RollbackPlan                struct{}
+	RollbackRequest             struct{}
+	RollbackResult              struct{}
+)

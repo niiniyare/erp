@@ -275,7 +275,7 @@ internal/core/abac/
 ## 🔗 Key Integration Patterns
 
 ### 1. **ABAC-Centric Security Model**
-The previous "Layered Security Model" is misleading. The actual pattern is a single, comprehensive evaluation orchestrated by the ABAC service.
+The previous "Layered Security Model" is misleading. The actual pattern is a single,  evaluation orchestrated by the ABAC service.
 
 ```go
 // Example: Document access check

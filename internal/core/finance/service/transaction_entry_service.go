@@ -1,3 +1,6 @@
+// Package service provides business logic and service layer implementation
+// for the application. It handles core operations, data processing, and
+// coordinates between different components of the system.
 package service
 
 import (

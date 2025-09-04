@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the comprehensive database testing implementation for the tenant context system, focusing on PostgreSQL session context management and Row Level Security (RLS) policies.
+This document describes the  database testing implementation for the tenant context system, focusing on PostgreSQL session context management and Row Level Security (RLS) policies.
 
 ## Testing Architecture
 
@@ -244,7 +244,7 @@ func (s *service) SetTenant(ctx context.Context, tenantID uuid.UUID) error {
 
 ## Conclusion
 
-The tenant context database testing implementation provides comprehensive validation of:
+The tenant context database testing implementation provides  validation of:
 - PostgreSQL session context management
 - SQLC query generation and execution
 - Repository pattern integration

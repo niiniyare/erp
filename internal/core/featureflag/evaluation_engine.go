@@ -269,7 +269,7 @@ func (e *advancedEvaluationEngine) EvaluateWithConditionalAccess(ctx context.Con
 	}
 
 	// Check if conditional access blocks the evaluation
-	var accessGranted = true
+	accessGranted := true
 	var conditionalAccessResult *ConditionalAccessResult
 
 	if conditionalResult != nil {

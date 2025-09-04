@@ -2,7 +2,7 @@
 
 ## 🏗️ Overview
 
-This document provides comprehensive technical specifications for the ERP system, including detailed architecture designs, database schemas, API specifications, integration patterns, and deployment configurations. It serves as the definitive technical reference for development, deployment, and maintenance teams.
+This document provides  technical specifications for the ERP system, including detailed architecture designs, database schemas, API specifications, integration patterns, and deployment configurations. It serves as the definitive technical reference for development, deployment, and maintenance teams.
 
 ## 💻 Technology Stack
 
@@ -1095,4 +1095,4 @@ func (ef *EncryptedField) AfterFind(tx *gorm.DB) error {
 }
 ```
 
-This comprehensive technical specification provides the foundation for building a robust, scalable, and secure ERP system that can handle enterprise-level requirements while maintaining high performance and reliability.
+This  technical specification provides the foundation for building a robust, scalable, and secure ERP system that can handle enterprise-level requirements while maintaining high performance and reliability.

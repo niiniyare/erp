@@ -330,7 +330,7 @@ Awo provides sophisticated organizational modeling that adapts to complex busine
 <!---->
 <!-- ### **Development Workflow** -->
 <!-- 1. Follow Clean Architecture principles -->
-<!-- 2. Implement comprehensive test coverage -->
+<!-- 2. Implement  test coverage -->
 <!-- 3. Ensure ABAC policy compliance -->
 <!-- 4. Update documentation for new features -->
 <!-- 5. Performance testing for authorization-critical paths -->

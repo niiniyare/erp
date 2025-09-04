@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Users API provides comprehensive user management capabilities for AWO ERP, including user creation, profile management, attribute handling, and user analytics. This API supports multi-tenant user management with role-based access control and advanced user behavior analytics.
+The Users API provides  user management capabilities for AWO ERP, including user creation, profile management, attribute handling, and user analytics. This API supports multi-tenant user management with role-based access control and advanced user behavior analytics.
 
 ## Key Features
 
@@ -457,7 +457,7 @@ def sync_users_from_hr_system(api_client, hr_users):
 ### User Analytics Dashboard
 ```python
 def generate_user_analytics_dashboard(api_client, user_ids):
-    """Generate comprehensive user analytics dashboard."""
+    """Generate  user analytics dashboard."""
     dashboard_data = {
         'users': [],
         'summary': {

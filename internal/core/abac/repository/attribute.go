@@ -359,18 +359,18 @@ func (r *attributeRepository) CreateAttributeValue(ctx context.Context, req *Cre
 	var efective_from sql.NullTime
 
 	if !req.EffectiveFrom.IsZero() {
-
 		efective_from = sql.NullTime{
 			Time:  req.EffectiveFrom,
-			Valid: true}
+			Valid: true,
+		}
 	}
 	var efective_to sql.NullTime
 
 	if !req.EffectiveTo.IsZero() {
-
 		efective_to = sql.NullTime{
 			Time:  *req.EffectiveTo,
-			Valid: true}
+			Valid: true,
+		}
 	}
 
 	params := db.CreateAttributeValueParams{

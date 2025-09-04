@@ -1,6 +1,6 @@
 # User API Testing Guide with Curl
 
-This guide provides comprehensive curl commands to test the User Management API following the data flow pattern.
+This guide provides  curl commands to test the User Management API following the data flow pattern.
 
 ## 🚀 Prerequisites
 
@@ -493,7 +493,7 @@ chmod +x test-user-api.sh
 - Replace UUIDs with actual values from your responses
 - All passwords must meet security requirements (8+ characters)
 - User codes and emails must be unique within a tenant
-- The API includes comprehensive observability (logging, tracing, metrics)
+- The API includes  observability (logging, tracing, metrics)
 - All endpoints return appropriate HTTP status codes
 - Caching is implemented for performance optimization
 

@@ -122,7 +122,6 @@ type CreateTransactionRequest struct {
 	CreatedBy             uuid.UUID            `json:"created_by"`
 	UpdatedBy             *uuid.UUID           `json:"updated_by,omitempty"`
 	PostedBy              *uuid.UUID           `json:"posted_by,omitempty"` // User who posted the transaction
-
 }
 
 // TransactionSummary represents aggregated transaction data for reporting

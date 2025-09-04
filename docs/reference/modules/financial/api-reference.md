@@ -10,7 +10,7 @@
 ## Overview
 
 ### API Description
-The Financial Module API provides comprehensive double-entry bookkeeping, transaction processing, and financial reporting capabilities within the AWO ERP system. This production-ready API supports multi-currency operations, advanced validation frameworks, and enterprise-grade compliance requirements.
+The Financial Module API provides  double-entry bookkeeping, transaction processing, and financial reporting capabilities within the AWO ERP system. This production-ready API supports multi-currency operations, advanced validation frameworks, and enterprise-grade compliance requirements.
 
 ### Base Information
 - **Base URL**: `https://api.awo-erp.com/api/v1/finance`
@@ -33,7 +33,7 @@ The Financial Module API provides comprehensive double-entry bookkeeping, transa
    - [Account Management](#account-management)
    - [Transaction Processing](#transaction-processing)
    - [Financial Reporting](#financial-reporting)
-4. [Enhanced Query Endpoints](#enhanced-query-endpoints)
+4. [ Query Endpoints](#enhanced-query-endpoints)
 5. [Search Endpoints](#search-endpoints)
 6. [Data Models](#data-models)
 7. [Error Handling](#error-handling)
@@ -740,7 +740,7 @@ Generate trial balance report showing account balances.
 
 ---
 
-## Enhanced Query Endpoints
+##  Query Endpoints
 
 ### Accounts with Groups
 Get accounts with hierarchical group information for enhanced reporting.
@@ -790,7 +790,7 @@ Get accounts with hierarchical group information for enhanced reporting.
 ```
 
 ### Complete Chart of Accounts
-Get comprehensive chart of accounts with full hierarchy and reporting structure.
+Get  chart of accounts with full hierarchy and reporting structure.
 
 **Endpoint**: `GET /api/v1/finance/accounts/chart-complete`
 
@@ -1415,7 +1415,7 @@ func createAccount(account Account) (*Account, error) {
 ## Testing
 
 ### Postman Collection
-A comprehensive Postman collection is available with:
+A  Postman collection is available with:
 - Pre-configured environments (dev, staging, production)
 - Authentication setup scripts
 - Complete endpoint coverage
@@ -1451,11 +1451,11 @@ Our testing strategy is built on the principle that **financial accuracy is non-
 
 ### Version 2.0.0 (2025-08-31)
 - Complete API redesign with standardized structure
-- Enhanced error handling and validation
+-  error handling and validation
 - Improved authentication and authorization
-- Added comprehensive data models
+- Added  data models
 - Standardized response formats
-- Enhanced search and filtering capabilities
+-  search and filtering capabilities
 - Added rate limiting implementation
 - Complete double-entry bookkeeping support
 - Multi-currency transaction processing

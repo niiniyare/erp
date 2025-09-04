@@ -2,7 +2,7 @@
 
 ## 🛍️ Overview
 
-The Retail Management module transforms the core ERP into a comprehensive omnichannel retail platform. It provides multi-channel sales management, customer analytics, inventory synchronization, merchandising, and e-commerce integration designed for retailers operating across physical stores, online platforms, and mobile channels.
+The Retail Management module transforms the core ERP into a  omnichannel retail platform. It provides multi-channel sales management, customer analytics, inventory synchronization, merchandising, and e-commerce integration designed for retailers operating across physical stores, online platforms, and mobile channels.
 
 ## 🏬 Multi-Channel Retail Operations
 
@@ -1035,4 +1035,4 @@ class EcommerceService implements EcommerceIntegration {
 }
 ```
 
-This comprehensive retail management system provides sophisticated omnichannel operations, customer analytics, visual merchandising, and e-commerce integration capabilities specifically designed for modern retail operations while integrating seamlessly with the core ERP inventory, financial, and customer management modules.
+This  retail management system provides sophisticated omnichannel operations, customer analytics, visual merchandising, and e-commerce integration capabilities specifically designed for modern retail operations while integrating seamlessly with the core ERP inventory, financial, and customer management modules.

@@ -2,7 +2,7 @@
 
 ## 📋 **What You've Got Now**
 
-I've created a **comprehensive 3-tier validation system** for your ERP/accounting database:
+I've created a ** 3-tier validation system** for your ERP/accounting database:
 
 ### **Tier 1: Structural Validation** ✅
 - Standard columns (tenant_id, entity_id, etc.)
@@ -44,8 +44,8 @@ psql -d your_database -f db/integrated_validation_system.sql
 -- Set your tenant context first
 SELECT set_tenant_context('your-tenant-uuid-here');
 
--- Run comprehensive validation
-SELECT * FROM run_comprehensive_validation();
+-- Run  validation
+SELECT * FROM run__validation();
 
 -- Check deployment readiness
 SELECT * FROM check_deployment_readiness();
@@ -155,7 +155,7 @@ INSERT INTO business_validation_rules (
 );
 ```
 
-### **Run Enhanced Validation:**
+### **Run  Validation:**
 ```sql
 SELECT * FROM check_all_business_logic_enhanced();
 ```
@@ -167,7 +167,7 @@ SELECT * FROM check_all_business_logic_enhanced();
 #!/bin/bash
 # validate-before-deploy.sh
 
-echo "🔍 Running comprehensive validation..."
+echo "🔍 Running  validation..."
 
 # Run validation and capture exit code
 psql -d $DATABASE_URL -v ON_ERROR_STOP=1 -c "
@@ -187,7 +187,7 @@ BEGIN
     
     -- Count critical issues
     SELECT COUNT(*) INTO critical_count 
-    FROM run_comprehensive_validation() 
+    FROM run__validation() 
     WHERE critical_issues > 0;
     
     -- Output summary
@@ -234,7 +234,7 @@ SELECT
         WHEN COUNT(*) FILTER (WHERE high_issues > 0) > 5 THEN '🟡 WARNINGS PRESENT'
         ELSE '🟢 HEALTHY'
     END as status
-FROM run_comprehensive_validation();
+FROM run__validation();
 
 -- Log successful deployment validation
 SELECT log_validation_run('POST_DEPLOYMENT');
@@ -251,7 +251,7 @@ WITH today_issues AS (
         COUNT(*) FILTER (WHERE critical_issues > 0) as critical,
         COUNT(*) FILTER (WHERE high_issues > 0) as high,
         COUNT(*) FILTER (WHERE total_issues > 0) as total_with_issues
-    FROM run_comprehensive_validation()
+    FROM run__validation()
 )
 SELECT 
     CASE 
@@ -425,7 +425,7 @@ Track these KPIs to measure validation system effectiveness:
 
 ---
 
-**🎉 You now have a production-ready, comprehensive validation system that:**
+**🎉 You now have a production-ready,  validation system that:**
 - ✅ Ensures structural compliance automatically
 - 🧠 Validates complex business logic
 - ⚙️ Supports custom tenant-specific rules

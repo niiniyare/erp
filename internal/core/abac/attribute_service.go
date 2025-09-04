@@ -1178,20 +1178,24 @@ func (as *attributeService) convertSecuritySettings(settings AttributeSecuritySe
 
 // Placeholder implementations for remaining interface methods
 
-type ValidateAttributeSchemaRequest struct{}
-type SchemaValidationResult struct{}
-type SupportedDataTypesResult struct{}
-type AttributeCategoriesResult struct{}
-type CreateAttributeDependencyRequest struct{}
-type AttributeDependency struct{}
-type AttributeDependenciesResult struct {
-	Dependencies []AttributeDependency `json:"dependencies"`
-	TotalCount   int64                 `json:"total_count"`
-}
-type EncryptAttributeValueRequest struct{}
-type EncryptedAttributeValue struct{}
-type DecryptAttributeValueRequest struct{}
-type DecryptedAttributeValue struct{}
+type (
+	ValidateAttributeSchemaRequest   struct{}
+	SchemaValidationResult           struct{}
+	SupportedDataTypesResult         struct{}
+	AttributeCategoriesResult        struct{}
+	CreateAttributeDependencyRequest struct{}
+	AttributeDependency              struct{}
+	AttributeDependenciesResult      struct {
+		Dependencies []AttributeDependency `json:"dependencies"`
+		TotalCount   int64                 `json:"total_count"`
+	}
+)
+type (
+	EncryptAttributeValueRequest struct{}
+	EncryptedAttributeValue      struct{}
+	DecryptAttributeValueRequest struct{}
+	DecryptedAttributeValue      struct{}
+)
 
 func (as *attributeService) UpdateAttributeDefinition(ctx context.Context, req *UpdateAttributeDefinitionRequest) (*AttributeDefinitionResult, error) {
 	return &AttributeDefinitionResult{}, nil

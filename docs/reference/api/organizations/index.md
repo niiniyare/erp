@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Organizations API provides comprehensive organizational structure management for AWO ERP, supporting hierarchical organizations, department management, and organizational analytics. This API enables complex organizational structures with support for cost centers, budget management, and organizational reporting.
+The Organizations API provides  organizational structure management for AWO ERP, supporting hierarchical organizations, department management, and organizational analytics. This API enables complex organizational structures with support for cost centers, budget management, and organizational reporting.
 
 ## Key Features
 

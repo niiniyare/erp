@@ -120,7 +120,7 @@ sequenceDiagram
 1. **Request & Interception (PEP):** A user action triggers an API handler (the PEP). The handler's first job is to stop and ask for permission before proceeding. It packages up the initial, known details of the request and calls the `abac.Service.EvaluatePermission` function.
 
 2. **Attribute Collection (PDP & PIPs):** The `abac.Service` (the PDP) receives the request and begins gathering attributes using its `Attribute Collector`:
-   - **User Attributes**: Calls `identity.Service.GetUserByID` and `identity.Service.GetUserRoles` to get comprehensive user information including:
+   - **User Attributes**: Calls `identity.Service.GetUserByID` and `identity.Service.GetUserRoles` to get  user information including:
      - `user.roles` (from user-role assignments)
      - `user.department` (from the linked Employee record)
      - `user.security_level` 
@@ -424,7 +424,7 @@ The permission check happens on almost every API call. A slow check means a slow
 The biggest challenge with caching is knowing when to invalidate the cache, especially with the multi-layered identity model.
 
 - **Gotcha:** A user's role is changed, but the ABAC decision cache still holds the old decision. Even worse, an employee's department is changed (affecting `user.department` attribute), but only role-based cache invalidation is implemented.
-- **Solution:** Implement comprehensive event-driven invalidation covering all identity layers:
+- **Solution:** Implement  event-driven invalidation covering all identity layers:
   - `user.roles.changed` → Invalidate all decisions for that user
   - `employee.department.changed` → Invalidate decisions using department-based policies  
   - `employee.manager.changed` → Invalidate decisions using managerial hierarchy

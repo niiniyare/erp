@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Building a secure, scalable multi-tenant ERP requires a well-orchestrated middleware stack that acts as the nervous system of your application. This guide provides a comprehensive implementation strategy, complete with code patterns, architectural decisions, and real-world considerations for production deployment.
+Building a secure, scalable multi-tenant ERP requires a well-orchestrated middleware stack that acts as the nervous system of your application. This guide provides a  implementation strategy, complete with code patterns, architectural decisions, and real-world considerations for production deployment.
 
 Your existing tenant lifecycle management provides an excellent foundation. This middleware layer will transform it into an enterprise-ready platform that handles thousands of tenants securely and efficiently.
 

@@ -28,7 +28,7 @@ func (s *FeatureFlagTestSuite) SetupTest() {
 	ctrl := gomock.NewController(s.T())
 	s.engine = &advancedEvaluationEngine{
 		conditionalAccessService: conditional.NewMockConditionalAccessService(ctrl),
-		simpleService:            nil, //NOTE: Would be injected in real usage
+		simpleService:            nil, // NOTE: Would be injected in real usage
 		logger:                   logger.NewMockLogger(ctrl),
 		metrics:                  metrics.NewMockMetricsProvider(ctrl),
 		tracing:                  tracing.NewMockTracingService(ctrl),

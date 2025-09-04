@@ -270,7 +270,7 @@ func (r *policyEvaluationRepository) GetEvaluationCacheStats(ctx context.Context
 
 	result := &EvaluationCacheStats{
 		TotalCachedEvaluations: stats.TotalCachedEvaluations,
-		CacheHitRate:           0, //stats.CacheHitRate,
+		CacheHitRate:           0, // stats.CacheHitRate,
 		CacheMissRate:          0, // This needs to be calculated
 		ExpiredEvaluations:     stats.ExpiredEvaluations,
 		AverageEvaluationTime:  time.Duration(stats.AvgEvaluationTimeMs) * time.Millisecond,

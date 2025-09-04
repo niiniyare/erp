@@ -358,7 +358,6 @@ func (pee *policyEvaluationEngine) executePolicyEvaluation(
 	attributeCtx *EvaluationAttributeContext,
 	req *PolicyEvaluationRequest,
 ) (*PolicyEvaluationResult, error) {
-
 	result := &PolicyEvaluationResult{
 		RequestID: req.RequestID,
 		PolicyID:  policy.ID,
@@ -449,7 +448,6 @@ func (pee *policyEvaluationEngine) applyCombiningAlgorithm(
 	algorithm types.CombiningAlgorithm,
 	ruleResults []RuleEvaluationResult,
 ) (types.PolicyDecisionType, error) {
-
 	switch algorithm {
 	case types.CombiningAlgorithmDenyOverrides:
 		return pee.applyDenyOverrides(ruleResults), nil
@@ -563,7 +561,6 @@ func (pipm *PolicyInformationPointManager) ResolveAttribute(
 	attributeID string,
 	subjectID uuid.UUID,
 ) (any, error) {
-
 	// Check cache first
 	if value, found := pipm.cache.Get(category, attributeID, subjectID); found {
 		return value, nil
@@ -622,7 +619,7 @@ func (eac *EvaluationAttributeContext) GetUsedAttributes() []AttributeUsage {
 		usage = append(usage, AttributeUsage{
 			AttributePath: path,
 			Category:      eac.categorizeAttributePath(path),
-			UsageCount:    1, //NOTE: Simplified for now
+			UsageCount:    1, // NOTE: Simplified for now
 		})
 	}
 
@@ -881,7 +878,6 @@ func (pee *policyEvaluationEngine) resolveEvaluationAttributes(
 	ctx context.Context,
 	req *PolicyEvaluationRequest,
 ) (*EvaluationAttributeContext, error) {
-
 	attributeCtx := &EvaluationAttributeContext{
 		Subject:     req.Subject,
 		Resource:    req.Resource,

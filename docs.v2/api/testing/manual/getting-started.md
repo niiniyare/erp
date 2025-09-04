@@ -1,6 +1,6 @@
 # Entity API Testing Guide
 
-This directory contains comprehensive testing resources for the Entity Management API.
+This directory contains  testing resources for the Entity Management API.
 
 ## 📁 Files
 

@@ -1,6 +1,6 @@
 #  Multi-Tenant Redis Cache Usage Guide
 
-A comprehensive guide for using the  multi-tenant Redis cache that maintains backward compatibility while adding powerful new features.
+A  guide for using the  multi-tenant Redis cache that maintains backward compatibility while adding powerful new features.
 
 ## Table of Contents
 

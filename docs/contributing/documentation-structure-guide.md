@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide defines the standardized documentation structure for the AWO ERP system. It provides templates and guidelines for creating consistent, comprehensive documentation across all modules and features.
+This guide defines the standardized documentation structure for the AWO ERP system. It provides templates and guidelines for creating consistent,  documentation across all modules and features.
 
 ## Standard Documentation Structure
 
@@ -188,7 +188,7 @@ All templates use consistent placeholder naming:
 Each module should have:
 - [x] README.md with overview and quick start
 - [x] TASK.md with current development progress  
-- [x] testing.md with comprehensive test strategy
+- [x] testing.md with  test strategy
 - [x] PRD.md with business requirements
 - [x] api-reference.md with complete API documentation
 - [x] Examples directory with code samples
@@ -293,4 +293,4 @@ Since this is primarily a backend system:
 3. Update MkDocs navigation to include the new structure
 4. Review and iterate based on team feedback
 
-This standardized approach ensures consistent, comprehensive documentation across the entire AWO ERP system while reducing the effort needed to create and maintain high-quality documentation.
+This standardized approach ensures consistent,  documentation across the entire AWO ERP system while reducing the effort needed to create and maintain high-quality documentation.

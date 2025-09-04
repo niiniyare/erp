@@ -41,7 +41,7 @@ Query Parameters:
 - include_performance: boolean (default: true) - Include performance metrics
 - include_capacity: boolean (default: false) - Include capacity utilization
 - include_predictions: boolean (default: false) - Include predictive analytics
-- detail_level: basic, standard, comprehensive (default: standard)
+- detail_level: basic, standard,  (default: standard)
 
 Response: 200 OK
 {
@@ -832,7 +832,7 @@ Request Body:
   "analysis_scope": {
     "time_period": "7d",
     "include_components": ["policy_engine", "cache_layer", "attribute_service"],
-    "analysis_depth": "comprehensive",
+    "analysis_depth": "",
     "include_predictions": true
   },
   "optimization_targets": [

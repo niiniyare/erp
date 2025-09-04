@@ -1144,4 +1144,4 @@ class WorkflowAnalyticsService {
 }
 ```
 
-This comprehensive workflow engine provides powerful business process automation capabilities with sophisticated task management, escalation handling, and analytics to optimize organizational efficiency and ensure consistent process execution across the ERP system.
+This  workflow engine provides powerful business process automation capabilities with sophisticated task management, escalation handling, and analytics to optimize organizational efficiency and ensure consistent process execution across the ERP system.

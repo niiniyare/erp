@@ -373,7 +373,6 @@ func (t *Template) Apply(target ConfigurationTarget) (*ApplicationResult, error)
 	sortedConfigs := t.getSortedConfigurations()
 	for _, config := range sortedConfigs {
 		change, conflict, err := t.applyConfiguration(config, target)
-
 		if err != nil {
 			result.Summary.Errors++
 			continue

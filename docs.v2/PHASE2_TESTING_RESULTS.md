@@ -57,7 +57,7 @@ Status: 200 OK
 - **8 GOA services** fully implemented with handlers
 - **30+ methods** implemented across Health, User, and Access Request services
 - **18 ABAC methods** in User service for advanced authorization
-- **12 Access Request methods** for comprehensive access management
+- **12 Access Request methods** for  access management
 
 ### 2. Successful Dual-Framework Architecture
 - Combined handler successfully routes between GOA and Gin

@@ -26,10 +26,12 @@ func stringPtr(s string) *string {
 }
 
 // Type aliases for external dependencies
-type AuditService = audit.Service
-type AuditEvent = audit.AuditEvent
-type DeviceInfo = conditional.DeviceInfo
-type LocationInfo = conditional.LocationInfo
+type (
+	AuditService = audit.Service
+	AuditEvent   = audit.AuditEvent
+	DeviceInfo   = conditional.DeviceInfo
+	LocationInfo = conditional.LocationInfo
+)
 
 const (
 	AuditSeverityHigh = "high"

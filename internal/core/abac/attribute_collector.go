@@ -1047,38 +1047,46 @@ func (c *AttributeCollectionCache) Set(key string, attr *CollectedAttribute, ttl
 
 // Placeholder implementations for remaining interface methods
 
-type ResourceAttributeRequest struct{}
-type ResourceAttributeResult struct{}
-type EnvironmentAttributeRequest struct{}
-type EnvironmentAttributeResult struct{}
-type PrefetchAttributesRequest struct{}
-type PrefetchResult struct{}
-type CollectionPlanRequest struct {
-	TargetType         AttributeTargetType        `json:"target_type"`
-	TargetID           uuid.UUID                  `json:"target_id"`
-	RequiredAttributes []string                   `json:"required_attributes"`
-	OptionalAttributes []string                   `json:"optional_attributes"`
-	CollectionOptions  AttributeCollectionOptions `json:"collection_options"`
-}
-type AttributeCollectionPlan struct{}
-type RegisterAttributeSourceRequest struct{}
-type AttributeSource struct {
-	SourceType      string    `json:"source_type"` // "direct_role", "inherited_role", "group", "computed"
-	SourceID        uuid.UUID `json:"source_id"`
-	SourceName      string    `json:"source_name"`
-	InheritancePath []string  `json:"inheritance_path,omitempty"`
-}
+type (
+	ResourceAttributeRequest    struct{}
+	ResourceAttributeResult     struct{}
+	EnvironmentAttributeRequest struct{}
+	EnvironmentAttributeResult  struct{}
+	PrefetchAttributesRequest   struct{}
+	PrefetchResult              struct{}
+	CollectionPlanRequest       struct {
+		TargetType         AttributeTargetType        `json:"target_type"`
+		TargetID           uuid.UUID                  `json:"target_id"`
+		RequiredAttributes []string                   `json:"required_attributes"`
+		OptionalAttributes []string                   `json:"optional_attributes"`
+		CollectionOptions  AttributeCollectionOptions `json:"collection_options"`
+	}
+)
+type (
+	AttributeCollectionPlan        struct{}
+	RegisterAttributeSourceRequest struct{}
+	AttributeSource                struct {
+		SourceType      string    `json:"source_type"` // "direct_role", "inherited_role", "group", "computed"
+		SourceID        uuid.UUID `json:"source_id"`
+		SourceName      string    `json:"source_name"`
+		InheritancePath []string  `json:"inheritance_path,omitempty"`
+	}
+)
 
-type AttributeSourceQueryRequest struct{}
-type AttributeSourceQueryResult struct{}
-type CollectionMetricsRequest struct{}
-type CollectionMetrics struct{}
-type SourceHealthStatus struct{}
+type (
+	AttributeSourceQueryRequest struct{}
+	AttributeSourceQueryResult  struct{}
+	CollectionMetricsRequest    struct{}
+	CollectionMetrics           struct{}
+	SourceHealthStatus          struct{}
+)
 
 // Placeholder connector and monitor types
-type AttributeSourceConnector any
-type AttributePrefetcher struct{}
-type SourceHealthMonitor struct{}
+type (
+	AttributeSourceConnector any
+	AttributePrefetcher      struct{}
+	SourceHealthMonitor      struct{}
+)
 
 func NewAttributePrefetcher() *AttributePrefetcher {
 	return &AttributePrefetcher{}

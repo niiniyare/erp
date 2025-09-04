@@ -34,7 +34,6 @@ func NewRepository(store db.Store, logger logger.Logger, tracing tracing.Tracing
 }
 
 func (r *repository) CreateAuditEvent(ctx context.Context, req CreateAuditEventRequest) (*AuditEvent, error) {
-
 	var auditEvent *AuditEvent
 	tenantID, ok := shared.GetTenantID(ctx)
 	if !ok {

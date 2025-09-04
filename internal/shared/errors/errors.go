@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-// ─── ENHANCED PREDEFINED ERRORS ─────────────────────────────────────────────
+// ─── PREDEFINED ERRORS ─────────────────────────────────────────────
 // These replace the simple error variables with enhanced BusinessError instances
 // while maintaining backward compatibility
 

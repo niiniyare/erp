@@ -500,7 +500,7 @@ var implementationEffort = map[string]map[string]int{
 ### 🎯 **Better Alternatives for Most ABAC Use Cases:**
 
 **For Enterprise ABAC:**
-- **OPA/Rego**: Most mature, comprehensive ecosystem, industry standard
+- **OPA/Rego**: Most mature,  ecosystem, industry standard
 - **AWS Cedar**: Amazon's new policy language, growing ecosystem
 - **Casbin**: Supports multiple access control models including ABAC
 
@@ -571,7 +571,7 @@ If you start with expr-lang and later need to migrate to a purpose-built ABAC en
 ### 🎯 **Recommended Alternatives:**
 
 **For Most Organizations:**
-- **OPA/Rego**: Industry standard, comprehensive tooling, multi-language support
+- **OPA/Rego**: Industry standard,  tooling, multi-language support
 - **Casbin**: Simpler adoption, good ABAC support, multi-language
 
 **For Go-Native Simple Cases:**

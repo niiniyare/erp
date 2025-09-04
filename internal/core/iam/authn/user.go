@@ -93,7 +93,6 @@ func (s *service) GetUser(ctx context.Context, userID uuid.UUID) (*model.User, e
 
 	// Cache miss - get from database
 	foundUser, err := s.repo.Users().GetByID(ctx, userID)
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		s.metrics.IncrementCounter("authn_get_user_errors", metrics.Fields{"reason": "not_found"})
@@ -114,7 +113,6 @@ func (s *service) GetUserByEmail(ctx context.Context, email string) (*model.User
 	defer span.End()
 
 	user, err := s.repo.Users().GetByEmail(ctx, email)
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return nil, fmt.Errorf("user not found: %w", err)
@@ -150,7 +148,6 @@ func (s *service) UpdateUser(ctx context.Context, req *UpdateUserRequest) (*mode
 
 	// Update in database
 	updatedUser, err := s.repo.Users().Update(ctx, user)
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return nil, fmt.Errorf("failed to update user: %w", err)
@@ -173,7 +170,6 @@ func (s *service) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 	defer span.End()
 
 	err := s.repo.Users().Delete(ctx, userID)
-
 	if err != nil {
 		s.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		return fmt.Errorf("failed to delete user: %w", err)

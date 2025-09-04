@@ -2,7 +2,7 @@
 
 ## 📦 Overview
 
-The Inventory Management module provides comprehensive stock control, warehouse management, procurement, and logistics capabilities. It supports multi-warehouse operations, real-time stock tracking, automated reordering, and advanced inventory optimization techniques including ABC analysis, lot tracking, and serial number management.
+The Inventory Management module provides  stock control, warehouse management, procurement, and logistics capabilities. It supports multi-warehouse operations, real-time stock tracking, automated reordering, and advanced inventory optimization techniques including ABC analysis, lot tracking, and serial number management.
 
 ## 🏗️ Item Master & Catalog Management
 
@@ -1143,4 +1143,4 @@ class CycleCountService implements CycleCountGenerator {
 }
 ```
 
-This comprehensive inventory management system provides the foundation for efficient stock control, procurement optimization, and warehouse operations while maintaining accurate financial valuation and supporting various industry-specific requirements.
+This  inventory management system provides the foundation for efficient stock control, procurement optimization, and warehouse operations while maintaining accurate financial valuation and supporting various industry-specific requirements.

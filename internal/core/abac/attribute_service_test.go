@@ -226,7 +226,6 @@ func TestAttributeService(t *testing.T) {
 		assert.NotEmpty(t, result.ValidationResults)
 		assert.False(t, result.ValidationResults[0].Passed)
 	})
-
 }
 
 // Helper functions (boolPtr only - using shared stringPtr and int32Ptr)

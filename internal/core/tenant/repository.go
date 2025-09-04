@@ -705,7 +705,6 @@ func (r *repository) ProvisionTenant(ctx context.Context, req ProvisionTenantReq
 		PTimezone:     "UTC",        // Default timezone
 		PSettings:     []byte("{}"), // Default settings
 	})
-
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to provision tenant via DB function")

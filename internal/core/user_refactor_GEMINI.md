@@ -59,7 +59,7 @@ Once all individual domains are refactored and compiling, integrate them into th
 2.  **API Smoke Test**: Manually or with scripts, test the primary API endpoints to ensure the refactored services are wired correctly and the application is functional.
 3.  **Update Documentation**: Search the `/docs` directory for any references to the old `internal/core/user` package and update them.
 4.  **Delete Old User Package**: Once confident that the refactoring is complete and stable, delete the now-empty `internal/core/user` directory.
-5.  **Commit**: Create a comprehensive commit message summarizing the refactoring.
+5.  **Commit**: Create a  commit message summarizing the refactoring.
 
 ## 4. Guiding Principles
 

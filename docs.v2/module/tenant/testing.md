@@ -396,7 +396,7 @@ Then:
 #### Test Case: Individual Tenant Health Check
 ```
 Test ID: MT-HEALTH-001
-Description: Test comprehensive tenant health assessment
+Description: Test  tenant health assessment
 Given: Tenant with various resource usage levels
 When: Calling get_tenant_health_status
 Then:
@@ -404,7 +404,7 @@ Then:
   - Storage, performance, error, activity statuses are accurate
   - Alerts are generated for critical conditions
   - Warnings are provided for concerning trends
-  - Metrics are comprehensive and accurate
+  - Metrics are  and accurate
 ```
 
 #### Test Case: Health Status Classification
@@ -720,7 +720,7 @@ Then:
 ```
 Test ID: MT-BACKUP-001
 Description: Test tenant-specific backup procedures
-Given: Tenant with comprehensive data
+Given: Tenant with  data
 When: Performing backup operations
 Then:
   - All tenant data is included in backup

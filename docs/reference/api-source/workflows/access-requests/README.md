@@ -1,6 +1,6 @@
 # Access Request Workflow API
 
-The Access Request Workflow API provides a comprehensive system for managing access requests including role assignments, permission grants, resource access, and privilege elevations with full approval workflows.
+The Access Request Workflow API provides a  system for managing access requests including role assignments, permission grants, resource access, and privilege elevations with full approval workflows.
 
 ## 📋 Overview
 

@@ -435,4 +435,4 @@ While testing, you can monitor:
 - **Performance**: Use `time` command to measure response times
 - **Traces**: If tracing is configured, check trace outputs
 
-The API includes comprehensive observability, so all requests are logged, traced, and have metrics collected automatically.
+The API includes  observability, so all requests are logged, traced, and have metrics collected automatically.

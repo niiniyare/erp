@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AWO ERP API provides comprehensive programmatic access to all system functionality through a RESTful interface. Built with the Goa framework, all APIs are auto-documented with OpenAPI 3.0 specifications and include interactive testing capabilities.
+The AWO ERP API provides  programmatic access to all system functionality through a RESTful interface. Built with the Goa framework, all APIs are auto-documented with OpenAPI 3.0 specifications and include interactive testing capabilities.
 
 ## Quick Start
 

@@ -2,7 +2,7 @@
 
 ## 🏗️ Overview
 
-The Asset Management module provides comprehensive tracking and management of fixed assets throughout their lifecycle, from acquisition to disposal. It includes depreciation calculations, maintenance scheduling, location tracking, and compliance with various accounting standards (GAAP, IFRS).
+The Asset Management module provides  tracking and management of fixed assets throughout their lifecycle, from acquisition to disposal. It includes depreciation calculations, maintenance scheduling, location tracking, and compliance with various accounting standards (GAAP, IFRS).
 
 ## 🏢 Fixed Asset Management
 
@@ -1037,4 +1037,4 @@ class AssetAnalyticsService {
 }
 ```
 
-This comprehensive asset management system provides complete lifecycle tracking, automated depreciation, proactive maintenance scheduling, and detailed performance analytics to optimize asset utilization and minimize total cost of ownership.
+This  asset management system provides complete lifecycle tracking, automated depreciation, proactive maintenance scheduling, and detailed performance analytics to optimize asset utilization and minimize total cost of ownership.

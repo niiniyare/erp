@@ -11,9 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testQueries *Queries
-var testDB *pgxpool.Pool
-var testStore Store
+var (
+	testQueries *Queries
+	testDB      *pgxpool.Pool
+	testStore   Store
+)
 
 func TestMain(m *testing.M) {
 	databaseUrl := os.Getenv("DATABASE_URL")

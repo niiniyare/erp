@@ -1,11 +1,11 @@
 # Predefined Errors Usage Guide
 
-A comprehensive guide for using the enhanced predefined errors in your ERP/Accounting system while maintaining backward compatibility.
+A guide for using the redefined errors in Awo ERP system while maintaining backward compatibility.
 
 ## Table of Contents
 
 - [Backward Compatibility](#backward-compatibility)
-- [Enhanced Error Features](#enhanced-error-features)
+- [ Error Features](#enhanced-error-features)
 - [Usage by Domain](#usage-by-domain)
 - [Error Checking Patterns](#error-checking-patterns)
 - [HTTP Integration](#http-integration)
@@ -65,16 +65,16 @@ func ErrorHandlingPatterns(err error) {
 }
 ```
 
-## Enhanced Error Features
+##  Error Features
 
 ### Rich Error Information
 
 ```go
-func EnhancedUserService(ctx context.Context, userID string) error {
+func UserService(ctx context.Context, userID string) error {
     user, err := userRepo.GetUser(ctx, userID)
     if err != nil {
         if errors.Is(err, ErrUserNotFound) {
-            // 🆕 Enhanced error now includes HTTP status, suggestions, etc.
+            // 🆕  error now includes HTTP status, suggestions, etc.
             return err // Returns rich BusinessError with HTTP 404, suggestions
         }
         return err
@@ -82,7 +82,7 @@ func EnhancedUserService(ctx context.Context, userID string) error {
     return nil
 }
 
-func HandleEnhancedError(w http.ResponseWriter, err error) {
+func HandleError(w http.ResponseWriter, err error) {
     if errors.Is(err, ErrUserNotFound) {
         // 🆕 Extract rich information from enhanced error
         if be, ok := err.(*BusinessError); ok {
@@ -186,7 +186,7 @@ func UserAuthenticationService(ctx context.Context, email, password string) (*Us
     // Validate credentials
     attemptCount := getLoginAttemptCount(ctx, email)
     if !validatePassword(password, user.PasswordHash) {
-        // 🆕 Enhanced error with attempt tracking
+        // 🆕  error with attempt tracking
         return nil, NewInvalidCredentialsError(email, attemptCount+1)
     }
     
@@ -291,7 +291,7 @@ func DeleteEntityHandler(w http.ResponseWriter, r *http.Request) {
 
 ## Error Checking Patterns
 
-### Enhanced Error Checking
+###  Error Checking
 
 ```go
 // ✅ Traditional checking still works
@@ -301,8 +301,8 @@ func TraditionalChecking(err error) {
     }
 }
 
-// 🆕 Enhanced checking with error details
-func EnhancedChecking(err error) {
+// 🆕  checking with error details
+func Checking(err error) {
     // Check error type and extract details
     if IsUserNotFound(err) {
         if be, ok := err.(*BusinessError); ok {
@@ -470,10 +470,10 @@ func ErrorMiddleware(next http.Handler) http.Handler {
 
 ## Contextual Error Constructors
 
-### Using Enhanced Constructors
+### Using  Constructors
 
 ```go
-func EnhancedErrorConstructors(ctx context.Context) {
+func ErrorConstructors(ctx context.Context) {
     // 🆕 Contextual user errors
     userErr := NewUserNotFoundError("user_123")
     emailErr := NewUserNotFoundByEmailError("user@example.com")
@@ -528,7 +528,7 @@ func Phase1_ExistingCode() error {
 }
 
 // Phase 2: Start using enhanced features
-func Phase2_EnhancedUsage(ctx context.Context) error {
+func Phase2_Usage(ctx context.Context) error {
     if userNotFound {
         // 🆕 Add context and details
         return NewUserNotFoundError(userID).
@@ -538,7 +538,7 @@ func Phase2_EnhancedUsage(ctx context.Context) error {
 }
 
 // Phase 3: Full enhancement
-func Phase3_FullyEnhanced(ctx context.Context) error {
+func Phase3_Fully(ctx context.Context) error {
     if userNotFound {
         // 🆝 Full context-aware error
         return NewUserNotFoundByEmailError(email).
@@ -567,7 +567,7 @@ func UpgradeLegacyErrors(err error) error {
 }
 
 // 🆕 Wrap legacy service errors
-func WrapLegacyService(legacyService LegacyService) EnhancedService {
+func WrapLegacyService(legacyService LegacyService) Service {
     return &legacyServiceWrapper{legacy: legacyService}
 }
 
@@ -654,7 +654,7 @@ func CollectErrorMetrics(err error) {
 ### Testing Patterns
 
 ```go
-func TestEnhancedErrors(t *testing.T) {
+func TestErrors(t *testing.T) {
     // ✅ Test error types
     err := NewUserNotFoundError("user_123")
     assert.True(t, IsUserNotFound(err))

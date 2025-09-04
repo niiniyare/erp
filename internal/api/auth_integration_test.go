@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/suite"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/api/gen/auth"
@@ -36,21 +36,21 @@ import (
 // TODO: Add OAuth2 integration testing and external identity provider validation
 type AuthAPIIntegrationTestSuite struct {
 	suite.Suite
-	ctx            context.Context
-	runner         *tenant.DatabaseTestRunner
-	server         *httptest.Server
-	client         *http.Client
-	authService    authn.Service
-	iamRepo        repo.IAMRepository
-	tenantA        *db.Tenant
-	tenantB        *db.Tenant
-	
+	ctx         context.Context
+	runner      *tenant.DatabaseTestRunner
+	server      *httptest.Server
+	client      *http.Client
+	authService authn.Service
+	iamRepo     repo.IAMRepository
+	tenantA     *db.Tenant
+	tenantB     *db.Tenant
+
 	// Test users and credentials
-	testUserA      *model.User
-	testUserB      *model.User
-	validPassword  string
+	testUserA       *model.User
+	testUserB       *model.User
+	validPassword   string
 	invalidPassword string
-	
+
 	// Test configuration
 	baseURL        string
 	defaultTimeout time.Duration
@@ -91,10 +91,10 @@ func (s *AuthAPIIntegrationTestSuite) TearDownSuite() {
 	if s.server != nil {
 		s.server.Close()
 	}
-	
+
 	// Cleanup test data
 	s.cleanupTestData()
-	
+
 	if s.runner != nil {
 		s.runner.Close()
 	}
@@ -125,7 +125,7 @@ func (s *AuthAPIIntegrationTestSuite) setupTestData() {
 
 	// Create test users within tenant contexts
 	ctx := context.WithValue(s.ctx, "tenant_id", s.tenantA.ID)
-	
+
 	s.testUserA, err = s.authService.CreateUser(ctx, &authn.CreateUserRequest{
 		Email:       fmt.Sprintf("testuser-a-%s@authtest.com", uniqueID),
 		Password:    s.validPassword,
@@ -136,7 +136,7 @@ func (s *AuthAPIIntegrationTestSuite) setupTestData() {
 	s.Require().NoError(err, "Failed to create test user A")
 
 	ctx = context.WithValue(s.ctx, "tenant_id", s.tenantB.ID)
-	
+
 	s.testUserB, err = s.authService.CreateUser(ctx, &authn.CreateUserRequest{
 		Email:       fmt.Sprintf("testuser-b-%s@authtest.com", uniqueID),
 		Password:    s.validPassword,
@@ -146,7 +146,7 @@ func (s *AuthAPIIntegrationTestSuite) setupTestData() {
 	})
 	s.Require().NoError(err, "Failed to create test user B")
 
-	s.T().Logf("Created test users: %s (%s), %s (%s)", 
+	s.T().Logf("Created test users: %s (%s), %s (%s)",
 		s.testUserA.ID, s.testUserA.Email,
 		s.testUserB.ID, s.testUserB.Email)
 }
@@ -173,8 +173,8 @@ func (s *AuthAPIIntegrationTestSuite) TestSuccessfulAuthentication() {
 	s.T().Log("Running AUTH-API-001: Successful User Authentication")
 
 	// Create test server with auth handler
-	authHandler := handlers.NewAuthGoaHandler(s.authService, 
-		tracing.NewNoOpTracingService(), 
+	authHandler := handlers.NewAuthGoaHandler(s.authService,
+		tracing.NewNoOpTracingService(),
 		&metrics.MetricsService{})
 
 	server := s.createAuthTestServer(authHandler)
@@ -226,8 +226,8 @@ func (s *AuthAPIIntegrationTestSuite) TestAuthenticationFailure() {
 	s.T().Log("Running AUTH-API-002: Authentication Failure with Invalid Credentials")
 
 	// Create test server with auth handler
-	authHandler := handlers.NewAuthGoaHandler(s.authService, 
-		tracing.NewNoOpTracingService(), 
+	authHandler := handlers.NewAuthGoaHandler(s.authService,
+		tracing.NewNoOpTracingService(),
 		&metrics.MetricsService{})
 
 	server := s.createAuthTestServer(authHandler)
@@ -235,32 +235,32 @@ func (s *AuthAPIIntegrationTestSuite) TestAuthenticationFailure() {
 
 	// Test cases for authentication failures
 	testCases := []struct {
-		name          string
-		email         string
-		password      string
+		name           string
+		email          string
+		password       string
 		expectedStatus int
-		description   string
+		description    string
 	}{
 		{
-			name:          "InvalidPassword",
-			email:         s.testUserA.Email,
-			password:      s.invalidPassword,
+			name:           "InvalidPassword",
+			email:          s.testUserA.Email,
+			password:       s.invalidPassword,
 			expectedStatus: http.StatusUnauthorized,
-			description:   "Wrong password should be rejected",
+			description:    "Wrong password should be rejected",
 		},
 		{
-			name:          "InvalidEmail",
-			email:         "nonexistent@test.com",
-			password:      s.validPassword,
+			name:           "InvalidEmail",
+			email:          "nonexistent@test.com",
+			password:       s.validPassword,
 			expectedStatus: http.StatusUnauthorized,
-			description:   "Non-existent user should be rejected",
+			description:    "Non-existent user should be rejected",
 		},
 		{
-			name:          "EmptyCredentials",
-			email:         "",
-			password:      "",
+			name:           "EmptyCredentials",
+			email:          "",
+			password:       "",
 			expectedStatus: http.StatusBadRequest,
-			description:   "Empty credentials should be rejected",
+			description:    "Empty credentials should be rejected",
 		},
 	}
 
@@ -284,7 +284,7 @@ func (s *AuthAPIIntegrationTestSuite) TestAuthenticationFailure() {
 		s.Require().NoError(err, "Authentication request failed")
 		resp.Body.Close()
 
-		s.Assert().Equal(tc.expectedStatus, resp.StatusCode, 
+		s.Assert().Equal(tc.expectedStatus, resp.StatusCode,
 			"%s: Expected status %d, got %d", tc.description, tc.expectedStatus, resp.StatusCode)
 	}
 
@@ -297,8 +297,8 @@ func (s *AuthAPIIntegrationTestSuite) TestJWTTokenValidation() {
 	s.T().Log("Running AUTH-API-003: JWT Token Validation")
 
 	// First, authenticate to get a valid token
-	authHandler := handlers.NewAuthGoaHandler(s.authService, 
-		tracing.NewNoOpTracingService(), 
+	authHandler := handlers.NewAuthGoaHandler(s.authService,
+		tracing.NewNoOpTracingService(),
 		&metrics.MetricsService{})
 
 	server := s.createAuthTestServer(authHandler)
@@ -349,8 +349,8 @@ func (s *AuthAPIIntegrationTestSuite) TestJWTTokenValidation() {
 func (s *AuthAPIIntegrationTestSuite) TestMultiTenantAuthenticationIsolation() {
 	s.T().Log("Running AUTH-API-004: Multi-Tenant Authentication Isolation")
 
-	authHandler := handlers.NewAuthGoaHandler(s.authService, 
-		tracing.NewNoOpTracingService(), 
+	authHandler := handlers.NewAuthGoaHandler(s.authService,
+		tracing.NewNoOpTracingService(),
 		&metrics.MetricsService{})
 
 	server := s.createAuthTestServer(authHandler)
@@ -374,7 +374,7 @@ func (s *AuthAPIIntegrationTestSuite) TestMultiTenantAuthenticationIsolation() {
 	s.Require().NoError(err, "Cross-tenant authentication request failed")
 	defer resp.Body.Close()
 
-	s.Assert().Equal(http.StatusUnauthorized, resp.StatusCode, 
+	s.Assert().Equal(http.StatusUnauthorized, resp.StatusCode,
 		"User from Tenant A should not be able to authenticate in Tenant B context")
 
 	// Test: User can authenticate in their own tenant context
@@ -387,7 +387,7 @@ func (s *AuthAPIIntegrationTestSuite) TestMultiTenantAuthenticationIsolation() {
 	s.Require().NoError(err, "Same-tenant authentication request failed")
 	defer resp.Body.Close()
 
-	s.Assert().Equal(http.StatusOK, resp.StatusCode, 
+	s.Assert().Equal(http.StatusOK, resp.StatusCode,
 		"User should be able to authenticate in their own tenant context")
 
 	s.T().Log("✅ AUTH-API-004 passed: Multi-tenant authentication isolation working correctly")
@@ -398,8 +398,8 @@ func (s *AuthAPIIntegrationTestSuite) TestMultiTenantAuthenticationIsolation() {
 func (s *AuthAPIIntegrationTestSuite) TestTokenRefresh() {
 	s.T().Log("Running AUTH-API-005: Token Refresh Functionality")
 
-	authHandler := handlers.NewAuthGoaHandler(s.authService, 
-		tracing.NewNoOpTracingService(), 
+	authHandler := handlers.NewAuthGoaHandler(s.authService,
+		tracing.NewNoOpTracingService(),
 		&metrics.MetricsService{})
 
 	server := s.createAuthTestServer(authHandler)
@@ -488,7 +488,6 @@ func (s *AuthAPIIntegrationTestSuite) createAuthTestServer(authHandler auth.Serv
 			Email:    email,
 			Password: password,
 		})
-
 		if err != nil {
 			http.Error(w, "Authentication failed", http.StatusUnauthorized)
 			return

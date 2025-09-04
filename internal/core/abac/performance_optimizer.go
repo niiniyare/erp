@@ -1054,7 +1054,7 @@ func (po *performanceOptimizer) performPolicyCompilation(ctx context.Context, po
 }
 
 func (po *performanceOptimizer) calculatePolicyComplexity(policy *models.Policy) int32 {
-	//TODO: Simplified complexity calculation
+	// TODO: Simplified complexity calculation
 	complexity := int32(10) // Base complexity
 
 	// Add complexity for rule structure
@@ -1095,7 +1095,7 @@ func (po *performanceOptimizer) calculatePolicyComplexity(policy *models.Policy)
 }
 
 func (po *performanceOptimizer) calculateCompiledComplexity(compiled CompiledCode) int32 {
-	//TODO: Simplified compiled complexity calculation
+	// TODO: Simplified compiled complexity calculation
 	complexity, err := convert.IntToInt32(len(compiled.ExecutionPlan.Steps) * 5)
 	if err != nil {
 		po.logger.Warn("Can't convert compiled complexity", logger.Fields{
@@ -1108,14 +1108,16 @@ func (po *performanceOptimizer) calculateCompiledComplexity(compiled CompiledCod
 
 // TODO: Placeholder implementations for remaining interface methods
 
-type BatchOptimizationRequest struct{}
-type BatchOptimizationResult struct{}
-type QueryAnalysisRequest struct{}
-type QueryPerformanceAnalysis struct{}
-type ParallelEvaluationRequest struct{}
-type ParallelEvaluationResult struct{}
-type ConfigOptimizationRequest struct{}
-type OptimizationRecommendations struct{}
+type (
+	BatchOptimizationRequest    struct{}
+	BatchOptimizationResult     struct{}
+	QueryAnalysisRequest        struct{}
+	QueryPerformanceAnalysis    struct{}
+	ParallelEvaluationRequest   struct{}
+	ParallelEvaluationResult    struct{}
+	ConfigOptimizationRequest   struct{}
+	OptimizationRecommendations struct{}
+)
 
 func (po *performanceOptimizer) OptimizeBatchQuery(ctx context.Context, req *BatchOptimizationRequest) (*BatchOptimizationResult, error) {
 	return &BatchOptimizationResult{}, nil

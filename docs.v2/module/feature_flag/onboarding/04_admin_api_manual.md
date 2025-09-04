@@ -40,7 +40,7 @@ Bulk endpoints are essential for managing multiple flags at once, such as during
 ### Check System Health
 
 -   **Endpoint**: `GET /health`
--   **Purpose**: To get a real-time, comprehensive snapshot of the feature flag system's health.
+-   **Purpose**: To get a real-time,  snapshot of the feature flag system's health.
 -   **When to Use**:
     -   As a primary endpoint for automated monitoring and alerting systems (e.g., Prometheus, Datadog).
     -   As the first step in troubleshooting any issue related to feature flags.

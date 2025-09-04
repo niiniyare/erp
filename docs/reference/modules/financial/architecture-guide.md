@@ -1260,6 +1260,6 @@ func (v *accountValidator) isValidAccountTypeForRootType(accountType domain.Acco
 
 ---
 
-This architectural guide provides the foundation for implementing the AWO ERP Financial Module with enterprise-grade capabilities. The design emphasizes clean separation of concerns, robust domain modeling, comprehensive security integration, and high-performance data access patterns.
+This architectural guide provides the foundation for implementing the AWO ERP Financial Module with enterprise-grade capabilities. The design emphasizes clean separation of concerns, robust domain modeling,  security integration, and high-performance data access patterns.
 
 The remaining sections (API Layer Implementation, Security Architecture, Performance Architecture, etc.) would continue with similarly detailed technical specifications, but I've provided the core architectural foundation that demonstrates the sophisticated engineering approach required for this financial system.

@@ -40,9 +40,11 @@ type Service interface {
 // ─── ACCESS REQUEST TYPES ──────────────────────────────────────────────────
 
 // Type aliases from request package
-type AccessRequest = types.AccessRequest
-type RequestType = types.RequestType
-type ApprovalStatus = types.ApprovalStatus
+type (
+	AccessRequest  = types.AccessRequest
+	RequestType    = types.RequestType
+	ApprovalStatus = types.ApprovalStatus
+)
 
 // CreateAccessRequestRequest represents a request to create an access request
 type CreateAccessRequestRequest struct {

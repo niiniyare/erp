@@ -1,6 +1,6 @@
 # User Analytics & Behavior API
 
-The User Analytics & Behavior API provides comprehensive user behavior analysis, risk assessment, and personalized insights to enhance security and user experience.
+The User Analytics & Behavior API provides  user behavior analysis, risk assessment, and personalized insights to enhance security and user experience.
 
 ## 📋 Overview
 
@@ -33,7 +33,7 @@ http://localhost:8080/api/v1/analytics
 | Level | Score Range | Description | Actions |
 |-------|-------------|-------------|---------|
 | `LOW` | 0-25 | Normal behavior | Standard access |
-| `MEDIUM` | 26-50 | Slightly unusual | Enhanced monitoring |
+| `MEDIUM` | 26-50 | Slightly unusual |  monitoring |
 | `HIGH` | 51-75 | Concerning behavior | Additional verification |
 | `CRITICAL` | 76-100 | High-risk behavior | Immediate action required |
 
@@ -101,7 +101,7 @@ cat curl-examples.md
 
 ### Security Monitoring
 ```bash
-# Get comprehensive user behavior pattern
+# Get  user behavior pattern
 curl -X GET http://localhost:8080/api/v1/analytics/users/user-id/behavior | jq .
 
 # Check current risk assessment

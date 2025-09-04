@@ -91,9 +91,11 @@ const (
 )
 
 // Domain Types with enhanced validation
-type KeyID string
-type Algorithm string
-type KeyVersion uint32
+type (
+	KeyID      string
+	Algorithm  string
+	KeyVersion uint32
+)
 
 const (
 	AlgorithmAES256GCM        Algorithm  = "AES-256-GCM"

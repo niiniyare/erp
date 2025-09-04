@@ -35,7 +35,8 @@ func NewABACGoaHandler(
 	coreSvc abac.Service, // Changed parameter name and type
 	metrics metrics.MetricsProvider,
 	tracing tracing.TracingService,
-	logger logger.Logger) abacGen.Service {
+	logger logger.Logger,
+) abacGen.Service {
 	return &abacGoaHandler{
 		coreSvc: coreSvc, // Assigned to coreSvc
 		metrics: metrics,

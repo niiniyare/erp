@@ -866,4 +866,4 @@ configuration_templates:
       stock_allocation_method: "demand_based"
 ```
 
-This comprehensive module configuration system ensures that the ERP can be precisely tailored to meet specific industry requirements while maintaining flexibility for customization and future expansion.
+This  module configuration system ensures that the ERP can be precisely tailored to meet specific industry requirements while maintaining flexibility for customization and future expansion.

@@ -689,7 +689,7 @@ func createEntity(entity Entity) (*Entity, error) {
 ## Testing
 
 ### Postman Collection
-A comprehensive Postman collection is available with:
+A  Postman collection is available with:
 - Pre-configured environments (dev, staging, production)
 - Authentication setup scripts
 - Complete endpoint coverage

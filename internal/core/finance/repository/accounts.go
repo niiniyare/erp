@@ -100,7 +100,6 @@ func (r *chartOfAccountsRepository) GetByID(ctx context.Context, id uuid.UUID) (
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +135,6 @@ func (r *chartOfAccountsRepository) GetByCode(ctx context.Context, entityID *uui
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +270,6 @@ func (r *chartOfAccountsRepository) List(ctx context.Context, filter *domain.Acc
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +324,6 @@ func (r *chartOfAccountsRepository) Count(ctx context.Context, filter *domain.Ac
 
 		return nil
 	})
-
 	if err != nil {
 		return 0, err
 	}
@@ -363,7 +359,6 @@ func (r *chartOfAccountsRepository) ListByParent(ctx context.Context, parentID u
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -416,7 +411,6 @@ func (r *chartOfAccountsRepository) GetAccountHierarchy(ctx context.Context, roo
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -576,7 +570,6 @@ func (r *chartOfAccountsRepository) GetControlAccounts(ctx context.Context, enti
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -656,7 +649,6 @@ func (r *chartOfAccountsRepository) HasChildren(ctx context.Context, accountID u
 		hasChildren = len(children) > 0
 		return nil
 	})
-
 	if err != nil {
 		return false, err
 	}

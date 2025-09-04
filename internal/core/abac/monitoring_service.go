@@ -1086,19 +1086,21 @@ func (ms *monitoringService) checkSecurityImplications(ctx context.Context, even
 
 // Placeholder implementations for remaining interface methods
 
-type AnomalyConfigRequest struct{}
-type AnomalyConfiguration struct{}
-type CreateAlertRequest struct{}
-type AlertQueryRequest struct{}
-type AlertQueryResult struct{}
-type ResolveAlertRequest struct{}
-type DashboardDataRequest struct{}
-type DashboardData struct{}
-type ReportGenerationRequest struct{}
-type MonitoringReport struct{}
-type SystemHealthStatus struct{}
-type HealthCheckRequest struct{}
-type HealthCheckResult struct{}
+type (
+	AnomalyConfigRequest    struct{}
+	AnomalyConfiguration    struct{}
+	CreateAlertRequest      struct{}
+	AlertQueryRequest       struct{}
+	AlertQueryResult        struct{}
+	ResolveAlertRequest     struct{}
+	DashboardDataRequest    struct{}
+	DashboardData           struct{}
+	ReportGenerationRequest struct{}
+	MonitoringReport        struct{}
+	SystemHealthStatus      struct{}
+	HealthCheckRequest      struct{}
+	HealthCheckResult       struct{}
+)
 
 func (ms *monitoringService) ConfigureAnomalyDetection(ctx context.Context, req *AnomalyConfigRequest) (*AnomalyConfiguration, error) {
 	return &AnomalyConfiguration{}, nil

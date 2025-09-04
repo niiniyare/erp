@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Audit & Monitoring API provides comprehensive audit trails, compliance reporting, and security monitoring for regulatory requirements. This service ensures complete visibility into access decisions, user behaviors, and system security events.
+The Audit & Monitoring API provides  audit trails, compliance reporting, and security monitoring for regulatory requirements. This service ensures complete visibility into access decisions, user behaviors, and system security events.
 
 **Goa Service**: `audit-monitoring`  
 **Base Path**: `/api/v1/audit`
@@ -501,7 +501,7 @@ Query Parameters:
 - include_predictions: boolean (default: false)
 - include_risk_factors: boolean (default: true)
 - include_peer_comparison: boolean (default: false)
-- detail_level: summary, detailed, comprehensive (default: detailed)
+- detail_level: summary, detailed,  (default: detailed)
 
 Response: 200 OK
 {
@@ -1161,7 +1161,7 @@ func AuditTrailMiddleware() func(endpoint.Endpoint) endpoint.Endpoint {
 <!---->
 <!-- Request Body: -->
 <!-- { -->
-<!--   "report_type": "comprehensive", -->
+<!--   "report_type": "", -->
 <!--   "time_range": { -->
 <!--     "start": "2025-01-01T00:00:00Z", -->
 <!--     "end": "2025-01-15T23:59:59Z" -->

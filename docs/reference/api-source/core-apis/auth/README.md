@@ -1,6 +1,6 @@
 # Authentication API
 
-The Authentication API provides comprehensive authentication and authorization functionality for the AWO ERP System. This API manages user authentication, JWT token generation, token validation, and session management.
+The Authentication API provides  authentication and authorization functionality for the AWO ERP System. This API manages user authentication, JWT token generation, token validation, and session management.
 
 ## 📋 Overview
 

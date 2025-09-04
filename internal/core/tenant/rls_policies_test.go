@@ -221,7 +221,6 @@ func (suite *RLSPoliciesTestSuite) TestContextValidationFunction() {
 
 // TestTenantRLSIsolation tests that tenants can only see their own data
 func (suite *RLSPoliciesTestSuite) TestTenantRLSIsolation() {
-
 	suite.Run("BasicTenantIsolation", func() {
 		// Set context to first tenant
 		err := suite.store.SetTenantContext(suite.ctx, suite.testTenantID)

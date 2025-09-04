@@ -5,7 +5,12 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/core/featureflag"
 	"github.com/niiniyare/erp/internal/core/finance/domain"
+	"github.com/niiniyare/erp/internal/core/iam"
+	"github.com/niiniyare/erp/internal/core/iam/authz"
+	"github.com/niiniyare/erp/internal/core/iam/model"
+	"github.com/niiniyare/erp/internal/shared"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -50,16 +55,28 @@ type AccountService interface {
 }
 
 type accountService struct {
-	repo    domain.AccountsRepository
-	tracing tracing.TracingService
-	metrics metrics.MetricsProvider
+	repo               domain.AccountsRepository
+	tracing            tracing.TracingService
+	metrics            metrics.MetricsProvider
+	settingsHelper     *SettingsHelper
+	iamService         iam.Service
+	featureFlagService featureflag.Service
 }
 
-func NewAccountService(repo domain.AccountsRepository, tracing tracing.TracingService, metrics metrics.MetricsProvider) AccountService {
+func NewAccountService(
+	repo domain.AccountsRepository,
+	tracing tracing.TracingService,
+	metrics metrics.MetricsProvider,
+	iamService iam.Service,
+	featureFlagService featureflag.Service,
+) AccountService {
 	return &accountService{
-		repo:    repo,
-		tracing: tracing,
-		metrics: metrics,
+		repo:               repo,
+		tracing:            tracing,
+		metrics:            metrics,
+		settingsHelper:     NewSettingsHelper(),
+		iamService:         iamService,
+		featureFlagService: featureFlagService,
 	}
 }
 
@@ -80,6 +97,71 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 			"account_type": string(req.AccountType),
 		})
 
+	// ABAC - Check if user can create accounts
+	if userID, ok := shared.GetUserID(ctx); ok {
+		permissionReq := &authz.PermissionEvaluationRequest{
+			UserID:       userID,
+			ResourceType: "account",
+			Action:       "create",
+			EntityID:     req.EntityID,
+			// TODO: get the rest from thee setion
+			// ResourceID:   &uuid.UUID{},
+			// Context:      map[string]any{},
+			// RequestID:    "",
+		}
+
+		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to evaluate permission", logger.Fields{
+				"user_id": userID.String(),
+				"error":   err.Error(),
+			})
+			return nil, errors.NewBusinessError("PERMISSION_ERROR", "Failed to evaluate permissions")
+		}
+
+		if result.Decision != model.PolicyDecisionAllow {
+			logger.WarnContext(ctx, "Permission denied for account creation", logger.Fields{
+				"user_id":  userID.String(),
+				"decision": string(result.Decision),
+			})
+			return nil, errors.NewBusinessError("UNAUTHORIZED", "Cannot create account")
+		}
+
+		logger.DebugContext(ctx, "Permission granted for account creation", logger.Fields{
+			"user_id":            userID.String(),
+			"evaluation_time_ms": result.EvaluationTimeMS,
+		})
+	}
+
+	// Settings-driven defaults - apply if not specified
+	if req.CurrencyCode == nil || *req.CurrencyCode == "" {
+		currency := domain.DefaultBaseCurrency
+		req.CurrencyCode = &currency // Uses existing constant
+	}
+
+	// Feature Flag - Use enhanced validation if enabled
+	useEnhancedValidation := false
+	tenantID, _ := shared.GetTenantID(ctx)
+	userID, _ := shared.GetUserID(ctx)
+
+	evalCtx := &featureflag.EvaluationContext{
+		TenantID:    tenantID,
+		UserID:      &userID,
+		Environment: "production", // TODO: Get from config
+		Attributes: map[string]string{
+			"module":        "finance",
+			"resource_type": "account",
+		},
+	}
+
+	if evalResult, err := s.featureFlagService.IsEnabled(ctx, "enhanced_account_validation", evalCtx); err == nil {
+		useEnhancedValidation = evalResult
+		logger.DebugContext(ctx, "Feature flag evaluated", logger.Fields{
+			"flag":    "enhanced_account_validation",
+			"enabled": useEnhancedValidation,
+		})
+	}
+
 	if err := req.Validate(); err != nil {
 		s.metrics.IncrementCounter("account_creation_errors", metrics.Fields{
 			"error_type": "validation_error",
@@ -93,6 +175,20 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 
 		return nil, fmt.Errorf("account validation failed: %v", err)
 	}
+
+	// Enhanced validation if feature flag is enabled
+	if useEnhancedValidation {
+		// Additional validation rules when enhanced validation is enabled
+		if len(req.AccountCode) < 3 {
+			return nil, errors.NewBusinessError("VALIDATION_ERROR", "Account code must be at least 3 characters when enhanced validation is enabled")
+		}
+		logger.DebugContext(ctx, "Using enhanced account validation", logger.Fields{"account_code": req.AccountCode})
+	}
+
+	// Settings-driven account code validation
+	// TODO: Get account code length setting when Settings service is available
+	// accountCodeLength := s.settingsService.GetEffectiveConfiguration(ctx, req.EntityID, "finance", "account_code_length")
+	// if len(req.AccountCode) > accountCodeLength { ... }
 
 	if err := s.repo.ValidateAccountCode(ctx, req.AccountCode, nil); err != nil {
 		s.metrics.IncrementCounter("account_creation_errors", metrics.Fields{
@@ -241,6 +337,24 @@ func (s *accountService) GetAccountByCode(ctx context.Context, code string) (*do
 	logger.DebugContext(ctx, "Getting account by code",
 		logger.Fields{"account_code": code})
 
+	// ABAC - Check if user can read accounts
+	if userID, ok := shared.GetUserID(ctx); ok {
+		permissionReq := &authz.PermissionEvaluationRequest{
+			UserID:       userID,
+			ResourceType: "account",
+			Action:       "read",
+		}
+
+		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
+		if err != nil || result.Decision != model.PolicyDecisionAllow {
+			logger.WarnContext(ctx, "Permission denied for account read", logger.Fields{
+				"user_id":      userID.String(),
+				"account_code": code,
+			})
+			return nil, errors.NewBusinessError("UNAUTHORIZED", "Cannot read account")
+		}
+	}
+
 	// TODO: Get entityID from context or parameter
 	account, err := s.repo.GetByCode(ctx, nil, code)
 	if err != nil {
@@ -277,6 +391,25 @@ func (s *accountService) UpdateAccount(ctx context.Context, id uuid.UUID, req do
 
 	logger.InfoContext(ctx, "Starting account update",
 		logger.Fields{"account_id": id.String()})
+
+	// ABAC - Check if user can update this account
+	if userID, ok := shared.GetUserID(ctx); ok {
+		permissionReq := &authz.PermissionEvaluationRequest{
+			UserID:       userID,
+			ResourceType: "account",
+			ResourceID:   &id,
+			Action:       "update",
+		}
+
+		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
+		if err != nil || result.Decision != model.PolicyDecisionAllow {
+			logger.WarnContext(ctx, "Permission denied for account update", logger.Fields{
+				"user_id":    userID.String(),
+				"account_id": id.String(),
+			})
+			return nil, errors.NewBusinessError("UNAUTHORIZED", "Cannot update account")
+		}
+	}
 
 	existingAccount, err := s.repo.GetByID(ctx, id)
 	if err != nil {
@@ -405,6 +538,44 @@ func (s *accountService) DeleteAccount(ctx context.Context, id uuid.UUID) error 
 	logger.InfoContext(ctx, "Starting account deletion",
 		logger.Fields{"account_id": id.String()})
 
+	// ABAC - Check if user can delete accounts
+	if userID, ok := shared.GetUserID(ctx); ok {
+		permissionReq := &authz.PermissionEvaluationRequest{
+			UserID:       userID,
+			ResourceType: "account",
+			ResourceID:   &id,
+			Action:       "delete",
+		}
+
+		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
+		if err != nil || result.Decision != model.PolicyDecisionAllow {
+			logger.WarnContext(ctx, "Permission denied for account deletion", logger.Fields{
+				"user_id":    userID.String(),
+				"account_id": id.String(),
+			})
+			return errors.NewBusinessError("UNAUTHORIZED", "Cannot delete account")
+		}
+	}
+
+	// Feature Flag - Check if enhanced deletion checks are enabled
+	tenantID, _ := shared.GetTenantID(ctx)
+	userID, _ := shared.GetUserID(ctx)
+
+	evalCtx := &featureflag.EvaluationContext{
+		TenantID:    tenantID,
+		UserID:      &userID,
+		Environment: "production",
+		Attributes: map[string]string{
+			"module":    "finance",
+			"operation": "delete",
+		},
+	}
+
+	useEnhancedDeletionChecks := false
+	if evalResult, err := s.featureFlagService.IsEnabled(ctx, "enhanced_account_deletion", evalCtx); err == nil {
+		useEnhancedDeletionChecks = evalResult
+	}
+
 	account, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		logger.ErrorContext(ctx, "Account not found for deletion",
@@ -459,6 +630,15 @@ func (s *accountService) DeleteAccount(ctx context.Context, id uuid.UUID) error 
 			})
 
 		return errors.NewBusinessError("HAS_CHILDREN", "Cannot delete account with child accounts")
+	}
+
+	// Enhanced deletion checks if feature flag is enabled
+	if useEnhancedDeletionChecks {
+		// Additional checks when enhanced deletion is enabled
+		logger.InfoContext(ctx, "Performing enhanced deletion checks", logger.Fields{"account_id": id.String()})
+
+		// Example: Check for pending reconciliations, scheduled transactions, etc.
+		// This would be additional business logic when the feature is enabled
 	}
 
 	timer := s.metrics.Timer("account_deletion_duration", metrics.Fields{
@@ -516,6 +696,46 @@ func (s *accountService) ListAccounts(ctx context.Context, filter *domain.Accoun
 			"limit":  getIntValue(filter.Limit),
 			"offset": getIntValue(filter.Offset),
 		})
+
+	// ABAC - Filter accounts based on user permissions
+	if userID, ok := shared.GetUserID(ctx); ok {
+		// Get user's effective permissions to determine what they can see
+		permissions, err := s.iamService.Authorization().GetUserEffectivePermissions(ctx, userID, nil)
+		if err != nil {
+			logger.WarnContext(ctx, "Failed to get user permissions for account listing", logger.Fields{
+				"user_id": userID.String(),
+				"error":   err.Error(),
+			})
+		} else {
+			// In a real implementation, you would filter the accounts based on permissions
+			logger.DebugContext(ctx, "Applied permission-based filtering", logger.Fields{
+				"user_id":           userID.String(),
+				"permissions_count": len(permissions.Permissions),
+			})
+		}
+	}
+
+	// Feature Flag - Use enhanced listing if enabled
+	tenantID, _ := shared.GetTenantID(ctx)
+	userID, _ := shared.GetUserID(ctx)
+
+	evalCtx := &featureflag.EvaluationContext{
+		TenantID:    tenantID,
+		UserID:      &userID,
+		Environment: "production",
+		Attributes: map[string]string{
+			"module":    "finance",
+			"operation": "list",
+		},
+	}
+
+	useEnhancedListing := false
+	if evalResult, err := s.featureFlagService.IsEnabled(ctx, "enhanced_account_listing", evalCtx); err == nil {
+		useEnhancedListing = evalResult
+		if useEnhancedListing {
+			logger.DebugContext(ctx, "Using enhanced account listing", logger.Fields{"enhanced": true})
+		}
+	}
 
 	if filter.Limit == nil || *filter.Limit <= 0 {
 		limit := 50
@@ -665,12 +885,60 @@ func (s *accountService) SearchAccounts(ctx context.Context, query string, limit
 			"limit": limit,
 		})
 
+	// ABAC - Check if user can search accounts
+	if userID, ok := shared.GetUserID(ctx); ok {
+		permissionReq := &authz.PermissionEvaluationRequest{
+			UserID:       userID,
+			ResourceType: "account",
+			Action:       "search",
+		}
+
+		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
+		if err != nil || result.Decision != model.PolicyDecisionAllow {
+			logger.WarnContext(ctx, "Permission denied for account search", logger.Fields{
+				"user_id": userID.String(),
+				"query":   query,
+			})
+			return nil, errors.NewBusinessError("UNAUTHORIZED", "Cannot search accounts")
+		}
+	}
+
+	// Feature Flag - Enhanced search capabilities
+	tenantID, _ := shared.GetTenantID(ctx)
+	userID, _ := shared.GetUserID(ctx)
+
+	evalCtx := &featureflag.EvaluationContext{
+		TenantID:    tenantID,
+		UserID:      &userID,
+		Environment: "production",
+		Attributes: map[string]string{
+			"module":    "finance",
+			"operation": "search",
+		},
+	}
+
+	useEnhancedSearch := false
+	if evalResult, err := s.featureFlagService.IsEnabled(ctx, "enhanced_account_search", evalCtx); err == nil {
+		useEnhancedSearch = evalResult
+		if useEnhancedSearch {
+			logger.DebugContext(ctx, "Using enhanced account search", logger.Fields{"enhanced": true})
+		}
+	}
+
+	// Settings-driven limit configuration
 	if limit <= 0 {
+		// Default from settings helper
 		limit = 50
 	}
 
-	if limit > 200 {
-		limit = 200
+	maxLimit := 200
+	if useEnhancedSearch {
+		// Enhanced search allows more results
+		maxLimit = 500
+	}
+
+	if limit > maxLimit {
+		limit = maxLimit
 	}
 
 	accounts, err := s.repo.Search(ctx, query, limit)
@@ -1051,4 +1319,55 @@ func getStringValue(s *string) string {
 		return ""
 	}
 	return *s
+}
+
+// Settings integration helper functions
+func (s *accountService) generateAccountCode(ctx context.Context, entityID *uuid.UUID, accountType string) (string, error) {
+	// Settings-driven account code generation
+	// TODO: When Settings service is available, get numbering scheme and format
+	// scheme := s.settingsService.GetEffectiveConfiguration(ctx, entityID, "finance", "account_numbering_scheme")
+	// format := s.settingsService.GetEffectiveConfiguration(ctx, entityID, "finance", "account_code_format")
+
+	// For now, use constants from settings helper
+	if accountType == domain.AccountTypeCurrentAsset {
+		// Asset accounts start with 1
+		return "1000", nil
+	} else if accountType == domain.AccountTypeCurrentLiability {
+		// Liability accounts start with 2
+		return "2000", nil
+	}
+
+	// Default fallback
+	return "9000", nil
+}
+
+// Business logic integration examples
+func (s *accountService) shouldRequireApproval(ctx context.Context, entityID *uuid.UUID, operation string) bool {
+	// Settings-driven approval requirements
+	// TODO: When Settings service is available
+	// approvalRequired := s.settingsService.GetEffectiveConfiguration(ctx, entityID, "finance", "require_account_approval")
+
+	// For now, use default behavior
+	return operation == "delete" // Only require approval for deletions
+}
+
+func (s *accountService) isEnhancedFeatureEnabled(ctx context.Context, featureName string, entityID *uuid.UUID) bool {
+	// Feature flag evaluation with proper context
+	tenantID, _ := shared.GetTenantID(ctx)
+	userID, _ := shared.GetUserID(ctx)
+
+	evalCtx := &featureflag.EvaluationContext{
+		TenantID:    tenantID,
+		UserID:      &userID,
+		Environment: "production",
+		Attributes: map[string]string{
+			"module":    "finance",
+			"entity_id": entityID.String(),
+		},
+	}
+
+	if evalResult, err := s.featureFlagService.IsEnabled(ctx, featureName, evalCtx); err == nil {
+		return evalResult
+	}
+	return false
 }

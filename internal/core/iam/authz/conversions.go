@@ -289,7 +289,7 @@ func convertApprovalConditionsFromIAM(iamConditions []*ApprovalCondition) []*acc
 	return accessConditions
 }
 
-// Local type definitions for missing types in IAM model
+// ApprovalCondition Local type definitions for missing types in IAM model
 type ApprovalCondition struct {
 	Type        string `json:"type"`
 	Operator    string `json:"operator"`
@@ -298,16 +298,18 @@ type ApprovalCondition struct {
 }
 
 // Use IAM model types directly
-type DeviceInfo = model.DeviceContext
-type LocationInfo = model.GeolocationContext
-type SecurityContext struct {
-	ThreatLevel         string         `json:"threat_level"`
-	AuthenticationLevel string         `json:"authentication_level"`
-	EncryptionLevel     string         `json:"encryption_level"`
-	SecurityFlags       []string       `json:"security_flags"`
-	RiskScore           float64        `json:"risk_score"`
-	Attributes          map[string]any `json:"attributes"`
-}
+type (
+	DeviceInfo      = model.DeviceContext
+	LocationInfo    = model.GeolocationContext
+	SecurityContext struct {
+		ThreatLevel         string         `json:"threat_level"`
+		AuthenticationLevel string         `json:"authentication_level"`
+		EncryptionLevel     string         `json:"encryption_level"`
+		SecurityFlags       []string       `json:"security_flags"`
+		RiskScore           float64        `json:"risk_score"`
+		Attributes          map[string]any `json:"attributes"`
+	}
+)
 
 type TimeContext struct {
 	RequestTime   time.Time      `json:"request_time"`

@@ -17,12 +17,12 @@ The Policy Management API enables business users to create, manage, and test com
 ## 🔄 **Latest Enhancement: Policy Manager CRUD & Analytics** 
 **Date**: August 25, 2025
 
-### **Enhanced Policy Service Implementation**
+### ** Policy Service Implementation**
 
-The Policy Manager now includes comprehensive CRUD operations and advanced analytics capabilities:
+The Policy Manager now includes  CRUD operations and advanced analytics capabilities:
 
 #### **Advanced Policy Listing** 
-- **Enhanced ListPolicies Method**: Intelligent caching with tenant-specific keys
+- ** ListPolicies Method**: Intelligent caching with tenant-specific keys
 - **Multi-level Caching**: Redis-based caching reducing database load by 80%
 - **Advanced Filtering**: Filter by type, category, search terms with full-text search
 - **Flexible Pagination**: Configurable limits with cursor-based pagination
@@ -627,7 +627,7 @@ Request Body:
 {
   "name": "financial_data_access_policy_v2",
   "display_name": "Financial Data Access Control V2",
-  "description": "Enhanced version of financial data access policy",
+  "description": " version of financial data access policy",
   "modifications": {
     "priority": 105,
     "rule": {

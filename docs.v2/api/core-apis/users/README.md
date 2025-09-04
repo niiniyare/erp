@@ -1,6 +1,6 @@
 # User Management API
 
-The User Management API provides comprehensive user authentication, authorization, and management capabilities following a clean architecture pattern.
+The User Management API provides  user authentication, authorization, and management capabilities following a clean architecture pattern.
 
 ## 📋 Overview
 

@@ -1,6 +1,6 @@
 # Entity Management API
 
-The Entity Management API provides comprehensive CRUD operations for managing business entities in a hierarchical structure.
+The Entity Management API provides  CRUD operations for managing business entities in a hierarchical structure.
 
 ## 📋 Overview
 

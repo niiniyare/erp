@@ -881,16 +881,18 @@ func (cl *compatibilityLayer) estimateCompletion(ctx context.Context, phases []M
 
 // Placeholder method implementations for complete interface
 
-type FallbackEvaluationRequest struct{}
-type FallbackEvaluationResult struct{}
-type PermissionBridgeRequest struct{}
-type PermissionBridge struct{}
-type BridgeEvaluationRequest struct{}
-type BridgeEvaluationResult struct{}
-type CompatibilityMonitoringRequest struct{}
-type CompatibilityMonitoringResult struct{}
-type CompatibilityReportRequest struct{}
-type CompatibilityReport struct{}
+type (
+	FallbackEvaluationRequest      struct{}
+	FallbackEvaluationResult       struct{}
+	PermissionBridgeRequest        struct{}
+	PermissionBridge               struct{}
+	BridgeEvaluationRequest        struct{}
+	BridgeEvaluationResult         struct{}
+	CompatibilityMonitoringRequest struct{}
+	CompatibilityMonitoringResult  struct{}
+	CompatibilityReportRequest     struct{}
+	CompatibilityReport            struct{}
+)
 
 func (cl *compatibilityLayer) EvaluateWithFallback(ctx context.Context, req *FallbackEvaluationRequest) (*FallbackEvaluationResult, error) {
 	return &FallbackEvaluationResult{}, nil

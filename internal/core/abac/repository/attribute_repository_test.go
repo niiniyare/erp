@@ -572,7 +572,7 @@ func (s *AttributeRepositoryTestSuite) TestCreateAttributeValue() {
 func (s *AttributeRepositoryTestSuite) TestGetAttributeValuesByEntity() {
 	// Create attribute definitions and values for testing
 	var userDef, resourceDef *models.AttributeDefinition
-	var testEntityID = uuid.New()
+	testEntityID := uuid.New()
 
 	err := s.runner.GetStore().WithTenant(s.ctx, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
 		// Create user attribute definition

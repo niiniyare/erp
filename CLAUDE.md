@@ -117,7 +117,7 @@ npm run preview         # Preview production build
 - `internal/core/` - Business logic and domain services
   - `internal/core/finance/` - Financial module (80% complete):
     - `domain/` - Financial entities, value objects, and business rules
-    - `service/` - Business logic layer with 10 comprehensive services (7,256 lines)
+    - `service/` - Business logic layer with 10  services (7,256 lines)
     - `repository/` - Data access layer with full SQLC integration (4,730 lines)
 - `internal/platform/` - Infrastructure concerns (database, cache, config)
 - `internal/shared/` - Common utilities and types
@@ -150,7 +150,7 @@ npm run preview         # Preview production build
 ## Financial Module Implementation Status
 
 ### ✅ **Completed Components (80% of module)**
-- **Database Schema**: 5 migrations with comprehensive financial tables and constraints
+- **Database Schema**: 5 migrations with  financial tables and constraints
 - **Domain Layer**: 9 files with rich entities, value objects, and business validation
 - **Service Layer**: 10 services totaling 7,256 lines including:
   - Transaction processing with state machine workflows

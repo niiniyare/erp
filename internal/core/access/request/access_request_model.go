@@ -11,9 +11,11 @@ import (
 )
 
 // Type aliases for shared types
-type RequestType = types.RequestType
-type ApprovalStatus = types.ApprovalStatus
-type AccessRequest = types.AccessRequest
+type (
+	RequestType    = types.RequestType
+	ApprovalStatus = types.ApprovalStatus
+	AccessRequest  = types.AccessRequest
+)
 
 const (
 	RequestTypeRoleAssignment  = types.RequestTypeRoleAssignment

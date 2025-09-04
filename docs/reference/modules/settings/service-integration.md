@@ -795,4 +795,4 @@ func (s *ServiceWithCache) HandleConfigurationChanged(ctx context.Context, event
 
 ---
 
-This integration guide provides comprehensive patterns and examples for services to effectively use the Settings system while maintaining performance, reliability, and operational visibility.
+This integration guide provides  patterns and examples for services to effectively use the Settings system while maintaining performance, reliability, and operational visibility.

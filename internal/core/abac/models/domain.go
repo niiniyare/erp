@@ -208,7 +208,6 @@ func (p *Policy) LogEvaluation(ctx context.Context, log logger.Logger, decision 
 
 // RecordMetrics records policy evaluation metrics
 func (p *Policy) RecordMetrics(ctx context.Context, m metrics.MetricsProvider, decision types.PolicyDecisionType, evaluationTime time.Duration) {
-
 	// Policy evaluation counter
 	policyCounter := m.Counter(
 		"abac_policy_evaluations_total",

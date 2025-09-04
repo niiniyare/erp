@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-This document describes the comprehensive ABAC (Attribute-Based Access Control) enhancements made to the existing user service. The integration provides enterprise-grade, context-aware authorization capabilities that complement the existing RBAC system.
+This document describes the  ABAC (Attribute-Based Access Control) enhancements made to the existing user service. The integration provides enterprise-grade, context-aware authorization capabilities that complement the existing RBAC system.
 
 ## 🎯 Key Features
 
@@ -38,7 +38,7 @@ PUT    /api/v1/users/{user_id}/sessions/{session_id}/context    - Set session co
 
 ### 4. User Context & Analytics
 ```
-GET    /api/v1/users/{id}/context - Get comprehensive user context for ABAC
+GET    /api/v1/users/{id}/context - Get  user context for ABAC
 ```
 
 ## 📊 ABAC Capabilities

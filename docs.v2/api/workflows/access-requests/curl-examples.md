@@ -1,6 +1,6 @@
 # Access Request Workflow API Testing Guide
 
-This guide provides comprehensive curl commands to test the Access Request Workflow API including conditional access controls and user analytics.
+This guide provides  curl commands to test the Access Request Workflow API including conditional access controls and user analytics.
 
 ## 🚀 Prerequisites
 
@@ -484,7 +484,7 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/rules \
 ### 15. Get User Behavior Analytics
 
 ```bash
-# Get comprehensive user behavior analytics
+# Get  user behavior analytics
 curl -X GET http://localhost:8080/api/v1/analytics/users/00000000-0000-0000-0000-000000000001/behavior \
   -H "Content-Type: application/json" | jq .
 
@@ -833,7 +833,7 @@ echo "✅ Access Request Workflow API test suite completed!"
 - The X-User-ID header is required for user context
 - Duration is specified in hours
 - All timestamps are in ISO 8601 format
-- Analytics endpoints return comprehensive behavioral data
+- Analytics endpoints return  behavioral data
 - Conditional access rules support multiple restriction types
 - Risk assessments are calculated based on behavioral patterns
 

@@ -1,7 +1,9 @@
 package service
 
 import (
+	"github.com/niiniyare/erp/internal/core/featureflag"
 	"github.com/niiniyare/erp/internal/core/finance/domain"
+	"github.com/niiniyare/erp/internal/core/iam"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -19,8 +21,10 @@ type Dependencies struct {
 	AccountRepo     domain.AccountsRepository
 	TransactionRepo domain.TransactionRepository
 	// TransactionEntryRepo domain.TransactionRepository // TODO: Create separate entry repository
-	Tracing tracing.TracingService
-	Metrics metrics.MetricsProvider
+	Tracing            tracing.TracingService
+	Metrics            metrics.MetricsProvider
+	IAMService         iam.Service
+	FeatureFlagService featureflag.Service
 }
 
 // NewServices creates a new instance of finance services with all dependencies
@@ -48,6 +52,8 @@ func NewServices(deps Dependencies) *Services {
 		deps.AccountRepo,
 		deps.Tracing,
 		deps.Metrics,
+		deps.IAMService,
+		deps.FeatureFlagService,
 	)
 
 	return &Services{

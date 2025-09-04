@@ -2,7 +2,7 @@
 
 ## ⛽ Overview
 
-The Forecourt Management module transforms the core ERP into a comprehensive fuel retail and convenience store management platform. It provides fuel inventory management, pump operations, environmental compliance, fleet card processing, and integrated retail operations designed for gas stations, truck stops, and fuel distribution centers.
+The Forecourt Management module transforms the core ERP into a  fuel retail and convenience store management platform. It provides fuel inventory management, pump operations, environmental compliance, fleet card processing, and integrated retail operations designed for gas stations, truck stops, and fuel distribution centers.
 
 ## 🛢️ Fuel Management System
 
@@ -1008,4 +1008,4 @@ class FleetCardService implements FleetManagementSystem {
 }
 ```
 
-This comprehensive forecourt management system provides sophisticated fuel inventory control, pump operations, environmental compliance, and fleet card processing capabilities specifically designed for gas stations and fuel retail operations while integrating seamlessly with the core ERP financial, inventory, and customer management modules.
+This  forecourt management system provides sophisticated fuel inventory control, pump operations, environmental compliance, and fleet card processing capabilities specifically designed for gas stations and fuel retail operations while integrating seamlessly with the core ERP financial, inventory, and customer management modules.

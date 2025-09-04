@@ -516,7 +516,7 @@ func (l *LoggerConfig) ToLoggerConfig(appConfig *AppConfig) LoggerPackageConfig 
 		config.Output = os.Stdout
 	default:
 		// If it's not stdout/stderr, assume it's a file path
-		if file, err := os.OpenFile(l.Output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
+		if file, err := os.OpenFile(l.Output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666); err == nil {
 			config.Output = file
 		} else {
 			config.Output = os.Stdout // Fallback to stdout if file can't be opened

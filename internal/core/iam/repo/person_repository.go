@@ -84,7 +84,6 @@ func (r *personRepository) Create(ctx context.Context, person *model.Person) (*m
 		r.metrics.IncrementCounter("person_repository_create_success", nil)
 		return nil
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementCounter("person_repository_create_error", nil)
@@ -118,7 +117,6 @@ func (r *personRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Pe
 		person = convertPersonToDomain(dbPerson)
 		return nil
 	})
-
 	if err != nil {
 		r.tracer.RecordError(ctx, err, tracing.WithErrorStatus())
 		r.metrics.IncrementCounter("person_repository_get_error", nil)

@@ -8,7 +8,7 @@ This guide shows you how to apply the standardized 3-tier validation system to a
 
 ### **Tier 1: Structural Validation** ✅
 - Standard validation columns on every table
-- Enhanced RLS policies with NULL protection
+-  RLS policies with NULL protection
 - Performance indexes for validation queries
 - Proper documentation and comments
 
@@ -41,7 +41,7 @@ This guide shows you how to apply the standardized 3-tier validation system to a
 <!-- validation_errors JSONB DEFAULT '[]'::jsonb, -->
 <!-- ``` -->
 <!---->
-### **Step 2: Enhanced RLS Policies**
+### **Step 2:  RLS Policies**
 
 Apply this pattern to **every table**:
 
@@ -70,7 +70,7 @@ CREATE POLICY your_table_admin_access ON your_table
 
 ### **Step 3: Required Comments**
 
-Add comprehensive documentation:
+Add  documentation:
 
 ```sql
 COMMENT ON TABLE your_table IS 
@@ -253,8 +253,8 @@ INSERT INTO business_validation_rules (
 -- Set tenant context first
 SELECT set_tenant_context('your-tenant-uuid-here');
 
--- Run comprehensive validation
-SELECT * FROM run_comprehensive_validation();
+-- Run  validation
+SELECT * FROM run__validation();
 
 -- Check specific table validation
 SELECT * FROM check_all_business_logic() 

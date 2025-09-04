@@ -95,7 +95,7 @@
 
 #### Week 4: Advanced Business Logic 🔥
 
-**Enhanced Domain Services**:
+** Domain Services**:
 - [ ] Complex business rule implementation
 - [ ] Multi-entity transaction handling
 - [ ] State machine transitions

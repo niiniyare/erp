@@ -10,7 +10,7 @@
 ## Overview
 
 ### API Description
-The Settings Module API provides comprehensive configuration management capabilities within the AWO ERP system. This API supports three-level configuration inheritance (System → Tenant → Entity), template-based configuration deployment, and enterprise-grade bulk operations for efficient configuration management.
+The Settings Module API provides  configuration management capabilities within the AWO ERP system. This API supports three-level configuration inheritance (System → Tenant → Entity), template-based configuration deployment, and enterprise-grade bulk operations for efficient configuration management.
 
 ### Base Information
 - **Base URL**: `https://api.awo-erp.com/api/v1/settings`
@@ -1112,7 +1112,7 @@ func resolveConfigurations(tenantID, entityID string, configs []struct{ Module, 
 ## Testing
 
 ### Postman Collection
-A comprehensive Postman collection is available with:
+A  Postman collection is available with:
 - Pre-configured environments (dev, staging, production)
 - Authentication setup scripts  
 - Complete endpoint coverage

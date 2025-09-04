@@ -148,7 +148,6 @@ func (j *JWTManager) validateToken(tokenString string, expectedType TokenType, s
 		}
 		return []byte(secret), nil
 	})
-
 	if err != nil {
 		return nil, errors.NewBusinessError("INVALID_TOKEN", "Token validation failed")
 	}
@@ -221,7 +220,6 @@ func ExtractClaimsFromToken(tokenString string) (map[string]any, error) {
 		// Don't validate signature for extraction
 		return []byte("dummy"), nil
 	})
-
 	if err != nil {
 		// Check if it's a malformed token error
 		if err == jwt.ErrTokenMalformed {

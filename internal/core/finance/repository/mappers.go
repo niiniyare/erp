@@ -471,7 +471,6 @@ func timeToPointer(t pgtype.Timestamptz) *time.Time {
 }
 
 func dateToPtr(t *time.Time) *pgtype.Date {
-
 	if t != nil {
 		return &pgtype.Date{Time: *t, Valid: true}
 	}

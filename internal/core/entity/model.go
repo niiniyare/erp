@@ -127,7 +127,6 @@ func FromSQLCEntity(sqlcEntity *db.Entity) (*Entity, error) {
 	var parentID *uuid.UUID
 	if sqlcEntity.ParentID == nil {
 		parentID = sqlcEntity.ParentID
-
 	}
 
 	return &Entity{

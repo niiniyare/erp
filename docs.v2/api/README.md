@@ -1,6 +1,6 @@
 # AWO ERP System API Documentation
 
-Welcome to the AWO ERP System API documentation. This directory contains comprehensive testing resources, documentation, and utilities for all API endpoints.
+Welcome to the AWO ERP System API documentation. This directory contains  testing resources, documentation, and utilities for all API endpoints.
 
 ## 📁 Directory Structure
 
@@ -138,7 +138,7 @@ curl -X GET http://localhost:8080/api/v1/tenants/health | jq .
 
 ### Full System Test
 ```bash
-# Run comprehensive test suite
+# Run  test suite
 ./utilities/scripts/run-all-tests.sh
 
 # Test specific API

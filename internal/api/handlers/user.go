@@ -1790,6 +1790,7 @@ func (h *UserGoaHandler) Create(ctx context.Context, p *user.CreateUserPayload) 
 
 	return userResult, "default", nil
 }
+
 func (h *UserGoaHandler) AuthorizeAction(context.Context, *user.AuthorizeActionPayload) (res *user.AuthorizationResult, err error) {
 	return nil, errors.New("NOT implemented")
 }

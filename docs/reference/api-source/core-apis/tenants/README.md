@@ -1,6 +1,6 @@
 # Tenant Management API
 
-The Tenant Management API provides comprehensive functionality for managing multi-tenant configurations in the AWO ERP System. This API enables tenant isolation, configuration, and management across the enterprise.
+The Tenant Management API provides  functionality for managing multi-tenant configurations in the AWO ERP System. This API enables tenant isolation, configuration, and management across the enterprise.
 
 ## 📋 Overview
 
