@@ -11,7 +11,7 @@
 -- - Both tables must exist before running this schema
 -- ================================================================================================
 CREATE TABLE persons (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
   person_type VARCHAR(20) NOT NULL CHECK (

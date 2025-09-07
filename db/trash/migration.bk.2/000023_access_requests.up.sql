@@ -8,7 +8,7 @@
 -- Approval workflow for access requests with business justification and lifecycle management.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS access_requests (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     requester_id UUID NOT NULL REFERENCES users(id),
     target_user_id UUID REFERENCES users(id),      -- If requesting for someone else

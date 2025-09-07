@@ -1,6 +1,6 @@
 -- -- Projects table (can be under any entity)
 -- CREATE TABLE projects (
---     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
 --     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
 --     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
 --     -- parent_project_id INT REFERENCES projects(id), -- Sub-projects
@@ -24,7 +24,7 @@
 --
 -- -- Budget management
 -- CREATE TABLE budgets (
---     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
 --     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
 --     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
 --     project_id UUID REFERENCES projects(id), -- Optional project budget
@@ -47,7 +47,7 @@
 --
 -- -- Multi-tenant Unit of Measure (UOM) table with conversion system
 -- CREATE TABLE uom (
---     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
 --     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
 --     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
 --     uom_name VARCHAR(255) NOT NULL,
@@ -68,7 +68,7 @@
 --
 -- -- Multi-tenant UOM Conversion table for complex conversions
 -- CREATE TABLE uom_conversion (
---     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
 --     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
 --     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
 --     from_uom_id UUID NOT NULL REFERENCES uom(id),

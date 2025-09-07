@@ -181,7 +181,7 @@ UPDATE
 SET
   first_name = 'REDACTED',
   last_name = 'REDACTED',
-  email = 'redacted_' || uuid_generate_v4() || '@example.com',
+  email = 'redacted_' || gen_random_uuid() || '@example.com',
   phone = NULL,
   national_id = NULL,
   tax_id = NULL
@@ -330,7 +330,7 @@ WHERE
 --- 7. Security Notification System:
 -- Notification table
 CREATE TABLE security_notifications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id),
   notification_type VARCHAR(50) NOT NULL CHECK (

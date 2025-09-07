@@ -1,8 +1,3 @@
--- +migrate Up
-BEGIN
-;
-
--- ENHANCED TRIGGERS AND FUNCTIONS
 -- Function to update account balances after transaction posting
 CREATE
 OR REPLACE FUNCTION update_account_balances_after_posting() RETURNS TRIGGER AS
@@ -603,4 +598,3 @@ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION analyze_finance_tables_performance IS 'Analyzes performance metrics for finance module tables';
 
-COMMIT;

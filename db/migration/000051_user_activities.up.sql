@@ -6,7 +6,7 @@
 -- Partitioned by timestamp for performance at scale
 -- Main partitioned table for user activity tracking
 CREATE TABLE user_activities (
-  id UUID DEFAULT uuid_generate_v4(),
+  id UUID DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,

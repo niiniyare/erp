@@ -17,7 +17,7 @@ v_slug VARCHAR(50);
 
 BEGIN
 -- Generate UUID and slug
-v_tenant_id := uuid_generate_v4();
+v_tenant_id := gen_random_uuid();
 
 v_slug := lower(
   regexp_replace(p_name, '[^a-zA-Z0-9]+', '-', 'g')

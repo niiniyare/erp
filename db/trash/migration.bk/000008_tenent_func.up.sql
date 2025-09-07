@@ -541,7 +541,7 @@ COMMENT ON FUNCTION is_valid_uuid(TEXT) IS 'Validates if a text string is a prop
 CREATE OR REPLACE FUNCTION ensure_valid_uuid(input_uuid UUID DEFAULT NULL)
 RETURNS UUID AS $$
 BEGIN
-    RETURN COALESCE(input_uuid, uuid_generate_v4());
+    RETURN COALESCE(input_uuid, gen_random_uuid());
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 

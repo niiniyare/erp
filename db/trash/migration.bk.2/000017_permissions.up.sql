@@ -4,7 +4,7 @@
 -- Granular permissions combining resources and actions with ABAC conditions.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS permissions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
     action_id UUID NOT NULL REFERENCES actions(id) ON DELETE CASCADE,

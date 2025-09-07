@@ -12,7 +12,7 @@
 -- - employees table with UUID primary key
 -- ================================================================================================
 CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
   person_id UUID REFERENCES persons(id) ON DELETE

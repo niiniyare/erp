@@ -32,7 +32,7 @@ BEGIN
                 WHEN 'tenant_id' THEN
                     fix_sql := fix_sql || '    ADD COLUMN IF NOT EXISTS tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,' || E'\n';
                 WHEN 'entity_id' THEN
-                    fix_sql := fix_sql || '    ADD COLUMN IF NOT EXISTS entity_id UUID NOT NULL DEFAULT uuid_generate_v4(),' || E'\n';
+                    fix_sql := fix_sql || '    ADD COLUMN IF NOT EXISTS entity_id UUID NOT NULL DEFAULT gen_random_uuid(),' || E'\n';
                 WHEN 'created_at' THEN
                     fix_sql := fix_sql || '    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),' || E'\n';
                 WHEN 'updated_at' THEN

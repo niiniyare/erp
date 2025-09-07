@@ -385,7 +385,7 @@ WHERE RANDOM() < 0.6;
 -- Entity state tracking
 INSERT INTO entitystate (uuid, fiscal_year, key, sequence, entity_id)
 SELECT
-    uuid_generate_v4(),
+    gen_random_uuid(),
     EXTRACT(YEAR FROM NOW()),
     docs.key,
     1000,

@@ -5,7 +5,7 @@
 -- =====================================================================
 
 CREATE TABLE item_categories (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     parent_id UUID REFERENCES item_categories(id),

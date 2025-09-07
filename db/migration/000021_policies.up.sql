@@ -7,7 +7,7 @@
 -- ABAC policies with advanced rule engine, priorities, and compliance tracking.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS policies (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID REFERENCES entities(uuid),  -- Entity scope for policy
   name VARCHAR(150) NOT NULL,

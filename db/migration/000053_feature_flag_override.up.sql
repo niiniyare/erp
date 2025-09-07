@@ -4,7 +4,7 @@
 -- =====================================================
 CREATE TABLE tenant_feature_overrides (
   -- Primary identifier
-  id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   -- References
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,

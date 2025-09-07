@@ -12,7 +12,7 @@
 -- ================================================================================================
 
 CREATE TABLE employees (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     person_id UUID NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
     employee_number VARCHAR(50) NOT NULL,

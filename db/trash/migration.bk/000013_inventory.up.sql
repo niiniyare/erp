@@ -4,7 +4,7 @@
 
 -- Warehouses/Locations
 CREATE TABLE warehouses (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     code VARCHAR(20) NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE warehouses (
 
 -- Item Categories
 CREATE TABLE item_categories (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     parent_id UUID REFERENCES item_categories(id),
@@ -36,7 +36,7 @@ CREATE TABLE item_categories (
 
 -- Items/Products
 CREATE TABLE items (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     item_code VARCHAR(50) NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE items (
 
 -- Inventory Balances
 CREATE TABLE inventory_balances (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
@@ -87,7 +87,7 @@ CREATE TABLE inventory_balances (
 
 -- Inventory Movements/Transactions
 CREATE TABLE inventory_movements (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     item_id UUID NOT NULL REFERENCES items(id),

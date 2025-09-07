@@ -5,7 +5,7 @@
 -- =====================================================================
 
 CREATE TABLE account (
-  id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
   updated TIMESTAMP WITHOUT TIME ZONE NULL,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,

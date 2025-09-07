@@ -4,7 +4,7 @@
 -- Maps permissions to roles with entity-specific scoping and conditions.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS role_permissions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
   permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,

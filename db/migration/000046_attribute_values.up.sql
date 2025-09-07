@@ -4,7 +4,7 @@
 -- Stores actual attribute values for ABAC policy evaluation.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS attribute_values (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   definition_id UUID NOT NULL REFERENCES attribute_definitions(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL,  -- The entity this attribute belongs to (user, resource, etc.)
@@ -63,7 +63,7 @@ CREATE INDEX idx_attribute_values_effective_period ON attribute_values(effective
 -- Defines external sources for attribute collection.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS attribute_sources (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   display_name VARCHAR(150),

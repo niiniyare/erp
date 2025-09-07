@@ -4,7 +4,7 @@
 --  audit logging with compliance flags and risk scoring.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     event_type VARCHAR(50) NOT NULL,
     event_category VARCHAR(50) DEFAULT 'ACCESS'

@@ -14,7 +14,7 @@
 -- CONFIG DEFINITIONS - System-wide metadata for all configurations
 -- =====================================================================
 CREATE TABLE config_definitions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,
   module_name VARCHAR(50) NOT NULL,
@@ -50,7 +50,7 @@ COMMENT ON COLUMN config_definitions.is_overridable IS 'Whether this configurati
 -- CONFIGURATION TEMPLATES - Bulk configuration deployment
 -- =====================================================================
 CREATE TABLE configuration_templates (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
@@ -87,7 +87,7 @@ COMMENT ON COLUMN configuration_templates.created_by IS 'UUID of user who create
 -- CONFIGURATION AUDIT - Complete audit trail for all changes
 -- =====================================================================
 CREATE TABLE configuration_audit (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID REFERENCES entities(uuid) ON DELETE SET NULL,
   config_key VARCHAR(150) NOT NULL,
@@ -120,7 +120,7 @@ COMMENT ON COLUMN configuration_audit.correlation_id IS 'Correlation ID for trac
 -- TEMPLATE APPLICATIONS - History of template deployments
 -- =====================================================================
 CREATE TABLE template_applications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   template_id UUID NOT NULL REFERENCES configuration_templates(id) ON DELETE CASCADE,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID REFERENCES entities(uuid) ON DELETE SET NULL,

@@ -12,7 +12,7 @@
 -- ================================================================================================
 
 CREATE TABLE user_sessions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     session_token VARCHAR(255) UNIQUE NOT NULL,

@@ -4,7 +4,7 @@
 -- Defines roles with module scope, entity context, and hierarchical structure.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS roles (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
   name VARCHAR(50) NOT NULL,

@@ -5,7 +5,7 @@
 -- =====================================================================
 
 CREATE TABLE uom (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
     uom_name VARCHAR(255) NOT NULL,

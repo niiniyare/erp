@@ -195,7 +195,7 @@ GRANT SELECT ON v_daily_health_check TO application_role;
 
 -- Table to store custom business rules
 CREATE TABLE IF NOT EXISTS business_validation_rules (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     
     rule_name VARCHAR(100) NOT NULL,
@@ -357,7 +357,7 @@ $$ LANGUAGE plpgsql;
 
 -- Table to track validation runs
 CREATE TABLE IF NOT EXISTS validation_run_history (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     
     run_type VARCHAR(50) NOT NULL, -- 'MANUAL', 'SCHEDULED', 'DEPLOYMENT'

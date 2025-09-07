@@ -30,7 +30,7 @@
 -- Supports ABAC with security attributes and flexible person typing.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS persons (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
     person_type VARCHAR(20) NOT NULL 
@@ -110,7 +110,7 @@ CREATE POLICY persons_admin_access ON persons
 -- Contains role context, security levels, and employment status tracking.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS employees (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     person_id UUID NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
     employee_number VARCHAR(50) NOT NULL,
@@ -181,7 +181,7 @@ CREATE POLICY employees_admin_access ON employees
 -- Can be linked to persons/employees or exist independently for service accounts.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
     person_id UUID REFERENCES persons(id) ON DELETE SET NULL,
@@ -262,7 +262,7 @@ CREATE POLICY users_admin_access ON users
 -- Tracks active user sessions with security context for ABAC evaluation.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_sessions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     session_token VARCHAR(255) UNIQUE NOT NULL,
@@ -321,7 +321,7 @@ CREATE POLICY user_sessions_admin_access ON user_sessions
 -- Organizes system functionality into modules for permission management and feature control.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS modules (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name VARCHAR(50) NOT NULL,
     display_name VARCHAR(100),
@@ -374,7 +374,7 @@ CREATE POLICY modules_admin_access ON modules
 -- Defines system resources that can be protected by permissions (APIs, UI components, data, etc.).
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS resources (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     module_id UUID NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
     entity_id UUID REFERENCES entities(uuid),      -- Resource can belong to specific entity
@@ -426,7 +426,7 @@ CREATE POLICY resources_admin_access ON resources
 -- Defines actions that can be performed on resources with risk and approval requirements.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS actions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     display_name VARCHAR(150),
@@ -477,7 +477,7 @@ CREATE POLICY actions_admin_access ON actions
 -- Defines roles with module scope, entity context, and hierarchical structure.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS roles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
     name VARCHAR(50) NOT NULL,
@@ -544,7 +544,7 @@ CREATE POLICY roles_admin_access ON roles
 -- Granular permissions combining resources and actions with ABAC conditions.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS permissions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
     action_id UUID NOT NULL REFERENCES actions(id) ON DELETE CASCADE,
@@ -594,7 +594,7 @@ CREATE POLICY permissions_admin_access ON permissions
 -- Maps permissions to roles with entity-specific scoping and conditions.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS role_permissions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
@@ -639,7 +639,7 @@ CREATE POLICY role_permissions_admin_access ON role_permissions
 -- Assigns roles to users with entity context, delegation, and temporal controls.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_roles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
@@ -696,7 +696,7 @@ CREATE POLICY user_roles_admin_access ON user_roles
 -- Direct permission grants to users bypassing roles for exceptional access.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_permissions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
@@ -748,7 +748,7 @@ CREATE POLICY user_permissions_admin_access ON user_permissions
 -- Defines attributes used in ABAC policies with validation and encryption controls.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS attribute_definitions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     display_name VARCHAR(150),
@@ -792,7 +792,7 @@ CREATE POLICY attribute_definitions_tenant_isolation ON attribute_definitions
 -- ABAC policies with advanced rule engine, priorities, and compliance tracking.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS policies (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID REFERENCES entities(uuid),      -- Entity scope for policy
     name VARCHAR(150) NOT NULL,
@@ -841,7 +841,7 @@ CREATE POLICY policies_tenant_isolation ON policies
 -- Caches policy evaluation results for performance optimization.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS policy_evaluations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id),
     resource_id UUID NOT NULL REFERENCES resources(id),
@@ -878,7 +878,7 @@ CREATE POLICY policy_evaluations_tenant_isolation ON policy_evaluations
 --  audit logging with compliance flags and risk scoring.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     event_type VARCHAR(50) NOT NULL,
     event_category VARCHAR(50) DEFAULT 'ACCESS'
@@ -925,7 +925,7 @@ CREATE POLICY audit_log_tenant_isolation ON audit_log
 -- Approval workflow for access requests with business justification and lifecycle management.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS access_requests (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     requester_id UUID NOT NULL REFERENCES users(id),
     target_user_id UUID REFERENCES users(id),      -- If requesting for someone else

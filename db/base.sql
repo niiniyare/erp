@@ -80,7 +80,7 @@ $$
 -- Stores tenant information, business details, and configuration
 CREATE TABLE tenants (
     -- Primary identifiers
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     slug VARCHAR(50) NOT NULL,
     name VARCHAR(255) UNIQUE NOT NULL,
     -- Contact and access information
@@ -1449,7 +1449,7 @@ GROUP BY t.id, t.name, t.status;
 -- ================================================================================================
 
 CREATE TABLE persons (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
     person_type VARCHAR(20) NOT NULL 
@@ -1599,7 +1599,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON persons TO application_role;
 -- ================================================================================================
 
 CREATE TABLE employees (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     person_id UUID NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
     employee_number VARCHAR(50) NOT NULL,
@@ -1761,7 +1761,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON employees TO application_role;-- =======
 -- ================================================================================================
 
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
     person_id UUID REFERENCES persons(id) ON DELETE SET NULL,
@@ -1945,7 +1945,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON users TO application_role;
 -- ================================================================================================
 
 CREATE TABLE user_sessions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     session_token VARCHAR(255) UNIQUE NOT NULL,
@@ -2064,7 +2064,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON user_sessions TO application_role;
 -- Organizes system functionality into modules for permission management and feature control.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS modules (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name VARCHAR(50) NOT NULL,
     display_name VARCHAR(100),
@@ -2116,7 +2116,7 @@ CREATE POLICY modules_admin_access ON modules
 -- Defines system resources that can be protected by permissions (APIs, UI components, data, etc.).
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS resources (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     module_id UUID NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
     entity_id UUID REFERENCES entities(uuid),      -- Resource can belong to specific entity
@@ -2167,7 +2167,7 @@ CREATE POLICY resources_admin_access ON resources
 -- Defines actions that can be performed on resources with risk and approval requirements.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS actions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     display_name VARCHAR(150),
@@ -2217,7 +2217,7 @@ CREATE POLICY actions_admin_access ON actions
 -- Granular permissions combining resources and actions with ABAC conditions.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS permissions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
     action_id UUID NOT NULL REFERENCES actions(id) ON DELETE CASCADE,
@@ -2266,7 +2266,7 @@ CREATE POLICY permissions_admin_access ON permissions
 -- Defines roles with module scope, entity context, and hierarchical structure.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS roles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
     name VARCHAR(50) NOT NULL,
@@ -2332,7 +2332,7 @@ CREATE POLICY roles_admin_access ON roles
 -- Maps permissions to roles with entity-specific scoping and conditions.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS role_permissions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
@@ -2376,7 +2376,7 @@ CREATE POLICY role_permissions_admin_access ON role_permissions
 -- Assigns roles to users with entity context, delegation, and temporal controls.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_roles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE RESTRICT,
@@ -2436,7 +2436,7 @@ CREATE POLICY user_roles_admin_access ON user_roles
 -- ABAC policies with advanced rule engine, priorities, and compliance tracking.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS policies (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID REFERENCES entities(uuid),      -- Entity scope for policy
     name VARCHAR(150) NOT NULL,
@@ -2503,7 +2503,7 @@ $$;
 -- Approval workflow for access requests with business justification and lifecycle management.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS access_requests (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     requester_id UUID NOT NULL REFERENCES users(id),
     target_user_id UUID REFERENCES users(id),      -- If requesting for someone else
@@ -2562,7 +2562,7 @@ $$;
 --  audit logging with compliance flags and risk scoring.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     event_type VARCHAR(50) NOT NULL,
     event_category VARCHAR(50) DEFAULT 'ACCESS'
@@ -2996,7 +2996,7 @@ $$;-- =====================================================================
 -- =====================================================================
 
 CREATE TABLE projects (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -3050,7 +3050,7 @@ CREATE TRIGGER update_projects_updated_at
 -- =====================================================================
 
 CREATE TABLE budgets (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
     project_id UUID REFERENCES projects(id), -- Optional project budget
@@ -3106,7 +3106,7 @@ CREATE TRIGGER update_budgets_updated_at
 -- =====================================================================
 
 CREATE TABLE uom (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
     uom_name VARCHAR(255) NOT NULL,
@@ -3159,7 +3159,7 @@ CREATE TRIGGER update_uom_updated_at
 -- =====================================================================
 
 CREATE TABLE uom_conversion (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
     from_uom_id UUID NOT NULL REFERENCES uom(id),
@@ -3196,7 +3196,7 @@ CREATE POLICY admin_full_access_policy ON uom_conversion
 -- =====================================================================
 
 CREATE TABLE chartofaccount (
-  id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
   module TEXT,
@@ -3229,7 +3229,7 @@ CREATE POLICY admin_full_access_policy ON chartofaccount
 -- =====================================================================
 
 CREATE TABLE account (
-  id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
   updated TIMESTAMP WITHOUT TIME ZONE NULL,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -3281,7 +3281,7 @@ CREATE POLICY admin_full_access_policy ON account
 -- =====================================================================
 
 CREATE TABLE ledger (
-  id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
   updated TIMESTAMP WITHOUT TIME ZONE NULL,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -3318,7 +3318,7 @@ CREATE POLICY admin_full_access_policy ON ledger
 -- =====================================================================
 
 CREATE TABLE journalentry (
-  id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   created TIMESTAMP WITHOUT TIME ZONE NOT NULL,
   updated TIMESTAMP WITHOUT TIME ZONE NULL,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -3435,7 +3435,7 @@ CREATE POLICY admin_full_access_policy ON vendor
 -- =====================================================================
 
 CREATE TABLE warehouses (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     code VARCHAR(20) NOT NULL,
@@ -3469,7 +3469,7 @@ CREATE POLICY admin_full_access_policy ON warehouses
 -- =====================================================================
 
 CREATE TABLE item_categories (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     parent_id UUID REFERENCES item_categories(id),
@@ -3501,7 +3501,7 @@ CREATE POLICY admin_full_access_policy ON item_categories
 -- =====================================================================
 
 CREATE TABLE items (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     item_code VARCHAR(50) NOT NULL,
@@ -3558,7 +3558,7 @@ CREATE TRIGGER update_items_updated_at
 -- =====================================================================
 
 CREATE TABLE inventory_balances (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
@@ -3602,7 +3602,7 @@ CREATE TRIGGER update_inventory_balances_updated_at
 -- =====================================================================
 
 CREATE TABLE inventory_movements (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE, 
     item_id UUID NOT NULL REFERENCES items(id),
@@ -3638,7 +3638,7 @@ CREATE POLICY admin_full_access_policy ON inventory_movements
     FOR ALL TO admin_role
     USING (true);
 CREATE TABLE IF NOT EXISTS notification_preferences (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     email_notifications BOOLEAN NOT NULL DEFAULT true,
@@ -3675,7 +3675,7 @@ CREATE TRIGGER update_notification_preferences_updated_at
 -- Direct permission grants to users bypassing roles for exceptional access.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_permissions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
@@ -3861,7 +3861,7 @@ BEGIN
     SET 
         first_name = 'REDACTED',
         last_name = 'REDACTED',
-        email = 'redacted_' || uuid_generate_v4() || '@example.com',
+        email = 'redacted_' || gen_random_uuid() || '@example.com',
         phone = NULL,
         national_id = NULL,
         tax_id = NULL
@@ -3962,7 +3962,7 @@ CREATE INDEX idx_active_roles ON roles (id) WHERE is_active = true AND deleted_a
 
 -- Notification table
 CREATE TABLE security_notifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id),
     notification_type VARCHAR(50) NOT NULL 
@@ -4055,7 +4055,7 @@ CREATE TRIGGER notify_role_changes
 -- Defines attributes used in ABAC policies with validation and encryption controls.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS attribute_definitions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     display_name VARCHAR(150),
@@ -4100,7 +4100,7 @@ CREATE POLICY attribute_definitions_tenant_isolation ON attribute_definitions
 -- Stores actual attribute values for ABAC policy evaluation.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS attribute_values (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     definition_id UUID NOT NULL REFERENCES attribute_definitions(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL,                       -- The entity this attribute belongs to (user, resource, etc.)
@@ -4149,7 +4149,7 @@ CREATE INDEX idx_attribute_values_effective_period ON attribute_values(effective
 -- Defines external sources for attribute collection.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS attribute_sources (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     display_name VARCHAR(150),
@@ -4186,7 +4186,7 @@ CREATE POLICY attribute_sources_tenant_isolation ON attribute_sources
 -- Caches policy evaluation results for performance optimization.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS policy_evaluations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id),
     resource_id UUID NOT NULL REFERENCES resources(id),
@@ -4224,7 +4224,7 @@ CREATE POLICY policy_evaluations_tenant_isolation ON policy_evaluations
 DROP TABLE IF EXISTS policy_evaluations CASCADE;
 
 CREATE TABLE IF NOT EXISTS policy_evaluations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id),
     resource_type VARCHAR(100) NOT NULL,           -- Flexible resource type (user, document, etc.)
@@ -4277,7 +4277,7 @@ CREATE INDEX idx_policy_evaluations_expires_at ON policy_evaluations(expires_at)
 CREATE INDEX idx_policy_evaluations_resource_action ON policy_evaluations(
     tenant_id, resource_type, action
 );CREATE TABLE policy_decisions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     policy_evaluation_id UUID NOT NULL REFERENCES policy_evaluations(id) ON DELETE CASCADE,
     policy_id UUID NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
     decision VARCHAR(20) NOT NULL,
@@ -4327,7 +4327,7 @@ $$ LANGUAGE plpgsql SECURITY INVOKER;-- ========================================
 
 -- Main partitioned table for user activity tracking
 CREATE TABLE user_activities (
-    id UUID DEFAULT uuid_generate_v4(),
+    id UUID DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     session_id UUID REFERENCES user_sessions(id) ON DELETE SET NULL,
@@ -4533,7 +4533,7 @@ GRANT EXECUTE ON FUNCTION drop_old_user_activities_partitions(INTEGER) TO admin_
 -- =====================================================
 CREATE TABLE feature_flags (
     -- Primary identifier
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     
@@ -4631,7 +4631,7 @@ CREATE TRIGGER update_feature_flags_updated_at
 -- =====================================================
 CREATE TABLE tenant_feature_overrides (
     -- Primary identifier
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     
     -- References
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -6666,7 +6666,7 @@ DECLARE
     v_slug VARCHAR(50);
 BEGIN
     -- Generate UUID and slug
-    v_tenant_id := uuid_generate_v4();
+    v_tenant_id := gen_random_uuid();
     v_slug := lower(regexp_replace(p_name, '[^a-zA-Z0-9]+', '-', 'g'));
 
     -- Ensure slug uniqueness

@@ -1,8 +1,3 @@
--- +migrate Up
-BEGIN
-;
-
--- NEW SUPPORTING TABLES (Backward Compatible Additions)
 -- Account balance history for audit trail
 CREATE TABLE finance_account_balances (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -61,7 +56,7 @@ CREATE TABLE finance_account_validation_rules (
 
 COMMENT ON TABLE finance_account_validation_rules IS 'Configurable validation rules for accounts and transactions - enables business rule enforcement';
 
--- ENHANCED COMPUTED COLUMNS (Backward Compatible)
+-- COMPUTED COLUMNS (Backward Compatible)
 ALTER TABLE
   finance_accounts
 ADD
@@ -72,4 +67,3 @@ ALTER TABLE
 ADD
   COLUMN IF NOT EXISTS is_leaf_account BOOLEAN DEFAULT TRUE;
 
-COMMIT;

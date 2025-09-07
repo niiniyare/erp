@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS notification_preferences (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   email_notifications BOOLEAN NOT NULL DEFAULT TRUE,

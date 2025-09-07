@@ -4,7 +4,7 @@
 -- Defines actions that can be performed on resources with risk and approval requirements.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS actions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   display_name VARCHAR(150),

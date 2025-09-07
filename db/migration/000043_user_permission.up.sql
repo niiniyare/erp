@@ -4,7 +4,7 @@
 -- Direct permission grants to users bypassing roles for exceptional access.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_permissions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,

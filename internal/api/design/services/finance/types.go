@@ -4,7 +4,7 @@ import (
 	. "goa.design/goa/v3/dsl"
 )
 
-// Account-related types
+// CreateAccountPayload is Account-related types
 var CreateAccountPayload = Type("CreateAccountPayload", func() {
 	Description("Payload for creating a new account")
 
@@ -263,7 +263,7 @@ var AccountHierarchyResult = Type("AccountHierarchyResult", func() {
 	Required("accounts", "total_count")
 })
 
-// Transaction-related types
+// CreateTransactionPayload is Transaction-related types
 var CreateTransactionPayload = Type("CreateTransactionPayload", func() {
 	Description("Payload for creating a new transaction")
 
@@ -494,7 +494,7 @@ var TransactionListResult = Type("TransactionListResult", func() {
 	Required("transactions", "total_count", "limit", "offset")
 })
 
-// Financial Reporting types
+// TrialBalancePayload Financial Reporting types
 var TrialBalancePayload = Type("TrialBalancePayload", func() {
 	Description("Payload for trial balance report")
 

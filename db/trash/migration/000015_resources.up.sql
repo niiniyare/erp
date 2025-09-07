@@ -4,7 +4,7 @@
 -- Defines system resources that can be protected by permissions (APIs, UI components, data, etc.).
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS resources (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     module_id UUID NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
     entity_id UUID REFERENCES entities(uuid),      -- Resource can belong to specific entity

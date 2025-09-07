@@ -2,7 +2,7 @@
 
 -- -- Audit logging (enhanced)
 -- CREATE TABLE audit_logs (
---     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
 --     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
 --     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
 --     entity_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
@@ -19,7 +19,7 @@
 -- );
 --
 -- CREATE TABLE IF NOT EXISTS rls_change_log (
---     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
 --     schema_name TEXT NOT NULL,
 --     table_name TEXT NOT NULL,
 --     action TEXT NOT NULL,           -- 'apply' or 'remove'

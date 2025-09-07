@@ -7,6 +7,10 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE SCHEMA IF NOT EXISTS ledger;
+
+SET search_path TO ledger;
+
 -- Enable Row Level Security globally
 SET
   row_security = ON;
@@ -80,7 +84,7 @@ $$
 -- Stores tenant information, business details, and configuration
 CREATE TABLE tenants (
   -- Primary identifiers
-  id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   slug VARCHAR(50) NOT NULL,
   name VARCHAR(255) UNIQUE NOT NULL,
   -- Contact and access information
