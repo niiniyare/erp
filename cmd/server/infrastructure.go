@@ -4,16 +4,18 @@ import (
 	"context"
 
 	"github.com/niiniyare/erp/internal/platform/config"
+	"github.com/niiniyare/erp/internal/platform/temporal"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
 type Infrastructure struct {
-	Config  *config.Config
-	Tracing tracing.TracingService
-	Metrics *metrics.MetricsService
-	Logger  logger.Logger
+	Config   *config.Config
+	Tracing  tracing.TracingService
+	Metrics  *metrics.MetricsService
+	Logger   logger.Logger
+	Temporal *temporal.Platform
 }
 
 func InitializeInfrastructure() (*Infrastructure, error) {
@@ -59,14 +61,31 @@ func InitializeInfrastructure() (*Infrastructure, error) {
 		return nil, err
 	}
 
+	// Initialize Temporal platform
+	temporalPlatform, err := temporal.NewPlatform(&cfg.Temporal, log)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Infrastructure{
-		Config:  cfg,
-		Tracing: tracingService,
-		Metrics: metricsService,
-		Logger:  log,
+		Config:   cfg,
+		Tracing:  tracingService,
+		Metrics:  metricsService,
+		Logger:   log,
+		Temporal: temporalPlatform,
 	}, nil
 }
 
 func (i *Infrastructure) Shutdown(ctx context.Context) error {
+	// Shutdown Temporal platform first
+	if i.Temporal != nil {
+		if err := i.Temporal.Stop(ctx); err != nil {
+			i.Logger.Error("Error stopping Temporal platform", logger.Fields{
+				"error": err.Error(),
+			})
+		}
+	}
+
+	// Shutdown tracing
 	return i.Tracing.Shutdown(ctx)
 }

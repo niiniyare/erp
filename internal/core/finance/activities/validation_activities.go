@@ -67,8 +67,8 @@ func (v *ValidationActivities) RegisterWith(w worker.Worker) {
 // BusinessRuleValidationInput represents business rule validation input
 type BusinessRuleValidationInput struct {
 	RuleType    string                 `json:"rule_type"`
-	RuleData    map[string]interface{} `json:"rule_data"`
-	Context     map[string]interface{} `json:"context"`
+	RuleData    map[string]any `json:"rule_data"`
+	Context     map[string]any `json:"context"`
 }
 
 // ValidationActivityOutput represents validation activity output
@@ -77,7 +77,7 @@ type ValidationActivityOutput struct {
 	ValidationErrors []string               `json:"validation_errors,omitempty"`
 	Warnings         []string               `json:"warnings,omitempty"`
 	AppliedRules     []string               `json:"applied_rules,omitempty"`
-	RuleResults      map[string]interface{} `json:"rule_results,omitempty"`
+	RuleResults      map[string]any `json:"rule_results,omitempty"`
 	Message          string                 `json:"message"`
 }
 
@@ -110,7 +110,7 @@ func (v *ValidationActivities) ValidateBusinessRulesActivity(ctx context.Context
 	validationErrors := []string{}
 	warnings := []string{}
 	appliedRules := []string{}
-	ruleResults := make(map[string]interface{})
+	ruleResults := make(map[string]any)
 
 	switch input.RuleType {
 	case "ACCOUNT_CREATION":
@@ -414,7 +414,7 @@ func (v *ValidationActivities) ValidateApprovalLimitsActivity(ctx context.Contex
 
 	validationErrors := []string{}
 	warnings := []string{}
-	ruleResults := make(map[string]interface{})
+	ruleResults := make(map[string]any)
 
 	// Get user's approval limits from IAM service
 	userLimits := v.getUserApprovalLimits(ctx, userID)
@@ -460,7 +460,7 @@ func (v *ValidationActivities) ValidateApprovalLimitsActivity(ctx context.Contex
 }
 
 // ValidateComplianceRulesActivity validates compliance and regulatory rules
-func (v *ValidationActivities) ValidateComplianceRulesActivity(ctx context.Context, ruleSet string, data map[string]interface{}) (*ValidationActivityOutput, error) {
+func (v *ValidationActivities) ValidateComplianceRulesActivity(ctx context.Context, ruleSet string, data map[string]any) (*ValidationActivityOutput, error) {
 	ctx, span := v.tracer.StartSpan(ctx, "finance.activity.compliance.validation")
 	defer span.End()
 
@@ -527,22 +527,22 @@ func (v *ValidationActivities) ValidateComplianceRulesActivity(ctx context.Conte
 
 // Helper functions for validation logic
 
-func (v *ValidationActivities) validateAccountCreationRules(ctx context.Context, data map[string]interface{}) ([]string, []string, []string, map[string]interface{}) {
+func (v *ValidationActivities) validateAccountCreationRules(ctx context.Context, data map[string]any) ([]string, []string, []string, map[string]any) {
 	// Implementation for account creation rule validation
-	return []string{}, []string{}, []string{"account_creation_base_rule"}, map[string]interface{}{}
+	return []string{}, []string{}, []string{"account_creation_base_rule"}, map[string]any{}
 }
 
-func (v *ValidationActivities) validateTransactionProcessingRules(ctx context.Context, data map[string]interface{}) ([]string, []string, []string, map[string]interface{}) {
+func (v *ValidationActivities) validateTransactionProcessingRules(ctx context.Context, data map[string]any) ([]string, []string, []string, map[string]any) {
 	// Implementation for transaction processing rule validation
-	return []string{}, []string{}, []string{"transaction_processing_base_rule"}, map[string]interface{}{}
+	return []string{}, []string{}, []string{"transaction_processing_base_rule"}, map[string]any{}
 }
 
-func (v *ValidationActivities) validatePeriodClosingRules(ctx context.Context, data map[string]interface{}) ([]string, []string, []string, map[string]interface{}) {
+func (v *ValidationActivities) validatePeriodClosingRules(ctx context.Context, data map[string]any) ([]string, []string, []string, map[string]any) {
 	// Implementation for period closing rule validation
-	return []string{}, []string{}, []string{"period_closing_base_rule"}, map[string]interface{}{}
+	return []string{}, []string{}, []string{"period_closing_base_rule"}, map[string]any{}
 }
 
-func (v *ValidationActivities) checkPeriodStatus(ctx context.Context, date string, settings interface{}) bool {
+func (v *ValidationActivities) checkPeriodStatus(ctx context.Context, date string, settings any) bool {
 	// Implementation for period status checking
 	return true // Simplified for example
 }
@@ -552,7 +552,7 @@ func (v *ValidationActivities) checkFutureDate(date string) bool {
 	return false // Simplified for example
 }
 
-func (v *ValidationActivities) checkCutoffDate(ctx context.Context, date string, settings interface{}) bool {
+func (v *ValidationActivities) checkCutoffDate(ctx context.Context, date string, settings any) bool {
 	// Implementation for cutoff date checking
 	return false // Simplified for example
 }
@@ -577,17 +577,17 @@ func (v *ValidationActivities) checkAdditionalApprovalRequirements(ctx context.C
 	return amount > 100000.0 // Simplified for example
 }
 
-func (v *ValidationActivities) validateSOXCompliance(ctx context.Context, data map[string]interface{}) ([]string, []string, []string) {
+func (v *ValidationActivities) validateSOXCompliance(ctx context.Context, data map[string]any) ([]string, []string, []string) {
 	// Implementation for SOX compliance validation
 	return []string{}, []string{}, []string{"sox_compliance_check"}
 }
 
-func (v *ValidationActivities) validateGAAPCompliance(ctx context.Context, data map[string]interface{}) ([]string, []string, []string) {
+func (v *ValidationActivities) validateGAAPCompliance(ctx context.Context, data map[string]any) ([]string, []string, []string) {
 	// Implementation for GAAP compliance validation
 	return []string{}, []string{}, []string{"gaap_compliance_check"}
 }
 
-func (v *ValidationActivities) validateIFRSCompliance(ctx context.Context, data map[string]interface{}) ([]string, []string, []string) {
+func (v *ValidationActivities) validateIFRSCompliance(ctx context.Context, data map[string]any) ([]string, []string, []string) {
 	// Implementation for IFRS compliance validation
 	return []string{}, []string{}, []string{"ifrs_compliance_check"}
 }

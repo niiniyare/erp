@@ -69,7 +69,7 @@ type AccountNotificationInput struct {
 	Action      string                 `json:"action"`
 	UserID      uuid.UUID              `json:"user_id"`
 	Recipients  []string               `json:"recipients,omitempty"`
-	MessageData map[string]interface{} `json:"message_data,omitempty"`
+	MessageData map[string]any `json:"message_data,omitempty"`
 }
 
 // TransactionNotificationInput represents transaction-related notification input
@@ -78,7 +78,7 @@ type TransactionNotificationInput struct {
 	Action      string                 `json:"action"`
 	UserID      uuid.UUID              `json:"user_id"`
 	Recipients  []string               `json:"recipients,omitempty"`
-	MessageData map[string]interface{} `json:"message_data,omitempty"`
+	MessageData map[string]any `json:"message_data,omitempty"`
 }
 
 // ApprovalNotificationInput represents approval-related notification input
@@ -88,7 +88,7 @@ type ApprovalNotificationInput struct {
 	RequesterID    uuid.UUID              `json:"requester_id"`
 	ApproverIDs    []uuid.UUID            `json:"approver_ids"`
 	ApprovalAmount float64                `json:"approval_amount,omitempty"`
-	MessageData    map[string]interface{} `json:"message_data,omitempty"`
+	MessageData    map[string]any `json:"message_data,omitempty"`
 }
 
 // BudgetNotificationInput represents budget-related notification input
@@ -100,7 +100,7 @@ type BudgetNotificationInput struct {
 	ExceededAmount float64                `json:"exceeded_amount,omitempty"`
 	Period         string                 `json:"period"`
 	Recipients     []string               `json:"recipients,omitempty"`
-	MessageData    map[string]interface{} `json:"message_data,omitempty"`
+	MessageData    map[string]any `json:"message_data,omitempty"`
 }
 
 // ComplianceNotificationInput represents compliance-related notification input
@@ -109,25 +109,25 @@ type ComplianceNotificationInput struct {
 	Severity       string                 `json:"severity"`
 	ResourceType   string                 `json:"resource_type"`
 	ResourceID     string                 `json:"resource_id"`
-	ViolationDetails map[string]interface{} `json:"violation_details"`
+	ViolationDetails map[string]any `json:"violation_details"`
 	Recipients     []string               `json:"recipients,omitempty"`
-	MessageData    map[string]interface{} `json:"message_data,omitempty"`
+	MessageData    map[string]any `json:"message_data,omitempty"`
 }
 
 // PeriodClosingNotificationInput represents period closing notification input
 type PeriodClosingNotificationInput struct {
 	Period      string                 `json:"period"`
 	Status      string                 `json:"status"`
-	Summary     map[string]interface{} `json:"summary"`
+	Summary     map[string]any `json:"summary"`
 	Recipients  []string               `json:"recipients,omitempty"`
-	MessageData map[string]interface{} `json:"message_data,omitempty"`
+	MessageData map[string]any `json:"message_data,omitempty"`
 }
 
 // ErrorNotificationInput represents error notification input
 type ErrorNotificationInput struct {
 	ErrorType    string                 `json:"error_type"`
 	ErrorMessage string                 `json:"error_message"`
-	Context      map[string]interface{} `json:"context"`
+	Context      map[string]any `json:"context"`
 	Severity     string                 `json:"severity"`
 	Recipients   []string               `json:"recipients,omitempty"`
 }
@@ -139,9 +139,9 @@ type BulkOperationNotificationInput struct {
 	SuccessCount  int                    `json:"success_count"`
 	ErrorCount    int                    `json:"error_count"`
 	Duration      string                 `json:"duration"`
-	Summary       map[string]interface{} `json:"summary"`
+	Summary       map[string]any `json:"summary"`
 	Recipients    []string               `json:"recipients,omitempty"`
-	MessageData   map[string]interface{} `json:"message_data,omitempty"`
+	MessageData   map[string]any `json:"message_data,omitempty"`
 }
 
 // NotificationActivityOutput represents notification activity output
@@ -786,7 +786,7 @@ type NotificationRequest struct {
 	Message    string                 `json:"message"`
 	Recipients []string               `json:"recipients"`
 	Priority   string                 `json:"priority"`
-	Data       map[string]interface{} `json:"data,omitempty"`
+	Data       map[string]any `json:"data,omitempty"`
 }
 
 // getNotificationSettings retrieves notification settings for a given type

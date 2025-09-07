@@ -100,7 +100,7 @@ type AccountActivityOutput struct {
 // ValidateAccountCreationActivityInput represents validation input
 type ValidateAccountCreationActivityInput struct {
 	AccountInput  CreateAccountActivityInput `json:"account_input"`
-	BusinessRules map[string]interface{}     `json:"business_rules"`
+	BusinessRules map[string]any     `json:"business_rules"`
 }
 
 // Account Activities Implementation
@@ -269,7 +269,7 @@ func (a *AccountActivities) GetAccountActivity(ctx context.Context, accountID uu
 }
 
 // UpdateAccountActivity updates an existing account
-func (a *AccountActivities) UpdateAccountActivity(ctx context.Context, accountID uuid.UUID, updates map[string]interface{}) (*AccountActivityOutput, error) {
+func (a *AccountActivities) UpdateAccountActivity(ctx context.Context, accountID uuid.UUID, updates map[string]any) (*AccountActivityOutput, error) {
 	ctx, span := a.tracer.StartSpan(ctx, domain.ActivityTypeAccountUpdate)
 	defer span.End()
 

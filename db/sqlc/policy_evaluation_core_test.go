@@ -59,17 +59,17 @@ package db
 // 	action := createActionForTest(t, ctx)
 //
 // 	// Context 1
-// 	context1 := map[string]interface{}{"ip": "192.168.1.1", "time": "morning"}
+// 	context1 := map[string]any{"ip": "192.168.1.1", "time": "morning"}
 // 	hash1 := hashContext(t, context1)
 //
 // 	// Context 2 (different)
-// 	context2 := map[string]interface{}{"ip": "192.168.1.2", "time": "morning"}
+// 	context2 := map[string]any{"ip": "192.168.1.2", "time": "morning"}
 // 	hash2 := hashContext(t, context2)
 //
 // 	require.NotEqual(t, hash1, hash2, "Different contexts should produce different hashes")
 //
 // 	// Context 3 (same as 1)
-// 	context3 := map[string]interface{}{"ip": "192.168.1.1", "time": "morning"}
+// 	context3 := map[string]any{"ip": "192.168.1.1", "time": "morning"}
 // 	hash3 := hashContext(t, context3)
 //
 // 	require.Equal(t, hash1, hash3, "Identical contexts should produce identical hashes")
@@ -108,7 +108,7 @@ package db
 // 	action := createActionForTest(t, ctx)
 //
 // 	// Time-sensitive context
-// 	timeContext := map[string]interface{}{
+// 	timeContext := map[string]any{
 // 		"time_of_day": time.Now().Hour(),
 // 		"day_of_week": time.Now().Weekday().String(),
 // 	}
@@ -125,7 +125,7 @@ package db
 // 	require.NoError(t, err)
 //
 // 	// Location-based context
-// 	locationContext := map[string]interface{}{
+// 	locationContext := map[string]any{
 // 		"ip_address": "203.0.113.55",
 // 		"geo_region": "EU",
 // 	}
@@ -673,7 +673,7 @@ package db
 // 	action := createActionForTest(t, ctx)
 //
 // 	// Test with unicode characters in context hash
-// 	unicodeContext := map[string]interface{}{
+// 	unicodeContext := map[string]any{
 // 		"用户":       "测试用户",   // Chinese: user: test user
 // 		"действие": "чтение", // Russian: action: reading
 // 		"🔐":        "🔓",      // Emoji
@@ -739,7 +739,7 @@ package db
 // }
 //
 // // Helper to create a consistent hash from a context map
-// func hashContext(t *testing.T, context map[string]interface{}) string {
+// func hashContext(t *testing.T, context map[string]any) string {
 // 	data, err := json.Marshal(context)
 // 	require.NoError(t, err)
 // 	hash := sha256.Sum256(data)

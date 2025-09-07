@@ -97,7 +97,7 @@ type CreateTransactionActivityInput struct {
 	Currency          *string                  `json:"currency"`
 	ExchangeRate      decimal.Decimal          `json:"exchange_rate"`
 	Entries           []TransactionEntryInput  `json:"entries"`
-	Metadata          map[string]interface{}   `json:"metadata"`
+	Metadata          map[string]any   `json:"metadata"`
 }
 
 // TransactionEntryInput represents a transaction entry
@@ -108,7 +108,7 @@ type TransactionEntryInput struct {
 	Currency    *string                `json:"currency"`
 	Description string                 `json:"description"`
 	Reference   string                 `json:"reference"`
-	Metadata    map[string]interface{} `json:"metadata"`
+	Metadata    map[string]any `json:"metadata"`
 }
 
 // TransactionActivityOutput represents the output of transaction operations

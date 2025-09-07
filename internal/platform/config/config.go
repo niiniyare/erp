@@ -105,10 +105,7 @@ type RedisConfig struct {
 	DB       int    `yaml:"db" mapstructure:"db"`
 }
 
-// TemporalConfig represents Temporal configuration
-type TemporalConfig struct {
-	HostPort string `yaml:"host_port" mapstructure:"host_port"`
-}
+// TemporalConfig is now defined in temporal.go for system-wide use
 
 // AuthConfig represents auth configuration
 type AuthConfig struct {
@@ -269,8 +266,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("redis.password", "")
 	v.SetDefault("redis.db", 0)
 
-	// Temporal defaults
-	v.SetDefault("temporal.host_port", "localhost:7233")
+	// Temporal defaults - comprehensive system-wide configuration
+	SetTemporalDefaults(v)
 
 	// Auth defaults
 	v.SetDefault("auth.jwt_secret", "")
@@ -321,8 +318,8 @@ func bindEnvVars(v *viper.Viper) {
 	v.BindEnv("redis.password", "REDIS_PASSWORD")
 	v.BindEnv("redis.db", "REDIS_DB")
 
-	// Temporal
-	v.BindEnv("temporal.host_port", "TEMPORAL_HOST_PORT")
+	// Temporal - comprehensive system-wide environment bindings
+	BindTemporalEnvVars(v)
 
 	// Auth
 	v.BindEnv("auth.jwt_secret", "JWT_SECRET")

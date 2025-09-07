@@ -79,7 +79,7 @@ type FeatureFlagCheckInput struct {
 	UserID    *uuid.UUID `json:"user_id,omitempty"`
 	TenantID  *uuid.UUID `json:"tenant_id,omitempty"`
 	EntityID  *uuid.UUID `json:"entity_id,omitempty"`
-	Context   map[string]interface{} `json:"context,omitempty"`
+	Context   map[string]any `json:"context,omitempty"`
 }
 
 // SettingsGetInput represents settings retrieval input
@@ -94,7 +94,7 @@ type PermissionValidationInput struct {
 	ResourceType string     `json:"resource_type"`
 	ResourceID   *uuid.UUID `json:"resource_id,omitempty"`
 	Action       string     `json:"action"`
-	Context      map[string]interface{} `json:"context,omitempty"`
+	Context      map[string]any `json:"context,omitempty"`
 }
 
 // AuditEventInput represents audit event input
@@ -102,14 +102,14 @@ type AuditEventInput struct {
 	EventType   string                 `json:"event_type"`
 	ResourceID  string                 `json:"resource_id"`
 	Action      string                 `json:"action"`
-	Details     map[string]interface{} `json:"details"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Details     map[string]any `json:"details"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 // CacheOperationInput represents cache operation input
 type CacheOperationInput struct {
 	Key       string      `json:"key"`
-	Value     interface{} `json:"value,omitempty"`
+	Value     any `json:"value,omitempty"`
 	TTL       int         `json:"ttl,omitempty"`
 	Pattern   string      `json:"pattern,omitempty"`
 }
@@ -117,10 +117,10 @@ type CacheOperationInput struct {
 // IntegrationActivityOutput represents integration activity output
 type IntegrationActivityOutput struct {
 	Success   bool                   `json:"success"`
-	Data      interface{}            `json:"data,omitempty"`
+	Data      any            `json:"data,omitempty"`
 	Message   string                 `json:"message"`
 	ErrorCode string                 `json:"error_code,omitempty"`
-	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+	Metadata  map[string]any `json:"metadata,omitempty"`
 }
 
 // Integration Activities Implementation
@@ -166,7 +166,7 @@ func (i *IntegrationActivities) CheckFeatureFlagActivity(ctx context.Context, in
 		Success: true,
 		Data:    enabled,
 		Message: "Feature flag check completed",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"flag_key": input.FlagKey,
 			"enabled":  enabled,
 		},
@@ -192,7 +192,7 @@ func (i *IntegrationActivities) GetSettingsActivity(ctx context.Context, input S
 
 	// Simplified settings retrieval - in real implementation, use proper domain types
 	// For demonstration, return a mock configuration value
-	config := map[string]interface{}{
+	config := map[string]any{
 		"key":   input.ConfigKey,
 		"value": "default_value",
 	}
@@ -204,7 +204,7 @@ func (i *IntegrationActivities) GetSettingsActivity(ctx context.Context, input S
 		Success: true,
 		Data:    config,
 		Message: "Settings retrieved successfully",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"config_key": input.ConfigKey,
 			"scope":      input.Scope,
 		},
@@ -248,7 +248,7 @@ func (i *IntegrationActivities) ValidateUserPermissionsActivity(ctx context.Cont
 		Success: true,
 		Data:    hasPermission,
 		Message: "Permission validation completed",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"user_id":        input.UserID,
 			"resource_type":  input.ResourceType,
 			"resource_id":    input.ResourceID,
@@ -292,7 +292,7 @@ func (i *IntegrationActivities) LogAuditEventActivity(ctx context.Context, input
 	return &IntegrationActivityOutput{
 		Success: true,
 		Message: "Audit event logged successfully",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"event_type":  input.EventType,
 			"resource_id": input.ResourceID,
 			"action":      input.Action,
@@ -354,7 +354,7 @@ func (i *IntegrationActivities) InvalidateCacheActivity(ctx context.Context, inp
 	return &IntegrationActivityOutput{
 		Success: true,
 		Message: "Cache invalidation completed",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"invalidated_count": invalidatedCount,
 		},
 	}, nil
@@ -397,7 +397,7 @@ func (i *IntegrationActivities) SetCacheActivity(ctx context.Context, input Cach
 	return &IntegrationActivityOutput{
 		Success: true,
 		Message: "Cache entry set successfully",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"cache_key": input.Key,
 			"ttl":       input.TTL,
 		},
@@ -450,7 +450,7 @@ func (i *IntegrationActivities) GetUserContextActivity(ctx context.Context, user
 		roles[i] = role.Name
 	}
 
-	userContext := map[string]interface{}{
+	userContext := map[string]any{
 		"user_id":    user.ID,
 		"email":      user.Email,
 		"first_name": user.FirstName,
@@ -470,7 +470,7 @@ func (i *IntegrationActivities) GetUserContextActivity(ctx context.Context, user
 		Success: true,
 		Data:    userContext,
 		Message: "User context retrieved successfully",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"user_id":     userID,
 			"email":       user.Email,
 			"roles_count": len(roles),
@@ -533,7 +533,7 @@ func (i *IntegrationActivities) ValidateEntityAccessActivity(ctx context.Context
 		Success: true,
 		Data:    hasAccess,
 		Message: "Entity access validation completed",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"user_id":    userID,
 			"entity_id":  entityID,
 			"has_access": hasAccess,
