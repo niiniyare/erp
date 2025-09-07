@@ -10,6 +10,8 @@ import (
 	"github.com/niiniyare/erp/internal/core/featureflag"
 	"github.com/niiniyare/erp/internal/core/finance/domain"
 	"github.com/niiniyare/erp/internal/core/iam"
+	"github.com/niiniyare/erp/internal/core/iam/authz"
+	"github.com/niiniyare/erp/internal/core/iam/model"
 	settingsService "github.com/niiniyare/erp/internal/core/settings/service"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -404,14 +406,14 @@ func (i *IntegrationActivities) SetCacheActivity(ctx context.Context, input Cach
 
 // GetUserContextActivity retrieves user context information
 func (i *IntegrationActivities) GetUserContextActivity(ctx context.Context, userID uuid.UUID) (*IntegrationActivityOutput, error) {
-	ctx, span := i.tracer.StartSpan(ctx, domain.ActivityTypeUserContextRetrieval)
+	ctx, span := i.tracer.StartSpan(ctx, "finance.activity.user.context_retrieval")
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := i.logger.WithFields(logger.Fields{
 		"activity_id":   info.ActivityID,
 		"workflow_id":   info.WorkflowExecution.ID,
-		"activity_type": domain.ActivityTypeUserContextRetrieval,
+		"activity_type": "finance.activity.user.context_retrieval",
 		"user_id":       userID,
 	})
 
@@ -424,45 +426,53 @@ func (i *IntegrationActivities) GetUserContextActivity(ctx context.Context, user
 		activityLogger.ErrorContext(ctx, "Failed to retrieve user context", logger.Fields{
 			"error": err.Error(),
 		})
-		i.metrics.Counter(domain.MetricUserContextRetrievalErrors, "User context retrieval errors").Add(1, nil)
+		i.metrics.Counter("finance.user.context.retrieval.errors", "User context retrieval errors").Add(1, nil)
 		return &IntegrationActivityOutput{
 			Success:   false,
 			Message:   "User context retrieval failed",
-			ErrorCode: domain.ErrCodeUserContextRetrievalFailed,
+			ErrorCode: "USER_CONTEXT_RETRIEVAL_FAILED",
 		}, err
 	}
 
 	// Get user roles and permissions
-	roles, err := i.iamService.Authorization().GetUserRoles(ctx, userID)
+	userRoles, err := i.iamService.Authentication().GetUserRoles(ctx, userID)
 	if err != nil {
 		activityLogger.WarnContext(ctx, "Failed to retrieve user roles", logger.Fields{
 			"error": err.Error(),
 		})
 		// Continue without roles - not critical
-		roles = []string{}
+		userRoles = []*model.Role{}
+	}
+
+	// Convert roles to strings
+	roles := make([]string, len(userRoles))
+	for i, role := range userRoles {
+		roles[i] = role.Name
 	}
 
 	userContext := map[string]interface{}{
-		"user_id":   user.ID,
-		"username":  user.Username,
-		"email":     user.Email,
-		"roles":     roles,
-		"is_active": user.IsActive,
+		"user_id":    user.ID,
+		"email":      user.Email,
+		"first_name": user.FirstName,
+		"last_name":  user.LastName,
+		"full_name":  user.FullName(),
+		"roles":      roles,
+		"is_active":  user.IsActive(),
 	}
 
 	activityLogger.InfoContext(ctx, "User context retrieved successfully", logger.Fields{
-		"username": user.Username,
-		"roles":    len(roles),
+		"email": user.Email,
+		"roles": len(roles),
 	})
-	i.metrics.Counter(domain.MetricUserContextRetrievals, "Total user context retrievals").Add(1, nil)
+	i.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	return &IntegrationActivityOutput{
 		Success: true,
 		Data:    userContext,
 		Message: "User context retrieved successfully",
 		Metadata: map[string]interface{}{
-			"user_id":   userID,
-			"username":  user.Username,
+			"user_id":     userID,
+			"email":       user.Email,
 			"roles_count": len(roles),
 		},
 	}, nil
@@ -470,14 +480,14 @@ func (i *IntegrationActivities) GetUserContextActivity(ctx context.Context, user
 
 // ValidateEntityAccessActivity validates entity access permissions
 func (i *IntegrationActivities) ValidateEntityAccessActivity(ctx context.Context, userID, entityID uuid.UUID) (*IntegrationActivityOutput, error) {
-	ctx, span := i.tracer.StartSpan(ctx, domain.ActivityTypeEntityAccessValidation)
+	ctx, span := i.tracer.StartSpan(ctx, domain.ActivityTypePermissionValidation)
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := i.logger.WithFields(logger.Fields{
 		"activity_id":   info.ActivityID,
 		"workflow_id":   info.WorkflowExecution.ID,
-		"activity_type": domain.ActivityTypeEntityAccessValidation,
+		"activity_type": domain.ActivityTypePermissionValidation,
 		"user_id":       userID,
 		"entity_id":     entityID,
 	})
@@ -485,28 +495,38 @@ func (i *IntegrationActivities) ValidateEntityAccessActivity(ctx context.Context
 	activityLogger.InfoContext(ctx, "Validating entity access")
 	i.metrics.Counter(domain.MetricActivityExecutions, "Total number of activity executions").Add(1, nil)
 
-	// Check if user has access to the entity
-	hasAccess, err := i.iamService.Authorization().HasEntityAccess(ctx, userID, entityID)
+	// Check if user has access to the entity by evaluating permissions
+	permissionReq := &authz.PermissionEvaluationRequest{
+		UserID:       userID,
+		ResourceType: "entity",
+		ResourceID:   &entityID,
+		Action:       "read",
+		EntityID:     &entityID,
+	}
+	
+	permissionResult, err := i.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
 	if err != nil {
 		activityLogger.ErrorContext(ctx, "Entity access validation failed", logger.Fields{
 			"error": err.Error(),
 		})
-		i.metrics.Counter(domain.MetricEntityAccessValidationErrors, "Entity access validation errors").Add(1, nil)
+		i.metrics.Counter(domain.MetricPermissionValidationErrors, "Permission validation errors").Add(1, nil)
 		return &IntegrationActivityOutput{
 			Success:   false,
 			Message:   "Entity access validation failed",
-			ErrorCode: domain.ErrCodeEntityAccessValidationFailed,
+			ErrorCode: domain.ErrCodeUnauthorized,
 		}, err
 	}
+
+	hasAccess := permissionResult.Decision == model.PolicyDecisionAllow
 
 	activityLogger.InfoContext(ctx, "Entity access validation completed", logger.Fields{
 		"has_access": hasAccess,
 	})
 
 	if hasAccess {
-		i.metrics.Counter(domain.MetricEntityAccessGranted, "Entity access granted").Add(1, nil)
+		i.metrics.Counter(domain.MetricPermissionGranted, "Permission granted").Add(1, nil)
 	} else {
-		i.metrics.Counter(domain.MetricEntityAccessDenied, "Entity access denied").Add(1, nil)
+		i.metrics.Counter(domain.MetricPermissionDenied, "Permission denied").Add(1, nil)
 	}
 
 	return &IntegrationActivityOutput{

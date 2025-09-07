@@ -12,6 +12,8 @@ import (
 	"github.com/niiniyare/erp/internal/core/finance/domain"
 	"github.com/niiniyare/erp/internal/core/finance/service"
 	"github.com/niiniyare/erp/internal/core/iam"
+	"github.com/niiniyare/erp/internal/core/iam/authz"
+	"github.com/niiniyare/erp/internal/core/iam/model"
 	settingsService "github.com/niiniyare/erp/internal/core/settings/service"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -142,7 +144,7 @@ func (t *TransactionActivities) ValidateTransactionActivity(ctx context.Context,
 	})
 
 	activityLogger.InfoContext(ctx, "Starting transaction validation")
-	t.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	t.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	validationErrors := []string{}
 
@@ -197,7 +199,7 @@ func (t *TransactionActivities) ValidateTransactionActivity(ctx context.Context,
 	}
 
 	// Check feature flags for advanced validation
-	advancedValidationEnabled, _ := t.featureFlagService.IsEnabled(ctx, domain.FeatureFlagAdvancedValidation, nil, nil)
+	advancedValidationEnabled, _ := t.featureFlagService.IsEnabled(ctx, domain.FeatureFlagApprovalWorkflow, nil)
 	if advancedValidationEnabled {
 		activityLogger.InfoContext(ctx, "Performing advanced transaction validation")
 		// Additional advanced validation logic
@@ -207,7 +209,7 @@ func (t *TransactionActivities) ValidateTransactionActivity(ctx context.Context,
 		activityLogger.WarnContext(ctx, "Transaction validation failed", logger.Fields{
 			"errors": validationErrors,
 		})
-		t.metrics.Counter(domain.MetricValidationErrors).Add(1)
+		t.metrics.Counter(domain.MetricValidationErrors, "Validation errors").Add(1, nil)
 		return &TransactionActivityOutput{
 			Success:          false,
 			Message:          "Transaction validation failed",
@@ -217,7 +219,7 @@ func (t *TransactionActivities) ValidateTransactionActivity(ctx context.Context,
 	}
 
 	activityLogger.InfoContext(ctx, "Transaction validation successful")
-	t.metrics.Counter(domain.MetricValidationSuccess).Add(1)
+	t.metrics.Counter(domain.MetricValidationSuccess, "Validation success").Add(1, nil)
 
 	return &TransactionActivityOutput{
 		Success: true,
@@ -239,7 +241,7 @@ func (t *TransactionActivities) CreateTransactionActivity(ctx context.Context, i
 	})
 
 	activityLogger.InfoContext(ctx, "Creating new transaction")
-	t.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	t.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	// Convert input to service request
 	req := domain.CreateTransactionRequest{
@@ -256,14 +258,32 @@ func (t *TransactionActivities) CreateTransactionActivity(ctx context.Context, i
 
 	// Convert entries
 	for _, entryInput := range input.Entries {
-		req.Entries = append(req.Entries, domain.CreateTransactionEntryRequest{
-			AccountID:   entryInput.AccountID,
-			EntryType:   entryInput.EntryType,
-			Amount:      entryInput.Amount,
-			Currency:    entryInput.Currency,
-			Description: entryInput.Description,
-			Reference:   entryInput.Reference,
-			Metadata:    entryInput.Metadata,
+		var debitAmount, creditAmount decimal.Decimal
+		
+		// Convert entry type to debit/credit amounts
+		// Note: This assumes EntryType indicates whether it's a debit or credit
+		// You may need to adjust this logic based on actual business requirements
+		if string(entryInput.EntryType) == string(domain.NormalBalanceDebit) {
+			debitAmount = entryInput.Amount
+			creditAmount = decimal.Zero
+		} else if string(entryInput.EntryType) == string(domain.NormalBalanceCredit) {
+			debitAmount = decimal.Zero
+			creditAmount = entryInput.Amount
+		} else {
+			// Default to debit if type is unclear
+			debitAmount = entryInput.Amount
+			creditAmount = decimal.Zero
+		}
+		
+		req.Entries = append(req.Entries, domain.CreateEntryRequest{
+			AccountID:        entryInput.AccountID,
+			DebitAmount:      debitAmount,
+			CreditAmount:     creditAmount,
+			Description:      entryInput.Description,
+			Reference:        &entryInput.Reference,
+			OriginalCurrency: entryInput.Currency,
+			OriginalAmount:   entryInput.Amount,
+			ExchangeRate:     decimal.NewFromInt(1), // Default exchange rate
 		})
 	}
 
@@ -273,18 +293,18 @@ func (t *TransactionActivities) CreateTransactionActivity(ctx context.Context, i
 		activityLogger.ErrorContext(ctx, "Failed to create transaction", logger.Fields{
 			"error": err.Error(),
 		})
-		t.metrics.Counter(domain.MetricTransactionErrors).Add(1)
+		t.metrics.Counter(domain.MetricActivityFailures, "Transaction errors").Add(1, nil)
 		return &TransactionActivityOutput{
 			Success:   false,
 			Message:   "Transaction creation failed",
-			ErrorCode: domain.ErrCodeTransactionCreationFailed,
+			ErrorCode: domain.ErrCodeInternalError,
 		}, err
 	}
 
 	activityLogger.InfoContext(ctx, "Transaction created successfully", logger.Fields{
 		"transaction_id": transaction.ID,
 	})
-	t.metrics.Counter(domain.MetricTransactionsProcessed).Add(1)
+	t.metrics.Counter(domain.MetricTransactionsProcessed, "Transactions processed").Add(1, nil)
 
 	return &TransactionActivityOutput{
 		Transaction: transaction,
@@ -295,36 +315,52 @@ func (t *TransactionActivities) CreateTransactionActivity(ctx context.Context, i
 
 // ProcessTransactionEntriesActivity processes transaction entries
 func (t *TransactionActivities) ProcessTransactionEntriesActivity(ctx context.Context, transactionID uuid.UUID, entries []TransactionEntryInput) (*TransactionActivityOutput, error) {
-	ctx, span := t.tracer.StartSpan(ctx, domain.ActivityTypeEntryProcessing)
+	ctx, span := t.tracer.StartSpan(ctx, domain.ActivityTypeEntryGeneration)
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := t.logger.WithFields(logger.Fields{
 		"activity_id":    info.ActivityID,
 		"workflow_id":    info.WorkflowExecution.ID,
-		"activity_type":  domain.ActivityTypeEntryProcessing,
+		"activity_type":  domain.ActivityTypeEntryGeneration,
 		"transaction_id": transactionID,
 		"entries_count":  len(entries),
 	})
 
 	activityLogger.InfoContext(ctx, "Processing transaction entries")
-	t.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	t.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	processedEntries := []*domain.TransactionEntry{}
 
 	for i, entryInput := range entries {
-		entryReq := domain.CreateTransactionEntryRequest{
-			TransactionID: transactionID,
-			AccountID:     entryInput.AccountID,
-			EntryType:     entryInput.EntryType,
-			Amount:        entryInput.Amount,
-			Currency:      entryInput.Currency,
-			Description:   entryInput.Description,
-			Reference:     entryInput.Reference,
-			Metadata:      entryInput.Metadata,
+		var debitAmount, creditAmount decimal.Decimal
+		
+		// Convert entry type to debit/credit amounts
+		if string(entryInput.EntryType) == string(domain.NormalBalanceDebit) {
+			debitAmount = entryInput.Amount
+			creditAmount = decimal.Zero
+		} else if string(entryInput.EntryType) == string(domain.NormalBalanceCredit) {
+			debitAmount = decimal.Zero
+			creditAmount = entryInput.Amount
+		} else {
+			// Default to debit if type is unclear
+			debitAmount = entryInput.Amount
+			creditAmount = decimal.Zero
+		}
+		
+		entryReq := &domain.TransactionEntry{
+			ID:               uuid.New(),
+			AccountID:        entryInput.AccountID,
+			DebitAmount:      debitAmount,
+			CreditAmount:     creditAmount,
+			Description:      entryInput.Description,
+			Reference:        &entryInput.Reference,
+			OriginalCurrency: entryInput.Currency,
+			OriginalAmount:   entryInput.Amount,
+			ExchangeRate:     decimal.NewFromInt(1), // Default exchange rate
 		}
 
-		entry, err := t.transactionEntryService.CreateTransactionEntry(ctx, entryReq)
+		err := t.transactionEntryService.CreateEntry(ctx, entryReq)
 		if err != nil {
 			activityLogger.ErrorContext(ctx, "Failed to create transaction entry", logger.Fields{
 				"error":     err.Error(),
@@ -333,15 +369,15 @@ func (t *TransactionActivities) ProcessTransactionEntriesActivity(ctx context.Co
 			return &TransactionActivityOutput{
 				Success:   false,
 				Message:   "Failed to process transaction entry",
-				ErrorCode: domain.ErrCodeEntryProcessingFailed,
+				ErrorCode: "ENTRY_PROCESSING_FAILED",
 			}, err
 		}
 
-		processedEntries = append(processedEntries, entry)
+		processedEntries = append(processedEntries, entryReq)
 	}
 
 	activityLogger.InfoContext(ctx, "Transaction entries processed successfully")
-	t.metrics.Counter(domain.MetricEntriesProcessed).Add(int64(len(processedEntries)))
+	t.metrics.Counter(domain.MetricActivityExecutions, "Entries processed").Add(float64(len(processedEntries)), nil)
 
 	return &TransactionActivityOutput{
 		Entries: processedEntries,
@@ -364,23 +400,24 @@ func (t *TransactionActivities) PostTransactionActivity(ctx context.Context, tra
 	})
 
 	activityLogger.InfoContext(ctx, "Posting transaction to general ledger")
-	t.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	t.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
-	err := t.transactionService.PostTransaction(ctx, transactionID)
+	now := time.Now()
+	_, err := t.transactionService.PostTransaction(ctx, transactionID, &now)
 	if err != nil {
 		activityLogger.ErrorContext(ctx, "Failed to post transaction", logger.Fields{
 			"error": err.Error(),
 		})
-		t.metrics.Counter(domain.MetricTransactionPostingErrors).Add(1)
+		t.metrics.Counter(domain.MetricActivityFailures, "Transaction posting errors").Add(1, nil)
 		return &TransactionActivityOutput{
 			Success:   false,
 			Message:   "Transaction posting failed",
-			ErrorCode: domain.ErrCodeTransactionPostingFailed,
+			ErrorCode: "TRANSACTION_POSTING_FAILED",
 		}, err
 	}
 
 	activityLogger.InfoContext(ctx, "Transaction posted successfully")
-	t.metrics.Counter(domain.MetricTransactionsPosted).Add(1)
+	t.metrics.Counter(domain.MetricTransactionsPosted, "Transactions posted").Add(1, nil)
 
 	return &TransactionActivityOutput{
 		Success: true,
@@ -403,25 +440,25 @@ func (t *TransactionActivities) ReverseTransactionActivity(ctx context.Context, 
 	})
 
 	activityLogger.InfoContext(ctx, "Creating transaction reversal")
-	t.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	t.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	reversalTransaction, err := t.transactionService.ReverseTransaction(ctx, originalTransactionID, reason)
 	if err != nil {
 		activityLogger.ErrorContext(ctx, "Failed to create transaction reversal", logger.Fields{
 			"error": err.Error(),
 		})
-		t.metrics.Counter(domain.MetricTransactionReversalErrors).Add(1)
+		t.metrics.Counter(domain.MetricActivityFailures, "Transaction reversal errors").Add(1, nil)
 		return &TransactionActivityOutput{
 			Success:   false,
 			Message:   "Transaction reversal failed",
-			ErrorCode: domain.ErrCodeTransactionReversalFailed,
+			ErrorCode: "TRANSACTION_REVERSAL_FAILED",
 		}, err
 	}
 
 	activityLogger.InfoContext(ctx, "Transaction reversal created successfully", logger.Fields{
 		"reversal_transaction_id": reversalTransaction.ID,
 	})
-	t.metrics.Counter(domain.MetricTransactionsReversed).Add(1)
+	t.metrics.Counter(domain.MetricTransactionsReversed, "Transactions reversed").Add(1, nil)
 
 	return &TransactionActivityOutput{
 		Transaction: reversalTransaction,
@@ -432,19 +469,19 @@ func (t *TransactionActivities) ReverseTransactionActivity(ctx context.Context, 
 
 // ValidateDoubleEntryActivity validates double-entry bookkeeping rules
 func (t *TransactionActivities) ValidateDoubleEntryActivity(ctx context.Context, entries []TransactionEntryInput) (*TransactionActivityOutput, error) {
-	ctx, span := t.tracer.StartSpan(ctx, domain.ActivityTypeDoubleEntryValidation)
+	ctx, span := t.tracer.StartSpan(ctx, "finance.activity.double.entry.validation")
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := t.logger.WithFields(logger.Fields{
 		"activity_id":   info.ActivityID,
 		"workflow_id":   info.WorkflowExecution.ID,
-		"activity_type": domain.ActivityTypeDoubleEntryValidation,
+		"activity_type": "finance.activity.double.entry.validation",
 		"entries_count": len(entries),
 	})
 
 	activityLogger.InfoContext(ctx, "Validating double-entry bookkeeping rules")
-	t.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	t.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	validationErrors := []string{}
 
@@ -459,11 +496,11 @@ func (t *TransactionActivities) ValidateDoubleEntryActivity(ctx context.Context,
 	creditCount := 0
 
 	for _, entry := range entries {
-		switch entry.EntryType {
-		case domain.DebitEntry:
+		switch string(entry.EntryType) {
+		case string(domain.NormalBalanceDebit):
 			totalDebits = totalDebits.Add(entry.Amount)
 			debitCount++
-		case domain.CreditEntry:
+		case string(domain.NormalBalanceCredit):
 			totalCredits = totalCredits.Add(entry.Amount)
 			creditCount++
 		default:
@@ -490,11 +527,11 @@ func (t *TransactionActivities) ValidateDoubleEntryActivity(ctx context.Context,
 			"total_debits":  totalDebits,
 			"total_credits": totalCredits,
 		})
-		t.metrics.Counter(domain.MetricDoubleEntryValidationErrors).Add(1)
+		t.metrics.Counter(domain.MetricActivityFailures, "Double-entry validation errors").Add(1, nil)
 		return &TransactionActivityOutput{
 			Success:          false,
 			Message:          "Double-entry validation failed",
-			ErrorCode:        domain.ErrCodeDoubleEntryValidationFailed,
+			ErrorCode:        "DOUBLE_ENTRY_VALIDATION_FAILED",
 			ValidationErrors: validationErrors,
 		}, nil
 	}
@@ -503,7 +540,7 @@ func (t *TransactionActivities) ValidateDoubleEntryActivity(ctx context.Context,
 		"total_debits":  totalDebits,
 		"total_credits": totalCredits,
 	})
-	t.metrics.Counter(domain.MetricDoubleEntryValidationSuccess).Add(1)
+	t.metrics.Counter(domain.MetricValidationSuccess, "Double-entry validation success").Add(1, nil)
 
 	return &TransactionActivityOutput{
 		Success: true,
@@ -526,7 +563,7 @@ func (t *TransactionActivities) CheckTransactionPermissionsActivity(ctx context.
 	})
 
 	activityLogger.InfoContext(ctx, "Checking transaction permissions")
-	t.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	t.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	// Extract user context
 	userID := getUserIDFromContext(ctx)
@@ -539,7 +576,13 @@ func (t *TransactionActivities) CheckTransactionPermissionsActivity(ctx context.
 	}
 
 	// Check permissions via IAM service
-	hasPermission, err := t.iamService.Authorization().HasPermission(ctx, userID, "finance_transaction", transactionID, action)
+	permReq := &authz.PermissionEvaluationRequest{
+		UserID:       userID,
+		ResourceType: "finance_transaction",
+		ResourceID:   transactionID,
+		Action:       action,
+	}
+	permResult, err := t.iamService.Authorization().EvaluatePermission(ctx, permReq)
 	if err != nil {
 		activityLogger.ErrorContext(ctx, "Permission check failed", logger.Fields{
 			"error": err.Error(),
@@ -547,13 +590,14 @@ func (t *TransactionActivities) CheckTransactionPermissionsActivity(ctx context.
 		return &TransactionActivityOutput{
 			Success:   false,
 			Message:   "Permission check failed",
-			ErrorCode: domain.ErrCodePermissionCheckFailed,
+			ErrorCode: "PERMISSION_CHECK_FAILED",
 		}, err
 	}
 
+	hasPermission := permResult.Decision == model.PolicyDecisionAllow
 	if !hasPermission {
 		activityLogger.WarnContext(ctx, "Permission denied")
-		t.metrics.Counter(domain.MetricPermissionDenied).Add(1)
+		t.metrics.Counter(domain.MetricPermissionDenied, "Permission denied").Add(1, nil)
 		return &TransactionActivityOutput{
 			Success:   false,
 			Message:   "Permission denied",
@@ -562,7 +606,7 @@ func (t *TransactionActivities) CheckTransactionPermissionsActivity(ctx context.
 	}
 
 	activityLogger.InfoContext(ctx, "Permission check successful")
-	t.metrics.Counter(domain.MetricPermissionGranted).Add(1)
+	t.metrics.Counter(domain.MetricPermissionGranted, "Permission granted").Add(1, nil)
 
 	return &TransactionActivityOutput{
 		Success: true,
@@ -572,23 +616,38 @@ func (t *TransactionActivities) CheckTransactionPermissionsActivity(ctx context.
 
 // UpdateTransactionStatusActivity updates transaction status
 func (t *TransactionActivities) UpdateTransactionStatusActivity(ctx context.Context, transactionID uuid.UUID, newStatus domain.TransactionStatus, reason string) (*TransactionActivityOutput, error) {
-	ctx, span := t.tracer.StartSpan(ctx, domain.ActivityTypeStatusUpdate)
+	ctx, span := t.tracer.StartSpan(ctx, "finance.activity.status.update")
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := t.logger.WithFields(logger.Fields{
 		"activity_id":    info.ActivityID,
 		"workflow_id":    info.WorkflowExecution.ID,
-		"activity_type":  domain.ActivityTypeStatusUpdate,
+		"activity_type":  "finance.activity.status.update",
 		"transaction_id": transactionID,
 		"new_status":     newStatus,
 		"reason":         reason,
 	})
 
 	activityLogger.InfoContext(ctx, "Updating transaction status")
-	t.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	t.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
-	err := t.transactionService.UpdateTransactionStatus(ctx, transactionID, newStatus, reason)
+	// Get current transaction
+	transaction, err := t.transactionService.GetTransactionByID(ctx, transactionID)
+	if err != nil {
+		activityLogger.ErrorContext(ctx, "Failed to get transaction", logger.Fields{
+			"error": err.Error(),
+		})
+		return &TransactionActivityOutput{
+			Success:   false,
+			Message:   "Failed to get transaction",
+			ErrorCode: "TRANSACTION_NOT_FOUND",
+		}, err
+	}
+
+	// Update transaction status
+	transaction.TransactionStatus = newStatus
+	updatedTransaction, err := t.transactionService.UpdateTransaction(ctx, transactionID, *transaction)
 	if err != nil {
 		activityLogger.ErrorContext(ctx, "Failed to update transaction status", logger.Fields{
 			"error": err.Error(),
@@ -596,16 +655,17 @@ func (t *TransactionActivities) UpdateTransactionStatusActivity(ctx context.Cont
 		return &TransactionActivityOutput{
 			Success:   false,
 			Message:   "Transaction status update failed",
-			ErrorCode: domain.ErrCodeStatusUpdateFailed,
+			ErrorCode: "STATUS_UPDATE_FAILED",
 		}, err
 	}
 
 	activityLogger.InfoContext(ctx, "Transaction status updated successfully")
-	t.metrics.Counter(domain.MetricTransactionStatusUpdated).Add(1)
+	t.metrics.Counter(domain.MetricActivityExecutions, "Transaction status updated").Add(1, nil)
 
 	return &TransactionActivityOutput{
-		Success: true,
-		Message: "Transaction status updated successfully",
+		Transaction: updatedTransaction,
+		Success:     true,
+		Message:     "Transaction status updated successfully",
 	}, nil
 }
 
@@ -627,9 +687,9 @@ func (t *TransactionActivities) CacheTransactionActivity(ctx context.Context, tr
 	// Generate cache key with tenant and entity context
 	tenantID := getTenantIDFromContext(ctx)
 	entityID := getEntityIDFromContext(ctx)
-	cacheKey := domain.GenerateTransactionCacheKey(tenantID.String(), entityID.String(), transaction.ID.String())
+	cacheKey := domain.GetTransactionCacheKey(tenantID.String(), entityID.String(), transaction.ID.String())
 
-	err := t.cacheService.Set(ctx, cacheKey, transaction, ttl)
+	err := t.cacheService.Set(ctx, cacheKey, transaction, time.Duration(ttl)*time.Second)
 	if err != nil {
 		activityLogger.ErrorContext(ctx, "Failed to cache transaction", logger.Fields{
 			"error": err.Error(),
@@ -650,21 +710,21 @@ func (t *TransactionActivities) CacheTransactionActivity(ctx context.Context, tr
 
 // ProcessBulkTransactionsActivity processes multiple transactions in bulk
 func (t *TransactionActivities) ProcessBulkTransactionsActivity(ctx context.Context, input BulkTransactionActivityInput) (*TransactionActivityOutput, error) {
-	ctx, span := t.tracer.StartSpan(ctx, domain.ActivityTypeBulkProcessing)
+	ctx, span := t.tracer.StartSpan(ctx, "finance.activity.bulk.processing")
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := t.logger.WithFields(logger.Fields{
 		"activity_id":        info.ActivityID,
 		"workflow_id":        info.WorkflowExecution.ID,
-		"activity_type":      domain.ActivityTypeBulkProcessing,
+		"activity_type":      "finance.activity.bulk.processing",
 		"transactions_count": len(input.Transactions),
 		"batch_size":         input.BatchSize,
 		"concurrent_limit":   input.ConcurrentLimit,
 	})
 
 	activityLogger.InfoContext(ctx, "Processing bulk transactions")
-	t.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	t.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	successCount := 0
 	errorCount := 0
@@ -712,8 +772,8 @@ func (t *TransactionActivities) ProcessBulkTransactionsActivity(ctx context.Cont
 		"total_count":   len(input.Transactions),
 	})
 
-	t.metrics.Counter(domain.MetricBulkTransactionsProcessed).Add(int64(successCount))
-	t.metrics.Counter(domain.MetricBulkTransactionErrors).Add(int64(errorCount))
+	t.metrics.Counter(domain.MetricTransactionsProcessed, "Bulk transactions processed").Add(float64(successCount), nil)
+	t.metrics.Counter(domain.MetricActivityFailures, "Bulk transaction errors").Add(float64(errorCount), nil)
 
 	return &TransactionActivityOutput{
 		Success:          successCount > 0,

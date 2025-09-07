@@ -422,6 +422,25 @@
   
 
       
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../schema/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database schema
+
+      </a>
+    </li>
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -1295,9 +1314,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#feature-2-double-entry-transaction-processing" class="md-nav__link">
+  <a href="#feature-2-temporal-first-double-entry-transaction-processing" class="md-nav__link">
     <span class="md-ellipsis">
-      Feature 2: Double-Entry Transaction Processing
+      Feature 2: Temporal-First Double-Entry Transaction Processing
     </span>
   </a>
   
@@ -1487,9 +1506,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#backend-services" class="md-nav__link">
+  <a href="#backend-services-with-temporal-integration" class="md-nav__link">
     <span class="md-ellipsis">
-      Backend Services
+      Backend Services with Temporal Integration
     </span>
   </a>
   
@@ -1538,9 +1557,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#business-workflows" class="md-nav__link">
+  <a href="#temporal-workflow-architecture-with-compensation" class="md-nav__link">
     <span class="md-ellipsis">
-      Business Workflows
+      Temporal Workflow Architecture with Compensation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temporal-workflow-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      Temporal Workflow State Machine
     </span>
   </a>
   
@@ -4485,6 +4513,28 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database schema
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -4517,12 +4567,13 @@
 - Advanced validation frameworks for financial business rules
 - Scalable architecture supporting high-volume transaction processing</p>
 <h3 id="solution-overview">Solution Overview</h3>
-<p>The Financial Module provides a complete double-entry accounting system built on clean architecture principles with:
-- <strong>Production-Ready Transaction Engine</strong>: Full double-entry processing with state machine workflows
-- <strong>Multi-Currency Support</strong>: Real-time exchange rate management and conversion
-- <strong>Advanced Validation</strong>: 30+ business rules ensuring financial accuracy and compliance
-- <strong>Complete Audit Trail</strong>: SOX-compliant logging and change tracking
-- <strong>Enterprise Scalability</strong>: Designed for high-volume, multi-tenant operations</p>
+<p>The Financial Module provides a complete double-entry accounting system built on clean architecture principles with Temporal-first workflow orchestration:
+- <strong>Production-Ready Transaction Engine</strong>: Full double-entry processing with Temporal workflow state machines
+- <strong>Temporal-First Architecture</strong>: Reliable, durable transaction processing with automatic retries and error handling
+- <strong>Multi-Currency Support</strong>: Real-time exchange rate management and conversion via Temporal activities
+- <strong>Advanced Validation</strong>: 30+ business rules ensuring financial accuracy and compliance through workflow validation
+- <strong>Complete Audit Trail</strong>: SOX-compliant logging and change tracking with Temporal's built-in event sourcing
+- <strong>Enterprise Scalability</strong>: Designed for high-volume, multi-tenant operations with Temporal's distributed processing</p>
 <h3 id="business-impact">Business Impact</h3>
 <ul>
 <li><strong>Primary Metrics</strong>: </li>
@@ -4599,29 +4650,42 @@
 - Row-level security for multi-tenant isolation<br />
 - SQLC integration for type-safe database operations
 - Redis caching for frequently accessed account data</p>
-<h4 id="feature-2-double-entry-transaction-processing">Feature 2: Double-Entry Transaction Processing</h4>
+<h4 id="feature-2-temporal-first-double-entry-transaction-processing">Feature 2: Temporal-First Double-Entry Transaction Processing</h4>
 <p><strong>Priority</strong>: High<br />
 <strong>Effort</strong>: Large (8+ weeks)<br />
 <strong>Business Value</strong>: Critical Core Function</p>
-<p><strong>Description</strong>: Complete transaction lifecycle management with double-entry validation, approval workflows, and state machine processing.</p>
+<p><strong>Description</strong>: Complete transaction lifecycle management with double-entry validation, approval workflows, and Temporal workflow state machine processing providing reliability, durability, and automatic error recovery.</p>
 <p><strong>User Stories</strong>:
-- As a financial accountant, I want to create transactions that automatically validate double-entry rules so that all entries balance correctly
-- As a finance manager, I need approval workflows for high-value transactions so that proper segregation of duties is maintained
-- As an auditor, I want complete transaction history with immutable audit trails so that I can verify financial integrity</p>
+- As a financial accountant, I want to create transactions that automatically validate double-entry rules through Temporal workflows so that all entries balance correctly with guaranteed processing
+- As a finance manager, I need approval workflows for high-value transactions orchestrated by Temporal so that proper segregation of duties is maintained with retry logic and timeout handling
+- As an auditor, I want complete transaction history with immutable audit trails provided by Temporal's event sourcing so that I can verify financial integrity with full workflow visibility
+- As a system administrator, I want failed transaction processing to automatically retry with exponential backoff so that temporary failures don't result in data loss</p>
 <p><strong>Acceptance Criteria</strong>:
-- [ ] All transactions must balance (total debits = total credits) with validation enforcement
-- [ ] Support for complex transactions with multiple entries and accounts
-- [ ] State machine workflow: Draft → Submitted → Approved → Posted → Reconciled
-- [ ] Configurable approval thresholds based on transaction amount and type
-- [ ] Transaction reversal functionality maintaining audit trail
-- [ ] Support for recurring transactions with flexible scheduling
-- [ ] Multi-currency transactions with exchange rate management
-- [ ] Batch processing capabilities for high-volume operations</p>
+- [ ] All transactions must balance (total debits = total credits) with validation enforcement via Temporal activities
+- [ ] Support for complex transactions with multiple entries and accounts orchestrated through workflows
+- [ ] Temporal workflow state machine: Draft → ValidationWorkflow → ApprovalWorkflow → PostingWorkflow → ReconciliationWorkflow
+- [ ] Configurable approval thresholds based on transaction amount and type with timeout handling
+- [ ] Transaction reversal functionality maintaining audit trail through compensating workflows
+- [ ] Support for recurring transactions with flexible scheduling via Temporal cron workflows
+- [ ] Multi-currency transactions with exchange rate management through dedicated activities
+- [ ] Batch processing capabilities for high-volume operations using Temporal's parallel processing
+- [ ] Automatic retry logic for transient failures with exponential backoff
+- [ ] Workflow timeout handling for stuck approval processes
+- [ ] Dead letter queue handling for permanently failed transactions</p>
 <p><strong>Technical Considerations</strong>:
-- Domain-driven design with transaction aggregates
-- Event sourcing for transaction state changes
-- Message queues for async processing
-- Database transactions ensuring ACID compliance</p>
+- Domain-driven design with transaction aggregates orchestrated by Temporal workflows
+- Event sourcing provided by Temporal's built-in workflow event history
+- Temporal activities for atomic operations (validation, posting, notifications)
+- Database transactions ensuring ACID compliance within individual activities
+- <strong>Saga Pattern Implementation</strong>: Compensation-based rollback for multi-step financial operations
+- <strong>Rollback and Compensation</strong>: Automatic rollback of completed steps when subsequent steps fail
+- <strong>Transaction Isolation</strong>: Each activity maintains transactional boundaries for safe rollback
+- <strong>Compensating Activities</strong>: Dedicated activities for reversing completed operations
+- <strong>Partial Success Handling</strong>: Graceful handling of partial transaction completion with compensation
+- Workflow versioning for seamless updates to business logic
+- Activity heartbeats for long-running operations
+- Temporal signals for external event handling (approvals, rejections)
+- Workflow queries for real-time status monitoring</p>
 <h4 id="feature-3-multi-currency-support">Feature 3: Multi-Currency Support</h4>
 <p><strong>Priority</strong>: High<br />
 <strong>Effort</strong>: Medium (4-5 weeks)<br />
@@ -4753,8 +4817,8 @@
 <hr />
 <h2 id="technical-architecture">Technical Architecture</h2>
 <h3 id="system-components">System Components</h3>
-<h4 id="backend-services">Backend Services</h4>
-<div class="highlight"><pre><span></span><code><span class="c1">// Financial module service interfaces</span>
+<h4 id="backend-services-with-temporal-integration">Backend Services with Temporal Integration</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// Financial module service interfaces with Temporal workflow orchestration</span>
 <span class="kd">type</span><span class="w"> </span><span class="nx">FinanceServices</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nx">AccountService</span><span class="w">           </span><span class="nx">AccountService</span>
 <span class="w">    </span><span class="nx">TransactionService</span><span class="w">       </span><span class="nx">TransactionService</span><span class="w">  </span>
@@ -4762,6 +4826,10 @@
 <span class="w">    </span><span class="nx">ExchangeRateService</span><span class="w">     </span><span class="nx">ExchangeRateService</span>
 <span class="w">    </span><span class="nx">ValidationService</span><span class="w">       </span><span class="nx">ValidationService</span>
 <span class="w">    </span><span class="nx">ReportingService</span><span class="w">        </span><span class="nx">ReportingService</span>
+
+<span class="w">    </span><span class="c1">// Temporal workflow orchestration</span>
+<span class="w">    </span><span class="nx">WorkflowService</span><span class="w">         </span><span class="nx">FinanceWorkflowService</span>
+<span class="w">    </span><span class="nx">ActivityService</span><span class="w">         </span><span class="nx">FinanceActivityService</span>
 <span class="p">}</span>
 
 <span class="kd">type</span><span class="w"> </span><span class="nx">AccountService</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
@@ -4775,14 +4843,80 @@
 <span class="w">    </span><span class="nx">ListAccounts</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">query</span><span class="w"> </span><span class="nx">ListAccountsQuery</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">AccountList</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 <span class="p">}</span>
 
+<span class="c1">// Temporal-first transaction service</span>
 <span class="kd">type</span><span class="w"> </span><span class="nx">TransactionService</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">CreateTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">cmd</span><span class="w"> </span><span class="nx">CreateTransactionCommand</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Transaction</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// Workflow-orchestrated operations</span>
+<span class="w">    </span><span class="nx">CreateTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">cmd</span><span class="w"> </span><span class="nx">CreateTransactionCommand</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">TransactionWorkflowResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">ProcessTransactionWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">TransactionWorkflowInput</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">TransactionWorkflowResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">ApprovalWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">ApprovalWorkflowInput</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">ApprovalResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">ReconciliationWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">ReconciliationWorkflowInput</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+
+<span class="w">    </span><span class="c1">// Query operations (non-workflow)</span>
 <span class="w">    </span><span class="nx">GetTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="nx">TransactionID</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Transaction</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">PostTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="nx">TransactionID</span><span class="p">,</span><span class="w"> </span><span class="nx">userID</span><span class="w"> </span><span class="nx">identity</span><span class="p">.</span><span class="nx">UserID</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
-<span class="w">    </span><span class="nx">ReverseTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="nx">TransactionID</span><span class="p">,</span><span class="w"> </span><span class="nx">reason</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
-<span class="w">    </span><span class="nx">ApproveTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="nx">TransactionID</span><span class="p">,</span><span class="w"> </span><span class="nx">userID</span><span class="w"> </span><span class="nx">identity</span><span class="p">.</span><span class="nx">UserID</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
-<span class="w">    </span><span class="nx">ValidateTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transaction</span><span class="w"> </span><span class="o">*</span><span class="nx">Transaction</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
 <span class="w">    </span><span class="nx">ListTransactions</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">query</span><span class="w"> </span><span class="nx">ListTransactionsQuery</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">TransactionList</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">GetWorkflowStatus</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">workflowID</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">WorkflowStatus</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// Signal operations for workflow interaction</span>
+<span class="w">    </span><span class="nx">ApproveTransactionSignal</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">workflowID</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">approval</span><span class="w"> </span><span class="nx">ApprovalSignal</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">RejectTransactionSignal</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">workflowID</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">rejection</span><span class="w"> </span><span class="nx">RejectionSignal</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="p">}</span>
+
+<span class="c1">// Temporal workflow service for financial operations</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">FinanceWorkflowService</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Core transaction workflows</span>
+<span class="w">    </span><span class="nx">TransactionProcessingWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">TransactionProcessingInput</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">ApprovalWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">ApprovalInput</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">ApprovalResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">RecurringTransactionWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">RecurringTransactionInput</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">BatchProcessingWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">BatchProcessingInput</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">BatchResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// Reconciliation workflows</span>
+<span class="w">    </span><span class="nx">BankReconciliationWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">BankReconciliationInput</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">AutoReconciliationWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">AutoReconciliationInput</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+
+<span class="w">    </span><span class="c1">// Reporting workflows</span>
+<span class="w">    </span><span class="nx">FinancialReportingWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">ReportingInput</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">ReportResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">MonthEndClosingWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">MonthEndInput</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="p">}</span>
+
+<span class="c1">// Temporal activities for atomic financial operations</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">FinanceActivityService</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Validation activities</span>
+<span class="w">    </span><span class="nx">ValidateTransactionActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transaction</span><span class="w"> </span><span class="o">*</span><span class="nx">Transaction</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">ValidationResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">ValidateAccountBalanceActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">accountID</span><span class="w"> </span><span class="nx">AccountID</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">ValidateApprovalRequirementActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transaction</span><span class="w"> </span><span class="o">*</span><span class="nx">Transaction</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">ApprovalRequirement</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// Transaction processing activities</span>
+<span class="w">    </span><span class="nx">CreateTransactionActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">cmd</span><span class="w"> </span><span class="nx">CreateTransactionCommand</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Transaction</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">PostTransactionActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transactionID</span><span class="w"> </span><span class="nx">TransactionID</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">UpdateAccountBalancesActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">entries</span><span class="w"> </span><span class="p">[]</span><span class="nx">TransactionEntry</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+
+<span class="w">    </span><span class="c1">// Approval activities</span>
+<span class="w">    </span><span class="nx">SendApprovalRequestActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">request</span><span class="w"> </span><span class="nx">ApprovalRequest</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">ProcessApprovalActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">approval</span><span class="w"> </span><span class="nx">Approval</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">ApprovalResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">EscalateApprovalActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">escalation</span><span class="w"> </span><span class="nx">ApprovalEscalation</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+
+<span class="w">    </span><span class="c1">// Notification activities</span>
+<span class="w">    </span><span class="nx">SendTransactionNotificationActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">notification</span><span class="w"> </span><span class="nx">TransactionNotification</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">SendApprovalNotificationActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">notification</span><span class="w"> </span><span class="nx">ApprovalNotification</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+
+<span class="w">    </span><span class="c1">// External integration activities</span>
+<span class="w">    </span><span class="nx">FetchExchangeRateActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">request</span><span class="w"> </span><span class="nx">ExchangeRateRequest</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">ExchangeRate</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">SyncWithBankActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">request</span><span class="w"> </span><span class="nx">BankSyncRequest</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">BankSyncResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">NotifyExternalSystemActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">notification</span><span class="w"> </span><span class="nx">ExternalNotification</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+
+<span class="w">    </span><span class="c1">// Compensation activities for rollback capabilities</span>
+<span class="w">    </span><span class="nx">CompensateTransactionCreationActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transactionID</span><span class="w"> </span><span class="nx">TransactionID</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">CompensatePostingActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transactionID</span><span class="w"> </span><span class="nx">TransactionID</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">CompensateBalanceActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">entries</span><span class="w"> </span><span class="p">[]</span><span class="nx">TransactionEntry</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">CompensateNotificationActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">notificationID</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">CompensateApprovalActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">approvalID</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">CompensateExternalSyncActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">syncID</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">CompensateReconciliationActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">reconciliationID</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+
+<span class="w">    </span><span class="c1">// Recovery activities for failed operations</span>
+<span class="w">    </span><span class="nx">RecoverTransactionStateActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transactionID</span><span class="w"> </span><span class="nx">TransactionID</span><span class="p">,</span><span class="w"> </span><span class="nx">targetState</span><span class="w"> </span><span class="nx">TransactionStatus</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">RecoverAccountBalancesActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">accountID</span><span class="w"> </span><span class="nx">AccountID</span><span class="p">,</span><span class="w"> </span><span class="nx">backupBalance</span><span class="w"> </span><span class="nx">decimal</span><span class="p">.</span><span class="nx">Decimal</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">RecoverWorkflowStateActivity</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">workflowID</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">checkpoint</span><span class="w"> </span><span class="nx">WorkflowCheckpoint</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
 <span class="p">}</span>
 </code></pre></div>
 <h4 id="database-schema">Database Schema</h4>
@@ -5006,28 +5140,92 @@
         timestamp created_at
         uuid created_by FK
     }</code></pre>
-<h4 id="business-workflows">Business Workflows</h4>
+<h4 id="temporal-workflow-architecture-with-compensation">Temporal Workflow Architecture with Compensation</h4>
+<pre class="mermaid"><code>graph TD
+    A[Transaction Created] --&gt; B[TransactionProcessingWorkflow]
+
+    B --&gt; C{Validation Activity}
+    C --&gt;|Pass| D{Approval Required?}
+    C --&gt;|Fail| E[ValidationFailureActivity]
+    E --&gt; F[Transaction Rejected]
+
+    D --&gt;|No| G[PostingActivity]
+    D --&gt;|Yes| H[ApprovalWorkflow]
+
+    H --&gt; I{Approval Timeout?}
+    I --&gt;|No| J{Approved?}
+    I --&gt;|Yes| K[TimeoutActivity]
+    K --&gt; L[Transaction Expired]
+
+    J --&gt;|Yes| G[PostingActivity]
+    J --&gt;|No| M[RejectionActivity]
+    M --&gt; N[Transaction Rejected]
+
+    G --&gt; O{Posting Success?}
+    O --&gt;|Yes| P[UpdateBalancesActivity]
+    O --&gt;|No| Q[PostingRetryActivity]
+    Q --&gt; R{Max Retries?}
+    R --&gt;|No| G
+    R --&gt;|Yes| S[CompensatePostingActivity]
+    S --&gt; T[Transaction Failed]
+
+    P --&gt; U{Balance Update Success?}
+    U --&gt;|Yes| V[NotificationActivity]
+    U --&gt;|No| W[CompensateBalanceActivity]
+    W --&gt; X[CompensatePostingActivity]
+    X --&gt; T
+
+    V --&gt; Y{Notification Success?}
+    Y --&gt;|Yes| Z[Transaction Posted]
+    Y --&gt;|No| AA[CompensateNotificationActivity]
+    AA --&gt; W
+
+    Z --&gt; BB[ReconciliationWorkflow]
+    BB --&gt; CC{Reconciliation Success?}
+    CC --&gt;|Yes| DD[Transaction Complete]
+    CC --&gt;|No| EE[CompensateReconciliationActivity]
+    EE --&gt; FF[Manual Intervention Required]
+
+    style B fill:#e1f5fe
+    style H fill:#fff3e0
+    style BB fill:#f3e5f5
+    style C fill:#e8f5e8
+    style G fill:#fff9c4
+    style W fill:#ffebee
+    style X fill:#ffebee
+    style S fill:#ffebee
+    style AA fill:#ffebee
+    style EE fill:#ffebee</code></pre>
+<h4 id="temporal-workflow-state-machine">Temporal Workflow State Machine</h4>
 <pre class="mermaid"><code>stateDiagram-v2
     [*] --&gt; Draft
-    Draft --&gt; Submitted : submit()
-    Submitted --&gt; Approved : approve()
-    Submitted --&gt; Draft : reject()
-    Approved --&gt; Posted : post()
-    Posted --&gt; Reconciled : reconcile()
-    Posted --&gt; Reversed : reverse()
-    Reversed --&gt; [*]
-    Reconciled --&gt; [*]
+    Draft --&gt; ValidationWorkflow : startWorkflow()
+    ValidationWorkflow --&gt; ApprovalWorkflow : validation_passed
+    ValidationWorkflow --&gt; Failed : validation_failed
+    ApprovalWorkflow --&gt; PostingWorkflow : approved
+    ApprovalWorkflow --&gt; Rejected : rejected
+    ApprovalWorkflow --&gt; Expired : timeout
+    PostingWorkflow --&gt; ReconciliationWorkflow : posted
+    PostingWorkflow --&gt; PostingRetry : posting_failed
+    PostingRetry --&gt; PostingWorkflow : retry
+    PostingRetry --&gt; Failed : max_retries_exceeded
+    ReconciliationWorkflow --&gt; Completed : reconciled
+    ReconciliationWorkflow --&gt; [*] : workflow_complete
+    Failed --&gt; [*]
+    Rejected --&gt; [*]
+    Expired --&gt; [*]
 
-    note right of Submitted
-        Approval required for
-        transactions &gt; $10,000
-        or based on user roles
+    note right of ApprovalWorkflow
+        Temporal workflow with
+        configurable timeouts,
+        signal handling for approvals,
+        and automatic escalation
     end note
 
-    note right of Posted
-        Posted transactions
-        are immutable and can
-        only be reversed
+    note right of PostingWorkflow
+        Atomic posting operations
+        with automatic retry logic
+        and compensation handling
     end note</code></pre>
 <hr />
 <h2 id="risk-assessment">Risk Assessment</h2>

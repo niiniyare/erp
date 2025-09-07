@@ -174,3 +174,4 @@ nav:
       - 'Manual Tests': 'reference/api-source/testing/manual/manual-curl-tests.md'
     - 'Utilities':
       - 'TODO': 'reference/api-source/utilities/todo.md'
+  - 'Database schema': 'schema/index.md'

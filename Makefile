@@ -78,11 +78,40 @@ fmt: ## Format Go code
 
 DOC_PORT ?= 8081
 
-docs: ## serve Doc by site/main.go on port 8081
-	@DOC_PORT=$(DOC_PORT) go run ./site/main.go
+docs: ## Serve documentation (MkDocs + Schema) on port 8081
+	@echo "🏢 Starting AWO ERP Documentation Server..."
+	@echo "📚 MkDocs documentation: http://localhost:$(DOC_PORT)/"
+	@echo "🗄️ Schema documentation: http://localhost:$(DOC_PORT)/schema/"
+	@cd docs && ./start-docs.sh $(DOC_PORT)
 
-docs-port: ## serve Doc with custom port: make docs-port DOC_PORT=9000
-	@DOC_PORT=$(DOC_PORT) go run ./site/main.go
+docs-port: ## Serve documentation with custom port: make docs-port DOC_PORT=9000
+	@echo "🏢 Starting AWO ERP Documentation Server on custom port..."
+	@echo "📚 MkDocs documentation: http://localhost:$(DOC_PORT)/"
+	@echo "🗄️ Schema documentation: http://localhost:$(DOC_PORT)/schema/"
+	@cd docs && ./start-docs.sh $(DOC_PORT)
+
+docs-build: ## Build MkDocs documentation
+	@echo "📖 Building MkDocs documentation..."
+	@mkdocs build
+	@echo "✅ Documentation built in site/ directory"
+
+docs-test: ## Test documentation server
+	@echo "🧪 Testing documentation server..."
+	@cd docs && ./test-server.sh
+
+docs-mkdocs-safe: ## Test MkDocs safety (docs/index.html protection)
+	@echo "🛡️ Testing MkDocs safety..."
+	@cd docs && ./test-mkdocs-safe.sh
+
+docs-dev: ## Development docs workflow (build + serve)
+	@echo "👨‍💻 Development documentation workflow..."
+	@$(MAKE) docs-build
+	@$(MAKE) docs
+
+docs-schema: ## Generate schema documentation with SchemaSpy
+	@echo "🗄️ Generating database schema documentation..."
+	@echo "Note: Requires SchemaSpy JAR and database connection"
+	@docs/scripts/generate-schema-docs.sh
 
 goa: ## generate 7oa 
 	@goa gen github.com/niiniyare/erp/internal/api/design -o internal/api && rm -rf ./internal/api/swagger/openapi && cp -f ./internal/api/gen/http/openapi3.json ./internal/api/swagger
@@ -248,4 +277,4 @@ run: ## Run the app server
 .PHONY: help clean ci fmt lint test test-core test-repo \
 	createdb dropdb migrateup migratedown migratedrop migrate-create \
 	sqlc mock proto buf buf-lint evans dbdocs sql2dbml run check-tools \
-	docs
+	docs docs-port docs-build docs-test docs-mkdocs-safe docs-dev docs-schema

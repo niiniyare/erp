@@ -9,6 +9,7 @@ import (
 	"github.com/niiniyare/erp/internal/core/finance/service"
 	"github.com/niiniyare/erp/internal/core/iam"
 	settingsService "github.com/niiniyare/erp/internal/core/settings/service"
+	settingsDomain "github.com/niiniyare/erp/internal/core/settings/domain"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -92,19 +93,19 @@ type ExchangeRateValidationInput struct {
 
 // ValidateBusinessRulesActivity validates general business rules
 func (v *ValidationActivities) ValidateBusinessRulesActivity(ctx context.Context, input BusinessRuleValidationInput) (*ValidationActivityOutput, error) {
-	ctx, span := v.tracer.StartSpan(ctx, domain.ActivityTypeBusinessRuleValidation)
+	ctx, span := v.tracer.StartSpan(ctx, "finance.activity.business.rule.validation")
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := v.logger.WithFields(logger.Fields{
 		"activity_id":   info.ActivityID,
 		"workflow_id":   info.WorkflowExecution.ID,
-		"activity_type": domain.ActivityTypeBusinessRuleValidation,
+		"activity_type": "finance.activity.business.rule.validation",
 		"rule_type":     input.RuleType,
 	})
 
 	activityLogger.InfoContext(ctx, "Validating business rules")
-	v.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	v.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	validationErrors := []string{}
 	warnings := []string{}
@@ -112,7 +113,7 @@ func (v *ValidationActivities) ValidateBusinessRulesActivity(ctx context.Context
 	ruleResults := make(map[string]interface{})
 
 	switch input.RuleType {
-	case domain.RuleTypeAccountCreation:
+	case "ACCOUNT_CREATION":
 		errors, warns, rules, results := v.validateAccountCreationRules(ctx, input.RuleData)
 		validationErrors = append(validationErrors, errors...)
 		warnings = append(warnings, warns...)
@@ -121,7 +122,7 @@ func (v *ValidationActivities) ValidateBusinessRulesActivity(ctx context.Context
 			ruleResults[k] = v
 		}
 
-	case domain.RuleTypeTransactionProcessing:
+	case "TRANSACTION_PROCESSING":
 		errors, warns, rules, results := v.validateTransactionProcessingRules(ctx, input.RuleData)
 		validationErrors = append(validationErrors, errors...)
 		warnings = append(warnings, warns...)
@@ -130,7 +131,7 @@ func (v *ValidationActivities) ValidateBusinessRulesActivity(ctx context.Context
 			ruleResults[k] = v
 		}
 
-	case domain.RuleTypePeriodClosing:
+	case "PERIOD_CLOSING":
 		errors, warns, rules, results := v.validatePeriodClosingRules(ctx, input.RuleData)
 		validationErrors = append(validationErrors, errors...)
 		warnings = append(warnings, warns...)
@@ -150,12 +151,12 @@ func (v *ValidationActivities) ValidateBusinessRulesActivity(ctx context.Context
 			"applied_rules": appliedRules,
 			"warnings":      len(warnings),
 		})
-		v.metrics.Counter(domain.MetricBusinessRuleValidationSuccess).Add(1)
+		v.metrics.Counter("finance.business.rule.validation.success", "Business rule validation success").Add(1, nil)
 	} else {
 		activityLogger.WarnContext(ctx, "Business rule validation failed", logger.Fields{
 			"errors": validationErrors,
 		})
-		v.metrics.Counter(domain.MetricBusinessRuleValidationErrors).Add(1)
+		v.metrics.Counter("finance.business.rule.validation.errors", "Business rule validation errors").Add(1, nil)
 	}
 
 	return &ValidationActivityOutput{
@@ -170,25 +171,25 @@ func (v *ValidationActivities) ValidateBusinessRulesActivity(ctx context.Context
 
 // ValidateAccountingPeriodActivity validates accounting period constraints
 func (v *ValidationActivities) ValidateAccountingPeriodActivity(ctx context.Context, date string) (*ValidationActivityOutput, error) {
-	ctx, span := v.tracer.StartSpan(ctx, domain.ActivityTypePeriodValidation)
+	ctx, span := v.tracer.StartSpan(ctx, "finance.activity.period.validation")
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := v.logger.WithFields(logger.Fields{
 		"activity_id":   info.ActivityID,
 		"workflow_id":   info.WorkflowExecution.ID,
-		"activity_type": domain.ActivityTypePeriodValidation,
+		"activity_type": "finance.activity.period.validation",
 		"date":          date,
 	})
 
 	activityLogger.InfoContext(ctx, "Validating accounting period")
-	v.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	v.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	validationErrors := []string{}
 	warnings := []string{}
 
 	// Get period settings from settings service
-	periodSettings, err := v.settingsService.GetConfiguration(ctx, domain.SettingsKeyAccountingPeriod)
+	periodSettings, err := v.settingsService.GetEffectiveConfiguration(ctx, nil, settingsDomain.ModuleName("finance"), settingsDomain.ConfigKey("accounting_period"))
 	if err != nil {
 		activityLogger.ErrorContext(ctx, "Failed to get period settings", logger.Fields{
 			"error": err.Error(),
@@ -221,12 +222,12 @@ func (v *ValidationActivities) ValidateAccountingPeriodActivity(ctx context.Cont
 
 	if isValid {
 		activityLogger.InfoContext(ctx, "Accounting period validation successful")
-		v.metrics.Counter(domain.MetricPeriodValidationSuccess).Add(1)
+		v.metrics.Counter("finance.period.validation.success", "Accounting period validation success").Add(1, nil)
 	} else {
 		activityLogger.WarnContext(ctx, "Accounting period validation failed", logger.Fields{
 			"errors": validationErrors,
 		})
-		v.metrics.Counter(domain.MetricPeriodValidationErrors).Add(1)
+		v.metrics.Counter("finance.period.validation.errors", "Accounting period validation errors").Add(1, nil)
 	}
 
 	return &ValidationActivityOutput{
@@ -239,14 +240,14 @@ func (v *ValidationActivities) ValidateAccountingPeriodActivity(ctx context.Cont
 
 // ValidateExchangeRateActivity validates exchange rate data
 func (v *ValidationActivities) ValidateExchangeRateActivity(ctx context.Context, input ExchangeRateValidationInput) (*ValidationActivityOutput, error) {
-	ctx, span := v.tracer.StartSpan(ctx, domain.ActivityTypeExchangeRateValidation)
+	ctx, span := v.tracer.StartSpan(ctx, "finance.activity.exchange.rate.validation")
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := v.logger.WithFields(logger.Fields{
 		"activity_id":     info.ActivityID,
 		"workflow_id":     info.WorkflowExecution.ID,
-		"activity_type":   domain.ActivityTypeExchangeRateValidation,
+		"activity_type":   "finance.activity.exchange.rate.validation",
 		"from_currency":   input.FromCurrency,
 		"to_currency":     input.ToCurrency,
 		"rate":            input.Rate,
@@ -254,7 +255,7 @@ func (v *ValidationActivities) ValidateExchangeRateActivity(ctx context.Context,
 	})
 
 	activityLogger.InfoContext(ctx, "Validating exchange rate")
-	v.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	v.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	validationErrors := []string{}
 	warnings := []string{}
@@ -285,9 +286,9 @@ func (v *ValidationActivities) ValidateExchangeRateActivity(ctx context.Context,
 	}
 
 	// Check for supported currencies
-	supportedCurrencies := []domain.CurrencyCode{
-		domain.CurrencyUSD, domain.CurrencyEUR, domain.CurrencyGBP,
-		domain.CurrencyJPY, domain.CurrencyCAD, domain.CurrencyAUD,
+	supportedCurrencies := []string{
+		"USD", "EUR", "GBP",
+		"JPY", "CAD", "AUD",
 	}
 
 	if !contains(supportedCurrencies, input.FromCurrency) {
@@ -301,12 +302,12 @@ func (v *ValidationActivities) ValidateExchangeRateActivity(ctx context.Context,
 
 	if isValid {
 		activityLogger.InfoContext(ctx, "Exchange rate validation successful")
-		v.metrics.Counter(domain.MetricExchangeRateValidationSuccess).Add(1)
+		v.metrics.Counter("finance.exchange.rate.validation.success", "Exchange rate validation success").Add(1, nil)
 	} else {
 		activityLogger.WarnContext(ctx, "Exchange rate validation failed", logger.Fields{
 			"errors": validationErrors,
 		})
-		v.metrics.Counter(domain.MetricExchangeRateValidationErrors).Add(1)
+		v.metrics.Counter("finance.exchange.rate.validation.errors", "Exchange rate validation errors").Add(1, nil)
 	}
 
 	return &ValidationActivityOutput{
@@ -319,21 +320,21 @@ func (v *ValidationActivities) ValidateExchangeRateActivity(ctx context.Context,
 
 // ValidateBudgetConstraintsActivity validates budget constraints
 func (v *ValidationActivities) ValidateBudgetConstraintsActivity(ctx context.Context, accountID uuid.UUID, amount float64, period string) (*ValidationActivityOutput, error) {
-	ctx, span := v.tracer.StartSpan(ctx, domain.ActivityTypeBudgetValidation)
+	ctx, span := v.tracer.StartSpan(ctx, "finance.activity.budget.validation")
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := v.logger.WithFields(logger.Fields{
 		"activity_id":   info.ActivityID,
 		"workflow_id":   info.WorkflowExecution.ID,
-		"activity_type": domain.ActivityTypeBudgetValidation,
+		"activity_type": "finance.activity.budget.validation",
 		"account_id":    accountID,
 		"amount":        amount,
 		"period":        period,
 	})
 
 	activityLogger.InfoContext(ctx, "Validating budget constraints")
-	v.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	v.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	validationErrors := []string{}
 	warnings := []string{}
@@ -348,7 +349,7 @@ func (v *ValidationActivities) ValidateBudgetConstraintsActivity(ctx context.Con
 	}
 
 	// Check if budget validation is enabled for this account type
-	if !requiresBudgetValidation(account.AccountType) {
+	if !requiresBudgetValidation(domain.RootType(account.AccountType)) {
 		activityLogger.InfoContext(ctx, "Budget validation not required for account type")
 		return &ValidationActivityOutput{
 			Valid:   true,
@@ -378,12 +379,12 @@ func (v *ValidationActivities) ValidateBudgetConstraintsActivity(ctx context.Con
 
 	if isValid {
 		activityLogger.InfoContext(ctx, "Budget constraint validation successful")
-		v.metrics.Counter(domain.MetricBudgetValidationSuccess).Add(1)
+		v.metrics.Counter("finance.budget.validation.success", "Budget validation success").Add(1, nil)
 	} else {
 		activityLogger.WarnContext(ctx, "Budget constraint validation failed", logger.Fields{
 			"errors": validationErrors,
 		})
-		v.metrics.Counter(domain.MetricBudgetValidationErrors).Add(1)
+		v.metrics.Counter("finance.budget.validation.errors", "Budget validation errors").Add(1, nil)
 	}
 
 	return &ValidationActivityOutput{
@@ -396,20 +397,20 @@ func (v *ValidationActivities) ValidateBudgetConstraintsActivity(ctx context.Con
 
 // ValidateApprovalLimitsActivity validates approval limit requirements
 func (v *ValidationActivities) ValidateApprovalLimitsActivity(ctx context.Context, amount float64, userID uuid.UUID) (*ValidationActivityOutput, error) {
-	ctx, span := v.tracer.StartSpan(ctx, domain.ActivityTypeApprovalValidation)
+	ctx, span := v.tracer.StartSpan(ctx, "finance.activity.approval.validation")
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := v.logger.WithFields(logger.Fields{
 		"activity_id":   info.ActivityID,
 		"workflow_id":   info.WorkflowExecution.ID,
-		"activity_type": domain.ActivityTypeApprovalValidation,
+		"activity_type": "finance.activity.approval.validation",
 		"amount":        amount,
 		"user_id":       userID,
 	})
 
 	activityLogger.InfoContext(ctx, "Validating approval limits")
-	v.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	v.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	validationErrors := []string{}
 	warnings := []string{}
@@ -441,12 +442,12 @@ func (v *ValidationActivities) ValidateApprovalLimitsActivity(ctx context.Contex
 
 	if isValid {
 		activityLogger.InfoContext(ctx, "Approval limit validation successful")
-		v.metrics.Counter(domain.MetricApprovalValidationSuccess).Add(1)
+		v.metrics.Counter("finance.approval.validation.success", "Approval validation success").Add(1, nil)
 	} else {
 		activityLogger.WarnContext(ctx, "Approval limit validation failed", logger.Fields{
 			"errors": validationErrors,
 		})
-		v.metrics.Counter(domain.MetricApprovalValidationErrors).Add(1)
+		v.metrics.Counter("finance.approval.validation.errors", "Approval validation errors").Add(1, nil)
 	}
 
 	return &ValidationActivityOutput{
@@ -460,38 +461,38 @@ func (v *ValidationActivities) ValidateApprovalLimitsActivity(ctx context.Contex
 
 // ValidateComplianceRulesActivity validates compliance and regulatory rules
 func (v *ValidationActivities) ValidateComplianceRulesActivity(ctx context.Context, ruleSet string, data map[string]interface{}) (*ValidationActivityOutput, error) {
-	ctx, span := v.tracer.StartSpan(ctx, domain.ActivityTypeComplianceValidation)
+	ctx, span := v.tracer.StartSpan(ctx, "finance.activity.compliance.validation")
 	defer span.End()
 
 	info := activity.GetInfo(ctx)
 	activityLogger := v.logger.WithFields(logger.Fields{
 		"activity_id":   info.ActivityID,
 		"workflow_id":   info.WorkflowExecution.ID,
-		"activity_type": domain.ActivityTypeComplianceValidation,
+		"activity_type": "finance.activity.compliance.validation",
 		"rule_set":      ruleSet,
 	})
 
 	activityLogger.InfoContext(ctx, "Validating compliance rules")
-	v.metrics.Counter(domain.MetricActivityExecutions).Add(1)
+	v.metrics.Counter(domain.MetricActivityExecutions, "Total activity executions").Add(1, nil)
 
 	validationErrors := []string{}
 	warnings := []string{}
 	appliedRules := []string{}
 
 	switch ruleSet {
-	case domain.ComplianceRuleSetSOX:
+	case "SOX":
 		errors, warns, rules := v.validateSOXCompliance(ctx, data)
 		validationErrors = append(validationErrors, errors...)
 		warnings = append(warnings, warns...)
 		appliedRules = append(appliedRules, rules...)
 
-	case domain.ComplianceRuleSetGAAP:
+	case "GAAP":
 		errors, warns, rules := v.validateGAAPCompliance(ctx, data)
 		validationErrors = append(validationErrors, errors...)
 		warnings = append(warnings, warns...)
 		appliedRules = append(appliedRules, rules...)
 
-	case domain.ComplianceRuleSetIFRS:
+	case "IFRS":
 		errors, warns, rules := v.validateIFRSCompliance(ctx, data)
 		validationErrors = append(validationErrors, errors...)
 		warnings = append(warnings, warns...)
@@ -507,12 +508,12 @@ func (v *ValidationActivities) ValidateComplianceRulesActivity(ctx context.Conte
 		activityLogger.InfoContext(ctx, "Compliance rule validation successful", logger.Fields{
 			"applied_rules": appliedRules,
 		})
-		v.metrics.Counter(domain.MetricComplianceValidationSuccess).Add(1)
+		v.metrics.Counter("finance.compliance.validation.success", "Compliance validation success").Add(1, nil)
 	} else {
 		activityLogger.WarnContext(ctx, "Compliance rule validation failed", logger.Fields{
 			"errors": validationErrors,
 		})
-		v.metrics.Counter(domain.MetricComplianceValidationErrors).Add(1)
+		v.metrics.Counter("finance.compliance.validation.errors", "Compliance validation errors").Add(1, nil)
 	}
 
 	return &ValidationActivityOutput{
