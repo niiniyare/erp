@@ -1,5 +1,5 @@
 -- ------------------------------------------------------------------------------------------------
--- Comprehensive user view with all related data
+--  user view with all related data
 -- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_user_complete_view AS
 SELECT
@@ -82,7 +82,7 @@ GROUP BY
   e.access_attributes,
   u.user_attributes;
 
-COMMENT ON VIEW v_user_complete_view IS 'Comprehensive view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.';
+COMMENT ON VIEW v_user_complete_view IS ' view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.';
 
 -- ------------------------------------------------------------------------------------------------
 -- Role permissions summary view

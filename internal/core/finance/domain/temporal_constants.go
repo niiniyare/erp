@@ -61,9 +61,12 @@ const (
 	// Account management activities
 	ActivityTypeAccountValidation    = "finance.activity.account.validation"
 	ActivityTypeAccountCreation      = "finance.activity.account.creation"
+	ActivityTypeAccountRetrieval     = "finance.activity.account.retrieval"
 	ActivityTypeAccountUpdate        = "finance.activity.account.update"
+	ActivityTypeAccountDeactivation  = "finance.activity.account.deactivation"
 	ActivityTypeAccountStatusChange  = "finance.activity.account.status_change"
 	ActivityTypeAccountBalanceUpdate = "finance.activity.account.balance_update"
+	ActivityTypeHierarchyValidation  = "finance.activity.hierarchy.validation"
 	
 	// Transaction processing activities
 	ActivityTypeTransactionValidation = "finance.activity.transaction.validation"
@@ -78,6 +81,10 @@ const (
 	ActivityTypeFeatureFlagCheck  = "finance.activity.feature_flag.check"
 	ActivityTypeSettingsRetrieval = "finance.activity.settings.retrieval"
 	ActivityTypeIAMValidation     = "finance.activity.iam.validation"
+	ActivityTypePermissionCheck       = "finance.activity.permission.check"
+	ActivityTypePermissionValidation  = "finance.activity.permission.validation"
+	ActivityTypeCacheOperation        = "finance.activity.cache.operation"
+	ActivityTypeCacheInvalidation     = "finance.activity.cache.invalidation"
 	
 	// Financial process activities
 	ActivityTypePeriodValidation    = "finance.activity.period.validation"
@@ -281,6 +288,126 @@ const (
 	ActivityStatusRetrying   = "RETRYING"     // Retrying after failure
 	ActivityStatusSkipped    = "SKIPPED"      // Skipped due to conditions
 	ActivityStatusTimedOut   = "TIMED_OUT"    // Exceeded execution timeout
+)
+
+// ========================================
+// NOTIFICATION TYPES AND PRIORITIES
+// ========================================
+
+// Additional notification types specific to Temporal workflows (complement constant.go)
+const (
+	NotificationTypeAccountCreated           = "finance.account.created"
+	NotificationTypeAccountUpdated           = "finance.account.updated" 
+	NotificationTypeAccountDeactivated       = "finance.account.deactivated"
+	NotificationTypeTransactionPosted        = "finance.transaction.posted"
+	NotificationTypeTransactionReversed      = "finance.transaction.reversed"
+	NotificationTypeApprovalRequest          = "finance.approval.request"
+	NotificationTypeApprovalGranted          = "finance.approval.granted"
+	NotificationTypeApprovalRejected         = "finance.approval.rejected"
+	NotificationTypeBudgetExceeded           = "finance.budget.exceeded"
+	NotificationTypeComplianceAlert          = "finance.compliance.alert"
+	NotificationTypePeriodOpened             = "finance.period.opened"
+	NotificationTypeError                    = "finance.error"
+	NotificationTypeBulkOperationCompleted   = "finance.bulk.completed"
+)
+
+// Notification priorities for proper routing and handling
+const (
+	NotificationPriorityLow      = "LOW"
+	NotificationPriorityNormal   = "NORMAL"
+	NotificationPriorityHigh     = "HIGH"
+	NotificationPriorityCritical = "CRITICAL"
+)
+
+// ========================================
+// TEMPORAL METRICS AND MONITORING
+// ========================================
+
+// Temporal-specific metrics for workflow and activity monitoring (complement constant.go)
+const (
+	// Activity execution metrics
+	MetricActivityExecutions           = "finance.temporal.activity.executions"
+	MetricActivityDuration            = "finance.temporal.activity.duration"
+	MetricActivityRetries             = "finance.temporal.activity.retries"
+	MetricActivityFailures            = "finance.temporal.activity.failures"
+	
+	// Workflow execution metrics  
+	MetricWorkflowExecutions          = "finance.temporal.workflow.executions"
+	MetricWorkflowDuration            = "finance.temporal.workflow.duration"
+	MetricWorkflowCompletions         = "finance.temporal.workflow.completions"
+	MetricWorkflowFailures            = "finance.temporal.workflow.failures"
+	
+	// Business operation metrics (unique to Temporal activities)
+	MetricAccountsUpdated             = "finance.accounts.updated"
+	MetricAccountsDeactivated         = "finance.accounts.deactivated"
+	MetricAccountsRetrieved           = "finance.accounts.retrieved"
+	MetricTransactionsPosted          = "finance.transactions.posted"
+	MetricTransactionsReversed        = "finance.transactions.reversed"
+	
+	// Validation and approval metrics
+	MetricValidationSuccess           = "finance.validation.success"
+	MetricApprovalsRequested          = "finance.approvals.requested"
+	MetricApprovalsGranted            = "finance.approvals.granted"
+	MetricApprovalsRejected           = "finance.approvals.rejected"
+	
+	// Notification metrics
+	MetricNotificationsSent           = "finance.notifications.sent"
+	MetricNotificationErrors          = "finance.notifications.errors"
+	MetricBudgetAlertsSent            = "finance.budget.alerts.sent"
+	MetricComplianceAlertsSent        = "finance.compliance.alerts.sent"
+	MetricErrorNotificationsSent      = "finance.error.notifications.sent"
+	
+	// Integration metrics
+	MetricFeatureFlagChecks           = "finance.feature_flag.checks"
+	MetricFeatureFlagCheckErrors      = "finance.feature_flag.check.errors"
+	MetricSettingsRetrievals          = "finance.settings.retrievals"
+	MetricSettingsRetrievalErrors     = "finance.settings.retrieval.errors"
+	MetricCacheOperations             = "finance.cache.operations"
+	MetricCacheOperationErrors        = "finance.cache.operation.errors"
+	MetricPermissionGranted           = "finance.permission.granted"
+	MetricPermissionDenied            = "finance.permission.denied"
+	MetricPermissionValidationErrors  = "finance.permission.validation.errors"
+	MetricAuditEventsLogged           = "finance.audit.events.logged"
+	MetricAuditLoggingErrors          = "finance.audit.logging.errors"
+	MetricCacheInvalidationErrors     = "finance.cache.invalidation.errors"
+	MetricCacheKeysInvalidated        = "finance.cache.keys.invalidated"
+	MetricCacheInvalidations          = "finance.cache.invalidations"
+)
+
+// ========================================
+// FEATURE FLAGS AND CONFIGURATION KEYS
+// ========================================
+
+// Feature flag names for finance module functionality
+const (
+	FeatureFlagAdvancedValidation     = "finance.validation.advanced"
+	FeatureFlagBulkOperations         = "finance.bulk.operations"
+	FeatureFlagApprovalWorkflows      = "finance.approval.workflows"
+	FeatureFlagPeriodClosingAutomation = "finance.period.closing.automation"
+	FeatureFlagComplianceMonitoring   = "finance.compliance.monitoring"
+	FeatureFlagBudgetEnforcement      = "finance.budget.enforcement"
+)
+
+// ========================================  
+// ERROR CODES FOR TEMPORAL ACTIVITIES
+// ========================================
+
+// Error codes specific to Temporal workflow activities (complement constant.go)
+const (
+	ErrCodeAccountCreationFailed         = "ACCOUNT_CREATION_FAILED"
+	ErrCodeAccountUpdateFailed           = "ACCOUNT_UPDATE_FAILED"
+	ErrCodeAccountDeactivationFailed     = "ACCOUNT_DEACTIVATION_FAILED"
+	ErrCodeAccountNotFound               = "ACCOUNT_NOT_FOUND"
+	ErrCodeInvalidHierarchy              = "INVALID_HIERARCHY"
+	ErrCodePermissionCheckFailed         = "PERMISSION_CHECK_FAILED"
+	ErrCodePermissionDenied              = "PERMISSION_DENIED"
+	ErrCodeCacheOperationFailed          = "CACHE_OPERATION_FAILED"
+	ErrCodeNotificationSettingsRetrievalFailed = "NOTIFICATION_SETTINGS_RETRIEVAL_FAILED"
+	ErrCodeFeatureFlagCheckFailed        = "FEATURE_FLAG_CHECK_FAILED"
+	ErrCodeSettingsRetrievalFailed       = "SETTINGS_RETRIEVAL_FAILED"
+	ErrCodePermissionValidationFailed    = "PERMISSION_VALIDATION_FAILED"
+	ErrCodeCacheInvalidationFailed       = "CACHE_INVALIDATION_FAILED"
+	ErrCodeAuditLoggingFailed            = "AUDIT_LOGGING_FAILED"
 )
 
 // ========================================

@@ -129,7 +129,7 @@ type AttributeValue struct {
 	UpdatedBy   *uuid.UUID   `json:"updated_by"`
 }
 
-// Comprehensive audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.
+//  audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.
 type AuditLog struct {
 	ID        uuid.UUID `json:"id"`
 	TenantID  uuid.UUID `json:"tenant_id"`
@@ -1515,7 +1515,7 @@ type VTenantResourceUtilization struct {
 	LastEntityUpdated  interface{} `json:"last_entity_updated"`
 }
 
-// Comprehensive view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.
+//  view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.
 type VUserCompleteView struct {
 	UserID             uuid.UUID    `json:"user_id"`
 	TenantID           uuid.UUID    `json:"tenant_id"`

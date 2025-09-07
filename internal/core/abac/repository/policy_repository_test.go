@@ -875,9 +875,9 @@ func (s *PolicyRepositoryTestSuite) TestGetPoliciesForEvaluation() {
 	}
 }
 
-// TestMultiTenantRLSIntegrity tests ABAC-REPO-007: Comprehensive Multi-tenant RLS Integrity
+// TestMultiTenantRLSIntegrity tests ABAC-REPO-007:  Multi-tenant RLS Integrity
 func (s *PolicyRepositoryTestSuite) TestMultiTenantRLSIntegrity() {
-	s.Run("ABAC-REPO-007_ComprehensiveRLSVerification", func() {
+	s.Run("ABAC-REPO-007_RLSVerification", func() {
 		// Test comprehensive multi-tenant RLS enforcement
 
 		// 1. Create policies in both tenants
@@ -1103,7 +1103,7 @@ func (s *PolicyRepositoryTestSuite) TestCacheIntegration() {
 	})
 }
 
-// TestRepositoryErrorHandling tests ABAC-REPO-009: Comprehensive Error Handling
+// TestRepositoryErrorHandling tests ABAC-REPO-009:  Error Handling
 func (s *PolicyRepositoryTestSuite) TestRepositoryErrorHandling() {
 	s.Run("ABAC-REPO-009_ErrorHandling", func() {
 		// Test various error scenarios

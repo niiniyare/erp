@@ -237,7 +237,7 @@ type GetEntityStateHealthCheckRow struct {
 	TotalDocumentsCreated int64       `json:"total_documents_created"`
 }
 
-// Usage: Comprehensive health check of entity state configuration
+// Usage:  health check of entity state configuration
 // Use case: System health monitoring, pre-deployment validation
 func (q *Queries) GetEntityStateHealthCheck(ctx context.Context) ([]*GetEntityStateHealthCheckRow, error) {
 	rows, err := q.db.Query(ctx, getEntityStateHealthCheck)

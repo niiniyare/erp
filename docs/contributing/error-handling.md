@@ -1,7 +1,7 @@
 # Awo ERP Error Handling Guide
 ## *Enhanced Error Management with BusinessError, ValidationErrors, and Repository Patterns*
 
-*Comprehensive error handling strategies for building resilient Awo ERP applications with proper error propagation, classification, and observability using our enhanced error system*
+* error handling strategies for building resilient Awo ERP applications with proper error propagation, classification, and observability using our enhanced error system*
 
 > **📚 Related Documentation:**
 > - `docs/contributing/architecture.md` - System architecture and context patterns

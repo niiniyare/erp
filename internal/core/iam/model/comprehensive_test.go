@@ -9,27 +9,27 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// ComprehensiveTestSuite defines comprehensive test suite for core domain model validation
+// TestSuite defines comprehensive test suite for core domain model validation
 // Implements Phase 3 Task 3.1.1: Core Domain Model Testing (IAM-CORE-001 to IAM-CORE-007)
-type ComprehensiveTestSuite struct {
+type TestSuite struct {
 	suite.Suite
 	tenantID uuid.UUID
 	entityID uuid.UUID
 }
 
 // SetupTest initializes test fixtures for each test
-func (s *ComprehensiveTestSuite) SetupTest() {
+func (s *TestSuite) SetupTest() {
 	s.tenantID = uuid.New()
 	s.entityID = uuid.New()
 }
 
-// TestComprehensiveIAMModels runs the comprehensive core domain model test suite
-func TestComprehensiveIAMModels(t *testing.T) {
-	suite.Run(t, new(ComprehensiveTestSuite))
+// TestIAMModels runs the comprehensive core domain model test suite
+func TestIAMModels(t *testing.T) {
+	suite.Run(t, new(TestSuite))
 }
 
 // TestPersonModelCreation implements IAM-CORE-001: Verify Person model creation with valid data
-func (s *ComprehensiveTestSuite) TestPersonModelCreation() {
+func (s *TestSuite) TestPersonModelCreation() {
 	testCases := []struct {
 		name            string
 		setupPerson     func() *Person
@@ -141,7 +141,7 @@ func (s *ComprehensiveTestSuite) TestPersonModelCreation() {
 }
 
 // TestPersonModelValidation implements IAM-CORE-002: Verify Person model validation for invalid data
-func (s *ComprehensiveTestSuite) TestPersonModelValidation() {
+func (s *TestSuite) TestPersonModelValidation() {
 	testCases := []struct {
 		name            string
 		setupPerson     func() *Person
@@ -253,7 +253,7 @@ func (s *ComprehensiveTestSuite) TestPersonModelValidation() {
 }
 
 // TestEmployeeModelCreation implements IAM-CORE-003: Verify Employee model creation and linking to a Person
-func (s *ComprehensiveTestSuite) TestEmployeeModelCreation() {
+func (s *TestSuite) TestEmployeeModelCreation() {
 	testCases := []struct {
 		name            string
 		setupEmployee   func() (*Person, *Employee)
@@ -338,7 +338,7 @@ func (s *ComprehensiveTestSuite) TestEmployeeModelCreation() {
 }
 
 // TestUserModelCreation implements IAM-CORE-004: Verify User model creation and linking to Person/Employee
-func (s *ComprehensiveTestSuite) TestUserModelCreation() {
+func (s *TestSuite) TestUserModelCreation() {
 	testCases := []struct {
 		name            string
 		setupUser       func() (*Person, *Employee, *User)
@@ -448,7 +448,7 @@ func (s *ComprehensiveTestSuite) TestUserModelCreation() {
 }
 
 // TestUserModelSecurityDefaults implements IAM-CORE-005: Verify User model security feature defaults
-func (s *ComprehensiveTestSuite) TestUserModelSecurityDefaults() {
+func (s *TestSuite) TestUserModelSecurityDefaults() {
 	testCases := []struct {
 		name            string
 		setupUser       func() *User
@@ -504,7 +504,7 @@ func (s *ComprehensiveTestSuite) TestUserModelSecurityDefaults() {
 }
 
 // TestRoleModelCreation implements IAM-CORE-006: Verify Role creation with hierarchy
-func (s *ComprehensiveTestSuite) TestRoleModelCreation() {
+func (s *TestSuite) TestRoleModelCreation() {
 	testCases := []struct {
 		name               string
 		setupRoles         func() (*Role, *Role) // parent, child
@@ -587,7 +587,7 @@ func (s *ComprehensiveTestSuite) TestRoleModelCreation() {
 }
 
 // TestPermissionModelCreation implements IAM-CORE-007: Verify Permission creation with risk levels and categories
-func (s *ComprehensiveTestSuite) TestPermissionModelCreation() {
+func (s *TestSuite) TestPermissionModelCreation() {
 	testCases := []struct {
 		name            string
 		setupPermission func() *Permission
@@ -658,7 +658,7 @@ func (s *ComprehensiveTestSuite) TestPermissionModelCreation() {
 }
 
 // TestEdgeCasesAndBoundaryConditions tests various edge cases and boundary conditions
-func (s *ComprehensiveTestSuite) TestEdgeCasesAndBoundaryConditions() {
+func (s *TestSuite) TestEdgeCasesAndBoundaryConditions() {
 	testCases := []struct {
 		name         string
 		spec         string

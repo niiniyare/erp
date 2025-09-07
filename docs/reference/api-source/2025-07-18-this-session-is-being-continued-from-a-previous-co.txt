@@ -362,7 +362,7 @@
 ● Write(utilities/scripts/run-all-tests.sh)
   ⎿  Wrote 348 lines to utilities/scripts/run-all-tests.sh
      #!/bin/bash
-     # Comprehensive API Test Runner
+     #  API Test Runner
      # This script runs all API tests in the correct order
      set -e  # Exit on any error
      # Configuration
@@ -399,15 +399,15 @@
   ├── core-apis/                         # Core business entity APIs
   │   ├── entities/                      # Entity Management API
   │   │   ├── README.md                  # Entity API overview
-  │   │   └── curl-examples.md           # Comprehensive curl examples
+  │   │   └── curl-examples.md           #  curl examples
   │   ├── users/                         # User Management API
   │   │   ├── README.md                  # User API overview
-  │   │   └── curl-examples.md           # Comprehensive curl examples
+  │   │   └── curl-examples.md           #  curl examples
   │   └── tenants/                       # Tenant Management API (placeholder)
   ├── workflows/                         # Workflow and advanced feature APIs
   │   ├── access-requests/               # Access Request Workflow API
   │   │   ├── README.md                  # Access request overview
-  │   │   └── curl-examples.md           # Comprehensive curl examples
+  │   │   └── curl-examples.md           #  curl examples
   │   ├── conditional-access/            # Conditional Access Controls API
   │   │   └── README.md                  # Conditional access overview
   │   └── user-analytics/                # User Analytics & Behavior API
@@ -437,18 +437,18 @@
   - Each API has its own dedicated folder with comprehensive documentation
   - Easy-to-find utilities and testing resources
 
-  2. Comprehensive Documentation
+  2.  Documentation
 
   - Main README.md: Complete overview with navigation
   - QUICK_START.md: 5-minute getting started guide
   - API-specific READMEs: Detailed documentation for each API
-  - curl-examples.md: Comprehensive curl command examples
+  - curl-examples.md:  curl command examples
 
   3. Automated Testing Suite
 
   - run-all-tests.sh: Master test runner with multiple modes
   - Individual test scripts: Dedicated test script for each API
-  - Comprehensive coverage: Tests all endpoints with error handling
+  -  coverage: Tests all endpoints with error handling
   - Flexible execution: Verbose mode, parallel execution, category-specific testing
 
   4. Professional Organization
@@ -513,7 +513,7 @@
   3. Manual Testing Guides: Step-by-step curl command examples
   4. Postman Collections: GUI-based testing resources
   5. Performance Testing: Built-in performance benchmarks
-  6. Error Scenario Testing: Comprehensive error handling validation
+  6. Error Scenario Testing:  error handling validation
   7. Parallel Test Execution: Faster testing with parallel execution
   8. Flexible Configuration: Verbose mode, cleanup options, category-specific testing
 

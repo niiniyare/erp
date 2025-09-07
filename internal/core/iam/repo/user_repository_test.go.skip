@@ -17,9 +17,9 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// UserRepositoryComprehensiveTestSuite implements IAM-REPO-002: UserRepository comprehensive testing
+// UserRepositoryTestSuite implements IAM-REPO-002: UserRepository comprehensive testing
 // Covers password hashing, account status updates, MFA field management, and security features
-type UserRepositoryComprehensiveTestSuite struct {
+type UserRepositoryTestSuite struct {
 	suite.Suite
 	ctx      context.Context
 	store    *db.MockStore
@@ -34,7 +34,7 @@ type UserRepositoryComprehensiveTestSuite struct {
 }
 
 // SetupTest initializes test fixtures for each test
-func (s *UserRepositoryComprehensiveTestSuite) SetupTest() {
+func (s *UserRepositoryTestSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.ctrl = gomock.NewController(s.T())
 	s.store = db.NewMockStore(s.ctrl)
@@ -48,17 +48,17 @@ func (s *UserRepositoryComprehensiveTestSuite) SetupTest() {
 }
 
 // TearDownTest cleans up test fixtures
-func (s *UserRepositoryComprehensiveTestSuite) TearDownTest() {
+func (s *UserRepositoryTestSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-// TestUserRepositoryComprehensive runs the comprehensive user repository test suite
-func TestUserRepositoryComprehensive(t *testing.T) {
-	suite.Run(t, new(UserRepositoryComprehensiveTestSuite))
+// TestUserRepository runs the comprehensive user repository test suite
+func TestUserRepository(t *testing.T) {
+	suite.Run(t, new(UserRepositoryTestSuite))
 }
 
 // TestCreateUserWithPasswordHashing implements IAM-REPO-002: Verify User creation with proper password hashing
-func (s *UserRepositoryComprehensiveTestSuite) TestCreateUserWithPasswordHashing() {
+func (s *UserRepositoryTestSuite) TestCreateUserWithPasswordHashing() {
 	testCases := []struct {
 		name           string
 		setupUser      func() *model.User
@@ -236,7 +236,7 @@ func (s *UserRepositoryComprehensiveTestSuite) TestCreateUserWithPasswordHashing
 }
 
 // TestUpdatePasswordHash implements IAM-REPO-002: Verify password hash update operations
-func (s *UserRepositoryComprehensiveTestSuite) TestUpdatePasswordHash() {
+func (s *UserRepositoryTestSuite) TestUpdatePasswordHash() {
 	testCases := []struct {
 		name          string
 		userID        uuid.UUID
@@ -317,7 +317,7 @@ func (s *UserRepositoryComprehensiveTestSuite) TestUpdatePasswordHash() {
 }
 
 // TestAccountStatusManagement implements IAM-REPO-002: Verify account status update operations
-func (s *UserRepositoryComprehensiveTestSuite) TestAccountStatusManagement() {
+func (s *UserRepositoryTestSuite) TestAccountStatusManagement() {
 	testCases := []struct {
 		name            string
 		userID          uuid.UUID
@@ -413,7 +413,7 @@ func (s *UserRepositoryComprehensiveTestSuite) TestAccountStatusManagement() {
 }
 
 // TestMFAOperations implements IAM-REPO-002: Verify MFA field management operations
-func (s *UserRepositoryComprehensiveTestSuite) TestMFAOperations() {
+func (s *UserRepositoryTestSuite) TestMFAOperations() {
 	testCases := []struct {
 		name          string
 		userID        uuid.UUID
@@ -533,7 +533,7 @@ func (s *UserRepositoryComprehensiveTestSuite) TestMFAOperations() {
 }
 
 // TestFailedLoginCountManagement implements IAM-REPO-002: Verify failed login count tracking
-func (s *UserRepositoryComprehensiveTestSuite) TestFailedLoginCountManagement() {
+func (s *UserRepositoryTestSuite) TestFailedLoginCountManagement() {
 	testCases := []struct {
 		name          string
 		userID        uuid.UUID
@@ -630,7 +630,7 @@ func (s *UserRepositoryComprehensiveTestSuite) TestFailedLoginCountManagement() 
 }
 
 // TestLastLoginTracking implements IAM-REPO-002: Verify last login timestamp tracking
-func (s *UserRepositoryComprehensiveTestSuite) TestLastLoginTracking() {
+func (s *UserRepositoryTestSuite) TestLastLoginTracking() {
 	testCases := []struct {
 		name          string
 		userID        uuid.UUID
@@ -697,7 +697,7 @@ func (s *UserRepositoryComprehensiveTestSuite) TestLastLoginTracking() {
 }
 
 // TestUserQueryOperations implements IAM-REPO-002: Verify user query operations with tenant isolation
-func (s *UserRepositoryComprehensiveTestSuite) TestUserQueryOperations() {
+func (s *UserRepositoryTestSuite) TestUserQueryOperations() {
 	testCases := []struct {
 		name           string
 		queryType      string

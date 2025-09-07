@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
     title: Enterprise AWO ERP System API
-    description: Comprehensive ERP system with multi-tenant support
+    description:  ERP system with multi-tenant support
     version: 1.0.0
 host: localhost:8080
 consumes:

@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "User API Collection",
-    "description": "Comprehensive User Management API testing collection following the data flow pattern",
+    "description": " User Management API testing collection following the data flow pattern",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "version": "1.0.0"
   },

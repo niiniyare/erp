@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // API endpoint patterns and metadata
     const apiEndpoints = [
         { path: '/abac/authorize', method: 'POST', category: 'Authorization', description: 'Simple authorization check' },
-        { path: '/abac/evaluate', method: 'POST', category: 'Authorization', description: 'Comprehensive policy evaluation' },
+        { path: '/abac/evaluate', method: 'POST', category: 'Authorization', description: ' policy evaluation' },
         { path: '/abac/evaluate-bulk', method: 'POST', category: 'Authorization', description: 'Bulk authorization requests' },
         { path: '/api/v1/auth/login', method: 'POST', category: 'Authentication', description: 'User login and JWT token generation' },
         { path: '/api/v1/auth/refresh', method: 'POST', category: 'Authentication', description: 'Refresh JWT access token' },

@@ -2559,7 +2559,7 @@ $$;
 -- ------------------------------------------------------------------------------------------------
 -- AUDIT LOG
 -- ------------------------------------------------------------------------------------------------
--- Comprehensive audit logging with compliance flags and risk scoring.
+--  audit logging with compliance flags and risk scoring.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -2588,7 +2588,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 
 COMMENT ON TABLE audit_log IS
-'Comprehensive audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.';
+' audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.';
 
 COMMENT ON COLUMN audit_log.event_category IS 'Event category: ACCESS (authorization), ADMIN (administrative), DATA (data access), AUTH (authentication), SYSTEM (system events), COMPLIANCE (regulatory)';
 COMMENT ON COLUMN audit_log.severity IS 'Event severity level: LOW, INFO, WARN, HIGH, CRITICAL';
@@ -2603,7 +2603,7 @@ CREATE POLICY audit_log_tenant_isolation ON audit_log
     FOR ALL TO public
     USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
 -- ------------------------------------------------------------------------------------------------
--- Comprehensive user view with all related data
+--  user view with all related data
 -- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_user_complete_view AS
 SELECT
@@ -2650,7 +2650,7 @@ GROUP BY u.id, u.tenant_id, u.entity_id, u.username, u.email, u.user_type,
          p.security_attributes, e.access_attributes, u.user_attributes;
 
 COMMENT ON VIEW v_user_complete_view IS
-'Comprehensive view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.';
+' view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.';
 
 -- ------------------------------------------------------------------------------------------------
 -- Role permissions summary view

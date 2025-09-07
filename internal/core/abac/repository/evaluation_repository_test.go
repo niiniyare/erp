@@ -995,9 +995,9 @@ func (s *PolicyEvaluationRepositoryTestSuite) TestCleanupExpiredEvaluations() {
 	}
 }
 
-// TestMultiTenantEvaluationIsolation tests ABAC-EVAL-REPO-008: Comprehensive Multi-tenant RLS for Evaluations
+// TestMultiTenantEvaluationIsolation tests ABAC-EVAL-REPO-008:  Multi-tenant RLS for Evaluations
 func (s *PolicyEvaluationRepositoryTestSuite) TestMultiTenantEvaluationIsolation() {
-	s.Run("ABAC-EVAL-REPO-008_ComprehensiveEvaluationRLS", func() {
+	s.Run("ABAC-EVAL-REPO-008_EvaluationRLS", func() {
 		// Create evaluation cache entries in both tenants
 		tenantAUsers := []uuid.UUID{uuid.New(), uuid.New()}
 		tenantBUsers := []uuid.UUID{uuid.New(), uuid.New()}

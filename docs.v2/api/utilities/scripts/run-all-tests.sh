@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Comprehensive API Test Runner
+#  API Test Runner
 # This script runs all API tests in the correct order
 
 set -e  # Exit on any error

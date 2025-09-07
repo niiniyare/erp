@@ -516,7 +516,7 @@ $$ LANGUAGE plpgsql;
 -- 9. MASTER BUSINESS LOGIC VALIDATION
 -- =====================================================
 
--- Comprehensive business logic validation function
+--  business logic validation function
 CREATE OR REPLACE FUNCTION check_all_business_logic()
 RETURNS TABLE(
     validation_type TEXT,

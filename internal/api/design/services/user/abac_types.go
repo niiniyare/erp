@@ -942,7 +942,7 @@ var UserMonitoringInfo = Type("UserMonitoringInfo", func() {
 
 // User Context Types
 var UserContextResult = Type("UserContextResult", func() {
-	Description("Comprehensive user context")
+	Description(" user context")
 
 	Attribute("user_id", String, "User ID", func() {
 		Format(FormatUUID)

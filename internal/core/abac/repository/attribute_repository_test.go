@@ -725,9 +725,9 @@ func (s *AttributeRepositoryTestSuite) TestGetAttributeValuesByEntity() {
 	}
 }
 
-// TestMultiTenantAttributeIsolation tests ABAC-ATTR-REPO-006: Comprehensive Multi-tenant RLS for Attributes
+// TestMultiTenantAttributeIsolation tests ABAC-ATTR-REPO-006:  Multi-tenant RLS for Attributes
 func (s *AttributeRepositoryTestSuite) TestMultiTenantAttributeIsolation() {
-	s.Run("ABAC-ATTR-REPO-006_ComprehensiveAttributeRLS", func() {
+	s.Run("ABAC-ATTR-REPO-006_AttributeRLS", func() {
 		// Create attribute definitions in both tenants
 		var defsA, defsB []*models.AttributeDefinition
 

@@ -17,9 +17,9 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// RoleRepositoryComprehensiveTestSuite implements IAM-REPO-003: RoleRepository comprehensive testing
+// RoleRepositoryTestSuite implements IAM-REPO-003: RoleRepository comprehensive testing
 // Covers hierarchical role queries, circular dependency detection, and role inheritance validation
-type RoleRepositoryComprehensiveTestSuite struct {
+type RoleRepositoryTestSuite struct {
 	suite.Suite
 	ctx      context.Context
 	store    *db.MockStore
@@ -33,7 +33,7 @@ type RoleRepositoryComprehensiveTestSuite struct {
 }
 
 // SetupTest initializes test fixtures for each test
-func (s *RoleRepositoryComprehensiveTestSuite) SetupTest() {
+func (s *RoleRepositoryTestSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.ctrl = gomock.NewController(s.T())
 	s.store = db.NewMockStore(s.ctrl)
@@ -46,17 +46,17 @@ func (s *RoleRepositoryComprehensiveTestSuite) SetupTest() {
 }
 
 // TearDownTest cleans up test fixtures
-func (s *RoleRepositoryComprehensiveTestSuite) TearDownTest() {
+func (s *RoleRepositoryTestSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-// TestRoleRepositoryComprehensive runs the comprehensive role repository test suite
-func TestRoleRepositoryComprehensive(t *testing.T) {
-	suite.Run(t, new(RoleRepositoryComprehensiveTestSuite))
+// TestRoleRepository runs the comprehensive role repository test suite
+func TestRoleRepository(t *testing.T) {
+	suite.Run(t, new(RoleRepositoryTestSuite))
 }
 
 // TestCreateRole implements IAM-REPO-003: Verify Role creation with hierarchy validation
-func (s *RoleRepositoryComprehensiveTestSuite) TestCreateRole() {
+func (s *RoleRepositoryTestSuite) TestCreateRole() {
 	testCases := []struct {
 		name           string
 		setupRole      func() *model.Role
@@ -275,7 +275,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCreateRole() {
 }
 
 // TestGetRoleHierarchy implements IAM-REPO-003: Verify hierarchical role queries
-func (s *RoleRepositoryComprehensiveTestSuite) TestGetRoleHierarchy() {
+func (s *RoleRepositoryTestSuite) TestGetRoleHierarchy() {
 	testCases := []struct {
 		name           string
 		roleID         uuid.UUID
@@ -413,7 +413,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestGetRoleHierarchy() {
 }
 
 // TestGetChildRoles implements IAM-REPO-003: Verify child role retrieval
-func (s *RoleRepositoryComprehensiveTestSuite) TestGetChildRoles() {
+func (s *RoleRepositoryTestSuite) TestGetChildRoles() {
 	testCases := []struct {
 		name           string
 		parentRoleID   uuid.UUID
@@ -534,7 +534,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestGetChildRoles() {
 }
 
 // TestCircularDependencyDetection implements IAM-REPO-003: Verify circular dependency detection
-func (s *RoleRepositoryComprehensiveTestSuite) TestCircularDependencyDetection() {
+func (s *RoleRepositoryTestSuite) TestCircularDependencyDetection() {
 	testCases := []struct {
 		name           string
 		setupScenario  func() (roleA, roleB, roleC uuid.UUID)
@@ -693,7 +693,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) TestCircularDependencyDetection()
 }
 
 // detectCircularDependency is a helper method to simulate circular dependency detection
-func (s *RoleRepositoryComprehensiveTestSuite) detectCircularDependency(roleID uuid.UUID, visited map[uuid.UUID]bool) bool {
+func (s *RoleRepositoryTestSuite) detectCircularDependency(roleID uuid.UUID, visited map[uuid.UUID]bool) bool {
 	if visited[roleID] {
 		return true // Circular dependency detected
 	}
@@ -711,7 +711,7 @@ func (s *RoleRepositoryComprehensiveTestSuite) detectCircularDependency(roleID u
 }
 
 // TestRoleTenantIsolation implements IAM-REPO-003: Verify strict tenant isolation for roles
-func (s *RoleRepositoryComprehensiveTestSuite) TestRoleTenantIsolation() {
+func (s *RoleRepositoryTestSuite) TestRoleTenantIsolation() {
 	testCases := []struct {
 		name           string
 		setupScenario  func() (tenantA, tenantB uuid.UUID)

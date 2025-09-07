@@ -1,4 +1,4 @@
--- Comprehensive account view with group information
+--  account view with group information
 CREATE VIEW v_finance_accounts_with_groups AS
 SELECT
   a.id,

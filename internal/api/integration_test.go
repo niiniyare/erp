@@ -452,8 +452,8 @@ func (s *APIIntegrationTestSuite) TestCacheConnectivityValidation() {
 
 // Test Specification: API-INTEGRATION-007
 // Description: Validate comprehensive dependency health check aggregation
-func (s *APIIntegrationTestSuite) TestComprehensiveDependencyHealthCheck() {
-	s.T().Log("Running API-INTEGRATION-007: Comprehensive Dependency Health Check")
+func (s *APIIntegrationTestSuite) TestDependencyHealthCheck() {
+	s.T().Log("Running API-INTEGRATION-007:  Dependency Health Check")
 
 	// Test comprehensive health check
 	results := s.healthChecker.CheckDependencies(s.ctx)
@@ -479,7 +479,7 @@ func (s *APIIntegrationTestSuite) TestComprehensiveDependencyHealthCheck() {
 			component, result.Status, result.Duration, result.Message)
 	}
 
-	s.T().Log("✅ API-INTEGRATION-007 passed: Comprehensive dependency health check working correctly")
+	s.T().Log("✅ API-INTEGRATION-007 passed:  dependency health check working correctly")
 }
 
 // RunAPIIntegrationTests is the test suite runner

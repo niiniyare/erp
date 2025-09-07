@@ -33,7 +33,7 @@ type AttributeCollectionService interface {
 	CollectEntityAttributes(ctx context.Context, entityID uuid.UUID) (map[string]*models.AttributeValue, error)
 	CollectActionAttributes(ctx context.Context, action string) (map[string]*models.AttributeValue, error)
 
-	// Comprehensive collection
+	//  collection
 	CollectAllAttributes(ctx context.Context, req *AttributeCollectionRequest) (*models.AttributeContext, error)
 
 	// Validation and enrichment

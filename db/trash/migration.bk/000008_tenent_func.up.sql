@@ -743,7 +743,7 @@ BEGIN
     RAISE NOTICE '  - Enhanced tenant context management with UUID support';
     RAISE NOTICE '  - Row Level Security policies for all tenant tables';
     RAISE NOTICE '  - Automatic timestamp triggers';
-    RAISE NOTICE '  - Comprehensive hierarchy management with UUID';
+    RAISE NOTICE '  -  hierarchy management with UUID';
     RAISE NOTICE '  - Hierarchy query functions (UUID-based)';
     RAISE NOTICE '  - RLS management utilities';
     RAISE NOTICE '  - UUID validation functions';

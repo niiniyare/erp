@@ -1533,7 +1533,7 @@ I'll create comprehensive sqlc functions for your entity management schema. This
 ## Advanced Queries
 - **Rich Entity Info**: Get entity with hierarchy metadata (level, child count, parent name)
 - **Tree Structure**: Recursive query to get complete entity tree with paths
-- **Statistics**: Comprehensive stats about entities in a tenant
+- **Statistics**:  stats about entities in a tenant
 - **Validation**: Check for circular references in hierarchy
 
 ## Batch Operations

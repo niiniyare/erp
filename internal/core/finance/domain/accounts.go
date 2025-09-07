@@ -35,11 +35,12 @@ type Accounts struct {
 	AccountHeaderID *uuid.UUID `json:"account_header_id,omitempty"` // Reference to account header
 
 	// Account classification following standard accounting taxonomy
-	RootType        RootType `json:"root_type"`                  // Primary classification
-	AccountType     string   `json:"account_type"`               // Secondary classification
-	AccountSubtype  *string  `json:"account_subtype,omitempty"`  // Tertiary classification
-	AccountCategory *string  `json:"account_category,omitempty"` // Account category for grouping
-	SubCategory     *string  `json:"sub_category,omitempty"`     // Sub-category within main category
+	RootType        RootType      `json:"root_type"`                  // Primary classification
+	AccountType     string        `json:"account_type"`               // Secondary classification
+	AccountSubtype  *string       `json:"account_subtype,omitempty"`  // Tertiary classification
+	AccountCategory *string       `json:"account_category,omitempty"` // Account category for grouping
+	SubCategory     *string       `json:"sub_category,omitempty"`     // Sub-category within main category
+	Status          AccountStatus `json:"account_status"`             // AccountState which can be based on the other tAttributes
 
 	// Financial attributes
 	NormalBalance    NormalBalance `json:"normal_balance"`               // Debit or Credit normal balance
@@ -89,6 +90,83 @@ type Accounts struct {
 	DeletedAt *time.Time `json:"deleted_at,omitempty"` // Soft delete support
 	CreatedBy uuid.UUID  `json:"created_by"`
 	UpdatedBy *uuid.UUID `json:"updated_by,omitempty"`
+}
+
+// StatusTransition defines a valid state transition between account statuses
+type StatusTransition struct {
+	From               AccountStatus // Starting status for the transition
+	To                 AccountStatus // Target status for the transition
+	RequiredPermission string        // Permission required to perform this transition
+	ValidationRequired bool          // Whether validation is required before transition
+}
+
+// AllowedTransitions defines all permitted status transitions for accounts
+var AllowedTransitions = []StatusTransition{
+	// Draft -> Pending Approval: Initial submission for review
+	{AccountStatusDraft, AccountStatusPendingApproval, "accounts.submit", true},
+	// Pending Approval -> Active: Approval process completion
+	{AccountStatusPendingApproval, AccountStatusActive, "accounts.approve", true},
+	// Active -> Inactive: Voluntary deactivation
+	{AccountStatusActive, AccountStatusInactive, "accounts.deactivate", false},
+	// Active -> Suspended: Administrative suspension
+	{AccountStatusActive, AccountStatusSuspended, "accounts.suspend", false},
+	// Suspended -> Active: Reactivation after suspension
+	{AccountStatusSuspended, AccountStatusActive, "accounts.activate", true},
+	// Inactive -> Closed: Final closure of inactive account
+	{AccountStatusInactive, AccountStatusClosed, "accounts.close", true},
+	// Closed -> Archived: Long-term storage of closed accounts
+	{AccountStatusClosed, AccountStatusArchived, "accounts.archive", false},
+	// ... more transitions
+}
+
+// CanAcceptTransactions determines if the account can receive financial transactions
+func (a *Accounts) CanAcceptTransactions() bool {
+	return a.Status == AccountStatusActive &&
+		a.IsActive &&
+		a.AllowManualEntries &&
+		a.DeletedAt == nil &&
+		a.ValidationStatus == ValidationStatusValid
+}
+
+// CanBeUsedInReports determines if the account should be included in financial reports
+func (a *Accounts) CanBeUsedInReports() bool {
+	return a.ShowInReports &&
+		a.DeletedAt == nil &&
+		a.Status != AccountStatusDraft
+}
+
+// RequiresApproval checks if the account is in a state requiring administrative approval
+func (a *Accounts) RequiresApproval() bool {
+	return a.Status == AccountStatusPendingApproval ||
+		a.Status == AccountStatusUnderReview
+}
+
+// GetTransactionRestrictions returns a list of transaction restrictions based on account status and settings
+func (a *Accounts) GetTransactionRestrictions() []string {
+	var restrictions []string
+
+	// Status-based restrictions
+	switch a.Status {
+	case AccountStatusRestricted:
+		restrictions = append(restrictions, "Manual entries only with approval")
+	case AccountStatusFrozen:
+		restrictions = append(restrictions, "No new transactions allowed")
+	case AccountStatusYearEndProcessing:
+		restrictions = append(restrictions, "Only closing entries permitted")
+	case AccountStatusAuditLock:
+		restrictions = append(restrictions, "Read-only during audit")
+	}
+
+	// Settings-based restrictions
+	if !a.AllowManualEntries {
+		restrictions = append(restrictions, "System entries only")
+	}
+
+	if a.RequireReference {
+		restrictions = append(restrictions, "Reference number mandatory")
+	}
+
+	return restrictions
 }
 
 // CreateAccountRequest represents the request to create a new account

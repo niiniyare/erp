@@ -419,7 +419,7 @@ type Querier interface {
 	GetEntityState(ctx context.Context, argUuid uuid.UUID) (*Entitystate, error)
 	GetEntityStateByEntityAndKey(ctx context.Context, arg GetEntityStateByEntityAndKeyParams) (*Entitystate, error)
 	GetEntityStateByEntityKeyAndFiscalYear(ctx context.Context, arg GetEntityStateByEntityKeyAndFiscalYearParams) (*Entitystate, error)
-	// Usage: Comprehensive health check of entity state configuration
+	// Usage:  health check of entity state configuration
 	// Use case: System health monitoring, pre-deployment validation
 	GetEntityStateHealthCheck(ctx context.Context) ([]*GetEntityStateHealthCheckRow, error)
 	// -- name: GetEntityStateWithLocking :one

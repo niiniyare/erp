@@ -1253,7 +1253,7 @@ func (suite *TenantTestSuite) TestAdvancedAnalytics() {
 	// Storage stats might be empty, but should not error
 }
 
-// Comprehensive Error Handling Tests
+//  Error Handling Tests
 func (suite *TenantTestSuite) TestErrorHandlingAndEdgeCases() {
 	// Test creating tenant with invalid data - try multiple invalid scenarios
 	invalidParams := CreateTenantParams{
@@ -1437,7 +1437,7 @@ func (suite *TenantTestSuite) TestValidationChecks() {
 	suite.Require().False(exists)
 }
 
-// Comprehensive Validation and Constraint Tests
+//  Validation and Constraint Tests
 func (suite *TenantTestSuite) TestTenantConstraintValidation() {
 	// Test invalid company size
 	metadata, _ := json.Marshal(map[string]any{"test": true})

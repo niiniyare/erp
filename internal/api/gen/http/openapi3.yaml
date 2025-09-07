@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
     title: Enterprise AWO ERP System API
-    description: Comprehensive ERP system with multi-tenant support
+    description:  ERP system with multi-tenant support
     version: 1.0.0
 servers:
     - url: http://localhost:8080
@@ -23453,7 +23453,7 @@ components:
                     description: User ID
                     example: f66ec8db-27a4-400d-8b0c-57f307a09a5a
                     format: uuid
-            description: Comprehensive user context
+            description:  user context
             example:
                 access_patterns:
                     average_session_duration_minutes: 13030398031767298264

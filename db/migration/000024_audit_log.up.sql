@@ -1,7 +1,7 @@
 -- ------------------------------------------------------------------------------------------------
 -- AUDIT LOG
 -- ------------------------------------------------------------------------------------------------
--- Comprehensive audit logging with compliance flags and risk scoring.
+--  audit logging with compliance flags and risk scoring.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-COMMENT ON TABLE audit_log IS 'Comprehensive audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.';
+COMMENT ON TABLE audit_log IS ' audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.';
 
 COMMENT ON COLUMN audit_log.event_category IS 'Event category: ACCESS (authorization), ADMIN (administrative), DATA (data access), AUTH (authentication), SYSTEM (system events), COMPLIANCE (regulatory)';
 

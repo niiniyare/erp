@@ -42,6 +42,26 @@ func ParseRootType(s string) (RootType, error) {
 	return rt, nil
 }
 
+type AccountStatus string
+
+const (
+	AccountStatusDraft             AccountStatus = "DRAFT"
+	AccountStatusPendingApproval   AccountStatus = "PENDING_APPROVAL"
+	AccountStatusActive            AccountStatus = "ACTIVE"
+	AccountStatusInactive          AccountStatus = "INACTIVE"
+	AccountStatusSuspended         AccountStatus = "SUSPENDED"
+	AccountStatusFrozen            AccountStatus = "FROZEN"
+	AccountStatusClosed            AccountStatus = "CLOSED"
+	AccountStatusArchived          AccountStatus = "ARCHIVED"
+	AccountStatusUnderReview       AccountStatus = "UNDER_REVIEW"
+	AccountStatusRestricted        AccountStatus = "RESTRICTED"
+	AccountStatusYearEndProcessing AccountStatus = "YEAR_END_PROCESSING"
+	AccountStatusAuditLock         AccountStatus = "AUDIT_LOCK"
+	AccountStatusDataError         AccountStatus = "DATA_ERROR"
+	AccountStatusComplianceHold    AccountStatus = "COMPLIANCE_HOLD"
+	AccountStatusSystemMaintenance AccountStatus = "SYSTEM_MAINTENANCE"
+)
+
 // NormalBalance represents the normal balance type for accounts
 // This determines which side (debit/credit) increases the account balance
 type NormalBalance string

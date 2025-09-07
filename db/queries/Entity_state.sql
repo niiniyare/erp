@@ -473,7 +473,7 @@ HAVING
   COUNT(*) > 1;
 
 -- name: GetEntityStateHealthCheck :many
--- Usage: Comprehensive health check of entity state configuration
+-- Usage:  health check of entity state configuration
 -- Use case: System health monitoring, pre-deployment validation
 SELECT
   es.entity_id,

@@ -22,7 +22,7 @@ var _ = Service("administrative-performance", func() {
 	Error("bad_request", String, "Bad request")
 
 	Method("get_system_health", func() {
-		Description("Comprehensive Health Check")
+		Description(" Health Check")
 		Payload(func() {
 			Attribute("include_dependencies", Boolean, "Include external dependency status", func() {
 				Default(true)
@@ -149,7 +149,7 @@ var _ = Service("administrative-performance", func() {
 	})
 
 	Method("get_system_statistics", func() {
-		Description("Comprehensive System Statistics")
+		Description(" System Statistics")
 		Payload(func() {
 			Attribute("period", String, "Time period", func() {
 				Default("24h")
