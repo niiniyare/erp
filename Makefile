@@ -63,7 +63,6 @@ evans: ## Start Evans gRPC REPL
 # ============================================================================
 # 🧠 Core Business Layer (Domain, Services, Interfaces)
 # ============================================================================
-
 sqlc-lint: ## detection of basd queries
 	@./db/queries/lint.sh
 sqlc: ## Generate SQLC store code
@@ -77,8 +76,14 @@ mock: ## Generate mocks for interfaces
 fmt: ## Format Go code
 	@go fmt ./...
 
-docs: ## serve Doc by mkdocs on port 8080 
-	@mkdocs serve -a localhost:8080
+DOC_PORT ?= 8081
+
+docs: ## serve Doc by site/main.go on port 8081
+	@DOC_PORT=$(DOC_PORT) go run ./site/main.go
+
+docs-port: ## serve Doc with custom port: make docs-port DOC_PORT=9000
+	@DOC_PORT=$(DOC_PORT) go run ./site/main.go
+
 goa: ## generate 7oa 
 	@goa gen github.com/niiniyare/erp/internal/api/design -o internal/api && rm -rf ./internal/api/swagger/openapi && cp -f ./internal/api/gen/http/openapi3.json ./internal/api/swagger
 lint: ## Lint Go code
