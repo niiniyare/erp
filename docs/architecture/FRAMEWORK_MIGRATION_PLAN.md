@@ -8,7 +8,7 @@ also read [# Gin Handlers Inventory](./GIN_HANDLERS_INVENTORY.md)
 ## Current State Analysis
 
 ### Existing GOA Implementation
-- **Generated Services**: ABAC, Auth, Organization, Tenant, User, OpenAPI
+- **Generated Services**: ABAC/IAM, Authz,Authn, Organization/entities, Tenant, User/Identity, OpenAPI
 - **Type-safe handlers** with automatic validation
 - **Design-first approach** with `.design` files
 - **Built-in OpenAPI/Swagger generation**
