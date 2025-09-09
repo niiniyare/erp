@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/testsuite"
 	"go.temporal.io/sdk/worker"
 
@@ -27,7 +25,11 @@ type IntegrationTestSuite struct {
 }
 
 func (s *IntegrationTestSuite) SetupTest() {
-	s.logger = logger.NewNopLogger()
+	config := logger.DefaultConfig()
+	config.Level = logger.InfoLevel
+	factory := &logger.LoggerFactory{}
+	log, _ := factory.NewLogger(config)
+	s.logger = log
 }
 
 // TestFinanceWorkflowExecution tests the complete finance workflow execution pipeline
@@ -162,7 +164,7 @@ func (s *IntegrationTestSuite) testAccountCreationWorkflow(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.NotNil(t, result.AccountID)
-	assert.Equal(t, domain.CreationStatusCompleted, result.Status)
+	assert.Equal(t, domain.AccountCreationStatusCompleted, result.Status)
 
 	s.logger.Info("Account creation workflow test passed", logger.Fields{
 		"account_id": result.AccountID,
@@ -204,12 +206,11 @@ func (s *IntegrationTestSuite) mockProcessingActivities(env *testsuite.TestWorkf
 	env.OnActivity("PostTransactionToLedger", domain.LedgerPostingInput{}).Return(
 		&domain.LedgerPostingResult{
 			PostingReference: "POST-12345",
-			ProcessedEntries: []domain.ProcessedEntry{
+			ProcessedEntries: []domain.TransactionEntry{
 				{
-					EntryID:     uuid.New(),
+					ID:          uuid.New(),
 					AccountID:   uuid.New(),
-					Amount:      decimal.NewFromFloat(1000),
-					EntryType:   "DEBIT",
+					DebitAmount: decimal.NewFromFloat(1000),
 					Description: "Test entry",
 				},
 			},
@@ -222,8 +223,8 @@ func (s *IntegrationTestSuite) mockProcessingActivities(env *testsuite.TestWorkf
 
 func (s *IntegrationTestSuite) mockAccountActivities(env *testsuite.TestWorkflowEnvironment) {
 	// Mock account validation
-	env.OnActivity("ValidateAccountCreationActivity", domain.AccountCreationValidationInput{}).Return(
-		&domain.AccountCreationValidationResult{
+	env.OnActivity("ValidateAccountCreationActivity", domain.AccountHierarchyValidationInput{}).Return(
+		&domain.AccountHierarchyValidationResult{
 			IsValid: true,
 		}, nil).Times(0)
 
@@ -245,7 +246,10 @@ func TestTemporalIntegrationSetup(t *testing.T) {
 	}
 
 	// This test verifies the temporal integration setup process
-	logger := logger.NewNopLogger()
+	loggerConfig := logger.DefaultConfig()
+	loggerConfig.Level = logger.InfoLevel
+	factory := &logger.LoggerFactory{}
+	testLogger, _ := factory.NewLogger(loggerConfig)
 
 	// Create a minimal configuration that should pass validation
 	config := finance.TemporalIntegrationConfig{
@@ -261,7 +265,7 @@ func TestTemporalIntegrationSetup(t *testing.T) {
 		NotificationService: nil, // Optional for this test
 		CacheService:        nil, // Optional for this test
 		TemporalClient:      nil, // Would provide test client in full integration
-		Logger:              logger,
+		Logger:              testLogger,
 		Metrics:             nil, // Optional for this test
 		Tracer:              nil, // Optional for this test
 	}

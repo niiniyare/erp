@@ -1,7 +1,6 @@
 package finance
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	"go.temporal.io/sdk/testsuite"
 
 	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared/logger"
 )
 
 // TestTransactionApprovalWorkflow tests the transaction approval workflow end-to-end
@@ -20,8 +18,6 @@ func TestTransactionApprovalWorkflow(t *testing.T) {
 	testSuite := &testsuite.WorkflowTestSuite{}
 	env := testSuite.NewTestWorkflowEnvironment()
 
-	// Create a logger for testing
-	testLogger := logger.NewNopLogger()
 
 	// Mock the activities that will be called
 	env.OnActivity("ValidateTransactionRequest", domain.TransactionValidationInput{
@@ -37,9 +33,9 @@ func TestTransactionApprovalWorkflow(t *testing.T) {
 		Amount:        decimal.NewFromFloat(1000.00),
 		AccountType:   "EXPENSE",
 	}).Return(&domain.ApprovalRequirementsResult{
-		RequiredApprovers:    []string{"manager@company.com"},
+		RequiredApprovers:     []string{"manager@company.com"},
 		RequiredApprovalCount: 1,
-		ApprovalTimeout:      time.Hour,
+		ApprovalTimeout:       time.Hour,
 	}, nil)
 
 	env.OnActivity("SendApprovalNotification", domain.ApprovalNotificationInput{
@@ -98,12 +94,11 @@ func TestTransactionProcessingWorkflow(t *testing.T) {
 		TransactionID: transactionID,
 	}).Return(&domain.LedgerPostingResult{
 		PostingReference: "POST-" + transactionID.String()[:8],
-		ProcessedEntries: []domain.ProcessedEntry{
+		ProcessedEntries: []domain.TransactionEntry{
 			{
-				EntryID:     uuid.New(),
+				ID:          uuid.New(),
 				AccountID:   uuid.New(),
-				Amount:      decimal.NewFromFloat(1000.00),
-				EntryType:   "DEBIT",
+				DebitAmount: decimal.NewFromFloat(1000.00),
 				Description: "Test transaction",
 			},
 		},
@@ -111,12 +106,11 @@ func TestTransactionProcessingWorkflow(t *testing.T) {
 
 	env.OnActivity("UpdateAccountBalance", domain.BalanceUpdateInput{
 		TransactionID: transactionID,
-		Entries: []domain.ProcessedEntry{
+		Entries: []domain.TransactionEntry{
 			{
-				EntryID:     uuid.New(),
+				ID:          uuid.New(),
 				AccountID:   uuid.New(),
-				Amount:      decimal.NewFromFloat(1000.00),
-				EntryType:   "DEBIT",
+				DebitAmount: decimal.NewFromFloat(1000.00),
 				Description: "Test transaction",
 			},
 		},
@@ -156,7 +150,7 @@ func TestBulkTransactionWorkflow(t *testing.T) {
 	testSuite := &testsuite.WorkflowTestSuite{}
 	env := testSuite.NewTestWorkflowEnvironment()
 
-	batchID := uuid.New()
+	batchID := "BATCH-" + uuid.New().String()[:8]
 	transactionIDs := []uuid.UUID{
 		uuid.New(),
 		uuid.New(),
@@ -169,11 +163,11 @@ func TestBulkTransactionWorkflow(t *testing.T) {
 			TransactionID: txID,
 		}).Return(&domain.TransactionProcessingWorkflowResult{
 			TransactionID:    txID,
-			Status:          domain.ProcessingStatusCompleted,
+			Status:           domain.ProcessingStatusCompleted,
 			PostingReference: "POST-" + txID.String()[:8],
-			StartTime:       time.Now(),
-			CompletedTime:   time.Now().Add(time.Second),
-			Duration:        time.Second,
+			StartTime:        time.Now(),
+			CompletedTime:    time.Now().Add(time.Second),
+			Duration:         time.Second,
 		}, nil)
 	}
 
@@ -218,37 +212,44 @@ func TestAccountCreationWorkflow(t *testing.T) {
 	accountID := uuid.New()
 
 	// Mock activities
-	env.OnActivity("ValidateAccountCreationActivity", domain.AccountCreationValidationInput{
+	env.OnActivity("ValidateAccountCreationActivity", domain.AccountHierarchyValidationInput{
 		AccountCode: "4000-001",
-		AccountName: "Office Supplies",
 		AccountType: "EXPENSE",
-	}).Return(&domain.AccountCreationValidationResult{
+		AccountClass: "OPERATING_EXPENSE",
+	}).Return(&domain.AccountHierarchyValidationResult{
 		IsValid: true,
 	}, nil)
 
 	env.OnActivity("CreateAccountActivity", domain.AccountCreationInput{
-		AccountCode: "4000-001",
-		AccountName: "Office Supplies",
-		AccountType: "EXPENSE",
-		IsActive:    true,
-		CreatedBy:   "admin@company.com",
+		AccountCode:        "4000-001",
+		AccountName:        "Office Supplies",
+		AccountType:        "EXPENSE",
+		AccountClass:       "OPERATING_EXPENSE",
+		CurrencyCode:       "USD",
+		IsActive:           true,
+		AllowManualJournal: true,
+		CreatedBy:          "admin@company.com",
 	}).Return(&domain.AccountCreationResult{
 		AccountID: accountID,
 	}, nil)
 
 	env.OnActivity("SendAccountCreatedNotificationActivity", domain.AccountNotificationInput{
-		AccountID:  accountID,
-		Action:     "CREATED",
-		Recipients: []string{"accounting@company.com"},
+		AccountID:   accountID,
+		AccountCode: "4000-001",
+		Action:      "CREATED",
+		Recipients:  []string{"accounting@company.com"},
 	}).Return(nil, nil)
 
 	// Create test input
 	testInput := domain.AccountCreationWorkflowInput{
-		AccountCode: "4000-001",
-		AccountName: "Office Supplies",
-		AccountType: "EXPENSE",
-		CreatedBy:   "admin@company.com",
-		Recipients:  []string{"accounting@company.com"},
+		AccountCode:        "4000-001",
+		AccountName:        "Office Supplies",
+		AccountType:        "EXPENSE",
+		AccountClass:       "OPERATING_EXPENSE",
+		CurrencyCode:       "USD",
+		IsActive:           true,
+		AllowManualJournal: true,
+		CreatedBy:          "admin@company.com",
 	}
 
 	// Execute workflow
@@ -263,7 +264,7 @@ func TestAccountCreationWorkflow(t *testing.T) {
 
 	// Verify results
 	assert.Equal(t, accountID, result.AccountID)
-	assert.Equal(t, domain.CreationStatusCompleted, result.Status)
+	assert.Equal(t, domain.AccountCreationStatusCompleted, result.Status)
 	assert.NotZero(t, result.StartTime)
 	assert.True(t, result.Duration > 0)
 
@@ -277,7 +278,7 @@ func TestAccountCreationWorkflow(t *testing.T) {
 func TestTemporalIntegrationInitialization(t *testing.T) {
 	// This test would verify that the TemporalIntegration can be created
 	// and properly registers activities and workflows
-	
+
 	// Create minimal configuration for testing
 	config := TemporalIntegrationConfig{
 		Services:            nil, // In real test, would provide mock services
@@ -288,17 +289,18 @@ func TestTemporalIntegrationInitialization(t *testing.T) {
 		NotificationService: nil,
 		CacheService:        nil,
 		TemporalClient:      nil, // In real test, would provide test client
-		Logger:              logger.NewNopLogger(),
+		Logger:              nil,
 		Metrics:             nil,
 		Tracer:              nil,
 	}
 
 	// This would fail due to missing services, but demonstrates the test structure
 	_, err := NewTemporalIntegration(config)
-	
+
 	// In a complete test, we would expect this to succeed with proper mocks
 	assert.Error(t, err) // Expected to fail with current minimal config
 	assert.Contains(t, err.Error(), "finance services are required")
 
 	t.Logf("✅ Temporal integration initialization test completed (expected failure with minimal config)")
 }
+

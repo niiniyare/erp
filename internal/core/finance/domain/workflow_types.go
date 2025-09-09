@@ -8,15 +8,17 @@ import (
 )
 
 // Common workflow types and enums (avoid duplicates with existing types)
-type ProcessingStatus string
-type ReversalStatus string
-type AccountCreationStatus string
-type AccountClosureStatus string
-type ReconciliationStatus string
-type AuditStatus string
-type FraudDetectionStatus string
-type ClosingStatus string
-type StepStatus string
+type (
+	ProcessingStatus      string
+	ReversalStatus        string
+	AccountCreationStatus string
+	AccountClosureStatus  string
+	ReconciliationStatus  string
+	AuditStatus           string
+	FraudDetectionStatus  string
+	ClosingStatus         string
+	StepStatus            string
+)
 
 const (
 	// Note: ApprovalStatus already defined in types.go
@@ -73,24 +75,24 @@ const (
 
 // Transaction Approval Workflow Types
 type TransactionApprovalWorkflowInput struct {
-	TransactionID uuid.UUID      `json:"transaction_id"`
-	SubmittedBy   string         `json:"submitted_by"`
-	SubmittedAt   time.Time      `json:"submitted_at"`
+	TransactionID uuid.UUID       `json:"transaction_id"`
+	SubmittedBy   string          `json:"submitted_by"`
+	SubmittedAt   time.Time       `json:"submitted_at"`
 	Amount        decimal.Decimal `json:"amount"`
-	AccountType   string         `json:"account_type"`
+	AccountType   string          `json:"account_type"`
 }
 
 type TransactionApprovalWorkflowResult struct {
-	TransactionID     uuid.UUID       `json:"transaction_id"`
-	Status           ApprovalStatus  `json:"status"`
-	ApprovedBy       []string        `json:"approved_by,omitempty"`
-	RejectedBy       []string        `json:"rejected_by,omitempty"`
-	Comments         []string        `json:"comments,omitempty"`
-	ValidationErrors []string        `json:"validation_errors,omitempty"`
-	StartTime        time.Time       `json:"start_time"`
-	CompletedTime    time.Time       `json:"completed_time"`
-	Duration         time.Duration   `json:"duration"`
-	Error            string          `json:"error,omitempty"`
+	TransactionID    uuid.UUID      `json:"transaction_id"`
+	Status           ApprovalStatus `json:"status"`
+	ApprovedBy       []string       `json:"approved_by,omitempty"`
+	RejectedBy       []string       `json:"rejected_by,omitempty"`
+	Comments         []string       `json:"comments,omitempty"`
+	ValidationErrors []string       `json:"validation_errors,omitempty"`
+	StartTime        time.Time      `json:"start_time"`
+	CompletedTime    time.Time      `json:"completed_time"`
+	Duration         time.Duration  `json:"duration"`
+	Error            string         `json:"error,omitempty"`
 }
 
 // Transaction Processing Workflow Types
@@ -100,30 +102,30 @@ type TransactionProcessingWorkflowInput struct {
 
 type TransactionProcessingWorkflowResult struct {
 	TransactionID    uuid.UUID        `json:"transaction_id"`
-	Status          ProcessingStatus `json:"status"`
+	Status           ProcessingStatus `json:"status"`
 	PostingReference string           `json:"posting_reference,omitempty"`
-	StartTime       time.Time        `json:"start_time"`
-	CompletedTime   time.Time        `json:"completed_time"`
-	Duration        time.Duration    `json:"duration"`
-	Error           string           `json:"error,omitempty"`
+	StartTime        time.Time        `json:"start_time"`
+	CompletedTime    time.Time        `json:"completed_time"`
+	Duration         time.Duration    `json:"duration"`
+	Error            string           `json:"error,omitempty"`
 }
 
 // Transaction Reversal Workflow Types
 type TransactionReversalWorkflowInput struct {
 	OriginalTransactionID uuid.UUID `json:"original_transaction_id"`
-	ReversalReason       string    `json:"reversal_reason"`
-	InitiatedBy          string    `json:"initiated_by"`
+	ReversalReason        string    `json:"reversal_reason"`
+	InitiatedBy           string    `json:"initiated_by"`
 }
 
 type TransactionReversalWorkflowResult struct {
 	OriginalTransactionID uuid.UUID      `json:"original_transaction_id"`
 	ReversalTransactionID uuid.UUID      `json:"reversal_transaction_id"`
-	Status               ReversalStatus `json:"status"`
-	PostingReference     string         `json:"posting_reference,omitempty"`
-	StartTime           time.Time      `json:"start_time"`
-	CompletedTime       time.Time      `json:"completed_time"`
-	Duration            time.Duration  `json:"duration"`
-	Error               string         `json:"error,omitempty"`
+	Status                ReversalStatus `json:"status"`
+	PostingReference      string         `json:"posting_reference,omitempty"`
+	StartTime             time.Time      `json:"start_time"`
+	CompletedTime         time.Time      `json:"completed_time"`
+	Duration              time.Duration  `json:"duration"`
+	Error                 string         `json:"error,omitempty"`
 }
 
 // Bulk Transaction Workflow Types
@@ -134,40 +136,41 @@ type BulkTransactionWorkflowInput struct {
 }
 
 type BulkTransactionWorkflowResult struct {
-	BatchID                string                                        `json:"batch_id"`
+	BatchID                string                                         `json:"batch_id"`
 	Results                map[string]TransactionProcessingWorkflowResult `json:"results"`
-	SuccessfulTransactions []uuid.UUID                                   `json:"successful_transactions"`
-	FailedTransactions     []uuid.UUID                                   `json:"failed_transactions"`
-	TotalProcessed         int                                           `json:"total_processed"`
-	SuccessRate           float64                                       `json:"success_rate"`
-	StartTime             time.Time                                     `json:"start_time"`
-	CompletedTime         time.Time                                     `json:"completed_time"`
-	Duration              time.Duration                                 `json:"duration"`
+	SuccessfulTransactions []uuid.UUID                                    `json:"successful_transactions"`
+	FailedTransactions     []uuid.UUID                                    `json:"failed_transactions"`
+	TotalProcessed         int                                            `json:"total_processed"`
+	SuccessRate            float64                                        `json:"success_rate"`
+	StartTime              time.Time                                      `json:"start_time"`
+	CompletedTime          time.Time                                      `json:"completed_time"`
+	Duration               time.Duration                                  `json:"duration"`
 }
 
 // Account Creation Workflow Types
 type AccountCreationWorkflowInput struct {
-	AccountCode        string      `json:"account_code"`
-	AccountName        string      `json:"account_name"`
-	AccountType        string      `json:"account_type"`
-	AccountClass       string      `json:"account_class"`
-	ParentAccountCode  string      `json:"parent_account_code,omitempty"`
-	CurrencyCode       string      `json:"currency_code"`
-	Description        string      `json:"description,omitempty"`
-	IsActive          bool        `json:"is_active"`
-	AllowManualJournal bool        `json:"allow_manual_journal"`
-	CreatedBy         string      `json:"created_by"`
+	AccountCode        string   `json:"account_code"`
+	AccountName        string   `json:"account_name"`
+	AccountType        string   `json:"account_type"`
+	AccountClass       string   `json:"account_class"`
+	ParentAccountCode  string   `json:"parent_account_code,omitempty"`
+	CurrencyCode       string   `json:"currency_code"`
+	Description        string   `json:"description,omitempty"`
+	IsActive           bool     `json:"is_active"`
+	AllowManualJournal bool     `json:"allow_manual_journal"`
+	Recipients         []string `json:"recipients,omitempty"`
+	CreatedBy          string   `json:"created_by"`
 }
 
 type AccountCreationWorkflowResult struct {
 	AccountCode      string                `json:"account_code"`
 	AccountID        uuid.UUID             `json:"account_id"`
-	Status          AccountCreationStatus `json:"status"`
+	Status           AccountCreationStatus `json:"status"`
 	ValidationErrors []string              `json:"validation_errors,omitempty"`
-	StartTime       time.Time             `json:"start_time"`
-	CompletedTime   time.Time             `json:"completed_time"`
-	Duration        time.Duration         `json:"duration"`
-	Error           string                `json:"error,omitempty"`
+	StartTime        time.Time             `json:"start_time"`
+	CompletedTime    time.Time             `json:"completed_time"`
+	Duration         time.Duration         `json:"duration"`
+	Error            string                `json:"error,omitempty"`
 }
 
 // Account Closure Workflow Types
@@ -179,144 +182,144 @@ type AccountClosureWorkflowInput struct {
 }
 
 type AccountClosureWorkflowResult struct {
-	AccountID    uuid.UUID            `json:"account_id"`
-	Status      AccountClosureStatus `json:"status"`
-	Dependencies []string             `json:"dependencies,omitempty"`
-	StartTime   time.Time            `json:"start_time"`
-	CompletedTime time.Time           `json:"completed_time"`
-	Duration    time.Duration        `json:"duration"`
-	Error       string               `json:"error,omitempty"`
+	AccountID     uuid.UUID            `json:"account_id"`
+	Status        AccountClosureStatus `json:"status"`
+	Dependencies  []string             `json:"dependencies,omitempty"`
+	StartTime     time.Time            `json:"start_time"`
+	CompletedTime time.Time            `json:"completed_time"`
+	Duration      time.Duration        `json:"duration"`
+	Error         string               `json:"error,omitempty"`
 }
 
 // Account Reconciliation Workflow Types
 type AccountReconciliationWorkflowInput struct {
 	AccountID            uuid.UUID `json:"account_id"`
 	ReconciliationPeriod string    `json:"reconciliation_period"`
-	PeriodFrom          time.Time `json:"period_from"`
-	PeriodTo            time.Time `json:"period_to"`
+	PeriodFrom           time.Time `json:"period_from"`
+	PeriodTo             time.Time `json:"period_to"`
 }
 
 type AccountReconciliationWorkflowResult struct {
 	AccountID       uuid.UUID            `json:"account_id"`
-	Period         string               `json:"period"`
-	Status         ReconciliationStatus `json:"status"`
+	Period          string               `json:"period"`
+	Status          ReconciliationStatus `json:"status"`
 	ExpectedBalance decimal.Decimal      `json:"expected_balance"`
-	ActualBalance  decimal.Decimal      `json:"actual_balance"`
-	Discrepancy    decimal.Decimal      `json:"discrepancy"`
-	ReportID       uuid.UUID            `json:"report_id,omitempty"`
-	ReportPath     string               `json:"report_path,omitempty"`
-	StartTime      time.Time            `json:"start_time"`
-	CompletedTime  time.Time            `json:"completed_time"`
-	Duration       time.Duration        `json:"duration"`
-	Error          string               `json:"error,omitempty"`
+	ActualBalance   decimal.Decimal      `json:"actual_balance"`
+	Discrepancy     decimal.Decimal      `json:"discrepancy"`
+	ReportID        uuid.UUID            `json:"report_id,omitempty"`
+	ReportPath      string               `json:"report_path,omitempty"`
+	StartTime       time.Time            `json:"start_time"`
+	CompletedTime   time.Time            `json:"completed_time"`
+	Duration        time.Duration        `json:"duration"`
+	Error           string               `json:"error,omitempty"`
 }
 
 // Compliance Audit Workflow Types
 type ComplianceAuditWorkflowInput struct {
-	AuditType               string            `json:"audit_type"`
-	AuditPeriod            string            `json:"audit_period"`
-	AuditScope             []string          `json:"audit_scope"`
-	ComplianceRules        []string          `json:"compliance_rules"`
-	PeriodFrom             time.Time         `json:"period_from"`
-	PeriodTo               time.Time         `json:"period_to"`
-	InitiatedBy            string            `json:"initiated_by"`
-	NotificationRecipients []string          `json:"notification_recipients"`
+	AuditType              string    `json:"audit_type"`
+	AuditPeriod            string    `json:"audit_period"`
+	AuditScope             []string  `json:"audit_scope"`
+	ComplianceRules        []string  `json:"compliance_rules"`
+	PeriodFrom             time.Time `json:"period_from"`
+	PeriodTo               time.Time `json:"period_to"`
+	InitiatedBy            string    `json:"initiated_by"`
+	NotificationRecipients []string  `json:"notification_recipients"`
 }
 
 type ComplianceAuditWorkflowResult struct {
-	AuditID        uuid.UUID              `json:"audit_id"`
-	AuditType      string                 `json:"audit_type"`
-	Period         string                 `json:"period"`
-	Status         AuditStatus            `json:"status"`
+	AuditID         uuid.UUID             `json:"audit_id"`
+	AuditType       string                `json:"audit_type"`
+	Period          string                `json:"period"`
+	Status          AuditStatus           `json:"status"`
 	ComplianceScore float64               `json:"compliance_score"`
-	ViolationCount int                    `json:"violation_count"`
-	Violations     []ComplianceViolation  `json:"violations,omitempty"`
-	ReportID       uuid.UUID              `json:"report_id,omitempty"`
-	ReportPath     string                 `json:"report_path,omitempty"`
-	StartTime      time.Time              `json:"start_time"`
-	CompletedTime  time.Time              `json:"completed_time"`
-	Duration       time.Duration          `json:"duration"`
-	Error          string                 `json:"error,omitempty"`
+	ViolationCount  int                   `json:"violation_count"`
+	Violations      []ComplianceViolation `json:"violations,omitempty"`
+	ReportID        uuid.UUID             `json:"report_id,omitempty"`
+	ReportPath      string                `json:"report_path,omitempty"`
+	StartTime       time.Time             `json:"start_time"`
+	CompletedTime   time.Time             `json:"completed_time"`
+	Duration        time.Duration         `json:"duration"`
+	Error           string                `json:"error,omitempty"`
 }
 
 // Fraud Detection Workflow Types
 type FraudDetectionWorkflowInput struct {
-	DetectionType       string                    `json:"detection_type"`
-	DetectionRules      []string                  `json:"detection_rules"`
-	MonitoringPeriod    string                    `json:"monitoring_period"`
-	TransactionData     []TransactionDataPoint    `json:"transaction_data"`
-	HistoricalData      []HistoricalDataPoint     `json:"historical_data"`
-	AlertThreshold      float64                   `json:"alert_threshold"`
-	CriticalThreshold   float64                   `json:"critical_threshold"`
-	AlertRecipients     []string                  `json:"alert_recipients"`
-	InitiatedBy         string                    `json:"initiated_by"`
+	DetectionType     string                 `json:"detection_type"`
+	DetectionRules    []string               `json:"detection_rules"`
+	MonitoringPeriod  string                 `json:"monitoring_period"`
+	TransactionData   []TransactionDataPoint `json:"transaction_data"`
+	HistoricalData    []HistoricalDataPoint  `json:"historical_data"`
+	AlertThreshold    float64                `json:"alert_threshold"`
+	CriticalThreshold float64                `json:"critical_threshold"`
+	AlertRecipients   []string               `json:"alert_recipients"`
+	InitiatedBy       string                 `json:"initiated_by"`
 }
 
 type FraudDetectionWorkflowResult struct {
-	DetectionID          uuid.UUID             `json:"detection_id"`
-	DetectionType        string                `json:"detection_type"`
-	Status              FraudDetectionStatus  `json:"status"`
-	AnalyzedTransactions int                   `json:"analyzed_transactions"`
-	HighRiskTransactions int                   `json:"high_risk_transactions"`
-	Alerts              []FraudAlert          `json:"alerts"`
-	RiskFactors         []string              `json:"risk_factors"`
-	ReportID            uuid.UUID             `json:"report_id,omitempty"`
-	ReportPath          string                `json:"report_path,omitempty"`
-	StartTime           time.Time             `json:"start_time"`
-	CompletedTime       time.Time             `json:"completed_time"`
-	Duration            time.Duration         `json:"duration"`
-	Error               string                `json:"error,omitempty"`
+	DetectionID          uuid.UUID            `json:"detection_id"`
+	DetectionType        string               `json:"detection_type"`
+	Status               FraudDetectionStatus `json:"status"`
+	AnalyzedTransactions int                  `json:"analyzed_transactions"`
+	HighRiskTransactions int                  `json:"high_risk_transactions"`
+	Alerts               []FraudAlert         `json:"alerts"`
+	RiskFactors          []string             `json:"risk_factors"`
+	ReportID             uuid.UUID            `json:"report_id,omitempty"`
+	ReportPath           string               `json:"report_path,omitempty"`
+	StartTime            time.Time            `json:"start_time"`
+	CompletedTime        time.Time            `json:"completed_time"`
+	Duration             time.Duration        `json:"duration"`
+	Error                string               `json:"error,omitempty"`
 }
 
 // Month-End and Year-End Closing Workflow Types
 type MonthEndClosingWorkflowInput struct {
-	ClosingPeriod           string            `json:"closing_period"`
-	TenantID                uuid.UUID         `json:"tenant_id"`
-	ValidationRules         []string          `json:"validation_rules"`
-	AccountFilter           []string          `json:"account_filter,omitempty"`
-	AdjustmentRules         []string          `json:"adjustment_rules"`
-	AssetFilter             []string          `json:"asset_filter,omitempty"`
-	StatementTypes          []string          `json:"statement_types"`
-	NotificationRecipients  []string          `json:"notification_recipients"`
-	InitiatedBy             string            `json:"initiated_by"`
+	ClosingPeriod          string    `json:"closing_period"`
+	TenantID               uuid.UUID `json:"tenant_id"`
+	ValidationRules        []string  `json:"validation_rules"`
+	AccountFilter          []string  `json:"account_filter,omitempty"`
+	AdjustmentRules        []string  `json:"adjustment_rules"`
+	AssetFilter            []string  `json:"asset_filter,omitempty"`
+	StatementTypes         []string  `json:"statement_types"`
+	NotificationRecipients []string  `json:"notification_recipients"`
+	InitiatedBy            string    `json:"initiated_by"`
 }
 
 type MonthEndClosingWorkflowResult struct {
-	ClosingPeriod      string                      `json:"closing_period"`
-	Status            ClosingStatus               `json:"status"`
-	Steps             map[string]ClosingStepResult `json:"steps"`
-	FinancialStatements []FinancialStatement       `json:"financial_statements,omitempty"`
-	ValidationErrors   []string                    `json:"validation_errors,omitempty"`
-	StartTime         time.Time                   `json:"start_time"`
-	CompletedTime     time.Time                   `json:"completed_time"`
-	Duration          time.Duration               `json:"duration"`
-	Error             string                      `json:"error,omitempty"`
+	ClosingPeriod       string                       `json:"closing_period"`
+	Status              ClosingStatus                `json:"status"`
+	Steps               map[string]ClosingStepResult `json:"steps"`
+	FinancialStatements []FinancialStatement         `json:"financial_statements,omitempty"`
+	ValidationErrors    []string                     `json:"validation_errors,omitempty"`
+	StartTime           time.Time                    `json:"start_time"`
+	CompletedTime       time.Time                    `json:"completed_time"`
+	Duration            time.Duration                `json:"duration"`
+	Error               string                       `json:"error,omitempty"`
 }
 
 type YearEndClosingWorkflowInput struct {
-	FiscalYear             string              `json:"fiscal_year"`
-	TenantID               uuid.UUID           `json:"tenant_id"`
-	ValidationRules        []string            `json:"validation_rules"`
-	AssetFilter            []string            `json:"asset_filter,omitempty"`
-	AccrualRules           []string            `json:"accrual_rules"`
-	StatementTypes         []string            `json:"statement_types"`
-	ArchiveSettings        ArchiveSettings     `json:"archive_settings"`
-	NotificationRecipients []string            `json:"notification_recipients"`
-	InitiatedBy            string              `json:"initiated_by"`
+	FiscalYear             string          `json:"fiscal_year"`
+	TenantID               uuid.UUID       `json:"tenant_id"`
+	ValidationRules        []string        `json:"validation_rules"`
+	AssetFilter            []string        `json:"asset_filter,omitempty"`
+	AccrualRules           []string        `json:"accrual_rules"`
+	StatementTypes         []string        `json:"statement_types"`
+	ArchiveSettings        ArchiveSettings `json:"archive_settings"`
+	NotificationRecipients []string        `json:"notification_recipients"`
+	InitiatedBy            string          `json:"initiated_by"`
 }
 
 type YearEndClosingWorkflowResult struct {
-	FiscalYear          string                      `json:"fiscal_year"`
-	Status             ClosingStatus               `json:"status"`
-	Steps              map[string]ClosingStepResult `json:"steps"`
-	FinancialStatements []FinancialStatement        `json:"financial_statements,omitempty"`
-	ArchiveReference    string                      `json:"archive_reference,omitempty"`
-	UnclosedMonths     []string                    `json:"unclosed_months,omitempty"`
-	ValidationErrors   []string                    `json:"validation_errors,omitempty"`
-	StartTime          time.Time                   `json:"start_time"`
-	CompletedTime      time.Time                   `json:"completed_time"`
-	Duration           time.Duration               `json:"duration"`
-	Error              string                      `json:"error,omitempty"`
+	FiscalYear          string                       `json:"fiscal_year"`
+	Status              ClosingStatus                `json:"status"`
+	Steps               map[string]ClosingStepResult `json:"steps"`
+	FinancialStatements []FinancialStatement         `json:"financial_statements,omitempty"`
+	ArchiveReference    string                       `json:"archive_reference,omitempty"`
+	UnclosedMonths      []string                     `json:"unclosed_months,omitempty"`
+	ValidationErrors    []string                     `json:"validation_errors,omitempty"`
+	StartTime           time.Time                    `json:"start_time"`
+	CompletedTime       time.Time                    `json:"completed_time"`
+	Duration            time.Duration                `json:"duration"`
+	Error               string                       `json:"error,omitempty"`
 }
 
 // Supporting types for workflow activities
@@ -330,51 +333,53 @@ type ClosingStepResult struct {
 }
 
 type ComplianceViolation struct {
-	ViolationID   uuid.UUID `json:"violation_id"`
-	RuleID        string    `json:"rule_id"`
-	Description   string    `json:"description"`
-	Severity      string    `json:"severity"`
-	TransactionID uuid.UUID `json:"transaction_id,omitempty"`
-	AccountID     uuid.UUID `json:"account_id,omitempty"`
+	ViolationID   uuid.UUID       `json:"violation_id"`
+	RuleID        string          `json:"rule_id"`
+	Description   string          `json:"description"`
+	Severity      string          `json:"severity"`
+	TransactionID uuid.UUID       `json:"transaction_id,omitempty"`
+	AccountID     uuid.UUID       `json:"account_id,omitempty"`
 	Amount        decimal.Decimal `json:"amount,omitempty"`
-	DetectedAt    time.Time `json:"detected_at"`
+	DetectedAt    time.Time       `json:"detected_at"`
 }
 
 type FraudAlert struct {
-	AlertID       uuid.UUID         `json:"alert_id"`
-	TransactionID uuid.UUID         `json:"transaction_id"`
-	AlertType     FraudAlertType    `json:"alert_type"`
-	RiskScore     float64           `json:"risk_score"`
-	RiskFactors   []string          `json:"risk_factors"`
-	Status        FraudAlertStatus  `json:"status"`
-	DetectedAt    time.Time         `json:"detected_at"`
-	ReviewedAt    time.Time         `json:"reviewed_at,omitempty"`
-	ReviewedBy    string            `json:"reviewed_by,omitempty"`
+	AlertID       uuid.UUID        `json:"alert_id"`
+	TransactionID uuid.UUID        `json:"transaction_id"`
+	AlertType     FraudAlertType   `json:"alert_type"`
+	RiskScore     float64          `json:"risk_score"`
+	RiskFactors   []string         `json:"risk_factors"`
+	Status        FraudAlertStatus `json:"status"`
+	DetectedAt    time.Time        `json:"detected_at"`
+	ReviewedAt    time.Time        `json:"reviewed_at,omitempty"`
+	ReviewedBy    string           `json:"reviewed_by,omitempty"`
 }
 
-type FraudAlertType string
-type FraudAlertStatus string
-type AlertType string
-type AlertPriority string
+type (
+	FraudAlertType   string
+	FraudAlertStatus string
+	AlertType        string
+	AlertPriority    string
+)
 
 const (
-	FraudAlertTypeHighRisk         FraudAlertType = "high_risk"
-	FraudAlertTypeAnomalous        FraudAlertType = "anomalous"
-	FraudAlertTypePatternMatch     FraudAlertType = "pattern_match"
+	FraudAlertTypeHighRisk     FraudAlertType = "high_risk"
+	FraudAlertTypeAnomalous    FraudAlertType = "anomalous"
+	FraudAlertTypePatternMatch FraudAlertType = "pattern_match"
 
-	FraudAlertStatusActive         FraudAlertStatus = "active"
-	FraudAlertStatusInvestigating  FraudAlertStatus = "investigating"
-	FraudAlertStatusResolved       FraudAlertStatus = "resolved"
-	FraudAlertStatusFalsePositive  FraudAlertStatus = "false_positive"
+	FraudAlertStatusActive        FraudAlertStatus = "active"
+	FraudAlertStatusInvestigating FraudAlertStatus = "investigating"
+	FraudAlertStatusResolved      FraudAlertStatus = "resolved"
+	FraudAlertStatusFalsePositive FraudAlertStatus = "false_positive"
 
-	AlertTypeViolation             AlertType = "violation"
-	AlertTypeFraud                 AlertType = "fraud"
-	AlertTypeCompliance            AlertType = "compliance"
+	AlertTypeViolation  AlertType = "violation"
+	AlertTypeFraud      AlertType = "fraud"
+	AlertTypeCompliance AlertType = "compliance"
 
-	AlertPriorityLow               AlertPriority = "low"
-	AlertPriorityMedium            AlertPriority = "medium"
-	AlertPriorityHigh              AlertPriority = "high"
-	AlertPriorityCritical          AlertPriority = "critical"
+	AlertPriorityLow      AlertPriority = "low"
+	AlertPriorityMedium   AlertPriority = "medium"
+	AlertPriorityHigh     AlertPriority = "high"
+	AlertPriorityCritical AlertPriority = "critical"
 )
 
 type TransactionDataPoint struct {
@@ -386,11 +391,11 @@ type TransactionDataPoint struct {
 }
 
 type HistoricalDataPoint struct {
-	Period        string          `json:"period"`
-	AccountID     uuid.UUID       `json:"account_id"`
-	AverageAmount decimal.Decimal `json:"average_amount"`
-	TransactionCount int          `json:"transaction_count"`
-	Patterns      []string        `json:"patterns"`
+	Period           string          `json:"period"`
+	AccountID        uuid.UUID       `json:"account_id"`
+	AverageAmount    decimal.Decimal `json:"average_amount"`
+	TransactionCount int             `json:"transaction_count"`
+	Patterns         []string        `json:"patterns"`
 }
 
 type FinancialStatement struct {
@@ -404,30 +409,30 @@ type FinancialStatement struct {
 }
 
 type ArchiveSettings struct {
-	ArchiveFormat     string    `json:"archive_format"`
-	ArchiveLocation   string    `json:"archive_location"`
-	CompressionLevel  int       `json:"compression_level"`
-	RetentionPeriod   time.Duration `json:"retention_period"`
-	IncludeAttachments bool     `json:"include_attachments"`
+	ArchiveFormat      string        `json:"archive_format"`
+	ArchiveLocation    string        `json:"archive_location"`
+	CompressionLevel   int           `json:"compression_level"`
+	RetentionPeriod    time.Duration `json:"retention_period"`
+	IncludeAttachments bool          `json:"include_attachments"`
 }
 
 // Signal types for approval workflows
 type ApprovalSignal struct {
-	ApproverID string `json:"approver_id"`
-	Comment    string `json:"comment,omitempty"`
+	ApproverID string    `json:"approver_id"`
+	Comment    string    `json:"comment,omitempty"`
 	Timestamp  time.Time `json:"timestamp"`
 }
 
 type RejectionSignal struct {
-	RejectorID string `json:"rejector_id"`
-	Comment    string `json:"comment"`
+	RejectorID string    `json:"rejector_id"`
+	Comment    string    `json:"comment"`
 	Timestamp  time.Time `json:"timestamp"`
 }
 
 // Additional supporting input/result types referenced in workflows
 type TransactionValidationInput struct {
-	TransactionID   uuid.UUID     `json:"transaction_id"`
-	ValidationType  ValidationType `json:"validation_type"`
+	TransactionID  uuid.UUID      `json:"transaction_id"`
+	ValidationType ValidationType `json:"validation_type"`
 }
 
 type TransactionValidationResult struct {
@@ -438,9 +443,9 @@ type TransactionValidationResult struct {
 type ValidationType string
 
 const (
-	ValidationTypeApproval  ValidationType = "approval"
-	ValidationTypePosting   ValidationType = "posting"
-	ValidationTypeReversal  ValidationType = "reversal"
+	ValidationTypeApproval ValidationType = "approval"
+	ValidationTypePosting  ValidationType = "posting"
+	ValidationTypeReversal ValidationType = "reversal"
 )
 
 type ApprovalRequirementsInput struct {
@@ -450,9 +455,9 @@ type ApprovalRequirementsInput struct {
 }
 
 type ApprovalRequirementsResult struct {
-	RequiredApprovers    []string      `json:"required_approvers"`
-	RequiredApprovalCount int          `json:"required_approval_count"`
-	ApprovalTimeout      time.Duration `json:"approval_timeout"`
+	RequiredApprovers     []string      `json:"required_approvers"`
+	RequiredApprovalCount int           `json:"required_approval_count"`
+	ApprovalTimeout       time.Duration `json:"approval_timeout"`
 }
 
 type ApprovalProcessResult struct {
@@ -477,20 +482,20 @@ type LedgerPostingInput struct {
 }
 
 type LedgerPostingResult struct {
-	PostingReference  string              `json:"posting_reference"`
-	ProcessedEntries []TransactionEntry  `json:"processed_entries"`
+	PostingReference string             `json:"posting_reference"`
+	ProcessedEntries []TransactionEntry `json:"processed_entries"`
 }
 
 type BalanceUpdateInput struct {
-	TransactionID uuid.UUID           `json:"transaction_id"`
-	Entries      []TransactionEntry  `json:"entries"`
+	TransactionID uuid.UUID          `json:"transaction_id"`
+	Entries       []TransactionEntry `json:"entries"`
 }
 
 type ApprovalNotificationInput struct {
 	TransactionID uuid.UUID      `json:"transaction_id"`
-	Status       ApprovalStatus `json:"status"`
-	Recipients   []string       `json:"recipients"`
-	Comments     []string       `json:"comments,omitempty"`
+	Status        ApprovalStatus `json:"status"`
+	Recipients    []string       `json:"recipients"`
+	Comments      []string       `json:"comments,omitempty"`
 }
 
 // Add more activity input/result types as needed...
