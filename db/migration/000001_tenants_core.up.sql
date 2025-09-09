@@ -7,9 +7,9 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE SCHEMA IF NOT EXISTS ledger;
+-- CREATE SCHEMA IF NOT EXISTS ledger;
 
-SET search_path TO ledger;
+-- SET search_path TO ledger;
 
 -- Enable Row Level Security globally
 SET

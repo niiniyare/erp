@@ -33,8 +33,19 @@ func main() {
 		logger.Fatal("Failed to initialize services", logger.Fields{"error": err})
 	}
 
+	// Initialize finance services
+	financeServices, err := InitializeFinanceServices(database.Store, database.RedisClient, infra.Logger, infra.Metrics, infra.Tracing, services)
+	if err != nil {
+		logger.Fatal("Failed to initialize finance services", logger.Fields{"error": err})
+	}
+
+	// Register finance module with Temporal platform
+	if err := RegisterFinanceModule(infra.Temporal, services, financeServices, database.RedisClient, infra.Logger, infra.Metrics, infra.Tracing); err != nil {
+		logger.Fatal("Failed to register finance module with Temporal", logger.Fields{"error": err})
+	}
+
 	// Initialize GOA server
-	goaServer, err := InitializeGOAServer(services, infra.Metrics, infra.Tracing)
+	goaServer, err := InitializeGOAServer(services, database.RedisClient, infra.Metrics, infra.Tracing)
 	if err != nil {
 		logger.Fatal("Failed to initialize GOA server", logger.Fields{"error": err})
 	}

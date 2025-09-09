@@ -216,13 +216,14 @@ const (
 	ApprovalStatusApproved          ApprovalStatus = "APPROVED"           // Approved by authorized user
 	ApprovalStatusRejected          ApprovalStatus = "REJECTED"           // Rejected by approver
 	ApprovalStatusPartiallyApproved ApprovalStatus = "PARTIALLY_APPROVED" // Partially approved (multi-level approval)
+	ApprovalStatusExpired           ApprovalStatus = "EXPIRED"            // Approval request has expired
 )
 
 // IsValid validates if the ApprovalStatus is one of the defined constants
 func (as ApprovalStatus) IsValid() bool {
 	switch as {
 	case ApprovalStatusNotRequired, ApprovalStatusPending, ApprovalStatusApproved,
-		ApprovalStatusRejected, ApprovalStatusPartiallyApproved:
+		ApprovalStatusRejected, ApprovalStatusPartiallyApproved, ApprovalStatusExpired:
 		return true
 	default:
 		return false
