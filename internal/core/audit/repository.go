@@ -53,7 +53,7 @@ func (r *repository) CreateAuditEvent(ctx context.Context, req CreateAuditEventR
 			UserID:        req.UserID,
 			EntityID:      req.EntityID,
 			Decision:      req.Decision,
-			Reason:        reason, // Handle nil pointer properly
+			Reason:        &reason, // Handle nil pointer properly
 		}
 
 		dbAuditEvent, err := s.CreateAuditEvent(ctx, params)
@@ -104,11 +104,11 @@ func (r *repository) CreateAuditEvent(ctx context.Context, req CreateAuditEventR
 			RoleID:          dbAuditEvent.RoleID,
 			PermissionID:    dbAuditEvent.PermissionID,
 			Decision:        dbAuditEvent.Decision,
-			Reason:          &dbAuditEvent.Reason,
+			Reason:          dbAuditEvent.Reason,
 			RiskScore:       riskScore,
 			Context:         dbAuditEvent.Context,
 			IPAddress:       ipAddress,
-			UserAgent:       &dbAuditEvent.UserAgent,
+			UserAgent:       dbAuditEvent.UserAgent,
 			SessionID:       dbAuditEvent.SessionID,
 			ComplianceFlags: dbAuditEvent.ComplianceFlags,
 			CreatedAt:       createdAt,

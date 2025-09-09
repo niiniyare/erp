@@ -56,11 +56,16 @@ func FromSQLCFeatureFlag(sqlcFlag *db.FeatureFlag) (*FeatureFlag, error) {
 		deletedAt = &sqlcFlag.DeletedAt.Time
 	}
 
+	var description string
+	if sqlcFlag.Description != nil {
+		description = *sqlcFlag.Description
+	}
+
 	return &FeatureFlag{
 		ID:                sqlcFlag.ID,
 		TenantID:          sqlcFlag.TenantID,
 		Name:              sqlcFlag.Name,
-		Description:       sqlcFlag.Description,
+		Description:       description,
 		FlagType:          FlagType(sqlcFlag.FlagType),
 		DefaultValue:      sqlcFlag.DefaultValue,
 		RolloutPercentage: sqlcFlag.RolloutPercentage,
@@ -93,7 +98,7 @@ func (req *CreateFeatureFlagRequest) ToSQLCCreateParams() (db.CreateFeatureFlagP
 
 	return db.CreateFeatureFlagParams{
 		Name:              req.Name,
-		Description:       req.Description,
+		Description:       &req.Description,
 		FlagType:          string(req.FlagType),
 		DefaultValue:      req.DefaultValue,
 		RolloutPercentage: req.RolloutPercentage,
@@ -151,7 +156,7 @@ func FromSQLCTenantFeatureOverride(sqlcOverride *db.TenantFeatureOverride) (*Ten
 		FeatureFlagName: sqlcOverride.FeatureFlagName,
 		Enabled:         sqlcOverride.Enabled,
 		Value:           value,
-		Reason:          &sqlcOverride.Reason,
+		Reason:          sqlcOverride.Reason,
 		CreatedAt:       sqlcOverride.CreatedAt,
 		UpdatedAt:       sqlcOverride.UpdatedAt,
 	}, nil

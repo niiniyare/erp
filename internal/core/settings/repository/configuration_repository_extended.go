@@ -141,7 +141,7 @@ func (r *configurationRepository) ListConfigDefinitions(ctx context.Context, mod
 		moduleFilter = string(module)
 	}
 
-	results, err := r.store.ListConfigDefinitions(ctx, moduleFilter)
+	results, err := r.store.ListConfigDefinitions(ctx, &moduleFilter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list config definitions: %w", err)
 	}
@@ -195,7 +195,7 @@ func (r *configurationRepository) CreateConfigDefinition(ctx context.Context, de
 		DataType:            string(def.DataType),
 		DefaultValue:        defaultValueJSON,
 		ValidationRules:     validationRulesJSON,
-		Description:         def.Description,
+		Description:         &def.Description,
 		RequiredPermission:  requiredPermission,
 		RequiredFeatureFlag: requiredFeatureFlag,
 		IsOverridable:       def.IsOverridable,
@@ -251,7 +251,7 @@ func (r *configurationRepository) UpdateConfigDefinition(ctx context.Context, de
 		DataType:            dataType,
 		DefaultValue:        defaultValueJSON,
 		ValidationRules:     validationRulesJSON,
-		Description:         def.Description,
+		Description:         &def.Description,
 		RequiredPermission:  requiredPermission,
 		RequiredFeatureFlag: requiredFeatureFlag,
 		IsOverridable:       isOverridable,
@@ -313,7 +313,7 @@ func (r *configurationRepository) GetConfigurationHistory(ctx context.Context, e
 
 	results, err := r.store.GetConfigurationHistory(ctx, db.GetConfigurationHistoryParams{
 		EntityIDFilter:  entityID,
-		ConfigKeyFilter: configKey,
+		ConfigKeyFilter: &configKey,
 		OffsetCount:     int32(offset),
 		LimitCount:      int32(limit),
 	})
@@ -403,7 +403,7 @@ func (r *configurationRepository) SearchConfigurations(ctx context.Context, crit
 
 	results, err := r.store.SearchConfigurations(ctx, db.SearchConfigurationsParams{
 		ModulesFilter:  modules,
-		SearchTerm:     criteria.ValueContains,
+		SearchTerm:     &criteria.ValueContains,
 		SourcesFilter:  sources,
 		UpdatedAfter:   sql.NullTime{Time: modifiedAfter, Valid: !modifiedAfter.IsZero()},
 		SortBy:         sortBy,

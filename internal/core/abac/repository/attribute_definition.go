@@ -549,12 +549,12 @@ func (r *attributeDefinitionRepository) toAttributeDefCreateParams(req *CreateAt
 	return &db.CreateAttributeDefinitionParams{
 		Name:               req.Name,
 		DisplayName:        req.DisplayName,
-		Description:        derefString(req.Description),
+		Description:        req.Description,
 		DataType:           string(req.DataType),
 		Category:           string(req.Category),
 		IsRequired:         &req.IsRequired,
 		IsSensitive:        &req.IsSensitive,
-		DefaultValue:       derefString(req.DefaultValue),
+		DefaultValue:       req.DefaultValue,
 		AllowedValues:      allowedValuesJSON,
 		ValidationRules:    validationRulesJSON,
 		EncryptionRequired: &req.EncryptionRequired,
@@ -573,7 +573,7 @@ func (r *attributeDefinitionRepository) toAttributeDefUpdateParams(id uuid.UUID,
 		params.DisplayName = req.DisplayName
 	}
 	if req.Description != nil {
-		params.Description = *req.Description
+		params.Description = req.Description
 	}
 	if req.IsRequired != nil {
 		params.IsRequired = req.IsRequired
@@ -582,7 +582,7 @@ func (r *attributeDefinitionRepository) toAttributeDefUpdateParams(id uuid.UUID,
 		params.IsSensitive = req.IsSensitive
 	}
 	if req.DefaultValue != nil {
-		params.DefaultValue = *req.DefaultValue
+		params.DefaultValue = req.DefaultValue
 	}
 	if req.AllowedValues != nil {
 		allowedValuesJSON, err := json.Marshal(req.AllowedValues)
@@ -655,12 +655,12 @@ func (r *attributeDefinitionRepository) fromSQLCAttributeDefinition(sqlcAttrDef 
 		TenantID:           sqlcAttrDef.TenantID,
 		Name:               sqlcAttrDef.Name,
 		DisplayName:        sqlcAttrDef.DisplayName,
-		Description:        &sqlcAttrDef.Description,
+		Description:        sqlcAttrDef.Description,
 		DataType:           types.AttributeDataType(sqlcAttrDef.DataType),
 		Category:           types.AttributeCategory(sqlcAttrDef.Category),
 		IsRequired:         *sqlcAttrDef.IsRequired,
 		IsSensitive:        *sqlcAttrDef.IsSensitive,
-		DefaultValue:       &sqlcAttrDef.DefaultValue,
+		DefaultValue:       sqlcAttrDef.DefaultValue,
 		AllowedValues:      allowedValues,
 		ValidationRules:    validationRules,
 		EncryptionRequired: *sqlcAttrDef.EncryptionRequired,

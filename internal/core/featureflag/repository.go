@@ -79,7 +79,7 @@ func (r *repository) CreateFeatureFlag(ctx context.Context, req *CreateFeatureFl
 		// Convert to SQLC params
 		params := db.CreateFeatureFlagParams{
 			Name:              req.Name,
-			Description:       req.Description,
+			Description:       &req.Description,
 			FlagType:          string(req.FlagType),
 			DefaultValue:      req.DefaultValue,
 			RolloutPercentage: req.RolloutPercentage,
@@ -149,7 +149,7 @@ func (r *repository) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, req *U
 		}
 
 		if req.Description != nil {
-			params.Description = *req.Description
+			params.Description = req.Description
 		}
 		if req.DefaultValue != nil {
 			params.DefaultValue = *req.DefaultValue
@@ -277,7 +277,7 @@ func (r *repository) GetFlagStats(ctx context.Context) (*FlagStats, error) {
 // SearchFlags searches feature flags by name/description
 func (r *repository) SearchFlags(ctx context.Context, query string, limit, offset int32) ([]*FeatureFlag, error) {
 	dbFlags, err := r.store.SearchFeatureFlags(ctx, db.SearchFeatureFlagsParams{
-		Column1: query,
+		Column1: &query,
 		Limit:   limit,
 		Offset:  offset,
 	})
@@ -324,11 +324,16 @@ func mustMarshalJSON(v any) []byte {
 
 // fromSQLCFeatureFlag converts SQLC FeatureFlag to domain FeatureFlag
 func fromSQLCFeatureFlag(dbFlag db.FeatureFlag) *FeatureFlag {
+	var description string
+	if dbFlag.Description != nil {
+		description = *dbFlag.Description
+	}
+
 	flag := &FeatureFlag{
 		ID:                dbFlag.ID,
 		TenantID:          dbFlag.TenantID,
 		Name:              dbFlag.Name,
-		Description:       dbFlag.Description,
+		Description:       description,
 		FlagType:          FlagType(dbFlag.FlagType),
 		DefaultValue:      dbFlag.DefaultValue,
 		RolloutPercentage: dbFlag.RolloutPercentage,

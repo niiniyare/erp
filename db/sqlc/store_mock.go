@@ -1867,7 +1867,7 @@ func (mr *MockStoreMockRecorder) GetAccountGroupsByRootType(ctx, arg any) *gomoc
 }
 
 // GetAccountHierarchy mocks base method.
-func (m *MockStore) GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceAccount, error) {
+func (m *MockStore) GetAccountHierarchy(ctx context.Context, accountPathPrefix *string) ([]*FinanceAccount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccountHierarchy", ctx, accountPathPrefix)
 	ret0, _ := ret[0].([]*FinanceAccount)
@@ -5893,7 +5893,7 @@ func (mr *MockStoreMockRecorder) ListAttributeDefinitionsByCategory(ctx, categor
 }
 
 // ListConfigDefinitions mocks base method.
-func (m *MockStore) ListConfigDefinitions(ctx context.Context, moduleName string) ([]*ConfigDefinition, error) {
+func (m *MockStore) ListConfigDefinitions(ctx context.Context, moduleName *string) ([]*ConfigDefinition, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListConfigDefinitions", ctx, moduleName)
 	ret0, _ := ret[0].([]*ConfigDefinition)

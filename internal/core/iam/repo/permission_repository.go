@@ -46,7 +46,7 @@ func (r *permissionRepository) Create(ctx context.Context, permission *model.Per
 	_, err := r.store.CreatePolicy(ctx, db.CreatePolicyParams{
 		EntityID:    permission.EntityID,
 		Name:        "Permission Policy for " + permission.ResourceType,
-		Description: "Auto-generated policy for permission: " + permission.Action,
+		Description: db.StringPtr("Auto-generated policy for permission: " + permission.Action),
 		// Map permission fields to policy fields as needed
 	})
 	if err != nil {

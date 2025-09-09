@@ -192,7 +192,7 @@ func (r *accessRequestRepository) UpdateAccessRequestStatus(ctx context.Context,
 		ApprovalStatus:   &approvalStatusStr,
 		ApprovedBy:       approvedBy,
 		ApprovedAt:       approvedAtSql,
-		ApprovalComments: approvalComments,
+		ApprovalComments: &approvalComments,
 		DurationHours:    req.DurationHours,
 		ExpiresAt:        expiresAtSql,
 	}
@@ -317,7 +317,7 @@ func (r *accessRequestRepository) ApproveAccessRequest(ctx context.Context, id, 
 		ApprovalStatus:   func() *string { s := "APPROVED"; return &s }(),
 		ApprovedBy:       &approverID,
 		ApprovedAt:       approvedAt,
-		ApprovalComments: commentsStr,
+		ApprovalComments: &commentsStr,
 		DurationHours:    nil,            // Keep existing duration
 		ExpiresAt:        sql.NullTime{}, // Keep existing expiry
 	}
@@ -362,7 +362,7 @@ func (r *accessRequestRepository) RejectAccessRequest(ctx context.Context, id, a
 		ApprovalStatus:   func() *string { s := "REJECTED"; return &s }(),
 		ApprovedBy:       &approverID,
 		ApprovedAt:       approvedAt,
-		ApprovalComments: commentsStr,
+		ApprovalComments: &commentsStr,
 		DurationHours:    nil,            // Keep existing duration
 		ExpiresAt:        sql.NullTime{}, // Keep existing expiry
 	}
@@ -403,7 +403,7 @@ func (r *accessRequestRepository) RevokeAccessRequest(ctx context.Context, id uu
 		ApprovalStatus:   func() *string { s := "REVOKED"; return &s }(),
 		ApprovedBy:       nil, // No specific approver for revocation
 		ApprovedAt:       approvedAt,
-		ApprovalComments: "Access request revoked",
+		ApprovalComments: db.StringPtr("Access request revoked"),
 		DurationHours:    nil,            // Keep existing duration
 		ExpiresAt:        sql.NullTime{}, // Keep existing expiry
 	}
@@ -441,7 +441,7 @@ func (r *accessRequestRepository) ExpireAccessRequest(ctx context.Context, id uu
 		ApprovalStatus:   func() *string { s := "EXPIRED"; return &s }(),
 		ApprovedBy:       nil, // No specific approver for expiration
 		ApprovedAt:       approvedAt,
-		ApprovalComments: "Access request expired",
+		ApprovalComments: db.StringPtr("Access request expired"),
 		DurationHours:    nil,            // Keep existing duration
 		ExpiresAt:        sql.NullTime{}, // Keep existing expiry
 	}

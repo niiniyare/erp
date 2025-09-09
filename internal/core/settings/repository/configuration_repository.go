@@ -176,7 +176,7 @@ func (r *configurationRepository) ListEffectiveConfigurations(ctx context.Contex
 
 	results, err := r.store.ListTenantEffectiveConfigurations(ctx, db.ListTenantEffectiveConfigurationsParams{
 		EntityID:     uuid,
-		ModuleFilter: moduleFilter,
+		ModuleFilter: &moduleFilter,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list effective configurations: %w", err)

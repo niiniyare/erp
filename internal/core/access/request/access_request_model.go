@@ -143,8 +143,8 @@ func FromSQLCAccessRequest(sqlcRequest *db.AccessRequest) (*AccessRequest, error
 	}
 
 	var approvalComments *string
-	if sqlcRequest.ApprovalComments != "" {
-		approvalComments = &sqlcRequest.ApprovalComments
+	if sqlcRequest.ApprovalComments != nil && *sqlcRequest.ApprovalComments != "" {
+		approvalComments = sqlcRequest.ApprovalComments
 	}
 
 	var expiresAt *time.Time
@@ -259,7 +259,7 @@ func (req *UpdateAccessRequestRequest) ToSQLCUpdateParams(requestID, approverID 
 		ApprovalStatus:   &approvalStatusStr,
 		ApprovedBy:       approvedBy,
 		ApprovedAt:       approvedAtSql,
-		ApprovalComments: approvalComments,
+		ApprovalComments: &approvalComments,
 		DurationHours:    req.DurationHours,
 		ExpiresAt:        expiresAtSql,
 	}, nil

@@ -109,7 +109,7 @@ func (r *policyRepository) CreatePolicy(ctx context.Context, req *CreatePolicyRe
 		params := db.CreatePolicyParams{
 			Name:        req.Name,
 			DisplayName: req.DisplayName,
-			Description: description,
+			Description: &description,
 			PolicyType:  &policyTypeStr,
 			Effect:      &effectStr,
 			Priority:    &req.Priority,
@@ -288,7 +288,7 @@ func (r *policyRepository) UpdatePolicy(ctx context.Context, id uuid.UUID, req *
 	params := db.UpdatePolicyParams{
 		ID:          id,
 		DisplayName: req.DisplayName,
-		Description: description,
+		Description: &description,
 		Priority:    req.Priority,
 		Target:      targetBytes,
 		Rule:        ruleBytes,

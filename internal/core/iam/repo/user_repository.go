@@ -321,8 +321,8 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*model.
 		params := db.ListUsersParams{
 			Limit:         int32(limit),
 			Offset:        int32(offset),
-			UserType:      "", // Empty string for no filter
-			AccountStatus: "", // Empty string for no filter
+			UserType:      db.StringPtr(""), // Empty string for no filter
+			AccountStatus: db.StringPtr(""), // Empty string for no filter
 		}
 
 		dbUsers, err := store.ListUsers(ctx, params)
