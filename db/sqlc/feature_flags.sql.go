@@ -124,13 +124,13 @@ RETURNING
 `
 
 type CreateFeatureFlagParams struct {
-	Name              string `json:"name"`
-	Description       string `json:"description"`
-	FlagType          string `json:"flag_type"`
-	DefaultValue      bool   `json:"default_value"`
-	RolloutPercentage *int32 `json:"rollout_percentage"`
-	TargetAudience    []byte `json:"target_audience"`
-	Metadata          []byte `json:"metadata"`
+	Name              string  `json:"name"`
+	Description       *string `json:"description"`
+	FlagType          string  `json:"flag_type"`
+	DefaultValue      bool    `json:"default_value"`
+	RolloutPercentage *int32  `json:"rollout_percentage"`
+	TargetAudience    []byte  `json:"target_audience"`
+	Metadata          []byte  `json:"metadata"`
 }
 
 // =====================================================================
@@ -458,9 +458,9 @@ LIMIT
 `
 
 type SearchFeatureFlagsParams struct {
-	Column1 string `json:"column_1"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
+	Column1 *string `json:"column_1"`
+	Limit   int32   `json:"limit"`
+	Offset  int32   `json:"offset"`
 }
 
 func (q *Queries) SearchFeatureFlags(ctx context.Context, arg SearchFeatureFlagsParams) ([]*FeatureFlag, error) {
@@ -520,7 +520,7 @@ RETURNING
 type UpdateFeatureFlagParams struct {
 	ID                uuid.UUID `json:"id"`
 	Name              string    `json:"name"`
-	Description       string    `json:"description"`
+	Description       *string   `json:"description"`
 	FlagType          string    `json:"flag_type"`
 	DefaultValue      bool      `json:"default_value"`
 	RolloutPercentage *int32    `json:"rollout_percentage"`

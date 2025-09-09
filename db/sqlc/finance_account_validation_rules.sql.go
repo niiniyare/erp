@@ -123,7 +123,7 @@ RETURNING
 
 type CreateAccountValidationRuleParams struct {
 	RuleName             string     `json:"rule_name"`
-	RuleDescription      string     `json:"rule_description"`
+	RuleDescription      *string    `json:"rule_description"`
 	AccountType          *string    `json:"account_type"`
 	RootType             *string    `json:"root_type"`
 	ValidationParameters []byte     `json:"validation_parameters"`
@@ -474,7 +474,7 @@ RETURNING
 type UpdateAccountValidationRuleParams struct {
 	ID                   uuid.UUID  `json:"id"`
 	RuleName             string     `json:"rule_name"`
-	RuleDescription      string     `json:"rule_description"`
+	RuleDescription      *string    `json:"rule_description"`
 	ValidationParameters []byte     `json:"validation_parameters"`
 	RuleSeverity         *string    `json:"rule_severity"`
 	IsActive             *bool      `json:"is_active"`

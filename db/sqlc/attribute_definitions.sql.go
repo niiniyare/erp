@@ -86,12 +86,12 @@ RETURNING
 type CreateAttributeDefinitionParams struct {
 	Name               string  `json:"name"`
 	DisplayName        *string `json:"display_name"`
-	Description        string  `json:"description"`
+	Description        *string `json:"description"`
 	DataType           string  `json:"data_type"`
 	Category           string  `json:"category"`
 	IsRequired         *bool   `json:"is_required"`
 	IsSensitive        *bool   `json:"is_sensitive"`
-	DefaultValue       string  `json:"default_value"`
+	DefaultValue       *string `json:"default_value"`
 	AllowedValues      []byte  `json:"allowed_values"`
 	ValidationRules    []byte  `json:"validation_rules"`
 	EncryptionRequired *bool   `json:"encryption_required"`
@@ -884,12 +884,12 @@ type UpdateAttributeDefinitionParams struct {
 	ID                 uuid.UUID `json:"id"`
 	Name               string    `json:"name"`
 	DisplayName        *string   `json:"display_name"`
-	Description        string    `json:"description"`
+	Description        *string   `json:"description"`
 	DataType           string    `json:"data_type"`
 	Category           string    `json:"category"`
 	IsRequired         *bool     `json:"is_required"`
 	IsSensitive        *bool     `json:"is_sensitive"`
-	DefaultValue       string    `json:"default_value"`
+	DefaultValue       *string   `json:"default_value"`
 	AllowedValues      []byte    `json:"allowed_values"`
 	ValidationRules    []byte    `json:"validation_rules"`
 	EncryptionRequired *bool     `json:"encryption_required"`

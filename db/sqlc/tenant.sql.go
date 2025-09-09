@@ -1989,9 +1989,9 @@ LIMIT
 `
 
 type SearchTenantsByNameParams struct {
-	Name   string `json:"name"`
-	Offset int32  `json:"offset"`
-	Limit  int32  `json:"limit"`
+	Name   *string `json:"name"`
+	Offset int32   `json:"offset"`
+	Limit  int32   `json:"limit"`
 }
 
 func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNameParams) ([]*Tenant, error) {
@@ -2212,8 +2212,8 @@ WHERE
 `
 
 type UpdateSpecificPasswordPolicyFieldParams struct {
-	FieldName  string `json:"field_name"`
-	FieldValue int32  `json:"field_value"`
+	FieldName  *string `json:"field_name"`
+	FieldValue int32   `json:"field_value"`
 }
 
 func (q *Queries) UpdateSpecificPasswordPolicyField(ctx context.Context, arg UpdateSpecificPasswordPolicyFieldParams) error {
@@ -2236,7 +2236,7 @@ WHERE
 `
 
 type UpdateSpecificSettingParams struct {
-	Key   string      `json:"key"`
+	Key   *string     `json:"key"`
 	Value interface{} `json:"value"`
 }
 

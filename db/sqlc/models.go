@@ -33,7 +33,7 @@ type AccessRequest struct {
 	ApprovalStatus   *string      `json:"approval_status"`
 	ApprovedBy       *uuid.UUID   `json:"approved_by"`
 	ApprovedAt       sql.NullTime `json:"approved_at"`
-	ApprovalComments string       `json:"approval_comments"`
+	ApprovalComments *string      `json:"approval_comments"`
 	ExpiresAt        sql.NullTime `json:"expires_at"`
 	// Whether to automatically revoke access when it expires
 	AutoRevoke *bool        `json:"auto_revoke"`
@@ -47,7 +47,7 @@ type Action struct {
 	TenantID    uuid.UUID `json:"tenant_id"`
 	Name        string    `json:"name"`
 	DisplayName *string   `json:"display_name"`
-	Description string    `json:"description"`
+	Description *string   `json:"description"`
 	// Standard action type: CREATE, READ, UPDATE, DELETE, EXECUTE, APPROVE, REJECT, EXPORT, IMPORT
 	ActionType string `json:"action_type"`
 	// Action category for risk assessment: STANDARD, ADMINISTRATIVE, SENSITIVE, BULK, SYSTEM
@@ -66,15 +66,15 @@ type AttributeDefinition struct {
 	TenantID    uuid.UUID `json:"tenant_id"`
 	Name        string    `json:"name"`
 	DisplayName *string   `json:"display_name"`
-	Description string    `json:"description"`
+	Description *string   `json:"description"`
 	// Attribute data type: STRING, NUMBER, BOOLEAN, DATE, TIME, JSON, ARRAY, ENUM
 	DataType string `json:"data_type"`
 	// Attribute category: USER (user attributes), RESOURCE (resource attributes), ENVIRONMENT (context), ACTION (action attributes), ENTITY (entity attributes), SESSION (session context)
 	Category   string `json:"category"`
 	IsRequired *bool  `json:"is_required"`
 	// Whether attribute contains PII or sensitive data requiring special handling
-	IsSensitive  *bool  `json:"is_sensitive"`
-	DefaultValue string `json:"default_value"`
+	IsSensitive  *bool   `json:"is_sensitive"`
+	DefaultValue *string `json:"default_value"`
 	// JSONB array of allowed values for ENUM data type
 	AllowedValues []byte `json:"allowed_values"`
 	// JSONB containing custom validation rules (regex, ranges, etc.)
@@ -91,7 +91,7 @@ type AttributeSource struct {
 	TenantID    uuid.UUID `json:"tenant_id"`
 	Name        string    `json:"name"`
 	DisplayName *string   `json:"display_name"`
-	Description string    `json:"description"`
+	Description *string   `json:"description"`
 	// Type of attribute source: LDAP, DATABASE, REST_API, GRAPHQL, FILE, MANUAL
 	SourceType string `json:"source_type"`
 	// JSONB containing source-specific configuration (URLs, queries, etc.)
@@ -147,12 +147,12 @@ type AuditLog struct {
 	RoleID       *uuid.UUID `json:"role_id"`
 	PermissionID *uuid.UUID `json:"permission_id"`
 	Decision     *string    `json:"decision"`
-	Reason       string     `json:"reason"`
+	Reason       *string    `json:"reason"`
 	// Calculated risk score from 0-100 based on action, context, and user behavior
 	RiskScore *int32      `json:"risk_score"`
 	Context   []byte      `json:"context"`
 	IpAddress *netip.Addr `json:"ip_address"`
-	UserAgent string      `json:"user_agent"`
+	UserAgent *string     `json:"user_agent"`
 	SessionID *uuid.UUID  `json:"session_id"`
 	// JSONB containing compliance-related flags (GDPR, SOX, HIPAA, PCI, etc.)
 	ComplianceFlags []byte       `json:"compliance_flags"`
@@ -176,7 +176,7 @@ type ConfigDefinition struct {
 	// JSON schema or validation rules for the configuration value
 	ValidationRules []byte `json:"validation_rules"`
 	// Human-readable description of the configuration purpose
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// Permission required to modify this configuration
 	RequiredPermission *string `json:"required_permission"`
 	// Feature flag that must be enabled for this configuration
@@ -223,8 +223,8 @@ type ConfigurationTemplate struct {
 	// Template display name
 	Name string `json:"name"`
 	// Template category: industry, functional, or regional
-	Category    string `json:"category"`
-	Description string `json:"description"`
+	Category    string  `json:"category"`
+	Description *string `json:"description"`
 	// Semantic version string for template versioning
 	Version string `json:"version"`
 	// JSON object containing all configuration key-value pairs
@@ -349,7 +349,7 @@ type FeatureFlag struct {
 	TenantID     uuid.UUID  `json:"tenant_id"`
 	EntityID     *uuid.UUID `json:"entity_id"`
 	Name         string     `json:"name"`
-	Description  string     `json:"description"`
+	Description  *string    `json:"description"`
 	FlagType     string     `json:"flag_type"`
 	DefaultValue bool       `json:"default_value"`
 	// Percentage of tenants that should have this feature enabled (0-100)
@@ -370,9 +370,9 @@ type FinanceAccount struct {
 	TenantID uuid.UUID  `json:"tenant_id"`
 	EntityID *uuid.UUID `json:"entity_id"`
 	// Unique account code within tenant - Used for transaction posting and reporting
-	AccountCode        string `json:"account_code"`
-	AccountName        string `json:"account_name"`
-	AccountDescription string `json:"account_description"`
+	AccountCode        string  `json:"account_code"`
+	AccountName        string  `json:"account_name"`
+	AccountDescription *string `json:"account_description"`
 	// Link to account group for organizational structure and reporting
 	AccountGroupID *uuid.UUID `json:"account_group_id"`
 	// Link to account header for financial statement presentation
@@ -449,7 +449,7 @@ type FinanceAccountGroup struct {
 	EntityID                  *uuid.UUID   `json:"entity_id"`
 	GroupCode                 string       `json:"group_code"`
 	GroupName                 string       `json:"group_name"`
-	GroupDescription          string       `json:"group_description"`
+	GroupDescription          *string      `json:"group_description"`
 	ParentGroupID             *uuid.UUID   `json:"parent_group_id"`
 	GroupLevel                int32        `json:"group_level"`
 	GroupPath                 *string      `json:"group_path"`
@@ -482,7 +482,7 @@ type FinanceAccountValidationRule struct {
 	ID                       uuid.UUID      `json:"id"`
 	TenantID                 uuid.UUID      `json:"tenant_id"`
 	RuleName                 string         `json:"rule_name"`
-	RuleDescription          string         `json:"rule_description"`
+	RuleDescription          *string        `json:"rule_description"`
 	AccountType              *string        `json:"account_type"`
 	RootType                 *string        `json:"root_type"`
 	AccountPattern           *string        `json:"account_pattern"`
@@ -528,7 +528,7 @@ type FinanceTransaction struct {
 	// External reference from third-party systems - bank reference, vendor invoice number
 	ExternalReference *string `json:"external_reference"`
 	// Additional notes or memo about the transaction - free text field for additional context
-	Memo string `json:"memo"`
+	Memo *string `json:"memo"`
 	// ISO 4217 currency code - defaults to USD but supports multi-currency
 	CurrencyCode string `json:"currency_code"`
 	// Exchange rate from transaction currency to functional currency - defaults to 1.0 for same currency
@@ -554,7 +554,7 @@ type FinanceTransaction struct {
 	// Timestamp when transaction was approved
 	ApprovedAt sql.NullTime `json:"approved_at"`
 	// Notes from the approver - can include reasons for approval or rejection
-	ApprovalNotes string `json:"approval_notes"`
+	ApprovalNotes *string `json:"approval_notes"`
 	// Whether this is a recurring transaction template
 	IsRecurring *bool `json:"is_recurring"`
 	// Frequency for recurring transactions - DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY
@@ -566,7 +566,7 @@ type FinanceTransaction struct {
 	// ID of the reversing transaction - creates audit trail for reversals
 	ReversedByTransactionID *uuid.UUID `json:"reversed_by_transaction_id"`
 	// Reason for reversing the transaction - required for compliance
-	ReversalReason string `json:"reversal_reason"`
+	ReversalReason *string `json:"reversal_reason"`
 	// Version number for optimistic locking - prevents concurrent modifications
 	Version int32 `json:"version"`
 	// Status of transaction validation - PENDING, VALID, WARNING, ERROR
@@ -654,7 +654,7 @@ type Module struct {
 	TenantID    uuid.UUID `json:"tenant_id"`
 	Name        string    `json:"name"`
 	DisplayName *string   `json:"display_name"`
-	Description string    `json:"description"`
+	Description *string   `json:"description"`
 	// Module category for grouping: CORE, HR, FINANCE, SALES, INVENTORY, etc.
 	Category *string `json:"category"`
 	// Module version for tracking feature updates and compatibility
@@ -677,7 +677,7 @@ type MvTenantFeatureFlagsCache struct {
 	Metadata          []byte      `json:"metadata"`
 	OverrideEnabled   *bool       `json:"override_enabled"`
 	OverrideValue     []byte      `json:"override_value"`
-	OverrideReason    string      `json:"override_reason"`
+	OverrideReason    *string     `json:"override_reason"`
 	CacheTimestamp    interface{} `json:"cache_timestamp"`
 	CacheCreatedAt    interface{} `json:"cache_created_at"`
 }
@@ -718,7 +718,7 @@ type Permission struct {
 	ActionID    uuid.UUID `json:"action_id"`
 	Name        string    `json:"name"`
 	DisplayName *string   `json:"display_name"`
-	Description string    `json:"description"`
+	Description *string   `json:"description"`
 	// Permission effect: ALLOW (grant access) or DENY (explicitly deny access)
 	Effect *string `json:"effect"`
 	// JSONB containing ABAC evaluation conditions (time, location, attributes, etc.)
@@ -782,7 +782,7 @@ type Policy struct {
 	EntityID    *uuid.UUID `json:"entity_id"`
 	Name        string     `json:"name"`
 	DisplayName *string    `json:"display_name"`
-	Description string     `json:"description"`
+	Description *string    `json:"description"`
 	// Policy type: ABAC (attribute-based), RBAC (role-based), HYBRID (combined), TIME_BASED (temporal), LOCATION_BASED (geographic)
 	PolicyType *string `json:"policy_type"`
 	Effect     *string `json:"effect"`
@@ -811,8 +811,8 @@ type PolicyDecision struct {
 	PolicyEvaluationID uuid.UUID `json:"policy_evaluation_id"`
 	PolicyID           uuid.UUID `json:"policy_id"`
 	Decision           string    `json:"decision"`
-	Reason             string    `json:"reason"`
-	MatchedRule        string    `json:"matched_rule"`
+	Reason             *string   `json:"reason"`
+	MatchedRule        *string   `json:"matched_rule"`
 	EvaluationMs       *int64    `json:"evaluation_ms"`
 	TargetMatched      *bool     `json:"target_matched"`
 	CreatedAt          time.Time `json:"created_at"`
@@ -852,7 +852,7 @@ type Resource struct {
 	EntityID    *uuid.UUID `json:"entity_id"`
 	Name        string     `json:"name"`
 	DisplayName *string    `json:"display_name"`
-	Description string     `json:"description"`
+	Description *string    `json:"description"`
 	// Type of resource: API, UI, DATA, FILE, REPORT, WORKFLOW, FUNCTION
 	ResourceType string `json:"resource_type"`
 	// Self-referential for resource hierarchy (e.g., API endpoints under API group)
@@ -873,7 +873,7 @@ type Role struct {
 	EntityID    uuid.UUID  `json:"entity_id"`
 	Name        string     `json:"name"`
 	DisplayName *string    `json:"display_name"`
-	Description string     `json:"description"`
+	Description *string    `json:"description"`
 	ModuleID    *uuid.UUID `json:"module_id"`
 	// Role classification: SYSTEM (built-in), TENANT (tenant-wide), ENTITY (entity-scoped), CUSTOM (user-defined), FUNCTIONAL (job-based)
 	RoleType *string `json:"role_type"`
@@ -1019,7 +1019,7 @@ type TenantFeatureOverride struct {
 	// Complex feature values for non-boolean flags (JSON format)
 	Value []byte `json:"value"`
 	// Business justification for the override
-	Reason    string    `json:"reason"`
+	Reason    *string   `json:"reason"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -1115,12 +1115,12 @@ type UserActivity struct {
 	ResourceID        *uuid.UUID  `json:"resource_id"`
 	ActionPerformed   *string     `json:"action_performed"`
 	IpAddress         *netip.Addr `json:"ip_address"`
-	UserAgent         string      `json:"user_agent"`
+	UserAgent         *string     `json:"user_agent"`
 	DeviceFingerprint *string     `json:"device_fingerprint"`
 	// JSONB containing geographic and network location information
 	LocationData   []byte  `json:"location_data"`
 	RequestMethod  *string `json:"request_method"`
-	RequestPath    string  `json:"request_path"`
+	RequestPath    *string `json:"request_path"`
 	RequestParams  []byte  `json:"request_params"`
 	ResponseStatus *int32  `json:"response_status"`
 	ResponseTimeMs *int32  `json:"response_time_ms"`
@@ -1143,7 +1143,7 @@ type UserPermission struct {
 	// Permission effect: ALLOW (grant access) or DENY (explicitly deny - overrides role permissions)
 	Effect *string `json:"effect"`
 	// Business justification for this direct permission assignment
-	Reason string `json:"reason"`
+	Reason *string `json:"reason"`
 	// User who granted this direct permission
 	GrantedBy  *uuid.UUID   `json:"granted_by"`
 	GrantedAt  sql.NullTime `json:"granted_at"`
@@ -1186,7 +1186,7 @@ type UserSession struct {
 	// IP address of the client
 	IpAddress *netip.Addr `json:"ip_address"`
 	// Browser/client user agent string
-	UserAgent string `json:"user_agent"`
+	UserAgent *string `json:"user_agent"`
 	// JSONB containing device fingerprinting data for security analysis
 	DeviceInfo []byte `json:"device_info"`
 	// JSONB containing geographic and network location data for location-based access control
@@ -1237,7 +1237,7 @@ type VChartOfAccountsComplete struct {
 	TenantID                  uuid.UUID      `json:"tenant_id"`
 	AccountCode               string         `json:"account_code"`
 	AccountName               string         `json:"account_name"`
-	AccountDescription        string         `json:"account_description"`
+	AccountDescription        *string        `json:"account_description"`
 	RootType                  string         `json:"root_type"`
 	AccountType               string         `json:"account_type"`
 	AccountSubtype            *string        `json:"account_subtype"`
@@ -1262,7 +1262,7 @@ type VChartOfAccountsComplete struct {
 	DisplayOrder              int32          `json:"display_order"`
 	StatementSection          *string        `json:"statement_section"`
 	CashFlowClassification    *string        `json:"cash_flow_classification"`
-	IncludeInReports          bool           `json:"include_in_reports"`
+	IncludeInReports          *bool          `json:"include_in_reports"`
 }
 
 type VCompanyStructure struct {
@@ -1378,7 +1378,7 @@ type VFinanceAccountsWithGroup struct {
 	TenantID                  uuid.UUID      `json:"tenant_id"`
 	AccountCode               string         `json:"account_code"`
 	AccountName               string         `json:"account_name"`
-	AccountDescription        string         `json:"account_description"`
+	AccountDescription        *string        `json:"account_description"`
 	RootType                  string         `json:"root_type"`
 	AccountType               string         `json:"account_type"`
 	AccountCategory           *string        `json:"account_category"`

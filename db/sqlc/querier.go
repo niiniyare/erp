@@ -257,7 +257,7 @@ type Querier interface {
 	GetAccountGroupHierarchy(ctx context.Context, arg GetAccountGroupHierarchyParams) ([]*FinanceAccountGroup, error)
 	GetAccountGroupSummary(ctx context.Context, entityID *uuid.UUID) ([]*GetAccountGroupSummaryRow, error)
 	GetAccountGroupsByRootType(ctx context.Context, arg GetAccountGroupsByRootTypeParams) ([]*FinanceAccountGroup, error)
-	GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceAccount, error)
+	GetAccountHierarchy(ctx context.Context, accountPathPrefix *string) ([]*FinanceAccount, error)
 	GetAccountHierarchyByLevel(ctx context.Context, arg GetAccountHierarchyByLevelParams) ([]*VFinanceAccountsHierarchy, error)
 	// =====================================================================
 	// HIERARCHY AND REPORTING QUERIES
@@ -851,7 +851,7 @@ type Querier interface {
 	// Attribute Definition Listing and Filtering
 	ListAttributeDefinitions(ctx context.Context, arg ListAttributeDefinitionsParams) ([]*AttributeDefinition, error)
 	ListAttributeDefinitionsByCategory(ctx context.Context, category string) ([]*AttributeDefinition, error)
-	ListConfigDefinitions(ctx context.Context, moduleName string) ([]*ConfigDefinition, error)
+	ListConfigDefinitions(ctx context.Context, moduleName *string) ([]*ConfigDefinition, error)
 	ListConfigurationTemplates(ctx context.Context, arg ListConfigurationTemplatesParams) ([]*ConfigurationTemplate, error)
 	// Entity Listing and Filtering
 	ListEntities(ctx context.Context) ([]*Entity, error)

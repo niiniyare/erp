@@ -806,7 +806,7 @@ func (suite *TenantTestSuite) TestSearchAndFilter() {
 
 	// Search by name pattern (Apple)
 	searchParams := SearchTenantsByNameParams{
-		Name:   "Apple",
+		Name:   stringPtr("Apple"),
 		Limit:  10,
 		Offset: 0,
 	}
@@ -1253,7 +1253,7 @@ func (suite *TenantTestSuite) TestAdvancedAnalytics() {
 	// Storage stats might be empty, but should not error
 }
 
-//  Error Handling Tests
+// Error Handling Tests
 func (suite *TenantTestSuite) TestErrorHandlingAndEdgeCases() {
 	// Test creating tenant with invalid data - try multiple invalid scenarios
 	invalidParams := CreateTenantParams{
@@ -1437,7 +1437,7 @@ func (suite *TenantTestSuite) TestValidationChecks() {
 	suite.Require().False(exists)
 }
 
-//  Validation and Constraint Tests
+// Validation and Constraint Tests
 func (suite *TenantTestSuite) TestTenantConstraintValidation() {
 	// Test invalid company size
 	metadata, _ := json.Marshal(map[string]any{"test": true})
@@ -1726,7 +1726,7 @@ func (suite *TenantTestSuite) TestPerformance() {
 
 	// Search tenants performance
 	searchParams := SearchTenantsByNameParams{
-		Name:   "Perf",
+		Name:   stringPtr("Perf"),
 		Limit:  25,
 		Offset: 0,
 	}

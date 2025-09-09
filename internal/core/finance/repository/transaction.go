@@ -54,7 +54,7 @@ func (r *transactionRepository) Create(ctx context.Context, transaction *domain.
 			Description:           transaction.Description,
 			ReferenceNumber:       transaction.ReferenceNumber,
 			ExternalReference:     transaction.ExternalReference,
-			Memo:                  getStringValue(transaction.ReferenceNumber), // Use reference as memo if available
+			Memo:                  transaction.ReferenceNumber, // Use reference as memo if available
 			CurrencyCode:          transaction.CurrencyCode,
 			ExchangeRate:          decimalToPgNumeric(&transaction.ExchangeRate),
 			TotalDebitAmount:      decimalToPgNumeric(&transaction.TotalDebitAmount),
@@ -94,15 +94,26 @@ func (r *transactionRepository) GetByID(ctx context.Context, id uuid.UUID) (*dom
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetByID")
 	defer span.End()
 
-	sqlcTransaction, err := r.store.GetTransactionByID(ctx, id)
-	if err != nil {
-		if err == db.ErrNoRows {
-			return nil, domain.ErrTransactionNotFound
-		}
-		return nil, r.mapDatabaseError(err, "get_transaction_by_id")
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
-	transaction, err := r.mapSQLCTransactionToDomain(sqlcTransaction)
+	var transaction *domain.Transaction
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		sqlcTransaction, err := s.GetTransactionByID(ctx, id)
+		if err != nil {
+			if err == db.ErrNoRows {
+				return domain.ErrTransactionNotFound
+			}
+			return r.mapDatabaseError(err, "get_transaction_by_id")
+		}
+
+		transaction, err = r.mapSQLCTransactionToDomain(sqlcTransaction)
+		return err
+	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -114,15 +125,26 @@ func (r *transactionRepository) GetByNumber(ctx context.Context, entityID *uuid.
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetByNumber")
 	defer span.End()
 
-	sqlcTransaction, err := r.store.GetTransactionByNumber(ctx, transactionNumber)
-	if err != nil {
-		if err == db.ErrNoRows {
-			return nil, domain.ErrTransactionNotFound
-		}
-		return nil, r.mapDatabaseError(err, "get_transaction_by_number")
+	// Get tenant ID from context
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
-	transaction, err := r.mapSQLCTransactionToDomain(sqlcTransaction)
+	var transaction *domain.Transaction
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		sqlcTransaction, err := s.GetTransactionByNumber(ctx, transactionNumber)
+		if err != nil {
+			if err == db.ErrNoRows {
+				return domain.ErrTransactionNotFound
+			}
+			return r.mapDatabaseError(err, "get_transaction_by_number")
+		}
+
+		transaction, err = r.mapSQLCTransactionToDomain(sqlcTransaction)
+		return err
+	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -147,16 +169,16 @@ func (r *transactionRepository) Update(ctx context.Context, transaction *domain.
 			TransactionStatus:     mapDomainTransactionStatusToSQLCEnumPtr(transaction.TransactionStatus),
 			PostingDate:           timePointerToTimeValue(transaction.PostingDate),
 			DueDate:               timePointerToTimeValue(transaction.DueDate),
-			Description:           transaction.Description,
+			Description:           &transaction.Description,
 			ReferenceNumber:       transaction.ReferenceNumber,
 			ExternalReference:     transaction.ExternalReference,
-			Memo:                  getStringValue(transaction.ReferenceNumber), // Use reference as memo
+			Memo:                  transaction.ReferenceNumber, // Use reference as memo
 			TotalDebitAmount:      decimalToPgNumeric(&transaction.TotalDebitAmount),
 			TotalCreditAmount:     decimalToPgNumeric(&transaction.TotalCreditAmount),
 			ApprovalStatus:        mapDomainApprovalStatusToNullEnum(&transaction.ApprovalStatus),
 			ApprovedBy:            transaction.ApprovedBy,
 			ApprovedAt:            timePointerToNullTime(transaction.ApprovedAt),
-			ApprovalNotes:         getStringValue(transaction.ApprovalNotes),
+			ApprovalNotes:         transaction.ApprovalNotes,
 			TransactionAttributes: mapAttributesToJSON(transaction.TransactionAttributes),
 			AttachmentIds:         transaction.AttachmentIds,
 			Tags:                  transaction.Tags,
@@ -186,19 +208,25 @@ func (r *transactionRepository) Delete(ctx context.Context, id uuid.UUID) error 
 	userID, _ := shared.GetUserID(ctx) // Optional for soft delete
 
 	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		// First check if transaction exists and is deletable
+		_, err := s.GetTransactionByID(ctx, id)
+		if err != nil {
+			if err == db.ErrNoRows {
+				return domain.ErrTransactionNotFound
+			}
+			return r.mapDatabaseError(err, "get_transaction_for_delete")
+		}
+
 		var userIDPtr *uuid.UUID
 		if userID != uuid.Nil {
 			userIDPtr = &userID
 		}
 
-		err := s.SoftDeleteTransaction(ctx, db.SoftDeleteTransactionParams{
+		err = s.SoftDeleteTransaction(ctx, db.SoftDeleteTransactionParams{
 			TransactionID: id,
 			UpdatedBy:     userIDPtr,
 		})
 		if err != nil {
-			if err == db.ErrNoRows {
-				return domain.ErrTransactionNotFound
-			}
 			return r.mapDatabaseError(err, "soft_delete_transaction")
 		}
 		return nil
@@ -233,6 +261,9 @@ func (r *transactionRepository) List(ctx context.Context, filter *domain.Transac
 		params := db.ListTransactionsParams{
 			LimitCount:  limitCount,
 			OffsetCount: offsetCount,
+			// Initialize date fields with zero time to avoid filtering issues
+			DateFrom: time.Time{},
+			DateTo:   time.Time{},
 		}
 
 		// Map optional filters
@@ -249,10 +280,18 @@ func (r *transactionRepository) List(ctx context.Context, filter *domain.Transac
 		if filter.DateRange != nil {
 			if !filter.DateRange.StartDate.IsZero() {
 				params.DateFrom = filter.DateRange.StartDate
+			} else {
+				params.DateFrom = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC) // Very old date to include all transactions
 			}
 			if filter.DateRange.EndDate != nil {
 				params.DateTo = *filter.DateRange.EndDate
+			} else {
+				params.DateTo = time.Date(2100, 12, 31, 23, 59, 59, 0, time.UTC) // Far future date to include all transactions
 			}
+		} else {
+			// No date filtering - use very wide date range
+			params.DateFrom = time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
+			params.DateTo = time.Date(2100, 12, 31, 23, 59, 59, 0, time.UTC)
 		}
 
 		// Execute SQLC query
@@ -371,7 +410,7 @@ func (r *transactionRepository) ApproveTransaction(ctx context.Context, transact
 		_, err := s.ApproveTransaction(ctx, db.ApproveTransactionParams{
 			TransactionID: transactionID,
 			ApprovedBy:    &approvedBy,
-			ApprovalNotes: notesStr,
+			ApprovalNotes: &notesStr,
 		})
 		if err != nil {
 			return r.mapDatabaseError(err, "approve_transaction")
@@ -403,7 +442,7 @@ func (r *transactionRepository) RejectTransaction(ctx context.Context, id uuid.U
 		_, err := s.RejectTransaction(ctx, db.RejectTransactionParams{
 			TransactionID: id,
 			ApprovedBy:    &userID,
-			ApprovalNotes: notesStr,
+			ApprovalNotes: &notesStr,
 		})
 		if err != nil {
 			return r.mapDatabaseError(err, "reject_transaction")
@@ -431,7 +470,7 @@ func (r *transactionRepository) ReverseTransaction(ctx context.Context, id uuid.
 		_, err := s.ReverseTransaction(ctx, db.ReverseTransactionParams{
 			TransactionID:           id,
 			ReversedByTransactionID: &reversalTransactionID,
-			ReversalReason:          reason,
+			ReversalReason:          &reason,
 			UpdatedBy:               &userID,
 		})
 		if err != nil {
@@ -506,7 +545,7 @@ func (r *transactionRepository) GetWithEntries(ctx context.Context, id uuid.UUID
 					AccountID:     getUUIDValue(result.AccountID),
 					DebitAmount:   pgNumericToDecimal(result.DebitAmount),
 					CreditAmount:  pgNumericToDecimal(result.CreditAmount),
-					Description:   result.EntryDescription,
+					Description:   ptrStringToString(result.EntryDescription),
 					Reference:     result.EntryReference,
 					CostCenter:    result.CostCenter,
 					Department:    result.Department,
@@ -612,7 +651,7 @@ func (r *transactionRepository) Search(ctx context.Context, query string, limit,
 	var transactions []*domain.Transaction
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
 		sqlcTransactions, err := s.SearchTransactions(ctx, db.SearchTransactionsParams{
-			SearchTerm:  query,
+			SearchTerm:  &query,
 			LimitCount:  limit,
 			OffsetCount: offset,
 		})
@@ -691,7 +730,7 @@ func (r *transactionRepository) mapSQLCTransactionToDomain(sqlcTransaction *db.F
 		ApprovalStatus:        mapNullApprovalStatusToDomain(sqlcTransaction.ApprovalStatus),
 		ApprovedBy:            sqlcTransaction.ApprovedBy,
 		ApprovedAt:            nullTimeToPointer(sqlcTransaction.ApprovedAt),
-		ApprovalNotes:         stringPtr(sqlcTransaction.ApprovalNotes),
+		ApprovalNotes:         sqlcTransaction.ApprovalNotes,
 		IsRecurring:           getBoolValue(sqlcTransaction.IsRecurring),
 		RecurringFrequency:    mapNullRecurringFrequencyToDomainString(sqlcTransaction.RecurringFrequency),
 		NextRecurringDate:     &sqlcTransaction.NextRecurringDate,
@@ -737,7 +776,7 @@ func (r *transactionRepository) mapSQLCTransactionRowToDomain(row *db.GetTransac
 		ApprovalStatus:        mapNullApprovalStatusToDomain(row.ApprovalStatus),
 		ApprovedBy:            row.ApprovedBy,
 		ApprovedAt:            nullTimeToPointer(row.ApprovedAt),
-		ApprovalNotes:         stringPtr(row.ApprovalNotes),
+		ApprovalNotes:         row.ApprovalNotes,
 		IsRecurring:           getBoolValue(row.IsRecurring),
 		RecurringFrequency:    mapNullRecurringFrequencyToDomainString(row.RecurringFrequency),
 		NextRecurringDate:     &row.NextRecurringDate,
@@ -925,7 +964,14 @@ func (r *transactionRepository) GetNextTransactionNumber(ctx context.Context, en
 	return "TXN-001", nil
 }
 
-// Helper function
+// Helper functions
+func ptrStringToString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
 func timePointerToValue(t *time.Time) time.Time {
 	if t == nil {
 		return time.Time{}

@@ -44,7 +44,7 @@ type CountAccountsParams struct {
 	EntityID    *uuid.UUID `json:"entity_id"`
 	AccountType *string    `json:"account_type"`
 	RootType    *string    `json:"root_type"`
-	IsActive    bool       `json:"is_active"`
+	IsActive    *bool      `json:"is_active"`
 }
 
 func (q *Queries) CountAccounts(ctx context.Context, arg CountAccountsParams) (int64, error) {
@@ -162,7 +162,7 @@ type CreateAccountParams struct {
 	EntityID                    *uuid.UUID     `json:"entity_id"`
 	AccountCode                 string         `json:"account_code"`
 	AccountName                 string         `json:"account_name"`
-	AccountDescription          string         `json:"account_description"`
+	AccountDescription          *string        `json:"account_description"`
 	AccountGroupID              *uuid.UUID     `json:"account_group_id"`
 	AccountHeaderID             *uuid.UUID     `json:"account_header_id"`
 	ParentAccountID             *uuid.UUID     `json:"parent_account_id"`
@@ -347,8 +347,8 @@ ORDER BY
 
 type GetAccountBalancesListParams struct {
 	EntityID    *uuid.UUID `json:"entity_id"`
-	NonZeroOnly bool       `json:"non_zero_only"`
-	RootType    string     `json:"root_type"`
+	NonZeroOnly *bool      `json:"non_zero_only"`
+	RootType    *string    `json:"root_type"`
 }
 
 type GetAccountBalancesListRow struct {
@@ -618,7 +618,7 @@ ORDER BY
   account_path ASC
 `
 
-func (q *Queries) GetAccountHierarchy(ctx context.Context, accountPathPrefix string) ([]*FinanceAccount, error) {
+func (q *Queries) GetAccountHierarchy(ctx context.Context, accountPathPrefix *string) ([]*FinanceAccount, error) {
 	rows, err := q.db.Query(ctx, getAccountHierarchy, accountPathPrefix)
 	if err != nil {
 		return nil, err
@@ -1171,7 +1171,7 @@ ORDER BY
 
 type GetAccountsForFinancialStatementsParams struct {
 	EntityID               *uuid.UUID `json:"entity_id"`
-	FinancialStatementLine string     `json:"financial_statement_line"`
+	FinancialStatementLine *string    `json:"financial_statement_line"`
 	PostingDate            time.Time  `json:"posting_date"`
 }
 
@@ -1181,7 +1181,7 @@ type GetAccountsForFinancialStatementsRow struct {
 	EntityID                    *uuid.UUID     `json:"entity_id"`
 	AccountCode                 string         `json:"account_code"`
 	AccountName                 string         `json:"account_name"`
-	AccountDescription          string         `json:"account_description"`
+	AccountDescription          *string        `json:"account_description"`
 	AccountGroupID              *uuid.UUID     `json:"account_group_id"`
 	AccountHeaderID             *uuid.UUID     `json:"account_header_id"`
 	ParentAccountID             *uuid.UUID     `json:"parent_account_id"`
@@ -1490,9 +1490,9 @@ ORDER BY
 
 type GetChartOfAccountsCompleteParams struct {
 	EntityID         *uuid.UUID `json:"entity_id"`
-	StatementSection string     `json:"statement_section"`
-	IncludeInactive  bool       `json:"include_inactive"`
-	IncludeInReports bool       `json:"include_in_reports"`
+	StatementSection *string    `json:"statement_section"`
+	IncludeInactive  *bool      `json:"include_inactive"`
+	IncludeInReports *bool      `json:"include_in_reports"`
 }
 
 // =====================================================================
@@ -1665,7 +1665,7 @@ ORDER BY
 
 type GetLeafAccountsWithGroupsParams struct {
 	EntityID *uuid.UUID `json:"entity_id"`
-	RootType string     `json:"root_type"`
+	RootType *string    `json:"root_type"`
 }
 
 func (q *Queries) GetLeafAccountsWithGroups(ctx context.Context, arg GetLeafAccountsWithGroupsParams) ([]*VFinanceAccountsWithGroup, error) {
@@ -1830,7 +1830,7 @@ ORDER BY
 
 type GetTrialBalanceDataParams struct {
 	EntityID    *uuid.UUID `json:"entity_id"`
-	NonZeroOnly bool       `json:"non_zero_only"`
+	NonZeroOnly *bool      `json:"non_zero_only"`
 }
 
 type GetTrialBalanceDataRow struct {
@@ -1907,7 +1907,7 @@ type ListAccountsParams struct {
 	EntityID    *uuid.UUID `json:"entity_id"`
 	AccountType *string    `json:"account_type"`
 	RootType    *string    `json:"root_type"`
-	IsActive    bool       `json:"is_active"`
+	IsActive    *bool      `json:"is_active"`
 	Offset      int32      `json:"offset"`
 	Limit       int32      `json:"limit"`
 }
@@ -2115,11 +2115,11 @@ LIMIT
 
 type ListAccountsWithGroupsParams struct {
 	EntityID    *uuid.UUID `json:"entity_id"`
-	RootType    string     `json:"root_type"`
-	AccountType string     `json:"account_type"`
-	GroupCode   string     `json:"group_code"`
-	IsActive    bool       `json:"is_active"`
-	IsLeafOnly  bool       `json:"is_leaf_only"`
+	RootType    *string    `json:"root_type"`
+	AccountType *string    `json:"account_type"`
+	GroupCode   *string    `json:"group_code"`
+	IsActive    *bool      `json:"is_active"`
+	IsLeafOnly  *bool      `json:"is_leaf_only"`
 	Offset      int32      `json:"offset"`
 	Limit       int32      `json:"limit"`
 }
@@ -2229,7 +2229,7 @@ LIMIT
 
 type SearchAccountsParams struct {
 	EntityID   *uuid.UUID `json:"entity_id"`
-	SearchTerm string     `json:"search_term"`
+	SearchTerm *string    `json:"search_term"`
 	Offset     int32      `json:"offset"`
 	Limit      int32      `json:"limit"`
 }
@@ -2339,7 +2339,7 @@ LIMIT
 
 type SearchAccountsWithGroupInfoParams struct {
 	EntityID   *uuid.UUID `json:"entity_id"`
-	SearchTerm string     `json:"search_term"`
+	SearchTerm *string    `json:"search_term"`
 	Offset     int32      `json:"offset"`
 	Limit      int32      `json:"limit"`
 }
@@ -2492,7 +2492,7 @@ RETURNING
 
 type UpdateAccountParams struct {
 	AccountName             *string        `json:"account_name"`
-	AccountDescription      string         `json:"account_description"`
+	AccountDescription      *string        `json:"account_description"`
 	AccountGroupID          *uuid.UUID     `json:"account_group_id"`
 	AccountHeaderID         *uuid.UUID     `json:"account_header_id"`
 	AccountLevel            *int32         `json:"account_level"`

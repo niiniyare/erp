@@ -84,7 +84,7 @@ type CreateAccountGroupParams struct {
 	EntityID                  *uuid.UUID `json:"entity_id"`
 	GroupCode                 string     `json:"group_code"`
 	GroupName                 string     `json:"group_name"`
-	GroupDescription          string     `json:"group_description"`
+	GroupDescription          *string    `json:"group_description"`
 	ParentGroupID             *uuid.UUID `json:"parent_group_id"`
 	GroupLevel                int32      `json:"group_level"`
 	GroupPath                 *string    `json:"group_path"`
@@ -744,7 +744,7 @@ LIMIT
 
 type SearchAccountGroupsParams struct {
 	Column1 uuid.UUID `json:"column_1"`
-	Column2 string    `json:"column_2"`
+	Column2 *string   `json:"column_2"`
 	Limit   int32     `json:"limit"`
 	Offset  int32     `json:"offset"`
 }
@@ -825,7 +825,7 @@ RETURNING
 type UpdateAccountGroupParams struct {
 	ID               uuid.UUID  `json:"id"`
 	GroupName        string     `json:"group_name"`
-	GroupDescription string     `json:"group_description"`
+	GroupDescription *string    `json:"group_description"`
 	UpdatedBy        *uuid.UUID `json:"updated_by"`
 }
 

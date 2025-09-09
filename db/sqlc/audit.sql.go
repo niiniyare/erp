@@ -239,7 +239,7 @@ type CreateAuditEventParams struct {
 	Severity      *string    `json:"severity"`
 	EntityID      *uuid.UUID `json:"entity_id"`
 	Decision      *string    `json:"decision"`
-	Reason        string     `json:"reason"`
+	Reason        *string    `json:"reason"`
 	Context       []byte     `json:"context"`
 }
 
@@ -353,7 +353,7 @@ type GetAdminActionsRow struct {
 	EventType     string       `json:"event_type"`
 	EventCategory *string      `json:"event_category"`
 	Decision      *string      `json:"decision"`
-	Reason        string       `json:"reason"`
+	Reason        *string      `json:"reason"`
 	Context       []byte       `json:"context"`
 	CreatedAt     sql.NullTime `json:"created_at"`
 }
@@ -725,7 +725,7 @@ type GetAuditEventsByEntityRow struct {
 	EventCategory *string      `json:"event_category"`
 	Severity      *string      `json:"severity"`
 	Decision      *string      `json:"decision"`
-	Reason        string       `json:"reason"`
+	Reason        *string      `json:"reason"`
 	RiskScore     *int32       `json:"risk_score"`
 	Context       []byte       `json:"context"`
 	CreatedAt     sql.NullTime `json:"created_at"`
@@ -820,7 +820,7 @@ type GetAuditEventsByResourceRow struct {
 	EventCategory *string      `json:"event_category"`
 	Severity      *string      `json:"severity"`
 	Decision      *string      `json:"decision"`
-	Reason        string       `json:"reason"`
+	Reason        *string      `json:"reason"`
 	Context       []byte       `json:"context"`
 	CreatedAt     sql.NullTime `json:"created_at"`
 }
@@ -1408,11 +1408,11 @@ type GetEventTimelineForUserRow struct {
 	EventCategory    *string        `json:"event_category"`
 	Severity         *string        `json:"severity"`
 	Decision         *string        `json:"decision"`
-	Reason           string         `json:"reason"`
+	Reason           *string        `json:"reason"`
 	RiskScore        *int32         `json:"risk_score"`
 	Context          []byte         `json:"context"`
 	IpAddress        *netip.Addr    `json:"ip_address"`
-	UserAgent        string         `json:"user_agent"`
+	UserAgent        *string        `json:"user_agent"`
 	SessionID        *uuid.UUID     `json:"session_id"`
 	CreatedAt        sql.NullTime   `json:"created_at"`
 	PrevEventTime    interface{}    `json:"prev_event_time"`
@@ -1663,10 +1663,10 @@ type GetFailedAccessAttemptsRow struct {
 	EventType  string       `json:"event_type"`
 	EntityID   *uuid.UUID   `json:"entity_id"`
 	ResourceID *uuid.UUID   `json:"resource_id"`
-	Reason     string       `json:"reason"`
+	Reason     *string      `json:"reason"`
 	RiskScore  *int32       `json:"risk_score"`
 	IpAddress  *netip.Addr  `json:"ip_address"`
-	UserAgent  string       `json:"user_agent"`
+	UserAgent  *string      `json:"user_agent"`
 	CreatedAt  sql.NullTime `json:"created_at"`
 }
 
@@ -1762,7 +1762,7 @@ type GetHighRiskEventsRow struct {
 	EventCategory *string      `json:"event_category"`
 	Severity      *string      `json:"severity"`
 	Decision      *string      `json:"decision"`
-	Reason        string       `json:"reason"`
+	Reason        *string      `json:"reason"`
 	RiskScore     *int32       `json:"risk_score"`
 	Context       []byte       `json:"context"`
 	IpAddress     *netip.Addr  `json:"ip_address"`
@@ -1930,7 +1930,7 @@ type GetRecentSecurityEventsRow struct {
 	EventCategory *string      `json:"event_category"`
 	Severity      *string      `json:"severity"`
 	Decision      *string      `json:"decision"`
-	Reason        string       `json:"reason"`
+	Reason        *string      `json:"reason"`
 	RiskScore     *int32       `json:"risk_score"`
 	IpAddress     *netip.Addr  `json:"ip_address"`
 	Context       []byte       `json:"context"`
@@ -2020,7 +2020,7 @@ LIMIT
 
 type GetRelatedEventsByContextParams struct {
 	ContextKey     []byte       `json:"context_key"`
-	ContextSearch  string       `json:"context_search"`
+	ContextSearch  *string      `json:"context_search"`
 	StartTime      sql.NullTime `json:"start_time"`
 	EndTime        sql.NullTime `json:"end_time"`
 	ExcludeEventID *uuid.UUID   `json:"exclude_event_id"`
@@ -2347,7 +2347,7 @@ type GetUserAgentAnalysisParams struct {
 }
 
 type GetUserAgentAnalysisRow struct {
-	UserAgent     string      `json:"user_agent"`
+	UserAgent     *string     `json:"user_agent"`
 	EventCount    int64       `json:"event_count"`
 	UniqueUsers   int64       `json:"unique_users"`
 	UniqueIps     int64       `json:"unique_ips"`
@@ -2444,7 +2444,7 @@ type GetUserAuditHistoryRow struct {
 	EventCategory *string      `json:"event_category"`
 	Severity      *string      `json:"severity"`
 	Decision      *string      `json:"decision"`
-	Reason        string       `json:"reason"`
+	Reason        *string      `json:"reason"`
 	RiskScore     *int32       `json:"risk_score"`
 	Context       []byte       `json:"context"`
 	IpAddress     *netip.Addr  `json:"ip_address"`
@@ -2595,7 +2595,7 @@ type GetUserSessionEventsRow struct {
 	EventCategory *string      `json:"event_category"`
 	Severity      *string      `json:"severity"`
 	Decision      *string      `json:"decision"`
-	Reason        string       `json:"reason"`
+	Reason        *string      `json:"reason"`
 	Context       []byte       `json:"context"`
 	CreatedAt     sql.NullTime `json:"created_at"`
 }

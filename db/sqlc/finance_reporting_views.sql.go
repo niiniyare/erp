@@ -146,7 +146,7 @@ ORDER BY
 type GetAccountHierarchyByLevelParams struct {
 	EntityID *uuid.UUID `json:"entity_id"`
 	MaxLevel int32      `json:"max_level"`
-	RootType string     `json:"root_type"`
+	RootType *string    `json:"root_type"`
 }
 
 func (q *Queries) GetAccountHierarchyByLevel(ctx context.Context, arg GetAccountHierarchyByLevelParams) ([]*VFinanceAccountsHierarchy, error) {
@@ -212,7 +212,7 @@ ORDER BY
 
 type GetAccountHierarchyViewParams struct {
 	EntityID        *uuid.UUID `json:"entity_id"`
-	RootType        string     `json:"root_type"`
+	RootType        *string    `json:"root_type"`
 	ParentAccountID *uuid.UUID `json:"parent_account_id"`
 }
 
@@ -596,7 +596,7 @@ ORDER BY
 
 type GetFinancialStatementBuilderParams struct {
 	EntityID         *uuid.UUID `json:"entity_id"`
-	StatementSection string     `json:"statement_section"`
+	StatementSection *string    `json:"statement_section"`
 }
 
 // =====================================================================
@@ -667,8 +667,8 @@ ORDER BY
 
 type GetFinancialStatementStructureParams struct {
 	EntityID         *uuid.UUID `json:"entity_id"`
-	StatementSection string     `json:"statement_section"`
-	ShowSummaryOnly  bool       `json:"show_summary_only"`
+	StatementSection *string    `json:"statement_section"`
+	ShowSummaryOnly  *bool      `json:"show_summary_only"`
 }
 
 func (q *Queries) GetFinancialStatementStructure(ctx context.Context, arg GetFinancialStatementStructureParams) ([]*VFinancialStatementStructure, error) {
@@ -744,7 +744,7 @@ ORDER BY
 
 type GetGroupBalanceSummaryParams struct {
 	EntityID *uuid.UUID `json:"entity_id"`
-	RootType string     `json:"root_type"`
+	RootType *string    `json:"root_type"`
 }
 
 type GetGroupBalanceSummaryRow struct {
@@ -993,7 +993,7 @@ ORDER BY
 
 type GetRootAccountsViewParams struct {
 	EntityID *uuid.UUID `json:"entity_id"`
-	RootType string     `json:"root_type"`
+	RootType *string    `json:"root_type"`
 }
 
 func (q *Queries) GetRootAccountsView(ctx context.Context, arg GetRootAccountsViewParams) ([]*VFinanceAccountsHierarchy, error) {
@@ -1061,7 +1061,7 @@ LIMIT
 
 type GetTopAccountsByBalanceParams struct {
 	EntityID *uuid.UUID `json:"entity_id"`
-	RootType string     `json:"root_type"`
+	RootType *string    `json:"root_type"`
 	Limit    int32      `json:"limit"`
 }
 
@@ -1137,7 +1137,7 @@ type GetTransactionSummaryParams struct {
 	EntityID          *uuid.UUID `json:"entity_id"`
 	FromDate          time.Time  `json:"from_date"`
 	ToDate            time.Time  `json:"to_date"`
-	TransactionStatus string     `json:"transaction_status"`
+	TransactionStatus *string    `json:"transaction_status"`
 	Offset            int32      `json:"offset"`
 	Limit             int32      `json:"limit"`
 }
@@ -1212,7 +1212,7 @@ ORDER BY
 
 type GetTransactionsByAccountParams struct {
 	EntityID    *uuid.UUID `json:"entity_id"`
-	AccountCode string     `json:"account_code"`
+	AccountCode *string    `json:"account_code"`
 	FromDate    time.Time  `json:"from_date"`
 	ToDate      time.Time  `json:"to_date"`
 }

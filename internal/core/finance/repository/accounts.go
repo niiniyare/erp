@@ -157,7 +157,7 @@ func (r *chartOfAccountsRepository) Update(ctx context.Context, account *domain.
 		params := db.UpdateAccountParams{
 			AccountID:              account.ID,
 			AccountName:            &account.AccountName,
-			AccountDescription:     getStringValue(account.AccountDescription),
+			AccountDescription:     account.AccountDescription,
 			AccountType:            &account.AccountType,
 			AccountSubtype:         account.AccountSubtype,
 			IsActive:               &account.IsActive,
@@ -313,7 +313,7 @@ func (r *chartOfAccountsRepository) Count(ctx context.Context, filter *domain.Ac
 		}
 
 		if filter.IsActive != nil {
-			params.IsActive = *filter.IsActive
+			params.IsActive = filter.IsActive
 		}
 
 		var err error
@@ -395,7 +395,7 @@ func (r *chartOfAccountsRepository) GetAccountHierarchy(ctx context.Context, roo
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
 		// Convert rootID to string for hierarchy query
 		rootIDStr := rootID.String()
-		sqlcAccounts, err := s.GetAccountHierarchy(ctx, rootIDStr)
+		sqlcAccounts, err := s.GetAccountHierarchy(ctx, &rootIDStr)
 		if err != nil {
 			return r.mapDatabaseError(err, "get_account_hierarchy")
 		}
@@ -825,7 +825,7 @@ func (r *chartOfAccountsRepository) SearchAccountsWithGroups(ctx context.Context
 	var result []*domain.AccountWithGroups
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
 		params := db.SearchAccountsWithGroupInfoParams{
-			SearchTerm: query,
+			SearchTerm: &query,
 			Limit:      int32(limit),
 			Offset:     0,
 		}
@@ -866,7 +866,7 @@ func (r *chartOfAccountsRepository) GetLeafAccountsOnly(ctx context.Context, roo
 		}
 		params := db.GetLeafAccountsWithGroupsParams{
 			EntityID: nil, // Will be set by tenant context
-			RootType: rootTypeStr,
+			RootType: &rootTypeStr,
 		}
 
 		sqlcAccounts, err := s.GetLeafAccountsWithGroups(ctx, params)
@@ -1056,7 +1056,7 @@ func (r *chartOfAccountsRepository) GetTrialBalanceAccounts(ctx context.Context,
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
 		params := db.GetTrialBalanceDataParams{
 			EntityID:    entityID,
-			NonZeroOnly: nonZeroOnly,
+			NonZeroOnly: &nonZeroOnly,
 		}
 
 		sqlcAccounts, err := s.GetTrialBalanceData(ctx, params)

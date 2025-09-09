@@ -542,10 +542,10 @@ LIMIT
 `
 
 type ListUsersParams struct {
-	Limit         int32  `json:"limit"`
-	Offset        int32  `json:"offset"`
-	UserType      string `json:"user_type"`
-	AccountStatus string `json:"account_status"`
+	Limit         int32   `json:"limit"`
+	Offset        int32   `json:"offset"`
+	UserType      *string `json:"user_type"`
+	AccountStatus *string `json:"account_status"`
 }
 
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error) {
@@ -647,9 +647,9 @@ LIMIT
 `
 
 type SearchUsersAdvancedParams struct {
-	Limit  int32  `json:"limit"`
-	Offset int32  `json:"offset"`
-	Query  string `json:"query"`
+	Limit  int32   `json:"limit"`
+	Offset int32   `json:"offset"`
+	Query  *string `json:"query"`
 }
 
 func (q *Queries) SearchUsersAdvanced(ctx context.Context, arg SearchUsersAdvancedParams) ([]*User, error) {

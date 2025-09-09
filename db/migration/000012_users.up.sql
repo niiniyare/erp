@@ -219,7 +219,7 @@ ALTER TABLE
 -- Tenant isolation policy
 CREATE POLICY users_tenant_isolation ON users FOR ALL TO application_role USING (
   current_tenant_id() IS NOT NULL
-  AND deleted_at IS NOT NULL
+  AND deleted_at IS NULL
   AND tenant_id = current_tenant_id()
 ) WITH CHECK (
   current_tenant_id() IS NOT NULL
@@ -241,11 +241,4 @@ UPDATE
 -- PERMISSIONS AND GRANTS
 -- =====================================================================
 -- Grant necessary permissions to application role
-GRANT
-SELECT
-,
-INSERT
-,
-UPDATE
-,
-  DELETE ON users TO application_role;
+GRANT SELECT,INSERT,UPDATE, DELETE ON users TO application_role;

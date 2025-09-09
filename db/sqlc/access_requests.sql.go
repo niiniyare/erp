@@ -479,7 +479,7 @@ type UpdateAccessRequestStatusParams struct {
 	ApprovalStatus   *string      `json:"approval_status"`
 	ApprovedBy       *uuid.UUID   `json:"approved_by"`
 	ApprovedAt       sql.NullTime `json:"approved_at"`
-	ApprovalComments string       `json:"approval_comments"`
+	ApprovalComments *string      `json:"approval_comments"`
 	DurationHours    *int32       `json:"duration_hours"`
 	ExpiresAt        sql.NullTime `json:"expires_at"`
 }

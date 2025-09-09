@@ -54,7 +54,7 @@ type CreateConfigDefinitionParams struct {
 	DataType            string  `json:"data_type"`
 	DefaultValue        []byte  `json:"default_value"`
 	ValidationRules     []byte  `json:"validation_rules"`
-	Description         string  `json:"description"`
+	Description         *string `json:"description"`
 	RequiredPermission  *string `json:"required_permission"`
 	RequiredFeatureFlag *string `json:"required_feature_flag"`
 	IsOverridable       bool    `json:"is_overridable"`
@@ -164,7 +164,7 @@ INSERT INTO configuration_templates (
 type CreateConfigurationTemplateParams struct {
 	Name                  string    `json:"name"`
 	Category              string    `json:"category"`
-	Description           string    `json:"description"`
+	Description           *string   `json:"description"`
 	Version               string    `json:"version"`
 	Configurations        []byte    `json:"configurations"`
 	ApplicableTenantTypes []string  `json:"applicable_tenant_types"`
@@ -399,7 +399,7 @@ LIMIT $4 OFFSET $3
 
 type GetConfigurationHistoryParams struct {
 	EntityIDFilter  *uuid.UUID `json:"entity_id_filter"`
-	ConfigKeyFilter string     `json:"config_key_filter"`
+	ConfigKeyFilter *string    `json:"config_key_filter"`
 	OffsetCount     int32      `json:"offset_count"`
 	LimitCount      int32      `json:"limit_count"`
 }
@@ -720,7 +720,7 @@ WHERE ($1::TEXT IS NULL OR $1::TEXT = '' OR module_name = $1)
 ORDER BY module_name, config_key
 `
 
-func (q *Queries) ListConfigDefinitions(ctx context.Context, moduleName string) ([]*ConfigDefinition, error) {
+func (q *Queries) ListConfigDefinitions(ctx context.Context, moduleName *string) ([]*ConfigDefinition, error) {
 	rows, err := q.db.Query(ctx, listConfigDefinitions, moduleName)
 	if err != nil {
 		return nil, err
@@ -764,7 +764,7 @@ ORDER BY name
 `
 
 type ListConfigurationTemplatesParams struct {
-	CategoryFilter    string   `json:"category_filter"`
+	CategoryFilter    *string  `json:"category_filter"`
 	TenantTypesFilter []string `json:"tenant_types_filter"`
 }
 
@@ -857,7 +857,7 @@ ORDER BY config_full_key, priority DESC
 
 type ListTenantEffectiveConfigurationsParams struct {
 	EntityID     uuid.UUID `json:"entity_id"`
-	ModuleFilter string    `json:"module_filter"`
+	ModuleFilter *string   `json:"module_filter"`
 }
 
 type ListTenantEffectiveConfigurationsRow struct {
@@ -965,7 +965,7 @@ LIMIT $7 OFFSET $6
 
 type SearchConfigurationsParams struct {
 	ModulesFilter  []string     `json:"modules_filter"`
-	SearchTerm     string       `json:"search_term"`
+	SearchTerm     *string      `json:"search_term"`
 	SourcesFilter  []string     `json:"sources_filter"`
 	UpdatedAfter   sql.NullTime `json:"updated_after"`
 	SortBy         interface{}  `json:"sort_by"`
@@ -1047,7 +1047,7 @@ type UpdateConfigDefinitionParams struct {
 	DataType            *string `json:"data_type"`
 	DefaultValue        []byte  `json:"default_value"`
 	ValidationRules     []byte  `json:"validation_rules"`
-	Description         string  `json:"description"`
+	Description         *string `json:"description"`
 	RequiredPermission  *string `json:"required_permission"`
 	RequiredFeatureFlag *string `json:"required_feature_flag"`
 	IsOverridable       *bool   `json:"is_overridable"`
@@ -1103,7 +1103,7 @@ RETURNING id, tenant_id, entity_id, name, category, description, version, config
 
 type UpdateConfigurationTemplateParams struct {
 	Name                  *string   `json:"name"`
-	Description           string    `json:"description"`
+	Description           *string   `json:"description"`
 	Configurations        []byte    `json:"configurations"`
 	ApplicableTenantTypes []string  `json:"applicable_tenant_types"`
 	RequiredFeatureFlags  []string  `json:"required_feature_flags"`

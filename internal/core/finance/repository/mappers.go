@@ -101,7 +101,7 @@ func mapDomainAccountToSQLCCreateDirect(account *domain.Accounts) (db.CreateAcco
 		EntityID:                    account.EntityID,
 		AccountCode:                 account.AccountCode,
 		AccountName:                 account.AccountName,
-		AccountDescription:          getStringValue(account.AccountDescription),
+		AccountDescription:          account.AccountDescription,
 		ParentAccountID:             account.ParentAccountID,
 		AccountLevel:                &account.AccountLevel,
 		AccountPath:                 account.AccountPath,
@@ -195,7 +195,7 @@ func mapDomainAccountToSQLCCreate(req *domain.CreateAccountRequest) (db.CreateAc
 		EntityID:                    req.EntityID,
 		AccountCode:                 req.AccountCode,
 		AccountName:                 req.AccountName,
-		AccountDescription:          getStringValue(req.AccountDescription),
+		AccountDescription:          req.AccountDescription,
 		ParentAccountID:             req.ParentAccountID,
 		RootType:                    rootType,
 		AccountType:                 req.AccountType,
@@ -280,7 +280,7 @@ func mapSQLCAccountToDomain(sqlcAccount *db.FinanceAccount) (*domain.Accounts, e
 		EntityID:                    sqlcAccount.EntityID,
 		AccountCode:                 sqlcAccount.AccountCode,
 		AccountName:                 sqlcAccount.AccountName,
-		AccountDescription:          &sqlcAccount.AccountDescription,
+		AccountDescription:          sqlcAccount.AccountDescription,
 		ParentAccountID:             sqlcAccount.ParentAccountID,
 		AccountLevel:                sqlcAccount.AccountLevel,
 		AccountPath:                 sqlcAccount.AccountPath,
@@ -352,9 +352,10 @@ func mapAccountFilterToSQLCParams(filter *domain.AccountFilter) (db.ListAccounts
 
 	// Map active status to IsActive
 	if filter.IsActive != nil {
-		params.IsActive = *filter.IsActive
+		params.IsActive = filter.IsActive
 	} else {
-		params.IsActive = true // Default to active accounts
+		trueVal := true
+		params.IsActive = &trueVal // Default to active accounts
 	}
 
 	return params, nil
@@ -453,7 +454,7 @@ func mapDomainTransactionToSQLCCreate(req *domain.CreateTransactionRequest) (db.
 		ExchangeRate:          exchangeRate,
 		TotalDebitAmount:      totalDebitAmount,
 		TotalCreditAmount:     totalCreditAmount,
-		Memo:                  req.Memo,
+		Memo:                  &req.Memo,
 		AttachmentIds:         req.AttachmentIds,
 		Tags:                  req.Tags,
 		TransactionAttributes: metadata,
@@ -796,7 +797,7 @@ func mapSQLCAccountWithGroupsToDomain(sqlcAccount db.VFinanceAccountsWithGroup) 
 		TenantID:           sqlcAccount.TenantID,
 		AccountCode:        sqlcAccount.AccountCode,
 		AccountName:        sqlcAccount.AccountName,
-		AccountDescription: &sqlcAccount.AccountDescription,
+		AccountDescription: sqlcAccount.AccountDescription,
 		RootType:           mapSQLCRootTypeToDomain(sqlcAccount.RootType),
 		AccountType:        sqlcAccount.AccountType,
 		AccountCategory:    sqlcAccount.AccountCategory,
@@ -844,7 +845,7 @@ func mapSQLCChartOfAccountsCompleteToDomain(sqlcAccount db.VChartOfAccountsCompl
 		StatementSection:       sqlcAccount.StatementSection,
 		CashFlowClassification: sqlcAccount.CashFlowClassification,
 		DisplayOrder:           sqlcAccount.DisplayOrder,
-		IncludeInReports:       sqlcAccount.IncludeInReports,
+		IncludeInReports:       sqlcAccount.IncludeInReports != nil && *sqlcAccount.IncludeInReports,
 		IsActive:               sqlcAccount.IsActive,
 		IsLeafAccount:          sqlcAccount.IsLeafAccount,
 		TenantID:               sqlcAccount.TenantID,
@@ -928,12 +929,28 @@ func mapAccountFilterToSQLCWithGroups(filter *domain.AccountFilter) (db.ListAcco
 		offset = int32(*filter.Offset)
 	}
 
+	// Convert pgtype to pointers
+	var rootTypePtr *string
+	if rootType.Valid {
+		rootTypePtr = &rootType.String
+	}
+
+	var accountTypePtr *string
+	if accountType.Valid {
+		accountTypePtr = &accountType.String
+	}
+
+	var isActivePtr *bool
+	if isActive.Valid {
+		isActivePtr = &isActive.Bool
+	}
+
 	return db.ListAccountsWithGroupsParams{
 		EntityID:    filter.EntityID,
-		RootType:    rootType.String,
-		AccountType: accountType.String,
-		IsActive:    isActive.Bool,
-		IsLeafOnly:  false, // Not specified in base filter
+		RootType:    rootTypePtr,
+		AccountType: accountTypePtr,
+		IsActive:    isActivePtr,
+		IsLeafOnly:  nil, // Not specified in base filter
 		Limit:       limit,
 		Offset:      offset,
 	}, nil
@@ -958,9 +975,9 @@ func mapChartOfAccountsFilterToSQLC(filter *domain.ChartOfAccountsFilter) (db.Ge
 
 	return db.GetChartOfAccountsCompleteParams{
 		EntityID:         filter.EntityID,
-		StatementSection: statementSection,
-		IncludeInactive:  includeInactive,
-		IncludeInReports: includeInReports,
+		StatementSection: &statementSection,
+		IncludeInactive:  &includeInactive,
+		IncludeInReports: &includeInReports,
 	}, nil
 }
 
@@ -978,8 +995,8 @@ func mapBalanceFilterToSQLC(filter *domain.BalanceFilter) (db.GetAccountBalances
 
 	return db.GetAccountBalancesListParams{
 		EntityID:    filter.EntityID,
-		NonZeroOnly: nonZeroOnly,
-		RootType:    rootType,
+		NonZeroOnly: &nonZeroOnly,
+		RootType:    &rootType,
 	}, nil
 }
 

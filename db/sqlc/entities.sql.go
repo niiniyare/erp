@@ -3408,8 +3408,8 @@ LIMIT
 `
 
 type SearchEntitiesByCodeAndNameParams struct {
-	Column1 string `json:"column_1"`
-	Limit   int32  `json:"limit"`
+	Column1 *string `json:"column_1"`
+	Limit   int32   `json:"limit"`
 }
 
 // =====================================================================
@@ -3473,8 +3473,8 @@ LIMIT
 `
 
 type SearchEntitiesByNameParams struct {
-	Column1 string `json:"column_1"`
-	Limit   int32  `json:"limit"`
+	Column1 *string `json:"column_1"`
+	Limit   int32   `json:"limit"`
 }
 
 func (q *Queries) SearchEntitiesByName(ctx context.Context, arg SearchEntitiesByNameParams) ([]*Entity, error) {

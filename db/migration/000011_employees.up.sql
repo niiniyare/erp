@@ -161,11 +161,11 @@ ALTER TABLE
 -- Tenant isolation policy
 CREATE POLICY employees_tenant_isolation ON employees FOR ALL TO application_role USING (
   current_tenant_id() IS NOT NULL
-  AND deleted_at IS NOT NULL
+  AND deleted_at IS NULL
   AND tenant_id = current_tenant_id()
 ) WITH CHECK (
   current_tenant_id() IS NOT NULL
-  AND deleted_at IS NOT NULL
+  AND deleted_at IS NULL
   AND tenant_id = current_tenant_id()
 );
 

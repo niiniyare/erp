@@ -92,7 +92,7 @@ type CreatePolicyParams struct {
 	EntityID    *uuid.UUID `json:"entity_id"`
 	Name        string     `json:"name"`
 	DisplayName *string    `json:"display_name"`
-	Description string     `json:"description"`
+	Description *string    `json:"description"`
 	PolicyType  *string    `json:"policy_type"`
 	Effect      *string    `json:"effect"`
 	Priority    *int32     `json:"priority"`
@@ -753,9 +753,9 @@ LIMIT
 `
 
 type SearchPoliciesParams struct {
-	Column1 string `json:"column_1"`
-	Limit   int32  `json:"limit"`
-	Offset  int32  `json:"offset"`
+	Column1 *string `json:"column_1"`
+	Limit   int32   `json:"limit"`
+	Offset  int32   `json:"offset"`
 }
 
 func (q *Queries) SearchPolicies(ctx context.Context, arg SearchPoliciesParams) ([]*Policy, error) {
@@ -845,7 +845,7 @@ type UpdatePolicyParams struct {
 	EntityID    *uuid.UUID `json:"entity_id"`
 	Name        string     `json:"name"`
 	DisplayName *string    `json:"display_name"`
-	Description string     `json:"description"`
+	Description *string    `json:"description"`
 	PolicyType  *string    `json:"policy_type"`
 	Effect      *string    `json:"effect"`
 	Priority    *int32     `json:"priority"`

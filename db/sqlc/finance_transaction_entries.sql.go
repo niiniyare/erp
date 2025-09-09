@@ -1301,7 +1301,7 @@ type UpdateTransactionEntryParams struct {
 	AccountID    *uuid.UUID     `json:"account_id"`
 	DebitAmount  pgtype.Numeric `json:"debit_amount"`
 	CreditAmount pgtype.Numeric `json:"credit_amount"`
-	Description  string         `json:"description"`
+	Description  *string        `json:"description"`
 	Reference    *string        `json:"reference"`
 	CostCenter   *string        `json:"cost_center"`
 	Department   *string        `json:"department"`

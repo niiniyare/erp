@@ -87,7 +87,7 @@ RETURNING
 
 type ApproveTransactionParams struct {
 	ApprovedBy    *uuid.UUID `json:"approved_by"`
-	ApprovalNotes string     `json:"approval_notes"`
+	ApprovalNotes *string    `json:"approval_notes"`
 	TransactionID uuid.UUID  `json:"transaction_id"`
 }
 
@@ -293,7 +293,7 @@ type CreateTransactionParams struct {
 	Description           string         `json:"description"`
 	ReferenceNumber       *string        `json:"reference_number"`
 	ExternalReference     *string        `json:"external_reference"`
-	Memo                  string         `json:"memo"`
+	Memo                  *string        `json:"memo"`
 	CurrencyCode          string         `json:"currency_code"`
 	ExchangeRate          pgtype.Numeric `json:"exchange_rate"`
 	TotalDebitAmount      pgtype.Numeric `json:"total_debit_amount"`
@@ -1104,7 +1104,7 @@ type GetTransactionWithEntriesRow struct {
 	Description             string         `json:"description"`
 	ReferenceNumber         *string        `json:"reference_number"`
 	ExternalReference       *string        `json:"external_reference"`
-	Memo                    string         `json:"memo"`
+	Memo                    *string        `json:"memo"`
 	CurrencyCode            string         `json:"currency_code"`
 	ExchangeRate            pgtype.Numeric `json:"exchange_rate"`
 	TotalDebitAmount        pgtype.Numeric `json:"total_debit_amount"`
@@ -1117,13 +1117,13 @@ type GetTransactionWithEntriesRow struct {
 	ApprovalStatus          *string        `json:"approval_status"`
 	ApprovedBy              *uuid.UUID     `json:"approved_by"`
 	ApprovedAt              sql.NullTime   `json:"approved_at"`
-	ApprovalNotes           string         `json:"approval_notes"`
+	ApprovalNotes           *string        `json:"approval_notes"`
 	IsRecurring             *bool          `json:"is_recurring"`
 	RecurringFrequency      *string        `json:"recurring_frequency"`
 	NextRecurringDate       time.Time      `json:"next_recurring_date"`
 	IsReversed              *bool          `json:"is_reversed"`
 	ReversedByTransactionID *uuid.UUID     `json:"reversed_by_transaction_id"`
-	ReversalReason          string         `json:"reversal_reason"`
+	ReversalReason          *string        `json:"reversal_reason"`
 	Version                 int32          `json:"version"`
 	ValidationStatus        *string        `json:"validation_status"`
 	ValidationErrors        []byte         `json:"validation_errors"`
@@ -1142,7 +1142,7 @@ type GetTransactionWithEntriesRow struct {
 	AccountID               *uuid.UUID     `json:"account_id"`
 	DebitAmount             pgtype.Numeric `json:"debit_amount"`
 	CreditAmount            pgtype.Numeric `json:"credit_amount"`
-	EntryDescription        string         `json:"entry_description"`
+	EntryDescription        *string        `json:"entry_description"`
 	EntryReference          *string        `json:"entry_reference"`
 	CostCenter              *string        `json:"cost_center"`
 	Department              *string        `json:"department"`
@@ -2017,7 +2017,7 @@ RETURNING
 
 type RejectTransactionParams struct {
 	ApprovedBy    *uuid.UUID `json:"approved_by"`
-	ApprovalNotes string     `json:"approval_notes"`
+	ApprovalNotes *string    `json:"approval_notes"`
 	TransactionID uuid.UUID  `json:"transaction_id"`
 }
 
@@ -2143,7 +2143,7 @@ RETURNING
 
 type ReverseTransactionParams struct {
 	ReversedByTransactionID *uuid.UUID `json:"reversed_by_transaction_id"`
-	ReversalReason          string     `json:"reversal_reason"`
+	ReversalReason          *string    `json:"reversal_reason"`
 	UpdatedBy               *uuid.UUID `json:"updated_by"`
 	TransactionID           uuid.UUID  `json:"transaction_id"`
 }
@@ -2232,9 +2232,9 @@ LIMIT
 `
 
 type SearchTransactionsParams struct {
-	SearchTerm  string `json:"search_term"`
-	OffsetCount int32  `json:"offset_count"`
-	LimitCount  int32  `json:"limit_count"`
+	SearchTerm  *string `json:"search_term"`
+	OffsetCount int32   `json:"offset_count"`
+	LimitCount  int32   `json:"limit_count"`
 }
 
 func (q *Queries) SearchTransactions(ctx context.Context, arg SearchTransactionsParams) ([]*FinanceTransaction, error) {
@@ -2319,9 +2319,9 @@ LIMIT
 `
 
 type SearchTransactionsByMemoParams struct {
-	SearchTerm  string `json:"search_term"`
-	OffsetCount int32  `json:"offset_count"`
-	LimitCount  int32  `json:"limit_count"`
+	SearchTerm  *string `json:"search_term"`
+	OffsetCount int32   `json:"offset_count"`
+	LimitCount  int32   `json:"limit_count"`
 }
 
 func (q *Queries) SearchTransactionsByMemo(ctx context.Context, arg SearchTransactionsByMemoParams) ([]*FinanceTransaction, error) {
@@ -2486,16 +2486,16 @@ type UpdateTransactionParams struct {
 	TransactionStatus     *string        `json:"transaction_status"`
 	PostingDate           time.Time      `json:"posting_date"`
 	DueDate               time.Time      `json:"due_date"`
-	Description           string         `json:"description"`
+	Description           *string        `json:"description"`
 	ReferenceNumber       *string        `json:"reference_number"`
 	ExternalReference     *string        `json:"external_reference"`
-	Memo                  string         `json:"memo"`
+	Memo                  *string        `json:"memo"`
 	TotalDebitAmount      pgtype.Numeric `json:"total_debit_amount"`
 	TotalCreditAmount     pgtype.Numeric `json:"total_credit_amount"`
 	ApprovalStatus        *string        `json:"approval_status"`
 	ApprovedBy            *uuid.UUID     `json:"approved_by"`
 	ApprovedAt            sql.NullTime   `json:"approved_at"`
-	ApprovalNotes         string         `json:"approval_notes"`
+	ApprovalNotes         *string        `json:"approval_notes"`
 	TransactionAttributes []byte         `json:"transaction_attributes"`
 	AttachmentIds         []string       `json:"attachment_ids"`
 	Tags                  []string       `json:"tags"`
@@ -2613,7 +2613,7 @@ WHERE
 `
 
 type UpdateTransactionMemoParams struct {
-	Memo          string     `json:"memo"`
+	Memo          *string    `json:"memo"`
 	UpdatedBy     *uuid.UUID `json:"updated_by"`
 	TransactionID uuid.UUID  `json:"transaction_id"`
 }

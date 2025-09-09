@@ -50,11 +50,11 @@ WHERE
 
 type CountAccountsWithGroupsParams struct {
 	EntityID      *uuid.UUID `json:"entity_id"`
-	RootType      string     `json:"root_type"`
-	AccountType   string     `json:"account_type"`
-	GroupCategory string     `json:"group_category"`
-	IsActive      bool       `json:"is_active"`
-	IsLeafOnly    bool       `json:"is_leaf_only"`
+	RootType      *string    `json:"root_type"`
+	AccountType   *string    `json:"account_type"`
+	GroupCategory *string    `json:"group_category"`
+	IsActive      *bool      `json:"is_active"`
+	IsLeafOnly    *bool      `json:"is_leaf_only"`
 }
 
 func (q *Queries) CountAccountsWithGroups(ctx context.Context, arg CountAccountsWithGroupsParams) (int64, error) {
@@ -166,8 +166,8 @@ ORDER BY
 `
 
 type GetAccountHierarchyCompleteParams struct {
-	RootType        string     `json:"root_type"`
-	IncludeInactive bool       `json:"include_inactive"`
+	RootType        *string    `json:"root_type"`
+	IncludeInactive *bool      `json:"include_inactive"`
 	EntityID        *uuid.UUID `json:"entity_id"`
 }
 
@@ -176,7 +176,7 @@ type GetAccountHierarchyCompleteRow struct {
 	TenantID                  uuid.UUID      `json:"tenant_id"`
 	AccountCode               string         `json:"account_code"`
 	AccountName               string         `json:"account_name"`
-	AccountDescription        string         `json:"account_description"`
+	AccountDescription        *string        `json:"account_description"`
 	RootType                  string         `json:"root_type"`
 	AccountType               string         `json:"account_type"`
 	AccountSubtype            *string        `json:"account_subtype"`
@@ -201,7 +201,7 @@ type GetAccountHierarchyCompleteRow struct {
 	DisplayOrder              int32          `json:"display_order"`
 	StatementSection          *string        `json:"statement_section"`
 	CashFlowClassification    *string        `json:"cash_flow_classification"`
-	IncludeInReports          bool           `json:"include_in_reports"`
+	IncludeInReports          *bool          `json:"include_in_reports"`
 	HierarchyLevel            int32          `json:"hierarchy_level"`
 	FullPath                  string         `json:"full_path"`
 	FullName                  string         `json:"full_name"`
@@ -419,7 +419,7 @@ ORDER BY
 
 type GetFinancialStatementDataParams struct {
 	EntityID         *uuid.UUID `json:"entity_id"`
-	StatementSection string     `json:"statement_section"`
+	StatementSection *string    `json:"statement_section"`
 }
 
 type GetFinancialStatementDataRow struct {
