@@ -4946,13 +4946,14 @@ paths:
                                       description: Leading provider of innovative business solutions
                                       display_name: ACME Corp
                                       employee_count: 500
+                                      entity_type: COMPANY
                                       id: 550e8400-e29b-41d4-a716-446655440000
                                       incorporation_date: "2020-01-15"
                                       industry: Technology
                                       jurisdiction: Delaware, USA
+                                      legal_entity_type: CORPORATION
                                       legal_name: Acme Corporation Inc.
                                       name: Acme Corporation
-                                      organization_type: CORPORATION
                                       parent_id: 550e8400-e29b-41d4-a716-446655440001
                                       registration_number: REG123456789
                                       settings:
@@ -5048,13 +5049,14 @@ paths:
                                       description: Leading provider of innovative business solutions
                                       display_name: ACME Corp
                                       employee_count: 500
+                                      entity_type: COMPANY
                                       id: 550e8400-e29b-41d4-a716-446655440000
                                       incorporation_date: "2020-01-15"
                                       industry: Technology
                                       jurisdiction: Delaware, USA
+                                      legal_entity_type: CORPORATION
                                       legal_name: Acme Corporation Inc.
                                       name: Acme Corporation
-                                      organization_type: CORPORATION
                                       parent_id: 550e8400-e29b-41d4-a716-446655440001
                                       registration_number: REG123456789
                                       settings:
@@ -5191,12 +5193,13 @@ paths:
                             description: Leading provider of innovative business solutions
                             display_name: ACME Corp
                             employee_count: 500
+                            entity_type: COMPANY
                             incorporation_date: "2020-01-15"
                             industry: Technology
                             jurisdiction: Delaware, USA
+                            legal_entity_type: CORPORATION
                             legal_name: Acme Corporation Inc.
                             name: Acme Corporation
-                            organization_type: CORPORATION
                             parent_id: 550e8400-e29b-41d4-a716-446655440001
                             registration_number: REG123456789
                             settings:
@@ -5302,13 +5305,14 @@ paths:
                                 description: Leading provider of innovative business solutions
                                 display_name: ACME Corp
                                 employee_count: 500
+                                entity_type: COMPANY
                                 id: 550e8400-e29b-41d4-a716-446655440000
                                 incorporation_date: "2020-01-15"
                                 industry: Technology
                                 jurisdiction: Delaware, USA
+                                legal_entity_type: CORPORATION
                                 legal_name: Acme Corporation Inc.
                                 name: Acme Corporation
-                                organization_type: CORPORATION
                                 parent_id: 550e8400-e29b-41d4-a716-446655440001
                                 registration_number: REG123456789
                                 settings:
@@ -5460,13 +5464,14 @@ paths:
                                 description: Leading provider of innovative business solutions
                                 display_name: ACME Corp
                                 employee_count: 500
+                                entity_type: COMPANY
                                 id: 550e8400-e29b-41d4-a716-446655440000
                                 incorporation_date: "2020-01-15"
                                 industry: Technology
                                 jurisdiction: Delaware, USA
+                                legal_entity_type: CORPORATION
                                 legal_name: Acme Corporation Inc.
                                 name: Acme Corporation
-                                organization_type: CORPORATION
                                 parent_id: 550e8400-e29b-41d4-a716-446655440001
                                 registration_number: REG123456789
                                 settings:
@@ -5624,12 +5629,13 @@ paths:
                             description: Leading provider of innovative business solutions
                             display_name: ACME Corp
                             employee_count: 500
+                            entity_type: COMPANY
                             incorporation_date: "2020-01-15"
                             industry: Technology
                             jurisdiction: Delaware, USA
+                            legal_entity_type: CORPORATION
                             legal_name: Acme Corporation Inc.
                             name: Acme Corporation
-                            organization_type: CORPORATION
                             parent_id: 550e8400-e29b-41d4-a716-446655440001
                             registration_number: REG123456789
                             settings:
@@ -5728,13 +5734,14 @@ paths:
                                 description: Leading provider of innovative business solutions
                                 display_name: ACME Corp
                                 employee_count: 500
+                                entity_type: COMPANY
                                 id: 550e8400-e29b-41d4-a716-446655440000
                                 incorporation_date: "2020-01-15"
                                 industry: Technology
                                 jurisdiction: Delaware, USA
+                                legal_entity_type: CORPORATION
                                 legal_name: Acme Corporation Inc.
                                 name: Acme Corporation
-                                organization_type: CORPORATION
                                 parent_id: 550e8400-e29b-41d4-a716-446655440001
                                 registration_number: REG123456789
                                 settings:
@@ -5921,74 +5928,74 @@ paths:
                                         - Voluptatem nisi expedita quam voluptates.
                                         - Dolore sint.
                                         - Rerum laboriosam tenetur nesciunt ab.
+                                      entity_type: COMPANY
                                       id: 550e8400-e29b-41d4-a716-446655440000
                                       level: 1
                                       name: Acme Corporation
-                                      organization_type: CORPORATION
                                       status: ACTIVE
                                     - children:
                                         - Voluptatem nisi expedita quam voluptates.
                                         - Dolore sint.
                                         - Rerum laboriosam tenetur nesciunt ab.
+                                      entity_type: COMPANY
                                       id: 550e8400-e29b-41d4-a716-446655440000
                                       level: 1
                                       name: Acme Corporation
-                                      organization_type: CORPORATION
                                       status: ACTIVE
                                     - children:
                                         - Voluptatem nisi expedita quam voluptates.
                                         - Dolore sint.
                                         - Rerum laboriosam tenetur nesciunt ab.
+                                      entity_type: COMPANY
                                       id: 550e8400-e29b-41d4-a716-446655440000
                                       level: 1
                                       name: Acme Corporation
-                                      organization_type: CORPORATION
                                       status: ACTIVE
                                     - children:
                                         - Voluptatem nisi expedita quam voluptates.
                                         - Dolore sint.
                                         - Rerum laboriosam tenetur nesciunt ab.
+                                      entity_type: COMPANY
                                       id: 550e8400-e29b-41d4-a716-446655440000
                                       level: 1
                                       name: Acme Corporation
-                                      organization_type: CORPORATION
                                       status: ACTIVE
                                 children:
                                     - children:
                                         - Voluptatem nisi expedita quam voluptates.
                                         - Dolore sint.
                                         - Rerum laboriosam tenetur nesciunt ab.
+                                      entity_type: COMPANY
                                       id: 550e8400-e29b-41d4-a716-446655440000
                                       level: 1
                                       name: Acme Corporation
-                                      organization_type: CORPORATION
                                       status: ACTIVE
                                     - children:
                                         - Voluptatem nisi expedita quam voluptates.
                                         - Dolore sint.
                                         - Rerum laboriosam tenetur nesciunt ab.
+                                      entity_type: COMPANY
                                       id: 550e8400-e29b-41d4-a716-446655440000
                                       level: 1
                                       name: Acme Corporation
-                                      organization_type: CORPORATION
                                       status: ACTIVE
                                     - children:
                                         - Voluptatem nisi expedita quam voluptates.
                                         - Dolore sint.
                                         - Rerum laboriosam tenetur nesciunt ab.
+                                      entity_type: COMPANY
                                       id: 550e8400-e29b-41d4-a716-446655440000
                                       level: 1
                                       name: Acme Corporation
-                                      organization_type: CORPORATION
                                       status: ACTIVE
                                     - children:
                                         - Voluptatem nisi expedita quam voluptates.
                                         - Dolore sint.
                                         - Rerum laboriosam tenetur nesciunt ab.
+                                      entity_type: COMPANY
                                       id: 550e8400-e29b-41d4-a716-446655440000
                                       level: 1
                                       name: Acme Corporation
-                                      organization_type: CORPORATION
                                       status: ACTIVE
                                 depth: 3
                                 root:
@@ -5996,10 +6003,10 @@ paths:
                                         - Voluptatem nisi expedita quam voluptates.
                                         - Dolore sint.
                                         - Rerum laboriosam tenetur nesciunt ab.
+                                    entity_type: COMPANY
                                     id: 550e8400-e29b-41d4-a716-446655440000
                                     level: 1
                                     name: Acme Corporation
-                                    organization_type: CORPORATION
                                     status: ACTIVE
                 "401":
                     description: 'unauthorized: Unauthorized response.'
@@ -13920,6 +13927,21 @@ components:
                     description: Number of employees
                     example: 500
                     format: int64
+                entity_type:
+                    type: string
+                    description: Type of entity in the organizational hierarchy
+                    example: COMPANY
+                    enum:
+                        - COMPANY
+                        - SUBSIDIARY
+                        - REGION
+                        - BRANCH
+                        - LOCATION
+                        - DEPARTMENT
+                        - DIVISION
+                        - COST_CENTER
+                        - PROJECT
+                        - BUDGET_UNIT
                 incorporation_date:
                     type: string
                     description: Date of incorporation
@@ -13935,6 +13957,18 @@ components:
                     description: Jurisdiction of incorporation
                     example: Delaware, USA
                     maxLength: 100
+                legal_entity_type:
+                    type: string
+                    description: Legal entity type (Corporation, LLC, etc.)
+                    example: CORPORATION
+                    enum:
+                        - CORPORATION
+                        - LLC
+                        - PARTNERSHIP
+                        - SOLE_PROPRIETORSHIP
+                        - NON_PROFIT
+                        - GOVERNMENT
+                        - OTHER
                 legal_name:
                     type: string
                     description: Legal business name
@@ -13946,17 +13980,6 @@ components:
                     example: Acme Corporation
                     minLength: 1
                     maxLength: 200
-                organization_type:
-                    type: string
-                    description: Type of organization
-                    example: CORPORATION
-                    enum:
-                        - CORPORATION
-                        - LLC
-                        - PARTNERSHIP
-                        - SOLE_PROPRIETORSHIP
-                        - NON_PROFIT
-                        - GOVERNMENT
                 parent_id:
                     type: string
                     description: Parent organization ID
@@ -14020,12 +14043,13 @@ components:
                 description: Leading provider of innovative business solutions
                 display_name: ACME Corp
                 employee_count: 500
+                entity_type: COMPANY
                 incorporation_date: "2020-01-15"
                 industry: Technology
                 jurisdiction: Delaware, USA
+                legal_entity_type: CORPORATION
                 legal_name: Acme Corporation Inc.
                 name: Acme Corporation
-                organization_type: CORPORATION
                 parent_id: 550e8400-e29b-41d4-a716-446655440001
                 registration_number: REG123456789
                 settings:
@@ -14083,7 +14107,7 @@ components:
                 website: https://www.acme.com
             required:
                 - name
-                - organization_type
+                - entity_type
         CreateTenantPayload:
             type: object
             properties:
@@ -16085,13 +16109,14 @@ components:
                           description: Leading provider of innovative business solutions
                           display_name: ACME Corp
                           employee_count: 500
+                          entity_type: COMPANY
                           id: 550e8400-e29b-41d4-a716-446655440000
                           incorporation_date: "2020-01-15"
                           industry: Technology
                           jurisdiction: Delaware, USA
+                          legal_entity_type: CORPORATION
                           legal_name: Acme Corporation Inc.
                           name: Acme Corporation
-                          organization_type: CORPORATION
                           parent_id: 550e8400-e29b-41d4-a716-446655440001
                           registration_number: REG123456789
                           settings:
@@ -16187,13 +16212,14 @@ components:
                           description: Leading provider of innovative business solutions
                           display_name: ACME Corp
                           employee_count: 500
+                          entity_type: COMPANY
                           id: 550e8400-e29b-41d4-a716-446655440000
                           incorporation_date: "2020-01-15"
                           industry: Technology
                           jurisdiction: Delaware, USA
+                          legal_entity_type: CORPORATION
                           legal_name: Acme Corporation Inc.
                           name: Acme Corporation
-                          organization_type: CORPORATION
                           parent_id: 550e8400-e29b-41d4-a716-446655440001
                           registration_number: REG123456789
                           settings:
@@ -16289,13 +16315,14 @@ components:
                           description: Leading provider of innovative business solutions
                           display_name: ACME Corp
                           employee_count: 500
+                          entity_type: COMPANY
                           id: 550e8400-e29b-41d4-a716-446655440000
                           incorporation_date: "2020-01-15"
                           industry: Technology
                           jurisdiction: Delaware, USA
+                          legal_entity_type: CORPORATION
                           legal_name: Acme Corporation Inc.
                           name: Acme Corporation
-                          organization_type: CORPORATION
                           parent_id: 550e8400-e29b-41d4-a716-446655440001
                           registration_number: REG123456789
                           settings:
@@ -16391,13 +16418,14 @@ components:
                           description: Leading provider of innovative business solutions
                           display_name: ACME Corp
                           employee_count: 500
+                          entity_type: COMPANY
                           id: 550e8400-e29b-41d4-a716-446655440000
                           incorporation_date: "2020-01-15"
                           industry: Technology
                           jurisdiction: Delaware, USA
+                          legal_entity_type: CORPORATION
                           legal_name: Acme Corporation Inc.
                           name: Acme Corporation
-                          organization_type: CORPORATION
                           parent_id: 550e8400-e29b-41d4-a716-446655440001
                           registration_number: REG123456789
                           settings:
@@ -16497,13 +16525,14 @@ components:
                       description: Leading provider of innovative business solutions
                       display_name: ACME Corp
                       employee_count: 500
+                      entity_type: COMPANY
                       id: 550e8400-e29b-41d4-a716-446655440000
                       incorporation_date: "2020-01-15"
                       industry: Technology
                       jurisdiction: Delaware, USA
+                      legal_entity_type: CORPORATION
                       legal_name: Acme Corporation Inc.
                       name: Acme Corporation
-                      organization_type: CORPORATION
                       parent_id: 550e8400-e29b-41d4-a716-446655440001
                       registration_number: REG123456789
                       settings:
@@ -16599,13 +16628,14 @@ components:
                       description: Leading provider of innovative business solutions
                       display_name: ACME Corp
                       employee_count: 500
+                      entity_type: COMPANY
                       id: 550e8400-e29b-41d4-a716-446655440000
                       incorporation_date: "2020-01-15"
                       industry: Technology
                       jurisdiction: Delaware, USA
+                      legal_entity_type: CORPORATION
                       legal_name: Acme Corporation Inc.
                       name: Acme Corporation
-                      organization_type: CORPORATION
                       parent_id: 550e8400-e29b-41d4-a716-446655440001
                       registration_number: REG123456789
                       settings:
@@ -16701,13 +16731,14 @@ components:
                       description: Leading provider of innovative business solutions
                       display_name: ACME Corp
                       employee_count: 500
+                      entity_type: COMPANY
                       id: 550e8400-e29b-41d4-a716-446655440000
                       incorporation_date: "2020-01-15"
                       industry: Technology
                       jurisdiction: Delaware, USA
+                      legal_entity_type: CORPORATION
                       legal_name: Acme Corporation Inc.
                       name: Acme Corporation
-                      organization_type: CORPORATION
                       parent_id: 550e8400-e29b-41d4-a716-446655440001
                       registration_number: REG123456789
                       settings:
@@ -16803,13 +16834,14 @@ components:
                       description: Leading provider of innovative business solutions
                       display_name: ACME Corp
                       employee_count: 500
+                      entity_type: COMPANY
                       id: 550e8400-e29b-41d4-a716-446655440000
                       incorporation_date: "2020-01-15"
                       industry: Technology
                       jurisdiction: Delaware, USA
+                      legal_entity_type: CORPORATION
                       legal_name: Acme Corporation Inc.
                       name: Acme Corporation
-                      organization_type: CORPORATION
                       parent_id: 550e8400-e29b-41d4-a716-446655440001
                       registration_number: REG123456789
                       settings:
@@ -17510,6 +17542,21 @@ components:
                     description: Number of employees
                     example: 500
                     format: int64
+                entity_type:
+                    type: string
+                    description: Type of entity in the organizational hierarchy
+                    example: COMPANY
+                    enum:
+                        - COMPANY
+                        - SUBSIDIARY
+                        - REGION
+                        - BRANCH
+                        - LOCATION
+                        - DEPARTMENT
+                        - DIVISION
+                        - COST_CENTER
+                        - PROJECT
+                        - BUDGET_UNIT
                 id:
                     type: string
                     description: Unique organization identifier
@@ -17530,6 +17577,18 @@ components:
                     description: Jurisdiction of incorporation
                     example: Delaware, USA
                     maxLength: 100
+                legal_entity_type:
+                    type: string
+                    description: Legal entity type (Corporation, LLC, etc.)
+                    example: CORPORATION
+                    enum:
+                        - CORPORATION
+                        - LLC
+                        - PARTNERSHIP
+                        - SOLE_PROPRIETORSHIP
+                        - NON_PROFIT
+                        - GOVERNMENT
+                        - OTHER
                 legal_name:
                     type: string
                     description: Legal business name
@@ -17541,17 +17600,6 @@ components:
                     example: Acme Corporation
                     minLength: 1
                     maxLength: 200
-                organization_type:
-                    type: string
-                    description: Type of organization
-                    example: CORPORATION
-                    enum:
-                        - CORPORATION
-                        - LLC
-                        - PARTNERSHIP
-                        - SOLE_PROPRIETORSHIP
-                        - NON_PROFIT
-                        - GOVERNMENT
                 parent_id:
                     type: string
                     description: Parent organization ID
@@ -17641,13 +17689,14 @@ components:
                 description: Leading provider of innovative business solutions
                 display_name: ACME Corp
                 employee_count: 500
+                entity_type: COMPANY
                 id: 550e8400-e29b-41d4-a716-446655440000
                 incorporation_date: "2020-01-15"
                 industry: Technology
                 jurisdiction: Delaware, USA
+                legal_entity_type: CORPORATION
                 legal_name: Acme Corporation Inc.
                 name: Acme Corporation
-                organization_type: CORPORATION
                 parent_id: 550e8400-e29b-41d4-a716-446655440001
                 registration_number: REG123456789
                 settings:
@@ -17709,7 +17758,7 @@ components:
             required:
                 - id
                 - name
-                - organization_type
+                - entity_type
                 - status
                 - created_at
                 - updated_at
@@ -17726,37 +17775,37 @@ components:
                             - Dolores id porro laudantium eaque aut suscipit.
                             - Velit id quam omnis totam.
                             - Dolorem ut exercitationem corrupti nam laudantium.
+                          entity_type: COMPANY
                           id: 550e8400-e29b-41d4-a716-446655440000
                           level: 1
                           name: Acme Corporation
-                          organization_type: CORPORATION
                           status: ACTIVE
                         - children:
                             - Dolores id porro laudantium eaque aut suscipit.
                             - Velit id quam omnis totam.
                             - Dolorem ut exercitationem corrupti nam laudantium.
+                          entity_type: COMPANY
                           id: 550e8400-e29b-41d4-a716-446655440000
                           level: 1
                           name: Acme Corporation
-                          organization_type: CORPORATION
                           status: ACTIVE
                         - children:
                             - Dolores id porro laudantium eaque aut suscipit.
                             - Velit id quam omnis totam.
                             - Dolorem ut exercitationem corrupti nam laudantium.
+                          entity_type: COMPANY
                           id: 550e8400-e29b-41d4-a716-446655440000
                           level: 1
                           name: Acme Corporation
-                          organization_type: CORPORATION
                           status: ACTIVE
                         - children:
                             - Dolores id porro laudantium eaque aut suscipit.
                             - Velit id quam omnis totam.
                             - Dolorem ut exercitationem corrupti nam laudantium.
+                          entity_type: COMPANY
                           id: 550e8400-e29b-41d4-a716-446655440000
                           level: 1
                           name: Acme Corporation
-                          organization_type: CORPORATION
                           status: ACTIVE
                 children:
                     type: array
@@ -17768,28 +17817,28 @@ components:
                             - Dolores id porro laudantium eaque aut suscipit.
                             - Velit id quam omnis totam.
                             - Dolorem ut exercitationem corrupti nam laudantium.
+                          entity_type: COMPANY
                           id: 550e8400-e29b-41d4-a716-446655440000
                           level: 1
                           name: Acme Corporation
-                          organization_type: CORPORATION
                           status: ACTIVE
                         - children:
                             - Dolores id porro laudantium eaque aut suscipit.
                             - Velit id quam omnis totam.
                             - Dolorem ut exercitationem corrupti nam laudantium.
+                          entity_type: COMPANY
                           id: 550e8400-e29b-41d4-a716-446655440000
                           level: 1
                           name: Acme Corporation
-                          organization_type: CORPORATION
                           status: ACTIVE
                         - children:
                             - Dolores id porro laudantium eaque aut suscipit.
                             - Velit id quam omnis totam.
                             - Dolorem ut exercitationem corrupti nam laudantium.
+                          entity_type: COMPANY
                           id: 550e8400-e29b-41d4-a716-446655440000
                           level: 1
                           name: Acme Corporation
-                          organization_type: CORPORATION
                           status: ACTIVE
                 depth:
                     type: integer
@@ -17805,65 +17854,65 @@ components:
                         - Dolores id porro laudantium eaque aut suscipit.
                         - Velit id quam omnis totam.
                         - Dolorem ut exercitationem corrupti nam laudantium.
+                      entity_type: COMPANY
                       id: 550e8400-e29b-41d4-a716-446655440000
                       level: 1
                       name: Acme Corporation
-                      organization_type: CORPORATION
                       status: ACTIVE
                     - children:
                         - Dolores id porro laudantium eaque aut suscipit.
                         - Velit id quam omnis totam.
                         - Dolorem ut exercitationem corrupti nam laudantium.
+                      entity_type: COMPANY
                       id: 550e8400-e29b-41d4-a716-446655440000
                       level: 1
                       name: Acme Corporation
-                      organization_type: CORPORATION
                       status: ACTIVE
                     - children:
                         - Dolores id porro laudantium eaque aut suscipit.
                         - Velit id quam omnis totam.
                         - Dolorem ut exercitationem corrupti nam laudantium.
+                      entity_type: COMPANY
                       id: 550e8400-e29b-41d4-a716-446655440000
                       level: 1
                       name: Acme Corporation
-                      organization_type: CORPORATION
                       status: ACTIVE
                     - children:
                         - Dolores id porro laudantium eaque aut suscipit.
                         - Velit id quam omnis totam.
                         - Dolorem ut exercitationem corrupti nam laudantium.
+                      entity_type: COMPANY
                       id: 550e8400-e29b-41d4-a716-446655440000
                       level: 1
                       name: Acme Corporation
-                      organization_type: CORPORATION
                       status: ACTIVE
                 children:
                     - children:
                         - Dolores id porro laudantium eaque aut suscipit.
                         - Velit id quam omnis totam.
                         - Dolorem ut exercitationem corrupti nam laudantium.
+                      entity_type: COMPANY
                       id: 550e8400-e29b-41d4-a716-446655440000
                       level: 1
                       name: Acme Corporation
-                      organization_type: CORPORATION
                       status: ACTIVE
                     - children:
                         - Dolores id porro laudantium eaque aut suscipit.
                         - Velit id quam omnis totam.
                         - Dolorem ut exercitationem corrupti nam laudantium.
+                      entity_type: COMPANY
                       id: 550e8400-e29b-41d4-a716-446655440000
                       level: 1
                       name: Acme Corporation
-                      organization_type: CORPORATION
                       status: ACTIVE
                     - children:
                         - Dolores id porro laudantium eaque aut suscipit.
                         - Velit id quam omnis totam.
                         - Dolorem ut exercitationem corrupti nam laudantium.
+                      entity_type: COMPANY
                       id: 550e8400-e29b-41d4-a716-446655440000
                       level: 1
                       name: Acme Corporation
-                      organization_type: CORPORATION
                       status: ACTIVE
                 depth: 3
                 root:
@@ -17871,10 +17920,10 @@ components:
                         - Dolores id porro laudantium eaque aut suscipit.
                         - Velit id quam omnis totam.
                         - Dolorem ut exercitationem corrupti nam laudantium.
+                    entity_type: COMPANY
                     id: 550e8400-e29b-41d4-a716-446655440000
                     level: 1
                     name: Acme Corporation
-                    organization_type: CORPORATION
                     status: ACTIVE
             required:
                 - root
@@ -17895,6 +17944,21 @@ components:
                         - Ad sit omnis.
                         - Odit enim voluptatem.
                         - Officia molestiae adipisci.
+                entity_type:
+                    type: string
+                    description: Type of entity
+                    example: COMPANY
+                    enum:
+                        - COMPANY
+                        - SUBSIDIARY
+                        - REGION
+                        - BRANCH
+                        - LOCATION
+                        - DEPARTMENT
+                        - DIVISION
+                        - COST_CENTER
+                        - PROJECT
+                        - BUDGET_UNIT
                 id:
                     type: string
                     description: Organization ID
@@ -17911,17 +17975,6 @@ components:
                     example: Acme Corporation
                     minLength: 1
                     maxLength: 200
-                organization_type:
-                    type: string
-                    description: Type of organization
-                    example: CORPORATION
-                    enum:
-                        - CORPORATION
-                        - LLC
-                        - PARTNERSHIP
-                        - SOLE_PROPRIETORSHIP
-                        - NON_PROFIT
-                        - GOVERNMENT
                 status:
                     type: string
                     description: Organization status
@@ -17937,15 +17990,15 @@ components:
                     - Qui illum explicabo perspiciatis soluta atque eum.
                     - Ut deleniti non numquam.
                     - Dolor hic et cupiditate voluptatibus amet ipsa.
+                entity_type: COMPANY
                 id: 550e8400-e29b-41d4-a716-446655440000
                 level: 1
                 name: Acme Corporation
-                organization_type: CORPORATION
                 status: ACTIVE
             required:
                 - id
                 - name
-                - organization_type
+                - entity_type
                 - status
                 - children
                 - level
@@ -22189,6 +22242,21 @@ components:
                     description: Number of employees
                     example: 500
                     format: int64
+                entity_type:
+                    type: string
+                    description: Type of entity in the organizational hierarchy
+                    example: COMPANY
+                    enum:
+                        - COMPANY
+                        - SUBSIDIARY
+                        - REGION
+                        - BRANCH
+                        - LOCATION
+                        - DEPARTMENT
+                        - DIVISION
+                        - COST_CENTER
+                        - PROJECT
+                        - BUDGET_UNIT
                 id:
                     type: string
                     description: Organization ID
@@ -22209,6 +22277,18 @@ components:
                     description: Jurisdiction of incorporation
                     example: Delaware, USA
                     maxLength: 100
+                legal_entity_type:
+                    type: string
+                    description: Legal entity type (Corporation, LLC, etc.)
+                    example: CORPORATION
+                    enum:
+                        - CORPORATION
+                        - LLC
+                        - PARTNERSHIP
+                        - SOLE_PROPRIETORSHIP
+                        - NON_PROFIT
+                        - GOVERNMENT
+                        - OTHER
                 legal_name:
                     type: string
                     description: Legal business name
@@ -22220,17 +22300,6 @@ components:
                     example: Acme Corporation
                     minLength: 1
                     maxLength: 200
-                organization_type:
-                    type: string
-                    description: Type of organization
-                    example: CORPORATION
-                    enum:
-                        - CORPORATION
-                        - LLC
-                        - PARTNERSHIP
-                        - SOLE_PROPRIETORSHIP
-                        - NON_PROFIT
-                        - GOVERNMENT
                 parent_id:
                     type: string
                     description: Parent organization ID
@@ -22321,13 +22390,14 @@ components:
                 description: Leading provider of innovative business solutions
                 display_name: ACME Corp
                 employee_count: 500
+                entity_type: COMPANY
                 id: 550e8400-e29b-41d4-a716-446655440000
                 incorporation_date: "2020-01-15"
                 industry: Technology
                 jurisdiction: Delaware, USA
+                legal_entity_type: CORPORATION
                 legal_name: Acme Corporation Inc.
                 name: Acme Corporation
-                organization_type: CORPORATION
                 parent_id: 550e8400-e29b-41d4-a716-446655440001
                 registration_number: REG123456789
                 settings:
@@ -22442,6 +22512,21 @@ components:
                     description: Number of employees
                     example: 500
                     format: int64
+                entity_type:
+                    type: string
+                    description: Type of entity in hierarchy
+                    example: COMPANY
+                    enum:
+                        - COMPANY
+                        - SUBSIDIARY
+                        - REGION
+                        - BRANCH
+                        - LOCATION
+                        - DEPARTMENT
+                        - DIVISION
+                        - COST_CENTER
+                        - PROJECT
+                        - BUDGET_UNIT
                 incorporation_date:
                     type: string
                     description: Date of incorporation
@@ -22457,6 +22542,18 @@ components:
                     description: Jurisdiction of incorporation
                     example: Delaware, USA
                     maxLength: 100
+                legal_entity_type:
+                    type: string
+                    description: Legal entity type (Corporation, LLC, etc.)
+                    example: CORPORATION
+                    enum:
+                        - CORPORATION
+                        - LLC
+                        - PARTNERSHIP
+                        - SOLE_PROPRIETORSHIP
+                        - NON_PROFIT
+                        - GOVERNMENT
+                        - OTHER
                 legal_name:
                     type: string
                     description: Legal business name
@@ -22468,17 +22565,6 @@ components:
                     example: Acme Corporation
                     minLength: 1
                     maxLength: 200
-                organization_type:
-                    type: string
-                    description: Type of organization
-                    example: CORPORATION
-                    enum:
-                        - CORPORATION
-                        - LLC
-                        - PARTNERSHIP
-                        - SOLE_PROPRIETORSHIP
-                        - NON_PROFIT
-                        - GOVERNMENT
                 parent_id:
                     type: string
                     description: Parent organization ID
@@ -22542,12 +22628,13 @@ components:
                 description: Leading provider of innovative business solutions
                 display_name: ACME Corp
                 employee_count: 500
+                entity_type: COMPANY
                 incorporation_date: "2020-01-15"
                 industry: Technology
                 jurisdiction: Delaware, USA
+                legal_entity_type: CORPORATION
                 legal_name: Acme Corporation Inc.
                 name: Acme Corporation
-                organization_type: CORPORATION
                 parent_id: 550e8400-e29b-41d4-a716-446655440001
                 registration_number: REG123456789
                 settings:

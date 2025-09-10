@@ -3,7 +3,11 @@
 # Test script for Tenant API with native middleware
 # This script tests the tenant endpoints to validate our Day 4 native middleware implementation
 
-BASE_URL="http://localhost:8090"
+# Source environment configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/setup_env.sh"
+
+BASE_URL="http://localhost:${SERVER_PORT}"
 TENANT_ID="550e8400-e29b-41d4-a716-446655440000"
 
 echo "🧪 Testing Tenant API with Native Middleware"

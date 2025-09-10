@@ -5,9 +5,12 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"goa.design/goa/v3/pkg"
 
 	"github.com/niiniyare/erp/internal/api/gen/organization"
 	"github.com/niiniyare/erp/internal/core/entity"
@@ -1068,7 +1071,7 @@ func (h *OrganizationGoaHandler) Create(ctx context.Context, p *organization.Cre
 		tracing.WithSpanKind(tracing.SpanKindServer),
 		tracing.WithAttributes(
 			attribute.String("organization.name", p.Name),
-			attribute.String("organization.type", string(p.OrganizationType)),
+			attribute.String("entity.type", string(p.EntityType)),
 		))
 	defer span.End()
 
@@ -1078,18 +1081,89 @@ func (h *OrganizationGoaHandler) Create(ctx context.Context, p *organization.Cre
 	})
 	defer timer.Stop()
 
-	// TODO: Integrate with existing entity creation logic using h.entityService.CreateEntity
+	// Convert GOA payload to entity domain request
+	req := entity.CreateEntityRequest{
+		Name:     p.Name,
+		Code:     generateEntityCode(p.Name), // Generate code from name
+		Type:     entity.EntityType(p.EntityType),
+		IsActive: true,
+		IsHidden: false,
+	}
+
+	// Set parent ID if provided
+	if p.ParentID != nil {
+		if parentUUID, err := uuid.Parse(*p.ParentID); err == nil {
+			req.ParentID = &parentUUID
+		}
+	}
+
+	// Add additional fields if provided
+	if p.Settings != nil || p.Description != nil {
+		req.Metadata = make(map[string]any)
+		if p.Description != nil {
+			req.Metadata["description"] = *p.Description
+		}
+		if p.LegalName != nil {
+			req.Metadata["legal_name"] = *p.LegalName
+		}
+		if p.LegalEntityType != nil {
+			req.Metadata["legal_entity_type"] = *p.LegalEntityType
+		}
+		if p.Website != nil {
+			req.Metadata["website"] = *p.Website
+		}
+		if p.Industry != nil {
+			req.Metadata["industry"] = *p.Industry
+		}
+	}
+
+	// Create entity through domain service
+	entityResult, err := h.entityService.CreateEntity(ctx, req)
+	if err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("organization_create_errors_total", metrics.Fields{
+			"entity_type": string(p.EntityType),
+		})
+		return nil, "", mapEntityError(err)
+	}
+
+	// Convert entity result to GOA organization
 	org := &organization.Organization{
-		ID:               "mock-org-id",
-		Name:             p.Name,
-		OrganizationType: p.OrganizationType,
-		Status:           "ACTIVE",
-		CreatedAt:        "2024-01-01T00:00:00Z",
-		UpdatedAt:        "2024-01-01T00:00:00Z",
+		ID:          entityResult.ID.String(),
+		Name:        entityResult.Name,
+		EntityType:  organization.EntityType(entityResult.Type),
+		Status:      organization.OrganizationStatus("ACTIVE"),
+		CreatedAt:   entityResult.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   entityResult.UpdatedAt.Format(time.RFC3339),
+	}
+
+	// Add optional fields from metadata
+	if entityResult.Metadata != nil {
+		if desc, ok := entityResult.Metadata["description"].(string); ok {
+			org.Description = &desc
+		}
+		if legalName, ok := entityResult.Metadata["legal_name"].(string); ok {
+			org.LegalName = &legalName
+		}
+		if legalType, ok := entityResult.Metadata["legal_entity_type"].(string); ok {
+			org.LegalEntityType = &legalType
+		}
+		if website, ok := entityResult.Metadata["website"].(string); ok {
+			org.Website = &website
+		}
+		if industry, ok := entityResult.Metadata["industry"].(string); ok {
+			org.Industry = &industry
+		}
+	}
+
+	// Set parent ID if exists
+	if entityResult.ParentID != nil {
+		parentIDStr := entityResult.ParentID.String()
+		org.ParentID = &parentIDStr
 	}
 
 	h.metrics.IncrementCounter("organization_create_total", metrics.Fields{
-		"organization_type": p.OrganizationType,
+		"entity_type": string(p.EntityType),
 	})
 	span.SetAttributes(attribute.String("result.organization_id", org.ID))
 
@@ -1112,14 +1186,59 @@ func (h *OrganizationGoaHandler) Get(ctx context.Context, p *organization.GetPay
 	})
 	defer timer.Stop()
 
-	// TODO: Integrate with existing entity retrieval logic using h.entityService.GetEntityByID
+	// Parse organization ID
+	orgUUID, err := uuid.Parse(p.ID)
+	if err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("organization_get_errors_total", metrics.Fields{
+			"error_type": "invalid_id",
+		})
+		return nil, "", organization.MakeBadRequest(err)
+	}
+
+	// Get entity through domain service
+	entityResult, err := h.entityService.GetEntityByID(ctx, orgUUID)
+	if err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("organization_get_errors_total", metrics.Fields{
+			"error_type": "not_found",
+		})
+		return nil, "", mapEntityError(err)
+	}
+
+	// Convert entity to GOA organization
 	org := &organization.Organization{
-		ID:               p.ID,
-		Name:             "Mock Organization",
-		OrganizationType: "CORPORATION",
-		Status:           "ACTIVE",
-		CreatedAt:        "2024-01-01T00:00:00Z",
-		UpdatedAt:        "2024-01-01T00:00:00Z",
+		ID:         entityResult.ID.String(),
+		Name:       entityResult.Name,
+		EntityType: organization.EntityType(entityResult.Type),
+		Status:     organization.OrganizationStatus("ACTIVE"),
+		CreatedAt:  entityResult.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:  entityResult.UpdatedAt.Format(time.RFC3339),
+	}
+
+	// Add optional fields from metadata
+	if entityResult.Metadata != nil {
+		if desc, ok := entityResult.Metadata["description"].(string); ok {
+			org.Description = &desc
+		}
+		if legalName, ok := entityResult.Metadata["legal_name"].(string); ok {
+			org.LegalName = &legalName
+		}
+		if legalType, ok := entityResult.Metadata["legal_entity_type"].(string); ok {
+			org.LegalEntityType = &legalType
+		}
+		if website, ok := entityResult.Metadata["website"].(string); ok {
+			org.Website = &website
+		}
+		if industry, ok := entityResult.Metadata["industry"].(string); ok {
+			org.Industry = &industry
+		}
+	}
+
+	// Set parent ID if exists
+	if entityResult.ParentID != nil {
+		parentIDStr := entityResult.ParentID.String()
+		org.ParentID = &parentIDStr
 	}
 
 	h.metrics.IncrementCounter("organization_get_total", metrics.Fields{})
@@ -1167,12 +1286,12 @@ func (h *OrganizationGoaHandler) Update(ctx context.Context, p *organization.Upd
 
 	// TODO: Integrate with existing entity update logic using h.entityService.UpdateEntity
 	org := &organization.Organization{
-		ID:               p.ID,
-		Name:             *p.Name,
-		OrganizationType: *p.OrganizationType,
-		Status:           *p.Status,
-		CreatedAt:        "2024-01-01T00:00:00Z",
-		UpdatedAt:        "2024-01-01T00:00:00Z",
+		ID:         p.ID,
+		Name:       *p.Name,
+		EntityType: *p.EntityType,
+		Status:     *p.Status,
+		CreatedAt:  "2024-01-01T00:00:00Z",
+		UpdatedAt:  "2024-01-01T00:00:00Z",
 	}
 
 	h.metrics.IncrementCounter("organization_update_total", metrics.Fields{})
@@ -1198,7 +1317,7 @@ func (h *OrganizationGoaHandler) Hierarchy(ctx context.Context, p *organization.
 
 	// TODO: Integrate with existing entity hierarchy logic using h.entityService.GetEntityWithHierarchy
 	result := &organization.OrganizationHierarchy{
-		Root:      &organization.OrganizationNode{ID: p.ID, Name: "Root Org", OrganizationType: "CORPORATION", Status: "ACTIVE", Children: []string{}, Level: 0},
+		Root:      &organization.OrganizationNode{ID: p.ID, Name: "Root Org", EntityType: "COMPANY", Status: "ACTIVE", Children: []string{}, Level: 0},
 		Children:  []*organization.OrganizationNode{},
 		Ancestors: []*organization.OrganizationNode{},
 		Depth:     p.Depth,
@@ -1231,4 +1350,36 @@ func (h *OrganizationGoaHandler) Archive(ctx context.Context, p *organization.Ar
 	// TODO: Integrate with existing entity archival logic using h.entityService.DeleteEntity
 	h.metrics.IncrementCounter("organization_archive_total", metrics.Fields{})
 	return nil
+}
+
+// Helper functions for organization GOA handler
+
+// generateEntityCode creates a standardized entity code from the name
+func generateEntityCode(name string) string {
+	// Convert to uppercase, replace spaces with underscores, and limit length
+	code := strings.ReplaceAll(strings.ToUpper(name), " ", "_")
+	if len(code) > 20 {
+		code = code[:20]
+	}
+	return code
+}
+
+// mapEntityError converts domain errors to GOA service errors
+func mapEntityError(err error) error {
+	switch {
+	case errors.Is(err, sharedErrors.ErrEntityNotFound):
+		return organization.MakeNotFound(err)
+	case errors.Is(err, sharedErrors.ErrEntityNameExists):
+		return organization.MakeConflict(err)
+	case errors.Is(err, sharedErrors.ErrEntityCodeExists):
+		return organization.MakeConflict(err)
+	case errors.Is(err, sharedErrors.ErrInvalidInput):
+		return organization.MakeBadRequest(err)
+	case errors.Is(err, sharedErrors.ErrInvalidEntityType):
+		return organization.MakeBadRequest(err)
+	case sharedErrors.IsValidationError(err):
+		return organization.MakeBadRequest(err)
+	default:
+		return goa.NewServiceError(err, "internal_error", false, false, false)
+	}
 }

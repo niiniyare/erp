@@ -24,8 +24,10 @@ type CreateRequestBody struct {
 	LegalName *string `form:"legal_name,omitempty" json:"legal_name,omitempty" xml:"legal_name,omitempty"`
 	// Display name
 	DisplayName *string `form:"display_name,omitempty" json:"display_name,omitempty" xml:"display_name,omitempty"`
-	// Type of organization
-	OrganizationType *string `form:"organization_type,omitempty" json:"organization_type,omitempty" xml:"organization_type,omitempty"`
+	// Type of entity in hierarchy
+	EntityType *string `form:"entity_type,omitempty" json:"entity_type,omitempty" xml:"entity_type,omitempty"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Tax identification number
 	TaxID *string `form:"tax_id,omitempty" json:"tax_id,omitempty" xml:"tax_id,omitempty"`
 	// Business registration number
@@ -61,8 +63,10 @@ type UpdateRequestBody struct {
 	LegalName *string `form:"legal_name,omitempty" json:"legal_name,omitempty" xml:"legal_name,omitempty"`
 	// Display name
 	DisplayName *string `form:"display_name,omitempty" json:"display_name,omitempty" xml:"display_name,omitempty"`
-	// Type of organization
-	OrganizationType *string `form:"organization_type,omitempty" json:"organization_type,omitempty" xml:"organization_type,omitempty"`
+	// Type of entity in hierarchy
+	EntityType *string `form:"entity_type,omitempty" json:"entity_type,omitempty" xml:"entity_type,omitempty"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Organization status
 	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
 	// Tax identification number
@@ -102,8 +106,10 @@ type CreateResponseBody struct {
 	LegalName *string `form:"legal_name,omitempty" json:"legal_name,omitempty" xml:"legal_name,omitempty"`
 	// Display name
 	DisplayName *string `form:"display_name,omitempty" json:"display_name,omitempty" xml:"display_name,omitempty"`
-	// Type of organization
-	OrganizationType string `form:"organization_type" json:"organization_type" xml:"organization_type"`
+	// Type of entity in hierarchy
+	EntityType string `form:"entity_type" json:"entity_type" xml:"entity_type"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Organization status
 	Status string `form:"status" json:"status" xml:"status"`
 	// Tax identification number
@@ -147,8 +153,10 @@ type CreateResponseBodyMinimal struct {
 	ID string `form:"id" json:"id" xml:"id"`
 	// Organization name
 	Name string `form:"name" json:"name" xml:"name"`
-	// Type of organization
-	OrganizationType string `form:"organization_type" json:"organization_type" xml:"organization_type"`
+	// Type of entity in hierarchy
+	EntityType string `form:"entity_type" json:"entity_type" xml:"entity_type"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Organization status
 	Status string `form:"status" json:"status" xml:"status"`
 }
@@ -162,8 +170,10 @@ type CreateResponseBodyTree struct {
 	Name string `form:"name" json:"name" xml:"name"`
 	// Display name
 	DisplayName *string `form:"display_name,omitempty" json:"display_name,omitempty" xml:"display_name,omitempty"`
-	// Type of organization
-	OrganizationType string `form:"organization_type" json:"organization_type" xml:"organization_type"`
+	// Type of entity in hierarchy
+	EntityType string `form:"entity_type" json:"entity_type" xml:"entity_type"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Organization status
 	Status string `form:"status" json:"status" xml:"status"`
 	// Parent organization ID
@@ -181,8 +191,10 @@ type GetResponseBody struct {
 	LegalName *string `form:"legal_name,omitempty" json:"legal_name,omitempty" xml:"legal_name,omitempty"`
 	// Display name
 	DisplayName *string `form:"display_name,omitempty" json:"display_name,omitempty" xml:"display_name,omitempty"`
-	// Type of organization
-	OrganizationType string `form:"organization_type" json:"organization_type" xml:"organization_type"`
+	// Type of entity in hierarchy
+	EntityType string `form:"entity_type" json:"entity_type" xml:"entity_type"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Organization status
 	Status string `form:"status" json:"status" xml:"status"`
 	// Tax identification number
@@ -226,8 +238,10 @@ type GetResponseBodyMinimal struct {
 	ID string `form:"id" json:"id" xml:"id"`
 	// Organization name
 	Name string `form:"name" json:"name" xml:"name"`
-	// Type of organization
-	OrganizationType string `form:"organization_type" json:"organization_type" xml:"organization_type"`
+	// Type of entity in hierarchy
+	EntityType string `form:"entity_type" json:"entity_type" xml:"entity_type"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Organization status
 	Status string `form:"status" json:"status" xml:"status"`
 }
@@ -241,8 +255,10 @@ type GetResponseBodyTree struct {
 	Name string `form:"name" json:"name" xml:"name"`
 	// Display name
 	DisplayName *string `form:"display_name,omitempty" json:"display_name,omitempty" xml:"display_name,omitempty"`
-	// Type of organization
-	OrganizationType string `form:"organization_type" json:"organization_type" xml:"organization_type"`
+	// Type of entity in hierarchy
+	EntityType string `form:"entity_type" json:"entity_type" xml:"entity_type"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Organization status
 	Status string `form:"status" json:"status" xml:"status"`
 	// Parent organization ID
@@ -269,8 +285,10 @@ type UpdateResponseBody struct {
 	LegalName *string `form:"legal_name,omitempty" json:"legal_name,omitempty" xml:"legal_name,omitempty"`
 	// Display name
 	DisplayName *string `form:"display_name,omitempty" json:"display_name,omitempty" xml:"display_name,omitempty"`
-	// Type of organization
-	OrganizationType string `form:"organization_type" json:"organization_type" xml:"organization_type"`
+	// Type of entity in hierarchy
+	EntityType string `form:"entity_type" json:"entity_type" xml:"entity_type"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Organization status
 	Status string `form:"status" json:"status" xml:"status"`
 	// Tax identification number
@@ -314,8 +332,10 @@ type UpdateResponseBodyMinimal struct {
 	ID string `form:"id" json:"id" xml:"id"`
 	// Organization name
 	Name string `form:"name" json:"name" xml:"name"`
-	// Type of organization
-	OrganizationType string `form:"organization_type" json:"organization_type" xml:"organization_type"`
+	// Type of entity in hierarchy
+	EntityType string `form:"entity_type" json:"entity_type" xml:"entity_type"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Organization status
 	Status string `form:"status" json:"status" xml:"status"`
 }
@@ -329,8 +349,10 @@ type UpdateResponseBodyTree struct {
 	Name string `form:"name" json:"name" xml:"name"`
 	// Display name
 	DisplayName *string `form:"display_name,omitempty" json:"display_name,omitempty" xml:"display_name,omitempty"`
-	// Type of organization
-	OrganizationType string `form:"organization_type" json:"organization_type" xml:"organization_type"`
+	// Type of entity in hierarchy
+	EntityType string `form:"entity_type" json:"entity_type" xml:"entity_type"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Organization status
 	Status string `form:"status" json:"status" xml:"status"`
 	// Parent organization ID
@@ -877,8 +899,10 @@ type OrganizationResponseBody struct {
 	LegalName *string `form:"legal_name,omitempty" json:"legal_name,omitempty" xml:"legal_name,omitempty"`
 	// Display name
 	DisplayName *string `form:"display_name,omitempty" json:"display_name,omitempty" xml:"display_name,omitempty"`
-	// Type of organization
-	OrganizationType string `form:"organization_type" json:"organization_type" xml:"organization_type"`
+	// Type of entity in hierarchy
+	EntityType string `form:"entity_type" json:"entity_type" xml:"entity_type"`
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Organization status
 	Status string `form:"status" json:"status" xml:"status"`
 	// Tax identification number
@@ -937,8 +961,8 @@ type OrganizationNodeResponseBody struct {
 	ID string `form:"id" json:"id" xml:"id"`
 	// Organization name
 	Name string `form:"name" json:"name" xml:"name"`
-	// Type of organization
-	OrganizationType string `form:"organization_type" json:"organization_type" xml:"organization_type"`
+	// Type of entity
+	EntityType string `form:"entity_type" json:"entity_type" xml:"entity_type"`
 	// Organization status
 	Status string `form:"status" json:"status" xml:"status"`
 	// Child organization IDs
@@ -1038,7 +1062,8 @@ func NewCreateResponseBody(res *organizationviews.OrganizationView) *CreateRespo
 		Name:               *res.Name,
 		LegalName:          res.LegalName,
 		DisplayName:        res.DisplayName,
-		OrganizationType:   string(*res.OrganizationType),
+		EntityType:         string(*res.EntityType),
+		LegalEntityType:    res.LegalEntityType,
 		Status:             string(*res.Status),
 		TaxID:              res.TaxID,
 		RegistrationNumber: res.RegistrationNumber,
@@ -1076,10 +1101,11 @@ func NewCreateResponseBody(res *organizationviews.OrganizationView) *CreateRespo
 // of the "create" endpoint of the "organization" service.
 func NewCreateResponseBodyMinimal(res *organizationviews.OrganizationView) *CreateResponseBodyMinimal {
 	body := &CreateResponseBodyMinimal{
-		ID:               *res.ID,
-		Name:             *res.Name,
-		OrganizationType: string(*res.OrganizationType),
-		Status:           string(*res.Status),
+		ID:              *res.ID,
+		Name:            *res.Name,
+		EntityType:      string(*res.EntityType),
+		LegalEntityType: res.LegalEntityType,
+		Status:          string(*res.Status),
 	}
 	return body
 }
@@ -1088,12 +1114,13 @@ func NewCreateResponseBodyMinimal(res *organizationviews.OrganizationView) *Crea
 // the "create" endpoint of the "organization" service.
 func NewCreateResponseBodyTree(res *organizationviews.OrganizationView) *CreateResponseBodyTree {
 	body := &CreateResponseBodyTree{
-		ID:               *res.ID,
-		Name:             *res.Name,
-		DisplayName:      res.DisplayName,
-		OrganizationType: string(*res.OrganizationType),
-		Status:           string(*res.Status),
-		ParentID:         res.ParentID,
+		ID:              *res.ID,
+		Name:            *res.Name,
+		DisplayName:     res.DisplayName,
+		EntityType:      string(*res.EntityType),
+		LegalEntityType: res.LegalEntityType,
+		Status:          string(*res.Status),
+		ParentID:        res.ParentID,
 	}
 	return body
 }
@@ -1106,7 +1133,8 @@ func NewGetResponseBody(res *organizationviews.OrganizationView) *GetResponseBod
 		Name:               *res.Name,
 		LegalName:          res.LegalName,
 		DisplayName:        res.DisplayName,
-		OrganizationType:   string(*res.OrganizationType),
+		EntityType:         string(*res.EntityType),
+		LegalEntityType:    res.LegalEntityType,
 		Status:             string(*res.Status),
 		TaxID:              res.TaxID,
 		RegistrationNumber: res.RegistrationNumber,
@@ -1144,10 +1172,11 @@ func NewGetResponseBody(res *organizationviews.OrganizationView) *GetResponseBod
 // the "get" endpoint of the "organization" service.
 func NewGetResponseBodyMinimal(res *organizationviews.OrganizationView) *GetResponseBodyMinimal {
 	body := &GetResponseBodyMinimal{
-		ID:               *res.ID,
-		Name:             *res.Name,
-		OrganizationType: string(*res.OrganizationType),
-		Status:           string(*res.Status),
+		ID:              *res.ID,
+		Name:            *res.Name,
+		EntityType:      string(*res.EntityType),
+		LegalEntityType: res.LegalEntityType,
+		Status:          string(*res.Status),
 	}
 	return body
 }
@@ -1156,12 +1185,13 @@ func NewGetResponseBodyMinimal(res *organizationviews.OrganizationView) *GetResp
 // "get" endpoint of the "organization" service.
 func NewGetResponseBodyTree(res *organizationviews.OrganizationView) *GetResponseBodyTree {
 	body := &GetResponseBodyTree{
-		ID:               *res.ID,
-		Name:             *res.Name,
-		DisplayName:      res.DisplayName,
-		OrganizationType: string(*res.OrganizationType),
-		Status:           string(*res.Status),
-		ParentID:         res.ParentID,
+		ID:              *res.ID,
+		Name:            *res.Name,
+		DisplayName:     res.DisplayName,
+		EntityType:      string(*res.EntityType),
+		LegalEntityType: res.LegalEntityType,
+		Status:          string(*res.Status),
+		ParentID:        res.ParentID,
 	}
 	return body
 }
@@ -1192,7 +1222,8 @@ func NewUpdateResponseBody(res *organizationviews.OrganizationView) *UpdateRespo
 		Name:               *res.Name,
 		LegalName:          res.LegalName,
 		DisplayName:        res.DisplayName,
-		OrganizationType:   string(*res.OrganizationType),
+		EntityType:         string(*res.EntityType),
+		LegalEntityType:    res.LegalEntityType,
 		Status:             string(*res.Status),
 		TaxID:              res.TaxID,
 		RegistrationNumber: res.RegistrationNumber,
@@ -1230,10 +1261,11 @@ func NewUpdateResponseBody(res *organizationviews.OrganizationView) *UpdateRespo
 // of the "update" endpoint of the "organization" service.
 func NewUpdateResponseBodyMinimal(res *organizationviews.OrganizationView) *UpdateResponseBodyMinimal {
 	body := &UpdateResponseBodyMinimal{
-		ID:               *res.ID,
-		Name:             *res.Name,
-		OrganizationType: string(*res.OrganizationType),
-		Status:           string(*res.Status),
+		ID:              *res.ID,
+		Name:            *res.Name,
+		EntityType:      string(*res.EntityType),
+		LegalEntityType: res.LegalEntityType,
+		Status:          string(*res.Status),
 	}
 	return body
 }
@@ -1242,12 +1274,13 @@ func NewUpdateResponseBodyMinimal(res *organizationviews.OrganizationView) *Upda
 // the "update" endpoint of the "organization" service.
 func NewUpdateResponseBodyTree(res *organizationviews.OrganizationView) *UpdateResponseBodyTree {
 	body := &UpdateResponseBodyTree{
-		ID:               *res.ID,
-		Name:             *res.Name,
-		DisplayName:      res.DisplayName,
-		OrganizationType: string(*res.OrganizationType),
-		Status:           string(*res.Status),
-		ParentID:         res.ParentID,
+		ID:              *res.ID,
+		Name:            *res.Name,
+		DisplayName:     res.DisplayName,
+		EntityType:      string(*res.EntityType),
+		LegalEntityType: res.LegalEntityType,
+		Status:          string(*res.Status),
+		ParentID:        res.ParentID,
 	}
 	return body
 }
@@ -1623,7 +1656,8 @@ func NewCreateOrganizationPayload(body *CreateRequestBody) *organization.CreateO
 		Name:               *body.Name,
 		LegalName:          body.LegalName,
 		DisplayName:        body.DisplayName,
-		OrganizationType:   organization.OrganizationType(*body.OrganizationType),
+		EntityType:         organization.EntityType(*body.EntityType),
+		LegalEntityType:    body.LegalEntityType,
 		TaxID:              body.TaxID,
 		RegistrationNumber: body.RegistrationNumber,
 		IncorporationDate:  body.IncorporationDate,
@@ -1682,6 +1716,7 @@ func NewUpdateOrganizationPayload(body *UpdateRequestBody, id string) *organizat
 		Name:               body.Name,
 		LegalName:          body.LegalName,
 		DisplayName:        body.DisplayName,
+		LegalEntityType:    body.LegalEntityType,
 		TaxID:              body.TaxID,
 		RegistrationNumber: body.RegistrationNumber,
 		IncorporationDate:  body.IncorporationDate,
@@ -1692,9 +1727,9 @@ func NewUpdateOrganizationPayload(body *UpdateRequestBody, id string) *organizat
 		EmployeeCount:      body.EmployeeCount,
 		ParentID:           body.ParentID,
 	}
-	if body.OrganizationType != nil {
-		organizationType := organization.OrganizationType(*body.OrganizationType)
-		v.OrganizationType = &organizationType
+	if body.EntityType != nil {
+		entityType := organization.EntityType(*body.EntityType)
+		v.EntityType = &entityType
 	}
 	if body.Status != nil {
 		status := organization.OrganizationStatus(*body.Status)
@@ -1742,8 +1777,8 @@ func ValidateCreateRequestBody(body *CreateRequestBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}
-	if body.OrganizationType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("organization_type", "body"))
+	if body.EntityType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("entity_type", "body"))
 	}
 	if body.Name != nil {
 		if utf8.RuneCountInString(*body.Name) < 1 {
@@ -1765,9 +1800,14 @@ func ValidateCreateRequestBody(body *CreateRequestBody) (err error) {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.display_name", *body.DisplayName, utf8.RuneCountInString(*body.DisplayName), 200, false))
 		}
 	}
-	if body.OrganizationType != nil {
-		if !(*body.OrganizationType == "CORPORATION" || *body.OrganizationType == "LLC" || *body.OrganizationType == "PARTNERSHIP" || *body.OrganizationType == "SOLE_PROPRIETORSHIP" || *body.OrganizationType == "NON_PROFIT" || *body.OrganizationType == "GOVERNMENT") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.organization_type", *body.OrganizationType, []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT"}))
+	if body.EntityType != nil {
+		if !(*body.EntityType == "COMPANY" || *body.EntityType == "SUBSIDIARY" || *body.EntityType == "REGION" || *body.EntityType == "BRANCH" || *body.EntityType == "LOCATION" || *body.EntityType == "DEPARTMENT" || *body.EntityType == "DIVISION" || *body.EntityType == "COST_CENTER" || *body.EntityType == "PROJECT" || *body.EntityType == "BUDGET_UNIT") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.entity_type", *body.EntityType, []any{"COMPANY", "SUBSIDIARY", "REGION", "BRANCH", "LOCATION", "DEPARTMENT", "DIVISION", "COST_CENTER", "PROJECT", "BUDGET_UNIT"}))
+		}
+	}
+	if body.LegalEntityType != nil {
+		if !(*body.LegalEntityType == "CORPORATION" || *body.LegalEntityType == "LLC" || *body.LegalEntityType == "PARTNERSHIP" || *body.LegalEntityType == "SOLE_PROPRIETORSHIP" || *body.LegalEntityType == "NON_PROFIT" || *body.LegalEntityType == "GOVERNMENT" || *body.LegalEntityType == "OTHER") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.legal_entity_type", *body.LegalEntityType, []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT", "OTHER"}))
 		}
 	}
 	if body.TaxID != nil {
@@ -1846,9 +1886,14 @@ func ValidateUpdateRequestBody(body *UpdateRequestBody) (err error) {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.display_name", *body.DisplayName, utf8.RuneCountInString(*body.DisplayName), 200, false))
 		}
 	}
-	if body.OrganizationType != nil {
-		if !(*body.OrganizationType == "CORPORATION" || *body.OrganizationType == "LLC" || *body.OrganizationType == "PARTNERSHIP" || *body.OrganizationType == "SOLE_PROPRIETORSHIP" || *body.OrganizationType == "NON_PROFIT" || *body.OrganizationType == "GOVERNMENT") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.organization_type", *body.OrganizationType, []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT"}))
+	if body.EntityType != nil {
+		if !(*body.EntityType == "COMPANY" || *body.EntityType == "SUBSIDIARY" || *body.EntityType == "REGION" || *body.EntityType == "BRANCH" || *body.EntityType == "LOCATION" || *body.EntityType == "DEPARTMENT" || *body.EntityType == "DIVISION" || *body.EntityType == "COST_CENTER" || *body.EntityType == "PROJECT" || *body.EntityType == "BUDGET_UNIT") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.entity_type", *body.EntityType, []any{"COMPANY", "SUBSIDIARY", "REGION", "BRANCH", "LOCATION", "DEPARTMENT", "DIVISION", "COST_CENTER", "PROJECT", "BUDGET_UNIT"}))
+		}
+	}
+	if body.LegalEntityType != nil {
+		if !(*body.LegalEntityType == "CORPORATION" || *body.LegalEntityType == "LLC" || *body.LegalEntityType == "PARTNERSHIP" || *body.LegalEntityType == "SOLE_PROPRIETORSHIP" || *body.LegalEntityType == "NON_PROFIT" || *body.LegalEntityType == "GOVERNMENT" || *body.LegalEntityType == "OTHER") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.legal_entity_type", *body.LegalEntityType, []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT", "OTHER"}))
 		}
 	}
 	if body.Status != nil {

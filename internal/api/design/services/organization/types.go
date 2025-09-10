@@ -9,10 +9,10 @@ import (
 // ENUM DEFINITIONS
 // =============================================================================
 
-var OrganizationType = Type("OrganizationType", String, func() {
-	Description("Type of organization")
-	Enum("CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT")
-	Example("CORPORATION")
+var EntityType = Type("EntityType", String, func() {
+	Description("Type of entity in the organizational hierarchy")
+	Enum("COMPANY", "SUBSIDIARY", "REGION", "BRANCH", "LOCATION", "DEPARTMENT", "DIVISION", "COST_CENTER", "PROJECT", "BUDGET_UNIT")
+	Example("COMPANY")
 })
 
 var OrganizationStatus = Type("OrganizationStatus", String, func() {
@@ -52,7 +52,11 @@ var OrganizationResult = ResultType("application/vnd.organization", func() {
 			MaxLength(200)
 			Example("ACME Corp")
 		})
-		Attribute("organization_type", OrganizationType, "Type of organization")
+		Attribute("entity_type", EntityType, "Type of entity in hierarchy")
+	Attribute("legal_entity_type", String, "Legal entity type (Corporation, LLC, etc.)", func() {
+		Enum("CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT", "OTHER")
+		Example("CORPORATION")
+	})
 		Attribute("status", OrganizationStatus, "Organization status")
 		Attribute("tax_id", String, "Tax identification number", func() {
 			Pattern("^[0-9-]+$")
@@ -94,14 +98,15 @@ var OrganizationResult = ResultType("application/vnd.organization", func() {
 		Attribute("settings", OrganizationSettings, "Organization settings")
 		types.AuditFields()
 	})
-	Required("id", "name", "organization_type", "status", "created_at", "updated_at")
+	Required("id", "name", "entity_type", "status", "created_at", "updated_at")
 
 	View("default", func() {
 		Attribute("id")
 		Attribute("name")
 		Attribute("legal_name")
 		Attribute("display_name")
-		Attribute("organization_type")
+		Attribute("entity_type")
+		Attribute("legal_entity_type")
 		Attribute("status")
 		Attribute("tax_id")
 		Attribute("registration_number")
@@ -124,7 +129,8 @@ var OrganizationResult = ResultType("application/vnd.organization", func() {
 	View("minimal", func() {
 		Attribute("id")
 		Attribute("name")
-		Attribute("organization_type")
+		Attribute("entity_type")
+		Attribute("legal_entity_type")
 		Attribute("status")
 	})
 
@@ -132,7 +138,8 @@ var OrganizationResult = ResultType("application/vnd.organization", func() {
 		Attribute("id")
 		Attribute("name")
 		Attribute("display_name")
-		Attribute("organization_type")
+		Attribute("entity_type")
+		Attribute("legal_entity_type")
 		Attribute("status")
 		Attribute("parent_id")
 	})
@@ -172,7 +179,11 @@ var CreateOrganizationPayload = Type("CreateOrganizationPayload", func() {
 		MaxLength(200)
 		Example("ACME Corp")
 	})
-	Attribute("organization_type", OrganizationType, "Type of organization")
+	Attribute("entity_type", EntityType, "Type of entity in hierarchy")
+	Attribute("legal_entity_type", String, "Legal entity type (Corporation, LLC, etc.)", func() {
+		Enum("CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT", "OTHER")
+		Example("CORPORATION")
+	})
 	Attribute("tax_id", String, "Tax identification number", func() {
 		Pattern("^[0-9-]+$")
 		Example("12-3456789")
@@ -211,7 +222,7 @@ var CreateOrganizationPayload = Type("CreateOrganizationPayload", func() {
 	Attribute("addresses", ArrayOf(AddressInfo), "Organization addresses")
 	Attribute("contacts", ArrayOf(types.ContactInfo), "Organization contacts")
 	Attribute("settings", OrganizationSettings, "Organization settings")
-	Required("name", "organization_type")
+	Required("name", "entity_type")
 })
 
 // UpdateOrganizationPayload describes the payload for updating an organization
@@ -234,7 +245,11 @@ var UpdateOrganizationPayload = Type("UpdateOrganizationPayload", func() {
 		MaxLength(200)
 		Example("ACME Corp")
 	})
-	Attribute("organization_type", OrganizationType, "Type of organization")
+	Attribute("entity_type", EntityType, "Type of entity in hierarchy")
+	Attribute("legal_entity_type", String, "Legal entity type (Corporation, LLC, etc.)", func() {
+		Enum("CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT", "OTHER")
+		Example("CORPORATION")
+	})
 	Attribute("status", OrganizationStatus, "Organization status")
 	Attribute("tax_id", String, "Tax identification number", func() {
 		Pattern("^[0-9-]+$")
@@ -293,9 +308,9 @@ var OrganizationNode = Type("OrganizationNode", func() {
 		MaxLength(200)
 		Example("Acme Corporation")
 	})
-	Attribute("organization_type", String, "Type of organization", func() {
-		Enum("CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT")
-		Example("CORPORATION")
+	Attribute("entity_type", String, "Type of entity", func() {
+		Enum("COMPANY", "SUBSIDIARY", "REGION", "BRANCH", "LOCATION", "DEPARTMENT", "DIVISION", "COST_CENTER", "PROJECT", "BUDGET_UNIT")
+		Example("COMPANY")
 	})
 	Attribute("status", String, "Organization status", func() {
 		Enum("ACTIVE", "INACTIVE", "SUSPENDED", "DISSOLVED")
@@ -305,7 +320,7 @@ var OrganizationNode = Type("OrganizationNode", func() {
 	Attribute("level", UInt, "Level in hierarchy", func() {
 		Example(1)
 	})
-	Required("id", "name", "organization_type", "status", "children", "level")
+	Required("id", "name", "entity_type", "status", "children", "level")
 })
 
 // AddressInfo describes address information

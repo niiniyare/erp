@@ -1068,7 +1068,8 @@ func marshalOrganizationOrganizationToOrganizationResponseBody(v *organization.O
 		Name:               v.Name,
 		LegalName:          v.LegalName,
 		DisplayName:        v.DisplayName,
-		OrganizationType:   string(v.OrganizationType),
+		EntityType:         string(v.EntityType),
+		LegalEntityType:    v.LegalEntityType,
 		Status:             string(v.Status),
 		TaxID:              v.TaxID,
 		RegistrationNumber: v.RegistrationNumber,
@@ -1276,11 +1277,11 @@ func marshalOrganizationPaginationMetaToPaginationMetaResponseBody(v *organizati
 // *organizationviews.OrganizationNodeView.
 func marshalOrganizationviewsOrganizationNodeViewToOrganizationNodeResponseBody(v *organizationviews.OrganizationNodeView) *OrganizationNodeResponseBody {
 	res := &OrganizationNodeResponseBody{
-		ID:               *v.ID,
-		Name:             *v.Name,
-		OrganizationType: *v.OrganizationType,
-		Status:           *v.Status,
-		Level:            *v.Level,
+		ID:         *v.ID,
+		Name:       *v.Name,
+		EntityType: *v.EntityType,
+		Status:     *v.Status,
+		Level:      *v.Level,
 	}
 	if v.Children != nil {
 		res.Children = make([]string, len(v.Children))

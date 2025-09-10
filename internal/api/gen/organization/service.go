@@ -129,8 +129,10 @@ type CreateOrganizationPayload struct {
 	LegalName *string
 	// Display name
 	DisplayName *string
-	// Type of organization
-	OrganizationType OrganizationType
+	// Type of entity in hierarchy
+	EntityType EntityType
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string
 	// Tax identification number
 	TaxID *string
 	// Business registration number
@@ -170,6 +172,9 @@ type DayHours struct {
 	// Break end time
 	BreakEnd *string
 }
+
+// Type of entity in the organizational hierarchy
+type EntityType string
 
 // GetPayload is the payload type of the organization service get method.
 type GetPayload struct {
@@ -222,8 +227,10 @@ type Organization struct {
 	LegalName *string
 	// Display name
 	DisplayName *string
-	// Type of organization
-	OrganizationType OrganizationType
+	// Type of entity in hierarchy
+	EntityType EntityType
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string
 	// Organization status
 	Status OrganizationStatus
 	// Tax identification number
@@ -279,8 +286,8 @@ type OrganizationNode struct {
 	ID string
 	// Organization name
 	Name string
-	// Type of organization
-	OrganizationType string
+	// Type of entity
+	EntityType string
 	// Organization status
 	Status string
 	// Child organization IDs
@@ -307,9 +314,6 @@ type OrganizationSettings struct {
 
 // Status of organization
 type OrganizationStatus string
-
-// Type of organization
-type OrganizationType string
 
 // Pagination metadata
 type PaginationMeta struct {
@@ -338,8 +342,10 @@ type UpdateOrganizationPayload struct {
 	LegalName *string
 	// Display name
 	DisplayName *string
-	// Type of organization
-	OrganizationType *OrganizationType
+	// Type of entity in hierarchy
+	EntityType *EntityType
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string
 	// Organization status
 	Status *OrganizationStatus
 	// Tax identification number
@@ -451,6 +457,7 @@ func newOrganization(vres *organizationviews.OrganizationView) *Organization {
 	res := &Organization{
 		LegalName:          vres.LegalName,
 		DisplayName:        vres.DisplayName,
+		LegalEntityType:    vres.LegalEntityType,
 		TaxID:              vres.TaxID,
 		RegistrationNumber: vres.RegistrationNumber,
 		IncorporationDate:  vres.IncorporationDate,
@@ -469,8 +476,8 @@ func newOrganization(vres *organizationviews.OrganizationView) *Organization {
 	if vres.Name != nil {
 		res.Name = *vres.Name
 	}
-	if vres.OrganizationType != nil {
-		res.OrganizationType = OrganizationType(*vres.OrganizationType)
+	if vres.EntityType != nil {
+		res.EntityType = EntityType(*vres.EntityType)
 	}
 	if vres.Status != nil {
 		res.Status = OrganizationStatus(*vres.Status)
@@ -502,15 +509,17 @@ func newOrganization(vres *organizationviews.OrganizationView) *Organization {
 // newOrganizationMinimal converts projected type Organization to service type
 // Organization.
 func newOrganizationMinimal(vres *organizationviews.OrganizationView) *Organization {
-	res := &Organization{}
+	res := &Organization{
+		LegalEntityType: vres.LegalEntityType,
+	}
 	if vres.ID != nil {
 		res.ID = *vres.ID
 	}
 	if vres.Name != nil {
 		res.Name = *vres.Name
 	}
-	if vres.OrganizationType != nil {
-		res.OrganizationType = OrganizationType(*vres.OrganizationType)
+	if vres.EntityType != nil {
+		res.EntityType = EntityType(*vres.EntityType)
 	}
 	if vres.Status != nil {
 		res.Status = OrganizationStatus(*vres.Status)
@@ -522,8 +531,9 @@ func newOrganizationMinimal(vres *organizationviews.OrganizationView) *Organizat
 // Organization.
 func newOrganizationTree(vres *organizationviews.OrganizationView) *Organization {
 	res := &Organization{
-		DisplayName: vres.DisplayName,
-		ParentID:    vres.ParentID,
+		DisplayName:     vres.DisplayName,
+		LegalEntityType: vres.LegalEntityType,
+		ParentID:        vres.ParentID,
 	}
 	if vres.ID != nil {
 		res.ID = *vres.ID
@@ -531,8 +541,8 @@ func newOrganizationTree(vres *organizationviews.OrganizationView) *Organization
 	if vres.Name != nil {
 		res.Name = *vres.Name
 	}
-	if vres.OrganizationType != nil {
-		res.OrganizationType = OrganizationType(*vres.OrganizationType)
+	if vres.EntityType != nil {
+		res.EntityType = EntityType(*vres.EntityType)
 	}
 	if vres.Status != nil {
 		res.Status = OrganizationStatus(*vres.Status)
@@ -548,6 +558,7 @@ func newOrganizationView(res *Organization) *organizationviews.OrganizationView 
 		Name:               &res.Name,
 		LegalName:          res.LegalName,
 		DisplayName:        res.DisplayName,
+		LegalEntityType:    res.LegalEntityType,
 		TaxID:              res.TaxID,
 		RegistrationNumber: res.RegistrationNumber,
 		IncorporationDate:  res.IncorporationDate,
@@ -562,8 +573,8 @@ func newOrganizationView(res *Organization) *organizationviews.OrganizationView 
 		CreatedBy:          res.CreatedBy,
 		UpdatedBy:          res.UpdatedBy,
 	}
-	organizationType := organizationviews.OrganizationTypeView(res.OrganizationType)
-	vres.OrganizationType = &organizationType
+	entityType := organizationviews.EntityTypeView(res.EntityType)
+	vres.EntityType = &entityType
 	status := organizationviews.OrganizationStatusView(res.Status)
 	vres.Status = &status
 	if res.Addresses != nil {
@@ -588,11 +599,12 @@ func newOrganizationView(res *Organization) *organizationviews.OrganizationView 
 // type OrganizationView using the "minimal" view.
 func newOrganizationViewMinimal(res *Organization) *organizationviews.OrganizationView {
 	vres := &organizationviews.OrganizationView{
-		ID:   &res.ID,
-		Name: &res.Name,
+		ID:              &res.ID,
+		Name:            &res.Name,
+		LegalEntityType: res.LegalEntityType,
 	}
-	organizationType := organizationviews.OrganizationTypeView(res.OrganizationType)
-	vres.OrganizationType = &organizationType
+	entityType := organizationviews.EntityTypeView(res.EntityType)
+	vres.EntityType = &entityType
 	status := organizationviews.OrganizationStatusView(res.Status)
 	vres.Status = &status
 	return vres
@@ -602,13 +614,14 @@ func newOrganizationViewMinimal(res *Organization) *organizationviews.Organizati
 // OrganizationView using the "tree" view.
 func newOrganizationViewTree(res *Organization) *organizationviews.OrganizationView {
 	vres := &organizationviews.OrganizationView{
-		ID:          &res.ID,
-		Name:        &res.Name,
-		DisplayName: res.DisplayName,
-		ParentID:    res.ParentID,
+		ID:              &res.ID,
+		Name:            &res.Name,
+		DisplayName:     res.DisplayName,
+		LegalEntityType: res.LegalEntityType,
+		ParentID:        res.ParentID,
 	}
-	organizationType := organizationviews.OrganizationTypeView(res.OrganizationType)
-	vres.OrganizationType = &organizationType
+	entityType := organizationviews.EntityTypeView(res.EntityType)
+	vres.EntityType = &entityType
 	status := organizationviews.OrganizationStatusView(res.Status)
 	vres.Status = &status
 	return vres
@@ -944,11 +957,11 @@ func transformOrganizationviewsOrganizationNodeViewToOrganizationNode(v *organiz
 		return nil
 	}
 	res := &OrganizationNode{
-		ID:               *v.ID,
-		Name:             *v.Name,
-		OrganizationType: *v.OrganizationType,
-		Status:           *v.Status,
-		Level:            *v.Level,
+		ID:         *v.ID,
+		Name:       *v.Name,
+		EntityType: *v.EntityType,
+		Status:     *v.Status,
+		Level:      *v.Level,
 	}
 	if v.Children != nil {
 		res.Children = make([]string, len(v.Children))
@@ -967,11 +980,11 @@ func transformOrganizationviewsOrganizationNodeViewToOrganizationNode(v *organiz
 // *OrganizationNode.
 func transformOrganizationNodeToOrganizationviewsOrganizationNodeView(v *OrganizationNode) *organizationviews.OrganizationNodeView {
 	res := &organizationviews.OrganizationNodeView{
-		ID:               &v.ID,
-		Name:             &v.Name,
-		OrganizationType: &v.OrganizationType,
-		Status:           &v.Status,
-		Level:            &v.Level,
+		ID:         &v.ID,
+		Name:       &v.Name,
+		EntityType: &v.EntityType,
+		Status:     &v.Status,
+		Level:      &v.Level,
 	}
 	if v.Children != nil {
 		res.Children = make([]string, len(v.Children))

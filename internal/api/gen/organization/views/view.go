@@ -40,8 +40,10 @@ type OrganizationView struct {
 	LegalName *string
 	// Display name
 	DisplayName *string
-	// Type of organization
-	OrganizationType *OrganizationTypeView
+	// Type of entity in hierarchy
+	EntityType *EntityTypeView
+	// Legal entity type (Corporation, LLC, etc.)
+	LegalEntityType *string
 	// Organization status
 	Status *OrganizationStatusView
 	// Tax identification number
@@ -78,8 +80,8 @@ type OrganizationView struct {
 	UpdatedBy *string
 }
 
-// OrganizationTypeView is a type that runs validations on a projected type.
-type OrganizationTypeView string
+// EntityTypeView is a type that runs validations on a projected type.
+type EntityTypeView string
 
 // OrganizationStatusView is a type that runs validations on a projected type.
 type OrganizationStatusView string
@@ -204,8 +206,8 @@ type OrganizationNodeView struct {
 	ID *string
 	// Organization name
 	Name *string
-	// Type of organization
-	OrganizationType *string
+	// Type of entity
+	EntityType *string
 	// Organization status
 	Status *string
 	// Child organization IDs
@@ -223,7 +225,8 @@ var (
 			"name",
 			"legal_name",
 			"display_name",
-			"organization_type",
+			"entity_type",
+			"legal_entity_type",
 			"status",
 			"tax_id",
 			"registration_number",
@@ -245,14 +248,16 @@ var (
 		"minimal": {
 			"id",
 			"name",
-			"organization_type",
+			"entity_type",
+			"legal_entity_type",
 			"status",
 		},
 		"tree": {
 			"id",
 			"name",
 			"display_name",
-			"organization_type",
+			"entity_type",
+			"legal_entity_type",
 			"status",
 			"parent_id",
 		},
@@ -306,8 +311,8 @@ func ValidateOrganizationView(result *OrganizationView) (err error) {
 	if result.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "result"))
 	}
-	if result.OrganizationType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("organization_type", "result"))
+	if result.EntityType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("entity_type", "result"))
 	}
 	if result.Status == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
@@ -341,9 +346,14 @@ func ValidateOrganizationView(result *OrganizationView) (err error) {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("result.display_name", *result.DisplayName, utf8.RuneCountInString(*result.DisplayName), 200, false))
 		}
 	}
-	if result.OrganizationType != nil {
-		if !(string(*result.OrganizationType) == "CORPORATION" || string(*result.OrganizationType) == "LLC" || string(*result.OrganizationType) == "PARTNERSHIP" || string(*result.OrganizationType) == "SOLE_PROPRIETORSHIP" || string(*result.OrganizationType) == "NON_PROFIT" || string(*result.OrganizationType) == "GOVERNMENT") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.organization_type", string(*result.OrganizationType), []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT"}))
+	if result.EntityType != nil {
+		if !(string(*result.EntityType) == "COMPANY" || string(*result.EntityType) == "SUBSIDIARY" || string(*result.EntityType) == "REGION" || string(*result.EntityType) == "BRANCH" || string(*result.EntityType) == "LOCATION" || string(*result.EntityType) == "DEPARTMENT" || string(*result.EntityType) == "DIVISION" || string(*result.EntityType) == "COST_CENTER" || string(*result.EntityType) == "PROJECT" || string(*result.EntityType) == "BUDGET_UNIT") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.entity_type", string(*result.EntityType), []any{"COMPANY", "SUBSIDIARY", "REGION", "BRANCH", "LOCATION", "DEPARTMENT", "DIVISION", "COST_CENTER", "PROJECT", "BUDGET_UNIT"}))
+		}
+	}
+	if result.LegalEntityType != nil {
+		if !(*result.LegalEntityType == "CORPORATION" || *result.LegalEntityType == "LLC" || *result.LegalEntityType == "PARTNERSHIP" || *result.LegalEntityType == "SOLE_PROPRIETORSHIP" || *result.LegalEntityType == "NON_PROFIT" || *result.LegalEntityType == "GOVERNMENT" || *result.LegalEntityType == "OTHER") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.legal_entity_type", *result.LegalEntityType, []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT", "OTHER"}))
 		}
 	}
 	if result.Status != nil {
@@ -426,8 +436,8 @@ func ValidateOrganizationViewMinimal(result *OrganizationView) (err error) {
 	if result.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "result"))
 	}
-	if result.OrganizationType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("organization_type", "result"))
+	if result.EntityType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("entity_type", "result"))
 	}
 	if result.Status == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
@@ -445,9 +455,14 @@ func ValidateOrganizationViewMinimal(result *OrganizationView) (err error) {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 200, false))
 		}
 	}
-	if result.OrganizationType != nil {
-		if !(string(*result.OrganizationType) == "CORPORATION" || string(*result.OrganizationType) == "LLC" || string(*result.OrganizationType) == "PARTNERSHIP" || string(*result.OrganizationType) == "SOLE_PROPRIETORSHIP" || string(*result.OrganizationType) == "NON_PROFIT" || string(*result.OrganizationType) == "GOVERNMENT") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.organization_type", string(*result.OrganizationType), []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT"}))
+	if result.EntityType != nil {
+		if !(string(*result.EntityType) == "COMPANY" || string(*result.EntityType) == "SUBSIDIARY" || string(*result.EntityType) == "REGION" || string(*result.EntityType) == "BRANCH" || string(*result.EntityType) == "LOCATION" || string(*result.EntityType) == "DEPARTMENT" || string(*result.EntityType) == "DIVISION" || string(*result.EntityType) == "COST_CENTER" || string(*result.EntityType) == "PROJECT" || string(*result.EntityType) == "BUDGET_UNIT") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.entity_type", string(*result.EntityType), []any{"COMPANY", "SUBSIDIARY", "REGION", "BRANCH", "LOCATION", "DEPARTMENT", "DIVISION", "COST_CENTER", "PROJECT", "BUDGET_UNIT"}))
+		}
+	}
+	if result.LegalEntityType != nil {
+		if !(*result.LegalEntityType == "CORPORATION" || *result.LegalEntityType == "LLC" || *result.LegalEntityType == "PARTNERSHIP" || *result.LegalEntityType == "SOLE_PROPRIETORSHIP" || *result.LegalEntityType == "NON_PROFIT" || *result.LegalEntityType == "GOVERNMENT" || *result.LegalEntityType == "OTHER") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.legal_entity_type", *result.LegalEntityType, []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT", "OTHER"}))
 		}
 	}
 	if result.Status != nil {
@@ -467,8 +482,8 @@ func ValidateOrganizationViewTree(result *OrganizationView) (err error) {
 	if result.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "result"))
 	}
-	if result.OrganizationType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("organization_type", "result"))
+	if result.EntityType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("entity_type", "result"))
 	}
 	if result.Status == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
@@ -491,9 +506,14 @@ func ValidateOrganizationViewTree(result *OrganizationView) (err error) {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("result.display_name", *result.DisplayName, utf8.RuneCountInString(*result.DisplayName), 200, false))
 		}
 	}
-	if result.OrganizationType != nil {
-		if !(string(*result.OrganizationType) == "CORPORATION" || string(*result.OrganizationType) == "LLC" || string(*result.OrganizationType) == "PARTNERSHIP" || string(*result.OrganizationType) == "SOLE_PROPRIETORSHIP" || string(*result.OrganizationType) == "NON_PROFIT" || string(*result.OrganizationType) == "GOVERNMENT") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.organization_type", string(*result.OrganizationType), []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT"}))
+	if result.EntityType != nil {
+		if !(string(*result.EntityType) == "COMPANY" || string(*result.EntityType) == "SUBSIDIARY" || string(*result.EntityType) == "REGION" || string(*result.EntityType) == "BRANCH" || string(*result.EntityType) == "LOCATION" || string(*result.EntityType) == "DEPARTMENT" || string(*result.EntityType) == "DIVISION" || string(*result.EntityType) == "COST_CENTER" || string(*result.EntityType) == "PROJECT" || string(*result.EntityType) == "BUDGET_UNIT") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.entity_type", string(*result.EntityType), []any{"COMPANY", "SUBSIDIARY", "REGION", "BRANCH", "LOCATION", "DEPARTMENT", "DIVISION", "COST_CENTER", "PROJECT", "BUDGET_UNIT"}))
+		}
+	}
+	if result.LegalEntityType != nil {
+		if !(*result.LegalEntityType == "CORPORATION" || *result.LegalEntityType == "LLC" || *result.LegalEntityType == "PARTNERSHIP" || *result.LegalEntityType == "SOLE_PROPRIETORSHIP" || *result.LegalEntityType == "NON_PROFIT" || *result.LegalEntityType == "GOVERNMENT" || *result.LegalEntityType == "OTHER") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.legal_entity_type", *result.LegalEntityType, []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT", "OTHER"}))
 		}
 	}
 	if result.Status != nil {
@@ -507,11 +527,10 @@ func ValidateOrganizationViewTree(result *OrganizationView) (err error) {
 	return
 }
 
-// ValidateOrganizationTypeView runs the validations defined on
-// OrganizationTypeView.
-func ValidateOrganizationTypeView(result OrganizationTypeView) (err error) {
-	if !(string(result) == "CORPORATION" || string(result) == "LLC" || string(result) == "PARTNERSHIP" || string(result) == "SOLE_PROPRIETORSHIP" || string(result) == "NON_PROFIT" || string(result) == "GOVERNMENT") {
-		err = goa.MergeErrors(err, goa.InvalidEnumValueError("result", string(result), []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT"}))
+// ValidateEntityTypeView runs the validations defined on EntityTypeView.
+func ValidateEntityTypeView(result EntityTypeView) (err error) {
+	if !(string(result) == "COMPANY" || string(result) == "SUBSIDIARY" || string(result) == "REGION" || string(result) == "BRANCH" || string(result) == "LOCATION" || string(result) == "DEPARTMENT" || string(result) == "DIVISION" || string(result) == "COST_CENTER" || string(result) == "PROJECT" || string(result) == "BUDGET_UNIT") {
+		err = goa.MergeErrors(err, goa.InvalidEnumValueError("result", string(result), []any{"COMPANY", "SUBSIDIARY", "REGION", "BRANCH", "LOCATION", "DEPARTMENT", "DIVISION", "COST_CENTER", "PROJECT", "BUDGET_UNIT"}))
 	}
 	return
 }
@@ -758,8 +777,8 @@ func ValidateOrganizationNodeView(result *OrganizationNodeView) (err error) {
 	if result.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "result"))
 	}
-	if result.OrganizationType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("organization_type", "result"))
+	if result.EntityType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("entity_type", "result"))
 	}
 	if result.Status == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
@@ -783,9 +802,9 @@ func ValidateOrganizationNodeView(result *OrganizationNodeView) (err error) {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 200, false))
 		}
 	}
-	if result.OrganizationType != nil {
-		if !(*result.OrganizationType == "CORPORATION" || *result.OrganizationType == "LLC" || *result.OrganizationType == "PARTNERSHIP" || *result.OrganizationType == "SOLE_PROPRIETORSHIP" || *result.OrganizationType == "NON_PROFIT" || *result.OrganizationType == "GOVERNMENT") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.organization_type", *result.OrganizationType, []any{"CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT"}))
+	if result.EntityType != nil {
+		if !(*result.EntityType == "COMPANY" || *result.EntityType == "SUBSIDIARY" || *result.EntityType == "REGION" || *result.EntityType == "BRANCH" || *result.EntityType == "LOCATION" || *result.EntityType == "DEPARTMENT" || *result.EntityType == "DIVISION" || *result.EntityType == "COST_CENTER" || *result.EntityType == "PROJECT" || *result.EntityType == "BUDGET_UNIT") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.entity_type", *result.EntityType, []any{"COMPANY", "SUBSIDIARY", "REGION", "BRANCH", "LOCATION", "DEPARTMENT", "DIVISION", "COST_CENTER", "PROJECT", "BUDGET_UNIT"}))
 		}
 	}
 	if result.Status != nil {

@@ -1272,7 +1272,8 @@ func unmarshalOrganizationResponseBodyToOrganizationOrganization(v *Organization
 		Name:               *v.Name,
 		LegalName:          v.LegalName,
 		DisplayName:        v.DisplayName,
-		OrganizationType:   organization.OrganizationType(*v.OrganizationType),
+		EntityType:         organization.EntityType(*v.EntityType),
+		LegalEntityType:    v.LegalEntityType,
 		Status:             organization.OrganizationStatus(*v.Status),
 		TaxID:              v.TaxID,
 		RegistrationNumber: v.RegistrationNumber,
@@ -1474,11 +1475,11 @@ func unmarshalPaginationMetaResponseBodyToOrganizationPaginationMeta(v *Paginati
 // of type *OrganizationNodeResponseBody.
 func unmarshalOrganizationNodeResponseBodyToOrganizationviewsOrganizationNodeView(v *OrganizationNodeResponseBody) *organizationviews.OrganizationNodeView {
 	res := &organizationviews.OrganizationNodeView{
-		ID:               v.ID,
-		Name:             v.Name,
-		OrganizationType: v.OrganizationType,
-		Status:           v.Status,
-		Level:            v.Level,
+		ID:         v.ID,
+		Name:       v.Name,
+		EntityType: v.EntityType,
+		Status:     v.Status,
+		Level:      v.Level,
 	}
 	res.Children = make([]string, len(v.Children))
 	for i, val := range v.Children {
