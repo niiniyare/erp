@@ -56,38 +56,40 @@ func main() {
 
 	switch serverMode {
 	case "goa-only":
-		// Production mode: Pure GOA server
+		// Production mode: Pure GOA server with native middleware
 		handler = goaServer.Handler
 		logger.Info("Server starting in GOA-only mode (production)", logger.Fields{
 			"port":    infra.Config.Server.Port,
 			"address": ":" + infra.Config.Server.Port,
 			"mode":    "goa-only",
+			"middleware": "native-http",
 		})
 
 	case "migration":
-		// Migration mode: Combined handler (fallback option)
-		ginRouter, err := InitializeGinRouter(services, infra.Metrics, infra.Tracing)
-		if err != nil {
-			logger.Fatal("Failed to initialize Gin router", logger.Fields{"error": err})
-		}
-
-		handler = &CombinedHandler{
-			goaHandler: goaServer.Handler,
-			ginHandler: ginRouter,
-		}
-		logger.Info("Server starting in migration mode (GOA+Gin)", logger.Fields{
+		// Migration mode: DEPRECATED - use GOA-only instead
+		logger.Warn("Migration mode is deprecated - falling back to GOA-only", logger.Fields{
+			"deprecated_mode": "migration",
+			"fallback_mode":   "goa-only",
+			"recommendation":  "Set SERVER_MODE=goa-only or remove env variable",
+		})
+		
+		handler = goaServer.Handler
+		logger.Info("Server starting in GOA-only mode (migration fallback)", logger.Fields{
 			"port":    infra.Config.Server.Port,
 			"address": ":" + infra.Config.Server.Port,
-			"mode":    "migration",
+			"mode":    "goa-only",
+			"note":    "migration mode deprecated",
 		})
 
 	default:
-		logger.Fatal("Invalid server mode", logger.Fields{
-			"mode":         serverMode,
-			"supported":    "goa-only, migration",
-			"default_mode": "goa-only",
-			"env_variable": "SERVER_MODE",
+		logger.Warn("Invalid server mode, using default", logger.Fields{
+			"invalid_mode":  serverMode,
+			"default_mode":  "goa-only",
+			"supported":     "goa-only (migration deprecated)",
+			"env_variable":  "SERVER_MODE",
 		})
+		
+		handler = goaServer.Handler
 	}
 
 	// Start HTTP server

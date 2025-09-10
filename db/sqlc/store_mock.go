@@ -206,6 +206,22 @@ func (mr *MockStoreMockRecorder) BeginTxWithTenant(ctx, tenantID any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTxWithTenant", reflect.TypeOf((*MockStore)(nil).BeginTxWithTenant), ctx, tenantID)
 }
 
+// BeginTxWithTenantFromCtx mocks base method.
+func (m *MockStore) BeginTxWithTenantFromCtx(ctx context.Context) (pgx.Tx, Store, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeginTxWithTenantFromCtx", ctx)
+	ret0, _ := ret[0].(pgx.Tx)
+	ret1, _ := ret[1].(Store)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// BeginTxWithTenantFromCtx indicates an expected call of BeginTxWithTenantFromCtx.
+func (mr *MockStoreMockRecorder) BeginTxWithTenantFromCtx(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTxWithTenantFromCtx", reflect.TypeOf((*MockStore)(nil).BeginTxWithTenantFromCtx), ctx)
+}
+
 // BulkAddComplianceFlags mocks base method.
 func (m *MockStore) BulkAddComplianceFlags(ctx context.Context, arg BulkAddComplianceFlagsParams) error {
 	m.ctrl.T.Helper()
@@ -6703,6 +6719,20 @@ func (mr *MockStoreMockRecorder) SetTenantContext(ctx, tenantID any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTenantContext", reflect.TypeOf((*MockStore)(nil).SetTenantContext), ctx, tenantID)
 }
 
+// SetTenantContextFromCtx mocks base method.
+func (m *MockStore) SetTenantContextFromCtx(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetTenantContextFromCtx", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetTenantContextFromCtx indicates an expected call of SetTenantContextFromCtx.
+func (mr *MockStoreMockRecorder) SetTenantContextFromCtx(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTenantContextFromCtx", reflect.TypeOf((*MockStore)(nil).SetTenantContextFromCtx), ctx)
+}
+
 // SoftDeleteAccount mocks base method.
 func (m *MockStore) SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) (int64, error) {
 	m.ctrl.T.Helper()
@@ -7751,6 +7781,20 @@ func (m *MockStore) WithTenant(ctx context.Context, tenantID uuid.UUID, fn func(
 func (mr *MockStoreMockRecorder) WithTenant(ctx, tenantID, fn any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithTenant", reflect.TypeOf((*MockStore)(nil).WithTenant), ctx, tenantID, fn)
+}
+
+// WithTenantFromCtx mocks base method.
+func (m *MockStore) WithTenantFromCtx(ctx context.Context, fn func(context.Context, Store) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithTenantFromCtx", ctx, fn)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WithTenantFromCtx indicates an expected call of WithTenantFromCtx.
+func (mr *MockStoreMockRecorder) WithTenantFromCtx(ctx, fn any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithTenantFromCtx", reflect.TypeOf((*MockStore)(nil).WithTenantFromCtx), ctx, fn)
 }
 
 // WithTx mocks base method.

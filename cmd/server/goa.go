@@ -9,13 +9,9 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/gin-gonic/gin"
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/api/handlers"
 	"github.com/niiniyare/erp/internal/core/abac"
-	"github.com/niiniyare/erp/internal/core/access/conditional"
-	"github.com/niiniyare/erp/internal/core/access/request"
-	"github.com/niiniyare/erp/internal/core/analytics"
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/entity"
 	"github.com/niiniyare/erp/internal/core/identity"
@@ -275,45 +271,37 @@ func getFieldValue(v reflect.Value, fieldName string) string {
 	return field.String()
 }
 
-// InitializeGinRouter creates and configures the Gin router for additional routes
-func InitializeGinRouter(services *Services, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*gin.Engine, error) {
-	// Create Gin router using the existing handlers.NewRouter function
-	ginRouter := handlers.NewRouter(
-		services.TenantService.(tenant.Service),
-		services.EntityService.(entity.Service),
-		services.IdentityService.(identity.Service),
-		services.AccessRequestService.(request.AccessRequestService),
-		services.ConditionalAccessService.(conditional.ConditionalAccessService),
-		services.AnalyticsService.(analytics.UserAnalyticsService),
-		tracingService,
-		metricsService,
-	)
-
-	logger.Info("Gin router initialized for Swagger UI", logger.Fields{
+// InitializeGinRouter is deprecated - use GOA-only mode instead
+func InitializeGinRouter(services *Services, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (http.Handler, error) {
+	logger.Warn("InitializeGinRouter is deprecated - migration mode no longer supported", logger.Fields{
 		"service": "gin-router",
-		"status":  "ready",
+		"status":  "deprecated",
+		"recommendation": "Use GOA-only mode (SERVER_MODE=goa-only)",
 	})
 
-	return ginRouter, nil
+	// Return a simple handler that redirects to GOA endpoints
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusGone)
+		w.Write([]byte(`{"error": "Migration mode deprecated. Use GOA-only mode.", "migration_guide": "/api/openapi.json"}`))
+	}), nil
 }
 
-// CombinedHandler routes requests between GOA and Gin handlers
+// CombinedHandler is deprecated - use GOA-only mode instead
 type CombinedHandler struct {
 	goaHandler http.Handler
-	ginHandler http.Handler
+	ginHandler http.Handler // Deprecated: no longer used
 }
 
-// ServeHTTP implements the http.Handler interface
+// ServeHTTP implements the http.Handler interface (deprecated)
 func (c *CombinedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Route specific paths to Gin handler for migration testing
-	if strings.HasPrefix(r.URL.Path, "/swagger-ui/") ||
-		strings.HasPrefix(r.URL.Path, "/api/v1/") {
-		c.ginHandler.ServeHTTP(w, r)
-		return
-	}
-
-	// GOA handles all other routes including /health, /ready, /openapi.json
-	// This allows testing GOA endpoints directly at their native paths
+	// Always route to GOA handler since migration mode is deprecated
+	logger.Warn("CombinedHandler is deprecated - use GOA-only mode", logger.Fields{
+		"path": r.URL.Path,
+		"method": r.Method,
+		"recommendation": "Set SERVER_MODE=goa-only",
+	})
+	
 	c.goaHandler.ServeHTTP(w, r)
 }
 
