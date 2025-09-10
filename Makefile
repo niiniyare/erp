@@ -272,7 +272,7 @@ sql2dbml: ## Convert SQL migration to DBML
 # 🚀 App Entry (main.go / wiring)
 # ============================================================================
 run: ## Run the app server
-	@go run ./cmd/server/{database.go,goa.go,infrastructure.go,main.go,migration.go,services.go,temporal_integration.go}
+	@go run ./cmd/server/
 
 .PHONY: help clean ci fmt lint test test-core test-repo \
 	createdb dropdb migrateup migratedown migratedrop migrate-create \

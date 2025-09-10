@@ -331,24 +331,60 @@ func (h *TenantGoaHandler) Create(ctx context.Context, p *goaTenant.CreateTenant
 	timer := h.metrics.Timer("tenant_create_duration", metrics.Fields{})
 	defer timer.Stop()
 
-	logger.Info("Tenant create called", logger.Fields{
+	logger.InfoContext(ctx, "Tenant create called", logger.Fields{
 		"name": p.Name,
 	})
 
-	// TODO: Integrate with existing tenant creation logic using h.tenantService.CreateTenant
-	// This should convert p (GOA payload) to domain request, call the service, and convert back
+	// Convert GOA payload to domain request
+	req := coreTenant.CreateTenantRequest{
+		Name:  p.Name,
+		Email: "admin@" + p.Name + ".com", // Default email - should be provided in payload
+	}
+	
+	// Set optional fields if provided
+	if p.Subdomain != nil {
+		req.Subdomain = p.Subdomain
+	}
 
-	// For now, return a mock response
+	// Create tenant using core service
+	newTenant, err := h.tenantService.CreateTenant(ctx, req)
+	if err != nil {
+		span.RecordError(err)
+		h.metrics.IncrementCounter("tenant_create_errors", metrics.Fields{"error": err.Error()})
+		
+		// Convert domain errors to GOA errors
+		switch {
+		case errors.Is(err, sharedErrors.ErrSubdomainAlreadyExists):
+			return nil, "", goaTenant.MakeConflict(err)
+		case errors.Is(err, sharedErrors.ErrInvalidInput):
+			return nil, "", goaTenant.MakeBadRequest(err)
+		default:
+			logger.ErrorContext(ctx, "Tenant creation failed", logger.Fields{
+				"error": err.Error(),
+				"name":  p.Name,
+			})
+			return nil, "", goaTenant.MakeUnprocessableEntity(err)
+		}
+	}
+
+	// Convert domain model to GOA result
 	tenantResult := &goaTenant.Tenant{
-		ID:        "mock-tenant-id",
-		Name:      p.Name,
-		Status:    "active",
-		CreatedAt: "2024-01-01T00:00:00Z",
-		UpdatedAt: "2024-01-01T00:00:00Z",
+		ID:        newTenant.ID.String(),
+		Name:      newTenant.Name,
+		Slug:      newTenant.Slug,
+		Subdomain: newTenant.Subdomain,
+		Status:    string(newTenant.Status),
+		CreatedAt: newTenant.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt: newTenant.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
 	h.metrics.IncrementCounter("tenant_create_total", metrics.Fields{})
 	span.SetAttributes(attribute.String("result.tenant_id", tenantResult.ID))
+
+	logger.InfoContext(ctx, "Tenant created successfully", logger.Fields{
+		"tenant_id": tenantResult.ID,
+		"name":      tenantResult.Name,
+	})
 
 	return tenantResult, "default", nil
 }
@@ -367,13 +403,44 @@ func (h *TenantGoaHandler) Get(ctx context.Context, p *goaTenant.GetPayload) (*g
 	timer := h.metrics.Timer("tenant_get_duration", metrics.Fields{})
 	defer timer.Stop()
 
-	// TODO: Integrate with existing tenant retrieval logic using h.tenantService.GetTenantByID
+	// Parse tenant ID
+	tenantID, err := uuid.Parse(p.ID)
+	if err != nil {
+		logger.WarnContext(ctx, "Invalid tenant ID format", logger.Fields{
+			"tenant_id": p.ID,
+			"error":     err.Error(),
+		})
+		return nil, "", goaTenant.MakeBadRequest(errors.New("invalid tenant ID format"))
+	}
+
+	// Get tenant using core service
+	tenant, err := h.tenantService.GetTenantByID(ctx, tenantID)
+	if err != nil {
+		span.RecordError(err)
+		h.metrics.IncrementCounter("tenant_get_errors", metrics.Fields{"error": err.Error()})
+		
+		// Convert domain errors to GOA errors
+		switch {
+		case errors.Is(err, sharedErrors.ErrTenantNotFound):
+			return nil, "", goaTenant.MakeNotFound(err)
+		default:
+			logger.ErrorContext(ctx, "Tenant retrieval failed", logger.Fields{
+				"error":     err.Error(),
+				"tenant_id": p.ID,
+			})
+			return nil, "", err
+		}
+	}
+
+	// Convert domain model to GOA result
 	tenantResult := &goaTenant.Tenant{
-		ID:        p.ID,
-		Name:      "Mock Tenant",
-		Status:    "active",
-		CreatedAt: "2024-01-01T00:00:00Z",
-		UpdatedAt: "2024-01-01T00:00:00Z",
+		ID:        tenant.ID.String(),
+		Name:      tenant.Name,
+		Slug:      tenant.Slug,
+		Subdomain: tenant.Subdomain,
+		Status:    string(tenant.Status),
+		CreatedAt: tenant.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt: tenant.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
 	h.metrics.IncrementCounter("tenant_get_total", metrics.Fields{})
@@ -391,10 +458,63 @@ func (h *TenantGoaHandler) List(ctx context.Context, p *goaTenant.ListPayload) (
 	timer := h.metrics.Timer("tenant_list_duration", metrics.Fields{})
 	defer timer.Stop()
 
-	// TODO: Integrate with existing tenant listing logic using h.tenantService.ListTenants
+	// Set defaults for pagination
+	page := int(p.Page)
+	pageSize := int(p.PageSize)
+	if page == 0 {
+		page = 1
+	}
+	if pageSize == 0 {
+		pageSize = 20
+	}
+
+	// Calculate offset
+	offset := (page - 1) * pageSize
+
+	// Get tenants using core service
+	tenants, err := h.tenantService.ListTenants(ctx, offset, pageSize)
+	if err != nil {
+		span.RecordError(err)
+		h.metrics.IncrementCounter("tenant_list_errors", metrics.Fields{"error": err.Error()})
+		
+		logger.ErrorContext(ctx, "Tenant list failed", logger.Fields{
+			"error":  err.Error(),
+			"offset": offset,
+			"limit":  pageSize,
+		})
+		return nil, err
+	}
+
+	// Convert domain models to GOA results
+	tenantResults := make([]*goaTenant.Tenant, len(tenants))
+	for i, tenant := range tenants {
+		tenantResults[i] = &goaTenant.Tenant{
+			ID:        tenant.ID.String(),
+			Name:      tenant.Name,
+			Slug:      tenant.Slug,
+			Subdomain: tenant.Subdomain,
+			Status:    string(tenant.Status),
+			CreatedAt: tenant.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt: tenant.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+	}
+
+	// Calculate pagination metadata
+	totalItems := uint(len(tenants)) // Note: This is a simplified count, real implementation should get total count separately
+	totalPages := (totalItems + uint(pageSize) - 1) / uint(pageSize)
+	hasNext := uint(page) < totalPages
+	hasPrev := page > 1
+
 	result := &goaTenant.ListResult{
-		Data:       []*goaTenant.Tenant{},
-		Pagination: &goaTenant.PaginationMeta{CurrentPage: 1, PageSize: 20, TotalItems: 0, TotalPages: 0, HasNext: false, HasPrev: false},
+		Data: tenantResults,
+		Pagination: &goaTenant.PaginationMeta{
+			CurrentPage: uint(page),
+			PageSize:    uint(pageSize),
+			TotalItems:  totalItems,
+			TotalPages:  totalPages,
+			HasNext:     hasNext,
+			HasPrev:     hasPrev,
+		},
 	}
 
 	h.metrics.IncrementCounter("tenant_list_total", metrics.Fields{})
