@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
+	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/api/handlers"
 	"github.com/niiniyare/erp/internal/core/abac"
 	"github.com/niiniyare/erp/internal/core/access/conditional"
@@ -18,6 +19,7 @@ import (
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/entity"
 	"github.com/niiniyare/erp/internal/core/identity"
+	"github.com/niiniyare/erp/internal/platform/middleware"
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -55,7 +57,7 @@ type GOAServer struct {
 	Mux     goahttp.Muxer
 }
 
-func InitializeGOAServer(services *Services, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*GOAServer, error) {
+func InitializeGOAServer(services *Services, store db.Store, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*GOAServer, error) {
 	// Initialize GOA services
 	var (
 		abacSvc             abacGen.Service
@@ -182,7 +184,7 @@ func InitializeGOAServer(services *Services, cacheService cache.Service, metrics
 	var finalHandler http.Handler = mux
 	
 	// Create IAM service adapter for middleware integration
-	iamAdapter := NewIAMServiceAdapter(services, cacheService, metricsService, tracingService)
+	iamAdapter := NewIAMServiceAdapter(services, store, cacheService, metricsService, tracingService)
 	middlewareSetup, err := initializeMiddleware(iamAdapter, cacheService, metricsService, tracingService)
 	if err != nil {
 		logger.Warn("Failed to initialize middleware, continuing without it", logger.Fields{
@@ -384,36 +386,72 @@ func getErrorStatusCode(err error) int {
 
 // initializeMiddleware creates and configures the middleware stack
 func initializeMiddleware(iamAdapter *IAMServiceAdapter, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*MiddlewareSetup, error) {
-	// For now, return a minimal middleware setup that doesn't break the application
-	// TODO: Implement full middleware integration once middleware package is available
+	// Use default whitelist for critical endpoints
+	whitelist, err := middleware.NewEndpointWhitelist(
+		[]string{"GET /health*", "GET /api/v1/health*", "GET /swagger-ui/*"},
+		[]string{"POST /api/v1/auth/login", "GET /api/v1/version"},
+	)
+	if err != nil {
+		logger.Warn("Failed to create endpoint whitelist, using default", logger.Fields{"error": err.Error()})
+		// Fallback to default whitelist
+		whitelist = middleware.DefaultWhitelist()
+	}
 	
 	return &MiddlewareSetup{
-		logger:  logger.WithFields(logger.Fields{"component": "middleware"}),
-		cache:   cacheService,
-		metrics: metricsService,
-		tracing: tracingService,
+		logger:    logger.WithFields(logger.Fields{"component": "middleware"}),
+		cache:     cacheService,
+		metrics:   metricsService,
+		tracing:   tracingService,
+		whitelist: whitelist,
+		services:  iamAdapter.services, // Store services for tenant middleware
+		store:     iamAdapter.store,    // Store database for RLS
 	}, nil
 }
 
-// MiddlewareSetup provides a minimal middleware setup for testing
+// MiddlewareSetup provides native HTTP middleware integration for GOA server
 type MiddlewareSetup struct {
-	logger  logger.Logger
-	cache   cache.Service
-	metrics *metrics.MetricsService
-	tracing tracing.TracingService
+	logger    logger.Logger
+	cache     cache.Service
+	metrics   *metrics.MetricsService
+	tracing   tracing.TracingService
+	whitelist *middleware.EndpointWhitelist
+	services  *Services
+	store     db.Store
 }
 
-// ConfigureHTTPMuxer wraps the muxer with basic middleware
+// ConfigureHTTPMuxer wraps the muxer with native tenant middleware
 func (m *MiddlewareSetup) ConfigureHTTPMuxer(mux http.Handler) http.Handler {
-	// For now, just return the muxer with basic request logging
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		m.logger.Debug("Request received", logger.Fields{
-			"method": r.Method,
-			"path":   r.URL.Path,
-			"remote": r.RemoteAddr,
+	// Apply native tenant middleware chain
+	// Order: Tenant Middleware → Request Logging → GOA Handler
+	
+	// 1. Create tenant middleware
+	tenantMiddleware := middleware.TenantMiddleware(
+		m.services.TenantService,
+		m.store,
+		m.whitelist,
+	)
+	
+	// 2. Create request logging middleware
+	requestLogger := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			m.logger.Debug("Request received", logger.Fields{
+				"method": r.Method,
+				"path":   r.URL.Path,
+				"remote": r.RemoteAddr,
+			})
+			next.ServeHTTP(w, r)
 		})
-		mux.ServeHTTP(w, r)
+	}
+	
+	// 3. Chain middlewares: Tenant → Logging → GOA Handler
+	handler := tenantMiddleware(requestLogger(mux))
+	
+	m.logger.Info("Native middleware chain configured", logger.Fields{
+		"middlewares": []string{"tenant", "request_logging"},
+		"mode":       "goa-native",
 	})
+	
+	return handler
 }
 
 // getEnvironment returns the current environment
@@ -439,10 +477,12 @@ type IAMServiceAdapter struct {
 	logger          logger.Logger
 	metrics         *metrics.MetricsService
 	tracing         tracing.TracingService
+	services        *Services  // Reference to all services
+	store           db.Store   // Database store for RLS operations
 }
 
 // NewIAMServiceAdapter creates a new IAM service adapter
-func NewIAMServiceAdapter(services *Services, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) *IAMServiceAdapter {
+func NewIAMServiceAdapter(services *Services, store db.Store, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) *IAMServiceAdapter {
 	return &IAMServiceAdapter{
 		identityService: services.IdentityService,
 		abacService:     services.ABACService,
@@ -453,6 +493,8 @@ func NewIAMServiceAdapter(services *Services, cacheService cache.Service, metric
 		logger:          logger.WithFields(logger.Fields{"component": "iam_adapter"}),
 		metrics:         metricsService,
 		tracing:         tracingService,
+		services:        services,
+		store:           store,
 	}
 }
 

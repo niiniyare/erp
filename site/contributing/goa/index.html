@@ -228,7 +228,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../architecture/system-overview/" class="md-tabs__link">
+        <a href="../../architecture/system-overview.md" class="md-tabs__link">
           
   
   
@@ -427,17 +427,18 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../schema/" class="md-tabs__link">
-        
-  
-  
     
+    
+      <li class="md-tabs__item">
+        <a href="../../task/INDEX/" class="md-tabs__link">
+          
   
-  Database schema
+  
+  Active Tasks
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -548,7 +549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/system-overview/" class="md-nav__link">
+      <a href="../../architecture/system-overview.md" class="md-nav__link">
         
   
   
@@ -4084,18 +4085,69 @@
   
   
   
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Active Tasks
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            Active Tasks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../../schema/" class="md-nav__link">
+      <a href="../../task/INDEX/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Database schema
+    GIN2GOA Migration
     
   </span>
   
 
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -4118,7 +4170,7 @@
 
 <h1 id="awo-erp-goa-api-implementation-guide">Awo ERP Goa API Implementation Guide</h1>
 <h2 id="design-first-api-development-with-modular-handler-architecture"><em>Design-First API Development with Modular Handler Architecture</em></h2>
-<p><em>A comprehensive guide for implementing Goa-based APIs in Awo ERP using design-first development and modular handler organization</em></p>
+<p><em>A guide for implementing Goa-based APIs in Awo ERP using design-first development and modular handler organization</em></p>
 <blockquote>
 <p><strong>📚 Essential Reading:</strong> This guide focuses on API layer implementation. For complementary patterns, also review:
 - <code>docs/contributing/service.md</code> - Service layer and business logic implementation
@@ -4575,7 +4627,7 @@ make<span class="w"> </span>test-integration
 <li><strong>Context Propagation</strong>: Always pass context through all layers for tracing and cancellation</li>
 <li><strong>Error Handling</strong>: Convert domain errors to appropriate HTTP status codes</li>
 <li><strong>Type Safety</strong>: Use type conversion helpers to maintain separation between API and domain layers</li>
-<li><strong>Testing</strong>: Write comprehensive unit tests for all handlers</li>
+<li><strong>Testing</strong>: Write unit tests for all handlers</li>
 <li><strong>Observability</strong>: Include tracing spans and metrics in all handlers</li>
 <li><strong>Validation</strong>: Validate input at both Goa design and handler levels</li>
 </ol>

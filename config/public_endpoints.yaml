@@ -1,0 +1,56 @@
+# Public Endpoints Configuration
+# These endpoints do not require tenant context and should bypass tenant middleware
+
+public_endpoints:
+  # Health and monitoring endpoints
+  patterns:
+    - "GET /health*"
+    - "GET /api/v1/health*"
+    - "GET /ready"
+    - "GET /metrics"
+    - "GET /debug/*"
+    
+    # OpenAPI and documentation
+    - "GET /openapi.json"
+    - "GET /openapi.yaml"
+    - "GET /openapi3.json"
+    - "GET /openapi3.yaml"
+    - "GET /swagger-ui/*"
+    - "GET /api/docs/*"
+    
+    # Static assets (if any)
+    - "GET /static/*"
+    - "GET /assets/*"
+    - "GET /favicon.ico"
+  
+  # Exact endpoint matches
+  exact_matches:
+    # Authentication endpoints (don't require existing tenant context)
+    - "POST /api/v1/auth/login"
+    - "POST /api/v1/auth/refresh"
+    - "GET /api/v1/auth/validate"
+    
+    # Tenant management (bootstrap endpoints)
+    - "POST /api/v1/tenant/onboard"
+    - "GET /api/v1/tenant/domains"
+    
+    # Version and status
+    - "GET /api/v1/version"
+    - "GET /version"
+    
+    # Health checks
+    - "GET /health"
+    - "GET /api/v1/health"
+    - "GET /ready"
+
+# Configuration validation settings
+validation:
+  require_approval: true
+  change_tracking: true
+  security_review: true
+  
+# Notes:
+# - Patterns support wildcards using filepath.Match
+# - Exact matches take priority over patterns
+# - All endpoints not listed here require tenant context
+# - Changes to this file should be reviewed by security team

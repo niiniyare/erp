@@ -294,7 +294,7 @@ done
 
 # Start testing
 log_header "AWO ERP System API Test Suite"
-echo "Starting comprehensive API testing..."
+echo "Starting API testing..."
 echo "Base URL: $BASE_URL"
 echo "Verbose: $VERBOSE"
 echo "Cleanup: $CLEANUP"

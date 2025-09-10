@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # User API Automated Test Script
-# This script tests all User API endpoints with comprehensive error handling
+# This script tests all User API endpoints with error handling
 
 set -e  # Exit on any error
 

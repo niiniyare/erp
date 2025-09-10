@@ -230,7 +230,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../system-overview/" class="md-tabs__link">
+        <a href="../system-overview.md" class="md-tabs__link">
           
   
   
@@ -427,17 +427,18 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../schema/" class="md-tabs__link">
-        
-  
-  
     
+    
+      <li class="md-tabs__item">
+        <a href="../../task/INDEX/" class="md-tabs__link">
+          
   
-  Database schema
+  
+  Active Tasks
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -553,7 +554,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../system-overview/" class="md-nav__link">
+      <a href="../system-overview.md" class="md-nav__link">
         
   
   
@@ -4246,18 +4247,69 @@
   
   
   
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Active Tasks
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            Active Tasks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../../schema/" class="md-nav__link">
+      <a href="../../task/INDEX/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Database schema
+    GIN2GOA Migration
     
   </span>
   
 
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -4285,7 +4337,7 @@
 <h2 id="current-state-analysis">Current State Analysis</h2>
 <h3 id="existing-goa-implementation">Existing GOA Implementation</h3>
 <ul>
-<li><strong>Generated Services</strong>: ABAC, Auth, Organization, Tenant, User, OpenAPI</li>
+<li><strong>Generated Services</strong>: ABAC/IAM, Authz,Authn, Organization/entities, Tenant, User/Identity, OpenAPI</li>
 <li><strong>Type-safe handlers</strong> with automatic validation</li>
 <li><strong>Design-first approach</strong> with <code>.design</code> files</li>
 <li><strong>Built-in OpenAPI/Swagger generation</strong></li>

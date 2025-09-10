@@ -1,6 +1,6 @@
 # AWO ERP Documentation Server
 
-This directory contains a Go-based web server that serves the comprehensive AWO ERP documentation, including both MkDocs-generated developer documentation and SchemaSpy-generated database schema documentation.
+This directory contains a Go-based web server that serves the AWO ERP documentation, including both MkDocs-generated developer documentation and SchemaSpy-generated database schema documentation.
 
 ## 🏗️ Architecture
 

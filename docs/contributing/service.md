@@ -1,7 +1,7 @@
 # Awo ERP Service Implementation Guide
 ## *Clean Architecture + Temporal Workflows Edition*
 
-*A comprehensive guide for implementing domain modules in Awo ERP following Clean Architecture principles, Temporal workflow orchestration, and modern ERP patterns*
+*A guide for implementing domain modules in Awo ERP following Clean Architecture principles, Temporal workflow orchestration, and modern ERP patterns*
 
 > **📚 Essential Reading:** This guide focuses on `internal/core/` module development. For detailed implementation patterns, also review:
 > - `docs/contributing/database-transactions.md` - Database and SQLC patterns
@@ -86,7 +86,7 @@
   - [ ] Add cross-service integration activities (tenant, IAM, settings)
   - [ ] Implement notification and audit activities
   - [ ] Use dependency injection for all service dependencies
-  - [ ] Add comprehensive error handling and retries
+  - [ ] Add error handling and retries
 - [ ] **Workflows Layer (`internal/core/{domain}/workflows/`) - NEW**
   - [ ] Define workflow input/output types with validation
   - [ ] Implement creation workflows with multi-step validation

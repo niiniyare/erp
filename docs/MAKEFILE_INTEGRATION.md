@@ -1,6 +1,6 @@
 # 📋 Makefile Documentation Commands
 
-The Makefile has been updated with comprehensive documentation commands that integrate with the new documentation server implementation.
+The Makefile has been updated with documentation commands that integrate with the new documentation server implementation.
 
 ## 🚀 Available Commands
 
@@ -72,7 +72,7 @@ make docs-test
 - 🛡️ Safe: Won't overwrite `docs/index.html`
 
 ### `make docs-test`
-- 🧪 Runs comprehensive server tests
+- 🧪 Runs server tests
 - ✅ Tests all endpoints (MkDocs, Schema, Assets)
 - 📊 Reports HTTP status codes
 - 🚀 Uses port 8082 for testing

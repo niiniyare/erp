@@ -615,7 +615,7 @@ CREATE POLICY finance_parties_admin_access
 
 -- Table and column comments
 COMMENT ON TABLE finance_parties IS 
-'Unified table for all business parties: customers, suppliers, employees, and others. Supports comprehensive contact and financial information management.';
+'Unified table for all business parties: customers, suppliers, employees, and others. Supports contact and financial information management.';
 
 COMMENT ON COLUMN finance_parties.id IS 'Unique identifier for the party';
 COMMENT ON COLUMN finance_parties.tenant_id IS 'Reference to tenant for multi-tenancy isolation';
@@ -758,7 +758,7 @@ CREATE POLICY finance_transactions_admin_access
 
 -- Table and column comments
 COMMENT ON TABLE finance_transactions IS 
-'Main table for all financial transactions including journal entries, invoices, payments, and other financial documents. Supports multi-currency, approval workflows, and comprehensive audit trail.';
+'Main table for all financial transactions including journal entries, invoices, payments, and other financial documents. Supports multi-currency, approval workflows, and audit trail.';
 
 COMMENT ON COLUMN finance_transactions.id IS 'Unique identifier for the transaction';
 COMMENT ON COLUMN finance_transactions.tenant_id IS 'Reference to tenant for multi-tenancy isolation';
@@ -1540,7 +1540,7 @@ COMMENT ON TABLE finance_bank_transactions IS 'Individual bank transactions from
 -- MIGRATION 013: FINANCE BOOKS AND TAX MANAGEMENT
 -- =====================================================================
 -- File: 013_create_finance_books_and_tax.up.sql
--- Description: Create multiple finance books and comprehensive tax management
+-- Description: Create multiple finance books and tax management
 -- Dependencies: finance_accounts, finance_transactions
 -- =====================================================================
 

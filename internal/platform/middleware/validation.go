@@ -29,10 +29,10 @@ type ValidationConfig struct {
 	StrictContentType   bool     `json:"strict_content_type"`
 
 	// Input sanitization
-	EnableHTMLSanitization bool `json:"enable_html_sanitization"`
+	EnableHTMLSanitization  bool `json:"enable_html_sanitization"`
 	EnableSQLInjectionCheck bool `json:"enable_sql_injection_check"`
-	EnableXSSCheck         bool `json:"enable_xss_check"`
-	EnablePathTraversal    bool `json:"enable_path_traversal_check"`
+	EnableXSSCheck          bool `json:"enable_xss_check"`
+	EnablePathTraversal     bool `json:"enable_path_traversal_check"`
 
 	// Field validation
 	MaxFieldLength    int      `json:"max_field_length"`
@@ -65,7 +65,7 @@ type ValidationMiddleware struct {
 
 	// Compiled regex patterns for performance
 	sqlInjectionPatterns []*regexp.Regexp
-	xssPatterns         []*regexp.Regexp
+	xssPatterns          []*regexp.Regexp
 	pathTraversalPattern *regexp.Regexp
 }
 
@@ -118,9 +118,9 @@ func DefaultValidationConfig() ValidationConfig {
 		// Common forbidden patterns
 		ForbiddenPatterns: []string{
 			`(?i)<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>`, // Script tags
-			`(?i)javascript:`,                                        // JavaScript URLs
-			`(?i)vbscript:`,                                          // VBScript URLs
-			`(?i)data:.*base64`,                                      // Base64 data URLs
+			`(?i)javascript:`,   // JavaScript URLs
+			`(?i)vbscript:`,     // VBScript URLs
+			`(?i)data:.*base64`, // Base64 data URLs
 		},
 
 		// Security headers that should be present
@@ -131,7 +131,7 @@ func DefaultValidationConfig() ValidationConfig {
 		// Specific validation rules for sensitive endpoints
 		EndpointRules: map[string]EndpointValidationRule{
 			"POST:/api/v1/auth/login": {
-				MaxRequestSize:      1024,          // 1KB for login
+				MaxRequestSize:      1024, // 1KB for login
 				AllowedMethods:      []string{"POST"},
 				AllowedContentTypes: []string{"application/json"},
 				RequiredHeaders:     []string{"Content-Type", "X-Tenant-ID"},
@@ -162,7 +162,7 @@ func (m *ValidationMiddleware) HTTPMiddleware() func(http.Handler) http.Handler 
 
 			// Get endpoint key for specific rules
 			endpointKey := fmt.Sprintf("%s:%s", r.Method, r.URL.Path)
-			
+
 			span.SetAttributes(
 				attribute.String("http.method", r.Method),
 				attribute.String("http.url", r.URL.Path),
@@ -410,7 +410,7 @@ func (m *ValidationMiddleware) validateJSONValue(value interface{}, depth int) e
 		if len(v) > maxFields {
 			return fmt.Errorf("too many object fields: %d (max: %d)", len(v), maxFields)
 		}
-		
+
 		for key, val := range v {
 			if len(key) > m.config.MaxFieldLength {
 				return fmt.Errorf("object key too long: %s", key)
@@ -428,7 +428,7 @@ func (m *ValidationMiddleware) validateJSONValue(value interface{}, depth int) e
 		if len(v) > maxArrayLength {
 			return fmt.Errorf("array too long: %d items (max: %d)", len(v), maxArrayLength)
 		}
-		
+
 		for _, item := range v {
 			if err := m.validateJSONValue(item, depth+1); err != nil {
 				return err
@@ -479,11 +479,11 @@ func (m *ValidationMiddleware) containsSuspiciousContent(content string) bool {
 // sanitizeHTML removes dangerous HTML content
 func (m *ValidationMiddleware) sanitizeHTML(content string) string {
 	// Remove script tags
-	scriptRegex := regexp.MustCompile(`(?i)<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>`)
+	scriptRegex := regexp.MustCompile(`(?i)<script\b[^>]*>.*?</script>`)
 	content = scriptRegex.ReplaceAllString(content, "")
 
 	// Remove dangerous attributes
-	eventAttributes := regexp.MustCompile(`(?i)\s+on\w+\s*=\s*["\'][^"\']*["\']`)
+	eventAttributes := regexp.MustCompile(`(?i)\s+on\w+\s*=\s*["'][^"']*["']`)
 	content = eventAttributes.ReplaceAllString(content, "")
 
 	// Remove javascript: URLs
@@ -592,3 +592,4 @@ func min(a, b int) int {
 	}
 	return b
 }
+

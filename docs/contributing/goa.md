@@ -1,7 +1,7 @@
 # Awo ERP Goa API Implementation Guide
 ## *Design-First API Development with Modular Handler Architecture*
 
-*A comprehensive guide for implementing Goa-based APIs in Awo ERP using design-first development and modular handler organization*
+*A guide for implementing Goa-based APIs in Awo ERP using design-first development and modular handler organization*
 
 > **📚 Essential Reading:** This guide focuses on API layer implementation. For complementary patterns, also review:
 > - `docs/contributing/service.md` - Service layer and business logic implementation
@@ -494,7 +494,7 @@ func TestCreateAccount_Success(t *testing.T) {
 3. **Context Propagation**: Always pass context through all layers for tracing and cancellation
 4. **Error Handling**: Convert domain errors to appropriate HTTP status codes
 5. **Type Safety**: Use type conversion helpers to maintain separation between API and domain layers
-6. **Testing**: Write comprehensive unit tests for all handlers
+6. **Testing**: Write unit tests for all handlers
 7. **Observability**: Include tracing spans and metrics in all handlers
 8. **Validation**: Validate input at both Goa design and handler levels
 

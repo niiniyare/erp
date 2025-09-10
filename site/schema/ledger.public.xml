@@ -799,7 +799,7 @@
          </index>
          <checkConstraint constraint="((rule_severity)::text = ANY ((ARRAY['INFO'::character varying, 'WARNING'::character varying, 'ERROR'::character varying, 'BLOCKING'::character varying])::text[]))" name="finance_account_validation_rules_rule_severity_check"/>
       </table>
-      <table name="finance_accounts" remarks="Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and comprehensive financial reporting requirements." schema="public" type="TABLE">
+      <table name="finance_accounts" remarks="Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and financial reporting requirements." schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child column="account_id" foreignKey="finance_account_balances_account_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="finance_account_balances"/>
             <child column="control_account_id" foreignKey="finance_accounts_control_account_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="finance_accounts"/>

@@ -208,7 +208,7 @@ if [[ -z "$TEST_TYPE" || "$TEST_TYPE" == "anomaly" ]]; then
     log_test "Anomaly detection"
 
     # Test anomaly detection with different configurations
-    test_endpoint "Detect anomalies (comprehensive)" "POST" "/api/v1/analytics/users/$USER_ID_1/detect-anomalies" '{
+    test_endpoint "Detect anomalies ()" "POST" "/api/v1/analytics/users/$USER_ID_1/detect-anomalies" '{
         "analysis_period": {
             "start": "2024-01-01T00:00:00Z",
             "end": "2024-01-31T23:59:59Z"

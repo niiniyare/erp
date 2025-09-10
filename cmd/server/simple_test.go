@@ -23,15 +23,18 @@ func TestServerCompilation(t *testing.T) {
 		
 		// Should not panic when creating adapter
 		assert.NotPanics(t, func() {
-			adapter := NewIAMServiceAdapter(services, nil, nil, nil)
+			adapter := NewIAMServiceAdapter(services, nil, nil, nil, nil)
 			assert.NotNil(t, adapter)
 		})
 	})
 	
 	t.Run("Middleware Setup Creation", func(t *testing.T) {
-		// Test that we can create middleware setup
+		// Test that we can create middleware setup with valid IAM adapter
+		services := &Services{}
+		iamAdapter := NewIAMServiceAdapter(services, nil, nil, nil, nil)
+		
 		assert.NotPanics(t, func() {
-			setup, err := initializeMiddleware(nil, nil, nil, nil)
+			setup, err := initializeMiddleware(iamAdapter, nil, nil, nil)
 			assert.NoError(t, err)
 			assert.NotNil(t, setup)
 		})

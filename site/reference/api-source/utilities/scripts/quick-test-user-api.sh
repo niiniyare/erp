@@ -89,7 +89,7 @@ echo "curl -X DELETE $BASE_URL/api/v1/users/YOUR_USER_ID"
 echo
 
 echo "📝 Complete Test Suite:"
-echo "For comprehensive testing, run: ./test-user-api.sh"
+echo "For testing, run: ./test-user-api.sh"
 echo "For detailed documentation, see: user-api-tests.md"
 echo
 

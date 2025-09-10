@@ -455,7 +455,7 @@
 - [ ] Implement `ValidateMultiCurrencyConsistencyActivity`
 - [ ] Add `ValidateBusinessRulesActivity` with configurable rules
 - [ ] Implement heartbeat mechanism for long-running validations
-- [ ] Add comprehensive error handling and retry logic
+- [ ] Add error handling and retry logic
 
 ##### Day 4-5: Approval Workflow Implementation 🔥
 **Files**: `@internal/core/finance/workflows/`
@@ -522,7 +522,7 @@
 - [ ] Implement `RecoverTransactionStateActivity` with state machine recovery
 - [ ] Add `RecoverAccountBalancesActivity` with balance snapshot restoration
 - [ ] Implement `RecoverWorkflowStateActivity` with workflow checkpoint recovery
-- [ ] Add comprehensive error handling for compensation failures
+- [ ] Add error handling for compensation failures
 - [ ] Implement compensation activity retry policies and circuit breakers
 - [ ] Add compensation activity monitoring and alerting
 
