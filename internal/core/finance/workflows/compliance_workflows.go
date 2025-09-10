@@ -67,10 +67,10 @@ func (cw *ComplianceWorkflows) ComplianceAuditWorkflow(ctx workflow.Context, inp
 	// Step 1: Initialize audit
 	var auditInit domain.AuditInitializationResult
 	err := workflow.ExecuteActivity(ctx, "InitializeComplianceAudit", domain.AuditInitializationInput{
-		AuditType:      input.AuditType,
-		AuditPeriod:    input.AuditPeriod,
-		AuditScope:     input.AuditScope,
-		InitiatedBy:    input.InitiatedBy,
+		AuditType:       input.AuditType,
+		AuditPeriod:     input.AuditPeriod,
+		AuditScope:      input.AuditScope,
+		InitiatedBy:     input.InitiatedBy,
 		ComplianceRules: input.ComplianceRules,
 	}).Get(ctx, &auditInit)
 
@@ -86,11 +86,11 @@ func (cw *ComplianceWorkflows) ComplianceAuditWorkflow(ctx workflow.Context, inp
 	// Step 2: Collect audit data
 	var dataCollection domain.AuditDataCollectionResult
 	err = workflow.ExecuteActivity(ctx, "CollectAuditData", domain.AuditDataCollectionInput{
-		AuditID:     auditInit.AuditID,
-		AuditType:   input.AuditType,
-		AuditScope:  input.AuditScope,
-		PeriodFrom:  input.PeriodFrom,
-		PeriodTo:    input.PeriodTo,
+		AuditID:    auditInit.AuditID,
+		AuditType:  input.AuditType,
+		AuditScope: input.AuditScope,
+		PeriodFrom: input.PeriodFrom,
+		PeriodTo:   input.PeriodTo,
 	}).Get(ctx, &dataCollection)
 
 	if err != nil {
@@ -142,11 +142,11 @@ func (cw *ComplianceWorkflows) ComplianceAuditWorkflow(ctx workflow.Context, inp
 	// Step 5: Send notifications for violations
 	if len(complianceResults.Violations) > 0 {
 		err = workflow.ExecuteActivity(ctx, "SendComplianceAlert", domain.ComplianceAlertInput{
-			AuditID:       auditInit.AuditID,
-			AlertType:     domain.AlertTypeViolation,
-			Violations:    complianceResults.Violations,
-			Severity:      complianceResults.MaxSeverity,
-			Recipients:    input.NotificationRecipients,
+			AuditID:    auditInit.AuditID,
+			AlertType:  domain.AlertTypeViolation,
+			Violations: complianceResults.Violations,
+			Severity:   complianceResults.MaxSeverity,
+			Recipients: input.NotificationRecipients,
 		}).Get(ctx, nil)
 
 		if err != nil {
@@ -190,10 +190,10 @@ func (cw *ComplianceWorkflows) FraudDetectionWorkflow(ctx workflow.Context, inpu
 	// Step 1: Initialize fraud detection
 	var detection domain.FraudDetectionInitResult
 	err := workflow.ExecuteActivity(ctx, "InitializeFraudDetection", domain.FraudDetectionInitInput{
-		DetectionType: input.DetectionType,
-		DetectionRules: input.DetectionRules,
+		DetectionType:    input.DetectionType,
+		DetectionRules:   input.DetectionRules,
 		MonitoringPeriod: input.MonitoringPeriod,
-		InitiatedBy: input.InitiatedBy,
+		InitiatedBy:      input.InitiatedBy,
 	}).Get(ctx, &detection)
 
 	if err != nil {
@@ -208,10 +208,10 @@ func (cw *ComplianceWorkflows) FraudDetectionWorkflow(ctx workflow.Context, inpu
 	// Step 2: Analyze transactions for fraud patterns
 	var patternAnalysis domain.FraudPatternAnalysisResult
 	err = workflow.ExecuteActivity(ctx, "AnalyzeFraudPatterns", domain.FraudPatternAnalysisInput{
-		DetectionID: detection.DetectionID,
-		DetectionRules: input.DetectionRules,
+		DetectionID:     detection.DetectionID,
+		DetectionRules:  input.DetectionRules,
 		TransactionData: input.TransactionData,
-		HistoricalData: input.HistoricalData,
+		HistoricalData:  input.HistoricalData,
 	}).Get(ctx, &patternAnalysis)
 
 	if err != nil {
@@ -225,7 +225,7 @@ func (cw *ComplianceWorkflows) FraudDetectionWorkflow(ctx workflow.Context, inpu
 	var riskScoring domain.FraudRiskScoringResult
 	err = workflow.ExecuteActivity(ctx, "CalculateFraudRiskScores", domain.FraudRiskScoringInput{
 		DetectionID: detection.DetectionID,
-		Patterns: patternAnalysis.DetectedPatterns,
+		Patterns:    patternAnalysis.DetectedPatterns,
 		RiskFactors: patternAnalysis.RiskFactors,
 	}).Get(ctx, &riskScoring)
 
@@ -269,12 +269,12 @@ func (cw *ComplianceWorkflows) FraudDetectionWorkflow(ctx workflow.Context, inpu
 	// Step 5: Generate detection report
 	var detectionReport domain.FraudDetectionReportResult
 	err = workflow.ExecuteActivity(ctx, "GenerateFraudDetectionReport", domain.FraudDetectionReportInput{
-		DetectionID:         detection.DetectionID,
-		DetectionType:       input.DetectionType,
+		DetectionID:          detection.DetectionID,
+		DetectionType:        input.DetectionType,
 		AnalyzedTransactions: len(input.TransactionData),
 		HighRiskTransactions: len(riskScoring.HighRiskTransactions),
-		Alerts:              result.Alerts,
-		RiskFactors:         riskScoring.TopRiskFactors,
+		Alerts:               result.Alerts,
+		RiskFactors:          riskScoring.TopRiskFactors,
 	}).Get(ctx, &detectionReport)
 
 	if err != nil {

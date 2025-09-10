@@ -67,10 +67,10 @@ func (tw *TransactionWorkflows) TransactionApprovalWorkflow(ctx workflow.Context
 	// Step 1: Validate transaction request
 	var validationResult domain.TransactionValidationResult
 	err := workflow.ExecuteActivity(ctx, "ValidateTransactionRequest", domain.TransactionValidationInput{
-		TransactionID: input.TransactionID,
+		TransactionID:  input.TransactionID,
 		ValidationType: domain.ValidationTypeApproval,
 	}).Get(ctx, &validationResult)
-	
+
 	if err != nil {
 		logger.Error("Transaction validation failed", "error", err)
 		result.Status = domain.ApprovalStatusRejected
@@ -131,7 +131,7 @@ func (tw *TransactionWorkflows) TransactionApprovalWorkflow(ctx workflow.Context
 	result.CompletedTime = workflow.Now(ctx)
 	result.Duration = result.CompletedTime.Sub(result.StartTime)
 
-	logger.Info("Transaction approval workflow completed", 
+	logger.Info("Transaction approval workflow completed",
 		"transaction_id", input.TransactionID,
 		"status", result.Status,
 		"duration", result.Duration)
@@ -142,7 +142,7 @@ func (tw *TransactionWorkflows) TransactionApprovalWorkflow(ctx workflow.Context
 // processManualApproval handles the manual approval process
 func (tw *TransactionWorkflows) processManualApproval(ctx workflow.Context, input domain.TransactionApprovalWorkflowInput, requirements domain.ApprovalRequirementsResult) domain.ApprovalProcessResult {
 	logger := workflow.GetLogger(ctx)
-	
+
 	result := domain.ApprovalProcessResult{
 		Status: domain.ApprovalStatusPending,
 	}
@@ -156,7 +156,7 @@ func (tw *TransactionWorkflows) processManualApproval(ctx workflow.Context, inpu
 	selector := workflow.NewSelector(ctx)
 	approvalChannel := workflow.GetSignalChannel(ctx, "approval-signal")
 	rejectionChannel := workflow.GetSignalChannel(ctx, "rejection-signal")
-	
+
 	approvedCount := 0
 	requiredApprovals := requirements.RequiredApprovalCount
 	if requiredApprovals == 0 {
@@ -167,12 +167,12 @@ func (tw *TransactionWorkflows) processManualApproval(ctx workflow.Context, inpu
 	selector.AddReceive(approvalChannel, func(c workflow.ReceiveChannel, more bool) {
 		var approval domain.ApprovalSignal
 		c.Receive(ctx, &approval)
-		
+
 		logger.Info("Received approval", "approver", approval.ApproverID, "transaction_id", input.TransactionID)
 		result.ApprovedBy = append(result.ApprovedBy, approval.ApproverID)
 		result.Comments = append(result.Comments, approval.Comment)
 		approvedCount++
-		
+
 		if approvedCount >= requiredApprovals {
 			result.Status = domain.ApprovalStatusApproved
 		}
@@ -181,7 +181,7 @@ func (tw *TransactionWorkflows) processManualApproval(ctx workflow.Context, inpu
 	selector.AddReceive(rejectionChannel, func(c workflow.ReceiveChannel, more bool) {
 		var rejection domain.RejectionSignal
 		c.Receive(ctx, &rejection)
-		
+
 		logger.Info("Received rejection", "rejector", rejection.RejectorID, "transaction_id", input.TransactionID)
 		result.RejectedBy = append(result.RejectedBy, rejection.RejectorID)
 		result.Comments = append(result.Comments, rejection.Comment)
@@ -191,14 +191,14 @@ func (tw *TransactionWorkflows) processManualApproval(ctx workflow.Context, inpu
 	// Wait for completion or timeout
 	for result.Status == domain.ApprovalStatusPending {
 		selector.Select(ctx)
-		
+
 		// Check timeout
 		if workflow.Now(ctx).Sub(input.SubmittedAt) > approvalTimeout {
 			logger.Warn("Approval workflow timed out", "transaction_id", input.TransactionID)
 			result.Status = domain.ApprovalStatusExpired
 			break
 		}
-		
+
 		// Check if we have enough approvals or any rejection
 		if result.Status != domain.ApprovalStatusPending {
 			break
@@ -266,7 +266,7 @@ func (tw *TransactionWorkflows) TransactionProcessingWorkflow(ctx workflow.Conte
 			OriginalTransactionID: input.TransactionID,
 			ReversalReason:        "Balance update failed",
 		}).Get(ctx, nil)
-		
+
 		result.Status = domain.ProcessingStatusFailed
 		result.Error = err.Error()
 		return result, nil
@@ -277,7 +277,7 @@ func (tw *TransactionWorkflows) TransactionProcessingWorkflow(ctx workflow.Conte
 	result.CompletedTime = workflow.Now(ctx)
 	result.Duration = result.CompletedTime.Sub(result.StartTime)
 
-	logger.Info("Transaction processing workflow completed successfully", 
+	logger.Info("Transaction processing workflow completed successfully",
 		"transaction_id", input.TransactionID,
 		"posting_ref", postingResult.PostingReference,
 		"duration", result.Duration)
@@ -323,7 +323,7 @@ func (tw *TransactionWorkflows) TransactionReversalWorkflow(ctx workflow.Context
 	err = workflow.ExecuteActivity(ctx, "CreateReversalTransaction", domain.ReversalCreationInput{
 		OriginalTransactionID: input.OriginalTransactionID,
 		ReversalReason:        input.ReversalReason,
-		InitiatedBy:          input.InitiatedBy,
+		InitiatedBy:           input.InitiatedBy,
 	}).Get(ctx, &reversalResult)
 
 	if err != nil {

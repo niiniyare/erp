@@ -38,9 +38,9 @@ type AccountCreationInput struct {
 	ParentAccountCode  string `json:"parent_account_code,omitempty"`
 	CurrencyCode       string `json:"currency_code"`
 	Description        string `json:"description,omitempty"`
-	IsActive          bool   `json:"is_active"`
+	IsActive           bool   `json:"is_active"`
 	AllowManualJournal bool   `json:"allow_manual_journal"`
-	CreatedBy         string `json:"created_by"`
+	CreatedBy          string `json:"created_by"`
 }
 
 type AccountCreationResult struct {
@@ -69,7 +69,7 @@ type AccountDependencyCheckInput struct {
 
 type AccountDependencyCheckResult struct {
 	HasDependencies bool     `json:"has_dependencies"`
-	Dependencies   []string `json:"dependencies,omitempty"`
+	Dependencies    []string `json:"dependencies,omitempty"`
 }
 
 type AccountClosureInput struct {
@@ -86,8 +86,8 @@ type AccountTransactionDataInput struct {
 }
 
 type AccountTransactionDataResult struct {
-	Transactions   []TransactionDetail  `json:"transactions"`
-	OpeningBalance decimal.Decimal      `json:"opening_balance"`
+	Transactions   []TransactionDetail `json:"transactions"`
+	OpeningBalance decimal.Decimal     `json:"opening_balance"`
 }
 
 type TransactionDetail struct {
@@ -99,9 +99,9 @@ type TransactionDetail struct {
 }
 
 type BalanceCalculationInput struct {
-	AccountID      uuid.UUID            `json:"account_id"`
-	Transactions   []TransactionDetail  `json:"transactions"`
-	OpeningBalance decimal.Decimal      `json:"opening_balance"`
+	AccountID      uuid.UUID           `json:"account_id"`
+	Transactions   []TransactionDetail `json:"transactions"`
+	OpeningBalance decimal.Decimal     `json:"opening_balance"`
 }
 
 type BalanceCalculationResult struct {
@@ -118,12 +118,12 @@ type ActualBalanceResult struct {
 }
 
 type ReconciliationReportInput struct {
-	AccountID       uuid.UUID            `json:"account_id"`
-	Period          string               `json:"period"`
-	ExpectedBalance decimal.Decimal      `json:"expected_balance"`
-	ActualBalance   decimal.Decimal      `json:"actual_balance"`
-	Discrepancy     decimal.Decimal      `json:"discrepancy"`
-	Transactions    []TransactionDetail  `json:"transactions"`
+	AccountID       uuid.UUID           `json:"account_id"`
+	Period          string              `json:"period"`
+	ExpectedBalance decimal.Decimal     `json:"expected_balance"`
+	ActualBalance   decimal.Decimal     `json:"actual_balance"`
+	Discrepancy     decimal.Decimal     `json:"discrepancy"`
+	Transactions    []TransactionDetail `json:"transactions"`
 }
 
 type ReconciliationReportResult struct {
@@ -183,19 +183,19 @@ type AuditReportResult struct {
 }
 
 type ComplianceAlertInput struct {
-	AuditID     uuid.UUID             `json:"audit_id"`
-	AlertType   AlertType             `json:"alert_type"`
-	Violations  []ComplianceViolation `json:"violations"`
-	Severity    string                `json:"severity"`
-	Recipients  []string              `json:"recipients"`
+	AuditID    uuid.UUID             `json:"audit_id"`
+	AlertType  AlertType             `json:"alert_type"`
+	Violations []ComplianceViolation `json:"violations"`
+	Severity   string                `json:"severity"`
+	Recipients []string              `json:"recipients"`
 }
 
 // Fraud Detection Activity Types
 type FraudDetectionInitInput struct {
-	DetectionType    string            `json:"detection_type"`
-	DetectionRules   []string          `json:"detection_rules"`
-	MonitoringPeriod string            `json:"monitoring_period"`
-	InitiatedBy      string            `json:"initiated_by"`
+	DetectionType    string   `json:"detection_type"`
+	DetectionRules   []string `json:"detection_rules"`
+	MonitoringPeriod string   `json:"monitoring_period"`
+	InitiatedBy      string   `json:"initiated_by"`
 }
 
 type FraudDetectionInitResult struct {
@@ -203,10 +203,10 @@ type FraudDetectionInitResult struct {
 }
 
 type FraudPatternAnalysisInput struct {
-	DetectionID     uuid.UUID               `json:"detection_id"`
-	DetectionRules  []string                `json:"detection_rules"`
-	TransactionData []TransactionDataPoint  `json:"transaction_data"`
-	HistoricalData  []HistoricalDataPoint   `json:"historical_data"`
+	DetectionID     uuid.UUID              `json:"detection_id"`
+	DetectionRules  []string               `json:"detection_rules"`
+	TransactionData []TransactionDataPoint `json:"transaction_data"`
+	HistoricalData  []HistoricalDataPoint  `json:"historical_data"`
 }
 
 type FraudPatternAnalysisResult struct {
@@ -279,7 +279,7 @@ type ReversalValidationResult struct {
 type ReversalCreationInput struct {
 	OriginalTransactionID uuid.UUID `json:"original_transaction_id"`
 	ReversalReason        string    `json:"reversal_reason"`
-	InitiatedBy          string    `json:"initiated_by"`
+	InitiatedBy           string    `json:"initiated_by"`
 }
 
 type ReversalCreationResult struct {
@@ -305,16 +305,16 @@ type AccountReconciliationBatchInput struct {
 }
 
 type AccountReconciliationBatchResult struct {
-	ProcessedAccounts int                                  `json:"processed_accounts"`
-	DiscrepancyCount  int                                  `json:"discrepancy_count"`
+	ProcessedAccounts int                                   `json:"processed_accounts"`
+	DiscrepancyCount  int                                   `json:"discrepancy_count"`
 	Results           []AccountReconciliationWorkflowResult `json:"results"`
 }
 
 type AdjustingEntriesInput struct {
-	ClosingPeriod         string                            `json:"closing_period"`
-	TenantID             uuid.UUID                         `json:"tenant_id"`
+	ClosingPeriod         string                                `json:"closing_period"`
+	TenantID              uuid.UUID                             `json:"tenant_id"`
 	ReconciliationResults []AccountReconciliationWorkflowResult `json:"reconciliation_results"`
-	AdjustmentRules      []string                          `json:"adjustment_rules"`
+	AdjustmentRules       []string                              `json:"adjustment_rules"`
 }
 
 type AdjustingEntriesResult struct {
@@ -341,17 +341,17 @@ type DepreciationCalculationResult struct {
 }
 
 type DepreciationEntry struct {
-	EntryID           uuid.UUID       `json:"entry_id"`
-	AssetID           uuid.UUID       `json:"asset_id"`
+	EntryID            uuid.UUID       `json:"entry_id"`
+	AssetID            uuid.UUID       `json:"asset_id"`
 	DepreciationAmount decimal.Decimal `json:"depreciation_amount"`
 	AccumulatedAmount  decimal.Decimal `json:"accumulated_amount"`
-	Method            string          `json:"method"`
+	Method             string          `json:"method"`
 }
 
 type ClosingEntriesInput struct {
 	ClosingPeriod       string              `json:"closing_period"`
-	TenantID           uuid.UUID           `json:"tenant_id"`
-	AdjustingEntries   []AdjustingEntry    `json:"adjusting_entries"`
+	TenantID            uuid.UUID           `json:"tenant_id"`
+	AdjustingEntries    []AdjustingEntry    `json:"adjusting_entries"`
 	DepreciationEntries []DepreciationEntry `json:"depreciation_entries"`
 }
 
@@ -378,7 +378,7 @@ type FinancialStatementsResult struct {
 }
 
 type FinalizeClosingInput struct {
-	ClosingPeriod        string               `json:"closing_period"`
+	ClosingPeriod       string               `json:"closing_period"`
 	TenantID            uuid.UUID            `json:"tenant_id"`
 	ClosingEntries      []ClosingEntry       `json:"closing_entries"`
 	FinancialStatements []FinancialStatement `json:"financial_statements"`
@@ -437,20 +437,20 @@ type YearEndAccrualsResult struct {
 }
 
 type AccrualEntry struct {
-	EntryID      uuid.UUID       `json:"entry_id"`
-	AccountID    uuid.UUID       `json:"account_id"`
-	Amount       decimal.Decimal `json:"amount"`
-	Description  string          `json:"description"`
-	AccrualType  string          `json:"accrual_type"`
-	PeriodStart  time.Time       `json:"period_start"`
-	PeriodEnd    time.Time       `json:"period_end"`
+	EntryID     uuid.UUID       `json:"entry_id"`
+	AccountID   uuid.UUID       `json:"account_id"`
+	Amount      decimal.Decimal `json:"amount"`
+	Description string          `json:"description"`
+	AccrualType string          `json:"accrual_type"`
+	PeriodStart time.Time       `json:"period_start"`
+	PeriodEnd   time.Time       `json:"period_end"`
 }
 
 type YearEndClosingEntriesInput struct {
 	FiscalYear          string              `json:"fiscal_year"`
-	TenantID           uuid.UUID           `json:"tenant_id"`
+	TenantID            uuid.UUID           `json:"tenant_id"`
 	DepreciationEntries []DepreciationEntry `json:"depreciation_entries"`
-	AccrualEntries     []AccrualEntry      `json:"accrual_entries"`
+	AccrualEntries      []AccrualEntry      `json:"accrual_entries"`
 }
 
 type YearEndClosingEntriesResult struct {
@@ -481,9 +481,9 @@ type FiscalYearArchiveResult struct {
 
 type FinalizeYearEndClosingInput struct {
 	FiscalYear          string               `json:"fiscal_year"`
-	TenantID           uuid.UUID            `json:"tenant_id"`
-	ClosingEntries     []ClosingEntry       `json:"closing_entries"`
+	TenantID            uuid.UUID            `json:"tenant_id"`
+	ClosingEntries      []ClosingEntry       `json:"closing_entries"`
 	FinancialStatements []FinancialStatement `json:"financial_statements"`
-	ArchiveReference   string               `json:"archive_reference"`
-	FinalizedBy        string               `json:"finalized_by"`
+	ArchiveReference    string               `json:"archive_reference"`
+	FinalizedBy         string               `json:"finalized_by"`
 }

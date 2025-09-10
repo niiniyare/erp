@@ -8,8 +8,8 @@ import (
 	"github.com/niiniyare/erp/internal/core/finance/domain"
 	"github.com/niiniyare/erp/internal/core/finance/service"
 	"github.com/niiniyare/erp/internal/core/iam"
-	settingsService "github.com/niiniyare/erp/internal/core/settings/service"
 	settingsDomain "github.com/niiniyare/erp/internal/core/settings/domain"
+	settingsService "github.com/niiniyare/erp/internal/core/settings/service"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -66,19 +66,19 @@ func (v *ValidationActivities) RegisterWith(w worker.Worker) {
 
 // BusinessRuleValidationInput represents business rule validation input
 type BusinessRuleValidationInput struct {
-	RuleType    string                 `json:"rule_type"`
-	RuleData    map[string]any `json:"rule_data"`
-	Context     map[string]any `json:"context"`
+	RuleType string         `json:"rule_type"`
+	RuleData map[string]any `json:"rule_data"`
+	Context  map[string]any `json:"context"`
 }
 
 // ValidationActivityOutput represents validation activity output
 type ValidationActivityOutput struct {
-	Valid            bool                   `json:"valid"`
-	ValidationErrors []string               `json:"validation_errors,omitempty"`
-	Warnings         []string               `json:"warnings,omitempty"`
-	AppliedRules     []string               `json:"applied_rules,omitempty"`
+	Valid            bool           `json:"valid"`
+	ValidationErrors []string       `json:"validation_errors,omitempty"`
+	Warnings         []string       `json:"warnings,omitempty"`
+	AppliedRules     []string       `json:"applied_rules,omitempty"`
 	RuleResults      map[string]any `json:"rule_results,omitempty"`
-	Message          string                 `json:"message"`
+	Message          string         `json:"message"`
 }
 
 // ExchangeRateValidationInput represents exchange rate validation input
@@ -245,13 +245,13 @@ func (v *ValidationActivities) ValidateExchangeRateActivity(ctx context.Context,
 
 	info := activity.GetInfo(ctx)
 	activityLogger := v.logger.WithFields(logger.Fields{
-		"activity_id":     info.ActivityID,
-		"workflow_id":     info.WorkflowExecution.ID,
-		"activity_type":   "finance.activity.exchange.rate.validation",
-		"from_currency":   input.FromCurrency,
-		"to_currency":     input.ToCurrency,
-		"rate":            input.Rate,
-		"date":            input.Date,
+		"activity_id":   info.ActivityID,
+		"workflow_id":   info.WorkflowExecution.ID,
+		"activity_type": "finance.activity.exchange.rate.validation",
+		"from_currency": input.FromCurrency,
+		"to_currency":   input.ToCurrency,
+		"rate":          input.Rate,
+		"date":          input.Date,
 	})
 
 	activityLogger.InfoContext(ctx, "Validating exchange rate")

@@ -16,13 +16,13 @@ import (
 const (
 	// Primary finance task queue for standard operations
 	TemporalTaskQueueFinance = "finance"
-	
+
 	// High priority queue for time-sensitive operations (period closing, urgent approvals)
 	TemporalTaskQueueFinanceHighPriority = "finance-high-priority"
-	
+
 	// Bulk operations queue for heavy processing (data imports, bulk posting)
 	TemporalTaskQueueFinanceBulk = "finance-bulk"
-	
+
 	// Long-running processes queue (month-end closing, year-end processing)
 	TemporalTaskQueueFinanceLongRunning = "finance-long-running"
 )
@@ -34,23 +34,23 @@ const (
 	WorkflowTypeAccountActivation   = "finance.account.activation"
 	WorkflowTypeAccountDeactivation = "finance.account.deactivation"
 	WorkflowTypeBulkAccountUpdate   = "finance.account.bulk_update"
-	
+
 	// Transaction processing workflows
 	WorkflowTypeTransactionProcessing = "finance.transaction.processing"
 	WorkflowTypeTransactionApproval   = "finance.transaction.approval"
 	WorkflowTypeTransactionPosting    = "finance.transaction.posting"
 	WorkflowTypeTransactionReversal   = "finance.transaction.reversal"
 	WorkflowTypeBulkTransactionImport = "finance.transaction.bulk_import"
-	
+
 	// Financial period workflows
 	WorkflowTypePeriodClosing  = "finance.period.closing"
 	WorkflowTypePeriodOpening  = "finance.period.opening"
 	WorkflowTypeYearEndClosing = "finance.period.year_end_closing"
-	
+
 	// Reconciliation workflows
 	WorkflowTypeBankReconciliation    = "finance.reconciliation.bank"
 	WorkflowTypeAccountReconciliation = "finance.reconciliation.account"
-	
+
 	// Reporting workflows
 	WorkflowTypeFinancialReporting = "finance.reporting.generation"
 	WorkflowTypeBulkReportExport   = "finance.reporting.bulk_export"
@@ -67,25 +67,25 @@ const (
 	ActivityTypeAccountStatusChange  = "finance.activity.account.status_change"
 	ActivityTypeAccountBalanceUpdate = "finance.activity.account.balance_update"
 	ActivityTypeHierarchyValidation  = "finance.activity.hierarchy.validation"
-	
+
 	// Transaction processing activities
 	ActivityTypeTransactionValidation = "finance.activity.transaction.validation"
 	ActivityTypeTransactionCreation   = "finance.activity.transaction.creation"
 	ActivityTypeTransactionPosting    = "finance.activity.transaction.posting"
 	ActivityTypeTransactionReversal   = "finance.activity.transaction.reversal"
 	ActivityTypeEntryGeneration       = "finance.activity.entry.generation"
-	
+
 	// External integration activities
-	ActivityTypeAuditLogging      = "finance.activity.audit.logging"
-	ActivityTypeNotification      = "finance.activity.notification.send"
-	ActivityTypeFeatureFlagCheck  = "finance.activity.feature_flag.check"
-	ActivityTypeSettingsRetrieval = "finance.activity.settings.retrieval"
-	ActivityTypeIAMValidation     = "finance.activity.iam.validation"
-	ActivityTypePermissionCheck       = "finance.activity.permission.check"
-	ActivityTypePermissionValidation  = "finance.activity.permission.validation"
-	ActivityTypeCacheOperation        = "finance.activity.cache.operation"
-	ActivityTypeCacheInvalidation     = "finance.activity.cache.invalidation"
-	
+	ActivityTypeAuditLogging         = "finance.activity.audit.logging"
+	ActivityTypeNotification         = "finance.activity.notification.send"
+	ActivityTypeFeatureFlagCheck     = "finance.activity.feature_flag.check"
+	ActivityTypeSettingsRetrieval    = "finance.activity.settings.retrieval"
+	ActivityTypeIAMValidation        = "finance.activity.iam.validation"
+	ActivityTypePermissionCheck      = "finance.activity.permission.check"
+	ActivityTypePermissionValidation = "finance.activity.permission.validation"
+	ActivityTypeCacheOperation       = "finance.activity.cache.operation"
+	ActivityTypeCacheInvalidation    = "finance.activity.cache.invalidation"
+
 	// Financial process activities
 	ActivityTypePeriodValidation    = "finance.activity.period.validation"
 	ActivityTypeBalanceCalculation  = "finance.activity.balance.calculation"
@@ -100,47 +100,47 @@ const (
 // Workflow execution timeouts - control maximum workflow execution time
 const (
 	// Standard operation timeouts
-	DefaultWorkflowTimeout        = 30 * time.Minute  // Most operations should complete within 30 minutes
-	AccountWorkflowTimeout        = 10 * time.Minute  // Account operations are typically fast
-	TransactionWorkflowTimeout    = 15 * time.Minute  // Transaction processing with validation
-	
-	// Long-running process timeouts  
-	BulkOperationWorkflowTimeout  = 2 * time.Hour     // Bulk imports and processing
-	PeriodClosingWorkflowTimeout  = 4 * time.Hour     // Month-end closing processes
-	YearEndClosingWorkflowTimeout = 8 * time.Hour     // Year-end closing with reports
-	ReportingWorkflowTimeout      = 1 * time.Hour     // Financial report generation
-	
+	DefaultWorkflowTimeout     = 30 * time.Minute // Most operations should complete within 30 minutes
+	AccountWorkflowTimeout     = 10 * time.Minute // Account operations are typically fast
+	TransactionWorkflowTimeout = 15 * time.Minute // Transaction processing with validation
+
+	// Long-running process timeouts
+	BulkOperationWorkflowTimeout  = 2 * time.Hour // Bulk imports and processing
+	PeriodClosingWorkflowTimeout  = 4 * time.Hour // Month-end closing processes
+	YearEndClosingWorkflowTimeout = 8 * time.Hour // Year-end closing with reports
+	ReportingWorkflowTimeout      = 1 * time.Hour // Financial report generation
+
 	// Critical business process timeouts
-	ReconciliationWorkflowTimeout = 45 * time.Minute  // Bank reconciliation processes
-	ApprovalWorkflowTimeout       = 24 * time.Hour    // Waiting for human approval
+	ReconciliationWorkflowTimeout = 45 * time.Minute // Bank reconciliation processes
+	ApprovalWorkflowTimeout       = 24 * time.Hour   // Waiting for human approval
 )
 
 // Activity execution timeouts - control individual activity execution time
 const (
 	// Database operation timeouts
-	StandardActivityTimeout   = 30 * time.Second   // Standard CRUD operations
-	ValidationActivityTimeout = 15 * time.Second   // Business rule validation
-	CalculationActivityTimeout = 45 * time.Second  // Balance calculations
-	
+	StandardActivityTimeout    = 30 * time.Second // Standard CRUD operations
+	ValidationActivityTimeout  = 15 * time.Second // Business rule validation
+	CalculationActivityTimeout = 45 * time.Second // Balance calculations
+
 	// External service timeouts
-	NotificationActivityTimeout   = 10 * time.Second   // Send notifications
-	AuditActivityTimeout         = 5 * time.Second    // Audit logging
-	FeatureFlagActivityTimeout   = 3 * time.Second    // Feature flag checks
-	SettingsActivityTimeout      = 5 * time.Second    // Settings retrieval
-	IAMActivityTimeout           = 10 * time.Second   // IAM validation calls
-	
+	NotificationActivityTimeout = 10 * time.Second // Send notifications
+	AuditActivityTimeout        = 5 * time.Second  // Audit logging
+	FeatureFlagActivityTimeout  = 3 * time.Second  // Feature flag checks
+	SettingsActivityTimeout     = 5 * time.Second  // Settings retrieval
+	IAMActivityTimeout          = 10 * time.Second // IAM validation calls
+
 	// Heavy processing timeouts
-	BulkProcessingActivityTimeout = 10 * time.Minute  // Bulk data processing
-	ReportGenerationActivityTimeout = 5 * time.Minute // Individual report generation
+	BulkProcessingActivityTimeout   = 10 * time.Minute // Bulk data processing
+	ReportGenerationActivityTimeout = 5 * time.Minute  // Individual report generation
 )
 
 // Retry policy configurations for different operation types
 const (
 	// Standard retry attempts for transient failures
 	DefaultRetryAttempts    = 3
-	ValidationRetryAttempts = 1  // Don't retry validation failures
-	NetworkRetryAttempts    = 5  // Retry network calls more aggressively
-	
+	ValidationRetryAttempts = 1 // Don't retry validation failures
+	NetworkRetryAttempts    = 5 // Retry network calls more aggressively
+
 	// Retry backoff intervals
 	StandardRetryBackoff = 2 * time.Second
 	NetworkRetryBackoff  = 1 * time.Second
@@ -155,75 +155,75 @@ const (
 // These keys ensure proper tenant and entity isolation for company data separation
 const (
 	// Account-related cache keys with tenant and entity isolation
-	CacheKeyAccountByID       = "tenant:%s:entity:%s:finance:account:id:%s"           // tenant_id, entity_id, account_id
-	CacheKeyAccountByCode     = "tenant:%s:entity:%s:finance:account:code:%s"         // tenant_id, entity_id, account_code
-	CacheKeyAccountBalance    = "tenant:%s:entity:%s:finance:account:balance:%s"      // tenant_id, entity_id, account_id
-	CacheKeyAccountList       = "tenant:%s:entity:%s:finance:account:list:%s"         // tenant_id, entity_id, filter_hash
-	CacheKeyAccountHierarchy  = "tenant:%s:entity:%s:finance:account:hierarchy"       // tenant_id, entity_id
-	
+	CacheKeyAccountByID      = "tenant:%s:entity:%s:finance:account:id:%s"      // tenant_id, entity_id, account_id
+	CacheKeyAccountByCode    = "tenant:%s:entity:%s:finance:account:code:%s"    // tenant_id, entity_id, account_code
+	CacheKeyAccountBalance   = "tenant:%s:entity:%s:finance:account:balance:%s" // tenant_id, entity_id, account_id
+	CacheKeyAccountList      = "tenant:%s:entity:%s:finance:account:list:%s"    // tenant_id, entity_id, filter_hash
+	CacheKeyAccountHierarchy = "tenant:%s:entity:%s:finance:account:hierarchy"  // tenant_id, entity_id
+
 	// Transaction-related cache keys with multi-company isolation
-	CacheKeyTransactionByID    = "tenant:%s:entity:%s:finance:transaction:id:%s"      // tenant_id, entity_id, transaction_id  
+	CacheKeyTransactionByID    = "tenant:%s:entity:%s:finance:transaction:id:%s"      // tenant_id, entity_id, transaction_id
 	CacheKeyTransactionList    = "tenant:%s:entity:%s:finance:transaction:list:%s"    // tenant_id, entity_id, filter_hash
 	CacheKeyTransactionEntries = "tenant:%s:entity:%s:finance:transaction:entries:%s" // tenant_id, entity_id, transaction_id
 	CacheKeyTransactionTotals  = "tenant:%s:entity:%s:finance:transaction:totals:%s"  // tenant_id, entity_id, date_range_hash
-	
+
 	// Exchange rate cache keys (may be shared across entities within tenant)
-	CacheKeyExchangeRate     = "tenant:%s:finance:exchange_rate:%s:%s"        // tenant_id, from_currency, to_currency
-	CacheKeyExchangeRateList = "tenant:%s:finance:exchange_rate:list:%s"      // tenant_id, date
-	
+	CacheKeyExchangeRate     = "tenant:%s:finance:exchange_rate:%s:%s"   // tenant_id, from_currency, to_currency
+	CacheKeyExchangeRateList = "tenant:%s:finance:exchange_rate:list:%s" // tenant_id, date
+
 	// Financial reporting cache keys with entity-specific data
-	CacheKeyReportTrialBalance  = "tenant:%s:entity:%s:finance:report:trial_balance:%s"   // tenant_id, entity_id, params_hash
-	CacheKeyReportIncomeStmt    = "tenant:%s:entity:%s:finance:report:income_stmt:%s"     // tenant_id, entity_id, params_hash
-	CacheKeyReportBalanceSheet  = "tenant:%s:entity:%s:finance:report:balance_sheet:%s"   // tenant_id, entity_id, params_hash
-	CacheKeyReportCashFlow     = "tenant:%s:entity:%s:finance:report:cash_flow:%s"       // tenant_id, entity_id, params_hash
-	
+	CacheKeyReportTrialBalance = "tenant:%s:entity:%s:finance:report:trial_balance:%s" // tenant_id, entity_id, params_hash
+	CacheKeyReportIncomeStmt   = "tenant:%s:entity:%s:finance:report:income_stmt:%s"   // tenant_id, entity_id, params_hash
+	CacheKeyReportBalanceSheet = "tenant:%s:entity:%s:finance:report:balance_sheet:%s" // tenant_id, entity_id, params_hash
+	CacheKeyReportCashFlow     = "tenant:%s:entity:%s:finance:report:cash_flow:%s"     // tenant_id, entity_id, params_hash
+
 	// Period and closing cache keys for entity-specific financial periods
-	CacheKeyFinancialPeriod    = "tenant:%s:entity:%s:finance:period:%s"           // tenant_id, entity_id, period_id
-	CacheKeyPeriodStatus       = "tenant:%s:entity:%s:finance:period:status:%s"    // tenant_id, entity_id, year_month
-	CacheKeyClosingStatus      = "tenant:%s:entity:%s:finance:closing:status:%s"   // tenant_id, entity_id, period_id
-	
+	CacheKeyFinancialPeriod = "tenant:%s:entity:%s:finance:period:%s"         // tenant_id, entity_id, period_id
+	CacheKeyPeriodStatus    = "tenant:%s:entity:%s:finance:period:status:%s"  // tenant_id, entity_id, year_month
+	CacheKeyClosingStatus   = "tenant:%s:entity:%s:finance:closing:status:%s" // tenant_id, entity_id, period_id
+
 	// Settings cache keys for finance configuration per entity
-	CacheKeyFinanceSettings    = "tenant:%s:entity:%s:finance:settings"                // tenant_id, entity_id
-	CacheKeyChartOfAccounts    = "tenant:%s:entity:%s:finance:chart_of_accounts"       // tenant_id, entity_id
-	CacheKeyAccountingPolicies = "tenant:%s:entity:%s:finance:accounting_policies"     // tenant_id, entity_id
-	
+	CacheKeyFinanceSettings    = "tenant:%s:entity:%s:finance:settings"            // tenant_id, entity_id
+	CacheKeyChartOfAccounts    = "tenant:%s:entity:%s:finance:chart_of_accounts"   // tenant_id, entity_id
+	CacheKeyAccountingPolicies = "tenant:%s:entity:%s:finance:accounting_policies" // tenant_id, entity_id
+
 	// Workflow state cache keys for tracking process status
-	CacheKeyWorkflowState      = "tenant:%s:entity:%s:finance:workflow:%s:%s"      // tenant_id, entity_id, workflow_type, workflow_id
-	CacheKeyPendingApprovals   = "tenant:%s:entity:%s:finance:approvals:pending"   // tenant_id, entity_id
-	CacheKeyActiveWorkflows    = "tenant:%s:entity:%s:finance:workflows:active"    // tenant_id, entity_id
+	CacheKeyWorkflowState    = "tenant:%s:entity:%s:finance:workflow:%s:%s"    // tenant_id, entity_id, workflow_type, workflow_id
+	CacheKeyPendingApprovals = "tenant:%s:entity:%s:finance:approvals:pending" // tenant_id, entity_id
+	CacheKeyActiveWorkflows  = "tenant:%s:entity:%s:finance:workflows:active"  // tenant_id, entity_id
 )
 
 // Cache TTL (Time To Live) constants for different data types
 // Balances business need for performance vs data freshness
 const (
 	// Account data caching - relatively stable, can cache longer
-	AccountDataCacheTTL        = 30 * time.Minute   // Account details change infrequently
-	AccountBalanceCacheTTL     = 5 * time.Minute    // Balances change more frequently  
-	AccountHierarchyCacheTTL   = 1 * time.Hour      // Chart of accounts changes rarely
-	
+	AccountDataCacheTTL      = 30 * time.Minute // Account details change infrequently
+	AccountBalanceCacheTTL   = 5 * time.Minute  // Balances change more frequently
+	AccountHierarchyCacheTTL = 1 * time.Hour    // Chart of accounts changes rarely
+
 	// Transaction data caching - more dynamic, shorter TTL
-	TransactionDataCacheTTL    = 15 * time.Minute   // Transaction details
-	TransactionListCacheTTL    = 5 * time.Minute    // Transaction lists change often
-	TransactionTotalsCacheTTL  = 10 * time.Minute   // Calculated totals
-	
+	TransactionDataCacheTTL   = 15 * time.Minute // Transaction details
+	TransactionListCacheTTL   = 5 * time.Minute  // Transaction lists change often
+	TransactionTotalsCacheTTL = 10 * time.Minute // Calculated totals
+
 	// Exchange rate caching - external data, moderate TTL
-	ExchangeRateCacheTTL       = 1 * time.Hour      // Exchange rates from external sources
-	
+	ExchangeRateCacheTTL = 1 * time.Hour // Exchange rates from external sources
+
 	// Report caching - expensive to generate, longer TTL
-	FinancialReportCacheTTL    = 2 * time.Hour      // Generated financial reports
-	ReportDataCacheTTL         = 30 * time.Minute   // Report data queries
-	
+	FinancialReportCacheTTL = 2 * time.Hour    // Generated financial reports
+	ReportDataCacheTTL      = 30 * time.Minute // Report data queries
+
 	// Configuration caching - rarely changes, long TTL
-	FinanceSettingsCacheTTL    = 4 * time.Hour      // Finance module settings
-	AccountingPoliciesCacheTTL = 6 * time.Hour      // Accounting policies and rules
-	
+	FinanceSettingsCacheTTL    = 4 * time.Hour // Finance module settings
+	AccountingPoliciesCacheTTL = 6 * time.Hour // Accounting policies and rules
+
 	// Workflow state caching - dynamic during processing
-	WorkflowStateCacheTTL      = 2 * time.Minute    // Active workflow states
-	PendingApprovalsCacheTTL   = 5 * time.Minute    // Pending approval lists
-	
-	// Period and closing caching - stable during period, changes at period boundaries  
-	FinancialPeriodCacheTTL    = 1 * time.Hour      // Financial period definitions
-	PeriodStatusCacheTTL       = 15 * time.Minute   // Period open/closed status
+	WorkflowStateCacheTTL    = 2 * time.Minute // Active workflow states
+	PendingApprovalsCacheTTL = 5 * time.Minute // Pending approval lists
+
+	// Period and closing caching - stable during period, changes at period boundaries
+	FinancialPeriodCacheTTL = 1 * time.Hour    // Financial period definitions
+	PeriodStatusCacheTTL    = 15 * time.Minute // Period open/closed status
 )
 
 // ========================================
@@ -234,15 +234,15 @@ const (
 const (
 	// Approval process signals
 	SignalApprovalGranted  = "approval_granted"
-	SignalApprovalRejected = "approval_rejected" 
+	SignalApprovalRejected = "approval_rejected"
 	SignalApprovalTimeout  = "approval_timeout"
-	
+
 	// Process control signals
 	SignalProcessCancel   = "process_cancel"
 	SignalProcessPause    = "process_pause"
 	SignalProcessResume   = "process_resume"
 	SignalProcessPriority = "process_priority_change"
-	
+
 	// Data update signals
 	SignalAccountUpdated     = "account_updated"
 	SignalTransactionUpdated = "transaction_updated"
@@ -251,43 +251,43 @@ const (
 
 // Temporal query types for workflow status inspection
 const (
-	QueryWorkflowStatus        = "workflow_status"
-	QueryProcessingProgress    = "processing_progress"  
-	QueryApprovalStatus        = "approval_status"
-	QueryValidationResults     = "validation_results"
-	QueryCurrentStep           = "current_step"
-	QueryRemainingWork         = "remaining_work"
-	QueryErrorDetails          = "error_details"
-	QueryPerformanceMetrics    = "performance_metrics"
+	QueryWorkflowStatus     = "workflow_status"
+	QueryProcessingProgress = "processing_progress"
+	QueryApprovalStatus     = "approval_status"
+	QueryValidationResults  = "validation_results"
+	QueryCurrentStep        = "current_step"
+	QueryRemainingWork      = "remaining_work"
+	QueryErrorDetails       = "error_details"
+	QueryPerformanceMetrics = "performance_metrics"
 )
 
 // ========================================
-// WORKFLOW STATE AND STATUS CONSTANTS  
+// WORKFLOW STATE AND STATUS CONSTANTS
 // ========================================
 
 // Workflow execution states for status tracking
 const (
-	WorkflowStatusInitializing = "INITIALIZING"  // Workflow starting up
-	WorkflowStatusValidating   = "VALIDATING"    // Input validation phase
-	WorkflowStatusProcessing   = "PROCESSING"    // Active processing
+	WorkflowStatusInitializing    = "INITIALIZING"     // Workflow starting up
+	WorkflowStatusValidating      = "VALIDATING"       // Input validation phase
+	WorkflowStatusProcessing      = "PROCESSING"       // Active processing
 	WorkflowStatusWaitingApproval = "WAITING_APPROVAL" // Awaiting human approval
-	WorkflowStatusApproved     = "APPROVED"      // Approval granted
-	WorkflowStatusRejected     = "REJECTED"      // Approval rejected  
-	WorkflowStatusCompleted    = "COMPLETED"     // Successfully completed
-	WorkflowStatusFailed       = "FAILED"        // Failed with errors
-	WorkflowStatusCancelled    = "CANCELLED"     // Cancelled by user/system
-	WorkflowStatusTimedOut     = "TIMED_OUT"     // Exceeded timeout limits
+	WorkflowStatusApproved        = "APPROVED"         // Approval granted
+	WorkflowStatusRejected        = "REJECTED"         // Approval rejected
+	WorkflowStatusCompleted       = "COMPLETED"        // Successfully completed
+	WorkflowStatusFailed          = "FAILED"           // Failed with errors
+	WorkflowStatusCancelled       = "CANCELLED"        // Cancelled by user/system
+	WorkflowStatusTimedOut        = "TIMED_OUT"        // Exceeded timeout limits
 )
 
 // Activity execution states for granular tracking
 const (
-	ActivityStatusPending    = "PENDING"      // Waiting to start
-	ActivityStatusStarted    = "STARTED"      // Currently executing
-	ActivityStatusCompleted  = "COMPLETED"    // Successfully completed
-	ActivityStatusFailed     = "FAILED"       // Failed with error
-	ActivityStatusRetrying   = "RETRYING"     // Retrying after failure
-	ActivityStatusSkipped    = "SKIPPED"      // Skipped due to conditions
-	ActivityStatusTimedOut   = "TIMED_OUT"    // Exceeded execution timeout
+	ActivityStatusPending   = "PENDING"   // Waiting to start
+	ActivityStatusStarted   = "STARTED"   // Currently executing
+	ActivityStatusCompleted = "COMPLETED" // Successfully completed
+	ActivityStatusFailed    = "FAILED"    // Failed with error
+	ActivityStatusRetrying  = "RETRYING"  // Retrying after failure
+	ActivityStatusSkipped   = "SKIPPED"   // Skipped due to conditions
+	ActivityStatusTimedOut  = "TIMED_OUT" // Exceeded execution timeout
 )
 
 // ========================================
@@ -296,19 +296,19 @@ const (
 
 // Additional notification types specific to Temporal workflows (complement constant.go)
 const (
-	NotificationTypeAccountCreated           = "finance.account.created"
-	NotificationTypeAccountUpdated           = "finance.account.updated" 
-	NotificationTypeAccountDeactivated       = "finance.account.deactivated"
-	NotificationTypeTransactionPosted        = "finance.transaction.posted"
-	NotificationTypeTransactionReversed      = "finance.transaction.reversed"
-	NotificationTypeApprovalRequest          = "finance.approval.request"
-	NotificationTypeApprovalGranted          = "finance.approval.granted"
-	NotificationTypeApprovalRejected         = "finance.approval.rejected"
-	NotificationTypeBudgetExceeded           = "finance.budget.exceeded"
-	NotificationTypeComplianceAlert          = "finance.compliance.alert"
-	NotificationTypePeriodOpened             = "finance.period.opened"
-	NotificationTypeError                    = "finance.error"
-	NotificationTypeBulkOperationCompleted   = "finance.bulk.completed"
+	NotificationTypeAccountCreated         = "finance.account.created"
+	NotificationTypeAccountUpdated         = "finance.account.updated"
+	NotificationTypeAccountDeactivated     = "finance.account.deactivated"
+	NotificationTypeTransactionPosted      = "finance.transaction.posted"
+	NotificationTypeTransactionReversed    = "finance.transaction.reversed"
+	NotificationTypeApprovalRequest        = "finance.approval.request"
+	NotificationTypeApprovalGranted        = "finance.approval.granted"
+	NotificationTypeApprovalRejected       = "finance.approval.rejected"
+	NotificationTypeBudgetExceeded         = "finance.budget.exceeded"
+	NotificationTypeComplianceAlert        = "finance.compliance.alert"
+	NotificationTypePeriodOpened           = "finance.period.opened"
+	NotificationTypeError                  = "finance.error"
+	NotificationTypeBulkOperationCompleted = "finance.bulk.completed"
 )
 
 // Notification priorities for proper routing and handling
@@ -326,52 +326,52 @@ const (
 // Temporal-specific metrics for workflow and activity monitoring (complement constant.go)
 const (
 	// Activity execution metrics
-	MetricActivityExecutions           = "finance.temporal.activity.executions"
-	MetricActivityDuration            = "finance.temporal.activity.duration"
-	MetricActivityRetries             = "finance.temporal.activity.retries"
-	MetricActivityFailures            = "finance.temporal.activity.failures"
-	
-	// Workflow execution metrics  
-	MetricWorkflowExecutions          = "finance.temporal.workflow.executions"
-	MetricWorkflowDuration            = "finance.temporal.workflow.duration"
-	MetricWorkflowCompletions         = "finance.temporal.workflow.completions"
-	MetricWorkflowFailures            = "finance.temporal.workflow.failures"
-	
+	MetricActivityExecutions = "finance.temporal.activity.executions"
+	MetricActivityDuration   = "finance.temporal.activity.duration"
+	MetricActivityRetries    = "finance.temporal.activity.retries"
+	MetricActivityFailures   = "finance.temporal.activity.failures"
+
+	// Workflow execution metrics
+	MetricWorkflowExecutions  = "finance.temporal.workflow.executions"
+	MetricWorkflowDuration    = "finance.temporal.workflow.duration"
+	MetricWorkflowCompletions = "finance.temporal.workflow.completions"
+	MetricWorkflowFailures    = "finance.temporal.workflow.failures"
+
 	// Business operation metrics (unique to Temporal activities)
-	MetricAccountsUpdated             = "finance.accounts.updated"
-	MetricAccountsDeactivated         = "finance.accounts.deactivated"
-	MetricAccountsRetrieved           = "finance.accounts.retrieved"
-	MetricTransactionsPosted          = "finance.transactions.posted"
-	MetricTransactionsReversed        = "finance.transactions.reversed"
-	
+	MetricAccountsUpdated      = "finance.accounts.updated"
+	MetricAccountsDeactivated  = "finance.accounts.deactivated"
+	MetricAccountsRetrieved    = "finance.accounts.retrieved"
+	MetricTransactionsPosted   = "finance.transactions.posted"
+	MetricTransactionsReversed = "finance.transactions.reversed"
+
 	// Validation and approval metrics
-	MetricValidationSuccess           = "finance.validation.success"
-	MetricApprovalsRequested          = "finance.approvals.requested"
-	MetricApprovalsGranted            = "finance.approvals.granted"
-	MetricApprovalsRejected           = "finance.approvals.rejected"
-	
+	MetricValidationSuccess  = "finance.validation.success"
+	MetricApprovalsRequested = "finance.approvals.requested"
+	MetricApprovalsGranted   = "finance.approvals.granted"
+	MetricApprovalsRejected  = "finance.approvals.rejected"
+
 	// Notification metrics
-	MetricNotificationsSent           = "finance.notifications.sent"
-	MetricNotificationErrors          = "finance.notifications.errors"
-	MetricBudgetAlertsSent            = "finance.budget.alerts.sent"
-	MetricComplianceAlertsSent        = "finance.compliance.alerts.sent"
-	MetricErrorNotificationsSent      = "finance.error.notifications.sent"
-	
+	MetricNotificationsSent      = "finance.notifications.sent"
+	MetricNotificationErrors     = "finance.notifications.errors"
+	MetricBudgetAlertsSent       = "finance.budget.alerts.sent"
+	MetricComplianceAlertsSent   = "finance.compliance.alerts.sent"
+	MetricErrorNotificationsSent = "finance.error.notifications.sent"
+
 	// Integration metrics
-	MetricFeatureFlagChecks           = "finance.feature_flag.checks"
-	MetricFeatureFlagCheckErrors      = "finance.feature_flag.check.errors"
-	MetricSettingsRetrievals          = "finance.settings.retrievals"
-	MetricSettingsRetrievalErrors     = "finance.settings.retrieval.errors"
-	MetricCacheOperations             = "finance.cache.operations"
-	MetricCacheOperationErrors        = "finance.cache.operation.errors"
-	MetricPermissionGranted           = "finance.permission.granted"
-	MetricPermissionDenied            = "finance.permission.denied"
-	MetricPermissionValidationErrors  = "finance.permission.validation.errors"
-	MetricAuditEventsLogged           = "finance.audit.events.logged"
-	MetricAuditLoggingErrors          = "finance.audit.logging.errors"
-	MetricCacheInvalidationErrors     = "finance.cache.invalidation.errors"
-	MetricCacheKeysInvalidated        = "finance.cache.keys.invalidated"
-	MetricCacheInvalidations          = "finance.cache.invalidations"
+	MetricFeatureFlagChecks          = "finance.feature_flag.checks"
+	MetricFeatureFlagCheckErrors     = "finance.feature_flag.check.errors"
+	MetricSettingsRetrievals         = "finance.settings.retrievals"
+	MetricSettingsRetrievalErrors    = "finance.settings.retrieval.errors"
+	MetricCacheOperations            = "finance.cache.operations"
+	MetricCacheOperationErrors       = "finance.cache.operation.errors"
+	MetricPermissionGranted          = "finance.permission.granted"
+	MetricPermissionDenied           = "finance.permission.denied"
+	MetricPermissionValidationErrors = "finance.permission.validation.errors"
+	MetricAuditEventsLogged          = "finance.audit.events.logged"
+	MetricAuditLoggingErrors         = "finance.audit.logging.errors"
+	MetricCacheInvalidationErrors    = "finance.cache.invalidation.errors"
+	MetricCacheKeysInvalidated       = "finance.cache.keys.invalidated"
+	MetricCacheInvalidations         = "finance.cache.invalidations"
 )
 
 // ========================================
@@ -380,34 +380,34 @@ const (
 
 // Feature flag names for finance module functionality
 const (
-	FeatureFlagAdvancedValidation     = "finance.validation.advanced"
-	FeatureFlagBulkOperations         = "finance.bulk.operations"
-	FeatureFlagApprovalWorkflows      = "finance.approval.workflows"
+	FeatureFlagAdvancedValidation      = "finance.validation.advanced"
+	FeatureFlagBulkOperations          = "finance.bulk.operations"
+	FeatureFlagApprovalWorkflows       = "finance.approval.workflows"
 	FeatureFlagPeriodClosingAutomation = "finance.period.closing.automation"
-	FeatureFlagComplianceMonitoring   = "finance.compliance.monitoring"
-	FeatureFlagBudgetEnforcement      = "finance.budget.enforcement"
+	FeatureFlagComplianceMonitoring    = "finance.compliance.monitoring"
+	FeatureFlagBudgetEnforcement       = "finance.budget.enforcement"
 )
 
-// ========================================  
+// ========================================
 // ERROR CODES FOR TEMPORAL ACTIVITIES
 // ========================================
 
 // Error codes specific to Temporal workflow activities (complement constant.go)
 const (
-	ErrCodeAccountCreationFailed         = "ACCOUNT_CREATION_FAILED"
-	ErrCodeAccountUpdateFailed           = "ACCOUNT_UPDATE_FAILED"
-	ErrCodeAccountDeactivationFailed     = "ACCOUNT_DEACTIVATION_FAILED"
-	ErrCodeAccountNotFound               = "ACCOUNT_NOT_FOUND"
-	ErrCodeInvalidHierarchy              = "INVALID_HIERARCHY"
-	ErrCodePermissionCheckFailed         = "PERMISSION_CHECK_FAILED"
-	ErrCodePermissionDenied              = "PERMISSION_DENIED"
-	ErrCodeCacheOperationFailed          = "CACHE_OPERATION_FAILED"
+	ErrCodeAccountCreationFailed               = "ACCOUNT_CREATION_FAILED"
+	ErrCodeAccountUpdateFailed                 = "ACCOUNT_UPDATE_FAILED"
+	ErrCodeAccountDeactivationFailed           = "ACCOUNT_DEACTIVATION_FAILED"
+	ErrCodeAccountNotFound                     = "ACCOUNT_NOT_FOUND"
+	ErrCodeInvalidHierarchy                    = "INVALID_HIERARCHY"
+	ErrCodePermissionCheckFailed               = "PERMISSION_CHECK_FAILED"
+	ErrCodePermissionDenied                    = "PERMISSION_DENIED"
+	ErrCodeCacheOperationFailed                = "CACHE_OPERATION_FAILED"
 	ErrCodeNotificationSettingsRetrievalFailed = "NOTIFICATION_SETTINGS_RETRIEVAL_FAILED"
-	ErrCodeFeatureFlagCheckFailed        = "FEATURE_FLAG_CHECK_FAILED"
-	ErrCodeSettingsRetrievalFailed       = "SETTINGS_RETRIEVAL_FAILED"
-	ErrCodePermissionValidationFailed    = "PERMISSION_VALIDATION_FAILED"
-	ErrCodeCacheInvalidationFailed       = "CACHE_INVALIDATION_FAILED"
-	ErrCodeAuditLoggingFailed            = "AUDIT_LOGGING_FAILED"
+	ErrCodeFeatureFlagCheckFailed              = "FEATURE_FLAG_CHECK_FAILED"
+	ErrCodeSettingsRetrievalFailed             = "SETTINGS_RETRIEVAL_FAILED"
+	ErrCodePermissionValidationFailed          = "PERMISSION_VALIDATION_FAILED"
+	ErrCodeCacheInvalidationFailed             = "CACHE_INVALIDATION_FAILED"
+	ErrCodeAuditLoggingFailed                  = "AUDIT_LOGGING_FAILED"
 )
 
 // ========================================

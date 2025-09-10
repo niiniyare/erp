@@ -33,7 +33,7 @@ type TemporalIntegration struct {
 type TemporalIntegrationConfig struct {
 	// Finance services
 	Services *service.Services
-	
+
 	// External service dependencies
 	IAMService          iam.Service
 	AuditService        audit.Service
@@ -41,7 +41,7 @@ type TemporalIntegrationConfig struct {
 	SettingsService     settingsService.ConfigurationService
 	NotificationService notification.NotificationService
 	CacheService        cache.Service
-	
+
 	// Infrastructure
 	TemporalClient client.Client
 	Logger         loggerPkg.Logger
@@ -122,10 +122,10 @@ func (ti *TemporalIntegration) RegisterWithPlatform(platform *temporal.Platform)
 	registrar.RegisterWorkflows(workflows)
 
 	ti.logger.Info("✅ Finance module registered with Temporal platform", loggerPkg.Fields{
-		"module":           "finance",
-		"activity_count":   len(activities),
-		"workflow_count":   len(workflows),
-		"status":          "registered",
+		"module":         "finance",
+		"activity_count": len(activities),
+		"workflow_count": len(workflows),
+		"status":         "registered",
 	})
 
 	return nil

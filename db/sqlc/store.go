@@ -18,12 +18,12 @@ type Store interface {
 	SetTenantContextFromCtx(ctx context.Context) error
 	WithTenantFromCtx(ctx context.Context, fn func(context.Context, Store) error) error
 	BeginTxWithTenantFromCtx(ctx context.Context) (pgx.Tx, Store, error)
-	
+
 	// Tenant context methods - legacy versions (deprecated, kept for backward compatibility)
 	SetTenantContext(ctx context.Context, tenantID uuid.UUID) error
 	WithTenant(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, Store) error) error
 	BeginTxWithTenant(ctx context.Context, tenantID uuid.UUID) (pgx.Tx, Store, error)
-	
+
 	WithTx(ctx context.Context, fn func(context.Context, Store) error) error
 	// Connection management
 	Close()
@@ -129,7 +129,7 @@ func (s *SQLStore) WithTenantFromCtx(ctx context.Context, fn func(context.Contex
 	if !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
-	
+
 	tx, err := s.connPool.Begin(ctx)
 	if err != nil {
 		return err
@@ -185,7 +185,7 @@ func (s *SQLStore) BeginTxWithTenantFromCtx(ctx context.Context) (pgx.Tx, Store,
 	if !ok {
 		return nil, nil, fmt.Errorf("tenant ID not found in context")
 	}
-	
+
 	tx, err := s.connPool.Begin(ctx)
 	if err != nil {
 		return nil, nil, err

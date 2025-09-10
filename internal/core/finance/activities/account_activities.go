@@ -78,15 +78,15 @@ func (a *AccountActivities) RegisterWith(w worker.Worker) {
 
 // CreateAccountActivityInput represents the input for creating an account
 type CreateAccountActivityInput struct {
-	AccountCode    string               `json:"account_code" validate:"required"`
-	AccountName    string               `json:"account_name" validate:"required"`
-	RootType       domain.RootType      `json:"root_type" validate:"required"`
-	AccountType    string               `json:"account_type" validate:"required"`
-	Description    *string              `json:"description"`
-	ParentID       *uuid.UUID           `json:"parent_account_id"`
-	CurrencyCode   *string              `json:"currency_code"`
-	IsActive       bool                 `json:"is_active"`
-	NormalBalance  domain.NormalBalance `json:"normal_balance" validate:"required"`
+	AccountCode   string               `json:"account_code" validate:"required"`
+	AccountName   string               `json:"account_name" validate:"required"`
+	RootType      domain.RootType      `json:"root_type" validate:"required"`
+	AccountType   string               `json:"account_type" validate:"required"`
+	Description   *string              `json:"description"`
+	ParentID      *uuid.UUID           `json:"parent_account_id"`
+	CurrencyCode  *string              `json:"currency_code"`
+	IsActive      bool                 `json:"is_active"`
+	NormalBalance domain.NormalBalance `json:"normal_balance" validate:"required"`
 }
 
 // AccountActivityOutput represents the output of account operations
@@ -100,7 +100,7 @@ type AccountActivityOutput struct {
 // ValidateAccountCreationActivityInput represents validation input
 type ValidateAccountCreationActivityInput struct {
 	AccountInput  CreateAccountActivityInput `json:"account_input"`
-	BusinessRules map[string]any     `json:"business_rules"`
+	BusinessRules map[string]any             `json:"business_rules"`
 }
 
 // Account Activities Implementation
@@ -195,13 +195,13 @@ func (a *AccountActivities) CreateAccountActivity(ctx context.Context, input Cre
 	req := domain.CreateAccountRequest{
 		AccountCode:        input.AccountCode,
 		AccountName:        input.AccountName,
-		RootType:          input.RootType,
-		AccountType:       input.AccountType,
+		RootType:           input.RootType,
+		AccountType:        input.AccountType,
 		AccountDescription: input.Description,
-		ParentAccountID:   input.ParentID,
-		CurrencyCode:      input.CurrencyCode,
-		IsActive:          input.IsActive,
-		NormalBalance:     input.NormalBalance,
+		ParentAccountID:    input.ParentID,
+		CurrencyCode:       input.CurrencyCode,
+		IsActive:           input.IsActive,
+		NormalBalance:      input.NormalBalance,
 	}
 
 	// Call account service
@@ -344,11 +344,11 @@ func (a *AccountActivities) DeactivateAccountActivity(ctx context.Context, accou
 		IsActive: &[]bool{false}[0], // Set active to false
 		// Could also update account description to include reason
 	}
-	
+
 	_, err := a.accountService.UpdateAccount(ctx, accountID, req)
 	if err != nil {
 		activityLogger.ErrorContext(ctx, "Failed to deactivate account", logger.Fields{
-			"error": err.Error(),
+			"error":  err.Error(),
 			"reason": reason,
 		})
 		return &AccountActivityOutput{
@@ -460,7 +460,7 @@ func (a *AccountActivities) CheckAccountPermissionsActivity(ctx context.Context,
 	// Check permissions via IAM service - simplified implementation
 	// In real implementation, you'd use EvaluatePermission with proper request structure
 	hasPermission := true // Simplified - assume permission granted for this demo
-	
+
 	if !hasPermission {
 		activityLogger.WarnContext(ctx, "Permission denied")
 		return &AccountActivityOutput{
@@ -612,4 +612,3 @@ func getEntityIDFromContext(ctx context.Context) uuid.UUID {
 	}
 	return uuid.Nil
 }
-

@@ -97,7 +97,7 @@ type CreateTransactionActivityInput struct {
 	Currency          *string                  `json:"currency"`
 	ExchangeRate      decimal.Decimal          `json:"exchange_rate"`
 	Entries           []TransactionEntryInput  `json:"entries"`
-	Metadata          map[string]any   `json:"metadata"`
+	Metadata          map[string]any           `json:"metadata"`
 }
 
 // TransactionEntryInput represents a transaction entry
@@ -108,7 +108,7 @@ type TransactionEntryInput struct {
 	Currency    *string                `json:"currency"`
 	Description string                 `json:"description"`
 	Reference   string                 `json:"reference"`
-	Metadata    map[string]any `json:"metadata"`
+	Metadata    map[string]any         `json:"metadata"`
 }
 
 // TransactionActivityOutput represents the output of transaction operations
@@ -259,7 +259,7 @@ func (t *TransactionActivities) CreateTransactionActivity(ctx context.Context, i
 	// Convert entries
 	for _, entryInput := range input.Entries {
 		var debitAmount, creditAmount decimal.Decimal
-		
+
 		// Convert entry type to debit/credit amounts
 		// Note: This assumes EntryType indicates whether it's a debit or credit
 		// You may need to adjust this logic based on actual business requirements
@@ -274,7 +274,7 @@ func (t *TransactionActivities) CreateTransactionActivity(ctx context.Context, i
 			debitAmount = entryInput.Amount
 			creditAmount = decimal.Zero
 		}
-		
+
 		req.Entries = append(req.Entries, domain.CreateEntryRequest{
 			AccountID:        entryInput.AccountID,
 			DebitAmount:      debitAmount,
@@ -334,7 +334,7 @@ func (t *TransactionActivities) ProcessTransactionEntriesActivity(ctx context.Co
 
 	for i, entryInput := range entries {
 		var debitAmount, creditAmount decimal.Decimal
-		
+
 		// Convert entry type to debit/credit amounts
 		if string(entryInput.EntryType) == string(domain.NormalBalanceDebit) {
 			debitAmount = entryInput.Amount
@@ -347,7 +347,7 @@ func (t *TransactionActivities) ProcessTransactionEntriesActivity(ctx context.Co
 			debitAmount = entryInput.Amount
 			creditAmount = decimal.Zero
 		}
-		
+
 		entryReq := &domain.TransactionEntry{
 			ID:               uuid.New(),
 			AccountID:        entryInput.AccountID,

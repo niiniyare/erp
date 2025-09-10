@@ -75,11 +75,11 @@ func (i *IntegrationActivities) RegisterWith(w worker.Worker) {
 
 // FeatureFlagCheckInput represents feature flag check input
 type FeatureFlagCheckInput struct {
-	FlagKey   string     `json:"flag_key"`
-	UserID    *uuid.UUID `json:"user_id,omitempty"`
-	TenantID  *uuid.UUID `json:"tenant_id,omitempty"`
-	EntityID  *uuid.UUID `json:"entity_id,omitempty"`
-	Context   map[string]any `json:"context,omitempty"`
+	FlagKey  string         `json:"flag_key"`
+	UserID   *uuid.UUID     `json:"user_id,omitempty"`
+	TenantID *uuid.UUID     `json:"tenant_id,omitempty"`
+	EntityID *uuid.UUID     `json:"entity_id,omitempty"`
+	Context  map[string]any `json:"context,omitempty"`
 }
 
 // SettingsGetInput represents settings retrieval input
@@ -90,36 +90,36 @@ type SettingsGetInput struct {
 
 // PermissionValidationInput represents permission validation input
 type PermissionValidationInput struct {
-	UserID       uuid.UUID  `json:"user_id"`
-	ResourceType string     `json:"resource_type"`
-	ResourceID   *uuid.UUID `json:"resource_id,omitempty"`
-	Action       string     `json:"action"`
+	UserID       uuid.UUID      `json:"user_id"`
+	ResourceType string         `json:"resource_type"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Action       string         `json:"action"`
 	Context      map[string]any `json:"context,omitempty"`
 }
 
 // AuditEventInput represents audit event input
 type AuditEventInput struct {
-	EventType   string                 `json:"event_type"`
-	ResourceID  string                 `json:"resource_id"`
-	Action      string                 `json:"action"`
-	Details     map[string]any `json:"details"`
-	Metadata    map[string]any `json:"metadata,omitempty"`
+	EventType  string         `json:"event_type"`
+	ResourceID string         `json:"resource_id"`
+	Action     string         `json:"action"`
+	Details    map[string]any `json:"details"`
+	Metadata   map[string]any `json:"metadata,omitempty"`
 }
 
 // CacheOperationInput represents cache operation input
 type CacheOperationInput struct {
-	Key       string      `json:"key"`
-	Value     any `json:"value,omitempty"`
-	TTL       int         `json:"ttl,omitempty"`
-	Pattern   string      `json:"pattern,omitempty"`
+	Key     string `json:"key"`
+	Value   any    `json:"value,omitempty"`
+	TTL     int    `json:"ttl,omitempty"`
+	Pattern string `json:"pattern,omitempty"`
 }
 
 // IntegrationActivityOutput represents integration activity output
 type IntegrationActivityOutput struct {
-	Success   bool                   `json:"success"`
+	Success   bool           `json:"success"`
 	Data      any            `json:"data,omitempty"`
-	Message   string                 `json:"message"`
-	ErrorCode string                 `json:"error_code,omitempty"`
+	Message   string         `json:"message"`
+	ErrorCode string         `json:"error_code,omitempty"`
 	Metadata  map[string]any `json:"metadata,omitempty"`
 }
 
@@ -218,13 +218,13 @@ func (i *IntegrationActivities) ValidateUserPermissionsActivity(ctx context.Cont
 
 	info := activity.GetInfo(ctx)
 	activityLogger := i.logger.WithFields(logger.Fields{
-		"activity_id":     info.ActivityID,
-		"workflow_id":     info.WorkflowExecution.ID,
-		"activity_type":   domain.ActivityTypePermissionValidation,
-		"user_id":         input.UserID,
-		"resource_type":   input.ResourceType,
-		"resource_id":     input.ResourceID,
-		"action":          input.Action,
+		"activity_id":   info.ActivityID,
+		"workflow_id":   info.WorkflowExecution.ID,
+		"activity_type": domain.ActivityTypePermissionValidation,
+		"user_id":       input.UserID,
+		"resource_type": input.ResourceType,
+		"resource_id":   input.ResourceID,
+		"action":        input.Action,
 	})
 
 	activityLogger.InfoContext(ctx, "Validating user permissions")
@@ -503,7 +503,7 @@ func (i *IntegrationActivities) ValidateEntityAccessActivity(ctx context.Context
 		Action:       "read",
 		EntityID:     &entityID,
 	}
-	
+
 	permissionResult, err := i.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
 	if err != nil {
 		activityLogger.ErrorContext(ctx, "Entity access validation failed", logger.Fields{

@@ -287,4 +287,3 @@ func TestWriteErrorResponse(t *testing.T) {
 		})
 	}
 }
-

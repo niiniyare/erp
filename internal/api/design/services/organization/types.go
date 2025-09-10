@@ -53,10 +53,10 @@ var OrganizationResult = ResultType("application/vnd.organization", func() {
 			Example("ACME Corp")
 		})
 		Attribute("entity_type", EntityType, "Type of entity in hierarchy")
-	Attribute("legal_entity_type", String, "Legal entity type (Corporation, LLC, etc.)", func() {
-		Enum("CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT", "OTHER")
-		Example("CORPORATION")
-	})
+		Attribute("legal_entity_type", String, "Legal entity type (Corporation, LLC, etc.)", func() {
+			Enum("CORPORATION", "LLC", "PARTNERSHIP", "SOLE_PROPRIETORSHIP", "NON_PROFIT", "GOVERNMENT", "OTHER")
+			Example("CORPORATION")
+		})
 		Attribute("status", OrganizationStatus, "Organization status")
 		Attribute("tax_id", String, "Tax identification number", func() {
 			Pattern("^[0-9-]+$")

@@ -34,9 +34,9 @@ func InitializeFinanceServices(
 	financeServiceDeps := service.Dependencies{
 		AccountRepo:        accountRepo,
 		TransactionRepo:    transactionRepo,
-		Tracing:           tracingService,
-		Metrics:           metricsService,
-		IAMService:        nil, // Will be initialized later when IAM module is complete
+		Tracing:            tracingService,
+		Metrics:            metricsService,
+		IAMService:         nil, // Will be initialized later when IAM module is complete
 		FeatureFlagService: services.FeatureFlagService,
 	}
 

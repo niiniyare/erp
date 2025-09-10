@@ -105,7 +105,7 @@ func (s *IntegrationTestSuite) testTransactionApprovalWorkflow(t *testing.T) {
 
 func (s *IntegrationTestSuite) testTransactionProcessingWorkflow(t *testing.T) {
 	env := s.NewTestWorkflowEnvironment()
-	
+
 	transactionWorkflows := &workflows.TransactionWorkflows{}
 	env.RegisterWorkflow(transactionWorkflows.TransactionProcessingWorkflow)
 
@@ -131,7 +131,7 @@ func (s *IntegrationTestSuite) testTransactionProcessingWorkflow(t *testing.T) {
 	assert.NotEmpty(t, result.PostingReference)
 
 	s.logger.Info("Transaction processing workflow test passed", logger.Fields{
-		"transaction_id":     result.TransactionID,
+		"transaction_id":    result.TransactionID,
 		"status":            result.Status,
 		"posting_reference": result.PostingReference,
 	})
@@ -139,7 +139,7 @@ func (s *IntegrationTestSuite) testTransactionProcessingWorkflow(t *testing.T) {
 
 func (s *IntegrationTestSuite) testAccountCreationWorkflow(t *testing.T) {
 	env := s.NewTestWorkflowEnvironment()
-	
+
 	accountWorkflows := &workflows.AccountWorkflows{}
 	env.RegisterWorkflow(accountWorkflows.AccountCreationWorkflow)
 
@@ -255,7 +255,7 @@ func TestTemporalIntegrationSetup(t *testing.T) {
 	config := finance.TemporalIntegrationConfig{
 		Services: &service.Services{
 			Account:          nil, // Would be initialized with proper mock
-			Transaction:      nil, // Would be initialized with proper mock  
+			Transaction:      nil, // Would be initialized with proper mock
 			TransactionEntry: nil, // Would be initialized with proper mock
 		},
 		IAMService:          nil, // Optional for this test
@@ -272,7 +272,7 @@ func TestTemporalIntegrationSetup(t *testing.T) {
 
 	// Test that the integration can be created (even if it fails due to missing client)
 	_, err := finance.NewTemporalIntegration(config)
-	
+
 	// We expect this to fail due to missing temporal client, but not due to structural issues
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "temporal client is required")

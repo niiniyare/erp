@@ -65,93 +65,93 @@ func (n *NotificationActivities) RegisterWith(w worker.Worker) {
 
 // AccountNotificationInput represents account-related notification input
 type AccountNotificationInput struct {
-	Account     *domain.Accounts       `json:"account"`
-	Action      string                 `json:"action"`
-	UserID      uuid.UUID              `json:"user_id"`
-	Recipients  []string               `json:"recipients,omitempty"`
-	MessageData map[string]any `json:"message_data,omitempty"`
+	Account     *domain.Accounts `json:"account"`
+	Action      string           `json:"action"`
+	UserID      uuid.UUID        `json:"user_id"`
+	Recipients  []string         `json:"recipients,omitempty"`
+	MessageData map[string]any   `json:"message_data,omitempty"`
 }
 
 // TransactionNotificationInput represents transaction-related notification input
 type TransactionNotificationInput struct {
-	Transaction *domain.Transaction    `json:"transaction"`
-	Action      string                 `json:"action"`
-	UserID      uuid.UUID              `json:"user_id"`
-	Recipients  []string               `json:"recipients,omitempty"`
-	MessageData map[string]any `json:"message_data,omitempty"`
+	Transaction *domain.Transaction `json:"transaction"`
+	Action      string              `json:"action"`
+	UserID      uuid.UUID           `json:"user_id"`
+	Recipients  []string            `json:"recipients,omitempty"`
+	MessageData map[string]any      `json:"message_data,omitempty"`
 }
 
 // ApprovalNotificationInput represents approval-related notification input
 type ApprovalNotificationInput struct {
-	ResourceType   string                 `json:"resource_type"`
-	ResourceID     uuid.UUID              `json:"resource_id"`
-	RequesterID    uuid.UUID              `json:"requester_id"`
-	ApproverIDs    []uuid.UUID            `json:"approver_ids"`
-	ApprovalAmount float64                `json:"approval_amount,omitempty"`
+	ResourceType   string         `json:"resource_type"`
+	ResourceID     uuid.UUID      `json:"resource_id"`
+	RequesterID    uuid.UUID      `json:"requester_id"`
+	ApproverIDs    []uuid.UUID    `json:"approver_ids"`
+	ApprovalAmount float64        `json:"approval_amount,omitempty"`
 	MessageData    map[string]any `json:"message_data,omitempty"`
 }
 
 // BudgetNotificationInput represents budget-related notification input
 type BudgetNotificationInput struct {
-	AccountID      uuid.UUID              `json:"account_id"`
-	AccountName    string                 `json:"account_name"`
-	BudgetLimit    float64                `json:"budget_limit"`
-	CurrentUsage   float64                `json:"current_usage"`
-	ExceededAmount float64                `json:"exceeded_amount,omitempty"`
-	Period         string                 `json:"period"`
-	Recipients     []string               `json:"recipients,omitempty"`
+	AccountID      uuid.UUID      `json:"account_id"`
+	AccountName    string         `json:"account_name"`
+	BudgetLimit    float64        `json:"budget_limit"`
+	CurrentUsage   float64        `json:"current_usage"`
+	ExceededAmount float64        `json:"exceeded_amount,omitempty"`
+	Period         string         `json:"period"`
+	Recipients     []string       `json:"recipients,omitempty"`
 	MessageData    map[string]any `json:"message_data,omitempty"`
 }
 
 // ComplianceNotificationInput represents compliance-related notification input
 type ComplianceNotificationInput struct {
-	AlertType      string                 `json:"alert_type"`
-	Severity       string                 `json:"severity"`
-	ResourceType   string                 `json:"resource_type"`
-	ResourceID     string                 `json:"resource_id"`
+	AlertType        string         `json:"alert_type"`
+	Severity         string         `json:"severity"`
+	ResourceType     string         `json:"resource_type"`
+	ResourceID       string         `json:"resource_id"`
 	ViolationDetails map[string]any `json:"violation_details"`
-	Recipients     []string               `json:"recipients,omitempty"`
-	MessageData    map[string]any `json:"message_data,omitempty"`
+	Recipients       []string       `json:"recipients,omitempty"`
+	MessageData      map[string]any `json:"message_data,omitempty"`
 }
 
 // PeriodClosingNotificationInput represents period closing notification input
 type PeriodClosingNotificationInput struct {
-	Period      string                 `json:"period"`
-	Status      string                 `json:"status"`
+	Period      string         `json:"period"`
+	Status      string         `json:"status"`
 	Summary     map[string]any `json:"summary"`
-	Recipients  []string               `json:"recipients,omitempty"`
+	Recipients  []string       `json:"recipients,omitempty"`
 	MessageData map[string]any `json:"message_data,omitempty"`
 }
 
 // ErrorNotificationInput represents error notification input
 type ErrorNotificationInput struct {
-	ErrorType    string                 `json:"error_type"`
-	ErrorMessage string                 `json:"error_message"`
+	ErrorType    string         `json:"error_type"`
+	ErrorMessage string         `json:"error_message"`
 	Context      map[string]any `json:"context"`
-	Severity     string                 `json:"severity"`
-	Recipients   []string               `json:"recipients,omitempty"`
+	Severity     string         `json:"severity"`
+	Recipients   []string       `json:"recipients,omitempty"`
 }
 
 // BulkOperationNotificationInput represents bulk operation notification input
 type BulkOperationNotificationInput struct {
-	OperationType string                 `json:"operation_type"`
-	TotalCount    int                    `json:"total_count"`
-	SuccessCount  int                    `json:"success_count"`
-	ErrorCount    int                    `json:"error_count"`
-	Duration      string                 `json:"duration"`
+	OperationType string         `json:"operation_type"`
+	TotalCount    int            `json:"total_count"`
+	SuccessCount  int            `json:"success_count"`
+	ErrorCount    int            `json:"error_count"`
+	Duration      string         `json:"duration"`
 	Summary       map[string]any `json:"summary"`
-	Recipients    []string               `json:"recipients,omitempty"`
+	Recipients    []string       `json:"recipients,omitempty"`
 	MessageData   map[string]any `json:"message_data,omitempty"`
 }
 
 // NotificationActivityOutput represents notification activity output
 type NotificationActivityOutput struct {
-	Success           bool     `json:"success"`
-	NotificationID    string   `json:"notification_id,omitempty"`
-	Message           string   `json:"message"`
-	ErrorCode         string   `json:"error_code,omitempty"`
-	DeliveredTo       []string `json:"delivered_to,omitempty"`
-	FailedRecipients  []string `json:"failed_recipients,omitempty"`
+	Success          bool     `json:"success"`
+	NotificationID   string   `json:"notification_id,omitempty"`
+	Message          string   `json:"message"`
+	ErrorCode        string   `json:"error_code,omitempty"`
+	DeliveredTo      []string `json:"delivered_to,omitempty"`
+	FailedRecipients []string `json:"failed_recipients,omitempty"`
 }
 
 // Notification Activities Implementation
@@ -200,7 +200,13 @@ func (n *NotificationActivities) SendAccountCreatedNotificationActivity(ctx cont
 		input.Account.AccountName,
 		input.Account.AccountCode,
 		string(input.Account.RootType),
-		func() string { if input.Account.CurrencyCode != nil { return *input.Account.CurrencyCode } else { return "N/A" } }(),
+		func() string {
+			if input.Account.CurrencyCode != nil {
+				return *input.Account.CurrencyCode
+			} else {
+				return "N/A"
+			}
+		}(),
 		string(input.Account.Status),
 		input.UserID,
 	)
@@ -628,11 +634,11 @@ func (n *NotificationActivities) SendErrorNotificationActivity(ctx context.Conte
 
 	info := activity.GetInfo(ctx)
 	activityLogger := n.logger.WithFields(logger.Fields{
-		"activity_id":    info.ActivityID,
-		"workflow_id":    info.WorkflowExecution.ID,
-		"activity_type":  domain.ActivityTypeNotification,
-		"error_type":     input.ErrorType,
-		"severity":       input.Severity,
+		"activity_id":   info.ActivityID,
+		"workflow_id":   info.WorkflowExecution.ID,
+		"activity_type": domain.ActivityTypeNotification,
+		"error_type":    input.ErrorType,
+		"severity":      input.Severity,
 	})
 
 	activityLogger.InfoContext(ctx, "Sending error notification")
@@ -703,13 +709,13 @@ func (n *NotificationActivities) SendBulkOperationCompletedNotificationActivity(
 
 	info := activity.GetInfo(ctx)
 	activityLogger := n.logger.WithFields(logger.Fields{
-		"activity_id":      info.ActivityID,
-		"workflow_id":      info.WorkflowExecution.ID,
-		"activity_type":    domain.ActivityTypeNotification,
-		"operation_type":   input.OperationType,
-		"total_count":      input.TotalCount,
-		"success_count":    input.SuccessCount,
-		"error_count":      input.ErrorCount,
+		"activity_id":    info.ActivityID,
+		"workflow_id":    info.WorkflowExecution.ID,
+		"activity_type":  domain.ActivityTypeNotification,
+		"operation_type": input.OperationType,
+		"total_count":    input.TotalCount,
+		"success_count":  input.SuccessCount,
+		"error_count":    input.ErrorCount,
 	})
 
 	activityLogger.InfoContext(ctx, "Sending bulk operation completed notification")
@@ -780,12 +786,12 @@ type NotificationSettings struct {
 
 // NotificationRequest represents a notification request
 type NotificationRequest struct {
-	ID         string                 `json:"id"`
-	Type       string                 `json:"type"`
-	Subject    string                 `json:"subject"`
-	Message    string                 `json:"message"`
-	Recipients []string               `json:"recipients"`
-	Priority   string                 `json:"priority"`
+	ID         string         `json:"id"`
+	Type       string         `json:"type"`
+	Subject    string         `json:"subject"`
+	Message    string         `json:"message"`
+	Recipients []string       `json:"recipients"`
+	Priority   string         `json:"priority"`
 	Data       map[string]any `json:"data,omitempty"`
 }
 
@@ -793,7 +799,7 @@ type NotificationRequest struct {
 func (n *NotificationActivities) getNotificationSettings(ctx context.Context, notificationType string) (*NotificationSettings, error) {
 	// This is a simplified implementation - in real implementation, you'd use proper domain types
 	// and retrieve actual settings from the configuration service
-	
+
 	// For now, return default settings
 	return &NotificationSettings{
 		Enabled:           true, // Default enabled
@@ -819,7 +825,7 @@ func (n *NotificationActivities) sendNotification(ctx context.Context, req Notif
 
 	// Extract tenant ID from context
 	tenantID := getTenantIDFromContext(ctx)
-	
+
 	// Convert recipients to notification recipients
 	recipients := make([]notification.Recipient, 0, len(req.Recipients))
 	deliveredTo := make([]string, 0)
@@ -863,11 +869,10 @@ func (n *NotificationActivities) sendNotification(ctx context.Context, req Notif
 			deliveredTo = append(deliveredTo, recipientStr)
 		}
 		n.logger.InfoContext(ctx, "Notification sent successfully", logger.Fields{
-			"notification_id":   req.ID,
-			"recipient_count":   len(recipients),
+			"notification_id": req.ID,
+			"recipient_count": len(recipients),
 		})
 	}
 
 	return deliveredTo, failedRecipients
 }
-

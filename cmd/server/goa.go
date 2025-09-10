@@ -15,9 +15,9 @@ import (
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/entity"
 	"github.com/niiniyare/erp/internal/core/identity"
-	"github.com/niiniyare/erp/internal/platform/middleware"
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/cache"
+	"github.com/niiniyare/erp/internal/platform/middleware"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -178,7 +178,7 @@ func InitializeGOAServer(services *Services, store db.Store, cacheService cache.
 
 	// Apply middleware to the muxer with IAM adapter
 	var finalHandler http.Handler = mux
-	
+
 	// Create IAM service adapter for middleware integration
 	iamAdapter := NewIAMServiceAdapter(services, store, cacheService, metricsService, tracingService)
 	middlewareSetup, err := initializeMiddleware(iamAdapter, cacheService, metricsService, tracingService)
@@ -274,8 +274,8 @@ func getFieldValue(v reflect.Value, fieldName string) string {
 // InitializeGinRouter is deprecated - use GOA-only mode instead
 func InitializeGinRouter(services *Services, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (http.Handler, error) {
 	logger.Warn("InitializeGinRouter is deprecated - migration mode no longer supported", logger.Fields{
-		"service": "gin-router",
-		"status":  "deprecated",
+		"service":        "gin-router",
+		"status":         "deprecated",
 		"recommendation": "Use GOA-only mode (SERVER_MODE=goa-only)",
 	})
 
@@ -297,11 +297,11 @@ type CombinedHandler struct {
 func (c *CombinedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Always route to GOA handler since migration mode is deprecated
 	logger.Warn("CombinedHandler is deprecated - use GOA-only mode", logger.Fields{
-		"path": r.URL.Path,
-		"method": r.Method,
+		"path":           r.URL.Path,
+		"method":         r.Method,
 		"recommendation": "Set SERVER_MODE=goa-only",
 	})
-	
+
 	c.goaHandler.ServeHTTP(w, r)
 }
 
@@ -384,7 +384,7 @@ func initializeMiddleware(iamAdapter *IAMServiceAdapter, cacheService cache.Serv
 		// Fallback to default whitelist
 		whitelist = middleware.DefaultWhitelist()
 	}
-	
+
 	return &MiddlewareSetup{
 		logger:    logger.WithFields(logger.Fields{"component": "middleware"}),
 		cache:     cacheService,
@@ -411,14 +411,14 @@ type MiddlewareSetup struct {
 func (m *MiddlewareSetup) ConfigureHTTPMuxer(mux http.Handler) http.Handler {
 	// Apply native tenant middleware chain
 	// Order: Tenant Middleware → Request Logging → GOA Handler
-	
+
 	// 1. Create tenant middleware
 	tenantMiddleware := middleware.TenantMiddleware(
 		m.services.TenantService,
 		m.store,
 		m.whitelist,
 	)
-	
+
 	// 2. Create request logging middleware
 	requestLogger := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -430,15 +430,15 @@ func (m *MiddlewareSetup) ConfigureHTTPMuxer(mux http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
-	
+
 	// 3. Chain middlewares: Tenant → Logging → GOA Handler
 	handler := tenantMiddleware(requestLogger(mux))
-	
+
 	m.logger.Info("Native middleware chain configured", logger.Fields{
 		"middlewares": []string{"tenant", "request_logging"},
-		"mode":       "goa-native",
+		"mode":        "goa-native",
 	})
-	
+
 	return handler
 }
 
@@ -465,8 +465,8 @@ type IAMServiceAdapter struct {
 	logger          logger.Logger
 	metrics         *metrics.MetricsService
 	tracing         tracing.TracingService
-	services        *Services  // Reference to all services
-	store           db.Store   // Database store for RLS operations
+	services        *Services // Reference to all services
+	store           db.Store  // Database store for RLS operations
 }
 
 // NewIAMServiceAdapter creates a new IAM service adapter
@@ -495,7 +495,7 @@ func (a *IAMServiceAdapter) Authentication() interface{} {
 	}
 }
 
-// Authorization returns a minimal authorization service adapter  
+// Authorization returns a minimal authorization service adapter
 func (a *IAMServiceAdapter) Authorization() interface{} {
 	// Return a simple struct that implements basic authz methods needed by middleware
 	return &AuthzAdapter{
@@ -532,12 +532,12 @@ func (a *AuthnAdapter) GetUser(ctx context.Context, userID string) (interface{},
 	if userID == "" {
 		return nil, fmt.Errorf("user ID cannot be empty")
 	}
-	
+
 	id, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID format: %w", err)
 	}
-	
+
 	return a.identityService.GetUserByID(ctx, id)
 }
 

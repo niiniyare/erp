@@ -104,10 +104,10 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 	}
 
 	result.Steps["reconciliation"] = domain.ClosingStepResult{
-		StepName:        "Account Reconciliation",
-		Status:          domain.StepStatusCompleted,
-		CompletedAt:     workflow.Now(ctx),
-		ProcessedCount:  reconciliationResult.ProcessedAccounts,
+		StepName:         "Account Reconciliation",
+		Status:           domain.StepStatusCompleted,
+		CompletedAt:      workflow.Now(ctx),
+		ProcessedCount:   reconciliationResult.ProcessedAccounts,
 		DiscrepancyCount: reconciliationResult.DiscrepancyCount,
 	}
 
@@ -116,9 +116,9 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 	var adjustingEntries domain.AdjustingEntriesResult
 	err = workflow.ExecuteActivity(ctx, "GenerateAdjustingEntries", domain.AdjustingEntriesInput{
 		ClosingPeriod:         input.ClosingPeriod,
-		TenantID:             input.TenantID,
+		TenantID:              input.TenantID,
 		ReconciliationResults: reconciliationResult.Results,
-		AdjustmentRules:      input.AdjustmentRules,
+		AdjustmentRules:       input.AdjustmentRules,
 	}).Get(ctx, &adjustingEntries)
 
 	if err != nil {
@@ -163,8 +163,8 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 	var closingEntries domain.ClosingEntriesResult
 	err = workflow.ExecuteActivity(ctx, "GenerateClosingEntries", domain.ClosingEntriesInput{
 		ClosingPeriod:       input.ClosingPeriod,
-		TenantID:           input.TenantID,
-		AdjustingEntries:   adjustingEntries.GeneratedEntries,
+		TenantID:            input.TenantID,
+		AdjustingEntries:    adjustingEntries.GeneratedEntries,
 		DepreciationEntries: depreciationResult.DepreciationEntries,
 	}).Get(ctx, &closingEntries)
 
@@ -186,8 +186,8 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 	logger.Info("Step 6: Financial statements")
 	var financialStatements domain.FinancialStatementsResult
 	err = workflow.ExecuteActivity(ctx, "GenerateFinancialStatements", domain.FinancialStatementsInput{
-		ClosingPeriod: input.ClosingPeriod,
-		TenantID:      input.TenantID,
+		ClosingPeriod:  input.ClosingPeriod,
+		TenantID:       input.TenantID,
 		StatementTypes: input.StatementTypes,
 	}).Get(ctx, &financialStatements)
 
@@ -208,7 +208,7 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 	// Step 7: Finalize closing
 	logger.Info("Step 7: Finalize closing")
 	err = workflow.ExecuteActivity(ctx, "FinalizeMonthEndClosing", domain.FinalizeClosingInput{
-		ClosingPeriod:        input.ClosingPeriod,
+		ClosingPeriod:       input.ClosingPeriod,
 		TenantID:            input.TenantID,
 		ClosingEntries:      closingEntries.GeneratedEntries,
 		FinancialStatements: financialStatements.GeneratedStatements,
@@ -230,10 +230,10 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 
 	// Step 8: Send notifications
 	err = workflow.ExecuteActivity(ctx, "SendClosingNotifications", domain.ClosingNotificationInput{
-		ClosingPeriod:      input.ClosingPeriod,
-		ClosingStatus:      domain.ClosingStatusCompleted,
+		ClosingPeriod:       input.ClosingPeriod,
+		ClosingStatus:       domain.ClosingStatusCompleted,
 		FinancialStatements: financialStatements.GeneratedStatements,
-		Recipients:         input.NotificationRecipients,
+		Recipients:          input.NotificationRecipients,
 	}).Get(ctx, nil)
 
 	if err != nil {
@@ -346,9 +346,9 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 	logger.Info("Step 4: Year-end accruals")
 	var accrualResult domain.YearEndAccrualsResult
 	err = workflow.ExecuteActivity(ctx, "ProcessYearEndAccruals", domain.YearEndAccrualsInput{
-		FiscalYear:    input.FiscalYear,
-		TenantID:      input.TenantID,
-		AccrualRules:  input.AccrualRules,
+		FiscalYear:   input.FiscalYear,
+		TenantID:     input.TenantID,
+		AccrualRules: input.AccrualRules,
 	}).Get(ctx, &accrualResult)
 
 	if err != nil {
@@ -369,10 +369,10 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 	logger.Info("Step 5: Year-end closing entries")
 	var yearEndClosingEntries domain.YearEndClosingEntriesResult
 	err = workflow.ExecuteActivity(ctx, "GenerateYearEndClosingEntries", domain.YearEndClosingEntriesInput{
-		FiscalYear:         input.FiscalYear,
-		TenantID:          input.TenantID,
+		FiscalYear:          input.FiscalYear,
+		TenantID:            input.TenantID,
 		DepreciationEntries: annualDepreciation.DepreciationEntries,
-		AccrualEntries:    accrualResult.AccrualEntries,
+		AccrualEntries:      accrualResult.AccrualEntries,
 	}).Get(ctx, &yearEndClosingEntries)
 
 	if err != nil {
@@ -393,9 +393,9 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 	logger.Info("Step 6: Annual financial statements")
 	var annualStatements domain.AnnualFinancialStatementsResult
 	err = workflow.ExecuteActivity(ctx, "GenerateAnnualFinancialStatements", domain.AnnualFinancialStatementsInput{
-		FiscalYear:     input.FiscalYear,
-		TenantID:       input.TenantID,
-		StatementTypes: input.StatementTypes,
+		FiscalYear:       input.FiscalYear,
+		TenantID:         input.TenantID,
+		StatementTypes:   input.StatementTypes,
 		IncludePriorYear: true,
 	}).Get(ctx, &annualStatements)
 
@@ -417,8 +417,8 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 	logger.Info("Step 7: Archive fiscal year data")
 	var archiveResult domain.FiscalYearArchiveResult
 	err = workflow.ExecuteActivity(ctx, "ArchiveFiscalYearData", domain.FiscalYearArchiveInput{
-		FiscalYear: input.FiscalYear,
-		TenantID:   input.TenantID,
+		FiscalYear:      input.FiscalYear,
+		TenantID:        input.TenantID,
 		ArchiveSettings: input.ArchiveSettings,
 	}).Get(ctx, &archiveResult)
 
@@ -430,9 +430,9 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 	}
 
 	result.Steps["archival"] = domain.ClosingStepResult{
-		StepName:    "Data Archival",
-		Status:      domain.StepStatusCompleted,
-		CompletedAt: workflow.Now(ctx),
+		StepName:       "Data Archival",
+		Status:         domain.StepStatusCompleted,
+		CompletedAt:    workflow.Now(ctx),
 		ProcessedCount: archiveResult.ArchivedRecords,
 	}
 
@@ -440,11 +440,11 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 	logger.Info("Step 8: Finalize year-end closing")
 	err = workflow.ExecuteActivity(ctx, "FinalizeYearEndClosing", domain.FinalizeYearEndClosingInput{
 		FiscalYear:          input.FiscalYear,
-		TenantID:           input.TenantID,
-		ClosingEntries:     yearEndClosingEntries.GeneratedEntries,
+		TenantID:            input.TenantID,
+		ClosingEntries:      yearEndClosingEntries.GeneratedEntries,
 		FinancialStatements: annualStatements.GeneratedStatements,
-		ArchiveReference:   archiveResult.ArchiveReference,
-		FinalizedBy:        input.InitiatedBy,
+		ArchiveReference:    archiveResult.ArchiveReference,
+		FinalizedBy:         input.InitiatedBy,
 	}).Get(ctx, nil)
 
 	if err != nil {

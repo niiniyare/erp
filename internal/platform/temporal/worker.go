@@ -105,7 +105,7 @@ func (wm *WorkerManager) RegisterModuleActivities(moduleName string, activities 
 		activityName := fmt.Sprintf("%s.%s", moduleName, name)
 		wm.activityReg.RegisterActivity(activityName, activity)
 	}
-	
+
 	wm.logger.Info("Registered module activities", loggerPkg.Fields{
 		"module":           moduleName,
 		"activity_count":   len(activities),
@@ -119,10 +119,10 @@ func (wm *WorkerManager) RegisterModuleWorkflows(moduleName string, workflows ma
 		workflowName := fmt.Sprintf("%s.%s", moduleName, name)
 		wm.workflowReg.RegisterWorkflow(workflowName, workflowFunc)
 	}
-	
+
 	wm.logger.Info("Registered module workflows", loggerPkg.Fields{
-		"module":          moduleName,
-		"workflow_count":  len(workflows),
+		"module":           moduleName,
+		"workflow_count":   len(workflows),
 		"registered_names": getWorkflowNames(workflows),
 	})
 }
@@ -150,10 +150,10 @@ func (wm *WorkerManager) StartWorkers(ctx context.Context) error {
 	}
 
 	wm.logger.Info("✅ All Temporal Workers Started", loggerPkg.Fields{
-		"total_workers":     len(wm.workers),
-		"enabled_modules":   enabledModules,
-		"system_workers":    []string{"system", "notifications", "analytics"},
-		"status":           "running",
+		"total_workers":   len(wm.workers),
+		"enabled_modules": enabledModules,
+		"system_workers":  []string{"system", "notifications", "analytics"},
+		"status":          "running",
 	})
 
 	return nil
@@ -262,7 +262,7 @@ func (wm *WorkerManager) startWorker(ctx context.Context, workerName string, con
 // registerWorkerActivities registers activities for a worker
 func (wm *WorkerManager) registerWorkerActivities(w worker.Worker, workerName string, isSystemWorker bool) {
 	activities := wm.activityReg.GetActivities()
-	
+
 	if isSystemWorker {
 		// System workers get all activities
 		for _, activity := range activities {
@@ -282,7 +282,7 @@ func (wm *WorkerManager) registerWorkerActivities(w worker.Worker, workerName st
 // registerWorkerWorkflows registers workflows for a worker
 func (wm *WorkerManager) registerWorkerWorkflows(w worker.Worker, workerName string, isSystemWorker bool) {
 	workflows := wm.workflowReg.GetWorkflows()
-	
+
 	if isSystemWorker {
 		// System workers get all workflows
 		for _, workflowFunc := range workflows {
@@ -322,7 +322,7 @@ func (wm *WorkerManager) StopWorkers(ctx context.Context) error {
 		wg.Add(1)
 		go func(workerName string, ch chan struct{}) {
 			defer wg.Done()
-			
+
 			select {
 			case ch <- struct{}{}:
 				wm.logger.Debug("Sent stop signal to worker", loggerPkg.Fields{
@@ -363,11 +363,11 @@ func (wm *WorkerManager) GetWorkerStatus() map[string]any {
 	defer wm.mu.RUnlock()
 
 	status := map[string]any{
-		"total_workers":      len(wm.workers),
-		"enabled_modules":    wm.config.GetEnabledModules(),
+		"total_workers":         len(wm.workers),
+		"enabled_modules":       wm.config.GetEnabledModules(),
 		"registered_activities": len(wm.activityReg.GetActivities()),
 		"registered_workflows":  len(wm.workflowReg.GetWorkflows()),
-		"workers": make(map[string]string),
+		"workers":               make(map[string]string),
 	}
 
 	for name := range wm.workers {

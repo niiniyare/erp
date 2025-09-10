@@ -13,15 +13,15 @@ package middleware
 // - tenant.go: Multi-tenant context handling (existing)
 
 // Usage example:
-// 
+//
 // // In your GOA service initialization:
 // jwtMiddleware := middleware.NewJWTAuthMiddleware(iamService, logger, metrics, tracer)
 // authzMiddleware := middleware.NewAuthorizationMiddleware(iamService, config, logger, metrics, tracer)
-// 
+//
 // // For GOA security middleware:
 // service.Use(jwtMiddleware.JWTAuth)
 // service.Use(authzMiddleware.RequirePermission("resource", "action"))
-// 
+//
 // // For HTTP middleware:
 // handler.Use(jwtMiddleware.HTTPJWTMiddleware())
 // handler.Use(authzMiddleware.HTTPMiddleware())

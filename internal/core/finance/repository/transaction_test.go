@@ -480,8 +480,8 @@ func (s *TransactionRepositoryTestSuite) TestTransactionApproval() {
 		CurrencyCode:      "USD",
 		ExchangeRate:      decimal.NewFromFloat(1.0),
 		IsRecurring:       false,
-		ApprovalRequired:  true,                              // Require approval
-		ApprovalStatus:    domain.ApprovalStatusPending,      // Set to pending for approval
+		ApprovalRequired:  true,                         // Require approval
+		ApprovalStatus:    domain.ApprovalStatusPending, // Set to pending for approval
 		CreatedBy:         s.testUser.ID,
 	}
 

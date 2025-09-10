@@ -23,10 +23,10 @@ import (
 // AuthorizationConfig defines the configuration for authorization middleware
 type AuthorizationConfig struct {
 	// Default authorization behavior
-	DefaultDeny           bool              `json:"default_deny"`             // Deny access by default
-	RequireAuthentication bool              `json:"require_authentication"`   // Require authentication for all endpoints
-	CachePermissions     bool              `json:"cache_permissions"`        // Cache permission evaluations
-	CacheTTL             time.Duration     `json:"cache_ttl"`               // Permission cache TTL
+	DefaultDeny           bool          `json:"default_deny"`           // Deny access by default
+	RequireAuthentication bool          `json:"require_authentication"` // Require authentication for all endpoints
+	CachePermissions      bool          `json:"cache_permissions"`      // Cache permission evaluations
+	CacheTTL              time.Duration `json:"cache_ttl"`              // Permission cache TTL
 
 	// Endpoint-specific authorization rules
 	EndpointRules map[string]EndpointAuthRule `json:"endpoint_rules"`
@@ -47,12 +47,12 @@ type AuthorizationConfig struct {
 
 // EndpointAuthRule defines authorization rules for specific endpoints
 type EndpointAuthRule struct {
-	ResourceType     string   `json:"resource_type"`      // Type of resource being accessed
-	Action           string   `json:"action"`             // Action being performed
-	RequiredRoles    []string `json:"required_roles"`     // Required roles
+	ResourceType        string   `json:"resource_type"`        // Type of resource being accessed
+	Action              string   `json:"action"`               // Action being performed
+	RequiredRoles       []string `json:"required_roles"`       // Required roles
 	RequiredPermissions []string `json:"required_permissions"` // Required permissions
-	AllowAnonymous   bool     `json:"allow_anonymous"`    // Allow anonymous access
-	RequireOwnership bool     `json:"require_ownership"`  // Require resource ownership
+	AllowAnonymous      bool     `json:"allow_anonymous"`      // Allow anonymous access
+	RequireOwnership    bool     `json:"require_ownership"`    // Require resource ownership
 }
 
 // ResourceMapping maps URL patterns to resource types
@@ -93,8 +93,8 @@ func DefaultAuthorizationConfig() AuthorizationConfig {
 	return AuthorizationConfig{
 		DefaultDeny:           true,
 		RequireAuthentication: true,
-		CachePermissions:     true,
-		CacheTTL:             5 * time.Minute,
+		CachePermissions:      true,
+		CacheTTL:              5 * time.Minute,
 
 		EndpointRules: map[string]EndpointAuthRule{
 			// Authentication endpoints
@@ -107,13 +107,13 @@ func DefaultAuthorizationConfig() AuthorizationConfig {
 
 			// User management
 			"GET:/api/v1/users/{id}": {
-				ResourceType:    "user",
-				Action:          "read",
+				ResourceType:     "user",
+				Action:           "read",
 				RequireOwnership: true,
 			},
 			"PUT:/api/v1/users/{id}": {
-				ResourceType:    "user",
-				Action:          "update",
+				ResourceType:     "user",
+				Action:           "update",
 				RequireOwnership: true,
 			},
 
@@ -211,7 +211,7 @@ func (m *AuthorizationMiddleware) RequirePermission(resourceType, action string,
 				"resource_type": resourceType,
 				"action":        action,
 			})
-			
+
 			m.recordAuthzMetrics(ctx, resourceType, action, "evaluation_error", time.Since(start))
 			span.RecordError(err)
 			return ctx, fmt.Errorf("authorization evaluation failed: %w", err)
@@ -283,7 +283,7 @@ func (m *AuthorizationMiddleware) RequireRole(requiredRoles ...string) func(cont
 				"error":   err.Error(),
 				"user_id": userID.String(),
 			})
-			
+
 			m.recordAuthzMetrics(ctx, "role", "check", "role_lookup_error", time.Since(start))
 			span.RecordError(err)
 			return ctx, fmt.Errorf("failed to get user roles: %w", err)
@@ -401,7 +401,7 @@ func (m *AuthorizationMiddleware) getUserIDFromContext(ctx context.Context) (uui
 	if userIDStr, ok := ctx.Value("user_id").(string); ok {
 		return uuid.Parse(userIDStr)
 	}
-	
+
 	if userID, ok := ctx.Value("user_id").(uuid.UUID); ok {
 		return userID, nil
 	}

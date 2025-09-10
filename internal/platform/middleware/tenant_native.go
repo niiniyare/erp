@@ -224,4 +224,3 @@ func GetTenantIDFromContext(ctx context.Context) (string, bool) {
 	tenantID, ok := ctx.Value(TenantIDKey).(string)
 	return tenantID, ok
 }
-

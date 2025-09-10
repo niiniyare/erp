@@ -340,7 +340,7 @@ func (h *TenantGoaHandler) Create(ctx context.Context, p *goaTenant.CreateTenant
 		Name:  p.Name,
 		Email: "admin@" + p.Name + ".com", // Default email - should be provided in payload
 	}
-	
+
 	// Set optional fields if provided
 	if p.Subdomain != nil {
 		req.Subdomain = p.Subdomain
@@ -351,7 +351,7 @@ func (h *TenantGoaHandler) Create(ctx context.Context, p *goaTenant.CreateTenant
 	if err != nil {
 		span.RecordError(err)
 		h.metrics.IncrementCounter("tenant_create_errors", metrics.Fields{"error": err.Error()})
-		
+
 		// Convert domain errors to GOA errors
 		switch {
 		case errors.Is(err, sharedErrors.ErrSubdomainAlreadyExists):
@@ -418,7 +418,7 @@ func (h *TenantGoaHandler) Get(ctx context.Context, p *goaTenant.GetPayload) (*g
 	if err != nil {
 		span.RecordError(err)
 		h.metrics.IncrementCounter("tenant_get_errors", metrics.Fields{"error": err.Error()})
-		
+
 		// Convert domain errors to GOA errors
 		switch {
 		case errors.Is(err, sharedErrors.ErrTenantNotFound):
@@ -476,7 +476,7 @@ func (h *TenantGoaHandler) List(ctx context.Context, p *goaTenant.ListPayload) (
 	if err != nil {
 		span.RecordError(err)
 		h.metrics.IncrementCounter("tenant_list_errors", metrics.Fields{"error": err.Error()})
-		
+
 		logger.ErrorContext(ctx, "Tenant list failed", logger.Fields{
 			"error":  err.Error(),
 			"offset": offset,

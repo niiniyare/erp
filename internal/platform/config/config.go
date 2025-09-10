@@ -161,6 +161,10 @@ func Load() *Config {
 	// Set default values
 	setDefaults(v)
 
+	// Bind environment variables BEFORE reading config files
+	// This ensures env vars take precedence over config files
+	bindEnvVars(v)
+
 	// Try to read .env file first (for backward compatibility)
 	loadDotEnvFile(v)
 
@@ -171,9 +175,6 @@ func Load() *Config {
 			fmt.Printf("Warning: Error reading config file: %v\n", err)
 		}
 	}
-
-	// Bind environment variables to maintain backward compatibility
-	bindEnvVars(v)
 
 	var config Config
 	if err := v.Unmarshal(&config); err != nil {
@@ -208,6 +209,10 @@ func LoadWithViper() (*Config, *viper.Viper) {
 	// Set default values
 	setDefaults(v)
 
+	// Bind environment variables BEFORE reading config files
+	// This ensures env vars take precedence over config files
+	bindEnvVars(v)
+
 	// Try to read .env file first
 	loadDotEnvFile(v)
 
@@ -217,9 +222,6 @@ func LoadWithViper() (*Config, *viper.Viper) {
 			fmt.Printf("Warning: Error reading config file: %v\n", err)
 		}
 	}
-
-	// Bind environment variables
-	bindEnvVars(v)
 
 	var config Config
 	if err := v.Unmarshal(&config); err != nil {
@@ -563,7 +565,11 @@ func loadDotEnvFile(v *viper.Viper) {
 				if len(value) >= 2 && ((value[0] == '"' && value[len(value)-1] == '"') || (value[0] == '\'' && value[len(value)-1] == '\'')) {
 					value = value[1 : len(value)-1]
 				}
-				os.Setenv(key, value)
+				// Only set the environment variable if it's not already set
+				// This allows command-line env vars to override .env file values
+				if os.Getenv(key) == "" {
+					os.Setenv(key, value)
+				}
 			}
 		}
 	}

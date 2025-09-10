@@ -37,12 +37,12 @@ func NewEndpointWhitelist(patterns []string, exactMatches []string) (*EndpointWh
 		exactMatches: make(map[string]bool),
 		compiled:     make([]*regexp.Regexp, 0, len(patterns)),
 	}
-	
+
 	// Convert exact matches to map for O(1) lookup
 	for _, endpoint := range exactMatches {
 		whitelist.exactMatches[endpoint] = true
 	}
-	
+
 	// Pre-compile regex patterns for performance
 	for _, pattern := range patterns {
 		// Convert filepath patterns to regex
@@ -57,13 +57,13 @@ func NewEndpointWhitelist(patterns []string, exactMatches []string) (*EndpointWh
 		}
 		whitelist.compiled = append(whitelist.compiled, compiled)
 	}
-	
+
 	logger.Info("Endpoint whitelist initialized", logger.Fields{
-		"exact_matches":    len(whitelist.exactMatches),
-		"patterns":         len(patterns),
+		"exact_matches":     len(whitelist.exactMatches),
+		"patterns":          len(patterns),
 		"compiled_patterns": len(whitelist.compiled),
 	})
-	
+
 	return whitelist, nil
 }
 
@@ -73,7 +73,7 @@ func LoadWhitelistFromYAML(yamlData []byte) (*EndpointWhitelist, error) {
 	if err := yaml.Unmarshal(yamlData, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse whitelist YAML: %w", err)
 	}
-	
+
 	return NewEndpointWhitelist(
 		config.PublicEndpoints.Patterns,
 		config.PublicEndpoints.ExactMatches,
@@ -87,14 +87,14 @@ func (w *EndpointWhitelist) IsPublicEndpoint(method, path string) bool {
 		// If no whitelist is configured, all endpoints require tenant context
 		return false
 	}
-	
+
 	// Normalize the path
 	path = strings.TrimSpace(path)
 	method = strings.ToUpper(strings.TrimSpace(method))
-	
+
 	// Create full endpoint string for pattern matching
 	fullEndpoint := method + " " + path
-	
+
 	// Check exact matches first (fastest lookup)
 	if w.exactMatches[fullEndpoint] {
 		logger.Debug("Endpoint matched exact whitelist entry", logger.Fields{
@@ -102,7 +102,7 @@ func (w *EndpointWhitelist) IsPublicEndpoint(method, path string) bool {
 		})
 		return true
 	}
-	
+
 	// Also check path-only exact matches (for backwards compatibility)
 	if w.exactMatches[path] {
 		logger.Debug("Path matched exact whitelist entry", logger.Fields{
@@ -110,7 +110,7 @@ func (w *EndpointWhitelist) IsPublicEndpoint(method, path string) bool {
 		})
 		return true
 	}
-	
+
 	// Check compiled regex patterns
 	for _, regex := range w.compiled {
 		if regex.MatchString(fullEndpoint) {
@@ -120,7 +120,7 @@ func (w *EndpointWhitelist) IsPublicEndpoint(method, path string) bool {
 			})
 			return true
 		}
-		
+
 		// Also check path-only pattern matches
 		if regex.MatchString(path) {
 			logger.Debug("Path matched whitelist pattern", logger.Fields{
@@ -130,7 +130,7 @@ func (w *EndpointWhitelist) IsPublicEndpoint(method, path string) bool {
 			return true
 		}
 	}
-	
+
 	// Check simple glob patterns using filepath.Match as fallback
 	for _, pattern := range w.patterns {
 		if matched, _ := filepath.Match(pattern, fullEndpoint); matched {
@@ -140,7 +140,7 @@ func (w *EndpointWhitelist) IsPublicEndpoint(method, path string) bool {
 			})
 			return true
 		}
-		
+
 		if matched, _ := filepath.Match(pattern, path); matched {
 			logger.Debug("Path matched glob pattern", logger.Fields{
 				"path":    path,
@@ -149,7 +149,7 @@ func (w *EndpointWhitelist) IsPublicEndpoint(method, path string) bool {
 			return true
 		}
 	}
-	
+
 	// Not whitelisted - requires tenant context
 	return false
 }
@@ -163,7 +163,7 @@ func (w *EndpointWhitelist) GetStats() map[string]int {
 			"compiled_patterns": 0,
 		}
 	}
-	
+
 	return map[string]int{
 		"exact_matches":     len(w.exactMatches),
 		"patterns":          len(w.patterns),
@@ -174,35 +174,35 @@ func (w *EndpointWhitelist) GetStats() map[string]int {
 // ValidateConfiguration validates the whitelist configuration
 func (w *EndpointWhitelist) ValidateConfiguration() []string {
 	var issues []string
-	
+
 	if w == nil {
 		issues = append(issues, "whitelist is nil")
 		return issues
 	}
-	
+
 	// Check for common security issues
 	for endpoint := range w.exactMatches {
 		if strings.Contains(endpoint, "*") {
 			issues = append(issues, fmt.Sprintf("exact match contains wildcard: %s", endpoint))
 		}
-		
+
 		// Check for overly permissive patterns
 		if strings.HasPrefix(endpoint, "GET /") && strings.Contains(endpoint, "admin") {
 			issues = append(issues, fmt.Sprintf("potentially insecure admin endpoint: %s", endpoint))
 		}
 	}
-	
+
 	for _, pattern := range w.patterns {
 		// Check for overly broad patterns
 		if pattern == "*" || pattern == "**" {
 			issues = append(issues, fmt.Sprintf("overly broad pattern: %s", pattern))
 		}
-		
+
 		if strings.Contains(pattern, "/admin/*") {
 			issues = append(issues, fmt.Sprintf("potentially insecure admin pattern: %s", pattern))
 		}
 	}
-	
+
 	return issues
 }
 
@@ -211,11 +211,11 @@ func (w *EndpointWhitelist) ValidateConfiguration() []string {
 func convertToRegex(pattern string) string {
 	// Escape special regex characters except * and ?
 	escaped := regexp.QuoteMeta(pattern)
-	
+
 	// Convert escaped wildcards back to regex equivalents
 	escaped = strings.ReplaceAll(escaped, `\*`, `.*`)
 	escaped = strings.ReplaceAll(escaped, `\?`, `.`)
-	
+
 	// Anchor the pattern
 	return "^" + escaped + "$"
 }
@@ -229,7 +229,7 @@ func DefaultWhitelist() *EndpointWhitelist {
 		"GET /swagger-ui/*",
 		"GET /debug/*",
 	}
-	
+
 	exactMatches := []string{
 		"POST /api/v1/auth/login",
 		"POST /api/v1/auth/refresh",
@@ -239,7 +239,7 @@ func DefaultWhitelist() *EndpointWhitelist {
 		"GET /health",
 		"GET /ready",
 	}
-	
+
 	whitelist, err := NewEndpointWhitelist(patterns, exactMatches)
 	if err != nil {
 		logger.Error("Failed to create default whitelist", logger.Fields{
@@ -247,6 +247,6 @@ func DefaultWhitelist() *EndpointWhitelist {
 		})
 		return nil
 	}
-	
+
 	return whitelist
 }

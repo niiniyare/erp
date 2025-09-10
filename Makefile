@@ -273,8 +273,11 @@ sql2dbml: ## Convert SQL migration to DBML
 # ============================================================================
 run: ## Run the app server
 	@go run ./cmd/server/
+temporal-server: ## Start temporal server 
+	@temporal server start-dev
 
 .PHONY: help clean ci fmt lint test test-core test-repo \
 	createdb dropdb migrateup migratedown migratedrop migrate-create \
 	sqlc mock proto buf buf-lint evans dbdocs sql2dbml run check-tools \
-	docs docs-port docs-build docs-test docs-mkdocs-safe docs-dev docs-schema
+	docs docs-port docs-build docs-test docs-mkdocs-safe docs-dev docs-schema \
+	temporal-server

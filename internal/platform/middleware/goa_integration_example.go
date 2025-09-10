@@ -63,7 +63,7 @@ func NewGOAMiddlewareSetup(
 func (g *GOAMiddlewareSetup) ConfigureHTTPMuxer(mux goaHTTP.Muxer) http.Handler {
 	// Apply HTTP middleware in order
 	middlewares := g.MiddlewareStack.HTTPMiddlewareChain()
-	
+
 	// Start with the muxer as the base handler
 	var handler http.Handler = mux
 
@@ -157,15 +157,15 @@ func NewFinanceService(middlewareSetup *middleware.GOAMiddlewareSetup) *FinanceS
 func (s *FinanceService) CreateTransaction(ctx context.Context, p *finance.CreateTransactionPayload) (*finance.Transaction, error) {
 	// The authorization middleware has already validated permissions
 	// Context contains user information from authentication
-	
+
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		return nil, fmt.Errorf("user not authenticated")
 	}
-	
+
 	// Business logic here...
 	// The user is authenticated and authorized to create transactions
-	
+
 	return &finance.Transaction{
 		ID:     "txn_123",
 		Amount: p.Amount,
@@ -176,13 +176,13 @@ func (s *FinanceService) CreateTransaction(ctx context.Context, p *finance.Creat
 // In your main server setup:
 func setupFinanceService(middlewareSetup *middleware.GOAMiddlewareSetup) finance.Service {
 	svc := NewFinanceService(middlewareSetup)
-	
+
 	// Get authorization adapter
 	authz := middlewareSetup.AuthorizationMiddleware()
-	
+
 	// Apply security to endpoints
 	finance.NewEndpoints(svc, authz.RequireFinancePermission("create"))
-	
+
 	return svc
 }
 
@@ -192,11 +192,11 @@ func setupServer() {
 	iamService := // ... initialize IAM service
 	tenantService := // ... initialize tenant service
 	cacheService := // ... initialize cache service
-	
+
 	// Initialize middleware
 	middlewareSetup, err := middleware.NewGOAMiddlewareSetup(
 		iamService,
-		tenantService, 
+		tenantService,
 		cacheService,
 		"production", // environment
 		logger,
@@ -206,13 +206,13 @@ func setupServer() {
 	if err != nil {
 		log.Fatal("Failed to setup middleware:", err)
 	}
-	
+
 	// Create GOA services with security
 	financeService := setupFinanceService(middlewareSetup)
-	
+
 	// Create HTTP muxer (following actual project pattern)
 	mux := goaHTTP.NewMuxer()
-	
+
 	// Create finance server with security
 	financeServer := financeHTTP.New(
 		finance.NewEndpoints(financeService),
@@ -223,13 +223,13 @@ func setupServer() {
 		// Add JWT security middleware
 		middlewareSetup.JWTSecurityFunc(),
 	)
-	
+
 	// Mount services
 	financeHTTP.Mount(mux, financeServer)
-	
+
 	// Configure middleware and get final handler
 	handler := middlewareSetup.ConfigureHTTPMuxer(mux)
-	
+
 	// Start server
 	log.Fatal(http.ListenAndServe(":8080", handler))
 }
@@ -255,8 +255,8 @@ func (g *GOAMiddlewareSetup) GetMiddlewareReport() MiddlewareReport {
 
 // MiddlewareReport provides comprehensive middleware status
 type MiddlewareReport struct {
-	Environment     string                 `json:"environment"`
-	Security        SecuritySummary        `json:"security"`
-	Health          map[string]interface{} `json:"health"`
-	GOAIntegration  map[string]interface{} `json:"goa_integration"`
+	Environment    string                 `json:"environment"`
+	Security       SecuritySummary        `json:"security"`
+	Health         map[string]interface{} `json:"health"`
+	GOAIntegration map[string]interface{} `json:"goa_integration"`
 }

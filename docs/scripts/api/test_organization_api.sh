@@ -11,7 +11,7 @@ source "$SCRIPT_DIR/common.sh"
 # Configuration - Read from environment or use defaults from config
 SERVER_URL="${SERVER_URL:-http://localhost:${SERVER_PORT}}"
 TENANT_HEADER="X-Tenant-ID"
-DEFAULT_TENANT="550e8400-e29b-41d4-a716-446655440000"
+DEFAULT_TENANT="01c02990-6d9c-41a4-88e8-c9ae77dcb6ed"
 
 # Test data
 declare -A TEST_ORGS=(

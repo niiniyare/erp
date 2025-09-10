@@ -59,9 +59,9 @@ func main() {
 		// Production mode: Pure GOA server with native middleware
 		handler = goaServer.Handler
 		logger.Info("Server starting in GOA-only mode (production)", logger.Fields{
-			"port":    infra.Config.Server.Port,
-			"address": ":" + infra.Config.Server.Port,
-			"mode":    "goa-only",
+			"port":       infra.Config.Server.Port,
+			"address":    ":" + infra.Config.Server.Port,
+			"mode":       "goa-only",
 			"middleware": "native-http",
 		})
 
@@ -72,7 +72,7 @@ func main() {
 			"fallback_mode":   "goa-only",
 			"recommendation":  "Set SERVER_MODE=goa-only or remove env variable",
 		})
-		
+
 		handler = goaServer.Handler
 		logger.Info("Server starting in GOA-only mode (migration fallback)", logger.Fields{
 			"port":    infra.Config.Server.Port,
@@ -83,12 +83,12 @@ func main() {
 
 	default:
 		logger.Warn("Invalid server mode, using default", logger.Fields{
-			"invalid_mode":  serverMode,
-			"default_mode":  "goa-only",
-			"supported":     "goa-only (migration deprecated)",
-			"env_variable":  "SERVER_MODE",
+			"invalid_mode": serverMode,
+			"default_mode": "goa-only",
+			"supported":    "goa-only (migration deprecated)",
+			"env_variable": "SERVER_MODE",
 		})
-		
+
 		handler = goaServer.Handler
 	}
 

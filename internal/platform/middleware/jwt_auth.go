@@ -191,7 +191,7 @@ func (m *JWTAuthMiddleware) BasicAuth(ctx context.Context, username, password st
 	return ctx, nil
 }
 
-// APIKeyAuth creates an API key authentication security middleware for GOA  
+// APIKeyAuth creates an API key authentication security middleware for GOA
 // Note: This is a placeholder implementation since APIKeyAuth is not currently
 // used in the GOA design, only JWT authentication is implemented
 func (m *JWTAuthMiddleware) APIKeyAuth(ctx context.Context, key string, scheme interface{}) (context.Context, error) {
@@ -219,7 +219,7 @@ func (m *JWTAuthMiddleware) APIKeyAuth(ctx context.Context, key string, scheme i
 	})
 	span.SetStatus(codes.Error, "api_key_not_implemented")
 	m.recordAuthFailure(ctx, "api_key", "not_implemented")
-	
+
 	return ctx, fmt.Errorf("API key authentication not implemented")
 }
 
@@ -233,14 +233,14 @@ func (m *JWTAuthMiddleware) enrichContextWithAuth(ctx context.Context, user *mod
 	ctx = context.WithValue(ctx, "user", user)
 	ctx = context.WithValue(ctx, "user_email", user.Email)
 	ctx = context.WithValue(ctx, "auth_claims", claims)
-	
+
 	if token != "" {
 		ctx = context.WithValue(ctx, "auth_token", token)
 	}
-	
+
 	// Add authentication timestamp
 	ctx = context.WithValue(ctx, "auth_time", time.Now())
-	
+
 	return ctx
 }
 
@@ -249,7 +249,7 @@ func (m *JWTAuthMiddleware) recordAuthMetrics(ctx context.Context, method string
 	labels := metrics.Fields{
 		"method": method,
 	}
-	
+
 	m.metrics.ObserveHistogram("auth_request_duration", duration.Seconds(), labels)
 	m.metrics.IncrementCounter("auth_requests_total", labels)
 }
@@ -260,7 +260,7 @@ func (m *JWTAuthMiddleware) recordAuthSuccess(ctx context.Context, method string
 		"method": method,
 		"result": "success",
 	}
-	
+
 	m.metrics.IncrementCounter("auth_results_total", labels)
 }
 
@@ -271,7 +271,7 @@ func (m *JWTAuthMiddleware) recordAuthFailure(ctx context.Context, method, reaso
 		"result": "failure",
 		"reason": reason,
 	}
-	
+
 	m.metrics.IncrementCounter("auth_results_total", labels)
 	m.metrics.IncrementCounter("auth_failures_total", labels)
 }
@@ -289,31 +289,31 @@ type AuthContext struct {
 // GetAuthContext extracts authentication context from request context
 func GetAuthContext(ctx context.Context) *AuthContext {
 	authCtx := &AuthContext{}
-	
+
 	if authenticated, ok := ctx.Value("authenticated").(bool); ok {
 		authCtx.Authenticated = authenticated
 	}
-	
+
 	if userID, ok := ctx.Value("user_id").(string); ok {
 		authCtx.UserID = userID
 	}
-	
+
 	if email, ok := ctx.Value("user_email").(string); ok {
 		authCtx.Email = email
 	}
-	
+
 	if claims, ok := ctx.Value("auth_claims").(map[string]any); ok {
 		authCtx.Claims = claims
 	}
-	
+
 	if token, ok := ctx.Value("auth_token").(string); ok {
 		authCtx.Token = token
 	}
-	
+
 	if authTime, ok := ctx.Value("auth_time").(time.Time); ok {
 		authCtx.AuthTime = authTime
 	}
-	
+
 	return authCtx
 }
 

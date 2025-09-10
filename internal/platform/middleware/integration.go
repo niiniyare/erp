@@ -35,7 +35,7 @@ type MiddlewareStack struct {
 type MiddlewareConfig struct {
 	// Environment settings
 	Environment string `json:"environment"` // development, staging, production
-	
+
 	// Feature toggles
 	EnableRateLimit       bool `json:"enable_rate_limit"`
 	EnableSecurityHeaders bool `json:"enable_security_headers"`
@@ -113,12 +113,12 @@ func NewMiddlewareStack(
 	}
 
 	logger.Info("Middleware stack initialized", loggerPkg.Fields{
-		"environment":         config.Environment,
-		"rate_limit_enabled":  config.EnableRateLimit,
-		"security_headers":    config.EnableSecurityHeaders,
-		"validation_enabled":  config.EnableValidation,
-		"authz_enabled":       config.EnableAuthorization,
-		"tenant_isolation":    config.EnableTenantIsolation,
+		"environment":        config.Environment,
+		"rate_limit_enabled": config.EnableRateLimit,
+		"security_headers":   config.EnableSecurityHeaders,
+		"validation_enabled": config.EnableValidation,
+		"authz_enabled":      config.EnableAuthorization,
+		"tenant_isolation":   config.EnableTenantIsolation,
 	})
 
 	return stack, nil
@@ -131,7 +131,7 @@ func (m *MiddlewareStack) createTenantHTTPMiddleware() func(http.Handler) http.H
 			// Extract tenant info from request (subdomain, header, etc.)
 			// This is a simplified version - you might want to implement
 			// the full tenant extraction logic from the gin version
-			
+
 			// For now, pass through without tenant context
 			// TODO: Implement proper tenant extraction for HTTP middleware
 			next.ServeHTTP(w, r)

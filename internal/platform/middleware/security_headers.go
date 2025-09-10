@@ -14,35 +14,35 @@ import (
 type SecurityHeadersConfig struct {
 	// Content Security Policy
 	CSPPolicy string `json:"csp_policy"`
-	
+
 	// HTTP Strict Transport Security
 	HSTSMaxAge            int  `json:"hsts_max_age"`
 	HSTSIncludeSubDomains bool `json:"hsts_include_subdomains"`
 	HSTSPreload           bool `json:"hsts_preload"`
-	
+
 	// X-Frame-Options
 	FrameOptions string `json:"frame_options"` // DENY, SAMEORIGIN, or ALLOW-FROM uri
-	
+
 	// X-Content-Type-Options
 	ContentTypeOptions bool `json:"content_type_options"`
-	
+
 	// X-XSS-Protection
 	XSSProtection bool `json:"xss_protection"`
-	
+
 	// Referrer Policy
 	ReferrerPolicy string `json:"referrer_policy"`
-	
+
 	// Permission Policy (formerly Feature Policy)
 	PermissionsPolicy string `json:"permissions_policy"`
-	
+
 	// Cross-Origin policies
 	CrossOriginEmbedderPolicy string `json:"cross_origin_embedder_policy"`
 	CrossOriginOpenerPolicy   string `json:"cross_origin_opener_policy"`
 	CrossOriginResourcePolicy string `json:"cross_origin_resource_policy"`
-	
+
 	// Custom headers
 	CustomHeaders map[string]string `json:"custom_headers"`
-	
+
 	// Environment-specific settings
 	Development bool `json:"development"`
 }
@@ -114,9 +114,9 @@ func DefaultSecurityHeadersConfig() SecurityHeadersConfig {
 
 		// Custom security headers
 		CustomHeaders: map[string]string{
-			"X-Robots-Tag":           "noindex, nofollow, nosnippet, noarchive",
+			"X-Robots-Tag":                      "noindex, nofollow, nosnippet, noarchive",
 			"X-Permitted-Cross-Domain-Policies": "none",
-			"X-DNS-Prefetch-Control": "off",
+			"X-DNS-Prefetch-Control":            "off",
 		},
 
 		Development: false,
@@ -126,7 +126,7 @@ func DefaultSecurityHeadersConfig() SecurityHeadersConfig {
 // DevelopmentSecurityHeadersConfig returns a more relaxed configuration for development
 func DevelopmentSecurityHeadersConfig() SecurityHeadersConfig {
 	config := DefaultSecurityHeadersConfig()
-	
+
 	// More relaxed CSP for development
 	config.CSPPolicy = "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; " +
 		"script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; " +
@@ -151,7 +151,7 @@ func DevelopmentSecurityHeadersConfig() SecurityHeadersConfig {
 	config.CrossOriginOpenerPolicy = "unsafe-none"
 
 	config.Development = true
-	
+
 	return config
 }
 
@@ -347,7 +347,7 @@ func (m *SecurityHeadersMiddleware) GetSecurityHeadersReport() SecurityHeadersRe
 	// Cross-origin policies
 	crossOriginPolicies := []string{
 		"Cross-Origin-Embedder-Policy",
-		"Cross-Origin-Opener-Policy", 
+		"Cross-Origin-Opener-Policy",
 		"Cross-Origin-Resource-Policy",
 	}
 

@@ -105,9 +105,9 @@ func (aw *AccountWorkflows) AccountCreationWorkflow(ctx workflow.Context, input 
 		ParentAccountCode:  input.ParentAccountCode,
 		CurrencyCode:       input.CurrencyCode,
 		Description:        input.Description,
-		IsActive:          input.IsActive,
+		IsActive:           input.IsActive,
 		AllowManualJournal: input.AllowManualJournal,
-		CreatedBy:         input.CreatedBy,
+		CreatedBy:          input.CreatedBy,
 	}).Get(ctx, &creationResult)
 
 	if err != nil {
@@ -268,8 +268,8 @@ func (aw *AccountWorkflows) AccountReconciliationWorkflow(ctx workflow.Context, 
 	// Step 2: Calculate expected balance
 	var balanceCalculation domain.BalanceCalculationResult
 	err = workflow.ExecuteActivity(ctx, "CalculateExpectedBalance", domain.BalanceCalculationInput{
-		AccountID:     input.AccountID,
-		Transactions:  transactionData.Transactions,
+		AccountID:      input.AccountID,
+		Transactions:   transactionData.Transactions,
 		OpeningBalance: transactionData.OpeningBalance,
 	}).Get(ctx, &balanceCalculation)
 
@@ -304,7 +304,7 @@ func (aw *AccountWorkflows) AccountReconciliationWorkflow(ctx workflow.Context, 
 		logger.Info("Account reconciled successfully - no discrepancies")
 	} else {
 		result.Status = domain.ReconciliationStatusDiscrepancy
-		logger.Warn("Account reconciliation found discrepancies", 
+		logger.Warn("Account reconciliation found discrepancies",
 			"expected", result.ExpectedBalance,
 			"actual", result.ActualBalance,
 			"discrepancy", result.Discrepancy)

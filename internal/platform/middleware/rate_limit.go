@@ -269,7 +269,7 @@ func (m *RateLimitMiddleware) checkLimit(ctx context.Context, limitType, key str
 
 	// Check if we can allow this request
 	currentCount := len(windowData.Requests)
-	
+
 	info := RateLimitInfo{
 		Limit:     rps,
 		Remaining: max(0, rps-currentCount-1),
@@ -300,7 +300,7 @@ type WindowData struct {
 // getWindowData retrieves window data from cache
 func (m *RateLimitMiddleware) getWindowData(ctx context.Context, key string) (WindowData, error) {
 	var data WindowData
-	
+
 	err := m.cache.Get(ctx, key, &data)
 	if err != nil {
 		return WindowData{Requests: []int64{}}, nil
@@ -413,12 +413,12 @@ func getClientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		return xff
 	}
-	
+
 	// Check X-Real-IP header
 	if xri := r.Header.Get("X-Real-IP"); xri != "" {
 		return xri
 	}
-	
+
 	// Fall back to RemoteAddr
 	return r.RemoteAddr
 }

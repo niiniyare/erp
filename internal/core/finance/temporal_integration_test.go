@@ -19,7 +19,6 @@ func TestTransactionApprovalWorkflow(t *testing.T) {
 	testSuite := &testsuite.WorkflowTestSuite{}
 	env := testSuite.NewTestWorkflowEnvironment()
 
-
 	// Mock the activities that will be called
 	env.OnActivity("ValidateTransactionRequest", domain.TransactionValidationInput{
 		TransactionID:  uuid.New(),
@@ -217,8 +216,8 @@ func TestAccountCreationWorkflow(t *testing.T) {
 
 	// Mock activities
 	env.OnActivity("ValidateAccountCreationActivity", domain.AccountHierarchyValidationInput{
-		AccountCode: "4000-001",
-		AccountType: "EXPENSE",
+		AccountCode:  "4000-001",
+		AccountType:  "EXPENSE",
 		AccountClass: "OPERATING_EXPENSE",
 	}).Return(&domain.AccountHierarchyValidationResult{
 		IsValid: true,
@@ -308,4 +307,3 @@ func TestTemporalIntegrationInitialization(t *testing.T) {
 
 	t.Logf("✅ Temporal integration initialization test completed (expected failure with minimal config)")
 }
-

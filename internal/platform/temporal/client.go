@@ -233,4 +233,3 @@ func (cm *ClientManager) GetNamespace() string {
 func (cm *ClientManager) GetHostPort() string {
 	return cm.config.HostPort
 }
-

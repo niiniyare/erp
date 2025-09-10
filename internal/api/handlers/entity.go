@@ -1083,17 +1083,61 @@ func (h *OrganizationGoaHandler) Create(ctx context.Context, p *organization.Cre
 
 	// Convert GOA payload to entity domain request
 	req := entity.CreateEntityRequest{
-		Name:     p.Name,
-		Code:     generateEntityCode(p.Name), // Generate code from name
-		Type:     entity.EntityType(p.EntityType),
-		IsActive: true,
-		IsHidden: false,
+		Name:          p.Name,
+		Code:          generateEntityCode(p.Name), // Generate code from name
+		Type:          entity.EntityType(p.EntityType),
+		IsActive:      true,
+		IsHidden:      false,
+		AccrualMethod: true, // Default to accrual accounting
+		FYStartMonth:  1,    // Default fiscal year starts in January
+		Address:       map[string]any{},
+		Settings:      map[string]any{},
+		Metadata:      map[string]any{},
 	}
+
+	// Debug log to check values
+	logger.Info("Creating organization with values", logger.Fields{
+		"name":           req.Name,
+		"code":           req.Code,
+		"type":           string(req.Type),
+		"fy_start_month": req.FYStartMonth,
+		"accrual_method": req.AccrualMethod,
+	})
 
 	// Set parent ID if provided
 	if p.ParentID != nil {
 		if parentUUID, err := uuid.Parse(*p.ParentID); err == nil {
 			req.ParentID = &parentUUID
+		}
+	}
+
+	// Map organization settings if provided
+	if p.Settings != nil {
+		// Extract fiscal year start from settings if available
+		if p.Settings.FiscalYearStart != "" {
+			// Parse fiscal year start (format: "MM-DD")
+			if len(p.Settings.FiscalYearStart) >= 2 {
+				if month := parseFiscalYearMonth(p.Settings.FiscalYearStart); month > 0 {
+					req.FYStartMonth = month
+				}
+			}
+		}
+
+		// Add organization settings to entity settings
+		if p.Settings.Timezone != "" {
+			req.Settings["timezone"] = p.Settings.Timezone
+		}
+		if p.Settings.Currency != "" {
+			req.Settings["currency"] = p.Settings.Currency
+		}
+		if p.Settings.BusinessHours != nil {
+			req.Settings["business_hours"] = p.Settings.BusinessHours
+		}
+		if p.Settings.Integrations != nil {
+			req.Settings["integrations"] = p.Settings.Integrations
+		}
+		if p.Settings.Preferences != nil {
+			req.Settings["preferences"] = p.Settings.Preferences
 		}
 	}
 
@@ -1129,12 +1173,12 @@ func (h *OrganizationGoaHandler) Create(ctx context.Context, p *organization.Cre
 
 	// Convert entity result to GOA organization
 	org := &organization.Organization{
-		ID:          entityResult.ID.String(),
-		Name:        entityResult.Name,
-		EntityType:  organization.EntityType(entityResult.Type),
-		Status:      organization.OrganizationStatus("ACTIVE"),
-		CreatedAt:   entityResult.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   entityResult.UpdatedAt.Format(time.RFC3339),
+		ID:         entityResult.ID.String(),
+		Name:       entityResult.Name,
+		EntityType: organization.EntityType(entityResult.Type),
+		Status:     organization.OrganizationStatus("ACTIVE"),
+		CreatedAt:  entityResult.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:  entityResult.UpdatedAt.Format(time.RFC3339),
 	}
 
 	// Add optional fields from metadata
@@ -1362,6 +1406,19 @@ func generateEntityCode(name string) string {
 		code = code[:20]
 	}
 	return code
+}
+
+// parseFiscalYearMonth parses fiscal year start string (MM-DD format) to month number
+func parseFiscalYearMonth(fyStart string) int {
+	// Extract month from "MM-DD" format
+	if len(fyStart) >= 2 {
+		if month, err := strconv.Atoi(fyStart[:2]); err == nil {
+			if month >= 1 && month <= 12 {
+				return month
+			}
+		}
+	}
+	return 1 // Default to January if parsing fails
 }
 
 // mapEntityError converts domain errors to GOA service errors

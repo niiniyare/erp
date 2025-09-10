@@ -16,11 +16,11 @@ import (
 
 // ActivityRegistry manages all finance-related Temporal activities
 type ActivityRegistry struct {
-	accountActivities          *AccountActivities
-	transactionActivities      *TransactionActivities
-	validationActivities       *ValidationActivities
-	integrationActivities      *IntegrationActivities
-	notificationActivities     *NotificationActivities
+	accountActivities      *AccountActivities
+	transactionActivities  *TransactionActivities
+	validationActivities   *ValidationActivities
+	integrationActivities  *IntegrationActivities
+	notificationActivities *NotificationActivities
 }
 
 // ActivityDependencies contains all required dependencies for finance activities
@@ -31,12 +31,12 @@ type ActivityDependencies struct {
 	TransactionEntryService service.TransactionEntryService
 
 	// Platform service dependencies
-	IAMService         iam.Service
-	AuditService       audit.Service
-	FeatureFlagService featureflag.Service
-	SettingsService    settingsService.ConfigurationService
+	IAMService          iam.Service
+	AuditService        audit.Service
+	FeatureFlagService  featureflag.Service
+	SettingsService     settingsService.ConfigurationService
 	NotificationService notification.NotificationService
-	CacheService       cache.Service
+	CacheService        cache.Service
 
 	// Infrastructure
 	Logger  logger.Logger

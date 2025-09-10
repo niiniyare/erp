@@ -48,7 +48,7 @@ func main() {
 			http.ServeFile(w, r, "index.html")
 			return
 		}
-		
+
 		sitePath := filepath.Join(baseDir, "site", r.URL.Path)
 		serveStaticFile(w, r, sitePath)
 	})

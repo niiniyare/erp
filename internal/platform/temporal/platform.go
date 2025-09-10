@@ -49,11 +49,11 @@ func NewPlatform(cfg *config.TemporalConfig, logger loggerPkg.Logger) (*Platform
 	}
 
 	logger.Info("✅ Temporal Platform Initialized", loggerPkg.Fields{
-		"host_port":        cfg.HostPort,
-		"namespace":        cfg.Namespace,
-		"enabled_modules":  cfg.GetEnabledModules(),
-		"tls_enabled":      cfg.TLS.Enabled,
-		"metrics_enabled":  cfg.Metrics.Enabled,
+		"host_port":       cfg.HostPort,
+		"namespace":       cfg.Namespace,
+		"enabled_modules": cfg.GetEnabledModules(),
+		"tls_enabled":     cfg.TLS.Enabled,
+		"metrics_enabled": cfg.Metrics.Enabled,
 		"status":          "initialized",
 	})
 
@@ -82,9 +82,9 @@ func (p *Platform) Start(ctx context.Context) error {
 	p.started = true
 
 	p.logger.Info("🚀 Temporal Platform Started", loggerPkg.Fields{
-		"namespace":     p.config.Namespace,
-		"host_port":     p.config.HostPort,
-		"worker_count":  len(p.workerManager.workers),
+		"namespace":    p.config.Namespace,
+		"host_port":    p.config.HostPort,
+		"worker_count": len(p.workerManager.workers),
 		"status":       "running",
 	})
 
@@ -158,12 +158,12 @@ func (p *Platform) GetStatus() map[string]any {
 	defer p.mu.RUnlock()
 
 	status := map[string]any{
-		"platform_started":   p.started,
-		"namespace":          p.config.Namespace,
-		"host_port":          p.config.HostPort,
-		"enabled_modules":    p.config.GetEnabledModules(),
-		"tls_enabled":        p.config.TLS.Enabled,
-		"metrics_enabled":    p.config.Metrics.Enabled,
+		"platform_started": p.started,
+		"namespace":        p.config.Namespace,
+		"host_port":        p.config.HostPort,
+		"enabled_modules":  p.config.GetEnabledModules(),
+		"tls_enabled":      p.config.TLS.Enabled,
+		"metrics_enabled":  p.config.Metrics.Enabled,
 	}
 
 	// Add worker status if available
