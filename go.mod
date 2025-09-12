@@ -1,6 +1,6 @@
 module github.com/niiniyare/erp
 
-go 1.24.4
+go 1.25.0
 
 require (
 	github.com/dgraph-io/ristretto/v2 v2.2.0

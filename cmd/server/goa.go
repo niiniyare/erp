@@ -71,7 +71,9 @@ func InitializeGOAServer(services *Services, store db.Store, cacheService cache.
 	abacSvc = handlers.NewABACGoaHandler(services.ABACService, metricsService, tracingService, logger.WithFields(logger.Fields{}))
 	accessRequestSvc = handlers.NewAccessRequestGoaHandler(services.AccessRequestService, services.ConditionalAccessService, services.AnalyticsService, tracingService, metricsService)
 	adminFeatureFlagSvc = handlers.NewAdminFeatureFlagService(services.AdminFeatureFlagService, services.ABACService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
-	authSvc = handlers.NewAuthHandler(services.IdentityService, tracingService, metricsService)
+	// For now, create a simple adapter for IAM service
+	// TODO: Replace with proper IAM service when fully implemented
+	authSvc = handlers.NewAuthHandlerWithIdentity(services.IdentityService, services.TenantService, tracingService, metricsService)
 	featureFlagSvc = handlers.NewFeatureFlagService(services.FeatureFlagService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
 	// Create a simple health checker instance (nil store for now - needs proper initialization)
 	healthChecker := handlers.NewHealthChecker(nil, nil, logger.WithFields(logger.Fields{}), metricsService, tracingService)

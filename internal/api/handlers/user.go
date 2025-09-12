@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -1737,17 +1738,22 @@ type UserGoaHandler struct {
 	accessRequestService     request.AccessRequestService
 	conditionalAccessService conditional.ConditionalAccessService
 	analyticsService         analytics.UserAnalyticsService
+	iamService               interface{} // TODO: Replace with proper IAM service when available
 	tracing                  tracing.TracingService
 	metrics                  *metrics.MetricsService
 }
 
 // NewUserGoaHandler creates a new GOA user handler following Clean Architecture pattern
 func NewUserGoaHandler(userSvc identity.Service, accessSvc request.AccessRequestService, conditionalSvc conditional.ConditionalAccessService, analyticsSvc analytics.UserAnalyticsService, tracing tracing.TracingService, metrics *metrics.MetricsService) user.Service {
+	// Create temporary IAM adapter for user service integration
+	iamAdapter := &identityToIAMAdapter{identityService: userSvc}
+
 	return &UserGoaHandler{
 		userService:              userSvc,
 		accessRequestService:     accessSvc,
 		conditionalAccessService: conditionalSvc,
 		analyticsService:         analyticsSvc,
+		iamService:               iamAdapter,
 		tracing:                  tracing,
 		metrics:                  metrics,
 	}
@@ -1770,17 +1776,37 @@ func (h *UserGoaHandler) Create(ctx context.Context, p *user.CreateUserPayload) 
 	})
 	defer timer.Stop()
 
-	// TODO: Integrate with existing user creation logic using h.userService.CreateUser
+	// Integrate with existing user creation logic using h.userService.CreateUser
+	createReq := &identity.CreateUserRequest{
+		EntityID: uuid.New(),                          // TODO: Get from context
+		Username: getStringValue(p.Username, p.Email), // Use email as username fallback
+		Email:    p.Email,
+		Password: getStringValue(p.Password, "TempPassword123!"), // Default temp password
+		UserType: string(p.UserType),
+	}
+
+	domainUser, err := h.userService.RegisterNewUser(ctx, createReq)
+	if err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("user_create_failed_total", metrics.Fields{
+			"reason": "service_error",
+		})
+
+		span.SetAttributes(attribute.String("error", err.Error()))
+		return nil, "", user.MakeBadRequest(err)
+	}
+
+	// Convert domain user to GOA response
 	userResult := &user.User{
-		ID:        "mock-user-id",
-		Username:  p.Username,
-		Email:     p.Email,
+		ID:        domainUser.ID.String(),
+		Username:  &domainUser.Username,
+		Email:     domainUser.Email,
 		FirstName: p.FirstName,
 		LastName:  p.LastName,
 		UserType:  p.UserType,
-		Status:    "ACTIVE",
-		CreatedAt: "2024-01-01T00:00:00Z",
-		UpdatedAt: "2024-01-01T00:00:00Z",
+		Status:    user.AccountStatus(domainUser.AccountStatus),
+		CreatedAt: domainUser.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: domainUser.UpdatedAt.Format(time.RFC3339),
 	}
 
 	h.metrics.IncrementCounter("user_create_total", metrics.Fields{
@@ -1811,18 +1837,36 @@ func (h *UserGoaHandler) Get(ctx context.Context, p *user.GetPayload) (*user.Use
 	})
 	defer timer.Stop()
 
-	// TODO: Integrate with existing user retrieval logic using h.userService.GetUserByID
-	mockUsername := "mockuser"
+	// Integrate with existing user retrieval logic using h.userService.GetUserByID
+	userID, err := uuid.Parse(p.ID)
+	if err != nil {
+		h.metrics.IncrementCounter("user_get_failed_total", metrics.Fields{
+			"reason": "invalid_id",
+		})
+		return nil, "", user.MakeBadRequest(fmt.Errorf("invalid user ID format"))
+	}
+
+	domainUser, err := h.userService.GetUserByID(ctx, userID)
+	if err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("user_get_failed_total", metrics.Fields{
+			"reason": "not_found",
+		})
+
+		span.SetAttributes(attribute.String("error", err.Error()))
+		return nil, "", user.MakeNotFound(err)
+	}
+
 	userResult := &user.User{
-		ID:        p.ID,
-		Username:  &mockUsername,
-		Email:     "mock@example.com",
-		FirstName: "Mock",
-		LastName:  "User",
-		UserType:  "INTERNAL",
-		Status:    "ACTIVE",
-		CreatedAt: "2024-01-01T00:00:00Z",
-		UpdatedAt: "2024-01-01T00:00:00Z",
+		ID:        domainUser.ID.String(),
+		Username:  &domainUser.Username,
+		Email:     domainUser.Email,
+		FirstName: "", // TODO: Get from Person entity if available
+		LastName:  "", // TODO: Get from Person entity if available
+		UserType:  user.UserType(domainUser.UserType),
+		Status:    user.AccountStatus(domainUser.AccountStatus),
+		CreatedAt: domainUser.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: domainUser.UpdatedAt.Format(time.RFC3339),
 	}
 
 	h.metrics.IncrementCounter("user_get_total", metrics.Fields{})
@@ -1842,10 +1886,72 @@ func (h *UserGoaHandler) List(ctx context.Context, p *user.ListPayload) (*user.L
 	})
 	defer timer.Stop()
 
-	// TODO: Integrate with existing user listing logic using h.userService.ListUsers
+	// Integrate with existing user listing logic using h.userService.ListUsers
+	// Convert pagination parameters
+	page := int(p.Page)
+	if page == 0 {
+		page = 1
+	}
+	pageSize := int(p.PageSize)
+	if pageSize == 0 {
+		pageSize = 10
+	}
+	offset := (page - 1) * pageSize
+
+	// Create list request for identity service
+	listReq := &identity.ListUsersRequest{
+		Limit:  pageSize,
+		Offset: offset,
+		// Note: ListUsersRequest might not have these fields, using basic pagination
+	}
+
+	// Get users from identity service
+	domainUsers, err := h.userService.ListUsers(ctx, listReq)
+	if err != nil {
+		h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
+		h.metrics.IncrementCounter("user_list_failed_total", metrics.Fields{
+			"reason": "service_error",
+		})
+
+		span.SetAttributes(attribute.String("error", err.Error()))
+		return nil, user.MakeBadRequest(err)
+	}
+
+	// Convert users to GOA format
+	var goaUsers []*user.User
+	for _, u := range domainUsers {
+		goaUsers = append(goaUsers, &user.User{
+			ID:        u.ID.String(),
+			Username:  &u.Username,
+			Email:     u.Email,
+			FirstName: "", // TODO: Get from Person entity if available
+			LastName:  "", // TODO: Get from Person entity if available
+			UserType:  user.UserType(u.UserType),
+			Status:    user.AccountStatus(u.AccountStatus),
+			CreatedAt: u.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: u.UpdatedAt.Format(time.RFC3339),
+		})
+	}
+
+	// Create pagination metadata
+	totalUsers := uint(len(goaUsers)) // TODO: Get actual count from service
+	hasMore := len(goaUsers) == pageSize
+	hasNext := hasMore
+	hasPrev := page > 1
+	totalPages := uint((int(totalUsers) + pageSize - 1) / pageSize)
+
+	paginationMeta := &user.PaginationMeta{
+		CurrentPage: uint(page),
+		PageSize:    uint(pageSize),
+		TotalItems:  totalUsers,
+		TotalPages:  totalPages,
+		HasNext:     hasNext,
+		HasPrev:     hasPrev,
+	}
+
 	result := &user.ListResult{
-		Data:       []*user.User{},
-		Pagination: &user.PaginationMeta{CurrentPage: 1, PageSize: 20, TotalItems: 0, TotalPages: 0, HasNext: false, HasPrev: false},
+		Data:       goaUsers,
+		Pagination: paginationMeta,
 	}
 
 	h.metrics.IncrementCounter("user_list_total", metrics.Fields{})
@@ -2247,4 +2353,24 @@ func (h *UserGoaHandler) RefreshAttributes(ctx context.Context, p *user.RefreshA
 
 	h.metrics.IncrementCounter("user_refresh_attributes_total", metrics.Fields{})
 	return result, nil
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Helper functions
+// ──────────────────────────────────────────────────────────────────────────────
+
+// getStringValue returns the value of a string pointer or a default value
+func getStringValue(ptr *string, defaultValue string) string {
+	if ptr != nil {
+		return *ptr
+	}
+	return defaultValue
+}
+
+// getIntValue returns the value of an int pointer or a default value
+func getIntValue(ptr *int, defaultValue int) int {
+	if ptr != nil {
+		return *ptr
+	}
+	return defaultValue
 }
