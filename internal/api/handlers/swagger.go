@@ -33,7 +33,7 @@ func (h *SwaggerHandler) ServeSwaggerUI(w http.ResponseWriter, r *http.Request) 
 			"path":  filePath,
 			"error": err.Error(),
 		})
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]interface{}{

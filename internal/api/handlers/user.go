@@ -29,7 +29,6 @@ type UserGoaHandler struct {
 	metrics                  *metrics.MetricsService
 }
 
-
 // NewUserGoaHandler creates a new GOA user handler following Clean Architecture pattern
 func NewUserGoaHandler(userSvc identity.Service, accessSvc request.AccessRequestService, conditionalSvc conditional.ConditionalAccessService, analyticsSvc analytics.UserAnalyticsService, tracing tracing.TracingService, metrics *metrics.MetricsService) user.Service {
 	// Create temporary IAM adapter for user service integration
