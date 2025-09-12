@@ -1,15 +1,11 @@
 package middleware
 
-import (
-	"time"
+// DEPRECATED: This file contains legacy Gin middleware that is no longer used.
+// The Goa server uses native HTTP middleware for tracing and metrics.
+// These functions are kept for reference but are commented out.
 
-	"github.com/gin-gonic/gin"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
-	"go.opentelemetry.io/otel/attribute"
-)
-
-// TracingMiddleware creates a middleware for distributed tracing
+/*
+// TracingMiddleware creates a middleware for distributed tracing (DEPRECATED: Use native HTTP middleware)
 func TracingMiddleware(tracingService tracing.TracingService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Extract tracing context from HTTP headers
@@ -21,98 +17,77 @@ func TracingMiddleware(tracingService tracing.TracingService) gin.HandlerFunc {
 			tracing.WithAttributes(
 				attribute.String("http.method", c.Request.Method),
 				attribute.String("http.url", c.Request.URL.String()),
-				attribute.String("http.scheme", c.Request.URL.Scheme),
-				attribute.String("http.host", c.Request.Host),
-				attribute.String("http.target", c.Request.URL.Path),
+				attribute.String("http.route", c.FullPath()),
 				attribute.String("http.user_agent", c.Request.UserAgent()),
-				attribute.String("http.remote_addr", c.ClientIP()),
 			))
 		defer span.End()
 
-		// Update request context with tracing context
+		// Set enriched context
 		c.Request = c.Request.WithContext(ctx)
 
-		// Process request
+		// Record HTTP request metrics
+		start := time.Now()
 		c.Next()
+		duration := time.Since(start)
 
-		// Set response attributes
+		// Add response attributes to span
 		span.SetAttributes(
 			attribute.Int("http.status_code", c.Writer.Status()),
-			attribute.Int("http.response_size", c.Writer.Size()),
+			attribute.String("http.response.size", string(rune(c.Writer.Size()))),
+			attribute.Float64("http.response.duration_ms", float64(duration.Nanoseconds())/1e6),
 		)
 
-		// Record errors if any
-		if len(c.Errors) > 0 {
-			tracingService.RecordError(ctx, c.Errors.Last().Err, tracing.WithErrorStatus())
+		// Record error if status >= 400
+		if c.Writer.Status() >= 400 {
+			span.SetStatus(codes.Error, fmt.Sprintf("HTTP %d", c.Writer.Status()))
 		}
-
-		// Inject tracing headers into response
-		tracingService.InjectHTTPHeaders(ctx, c.Writer.Header())
 	}
 }
 
-// MetricsMiddleware creates a middleware for collecting HTTP metrics
+// MetricsMiddleware creates a middleware for collecting HTTP metrics (DEPRECATED: Use native HTTP middleware)
 func MetricsMiddleware(metricsService *metrics.MetricsService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-		path := c.Request.URL.Path
-		method := c.Request.Method
 
-		// Process request
-		c.Next()
-
-		// Collect metrics
-		duration := time.Since(start)
-		statusCode := c.Writer.Status()
-
-		// Increment request counter
+		// Record request start
 		metricsService.IncrementCounter("http_requests_total", metrics.Fields{
-			"method": method,
-			"path":   path,
-			"status": statusCodeClass(statusCode),
+			"method": c.Request.Method,
+			"path":   c.FullPath(),
 		})
 
-		// Record request duration
-		metricsService.ObserveHistogram("http_request_duration_seconds",
-			duration.Seconds(), metrics.Fields{
-				"method": method,
-				"path":   path,
-			})
+		c.Next()
+
+		duration := time.Since(start)
+		status := c.Writer.Status()
+
+		// Record request completion metrics
+		metricsService.ObserveHistogram("http_request_duration_seconds", duration.Seconds(), metrics.Fields{
+			"method": c.Request.Method,
+			"path":   c.FullPath(),
+			"status": string(rune(status)),
+		})
+
+		metricsService.IncrementCounter("http_responses_total", metrics.Fields{
+			"method": c.Request.Method,
+			"path":   c.FullPath(),
+			"status": string(rune(status)),
+		})
 
 		// Record response size
-		if c.Writer.Size() > 0 {
-			metricsService.ObserveHistogram("http_response_size_bytes",
-				float64(c.Writer.Size()), metrics.Fields{
-					"method": method,
-					"path":   path,
-				})
-		}
+		responseSize := c.Writer.Size()
+		metricsService.ObserveHistogram("http_response_size_bytes", float64(responseSize), metrics.Fields{
+			"method": c.Request.Method,
+			"path":   c.FullPath(),
+		})
 
-		// Count errors
-		if statusCode >= 400 {
+		// Track error rates
+		if status >= 400 {
 			metricsService.IncrementCounter("http_errors_total", metrics.Fields{
-				"method": method,
-				"path":   path,
-				"status": statusCodeClass(statusCode),
+				"method": c.Request.Method,
+				"path":   c.FullPath(),
+				"status": string(rune(status)),
 			})
 		}
 	}
 }
-
-// statusCodeClass returns the status code class (1xx, 2xx, 3xx, 4xx, 5xx)
-func statusCodeClass(statusCode int) string {
-	switch {
-	case statusCode >= 100 && statusCode < 200:
-		return "1xx"
-	case statusCode >= 200 && statusCode < 300:
-		return "2xx"
-	case statusCode >= 300 && statusCode < 400:
-		return "3xx"
-	case statusCode >= 400 && statusCode < 500:
-		return "4xx"
-	case statusCode >= 500:
-		return "5xx"
-	default:
-		return "unknown"
-	}
-}
+*/

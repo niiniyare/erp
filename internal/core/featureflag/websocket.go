@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	db "github.com/niiniyare/erp/db/sqlc"
@@ -22,7 +21,7 @@ import (
 // WebSocketService handles real-time feature flag updates
 type WebSocketService interface {
 	// Connection management
-	HandleConnection(ctx *gin.Context)
+	HandleConnection(w http.ResponseWriter, r *http.Request)
 	BroadcastToTenant(ctx context.Context, tenantID uuid.UUID, message *WebSocketMessage) error
 	BroadcastToAllTenants(ctx context.Context, message *WebSocketMessage) error
 
@@ -134,28 +133,28 @@ func NewWebSocketService(
 }
 
 // HandleConnection handles new WebSocket connections
-func (s *webSocketService) HandleConnection(ctx *gin.Context) {
-	ctxWithTrace, span := s.tracing.StartSpan(ctx.Request.Context(), "webSocketService.HandleConnection")
+func (s *webSocketService) HandleConnection(w http.ResponseWriter, r *http.Request) {
+	ctxWithTrace, span := s.tracing.StartSpan(r.Context(), "webSocketService.HandleConnection")
 	defer span.End()
 
 	log := logger.WithFields(logger.Fields{"service": "websocket", "method": "HandleConnection"})
 
 	// Extract tenant and user from context/headers
-	tenantID, err := extractTenantIDFromContext(ctx)
+	tenantID, err := extractTenantIDFromRequest(r)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to extract tenant ID")
 		log.Error("Failed to extract tenant ID", logger.Fields{"error": err})
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Tenant ID required"})
+		http.Error(w, `{"error": "Tenant ID required"}`, http.StatusBadRequest)
 		return
 	}
 
-	userID, err := extractUserIDFromContext(ctx)
+	userID, err := extractUserIDFromRequest(r)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to extract user ID")
 		log.Error("Failed to extract user ID", logger.Fields{"error": err})
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "User ID required"})
+		http.Error(w, `{"error": "User ID required"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -165,7 +164,7 @@ func (s *webSocketService) HandleConnection(ctx *gin.Context) {
 	)
 
 	// Upgrade connection to WebSocket
-	conn, err := s.upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to upgrade connection")
@@ -609,11 +608,11 @@ func (s *webSocketService) trackMessage() {
 }
 
 // Helper functions for extracting context information
-func extractTenantIDFromContext(ctx *gin.Context) (uuid.UUID, error) {
-	tenantIDStr := ctx.GetHeader("X-Tenant-ID")
+func extractTenantIDFromRequest(r *http.Request) (uuid.UUID, error) {
+	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	if tenantIDStr == "" {
 		// Try to get from query parameter
-		tenantIDStr = ctx.Query("tenant_id")
+		tenantIDStr = r.URL.Query().Get("tenant_id")
 	}
 
 	if tenantIDStr == "" {
@@ -623,11 +622,11 @@ func extractTenantIDFromContext(ctx *gin.Context) (uuid.UUID, error) {
 	return uuid.Parse(tenantIDStr)
 }
 
-func extractUserIDFromContext(ctx *gin.Context) (uuid.UUID, error) {
-	userIDStr := ctx.GetHeader("X-User-ID")
+func extractUserIDFromRequest(r *http.Request) (uuid.UUID, error) {
+	userIDStr := r.Header.Get("X-User-ID")
 	if userIDStr == "" {
 		// Try to get from query parameter
-		userIDStr = ctx.Query("user_id")
+		userIDStr = r.URL.Query().Get("user_id")
 	}
 
 	if userIDStr == "" {

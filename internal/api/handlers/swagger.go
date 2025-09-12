@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"path/filepath"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/niiniyare/erp/internal/api/swagger"
 	"github.com/niiniyare/erp/internal/shared/logger"
 )
@@ -19,9 +19,9 @@ func NewSwaggerHandler() *SwaggerHandler {
 }
 
 // ServeSwaggerUI serves the Swagger UI files
-func (h *SwaggerHandler) ServeSwaggerUI(c *gin.Context) {
+func (h *SwaggerHandler) ServeSwaggerUI(w http.ResponseWriter, r *http.Request) {
 	// Get the requested file path, default to index.html
-	filePath := strings.TrimPrefix(c.Request.URL.Path, "/swagger-ui/")
+	filePath := strings.TrimPrefix(r.URL.Path, "/swagger-ui/")
 	if filePath == "" || filePath == "/" {
 		filePath = "index.html"
 	}
@@ -33,7 +33,10 @@ func (h *SwaggerHandler) ServeSwaggerUI(c *gin.Context) {
 			"path":  filePath,
 			"error": err.Error(),
 		})
-		c.JSON(http.StatusNotFound, gin.H{
+		
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]interface{}{
 			"error": "File not found",
 			"file":  filePath,
 		})
@@ -42,8 +45,8 @@ func (h *SwaggerHandler) ServeSwaggerUI(c *gin.Context) {
 
 	// Set appropriate content type
 	contentType := getContentType(filePath)
-	c.Header("Content-Type", contentType)
-	c.Header("Cache-Control", "public, max-age=31536000") // Cache for 1 year
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Cache-Control", "public, max-age=31536000") // Cache for 1 year
 
 	logger.Info("Swagger UI file served", logger.Fields{
 		"path":           filePath,
@@ -51,7 +54,8 @@ func (h *SwaggerHandler) ServeSwaggerUI(c *gin.Context) {
 		"content_type":   contentType,
 	})
 
-	c.Data(http.StatusOK, contentType, content)
+	w.WriteHeader(http.StatusOK)
+	w.Write(content)
 }
 
 func getContentType(filename string) string {

@@ -8,359 +8,430 @@ Let's walk through implementing a complete tenant management feature from API to
 
 ## 📱 API Layer Implementation
 
-### Handler Example
+### Goa Handler Example
 ```go
-// internal/api/handlers/tenant.go
+// internal/api/handlers/tenant_goa.go
 package handlers
 
 import (
-    "net/http"
+    "context"
     "strconv"
 
-    "github.com/gin-gonic/gin"
     "github.com/google/uuid"
+    goaTenant "github.com/niiniyare/erp/internal/api/gen/tenant"
     
-    "internal/core/tenant"
-    "internal/shared/logger"
-    "internal/shared/tracing"
-    "internal/shared/metrics"
-    "internal/shared/errors"
+    "github.com/niiniyare/erp/internal/core/tenant"
+    "github.com/niiniyare/erp/internal/shared/logger"
+    "github.com/niiniyare/erp/internal/shared/tracing"
+    "github.com/niiniyare/erp/internal/shared/metrics"
+    "github.com/niiniyare/erp/internal/shared/errors"
+    "go.opentelemetry.io/otel/attribute"
+    "go.opentelemetry.io/otel/codes"
 )
 
-type TenantHandler struct {
+// TenantGoaHandler implements the Goa tenant service interface
+type TenantGoaHandler struct {
     service tenant.Service
+    tracing tracing.TracingService
+    metrics *metrics.MetricsService
     logger  logger.Logger
-    tracing tracing.Tracer
-    metrics metrics.MetricsProvider
 }
 
-func NewTenantHandler(
+// NewTenantGoaHandler creates a new Goa tenant handler
+func NewTenantGoaHandler(
     service tenant.Service,
-    logger logger.Logger,
-    tracing tracing.Tracer,
-    metrics metrics.MetricsProvider,
-) *TenantHandler {
-    return &TenantHandler{
+    tracing tracing.TracingService,
+    metrics *metrics.MetricsService,
+) goaTenant.Service {
+    return &TenantGoaHandler{
         service: service,
-        logger:  logger,
         tracing: tracing,
         metrics: metrics,
+        logger:  logger.WithFields(logger.Fields{"handler": "tenant"}),
     }
 }
 
-// CreateTenant handles POST /api/v1/tenants
-func (h *TenantHandler) CreateTenant(c *gin.Context) {
-    // Extract tracing context from HTTP headers
-    ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
-    
-    // Start HTTP span with  attributes
-    ctx, span := h.tracing.StartSpan(ctx, "http.create_tenant", 
+// CreateTenant implements the Goa service interface
+func (h *TenantGoaHandler) CreateTenant(ctx context.Context, p *goaTenant.CreateTenantPayload) (*goaTenant.TenantResult, error) {
+    // Start tracing span with comprehensive attributes
+    ctx, span := h.tracing.StartSpan(ctx, "tenant_handler.create_tenant",
         tracing.WithSpanKind(tracing.SpanKindServer),
         tracing.WithAttributes(
-            attribute.String("http.method", c.Request.Method),
-            attribute.String("http.url", c.Request.URL.String()),
-            attribute.String("http.route", "/api/v1/tenants"),
-            attribute.String("http.user_agent", c.Request.UserAgent()),
-            attribute.String("http.remote_addr", c.ClientIP()),
+            attribute.String("tenant.name", p.Name),
+            attribute.String("tenant.slug", p.Slug),
+            attribute.String("tenant.email", p.Email),
         ))
     defer span.End()
-    
-    // Start metrics timer and track active requests
-    timer := h.metrics.Timer("http_request_duration", metrics.Fields{
-        "method":   c.Request.Method,
-        "endpoint": "/api/v1/tenants",
+
+    // Track metrics for handler operations
+    timer := h.metrics.Timer("tenant_handler_duration", metrics.Fields{
+        "operation": "create_tenant",
+        "handler":   "goa",
     })
     defer timer.Stop()
-    
-    h.metrics.IncrementGauge("http_active_requests", metrics.Fields{
-        "method":   c.Request.Method,
-        "endpoint": "/api/v1/tenants",
+
+    h.metrics.IncrementGauge("active_tenant_requests", metrics.Fields{
+        "operation": "create",
     })
-    defer h.metrics.DecrementGauge("http_active_requests", metrics.Fields{
-        "method":   c.Request.Method,
-        "endpoint": "/api/v1/tenants",
+    defer h.metrics.DecrementGauge("active_tenant_requests", metrics.Fields{
+        "operation": "create",
     })
-    
-    // Log request start
+
+    // Log request processing
     h.logger.InfoContext(ctx, "Processing create tenant request", logger.Fields{
-        "method":     c.Request.Method,
-        "path":       c.Request.URL.Path,
-        "user_agent": c.Request.UserAgent(),
-        "remote_ip":  c.ClientIP(),
+        "tenant_name":  p.Name,
+        "tenant_slug":  p.Slug,
+        "tenant_email": p.Email,
+        "operation":    "create_tenant",
     })
-    
-    // 1. Parse and validate request
-    var req tenant.CreateTenantRequest
-    if err := c.ShouldBindJSON(&req); err != nil {
-        // Record validation error in span and metrics
-        h.tracing.RecordError(ctx, err, tracing.WithErrorStatus())
-        span.SetAttributes(attribute.String("error.type", "validation_error"))
-        
-        h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
-            "method":     c.Request.Method,
-            "endpoint":   "/api/v1/tenants",
-            "error_type": "validation_error",
-            "status":     "400",
+
+    // Add subdomain to span if provided
+    if p.Subdomain != nil {
+        span.SetAttributes(attribute.String("tenant.subdomain", *p.Subdomain))
+        h.logger.DebugContext(ctx, "Subdomain provided", logger.Fields{
+            "subdomain": *p.Subdomain,
         })
-        
-        h.logger.WarnContext(ctx, "Invalid request format", logger.Fields{
-            "error": err.Error(),
-            "body":  c.Request.Body,
-        })
-        
-        c.JSON(http.StatusBadRequest, gin.H{
-            "error":   "Invalid request format",
-            "details": err.Error(),
-        })
-        return
     }
-    
-    // Add request data to span
-    span.SetAttributes(
-        attribute.String("tenant.name", req.Name),
-        attribute.String("tenant.slug", req.Slug),
-        attribute.String("tenant.email", req.Email),
-    )
-    if req.Subdomain != nil {
-        span.SetAttributes(attribute.String("tenant.subdomain", *req.Subdomain))
+
+    // Convert Goa payload to domain request
+    domainReq := tenant.CreateTenantRequest{
+        Name:         p.Name,
+        Slug:         p.Slug,
+        Email:        p.Email,
+        Subdomain:    p.Subdomain,
+        Timezone:     p.Timezone,
+        CurrencyCode: p.CurrencyCode,
+        Metadata:     p.Metadata,
     }
-    
-    // 2. Call service layer
-    newTenant, err := h.service.CreateTenant(ctx, req)
+
+    // Call service layer with proper error handling
+    newTenant, err := h.service.CreateTenant(ctx, domainReq)
     if err != nil {
-        // Handle different types of business errors
-        switch {
-        case errors.Is(err, errors.ErrSubdomainAlreadyExists):
-            span.SetAttributes(attribute.String("error.type", "business_error"))
-            span.SetStatus(codes.Error, "Subdomain already exists")
-            
-            h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
-                "method":     c.Request.Method,
-                "endpoint":   "/api/v1/tenants",
-                "error_type": "conflict",
-                "status":     "409",
-            })
-            
-            h.logger.WarnContext(ctx, "Subdomain already exists", logger.Fields{
-                "subdomain": req.Subdomain,
-                "error":     err.Error(),
-            })
-            
-            c.JSON(http.StatusConflict, gin.H{
-                "error": "Subdomain already exists",
-                "code":  "SUBDOMAIN_EXISTS",
-            })
-            
-        case errors.Is(err, errors.ErrValidation):
-            span.SetAttributes(attribute.String("error.type", "validation_error"))
-            span.SetStatus(codes.Error, "Validation failed")
-            
-            h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
-                "method":     c.Request.Method,
-                "endpoint":   "/api/v1/tenants",
-                "error_type": "validation",
-                "status":     "400",
-            })
-            
-            h.logger.WarnContext(ctx, "Validation failed", logger.Fields{
-                "error": err.Error(),
-            })
-            
-            c.JSON(http.StatusBadRequest, gin.H{
-                "error": "Validation failed",
-                "code":  "VALIDATION_ERROR",
-            })
-            
-        default:
-            // Internal server errors
-            span.SetAttributes(attribute.String("error.type", "internal_error"))
-            span.RecordError(err)
-            span.SetStatus(codes.Error, "Internal server error")
-            
-            h.metrics.IncrementCounter("http_errors_total", metrics.Fields{
-                "method":     c.Request.Method,
-                "endpoint":   "/api/v1/tenants",
-                "error_type": "internal",
-                "status":     "500",
-            })
-            
-            h.logger.ErrorContext(ctx, "Failed to create tenant", logger.Fields{
-                "error": err.Error(),
-            })
-            
-            c.JSON(http.StatusInternalServerError, gin.H{
-                "error": "Internal server error",
-                "code":  "INTERNAL_ERROR",
-            })
-        }
-        return
+        return nil, h.handleError(ctx, err, span)
     }
-    
-    // 3. Success response
+
+    // Convert domain model to Goa result
+    result := &goaTenant.TenantResult{
+        ID:           newTenant.ID.String(),
+        Name:         newTenant.Name,
+        Slug:         newTenant.Slug,
+        Email:        newTenant.Email,
+        Status:       string(newTenant.Status),
+        Timezone:     newTenant.Timezone,
+        CurrencyCode: newTenant.CurrencyCode,
+        CreatedAt:    newTenant.CreatedAt.Format(time.RFC3339),
+        UpdatedAt:    newTenant.UpdatedAt.Format(time.RFC3339),
+    }
+
+    if newTenant.Subdomain != nil {
+        result.Subdomain = newTenant.Subdomain
+    }
+
+    // Success metrics and logging
     span.SetAttributes(
         attribute.String("tenant.id", newTenant.ID.String()),
         attribute.String("response.status", "created"),
     )
     span.SetStatus(codes.Ok, "Tenant created successfully")
-    
-    h.metrics.IncrementCounter("http_requests_total", metrics.Fields{
-        "method":   c.Request.Method,
-        "endpoint": "/api/v1/tenants",
-        "status":   "success",
+
+    h.metrics.IncrementCounter("tenant_operations_total", metrics.Fields{
+        "operation": "create",
+        "status":    "success",
+        "handler":   "goa",
     })
-    
-    h.metrics.IncrementCounter("tenants_created_total", metrics.Fields{})
-    
+
     h.logger.InfoContext(ctx, "Tenant created successfully", logger.Fields{
         "tenant_id":   newTenant.ID.String(),
         "tenant_name": newTenant.Name,
-        "status_code": http.StatusCreated,
+        "operation":   "create_tenant",
     })
-    
-    c.JSON(http.StatusCreated, newTenant)
+
+    return result, nil
 }
 
-// GetTenant handles GET /api/v1/tenants/{id}
-func (h *TenantHandler) GetTenant(c *gin.Context) {
-    ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
-    
-    ctx, span := h.tracing.StartSpan(ctx, "http.get_tenant",
+// GetTenant implements the Goa service interface  
+func (h *TenantGoaHandler) GetTenant(ctx context.Context, p *goaTenant.GetTenantPayload) (*goaTenant.TenantResult, error) {
+    ctx, span := h.tracing.StartSpan(ctx, "tenant_handler.get_tenant",
         tracing.WithSpanKind(tracing.SpanKindServer))
     defer span.End()
-    
-    timer := h.metrics.Timer("http_request_duration", metrics.Fields{
-        "method":   c.Request.Method,
-        "endpoint": "/api/v1/tenants/{id}",
+
+    timer := h.metrics.Timer("tenant_handler_duration", metrics.Fields{
+        "operation": "get_tenant",
+        "handler":   "goa",
     })
     defer timer.Stop()
-    
-    // Parse and validate ID parameter
-    idStr := c.Param("id")
-    id, err := uuid.Parse(idStr)
+
+    // Parse and validate ID
+    id, err := uuid.Parse(p.ID)
     if err != nil {
         span.SetAttributes(attribute.String("error.type", "validation_error"))
         span.SetStatus(codes.Error, "Invalid UUID format")
         
         h.logger.WarnContext(ctx, "Invalid tenant ID format", logger.Fields{
-            "tenant_id": idStr,
+            "tenant_id": p.ID,
             "error":     err.Error(),
         })
         
-        c.JSON(http.StatusBadRequest, gin.H{
-            "error": "Invalid tenant ID format",
-            "code":  "INVALID_UUID",
-        })
-        return
+        return nil, goaTenant.MakeBadRequest(errors.NewValidationError("id", "Invalid UUID format"))
+    }
+
+    span.SetAttributes(attribute.String("tenant.id", id.String()))
+
+    h.logger.DebugContext(ctx, "Getting tenant by ID", logger.Fields{
+        "tenant_id": id.String(),
+        "operation": "get_tenant",
+    })
+
+    // Get from service layer
+    domainTenant, err := h.service.GetTenant(ctx, id)
+    if err != nil {
+        return nil, h.handleError(ctx, err, span)
+    }
+
+    // Convert to Goa result
+    result := &goaTenant.TenantResult{
+        ID:           domainTenant.ID.String(),
+        Name:         domainTenant.Name,
+        Slug:         domainTenant.Slug,
+        Email:        domainTenant.Email,
+        Status:       string(domainTenant.Status),
+        Timezone:     domainTenant.Timezone,
+        CurrencyCode: domainTenant.CurrencyCode,
+        CreatedAt:    domainTenant.CreatedAt.Format(time.RFC3339),
+        UpdatedAt:    domainTenant.UpdatedAt.Format(time.RFC3339),
+    }
+
+    if domainTenant.Subdomain != nil {
+        result.Subdomain = domainTenant.Subdomain
+    }
+
+    span.SetStatus(codes.Ok, "Tenant retrieved successfully")
+    
+    h.metrics.IncrementCounter("tenant_operations_total", metrics.Fields{
+        "operation": "get",
+        "status":    "success",
+        "handler":   "goa",
+    })
+
+    return result, nil
+}
+
+// ListTenants implements the Goa service interface
+func (h *TenantGoaHandler) ListTenants(ctx context.Context, p *goaTenant.ListTenantsPayload) (*goaTenant.TenantListResult, error) {
+    ctx, span := h.tracing.StartSpan(ctx, "tenant_handler.list_tenants",
+        tracing.WithSpanKind(tracing.SpanKindServer))
+    defer span.End()
+
+    timer := h.metrics.Timer("tenant_handler_duration", metrics.Fields{
+        "operation": "list_tenants", 
+        "handler":   "goa",
+    })
+    defer timer.Stop()
+
+    // Parse pagination parameters with defaults
+    page := 1
+    limit := 20
+    
+    if p.Page != nil && *p.Page > 0 {
+        page = *p.Page
     }
     
-    span.SetAttributes(attribute.String("tenant.id", id.String()))
+    if p.Limit != nil && *p.Limit > 0 && *p.Limit <= 100 {
+        limit = *p.Limit
+    }
+
+    // Build filter
+    filter := tenant.ListFilter{
+        Page:  page,
+        Limit: limit,
+    }
     
-    // Get tenant from service
-    tenant, err := h.service.GetTenant(ctx, id)
+    if p.Search != nil {
+        filter.Search = *p.Search
+        span.SetAttributes(attribute.String("filter.search", *p.Search))
+    }
+    
+    if p.Status != nil {
+        filter.Status = *p.Status
+        span.SetAttributes(attribute.String("filter.status", *p.Status))
+    }
+
+    span.SetAttributes(
+        attribute.Int("filter.page", page),
+        attribute.Int("filter.limit", limit),
+    )
+
+    h.logger.DebugContext(ctx, "Listing tenants", logger.Fields{
+        "page":      page,
+        "limit":     limit,
+        "search":    filter.Search,
+        "status":    filter.Status,
+        "operation": "list_tenants",
+    })
+
+    // Get from service layer
+    tenants, total, err := h.service.ListTenants(ctx, filter)
     if err != nil {
-        if errors.Is(err, errors.ErrTenantNotFound) {
+        return nil, h.handleError(ctx, err, span)
+    }
+
+    // Convert to Goa results
+    results := make([]*goaTenant.TenantResult, len(tenants))
+    for i, domainTenant := range tenants {
+        results[i] = &goaTenant.TenantResult{
+            ID:           domainTenant.ID.String(),
+            Name:         domainTenant.Name,
+            Slug:         domainTenant.Slug,
+            Email:        domainTenant.Email,
+            Status:       string(domainTenant.Status),
+            Timezone:     domainTenant.Timezone,
+            CurrencyCode: domainTenant.CurrencyCode,
+            CreatedAt:    domainTenant.CreatedAt.Format(time.RFC3339),
+            UpdatedAt:    domainTenant.UpdatedAt.Format(time.RFC3339),
+        }
+        
+        if domainTenant.Subdomain != nil {
+            results[i].Subdomain = domainTenant.Subdomain
+        }
+    }
+
+    result := &goaTenant.TenantListResult{
+        Tenants:     results,
+        Total:       total,
+        Page:        page,
+        Limit:       limit,
+        HasNext:     (page * limit) < total,
+        HasPrevious: page > 1,
+    }
+
+    span.SetAttributes(
+        attribute.Int("response.total", total),
+        attribute.Int("response.count", len(results)),
+        attribute.Bool("response.has_next", result.HasNext),
+        attribute.Bool("response.has_previous", result.HasPrevious),
+    )
+    span.SetStatus(codes.Ok, "Tenants listed successfully")
+
+    h.metrics.IncrementCounter("tenant_operations_total", metrics.Fields{
+        "operation": "list",
+        "status":    "success", 
+        "handler":   "goa",
+    })
+
+    return result, nil
+}
+
+// handleError converts domain errors to appropriate Goa errors
+func (h *TenantGoaHandler) handleError(ctx context.Context, err error, span tracing.Span) error {
+    var businessErr *errors.BusinessError
+    if errors.As(err, &businessErr) {
+        // Handle specific business error codes
+        switch businessErr.Code {
+        case "TENANT_NOT_FOUND":
             span.SetAttributes(attribute.String("error.type", "not_found"))
             span.SetStatus(codes.Error, "Tenant not found")
             
+            h.metrics.IncrementCounter("tenant_operations_total", metrics.Fields{
+                "operation":  "unknown",
+                "status":     "error",
+                "error_type": "not_found",
+                "handler":    "goa",
+            })
+            
             h.logger.InfoContext(ctx, "Tenant not found", logger.Fields{
-                "tenant_id": id.String(),
+                "error": businessErr.Message,
             })
             
-            c.JSON(http.StatusNotFound, gin.H{
-                "error": "Tenant not found",
-                "code":  "TENANT_NOT_FOUND",
-            })
-        } else {
-            span.RecordError(err)
-            span.SetStatus(codes.Error, "Internal server error")
+            return goaTenant.MakeNotFound(businessErr)
+
+        case "SUBDOMAIN_EXISTS", "TENANT_EXISTS":
+            span.SetAttributes(attribute.String("error.type", "conflict"))
+            span.SetStatus(codes.Error, "Tenant conflict")
             
-            h.logger.ErrorContext(ctx, "Failed to get tenant", logger.Fields{
-                "tenant_id": id.String(),
-                "error":     err.Error(),
+            h.metrics.IncrementCounter("tenant_operations_total", metrics.Fields{
+                "operation":  "unknown",
+                "status":     "error", 
+                "error_type": "conflict",
+                "handler":    "goa",
             })
             
-            c.JSON(http.StatusInternalServerError, gin.H{
-                "error": "Internal server error",
-                "code":  "INTERNAL_ERROR",
+            h.logger.WarnContext(ctx, "Tenant conflict", logger.Fields{
+                "error": businessErr.Message,
+                "code":  businessErr.Code,
             })
+            
+            return goaTenant.MakeConflict(businessErr)
+
+        case "VALIDATION_ERROR", "INVALID_INPUT":
+            span.SetAttributes(attribute.String("error.type", "validation"))
+            span.SetStatus(codes.Error, "Validation failed")
+            
+            h.metrics.IncrementCounter("tenant_operations_total", metrics.Fields{
+                "operation":  "unknown",
+                "status":     "error",
+                "error_type": "validation", 
+                "handler":    "goa",
+            })
+            
+            h.logger.WarnContext(ctx, "Validation failed", logger.Fields{
+                "error": businessErr.Message,
+                "code":  businessErr.Code,
+            })
+            
+            return goaTenant.MakeBadRequest(businessErr)
+
+        default:
+            // Fallback to HTTP status mapping
+            return h.mapHTTPStatusToGoaError(businessErr, span)
         }
-        return
     }
+
+    // Handle non-business errors
+    span.RecordError(err)
+    span.SetStatus(codes.Error, "Internal server error")
     
-    span.SetStatus(codes.Ok, "Tenant retrieved successfully")
-    c.JSON(http.StatusOK, tenant)
+    h.metrics.IncrementCounter("tenant_operations_total", metrics.Fields{
+        "operation":  "unknown",
+        "status":     "error",
+        "error_type": "internal",
+        "handler":    "goa",
+    })
+    
+    h.logger.ErrorContext(ctx, "Internal server error", logger.Fields{
+        "error": err.Error(),
+    })
+    
+    return goaTenant.MakeInternalServerError(err)
 }
 
-// ListTenants handles GET /api/v1/tenants
-func (h *TenantHandler) ListTenants(c *gin.Context) {
-    ctx := h.tracing.ExtractHTTPHeaders(c.Request.Context(), c.Request.Header)
-    
-    ctx, span := h.tracing.StartSpan(ctx, "http.list_tenants",
-        tracing.WithSpanKind(tracing.SpanKindServer))
-    defer span.End()
-    
-    // Parse query parameters
-    filter := h.parseListFilter(c)
-    
-    span.SetAttributes(
-        attribute.Int("list.page", filter.Page),
-        attribute.Int("list.limit", filter.Limit),
-        attribute.String("list.search", filter.Search),
-    )
-    
-    result, err := h.service.ListTenants(ctx, filter)
-    if err != nil {
-        span.RecordError(err)
-        span.SetStatus(codes.Error, "Failed to list tenants")
-        
-        h.logger.ErrorContext(ctx, "Failed to list tenants", logger.Fields{
-            "filter": filter,
-            "error":  err.Error(),
-        })
-        
-        c.JSON(http.StatusInternalServerError, gin.H{
-            "error": "Internal server error",
-        })
-        return
+// mapHTTPStatusToGoaError maps BusinessError HTTP status codes to Goa errors
+func (h *TenantGoaHandler) mapHTTPStatusToGoaError(businessErr *errors.BusinessError, span tracing.Span) error {
+    switch businessErr.HTTPStatus {
+    case 400:
+        span.SetAttributes(attribute.String("error.type", "bad_request"))
+        return goaTenant.MakeBadRequest(businessErr)
+    case 401:
+        span.SetAttributes(attribute.String("error.type", "unauthorized"))  
+        return goaTenant.MakeUnauthorized(businessErr)
+    case 403:
+        span.SetAttributes(attribute.String("error.type", "forbidden"))
+        return goaTenant.MakeForbidden(businessErr)
+    case 404:
+        span.SetAttributes(attribute.String("error.type", "not_found"))
+        return goaTenant.MakeNotFound(businessErr)
+    case 409:
+        span.SetAttributes(attribute.String("error.type", "conflict"))
+        return goaTenant.MakeConflict(businessErr)
+    case 422:
+        span.SetAttributes(attribute.String("error.type", "unprocessable_entity"))
+        return goaTenant.MakeUnprocessableEntity(businessErr)
+    case 500:
+        span.SetAttributes(attribute.String("error.type", "internal_server_error"))
+        return goaTenant.MakeInternalServerError(businessErr)
+    default:
+        span.SetAttributes(attribute.String("error.type", "unknown"))
+        return goaTenant.MakeBadRequest(businessErr)
     }
-    
-    // Set pagination headers
-    c.Header("X-Total-Count", strconv.Itoa(result.Total))
-    c.Header("X-Page", strconv.Itoa(filter.Page))
-    c.Header("X-Per-Page", strconv.Itoa(filter.Limit))
-    
-    span.SetAttributes(
-        attribute.Int("response.total", result.Total),
-        attribute.Int("response.count", len(result.Items)),
-    )
-    span.SetStatus(codes.Ok, "Tenants listed successfully")
-    
-    c.JSON(http.StatusOK, result.Items)
-}
-
-// Helper method to parse list filters
-func (h *TenantHandler) parseListFilter(c *gin.Context) tenant.ListFilter {
-    filter := tenant.ListFilter{
-        Page:  1,
-        Limit: 20,
-    }
-    
-    if pageStr := c.Query("page"); pageStr != "" {
-        if page, err := strconv.Atoi(pageStr); err == nil && page > 0 {
-            filter.Page = page
-        }
-    }
-    
-    if limitStr := c.Query("limit"); limitStr != "" {
-        if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 && limit <= 100 {
-            filter.Limit = limit
-        }
-    }
-    
-    filter.Search = c.Query("search")
-    filter.Status = c.Query("status")
-    
-    return filter
 }
 ```
 

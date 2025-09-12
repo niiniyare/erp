@@ -1,9 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 // HealthHandler handles health check requests
@@ -15,20 +14,24 @@ func NewHealthHandler() *HealthHandler {
 }
 
 // Health handles basic health check requests
-func (h *HealthHandler) Health(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
+func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "ok",
-		"service": "awo",
+		"service": "erp",
 		"version": "1.0.0",
 	})
 }
 
 // Ready handles readiness check requests
-func (h *HealthHandler) Ready(c *gin.Context) {
+func (h *HealthHandler) Ready(w http.ResponseWriter, r *http.Request) {
 	// TODO: Add actual readiness checks (database, cache, etc.)
-	c.JSON(http.StatusOK, gin.H{
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ready",
-		"checks": gin.H{
+		"checks": map[string]interface{}{
 			"database": "ok",
 			"cache":    "ok",
 		},
