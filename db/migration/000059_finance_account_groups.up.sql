@@ -99,7 +99,7 @@ WHERE
   AND is_active = TRUE;
 
 -- =====================================================================
--- ENHANCED VIEWS WITH GROUPING
+-- VIEWS WITH GROUPING
 -- =====================================================================
 -- =====================================================================
 -- RLS AND PERMISSIONS FOR NEW TABLES
@@ -139,7 +139,7 @@ UPDATE
 ,
   DELETE ON finance_account_groups TO admin_role;
 
--- Grant permissions on enhanced views
+-- Grant permissions on views
 -- =====================================================================
 -- EXAMPLE USAGE AND BENEFITS
 -- =====================================================================
@@ -151,7 +151,7 @@ BENEFITS OF ACCOUNT GROUPS/HEADERS:
  - Operating vs Administrative Expenses  
  - Proper Income Statement vs Balance Sheet classification
 
-2. ENHANCED REPORTING:
+2. REPORTING:
  - Group-level subtotals automatically calculated
  - Hierarchical financial statements
  - Variance analysis by account group

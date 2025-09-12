@@ -82,15 +82,17 @@ The Financial Module provides a complete double-entry accounting system built on
 
 #### Feature 1: Chart of Accounts Management
 **Priority**: High  
-**Effort**: Large (6+ weeks)  
+**Effort**: Large  
 **Business Value**: Critical Foundation  
 
-**Description**:  chart of accounts with hierarchical structure, account categorization, and balance tracking.
+**Description**: Comprehensive chart of accounts with hierarchical structure, account categorization, balance tracking, and sophisticated account grouping for financial statement presentation.
 
 **User Stories**:
 - As a financial accountant, I want to create and manage accounts with proper categorization so that transactions are properly classified
 - As a finance manager, I need hierarchical account organization so that I can generate consolidated reports by department or cost center
 - As a system administrator, I want to enforce account coding standards so that financial data remains consistent across tenants
+- As a financial analyst, I need account groups with financial statement sections so that I can generate properly formatted Balance Sheets, Income Statements, and Cash Flow Statements
+- As a CFO, I want configurable account group hierarchies so that I can present financial data according to GAAP/IFRS standards and custom organizational needs
 
 **Acceptance Criteria**:
 - [ ] Account codes must be unique within tenant with configurable format validation
@@ -101,6 +103,17 @@ The Financial Module provides a complete double-entry accounting system built on
 - [ ] Soft delete functionality preserving historical references
 - [ ] Bulk import/export capabilities for chart of accounts setup
 
+**Account Groups Management**:
+- [ ] Hierarchical account groups with materialized path for efficient queries (up to 5 levels deep)
+- [ ] Financial statement section mapping (Balance Sheet, Income Statement, Cash Flow Statement)
+- [ ] Statement ordering and presentation formatting (indent levels, bold display, show totals)
+- [ ] Consolidation methods (SUM, AVERAGE, MAX, MIN, CUSTOM) for group-level reporting
+- [ ] Cash flow categorization (OPERATING, INVESTING, FINANCING) for cash flow statement preparation
+- [ ] Budget and variance analysis grouping for management reporting
+- [ ] System-defined groups for standard financial statement presentation
+- [ ] Custom group creation for organization-specific reporting needs
+- [ ] Group-level balance calculation and rollup functionality
+
 **Technical Considerations**:
 - Nested set model for efficient hierarchy queries
 - Row-level security for multi-tenant isolation  
@@ -109,7 +122,7 @@ The Financial Module provides a complete double-entry accounting system built on
 
 #### Feature 2: Temporal-First Double-Entry Transaction Processing
 **Priority**: High  
-**Effort**: Large (8+ weeks)  
+**Effort**: Large  
 **Business Value**: Critical Core Function
 
 **Description**: Complete transaction lifecycle management with double-entry validation, approval workflows, and Temporal workflow state machine processing providing reliability, durability, and automatic error recovery.
@@ -150,8 +163,10 @@ The Financial Module provides a complete double-entry accounting system built on
 
 #### Feature 3: Multi-Currency Support
 **Priority**: High  
-**Effort**: Medium (4-5 weeks)  
+**Effort**: Medium  
 **Business Value**: High (Global Operations)
+
+> **📌 Module Dependency Note**: This feature integrates with the **Currency Management Module** which will be developed as a separate module. The Finance Module handles multi-currency transactions and conversions, while currency rate management, exchange rate services integration, and currency configuration are handled by the dedicated Currency Management Module.
 
 **Description**:  multi-currency transaction processing with real-time exchange rate management and conversion.
 
@@ -171,7 +186,7 @@ The Financial Module provides a complete double-entry accounting system built on
 
 #### Feature 4: Advanced Validation Framework
 **Priority**: High  
-**Effort**: Medium (3-4 weeks)  
+**Effort**: Medium  
 **Business Value**: High (Accuracy & Compliance)
 
 **Description**:  business rule validation ensuring financial accuracy, compliance, and data integrity.
@@ -190,9 +205,267 @@ The Financial Module provides a complete double-entry accounting system built on
 - [ ] Validation rule versioning and audit trail
 - [ ] Performance optimization for high-volume validation
 
-### Business Rules
+#### Feature 5: Accounts Receivable Management
+**Priority**: High  
+**Effort**: Large  
+**Business Value**: Critical (Revenue Management)
 
-#### Rule 1: Double-Entry Balance Validation
+**Description**: Complete customer invoice and payment management with automated workflows for credit control and collections.
+
+**User Stories**:
+- As a financial accountant, I want to generate professional invoices with automated calculations so that customers receive accurate billing
+- As an AR clerk, I need aging reports and automated reminders so that I can efficiently manage collections
+- As a finance manager, I want credit management controls so that customer risk is properly monitored
+- As a business analyst, I need payment tracking and analysis so that I can optimize cash flow
+
+**Acceptance Criteria**:
+- [ ] Invoice generation with customizable templates and automatic calculations
+- [ ] Payment processing with automatic application to outstanding invoices
+- [ ] Customer credit limits with automated enforcement and alerts
+- [ ] Aging reports by customer with configurable periods (30/60/90/120+ days)
+- [ ] Automated reminder system with escalation workflows
+- [ ] Customer statements with transaction history and balance details
+- [ ] Bad debt write-off functionality with proper documentation
+- [ ] Payment terms management with automatic due date calculation
+- [ ] Multi-currency customer transactions with exchange rate handling
+- [ ] Integration with sales order processing and fulfillment workflows
+
+**Technical Considerations**:
+- Temporal workflows for automated collections and reminder processes
+- Integration with customer master data and credit scoring services
+- Automated payment matching using fuzzy logic algorithms
+- Real-time aging calculations with materialized views for performance
+
+#### Feature 6: Accounts Payable Management
+**Priority**: High  
+**Effort**: Large  
+**Business Value**: Critical (Cash Flow Management)
+
+**Description**: Vendor invoice processing and payment management with approval workflows and cash flow optimization.
+
+**User Stories**:
+- As an AP clerk, I want to process vendor invoices efficiently with three-way matching so that payments are accurate
+- As a finance manager, I need payment scheduling capabilities so that I can optimize cash flow and take advantage of early payment discounts
+- As a procurement manager, I want purchase order integration so that invoice processing is streamlined
+- As a controller, I need vendor aging reports so that I can manage supplier relationships and payment obligations
+
+**Acceptance Criteria**:
+- [ ] Vendor invoice entry with automatic coding and GL distribution
+- [ ] Three-way matching (PO, receipt, invoice) with exception handling
+- [ ] Payment scheduling with cash flow optimization and discount tracking
+- [ ] Vendor aging reports with payment due date analysis
+- [ ] Multiple payment methods (check, ACH, wire transfer, credit card)
+- [ ] 1099 reporting and tax form generation for compliance
+- [ ] Approval workflows based on invoice amount and department budgets
+- [ ] Recurring invoice processing for subscription and contract payments
+- [ ] Vendor statement reconciliation with dispute management
+- [ ] Integration with procurement and inventory receiving processes
+
+**Technical Considerations**:
+- Temporal workflows for approval routing and payment processing
+- Integration with banking systems for electronic payments
+- Automated invoice data extraction using OCR/ML capabilities
+- Real-time budget validation and spend analytics
+
+#### Feature 7: Financial Reporting Engine
+**Priority**: High  
+**Effort**: Large  
+**Business Value**: Critical (Business Intelligence)
+
+**Description**: Comprehensive financial reporting system providing standard financial statements, analytical reports, and real-time business intelligence with drill-down capabilities.
+
+**User Stories**:
+- As a finance manager, I need standard financial reports (P&L, Balance Sheet, Cash Flow) so that I can meet regulatory requirements and make informed decisions
+- As a controller, I want comparative reporting capabilities so that I can analyze performance trends and variances
+- As an executive, I need real-time financial dashboards so that I can monitor business performance continuously
+- As an auditor, I want detailed trial balance and supporting schedules so that I can perform financial reviews efficiently
+- As a department manager, I need departmental P&L reports so that I can track my cost center performance
+
+**Acceptance Criteria**:
+- [ ] Standard Financial Statements:
+  - [ ] Income Statement (P&L) with period comparisons and budget variance analysis using account groups for proper categorization
+  - [ ] Balance Sheet with account classifications and supporting schedules organized by account group hierarchy
+  - [ ] Cash Flow Statement with operating, investing, and financing activities based on account group cash flow categories
+  - [ ] Statement of Retained Earnings with opening/closing balances
+- [ ] Account Group-Based Reporting:
+  - [ ] Financial statement presentation using account group structure and ordering
+  - [ ] Group-level subtotals with configurable consolidation methods (SUM, AVERAGE, etc.)
+  - [ ] Hierarchical report formatting with proper indentation and bold headers
+  - [ ] Cash flow categorization based on account group classifications
+- [ ] Trial Balance Reports:
+  - [ ] Detailed trial balance with all account transactions
+  - [ ] Summary trial balance grouped by account type
+  - [ ] Adjusted trial balance with closing entries
+  - [ ] Pre-closing trial balance for period-end verification
+- [ ] Analytical Reports:
+  - [ ] Comparative reports (month-over-month, year-over-year)
+  - [ ] Budget vs. actual analysis with variance explanations
+  - [ ] Departmental and project-based financial analysis
+  - [ ] Custom date range reporting with flexible periods
+- [ ] Real-time Dashboards:
+  - [ ] Key Performance Indicators (KPIs) with automated calculations
+  - [ ] Financial metrics trending and visualization
+  - [ ] Executive summary dashboards with drill-down capabilities
+  - [ ] Alert system for unusual variances or exceptions
+- [ ] Export and Distribution:
+  - [ ] Multiple format support (PDF, Excel, CSV)
+  - [ ] Scheduled report generation and email distribution
+  - [ ] Report templates with corporate branding
+  - [ ] API access for external reporting tools integration
+
+**Technical Considerations**:
+- Temporal workflows for complex report generation with progress tracking
+- Materialized views for real-time reporting performance optimization
+- Caching strategies for frequently accessed financial data
+- Report template engine with dynamic content generation
+- Integration with data visualization tools (charts, graphs, dashboards)
+
+#### Feature 8: Inventory Integration & COGS Management
+**Priority**: High  
+**Effort**: Large  
+**Business Value**: Critical (Cost Management)
+
+> **📌 Module Dependency Note**: This feature integrates with the **Inventory Module** which will be developed as a separate module. The Finance Module provides COGS calculation and financial reporting capabilities, while inventory management, stock tracking, and warehouse operations are handled by the dedicated Inventory Module.
+
+**Description**: Advanced Cost of Goods Sold calculation with perpetual inventory integration, multiple costing methods, and real-time profitability analysis.
+
+**User Stories**:
+- As a cost accountant, I need accurate COGS calculations so that product profitability is properly tracked
+- As an inventory manager, I want perpetual inventory updates so that stock levels and valuations are always current
+- As a finance manager, I need multiple costing methods so that I can choose the most appropriate method for different products
+- As a controller, I want landed cost allocation so that all product costs are properly captured and reported
+
+**Acceptance Criteria**:
+- [ ] Costing Methods:
+  - [ ] FIFO (First In, First Out) with automatic lot tracking
+  - [ ] LIFO (Last In, First Out) with period-end adjustments
+  - [ ] Weighted Average Cost with automatic recalculation
+  - [ ] Standard Cost with variance analysis and reporting
+- [ ] Perpetual Inventory Integration:
+  - [ ] Real-time inventory updates with every transaction
+  - [ ] Automatic COGS posting on sales transactions
+  - [ ] Inventory valuation with multiple costing method support
+  - [ ] Physical count integration with variance reporting
+- [ ] Advanced Cost Features:
+  - [ ] Landed cost allocation (freight, duties, handling)
+  - [ ] Assembly cost roll-up with component tracking
+  - [ ] Work-in-process (WIP) inventory management
+  - [ ] Overhead allocation with configurable drivers
+- [ ] Profitability Analysis:
+  - [ ] Gross margin analysis by product, customer, and sales rep
+  - [ ] Product profitability reports with full cost absorption
+  - [ ] Margin analysis trends and performance indicators
+  - [ ] Price optimization recommendations based on cost analysis
+- [ ] Integration Points:
+  - [ ] Sales order integration for revenue recognition timing
+  - [ ] Purchase order integration for cost capture and matching
+  - [ ] Manufacturing integration for work order costing
+  - [ ] Multi-location inventory with transfer cost tracking
+
+**Technical Considerations**:
+- Event-driven architecture for real-time inventory updates
+- Complex calculation engines for different costing methods
+- Integration with inventory management and warehouse systems
+- Performance optimization for high-volume transaction processing
+
+#### Feature 9: Project Accounting & Time Tracking
+**Priority**: Medium  
+**Effort**: Medium  
+**Business Value**: High (Project Profitability)
+
+> **📌 Module Dependency Note**: This feature integrates with the **Project Management Module** and **HRM Module** which will be developed as separate modules. The Finance Module handles project-based financial accounting, cost allocation, and profitability analysis, while project management activities and HR/employee management are handled by their respective dedicated modules.
+
+**Description**: Comprehensive project-based accounting with time tracking, expense allocation, and real-time profitability analysis for service-based and project-driven organizations.
+
+**User Stories**:
+- As a project manager, I need real-time project profitability so that I can make informed decisions about resource allocation
+- As a consultant, I want to track billable time efficiently so that client billing is accurate and timely
+- As a finance manager, I need project-based financial reports so that I can analyze individual project performance
+- As a business owner, I want to understand which types of projects are most profitable so that I can focus on high-value opportunities
+
+**Acceptance Criteria**:
+- [ ] Project Setup and Management:
+  - [ ] Project creation with budgets, timelines, and billing arrangements
+  - [ ] Multi-phase project support with milestone tracking
+  - [ ] Project templates for common project types
+  - [ ] Project status tracking (active, on-hold, completed, cancelled)
+- [ ] Time Tracking Integration:
+  - [ ] Employee time entry with project and task assignment
+  - [ ] Billable vs. non-billable time classification
+  - [ ] Time approval workflows with manager oversight
+  - [ ] Mobile time entry capabilities for field workers
+- [ ] Expense Allocation:
+  - [ ] Direct cost assignment to specific projects
+  - [ ] Overhead allocation using configurable drivers
+  - [ ] Travel and expense reimbursement integration
+  - [ ] Subcontractor cost tracking and management
+- [ ] Project Profitability Analysis:
+  - [ ] Real-time profit/loss calculation by project
+  - [ ] Budget vs. actual analysis with variance reporting
+  - [ ] Resource utilization tracking and optimization
+  - [ ] Billing efficiency and realization rate analysis
+- [ ] Client Billing Integration:
+  - [ ] Automated invoice generation from time and expenses
+  - [ ] Progress billing with percentage completion
+  - [ ] Retainer and advance payment management
+  - [ ] Change order tracking and billing
+
+**Technical Considerations**:
+- Integration with HR systems for employee rate management
+- Real-time calculation engines for project profitability metrics
+- Time tracking data validation and approval workflows
+- Mobile-responsive time entry interfaces
+
+#### Feature 10: Tax Management & Compliance
+**Priority**: Medium  
+**Effort**: Medium  
+**Business Value**: High (Regulatory Compliance)
+
+> **📌 Module Dependency Note**: This feature will eventually be extracted to a dedicated **Tax Management Module** for enterprise deployments. The Finance Module provides core tax calculation and integration capabilities, while comprehensive tax compliance, multi-jurisdiction management, and advanced tax reporting will be handled by the specialized Tax Management Module.
+
+**Description**: Comprehensive tax management system supporting multiple tax types, jurisdictions, and automated compliance reporting for domestic and international operations.
+
+**User Stories**:
+- As a tax accountant, I need automated tax calculations so that all transactions have proper tax treatment
+- As a compliance officer, I want automated tax reporting so that regulatory filings are accurate and timely
+- As a finance manager, I need multi-jurisdiction support so that I can manage taxes across different locations
+- As a controller, I want tax reconciliation capabilities so that tax payments match calculated liabilities
+
+**Acceptance Criteria**:
+- [ ] Tax Type Support:
+  - [ ] Sales Tax with state and local jurisdiction handling
+  - [ ] Value Added Tax (VAT) with reverse charge scenarios
+  - [ ] Goods and Services Tax (GST) for international operations
+  - [ ] Use Tax calculation and reporting
+  - [ ] Custom tax types for specific industry requirements
+- [ ] Tax Calculation Engine:
+  - [ ] Real-time tax calculation based on transaction details
+  - [ ] Tax exemption handling for qualified customers
+  - [ ] Tax-inclusive and tax-exclusive pricing support
+  - [ ] Compound tax calculations for multiple tax types
+- [ ] Jurisdiction Management:
+  - [ ] Tax rate management with effective date tracking
+  - [ ] Geographic tax zone configuration
+  - [ ] Tax authority registration and reporting requirements
+  - [ ] Multi-state/country tax compliance
+- [ ] Compliance Reporting:
+  - [ ] Automated tax return generation
+  - [ ] Electronic filing integration with tax authorities
+  - [ ] Tax payment processing and remittance
+  - [ ] Audit trail for all tax-related transactions
+- [ ] Tax Reconciliation:
+  - [ ] Tax collected vs. tax remitted reconciliation
+  - [ ] Tax account balance management
+  - [ ] Exception reporting and resolution workflows
+  - [ ] Tax adjustment processing with proper documentation
+
+**Technical Considerations**:
+- Integration with external tax rate services for automatic updates
+- Temporal workflows for complex tax calculation and filing processes
+- Support for multiple tax calendars and reporting periods
+- Integration with payment processing systems for tax remittance
+
+### Business Rules
 - **Description**: All financial transactions must maintain perfect balance (debits = credits)
 - **Enforcement**: Domain entity validation, service layer checks, database constraints
 - **Exceptions**: None - fundamental accounting principle
@@ -223,6 +496,17 @@ The Financial Module provides a complete double-entry accounting system built on
 - **Tenant Module**: Multi-tenancy, data isolation, tenant-specific configuration
 - **Audit Module**:  activity logging, compliance reporting, change tracking
 - **ABAC Module**: Attribute-based access control, policy evaluation, segregation of duties
+
+#### Future Module Dependencies
+> **📌 Architecture Note**: The following modules will be developed as separate, dedicated modules in future phases:
+- **Currency Management Module**: Exchange rate services, currency configuration, rate history management
+- **Inventory Module**: Stock management, warehouse operations, item master data
+- **Project Management Module**: Project planning, resource allocation, milestone tracking
+- **HRM Module**: Employee management, payroll integration, organizational structure
+- **Tax Management Module**: Advanced tax compliance, multi-jurisdiction support, tax authority integration
+- **Asset Management Module**: Fixed asset tracking, depreciation, asset lifecycle management
+
+These modules will integrate with the Finance Module through well-defined APIs and event-driven architecture to maintain loose coupling and modularity.
 
 #### External System Integration
 - **Banking Systems**: Transaction import, account reconciliation, payment processing
