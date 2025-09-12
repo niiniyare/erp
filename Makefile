@@ -10,274 +10,563 @@ SHELL := bash
 MAKEFLAGS += --warn-undefined-variables --no-builtin-rules --no-print-directory
 .DEFAULT_GOAL := help
 
+# ============================================================================
+# 📋 Variables & Configuration
+# ============================================================================
+
+# Database Configuration
 DB_NAME ?= ledger
 DB_USER ?= admin
 DB_PSSWD ?= admin
-DB_URL ?= postgresql://$(DB_USER):$(DB_PSSWD)@localhost:5432/$(DB_NAME)?sslmode=disable
+DB_HOST ?= localhost
+DB_PORT ?= 5432
+DB_URL ?= postgresql://$(DB_USER):$(DB_PSSWD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 
-MIGRATION_PATH := db/migration/
+# Paths
+MIGRATION_PATH := db/migration
 SQLC_OUT := db/sqlc
-PROTO := api/proto/v1
-PB := api/pb/v1
+DOCS_PATH := docs
+COVERAGE_FILE := coverage.out
+COVERAGE_HTML := coverage.html
 
-REQUIRED_TOOLS := sqlc protoc mockgen migrate dbdocs psql buf
-
-# ============================================================================
-# 🧪 General
-# ============================================================================
-
-help: ## Show this help
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36mtarget\033[0m\n"} \
-	/^[a-zA-Z0-9_.-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
-
-check-tools: ## Check required tools
-	@$(foreach tool,$(REQUIRED_TOOLS),\
-		command -v $(tool) >/dev/null 2>&1 || { echo >&2 "Missing: $(tool)"; exit 1; };)
-
-clean: ## Clean generated files
-	@rm -f $(PB)/*.go doc/swagger/*.json
-
-ci: check-tools fmt lint test proto sqlc ## Run all essential checks
-
-# ============================================================================
-# 🧬 API Layer (Handlers, Middleware, Routes)
-# ============================================================================
-
-proto: check-tools ## Generate gRPC and gateway files
-	@mkdir -p $(PB)
-	@protoc --proto_path=$(PROTO) \
-		--go_out=$(PB) --go_opt=paths=source_relative \
-		--go-grpc_out=$(PB) --go-grpc_opt=paths=source_relative \
-		--grpc-gateway_out=$(PB) --grpc-gateway_opt=paths=source_relative \
-		$(PROTO)/*.proto
-
-buf: ## Use Buf to generate proto files
-	@buf generate --output $(PB)
-
-buf-lint: ## Lint proto files with Buf
-	@buf lint | jq
-
-evans: ## Start Evans gRPC REPL
-	@evans --host localhost --port 9090 -r repl
-
-# ============================================================================
-# 🧠 Core Business Layer (Domain, Services, Interfaces)
-# ============================================================================
-sqlc-lint: ## detection of basd queries
-	@./db/queries/lint.sh
-sqlc: ## Generate SQLC store code
-	@sqlc generate && go generate  ./db/sqlc/...
-
-interface2any: ## conver interfaces to any 
-	@find . -type f -name '*.go' | xargs sed -i 's/interface{}/any/g'
-mock: ## Generate mocks for interfaces
-	# @./generate_all_mocks.sh
-		@go generate  ./...
-fmt: ## Format Go code
-	@go fmt ./...
-
+# Ports
 DOC_PORT ?= 8081
+GRPC_PORT ?= 9090
 
-docs: ## Serve documentation (MkDocs + Schema) on port 8081
-	@echo "🏢 Starting AWO ERP Documentation Server..."
-	@echo "📚 MkDocs documentation: http://localhost:$(DOC_PORT)/"
-	@echo "🗄️ Schema documentation: http://localhost:$(DOC_PORT)/schema/"
-	@cd docs && ./start-docs.sh $(DOC_PORT)
+# Tools
+REQUIRED_TOOLS := sqlc mockgen migrate psql golangci-lint mkdocs java sleek
 
-docs-port: ## Serve documentation with custom port: make docs-port DOC_PORT=9000
-	@echo "🏢 Starting AWO ERP Documentation Server on custom port..."
-	@echo "📚 MkDocs documentation: http://localhost:$(DOC_PORT)/"
-	@echo "🗄️ Schema documentation: http://localhost:$(DOC_PORT)/schema/"
-	@cd docs && ./start-docs.sh $(DOC_PORT)
+# Test Configuration
+TEST_TIMEOUT := 10m
+TEST_TIMEOUT_FAST := 5m
+TEST_TIMEOUT_E2E := 15m
+TEST_TIMEOUT_INTEGRATION := 8m
+DOCKER_COMPOSE_TEST := docker-compose.test.yml
+TEST_PARALLEL_JOBS := 4
 
-docs-build: ## Build MkDocs documentation
-	@echo "📖 Building MkDocs documentation..."
-	@mkdocs build
-	@echo "✅ Documentation built in site/ directory"
+# Test Directories
+UNIT_TEST_DIRS := ./internal/core/... ./internal/shared/... ./internal/adapters/...
+INTEGRATION_TEST_DIRS := ./test/integration/...
+E2E_TEST_DIRS := ./test/e2e/...
 
-docs-test: ## Test documentation server
-	@echo "🧪 Testing documentation server..."
-	@cd docs && ./test-server.sh
+# Colors for output
+ESC := $(shell printf '\033')
+RED := $(ESC)[0;31m
+GREEN := $(ESC)[0;32m
+YELLOW := $(ESC)[0;33m
+BLUE := $(ESC)[0;34m
+PURPLE := $(ESC)[0;35m
+CYAN := $(ESC)[0;36m
+NC := $(ESC)[0m
 
-docs-mkdocs-safe: ## Test MkDocs safety (docs/index.html protection)
-	@echo "🛡️ Testing MkDocs safety..."
-	@cd docs && ./test-mkdocs-safe.sh
+# ============================================================================
+# 🆘 Help & Utilities
+# ============================================================================
 
-docs-dev: ## Development docs workflow (build + serve)
-	@echo "👨‍💻 Development documentation workflow..."
-	@$(MAKE) docs-build
-	@$(MAKE) docs
+.PHONY: help
+help: ## 📚 Show this help message
+	@echo "$(CYAN)Available targets:$(NC)"
+	@awk 'BEGIN {FS = ":.*##"; printf "\n"} \
+	/^[a-zA-Z0-9_.-]+:.*?##/ { \
+		gsub(/^[ \t]+/, "", $$2); \
+		printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2 \
+	}' $(MAKEFILE_LIST)
+	@echo ""
 
-docs-schema: ## Generate schema documentation with SchemaSpy
-	@echo "🗄️ Generating database schema documentation..."
-	@echo "Note: Requires SchemaSpy JAR and database connection"
-	@docs/scripts/generate-schema-docs.sh
+.PHONY: check-tools
+check-tools: ## 🔧 Check if required tools are installed
+	@echo "$(BLUE)Checking required tools...$(NC)"
+	@$(foreach tool,$(REQUIRED_TOOLS),\
+		command -v $(tool) >/dev/null 2>&1 || { \
+			echo "$(RED)❌ Missing: $(tool)$(NC)"; exit 1; \
+		};)
+	@echo "$(GREEN)✅ All required tools are installed$(NC)"
 
-goa: ## generate 7oa 
-	@goa gen github.com/niiniyare/erp/internal/api/design -o internal/api && rm -rf ./internal/api/swagger/openapi && cp -f ./internal/api/gen/http/openapi3.json ./internal/api/swagger
-lint: ## Lint Go code
-	@golangci-lint run ./...
+.PHONY: clean
+clean: ## 🧹 Clean generated files and artifacts
+	@echo "$(YELLOW)Cleaning generated files...$(NC)"
+	@rm -f doc/swagger/*.json
+	@rm -f $(COVERAGE_FILE) $(COVERAGE_HTML) benchmark.out
+	@go clean -testcache -cache -modcache
+	@echo "$(GREEN)✅ Cleanup complete$(NC)"
 
-gen: sqlc goa ##  generate All 
+.PHONY: status
+status: ## 📊 Show project status and configuration
+	@echo "$(CYAN)Project Configuration:$(NC)"
+	@echo "  Database: $(DB_USER)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+	@echo "  Migration Path: $(MIGRATION_PATH)"
+	@echo "  Documentation Port: $(DOC_PORT)"
+	@echo "  Test Timeout: $(TEST_TIMEOUT)"
+	@echo "  Parallel Jobs: $(TEST_PARALLEL_JOBS)"
 
+# ============================================================================
+# 🏗️ Build & Generation
+# ============================================================================
 
-test: ## Run all tests
-	@go test -v -cover ./...
+.PHONY: generate
+generate: sqlc mock ## 🔄 Generate all code (SQLC, Mocks)
 
-test-unit: ## Run unit tests only
-	@echo "🧪 Running unit tests..."
-	@go test -tags=unit -race -timeout=10m -v ./internal/core/... ./internal/shared/... ./internal/adapters/...
+.PHONY: sqlc-install
+sqlc-install: ## Install sqlc excutable of if it's not in the system
+	@echo "$(BLUE)Installing SQLC ...$(NC)"
+	@CGO_CFLAGS="-D_GNU_SOURCE" go install -v github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
-test-unit-fast: ## Run unit tests without race detection (faster)
-	@echo "⚡ Running unit tests (fast mode)..."
-	@go test -tags=unit -timeout=5m ./internal/core/... ./internal/shared/... ./internal/adapters/...
+.PHONY: sqlc
+sqlc: ## 🗄️ Generate SQLC store code
+	@echo "$(BLUE)Generating SQLC code...$(NC)"
+	@sqlc generate && go generate ./db/sqlc/...
+	@echo "$(GREEN)✅ SQLC generation complete$(NC)"
 
-test-integration: ## Run integration tests
-	@echo "🔗 Running integration tests..."
+.PHONY: sqlc-lint
+sqlc-lint: ## 🔍 Lint SQL queries
+	@./db/queries/lint.sh
+
+.PHONY: mock
+mock: ## 🎭 Generate mocks for interfaces
+	@echo "$(BLUE)Generating mocks...$(NC)"
+	@go generate ./...
+	@echo "$(GREEN)✅ Mocks generated$(NC)"
+
+.PHONY: goa
+goa: ## 🎯 Generate Goa code
+	@echo "$(BLUE)Generating Goa code...$(NC)"
+	@goa gen github.com/niiniyare/erp/internal/api/design -o internal/api
+	@rm -rf ./internal/api/swagger/openapi
+	@cp -f ./internal/api/gen/http/openapi3.json ./internal/api/swagger
+	@echo "$(GREEN)✅ Goa generation complete$(NC)"
+
+.PHONY: interface2any
+interface2any: ## 🔄 Convert interfaces to any
+	@find . -type f -name '*.go' | xargs sed -i 's/interface{}/any/g'
+
+# ============================================================================
+# 🧪 Testing Framework
+# ============================================================================
+
+.PHONY: test
+test: test-unit ## 🧪 Run default tests (unit tests)
+
+# ============================================================================
+# 🎯 Core Test Suites
+# ============================================================================
+
+.PHONY: test-unit
+test-unit: ## 🎯 Run unit tests with race detection
+	@echo "$(BLUE)Running unit tests...$(NC)"
+	@go test -tags=unit -race -timeout=$(TEST_TIMEOUT) -v \
+		-parallel=$(TEST_PARALLEL_JOBS) $(UNIT_TEST_DIRS)
+	@echo "$(GREEN)✅ Unit tests passed$(NC)"
+
+.PHONY: test-unit-fast
+test-unit-fast: ## ⚡ Run unit tests without race detection (faster)
+	@echo "$(BLUE)Running unit tests (fast mode)...$(NC)"
+	@go test -tags=unit -timeout=$(TEST_TIMEOUT_FAST) \
+		-parallel=$(TEST_PARALLEL_JOBS) $(UNIT_TEST_DIRS)
+	@echo "$(GREEN)✅ Fast unit tests passed$(NC)"
+
+.PHONY: test-unit-short
+test-unit-short: ## 🏃 Run unit tests with short flag (skip slow tests)
+	@echo "$(BLUE)Running unit tests (short mode)...$(NC)"
+	@go test -tags=unit -short -timeout=$(TEST_TIMEOUT_FAST) \
+		-parallel=$(TEST_PARALLEL_JOBS) $(UNIT_TEST_DIRS)
+	@echo "$(GREEN)✅ Short unit tests passed$(NC)"
+
+.PHONY: test-integration
+test-integration: ## 🔗 Run integration tests
+	@echo "$(BLUE)Running integration tests...$(NC)"
 	@echo "🐳 Starting dependencies..."
-	@docker-compose -f docker-compose.test.yml up -d postgres redis || true
+	@docker-compose -f $(DOCKER_COMPOSE_TEST) up -d postgres redis || true
 	@sleep 5
-	@go test -tags=integration -timeout=5m -v ./... || (docker-compose -f docker-compose.test.yml down; exit 1)
+	@go test -tags=integration -timeout=$(TEST_TIMEOUT_INTEGRATION) \
+		-parallel=$(TEST_PARALLEL_JOBS) -v $(INTEGRATION_TEST_DIRS) || \
+		(docker-compose -f $(DOCKER_COMPOSE_TEST) down; exit 1)
 	@echo "🧹 Cleaning up dependencies..."
-	@docker-compose -f docker-compose.test.yml down
+	@docker-compose -f $(DOCKER_COMPOSE_TEST) down
+	@echo "$(GREEN)✅ Integration tests passed$(NC)"
 
-test-e2e: ## Run end-to-end tests
-	@echo "🌐 Running E2E tests..."
+.PHONY: test-e2e
+test-e2e: ## 🌐 Run end-to-end tests
+	@echo "$(BLUE)Running E2E tests...$(NC)"
 	@echo "🐳 Starting full environment..."
-	@docker-compose -f docker-compose.test.yml up -d || true
+	@docker-compose -f $(DOCKER_COMPOSE_TEST) up -d || true
 	@sleep 10
-	@go test -tags=e2e -timeout=15m -v ./test/e2e/... || (docker-compose -f docker-compose.test.yml down; exit 1)
+	@go test -tags=e2e -timeout=$(TEST_TIMEOUT_E2E) -v $(E2E_TEST_DIRS) || \
+		(docker-compose -f $(DOCKER_COMPOSE_TEST) down; exit 1)
 	@echo "🧹 Cleaning up environment..."
-	@docker-compose -f docker-compose.test.yml down
+	@docker-compose -f $(DOCKER_COMPOSE_TEST) down
+	@echo "$(GREEN)✅ E2E tests passed$(NC)"
 
-test-coverage: ## Run tests with coverage report
-	@echo "📊 Running tests with coverage..."
-	@go test -race -timeout=10m -coverprofile=coverage.out ./...
-	@go tool cover -func=coverage.out
-	@go tool cover -html=coverage.out -o coverage.html
-	@echo "✅ Coverage report generated: coverage.html"
+# ============================================================================
+# 📊 Test Analysis & Reporting
+# ============================================================================
 
-test-benchmark: ## Run benchmark tests
-	@echo "🏃 Running benchmark tests..."
-	@go test -bench=. -benchmem -timeout=10m ./...
+.PHONY: test-coverage
+test-coverage: ## 📊 Run tests with coverage report
+	@echo "$(BLUE)Running tests with coverage...$(NC)"
+	@go test -race -timeout=$(TEST_TIMEOUT) -coverprofile=$(COVERAGE_FILE) \
+		-covermode=atomic -parallel=$(TEST_PARALLEL_JOBS) ./...
+	@go tool cover -func=$(COVERAGE_FILE) | tail -1
+	@go tool cover -html=$(COVERAGE_FILE) -o $(COVERAGE_HTML)
+	@echo "$(GREEN)✅ Coverage report generated: $(COVERAGE_HTML)$(NC)"
 
-test-core: ## Run only core layer tests
-	@go test -v ./internal/core/...
+.PHONY: test-coverage-unit
+test-coverage-unit: ## 📊 Run unit tests with coverage
+	@echo "$(BLUE)Running unit tests with coverage...$(NC)"
+	@go test -tags=unit -race -timeout=$(TEST_TIMEOUT) \
+		-coverprofile=$(COVERAGE_FILE) -covermode=atomic \
+		-parallel=$(TEST_PARALLEL_JOBS) $(UNIT_TEST_DIRS)
+	@go tool cover -func=$(COVERAGE_FILE) | tail -1
+	@echo "$(GREEN)✅ Unit test coverage complete$(NC)"
 
-# Domain-specific tests
-test-identity: ## Run identity domain tests
-	@echo "🆔 Testing identity domain..."
-	@go test -race -timeout=10m -v ./internal/core/identity/...
+.PHONY: test-coverage-html
+test-coverage-html: test-coverage ## 🌐 Generate and open HTML coverage report
+	@echo "$(BLUE)Opening coverage report in browser...$(NC)"
+	@open $(COVERAGE_HTML) || xdg-open $(COVERAGE_HTML) || echo "Please open $(COVERAGE_HTML) manually"
 
-test-access: ## Run access domain tests  
-	@echo "🔐 Testing access domain..."
-	@go test -race -timeout=10m -v ./internal/core/access/...
+.PHONY: test-benchmark
+test-benchmark: ## 🏃 Run benchmark tests
+	@echo "$(BLUE)Running benchmark tests...$(NC)"
+	@go test -bench=. -benchmem -timeout=$(TEST_TIMEOUT) \
+		-run=^$$ ./... | tee benchmark.out
+	@echo "$(GREEN)✅ Benchmarks complete$(NC)"
 
-test-audit: ## Run audit domain tests
-	@echo "📋 Testing audit domain..."
-	@go test -race -timeout=10m -v ./internal/core/audit/...
+.PHONY: test-benchmark-compare
+test-benchmark-compare: ## 🏃 Run benchmarks and compare with previous results
+	@echo "$(BLUE)Running benchmarks for comparison...$(NC)"
+	@go test -bench=. -benchmem -count=5 -timeout=$(TEST_TIMEOUT) \
+		-run=^$$ ./... | tee benchmark-new.out
+	@if [ -f benchmark.out ]; then \
+		echo "$(BLUE)Comparing with previous results...$(NC)"; \
+		benchcmp benchmark.out benchmark-new.out || echo "benchcmp not available"; \
+	fi
+	@mv benchmark-new.out benchmark.out
 
-test-notification: ## Run notification domain tests
-	@echo "📢 Testing notification domain..."
-	@go test -race -timeout=10m -v ./internal/core/notification/...
+# ============================================================================
+# 🎯 Domain-Specific Tests
+# ============================================================================
 
-test-analytics: ## Run analytics domain tests
-	@echo "📈 Testing analytics domain..."
-	@go test -race -timeout=10m -v ./internal/core/analytics/...
+.PHONY: test-identity
+test-identity: ## 🆔 Run identity domain tests
+	@echo "$(BLUE)Testing identity domain...$(NC)"
+	@go test -race -timeout=$(TEST_TIMEOUT) -v ./internal/core/identity/...
 
-test-all: ## Run complete test suite (unit + integration + e2e)
-	@echo "🎯 Running complete test suite..."
-	@$(MAKE) test-unit
-	@$(MAKE) test-integration  
-	@$(MAKE) test-e2e
-	@echo "✅ All tests completed successfully!"
+.PHONY: test-access
+test-access: ## 🔐 Run access domain tests
+	@echo "$(BLUE)Testing access domain...$(NC)"
+	@go test -race -timeout=$(TEST_TIMEOUT) -v ./internal/core/access/...
 
-# Development workflow tests
-dev-test: ## Quick development test cycle
-	@echo "👨‍💻 Running development test cycle..."
-	@$(MAKE) test-unit-fast
-	@go build ./...
+.PHONY: test-audit
+test-audit: ## 📋 Run audit domain tests
+	@echo "$(BLUE)Testing audit domain...$(NC)"
+	@go test -race -timeout=$(TEST_TIMEOUT) -v ./internal/core/audit/...
 
-dev-test-coverage: ## Development test with coverage
-	@echo "👨‍💻 Running development test with coverage..."
-	@go test -tags=unit -race -timeout=5m -coverprofile=coverage.out ./internal/core/... ./internal/shared/... ./internal/adapters/...
-	@go tool cover -func=coverage.out
+.PHONY: test-notification
+test-notification: ## 📢 Run notification domain tests
+	@echo "$(BLUE)Testing notification domain...$(NC)"
+	@go test -race -timeout=$(TEST_TIMEOUT) -v ./internal/core/notification/...
 
-# CI/CD pipeline commands  
-ci-test: ## CI test pipeline
-	@echo "🚀 Running CI test pipeline..."
+.PHONY: test-analytics
+test-analytics: ## 📈 Run analytics domain tests
+	@echo "$(BLUE)Testing analytics domain...$(NC)"
+	@go test -race -timeout=$(TEST_TIMEOUT) -v ./internal/core/analytics/...
+
+# ============================================================================
+# 🚀 Test Suites & Workflows
+# ============================================================================
+
+.PHONY: test-all
+test-all: ## 🎯 Run complete test suite (unit + integration + e2e)
+	@echo "$(PURPLE)Running complete test suite...$(NC)"
 	@$(MAKE) test-unit
 	@$(MAKE) test-integration
-	@go test -race -timeout=10m -coverprofile=coverage.out ./...
-	@go tool cover -func=coverage.out | tail -1
-
-ci-full: ## Full CI pipeline
-	@echo "🚀 Running full CI pipeline..."
-	@go build ./...
-	@$(MAKE) test-unit
-	@$(MAKE) test-integration
 	@$(MAKE) test-e2e
-	@go test -race -timeout=10m -coverprofile=coverage.out ./...
-	@go tool cover -func=coverage.out | tail -1
+	@echo "$(GREEN)✅ All tests completed successfully!$(NC)"
 
-# Test cleanup
-test-clean: ## Clean test artifacts
-	@echo "🧹 Cleaning test artifacts..."
-	@rm -f coverage.out coverage.html benchmark.out
-	@docker-compose -f docker-compose.test.yml down -v --remove-orphans || true
+.PHONY: test-quick
+test-quick: ## ⚡ Quick test run (unit tests in short mode)
+	@echo "$(BLUE)Running quick tests...$(NC)"
+	@$(MAKE) test-unit-short
 
-test-clean-cache: ## Clean Go test cache
-	@echo "🧹 Cleaning Go test cache..."
-	@go clean -testcache
-	@go clean -cache
+.PHONY: test-ci
+test-ci: ## 🚀 CI test pipeline (coverage + all tests)
+	@echo "$(PURPLE)Running CI test pipeline...$(NC)"
+	@$(MAKE) test-coverage
+	@$(MAKE) test-integration
+	@echo "$(GREEN)✅ CI test pipeline completed!$(NC)"
+
+.PHONY: test-watch
+test-watch: ## 👀 Watch for changes and run tests (requires entr)
+	@echo "$(BLUE)Watching for changes (press Ctrl+C to stop)...$(NC)"
+	@find . -name "*.go" | entr -c make test-unit-fast
+
+.PHONY: test-failed
+test-failed: ## 🔄 Re-run only failed tests from last run
+	@echo "$(BLUE)Re-running failed tests...$(NC)"
+	@go test -json ./... | tee /tmp/test-output.json
+	@cat /tmp/test-output.json | jq -r 'select(.Action=="fail" and .Test) | .Package + "/" + .Test' | \
+		xargs -I {} go test -run {} -v
 
 # ============================================================================
-# 🗃️ Repository Layer (SQLC Store, Repos, Converters)
+# 🧹 Test Maintenance & Utilities
 # ============================================================================
 
-test-repo: ## Run tests related to repositories
-	@go test -v ./internal/core/tenant/store/...
+.PHONY: test-clean
+test-clean: ## 🧹 Clean test artifacts and docker containers
+	@echo "$(YELLOW)Cleaning test artifacts...$(NC)"
+	@rm -f $(COVERAGE_FILE) $(COVERAGE_HTML) benchmark.out benchmark-new.out
+	@docker-compose -f $(DOCKER_COMPOSE_TEST) down -v --remove-orphans || true
+	@go clean -testcache -cache
+	@echo "$(GREEN)✅ Test cleanup complete$(NC)"
+
+.PHONY: test-deps
+test-deps: ## 📦 Install test dependencies
+	@echo "$(BLUE)Installing test dependencies...$(NC)"
+	@go install github.com/golang/mock/mockgen@latest
+	@go install gotest.tools/gotestsum@latest
+	@command -v entr >/dev/null || echo "$(YELLOW)Consider installing 'entr' for test-watch$(NC)"
+	@command -v benchcmp >/dev/null || echo "$(YELLOW)Consider installing 'benchcmp' for benchmark comparison$(NC)"
+
+.PHONY: test-list
+test-list: ## 📋 List all available tests
+	@echo "$(BLUE)Available tests:$(NC)"
+	@go test -list . ./... 2>/dev/null | grep -E '^Test|^Example|^Benchmark' | sort
+
+.PHONY: test-verbose
+test-verbose: ## 🔊 Run tests with verbose output and detailed timing
+	@echo "$(BLUE)Running tests with verbose output...$(NC)"
+	@go test -v -timeout=$(TEST_TIMEOUT) -parallel=$(TEST_PARALLEL_JOBS) ./... | \
+		grep -E "(PASS|FAIL|RUN)"
 
 # ============================================================================
-# 🏗️ Infrastructure Layer (Database, Redis, Config)
+# 🎨 Code Quality
 # ============================================================================
 
-createdb: ## Create the database
+.PHONY: fmt
+fmt: ## 🎨 Format Go code
+	@echo "$(BLUE)Formatting Go code...$(NC)"
+	@go fmt ./...
+	@echo "$(GREEN)✅ Code formatted$(NC)"
+
+.PHONY: lint
+lint: ## 📝 Lint Go code
+	@echo "$(BLUE)Linting Go code...$(NC)"
+	@golangci-lint run ./...
+	@echo "$(GREEN)✅ Linting complete$(NC)"
+
+.PHONY: vet
+vet: ## 🔍 Run go vet
+	@echo "$(BLUE)Running go vet...$(NC)"
+	@go vet ./...
+	@echo "$(GREEN)✅ Vet check complete$(NC)"
+
+.PHONY: security
+security: ## 🔒 Run security checks (gosec)
+	@echo "$(BLUE)Running security checks...$(NC)"
+	@command -v gosec >/dev/null 2>&1 || go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+	@gosec ./...
+	@echo "$(GREEN)✅ Security check complete$(NC)"
+
+.PHONY: quality
+quality: fmt vet lint ## 🏆 Run all code quality checks
+
+# ============================================================================
+# 🗄️ Database Operations
+# ============================================================================
+
+.PHONY: db-create
+db-create: ## 🏗️ Create the database
+	@echo "$(BLUE)Creating database $(DB_NAME)...$(NC)"
 	@createdb --username="$(DB_USER)" --owner="$(DB_USER)" $(DB_NAME)
+	@echo "$(GREEN)✅ Database created$(NC)"
 
-dropdb: ## Drop the database
+.PHONY: db-drop
+db-drop: ## 💥 Drop the database
+	@echo "$(RED)Dropping database $(DB_NAME)...$(NC)"
 	@dropdb $(DB_NAME)
+	@echo "$(YELLOW)⚠️ Database dropped$(NC)"
 
-migrateup: ## Run all up migrations
+.PHONY: db-reset
+db-reset: db-drop db-create migrate-up ## 🔄 Reset database (drop, create, migrate)
+
+.PHONY: migrate-up
+migrate-up: ## ⬆️ Run all up migrations
+	@echo "$(BLUE)Running up migrations...$(NC)"
 	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose up
+	@echo "$(GREEN)✅ Migrations applied$(NC)"
 
-migratedown: ## Roll back the last migration
-	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose down
+.PHONY: migrate-down
+migrate-down: ## ⬇️ Roll back the last migration
+	@echo "$(YELLOW)Rolling back last migration...$(NC)"
+	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose down 1
+	@echo "$(YELLOW)⚠️ Migration rolled back$(NC)"
 
-migratedrop: ## Drop all schema objects
-	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose drop
+.PHONY: migrate-drop
+migrate-drop: ## 💥 Drop all schema objects
+	@echo "$(RED)Dropping all schema objects...$(NC)"
+	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose drop -f
+	@echo "$(YELLOW)⚠️ Schema dropped$(NC)"
 
-migrate-create: ## Create new migration file: make migrate-create name=init_users
+.PHONY: migrate-create
+migrate-create: ## 📝 Create new migration file: make migrate-create name=init_users
 	@name=$(name); \
-	if [ -z "$$name" ]; then echo "Missing name param. Use: make migrate-create name=xyz"; exit 1; fi; \
+	if [ -z "$$name" ]; then \
+		echo "$(RED)Missing name param. Use: make migrate-create name=xyz$(NC)"; exit 1; \
+	fi; \
+	echo "$(BLUE)Creating migration: $$name$(NC)"; \
 	migrate create -ext sql -dir "$(MIGRATION_PATH)" -digits 2 -seq "$$name" -verbose
+	@echo "$(GREEN)✅ Migration created$(NC)"
 
-dbdocs: ## Generate DB docs from DBML
-	@dbdocs build docs/schema.dbml
-
-sql2dbml: ## Convert SQL migration to DBML
-	@sql2dbml $(MIGRATION_PATH)/*.up.sql --postgres -o docs/schema.dbml
+.PHONY: migrate-status
+migrate-status: ## 📊 Show migration status
+	@echo "$(BLUE)Checking migration status...$(NC)"
+	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" version
 
 # ============================================================================
-# 🚀 App Entry (main.go / wiring)
+# 📚 Documentation
 # ============================================================================
-run: ## Run the app server
+
+.PHONY: docs
+docs: ## 📖 Serve documentation on default port
+	@echo "$(BLUE)🏢 Starting AWO ERP Documentation Server...$(NC)"
+	@echo "📚 MkDocs documentation: http://localhost:$(DOC_PORT)/"
+	@echo "🗄️ Schema documentation: http://localhost:$(DOC_PORT)/schema/"
+	@cd $(DOCS_PATH) && ./start-docs.sh $(DOC_PORT)
+
+.PHONY: docs-build
+docs-build: ## 🏗️ Build MkDocs documentation
+	@echo "$(BLUE)📖 Building MkDocs documentation...$(NC)"
+	@mkdocs build
+	@echo "$(GREEN)✅ Documentation built in site/ directory$(NC)"
+
+.PHONY: docs-dev
+docs-dev: docs-build docs ## 👨‍💻 Development docs workflow (build + serve)
+
+.PHONY: docs-schema
+docs-schema: ## 🗄️ Generate database schema documentation
+	@echo "$(BLUE)🗄️ Generating database schema documentation...$(NC)"
+	@echo "Note: Requires SchemaSpy JAR and database connection"
+	@$(DOCS_PATH)/scripts/generate-schema-docs.sh
+	@echo "$(GREEN)✅ Schema documentation generated$(NC)"
+
+.PHONY: docs-test
+docs-test: ## 🧪 Test documentation server
+	@echo "$(BLUE)🧪 Testing documentation server...$(NC)"
+	@cd $(DOCS_PATH) && ./test-server.sh
+
+.PHONY: dbdocs
+dbdocs: ## 📊 Generate DB docs from DBML
+	@echo "$(BLUE)Generating database documentation...$(NC)"
+	@dbdocs build $(DOCS_PATH)/schema.dbml
+	@echo "$(GREEN)✅ Database documentation generated$(NC)"
+
+.PHONY: sql2dbml
+sql2dbml: ## 🔄 Convert SQL migration to DBML
+	@sql2dbml $(MIGRATION_PATH)/*.up.sql --postgres -o $(DOCS_PATH)/schema.dbml
+
+# ============================================================================
+# 🚀 Application & Services
+# ============================================================================
+
+.PHONY: run
+run: ## 🚀 Run the application server
+	@echo "$(BLUE)Starting application server...$(NC)"
 	@go run ./cmd/server/
-temporal-server: ## Start temporal server 
+
+.PHONY: build
+build: ## 🔨 Build the application
+	@echo "$(BLUE)Building application...$(NC)"
+	@go build -o bin/server ./cmd/server/
+	@echo "$(GREEN)✅ Application built: bin/server$(NC)"
+
+.PHONY: evans
+evans: ## 🔌 Start Evans gRPC REPL
+	@echo "$(BLUE)Starting Evans gRPC REPL...$(NC)"
+	@evans --host localhost --port $(GRPC_PORT) -r repl
+
+.PHONY: temporal-server
+temporal-server: ## ⏰ Start Temporal server
+	@echo "$(BLUE)Starting Temporal server...$(NC)"
 	@temporal server start-dev
 
-.PHONY: help clean ci fmt lint test test-core test-repo \
-	createdb dropdb migrateup migratedown migratedrop migrate-create \
-	sqlc mock proto buf buf-lint evans dbdocs sql2dbml run check-tools \
-	docs docs-port docs-build docs-test docs-mkdocs-safe docs-dev docs-schema \
-	temporal-server
+# ============================================================================
+# 🔄 Development Workflows
+# ============================================================================
+
+.PHONY: dev-setup
+dev-setup: check-tools db-create migrate-up generate test-deps ## 🛠️ Setup development environment
+
+.PHONY: dev-test
+dev-test: test-unit-fast build ## 👨‍💻 Quick development test cycle
+
+.PHONY: dev-reset
+dev-reset: clean db-reset generate ## 🔄 Reset development environment
+
+.PHONY: ci
+ci: quality test-ci build ## 🚀 Run CI pipeline
+
+.PHONY: ci-full
+ci-full: quality test-all build ## 🚀 Run full CI pipeline
+
+# ============================================================================
+# 🔧 Maintenance
+# ============================================================================
+
+.PHONY: deps-update
+deps-update: ## 📦 Update Go dependencies
+	@echo "$(BLUE)Updating dependencies...$(NC)"
+	@go get -u ./...
+	@go mod tidy
+	@echo "$(GREEN)✅ Dependencies updated$(NC)"
+
+.PHONY: deps-check
+deps-check: ## 🔍 Check for dependency vulnerabilities
+	@echo "$(BLUE)Checking dependencies for vulnerabilities...$(NC)"
+	@go list -json -deps ./... | nancy sleuth
+	@echo "$(GREEN)✅ Dependency check complete$(NC)"
+
+.PHONY: docker-build
+docker-build: ## 🐳 Build Docker image
+	@echo "$(BLUE)Building Docker image...$(NC)"
+	@docker build -t erp-app .
+	@echo "$(GREEN)✅ Docker image built$(NC)"
+
+.PHONY: docker-run
+docker-run: ## 🐳 Run application in Docker
+	@echo "$(BLUE)Running application in Docker...$(NC)"
+	@docker run -p 8080:8080 erp-app
+
+# ============================================================================
+# 🎯 Aliases & Shortcuts
+# ============================================================================
+
+.PHONY: dev
+dev: dev-test ## 👨‍💻 Alias for dev-test
+
+.PHONY: setup
+setup: dev-setup ## 🛠️ Alias for dev-setup
+
+.PHONY: reset
+reset: dev-reset ## 🔄 Alias for dev-reset
+
+.PHONY: gen
+gen: generate ## 🔄 Alias for generate
+
+.PHONY: coverage
+coverage: test-coverage ## 📊 Alias for test-coverage
+
+.PHONY: bench
+bench: test-benchmark ## 🏃 Alias for test-benchmark
+
+.PHONY: watch
+watch: test-watch ## 👀 Alias for test-watch
+
+.PHONY: quick
+quick: test-quick ## ⚡ Alias for test-quick
+
+# Legacy aliases for backward compatibility
+.PHONY: createdb dropdb migrateup migratedown migratedrop
+createdb: db-create
+dropdb: db-drop  
+migrateup: migrate-up
+migratedown: migrate-down
+migratedrop: migrate-drop
