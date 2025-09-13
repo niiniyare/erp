@@ -103,6 +103,7 @@ type Querier interface {
 	// FINANCE MODULE - CHART OF ACCOUNTS QUERIES
 	// SQLC queries for chart of accounts with proper tenant isolation
 	// Updated with proper sqlc.narg and sqlc.arg usage
+	// Includes view-based queries for enhanced hierarchy and analytics
 	// =====================================================================
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceAccount, error)
 	CreateAccountBalance(ctx context.Context, arg CreateAccountBalanceParams) (*FinanceAccountBalance, error)
@@ -245,6 +246,7 @@ type Querier interface {
 	// ACCOUNT ACTIVITY VIEW QUERIES
 	// =====================================================================
 	GetAccountActivity(ctx context.Context, arg GetAccountActivityParams) ([]*VFinanceAccountActivity, error)
+	GetAccountActivitySummary(ctx context.Context, arg GetAccountActivitySummaryParams) ([]*GetAccountActivitySummaryRow, error)
 	GetAccountBalance(ctx context.Context, id uuid.UUID) (*FinanceAccountBalance, error)
 	GetAccountBalanceByDate(ctx context.Context, arg GetAccountBalanceByDateParams) (*FinanceAccountBalance, error)
 	GetAccountBalanceHistory(ctx context.Context, arg GetAccountBalanceHistoryParams) ([]*FinanceAccountBalance, error)
@@ -253,6 +255,11 @@ type Querier interface {
 	GetAccountByCodeWithGroups(ctx context.Context, accountCode string) (*VFinanceAccountsWithGroup, error)
 	GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceAccount, error)
 	GetAccountChildren(ctx context.Context, parentAccountID *uuid.UUID) ([]*VFinanceAccountsHierarchy, error)
+	// =====================================================================
+	// VIEW-BASED QUERIES FOR ENHANCED HIERARCHY AND ANALYTICS
+	// Additional queries that complement existing reporting views
+	// =====================================================================
+	GetAccountChildrenHierarchy(ctx context.Context, parentAccountID *uuid.UUID) ([]*VFinanceAccountsHierarchy, error)
 	GetAccountEntries(ctx context.Context, arg GetAccountEntriesParams) ([]*GetAccountEntriesRow, error)
 	// Get account group by ID with proper tenant/entity isolation
 	GetAccountGroup(ctx context.Context, arg GetAccountGroupParams) (*FinanceAccountGroup, error)
@@ -266,16 +273,41 @@ type Querier interface {
 	// Get account groups by root type with entity isolation
 	GetAccountGroupsByRootType(ctx context.Context, arg GetAccountGroupsByRootTypeParams) ([]*FinanceAccountGroup, error)
 	GetAccountHierarchy(ctx context.Context, accountPathPrefix *string) ([]*FinanceAccount, error)
+	// =====================================================================
+	// ACCOUNT HIERARCHY VIEW QUERIES
+	// =====================================================================
+	// -- name: GetAccountHierarchyView :many
+	// SELECT
+	//   *
+	// FROM
+	//   v_finance_accounts_hierarchy
+	// WHERE
+	//   tenant_id = current_tenant_id()
+	//   AND (
+	//     sqlc.narg('entity_id')::uuid IS NULL
+	//     OR tenant_id = current_tenant_id()
+	//   )
+	//   AND (
+	//     sqlc.narg('root_type')::text IS NULL
+	//     OR root_type = sqlc.narg('root_type')
+	//   )
+	//   AND (
+	//     sqlc.narg('parent_account_id')::uuid IS NULL
+	//     OR (
+	//       sqlc.narg('parent_account_id') IS NULL
+	//       AND parent_account_id IS NULL
+	//     )
+	//     OR full_path LIKE '%' || sqlc.narg('parent_account_id')::text || '%'
+	//   )
+	// ORDER BY
+	//   full_path;
 	GetAccountHierarchyByLevel(ctx context.Context, arg GetAccountHierarchyByLevelParams) ([]*VFinanceAccountsHierarchy, error)
 	// =====================================================================
 	// HIERARCHY AND REPORTING QUERIES
 	// =====================================================================
 	GetAccountHierarchyComplete(ctx context.Context, arg GetAccountHierarchyCompleteParams) ([]*GetAccountHierarchyCompleteRow, error)
-	// =====================================================================
-	// ACCOUNT HIERARCHY VIEW QUERIES
-	// =====================================================================
-	GetAccountHierarchyView(ctx context.Context, arg GetAccountHierarchyViewParams) ([]*VFinanceAccountsHierarchy, error)
 	GetAccountReportingInfo(ctx context.Context, accountID uuid.UUID) (*VChartOfAccountsComplete, error)
+	GetAccountSubtree(ctx context.Context, accountID uuid.UUID) ([]*VFinanceAccountsHierarchy, error)
 	GetAccountTransactionBalance(ctx context.Context, arg GetAccountTransactionBalanceParams) (*GetAccountTransactionBalanceRow, error)
 	// =====================================================================
 	// PERFORMANCE AND ANALYTICS QUERIES
@@ -299,6 +331,10 @@ type Querier interface {
 	GetAccountsForFinancialStatements(ctx context.Context, arg GetAccountsForFinancialStatementsParams) ([]*GetAccountsForFinancialStatementsRow, error)
 	GetAccountsRequiringAttention(ctx context.Context, entityID *uuid.UUID) ([]*GetAccountsRequiringAttentionRow, error)
 	GetAccountsWithNonZeroBalance(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error)
+	// =====================================================================
+	// ENHANCED ACCOUNT ACTIVITY QUERIES
+	// =====================================================================
+	GetAccountsWithRecentActivity(ctx context.Context, arg GetAccountsWithRecentActivityParams) ([]*VFinanceAccountActivity, error)
 	GetActiveAccounts(ctx context.Context, entityID *uuid.UUID) ([]*VFinanceAccountActivity, error)
 	GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, error)
 	GetActiveTenants(ctx context.Context) ([]*Tenant, error)
@@ -742,6 +778,7 @@ type Querier interface {
 	// Find similar incident patterns for threat intelligence
 	GetSimilarIncidentPatterns(ctx context.Context, arg GetSimilarIncidentPatternsParams) ([]*GetSimilarIncidentPatternsRow, error)
 	GetSpecificSetting(ctx context.Context, key string) (interface{}, error)
+	GetStaleAccountBalances(ctx context.Context, arg GetStaleAccountBalancesParams) ([]*GetStaleAccountBalancesRow, error)
 	// Usage: Finds entity states that haven't been updated recently
 	// Use case: Identifying inactive sequences, cleanup candidate identification
 	GetStaleEntityStates(ctx context.Context, updatedAt time.Time) ([]*GetStaleEntityStatesRow, error)

@@ -1165,6 +1165,191 @@ func (r *accountsRepository) GetAccountSummaryByGroup(ctx context.Context, entit
 	return result, err
 }
 
+// =====================================================================
+// VIEW-BASED QUERY METHODS (ENHANCED HIERARCHY AND ANALYTICS)
+// =====================================================================
+
+// GetAccountChildrenHierarchy retrieves child accounts using hierarchy view
+func (r *accountsRepository) GetAccountChildrenHierarchy(ctx context.Context, parentAccountID uuid.UUID) ([]*domain.AccountHierarchy, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountChildrenHierarchy")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	cacheKey := fmt.Sprintf("account_children_hierarchy:%s:%s", tenantID.String(), parentAccountID.String())
+	
+	// Try to get from cache first
+	var result []*domain.AccountHierarchy
+	if err := r.cache.Get(ctx, cacheKey, &result); err == nil && result != nil {
+		return result, nil
+	}
+
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		sqlcAccounts, err := s.GetAccountChildrenHierarchy(ctx, &parentAccountID)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_account_children_hierarchy")
+		}
+
+		result = make([]*domain.AccountHierarchy, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCAccountHierarchyToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache the result for 15 minutes
+	r.cache.Set(ctx, cacheKey, result, 15*time.Minute)
+	return result, nil
+}
+
+// GetAccountSubtree retrieves an account and all its descendants using hierarchy view
+func (r *accountsRepository) GetAccountSubtree(ctx context.Context, accountID uuid.UUID) ([]*domain.AccountHierarchy, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountSubtree")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	cacheKey := fmt.Sprintf("account_subtree:%s:%s", tenantID.String(), accountID.String())
+	
+	// Try to get from cache first
+	var result []*domain.AccountHierarchy
+	if err := r.cache.Get(ctx, cacheKey, &result); err == nil && result != nil {
+		return result, nil
+	}
+
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		sqlcAccounts, err := s.GetAccountSubtree(ctx, accountID)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_account_subtree")
+		}
+
+		result = make([]*domain.AccountHierarchy, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCAccountHierarchyToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache the result for 15 minutes
+	r.cache.Set(ctx, cacheKey, result, 15*time.Minute)
+	return result, nil
+}
+
+// GetAccountsWithRecentActivity retrieves accounts with recent transaction activity
+func (r *accountsRepository) GetAccountsWithRecentActivity(ctx context.Context, filter *domain.AccountActivityFilter) ([]*domain.AccountActivity, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountsWithRecentActivity")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.AccountActivity
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params := db.GetAccountsWithRecentActivityParams{
+			EntityID:   filter.EntityID,
+			MinEntries: filter.MinEntries,
+		}
+
+		sqlcAccounts, err := s.GetAccountsWithRecentActivity(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_accounts_with_recent_activity")
+		}
+
+		result = make([]*domain.AccountActivity, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCAccountActivityToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+// GetStaleAccountBalances retrieves accounts with non-zero balances but no recent activity
+func (r *accountsRepository) GetStaleAccountBalances(ctx context.Context, filter *domain.AccountActivityFilter) ([]*domain.AccountActivity, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetStaleAccountBalances")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.AccountActivity
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params := db.GetStaleAccountBalancesParams{
+			EntityID:          filter.EntityID,
+			MinDaysInactive:   filter.MinDaysInactive,
+		}
+
+		sqlcAccounts, err := s.GetStaleAccountBalances(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_stale_account_balances")
+		}
+
+		result = make([]*domain.AccountActivity, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCStaleAccountToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+// GetAccountActivitySummary retrieves detailed activity summary for accounts
+func (r *accountsRepository) GetAccountActivitySummary(ctx context.Context, filter *domain.AccountActivityFilter) ([]*domain.AccountActivitySummary, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountActivitySummary")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var result []*domain.AccountActivitySummary
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		params := db.GetAccountActivitySummaryParams{
+			EntityID:      filter.EntityID,
+			ActivityLevel: filter.ActivityLevel,
+		}
+
+		sqlcAccounts, err := s.GetAccountActivitySummary(ctx, params)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_account_activity_summary")
+		}
+
+		result = make([]*domain.AccountActivitySummary, len(sqlcAccounts))
+		for i, sqlcAccount := range sqlcAccounts {
+			result[i] = mapSQLCAccountActivitySummaryToDomain(*sqlcAccount)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
 // Helper functions
 func getStringValue(s *string) string {
 	if s == nil {

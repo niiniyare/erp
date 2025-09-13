@@ -124,6 +124,7 @@ func (q *Queries) GetAccountChildren(ctx context.Context, parentAccountID *uuid.
 }
 
 const getAccountHierarchyByLevel = `-- name: GetAccountHierarchyByLevel :many
+
 SELECT
   id, tenant_id, account_code, account_name, parent_account_id, root_type, account_type, normal_balance, current_balance, level, full_path, full_name, child_count
 FROM
@@ -149,78 +150,43 @@ type GetAccountHierarchyByLevelParams struct {
 	RootType *string    `json:"root_type"`
 }
 
-func (q *Queries) GetAccountHierarchyByLevel(ctx context.Context, arg GetAccountHierarchyByLevelParams) ([]*VFinanceAccountsHierarchy, error) {
-	rows, err := q.db.Query(ctx, getAccountHierarchyByLevel, arg.EntityID, arg.MaxLevel, arg.RootType)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*VFinanceAccountsHierarchy{}
-	for rows.Next() {
-		var i VFinanceAccountsHierarchy
-		if err := rows.Scan(
-			&i.ID,
-			&i.TenantID,
-			&i.AccountCode,
-			&i.AccountName,
-			&i.ParentAccountID,
-			&i.RootType,
-			&i.AccountType,
-			&i.NormalBalance,
-			&i.CurrentBalance,
-			&i.Level,
-			&i.FullPath,
-			&i.FullName,
-			&i.ChildCount,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAccountHierarchyView = `-- name: GetAccountHierarchyView :many
-SELECT
-  id, tenant_id, account_code, account_name, parent_account_id, root_type, account_type, normal_balance, current_balance, level, full_path, full_name, child_count
-FROM
-  v_finance_accounts_hierarchy
-WHERE
-  tenant_id = current_tenant_id()
-  AND (
-    $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
-  )
-  AND (
-    $2::text IS NULL
-    OR root_type = $2
-  )
-  AND (
-    $3::uuid IS NULL
-    OR (
-      $3 IS NULL
-      AND parent_account_id IS NULL
-    )
-    OR full_path LIKE '%' || $3::text || '%'
-  )
-ORDER BY
-  full_path
-`
-
-type GetAccountHierarchyViewParams struct {
-	EntityID        *uuid.UUID `json:"entity_id"`
-	RootType        *string    `json:"root_type"`
-	ParentAccountID *uuid.UUID `json:"parent_account_id"`
-}
-
 // =====================================================================
 // ACCOUNT HIERARCHY VIEW QUERIES
 // =====================================================================
-func (q *Queries) GetAccountHierarchyView(ctx context.Context, arg GetAccountHierarchyViewParams) ([]*VFinanceAccountsHierarchy, error) {
-	rows, err := q.db.Query(ctx, getAccountHierarchyView, arg.EntityID, arg.RootType, arg.ParentAccountID)
+// -- name: GetAccountHierarchyView :many
+// SELECT
+//
+//	*
+//
+// FROM
+//
+//	v_finance_accounts_hierarchy
+//
+// WHERE
+//
+//	tenant_id = current_tenant_id()
+//	AND (
+//	  sqlc.narg('entity_id')::uuid IS NULL
+//	  OR tenant_id = current_tenant_id()
+//	)
+//	AND (
+//	  sqlc.narg('root_type')::text IS NULL
+//	  OR root_type = sqlc.narg('root_type')
+//	)
+//	AND (
+//	  sqlc.narg('parent_account_id')::uuid IS NULL
+//	  OR (
+//	    sqlc.narg('parent_account_id') IS NULL
+//	    AND parent_account_id IS NULL
+//	  )
+//	  OR full_path LIKE '%' || sqlc.narg('parent_account_id')::text || '%'
+//	)
+//
+// ORDER BY
+//
+//	full_path;
+func (q *Queries) GetAccountHierarchyByLevel(ctx context.Context, arg GetAccountHierarchyByLevelParams) ([]*VFinanceAccountsHierarchy, error) {
+	rows, err := q.db.Query(ctx, getAccountHierarchyByLevel, arg.EntityID, arg.MaxLevel, arg.RootType)
 	if err != nil {
 		return nil, err
 	}

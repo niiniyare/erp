@@ -1658,6 +1658,21 @@ func (mr *MockStoreMockRecorder) GetAccountActivity(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountActivity", reflect.TypeOf((*MockStore)(nil).GetAccountActivity), ctx, arg)
 }
 
+// GetAccountActivitySummary mocks base method.
+func (m *MockStore) GetAccountActivitySummary(ctx context.Context, arg GetAccountActivitySummaryParams) ([]*GetAccountActivitySummaryRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountActivitySummary", ctx, arg)
+	ret0, _ := ret[0].([]*GetAccountActivitySummaryRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountActivitySummary indicates an expected call of GetAccountActivitySummary.
+func (mr *MockStoreMockRecorder) GetAccountActivitySummary(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountActivitySummary", reflect.TypeOf((*MockStore)(nil).GetAccountActivitySummary), ctx, arg)
+}
+
 // GetAccountBalance mocks base method.
 func (m *MockStore) GetAccountBalance(ctx context.Context, id uuid.UUID) (*FinanceAccountBalance, error) {
 	m.ctrl.T.Helper()
@@ -1776,6 +1791,21 @@ func (m *MockStore) GetAccountChildren(ctx context.Context, parentAccountID *uui
 func (mr *MockStoreMockRecorder) GetAccountChildren(ctx, parentAccountID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountChildren", reflect.TypeOf((*MockStore)(nil).GetAccountChildren), ctx, parentAccountID)
+}
+
+// GetAccountChildrenHierarchy mocks base method.
+func (m *MockStore) GetAccountChildrenHierarchy(ctx context.Context, parentAccountID *uuid.UUID) ([]*VFinanceAccountsHierarchy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountChildrenHierarchy", ctx, parentAccountID)
+	ret0, _ := ret[0].([]*VFinanceAccountsHierarchy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountChildrenHierarchy indicates an expected call of GetAccountChildrenHierarchy.
+func (mr *MockStoreMockRecorder) GetAccountChildrenHierarchy(ctx, parentAccountID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountChildrenHierarchy", reflect.TypeOf((*MockStore)(nil).GetAccountChildrenHierarchy), ctx, parentAccountID)
 }
 
 // GetAccountEntries mocks base method.
@@ -1928,21 +1958,6 @@ func (mr *MockStoreMockRecorder) GetAccountHierarchyComplete(ctx, arg any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountHierarchyComplete", reflect.TypeOf((*MockStore)(nil).GetAccountHierarchyComplete), ctx, arg)
 }
 
-// GetAccountHierarchyView mocks base method.
-func (m *MockStore) GetAccountHierarchyView(ctx context.Context, arg GetAccountHierarchyViewParams) ([]*VFinanceAccountsHierarchy, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccountHierarchyView", ctx, arg)
-	ret0, _ := ret[0].([]*VFinanceAccountsHierarchy)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAccountHierarchyView indicates an expected call of GetAccountHierarchyView.
-func (mr *MockStoreMockRecorder) GetAccountHierarchyView(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountHierarchyView", reflect.TypeOf((*MockStore)(nil).GetAccountHierarchyView), ctx, arg)
-}
-
 // GetAccountReportingInfo mocks base method.
 func (m *MockStore) GetAccountReportingInfo(ctx context.Context, accountID uuid.UUID) (*VChartOfAccountsComplete, error) {
 	m.ctrl.T.Helper()
@@ -1956,6 +1971,21 @@ func (m *MockStore) GetAccountReportingInfo(ctx context.Context, accountID uuid.
 func (mr *MockStoreMockRecorder) GetAccountReportingInfo(ctx, accountID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountReportingInfo", reflect.TypeOf((*MockStore)(nil).GetAccountReportingInfo), ctx, accountID)
+}
+
+// GetAccountSubtree mocks base method.
+func (m *MockStore) GetAccountSubtree(ctx context.Context, accountID uuid.UUID) ([]*VFinanceAccountsHierarchy, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountSubtree", ctx, accountID)
+	ret0, _ := ret[0].([]*VFinanceAccountsHierarchy)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountSubtree indicates an expected call of GetAccountSubtree.
+func (mr *MockStoreMockRecorder) GetAccountSubtree(ctx, accountID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountSubtree", reflect.TypeOf((*MockStore)(nil).GetAccountSubtree), ctx, accountID)
 }
 
 // GetAccountTransactionBalance mocks base method.
@@ -2181,6 +2211,21 @@ func (m *MockStore) GetAccountsWithNonZeroBalance(ctx context.Context, entityID 
 func (mr *MockStoreMockRecorder) GetAccountsWithNonZeroBalance(ctx, entityID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountsWithNonZeroBalance", reflect.TypeOf((*MockStore)(nil).GetAccountsWithNonZeroBalance), ctx, entityID)
+}
+
+// GetAccountsWithRecentActivity mocks base method.
+func (m *MockStore) GetAccountsWithRecentActivity(ctx context.Context, arg GetAccountsWithRecentActivityParams) ([]*VFinanceAccountActivity, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountsWithRecentActivity", ctx, arg)
+	ret0, _ := ret[0].([]*VFinanceAccountActivity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountsWithRecentActivity indicates an expected call of GetAccountsWithRecentActivity.
+func (mr *MockStoreMockRecorder) GetAccountsWithRecentActivity(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountsWithRecentActivity", reflect.TypeOf((*MockStore)(nil).GetAccountsWithRecentActivity), ctx, arg)
 }
 
 // GetActiveAccounts mocks base method.
@@ -4565,6 +4610,21 @@ func (m *MockStore) GetSpecificSetting(ctx context.Context, key string) (any, er
 func (mr *MockStoreMockRecorder) GetSpecificSetting(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpecificSetting", reflect.TypeOf((*MockStore)(nil).GetSpecificSetting), ctx, key)
+}
+
+// GetStaleAccountBalances mocks base method.
+func (m *MockStore) GetStaleAccountBalances(ctx context.Context, arg GetStaleAccountBalancesParams) ([]*GetStaleAccountBalancesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStaleAccountBalances", ctx, arg)
+	ret0, _ := ret[0].([]*GetStaleAccountBalancesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetStaleAccountBalances indicates an expected call of GetStaleAccountBalances.
+func (mr *MockStoreMockRecorder) GetStaleAccountBalances(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStaleAccountBalances", reflect.TypeOf((*MockStore)(nil).GetStaleAccountBalances), ctx, arg)
 }
 
 // GetStaleEntityStates mocks base method.

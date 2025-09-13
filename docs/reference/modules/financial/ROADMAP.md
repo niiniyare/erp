@@ -12,7 +12,7 @@
 
 This roadmap provides the definitive, sequential implementation plan for transforming the Finance module from its current partial state to a fully operational, workflow-orchestrated system with business-focused APIs.
 
-**Current Reality**: 50% complete (155/307 tasks)
+**Current Reality**: 55% complete (170/307 tasks)
 **Architecture**: Clean dependency injection with core-owned WorkflowOrchestrator interface
 **Target**: Production-ready finance system with reliable transaction processing
 
@@ -37,10 +37,13 @@ This roadmap provides the definitive, sequential implementation plan for transfo
 **Step 4:** ✅ `@internal/core/finance/repository/account_groups.go` - COMPLETED
 - Create repository implementation for account groups
 - SQLC integration with tenant isolation and domain type mappings
+- ✅ Enhanced with database views integration for hierarchy and analytics
+- ✅ Complete service layer implementation with 5 new analytics methods
 
 **Step 5:** ✅ `@internal/core/finance/repository/mappers.go` - COMPLETED
 - Complete missing SQLC domain type mappings
 - Add mappers for account groups, transaction entries, enhanced account types
+- ✅ Enhanced analytics domain types and mappers (5 new analytics operations)
 
 **Step 6:** `@internal/core/finance/service/account_group_service.go`
 - Create account groups service layer
@@ -222,7 +225,7 @@ This roadmap provides the definitive, sequential implementation plan for transfo
 **Minimum Viable Implementation** (Core workflow orchestration):
 
 1. ✅ Step 1 (Interface) - COMPLETED
-2. ✅ Steps 3-5 (Account Groups Repository) - COMPLETED
+2. ✅ Steps 3-5 (Account Groups Repository + Analytics) - COMPLETED
 3. Step 9 (Service Integration)  
 4. Steps 14-15 (Orchestrator + Core Workflows)
 5. Step 24 (Transaction API)

@@ -119,31 +119,31 @@ ORDER BY
 -- =====================================================================
 -- ACCOUNT HIERARCHY VIEW QUERIES
 -- =====================================================================
--- name: GetAccountHierarchyView :many
-SELECT
-  *
-FROM
-  v_finance_accounts_hierarchy
-WHERE
-  tenant_id = current_tenant_id()
-  AND (
-    sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
-  )
-  AND (
-    sqlc.narg('root_type')::text IS NULL
-    OR root_type = sqlc.narg('root_type')
-  )
-  AND (
-    sqlc.narg('parent_account_id')::uuid IS NULL
-    OR (
-      sqlc.narg('parent_account_id') IS NULL
-      AND parent_account_id IS NULL
-    )
-    OR full_path LIKE '%' || sqlc.narg('parent_account_id')::text || '%'
-  )
-ORDER BY
-  full_path;
+-- -- name: GetAccountHierarchyView :many
+-- SELECT
+--   *
+-- FROM
+--   v_finance_accounts_hierarchy
+-- WHERE
+--   tenant_id = current_tenant_id()
+--   AND (
+--     sqlc.narg('entity_id')::uuid IS NULL
+--     OR tenant_id = current_tenant_id()
+--   )
+--   AND (
+--     sqlc.narg('root_type')::text IS NULL
+--     OR root_type = sqlc.narg('root_type')
+--   )
+--   AND (
+--     sqlc.narg('parent_account_id')::uuid IS NULL
+--     OR (
+--       sqlc.narg('parent_account_id') IS NULL
+--       AND parent_account_id IS NULL
+--     )
+--     OR full_path LIKE '%' || sqlc.narg('parent_account_id')::text || '%'
+--   )
+-- ORDER BY
+--   full_path;
 
 -- name: GetAccountHierarchyByLevel :many
 SELECT

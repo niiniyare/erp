@@ -92,6 +92,13 @@ type AccountsRepository interface {
 	
 	// Validation helpers for account groups
 	ValidateAccountGroupCode(ctx context.Context, code string, excludeID *uuid.UUID, entityID *uuid.UUID) error
+
+	// Enhanced analytics and hierarchy operations
+	GetAccountChildrenHierarchy(ctx context.Context, parentAccountID uuid.UUID) ([]*AccountHierarchy, error)
+	GetAccountSubtree(ctx context.Context, accountID uuid.UUID) ([]*AccountHierarchy, error)
+	GetAccountsWithRecentActivity(ctx context.Context, filter *AccountActivityFilter) ([]*AccountActivity, error)
+	GetStaleAccountBalances(ctx context.Context, filter *AccountActivityFilter) ([]*AccountActivity, error)
+	GetAccountActivitySummary(ctx context.Context, filter *AccountActivityFilter) ([]*AccountActivitySummary, error)
 }
 
 // TransactionRepository defines the contract for transaction persistence

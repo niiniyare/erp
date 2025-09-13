@@ -208,6 +208,7 @@ type CreateAccountParams struct {
 // FINANCE MODULE - CHART OF ACCOUNTS QUERIES
 // SQLC queries for chart of accounts with proper tenant isolation
 // Updated with proper sqlc.narg and sqlc.arg usage
+// Includes view-based queries for enhanced hierarchy and analytics
 // =====================================================================
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceAccount, error) {
 	row := q.db.QueryRow(ctx, createAccount,
@@ -308,6 +309,93 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (*
 		&i.IsLeafAccount,
 	)
 	return &i, err
+}
+
+const getAccountActivitySummary = `-- name: GetAccountActivitySummary :many
+SELECT
+  account_id,
+  account_code,
+  account_name,
+  current_balance,
+  entries_last_30_days,
+  debits_last_30_days,
+  credits_last_30_days,
+  (debits_last_30_days + credits_last_30_days) AS total_activity_30_days,
+  CASE
+    WHEN entries_last_30_days = 0 THEN 'Inactive'
+    WHEN entries_last_30_days BETWEEN 1 AND 5 THEN 'Low Activity'
+    WHEN entries_last_30_days BETWEEN 6 AND 20 THEN 'Medium Activity'
+    ELSE 'High Activity'
+  END AS activity_level
+FROM
+  v_finance_account_activity
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::uuid IS NULL
+    OR tenant_id = current_tenant_id()
+  )
+  AND (
+    $2::text IS NULL
+    OR (
+      CASE
+        WHEN entries_last_30_days = 0 THEN 'Inactive'
+        WHEN entries_last_30_days BETWEEN 1 AND 5 THEN 'Low Activity'
+        WHEN entries_last_30_days BETWEEN 6 AND 20 THEN 'Medium Activity'
+        ELSE 'High Activity'
+      END
+    ) = $2
+  )
+ORDER BY
+  entries_last_30_days DESC,
+  ABS(current_balance) DESC
+`
+
+type GetAccountActivitySummaryParams struct {
+	EntityID      *uuid.UUID `json:"entity_id"`
+	ActivityLevel *string    `json:"activity_level"`
+}
+
+type GetAccountActivitySummaryRow struct {
+	AccountID           uuid.UUID      `json:"account_id"`
+	AccountCode         string         `json:"account_code"`
+	AccountName         string         `json:"account_name"`
+	CurrentBalance      pgtype.Numeric `json:"current_balance"`
+	EntriesLast30Days   int64          `json:"entries_last_30_days"`
+	DebitsLast30Days    int64          `json:"debits_last_30_days"`
+	CreditsLast30Days   int64          `json:"credits_last_30_days"`
+	TotalActivity30Days int32          `json:"total_activity_30_days"`
+	ActivityLevel       string         `json:"activity_level"`
+}
+
+func (q *Queries) GetAccountActivitySummary(ctx context.Context, arg GetAccountActivitySummaryParams) ([]*GetAccountActivitySummaryRow, error) {
+	rows, err := q.db.Query(ctx, getAccountActivitySummary, arg.EntityID, arg.ActivityLevel)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetAccountActivitySummaryRow{}
+	for rows.Next() {
+		var i GetAccountActivitySummaryRow
+		if err := rows.Scan(
+			&i.AccountID,
+			&i.AccountCode,
+			&i.AccountName,
+			&i.CurrentBalance,
+			&i.EntriesLast30Days,
+			&i.DebitsLast30Days,
+			&i.CreditsLast30Days,
+			&i.TotalActivity30Days,
+			&i.ActivityLevel,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getAccountBalancesList = `-- name: GetAccountBalancesList :many
@@ -527,6 +615,57 @@ func (q *Queries) GetAccountByID(ctx context.Context, accountID uuid.UUID) (*Fin
 	return &i, err
 }
 
+const getAccountChildrenHierarchy = `-- name: GetAccountChildrenHierarchy :many
+
+SELECT
+  id, tenant_id, account_code, account_name, parent_account_id, root_type, account_type, normal_balance, current_balance, level, full_path, full_name, child_count
+FROM
+  v_finance_accounts_hierarchy
+WHERE
+  tenant_id = current_tenant_id()
+  AND parent_account_id = $1
+ORDER BY
+  account_code
+`
+
+// =====================================================================
+// VIEW-BASED QUERIES FOR ENHANCED HIERARCHY AND ANALYTICS
+// Additional queries that complement existing reporting views
+// =====================================================================
+func (q *Queries) GetAccountChildrenHierarchy(ctx context.Context, parentAccountID *uuid.UUID) ([]*VFinanceAccountsHierarchy, error) {
+	rows, err := q.db.Query(ctx, getAccountChildrenHierarchy, parentAccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*VFinanceAccountsHierarchy{}
+	for rows.Next() {
+		var i VFinanceAccountsHierarchy
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.AccountCode,
+			&i.AccountName,
+			&i.ParentAccountID,
+			&i.RootType,
+			&i.AccountType,
+			&i.NormalBalance,
+			&i.CurrentBalance,
+			&i.Level,
+			&i.FullPath,
+			&i.FullName,
+			&i.ChildCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAccountGroupSummary = `-- name: GetAccountGroupSummary :many
 SELECT
   group_code,
@@ -734,6 +873,64 @@ func (q *Queries) GetAccountReportingInfo(ctx context.Context, accountID uuid.UU
 		&i.IncludeInReports,
 	)
 	return &i, err
+}
+
+const getAccountSubtree = `-- name: GetAccountSubtree :many
+SELECT
+  id, tenant_id, account_code, account_name, parent_account_id, root_type, account_type, normal_balance, current_balance, level, full_path, full_name, child_count
+FROM
+  v_finance_accounts_hierarchy h
+WHERE
+  h.tenant_id = current_tenant_id()
+  AND (
+    h.id = $1
+    OR h.full_path LIKE '%' || (
+      SELECT
+        account_code
+      FROM
+        finance_accounts
+      WHERE
+        id = $1
+        AND tenant_id = current_tenant_id()
+    ) || '%'
+  )
+ORDER BY
+  h.level,
+  h.account_code
+`
+
+func (q *Queries) GetAccountSubtree(ctx context.Context, accountID uuid.UUID) ([]*VFinanceAccountsHierarchy, error) {
+	rows, err := q.db.Query(ctx, getAccountSubtree, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*VFinanceAccountsHierarchy{}
+	for rows.Next() {
+		var i VFinanceAccountsHierarchy
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.AccountCode,
+			&i.AccountName,
+			&i.ParentAccountID,
+			&i.RootType,
+			&i.AccountType,
+			&i.NormalBalance,
+			&i.CurrentBalance,
+			&i.Level,
+			&i.FullPath,
+			&i.FullName,
+			&i.ChildCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getAccountWithGroupsByCode = `-- name: GetAccountWithGroupsByCode :one
@@ -1386,6 +1583,66 @@ func (q *Queries) GetAccountsWithNonZeroBalance(ctx context.Context, entityID *u
 	return items, nil
 }
 
+const getAccountsWithRecentActivity = `-- name: GetAccountsWithRecentActivity :many
+
+SELECT
+  tenant_id, account_id, account_code, account_name, current_balance, last_transaction_date, total_entries, entries_last_30_days, debits_last_30_days, credits_last_30_days
+FROM
+  v_finance_account_activity
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::uuid IS NULL
+    OR tenant_id = current_tenant_id()
+  )
+  AND entries_last_30_days > 0
+  AND (
+    $2::int IS NULL
+    OR entries_last_30_days >= $2
+  )
+ORDER BY
+  entries_last_30_days DESC
+`
+
+type GetAccountsWithRecentActivityParams struct {
+	EntityID   *uuid.UUID `json:"entity_id"`
+	MinEntries *int32     `json:"min_entries"`
+}
+
+// =====================================================================
+// ENHANCED ACCOUNT ACTIVITY QUERIES
+// =====================================================================
+func (q *Queries) GetAccountsWithRecentActivity(ctx context.Context, arg GetAccountsWithRecentActivityParams) ([]*VFinanceAccountActivity, error) {
+	rows, err := q.db.Query(ctx, getAccountsWithRecentActivity, arg.EntityID, arg.MinEntries)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*VFinanceAccountActivity{}
+	for rows.Next() {
+		var i VFinanceAccountActivity
+		if err := rows.Scan(
+			&i.TenantID,
+			&i.AccountID,
+			&i.AccountCode,
+			&i.AccountName,
+			&i.CurrentBalance,
+			&i.LastTransactionDate,
+			&i.TotalEntries,
+			&i.EntriesLast30Days,
+			&i.DebitsLast30Days,
+			&i.CreditsLast30Days,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCashFlowAccountsList = `-- name: GetCashFlowAccountsList :many
 SELECT
   account_id,
@@ -1785,6 +2042,73 @@ func (q *Queries) GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error
 			&i.UpdatedBy,
 			&i.HasChildren,
 			&i.IsLeafAccount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getStaleAccountBalances = `-- name: GetStaleAccountBalances :many
+SELECT
+  account_id,
+  account_code,
+  account_name,
+  current_balance,
+  last_transaction_date,
+  total_entries
+FROM
+  v_finance_account_activity
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    $1::uuid IS NULL
+    OR tenant_id = current_tenant_id()
+  )
+  AND entries_last_30_days = 0
+  AND current_balance != 0
+  AND (
+    $2::int IS NULL
+    OR last_transaction_date < CURRENT_DATE - INTERVAL '1 day' * $2
+  )
+ORDER BY
+  ABS(current_balance) DESC
+`
+
+type GetStaleAccountBalancesParams struct {
+	EntityID        *uuid.UUID `json:"entity_id"`
+	MinDaysInactive *int32     `json:"min_days_inactive"`
+}
+
+type GetStaleAccountBalancesRow struct {
+	AccountID           uuid.UUID      `json:"account_id"`
+	AccountCode         string         `json:"account_code"`
+	AccountName         string         `json:"account_name"`
+	CurrentBalance      pgtype.Numeric `json:"current_balance"`
+	LastTransactionDate time.Time      `json:"last_transaction_date"`
+	TotalEntries        int64          `json:"total_entries"`
+}
+
+func (q *Queries) GetStaleAccountBalances(ctx context.Context, arg GetStaleAccountBalancesParams) ([]*GetStaleAccountBalancesRow, error) {
+	rows, err := q.db.Query(ctx, getStaleAccountBalances, arg.EntityID, arg.MinDaysInactive)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetStaleAccountBalancesRow{}
+	for rows.Next() {
+		var i GetStaleAccountBalancesRow
+		if err := rows.Scan(
+			&i.AccountID,
+			&i.AccountCode,
+			&i.AccountName,
+			&i.CurrentBalance,
+			&i.LastTransactionDate,
+			&i.TotalEntries,
 		); err != nil {
 			return nil, err
 		}

@@ -114,8 +114,11 @@ sqlc-install: ## Install sqlc excutable of if it's not in the system
 .PHONY: sqlc
 sqlc: ## 🗄️ Generate SQLC store code
 	@echo "$(BLUE)Generating SQLC code...$(NC)"
-	@sqlc generate && go generate ./db/sqlc/...
+	@sqlc generate &&
 	@echo "$(GREEN)✅ SQLC generation complete$(NC)"
+	@echo "$(BLUE) Mock Generation for db.Store interface...$(NC)"
+	@ go generate ./db/sqlc/...
+	@echo "$(GREEN)✅ Mock generation complete$(NC)"
 
 .PHONY: sqlc-lint
 sqlc-lint: ## 🔍 Lint SQL queries

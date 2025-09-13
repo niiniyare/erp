@@ -69,6 +69,13 @@ type AccountService interface {
 	GetAccountsWithBalances(ctx context.Context, filter *domain.BalanceFilter) ([]*domain.ChartOfAccountsComplete, error)
 	GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*domain.CashFlowAccount, error)
 	GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*domain.AccountGroupSummary, error)
+
+	// Enhanced analytics and hierarchy operations
+	GetAccountChildrenHierarchy(ctx context.Context, parentAccountID uuid.UUID) ([]*domain.AccountHierarchy, error)
+	GetAccountSubtree(ctx context.Context, accountID uuid.UUID) ([]*domain.AccountHierarchy, error)
+	GetAccountsWithRecentActivity(ctx context.Context, filter *domain.AccountActivityFilter) ([]*domain.AccountActivity, error)
+	GetStaleAccountBalances(ctx context.Context, filter *domain.AccountActivityFilter) ([]*domain.AccountActivity, error)
+	GetAccountActivitySummary(ctx context.Context, filter *domain.AccountActivityFilter) ([]*domain.AccountActivitySummary, error)
 }
 
 type accountService struct {
@@ -1925,4 +1932,366 @@ func (s *accountService) SearchAccountsAndGroups(ctx context.Context, query stri
 	// TODO: Implement unified search
 	// For now, return placeholder to maintain interface compliance
 	return nil, fmt.Errorf("unified search not yet implemented - requires UnifiedAccountRepository")
+}
+
+// =====================================================================
+// ENHANCED ANALYTICS AND HIERARCHY OPERATIONS
+// =====================================================================
+
+// GetAccountChildrenHierarchy retrieves child accounts using hierarchy view with business validation
+func (s *accountService) GetAccountChildrenHierarchy(ctx context.Context, parentAccountID uuid.UUID) ([]*domain.AccountHierarchy, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_children_hierarchy",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("parent_account_id", parentAccountID.String()),
+		))
+	defer span.End()
+
+	// Permission check
+	if err := s.checkAccountReadPermission(ctx); err != nil {
+		return nil, err
+	}
+
+	// Validate that parent account exists and is accessible
+	parentAccount, err := s.accountRepo.GetByID(ctx, parentAccountID)
+	if err != nil {
+		s.metrics.IncrementCounter("account.hierarchy.parent_not_found", metrics.Fields{
+			"parent_account_id": parentAccountID.String(),
+		})
+		return nil, fmt.Errorf("parent account not found: %w", err)
+	}
+
+	// Business validation: ensure parent account can have children
+	if !parentAccount.IsActive {
+		return nil, errors.NewBusinessError("INACTIVE_PARENT_ACCOUNT", "parent account must be active to retrieve children")
+	}
+
+	logger.InfoContext(ctx, "Retrieving account children hierarchy",
+		logger.Fields{
+			"parent_account_id":   parentAccountID,
+			"parent_account_code": parentAccount.AccountCode,
+		})
+
+	result, err := s.accountRepo.GetAccountChildrenHierarchy(ctx, parentAccountID)
+	if err != nil {
+		s.metrics.IncrementCounter("account.hierarchy.children_fetch_error", metrics.Fields{
+			"parent_account_id": parentAccountID.String(),
+		})
+		return nil, fmt.Errorf("failed to get account children hierarchy: %w", err)
+	}
+
+	s.metrics.IncrementCounter("account.hierarchy.children_fetched", metrics.Fields{
+		"parent_account_id": parentAccountID.String(),
+	})
+	s.metrics.SetGauge("account.hierarchy.children_count", float64(len(result)), metrics.Fields{
+		"parent_account_id": parentAccountID.String(),
+	})
+
+	logger.InfoContext(ctx, "Successfully retrieved account children hierarchy",
+		logger.Fields{
+			"parent_account_id": parentAccountID,
+			"children_count":    len(result),
+		})
+
+	return result, nil
+}
+
+// GetAccountSubtree retrieves an account and all its descendants with business validation
+func (s *accountService) GetAccountSubtree(ctx context.Context, accountID uuid.UUID) ([]*domain.AccountHierarchy, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_subtree",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("account_id", accountID.String()),
+		))
+	defer span.End()
+
+	// Permission check
+	if err := s.checkAccountReadPermission(ctx); err != nil {
+		return nil, err
+	}
+
+	// Validate that account exists and is accessible
+	account, err := s.accountRepo.GetByID(ctx, accountID)
+	if err != nil {
+		s.metrics.IncrementCounter("account.subtree.account_not_found", metrics.Fields{
+			"account_id": accountID.String(),
+		})
+		return nil, fmt.Errorf("account not found: %w", err)
+	}
+
+	logger.InfoContext(ctx, "Retrieving account subtree",
+		logger.Fields{
+			"account_id":   accountID,
+			"account_code": account.AccountCode,
+		})
+
+	result, err := s.accountRepo.GetAccountSubtree(ctx, accountID)
+	if err != nil {
+		s.metrics.IncrementCounter("account.subtree.fetch_error", metrics.Fields{
+			"account_id": accountID.String(),
+		})
+		return nil, fmt.Errorf("failed to get account subtree: %w", err)
+	}
+
+	s.metrics.IncrementCounter("account.subtree.fetched", metrics.Fields{
+		"account_id": accountID.String(),
+	})
+	s.metrics.SetGauge("account.subtree.node_count", float64(len(result)), metrics.Fields{
+		"account_id": accountID.String(),
+	})
+
+	logger.InfoContext(ctx, "Successfully retrieved account subtree",
+		logger.Fields{
+			"account_id":  accountID,
+			"node_count":  len(result),
+		})
+
+	return result, nil
+}
+
+// GetAccountsWithRecentActivity retrieves accounts with recent transaction activity
+func (s *accountService) GetAccountsWithRecentActivity(ctx context.Context, filter *domain.AccountActivityFilter) ([]*domain.AccountActivity, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_with_recent_activity",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	// Permission check
+	if err := s.checkAccountReadPermission(ctx); err != nil {
+		return nil, err
+	}
+
+	// Validate filter parameters
+	if err := s.validateActivityFilter(filter); err != nil {
+		return nil, fmt.Errorf("invalid activity filter: %w", err)
+	}
+
+	logger.InfoContext(ctx, "Retrieving accounts with recent activity",
+		logger.Fields{
+			"filter": filter,
+		})
+
+	result, err := s.accountRepo.GetAccountsWithRecentActivity(ctx, filter)
+	if err != nil {
+		s.metrics.IncrementCounter("account.activity.recent_fetch_error", metrics.Fields{
+			"error_type": "fetch_error",
+		})
+		return nil, fmt.Errorf("failed to get accounts with recent activity: %w", err)
+	}
+
+	s.metrics.IncrementCounter("account.activity.recent_fetched", metrics.Fields{
+		"count": len(result),
+	})
+	s.metrics.SetGauge("account.activity.recent_count", float64(len(result)), metrics.Fields{})
+
+	logger.InfoContext(ctx, "Successfully retrieved accounts with recent activity",
+		logger.Fields{
+			"account_count": len(result),
+		})
+
+	return result, nil
+}
+
+// GetStaleAccountBalances identifies accounts with non-zero balances but no recent activity
+func (s *accountService) GetStaleAccountBalances(ctx context.Context, filter *domain.AccountActivityFilter) ([]*domain.AccountActivity, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_stale_account_balances",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	// Permission check
+	if err := s.checkAccountReadPermission(ctx); err != nil {
+		return nil, err
+	}
+
+	// Validate filter parameters
+	if err := s.validateActivityFilter(filter); err != nil {
+		return nil, fmt.Errorf("invalid activity filter: %w", err)
+	}
+
+	logger.InfoContext(ctx, "Retrieving stale account balances",
+		logger.Fields{
+			"filter": filter,
+		})
+
+	result, err := s.accountRepo.GetStaleAccountBalances(ctx, filter)
+	if err != nil {
+		s.metrics.IncrementCounter("account.activity.stale_fetch_error", metrics.Fields{
+			"error_type": "fetch_error",
+		})
+		return nil, fmt.Errorf("failed to get stale account balances: %w", err)
+	}
+
+	// Log warning if we found stale accounts (potential business issue)
+	if len(result) > 0 {
+		logger.WarnContext(ctx, "Found accounts with stale balances - may require attention",
+			logger.Fields{
+				"stale_account_count": len(result),
+			})
+	}
+
+	s.metrics.IncrementCounter("account.activity.stale_fetched", metrics.Fields{
+		"count": len(result),
+	})
+	s.metrics.SetGauge("account.activity.stale_count", float64(len(result)), metrics.Fields{})
+
+	logger.InfoContext(ctx, "Successfully retrieved stale account balances",
+		logger.Fields{
+			"stale_account_count": len(result),
+		})
+
+	return result, nil
+}
+
+// GetAccountActivitySummary provides detailed activity analysis with categorization
+func (s *accountService) GetAccountActivitySummary(ctx context.Context, filter *domain.AccountActivityFilter) ([]*domain.AccountActivitySummary, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_activity_summary",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	// Permission check
+	if err := s.checkAccountReadPermission(ctx); err != nil {
+		return nil, err
+	}
+
+	// Validate filter parameters
+	if err := s.validateActivityFilter(filter); err != nil {
+		return nil, fmt.Errorf("invalid activity filter: %w", err)
+	}
+
+	logger.InfoContext(ctx, "Retrieving account activity summary",
+		logger.Fields{
+			"filter": filter,
+		})
+
+	result, err := s.accountRepo.GetAccountActivitySummary(ctx, filter)
+	if err != nil {
+		s.metrics.IncrementCounter("account.activity.summary_fetch_error", metrics.Fields{
+			"error_type": "fetch_error",
+		})
+		return nil, fmt.Errorf("failed to get account activity summary: %w", err)
+	}
+
+	// Analyze activity patterns for business insights
+	s.analyzeActivityPatterns(ctx, result)
+
+	s.metrics.IncrementCounter("account.activity.summary_fetched", metrics.Fields{
+		"count": len(result),
+	})
+	s.metrics.SetGauge("account.activity.summary_count", float64(len(result)), metrics.Fields{})
+
+	logger.InfoContext(ctx, "Successfully retrieved account activity summary",
+		logger.Fields{
+			"account_count": len(result),
+		})
+
+	return result, nil
+}
+
+// =====================================================================
+// PRIVATE HELPER METHODS
+// =====================================================================
+
+// validateActivityFilter validates the activity filter parameters
+func (s *accountService) validateActivityFilter(filter *domain.AccountActivityFilter) error {
+	if filter == nil {
+		return errors.ValidationErrors{{
+			Field:   "filter",
+			Message: "filter cannot be nil",
+		}}
+	}
+
+	var validationErrors errors.ValidationErrors
+
+	// Validate minimum entries if specified
+	if filter.MinEntries != nil && *filter.MinEntries < 0 {
+		validationErrors.Add("min_entries", "min_entries must be non-negative")
+	}
+
+	// Validate minimum days inactive if specified
+	if filter.MinDaysInactive != nil && *filter.MinDaysInactive < 0 {
+		validationErrors.Add("min_days_inactive", "min_days_inactive must be non-negative")
+	}
+
+	// Validate minimum balance if specified
+	if filter.MinBalance != nil && filter.MinBalance.IsNegative() {
+		validationErrors.Add("min_balance", "min_balance must be non-negative")
+	}
+
+	// Validate activity level if specified
+	if filter.ActivityLevel != nil {
+		validLevels := []string{"Inactive", "Low Activity", "Medium Activity", "High Activity"}
+		valid := false
+		for _, level := range validLevels {
+			if level == *filter.ActivityLevel {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			validationErrors.Add("activity_level", "invalid activity_level: must be one of Inactive, Low Activity, Medium Activity, High Activity")
+		}
+	}
+
+	if validationErrors.HasErrors() {
+		return validationErrors
+	}
+	return nil
+}
+
+// analyzeActivityPatterns analyzes activity patterns for business insights
+func (s *accountService) analyzeActivityPatterns(ctx context.Context, activities []*domain.AccountActivitySummary) {
+	if len(activities) == 0 {
+		return
+	}
+
+	// Count activity levels for business intelligence
+	activityLevelCounts := make(map[string]int)
+	totalActivity := int64(0)
+
+	for _, activity := range activities {
+		activityLevelCounts[activity.ActivityLevel]++
+		totalActivity += activity.EntriesLast30Days
+	}
+
+	// Log insights for monitoring and alerting
+	logger.InfoContext(ctx, "Account activity pattern analysis",
+		logger.Fields{
+			"total_accounts":      len(activities),
+			"inactive_accounts":   activityLevelCounts["Inactive"],
+			"low_activity":        activityLevelCounts["Low Activity"],
+			"medium_activity":     activityLevelCounts["Medium Activity"],
+			"high_activity":       activityLevelCounts["High Activity"],
+			"total_activity_30d":  totalActivity,
+		})
+
+	// Set metrics for monitoring dashboards
+	for level, count := range activityLevelCounts {
+		s.metrics.SetGauge(fmt.Sprintf("account.activity.level.%s", level), float64(count), metrics.Fields{
+			"level": level,
+		})
+	}
+	s.metrics.SetGauge("account.activity.total_entries_30d", float64(totalActivity), metrics.Fields{})
+}
+
+// checkAccountReadPermission validates if the user has permission to read accounts
+func (s *accountService) checkAccountReadPermission(ctx context.Context) error {
+	if userID, ok := shared.GetUserID(ctx); ok {
+		permissionReq := &authz.PermissionEvaluationRequest{
+			UserID:       userID,
+			ResourceType: "account",
+			Action:       "read",
+		}
+
+		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
+		if err != nil {
+			return fmt.Errorf("failed to evaluate read permission: %w", err)
+		}
+		
+		if result.Decision != model.PolicyDecisionAllow {
+			logger.WarnContext(ctx, "Permission denied for account read", logger.Fields{
+				"user_id": userID.String(),
+			})
+			return errors.ErrForbidden
+		}
+	}
+	return nil
 }

@@ -2,6 +2,7 @@
 -- FINANCE MODULE - CHART OF ACCOUNTS QUERIES
 -- SQLC queries for chart of accounts with proper tenant isolation
 -- Updated with proper sqlc.narg and sqlc.arg usage
+-- Includes view-based queries for enhanced hierarchy and analytics
 -- =====================================================================
 -- name: CreateAccount :one
 INSERT INTO
@@ -778,3 +779,129 @@ GROUP BY
 ORDER BY
   statement_section,
   group_code;
+
+-- =====================================================================
+-- VIEW-BASED QUERIES FOR ENHANCED HIERARCHY AND ANALYTICS
+-- Additional queries that complement existing reporting views
+-- =====================================================================
+
+-- name: GetAccountChildrenHierarchy :many
+SELECT
+  *
+FROM
+  v_finance_accounts_hierarchy
+WHERE
+  tenant_id = current_tenant_id()
+  AND parent_account_id = sqlc.arg('parent_account_id')
+ORDER BY
+  account_code;
+
+-- name: GetAccountSubtree :many
+SELECT
+  *
+FROM
+  v_finance_accounts_hierarchy h
+WHERE
+  h.tenant_id = current_tenant_id()
+  AND (
+    h.id = sqlc.arg('account_id')
+    OR h.full_path LIKE '%' || (
+      SELECT
+        account_code
+      FROM
+        finance_accounts
+      WHERE
+        id = sqlc.arg('account_id')
+        AND tenant_id = current_tenant_id()
+    ) || '%'
+  )
+ORDER BY
+  h.level,
+  h.account_code;
+
+-- =====================================================================
+-- ENHANCED ACCOUNT ACTIVITY QUERIES
+-- =====================================================================
+
+-- name: GetAccountsWithRecentActivity :many
+SELECT
+  *
+FROM
+  v_finance_account_activity
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    sqlc.narg('entity_id')::uuid IS NULL
+    OR tenant_id = current_tenant_id()
+  )
+  AND entries_last_30_days > 0
+  AND (
+    sqlc.narg('min_entries')::int IS NULL
+    OR entries_last_30_days >= sqlc.narg('min_entries')
+  )
+ORDER BY
+  entries_last_30_days DESC;
+
+-- name: GetStaleAccountBalances :many
+SELECT
+  account_id,
+  account_code,
+  account_name,
+  current_balance,
+  last_transaction_date,
+  total_entries
+FROM
+  v_finance_account_activity
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    sqlc.narg('entity_id')::uuid IS NULL
+    OR tenant_id = current_tenant_id()
+  )
+  AND entries_last_30_days = 0
+  AND current_balance != 0
+  AND (
+    sqlc.narg('min_days_inactive')::int IS NULL
+    OR last_transaction_date < CURRENT_DATE - INTERVAL '1 day' * sqlc.narg('min_days_inactive')
+  )
+ORDER BY
+  ABS(current_balance) DESC;
+
+-- name: GetAccountActivitySummary :many
+SELECT
+  account_id,
+  account_code,
+  account_name,
+  current_balance,
+  entries_last_30_days,
+  debits_last_30_days,
+  credits_last_30_days,
+  (debits_last_30_days + credits_last_30_days) AS total_activity_30_days,
+  CASE
+    WHEN entries_last_30_days = 0 THEN 'Inactive'
+    WHEN entries_last_30_days BETWEEN 1 AND 5 THEN 'Low Activity'
+    WHEN entries_last_30_days BETWEEN 6 AND 20 THEN 'Medium Activity'
+    ELSE 'High Activity'
+  END AS activity_level
+FROM
+  v_finance_account_activity
+WHERE
+  tenant_id = current_tenant_id()
+  AND (
+    sqlc.narg('entity_id')::uuid IS NULL
+    OR tenant_id = current_tenant_id()
+  )
+  AND (
+    sqlc.narg('activity_level')::text IS NULL
+    OR (
+      CASE
+        WHEN entries_last_30_days = 0 THEN 'Inactive'
+        WHEN entries_last_30_days BETWEEN 1 AND 5 THEN 'Low Activity'
+        WHEN entries_last_30_days BETWEEN 6 AND 20 THEN 'Medium Activity'
+        ELSE 'High Activity'
+      END
+    ) = sqlc.narg('activity_level')
+  )
+ORDER BY
+  entries_last_30_days DESC,
+  ABS(current_balance) DESC;
