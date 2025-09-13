@@ -1309,6 +1309,39 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Attribute-Based Access Control (ABAC)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#segregation-of-duties-enforcement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Segregation of Duties Enforcement:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#policy-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Policy Examples:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#business-rule-context-headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Business Rule Context Headers:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1352,6 +1385,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Create Account">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#business-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Business Rules:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1360,6 +1408,21 @@
       Get Account Hierarchy
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Get Account Hierarchy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query Parameters:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1436,6 +1499,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Generate Trial Balance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query Parameters:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1473,6 +1551,21 @@
       Get Account Balance History
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Get Account Balance History">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query Parameters:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1689,6 +1782,48 @@
       AMIS Report Configuration
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="AMIS Report Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#this-complete-implementation-provides" class="md-nav__link">
+    <span class="md-ellipsis">
+      This complete implementation provides:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#business-rules-proper-validation-authorization-checks-and-approval-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Business Rules: Proper validation, authorization checks, and approval workflows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-changes-from-v20" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Changes from v2.0
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#related-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Documents
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -4490,19 +4625,23 @@ X-Cost-Center:<span class="w"> </span>&lt;cost-center-code&gt;<span class="w">  
 </code></pre></div>
 <h3 id="attribute-based-access-control-abac">Attribute-Based Access Control (ABAC)</h3>
 <p>The financial API uses ABAC to enforce complex business policies beyond simple role-based access.</p>
-<p><strong>Segregation of Duties Enforcement</strong>:
-- Users cannot approve transactions they created
-- Different approval thresholds based on transaction amount and department
-- Cost center restrictions for accounting personnel</p>
-<p><strong>Policy Examples</strong>:
-- "Accountants can create transactions up to $10,000 in their assigned cost centers"
-- "Managers can approve transactions up to $50,000 in their departments"<br />
-- "CFO approval required for transactions over $100,000 or affecting executive accounts"</p>
-<p><strong>Business Rule Context Headers</strong>:
+<h5 id="segregation-of-duties-enforcement"><strong>Segregation of Duties Enforcement</strong>:</h5>
+<ul>
+<li>Users cannot approve transactions they created</li>
+<li>Different approval thresholds based on transaction amount and department</li>
+<li>Cost center restrictions for accounting personnel</li>
+</ul>
+<h5 id="policy-examples"><strong>Policy Examples</strong>:</h5>
+<ul>
+<li>"Accountants can create transactions up to $10,000 in their assigned cost centers"</li>
+<li>"Managers can approve transactions up to $50,000 in their departments"  </li>
+<li>"CFO approval required for transactions over $100,000 or affecting executive accounts"</li>
+</ul>
+<h5 id="business-rule-context-headers"><strong>Business Rule Context Headers</strong>:</h5>
 <div class="highlight"><pre><span></span><code><span class="err">X-Tenant-ID: tenant-uuid</span>
 <span class="err">X-Department-ID: dept-uuid (optional)</span>
 <span class="err">X-Cost-Center: cost-center-code (optional)</span>
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="jwt-token-structure">JWT Token Structure</h3>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;payload&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
@@ -4565,23 +4704,65 @@ X-Cost-Center:<span class="w"> </span>&lt;cost-center-code&gt;<span class="w">  
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></p>
-<p><strong>Business Rules</strong>:
-- Account code must be unique within tenant
-- Parent group must exist and be appropriate for account type
-- Cost center assignment validated against user permissions
-- Automatic assignment to appropriate financial statement section</p>
+<h5 id="business-rules"><strong>Business Rules</strong>:</h5>
+<ul>
+<li>Account code must be unique within tenant</li>
+<li>Parent group must exist and be appropriate for account type</li>
+<li>Cost center assignment validated against user permissions</li>
+<li>Automatic assignment to appropriate financial statement section</li>
+</ul>
 <h4 id="get-account-hierarchy">Get Account Hierarchy</h4>
 <p>Retrieve accounts with hierarchical group structure for financial reporting.</p>
 <p><strong>Endpoint</strong>: <code>GET /api/v1/finance/accounts</code></p>
-<p><strong>Query Parameters</strong>:
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| <code>include_groups</code> | boolean | No | Include group hierarchy (default: false) |
-| <code>depth</code> | integer | No | Hierarchy depth to include (default: all) |
-| <code>root_type</code> | string | No | Filter by root type (ASSET, LIABILITY, etc.) |
-| <code>statement_section</code> | string | No | Filter by financial statement section |
-| <code>cost_center</code> | string | No | Filter by cost center |
-| <code>include_balances</code> | boolean | No | Include current balances (default: true) |</p>
+<h5 id="query-parameters"><strong>Query Parameters</strong>:</h5>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>include_groups</code></td>
+<td>boolean</td>
+<td>No</td>
+<td>Include group hierarchy (default: false)</td>
+</tr>
+<tr>
+<td><code>depth</code></td>
+<td>integer</td>
+<td>No</td>
+<td>Hierarchy depth to include (default: all)</td>
+</tr>
+<tr>
+<td><code>root_type</code></td>
+<td>string</td>
+<td>No</td>
+<td>Filter by root type (ASSET, LIABILITY, etc.)</td>
+</tr>
+<tr>
+<td><code>statement_section</code></td>
+<td>string</td>
+<td>No</td>
+<td>Filter by financial statement section</td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>string</td>
+<td>No</td>
+<td>Filter by cost center</td>
+</tr>
+<tr>
+<td><code>include_balances</code></td>
+<td>boolean</td>
+<td>No</td>
+<td>Include current balances (default: true)</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Response</strong> (200 OK):
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;items&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
@@ -4769,14 +4950,49 @@ X-Cost-Center:<span class="w"> </span>&lt;cost-center-code&gt;<span class="w">  
 <h4 id="generate-trial-balance">Generate Trial Balance</h4>
 <p>Produce trial balance report for a specific date range.</p>
 <p><strong>Endpoint</strong>: <code>GET /api/v1/finance/reports/trial-balance</code></p>
-<p><strong>Query Parameters</strong>:
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| <code>as_of_date</code> | date | No | Balance as of date (default: current date) |
-| <code>include_zero_balances</code> | boolean | No | Include zero balance accounts (default: false) |
-| <code>cost_center</code> | string | No | Filter by cost center |
-| <code>department</code> | string | No | Filter by department |
-| <code>group_by</code> | string | No | Group by ROOT_TYPE, DEPARTMENT, or COST_CENTER |</p>
+<h5 id="query-parameters_1"><strong>Query Parameters</strong>:</h5>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>as_of_date</code></td>
+<td>date</td>
+<td>No</td>
+<td>Balance as of date (default: current date)</td>
+</tr>
+<tr>
+<td><code>include_zero_balances</code></td>
+<td>boolean</td>
+<td>No</td>
+<td>Include zero balance accounts (default: false)</td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>string</td>
+<td>No</td>
+<td>Filter by cost center</td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>string</td>
+<td>No</td>
+<td>Filter by department</td>
+</tr>
+<tr>
+<td><code>group_by</code></td>
+<td>string</td>
+<td>No</td>
+<td>Group by ROOT_TYPE, DEPARTMENT, or COST_CENTER</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Response</strong> (200 OK):
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;report_metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
@@ -4848,12 +5064,37 @@ X-Cost-Center:<span class="w"> </span>&lt;cost-center-code&gt;<span class="w">  
 <h3 id="get-account-balance-history">Get Account Balance History</h3>
 <p>Retrieve account balance changes over time for analysis.</p>
 <p><strong>Endpoint</strong>: <code>GET /api/v1/finance/accounts/{account_id}/balance-history</code></p>
-<p><strong>Query Parameters</strong>:
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| <code>from_date</code> | date | Yes | Start date for history |
-| <code>to_date</code> | date | Yes | End date for history |
-| <code>interval</code> | string | No | Grouping interval (daily, weekly, monthly) |</p>
+<h5 id="query-parameters_2"><strong>Query Parameters</strong>:</h5>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>from_date</code></td>
+<td>date</td>
+<td>Yes</td>
+<td>Start date for history</td>
+</tr>
+<tr>
+<td><code>to_date</code></td>
+<td>date</td>
+<td>Yes</td>
+<td>End date for history</td>
+</tr>
+<tr>
+<td><code>interval</code></td>
+<td>string</td>
+<td>No</td>
+<td>Grouping interval (daily, weekly, monthly)</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Response</strong> (200 OK):
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;account&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
@@ -4882,8 +5123,8 @@ X-Cost-Center:<span class="w"> </span>&lt;cost-center-code&gt;<span class="w">  
 <span class="p">}</span>
 </code></pre></div></p>
 <hr />
-<h2 id="business-rules-workflows">Business Rules &amp; Workflows</h2>
-<h3 id="transaction-approval-workflow">Transaction Approval Workflow</h3>
+<h2 id="business-rules-workflows"><strong>Business Rules &amp; Workflows</strong></h2>
+<h3 id="transaction-approval-workflow"><strong>Transaction Approval Workflow</strong></h3>
 <ol>
 <li><strong>Submission</strong>: Transaction created with business validation</li>
 <li><strong>Auto-approval</strong>: Transactions under $1,000 automatically approved for authorized users</li>
@@ -4892,7 +5133,7 @@ X-Cost-Center:<span class="w"> </span>&lt;cost-center-code&gt;<span class="w">  
 <li><strong>CFO approval</strong>: Over $50,000 requires CFO approval</li>
 <li><strong>Posting</strong>: Automated balance updates after final approval</li>
 </ol>
-<h3 id="compliance-requirements">Compliance Requirements</h3>
+<h3 id="compliance-requirements"><strong>Compliance Requirements</strong></h3>
 <ul>
 <li><strong>SOX 404</strong>: All financial changes audited with full traceability</li>
 <li><strong>GAAP</strong>: Double-entry bookkeeping enforced with validation</li>
@@ -5065,7 +5306,7 @@ X-Cost-Center:<span class="w"> </span>&lt;cost-center-code&gt;<span class="w">  
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div>
-<h3 id="standard-business-error-codes">Standard Business Error Codes</h3>
+<h3 id="standard-business-error-codes"><strong>Standard Business Error Codes</strong></h3>
 <table>
 <thead>
 <tr>
@@ -6415,11 +6656,13 @@ X-Cost-Center:<span class="w"> </span>&lt;cost-center-code&gt;<span class="w">  
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>This complete implementation provides:</p>
+<h6 id="this-complete-implementation-provides">This complete implementation provides:</h6>
 <ol>
 <li><strong>Go Backend</strong>: Full HTTP handlers with business logic, validation, and AMIS-compatible responses</li>
 <li><strong>AMIS Frontend</strong>: Complete UI configurations for account management, transaction processing, approval workflows, and financial reporting</li>
-<li><strong>Business Rules</strong>: Proper validation, authorization checks, and approval workflows</li>
+<li>
+<h5 id="business-rules-proper-validation-authorization-checks-and-approval-workflows"><strong>Business Rules</strong>: Proper validation, authorization checks, and approval workflows</h5>
+</li>
 <li><strong>Integration</strong>: Seamless data flow between Go backend and AMIS frontend with proper error handling</li>
 </ol>
 <p>The code follows Go standards and integrates perfectly with AMIS's data structure expectations, providing a production-ready financial management system.</p>
@@ -6429,23 +6672,27 @@ X-Cost-Center:<span class="w"> </span>&lt;cost-center-code&gt;<span class="w">  
 - <strong>Last Updated</strong>: September 13, 2025
 - <strong>API Status</strong>: Production
 - <strong>Architecture</strong>: Business-Focused, Implementation-Agnostic</p>
-<p><strong>Key Changes from v2.0</strong>
-- Removed all implementation-specific references (Temporal, workflow engines)
-- Redesigned endpoints around business capabilities
-- Enhanced ABAC documentation with business policy examples
-- Unified account hierarchy endpoint
-- Business-oriented error messages and codes
-- Added approval workflow documentation
-- Focused on compliance and business rule enforcement</p>
-<p><strong>Related Documents</strong>
-- <a href="business-processes.md">Business Process Documentation</a>
-- <a href="compliance.md">Compliance Guide</a> 
-- <a href="abac-policies.md">ABAC Policy Reference</a>
-- <a href="integration.md">Integration Guide</a>
-- <a href="../PRD/">Product Requirements Document</a>
-- <a href="../testing/">Testing Strategy</a>
-- <a href="../architecture-guide/">Architecture Guide</a>
-- <a href="../">Module Overview</a></p>
+<h5 id="key-changes-from-v20"><strong>Key Changes from v2.0</strong></h5>
+<ul>
+<li>Removed all implementation-specific references (Temporal, workflow engines)</li>
+<li>Redesigned endpoints around business capabilities</li>
+<li>ABAC documentation with business policy examples</li>
+<li>Unified account hierarchy endpoint</li>
+<li>Business-oriented error messages and codes</li>
+<li>Added approval workflow documentation</li>
+<li>Focused on compliance and business rule enforcement</li>
+</ul>
+<h5 id="related-documents"><strong>Related Documents</strong></h5>
+<ul>
+<li><a href="business-processes.md">Business Process Documentation</a></li>
+<li><a href="compliance.md">Compliance Guide</a> </li>
+<li><a href="abac-policies.md">ABAC Policy Reference</a></li>
+<li><a href="integration.md">Integration Guide</a></li>
+<li><a href="../PRD/">Product Requirements Document</a></li>
+<li><a href="../testing/">Testing Strategy</a></li>
+<li><a href="../architecture-guide/">Architecture Guide</a></li>
+<li><a href="../">Module Overview</a></li>
+</ul>
 
 
 

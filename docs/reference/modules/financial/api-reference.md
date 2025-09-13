@@ -62,7 +62,7 @@ The financial API uses ABAC to enforce complex business policies beyond simple r
 - Different approval thresholds based on transaction amount and department
 - Cost center restrictions for accounting personnel
 
-**Policy Examples**:
+##### **Policy Examples**:
 - "Accountants can create transactions up to $10,000 in their assigned cost centers"
 - "Managers can approve transactions up to $50,000 in their departments"  
 - "CFO approval required for transactions over $100,000 or affecting executive accounts"
@@ -509,9 +509,9 @@ Retrieve account balance changes over time for analysis.
 
 ---
 
-## Business Rules & Workflows
+## **Business Rules & Workflows**
 
-### Transaction Approval Workflow
+### **Transaction Approval Workflow**
 1. **Submission**: Transaction created with business validation
 2. **Auto-approval**: Transactions under $1,000 automatically approved for authorized users
 3. **Manager review**: $1,000 - $10,000 requires manager approval  
@@ -519,7 +519,7 @@ Retrieve account balance changes over time for analysis.
 5. **CFO approval**: Over $50,000 requires CFO approval
 6. **Posting**: Automated balance updates after final approval
 
-### Compliance Requirements
+### **Compliance Requirements**
 - **SOX 404**: All financial changes audited with full traceability
 - **GAAP**: Double-entry bookkeeping enforced with validation
 - **Internal Controls**: Segregation of duties with policy engine enforcement
@@ -700,7 +700,7 @@ Retrieve account balance changes over time for analysis.
 }
 ```
 
-### Standard Business Error Codes
+### **Standard Business Error Codes**
 
 | HTTP Status | Error Code | Business Context |
 |-------------|------------|------------------|
@@ -2031,7 +2031,7 @@ func submitApprovalHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-This complete implementation provides:
+###### This complete implementation provides:
 
 1. **Go Backend**: Full HTTP handlers with business logic, validation, and AMIS-compatible responses
 2. **AMIS Frontend**: Complete UI configurations for account management, transaction processing, approval workflows, and financial reporting
