@@ -14,30 +14,34 @@ import (
 
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/core/finance/domain"
+	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-type chartOfAccountsRepository struct {
-	store   db.Store
+type accountsRepository struct {
+	store db.Store
+	cache cache.Service
+
 	tracing tracing.TracingService
 }
 
-func NewAccountsRepository(store db.Store, tracing tracing.TracingService) domain.AccountsRepository {
-	return &chartOfAccountsRepository{
+func NewAccountsRepository(store db.Store, cache cache.Service, tracing tracing.TracingService) domain.AccountsRepository {
+	return &accountsRepository{
 		store:   store,
+		cache:   cache,
 		tracing: tracing,
 	}
 }
 
 // NewAccountRepository is an alias for NewAccountsRepository for test compatibility
-func NewAccountRepository(store db.Store, tracing tracing.TracingService) domain.AccountsRepository {
-	return NewAccountsRepository(store, tracing)
+func NewAccountRepository(store db.Store, cache cache.Service, tracing tracing.TracingService) domain.AccountsRepository {
+	return NewAccountsRepository(store, cache, tracing)
 }
 
 // Basic CRUD Operations
 
-func (r *chartOfAccountsRepository) Create(ctx context.Context, account *domain.Accounts) error {
+func (r *accountsRepository) Create(ctx context.Context, account *domain.Accounts) error {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.Create")
 	defer span.End()
 
@@ -73,7 +77,7 @@ func (r *chartOfAccountsRepository) Create(ctx context.Context, account *domain.
 	})
 }
 
-func (r *chartOfAccountsRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Accounts, error) {
+func (r *accountsRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetByID")
 	defer span.End()
 
@@ -107,7 +111,7 @@ func (r *chartOfAccountsRepository) GetByID(ctx context.Context, id uuid.UUID) (
 	return account, nil
 }
 
-func (r *chartOfAccountsRepository) GetByCode(ctx context.Context, entityID *uuid.UUID, accountCode string) (*domain.Accounts, error) {
+func (r *accountsRepository) GetByCode(ctx context.Context, entityID *uuid.UUID, accountCode string) (*domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetByCode")
 	defer span.End()
 
@@ -142,7 +146,7 @@ func (r *chartOfAccountsRepository) GetByCode(ctx context.Context, entityID *uui
 	return account, nil
 }
 
-func (r *chartOfAccountsRepository) Update(ctx context.Context, account *domain.Accounts) error {
+func (r *accountsRepository) Update(ctx context.Context, account *domain.Accounts) error {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.Update")
 	defer span.End()
 
@@ -196,7 +200,7 @@ func (r *chartOfAccountsRepository) Update(ctx context.Context, account *domain.
 	})
 }
 
-func (r *chartOfAccountsRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *accountsRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.Delete")
 	defer span.End()
 
@@ -234,7 +238,7 @@ func (r *chartOfAccountsRepository) Delete(ctx context.Context, id uuid.UUID) er
 
 // List and Filter Operations
 
-func (r *chartOfAccountsRepository) List(ctx context.Context, filter *domain.AccountFilter) ([]*domain.Accounts, error) {
+func (r *accountsRepository) List(ctx context.Context, filter *domain.AccountFilter) ([]*domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.List")
 	defer span.End()
 
@@ -277,7 +281,7 @@ func (r *chartOfAccountsRepository) List(ctx context.Context, filter *domain.Acc
 	return accounts, nil
 }
 
-func (r *chartOfAccountsRepository) Count(ctx context.Context, filter *domain.AccountFilter) (int64, error) {
+func (r *accountsRepository) Count(ctx context.Context, filter *domain.AccountFilter) (int64, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.Count")
 	defer span.End()
 
@@ -331,7 +335,7 @@ func (r *chartOfAccountsRepository) Count(ctx context.Context, filter *domain.Ac
 	return count, nil
 }
 
-func (r *chartOfAccountsRepository) ListByParent(ctx context.Context, parentID uuid.UUID) ([]*domain.Accounts, error) {
+func (r *accountsRepository) ListByParent(ctx context.Context, parentID uuid.UUID) ([]*domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.ListByParent")
 	defer span.End()
 
@@ -367,7 +371,7 @@ func (r *chartOfAccountsRepository) ListByParent(ctx context.Context, parentID u
 }
 
 // ListByRootType retrieves accounts by root type
-func (r *chartOfAccountsRepository) ListByRootType(ctx context.Context, rootType domain.RootType) ([]*domain.Accounts, error) {
+func (r *accountsRepository) ListByRootType(ctx context.Context, rootType domain.RootType) ([]*domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.ListByRootType")
 	defer span.End()
 
@@ -381,7 +385,7 @@ func (r *chartOfAccountsRepository) ListByRootType(ctx context.Context, rootType
 
 // Hierarchy Operations
 
-func (r *chartOfAccountsRepository) GetAccountHierarchy(ctx context.Context, rootID uuid.UUID) ([]*domain.Accounts, error) {
+func (r *accountsRepository) GetAccountHierarchy(ctx context.Context, rootID uuid.UUID) ([]*domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountHierarchy")
 	defer span.End()
 
@@ -419,7 +423,7 @@ func (r *chartOfAccountsRepository) GetAccountHierarchy(ctx context.Context, roo
 }
 
 // GetAccountPath retrieves the full path of accounts from root to specified account
-func (r *chartOfAccountsRepository) GetAccountPath(ctx context.Context, accountID uuid.UUID) ([]domain.Accounts, error) {
+func (r *accountsRepository) GetAccountPath(ctx context.Context, accountID uuid.UUID) ([]domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountPath")
 	defer span.End()
 
@@ -440,7 +444,7 @@ func (r *chartOfAccountsRepository) GetAccountPath(ctx context.Context, accountI
 }
 
 // ValidateHierarchy validates if the parent-child relationship is valid
-func (r *chartOfAccountsRepository) ValidateHierarchy(ctx context.Context, accountID, parentID uuid.UUID) error {
+func (r *accountsRepository) ValidateHierarchy(ctx context.Context, accountID, parentID uuid.UUID) error {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.ValidateHierarchy")
 	defer span.End()
 
@@ -464,7 +468,7 @@ func (r *chartOfAccountsRepository) ValidateHierarchy(ctx context.Context, accou
 
 // Balance Operations
 
-func (r *chartOfAccountsRepository) GetAccountBalance(ctx context.Context, accountID uuid.UUID, asOfDate *time.Time) (*domain.AccountBalance, error) {
+func (r *accountsRepository) GetAccountBalance(ctx context.Context, accountID uuid.UUID, asOfDate *time.Time) (*domain.AccountBalance, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountBalance")
 	defer span.End()
 
@@ -499,7 +503,7 @@ func (r *chartOfAccountsRepository) GetAccountBalance(ctx context.Context, accou
 }
 
 // GetAccountBalances retrieves balances for multiple accounts
-func (r *chartOfAccountsRepository) GetAccountBalances(ctx context.Context, accountIDs []uuid.UUID, asOfDate *time.Time) ([]*domain.AccountBalance, error) {
+func (r *accountsRepository) GetAccountBalances(ctx context.Context, accountIDs []uuid.UUID, asOfDate *time.Time) ([]*domain.AccountBalance, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountBalances")
 	defer span.End()
 
@@ -515,7 +519,7 @@ func (r *chartOfAccountsRepository) GetAccountBalances(ctx context.Context, acco
 	return balances, nil
 }
 
-func (r *chartOfAccountsRepository) GetTrialBalance(ctx context.Context, entityID *uuid.UUID, asOfDate *time.Time) ([]*domain.TrialBalanceEntry, error) {
+func (r *accountsRepository) GetTrialBalance(ctx context.Context, entityID *uuid.UUID, asOfDate *time.Time) ([]*domain.TrialBalanceEntry, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetTrialBalance")
 	defer span.End()
 
@@ -528,7 +532,7 @@ func (r *chartOfAccountsRepository) GetTrialBalance(ctx context.Context, entityI
 
 // Business Logic Queries
 
-func (r *chartOfAccountsRepository) GetActiveAccounts(ctx context.Context, entityID *uuid.UUID) ([]*domain.Accounts, error) {
+func (r *accountsRepository) GetActiveAccounts(ctx context.Context, entityID *uuid.UUID) ([]*domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetActiveAccounts")
 	defer span.End()
 
@@ -541,7 +545,7 @@ func (r *chartOfAccountsRepository) GetActiveAccounts(ctx context.Context, entit
 	return r.List(ctx, filter)
 }
 
-func (r *chartOfAccountsRepository) GetControlAccounts(ctx context.Context, entityID *uuid.UUID) ([]*domain.Accounts, error) {
+func (r *accountsRepository) GetControlAccounts(ctx context.Context, entityID *uuid.UUID) ([]*domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetControlAccounts")
 	defer span.End()
 
@@ -577,7 +581,7 @@ func (r *chartOfAccountsRepository) GetControlAccounts(ctx context.Context, enti
 	return accounts, nil
 }
 
-func (r *chartOfAccountsRepository) GetAccountsByType(ctx context.Context, accountType string, rootType *domain.RootType) ([]*domain.Accounts, error) {
+func (r *accountsRepository) GetAccountsByType(ctx context.Context, accountType string, rootType *domain.RootType) ([]*domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountsByType")
 	defer span.End()
 
@@ -592,7 +596,7 @@ func (r *chartOfAccountsRepository) GetAccountsByType(ctx context.Context, accou
 
 // Validation Helpers
 
-func (r *chartOfAccountsRepository) ValidateAccountCode(ctx context.Context, code string, excludeID *uuid.UUID) error {
+func (r *accountsRepository) ValidateAccountCode(ctx context.Context, code string, excludeID *uuid.UUID) error {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.ValidateAccountCode")
 	defer span.End()
 
@@ -606,7 +610,7 @@ func (r *chartOfAccountsRepository) ValidateAccountCode(ctx context.Context, cod
 	return nil
 }
 
-func (r *chartOfAccountsRepository) IsAccountCodeUnique(ctx context.Context, entityID *uuid.UUID, accountCode string, excludeID *uuid.UUID) (bool, error) {
+func (r *accountsRepository) IsAccountCodeUnique(ctx context.Context, entityID *uuid.UUID, accountCode string, excludeID *uuid.UUID) (bool, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.IsAccountCodeUnique")
 	defer span.End()
 
@@ -628,7 +632,7 @@ func (r *chartOfAccountsRepository) IsAccountCodeUnique(ctx context.Context, ent
 	return false, nil
 }
 
-func (r *chartOfAccountsRepository) HasChildren(ctx context.Context, accountID uuid.UUID) (bool, error) {
+func (r *accountsRepository) HasChildren(ctx context.Context, accountID uuid.UUID) (bool, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.HasChildren")
 	defer span.End()
 
@@ -656,7 +660,7 @@ func (r *chartOfAccountsRepository) HasChildren(ctx context.Context, accountID u
 	return hasChildren, nil
 }
 
-func (r *chartOfAccountsRepository) HasTransactions(ctx context.Context, accountID uuid.UUID) (bool, error) {
+func (r *accountsRepository) HasTransactions(ctx context.Context, accountID uuid.UUID) (bool, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.HasTransactions")
 	defer span.End()
 
@@ -665,7 +669,7 @@ func (r *chartOfAccountsRepository) HasTransactions(ctx context.Context, account
 	return false, nil
 }
 
-func (r *chartOfAccountsRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Accounts, error) {
+func (r *accountsRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.Search")
 	defer span.End()
 
@@ -673,7 +677,7 @@ func (r *chartOfAccountsRepository) Search(ctx context.Context, query string, li
 	return make([]*domain.Accounts, 0), nil
 }
 
-func (r *chartOfAccountsRepository) UpdateBalance(ctx context.Context, accountID uuid.UUID, balance domain.AccountBalance) error {
+func (r *accountsRepository) UpdateBalance(ctx context.Context, accountID uuid.UUID, balance domain.AccountBalance) error {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.UpdateBalance")
 	defer span.End()
 
@@ -681,7 +685,7 @@ func (r *chartOfAccountsRepository) UpdateBalance(ctx context.Context, accountID
 	return nil
 }
 
-func (r *chartOfAccountsRepository) GetChildren(ctx context.Context, accountID uuid.UUID) ([]*domain.Accounts, error) {
+func (r *accountsRepository) GetChildren(ctx context.Context, accountID uuid.UUID) ([]*domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetChildren")
 	defer span.End()
 
@@ -689,7 +693,7 @@ func (r *chartOfAccountsRepository) GetChildren(ctx context.Context, accountID u
 }
 
 // Error mapping helper
-func (r *chartOfAccountsRepository) mapDatabaseError(err error, operation string) error {
+func (r *accountsRepository) mapDatabaseError(err error, operation string) error {
 	// Convert database-specific errors to domain errors
 	if err == db.ErrNoRows {
 		return domain.ErrAccountNotFound
@@ -732,7 +736,7 @@ func mapSQLCRootTypeToDomain(sqlcRootType string) domain.RootType {
 
 // Enhanced view-based operations
 
-func (r *chartOfAccountsRepository) GetAccountWithGroups(ctx context.Context, id uuid.UUID) (*domain.AccountWithGroups, error) {
+func (r *accountsRepository) GetAccountWithGroups(ctx context.Context, id uuid.UUID) (*domain.AccountWithGroups, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountWithGroups")
 	defer span.End()
 
@@ -755,7 +759,7 @@ func (r *chartOfAccountsRepository) GetAccountWithGroups(ctx context.Context, id
 	return result, err
 }
 
-func (r *chartOfAccountsRepository) GetAccountWithGroupsByCode(ctx context.Context, code string) (*domain.AccountWithGroups, error) {
+func (r *accountsRepository) GetAccountWithGroupsByCode(ctx context.Context, code string) (*domain.AccountWithGroups, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountWithGroupsByCode")
 	defer span.End()
 
@@ -778,7 +782,7 @@ func (r *chartOfAccountsRepository) GetAccountWithGroupsByCode(ctx context.Conte
 	return result, err
 }
 
-func (r *chartOfAccountsRepository) ListAccountsWithGroups(ctx context.Context, filter *domain.AccountFilter) ([]*domain.AccountWithGroups, error) {
+func (r *accountsRepository) ListAccountsWithGroups(ctx context.Context, filter *domain.AccountFilter) ([]*domain.AccountWithGroups, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.ListAccountsWithGroups")
 	defer span.End()
 
@@ -813,7 +817,7 @@ func (r *chartOfAccountsRepository) ListAccountsWithGroups(ctx context.Context, 
 	return result, err
 }
 
-func (r *chartOfAccountsRepository) SearchAccountsWithGroups(ctx context.Context, query string, limit int) ([]*domain.AccountWithGroups, error) {
+func (r *accountsRepository) SearchAccountsWithGroups(ctx context.Context, query string, limit int) ([]*domain.AccountWithGroups, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.SearchAccountsWithGroups")
 	defer span.End()
 
@@ -849,7 +853,7 @@ func (r *chartOfAccountsRepository) SearchAccountsWithGroups(ctx context.Context
 	return result, err
 }
 
-func (r *chartOfAccountsRepository) GetLeafAccountsOnly(ctx context.Context, rootType *string) ([]*domain.AccountWithGroups, error) {
+func (r *accountsRepository) GetLeafAccountsOnly(ctx context.Context, rootType *string) ([]*domain.AccountWithGroups, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetLeafAccountsOnly")
 	defer span.End()
 
@@ -890,7 +894,7 @@ func (r *chartOfAccountsRepository) GetLeafAccountsOnly(ctx context.Context, roo
 
 // Complete chart of accounts operations
 
-func (r *chartOfAccountsRepository) GetCompleteChartOfAccounts(ctx context.Context, filter *domain.ChartOfAccountsFilter) ([]*domain.ChartOfAccountsComplete, error) {
+func (r *accountsRepository) GetCompleteChartOfAccounts(ctx context.Context, filter *domain.ChartOfAccountsFilter) ([]*domain.ChartOfAccountsComplete, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetCompleteChartOfAccounts")
 	defer span.End()
 
@@ -922,7 +926,7 @@ func (r *chartOfAccountsRepository) GetCompleteChartOfAccounts(ctx context.Conte
 	return result, err
 }
 
-func (r *chartOfAccountsRepository) GetAccountForReporting(ctx context.Context, accountID uuid.UUID) (*domain.ChartOfAccountsComplete, error) {
+func (r *accountsRepository) GetAccountForReporting(ctx context.Context, accountID uuid.UUID) (*domain.ChartOfAccountsComplete, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountForReporting")
 	defer span.End()
 
@@ -945,7 +949,7 @@ func (r *chartOfAccountsRepository) GetAccountForReporting(ctx context.Context, 
 	return result, err
 }
 
-func (r *chartOfAccountsRepository) GetAccountsByStatementSection(ctx context.Context, section string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
+func (r *accountsRepository) GetAccountsByStatementSection(ctx context.Context, section string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountsByStatementSection")
 	defer span.End()
 
@@ -977,7 +981,7 @@ func (r *chartOfAccountsRepository) GetAccountsByStatementSection(ctx context.Co
 	return result, err
 }
 
-func (r *chartOfAccountsRepository) GetAccountsByGroup(ctx context.Context, groupCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
+func (r *accountsRepository) GetAccountsByGroup(ctx context.Context, groupCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountsByGroup")
 	defer span.End()
 
@@ -1009,7 +1013,7 @@ func (r *chartOfAccountsRepository) GetAccountsByGroup(ctx context.Context, grou
 	return result, err
 }
 
-func (r *chartOfAccountsRepository) GetAccountsByHeader(ctx context.Context, headerCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
+func (r *accountsRepository) GetAccountsByHeader(ctx context.Context, headerCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountsByHeader")
 	defer span.End()
 
@@ -1043,7 +1047,7 @@ func (r *chartOfAccountsRepository) GetAccountsByHeader(ctx context.Context, hea
 
 // Financial reporting operations
 
-func (r *chartOfAccountsRepository) GetTrialBalanceAccounts(ctx context.Context, entityID *uuid.UUID, nonZeroOnly bool) ([]*domain.TrialBalanceSummary, error) {
+func (r *accountsRepository) GetTrialBalanceAccounts(ctx context.Context, entityID *uuid.UUID, nonZeroOnly bool) ([]*domain.TrialBalanceSummary, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetTrialBalanceAccounts")
 	defer span.End()
 
@@ -1075,7 +1079,7 @@ func (r *chartOfAccountsRepository) GetTrialBalanceAccounts(ctx context.Context,
 	return result, err
 }
 
-func (r *chartOfAccountsRepository) GetAccountsWithBalances(ctx context.Context, filter *domain.BalanceFilter) ([]*domain.ChartOfAccountsComplete, error) {
+func (r *accountsRepository) GetAccountsWithBalances(ctx context.Context, filter *domain.BalanceFilter) ([]*domain.ChartOfAccountsComplete, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountsWithBalances")
 	defer span.End()
 
@@ -1107,7 +1111,7 @@ func (r *chartOfAccountsRepository) GetAccountsWithBalances(ctx context.Context,
 	return result, err
 }
 
-func (r *chartOfAccountsRepository) GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*domain.CashFlowAccount, error) {
+func (r *accountsRepository) GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*domain.CashFlowAccount, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetCashFlowAccounts")
 	defer span.End()
 
@@ -1134,7 +1138,7 @@ func (r *chartOfAccountsRepository) GetCashFlowAccounts(ctx context.Context, ent
 	return result, err
 }
 
-func (r *chartOfAccountsRepository) GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*domain.AccountGroupSummary, error) {
+func (r *accountsRepository) GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*domain.AccountGroupSummary, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountSummaryByGroup")
 	defer span.End()
 

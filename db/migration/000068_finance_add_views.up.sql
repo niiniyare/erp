@@ -1,8 +1,5 @@
--- +migrate Up
-BEGIN
-;
 
--- ENHANCED VIEWS FOR COMMON QUERIES
+-- VIEWS FOR COMMON QUERIES
 -- Account hierarchy view with computed fields (Fixed type casting)
 CREATE VIEW v_finance_accounts_hierarchy AS WITH RECURSIVE account_tree AS (
   -- Root accounts
@@ -181,4 +178,3 @@ GROUP BY
 
 COMMENT ON VIEW v_finance_account_activity IS 'Account activity summary for monitoring and analysis';
 
-COMMIT;

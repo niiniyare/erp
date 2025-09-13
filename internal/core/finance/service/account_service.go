@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/core/featureflag"
@@ -33,6 +34,22 @@ type AccountService interface {
 	SearchAccounts(ctx context.Context, query string, limit int) ([]*domain.Accounts, error)
 	UpdateAccountBalance(ctx context.Context, accountID uuid.UUID, balance domain.AccountBalance) error
 
+	// Account Groups Management
+	CreateAccountGroup(ctx context.Context, req domain.CreateAccountGroupRequest) (*domain.AccountGroup, error)
+	GetAccountGroupByID(ctx context.Context, id uuid.UUID) (*domain.AccountGroup, error)
+	GetAccountGroupByCode(ctx context.Context, code string) (*domain.AccountGroup, error)
+	UpdateAccountGroup(ctx context.Context, id uuid.UUID, req domain.UpdateAccountGroupRequest) (*domain.AccountGroup, error)
+	DeleteAccountGroup(ctx context.Context, id uuid.UUID) error
+	ListAccountGroups(ctx context.Context, filter *domain.AccountGroupFilter) ([]*domain.AccountGroup, error)
+	GetAccountGroupHierarchy(ctx context.Context) ([]*domain.AccountGroup, error)
+	GetGroupsByFinancialStatement(ctx context.Context, statementType string) ([]*domain.AccountGroup, error)
+	GetGroupsByCashFlowCategory(ctx context.Context, category string) ([]*domain.AccountGroup, error)
+
+	// Unified Operations
+	ListAccountsAndGroups(ctx context.Context, filter *domain.UnifiedFilter) ([]*domain.AccountNode, error)
+	GetAccountHierarchyWithGroups(ctx context.Context) ([]*domain.AccountNode, error)
+	SearchAccountsAndGroups(ctx context.Context, query string, limit int) ([]*domain.AccountNode, error)
+
 	// Enhanced view-based operations
 	GetAccountWithGroups(ctx context.Context, id uuid.UUID) (*domain.AccountWithGroups, error)
 	GetAccountWithGroupsByCode(ctx context.Context, code string) (*domain.AccountWithGroups, error)
@@ -55,7 +72,8 @@ type AccountService interface {
 }
 
 type accountService struct {
-	repo               domain.AccountsRepository
+	accountRepo        domain.AccountsRepository
+	accountGroupRepo   domain.AccountGroupRepository
 	tracing            tracing.TracingService
 	metrics            metrics.MetricsProvider
 	settingsHelper     *SettingsHelper
@@ -64,14 +82,16 @@ type accountService struct {
 }
 
 func NewAccountService(
-	repo domain.AccountsRepository,
+	accountRepo domain.AccountsRepository,
+	accountGroupRepo domain.AccountGroupRepository,
 	tracing tracing.TracingService,
 	metrics metrics.MetricsProvider,
 	iamService iam.Service,
 	featureFlagService featureflag.Service,
 ) AccountService {
 	return &accountService{
-		repo:               repo,
+		accountRepo:        accountRepo,
+		accountGroupRepo:   accountGroupRepo,
 		tracing:            tracing,
 		metrics:            metrics,
 		settingsHelper:     NewSettingsHelper(),
@@ -190,7 +210,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 	// accountCodeLength := s.settingsService.GetEffectiveConfiguration(ctx, req.EntityID, "finance", "account_code_length")
 	// if len(req.AccountCode) > accountCodeLength { ... }
 
-	if err := s.repo.ValidateAccountCode(ctx, req.AccountCode, nil); err != nil {
+	if err := s.accountRepo.ValidateAccountCode(ctx, req.AccountCode, nil); err != nil {
 		s.metrics.IncrementCounter("account_creation_errors", metrics.Fields{
 			"error_type": "duplicate_code",
 		})
@@ -202,7 +222,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 	}
 
 	if req.ParentAccountID != nil {
-		parentAccount, err := s.repo.GetByID(ctx, *req.ParentAccountID)
+		parentAccount, err := s.accountRepo.GetByID(ctx, *req.ParentAccountID)
 		if err != nil {
 			s.metrics.IncrementCounter("account_creation_errors", metrics.Fields{
 				"error_type": "invalid_parent",
@@ -249,7 +269,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 		AccountAttributes:           req.AccountAttributes,
 	}
 
-	err := s.repo.Create(ctx, account)
+	err := s.accountRepo.Create(ctx, account)
 	duration := timer.Stop()
 
 	if err != nil {
@@ -264,7 +284,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 	}
 
 	// Retrieve the created account with generated ID
-	createdAccount, err := s.repo.GetByCode(ctx, req.EntityID, req.AccountCode)
+	createdAccount, err := s.accountRepo.GetByCode(ctx, req.EntityID, req.AccountCode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve created account: %w", err)
 	}
@@ -301,7 +321,7 @@ func (s *accountService) GetAccountByID(ctx context.Context, id uuid.UUID) (*dom
 	logger.DebugContext(ctx, "Getting account by ID",
 		logger.Fields{"account_id": id.String()})
 
-	account, err := s.repo.GetByID(ctx, id)
+	account, err := s.accountRepo.GetByID(ctx, id)
 	if err != nil {
 		if err == errors.ErrNotFound {
 			logger.WarnContext(ctx, "Account not found",
@@ -356,7 +376,7 @@ func (s *accountService) GetAccountByCode(ctx context.Context, code string) (*do
 	}
 
 	// TODO: Get entityID from context or parameter
-	account, err := s.repo.GetByCode(ctx, nil, code)
+	account, err := s.accountRepo.GetByCode(ctx, nil, code)
 	if err != nil {
 		if err == domain.ErrAccountNotFound {
 			logger.WarnContext(ctx, "Account not found",
@@ -411,7 +431,7 @@ func (s *accountService) UpdateAccount(ctx context.Context, id uuid.UUID, req do
 		}
 	}
 
-	existingAccount, err := s.repo.GetByID(ctx, id)
+	existingAccount, err := s.accountRepo.GetByID(ctx, id)
 	if err != nil {
 		logger.ErrorContext(ctx, "Account not found for update",
 			logger.Fields{
@@ -436,7 +456,7 @@ func (s *accountService) UpdateAccount(ctx context.Context, id uuid.UUID, req do
 	}
 
 	if req.AccountCode != nil && *req.AccountCode != existingAccount.AccountCode {
-		if err := s.repo.ValidateAccountCode(ctx, *req.AccountCode, &id); err != nil {
+		if err := s.accountRepo.ValidateAccountCode(ctx, *req.AccountCode, &id); err != nil {
 			s.metrics.IncrementCounter("account_update_errors", metrics.Fields{
 				"error_type": "duplicate_code",
 			})
@@ -490,7 +510,7 @@ func (s *accountService) UpdateAccount(ctx context.Context, id uuid.UUID, req do
 		"account_type": string(existingAccount.AccountType),
 	})
 
-	err = s.repo.Update(ctx, existingAccount)
+	err = s.accountRepo.Update(ctx, existingAccount)
 	duration := timer.Stop()
 
 	if err != nil {
@@ -576,7 +596,7 @@ func (s *accountService) DeleteAccount(ctx context.Context, id uuid.UUID) error 
 		useEnhancedDeletionChecks = evalResult
 	}
 
-	account, err := s.repo.GetByID(ctx, id)
+	account, err := s.accountRepo.GetByID(ctx, id)
 	if err != nil {
 		logger.ErrorContext(ctx, "Account not found for deletion",
 			logger.Fields{
@@ -597,7 +617,7 @@ func (s *accountService) DeleteAccount(ctx context.Context, id uuid.UUID) error 
 		return errors.NewBusinessError("SYSTEM_ACCOUNT", "Cannot delete system account")
 	}
 
-	hasTransactions, err := s.repo.HasTransactions(ctx, id)
+	hasTransactions, err := s.accountRepo.HasTransactions(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to check account transactions: %w", err)
 	}
@@ -613,7 +633,7 @@ func (s *accountService) DeleteAccount(ctx context.Context, id uuid.UUID) error 
 		return errors.NewBusinessError("HAS_TRANSACTIONS", "Cannot delete account with existing transactions")
 	}
 
-	children, err := s.repo.GetChildren(ctx, id)
+	children, err := s.accountRepo.GetChildren(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to check for child accounts: %w", err)
 	}
@@ -645,7 +665,7 @@ func (s *accountService) DeleteAccount(ctx context.Context, id uuid.UUID) error 
 		"account_type": string(account.AccountType),
 	})
 
-	err = s.repo.Delete(ctx, id)
+	err = s.accountRepo.Delete(ctx, id)
 	duration := timer.Stop()
 
 	if err != nil {
@@ -749,7 +769,7 @@ func (s *accountService) ListAccounts(ctx context.Context, filter *domain.Accoun
 
 	timer := s.metrics.Timer("account_list_duration", metrics.Fields{})
 
-	accounts, err := s.repo.List(ctx, filter)
+	accounts, err := s.accountRepo.List(ctx, filter)
 	duration := timer.Stop()
 
 	if err != nil {
@@ -790,7 +810,7 @@ func (s *accountService) GetAccountHierarchy(ctx context.Context, rootAccountID 
 	logger.DebugContext(ctx, "Getting account hierarchy",
 		logger.Fields{"root_account_id": rootAccountID.String()})
 
-	hierarchy, err := s.repo.GetAccountHierarchy(ctx, rootAccountID)
+	hierarchy, err := s.accountRepo.GetAccountHierarchy(ctx, rootAccountID)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to get account hierarchy",
 			logger.Fields{
@@ -817,7 +837,7 @@ func (s *accountService) ValidateAccountCode(ctx context.Context, code string, e
 		))
 	defer span.End()
 
-	return s.repo.ValidateAccountCode(ctx, code, excludeID)
+	return s.accountRepo.ValidateAccountCode(ctx, code, excludeID)
 }
 
 func (s *accountService) GetAccountsByType(ctx context.Context, accountType string, rootType *domain.RootType) ([]*domain.Accounts, error) {
@@ -831,7 +851,7 @@ func (s *accountService) GetAccountsByType(ctx context.Context, accountType stri
 	logger.DebugContext(ctx, "Getting accounts by type",
 		logger.Fields{"account_type": string(accountType)})
 
-	accounts, err := s.repo.GetAccountsByType(ctx, accountType, rootType)
+	accounts, err := s.accountRepo.GetAccountsByType(ctx, accountType, rootType)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to get accounts by type",
 			logger.Fields{
@@ -857,7 +877,7 @@ func (s *accountService) GetActiveAccounts(ctx context.Context) ([]*domain.Accou
 
 	logger.DebugContext(ctx, "Getting active accounts")
 
-	accounts, err := s.repo.GetActiveAccounts(ctx, nil)
+	accounts, err := s.accountRepo.GetActiveAccounts(ctx, nil)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to get active accounts",
 			logger.Fields{"error": err.Error()})
@@ -941,7 +961,7 @@ func (s *accountService) SearchAccounts(ctx context.Context, query string, limit
 		limit = maxLimit
 	}
 
-	accounts, err := s.repo.Search(ctx, query, limit)
+	accounts, err := s.accountRepo.Search(ctx, query, limit)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to search accounts",
 			logger.Fields{
@@ -975,7 +995,7 @@ func (s *accountService) UpdateAccountBalance(ctx context.Context, accountID uui
 			"ytd_balance":     balance.NetBalance.String(),
 		})
 
-	err := s.repo.UpdateBalance(ctx, accountID, balance)
+	err := s.accountRepo.UpdateBalance(ctx, accountID, balance)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to update account balance",
 			logger.Fields{
@@ -1005,7 +1025,7 @@ func (s *accountService) GetAccountWithGroups(ctx context.Context, id uuid.UUID)
 
 	// TODO: Implement repository method GetAccountWithGroups
 	// This should use the GetAccountWithGroupsByID query
-	account, err := s.repo.GetAccountWithGroups(ctx, id)
+	account, err := s.accountRepo.GetAccountWithGroups(ctx, id)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to get account with groups",
 			logger.Fields{
@@ -1037,7 +1057,7 @@ func (s *accountService) GetAccountWithGroupsByCode(ctx context.Context, code st
 		logger.Fields{"account_code": code})
 
 	// TODO: Implement repository method GetAccountWithGroupsByCode
-	account, err := s.repo.GetAccountWithGroupsByCode(ctx, code)
+	account, err := s.accountRepo.GetAccountWithGroupsByCode(ctx, code)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to get account with groups by code",
 			logger.Fields{
@@ -1068,7 +1088,7 @@ func (s *accountService) ListAccountsWithGroups(ctx context.Context, filter *dom
 	}
 
 	// TODO: Implement repository method ListAccountsWithGroups
-	accounts, err := s.repo.ListAccountsWithGroups(ctx, filter)
+	accounts, err := s.accountRepo.ListAccountsWithGroups(ctx, filter)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to list accounts with groups",
 			logger.Fields{"error": err.Error()})
@@ -1101,7 +1121,7 @@ func (s *accountService) SearchAccountsWithGroups(ctx context.Context, query str
 	}
 
 	// TODO: Implement repository method SearchAccountsWithGroups
-	accounts, err := s.repo.SearchAccountsWithGroups(ctx, query, limit)
+	accounts, err := s.accountRepo.SearchAccountsWithGroups(ctx, query, limit)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to search accounts with groups",
 			logger.Fields{"query": query, "error": err.Error()})
@@ -1120,7 +1140,7 @@ func (s *accountService) GetLeafAccountsOnly(ctx context.Context, rootType *stri
 		logger.Fields{"root_type": getStringValue(rootType)})
 
 	// TODO: Implement repository method GetLeafAccountsOnly
-	accounts, err := s.repo.GetLeafAccountsOnly(ctx, rootType)
+	accounts, err := s.accountRepo.GetLeafAccountsOnly(ctx, rootType)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to get leaf accounts",
 			logger.Fields{"error": err.Error()})
@@ -1150,7 +1170,7 @@ func (s *accountService) GetCompleteChartOfAccounts(ctx context.Context, filter 
 	}
 
 	// TODO: Implement repository method GetCompleteChartOfAccounts
-	accounts, err := s.repo.GetCompleteChartOfAccounts(ctx, filter)
+	accounts, err := s.accountRepo.GetCompleteChartOfAccounts(ctx, filter)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to get complete chart of accounts",
 			logger.Fields{"error": err.Error()})
@@ -1169,7 +1189,7 @@ func (s *accountService) GetAccountForReporting(ctx context.Context, accountID u
 	defer span.End()
 
 	// TODO: Implement repository method GetAccountForReporting
-	account, err := s.repo.GetAccountForReporting(ctx, accountID)
+	account, err := s.accountRepo.GetAccountForReporting(ctx, accountID)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to get account for reporting",
 			logger.Fields{"account_id": accountID.String(), "error": err.Error()})
@@ -1188,7 +1208,7 @@ func (s *accountService) GetAccountsByStatementSection(ctx context.Context, sect
 	defer span.End()
 
 	// TODO: Implement repository method GetAccountsByStatementSection
-	accounts, err := s.repo.GetAccountsByStatementSection(ctx, section, entityID)
+	accounts, err := s.accountRepo.GetAccountsByStatementSection(ctx, section, entityID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get accounts by statement section: %w", err)
 	}
@@ -1205,7 +1225,7 @@ func (s *accountService) GetAccountsByGroup(ctx context.Context, groupCode strin
 	defer span.End()
 
 	// TODO: Implement repository method GetAccountsByGroup
-	accounts, err := s.repo.GetAccountsByGroup(ctx, groupCode, entityID)
+	accounts, err := s.accountRepo.GetAccountsByGroup(ctx, groupCode, entityID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get accounts by group: %w", err)
 	}
@@ -1222,7 +1242,7 @@ func (s *accountService) GetAccountsByHeader(ctx context.Context, headerCode str
 	defer span.End()
 
 	// TODO: Implement repository method GetAccountsByHeader
-	accounts, err := s.repo.GetAccountsByHeader(ctx, headerCode, entityID)
+	accounts, err := s.accountRepo.GetAccountsByHeader(ctx, headerCode, entityID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get accounts by header: %w", err)
 	}
@@ -1240,7 +1260,7 @@ func (s *accountService) GetTrialBalanceAccounts(ctx context.Context, entityID *
 		logger.Fields{"non_zero_only": nonZeroOnly})
 
 	// TODO: Implement repository method GetTrialBalanceAccounts
-	accounts, err := s.repo.GetTrialBalanceAccounts(ctx, entityID, nonZeroOnly)
+	accounts, err := s.accountRepo.GetTrialBalanceAccounts(ctx, entityID, nonZeroOnly)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to get trial balance accounts",
 			logger.Fields{"error": err.Error()})
@@ -1262,7 +1282,7 @@ func (s *accountService) GetAccountsWithBalances(ctx context.Context, filter *do
 	}
 
 	// TODO: Implement repository method GetAccountsWithBalances
-	accounts, err := s.repo.GetAccountsWithBalances(ctx, filter)
+	accounts, err := s.accountRepo.GetAccountsWithBalances(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get accounts with balances: %w", err)
 	}
@@ -1278,7 +1298,7 @@ func (s *accountService) GetCashFlowAccounts(ctx context.Context, entityID *uuid
 	logger.DebugContext(ctx, "Getting cash flow accounts")
 
 	// TODO: Implement repository method GetCashFlowAccounts
-	accounts, err := s.repo.GetCashFlowAccounts(ctx, entityID)
+	accounts, err := s.accountRepo.GetCashFlowAccounts(ctx, entityID)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to get cash flow accounts",
 			logger.Fields{"error": err.Error()})
@@ -1296,7 +1316,7 @@ func (s *accountService) GetAccountSummaryByGroup(ctx context.Context, entityID 
 	logger.DebugContext(ctx, "Getting account summary by group")
 
 	// TODO: Implement repository method GetAccountSummaryByGroup
-	summary, err := s.repo.GetAccountSummaryByGroup(ctx, entityID)
+	summary, err := s.accountRepo.GetAccountSummaryByGroup(ctx, entityID)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to get account summary by group",
 			logger.Fields{"error": err.Error()})
@@ -1370,4 +1390,539 @@ func (s *accountService) isEnhancedFeatureEnabled(ctx context.Context, featureNa
 		return evalResult
 	}
 	return false
+}
+
+// ============================================================================
+// Account Groups Management Methods
+// ============================================================================
+
+func (s *accountService) CreateAccountGroup(ctx context.Context, req domain.CreateAccountGroupRequest) (*domain.AccountGroup, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.create_account_group",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("group.code", req.GroupCode),
+			attribute.String("group.name", req.GroupName),
+			attribute.String("group.type", req.GroupType),
+		))
+	defer span.End()
+
+	logger.InfoContext(ctx, "Starting account group creation",
+		logger.Fields{
+			"group_code": req.GroupCode,
+			"group_name": req.GroupName,
+			"group_type": req.GroupType,
+		})
+
+	// ABAC - Check if user can create account groups
+	if userID, ok := shared.GetUserID(ctx); ok {
+		permissionReq := &authz.PermissionEvaluationRequest{
+			UserID:       userID,
+			ResourceType: "account_group",
+			Action:       "create",
+			EntityID:     req.EntityID,
+		}
+
+		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to evaluate permission for account group creation",
+				logger.Fields{"user_id": userID.String(), "error": err.Error()})
+			return nil, errors.NewBusinessError("PERMISSION_ERROR", "Failed to evaluate permissions")
+		}
+
+		if result.Decision != model.PolicyDecisionAllow {
+			logger.WarnContext(ctx, "User does not have permission to create account groups",
+				logger.Fields{"user_id": userID.String(), "decision": string(result.Decision)})
+			return nil, errors.NewBusinessError("INSUFFICIENT_PERMISSIONS", "Insufficient permissions to create account group")
+		}
+	}
+
+	// Validate account group code uniqueness
+	if err := s.accountGroupRepo.ValidateGroupCode(ctx, req.GroupCode, nil); err != nil {
+		return nil, fmt.Errorf("account group validation failed: %w", err)
+	}
+
+	// Validate parent group if specified
+	if req.ParentGroupID != nil {
+		parentGroup, err := s.accountGroupRepo.GetByID(ctx, *req.ParentGroupID)
+		if err != nil {
+			return nil, fmt.Errorf("parent group validation failed: %w", err)
+		}
+		if !parentGroup.IsActive {
+			return nil, errors.NewBusinessError("VALIDATION_ERROR", "Parent group must be active")
+		}
+	}
+
+	// Get current user for audit
+	userID, _ := shared.GetUserID(ctx)
+
+	// Create account group entity
+	group := &domain.AccountGroup{
+		ID:                        uuid.New(),
+		EntityID:                  req.EntityID,
+		GroupCode:                req.GroupCode,
+		GroupName:                req.GroupName,
+		Description:              req.Description,
+		GroupType:               req.GroupType,
+		ParentGroupID:           req.ParentGroupID,
+		FinancialStatementSection: req.FinancialStatementSection,
+		ConsolidationMethod:     req.ConsolidationMethod,
+		CashFlowCategory:        req.CashFlowCategory,
+		DisplayOrder:            req.DisplayOrder,
+		IsSystemDefined:         false, // User-created groups are not system defined
+		IsActive:                true,
+		IsHeader:                req.IsHeader,
+		ShowTotals:              req.ShowTotals,
+		IndentLevel:             req.IndentLevel,
+		BoldDisplay:             req.BoldDisplay,
+		CreatedAt:               time.Now(),
+		UpdatedAt:               time.Now(),
+		CreatedBy:               userID,
+		UpdatedBy:               userID,
+		Version:                 1,
+	}
+
+	// Validate business rules
+	if err := group.Validate(); err != nil {
+		return nil, fmt.Errorf("account group validation failed: %w", err)
+	}
+
+	// Create in repository
+	err := s.accountGroupRepo.Create(ctx, group)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to create account group",
+			logger.Fields{
+				"group_code": req.GroupCode,
+				"error":      err.Error(),
+			})
+		return nil, fmt.Errorf("failed to create account group: %w", err)
+	}
+
+	// Retrieve the created group with computed fields
+	createdGroup, err := s.accountGroupRepo.GetByCode(ctx, req.EntityID, req.GroupCode)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to retrieve created account group",
+			logger.Fields{
+				"group_code": req.GroupCode,
+				"error":      err.Error(),
+			})
+		return nil, fmt.Errorf("failed to retrieve created account group: %w", err)
+	}
+
+	logger.InfoContext(ctx, "Account group created successfully",
+		logger.Fields{
+			"group_id":   createdGroup.ID.String(),
+			"group_code": createdGroup.GroupCode,
+			"group_name": createdGroup.GroupName,
+		})
+
+	return createdGroup, nil
+}
+
+func (s *accountService) GetAccountGroupByID(ctx context.Context, id uuid.UUID) (*domain.AccountGroup, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_group_by_id",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("group.id", id.String()),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting account group by ID",
+		logger.Fields{"group_id": id.String()})
+
+	group, err := s.accountGroupRepo.GetByID(ctx, id)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get account group",
+			logger.Fields{
+				"group_id": id.String(),
+				"error":    err.Error(),
+			})
+		return nil, fmt.Errorf("failed to get account group: %w", err)
+	}
+
+	logger.DebugContext(ctx, "Account group retrieved successfully",
+		logger.Fields{
+			"group_id":   group.ID.String(),
+			"group_code": group.GroupCode,
+			"group_name": group.GroupName,
+		})
+
+	return group, nil
+}
+
+func (s *accountService) GetAccountGroupByCode(ctx context.Context, code string) (*domain.AccountGroup, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_group_by_code",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("group.code", code),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting account group by code",
+		logger.Fields{"group_code": code})
+
+	group, err := s.accountGroupRepo.GetByCode(ctx, nil, code)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get account group by code",
+			logger.Fields{
+				"group_code": code,
+				"error":      err.Error(),
+			})
+		return nil, fmt.Errorf("failed to get account group by code: %w", err)
+	}
+
+	logger.DebugContext(ctx, "Account group retrieved successfully",
+		logger.Fields{
+			"group_id":   group.ID.String(),
+			"group_code": group.GroupCode,
+			"group_name": group.GroupName,
+		})
+
+	return group, nil
+}
+
+func (s *accountService) UpdateAccountGroup(ctx context.Context, id uuid.UUID, req domain.UpdateAccountGroupRequest) (*domain.AccountGroup, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.update_account_group",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("group.id", id.String()),
+		))
+	defer span.End()
+
+	logger.InfoContext(ctx, "Starting account group update",
+		logger.Fields{"group_id": id.String()})
+
+	// Get existing group
+	existingGroup, err := s.accountGroupRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get existing account group: %w", err)
+	}
+
+	// ABAC - Check if user can update account groups
+	if userID, ok := shared.GetUserID(ctx); ok {
+		permissionReq := &authz.PermissionEvaluationRequest{
+			UserID:       userID,
+			ResourceType: "account_group",
+			Action:       "update",
+			ResourceID:   &id,
+			EntityID:     existingGroup.EntityID,
+		}
+
+		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to evaluate permission for account group update",
+				logger.Fields{"user_id": userID.String(), "group_id": id.String(), "error": err.Error()})
+			return nil, errors.NewBusinessError("PERMISSION_ERROR", "Failed to evaluate permissions")
+		}
+
+		if result.Decision != model.PolicyDecisionAllow {
+			logger.WarnContext(ctx, "User does not have permission to update account group",
+				logger.Fields{"user_id": userID.String(), "group_id": id.String(), "decision": string(result.Decision)})
+			return nil, errors.NewBusinessError("INSUFFICIENT_PERMISSIONS", "Insufficient permissions to update account group")
+		}
+	}
+
+	// Apply updates
+	if req.GroupName != nil {
+		existingGroup.GroupName = *req.GroupName
+	}
+	if req.Description != nil {
+		existingGroup.Description = req.Description
+	}
+	if req.GroupType != nil {
+		existingGroup.GroupType = *req.GroupType
+	}
+	if req.ParentGroupID != nil {
+		existingGroup.ParentGroupID = req.ParentGroupID
+	}
+	if req.FinancialStatementSection != nil {
+		existingGroup.FinancialStatementSection = req.FinancialStatementSection
+	}
+	if req.ConsolidationMethod != nil {
+		existingGroup.ConsolidationMethod = req.ConsolidationMethod
+	}
+	if req.CashFlowCategory != nil {
+		existingGroup.CashFlowCategory = req.CashFlowCategory
+	}
+	if req.DisplayOrder != nil {
+		existingGroup.DisplayOrder = *req.DisplayOrder
+	}
+	if req.IsActive != nil {
+		existingGroup.IsActive = *req.IsActive
+	}
+	if req.IsHeader != nil {
+		existingGroup.IsHeader = *req.IsHeader
+	}
+	if req.ShowTotals != nil {
+		existingGroup.ShowTotals = *req.ShowTotals
+	}
+	if req.IndentLevel != nil {
+		existingGroup.IndentLevel = *req.IndentLevel
+	}
+	if req.BoldDisplay != nil {
+		existingGroup.BoldDisplay = *req.BoldDisplay
+	}
+
+	// Update audit fields
+	userID, _ := shared.GetUserID(ctx)
+	existingGroup.UpdatedAt = time.Now()
+	existingGroup.UpdatedBy = userID
+	existingGroup.Version++
+
+	// Validate business rules
+	if err := existingGroup.Validate(); err != nil {
+		return nil, fmt.Errorf("account group validation failed: %w", err)
+	}
+
+	// Update in repository
+	err = s.accountGroupRepo.Update(ctx, existingGroup)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to update account group",
+			logger.Fields{
+				"group_id": id.String(),
+				"error":    err.Error(),
+			})
+		return nil, fmt.Errorf("failed to update account group: %w", err)
+	}
+
+	logger.InfoContext(ctx, "Account group updated successfully",
+		logger.Fields{
+			"group_id":   existingGroup.ID.String(),
+			"group_code": existingGroup.GroupCode,
+			"group_name": existingGroup.GroupName,
+		})
+
+	return existingGroup, nil
+}
+
+func (s *accountService) DeleteAccountGroup(ctx context.Context, id uuid.UUID) error {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.delete_account_group",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("group.id", id.String()),
+		))
+	defer span.End()
+
+	logger.InfoContext(ctx, "Starting account group deletion",
+		logger.Fields{"group_id": id.String()})
+
+	// Get existing group
+	group, err := s.accountGroupRepo.GetByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to get account group: %w", err)
+	}
+
+	// ABAC - Check if user can delete account groups
+	if userID, ok := shared.GetUserID(ctx); ok {
+		permissionReq := &authz.PermissionEvaluationRequest{
+			UserID:       userID,
+			ResourceType: "account_group",
+			Action:       "delete",
+			ResourceID:   &id,
+			EntityID:     group.EntityID,
+		}
+
+		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
+		if err != nil {
+			logger.ErrorContext(ctx, "Failed to evaluate permission for account group deletion",
+				logger.Fields{"user_id": userID.String(), "group_id": id.String(), "error": err.Error()})
+			return errors.NewBusinessError("PERMISSION_ERROR", "Failed to evaluate permissions")
+		}
+
+		if result.Decision != model.PolicyDecisionAllow {
+			logger.WarnContext(ctx, "User does not have permission to delete account group",
+				logger.Fields{"user_id": userID.String(), "group_id": id.String(), "decision": string(result.Decision)})
+			return errors.NewBusinessError("INSUFFICIENT_PERMISSIONS", "Insufficient permissions to delete account group")
+		}
+	}
+
+	// Check if group can be deleted
+	canDelete, err := s.accountGroupRepo.CanDeleteGroup(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to validate group deletion: %w", err)
+	}
+	if !canDelete {
+		return errors.NewBusinessError("VALIDATION_ERROR", "Account group cannot be deleted - it may have child groups or associated accounts")
+	}
+
+	// Check if group has children
+	hasChildren, err := s.accountGroupRepo.HasChildren(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to check for child groups: %w", err)
+	}
+	if hasChildren {
+		return errors.NewBusinessError("VALIDATION_ERROR", "Cannot delete account group with child groups")
+	}
+
+	// Delete the group
+	err = s.accountGroupRepo.Delete(ctx, id)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to delete account group",
+			logger.Fields{
+				"group_id": id.String(),
+				"error":    err.Error(),
+			})
+		return fmt.Errorf("failed to delete account group: %w", err)
+	}
+
+	logger.InfoContext(ctx, "Account group deleted successfully",
+		logger.Fields{
+			"group_id":   id.String(),
+			"group_code": group.GroupCode,
+			"group_name": group.GroupName,
+		})
+
+	return nil
+}
+
+func (s *accountService) ListAccountGroups(ctx context.Context, filter *domain.AccountGroupFilter) ([]*domain.AccountGroup, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.list_account_groups",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Listing account groups with filter")
+
+	groups, err := s.accountGroupRepo.List(ctx, filter)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to list account groups",
+			logger.Fields{"error": err.Error()})
+		return nil, fmt.Errorf("failed to list account groups: %w", err)
+	}
+
+	logger.DebugContext(ctx, "Account groups listed successfully",
+		logger.Fields{"count": len(groups)})
+
+	return groups, nil
+}
+
+func (s *accountService) GetAccountGroupHierarchy(ctx context.Context) ([]*domain.AccountGroup, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_group_hierarchy",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting account group hierarchy")
+
+	hierarchy, err := s.accountGroupRepo.GetGroupHierarchy(ctx)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get account group hierarchy",
+			logger.Fields{"error": err.Error()})
+		return nil, fmt.Errorf("failed to get account group hierarchy: %w", err)
+	}
+
+	logger.DebugContext(ctx, "Account group hierarchy retrieved successfully",
+		logger.Fields{"count": len(hierarchy)})
+
+	return hierarchy, nil
+}
+
+func (s *accountService) GetGroupsByFinancialStatement(ctx context.Context, statementType string) ([]*domain.AccountGroup, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_groups_by_financial_statement",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("statement.type", statementType),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting groups by financial statement",
+		logger.Fields{"statement_type": statementType})
+
+	groups, err := s.accountGroupRepo.GetGroupsByFinancialStatement(ctx, statementType)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get groups by financial statement",
+			logger.Fields{
+				"statement_type": statementType,
+				"error":          err.Error(),
+			})
+		return nil, fmt.Errorf("failed to get groups by financial statement: %w", err)
+	}
+
+	logger.DebugContext(ctx, "Groups retrieved successfully",
+		logger.Fields{
+			"statement_type": statementType,
+			"count":          len(groups),
+		})
+
+	return groups, nil
+}
+
+func (s *accountService) GetGroupsByCashFlowCategory(ctx context.Context, category string) ([]*domain.AccountGroup, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_groups_by_cash_flow_category",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("cash_flow.category", category),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting groups by cash flow category",
+		logger.Fields{"category": category})
+
+	// Convert string to CashFlowCategory enum
+	cashFlowCategory := domain.CashFlowCategory(category)
+	groups, err := s.accountGroupRepo.GetGroupsByCashFlowCategory(ctx, cashFlowCategory)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get groups by cash flow category",
+			logger.Fields{
+				"category": category,
+				"error":    err.Error(),
+			})
+		return nil, fmt.Errorf("failed to get groups by cash flow category: %w", err)
+	}
+
+	logger.DebugContext(ctx, "Groups retrieved successfully",
+		logger.Fields{
+			"category": category,
+			"count":    len(groups),
+		})
+
+	return groups, nil
+}
+
+// ============================================================================
+// Unified Operations (Accounts and Groups Together)
+// ============================================================================
+
+// TODO: These methods will be implemented once UnifiedAccountRepository is created
+// They represent the unified view of accounts and account groups in a single hierarchy
+
+func (s *accountService) ListAccountsAndGroups(ctx context.Context, filter *domain.UnifiedFilter) ([]*domain.AccountNode, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.list_accounts_and_groups",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Listing accounts and groups unified")
+
+	// TODO: Implement unified repository call
+	// For now, return placeholder to maintain interface compliance
+	return nil, fmt.Errorf("unified account listing not yet implemented - requires UnifiedAccountRepository")
+}
+
+func (s *accountService) GetAccountHierarchyWithGroups(ctx context.Context) ([]*domain.AccountNode, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_hierarchy_with_groups",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Getting account hierarchy with groups")
+
+	// TODO: Implement unified hierarchy query
+	// For now, return placeholder to maintain interface compliance
+	return nil, fmt.Errorf("unified hierarchy not yet implemented - requires UnifiedAccountRepository")
+}
+
+func (s *accountService) SearchAccountsAndGroups(ctx context.Context, query string, limit int) ([]*domain.AccountNode, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "account_service.search_accounts_and_groups",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("search.query", query),
+			attribute.Int("search.limit", limit),
+		))
+	defer span.End()
+
+	logger.DebugContext(ctx, "Searching accounts and groups unified",
+		logger.Fields{
+			"query": query,
+			"limit": limit,
+		})
+
+	// TODO: Implement unified search
+	// For now, return placeholder to maintain interface compliance
+	return nil, fmt.Errorf("unified search not yet implemented - requires UnifiedAccountRepository")
 }

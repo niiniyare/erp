@@ -482,19 +482,19 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-func getBoolValue(b *bool) bool {
-	if b == nil {
-		return false
-	}
-	return *b
-}
-
-func getInt32Value(i *int32) int32 {
-	if i == nil {
-		return 0
-	}
-	return *i
-}
+// func getBoolValue(b *bool) bool {
+// 	if b == nil {
+// 		return false
+// 	}
+// 	return *b
+// }
+//
+// func getInt32Value(i *int32) int32 {
+// 	if i == nil {
+// 		return 0
+// 	}
+// 	return *i
+// }
 
 func getDecimalValue(d *decimal.Decimal) decimal.Decimal {
 	if d == nil {

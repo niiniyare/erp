@@ -50,7 +50,7 @@ func (s *AccountsRepositoryTestSuite) SetupSuite() {
 
 	// Setup repository
 	traceService := tracing.NewNoOpTracingService()
-	s.repo = NewAccountsRepository(s.runner.GetStore(), traceService)
+	s.repo = NewAccountsRepository(s.runner.GetStore(), nil, traceService) // nil cache for tests
 }
 
 // SetupTest runs before each test

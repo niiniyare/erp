@@ -27,7 +27,7 @@ func InitializeFinanceServices(
 	})
 
 	// Create finance repositories
-	accountRepo := repository.NewAccountsRepository(store, tracingService)
+	accountRepo := repository.NewAccountsRepository(store, cacheService, tracingService)
 	transactionRepo := repository.NewTransactionRepository(store, tracingService)
 
 	// Create finance service dependencies

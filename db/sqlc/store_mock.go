@@ -438,6 +438,21 @@ func (mr *MockStoreMockRecorder) CheckEmployeeNumberAvailability(ctx, employeeNu
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckEmployeeNumberAvailability", reflect.TypeOf((*MockStore)(nil).CheckEmployeeNumberAvailability), ctx, employeeNumber)
 }
 
+// CheckGroupHasChildren mocks base method.
+func (m *MockStore) CheckGroupHasChildren(ctx context.Context, groupID *uuid.UUID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckGroupHasChildren", ctx, groupID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckGroupHasChildren indicates an expected call of CheckGroupHasChildren.
+func (mr *MockStoreMockRecorder) CheckGroupHasChildren(ctx, groupID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckGroupHasChildren", reflect.TypeOf((*MockStore)(nil).CheckGroupHasChildren), ctx, groupID)
+}
+
 // CheckPasswordPolicyRequirements mocks base method.
 func (m *MockStore) CheckPasswordPolicyRequirements(ctx context.Context) (*CheckPasswordPolicyRequirementsRow, error) {
 	m.ctrl.T.Helper()
@@ -1388,20 +1403,6 @@ func (mr *MockStoreMockRecorder) DeleteAccountBalance(ctx, id any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountBalance", reflect.TypeOf((*MockStore)(nil).DeleteAccountBalance), ctx, id)
 }
 
-// DeleteAccountGroup mocks base method.
-func (m *MockStore) DeleteAccountGroup(ctx context.Context, id uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAccountGroup", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteAccountGroup indicates an expected call of DeleteAccountGroup.
-func (mr *MockStoreMockRecorder) DeleteAccountGroup(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountGroup", reflect.TypeOf((*MockStore)(nil).DeleteAccountGroup), ctx, id)
-}
-
 // DeleteAccountValidationRule mocks base method.
 func (m *MockStore) DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -1793,33 +1794,33 @@ func (mr *MockStoreMockRecorder) GetAccountEntries(ctx, arg any) *gomock.Call {
 }
 
 // GetAccountGroup mocks base method.
-func (m *MockStore) GetAccountGroup(ctx context.Context, id uuid.UUID) (*FinanceAccountGroup, error) {
+func (m *MockStore) GetAccountGroup(ctx context.Context, arg GetAccountGroupParams) (*FinanceAccountGroup, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccountGroup", ctx, id)
+	ret := m.ctrl.Call(m, "GetAccountGroup", ctx, arg)
 	ret0, _ := ret[0].(*FinanceAccountGroup)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAccountGroup indicates an expected call of GetAccountGroup.
-func (mr *MockStoreMockRecorder) GetAccountGroup(ctx, id any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetAccountGroup(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountGroup", reflect.TypeOf((*MockStore)(nil).GetAccountGroup), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountGroup", reflect.TypeOf((*MockStore)(nil).GetAccountGroup), ctx, arg)
 }
 
 // GetAccountGroupByCode mocks base method.
-func (m *MockStore) GetAccountGroupByCode(ctx context.Context, groupCode string) (*FinanceAccountGroup, error) {
+func (m *MockStore) GetAccountGroupByCode(ctx context.Context, arg GetAccountGroupByCodeParams) (*FinanceAccountGroup, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccountGroupByCode", ctx, groupCode)
+	ret := m.ctrl.Call(m, "GetAccountGroupByCode", ctx, arg)
 	ret0, _ := ret[0].(*FinanceAccountGroup)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAccountGroupByCode indicates an expected call of GetAccountGroupByCode.
-func (mr *MockStoreMockRecorder) GetAccountGroupByCode(ctx, groupCode any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetAccountGroupByCode(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountGroupByCode", reflect.TypeOf((*MockStore)(nil).GetAccountGroupByCode), ctx, groupCode)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountGroupByCode", reflect.TypeOf((*MockStore)(nil).GetAccountGroupByCode), ctx, arg)
 }
 
 // GetAccountGroupChildren mocks base method.
@@ -6748,6 +6749,20 @@ func (mr *MockStoreMockRecorder) SoftDeleteAccount(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SoftDeleteAccount", reflect.TypeOf((*MockStore)(nil).SoftDeleteAccount), ctx, arg)
 }
 
+// SoftDeleteAccountGroup mocks base method.
+func (m *MockStore) SoftDeleteAccountGroup(ctx context.Context, arg SoftDeleteAccountGroupParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SoftDeleteAccountGroup", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SoftDeleteAccountGroup indicates an expected call of SoftDeleteAccountGroup.
+func (mr *MockStoreMockRecorder) SoftDeleteAccountGroup(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SoftDeleteAccountGroup", reflect.TypeOf((*MockStore)(nil).SoftDeleteAccountGroup), ctx, arg)
+}
+
 // SoftDeleteAttributeDefinition mocks base method.
 func (m *MockStore) SoftDeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -7633,6 +7648,21 @@ func (m *MockStore) UpsertAccountBalance(ctx context.Context, arg UpsertAccountB
 func (mr *MockStoreMockRecorder) UpsertAccountBalance(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertAccountBalance", reflect.TypeOf((*MockStore)(nil).UpsertAccountBalance), ctx, arg)
+}
+
+// ValidateAccountGroupCode mocks base method.
+func (m *MockStore) ValidateAccountGroupCode(ctx context.Context, arg ValidateAccountGroupCodeParams) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateAccountGroupCode", ctx, arg)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateAccountGroupCode indicates an expected call of ValidateAccountGroupCode.
+func (mr *MockStoreMockRecorder) ValidateAccountGroupCode(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAccountGroupCode", reflect.TypeOf((*MockStore)(nil).ValidateAccountGroupCode), ctx, arg)
 }
 
 // ValidateAccountHierarchy mocks base method.

@@ -52,7 +52,7 @@ func (s *FinanceRepositoryIntegrationTestSuite) SetupSuite() {
 
 	// Setup repositories
 	traceService := tracing.NewNoOpTracingService()
-	s.accountRepo = NewAccountsRepository(s.runner.GetStore(), traceService)
+	s.accountRepo = NewAccountsRepository(s.runner.GetStore(), nil, traceService) // nil cache for tests
 	s.transactionRepo = NewTransactionRepository(s.runner.GetStore(), traceService)
 }
 

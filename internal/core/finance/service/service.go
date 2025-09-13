@@ -20,8 +20,9 @@ type Services struct {
 
 // Dependencies contains the required dependencies to create finance services
 type Dependencies struct {
-	AccountRepo     domain.AccountsRepository
-	TransactionRepo domain.TransactionRepository
+	AccountRepo        domain.AccountsRepository
+	AccountGroupRepo   domain.AccountGroupRepository
+	TransactionRepo    domain.TransactionRepository
 	// TransactionEntryRepo domain.TransactionRepository // TODO: Create separate entry repository
 	Tracing            tracing.TracingService
 	Metrics            metrics.MetricsProvider
@@ -49,9 +50,10 @@ func NewServices(deps Dependencies) *Services {
 		deps.Metrics,
 	)
 
-	// Create Account service
+	// Create Account service with account group repository
 	accountService := NewAccountService(
 		deps.AccountRepo,
+		deps.AccountGroupRepo,
 		deps.Tracing,
 		deps.Metrics,
 		deps.IAMService,

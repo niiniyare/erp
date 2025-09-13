@@ -376,17 +376,17 @@ func (ss StatementSection) String() string {
 	return string(ss)
 }
 
-// CashFlowClassification represents cash flow statement classifications
-type CashFlowClassification string
+// CashFlowCategory represents cash flow statement classifications
+type CashFlowCategory string
 
 const (
-	CashFlowOperating CashFlowClassification = "OPERATING"
-	CashFlowInvesting CashFlowClassification = "INVESTING"
-	CashFlowFinancing CashFlowClassification = "FINANCING"
+	CashFlowOperating CashFlowCategory = "OPERATING"
+	CashFlowInvesting CashFlowCategory = "INVESTING"
+	CashFlowFinancing CashFlowCategory = "FINANCING"
 )
 
-// IsValid validates if the CashFlowClassification is one of the defined constants
-func (cfc CashFlowClassification) IsValid() bool {
+// IsValid validates if the CashFlowCategory is one of the defined constants
+func (cfc CashFlowCategory) IsValid() bool {
 	switch cfc {
 	case CashFlowOperating, CashFlowInvesting, CashFlowFinancing:
 		return true
@@ -395,8 +395,8 @@ func (cfc CashFlowClassification) IsValid() bool {
 	}
 }
 
-// String returns the string representation of CashFlowClassification
-func (cfc CashFlowClassification) String() string {
+// String returns the string representation of CashFlowCategory
+func (cfc CashFlowCategory) String() string {
 	return string(cfc)
 }
 

@@ -120,43 +120,43 @@ The Financial Module provides a complete double-entry accounting system built on
 - SQLC integration for type-safe database operations
 - Redis caching for frequently accessed account data
 
-#### Feature 2: Temporal-First Double-Entry Transaction Processing
+#### Feature 2: Reliable Transaction Processing
 **Priority**: High  
 **Effort**: Large  
 **Business Value**: Critical Core Function
 
-**Description**: Complete transaction lifecycle management with double-entry validation, approval workflows, and Temporal workflow state machine processing providing reliability, durability, and automatic error recovery.
+**Description**: Complete transaction lifecycle management with double-entry validation, approval workflows, and reliable processing that guarantees data integrity, automatic error recovery, and full audit trails.
 
 **User Stories**:
-- As a financial accountant, I want to create transactions that automatically validate double-entry rules through Temporal workflows so that all entries balance correctly with guaranteed processing
-- As a finance manager, I need approval workflows for high-value transactions orchestrated by Temporal so that proper segregation of duties is maintained with retry logic and timeout handling
-- As an auditor, I want complete transaction history with immutable audit trails provided by Temporal's event sourcing so that I can verify financial integrity with full workflow visibility
+- As a financial accountant, I want to create transactions that automatically validate double-entry rules so that all entries balance correctly with guaranteed processing
+- As a finance manager, I need approval workflows for high-value transactions so that proper segregation of duties is maintained with retry logic and timeout handling
+- As an auditor, I want complete transaction history with immutable audit trails so that I can verify financial integrity with full processing visibility
 - As a system administrator, I want failed transaction processing to automatically retry with exponential backoff so that temporary failures don't result in data loss
 
 **Acceptance Criteria**:
-- [ ] All transactions must balance (total debits = total credits) with validation enforcement via Temporal activities
-- [ ] Support for complex transactions with multiple entries and accounts orchestrated through workflows
-- [ ] Temporal workflow state machine: Draft → ValidationWorkflow → ApprovalWorkflow → PostingWorkflow → ReconciliationWorkflow
+- [ ] All transactions must balance (total debits = total credits) with automatic validation
+- [ ] Support for complex transactions with multiple entries and accounts
+- [ ] Business process state machine: Draft → Validation → Approval → Posting → Reconciliation → Complete
 - [ ] Configurable approval thresholds based on transaction amount and type with timeout handling
-- [ ] Transaction reversal functionality maintaining audit trail through compensating workflows
-- [ ] Support for recurring transactions with flexible scheduling via Temporal cron workflows
-- [ ] Multi-currency transactions with exchange rate management through dedicated activities
-- [ ] Batch processing capabilities for high-volume operations using Temporal's parallel processing
+- [ ] Transaction reversal functionality maintaining complete audit trail
+- [ ] Support for recurring transactions with flexible scheduling
+- [ ] Multi-currency transactions with exchange rate management
+- [ ] Batch processing capabilities for high-volume operations
 - [ ] Automatic retry logic for transient failures with exponential backoff
-- [ ] Workflow timeout handling for stuck approval processes
-- [ ] Dead letter queue handling for permanently failed transactions
+- [ ] Timeout handling for stuck approval processes
+- [ ] Error handling for permanently failed transactions
 
 **Technical Considerations**:
-- Domain-driven design with transaction aggregates orchestrated by Temporal workflows
-- Event sourcing provided by Temporal's built-in workflow event history
-- Temporal activities for atomic operations (validation, posting, notifications)
-- Database transactions ensuring ACID compliance within individual activities
-- **Saga Pattern Implementation**: Compensation-based rollback for multi-step financial operations
+- Domain-driven design with transaction aggregates and business process orchestration
+- Complete audit trail with immutable transaction history
+- Atomic operations for validation, posting, and notifications
+- Database transactions ensuring ACID compliance
+- **Saga Pattern Implementation**: Compensation-based rollback for multi-step operations
 - **Rollback and Compensation**: Automatic rollback of completed steps when subsequent steps fail
-- **Transaction Isolation**: Each activity maintains transactional boundaries for safe rollback
-- **Compensating Activities**: Dedicated activities for reversing completed operations
+- **Transaction Isolation**: Each operation maintains transactional boundaries for safe rollback
+- **Compensating Operations**: Dedicated logic for reversing completed operations
 - **Partial Success Handling**: Graceful handling of partial transaction completion with compensation
-- Workflow versioning for seamless updates to business logic
+- Business logic versioning for seamless updates
 - Activity heartbeats for long-running operations
 - Temporal signals for external event handling (approvals, rejections)
 - Workflow queries for real-time status monitoring
@@ -562,9 +562,9 @@ These modules will integrate with the Finance Module through well-defined APIs a
 
 ### System Components
 
-#### Backend Services with Temporal Integration
+#### Backend Services with Workflow Orchestration
 ```go
-// Financial module service interfaces with Temporal workflow orchestration
+// Financial module service interfaces with business process orchestration
 type FinanceServices struct {
     AccountService           AccountService
     TransactionService       TransactionService  
@@ -573,9 +573,8 @@ type FinanceServices struct {
     ValidationService       ValidationService
     ReportingService        ReportingService
     
-    // Temporal workflow orchestration
-    WorkflowService         FinanceWorkflowService
-    ActivityService         FinanceActivityService
+    // Business process orchestration (implementation-agnostic)
+    ProcessOrchestrator     ProcessOrchestrator
 }
 
 type AccountService interface {
@@ -589,22 +588,17 @@ type AccountService interface {
     ListAccounts(ctx context.Context, query ListAccountsQuery) (*AccountList, error)
 }
 
-// Temporal-first transaction service
+// Business-focused transaction service
 type TransactionService interface {
-    // Workflow-orchestrated operations
-    CreateTransaction(ctx context.Context, cmd CreateTransactionCommand) (*TransactionWorkflowResult, error)
-    ProcessTransactionWorkflow(ctx workflow.Context, input TransactionWorkflowInput) (*TransactionWorkflowResult, error)
-    ApprovalWorkflow(ctx workflow.Context, input ApprovalWorkflowInput) (*ApprovalResult, error)
-    ReconciliationWorkflow(ctx workflow.Context, input ReconciliationWorkflowInput) error
+    // Business operations with reliable processing
+    ProcessTransaction(ctx context.Context, req ProcessTransactionRequest) (*Transaction, error)
+    SubmitApproval(ctx context.Context, transactionID uuid.UUID, decision ApprovalDecision) error
+    GetTransactionStatus(ctx context.Context, transactionID uuid.UUID) (*TransactionStatus, error)
     
-    // Query operations (non-workflow)
+    // Standard query operations
     GetTransaction(ctx context.Context, tenantID tenant.ID, id TransactionID) (*Transaction, error)
     ListTransactions(ctx context.Context, query ListTransactionsQuery) (*TransactionList, error)
-    GetWorkflowStatus(ctx context.Context, workflowID string) (*WorkflowStatus, error)
-    
-    // Signal operations for workflow interaction
-    ApproveTransactionSignal(ctx context.Context, workflowID string, approval ApprovalSignal) error
-    RejectTransactionSignal(ctx context.Context, workflowID string, rejection RejectionSignal) error
+    GetProcessingProgress(ctx context.Context, transactionID uuid.UUID) (*ProcessingProgress, error)
 }
 
 // Temporal workflow service for financial operations
@@ -1020,39 +1014,43 @@ stateDiagram-v2
 
 ## Implementation Timeline
 
-### Phase 1: Foundation (Weeks 1-8) - ✅ 100% Complete
+### Phase 1: Foundation (Weeks 1-8) - 🚧 67% Complete
 **Scope**: Core infrastructure and domain modeling
 - ✅ Database schema design and implementation (11 migrations)
 - ✅ Domain entities and business logic (9 domain files)
-- ✅ Repository layer with SQLC integration (30+ methods)
-- ✅ Service layer implementation (10 services, 7,266 lines)
-- ✅ Advanced validation framework (30+ business rules)
+- 🚧 Repository layer with SQLC integration (partial implementation)
+- 🚧 Service layer structure (missing orchestration integration)
+- ✅ Validation framework (30+ business rules)
 
 **Deliverables**:
 - ✅ Complete database migrations with RLS policies
 - ✅ Full domain model with rich business entities
-- ✅ Repository implementations with tenant isolation
-- ✅ Service layer with  business logic
-- ✅ Unit test framework with 85% coverage
+- 🚧 Repository implementations with tenant isolation (67% complete)
+- 🚧 Service layer foundation (needs workflow integration)
+- ⏳ Unit test framework (not implemented)
 
-### Phase 2: API Development (Weeks 9-12) - 🚧 92% Complete
-**Scope**: REST API and integration points
-- ✅ Goa API design and code generation
-- ✅ HTTP handlers implementation (15+ endpoints)
-- ✅ OpenAPI specification and documentation
-- 🚧 Service integration and routing (pending)
-- ⏳ Authentication and authorization integration
+### Phase 2: Business Process Integration (Weeks 9-12) - ⏳ 0% Complete
+**Scope**: Workflow orchestration and service integration
+- ⏳ WorkflowOrchestrator interface implementation
+- ⏳ Service layer integration with process orchestration
+- ⏳ Business-focused transaction processing
+- ⏳ Reliable approval and validation workflows
+- ⏳ Account groups and unified hierarchy support
 
 **Deliverables**:
-- ✅ Complete REST API endpoints with search capabilities
-- ✅ OpenAPI specification with  documentation
-- ✅ Handler implementations with error handling and logging
-- 🚧 Service integration and middleware configuration
-- ⏳ API test coverage > 95%
+- ⏳ Complete workflow orchestration implementation
+- ⏳ Service layer with integrated business processes
+- ⏳ Reliable transaction processing with approval flows
+- ⏳ Account groups management and unified API
+- ⏳ Integration test coverage > 90%
 
-### Phase 3: Advanced Features (Weeks 13-20) - ⏳ 0% Complete
-**Scope**:  functionality and optimization
-- ⏳ Financial reporting engine (Trial Balance, P&L, Balance Sheet)
+### Phase 3: Business-Focused API Layer (Weeks 13-16) - ⏳ 0% Complete
+**Scope**: Business capability APIs hiding implementation details
+- ⏳ Business-focused API endpoint design
+- ⏳ Transaction processing endpoints (hiding orchestration)
+- ⏳ Account and group management APIs
+- ⏳ Status monitoring and approval endpoints
+- ⏳ OpenAPI specification updates
 - ⏳ Accounts receivable automation
 - ⏳ Accounts payable automation
 - ⏳ Advanced reconciliation workflows

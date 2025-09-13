@@ -7,9 +7,29 @@ package db
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
+
+const checkGroupHasChildren = `-- name: CheckGroupHasChildren :one
+SELECT
+  EXISTS(
+    SELECT 1
+    FROM finance_account_groups
+    WHERE parent_group_id = $1
+      AND tenant_id = current_tenant_id()
+      AND deleted_at IS NULL
+  ) as has_children
+`
+
+// Check if account group has child groups
+func (q *Queries) CheckGroupHasChildren(ctx context.Context, groupID *uuid.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, checkGroupHasChildren, groupID)
+	var has_children bool
+	err := row.Scan(&has_children)
+	return has_children, err
+}
 
 const countAccountGroups = `-- name: CountAccountGroups :one
 SELECT
@@ -18,28 +38,31 @@ FROM
   finance_account_groups
 WHERE
   tenant_id = current_tenant_id()
-  AND (
-    $1::uuid IS NULL
-    OR entity_id = $1
-  )
-  AND (
-    $2::text IS NULL
-    OR root_type = $2
-  )
-  AND (
-    $3::text IS NULL
-    OR group_category = $3
-  )
+  AND ($1::uuid IS NULL OR entity_id = $1)
+  AND ($2::text IS NULL OR root_type = $2)
+  AND ($3::text IS NULL OR group_category = $3)
+  AND ($4::uuid IS NULL OR parent_group_id = $4)
+  AND ($5::boolean IS NULL OR is_active = $5)
+  AND deleted_at IS NULL
 `
 
 type CountAccountGroupsParams struct {
-	Column1 uuid.UUID `json:"column_1"`
-	Column2 string    `json:"column_2"`
-	Column3 string    `json:"column_3"`
+	EntityID      *uuid.UUID `json:"entity_id"`
+	RootType      *string    `json:"root_type"`
+	GroupCategory *string    `json:"group_category"`
+	ParentGroupID *uuid.UUID `json:"parent_group_id"`
+	IsActive      *bool      `json:"is_active"`
 }
 
+// Count account groups with filtering
 func (q *Queries) CountAccountGroups(ctx context.Context, arg CountAccountGroupsParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countAccountGroups, arg.Column1, arg.Column2, arg.Column3)
+	row := q.db.QueryRow(ctx, countAccountGroups,
+		arg.EntityID,
+		arg.RootType,
+		arg.GroupCategory,
+		arg.ParentGroupID,
+		arg.IsActive,
+	)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -59,6 +82,14 @@ INSERT INTO
     root_type,
     group_category,
     financial_statement_section,
+    consolidation_method,
+    cash_flow_category,
+    statement_order,
+    display_format,
+    indent_level,
+    show_totals,
+    bold_display,
+    is_active,
     created_by
   )
 VALUES
@@ -74,7 +105,15 @@ VALUES
     $8,
     $9,
     $10,
-    $11
+    $11,
+    $12,
+    $13,
+    $14,
+    $15,
+    $16,
+    $17,
+    $18,
+    $19
   )
 RETURNING
   id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
@@ -91,9 +130,18 @@ type CreateAccountGroupParams struct {
 	RootType                  string     `json:"root_type"`
 	GroupCategory             *string    `json:"group_category"`
 	FinancialStatementSection *string    `json:"financial_statement_section"`
+	ConsolidationMethod       *string    `json:"consolidation_method"`
+	CashFlowCategory          *string    `json:"cash_flow_category"`
+	StatementOrder            *int32     `json:"statement_order"`
+	DisplayFormat             *string    `json:"display_format"`
+	IndentLevel               *int32     `json:"indent_level"`
+	ShowTotals                *bool      `json:"show_totals"`
+	BoldDisplay               *bool      `json:"bold_display"`
+	IsActive                  bool       `json:"is_active"`
 	CreatedBy                 *uuid.UUID `json:"created_by"`
 }
 
+// Create a new account group with proper entity isolation
 func (q *Queries) CreateAccountGroup(ctx context.Context, arg CreateAccountGroupParams) (*FinanceAccountGroup, error) {
 	row := q.db.QueryRow(ctx, createAccountGroup,
 		arg.EntityID,
@@ -106,6 +154,14 @@ func (q *Queries) CreateAccountGroup(ctx context.Context, arg CreateAccountGroup
 		arg.RootType,
 		arg.GroupCategory,
 		arg.FinancialStatementSection,
+		arg.ConsolidationMethod,
+		arg.CashFlowCategory,
+		arg.StatementOrder,
+		arg.DisplayFormat,
+		arg.IndentLevel,
+		arg.ShowTotals,
+		arg.BoldDisplay,
+		arg.IsActive,
 		arg.CreatedBy,
 	)
 	var i FinanceAccountGroup
@@ -145,19 +201,6 @@ func (q *Queries) CreateAccountGroup(ctx context.Context, arg CreateAccountGroup
 	return &i, err
 }
 
-const deleteAccountGroup = `-- name: DeleteAccountGroup :exec
-DELETE FROM
-  finance_account_groups
-WHERE
-  id = $1
-  AND tenant_id = current_tenant_id()
-`
-
-func (q *Queries) DeleteAccountGroup(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteAccountGroup, id)
-	return err
-}
-
 const getAccountGroup = `-- name: GetAccountGroup :one
 SELECT
   id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
@@ -166,10 +209,18 @@ FROM
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
+  AND ($2::uuid IS NULL OR entity_id = $2)
+  AND deleted_at IS NULL
 `
 
-func (q *Queries) GetAccountGroup(ctx context.Context, id uuid.UUID) (*FinanceAccountGroup, error) {
-	row := q.db.QueryRow(ctx, getAccountGroup, id)
+type GetAccountGroupParams struct {
+	GroupID  uuid.UUID  `json:"group_id"`
+	EntityID *uuid.UUID `json:"entity_id"`
+}
+
+// Get account group by ID with proper tenant/entity isolation
+func (q *Queries) GetAccountGroup(ctx context.Context, arg GetAccountGroupParams) (*FinanceAccountGroup, error) {
+	row := q.db.QueryRow(ctx, getAccountGroup, arg.GroupID, arg.EntityID)
 	var i FinanceAccountGroup
 	err := row.Scan(
 		&i.ID,
@@ -215,10 +266,18 @@ FROM
 WHERE
   group_code = $1
   AND tenant_id = current_tenant_id()
+  AND ($2::uuid IS NULL OR entity_id = $2)
+  AND deleted_at IS NULL
 `
 
-func (q *Queries) GetAccountGroupByCode(ctx context.Context, groupCode string) (*FinanceAccountGroup, error) {
-	row := q.db.QueryRow(ctx, getAccountGroupByCode, groupCode)
+type GetAccountGroupByCodeParams struct {
+	GroupCode string     `json:"group_code"`
+	EntityID  *uuid.UUID `json:"entity_id"`
+}
+
+// Get account group by code with proper tenant/entity isolation
+func (q *Queries) GetAccountGroupByCode(ctx context.Context, arg GetAccountGroupByCodeParams) (*FinanceAccountGroup, error) {
+	row := q.db.QueryRow(ctx, getAccountGroupByCode, arg.GroupCode, arg.EntityID)
 	var i FinanceAccountGroup
 	err := row.Scan(
 		&i.ID,
@@ -263,22 +322,22 @@ FROM
   finance_account_groups
 WHERE
   tenant_id = current_tenant_id()
-  AND (
-    $1::uuid IS NULL
-    OR entity_id = $1
-  )
+  AND ($1::uuid IS NULL OR entity_id = $1)
   AND parent_group_id = $2
+  AND deleted_at IS NULL
 ORDER BY
+  statement_order,
   group_name
 `
 
 type GetAccountGroupChildrenParams struct {
-	Column1       uuid.UUID  `json:"column_1"`
+	EntityID      *uuid.UUID `json:"entity_id"`
 	ParentGroupID *uuid.UUID `json:"parent_group_id"`
 }
 
+// Get direct children of an account group
 func (q *Queries) GetAccountGroupChildren(ctx context.Context, arg GetAccountGroupChildrenParams) ([]*FinanceAccountGroup, error) {
-	rows, err := q.db.Query(ctx, getAccountGroupChildren, arg.Column1, arg.ParentGroupID)
+	rows, err := q.db.Query(ctx, getAccountGroupChildren, arg.EntityID, arg.ParentGroupID)
 	if err != nil {
 		return nil, err
 	}
@@ -336,27 +395,27 @@ FROM
   finance_account_groups
 WHERE
   tenant_id = current_tenant_id()
-  AND (
-    $1::uuid IS NULL
-    OR entity_id = $1
-  )
+  AND ($1::uuid IS NULL OR entity_id = $1)
   AND (
     $2::uuid IS NULL
     OR id = $2
     OR group_path LIKE '%/' || $2::text || '/%'
   )
+  AND deleted_at IS NULL
 ORDER BY
   group_level,
+  statement_order,
   group_name
 `
 
 type GetAccountGroupHierarchyParams struct {
-	Column1 uuid.UUID `json:"column_1"`
-	Column2 uuid.UUID `json:"column_2"`
+	EntityID    *uuid.UUID `json:"entity_id"`
+	RootGroupID *uuid.UUID `json:"root_group_id"`
 }
 
+// Get account group hierarchy with optional root filtering
 func (q *Queries) GetAccountGroupHierarchy(ctx context.Context, arg GetAccountGroupHierarchyParams) ([]*FinanceAccountGroup, error) {
-	rows, err := q.db.Query(ctx, getAccountGroupHierarchy, arg.Column1, arg.Column2)
+	rows, err := q.db.Query(ctx, getAccountGroupHierarchy, arg.EntityID, arg.RootGroupID)
 	if err != nil {
 		return nil, err
 	}
@@ -414,23 +473,23 @@ FROM
   finance_account_groups
 WHERE
   tenant_id = current_tenant_id()
-  AND (
-    $1::uuid IS NULL
-    OR entity_id = $1
-  )
+  AND ($1::uuid IS NULL OR entity_id = $1)
   AND root_type = $2
+  AND deleted_at IS NULL
 ORDER BY
   group_level,
+  statement_order,
   group_name
 `
 
 type GetAccountGroupsByRootTypeParams struct {
-	Column1  uuid.UUID `json:"column_1"`
-	RootType string    `json:"root_type"`
+	EntityID *uuid.UUID `json:"entity_id"`
+	RootType string     `json:"root_type"`
 }
 
+// Get account groups by root type with entity isolation
 func (q *Queries) GetAccountGroupsByRootType(ctx context.Context, arg GetAccountGroupsByRootTypeParams) ([]*FinanceAccountGroup, error) {
-	rows, err := q.db.Query(ctx, getAccountGroupsByRootType, arg.Column1, arg.RootType)
+	rows, err := q.db.Query(ctx, getAccountGroupsByRootType, arg.EntityID, arg.RootType)
 	if err != nil {
 		return nil, err
 	}
@@ -635,40 +694,44 @@ FROM
   finance_account_groups
 WHERE
   tenant_id = current_tenant_id()
-  AND (
-    $1::uuid IS NULL
-    OR entity_id = $1
-  )
-  AND (
-    $2::text IS NULL
-    OR root_type = $2
-  )
-  AND (
-    $3::text IS NULL
-    OR group_category = $3
-  )
+  AND ($1::uuid IS NULL OR entity_id = $1)
+  AND ($2::text IS NULL OR root_type = $2)
+  AND ($3::text IS NULL OR group_category = $3)
+  AND ($4::uuid IS NULL OR parent_group_id = $4)
+  AND ($5::boolean IS NULL OR is_active = $5)
+  AND deleted_at IS NULL
 ORDER BY
+  CASE WHEN $6::text = 'group_level' THEN group_level END,
+  CASE WHEN $6::text = 'group_name' THEN group_name END,
+  CASE WHEN $6::text = 'statement_order' THEN statement_order END,
   group_level,
   group_name
 LIMIT
-  $4 OFFSET $5
+  $8 OFFSET $7
 `
 
 type ListAccountGroupsParams struct {
-	Column1 uuid.UUID `json:"column_1"`
-	Column2 string    `json:"column_2"`
-	Column3 string    `json:"column_3"`
-	Limit   int32     `json:"limit"`
-	Offset  int32     `json:"offset"`
+	EntityID      *uuid.UUID `json:"entity_id"`
+	RootType      *string    `json:"root_type"`
+	GroupCategory *string    `json:"group_category"`
+	ParentGroupID *uuid.UUID `json:"parent_group_id"`
+	IsActive      *bool      `json:"is_active"`
+	SortBy        *string    `json:"sort_by"`
+	OffsetCount   int32      `json:"offset_count"`
+	LimitCount    int32      `json:"limit_count"`
 }
 
+// List account groups with filtering and pagination
 func (q *Queries) ListAccountGroups(ctx context.Context, arg ListAccountGroupsParams) ([]*FinanceAccountGroup, error) {
 	rows, err := q.db.Query(ctx, listAccountGroups,
-		arg.Column1,
-		arg.Column2,
-		arg.Column3,
-		arg.Limit,
-		arg.Offset,
+		arg.EntityID,
+		arg.RootType,
+		arg.GroupCategory,
+		arg.ParentGroupID,
+		arg.IsActive,
+		arg.SortBy,
+		arg.OffsetCount,
+		arg.LimitCount,
 	)
 	if err != nil {
 		return nil, err
@@ -806,35 +869,98 @@ func (q *Queries) SearchAccountGroups(ctx context.Context, arg SearchAccountGrou
 	return items, nil
 }
 
+const softDeleteAccountGroup = `-- name: SoftDeleteAccountGroup :exec
+UPDATE
+  finance_account_groups
+SET
+  deleted_at = $1,
+  updated_at = $1,
+  updated_by = $2
+WHERE
+  id = $3
+  AND tenant_id = current_tenant_id()
+  AND ($4::uuid IS NULL OR entity_id = $4)
+  AND deleted_at IS NULL
+`
+
+type SoftDeleteAccountGroupParams struct {
+	DeletedAt sql.NullTime `json:"deleted_at"`
+	DeletedBy *uuid.UUID   `json:"deleted_by"`
+	GroupID   uuid.UUID    `json:"group_id"`
+	EntityID  *uuid.UUID   `json:"entity_id"`
+}
+
+// Soft delete account group with proper tenant/entity isolation
+func (q *Queries) SoftDeleteAccountGroup(ctx context.Context, arg SoftDeleteAccountGroupParams) error {
+	_, err := q.db.Exec(ctx, softDeleteAccountGroup,
+		arg.DeletedAt,
+		arg.DeletedBy,
+		arg.GroupID,
+		arg.EntityID,
+	)
+	return err
+}
+
 const updateAccountGroup = `-- name: UpdateAccountGroup :one
 UPDATE
   finance_account_groups
 SET
-  group_name = COALESCE($2, group_name),
-  group_description = COALESCE($3, group_description),
+  group_name = COALESCE($1, group_name),
+  group_description = COALESCE($2, group_description),
+  parent_group_id = COALESCE($3, parent_group_id),
+  financial_statement_section = COALESCE($4, financial_statement_section),
+  consolidation_method = COALESCE($5, consolidation_method),
+  cash_flow_category = COALESCE($6, cash_flow_category),
+  statement_order = COALESCE($7, statement_order),
+  indent_level = COALESCE($8, indent_level),
+  show_totals = COALESCE($9, show_totals),
+  bold_display = COALESCE($10, bold_display),
+  is_active = COALESCE($11, is_active),
   updated_at = NOW(),
-  updated_by = $4,
-  version = version + 1
+  updated_by = $12
 WHERE
-  id = $1
+  id = $13
   AND tenant_id = current_tenant_id()
+  AND ($14::uuid IS NULL OR entity_id = $14)
+  AND deleted_at IS NULL
 RETURNING
   id, tenant_id, entity_id, group_code, group_name, group_description, parent_group_id, group_level, group_path, root_type, group_category, financial_statement_section, statement_order, show_in_summary, consolidation_method, display_format, indent_level, show_totals, bold_display, is_active, is_system_group, allow_direct_posting, budget_category, variance_analysis_group, cash_flow_category, group_attributes, created_at, updated_at, deleted_at, created_by, updated_by
 `
 
 type UpdateAccountGroupParams struct {
-	ID               uuid.UUID  `json:"id"`
-	GroupName        string     `json:"group_name"`
-	GroupDescription *string    `json:"group_description"`
-	UpdatedBy        *uuid.UUID `json:"updated_by"`
+	GroupName                 *string    `json:"group_name"`
+	GroupDescription          *string    `json:"group_description"`
+	ParentGroupID             *uuid.UUID `json:"parent_group_id"`
+	FinancialStatementSection *string    `json:"financial_statement_section"`
+	ConsolidationMethod       *string    `json:"consolidation_method"`
+	CashFlowCategory          *string    `json:"cash_flow_category"`
+	StatementOrder            *int32     `json:"statement_order"`
+	IndentLevel               *int32     `json:"indent_level"`
+	ShowTotals                *bool      `json:"show_totals"`
+	BoldDisplay               *bool      `json:"bold_display"`
+	IsActive                  *bool      `json:"is_active"`
+	UpdatedBy                 *uuid.UUID `json:"updated_by"`
+	GroupID                   uuid.UUID  `json:"group_id"`
+	EntityID                  *uuid.UUID `json:"entity_id"`
 }
 
+// Update account group with proper tenant/entity isolation
 func (q *Queries) UpdateAccountGroup(ctx context.Context, arg UpdateAccountGroupParams) (*FinanceAccountGroup, error) {
 	row := q.db.QueryRow(ctx, updateAccountGroup,
-		arg.ID,
 		arg.GroupName,
 		arg.GroupDescription,
+		arg.ParentGroupID,
+		arg.FinancialStatementSection,
+		arg.ConsolidationMethod,
+		arg.CashFlowCategory,
+		arg.StatementOrder,
+		arg.IndentLevel,
+		arg.ShowTotals,
+		arg.BoldDisplay,
+		arg.IsActive,
 		arg.UpdatedBy,
+		arg.GroupID,
+		arg.EntityID,
 	)
 	var i FinanceAccountGroup
 	err := row.Scan(
@@ -929,4 +1055,31 @@ func (q *Queries) UpdateGroupHierarchyPath(ctx context.Context, arg UpdateGroupH
 		&i.UpdatedBy,
 	)
 	return &i, err
+}
+
+const validateAccountGroupCode = `-- name: ValidateAccountGroupCode :one
+SELECT
+  EXISTS(
+    SELECT 1
+    FROM finance_account_groups
+    WHERE tenant_id = current_tenant_id()
+      AND ($1::uuid IS NULL OR entity_id = $1)
+      AND group_code = $2
+      AND ($3::uuid IS NULL OR id != $3)
+      AND deleted_at IS NULL
+  ) as code_exists
+`
+
+type ValidateAccountGroupCodeParams struct {
+	EntityID  *uuid.UUID `json:"entity_id"`
+	GroupCode string     `json:"group_code"`
+	ExcludeID *uuid.UUID `json:"exclude_id"`
+}
+
+// Validate if account group code is unique within entity/tenant
+func (q *Queries) ValidateAccountGroupCode(ctx context.Context, arg ValidateAccountGroupCodeParams) (bool, error) {
+	row := q.db.QueryRow(ctx, validateAccountGroupCode, arg.EntityID, arg.GroupCode, arg.ExcludeID)
+	var code_exists bool
+	err := row.Scan(&code_exists)
+	return code_exists, err
 }

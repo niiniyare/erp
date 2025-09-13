@@ -34,3 +34,9 @@ func GetUserID(ctx context.Context) (uuid.UUID, bool) {
 	userID, ok := ctx.Value(UserIDKey).(uuid.UUID)
 	return userID, ok
 }
+
+// GetUserIDPtr retrieves user ID from context
+func GetUserIDPtr(ctx context.Context) *uuid.UUID {
+	userID, _ := ctx.Value(UserIDKey).(uuid.UUID)
+	return &userID
+}

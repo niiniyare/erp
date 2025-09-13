@@ -70,6 +70,28 @@ type AccountsRepository interface {
 	GetAccountsWithBalances(ctx context.Context, filter *BalanceFilter) ([]*ChartOfAccountsComplete, error)
 	GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*CashFlowAccount, error)
 	GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*AccountGroupSummary, error)
+
+	// Account Group operations (unified in AccountsRepository)
+	// Basic CRUD operations for account groups
+	CreateAccountGroup(ctx context.Context, group *AccountGroup) error
+	GetAccountGroupByID(ctx context.Context, id uuid.UUID) (*AccountGroup, error)
+	GetAccountGroupByCode(ctx context.Context, code string, entityID *uuid.UUID) (*AccountGroup, error)
+	UpdateAccountGroup(ctx context.Context, id uuid.UUID, group *AccountGroup) error
+	DeleteAccountGroup(ctx context.Context, id uuid.UUID, entityID *uuid.UUID) error
+
+	// List and filtering operations for account groups
+	ListAccountGroups(ctx context.Context, filter *AccountGroupFilter) ([]*AccountGroup, error)
+	CountAccountGroups(ctx context.Context, filter *AccountGroupFilter) (int64, error)
+	
+	// Hierarchy operations for account groups
+	GetAccountGroupHierarchy(ctx context.Context, rootGroupID *uuid.UUID, entityID *uuid.UUID) ([]*AccountGroup, error)
+	
+	// Financial statement operations for account groups
+	GetGroupsByFinancialStatement(ctx context.Context, statementType string, entityID *uuid.UUID) ([]*AccountGroup, error)
+	GetGroupsByCashFlowCategory(ctx context.Context, category string, entityID *uuid.UUID) ([]*AccountGroup, error)
+	
+	// Validation helpers for account groups
+	ValidateAccountGroupCode(ctx context.Context, code string, excludeID *uuid.UUID, entityID *uuid.UUID) error
 }
 
 // TransactionRepository defines the contract for transaction persistence
@@ -245,9 +267,64 @@ type UnitOfWork interface {
 	Audit() AuditRepository
 }
 
+// AccountGroupRepository defines the contract for account group persistence
+type AccountGroupRepository interface {
+	// Basic CRUD operations
+	Create(ctx context.Context, group *AccountGroup) error
+	GetByID(ctx context.Context, id uuid.UUID) (*AccountGroup, error)
+	GetByCode(ctx context.Context, entityID *uuid.UUID, groupCode string) (*AccountGroup, error)
+	Update(ctx context.Context, group *AccountGroup) error
+	Delete(ctx context.Context, id uuid.UUID) error
+
+	// List and filtering operations
+	List(ctx context.Context, filter *AccountGroupFilter) ([]*AccountGroup, error)
+	Count(ctx context.Context, filter *AccountGroupFilter) (int64, error)
+	ListByParent(ctx context.Context, parentID uuid.UUID) ([]*AccountGroup, error)
+	GetRootGroups(ctx context.Context, entityID *uuid.UUID) ([]*AccountGroup, error)
+
+	// Hierarchy operations
+	GetGroupHierarchy(ctx context.Context) ([]*AccountGroup, error)
+	GetGroupPath(ctx context.Context, groupID uuid.UUID) ([]*AccountGroup, error)
+	ValidateHierarchy(ctx context.Context, groupID, parentID uuid.UUID) error
+	GetChildren(ctx context.Context, groupID uuid.UUID) ([]*AccountGroup, error)
+	HasChildren(ctx context.Context, groupID uuid.UUID) (bool, error)
+
+	// Financial statement operations
+	GetGroupsByFinancialStatement(ctx context.Context, statementType string) ([]*AccountGroup, error)
+	GetGroupsByCashFlowCategory(ctx context.Context, category CashFlowCategory) ([]*AccountGroup, error)
+	GetGroupsByConsolidationMethod(ctx context.Context, method ConsolidationMethod) ([]*AccountGroup, error)
+
+	// Business logic queries
+	GetSystemGroups(ctx context.Context) ([]*AccountGroup, error)
+	GetCustomGroups(ctx context.Context, entityID *uuid.UUID) ([]*AccountGroup, error)
+	GetActiveGroups(ctx context.Context, entityID *uuid.UUID) ([]*AccountGroup, error)
+	Search(ctx context.Context, query string, limit int) ([]*AccountGroup, error)
+
+	// Validation helpers
+	ValidateGroupCode(ctx context.Context, code string, excludeID *uuid.UUID) error
+	IsGroupCodeUnique(ctx context.Context, entityID *uuid.UUID, groupCode string, excludeID *uuid.UUID) (bool, error)
+	CanDeleteGroup(ctx context.Context, groupID uuid.UUID) (bool, error)
+}
+
+// UnifiedAccountRepository defines operations for unified account/group queries
+type UnifiedAccountRepository interface {
+	// Unified hierarchy operations
+	ListAccountsAndGroups(ctx context.Context, filter *UnifiedFilter) ([]*AccountNode, error)
+	GetHierarchyWithGroups(ctx context.Context, entityID *uuid.UUID) ([]*AccountNode, error)
+	SearchAccountsAndGroups(ctx context.Context, query string, limit int) ([]*AccountNode, error)
+	GetNodePath(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*AccountNode, error)
+
+	// Tree operations
+	GetSubtree(ctx context.Context, rootID uuid.UUID, rootType AccountNodeType, maxDepth *int) ([]*AccountNode, error)
+	GetSiblings(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*AccountNode, error)
+	GetNodeChildren(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*AccountNode, error)
+}
+
 // Repository factory for creating repository instances
 type RepositoryFactory interface {
 	CreateAccountsRepository() AccountsRepository
+	CreateAccountGroupRepository() AccountGroupRepository
+	CreateUnifiedAccountRepository() UnifiedAccountRepository
 	CreateTransactionRepository() TransactionRepository
 	CreateAuditRepository() AuditRepository
 	CreateUnitOfWork() UnitOfWork

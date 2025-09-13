@@ -62,6 +62,8 @@ type Querier interface {
 	CheckCurrentTenantExists(ctx context.Context) (bool, error)
 	CheckEmailAvailability(ctx context.Context, email string) (bool, error)
 	CheckEmployeeNumberAvailability(ctx context.Context, employeeNumber string) (bool, error)
+	// Check if account group has child groups
+	CheckGroupHasChildren(ctx context.Context, groupID *uuid.UUID) (bool, error)
 	CheckPasswordPolicyRequirements(ctx context.Context) (*CheckPasswordPolicyRequirementsRow, error)
 	CheckSubdomainExists(ctx context.Context, subdomain *string) (bool, error)
 	CheckTenantExists(ctx context.Context, id uuid.UUID) (bool, error)
@@ -80,6 +82,7 @@ type Querier interface {
 	CountAccessRequestsByStatus(ctx context.Context, arg CountAccessRequestsByStatusParams) (*CountAccessRequestsByStatusRow, error)
 	CountAccountBalances(ctx context.Context, arg CountAccountBalancesParams) (int64, error)
 	CountAccountEntries(ctx context.Context, arg CountAccountEntriesParams) (int64, error)
+	// Count account groups with filtering
 	CountAccountGroups(ctx context.Context, arg CountAccountGroupsParams) (int64, error)
 	CountAccountValidationRules(ctx context.Context, arg CountAccountValidationRulesParams) (int64, error)
 	CountAccounts(ctx context.Context, arg CountAccountsParams) (int64, error)
@@ -103,6 +106,7 @@ type Querier interface {
 	// =====================================================================
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (*FinanceAccount, error)
 	CreateAccountBalance(ctx context.Context, arg CreateAccountBalanceParams) (*FinanceAccountBalance, error)
+	// Create a new account group with proper entity isolation
 	CreateAccountGroup(ctx context.Context, arg CreateAccountGroupParams) (*FinanceAccountGroup, error)
 	CreateAccountValidationRule(ctx context.Context, arg CreateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
 	CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error)
@@ -207,7 +211,6 @@ type Querier interface {
 	DeactivateAccountValidationRule(ctx context.Context, arg DeactivateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
 	DeactivateConfigurationTemplate(ctx context.Context, templateID uuid.UUID) error
 	DeleteAccountBalance(ctx context.Context, id uuid.UUID) error
-	DeleteAccountGroup(ctx context.Context, id uuid.UUID) error
 	DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeValue(ctx context.Context, arg DeleteAttributeValueParams) error
@@ -251,11 +254,16 @@ type Querier interface {
 	GetAccountByID(ctx context.Context, accountID uuid.UUID) (*FinanceAccount, error)
 	GetAccountChildren(ctx context.Context, parentAccountID *uuid.UUID) ([]*VFinanceAccountsHierarchy, error)
 	GetAccountEntries(ctx context.Context, arg GetAccountEntriesParams) ([]*GetAccountEntriesRow, error)
-	GetAccountGroup(ctx context.Context, id uuid.UUID) (*FinanceAccountGroup, error)
-	GetAccountGroupByCode(ctx context.Context, groupCode string) (*FinanceAccountGroup, error)
+	// Get account group by ID with proper tenant/entity isolation
+	GetAccountGroup(ctx context.Context, arg GetAccountGroupParams) (*FinanceAccountGroup, error)
+	// Get account group by code with proper tenant/entity isolation
+	GetAccountGroupByCode(ctx context.Context, arg GetAccountGroupByCodeParams) (*FinanceAccountGroup, error)
+	// Get direct children of an account group
 	GetAccountGroupChildren(ctx context.Context, arg GetAccountGroupChildrenParams) ([]*FinanceAccountGroup, error)
+	// Get account group hierarchy with optional root filtering
 	GetAccountGroupHierarchy(ctx context.Context, arg GetAccountGroupHierarchyParams) ([]*FinanceAccountGroup, error)
 	GetAccountGroupSummary(ctx context.Context, entityID *uuid.UUID) ([]*GetAccountGroupSummaryRow, error)
+	// Get account groups by root type with entity isolation
 	GetAccountGroupsByRootType(ctx context.Context, arg GetAccountGroupsByRootTypeParams) ([]*FinanceAccountGroup, error)
 	GetAccountHierarchy(ctx context.Context, accountPathPrefix *string) ([]*FinanceAccount, error)
 	GetAccountHierarchyByLevel(ctx context.Context, arg GetAccountHierarchyByLevelParams) ([]*VFinanceAccountsHierarchy, error)
@@ -839,6 +847,7 @@ type Querier interface {
 	IsEntityAncestor(ctx context.Context, arg IsEntityAncestorParams) (bool, error)
 	ListAccessRequestsByStatus(ctx context.Context, arg ListAccessRequestsByStatusParams) ([]*AccessRequest, error)
 	ListAccountBalances(ctx context.Context, arg ListAccountBalancesParams) ([]*FinanceAccountBalance, error)
+	// List account groups with filtering and pagination
 	ListAccountGroups(ctx context.Context, arg ListAccountGroupsParams) ([]*FinanceAccountGroup, error)
 	ListAccountValidationRules(ctx context.Context, arg ListAccountValidationRulesParams) ([]*FinanceAccountValidationRule, error)
 	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceAccount, error)
@@ -937,6 +946,8 @@ type Querier interface {
 	// =====================================================
 	SetTenantContext(ctx context.Context, tenantID uuid.UUID) error
 	SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) (int64, error)
+	// Soft delete account group with proper tenant/entity isolation
+	SoftDeleteAccountGroup(ctx context.Context, arg SoftDeleteAccountGroupParams) error
 	SoftDeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	SoftDeleteEntityState(ctx context.Context, argUuid uuid.UUID) error
@@ -956,6 +967,7 @@ type Querier interface {
 	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceAccount, error)
 	UpdateAccountBalance(ctx context.Context, arg UpdateAccountBalanceParams) (*FinanceAccountBalance, error)
 	UpdateAccountCurrentBalance(ctx context.Context, arg UpdateAccountCurrentBalanceParams) error
+	// Update account group with proper tenant/entity isolation
 	UpdateAccountGroup(ctx context.Context, arg UpdateAccountGroupParams) (*FinanceAccountGroup, error)
 	UpdateAccountValidationRule(ctx context.Context, arg UpdateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
 	UpdateAttributeDefinition(ctx context.Context, arg UpdateAttributeDefinitionParams) (*AttributeDefinition, error)
@@ -1037,6 +1049,8 @@ type Querier interface {
 	UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpsertAccountBalance(ctx context.Context, arg UpsertAccountBalanceParams) (*FinanceAccountBalance, error)
+	// Validate if account group code is unique within entity/tenant
+	ValidateAccountGroupCode(ctx context.Context, arg ValidateAccountGroupCodeParams) (bool, error)
 	ValidateAccountHierarchy(ctx context.Context, parentAccountID *uuid.UUID) (bool, error)
 	ValidateCurrentTenant(ctx context.Context) error
 	// =====================================================================
