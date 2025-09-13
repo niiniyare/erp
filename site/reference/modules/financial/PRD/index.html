@@ -1315,9 +1315,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#feature-2-temporal-first-double-entry-transaction-processing" class="md-nav__link">
+  <a href="#feature-2-reliable-transaction-processing" class="md-nav__link">
     <span class="md-ellipsis">
-      Feature 2: Temporal-First Double-Entry Transaction Processing
+      Feature 2: Reliable Transaction Processing
     </span>
   </a>
   
@@ -1341,6 +1341,60 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#feature-5-accounts-receivable-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature 5: Accounts Receivable Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feature-6-accounts-payable-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature 6: Accounts Payable Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feature-7-financial-reporting-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature 7: Financial Reporting Engine
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feature-8-inventory-integration-cogs-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature 8: Inventory Integration &amp; COGS Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feature-9-project-accounting-time-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature 9: Project Accounting &amp; Time Tracking
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feature-10-tax-management-compliance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature 10: Tax Management &amp; Compliance
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1355,15 +1409,6 @@
   
     <nav class="md-nav" aria-label="Business Rules">
       <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#rule-1-double-entry-balance-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Rule 1: Double-Entry Balance Validation
-    </span>
-  </a>
-  
-</li>
         
           <li class="md-nav__item">
   <a href="#rule-2-account-code-uniqueness" class="md-nav__link">
@@ -1411,6 +1456,15 @@
   <a href="#internal-module-dependencies" class="md-nav__link">
     <span class="md-ellipsis">
       Internal Module Dependencies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-module-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Module Dependencies
     </span>
   </a>
   
@@ -1507,9 +1561,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#backend-services-with-temporal-integration" class="md-nav__link">
+  <a href="#backend-services-with-workflow-orchestration" class="md-nav__link">
     <span class="md-ellipsis">
-      Backend Services with Temporal Integration
+      Backend Services with Workflow Orchestration
     </span>
   </a>
   
@@ -1638,27 +1692,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#phase-1-foundation-weeks-1-8-100-complete" class="md-nav__link">
+  <a href="#phase-1-foundation-weeks-1-8-67-complete" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 1: Foundation (Weeks 1-8) - ✅ 100% Complete
+      Phase 1: Foundation (Weeks 1-8) - 🚧 67% Complete
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-2-api-development-weeks-9-12-92-complete" class="md-nav__link">
+  <a href="#phase-2-business-process-integration-weeks-9-12-0-complete" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 2: API Development (Weeks 9-12) - 🚧 92% Complete
+      Phase 2: Business Process Integration (Weeks 9-12) - ⏳ 0% Complete
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-3-advanced-features-weeks-13-20-0-complete" class="md-nav__link">
+  <a href="#phase-3-business-focused-api-layer-weeks-13-16-0-complete" class="md-nav__link">
     <span class="md-ellipsis">
-      Phase 3: Advanced Features (Weeks 13-20) - ⏳ 0% Complete
+      Phase 3: Business-Focused API Layer (Weeks 13-16) - ⏳ 0% Complete
     </span>
   </a>
   
@@ -4682,13 +4736,15 @@
 <h3 id="core-features">Core Features</h3>
 <h4 id="feature-1-chart-of-accounts-management">Feature 1: Chart of Accounts Management</h4>
 <p><strong>Priority</strong>: High<br />
-<strong>Effort</strong>: Large (6+ weeks)<br />
+<strong>Effort</strong>: Large<br />
 <strong>Business Value</strong>: Critical Foundation  </p>
-<p><strong>Description</strong>:  chart of accounts with hierarchical structure, account categorization, and balance tracking.</p>
+<p><strong>Description</strong>: Comprehensive chart of accounts with hierarchical structure, account categorization, balance tracking, and sophisticated account grouping for financial statement presentation.</p>
 <p><strong>User Stories</strong>:
 - As a financial accountant, I want to create and manage accounts with proper categorization so that transactions are properly classified
 - As a finance manager, I need hierarchical account organization so that I can generate consolidated reports by department or cost center
-- As a system administrator, I want to enforce account coding standards so that financial data remains consistent across tenants</p>
+- As a system administrator, I want to enforce account coding standards so that financial data remains consistent across tenants
+- As a financial analyst, I need account groups with financial statement sections so that I can generate properly formatted Balance Sheets, Income Statements, and Cash Flow Statements
+- As a CFO, I want configurable account group hierarchies so that I can present financial data according to GAAP/IFRS standards and custom organizational needs</p>
 <p><strong>Acceptance Criteria</strong>:
 - [ ] Account codes must be unique within tenant with configurable format validation
 - [ ] Support unlimited hierarchy levels with efficient tree operations
@@ -4697,51 +4753,64 @@
 - [ ] Multi-currency support with base currency conversion
 - [ ] Soft delete functionality preserving historical references
 - [ ] Bulk import/export capabilities for chart of accounts setup</p>
+<p><strong>Account Groups Management</strong>:
+- [ ] Hierarchical account groups with materialized path for efficient queries (up to 5 levels deep)
+- [ ] Financial statement section mapping (Balance Sheet, Income Statement, Cash Flow Statement)
+- [ ] Statement ordering and presentation formatting (indent levels, bold display, show totals)
+- [ ] Consolidation methods (SUM, AVERAGE, MAX, MIN, CUSTOM) for group-level reporting
+- [ ] Cash flow categorization (OPERATING, INVESTING, FINANCING) for cash flow statement preparation
+- [ ] Budget and variance analysis grouping for management reporting
+- [ ] System-defined groups for standard financial statement presentation
+- [ ] Custom group creation for organization-specific reporting needs
+- [ ] Group-level balance calculation and rollup functionality</p>
 <p><strong>Technical Considerations</strong>:
 - Nested set model for efficient hierarchy queries
 - Row-level security for multi-tenant isolation<br />
 - SQLC integration for type-safe database operations
 - Redis caching for frequently accessed account data</p>
-<h4 id="feature-2-temporal-first-double-entry-transaction-processing">Feature 2: Temporal-First Double-Entry Transaction Processing</h4>
+<h4 id="feature-2-reliable-transaction-processing">Feature 2: Reliable Transaction Processing</h4>
 <p><strong>Priority</strong>: High<br />
-<strong>Effort</strong>: Large (8+ weeks)<br />
+<strong>Effort</strong>: Large<br />
 <strong>Business Value</strong>: Critical Core Function</p>
-<p><strong>Description</strong>: Complete transaction lifecycle management with double-entry validation, approval workflows, and Temporal workflow state machine processing providing reliability, durability, and automatic error recovery.</p>
+<p><strong>Description</strong>: Complete transaction lifecycle management with double-entry validation, approval workflows, and reliable processing that guarantees data integrity, automatic error recovery, and full audit trails.</p>
 <p><strong>User Stories</strong>:
-- As a financial accountant, I want to create transactions that automatically validate double-entry rules through Temporal workflows so that all entries balance correctly with guaranteed processing
-- As a finance manager, I need approval workflows for high-value transactions orchestrated by Temporal so that proper segregation of duties is maintained with retry logic and timeout handling
-- As an auditor, I want complete transaction history with immutable audit trails provided by Temporal's event sourcing so that I can verify financial integrity with full workflow visibility
+- As a financial accountant, I want to create transactions that automatically validate double-entry rules so that all entries balance correctly with guaranteed processing
+- As a finance manager, I need approval workflows for high-value transactions so that proper segregation of duties is maintained with retry logic and timeout handling
+- As an auditor, I want complete transaction history with immutable audit trails so that I can verify financial integrity with full processing visibility
 - As a system administrator, I want failed transaction processing to automatically retry with exponential backoff so that temporary failures don't result in data loss</p>
 <p><strong>Acceptance Criteria</strong>:
-- [ ] All transactions must balance (total debits = total credits) with validation enforcement via Temporal activities
-- [ ] Support for complex transactions with multiple entries and accounts orchestrated through workflows
-- [ ] Temporal workflow state machine: Draft → ValidationWorkflow → ApprovalWorkflow → PostingWorkflow → ReconciliationWorkflow
+- [ ] All transactions must balance (total debits = total credits) with automatic validation
+- [ ] Support for complex transactions with multiple entries and accounts
+- [ ] Business process state machine: Draft → Validation → Approval → Posting → Reconciliation → Complete
 - [ ] Configurable approval thresholds based on transaction amount and type with timeout handling
-- [ ] Transaction reversal functionality maintaining audit trail through compensating workflows
-- [ ] Support for recurring transactions with flexible scheduling via Temporal cron workflows
-- [ ] Multi-currency transactions with exchange rate management through dedicated activities
-- [ ] Batch processing capabilities for high-volume operations using Temporal's parallel processing
+- [ ] Transaction reversal functionality maintaining complete audit trail
+- [ ] Support for recurring transactions with flexible scheduling
+- [ ] Multi-currency transactions with exchange rate management
+- [ ] Batch processing capabilities for high-volume operations
 - [ ] Automatic retry logic for transient failures with exponential backoff
-- [ ] Workflow timeout handling for stuck approval processes
-- [ ] Dead letter queue handling for permanently failed transactions</p>
+- [ ] Timeout handling for stuck approval processes
+- [ ] Error handling for permanently failed transactions</p>
 <p><strong>Technical Considerations</strong>:
-- Domain-driven design with transaction aggregates orchestrated by Temporal workflows
-- Event sourcing provided by Temporal's built-in workflow event history
-- Temporal activities for atomic operations (validation, posting, notifications)
-- Database transactions ensuring ACID compliance within individual activities
-- <strong>Saga Pattern Implementation</strong>: Compensation-based rollback for multi-step financial operations
+- Domain-driven design with transaction aggregates and business process orchestration
+- Complete audit trail with immutable transaction history
+- Atomic operations for validation, posting, and notifications
+- Database transactions ensuring ACID compliance
+- <strong>Saga Pattern Implementation</strong>: Compensation-based rollback for multi-step operations
 - <strong>Rollback and Compensation</strong>: Automatic rollback of completed steps when subsequent steps fail
-- <strong>Transaction Isolation</strong>: Each activity maintains transactional boundaries for safe rollback
-- <strong>Compensating Activities</strong>: Dedicated activities for reversing completed operations
+- <strong>Transaction Isolation</strong>: Each operation maintains transactional boundaries for safe rollback
+- <strong>Compensating Operations</strong>: Dedicated logic for reversing completed operations
 - <strong>Partial Success Handling</strong>: Graceful handling of partial transaction completion with compensation
-- Workflow versioning for seamless updates to business logic
+- Business logic versioning for seamless updates
 - Activity heartbeats for long-running operations
 - Temporal signals for external event handling (approvals, rejections)
 - Workflow queries for real-time status monitoring</p>
 <h4 id="feature-3-multi-currency-support">Feature 3: Multi-Currency Support</h4>
 <p><strong>Priority</strong>: High<br />
-<strong>Effort</strong>: Medium (4-5 weeks)<br />
+<strong>Effort</strong>: Medium<br />
 <strong>Business Value</strong>: High (Global Operations)</p>
+<blockquote>
+<p><strong>📌 Module Dependency Note</strong>: This feature integrates with the <strong>Currency Management Module</strong> which will be developed as a separate module. The Finance Module handles multi-currency transactions and conversions, while currency rate management, exchange rate services integration, and currency configuration are handled by the dedicated Currency Management Module.</p>
+</blockquote>
 <p><strong>Description</strong>:  multi-currency transaction processing with real-time exchange rate management and conversion.</p>
 <p><strong>User Stories</strong>:
 - As a financial accountant, I want to process transactions in multiple currencies so that I can handle international operations
@@ -4757,7 +4826,7 @@
 - [ ] Exchange rate override capability with approval workflow</p>
 <h4 id="feature-4-advanced-validation-framework">Feature 4: Advanced Validation Framework</h4>
 <p><strong>Priority</strong>: High<br />
-<strong>Effort</strong>: Medium (3-4 weeks)<br />
+<strong>Effort</strong>: Medium<br />
 <strong>Business Value</strong>: High (Accuracy &amp; Compliance)</p>
 <p><strong>Description</strong>:  business rule validation ensuring financial accuracy, compliance, and data integrity.</p>
 <p><strong>User Stories</strong>:
@@ -4772,8 +4841,240 @@
 - [ ] Tenant-specific rule customization
 - [ ] Validation rule versioning and audit trail
 - [ ] Performance optimization for high-volume validation</p>
+<h4 id="feature-5-accounts-receivable-management">Feature 5: Accounts Receivable Management</h4>
+<p><strong>Priority</strong>: High<br />
+<strong>Effort</strong>: Large<br />
+<strong>Business Value</strong>: Critical (Revenue Management)</p>
+<p><strong>Description</strong>: Complete customer invoice and payment management with automated workflows for credit control and collections.</p>
+<p><strong>User Stories</strong>:
+- As a financial accountant, I want to generate professional invoices with automated calculations so that customers receive accurate billing
+- As an AR clerk, I need aging reports and automated reminders so that I can efficiently manage collections
+- As a finance manager, I want credit management controls so that customer risk is properly monitored
+- As a business analyst, I need payment tracking and analysis so that I can optimize cash flow</p>
+<p><strong>Acceptance Criteria</strong>:
+- [ ] Invoice generation with customizable templates and automatic calculations
+- [ ] Payment processing with automatic application to outstanding invoices
+- [ ] Customer credit limits with automated enforcement and alerts
+- [ ] Aging reports by customer with configurable periods (30/60/90/120+ days)
+- [ ] Automated reminder system with escalation workflows
+- [ ] Customer statements with transaction history and balance details
+- [ ] Bad debt write-off functionality with proper documentation
+- [ ] Payment terms management with automatic due date calculation
+- [ ] Multi-currency customer transactions with exchange rate handling
+- [ ] Integration with sales order processing and fulfillment workflows</p>
+<p><strong>Technical Considerations</strong>:
+- Temporal workflows for automated collections and reminder processes
+- Integration with customer master data and credit scoring services
+- Automated payment matching using fuzzy logic algorithms
+- Real-time aging calculations with materialized views for performance</p>
+<h4 id="feature-6-accounts-payable-management">Feature 6: Accounts Payable Management</h4>
+<p><strong>Priority</strong>: High<br />
+<strong>Effort</strong>: Large<br />
+<strong>Business Value</strong>: Critical (Cash Flow Management)</p>
+<p><strong>Description</strong>: Vendor invoice processing and payment management with approval workflows and cash flow optimization.</p>
+<p><strong>User Stories</strong>:
+- As an AP clerk, I want to process vendor invoices efficiently with three-way matching so that payments are accurate
+- As a finance manager, I need payment scheduling capabilities so that I can optimize cash flow and take advantage of early payment discounts
+- As a procurement manager, I want purchase order integration so that invoice processing is streamlined
+- As a controller, I need vendor aging reports so that I can manage supplier relationships and payment obligations</p>
+<p><strong>Acceptance Criteria</strong>:
+- [ ] Vendor invoice entry with automatic coding and GL distribution
+- [ ] Three-way matching (PO, receipt, invoice) with exception handling
+- [ ] Payment scheduling with cash flow optimization and discount tracking
+- [ ] Vendor aging reports with payment due date analysis
+- [ ] Multiple payment methods (check, ACH, wire transfer, credit card)
+- [ ] 1099 reporting and tax form generation for compliance
+- [ ] Approval workflows based on invoice amount and department budgets
+- [ ] Recurring invoice processing for subscription and contract payments
+- [ ] Vendor statement reconciliation with dispute management
+- [ ] Integration with procurement and inventory receiving processes</p>
+<p><strong>Technical Considerations</strong>:
+- Temporal workflows for approval routing and payment processing
+- Integration with banking systems for electronic payments
+- Automated invoice data extraction using OCR/ML capabilities
+- Real-time budget validation and spend analytics</p>
+<h4 id="feature-7-financial-reporting-engine">Feature 7: Financial Reporting Engine</h4>
+<p><strong>Priority</strong>: High<br />
+<strong>Effort</strong>: Large<br />
+<strong>Business Value</strong>: Critical (Business Intelligence)</p>
+<p><strong>Description</strong>: Comprehensive financial reporting system providing standard financial statements, analytical reports, and real-time business intelligence with drill-down capabilities.</p>
+<p><strong>User Stories</strong>:
+- As a finance manager, I need standard financial reports (P&amp;L, Balance Sheet, Cash Flow) so that I can meet regulatory requirements and make informed decisions
+- As a controller, I want comparative reporting capabilities so that I can analyze performance trends and variances
+- As an executive, I need real-time financial dashboards so that I can monitor business performance continuously
+- As an auditor, I want detailed trial balance and supporting schedules so that I can perform financial reviews efficiently
+- As a department manager, I need departmental P&amp;L reports so that I can track my cost center performance</p>
+<p><strong>Acceptance Criteria</strong>:
+- [ ] Standard Financial Statements:
+  - [ ] Income Statement (P&amp;L) with period comparisons and budget variance analysis using account groups for proper categorization
+  - [ ] Balance Sheet with account classifications and supporting schedules organized by account group hierarchy
+  - [ ] Cash Flow Statement with operating, investing, and financing activities based on account group cash flow categories
+  - [ ] Statement of Retained Earnings with opening/closing balances
+- [ ] Account Group-Based Reporting:
+  - [ ] Financial statement presentation using account group structure and ordering
+  - [ ] Group-level subtotals with configurable consolidation methods (SUM, AVERAGE, etc.)
+  - [ ] Hierarchical report formatting with proper indentation and bold headers
+  - [ ] Cash flow categorization based on account group classifications
+- [ ] Trial Balance Reports:
+  - [ ] Detailed trial balance with all account transactions
+  - [ ] Summary trial balance grouped by account type
+  - [ ] Adjusted trial balance with closing entries
+  - [ ] Pre-closing trial balance for period-end verification
+- [ ] Analytical Reports:
+  - [ ] Comparative reports (month-over-month, year-over-year)
+  - [ ] Budget vs. actual analysis with variance explanations
+  - [ ] Departmental and project-based financial analysis
+  - [ ] Custom date range reporting with flexible periods
+- [ ] Real-time Dashboards:
+  - [ ] Key Performance Indicators (KPIs) with automated calculations
+  - [ ] Financial metrics trending and visualization
+  - [ ] Executive summary dashboards with drill-down capabilities
+  - [ ] Alert system for unusual variances or exceptions
+- [ ] Export and Distribution:
+  - [ ] Multiple format support (PDF, Excel, CSV)
+  - [ ] Scheduled report generation and email distribution
+  - [ ] Report templates with corporate branding
+  - [ ] API access for external reporting tools integration</p>
+<p><strong>Technical Considerations</strong>:
+- Temporal workflows for complex report generation with progress tracking
+- Materialized views for real-time reporting performance optimization
+- Caching strategies for frequently accessed financial data
+- Report template engine with dynamic content generation
+- Integration with data visualization tools (charts, graphs, dashboards)</p>
+<h4 id="feature-8-inventory-integration-cogs-management">Feature 8: Inventory Integration &amp; COGS Management</h4>
+<p><strong>Priority</strong>: High<br />
+<strong>Effort</strong>: Large<br />
+<strong>Business Value</strong>: Critical (Cost Management)</p>
+<blockquote>
+<p><strong>📌 Module Dependency Note</strong>: This feature integrates with the <strong>Inventory Module</strong> which will be developed as a separate module. The Finance Module provides COGS calculation and financial reporting capabilities, while inventory management, stock tracking, and warehouse operations are handled by the dedicated Inventory Module.</p>
+</blockquote>
+<p><strong>Description</strong>: Advanced Cost of Goods Sold calculation with perpetual inventory integration, multiple costing methods, and real-time profitability analysis.</p>
+<p><strong>User Stories</strong>:
+- As a cost accountant, I need accurate COGS calculations so that product profitability is properly tracked
+- As an inventory manager, I want perpetual inventory updates so that stock levels and valuations are always current
+- As a finance manager, I need multiple costing methods so that I can choose the most appropriate method for different products
+- As a controller, I want landed cost allocation so that all product costs are properly captured and reported</p>
+<p><strong>Acceptance Criteria</strong>:
+- [ ] Costing Methods:
+  - [ ] FIFO (First In, First Out) with automatic lot tracking
+  - [ ] LIFO (Last In, First Out) with period-end adjustments
+  - [ ] Weighted Average Cost with automatic recalculation
+  - [ ] Standard Cost with variance analysis and reporting
+- [ ] Perpetual Inventory Integration:
+  - [ ] Real-time inventory updates with every transaction
+  - [ ] Automatic COGS posting on sales transactions
+  - [ ] Inventory valuation with multiple costing method support
+  - [ ] Physical count integration with variance reporting
+- [ ] Advanced Cost Features:
+  - [ ] Landed cost allocation (freight, duties, handling)
+  - [ ] Assembly cost roll-up with component tracking
+  - [ ] Work-in-process (WIP) inventory management
+  - [ ] Overhead allocation with configurable drivers
+- [ ] Profitability Analysis:
+  - [ ] Gross margin analysis by product, customer, and sales rep
+  - [ ] Product profitability reports with full cost absorption
+  - [ ] Margin analysis trends and performance indicators
+  - [ ] Price optimization recommendations based on cost analysis
+- [ ] Integration Points:
+  - [ ] Sales order integration for revenue recognition timing
+  - [ ] Purchase order integration for cost capture and matching
+  - [ ] Manufacturing integration for work order costing
+  - [ ] Multi-location inventory with transfer cost tracking</p>
+<p><strong>Technical Considerations</strong>:
+- Event-driven architecture for real-time inventory updates
+- Complex calculation engines for different costing methods
+- Integration with inventory management and warehouse systems
+- Performance optimization for high-volume transaction processing</p>
+<h4 id="feature-9-project-accounting-time-tracking">Feature 9: Project Accounting &amp; Time Tracking</h4>
+<p><strong>Priority</strong>: Medium<br />
+<strong>Effort</strong>: Medium<br />
+<strong>Business Value</strong>: High (Project Profitability)</p>
+<blockquote>
+<p><strong>📌 Module Dependency Note</strong>: This feature integrates with the <strong>Project Management Module</strong> and <strong>HRM Module</strong> which will be developed as separate modules. The Finance Module handles project-based financial accounting, cost allocation, and profitability analysis, while project management activities and HR/employee management are handled by their respective dedicated modules.</p>
+</blockquote>
+<p><strong>Description</strong>: Comprehensive project-based accounting with time tracking, expense allocation, and real-time profitability analysis for service-based and project-driven organizations.</p>
+<p><strong>User Stories</strong>:
+- As a project manager, I need real-time project profitability so that I can make informed decisions about resource allocation
+- As a consultant, I want to track billable time efficiently so that client billing is accurate and timely
+- As a finance manager, I need project-based financial reports so that I can analyze individual project performance
+- As a business owner, I want to understand which types of projects are most profitable so that I can focus on high-value opportunities</p>
+<p><strong>Acceptance Criteria</strong>:
+- [ ] Project Setup and Management:
+  - [ ] Project creation with budgets, timelines, and billing arrangements
+  - [ ] Multi-phase project support with milestone tracking
+  - [ ] Project templates for common project types
+  - [ ] Project status tracking (active, on-hold, completed, cancelled)
+- [ ] Time Tracking Integration:
+  - [ ] Employee time entry with project and task assignment
+  - [ ] Billable vs. non-billable time classification
+  - [ ] Time approval workflows with manager oversight
+  - [ ] Mobile time entry capabilities for field workers
+- [ ] Expense Allocation:
+  - [ ] Direct cost assignment to specific projects
+  - [ ] Overhead allocation using configurable drivers
+  - [ ] Travel and expense reimbursement integration
+  - [ ] Subcontractor cost tracking and management
+- [ ] Project Profitability Analysis:
+  - [ ] Real-time profit/loss calculation by project
+  - [ ] Budget vs. actual analysis with variance reporting
+  - [ ] Resource utilization tracking and optimization
+  - [ ] Billing efficiency and realization rate analysis
+- [ ] Client Billing Integration:
+  - [ ] Automated invoice generation from time and expenses
+  - [ ] Progress billing with percentage completion
+  - [ ] Retainer and advance payment management
+  - [ ] Change order tracking and billing</p>
+<p><strong>Technical Considerations</strong>:
+- Integration with HR systems for employee rate management
+- Real-time calculation engines for project profitability metrics
+- Time tracking data validation and approval workflows
+- Mobile-responsive time entry interfaces</p>
+<h4 id="feature-10-tax-management-compliance">Feature 10: Tax Management &amp; Compliance</h4>
+<p><strong>Priority</strong>: Medium<br />
+<strong>Effort</strong>: Medium<br />
+<strong>Business Value</strong>: High (Regulatory Compliance)</p>
+<blockquote>
+<p><strong>📌 Module Dependency Note</strong>: This feature will eventually be extracted to a dedicated <strong>Tax Management Module</strong> for enterprise deployments. The Finance Module provides core tax calculation and integration capabilities, while comprehensive tax compliance, multi-jurisdiction management, and advanced tax reporting will be handled by the specialized Tax Management Module.</p>
+</blockquote>
+<p><strong>Description</strong>: Comprehensive tax management system supporting multiple tax types, jurisdictions, and automated compliance reporting for domestic and international operations.</p>
+<p><strong>User Stories</strong>:
+- As a tax accountant, I need automated tax calculations so that all transactions have proper tax treatment
+- As a compliance officer, I want automated tax reporting so that regulatory filings are accurate and timely
+- As a finance manager, I need multi-jurisdiction support so that I can manage taxes across different locations
+- As a controller, I want tax reconciliation capabilities so that tax payments match calculated liabilities</p>
+<p><strong>Acceptance Criteria</strong>:
+- [ ] Tax Type Support:
+  - [ ] Sales Tax with state and local jurisdiction handling
+  - [ ] Value Added Tax (VAT) with reverse charge scenarios
+  - [ ] Goods and Services Tax (GST) for international operations
+  - [ ] Use Tax calculation and reporting
+  - [ ] Custom tax types for specific industry requirements
+- [ ] Tax Calculation Engine:
+  - [ ] Real-time tax calculation based on transaction details
+  - [ ] Tax exemption handling for qualified customers
+  - [ ] Tax-inclusive and tax-exclusive pricing support
+  - [ ] Compound tax calculations for multiple tax types
+- [ ] Jurisdiction Management:
+  - [ ] Tax rate management with effective date tracking
+  - [ ] Geographic tax zone configuration
+  - [ ] Tax authority registration and reporting requirements
+  - [ ] Multi-state/country tax compliance
+- [ ] Compliance Reporting:
+  - [ ] Automated tax return generation
+  - [ ] Electronic filing integration with tax authorities
+  - [ ] Tax payment processing and remittance
+  - [ ] Audit trail for all tax-related transactions
+- [ ] Tax Reconciliation:
+  - [ ] Tax collected vs. tax remitted reconciliation
+  - [ ] Tax account balance management
+  - [ ] Exception reporting and resolution workflows
+  - [ ] Tax adjustment processing with proper documentation</p>
+<p><strong>Technical Considerations</strong>:
+- Integration with external tax rate services for automatic updates
+- Temporal workflows for complex tax calculation and filing processes
+- Support for multiple tax calendars and reporting periods
+- Integration with payment processing systems for tax remittance</p>
 <h3 id="business-rules">Business Rules</h3>
-<h4 id="rule-1-double-entry-balance-validation">Rule 1: Double-Entry Balance Validation</h4>
 <ul>
 <li><strong>Description</strong>: All financial transactions must maintain perfect balance (debits = credits)</li>
 <li><strong>Enforcement</strong>: Domain entity validation, service layer checks, database constraints</li>
@@ -4809,6 +5110,17 @@
 <li><strong>Audit Module</strong>:  activity logging, compliance reporting, change tracking</li>
 <li><strong>ABAC Module</strong>: Attribute-based access control, policy evaluation, segregation of duties</li>
 </ul>
+<h4 id="future-module-dependencies">Future Module Dependencies</h4>
+<blockquote>
+<p><strong>📌 Architecture Note</strong>: The following modules will be developed as separate, dedicated modules in future phases:
+- <strong>Currency Management Module</strong>: Exchange rate services, currency configuration, rate history management
+- <strong>Inventory Module</strong>: Stock management, warehouse operations, item master data
+- <strong>Project Management Module</strong>: Project planning, resource allocation, milestone tracking
+- <strong>HRM Module</strong>: Employee management, payroll integration, organizational structure
+- <strong>Tax Management Module</strong>: Advanced tax compliance, multi-jurisdiction support, tax authority integration
+- <strong>Asset Management Module</strong>: Fixed asset tracking, depreciation, asset lifecycle management</p>
+</blockquote>
+<p>These modules will integrate with the Finance Module through well-defined APIs and event-driven architecture to maintain loose coupling and modularity.</p>
 <h4 id="external-system-integration">External System Integration</h4>
 <ul>
 <li><strong>Banking Systems</strong>: Transaction import, account reconciliation, payment processing</li>
@@ -4869,8 +5181,8 @@
 <hr />
 <h2 id="technical-architecture">Technical Architecture</h2>
 <h3 id="system-components">System Components</h3>
-<h4 id="backend-services-with-temporal-integration">Backend Services with Temporal Integration</h4>
-<div class="highlight"><pre><span></span><code><span class="c1">// Financial module service interfaces with Temporal workflow orchestration</span>
+<h4 id="backend-services-with-workflow-orchestration">Backend Services with Workflow Orchestration</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// Financial module service interfaces with business process orchestration</span>
 <span class="kd">type</span><span class="w"> </span><span class="nx">FinanceServices</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nx">AccountService</span><span class="w">           </span><span class="nx">AccountService</span>
 <span class="w">    </span><span class="nx">TransactionService</span><span class="w">       </span><span class="nx">TransactionService</span><span class="w">  </span>
@@ -4879,9 +5191,8 @@
 <span class="w">    </span><span class="nx">ValidationService</span><span class="w">       </span><span class="nx">ValidationService</span>
 <span class="w">    </span><span class="nx">ReportingService</span><span class="w">        </span><span class="nx">ReportingService</span>
 
-<span class="w">    </span><span class="c1">// Temporal workflow orchestration</span>
-<span class="w">    </span><span class="nx">WorkflowService</span><span class="w">         </span><span class="nx">FinanceWorkflowService</span>
-<span class="w">    </span><span class="nx">ActivityService</span><span class="w">         </span><span class="nx">FinanceActivityService</span>
+<span class="w">    </span><span class="c1">// Business process orchestration (implementation-agnostic)</span>
+<span class="w">    </span><span class="nx">ProcessOrchestrator</span><span class="w">     </span><span class="nx">ProcessOrchestrator</span>
 <span class="p">}</span>
 
 <span class="kd">type</span><span class="w"> </span><span class="nx">AccountService</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
@@ -4895,22 +5206,17 @@
 <span class="w">    </span><span class="nx">ListAccounts</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">query</span><span class="w"> </span><span class="nx">ListAccountsQuery</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">AccountList</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 <span class="p">}</span>
 
-<span class="c1">// Temporal-first transaction service</span>
+<span class="c1">// Business-focused transaction service</span>
 <span class="kd">type</span><span class="w"> </span><span class="nx">TransactionService</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// Workflow-orchestrated operations</span>
-<span class="w">    </span><span class="nx">CreateTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">cmd</span><span class="w"> </span><span class="nx">CreateTransactionCommand</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">TransactionWorkflowResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">ProcessTransactionWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">TransactionWorkflowInput</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">TransactionWorkflowResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">ApprovalWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">ApprovalWorkflowInput</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">ApprovalResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">ReconciliationWorkflow</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">workflow</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="nx">ReconciliationWorkflowInput</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="c1">// Business operations with reliable processing</span>
+<span class="w">    </span><span class="nx">ProcessTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">req</span><span class="w"> </span><span class="nx">ProcessTransactionRequest</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Transaction</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">SubmitApproval</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transactionID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">,</span><span class="w"> </span><span class="nx">decision</span><span class="w"> </span><span class="nx">ApprovalDecision</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">GetTransactionStatus</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transactionID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">TransactionStatus</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 
-<span class="w">    </span><span class="c1">// Query operations (non-workflow)</span>
+<span class="w">    </span><span class="c1">// Standard query operations</span>
 <span class="w">    </span><span class="nx">GetTransaction</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">tenantID</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="nx">TransactionID</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Transaction</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 <span class="w">    </span><span class="nx">ListTransactions</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">query</span><span class="w"> </span><span class="nx">ListTransactionsQuery</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">TransactionList</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-<span class="w">    </span><span class="nx">GetWorkflowStatus</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">workflowID</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">WorkflowStatus</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
-
-<span class="w">    </span><span class="c1">// Signal operations for workflow interaction</span>
-<span class="w">    </span><span class="nx">ApproveTransactionSignal</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">workflowID</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">approval</span><span class="w"> </span><span class="nx">ApprovalSignal</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
-<span class="w">    </span><span class="nx">RejectTransactionSignal</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">workflowID</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">rejection</span><span class="w"> </span><span class="nx">RejectionSignal</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">GetProcessingProgress</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">transactionID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">ProcessingProgress</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
 <span class="p">}</span>
 
 <span class="c1">// Temporal workflow service for financial operations</span>
@@ -5394,35 +5700,39 @@
 </table>
 <hr />
 <h2 id="implementation-timeline">Implementation Timeline</h2>
-<h3 id="phase-1-foundation-weeks-1-8-100-complete">Phase 1: Foundation (Weeks 1-8) - ✅ 100% Complete</h3>
+<h3 id="phase-1-foundation-weeks-1-8-67-complete">Phase 1: Foundation (Weeks 1-8) - 🚧 67% Complete</h3>
 <p><strong>Scope</strong>: Core infrastructure and domain modeling
 - ✅ Database schema design and implementation (11 migrations)
 - ✅ Domain entities and business logic (9 domain files)
-- ✅ Repository layer with SQLC integration (30+ methods)
-- ✅ Service layer implementation (10 services, 7,266 lines)
-- ✅ Advanced validation framework (30+ business rules)</p>
+- 🚧 Repository layer with SQLC integration (partial implementation)
+- 🚧 Service layer structure (missing orchestration integration)
+- ✅ Validation framework (30+ business rules)</p>
 <p><strong>Deliverables</strong>:
 - ✅ Complete database migrations with RLS policies
 - ✅ Full domain model with rich business entities
-- ✅ Repository implementations with tenant isolation
-- ✅ Service layer with  business logic
-- ✅ Unit test framework with 85% coverage</p>
-<h3 id="phase-2-api-development-weeks-9-12-92-complete">Phase 2: API Development (Weeks 9-12) - 🚧 92% Complete</h3>
-<p><strong>Scope</strong>: REST API and integration points
-- ✅ Goa API design and code generation
-- ✅ HTTP handlers implementation (15+ endpoints)
-- ✅ OpenAPI specification and documentation
-- 🚧 Service integration and routing (pending)
-- ⏳ Authentication and authorization integration</p>
+- 🚧 Repository implementations with tenant isolation (67% complete)
+- 🚧 Service layer foundation (needs workflow integration)
+- ⏳ Unit test framework (not implemented)</p>
+<h3 id="phase-2-business-process-integration-weeks-9-12-0-complete">Phase 2: Business Process Integration (Weeks 9-12) - ⏳ 0% Complete</h3>
+<p><strong>Scope</strong>: Workflow orchestration and service integration
+- ⏳ WorkflowOrchestrator interface implementation
+- ⏳ Service layer integration with process orchestration
+- ⏳ Business-focused transaction processing
+- ⏳ Reliable approval and validation workflows
+- ⏳ Account groups and unified hierarchy support</p>
 <p><strong>Deliverables</strong>:
-- ✅ Complete REST API endpoints with search capabilities
-- ✅ OpenAPI specification with  documentation
-- ✅ Handler implementations with error handling and logging
-- 🚧 Service integration and middleware configuration
-- ⏳ API test coverage &gt; 95%</p>
-<h3 id="phase-3-advanced-features-weeks-13-20-0-complete">Phase 3: Advanced Features (Weeks 13-20) - ⏳ 0% Complete</h3>
-<p><strong>Scope</strong>:  functionality and optimization
-- ⏳ Financial reporting engine (Trial Balance, P&amp;L, Balance Sheet)
+- ⏳ Complete workflow orchestration implementation
+- ⏳ Service layer with integrated business processes
+- ⏳ Reliable transaction processing with approval flows
+- ⏳ Account groups management and unified API
+- ⏳ Integration test coverage &gt; 90%</p>
+<h3 id="phase-3-business-focused-api-layer-weeks-13-16-0-complete">Phase 3: Business-Focused API Layer (Weeks 13-16) - ⏳ 0% Complete</h3>
+<p><strong>Scope</strong>: Business capability APIs hiding implementation details
+- ⏳ Business-focused API endpoint design
+- ⏳ Transaction processing endpoints (hiding orchestration)
+- ⏳ Account and group management APIs
+- ⏳ Status monitoring and approval endpoints
+- ⏳ OpenAPI specification updates
 - ⏳ Accounts receivable automation
 - ⏳ Accounts payable automation
 - ⏳ Advanced reconciliation workflows

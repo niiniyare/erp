@@ -57,7 +57,7 @@ X-Cost-Center: <cost-center-code>  # Optional for cost center filtering
 ### Attribute-Based Access Control (ABAC)
 The financial API uses ABAC to enforce complex business policies beyond simple role-based access.
 
-**Segregation of Duties Enforcement**:
+#####  **Segregation of Duties Enforcement**:
 - Users cannot approve transactions they created
 - Different approval thresholds based on transaction amount and department
 - Cost center restrictions for accounting personnel
@@ -67,7 +67,7 @@ The financial API uses ABAC to enforce complex business policies beyond simple r
 - "Managers can approve transactions up to $50,000 in their departments"  
 - "CFO approval required for transactions over $100,000 or affecting executive accounts"
 
-**Business Rule Context Headers**:
+##### **Business Rule Context Headers**:
 ```http
 X-Tenant-ID: tenant-uuid
 X-Department-ID: dept-uuid (optional)
@@ -147,7 +147,7 @@ Create a new account within the chart of accounts structure.
 }
 ```
 
-**Business Rules**:
+#####  **Business Rules**:
 - Account code must be unique within tenant
 - Parent group must exist and be appropriate for account type
 - Cost center assignment validated against user permissions
@@ -158,7 +158,7 @@ Retrieve accounts with hierarchical group structure for financial reporting.
 
 **Endpoint**: `GET /api/v1/finance/accounts`
 
-**Query Parameters**:
+#####  **Query Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `include_groups` | boolean | No | Include group hierarchy (default: false) |
@@ -381,7 +381,7 @@ Produce trial balance report for a specific date range.
 
 **Endpoint**: `GET /api/v1/finance/reports/trial-balance`
 
-**Query Parameters**:
+#####  **Query Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `as_of_date` | date | No | Balance as of date (default: current date) |
@@ -471,7 +471,7 @@ Retrieve account balance changes over time for analysis.
 
 **Endpoint**: `GET /api/v1/finance/accounts/{account_id}/balance-history`
 
-**Query Parameters**:
+#####  **Query Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `from_date` | date | Yes | Start date for history |
@@ -2035,7 +2035,7 @@ This complete implementation provides:
 
 1. **Go Backend**: Full HTTP handlers with business logic, validation, and AMIS-compatible responses
 2. **AMIS Frontend**: Complete UI configurations for account management, transaction processing, approval workflows, and financial reporting
-3. **Business Rules**: Proper validation, authorization checks, and approval workflows
+3. ##### **Business Rules**: Proper validation, authorization checks, and approval workflows
 4. **Integration**: Seamless data flow between Go backend and AMIS frontend with proper error handling
 
 The code follows Go standards and integrates perfectly with AMIS's data structure expectations, providing a production-ready financial management system.
@@ -2048,16 +2048,16 @@ The code follows Go standards and integrates perfectly with AMIS's data structur
 - **API Status**: Production
 - **Architecture**: Business-Focused, Implementation-Agnostic
 
-**Key Changes from v2.0**
+#####  **Key Changes from v2.0**
 - Removed all implementation-specific references (Temporal, workflow engines)
 - Redesigned endpoints around business capabilities
-- Enhanced ABAC documentation with business policy examples
+- ABAC documentation with business policy examples
 - Unified account hierarchy endpoint
 - Business-oriented error messages and codes
 - Added approval workflow documentation
 - Focused on compliance and business rule enforcement
 
-**Related Documents**
+##### **Related Documents**
 - [Business Process Documentation](business-processes.md)
 - [Compliance Guide](compliance.md) 
 - [ABAC Policy Reference](abac-policies.md)

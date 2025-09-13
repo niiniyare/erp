@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"time"
 )
 
 func main() {
@@ -62,7 +63,7 @@ func main() {
 
 	// Open URL in default browser
 	go func() {
-		// time.Sleep(1 * time.Second) // Wait for server to start
+		time.Sleep(1 * time.Second) // Wait for server to start
 		openBrowser(url)
 	}()
 
