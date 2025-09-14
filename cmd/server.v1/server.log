@@ -1,0 +1,9 @@
+[90m2025-08-04T17:04:45Z[0m [32mINF[0m [1mStarting Awo ERP server[0m [36mservice=[0mawo-server [36mversion=[0m1.0.0
+[90m2025-08-04T17:04:45Z[0m [32mINF[0m [1mConfiguration loaded[0m [36mdb_host=[0mlocalhost [36mredis_host=[0mlocalhost [36mserver_port=[0m8081 [36mservice=[0mapp [36mversion=[0m1.0.0
+[90m2025-08-04T17:04:45Z[0m [32mINF[0m [1mTesting database connection[0m [36mdb_host=[0mlocalhost [36mdb_name=[0mledger [36mservice=[0mapp [36mversion=[0m1.0.0
+[90m2025-08-04T17:04:45Z[0m [32mINF[0m [1mDatabase connection test successful[0m [36mservice=[0mapp [36mversion=[0m1.0.0
+[90m2025-08-04T17:04:45Z[0m [32mINF[0m [1mTesting Redis connection[0m [36mredis_host=[0mlocalhost [36mredis_port=[0m6379 [36mservice=[0mapp [36mversion=[0m1.0.0
+[90m2025-08-04T17:04:45Z[0m [32mINF[0m [1mRedis connection test successful[0m [36mservice=[0mapp [36mversion=[0m1.0.0
+[90m2025-08-04T17:04:45Z[0m [32mINF[0m [1mRunning database migrations[0m [36mdb_host=[0mlocalhost [36mdb_name=[0mledger [36mmigration_url=[0mfile://db/migration [36mservice=[0mapp [36mversion=[0m1.0.0
+[90m2025-08-04T17:04:45Z[0m [32mINF[0m [1mstarting database migration[0m [36moperation=[0mdatabase_migration [36mservice=[0mapp [36mversion=[0m1.0.0
+[90m2025-08-04T17:04:45Z[0m [31mFTL[0m [1mcannot create new migrate instance[0m [36merror=[0m[31m[1m"failed to open source, \"file://db/migration\": open .: no such file or directory"[0m[0m [36moperation=[0mdatabase_migration [36mservice=[0mapp [36mversion=[0m1.0.0

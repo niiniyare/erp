@@ -167,6 +167,14 @@ redis:
 # Temporal Configuration
 temporal:
   host_port: "localhost:7233"       # Temporal server host:port
+  namespace: "default"
+  workers:
+    max_concurrent_activities: 100
+    max_concurrent_workflows: 100
+    worker_stop_timeout: 30s
+  client:
+    identity: "awo-erp"
+    connection_timeout: 30s
 
 # Authentication Configuration
 auth:
@@ -185,6 +193,10 @@ logger:
   service_name: "AwoERP"           # Service name for structured logging
   version: "1.0.0"                 # Service version for logging
   output: "stdout"                  # Output destination: stdout, stderr, or file path
+
+# Migration Configuration
+migration:
+  url: "file://db/migration"
 
 ---
 # Example Production Configuration

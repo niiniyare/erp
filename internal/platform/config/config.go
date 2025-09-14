@@ -56,16 +56,22 @@ type AppConfig struct {
 	Namespace   string   `yaml:"namespace" mapstructure:"namespace"`     // Kubernetes namespace or deployment namespace
 }
 
+// IsProduction returns true if the application stage is production.
+func (a *AppConfig) IsProduction() bool {
+	return a.Stage.IsProduction()
+}
+
 // Config represents application configuration
 type Config struct {
-	App      AppConfig      `yaml:"app" mapstructure:"app"`
-	Server   ServerConfig   `yaml:"server" mapstructure:"server"`
-	Database DatabaseConfig `yaml:"database" mapstructure:"database"`
-	Redis    RedisConfig    `yaml:"redis" mapstructure:"redis"`
-	Temporal TemporalConfig `yaml:"temporal" mapstructure:"temporal"`
-	Auth     AuthConfig     `yaml:"auth" mapstructure:"auth"`
-	Features FeatureConfig  `yaml:"features" mapstructure:"features"`
-	Logger   LoggerConfig   `yaml:"logger" mapstructure:"logger"`
+	App       AppConfig       `yaml:"app" mapstructure:"app"`
+	Server    ServerConfig    `yaml:"server" mapstructure:"server"`
+	Database  DatabaseConfig  `yaml:"database" mapstructure:"database"`
+	Migration MigrationConfig `yaml:"migration" mapstructure:"migration"`
+	Redis     RedisConfig     `yaml:"redis" mapstructure:"redis"`
+	Temporal  TemporalConfig  `yaml:"temporal" mapstructure:"temporal"`
+	Auth      AuthConfig      `yaml:"auth" mapstructure:"auth"`
+	Features  FeatureConfig   `yaml:"features" mapstructure:"features"`
+	Logger    LoggerConfig    `yaml:"logger" mapstructure:"logger"`
 }
 
 // ServerConfig represents server configuration
@@ -95,6 +101,15 @@ func (d *DatabaseConfig) GetDatabaseURL() string {
 		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		d.User, d.Password, d.Host, d.Port, d.Database, d.SSLMode,
 	)
+}
+
+// MigrationConfig represents database migration configuration
+type MigrationConfig struct {
+	URL         string        `yaml:"url" mapstructure:"url"`
+	Timeout     time.Duration `yaml:"timeout" mapstructure:"timeout"`
+	LockTimeout time.Duration `yaml:"lock_timeout" mapstructure:"lock_timeout"`
+	Verbose     bool          `yaml:"verbose" mapstructure:"verbose"`
+	NoVerify    bool          `yaml:"no_verify" mapstructure:"no_verify"`
 }
 
 // RedisConfig represents Redis configuration
@@ -160,9 +175,11 @@ func Load() *Config {
 	v.AddConfigPath("../../../")
 	v.AddConfigPath("/etc/myapp")
 
+	// Try to read .env file first (for backward compatibility)
+	loadDotEnvFile(v)
+
 	// Enable reading from environment variables
 	v.AutomaticEnv()
-
 	// Set environment variable replacer for nested keys
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
@@ -172,10 +189,6 @@ func Load() *Config {
 	// Bind environment variables BEFORE reading config files
 	// This ensures env vars take precedence over config files
 	bindEnvVars(v)
-
-	// Try to read .env file first (for backward compatibility)
-	loadDotEnvFile(v)
-
 	// Try to read config file (optional)
 	if err := v.ReadInConfig(); err != nil {
 		// Config file not found or error reading - continue with env vars and defaults
@@ -269,6 +282,13 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("database.max_open_conns", 25)
 	v.SetDefault("database.max_idle_conns", 5)
 	v.SetDefault("database.conn_max_lifetime", 5*time.Minute)
+
+	// Migration defaults
+	v.SetDefault("migration.url", "file://db/migration")
+	v.SetDefault("migration.timeout", 5*time.Minute)
+	v.SetDefault("migration.lock_timeout", 15*time.Minute)
+	v.SetDefault("migration.verbose", true)
+	v.SetDefault("migration.no_verify", false)
 
 	// Redis defaults
 	v.SetDefault("redis.host", "localhost")
@@ -575,9 +595,7 @@ func loadDotEnvFile(v *viper.Viper) {
 				}
 				// Only set the environment variable if it's not already set
 				// This allows command-line env vars to override .env file values
-				if os.Getenv(key) == "" {
-					os.Setenv(key, value)
-				}
+				os.Setenv(key, value)
 			}
 		}
 	}
