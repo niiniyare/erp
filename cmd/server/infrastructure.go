@@ -25,11 +25,6 @@ func InitializeInfrastructure() (*Infrastructure, error) {
 	}
 	log := logger.WithFields(logger.Fields{})
 
-	log.Info("Starting Awo ERP server", logger.Fields{
-		"service": "awo-server",
-		"version": "1.0.0",
-	})
-
 	// Load configuration
 	cfg := config.Load()
 	log.Info("Configuration loaded", logger.Fields{
@@ -38,11 +33,16 @@ func InitializeInfrastructure() (*Infrastructure, error) {
 		"redis_host":  cfg.Redis.Host,
 	})
 
+	log.Info("Starting Awo ERP server", logger.Fields{
+		"service": cfg.App.Name,
+		"version": cfg.App.Version,
+	})
+
 	// Initialize tracing
 	tracingService, err := tracing.NewTracingService(tracing.TracingConfig{
-		ServiceName:    "awo-server",
-		ServiceVersion: "1.0.0",
-		Environment:    "development",
+		ServiceName:    cfg.App.Name,
+		ServiceVersion: cfg.App.Version,
+		Environment:    cfg.App.Environment,
 		ExporterType:   tracing.StdoutExporter,
 		SamplingRatio:  1.0,
 	})
@@ -52,7 +52,7 @@ func InitializeInfrastructure() (*Infrastructure, error) {
 
 	// Initialize metrics
 	metricsService, err := metrics.NewMetricsService(metrics.MetricsConfig{
-		Namespace: "awo-erp",
+		Namespace: cfg.App.Environment,
 		Subsystem: "server",
 		Provider:  "prometheus",
 		Enabled:   true,

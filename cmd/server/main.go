@@ -45,7 +45,7 @@ func main() {
 	}
 
 	// Initialize GOA server
-	goaServer, err := InitializeGOAServer(services, database.Store, database.RedisClient, infra.Metrics, infra.Tracing)
+	goaServer, err := InitializeGOAServer(services, financeServices, database.Store, database.RedisClient, infra.Metrics, infra.Tracing)
 	if err != nil {
 		logger.Fatal("Failed to initialize GOA server", logger.Fields{"error": err})
 	}

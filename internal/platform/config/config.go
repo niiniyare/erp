@@ -140,6 +140,14 @@ type LoggerPackageConfig struct {
 	Version     string
 }
 
+// MetricsConfig holds configuration for metrics
+type MetricsConfig struct {
+	Provider  string // "prometheus" or "otel"
+	Namespace string
+	Subsystem string
+	Enabled   bool
+}
+
 // Load loads configuration from environment variables and files using Viper
 func Load() *Config {
 	v := viper.New()

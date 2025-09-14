@@ -11,12 +11,15 @@ import (
 	"github.com/google/uuid"
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/api/handlers"
+	financeHandler "github.com/niiniyare/erp/internal/api/handlers/finance"
 	"github.com/niiniyare/erp/internal/core/abac"
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/entity"
+	financeService "github.com/niiniyare/erp/internal/core/finance/service"
 	"github.com/niiniyare/erp/internal/core/identity"
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/cache"
+	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/platform/middleware"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -28,12 +31,14 @@ import (
 	adminfeatureflag "github.com/niiniyare/erp/internal/api/gen/admin_featureflag"
 	auth "github.com/niiniyare/erp/internal/api/gen/auth"
 	featureflag "github.com/niiniyare/erp/internal/api/gen/featureflag"
+	finance "github.com/niiniyare/erp/internal/api/gen/finance"
 	health "github.com/niiniyare/erp/internal/api/gen/health"
 	abacsvr "github.com/niiniyare/erp/internal/api/gen/http/abac/server"
 	accessrequestsvr "github.com/niiniyare/erp/internal/api/gen/http/access_request/server"
 	adminfeatureflagsvr "github.com/niiniyare/erp/internal/api/gen/http/admin_featureflag/server"
 	authsvr "github.com/niiniyare/erp/internal/api/gen/http/auth/server"
 	featureflagsvr "github.com/niiniyare/erp/internal/api/gen/http/featureflag/server"
+	financesvr "github.com/niiniyare/erp/internal/api/gen/http/finance/server"
 	healthsvr "github.com/niiniyare/erp/internal/api/gen/http/health/server"
 	openapisvr "github.com/niiniyare/erp/internal/api/gen/http/openapi/server"
 	organizationsvr "github.com/niiniyare/erp/internal/api/gen/http/organization/server"
@@ -53,7 +58,7 @@ type GOAServer struct {
 	Mux     goahttp.Muxer
 }
 
-func InitializeGOAServer(services *Services, store db.Store, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*GOAServer, error) {
+func InitializeGOAServer(services *Services, financeServices *financeService.Services, store db.Store, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*GOAServer, error) {
 	// Initialize GOA services
 	var (
 		abacSvc             abacGen.Service
@@ -61,6 +66,7 @@ func InitializeGOAServer(services *Services, store db.Store, cacheService cache.
 		adminFeatureFlagSvc adminfeatureflag.Service
 		authSvc             auth.Service
 		featureFlagSvc      featureflag.Service
+		financeSvc          finance.Service
 		healthSvc           health.Service
 		organizationSvc     organization.Service
 		tenantSvc           goaTenant.Service
@@ -75,6 +81,7 @@ func InitializeGOAServer(services *Services, store db.Store, cacheService cache.
 	// TODO: Replace with proper IAM service when fully implemented
 	authSvc = handlers.NewAuthHandlerWithIdentity(services.IdentityService, services.TenantService, tracingService, metricsService)
 	featureFlagSvc = handlers.NewFeatureFlagService(services.FeatureFlagService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
+	financeSvc = financeHandler.NewFinanceHandler(*financeServices, tracingService, metricsService)
 	// Create a simple health checker instance (nil store for now - needs proper initialization)
 	healthChecker := handlers.NewHealthChecker(nil, nil, logger.WithFields(logger.Fields{}), metricsService, tracingService)
 	healthSvc = handlers.NewHealthGoaHandler(healthChecker, tracingService, metricsService)
@@ -90,6 +97,7 @@ func InitializeGOAServer(services *Services, store db.Store, cacheService cache.
 		adminFeatureFlagEndpoints *adminfeatureflag.Endpoints
 		authEndpoints             *auth.Endpoints
 		featureFlagEndpoints      *featureflag.Endpoints
+		financeEndpoints          *finance.Endpoints
 		healthEndpoints           *health.Endpoints
 		organizationEndpoints     *organization.Endpoints
 		tenantEndpoints           *goaTenant.Endpoints
@@ -116,6 +124,10 @@ func InitializeGOAServer(services *Services, store db.Store, cacheService cache.
 	featureFlagEndpoints = featureflag.NewEndpoints(featureFlagSvc)
 	featureFlagEndpoints.Use(debug.LogPayloads())
 	featureFlagEndpoints.Use(clueLog.Endpoint)
+
+	financeEndpoints = finance.NewEndpoints(financeSvc)
+	financeEndpoints.Use(debug.LogPayloads())
+	financeEndpoints.Use(clueLog.Endpoint)
 
 	healthEndpoints = health.NewEndpoints(healthSvc)
 	healthEndpoints.Use(debug.LogPayloads())
@@ -160,6 +172,7 @@ func InitializeGOAServer(services *Services, store db.Store, cacheService cache.
 	adminFeatureFlagServer := adminfeatureflagsvr.New(adminFeatureFlagEndpoints, mux, dec, enc, eh, nil)
 	authServer := authsvr.New(authEndpoints, mux, dec, enc, eh, nil)
 	featureFlagServer := featureflagsvr.New(featureFlagEndpoints, mux, dec, enc, eh, nil)
+	financeServer := financesvr.New(financeEndpoints, mux, dec, enc, eh, nil)
 	healthServer := healthsvr.New(healthEndpoints, mux, dec, enc, eh, nil)
 	organizationServer := organizationsvr.New(organizationEndpoints, mux, dec, enc, eh, nil)
 	tenantServer := tenantsvr.New(tenantEndpoints, mux, dec, enc, eh, nil)
@@ -172,6 +185,7 @@ func InitializeGOAServer(services *Services, store db.Store, cacheService cache.
 	adminfeatureflagsvr.Mount(mux, adminFeatureFlagServer)
 	authsvr.Mount(mux, authServer)
 	featureflagsvr.Mount(mux, featureFlagServer)
+	financesvr.Mount(mux, financeServer)
 	healthsvr.Mount(mux, healthServer)
 	organizationsvr.Mount(mux, organizationServer)
 	tenantsvr.Mount(mux, tenantServer)
@@ -218,6 +232,7 @@ func InitializeGOAServer(services *Services, store db.Store, cacheService cache.
 	logMountedEndpoints(adminFeatureFlagServer.Mounts, "AdminFeatureFlag")
 	logMountedEndpoints(authServer.Mounts, "Auth")
 	logMountedEndpoints(featureFlagServer.Mounts, "FeatureFlag")
+	logMountedEndpoints(financeServer.Mounts, "Finance")
 	logMountedEndpoints(organizationServer.Mounts, "Organization")
 	logMountedEndpoints(tenantServer.Mounts, "Tenant")
 	logMountedEndpoints(userServer.Mounts, "User")
@@ -405,6 +420,7 @@ type MiddlewareSetup struct {
 	metrics   *metrics.MetricsService
 	tracing   tracing.TracingService
 	whitelist *middleware.EndpointWhitelist
+	config    *config.Config
 	services  *Services
 	store     db.Store
 }
@@ -489,7 +505,7 @@ func NewIAMServiceAdapter(services *Services, store db.Store, cacheService cache
 }
 
 // Authentication returns a minimal authentication service adapter
-func (a *IAMServiceAdapter) Authentication() interface{} {
+func (a *IAMServiceAdapter) Authentication() any {
 	// Return a simple struct that implements basic auth methods needed by middleware
 	return &AuthnAdapter{
 		identityService: a.identityService,
@@ -498,7 +514,7 @@ func (a *IAMServiceAdapter) Authentication() interface{} {
 }
 
 // Authorization returns a minimal authorization service adapter
-func (a *IAMServiceAdapter) Authorization() interface{} {
+func (a *IAMServiceAdapter) Authorization() any {
 	// Return a simple struct that implements basic authz methods needed by middleware
 	return &AuthzAdapter{
 		abacService: a.abacService,
@@ -507,7 +523,7 @@ func (a *IAMServiceAdapter) Authorization() interface{} {
 }
 
 // Policy returns a minimal policy service adapter
-func (a *IAMServiceAdapter) Policy() interface{} {
+func (a *IAMServiceAdapter) Policy() any {
 	// Return a simple struct that implements basic policy methods needed by middleware
 	return &PolicyAdapter{
 		abacService: a.abacService,
@@ -530,7 +546,7 @@ func (a *AuthnAdapter) ValidateToken(ctx context.Context, token string) (bool, e
 }
 
 // GetUser retrieves user by ID (bridge to existing identity service)
-func (a *AuthnAdapter) GetUser(ctx context.Context, userID string) (interface{}, error) {
+func (a *AuthnAdapter) GetUser(ctx context.Context, userID string) (any, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("user ID cannot be empty")
 	}
@@ -568,9 +584,9 @@ type PolicyAdapter struct {
 }
 
 // GetPolicy retrieves policy information (bridge to existing ABAC service)
-func (a *PolicyAdapter) GetPolicy(ctx context.Context, policyID string) (interface{}, error) {
+func (a *PolicyAdapter) GetPolicy(ctx context.Context, policyID string) (any, error) {
 	// TODO: Bridge to ABAC service policy operations
 	// For now, return empty policy to allow middleware testing
 	a.logger.Debug("Policy retrieval called", logger.Fields{"policy_id": policyID})
-	return map[string]interface{}{"id": policyID, "status": "active"}, nil
+	return map[string]any{"id": policyID, "status": "active"}, nil
 }
